@@ -143,10 +143,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         // Verify React Native bundle integrity to prevent tampering.
         // On failure: show a blocking security window and return early without starting React Native.
         // We return true (not false) so UIKit doesn't log a spurious launch-URL error.
+        // Skipped during Maestro E2E test runs (MAESTRO compilation condition set by CI build).
+        #if !MAESTRO
         if !verifyBundleIntegrity() {
             showBundleTamperedAlert()
             return true
         }
+        #endif
 
         // 1. React Native setup using factory
         let rnDelegate = ReactNativeDelegate()
@@ -247,6 +250,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
             NSLog("BitPay: Failed to set file protection: \(error)")
         }
 
+        #if !MAESTRO
         // Custom NSURLProtocol to whitelist URL prefixes
         RCTSetCustomNSURLSessionConfigurationProvider {
             let configuration = URLSessionConfiguration.default
@@ -258,6 +262,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
             configuration.protocolClasses = classes
             return configuration
         }
+        #endif
 
         // Set UNUserNotificationCenter delegate to receive foreground notifications
         UNUserNotificationCenter.current().delegate = self

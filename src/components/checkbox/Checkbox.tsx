@@ -12,6 +12,7 @@ interface Props {
   radio?: boolean;
   radioHeight?: number;
   checkHeight?: number;
+  testID?: string;
 }
 
 interface BorderProps {
@@ -55,6 +56,7 @@ const Checkbox: React.FC<Props> = ({
   radio,
   radioHeight,
   checkHeight,
+  testID,
 }) => {
   const radioStyles = radioHeight
     ? {height: radioHeight, width: radioHeight}
@@ -75,7 +77,7 @@ const Checkbox: React.FC<Props> = ({
         ...baseStyles,
       }}
       // @ts-ignore --> testing
-      testID="checkbox"
+      testID={testID || 'checkbox'}
       accessibilityLabel="Checkbox"
       outerStyle={{
         ...baseStyles,

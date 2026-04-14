@@ -45,9 +45,9 @@ const TermsBox = ({term, emit}: Props) => {
   };
 
   return (
-    <TermsBoxContainer activeOpacity={1.0} onPressIn={toggleCheck}>
+    <TermsBoxContainer activeOpacity={1.0} onPressIn={toggleCheck} testID={term.accessibilityLabel}>
       <CheckBoxContainer>
-        <Checkbox checked={checked} onPress={toggleCheck} />
+        <Checkbox checked={checked} onPress={toggleCheck} testID={term.accessibilityLabel} />
       </CheckBoxContainer>
       <TermTextContainer>{statement}</TermTextContainer>
     </TermsBoxContainer>

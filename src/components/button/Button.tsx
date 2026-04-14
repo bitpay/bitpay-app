@@ -321,6 +321,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     accessibilityLabel,
     touchableLibrary,
     icon,
+    testID,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -399,7 +400,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       buttonType={buttonType}
       onPress={debouncedOnPress}
       activeOpacity={disabled ? 1 : ActiveOpacity}
-      testID={'button'}>
+      testID={testID || 'button'}>
       <ButtonTypeContainer
         height={height}
         danger={danger}

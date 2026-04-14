@@ -1,0 +1,99 @@
+name: E2E iOS
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e-ios:
+    name: E2E iOS Smoke
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.node-version'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Create env file
+        env:
+          ENV_FILE: ${{ secrets.ENV_DEVELOPMENT }}
+        run: |
+          echo "$ENV_FILE" > .env.development
+          echo "IS_MAESTRO=true" >> .env.development
+
+      - name: Create Sentry properties
+        run: |
+          echo "${{ secrets.SENTRY_PROPERTIES }}" > ios/sentry.properties
+          echo "${{ secrets.SENTRY_PROPERTIES }}" > android/sentry.properties
+
+      - name: Set native config values
+        run: yarn set:dev
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          bundle install
+          bundle exec pod install
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+
+      - name: Build iOS app for simulator
+        run: |
+          xcodebuild \
+            -workspace ios/BitPayApp.xcworkspace \
+            -scheme BitPayApp \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath ios/build \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG MAESTRO" \
+            build
+
+      - name: Boot simulator
+        run: |
+          UDID=$(xcrun simctl list devices available | grep "iPhone 16" | head -1 | grep -E -o '\(([0-9A-F-]+)\)' | tr -d '()')
+          xcrun simctl boot "$UDID"
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+
+      - name: Install app on simulator
+        run: |
+          APP_PATH=$(find ios/build -name "*.app" | head -1)
+          xcrun simctl install "$SIMULATOR_UDID" "$APP_PATH"
+
+      - name: Run Maestro smoke tests
+        run: maestro test .maestro/flows/ --format junit --output maestro-results.xml
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: maestro-ios-results
+          path: |
+            maestro-results.xml
+            ~/.maestro/tests/
+          retention-days: 7
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: maestro-ios-screenshots
+          path: ~/.maestro/tests/**/*.png
+          retention-days: 7
