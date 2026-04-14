@@ -9,10 +9,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-ios:
-    name: Build iOS App
-    runs-on: macos-latest
-    timeout-minutes: 45
+  e2e-ios:
+    name: E2E iOS Smoke
+    runs-on: macos-latest-xlarge
+    timeout-minutes: 75
 
     steps:
       - name: Checkout
@@ -21,11 +21,21 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
-          node-version-file: '.node-version'
-          cache: 'yarn'
+          node-version: '20'
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('yarn.lock') }}
 
       - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile
+
+      - name: Generate DKLS vendor files
+        run: node ./scripts/generate-dkls-vendor.js
 
       - name: Create env file
         env:
@@ -49,64 +59,38 @@ jobs:
           ruby-version: '2.7.6'
           bundler-cache: true
 
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: pods-
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
+
+      - name: Clean Xcode caches
+        run: |
+          rm -rf ios/build
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
 
       - name: Install CocoaPods
-        run: |
-          cd ios
-          bundle exec pod install
-
-      - name: Cache Xcode build products
-        uses: actions/cache@v4
-        with:
-          path: ios/build/Build/Products
-          key: xcode-products-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock', 'yarn.lock') }}
-          restore-keys: xcode-products-${{ runner.os }}-
-
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode.app
+        run: cd ios && bundle exec pod install
 
       - name: Build iOS app for simulator
         env:
+          CI: "1"
           SENTRY_DISABLE_AUTO_UPLOAD: true
+          NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
+          export NODE_BINARY=$(which node)
+          export PATH="$(dirname "$NODE_BINARY"):$PATH"
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
             -configuration Debug \
             -sdk iphonesimulator \
             -derivedDataPath ios/build \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'generic/platform=iOS Simulator' \
+            NODE_BINARY="$NODE_BINARY" \
             SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG MAESTRO" \
+            FORCE_BUNDLING=YES \
+            ONLY_ACTIVE_ARCH=YES \
+            ARCHS=arm64 \
             build
-
-      - name: Upload app artifact
-        uses: actions/upload-artifact@v5
-        with:
-          name: ios-app-simulator
-          path: ios/build/Build/Products/Debug-iphonesimulator/BitPayApp.app
-          retention-days: 1
-
-  test-ios:
-    name: E2E iOS Smoke
-    needs: build-ios
-    runs-on: macos-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Download app artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-app-simulator
-          path: BitPayApp.app
 
       - name: Cache Maestro
         uses: actions/cache@v4
@@ -122,14 +106,14 @@ jobs:
 
       - name: Boot simulator
         run: |
-          UDID=$(xcrun simctl list devices available | grep "iPhone 16" | head -1 | grep -E -o '\(([0-9A-F-]+)\)' | tr -d '()')
+          UDID=$(xcrun simctl list devices available | grep -E "iPhone [0-9]" | head -1 | grep -E -o '\(([0-9A-F-]+)\)' | tr -d '()')
+          echo "Booting simulator: $UDID"
           xcrun simctl boot "$UDID"
-          # Wait until simulator is fully booted before proceeding
           xcrun simctl bootstatus "$UDID" -b
           echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
 
       - name: Install app on simulator
-        run: xcrun simctl install "$SIMULATOR_UDID" BitPayApp.app
+        run: xcrun simctl install "$SIMULATOR_UDID" ios/build/Build/Products/Debug-iphonesimulator/BitPayApp.app
 
       - name: Run Maestro smoke tests
         run: maestro test .maestro/flows/ --format junit --output maestro-results.xml

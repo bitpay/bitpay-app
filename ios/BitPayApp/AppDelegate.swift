@@ -104,7 +104,10 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
     }
 
     override func bundleURL() -> URL? {
-#if DEBUG
+#if MAESTRO
+        // On CI there is no Metro server — use the embedded bundle (requires FORCE_BUNDLING=YES in xcodebuild)
+        return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+#elseif DEBUG
         return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
 #else
         return Bundle.main.url(forResource: "main", withExtension: "jsbundle")

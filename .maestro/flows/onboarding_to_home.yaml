@@ -8,37 +8,56 @@ appId: com.bitpay.wallet
     visible:
       id: "onboarding-start-view"
     timeout: 600000
+- takeScreenshot: "01-onboarding-start"
 - waitForAnimationToEnd
 - tapOn:
     id: "continue-without-an-account-button"
 
 # Notifications screen
-- assertVisible:
-    id: "set-notifications-view"
+- extendedWaitUntil:
+    visible:
+      id: "set-notifications-view"
+    timeout: 15000
+- takeScreenshot: "02-notifications"
+- waitForAnimationToEnd
 - tapOn:
     id: "skip-button"
+- takeScreenshot: "03-after-notifications-skip"
 
 # Protect your wallet (security) screen
-- assertVisible:
-    id: "security-view"
+- extendedWaitUntil:
+    visible:
+      id: "security-view"
+    timeout: 30000
+- takeScreenshot: "04-security-view"
+- waitForAnimationToEnd
 - tapOn:
     id: "skip-button"
+- takeScreenshot: "05-after-security-skip"
 
 # Create key screen
-- assertVisible:
-    id: "create-key-view"
+- extendedWaitUntil:
+    visible:
+      id: "create-key-view"
+    timeout: 15000
+- takeScreenshot: "06-create-key"
+- waitForAnimationToEnd
 - tapOn:
     id: "i-already-have-a-key-button"
 
 # Import screen - enter seed phrase
-- assertVisible:
-    id: "import-view"
+- extendedWaitUntil:
+    visible:
+      id: "import-view"
+    timeout: 15000
+- takeScreenshot: "07-import"
 - tapOn:
     id: "import-text-input"
 - inputText: "gown pizza sell law yard laundry gown action enemy speed embark awkward"
 
-# Dismiss keyboard
-- hideKeyboard
+# Dismiss keyboard by tapping outside the input
+- tapOn:
+    point: "50%,20%"
 
 # Import wallet
 - tapOn:
@@ -49,6 +68,7 @@ appId: com.bitpay.wallet
     visible:
       id: "terms-of-use-container"
     timeout: 60000
+- takeScreenshot: "08-terms"
 
 # Important - tap all 3 checkboxes and agree
 - assertVisible:
@@ -65,4 +85,4 @@ appId: com.bitpay.wallet
 # Verify home screen is visible
 - assertVisible:
     id: "portfolio-balance-toggle"
-
+- takeScreenshot: "09-home"
