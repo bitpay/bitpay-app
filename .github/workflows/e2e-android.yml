@@ -8,6 +8,9 @@ concurrency:
   group: e2e-android-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  pull-requests: write
+
 jobs:
   e2e-android:
     name: E2E Android Smoke

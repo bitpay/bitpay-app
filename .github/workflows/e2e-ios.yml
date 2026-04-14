@@ -8,6 +8,9 @@ concurrency:
   group: e2e-ios-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  pull-requests: write
+
 jobs:
   e2e-ios:
     name: E2E iOS Smoke
@@ -84,6 +87,8 @@ jobs:
           restore-keys: xcode-products-${{ runner.os }}-
 
       - name: Build iOS app for simulator
+        env:
+          SENTRY_DISABLE_AUTO_UPLOAD: true
         run: |
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
