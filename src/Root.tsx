@@ -2,6 +2,7 @@ import {
   NavigationContainer,
   NavigationState,
   NavigatorScreenParams,
+  useNavigation,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
@@ -16,6 +17,7 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
+  View,
 } from 'react-native';
 import 'react-native-gesture-handler';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -168,6 +170,7 @@ const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
+  StartupGate: undefined;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   AllAssets: {keyId?: string} | undefined;
   Allocation:
@@ -281,6 +284,40 @@ export const getNavigationTabName = () => {
 
 export const Root = createNativeStackNavigator<RootStackParamList>();
 
+const StartupGate = () => {
+  const navigation = useNavigation<any>();
+  const onboardingCompleted = useAppSelector(
+    ({APP}) => APP.onboardingCompleted,
+  );
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
+  const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
+  const hasRoutedRef = useRef(false);
+
+  const scheme = appColorScheme || Appearance.getColorScheme();
+  const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
+
+  useEffect(() => {
+    if (!appWasInit || hasRoutedRef.current) {
+      return;
+    }
+
+    hasRoutedRef.current = true;
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: onboardingCompleted
+            ? RootStacks.TABS
+            : OnboardingScreens.ONBOARDING_START,
+        },
+      ],
+    });
+  }, [appWasInit, onboardingCompleted, navigation]);
+
+  return <View style={{flex: 1, backgroundColor: theme.colors.background}} />;
+};
+
 export default () => {
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
@@ -289,6 +326,7 @@ export default () => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const lastSystemEnabledRef = useRef<boolean | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const splashHiddenRef = useRef(false);
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
@@ -664,13 +702,10 @@ export default () => {
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
-  // ROOT STACKS AND GLOBAL COMPONENTS
-  const initialRoute = onboardingCompleted
-    ? RootStacks.TABS
-    : OnboardingScreens.ONBOARDING_START;
-
   return (
-    <SafeAreaView style={{flex: 1}} edges={['left', 'right']}>
+    <SafeAreaView
+      style={{flex: 1, backgroundColor: theme.colors.background}}
+      edges={['left', 'right']}>
       {showArchaxBanner && <ArchaxBanner isSmallScreen={isNarrowHeight} />}
       {/* https://github.com/react-navigation/react-navigation/issues/11353#issuecomment-1548114655 */}
       <HeaderShownContext.Provider value>
@@ -682,9 +717,6 @@ export default () => {
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
             dispatch(showBlur(pinLockActive || biometricLockActive));
-            await RNBootSplash.hide({fade: true});
-            // avoid splash conflicting with modal in iOS
-            // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
             logManager.debug(
               `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
             );
@@ -980,16 +1012,49 @@ export default () => {
               },
             );
           }}
-          onStateChange={debouncedOnStateChange}>
+          onStateChange={state => {
+            debouncedOnStateChange(state);
+
+            if (splashHiddenRef.current) {
+              return;
+            }
+
+            const currentRoute = navigationRef.getCurrentRoute()?.name;
+
+            if (currentRoute && currentRoute !== 'StartupGate') {
+              splashHiddenRef.current = true;
+
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  RNBootSplash.hide({fade: true}).catch(err => {
+                    logManager.error(
+                      `RNBootSplash.hide failed: ${
+                        err instanceof Error ? err.message : JSON.stringify(err)
+                      }`,
+                    );
+                  });
+                });
+              });
+            }
+          }}>
           <Root.Navigator
             screenOptions={{
               ...baseNavigatorOptions,
               headerShown: false,
+              contentStyle: {backgroundColor: theme.colors.background},
               headerStyle: {
                 backgroundColor: theme.colors.background,
               },
             }}
-            initialRouteName={initialRoute}>
+            initialRouteName="StartupGate">
+            <Root.Screen
+              name="StartupGate"
+              component={StartupGate}
+              options={{
+                animation: 'none',
+                gestureEnabled: false,
+              }}
+            />
             <Root.Screen
               name={DebugScreens.DEBUG}
               component={DebugScreen}
@@ -1003,6 +1068,7 @@ export default () => {
               component={TabsStack}
               options={{
                 gestureEnabled: false,
+                animation: 'none',
               }}
             />
             <Root.Screen
