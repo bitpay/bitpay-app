@@ -2788,10 +2788,7 @@ export const showNoWalletsModal =
 
 export const checkBiometricForSending =
   (): Effect<Promise<any>> => async dispatch => {
-    // preventing for asking biometric again when the app goes to background ( ios only )
-    if (Platform.OS === 'ios') {
-      dispatch(checkingBiometricForSending(true));
-    }
+    dispatch(checkingBiometricForSending(true));
     try {
       const rnBiometrics = new ReactNativeBiometrics({
         allowDeviceCredentials: true,

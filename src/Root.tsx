@@ -488,78 +488,151 @@ export default () => {
   }, []);
 
   // CHECK PIN || BIOMETRIC
+  const needsLockRef = useRef(false);
   useEffect(() => {
-    async function onAppStateChange(status: AppStateStatus) {
-      // status === 'active' when the app goes from background to foreground,
+    const shouldBlurCurrentScreen = () => {
+      const currentNavState = navigationRef.getState()?.routes?.slice(-1)[0];
+      const currentScreen: string | undefined =
+        currentNavState?.name ?? navigationRef.getCurrentRoute()?.name;
+      const currentTab: number | undefined = currentNavState?.state?.index;
 
-      const showLockOption = () => {
-        if (biometricLockActive) {
-          dispatch(AppActions.showBiometricModal({}));
-        } else if (pinLockActive) {
-          dispatch(AppActions.showPinModal({type: 'check'}));
-        } else {
-          dispatch(AppActions.showBlur(false));
-        }
-      };
+      return (
+        (currentScreen && blurScreenList.includes(currentScreen)) ||
+        (currentScreen === 'Tabs' && (!currentTab || currentTab === 0))
+      );
+    };
 
-      if (onboardingCompleted && navigationRef.isReady()) {
-        if (status === 'active' && checkingBiometricForSending) {
-          dispatch(AppActions.checkingBiometricForSending(false));
-          dispatch(AppActions.showBlur(false));
-        } else if (status === 'inactive' && checkingBiometricForSending) {
-          dispatch(AppActions.showBlur(false));
-        } else if (status === 'active' && !failedAppInit) {
-          if (lockAuthorizedUntil) {
-            const timeSinceBoot = await Timer.getRelativeTime();
-            const totalSecs =
-              Number(lockAuthorizedUntil) - Number(timeSinceBoot);
-            if (totalSecs < 0) {
-              dispatch(AppActions.lockAuthorizedUntil(undefined));
-              showLockOption();
-            } else {
-              const timeSinceBoot = await Timer.getRelativeTime();
-              const authorizedUntil =
-                Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
-              dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-              dispatch(AppActions.showBlur(false));
-            }
-          } else {
-            showLockOption();
-          }
-        } else if (failedAppInit) {
-          dispatch(AppActions.showBlur(false));
-        } else {
-          const currentNavState = navigationRef
-            .getState()
-            ?.routes?.slice(-1)[0];
-          const currentScreen: string | undefined =
-            currentNavState?.name ?? navigationRef.getCurrentRoute()?.name;
-          const currentTab: number | undefined = currentNavState?.state?.index;
-          if (
-            (currentScreen && blurScreenList.includes(currentScreen)) ||
-            (currentScreen === 'Tabs' && (!currentTab || currentTab === 0))
-          ) {
-            dispatch(AppActions.showBlur(true));
-          } else {
-            dispatch(AppActions.showBlur(false));
-          }
-        }
+    const prepareLock = async () => {
+      needsLockRef.current = true;
+      if (lockAuthorizedUntil) {
+        const timeSinceBoot = await Timer.getRelativeTime();
+        dispatch(
+          AppActions.lockAuthorizedUntil(
+            Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME,
+          ),
+        );
       }
-    }
 
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      onAppStateChange,
-    );
-    return () => subscriptionAppStateChange.remove();
+      if (shouldBlurCurrentScreen()) {
+        dispatch(AppActions.showBlur(true));
+      } else {
+        dispatch(AppActions.showBlur(false));
+      }
+    };
+
+    const showLockOption = async () => {
+      if (checkingBiometricForSending) {
+        dispatch(AppActions.checkingBiometricForSending(false));
+        dispatch(AppActions.showBlur(false));
+        needsLockRef.current = false;
+        return;
+      }
+
+      if (failedAppInit) {
+        dispatch(AppActions.showBlur(false));
+        needsLockRef.current = false;
+        return;
+      }
+
+      if (lockAuthorizedUntil) {
+        const timeSinceBoot = await Timer.getRelativeTime();
+        const totalSecs = Number(lockAuthorizedUntil) - Number(timeSinceBoot);
+
+        if (totalSecs >= 0) {
+          const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+          dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
+          dispatch(AppActions.showBlur(false));
+          needsLockRef.current = false;
+          return;
+        }
+
+        dispatch(AppActions.lockAuthorizedUntil(undefined));
+      }
+
+      if (biometricLockActive) {
+        // Important: remove blur before showing modal to avoid flash
+        dispatch(AppActions.showBlur(false));
+        dispatch(AppActions.showBiometricModal({}));
+      } else if (pinLockActive) {
+        dispatch(AppActions.showPinModal({type: 'check'}));
+      } else {
+        dispatch(AppActions.showBlur(false));
+      }
+
+      needsLockRef.current = false;
+    };
+
+    const onAppStateChange = async (status: AppStateStatus) => {
+      if (!onboardingCompleted || !navigationRef.isReady()) {
+        return;
+      }
+
+      if (status === 'active') {
+        if (needsLockRef.current) {
+          await showLockOption();
+        }
+        return;
+      }
+
+      if (status === 'inactive' || status === 'background') {
+        prepareLock();
+      }
+    };
+
+    const onAppBlur = () => {
+      if (AppState.currentState === 'active') {
+        return;
+      }
+
+      if (checkingBiometricForSending) {
+        dispatch(AppActions.checkingBiometricForSending(false));
+        dispatch(AppActions.showBlur(false));
+        needsLockRef.current = false;
+        return;
+      }
+
+      if (!onboardingCompleted || !navigationRef.isReady()) {
+        return;
+      }
+
+      prepareLock();
+    };
+
+    const onAppFocus = async () => {
+      if (checkingBiometricForSending) {
+        dispatch(AppActions.checkingBiometricForSending(false));
+        dispatch(AppActions.showBlur(false));
+        needsLockRef.current = false;
+        return;
+      }
+
+      if (!onboardingCompleted || !navigationRef.isReady()) {
+        return;
+      }
+
+      if (needsLockRef.current) {
+        await showLockOption();
+      }
+    };
+
+    const changeSub = AppState.addEventListener('change', onAppStateChange);
+    const blurSub = AppState.addEventListener('blur', onAppBlur);
+    const focusSub = AppState.addEventListener('focus', onAppFocus);
+
+    return () => {
+      changeSub.remove();
+      blurSub.remove();
+      focusSub.remove();
+    };
   }, [
     dispatch,
     onboardingCompleted,
     pinLockActive,
-    lockAuthorizedUntil,
     biometricLockActive,
+    lockAuthorizedUntil,
     checkingBiometricForSending,
     failedAppInit,
+    blurScreenList,
   ]);
 
   // Silent Push Notifications
