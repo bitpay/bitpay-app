@@ -568,7 +568,7 @@ const BuyAndSellRoot = ({
           fiatCurrency !== currentFiatCurrency
         ) {
           const _initialAmount = dispatch(
-            calculateAltFiatToUsd(DEFAULT_USD_VALUE, currentFiatCurrency),
+            calculateUsdToAltFiat(DEFAULT_USD_VALUE, currentFiatCurrency),
           );
           initialAmount = _initialAmount
             ? roundUpNice(_initialAmount)

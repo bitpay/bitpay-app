@@ -45,7 +45,6 @@ import {
   TransakQuoteData,
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {
-  calculateAltFiatToUsd,
   calculateAnyFiatToAltFiat,
   getBuyCryptoFiatLimits,
 } from '../../../store/buy-crypto/buy-crypto.effects';
@@ -553,7 +552,7 @@ const ExternalServicesOfferSelector: React.FC<
   if (context === 'buyCrypto') {
     BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
       if (offersDefault[exchange]) {
-        offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
+        const exchangeFiatCurrency = getAvailableFiatCurrencies(
           exchange,
         ).includes(fiatCurrency)
           ? fiatCurrency
@@ -571,7 +570,7 @@ const ExternalServicesOfferSelector: React.FC<
                     paymentMethod,
                     coin,
                     chain,
-                    offersDefault[preSetPartner].fiatCurrency,
+                    exchangeFiatCurrency,
                     country,
                   ) &&
                   (!buyCryptoConfig?.[preSetPartner] ||
@@ -584,7 +583,7 @@ const ExternalServicesOfferSelector: React.FC<
                 paymentMethod,
                 coin,
                 chain,
-                offersDefault[exchange].fiatCurrency,
+                exchangeFiatCurrency,
                 country,
               ) &&
               (!buyCryptoConfig?.[exchange] ||
@@ -612,16 +611,15 @@ const ExternalServicesOfferSelector: React.FC<
         }
 
         if (withdrawalMethod) {
-          sellOffersDefault[exchange].fiatCurrency =
-            getAvailableSellCryptoFiatCurrencies(
-              exchange,
-              withdrawalMethod.method,
-            ).includes(fiatCurrency)
-              ? fiatCurrency
-              : getBaseSellCryptoFiatCurrencies(
-                  exchange,
-                  withdrawalMethod.method,
-                );
+          const exchangeSellFiatCurrency = getAvailableSellCryptoFiatCurrencies(
+            exchange,
+            withdrawalMethod.method,
+          ).includes(fiatCurrency)
+            ? fiatCurrency
+            : getBaseSellCryptoFiatCurrencies(
+                exchange,
+                withdrawalMethod.method,
+              );
 
           if (
             preSetPartner &&
@@ -636,7 +634,7 @@ const ExternalServicesOfferSelector: React.FC<
                     withdrawalMethod,
                     coin,
                     chain,
-                    sellOffersDefault[preSetPartner].fiatCurrency,
+                    exchangeSellFiatCurrency,
                     country,
                     user?.country,
                   ) &&
@@ -650,7 +648,7 @@ const ExternalServicesOfferSelector: React.FC<
                 withdrawalMethod,
                 coin,
                 chain,
-                sellOffersDefault[exchange].fiatCurrency,
+                exchangeSellFiatCurrency,
                 country,
                 user?.country,
               ) &&
@@ -672,7 +670,6 @@ const ExternalServicesOfferSelector: React.FC<
   const [offerSelectorText, setOfferSelectorText] = useState<string>(
     t('Set amount for our Best Offer'),
   );
-  const [openingBrowser, setOpeningBrowser] = useState(false);
   const [finishedBanxa, setFinishedBanxa] = useState<boolean | null>(null);
   const [finishedMoonpay, setFinishedMoonpay] = useState<boolean | null>(null);
   const [finishedRamp, setFinishedRamp] = useState<boolean | null>(null);
@@ -698,10 +695,30 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
+    offers.banxa.fiatCurrency = getAvailableFiatCurrencies('banxa').includes(
+      fiatCurrency,
+    )
+      ? fiatCurrency
+      : 'USD';
+
+    if (paymentMethod?.method === 'paypal') {
+      // Banxa only accepts EUR as a base currency for PayPal payments
+      offers.banxa.fiatCurrency = 'EUR';
+    } else if (paymentMethod?.method === 'ach') {
+      // Banxa only accepts USD as a base currency for ACH payments
+      offers.banxa.fiatCurrency = 'USD';
+    }
+
     offers.banxa.fiatAmount =
       offers.banxa.fiatCurrency === fiatCurrency
         ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        : dispatch(
+            calculateAnyFiatToAltFiat(
+              amount,
+              fiatCurrency,
+              offers.banxa.fiatCurrency,
+            ),
+          ) || amount;
 
     let banxaPaymentMethods: BanxaPaymentMethodsData | undefined;
     try {
@@ -798,6 +815,10 @@ const ExternalServicesOfferSelector: React.FC<
       (offers.banxa.amountLimits?.max &&
         offers.banxa.fiatAmount > offers.banxa.amountLimits.max)
     ) {
+      offers.banxa.amountReceiving = undefined;
+      offers.banxa.fiatMoney = undefined;
+      offers.banxa.quoteData = undefined;
+      offers.banxa.errorMsg = undefined;
       offers.banxa.outOfLimitMsg = t(
         'There are no Banxa offers available, as the current purchase limits for this exchange must be between and',
         {
@@ -892,6 +913,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     offers.banxa.errorMsg = msg;
+    offers.banxa.amountReceiving = undefined;
     offers.banxa.fiatMoney = undefined;
     offers.banxa.expanded = false;
     setFinishedBanxa(true);
@@ -909,6 +931,12 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
+    offers.moonpay.fiatCurrency = getAvailableFiatCurrencies(
+      'moonpay',
+    ).includes(fiatCurrency)
+      ? fiatCurrency
+      : 'USD';
+
     let _paymentMethod: MoonpayPaymentType | undefined =
       getMoonpayPaymentMethodFormat(paymentMethod?.method);
 
@@ -920,7 +948,13 @@ const ExternalServicesOfferSelector: React.FC<
     offers.moonpay.fiatAmount =
       offers.moonpay.fiatCurrency === fiatCurrency
         ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        : dispatch(
+            calculateAnyFiatToAltFiat(
+              amount,
+              fiatCurrency,
+              offers.moonpay.fiatCurrency,
+            ),
+          ) || amount;
 
     const currencyLimitsrequestData: MoonpayGetCurrencyLimitsRequestData = {
       currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
@@ -948,6 +982,10 @@ const ExternalServicesOfferSelector: React.FC<
         (offers.moonpay.amountLimits.max &&
           offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
       ) {
+        offers.moonpay.amountReceiving = undefined;
+        offers.moonpay.fiatMoney = undefined;
+        offers.moonpay.quoteData = undefined;
+        offers.moonpay.errorMsg = undefined;
         offers.moonpay.outOfLimitMsg = t(
           'There are no Moonpay offers available, as the current purchase limits for this exchange must be between and',
           {
@@ -981,6 +1019,8 @@ const ExternalServicesOfferSelector: React.FC<
         env: moonpayEnv,
       };
 
+      console.log('============= Moonpay get quote requestData', requestData);
+
       const MOONPAY_TIMEOUT = 8000; // 8 seconds
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(
@@ -1004,6 +1044,10 @@ const ExternalServicesOfferSelector: React.FC<
           (offers.moonpay.amountLimits.max &&
             offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
         ) {
+          offers.moonpay.amountReceiving = undefined;
+          offers.moonpay.fiatMoney = undefined;
+          offers.moonpay.quoteData = undefined;
+          offers.moonpay.errorMsg = undefined;
           offers.moonpay.outOfLimitMsg = t(
             'There are no Moonpay offers available, as the current purchase limits for this exchange must be between and',
             {
@@ -1078,6 +1122,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     offers.moonpay.errorMsg = msg;
+    offers.moonpay.amountReceiving = undefined;
     offers.moonpay.fiatMoney = undefined;
     offers.moonpay.expanded = false;
     setFinishedMoonpay(true);
@@ -1095,6 +1140,12 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
+    offers.ramp.fiatCurrency = getAvailableFiatCurrencies('ramp').includes(
+      fiatCurrency,
+    )
+      ? fiatCurrency
+      : 'USD';
+
     switch (paymentMethod?.method) {
       case 'pix':
         // Ramp only accepts BRL as a base currency for Pix payments
@@ -1111,7 +1162,13 @@ const ExternalServicesOfferSelector: React.FC<
     offers.ramp.fiatAmount =
       offers.ramp.fiatCurrency === fiatCurrency
         ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        : dispatch(
+            calculateAnyFiatToAltFiat(
+              amount,
+              fiatCurrency,
+              offers.ramp.fiatCurrency,
+            ),
+          ) || amount;
 
     const getAssetsRequestData: RampGetAssetsRequestData = {
       env: rampEnv,
@@ -1207,6 +1264,10 @@ const ExternalServicesOfferSelector: React.FC<
           (offers.ramp.amountLimits.max &&
             offers.ramp.fiatAmount > offers.ramp.amountLimits.max)
         ) {
+          offers.ramp.amountReceiving = undefined;
+          offers.ramp.fiatMoney = undefined;
+          offers.ramp.quoteData = undefined;
+          offers.ramp.errorMsg = undefined;
           offers.ramp.outOfLimitMsg = t(
             'There are no Ramp offers available, as the current purchase limits for this exchange must be between and',
             {
@@ -1298,6 +1359,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     offers.ramp.errorMsg = msg;
+    offers.ramp.amountReceiving = undefined;
     offers.ramp.fiatMoney = undefined;
     offers.ramp.expanded = false;
     setFinishedRamp(true);
@@ -1315,10 +1377,22 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
+    offers.sardine.fiatCurrency = getAvailableFiatCurrencies(
+      'sardine',
+    ).includes(fiatCurrency)
+      ? fiatCurrency
+      : 'USD';
+
     offers.sardine.fiatAmount =
       offers.sardine.fiatCurrency === fiatCurrency
         ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        : dispatch(
+            calculateAnyFiatToAltFiat(
+              amount,
+              fiatCurrency,
+              offers.sardine.fiatCurrency,
+            ),
+          ) || amount;
 
     try {
       const sardineCurrencyLimitsData = await sardineGetCurrencyLimits(
@@ -1342,6 +1416,10 @@ const ExternalServicesOfferSelector: React.FC<
       (offers.sardine.amountLimits?.max &&
         offers.sardine.fiatAmount > offers.sardine.amountLimits.max)
     ) {
+      offers.sardine.amountReceiving = undefined;
+      offers.sardine.fiatMoney = undefined;
+      offers.sardine.quoteData = undefined;
+      offers.sardine.errorMsg = undefined;
       offers.sardine.outOfLimitMsg = t(
         'There are no Sardine offers available, as the current purchase limits for this exchange must be between and',
         {
@@ -1437,6 +1515,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     offers.sardine.errorMsg = msg;
+    offers.sardine.amountReceiving = undefined;
     offers.sardine.fiatMoney = undefined;
     offers.sardine.expanded = false;
     setFinishedSardine(true);
@@ -1454,10 +1533,22 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
+    offers.simplex.fiatCurrency = getAvailableFiatCurrencies(
+      'simplex',
+    ).includes(fiatCurrency)
+      ? fiatCurrency
+      : 'USD';
+
     offers.simplex.fiatAmount =
       offers.simplex.fiatCurrency === fiatCurrency
         ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        : dispatch(
+            calculateAnyFiatToAltFiat(
+              amount,
+              fiatCurrency,
+              offers.simplex.fiatCurrency,
+            ),
+          ) || amount;
 
     offers.simplex.amountLimits = dispatch(
       getBuyCryptoFiatLimits('simplex', offers.simplex.fiatCurrency),
@@ -1469,6 +1560,10 @@ const ExternalServicesOfferSelector: React.FC<
       (offers.simplex.amountLimits?.max &&
         offers.simplex.fiatAmount > offers.simplex.amountLimits.max)
     ) {
+      offers.simplex.amountReceiving = undefined;
+      offers.simplex.fiatMoney = undefined;
+      offers.simplex.quoteData = undefined;
+      offers.simplex.errorMsg = undefined;
       offers.simplex.outOfLimitMsg = t(
         'There are no Simplex offers available, as the current purchase limits for this exchange must be between and',
         {
@@ -1578,6 +1673,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     offers.simplex.errorMsg = msg;
+    offers.simplex.amountReceiving = undefined;
     offers.simplex.fiatMoney = undefined;
     offers.simplex.expanded = false;
     setFinishedSimplex(true);
@@ -1595,10 +1691,22 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
+    offers.transak.fiatCurrency = getAvailableFiatCurrencies(
+      'transak',
+    ).includes(fiatCurrency)
+      ? fiatCurrency
+      : 'USD';
+
     offers.transak.fiatAmount =
       offers.transak.fiatCurrency === fiatCurrency
         ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        : dispatch(
+            calculateAnyFiatToAltFiat(
+              amount,
+              fiatCurrency,
+              offers.transak.fiatCurrency,
+            ),
+          ) || amount;
 
     try {
       // Transak getFiatCurrencies to validate pairs and get currency limits (transakGetCurrencyLimits)
@@ -1645,6 +1753,10 @@ const ExternalServicesOfferSelector: React.FC<
       (offers.transak.amountLimits.max &&
         offers.transak.fiatAmount > offers.transak.amountLimits.max)
     ) {
+      offers.transak.amountReceiving = undefined;
+      offers.transak.fiatMoney = undefined;
+      offers.transak.quoteData = undefined;
+      offers.transak.errorMsg = undefined;
       offers.transak.outOfLimitMsg = t(
         'There are no Transak offers available, as the current purchase limits for this exchange must be between and',
         {
@@ -1761,6 +1873,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     offers.transak.errorMsg = msg;
+    offers.transak.amountReceiving = undefined;
     offers.transak.fiatMoney = undefined;
     offers.transak.expanded = false;
     setFinishedTransak(true);
@@ -1782,6 +1895,15 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     sellOffers.moonpay.cryptoAmount = amount;
+
+    if (withdrawalMethod) {
+      sellOffers.moonpay.fiatCurrency = getAvailableSellCryptoFiatCurrencies(
+        'moonpay',
+        withdrawalMethod.method,
+      ).includes(fiatCurrency)
+        ? fiatCurrency
+        : getBaseSellCryptoFiatCurrencies('moonpay', withdrawalMethod.method);
+    }
 
     const requestData: MoonpayGetSellQuoteRequestData = {
       env: moonpaySellEnv,
@@ -1812,6 +1934,10 @@ const ExternalServicesOfferSelector: React.FC<
               Number(sellOffers.moonpay.sellAmount) >
                 sellOffers.moonpay.amountLimits.max)
           ) {
+            sellOffers.moonpay.amountReceiving = undefined;
+            sellOffers.moonpay.fiatMoney = undefined;
+            sellOffers.moonpay.quoteData = undefined;
+            sellOffers.moonpay.errorMsg = undefined;
             sellOffers.moonpay.outOfLimitMsg = t(
               'There are no Moonpay offers available, as the current sell limits for this exchange must be between and',
               {
@@ -1906,6 +2032,8 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     sellOffers.moonpay.errorMsg = msg;
+    sellOffers.moonpay.amountReceiving = undefined;
+    sellOffers.moonpay.amountReceivingAltFiatCurrency = undefined;
     sellOffers.moonpay.fiatMoney = undefined;
     sellOffers.moonpay.expanded = false;
     setUpdateViewSell(Math.random());
@@ -1924,6 +2052,15 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     sellOffers.ramp.cryptoAmount = amount;
+
+    if (withdrawalMethod) {
+      sellOffers.ramp.fiatCurrency = getAvailableSellCryptoFiatCurrencies(
+        'ramp',
+        withdrawalMethod.method,
+      ).includes(fiatCurrency)
+        ? fiatCurrency
+        : getBaseSellCryptoFiatCurrencies('ramp', withdrawalMethod.method);
+    }
 
     const requestData: RampGetSellQuoteRequestData = {
       env: rampSellEnv,
@@ -2013,6 +2150,10 @@ const ExternalServicesOfferSelector: React.FC<
               Number(sellOffers.ramp.sellAmount) >
                 sellOffers.ramp.amountLimits.max)
           ) {
+            sellOffers.ramp.amountReceiving = undefined;
+            sellOffers.ramp.fiatMoney = undefined;
+            sellOffers.ramp.quoteData = undefined;
+            sellOffers.ramp.errorMsg = undefined;
             sellOffers.ramp.outOfLimitMsg = t(
               'There are no Ramp Network offers available, as the current sell limits for this exchange must be between and',
               {
@@ -2139,6 +2280,8 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     sellOffers.ramp.errorMsg = msg;
+    sellOffers.ramp.amountReceiving = undefined;
+    sellOffers.ramp.amountReceivingAltFiatCurrency = undefined;
     sellOffers.ramp.fiatMoney = undefined;
     sellOffers.ramp.expanded = false;
     setUpdateViewSell(Math.random());
@@ -2159,6 +2302,15 @@ const ExternalServicesOfferSelector: React.FC<
 
     sellOffers.simplex.cryptoAmount = amount;
 
+    if (withdrawalMethod) {
+      sellOffers.simplex.fiatCurrency = getAvailableSellCryptoFiatCurrencies(
+        'simplex',
+        withdrawalMethod.method,
+      ).includes(fiatCurrency)
+        ? fiatCurrency
+        : getBaseSellCryptoFiatCurrencies('simplex', withdrawalMethod.method);
+    }
+
     if (
       (sellOffers.simplex.amountLimits?.min &&
         Number(sellOffers.simplex.sellAmount) <
@@ -2167,6 +2319,10 @@ const ExternalServicesOfferSelector: React.FC<
         Number(sellOffers.simplex.sellAmount) >
           sellOffers.simplex.amountLimits.max)
     ) {
+      sellOffers.simplex.amountReceiving = undefined;
+      sellOffers.simplex.fiatMoney = undefined;
+      sellOffers.simplex.quoteData = undefined;
+      sellOffers.simplex.errorMsg = undefined;
       sellOffers.simplex.outOfLimitMsg = t(
         'There are no Simplex offers available, as the current sell limits for this exchange must be between and',
         {
@@ -2294,6 +2450,8 @@ const ExternalServicesOfferSelector: React.FC<
     );
 
     sellOffers.simplex.errorMsg = msg;
+    sellOffers.simplex.amountReceiving = undefined;
+    sellOffers.simplex.amountReceivingAltFiatCurrency = undefined;
     sellOffers.simplex.fiatMoney = undefined;
     sellOffers.simplex.expanded = false;
     setUpdateViewSell(Math.random());
