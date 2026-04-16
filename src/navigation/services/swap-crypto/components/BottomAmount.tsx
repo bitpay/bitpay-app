@@ -489,7 +489,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
                           const minAmount = _minAmount.toString();
                           if (primaryIsFiat && rate) {
                             const minAmountFiat = (
-                              limitsOpts.limits.minAmount * rate
+                              _minAmount * rate
                             ).toFixed(2);
                             curValRef.current = minAmountFiat;
                             updateAmountRef.current(minAmountFiat, true);
