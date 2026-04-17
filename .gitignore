@@ -1,3 +1,10 @@
+# Claude Code
+.claude
+
+# Maestro
+android/samples/
+.maestro/screenshots/
+
 # OSX
 #
 .DS_Store

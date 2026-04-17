@@ -88,6 +88,7 @@ const NotificationsScreen = ({
             testID="skip-button"
             accessibilityLabel="Skip"
             buttonType={'pill'}
+            touchableLibrary={'react-native'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
