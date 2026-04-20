@@ -3304,7 +3304,6 @@ const BuyAndSellRoot = ({
       defaultFlow: 'OFFRAMP',
       selectedCountryCode: country,
       defaultAsset: rampAsset,
-      variant: 'webview-mobile',
       useSendCryptoCallback: true,
       useSendCryptoCallbackVersion: 1,
       hideExitButton: false,
