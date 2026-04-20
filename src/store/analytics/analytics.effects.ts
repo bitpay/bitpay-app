@@ -90,18 +90,8 @@ export const Analytics = (() => {
             logManager.debug('Failed to initialize Braze SDK.', errMsg);
           });
 
-        // Force App Version
-        const superProperties = {app_version_string: APP_VERSION};
-        await MixpanelWrapper.init(false, superProperties)
-          .then(() => {
-            logManager.debug('Successfully initialized Mixpanel SDK.');
-          })
-          .catch(err => {
-            const errMsg =
-              err instanceof Error ? err.message : JSON.stringify(err);
-
-            logManager.debug('Failed to initialize Mixpanel SDK.', errMsg);
-          });
+        // Mixpanel
+        await MixpanelWrapper.init();
 
         // AppsFlyer
         await AppsFlyerWrapper.init();
