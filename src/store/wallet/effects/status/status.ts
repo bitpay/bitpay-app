@@ -1120,22 +1120,6 @@ export const buildPendingTxps =
       );
     }
 
-    if (wallet.tssKeyId && newPendingTxps.length > 0) {
-      const TEN_MINUTES_IN_SECONDS = 10 * 60;
-      const now = Math.floor(Date.now() / 1000);
-      const expiredTxps = newPendingTxps.filter(
-        txp => now - txp.createdOn > TEN_MINUTES_IN_SECONDS,
-      );
-      newPendingTxps = newPendingTxps.filter(
-        txp => now - txp.createdOn <= TEN_MINUTES_IN_SECONDS,
-      );
-      expiredTxps.forEach(txp => {
-        RemoveTxProposal(wallet, txp).catch(err => {
-          logManager.warn(`Failed to remove expired TSS txp ${txp.id}: ${err}`);
-        });
-      });
-    }
-
     return newPendingTxps;
   };
 
