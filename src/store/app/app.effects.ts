@@ -274,7 +274,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(initializeApi(network, identity));
 
-    dispatch(LocationEffects.getLocationData());
+    const locationDataPromise = dispatch(LocationEffects.getLocationData());
 
     dispatch(fetchInitialUserData());
 
@@ -377,6 +377,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
 
     // Pre-fetch external services config and swap crypto currencies in background
+    await locationDataPromise;
     dispatch(prefetchExternalServicesData());
   } catch (err: unknown) {
     let errorStr;
