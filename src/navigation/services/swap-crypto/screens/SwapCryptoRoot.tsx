@@ -732,8 +732,11 @@ const SwapCryptoRoot: React.FC = () => {
             chain: `${cloneDeep(selectedWallet.chain).toUpperCase()}`,
           },
         );
+        logger.warn('It was not possible to set the selected wallet');
         showError({msg});
         selectedWallet = undefined;
+        await sleep(600);
+        setLoadingWalletFromStatus(false);
         return;
       }
 
