@@ -6,45 +6,50 @@ import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {AppsFlyerWrapper} from '../../utils/appsFlyer';
 import {logManager} from '../../managers/LogManager';
 
-const getTrackingAuthorizedByUser =
-  (): Effect<Promise<void>> => async dispatch => {
-    check(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY)
-      .then(status => {
-        switch (status) {
-          case RESULTS.DENIED:
-            logManager.debug('Tracking permission denied. Requesting... ');
-            request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY).then(result => {
-              switch (result) {
-                case RESULTS.GRANTED:
-                case RESULTS.LIMITED:
-                  logManager.debug('Tracking permission granted.');
-                  return;
-                default:
-                  logManager.debug('Tracking permission: ', result);
-                  return;
-              }
-            });
-            break;
-          // Granted, limited, unavailable, or blocked
+const getTrackingAuthorizedByUser = (): Effect<Promise<void>> => async () => {
+  try {
+    const status = await check(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY);
+
+    switch (status) {
+      case RESULTS.DENIED: {
+        logManager.debug('Tracking permission denied. Requesting... ');
+        const result = await request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY);
+
+        switch (result) {
+          case RESULTS.GRANTED:
+          case RESULTS.LIMITED:
+            logManager.debug('Tracking permission granted.');
+            return;
           default:
-            logManager.debug('Tracking permission: ', status);
+            logManager.debug('Tracking permission: ', result);
             return;
         }
-      })
-      .catch(err => {
-        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.error(
-          'An error occurred while requesting tracking permission',
-          errMsg,
-        );
+      }
+
+      default:
+        logManager.debug('Tracking permission: ', status);
         return;
-      });
-  };
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error(
+      'An error occurred while requesting tracking permission',
+      errMsg,
+    );
+  }
+};
 
 export const Analytics = (() => {
   let _preInitQueue: Array<() => void> = [];
   let _isInitialized = false;
+  let _initPromise: Promise<void> | null = null;
   let _isMergingUser = false;
+
+  const flushQueue = () => {
+    const queue = _preInitQueue;
+    _preInitQueue = [];
+    queue.forEach(cb => cb());
+  };
 
   const guard = (cb: () => void) => {
     if (!APP_ANALYTICS_ENABLED) {
@@ -76,32 +81,29 @@ export const Analytics = (() => {
         return;
       }
 
-      if (APP_ANALYTICS_ENABLED) {
-        await dispatch(getTrackingAuthorizedByUser());
-
-        await BrazeWrapper.init()
-          .then(() => {
-            logManager.debug('Successfully initialized Braze SDK.');
-          })
-          .catch(err => {
-            const errMsg =
-              err instanceof Error ? err.message : JSON.stringify(err);
-
-            logManager.debug('Failed to initialize Braze SDK.', errMsg);
-          });
-
-        // Mixpanel
-        await MixpanelWrapper.init();
-
-        // AppsFlyer
-        await AppsFlyerWrapper.init();
+      if (_initPromise) {
+        return _initPromise;
       }
 
-      _isInitialized = true;
+      _initPromise = (async () => {
+        try {
+          if (APP_ANALYTICS_ENABLED) {
+            await BrazeWrapper.init();
+            await MixpanelWrapper.init();
+            await AppsFlyerWrapper.init();
+            await dispatch(getTrackingAuthorizedByUser());
+          }
 
-      logManager.info('Successfully initialized analytics.');
+          _isInitialized = true;
+          flushQueue();
 
-      return;
+          logManager.info('Successfully initialized analytics.');
+        } finally {
+          _initPromise = null;
+        }
+      })();
+
+      return _initPromise;
     },
 
     /**
