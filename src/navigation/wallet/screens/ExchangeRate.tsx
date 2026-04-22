@@ -128,6 +128,7 @@ import useExchangeRateChartData, {
   defaultDisplayData,
   HISTORIC_TIMEFRAME_WINDOW_MS,
 } from '../hooks/useExchangeRateChartData';
+import {SwapCryptoScreens} from '../../services/swap-crypto/SwapCryptoGroup';
 
 const AxisLabel = ({
   value,
@@ -1750,9 +1751,8 @@ const ExchangeRate = () => {
                     chain: assetContext.chain || '',
                   }),
                 );
-                navigation.navigate('GlobalSelect', {
-                  context: 'swapFrom',
-                  assetContext,
+                navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_ROOT, {
+                  selectedWallet: walletsForAsset[0]?.wallet || undefined,
                 });
               },
             }}
