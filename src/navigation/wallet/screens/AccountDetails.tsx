@@ -1421,7 +1421,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate('SwapCryptoRoot');
+                navigation.navigate('SwapCryptoRoot', {
+                  selectedAccount: selectedAccountAddress,
+                });
               },
             }}
             receive={{
