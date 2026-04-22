@@ -244,6 +244,7 @@ import {
 export type SwapCryptoRootScreenParams =
   | {
       selectedWallet?: Wallet;
+      selectedAccount?: string;
       partner?: SwapCryptoExchangeKey;
     }
   | undefined;
@@ -394,6 +395,7 @@ const SwapCryptoRoot: React.FC = () => {
   >();
   const [offersLoading, setOffersLoading] = useState<boolean>(false);
   let selectedWallet = route.params?.selectedWallet;
+  const selectedAccountAddress = route.params?.selectedAccount;
   const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
   const preSetPartner: SwapCryptoExchangeKey | undefined =
     route.params?.partner &&
@@ -754,6 +756,7 @@ const SwapCryptoRoot: React.FC = () => {
       }
     } else {
       // No pre-selected wallet: pick the wallet with the highest fiat balance
+      // pre-selected account: pick the wallet in the account with the highest fiat balance
       // from all keys, only considering wallets whose coin is in supportedCoins
       let bestWallet: Wallet | undefined;
       let bestFiatBalance = 0;
@@ -763,6 +766,13 @@ const SwapCryptoRoot: React.FC = () => {
           if (
             !wallet.balance?.fiatSpendable ||
             wallet.balance.fiatSpendable <= 0
+          ) {
+            return;
+          }
+
+          if (
+            selectedAccountAddress &&
+            wallet.receiveAddress !== selectedAccountAddress
           ) {
             return;
           }
