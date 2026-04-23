@@ -46,14 +46,10 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdAnalyticsInit =
-  (
-    user: BasicUserInfo,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect<void> =>
+  (user: BasicUserInfo): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     const acceptedEmailNotifications = !!APP.emailNotifications?.accepted;
-    const notificationsAccepted = APP.notificationsAccepted;
 
     if (user) {
       const {eid, name} = user;
@@ -106,31 +102,18 @@ export const startBitPayIdAnalyticsInit =
       }
 
       // Set email notifications and push notifications after Braze EID is set
-      dispatch(
-        setEmailNotifications(
-          acceptedEmailNotifications &&
-            user.optInEmailMarketing &&
-            user.verified,
-          email,
-          agreedToMarketingCommunications,
-        ),
-      );
+      dispatch(setEmailNotifications(acceptedEmailNotifications, email));
     }
   };
 
 export const startBitPayIdStoreInit =
-  (
-    initialData: InitialUserData,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect<void> =>
+  (initialData: InitialUserData): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     const {basicInfo: user} = initialData;
     dispatch(BitPayIdActions.successInitializeStore(APP.network, initialData));
     try {
-      dispatch(
-        startBitPayIdAnalyticsInit(user, agreedToMarketingCommunications),
-      );
+      dispatch(startBitPayIdAnalyticsInit(user));
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error(
@@ -183,12 +166,13 @@ export const startCreateAccount =
         hashedPassword: hashedPassword,
         salt: salt,
         agreedToTOSandPP: params.agreedToTOSandPP,
-        optInEmailMarketing: params.agreedToMarketingCommunications,
-        attribute: params.agreedToMarketingCommunications
-          ? 'App Signup'
-          : undefined,
+        optInEmailMarketing: agreedToMarketingCommunications,
+        attribute: agreedToMarketingCommunications ? 'App Signup' : undefined,
         gCaptchaResponse: params.gCaptchaResponse,
       });
+
+      // New users accept email notifications by default
+      dispatch(setEmailNotificationsAccepted(true, params.email));
 
       // refresh session
       const session = await AuthApi.fetchSession(APP.network);
@@ -198,14 +182,7 @@ export const startCreateAccount =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(
-        startPairAndLoadUser(
-          APP.network,
-          secret,
-          undefined,
-          agreedToMarketingCommunications,
-        ),
-      );
+      await dispatch(startPairAndLoadUser(APP.network, secret, undefined));
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
@@ -536,12 +513,7 @@ export const startDeeplinkPairing =
   };
 
 export const startPairAndLoadUser =
-  (
-    network: Network,
-    secret: string,
-    code?: string,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect<Promise<void>> =>
+  (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
@@ -575,9 +547,7 @@ export const startPairAndLoadUser =
         );
       }
 
-      dispatch(
-        startBitPayIdStoreInit(data.user, agreedToMarketingCommunications),
-      );
+      dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>

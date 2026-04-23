@@ -945,11 +945,7 @@ export const setAnnouncementsNotifications =
   };
 
 export const setEmailNotifications =
-  (
-    accepted: boolean,
-    email: string | null,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect =>
+  (accepted: boolean, email: string | null): Effect =>
   (dispatch, getState) => {
     const {
       WALLET: {keys},
@@ -966,10 +962,7 @@ export const setEmailNotifications =
         Braze.setEmail(email);
       }
       Braze.setEmailNotificationSubscriptionType(
-        (bitpayUser &&
-          bitpayUser?.verified &&
-          bitpayUser?.optInEmailMarketing) ||
-          agreedToMarketingCommunications
+        bitpayUser && bitpayUser?.verified && bitpayUser?.optInEmailMarketing
           ? Braze.NotificationSubscriptionTypes.OPTED_IN
           : Braze.NotificationSubscriptionTypes.SUBSCRIBED,
       );

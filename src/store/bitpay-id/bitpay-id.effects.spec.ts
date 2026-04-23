@@ -74,6 +74,7 @@ jest.mock('../analytics/analytics.effects', () => ({
     track: jest.fn(() => ({type: 'ANALYTICS/TRACK'})),
     identify: jest.fn(() => () => Promise.resolve()),
     startMergingUser: jest.fn(),
+    endMergingUser: jest.fn(),
   },
 }));
 
@@ -150,6 +151,7 @@ jest.mock('../../api/bitpay', () => ({
 import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
 import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
+import * as helperMethods from '../../utils/helper-methods';
 import {isAnonymousBrazeEid} from '../app/app.effects';
 import {BrazeWrapper} from '../../lib/Braze';
 
@@ -159,6 +161,9 @@ const MockGetPasskeyStatus = getPasskeyStatus as jest.Mock;
 const MockSignInWithPasskey = signInWithPasskey as jest.Mock;
 const MockIsAnonymousBrazeEid = isAnonymousBrazeEid as jest.Mock;
 const MockBrazeWrapperMerge = BrazeWrapper.merge as jest.Mock;
+const MockSleep = jest
+  .spyOn(helperMethods, 'sleep')
+  .mockResolvedValue(undefined);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -265,7 +270,7 @@ describe('startBitPayIdStoreInit', () => {
     const store = baseStore();
     const initialData = makeInitialData();
 
-    await store.dispatch(startBitPayIdStoreInit(initialData, true));
+    await store.dispatch(startBitPayIdStoreInit(initialData));
 
     // Even with marketing flag set, user should still be initialized
     const state = store.getState().BITPAY_ID;
@@ -309,6 +314,7 @@ describe('startBitPayIdAnalyticsInit', () => {
       'old-anon-eid',
       'new-eid-xyz',
     );
+    expect(MockSleep).toHaveBeenCalledWith(5000);
   });
 
   it('does NOT call BrazeWrapper.merge when brazeEid is not anonymous', async () => {
