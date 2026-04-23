@@ -1,10 +1,15 @@
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
-import { install as installQuickCrypto } from 'react-native-quick-crypto';
+import {install as installQuickCrypto} from 'react-native-quick-crypto';
 import '@ethersproject/shims';
 // import 'fast-text-encoding';
 import './shim';
 import '@walletconnect/react-native-compat';
-import {AppRegistry, Alert, StatusBar, Appearance} from 'react-native';
+import {AppRegistry, Alert, StatusBar, Appearance, LogBox} from 'react-native';
+import {IS_MAESTRO} from '@env';
+
+if (IS_MAESTRO === 'true') {
+  LogBox.ignoreAllLogs();
+}
 import Root from './src/Root';
 import React, {useState, useEffect} from 'react';
 import './i18n';
@@ -74,9 +79,8 @@ Sentry.init({
       return breadcrumb;
     }
     return null;
-  }
+  },
 });
-
 
 installQuickCrypto();
 
@@ -175,8 +179,8 @@ const ReduxProvider = () => {
 
   return (
     <Provider store={reduxStore}>
-      <PersistGate loading={null} persistor={reduxPersistor}>
-        {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
+          <PersistGate loading={null} persistor={reduxPersistor}>
+            {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
       </PersistGate>
     </Provider>
   );
@@ -199,11 +203,13 @@ const AppWrapper = () => {
 
     updateTheme();
 
-    const subscription = Appearance.addChangeListener(({colorScheme: newScheme}) => {
-      if (colorScheme === null) {
-        setIsDark(newScheme === 'dark');
-      }
-    });
+    const subscription = Appearance.addChangeListener(
+      ({colorScheme: newScheme}) => {
+        if (colorScheme === null) {
+          setIsDark(newScheme === 'dark');
+        }
+      },
+    );
 
     return () => subscription.remove();
   }, [colorScheme]);

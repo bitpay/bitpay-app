@@ -16,35 +16,35 @@ export const isEuCountry = (countryShortCode: string | undefined): boolean => {
 
 export const getLocationData =
   (): Effect<Promise<LocationData | undefined>> => async dispatch => {
-  try {
-    const {data: locationData} = await axios.get(
-      'https://bitpay.com/location/ipAddress',
-      {
-        headers: {
-          ...NO_CACHE_HEADERS,
-          'Content-Type': 'application/json',
+    try {
+      const {data: locationData} = await axios.get(
+        'https://bitpay.com/location/ipAddress',
+        {
+          headers: {
+            ...NO_CACHE_HEADERS,
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    );
+      );
 
-    const normalizedLocationData: LocationData = {
-      countryShortCode: locationData.country,
-      isEuCountry: isEuCountry(locationData.country),
-      stateShortCode: locationData.state ?? undefined,
-      cityFullName: locationData.city ?? undefined,
-      locationFullName: locationData.locationString ?? undefined,
-    };
+      const normalizedLocationData: LocationData = {
+        countryShortCode: locationData.country,
+        isEuCountry: isEuCountry(locationData.country),
+        stateShortCode: locationData.state ?? undefined,
+        cityFullName: locationData.city ?? undefined,
+        locationFullName: locationData.locationString ?? undefined,
+      };
 
-    logManager.info('getLocationData', locationData.country);
-    await dispatch(
-      LocationActions.successGetLocation({
-        locationData: normalizedLocationData,
-      }),
-    );
-    return normalizedLocationData;
-  } catch (err) {
-    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error('getLocationData', errStr);
-    return undefined;
-  }
-};
+      logManager.info('getLocationData', locationData.country);
+      await dispatch(
+        LocationActions.successGetLocation({
+          locationData: normalizedLocationData,
+        }),
+      );
+      return normalizedLocationData;
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error('getLocationData', errStr);
+      return undefined;
+    }
+  };

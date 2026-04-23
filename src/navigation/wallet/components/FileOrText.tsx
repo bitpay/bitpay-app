@@ -302,7 +302,6 @@ const FileOrText = () => {
           source: 'FileOrText',
         }),
       );
-
     } catch (err: any) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);
