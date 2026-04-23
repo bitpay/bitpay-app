@@ -25,8 +25,6 @@ import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/
 import axios from 'axios';
 import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {setBrazeEid, setEmailNotificationsAccepted} from '../app/app.actions';
-import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {DeviceEventEmitter} from 'react-native';
 import {
   getPasskeyCredentials,
   getPasskeyStatus,
@@ -39,6 +37,7 @@ import {
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
+import {sleep} from '../../utils/helper-methods';
 
 interface StartLoginParams {
   email?: string;
@@ -74,39 +73,7 @@ export const startBitPayIdAnalyticsInit =
         }
       }
 
-      // Check if Braze EID exists and not the same
-      // Merge ONLY anonymous EIDs
-      // If login with any other BitPayID, we shouldn't delete/merge previous user
-      // Only switch to a new EID with setBrazeEid
-      if (
-        APP.brazeEid &&
-        APP.brazeEid !== eid &&
-        isAnonymousBrazeEid(APP.brazeEid)
-      ) {
-        Analytics.startMergingUser();
-        // Should migrate the user to the new EID
-        logManager.info(
-          '[startBitPayIdAnalyticsInit] Merging current user to new EID: ',
-          eid,
-        );
-        try {
-          await BrazeWrapper.merge(APP.brazeEid, eid);
-          // Emit event to delete old user
-          DeviceEventEmitter.emit(
-            DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-            {
-              oldEid: APP.brazeEid,
-              newEid: eid,
-            },
-          );
-        } catch (error) {
-          const errMsg =
-            error instanceof Error ? error.message : JSON.stringify(error);
-          logManager.error(
-            `[startBitPayIdAnalyticsInit] Merging current user failed: ${errMsg}`,
-          );
-        }
-      }
+      const previousBrazeEid = APP.brazeEid;
       dispatch(setBrazeEid(eid));
       await dispatch(
         Analytics.identify(eid, {
@@ -115,6 +82,29 @@ export const startBitPayIdAnalyticsInit =
           lastName: familyName,
         }),
       );
+
+      if (
+        previousBrazeEid &&
+        previousBrazeEid !== eid &&
+        isAnonymousBrazeEid(previousBrazeEid)
+      ) {
+        Analytics.startMergingUser();
+        try {
+          logManager.info(
+            '[Braze] Merge oldEid/newEid: ',
+            previousBrazeEid,
+            eid,
+          );
+          await BrazeWrapper.merge(previousBrazeEid, eid);
+        } catch (error) {
+          const errMsg =
+            error instanceof Error ? error.message : JSON.stringify(error);
+          logManager.error(`[Braze] Merge EID failed: ${errMsg}`);
+        }
+        await sleep(5000);
+        Analytics.endMergingUser();
+      }
+
       // Set email notifications and push notifications after Braze EID is set
       dispatch(
         setEmailNotifications(
