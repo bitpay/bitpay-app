@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useEffect, useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useCallback} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
@@ -109,6 +109,45 @@ const CreateOrImportKey = ({
     );
   };
 
+  const onCreateKeyPress = useCallback(async () => {
+    try {
+      const context = 'onboarding';
+
+      showOngoingProcess('CREATING_KEY');
+      await sleep(500);
+
+      const createdKey = await dispatch(
+        startCreateKey(getBaseKeyCreationCoinsAndTokens(), context),
+      );
+
+      dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
+      hideOngoingProcess();
+
+      askForTrackingThenNavigate(() => {
+        dispatch(Analytics.track('Clicked Create New Key', {context}));
+        navigation.navigate('BackupKey', {
+          context,
+          key: createdKey,
+        });
+      });
+    } catch (err: any) {
+      const errstring =
+        err instanceof Error ? err.message : JSON.stringify(err);
+
+      logManager.error(`Error creating key: ${errstring}`);
+      hideOngoingProcess();
+      await sleep(500);
+      showErrorModal(errstring);
+    }
+  }, [
+    dispatch,
+    navigation,
+    showOngoingProcess,
+    hideOngoingProcess,
+    askForTrackingThenNavigate,
+    showErrorModal,
+  ]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
@@ -122,7 +161,7 @@ const CreateOrImportKey = ({
     }
   }, [isImportLedgerModalVisible]);
   return (
-    <CreateKeyContainer accessibilityLabel="create-key-view">
+    <CreateKeyContainer testID="create-key-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -142,52 +181,20 @@ const CreateOrImportKey = ({
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer accessibilityLabel="cta-container">
+        <CtaContainer testID="cta-container">
           <ActionContainer>
             <Button
-              accessibilityLabel="create-a-key-button"
+              testID="create-a-key-button"
+              accessibilityLabel="Create a key"
               buttonStyle={'primary'}
-              onPress={async () => {
-                try {
-                  const context = 'onboarding';
-                  showOngoingProcess('CREATING_KEY');
-                  const createdKey = await dispatch(
-                    startCreateKey(
-                      getBaseKeyCreationCoinsAndTokens(),
-                      'onboarding',
-                    ),
-                  );
-
-                  dispatch(
-                    setHomeCarouselConfig({id: createdKey.id, show: true}),
-                  );
-                  hideOngoingProcess();
-                  askForTrackingThenNavigate(() => {
-                    dispatch(
-                      Analytics.track('Clicked Create New Key', {
-                        context: 'onboarding',
-                      }),
-                    );
-                    navigation.navigate('BackupKey', {
-                      context,
-                      key: createdKey,
-                    });
-                  });
-                } catch (err: any) {
-                  const errstring =
-                    err instanceof Error ? err.message : JSON.stringify(err);
-                  logManager.error(`Error creating key: ${errstring}`);
-                  hideOngoingProcess();
-                  await sleep(500);
-                  showErrorModal(errstring);
-                }
-              }}>
+              onPress={onCreateKeyPress}>
               {t('Create a Key')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
-              accessibilityLabel="i-already-have-a-key-button"
+              testID="i-already-have-a-key-button"
+              accessibilityLabel="I already have a key"
               buttonStyle={'secondary'}
               onPress={() => {
                 askForTrackingThenNavigate(() => {

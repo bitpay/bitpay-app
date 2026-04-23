@@ -23,6 +23,7 @@ import {
   IsShared,
   TxForPaymentFeeEVM,
   TxActions,
+  IsTSSShared,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
 import {
@@ -597,7 +598,7 @@ const TransactionDetails = () => {
             <MultipleOutputsTx tx={txs} tokenAddress={wallet.tokenAddress} />
           ) : null}
 
-          {txs.creatorName && IsShared(wallet) ? (
+          {txs.creatorName && (IsShared(wallet) || IsTSSShared(wallet)) ? (
             <>
               <DetailContainer>
                 <DetailRow>
@@ -644,6 +645,8 @@ const TransactionDetails = () => {
                 {!txs.confirmations ? (
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
+                    testID="transaction-details-unconfirmed-link"
+                    accessibilityLabel="Learn about unconfirmed transactions"
                     onPress={() => {
                       dispatch(
                         openUrlWithInAppBrowser(URL.HELP_TXS_UNCONFIRMED),
@@ -685,7 +688,10 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>{t('Transaction ID')}</H7>
 
-              <CopyTransactionId onPress={() => copyText(txs.txid!)}>
+              <CopyTransactionId
+                testID="transaction-details-copy-txid-button"
+                accessibilityLabel="Transaction details copy txid button"
+                onPress={() => copyText(txs.txid!)}>
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>
@@ -720,7 +726,11 @@ const TransactionDetails = () => {
           </VerticalSpace>
 
           <VerticalSpace>
-            <Button buttonStyle={'secondary'} onPress={goToBlockchain}>
+            <Button
+              testID="transaction-details-view-on-blockchain-button"
+              accessibilityLabel="Transaction details view on blockchain button"
+              buttonStyle={'secondary'}
+              onPress={goToBlockchain}>
               {t('View On Blockchain')}
             </Button>
           </VerticalSpace>

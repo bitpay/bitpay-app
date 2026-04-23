@@ -102,7 +102,10 @@ const FeedbackCard: React.FC = () => {
           <Question width={24} height={24} />
           <FeedbackTitle>{t('Feedback')}</FeedbackTitle>
         </FeedbackTitleContainer>
-        <FeedbackCloseContainer onPress={() => rateApp('default')}>
+        <FeedbackCloseContainer
+          testID="home-feedback-close-button"
+          accessibilityLabel="Close feedback"
+          onPress={() => rateApp('default')}>
           <Close width={18} height={18} />
         </FeedbackCloseContainer>
       </FeedbackHeader>
@@ -111,13 +114,22 @@ const FeedbackCard: React.FC = () => {
       </FeedbackParagraph>
       <EmojisContainer>
         <EmojiActionContainer>
-          <EmojiAction onPress={() => rateApp('disappointed')}>
+          <EmojiAction
+            testID="home-feedback-disappointed-button"
+            accessibilityLabel="Disappointed"
+            onPress={() => rateApp('disappointed')}>
             <Speechless width={44} height={44} />
           </EmojiAction>
-          <EmojiAction onPress={() => rateApp('ok')}>
+          <EmojiAction
+            testID="home-feedback-ok-button"
+            accessibilityLabel="OK"
+            onPress={() => rateApp('ok')}>
             <Smile width={44} height={44} />
           </EmojiAction>
-          <EmojiAction onPress={() => rateApp('love')}>
+          <EmojiAction
+            testID="home-feedback-love-button"
+            accessibilityLabel="Love it"
+            onPress={() => rateApp('love')}>
             <HearFace width={44} height={44} />
           </EmojiAction>
         </EmojiActionContainer>

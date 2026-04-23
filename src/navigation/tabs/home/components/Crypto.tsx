@@ -157,6 +157,14 @@ export const keyBackupRequired = (
                     const decryptedKey = key.methods!.get(encryptPassword);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(300);
+                    if (isTSSKey(key)) {
+                      navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
+                        keyId: key.id,
+                        decryptPassword: encryptPassword,
+                        context: 'backupExistingTSSKey',
+                      });
+                      return;
+                    }
                     navigation.navigate('RecoveryPhrase', {
                       keyId: key.id,
                       words: decryptedKey.mnemonic.trim().split(' '),
@@ -174,6 +182,12 @@ export const keyBackupRequired = (
                 },
               }),
             );
+          } else if (isTSSKey(key)) {
+            navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
+              keyId: key.id,
+              context: 'backupExistingTSSKey',
+            });
+            return;
           } else {
             navigation.navigate('RecoveryPhrase', {
               keyId: key.id,
@@ -322,6 +336,9 @@ export const createHomeCardList = ({
       const percentageDifference =
         totalBalance > 0 ? rawPercentageDifference : null;
 
+      const fullWalletObj = key?.wallets?.[0];
+      const hasPendingTssSession = fullWalletObj?.pendingTssSession;
+
       return {
         id: key.id,
         component: (
@@ -334,6 +351,7 @@ export const createHomeCardList = ({
             percentageDifference={percentageDifference}
             needsBackup={!backupComplete}
             context={context}
+            pendingTssSession={hasPendingTssSession}
             onPress={
               onPress
                 ? () => {
@@ -342,9 +360,8 @@ export const createHomeCardList = ({
                   }
                 : () => {
                     haptic('soft');
-                    if (backupComplete) {
-                      const fullWalletObj = key?.wallets?.[0];
-                      if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+                    if (backupComplete || hasPendingTssSession) {
+                      if (hasPendingTssSession && key?.tssSession) {
                         const {isCreator} = key.tssSession;
                         if (isCreator) {
                           navigation.navigate(WalletScreens.INVITE_COSIGNERS, {
@@ -552,6 +569,8 @@ const Crypto = () => {
           <CryptoHeaderActions>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
+              testID="my-crypto-add-button"
+              accessibilityLabel="Add crypto wallet"
               onPress={() => {
                 haptic('soft');
                 navigation.navigate('CreationOptions');
@@ -560,6 +579,8 @@ const Crypto = () => {
             </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
+              testID="my-crypto-customize-button"
+              accessibilityLabel="Customize home"
               onPress={() => {
                 haptic('soft');
                 // Apply SettingsDetails config so that the custom header is used

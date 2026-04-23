@@ -202,6 +202,8 @@ const AssetRow: React.FC<Props> = ({
     <Row
       activeOpacity={canNavigate ? ActiveOpacity : 1}
       isLast={isLast}
+      testID={`home-asset-row-item-${item.currencyAbbreviation}-${item.chain}`}
+      accessibilityLabel={`${item.name} asset`}
       onPress={canNavigate ? handlePress : undefined}>
       <IconContainer>
         <CurrencyImage

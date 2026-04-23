@@ -222,6 +222,8 @@ const KeyWalletsRow = ({
                   isLast={key?.mergedUtxoAndEvmAccounts.length === index + 1}>
                   <AccountChainsContainer
                     activeOpacity={ActiveOpacity}
+                    testID={`key-wallets-evm-account-toggle-${evmAccount?.receiveAddress}`}
+                    accessibilityLabel={`${evmAccount?.accountName} account`}
                     onPress={() => onHide(evmAccount?.receiveAddress)}>
                     <Blockie size={19} seed={evmAccount?.receiveAddress} />
                     <Column>
@@ -334,6 +336,12 @@ const KeyWalletsRow = ({
                     (prev.chain !== wallet.chain && (
                       <AccountChainsContainer
                         activeOpacity={ActiveOpacity}
+                        testID={`key-wallets-utxo-chain-toggle-${wallet?.chain}-${key.key}`}
+                        accessibilityLabel={`${
+                          BitpaySupportedCoins[
+                            wallet?.currencyAbbreviation?.toLowerCase() as keyof typeof BitpaySupportedCoins
+                          ]?.name ?? wallet?.chain
+                        } chain`}
                         onPress={() =>
                           wallet?.chain && onHide(`${wallet.chain}-${key.key}`)
                         }>

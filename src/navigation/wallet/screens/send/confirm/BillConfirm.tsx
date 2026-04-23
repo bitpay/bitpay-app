@@ -88,7 +88,7 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
-import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
@@ -151,7 +151,6 @@ const BillConfirm: React.FC<
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
-  const isTSSWallet = key ? isTSSKey(key) : false;
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -207,7 +206,8 @@ const BillConfirm: React.FC<
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            accessibilityLabel="cancel-button"
+            testID="cancel-button"
+            accessibilityLabel="Cancel"
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
@@ -437,8 +437,8 @@ const BillConfirm: React.FC<
             key,
             wallet,
             recipient,
-            ...(isTSSWallet && {tssCallbacks}),
-            ...(isTSSWallet && {setShowTSSProgressModal}),
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
           }),
         )
       : await dispatch(
@@ -639,7 +639,7 @@ const BillConfirm: React.FC<
       <DetailsList>
         <>
           <Header hr>Summary</Header>
-          {isTSSWallet && wallet && (
+          {wallet && isTSSWallet(wallet) && (
             <TSSProgressTracker
               status={tssStatus}
               progress={tssProgress}

@@ -1,4 +1,4 @@
-import React, {ReactChild, useEffect, useMemo, useCallback} from 'react';
+import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
 import {Platform} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import SheetModal from '../base/sheet/SheetModal';
@@ -41,7 +41,7 @@ export interface BottomNotificationConfig {
     action: (rootState: RootState) => any;
   }>;
   code?: string;
-  message2?: ReactChild;
+  message2?: ReactNode;
   enableBackdropDismiss: boolean;
   onBackdropDismiss?: () => void;
 }
@@ -186,6 +186,10 @@ const BottomNotification = React.memo(() => {
           <TouchableOpacity
             style={{minHeight: 30, minWidth: 60}}
             key={index}
+            testID={`bottom-notification-${
+              primary ? 'primary' : 'secondary'
+            }-action-button`}
+            accessibilityLabel={text}
             onPress={handlePress}>
             <BottomNotificationCta
               suppressHighlighting={true}

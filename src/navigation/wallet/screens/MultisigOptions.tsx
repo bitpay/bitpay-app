@@ -73,6 +73,7 @@ const MultisigOptions = ({
         description: t(
           'Create a new wallet that requires multiple signatures for transactions',
         ),
+        showChevron: true,
         onPress: () => {
           dispatch(
             Analytics.track('Clicked Create Multisig Wallet', {
@@ -91,6 +92,7 @@ const MultisigOptions = ({
         description: t(
           'Join an existing multisig wallet using an invitation from another user',
         ),
+        showChevron: true,
         onPress: () => {
           dispatch(
             Analytics.track('Clicked Join Multisig Wallet', {
@@ -112,6 +114,7 @@ const MultisigOptions = ({
         description: t(
           'Support for Bitcoin, Litecoin, Dogecoin and Bitcoin Cash networks. Each co-signer/device has a unique private key/recovery phrase, and all signatures are recorded directly on the blockchain.',
         ),
+        showChevron: true,
         onPress: () => {
           dispatch(
             Analytics.track('Clicked Create Multisig Wallet', {
@@ -135,6 +138,7 @@ const MultisigOptions = ({
               subDescription: t(
                 "All participants need to be online at the same time to create the wallet and sign transactions. This wallet **can't be imported into other crypto platforms.**",
               ),
+              showChevron: true,
               onPress: () => {
                 dispatch(
                   Analytics.track('Clicked Create TSS Wallet', {
@@ -161,6 +165,7 @@ const MultisigOptions = ({
         description: t(
           'Support for Bitcoin, Litecoin, Dogecoin and Bitcoin Cash networks. Each co-signer/device has a unique private key/recovery phrase, and all signatures are recorded directly on the blockchain.',
         ),
+        showChevron: true,
         onPress: () => {
           dispatch(
             Analytics.track('Clicked Join Multisig Wallet', {
@@ -181,6 +186,7 @@ const MultisigOptions = ({
               subDescription: t(
                 "All participants need to be online at the same time to create the wallet and sign transactions. This wallet **can't be imported into other crypto platforms.**",
               ),
+              showChevron: true,
               onPress: () => {
                 dispatch(
                   Analytics.track('Clicked Join TSS Wallet', {

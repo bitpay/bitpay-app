@@ -91,6 +91,7 @@ import {
   IsSVMChain,
   IsUtxoChain,
   IsEVMChain,
+  IsNonceChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -131,6 +132,7 @@ import {
   requiresTSSSigning,
   TSSSigningCallbacks,
   startTSSSigning,
+  pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
 
 export const createProposalAndBuildTxDetails =
@@ -1398,7 +1400,21 @@ export const publishAndSign =
           logManager.debug('success publish [publishAndSign]');
         }
 
-        const txpToSign = publishedTx || txp;
+        let txpToSign = publishedTx || txp;
+
+        // Nonce-based chains (EVM, XRP) without a nonce need one assigned before signing.
+        // TODO: remove deferNonce check once BWS always defers nonce for nonce chains
+        if (
+          (txpToSign.deferNonce || txpToSign.nonce == null) &&
+          IsNonceChain(txpToSign.chain)
+        ) {
+          txpToSign = (await wallet.prepareTx({
+            txp: txpToSign,
+          })) as TransactionProposal;
+          logManager.info(
+            `prepareTx: BWS assigned nonce ${txpToSign.nonce} to txp ${txpToSign.id}`,
+          );
+        }
 
         if (key.isReadOnly && !key.hardwareSource) {
           // read only wallet
@@ -1414,7 +1430,6 @@ export const publishAndSign =
               wallet,
               txp: txpToSign as TransactionProposal,
               callbacks: tssCallbacks!,
-              isCreator: true,
               password,
             }),
           );
@@ -1443,16 +1458,19 @@ export const publishAndSign =
         }
 
         if (signedTx.status === 'accepted') {
-          if (isTSSSigning && tssCallbacks) {
-            tssCallbacks.onStatusChange('broadcasting');
+          if (isTSSSigning) {
+            tssCallbacks?.onStatusChange('broadcasting');
+            try {
+              broadcastedTx = await broadcastTx(wallet, signedTx);
+            } catch (_) {
+              // Another copayer may have already broadcasted — poll for confirmed state.
+              broadcastedTx = await pollTxpUntilBroadcast(wallet, signedTx.id);
+            }
+            tssCallbacks?.onStatusChange('complete');
+          } else {
+            broadcastedTx = await broadcastTx(wallet, signedTx);
           }
-
-          broadcastedTx = await broadcastTx(wallet, signedTx);
           logManager.debug('success broadcast [publishAndSign]');
-
-          if (isTSSSigning && tssCallbacks) {
-            tssCallbacks.onStatusChange('complete');
-          }
 
           const {fee, amount} = broadcastedTx as {
             fee: number;
@@ -1596,9 +1614,17 @@ export const publishAndSignMultipleProposals =
           | void
           | Error
         )[] = [];
-        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined);
-        evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
-        for (const txp of evmTxsWithNonce) {
+        const nonceTxs = txps.filter(txp => {
+          const hasAssignedNonce = txp.nonce !== undefined; // BWS already set a nonce (normal flow)
+          const hasDeferredNonce = txp.deferNonce; // flagged txp — app assigns nonce via prepareTx
+          const isMissingNonceOnNonceChain =
+            txp.nonce == null && IsNonceChain(txp.chain); // handles when BWS always defers nonce by default (deferNonce flag won't be needed)
+          return (
+            hasAssignedNonce || hasDeferredNonce || isMissingNonceOnNonceChain
+          );
+        });
+        nonceTxs.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
+        for (const txp of nonceTxs) {
           try {
             const result = await dispatch(
               publishAndSign({
@@ -1620,7 +1646,12 @@ export const publishAndSignMultipleProposals =
         }
 
         // Process transactions without a nonce concurrently
-        const withoutNonce = txps.filter(txp => txp.nonce === undefined);
+        const withoutNonce = txps.filter(
+          txp =>
+            txp.nonce === undefined &&
+            !txp.deferNonce &&
+            !IsNonceChain(txp.chain),
+        );
         const promisesWithoutNonce: Promise<
           Partial<TransactionProposal> | void | Error
         >[] = withoutNonce.map(txp =>

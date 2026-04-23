@@ -378,6 +378,8 @@ const AddWallet = ({
 
         <WalletAdvancedOptionsContainer>
           <AdvancedOptionsButton
+            testID="add-wallet-advanced-options-toggle-button"
+            accessibilityLabel="Add wallet advanced options toggle button"
             onPress={() => {
               Haptic('impactLight');
               setShowOptions(!showOptions);
@@ -401,7 +403,10 @@ const AddWallet = ({
 
           {showOptions && nativeSegwitCurrency && (
             <AdvancedOptions>
-              <RowContainer onPress={() => toggleUseNativeSegwit()}>
+              <RowContainer
+                testID="add-wallet-segwit-toggle"
+                accessibilityLabel="Use native SegWit"
+                onPress={() => toggleUseNativeSegwit()}>
                 <Column>
                   <OptionTitle>Segwit</OptionTitle>
                 </Column>
@@ -417,7 +422,10 @@ const AddWallet = ({
 
           {showOptions && taprootCurrency && (
             <AdvancedOptions>
-              <RowContainer onPress={() => toggleUseTaproot()}>
+              <RowContainer
+                testID="add-wallet-taproot-toggle"
+                accessibilityLabel="Use Taproot"
+                onPress={() => toggleUseTaproot()}>
                 <Column>
                   <OptionTitle>Taproot</OptionTitle>
                 </Column>
@@ -434,6 +442,8 @@ const AddWallet = ({
           {showOptions && (
             <AdvancedOptions>
               <RowContainer
+                testID="add-wallet-testnet-toggle"
+                accessibilityLabel="Use testnet"
                 activeOpacity={1}
                 onPress={() => {
                   setIsTestnet(!isTestnet);
@@ -467,6 +477,8 @@ const AddWallet = ({
           {showOptions && !singleAddressCurrency && (
             <AdvancedOptions>
               <RowContainer
+                testID="add-wallet-single-address-toggle"
+                accessibilityLabel="Single address mode"
                 activeOpacity={1}
                 onPress={() => {
                   setSingleAddress(!singleAddress);
@@ -503,6 +515,8 @@ const AddWallet = ({
 
                     <VerticalPadding>
                       <TouchableOpacity
+                        testID="add-wallet-single-address-learn-more-button"
+                        accessibilityLabel="Add wallet single address learn more button"
                         onPress={() => {
                           Haptic('impactLight');
                           dispatch(
@@ -521,6 +535,8 @@ const AddWallet = ({
 
         <ButtonContainer>
           <Button
+            testID="add-wallet-submit-button"
+            accessibilityLabel="Add wallet submit button"
             disabled={!walletNameValue || isSubmitting}
             onPress={add}
             buttonStyle={'primary'}>

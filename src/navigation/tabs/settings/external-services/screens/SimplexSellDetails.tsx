@@ -192,6 +192,8 @@ const SimplexSellDetails: React.FC = () => {
                     {t('Having problems with Simplex?')}{' '}
                   </LabelTipText>
                   <TouchableOpacity
+                    testID="simplex-sell-support-link"
+                    accessibilityLabel="Contact support"
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -211,6 +213,8 @@ const SimplexSellDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="simplex-sell-copy-deposit-address-button"
+              accessibilityLabel="Simplex sell copy deposit address button"
               onPress={() => {
                 copyText(sellOrder.address_to);
                 setCopiedDepositAddress(true);
@@ -230,6 +234,8 @@ const SimplexSellDetails: React.FC = () => {
           {sellOrder.quote_id ? (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="simplex-sell-copy-quote-id-button"
+                accessibilityLabel="Simplex sell copy quote id button"
                 onPress={() => {
                   copyText(sellOrder.quote_id!);
                   setCopiedPaymentId(true);
@@ -250,6 +256,8 @@ const SimplexSellDetails: React.FC = () => {
           {!!sellOrder.tx_sent_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="simplex-sell-copy-transaction-id-button"
+                accessibilityLabel="Simplex sell copy transaction id button"
                 onPress={() => {
                   copyText(sellOrder.tx_sent_id!);
                   setCopiedTransactionSentId(true);
@@ -268,6 +276,8 @@ const SimplexSellDetails: React.FC = () => {
           )}
 
           <RemoveCta
+            testID="simplex-sell-remove-order-button"
+            accessibilityLabel="Simplex sell remove order button"
             onPress={async () => {
               haptic('impactLight');
               dispatch(

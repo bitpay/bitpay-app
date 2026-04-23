@@ -139,6 +139,10 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
       <View>
         <Setting
           activeOpacity={ActiveOpacity}
+          testID={`settings-${item.id
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')}-row`}
+          accessibilityLabel={item.title}
           onPress={() => {
             navigation.navigate('SettingsDetails', {
               initialRoute: item.id,
@@ -158,6 +162,8 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   const ListHeaderComponent = () => (
     <BitPayIdSettingsLink
       style={{paddingHorizontal: 15}}
+      testID="settings-bitpay-id-profile-row"
+      accessibilityLabel="BitPay ID profile"
       onPress={() => {
         if (user) {
           navigation.navigate('BitPayIdProfile');

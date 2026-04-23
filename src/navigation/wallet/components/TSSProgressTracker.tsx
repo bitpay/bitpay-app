@@ -10,6 +10,8 @@ import {
   Success25,
   Action,
   LightBlue,
+  BitPay,
+  Midnight,
 } from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {
@@ -153,13 +155,13 @@ const HelpBanner = styled.View`
   margin-top: 8px;
   padding: 10px 12px;
   border-radius: 8px;
-  background-color: ${({theme: {dark}}) => (dark ? '#1E2A3A' : '#EAF2FF')};
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
 `;
 
 const HelpBannerText = styled(BaseText)`
   font-size: 13px;
   line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? '#90B4D4' : '#2C5282')};
+  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
 `;
 
 const TimeAgo: React.FC<{date: Date}> = ({date}) => {
@@ -405,12 +407,12 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         wallet.copayers?.map(copayer => ({
           id: copayer.id,
           name: copayer.name,
-          signed: copayer.id === txpCreatorId,
+          signed: false,
         })) || [];
 
       onCopayersInitialized(initialCopayers);
     }
-  }, [wallet, onCopayersInitialized, copayers.length, txpCreatorId]);
+  }, [wallet, onCopayersInitialized, copayers.length]);
 
   return (
     <>
@@ -508,7 +510,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                         <HelpBanner>
                           <HelpBannerText>
                             {t(
-                              'All co-signers must have the app open and active during signing. If someone closed the app, they need to reopen it and re-join this proposal from their pending transactions.',
+                              'All co-signers must have the app open and active during signing. If the session gets stuck, delete this proposal and create a new one.',
                             )}
                           </HelpBannerText>
                         </HelpBanner>

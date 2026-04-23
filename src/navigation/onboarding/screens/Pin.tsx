@@ -86,7 +86,8 @@ const PinScreen = ({
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            accessibilityLabel="skip-button"
+            testID="skip-button"
+            accessibilityLabel="Skip"
             buttonType={'pill'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
@@ -135,7 +136,7 @@ const PinScreen = ({
   };
 
   return (
-    <PinContainer accessibilityLabel="security-view">
+    <PinContainer testID="security-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -155,10 +156,11 @@ const PinScreen = ({
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer accessibilityLabel="cta-container">
+        <CtaContainer testID="cta-container">
           <ActionContainer>
             <Button
-              accessibilityLabel="pin-button"
+              testID="pin-button"
+              accessibilityLabel="Set PIN"
               onPress={() => onSetPinPress()}
               buttonStyle={'primary'}>
               {t('PIN')}
@@ -166,7 +168,8 @@ const PinScreen = ({
           </ActionContainer>
           <ActionContainer>
             <Button
-              accessibilityLabel="biometric-button"
+              testID="biometric-button"
+              accessibilityLabel="Set biometric login"
               onPress={() => onSetBiometricPress()}
               buttonStyle={'secondary'}>
               {t('Biometric')}

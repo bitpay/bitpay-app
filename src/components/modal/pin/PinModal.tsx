@@ -395,7 +395,7 @@ const Pin = gestureHandlerRootHOC(
             </PinMessagesErrorContainer>
           </View>
         </UpperContainer>
-        <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
+        <VirtualKeyboardContainer testID="virtual-key-container">
           <VirtualKeyboard
             showDot={false}
             onCellPress={handleCellPress}

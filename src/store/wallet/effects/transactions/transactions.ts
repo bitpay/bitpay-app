@@ -1003,6 +1003,11 @@ export const IsShared = (wallet: Wallet): boolean => {
   return credentials.n > 1;
 };
 
+export const IsTSSShared = (wallet: Wallet): boolean => {
+  const {tssKeyId} = wallet;
+  return !!tssKeyId;
+};
+
 export const IsMultisigEthInfo = (wallet: Wallet): boolean => {
   const {credentials} = wallet;
   return !!credentials.multisigEthInfo;
@@ -1468,7 +1473,7 @@ export interface TxActions {
 const GetActionsList = (transaction: any, wallet: Wallet) => {
   const {actions, createdOn, creatorName, time, action} = transaction;
 
-  if (!IsShared(wallet) || IsReceived(action)) {
+  if ((!IsShared(wallet) && !IsTSSShared(wallet)) || IsReceived(action)) {
     return;
   }
 

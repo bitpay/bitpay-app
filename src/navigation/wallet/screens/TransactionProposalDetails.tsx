@@ -90,7 +90,7 @@ import {logManager} from '../../../managers/LogManager';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {
-  isTSSKey,
+  isTSSWallet,
   joinTSSSigningSession,
 } from '../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../components/TSSProgressTracker';
@@ -246,7 +246,6 @@ const TransactionProposalDetails = () => {
     [dispatch],
   );
 
-  const isTSSWallet = isTSSKey(key);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
     'waiting_for_cosigners',
@@ -558,7 +557,7 @@ const TransactionProposalDetails = () => {
 
   const onSwipeComplete = async () => {
     try {
-      if (isTSSWallet) {
+      if (isTSSWallet(wallet)) {
         await joinTSSSigning();
         return;
       }
@@ -695,6 +694,8 @@ const TransactionProposalDetails = () => {
                 description={t('Payment accepted, but not yet broadcasted.')}
               />
               <Button
+                testID="txp-details-broadcast-payment-button"
+                accessibilityLabel="Txp details broadcast payment button"
                 onPress={() => {
                   broadcastTxp(txp);
                 }}
@@ -704,7 +705,7 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          {!isTSSWallet &&
+          {!isTSSWallet(wallet) &&
           ((!txp.removed && txp.canBeRemoved) ||
             (txp.status === 'accepted' && !txp.broadcastedOn)) ? (
             <>
@@ -728,6 +729,8 @@ const TransactionProposalDetails = () => {
                 />
               ) : null}
               <Button
+                testID="txp-details-delete-proposal-button"
+                accessibilityLabel="Txp details delete proposal button"
                 style={{marginTop: 10}}
                 onPress={removePaymentProposal}
                 buttonType={'link'}
@@ -737,24 +740,21 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          {isTSSWallet ? (
+          {isTSSWallet(wallet) ? (
             <>
-              <Banner
-                type={'info'}
-                description={t(
-                  'If the connection is lost when the signature generation is in progress, the session may become unrecoverable - delete this proposal and create a new one.',
-                )}
-              />
               {(txp.creatorId === wallet.credentials.copayerId ||
-                txp.canBeRemoved) && (
-                <Button
-                  style={{marginTop: 10}}
-                  onPress={removePaymentProposal}
-                  buttonType={'link'}
-                  buttonStyle={'danger'}>
-                  {t('Delete payment proposal')}
-                </Button>
-              )}
+                txp.canBeRemoved) &&
+                !key.isReadOnly && (
+                  <Button
+                    testID="txp-details-tss-delete-proposal-button"
+                    accessibilityLabel="Txp details tss delete proposal button"
+                    style={{marginTop: 10}}
+                    onPress={removePaymentProposal}
+                    buttonType={'link'}
+                    buttonStyle={'danger'}>
+                    {t('Delete payment proposal')}
+                  </Button>
+                )}
             </>
           ) : null}
 
@@ -764,6 +764,8 @@ const TransactionProposalDetails = () => {
           !txp.multisigContractAddress &&
           wallet.credentials.n > 1 ? (
             <Button
+              testID="txp-details-reject-proposal-button"
+              accessibilityLabel="Txp details reject proposal button"
               onPress={rejectPaymentProposal}
               buttonType={'link'}
               buttonStyle={'danger'}>
@@ -774,9 +776,9 @@ const TransactionProposalDetails = () => {
           <DetailContainer>
             <H6>{t('DETAILS')}</H6>
           </DetailContainer>
-          {!isTSSWallet && <Hr />}
+          {!isTSSWallet(wallet) && <Hr />}
 
-          {isTSSWallet && transaction && (
+          {isTSSWallet(wallet) && transaction && (
             <TSSProgressTracker
               status={tssStatus}
               progress={tssProgress}
@@ -981,8 +983,8 @@ const TransactionProposalDetails = () => {
         (payProDetails && !payproIsLoading && !paymentExpired)) ? (
         <SwipeButton
           title={
-            isTSSWallet
-              ? t('Slide to join signing')
+            isTSSWallet(wallet)
+              ? t('Slide to send')
               : lastSigner
               ? t('Slide to send')
               : t('Slide to accept')

@@ -582,7 +582,8 @@ const RecoveryPhrase = () => {
 
       return (
         <RowContainer
-          accessibilityLabel="currency-selection-row"
+          testID="currency-selection-row"
+          accessibilityLabel="Select currency"
           onPress={onPress}
           key={item.id}>
           <CurrencyColumn>
@@ -617,7 +618,8 @@ const RecoveryPhrase = () => {
 
   return (
     <ScrollViewContainer
-      accessibilityLabel="recovery-phrase-view"
+      testID="recovery-phrase-view"
+      accessibilityLabel="Recovery phrase view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
@@ -631,7 +633,8 @@ const RecoveryPhrase = () => {
           <ImportTitle>{t('Recovery phrase')}</ImportTitle>
 
           <ScanContainer
-            accessibilityLabel="scan-button"
+            testID="scan-button"
+            accessibilityLabel="Scan QR code"
             activeOpacity={ActiveOpacity}
             onPress={() => {
               dispatch(
@@ -654,7 +657,8 @@ const RecoveryPhrase = () => {
           render={({field: {onChange, onBlur, value}}) => (
             <ImportTextInput
               ref={wordsRef}
-              accessibilityLabel="import-text-input"
+              testID="import-text-input"
+              accessibilityLabel="Enter recovery phrase"
               multiline
               autoCapitalize={'none'}
               numberOfLines={3}
@@ -678,9 +682,12 @@ const RecoveryPhrase = () => {
           {t('This process may take a few minutes to complete.')}
         </CuationText>
         <CtaContainer>
-          <AdvancedOptionsContainer accessibilityLabel="advanced-options-container">
+          <AdvancedOptionsContainer
+            testID="advanced-options-container"
+            accessibilityLabel="Advanced options container">
             <AdvancedOptionsButton
-              accessibilityLabel="show-advanced-options"
+              testID="show-advanced-options"
+              accessibilityLabel="Show advanced options"
               onPress={() => {
                 Haptic('impactLight');
                 setShowAdvancedOptions(!showAdvancedOptions);
@@ -701,7 +708,6 @@ const RecoveryPhrase = () => {
                 </>
               )}
             </AdvancedOptionsButton>
-
             {showAdvancedOptions && !derivationPathEnabled && (
               <AdvancedOptions>
                 <RowContainer
@@ -712,7 +718,9 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer accessibilityLabel="include-testnet-wallet-checkbox">
+                  <CheckBoxContainer
+                    testID="include-testnet-wallet-checkbox"
+                    accessibilityLabel="Include testnet wallets">
                     <Checkbox
                       checked={includeTestnetWallets}
                       onPress={() => {
@@ -723,7 +731,6 @@ const RecoveryPhrase = () => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions && !derivationPathEnabled && (
               <AdvancedOptions>
                 <RowContainer
@@ -734,7 +741,9 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer accessibilityLabel="include-legacy-wallet-checkbox">
+                  <CheckBoxContainer
+                    testID="include-legacy-wallet-checkbox"
+                    accessibilityLabel="Include legacy wallets">
                     <Checkbox
                       checked={includeLegacyWallets}
                       onPress={() => {
@@ -745,7 +754,6 @@ const RecoveryPhrase = () => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions && (
               <AdvancedOptions>
                 <RowContainer
@@ -756,7 +764,9 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer accessibilityLabel="specify-derivation-path-checkbox">
+                  <CheckBoxContainer
+                    testID="specify-derivation-path-checkbox"
+                    accessibilityLabel="Specify derivation path">
                     <Checkbox
                       checked={derivationPathEnabled}
                       onPress={() => {
@@ -767,13 +777,13 @@ const RecoveryPhrase = () => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <CurrencySelectorContainer>
                   <Label>{t('CURRENCY')}</Label>
                   <CurrencyContainer
-                    accessibilityLabel="currency-container"
+                    testID="currency-container"
+                    accessibilityLabel="Currency container"
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
                       setCurrencyModalVisible(true);
@@ -805,7 +815,6 @@ const RecoveryPhrase = () => {
                 </CurrencySelectorContainer>
               </AdvancedOptions>
             )}
-
             <SheetModal
               isVisible={currencyModalVisible}
               onBackdropPress={() => setCurrencyModalVisible(false)}>
@@ -821,12 +830,12 @@ const RecoveryPhrase = () => {
                 />
               </CurrencySelectionModalContainer>
             </SheetModal>
-
             {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <InputContainer>
                   <BoxInput
-                    accessibilityLabel="derivation-path-box-input"
+                    testID="derivation-path-box-input"
+                    accessibilityLabel="Derivation path"
                     label={'DERIVATION PATH'}
                     onChangeText={(text: string) =>
                       setAdvancedOptions({
@@ -839,7 +848,6 @@ const RecoveryPhrase = () => {
                 </InputContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions &&
               derivationPathEnabled &&
               advancedOptions.derivationPath ===
@@ -856,7 +864,9 @@ const RecoveryPhrase = () => {
                     <Column>
                       <OptionTitle>{t('Shared Wallet')}</OptionTitle>
                     </Column>
-                    <CheckBoxContainer accessibilityLabel="shared-wallet-checkbox">
+                    <CheckBoxContainer
+                      testID="shared-wallet-checkbox"
+                      accessibilityLabel="Shared wallet">
                       <Checkbox
                         checked={advancedOptions.isMultisig}
                         onPress={() => {
@@ -870,12 +880,12 @@ const RecoveryPhrase = () => {
                   </RowContainer>
                 </AdvancedOptions>
               )}
-
             {showAdvancedOptions && (
               <AdvancedOptions>
                 <InputContainer>
                   <BoxInput
-                    accessibilityLabel="password-input-box"
+                    testID="password-input-box"
+                    accessibilityLabel="Wallet password"
                     placeholder={'strongPassword123'}
                     type={'password'}
                     onChangeText={(text: string) =>
@@ -895,7 +905,8 @@ const RecoveryPhrase = () => {
         </CtaContainer>
 
         <Button
-          accessibilityLabel="import-wallet-button"
+          testID="import-wallet-button"
+          accessibilityLabel="Import wallet"
           buttonStyle={'primary'}
           onPress={handleSubmit(onSubmit)}>
           {t('Import Wallet')}

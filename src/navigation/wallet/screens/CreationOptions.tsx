@@ -112,7 +112,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
     },
     {
       id: 'addMultisig',
-      title: t('Add Multisig Wallet'),
+      title: t('Add Shared Wallet'),
       description: t(
         'Create a new wallet that requires multiple signatures for transactions',
       ),
@@ -158,6 +158,8 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
         <OptionListContainer>
           {optionList.map(({cta, id, title, description}: Option) => (
             <OptionList
+              testID={`creation-options-${id}-button`}
+              accessibilityLabel={title}
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');

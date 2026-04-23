@@ -85,7 +85,8 @@ const NotificationsScreen = ({
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            accessibilityLabel="skip-button"
+            testID="skip-button"
+            accessibilityLabel="Skip"
             buttonType={'pill'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
@@ -127,7 +128,7 @@ const NotificationsScreen = ({
   };
 
   return (
-    <NotificationsContainer accessibilityLabel="set-notifications-view">
+    <NotificationsContainer testID="set-notifications-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -151,10 +152,11 @@ const NotificationsScreen = ({
           </TextAlign>
         </TextContainer>
 
-        <CtaContainer accessibilityLabel="set-notifications-cta-container">
+        <CtaContainer testID="set-notifications-cta-container">
           <ActionContainer>
             <Button
-              accessibilityLabel="allow-button"
+              testID="allow-button"
+              accessibilityLabel="Allow notifications"
               buttonStyle={'primary'}
               onPress={() => onSetNotificationsPress(true)}>
               {t('Allow')}
@@ -162,7 +164,8 @@ const NotificationsScreen = ({
           </ActionContainer>
           <ActionContainer>
             <Button
-              accessibilityLabel="deny-button"
+              testID="deny-button"
+              accessibilityLabel="Deny notifications"
               buttonStyle={'secondary'}
               onPress={() => onSetNotificationsPress(false)}>
               {t('Deny')}

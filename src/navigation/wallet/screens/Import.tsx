@@ -37,7 +37,7 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   }, [navigation, t]);
 
   return (
-    <ImportContainer accessibilityLabel="import-view">
+    <ImportContainer testID="import-view">
       <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
         <Tab.Screen
           name={t('Phrase')}

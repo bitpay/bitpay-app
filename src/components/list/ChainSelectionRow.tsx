@@ -46,9 +46,11 @@ export const ChainSelectionRow: React.FC<ChainSelectionRowProps> = memo(
     const {coin: currencyAbbreviation, chain, img, name} = chainObj;
 
     return (
-      <ChainSelectionRowContainer accessibilityLabel="currency-selection-container">
+      <ChainSelectionRowContainer
+        testID={`currency-selection-container-${chain}`}>
         <FlexRow
-          accessibilityLabel="chain-selection-row"
+          testID={`chain-selection-row-${currencyAbbreviation}-${chain}`}
+          accessibilityLabel={`${name} chain selection`}
           onPress={() => onToggle(currencyAbbreviation, chain)}>
           <CurrencyColumn>
             <CurrencyImage img={img!} />

@@ -49,6 +49,8 @@ const AssetsSearchPill: React.FC<Props> = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={'#6F7782'}
+        testID="assets-search-input"
+        accessibilityLabel="Search assets"
       />
     </Container>
   );

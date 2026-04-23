@@ -38,6 +38,8 @@ const ScanButton: React.FC = () => {
   return (
     <HeaderButtonContainer>
       <TouchableOpacity
+        testID="scan-button"
+        accessibilityLabel="Scan QR code"
         onPress={() => {
           dispatch(
             Analytics.track('Open Scanner', {

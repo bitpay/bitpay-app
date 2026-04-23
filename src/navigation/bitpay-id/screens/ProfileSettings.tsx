@@ -142,7 +142,8 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
           {!user.verified ? (
             <EmailAddressNotVerified>
               <Link
-                accessibilityLabel="resend-link-button"
+                testID="resend-link-button"
+                accessibilityLabel="Verify email address"
                 onPress={() => navigation.navigate('VerifyEmail')}>
                 {t('Verify email address')}
               </Link>

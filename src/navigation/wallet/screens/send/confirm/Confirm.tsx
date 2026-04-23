@@ -31,7 +31,7 @@ import {
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
@@ -209,7 +209,6 @@ const Confirm = () => {
     [dispatch],
   );
 
-  const isTSSWallet = isTSSKey(key);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -477,8 +476,8 @@ const Confirm = () => {
             wallet,
             recipient,
             transport,
-            ...(isTSSWallet && {tssCallbacks}),
-            ...(isTSSWallet && {setShowTSSProgressModal}),
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
           }),
         );
       }
@@ -705,7 +704,7 @@ const Confirm = () => {
           <DetailsList keyboardShouldPersistTaps={'handled'}>
             <Header>{t('Summary')}</Header>
 
-            {isTSSWallet && (
+            {wallet && isTSSWallet(wallet) && (
               <TSSProgressTracker
                 status={tssStatus}
                 progress={tssProgress}
@@ -849,6 +848,8 @@ const Confirm = () => {
 
                   <VerticalPadding>
                     <TouchableOpacity
+                      testID="confirm-destination-tag-learn-more-button"
+                      accessibilityLabel="Confirm destination tag learn more button"
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
                         haptic('impactLight');

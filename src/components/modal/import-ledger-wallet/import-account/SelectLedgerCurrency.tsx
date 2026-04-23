@@ -988,6 +988,8 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
               {CHAINS.map((c, index) => (
                 <RowContainerWithoutBorders
                   onPress={() => onContinue(c.chain)}
+                  testID={`ledger-select-currency-${c.chain}-button`}
+                  accessibilityLabel={`${c.label} currency`}
                   key={index}>
                   <CurrencyImageContainer>
                     <CurrencyImage img={c.img} />
@@ -1015,6 +1017,8 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             </CurrencyListContainer>
             <Button
               buttonType={'link'}
+              testID="ledger-add-by-derivation-path-button"
+              accessibilityLabel="Add by derivation path"
               onPress={props.onAddByDerivationPathSelected}>
               Add by Derivation Path
             </Button>

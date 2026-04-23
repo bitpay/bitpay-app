@@ -2312,6 +2312,7 @@ const BuyAndSellRoot = ({
       target: getBanxaCoinFormat(coin),
       wallet_address: address,
       blockchain: getBanxaChainFormat(selectedWallet.chain),
+      payment_method: paymentMethod.method,
       return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa?externalId=${banxaExternalId}&status=pending`,
       return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled?externalId=${banxaExternalId}&status=cancelled`,
       return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed?externalId=${banxaExternalId}&status=failed`,

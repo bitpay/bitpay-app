@@ -46,6 +46,8 @@ const LinkCard: React.FC<LinkCardProps> = ({image, description, onPress}) => {
   return (
     <LinkCardContainer
       activeOpacity={ActiveOpacity}
+      testID={`link-card-${description.toLowerCase().replace(/\s+/g, '-')}`}
+      accessibilityLabel={description}
       onPress={() => {
         haptic('soft');
         onPress();

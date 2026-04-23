@@ -349,7 +349,7 @@ const FileOrText = () => {
     try {
       const parsed = JSON.parse(decryptBackupText);
       if (parsed.isTSS) {
-        importTSSWallet(decryptBackupText);
+        importTSSWallet(decryptBackupText, opts);
         return;
       }
     } catch {}
@@ -366,13 +366,18 @@ const FileOrText = () => {
     return () => sub.remove();
   }, [clearSensitive]);
 
-  const importTSSWallet = async (decryptBackupText: string) => {
+  const importTSSWallet = async (
+    decryptBackupText: string,
+    opts: Partial<KeyOptions>,
+  ) => {
     try {
       showOngoingProcess('IMPORTING');
       await sleep(1000);
 
       const key = (await dispatch<any>(
-        startImportTSSFile(decryptBackupText),
+        startImportTSSFile(decryptBackupText, {
+          keyId: opts.keyId,
+        }),
       )) as Key;
 
       try {
@@ -451,7 +456,10 @@ const FileOrText = () => {
       });
 
       if (result.fileCopyUri) {
-        const fileContent = await RNFS.readFile(result.fileCopyUri, 'utf8');
+        const fileContent = await RNFS.readFile(
+          decodeURIComponent(result.fileCopyUri),
+          'utf8',
+        );
         const encryptedMatch = fileContent.match(/\{[^}]+\}/);
 
         if (encryptedMatch) {
@@ -517,7 +525,8 @@ const FileOrText = () => {
 
   return (
     <ScrollViewContainer
-      accessibilityLabel="file-or-text-view"
+      testID="file-or-text-view"
+      accessibilityLabel="File or text view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
@@ -589,7 +598,8 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="password-box-input"
+                testID="password-box-input"
+                accessibilityLabel="Password"
                 label={t('PASSWORD')}
                 placeholder={'strongPassword123'}
                 type={'password'}
@@ -605,7 +615,8 @@ const FileOrText = () => {
         </FormRow>
 
         <Button
-          accessibilityLabel="import-wallet-button"
+          testID="import-wallet-button"
+          accessibilityLabel="Import wallet"
           buttonStyle={'primary'}
           onPress={onSubmit}>
           {t('Import Wallet')}
