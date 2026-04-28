@@ -17,7 +17,7 @@ jest.mock('react-native/Libraries/Utilities/Platform', () => {
     isPad: false,
     isTV: false,
     isTesting: true,
-    select: spec => spec['android'] ?? null,
+    select: spec => spec.android ?? null,
   };
   return {...Platform, default: Platform};
 });
