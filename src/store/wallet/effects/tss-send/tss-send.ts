@@ -169,10 +169,9 @@ export const toBwsSignatureFormat = (sig: any, chain: string): string => {
 
 export const generateSessionId = (
   txp: TransactionProposal,
-  derivationPath: string,
   i: number,
 ): string => {
-  return `${txp.id}:${derivationPath.replace(/\//g, '-')}-input${i}`;
+  return `${txp.id}:input${i}`;
 };
 
 const signInput = async (params: {
@@ -515,7 +514,7 @@ export const startTSSSigning =
             // sigtype: SIGHASH_TYPE,
           });
           const messageHash = Buffer.from(sighashHex, 'hex');
-          const sessionId = generateSessionId(txp, derivationPath!, i + 1);
+          const sessionId = generateSessionId(txp, i);
           logManager.debug(`Session ID for input ${i + 1}: ${sessionId}`);
           const signature = await signInput({
             tssKey,
