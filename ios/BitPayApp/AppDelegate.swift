@@ -6,6 +6,7 @@ import AppsFlyerLib
 import RNBootSplash
 import BrazeKit
 import BrazeUI
+import braze_react_native_sdk
 import UserNotifications
 import CryptoKit
 
@@ -172,17 +173,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         window?.makeKeyAndVisible()
 
         // MARK: Braze SDK setup
-        let config = Braze.Configuration(apiKey: "BRAZE_API_KEY_REPLACE_ME", endpoint: "sdk.iad-05.braze.com")
-        config.logger.level = .info
-        config.triggerMinimumTimeInterval = 1
-
-        // `BrazeReactBridge.initBraze(_:)` is an Objective-C selector; we call it dynamically
-        if let brazeObj = BrazeReactBridge.perform(#selector(BrazeReactBridge.initBraze(_:)), with: config)?.takeUnretainedValue() as? Braze {
-            self.braze = brazeObj
+        BrazeReactInitializer.configure({ config in
+            config.logger.level = .info
+            config.triggerMinimumTimeInterval = 1
+        }, postInitialization: { [weak self] braze in
+            self?.braze = braze
             let inAppUI = BrazeInAppMessageUI()
             inAppUI.delegate = self
-            brazeObj.inAppMessagePresenter = inAppUI
-        }
+            braze.inAppMessagePresenter = inAppUI
+        })
 
         // Disable URL caching globally to prevent sensitive data disclosure
         URLCache.shared.removeAllCachedResponses()
