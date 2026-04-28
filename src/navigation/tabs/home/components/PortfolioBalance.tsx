@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {BaseText, H2} from '../../../../components/styled/Text';
-import {SlateDark, White} from '../../../../styles/colors';
+import {Slate30, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {
@@ -11,6 +11,7 @@ import {
 import InfoSvg from './InfoSvg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
@@ -69,6 +70,9 @@ const HiddenBalance = styled(H2)`
 
 const PortfolioBalance = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
+  const importIsFirstKey = useAppSelector(({APP}) => APP.importIsFirstKey);
   const coinbaseBalance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
@@ -278,33 +282,53 @@ const PortfolioBalance = () => {
         <PortfolioBalanceTitle>{t('Portfolio Balance')}</PortfolioBalanceTitle>
         <InfoSvg width={16} height={16} />
       </PortfolioBalanceHeader>
-      <TouchableOpacity
-        testID="portfolio-balance-toggle"
-        accessibilityLabel="Toggle balance visibility"
-        onLongPress={() => {
-          dispatch(toggleHideAllBalances());
-        }}>
-        {!hideAllBalances ? (
-          <>
-            <PortfolioBalanceText>
-              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                currencyDisplay: 'symbol',
-              })}
-            </PortfolioBalanceText>
-            {percentageDifference || percentageDifference === 0 ? (
-              <PercentageWrapper>
-                <Percentage
-                  percentageDifference={percentageDifference}
-                  hideArrow
-                  rangeLabel={t('Last Day')}
-                />
-              </PercentageWrapper>
-            ) : null}
-          </>
-        ) : (
-          <HiddenBalance>{maskIfHidden(true, totalBalance)}</HiddenBalance>
-        )}
-      </TouchableOpacity>
+      {pendingImport && importIsFirstKey ? (
+        <SkeletonPlaceholder
+          backgroundColor={theme.dark ? '#363636' : '#FAFAFB'}
+          highlightColor={theme.dark ? '#575757' : Slate30}>
+          <SkeletonPlaceholder.Item
+            borderRadius={100}
+            height={38}
+            width={140}
+            marginTop={6}
+            marginBottom={6}
+          />
+          <SkeletonPlaceholder.Item
+            borderRadius={100}
+            height={18}
+            width={80}
+            alignSelf="center"
+          />
+        </SkeletonPlaceholder>
+      ) : (
+        <TouchableOpacity
+          testID="portfolio-balance-toggle"
+          accessibilityLabel="Toggle balance visibility"
+          onLongPress={() => {
+            dispatch(toggleHideAllBalances());
+          }}>
+          {!hideAllBalances ? (
+            <>
+              <PortfolioBalanceText>
+                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                  currencyDisplay: 'symbol',
+                })}
+              </PortfolioBalanceText>
+              {percentageDifference || percentageDifference === 0 ? (
+                <PercentageWrapper>
+                  <Percentage
+                    percentageDifference={percentageDifference}
+                    hideArrow
+                    rangeLabel={t('Last Day')}
+                  />
+                </PercentageWrapper>
+              ) : null}
+            </>
+          ) : (
+            <HiddenBalance>{maskIfHidden(true, totalBalance)}</HiddenBalance>
+          )}
+        </TouchableOpacity>
+      )}
     </PortfolioContainer>
   );
 };

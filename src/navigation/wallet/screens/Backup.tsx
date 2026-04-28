@@ -17,13 +17,16 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {Key} from '../../../store/wallet/wallet.models';
-import {useNavigation} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
+import {SwapCryptoScreens} from '../../services/swap-crypto/SwapCryptoGroup';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
 
 const BackupImage = {
   light: (
@@ -78,29 +81,34 @@ export const backupRedirect = ({
   key?: Key;
 }) => {
   if (context === 'onboarding') {
-    navigation.navigate('TermsOfUse');
+    navigation.navigate(WalletScreens.TERMS_OF_USE);
   } else if (context === 'keySettings') {
-    navigation.navigate('KeySettings', {key});
+    navigation.navigate(WalletScreens.KEY_SETTINGS, {key});
   } else if (context === 'settings') {
-    navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
+    navigation.navigate(RootStacks.TABS, {
+      screen: TabsScreens.SETTINGS,
+      params: {key},
+    });
   } else if (!key?.backupComplete) {
-    navigation.navigate('Tabs', {screen: 'Home'});
+    navigation.navigate(RootStacks.TABS, {screen: TabsScreens.HOME});
   } else if (!walletTermsAccepted) {
-    navigation.navigate('TermsOfUse', {key});
+    navigation.navigate(WalletScreens.TERMS_OF_USE, {key});
   } else if (context === 'createNewMultisigKey') {
     navigation.dispatch(StackActions.popToTop());
     navigation.dispatch(
-      StackActions.push('KeyOverview', {id: key.id, context}),
+      StackActions.push(WalletScreens.KEY_OVERVIEW, {id: key.id, context}),
     );
   } else if (context === 'swapCrypto' || context === 'swapTo') {
-    navigation.navigate('SwapCryptoRoot');
+    navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_ROOT);
   } else if (context === 'buyCrypto') {
     navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
       context: 'buyCrypto',
     });
   } else {
     navigation.dispatch(StackActions.popToTop());
-    navigation.dispatch(StackActions.push('KeyOverview', {id: key.id}));
+    navigation.dispatch(
+      StackActions.push(WalletScreens.KEY_OVERVIEW, {id: key.id}),
+    );
   }
 };
 

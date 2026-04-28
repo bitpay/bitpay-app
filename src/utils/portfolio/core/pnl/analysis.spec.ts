@@ -577,8 +577,8 @@ describe('buildPnlAnalysisSeries — two BTC wallets', () => {
 
   it('byWalletId has entries for both wallets', () => {
     const pt = result.points[0];
-    expect(pt.byWalletId['w1']).toBeDefined();
-    expect(pt.byWalletId['w2']).toBeDefined();
+    expect(pt.byWalletId.w1).toBeDefined();
+    expect(pt.byWalletId.w2).toBeDefined();
   });
 
   it('totalCryptoBalanceAtomic sums both wallets (singleAsset=true)', () => {
@@ -1003,25 +1003,25 @@ describe('buildPnlAnalysisSeries — per-wallet pnlPercent', () => {
 
   it('per-wallet pnlPercent at last point is ~50% (rate went from 10k to 15k)', () => {
     const last = result.points[result.points.length - 1];
-    const walletPoint = last.byWalletId['w1'];
+    const walletPoint = last.byWalletId.w1;
     expect(walletPoint.pnlPercent).toBeCloseTo(50, 0);
   });
 
   it('per-wallet ratePercentChange at last point is ~50%', () => {
     const last = result.points[result.points.length - 1];
-    const walletPoint = last.byWalletId['w1'];
+    const walletPoint = last.byWalletId.w1;
     expect(walletPoint.ratePercentChange).toBeCloseTo(50, 0);
   });
 
   it('per-wallet balanceAtomic equals the snapshot balance', () => {
     const last = result.points[result.points.length - 1];
-    const walletPoint = last.byWalletId['w1'];
+    const walletPoint = last.byWalletId.w1;
     expect(walletPoint.balanceAtomic).toBe('100000000');
   });
 
   it('per-wallet markRate is the current rate at that point', () => {
     const last = result.points[result.points.length - 1];
-    const walletPoint = last.byWalletId['w1'];
+    const walletPoint = last.byWalletId.w1;
     expect(walletPoint.markRate).toBeCloseTo(endRate, 0);
   });
 });

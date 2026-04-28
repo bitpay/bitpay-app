@@ -331,7 +331,7 @@ describe('SUCCESS_UPDATE_KEYS_TOTAL_BALANCE', () => {
       type: WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE,
       payload: [{keyId: 'ghost', totalBalance: 100, totalBalanceLastDay: 100}],
     });
-    expect(state.keys['ghost']).toBeUndefined();
+    expect(state.keys.ghost).toBeUndefined();
   });
 });
 

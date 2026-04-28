@@ -108,8 +108,8 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import * as Sentry from '@sentry/react-native';
 import {
+  getOngoingProcessMessage,
   importProgressEvents,
-  ongoingProcessManager,
 } from '../../../../managers/OngoingProcessManager';
 import {EventEmitter} from 'events';
 
@@ -874,6 +874,7 @@ export const startImportMnemonic =
   (
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
+    onProgress?: (evt: string, message: string) => void,
   ): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
@@ -899,7 +900,7 @@ export const startImportMnemonic =
         opts.words = normalizeMnemonic(words);
         opts.xPrivKey = xPrivKey;
 
-        const data = await serverAssistedImport(opts);
+        const data = await serverAssistedImport(opts, onProgress);
 
         // we need to ensure that each evm/svm account has all supported wallets attached.
         const vmWallets = getEvmGasWallets(data.wallets);
@@ -1609,6 +1610,7 @@ const createKeyAndCredentialsWithFile = async (
 
 export const serverAssistedImport = async (
   opts: Partial<KeyOptions>,
+  onProgress?: (evt: string, message: string) => void,
 ): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
   return new Promise((resolve, reject) => {
     try {
@@ -1629,7 +1631,10 @@ export const serverAssistedImport = async (
           return;
         }
         draining = true;
-        ongoingProcessManager.show(item.evt as any, item.data);
+        onProgress?.(
+          item.evt,
+          getOngoingProcessMessage(item.evt as any, item.data),
+        );
         setTimeout(drainQueue, MIN_DISPLAY_MS);
       };
 
@@ -1651,6 +1656,7 @@ export const serverAssistedImport = async (
       ]);
 
       const eventIterations: Record<string, number> = {};
+      const chainIterations: Record<string, number> = {};
 
       importProgressEvents.forEach(evt => {
         events.on(evt, (data?: any) => {
@@ -1662,7 +1668,18 @@ export const serverAssistedImport = async (
           const baseData =
             typeof data === 'object' && data !== null ? data : {};
           const countData = typeof data === 'number' ? {count: data} : {};
-          eventQueue.push({evt, data: {...baseData, ...countData, iteration}});
+
+          let chainIteration: number | undefined;
+          if (evt === 'walletInfo.gatheringTokens' && baseData.chain) {
+            const chainKey = baseData.chain;
+            chainIterations[chainKey] = (chainIterations[chainKey] ?? 0) + 1;
+            chainIteration = chainIterations[chainKey];
+          }
+
+          eventQueue.push({
+            evt,
+            data: {...baseData, ...countData, iteration, chainIteration},
+          });
           if (!draining) {
             drainQueue();
           }
