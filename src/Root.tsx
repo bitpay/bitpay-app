@@ -145,7 +145,6 @@ import {
   successAddWallet,
   successGetReceiveAddress,
 } from './store/wallet/wallet.actions';
-import {BrazeWrapper} from './lib/Braze';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
@@ -654,30 +653,6 @@ export default () => {
 
     return () => subscriptionAppStateChange.remove();
   }, [pinLockActive, biometricLockActive, onboardingCompleted]);
-
-  useEffect(() => {
-    const eventBrazeListener = DeviceEventEmitter.addListener(
-      DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-      async ({oldEid, newEid}) => {
-        await sleep(20000);
-        logManager.info('Deleting old user EID: ', oldEid);
-        try {
-          await BrazeWrapper.delete(oldEid);
-        } catch (error) {
-          const errMsg =
-            error instanceof Error ? error.message : JSON.stringify(error);
-          logManager.error(`Deleting old user EID failed: ${errMsg}`);
-        }
-        // Wait for a few seconds to ensure the user is deleted
-        await sleep(5000);
-        Analytics.endMergingUser();
-      },
-    );
-
-    return () => {
-      eventBrazeListener.remove();
-    };
-  }, []);
 
   // Patch BWC logger to forward logs to the debug screen.
   // Note: BWC logs full request bodies — we filter long messages to avoid clutter.
