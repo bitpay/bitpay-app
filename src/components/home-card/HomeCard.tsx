@@ -40,6 +40,7 @@ interface HomeCardProps {
   footer?: ReactNode;
   onCTAPress?: () => void;
   backgroundImg?: () => ReactElement;
+  cardHeight?: number;
 }
 
 const CardBodyHeader = styled(BaseText)`
@@ -97,8 +98,14 @@ export const NeedBackupText = styled(BaseText)`
 
 export const HOME_CARD_HEIGHT = 143;
 export const HOME_CARD_WIDTH = 170;
+export const IMPORT_CARD_HEIGHT = 185;
 
-const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
+const HomeCard: React.FC<HomeCardProps> = ({
+  body,
+  footer,
+  onCTAPress,
+  cardHeight = HOME_CARD_HEIGHT,
+}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const {
@@ -114,6 +121,9 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
 
   const BodyComp = (
     <View>
+      {cardHeight > HOME_CARD_HEIGHT && (
+        <View style={{height: cardHeight - HOME_CARD_HEIGHT}} />
+      )}
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
       {needsBackup && !pendingTssSession ? (
         <Row>
@@ -161,7 +171,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
           backgroundColor: theme.dark ? CharcoalBlack : White,
           borderColor: theme.dark ? LightBlack : Slate30,
           borderWidth: 1,
-          height: HOME_CARD_HEIGHT,
+          height: cardHeight,
           width: HOME_CARD_WIDTH,
         }}
       />

@@ -29,6 +29,10 @@ import {
 import Button, {ButtonState} from '../../../components/button/Button';
 import {
   setHomeCarouselConfig,
+  setImportBannerMessage,
+  setImportIsFirstKey,
+  setImportProgress,
+  setPendingImport,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -52,7 +56,9 @@ import {
   startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -100,6 +106,10 @@ import {
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {
+  getOngoingProcessMessage,
+  IMPORT_PROGRESS_VISIBLE_EVENTS,
+} from '../../../managers/OngoingProcessManager';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -225,6 +235,7 @@ const RecoveryPhrase = () => {
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
+  const existingKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const [importButtonState, setImportButtonState] = useState<ButtonState>();
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [derivationPathEnabled, setDerivationPathEnabled] = useState(false);
@@ -415,7 +426,15 @@ const RecoveryPhrase = () => {
 
   const scanFunds = async (key: Key) => {
     try {
-      showOngoingProcess('IMPORT_SCANNING_FUNDS');
+      if (derivationPathEnabled) {
+        showOngoingProcess('IMPORT_SCANNING_FUNDS');
+      } else {
+        dispatch(
+          setImportBannerMessage(
+            getOngoingProcessMessage('IMPORT_SCANNING_FUNDS'),
+          ),
+        );
+      }
       logger.debug('[Scan funds] Get rates (1/4)...');
       await dispatch(startGetRates({force: true}));
       logger.debug('[Scan funds] Fix wallet addresses (2/4)...');
@@ -444,45 +463,107 @@ const RecoveryPhrase = () => {
     importData: {words?: string | undefined; xPrivKey?: string | undefined},
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
-    try {
-      setImportButtonState('loading');
-      showOngoingProcess('IMPORTING');
-      await sleep(1000);
-      const key = !derivationPathEnabled
-        ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
-        : ((await dispatch<any>(
-            startImportWithDerivationPath(importData, opts),
-          )) as Key);
-      await sleep(1000);
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-      await scanFunds(key);
-      setImportButtonState('success');
-      await sleep(500);
-      setImportButtonState(undefined);
-      hideOngoingProcess();
-      backupRedirect({
-        context: route.params?.context,
-        navigation,
-        walletTermsAccepted,
-        key,
-      });
-      dispatch(
-        Analytics.track('Imported Key', {
-          context: route.params?.context || '',
-          source: 'RecoveryPhrase',
-        }),
-      );
-    } catch (err: any) {
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error(errMsg);
-      setImportButtonState('failed');
-      await sleep(500);
-      setImportButtonState(undefined);
-      hideOngoingProcess();
-      await sleep(600);
-      showErrorModal(err);
+    if (derivationPathEnabled) {
+      try {
+        setImportButtonState('loading');
+        await sleep(1000);
+        const key = (await dispatch<any>(
+          startImportWithDerivationPath(importData, opts),
+        )) as Key;
+        await sleep(1000);
+        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+        await scanFunds(key);
+        setImportButtonState('success');
+        await sleep(500);
+        setImportButtonState(undefined);
+        hideOngoingProcess();
+        backupRedirect({
+          context: route.params?.context,
+          navigation,
+          walletTermsAccepted,
+          key,
+        });
+        dispatch(
+          Analytics.track('Imported Key', {
+            context: route.params?.context || '',
+            source: 'RecoveryPhrase',
+          }),
+        );
+      } catch (err: any) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(errMsg);
+        hideOngoingProcess();
+        showErrorModal(err);
+      }
       return;
     }
+    setImportButtonState('loading');
+    dispatch(setPendingImport(true));
+    dispatch(setImportIsFirstKey(Object.keys(existingKeys).length === 0));
+    dispatch(setImportProgress(0));
+    dispatch(setImportBannerMessage(getOngoingProcessMessage('IMPORTING')));
+    await sleep(1000);
+    backupRedirect({
+      context: route.params?.context,
+      navigation,
+      walletTermsAccepted,
+    });
+    (async () => {
+      try {
+        const seenEvts = new Set<string>();
+        const onProgress = (evt: string, msg: string) => {
+          if (
+            IMPORT_PROGRESS_VISIBLE_EVENTS.includes(evt) &&
+            !seenEvts.has(evt)
+          ) {
+            seenEvts.add(evt);
+            dispatch(
+              setImportProgress(
+                Math.min(
+                  seenEvts.size / IMPORT_PROGRESS_VISIBLE_EVENTS.length,
+                  0.95,
+                ),
+              ),
+            );
+          }
+          dispatch(setImportBannerMessage(msg));
+        };
+        const key = (await dispatch<any>(
+          startImportMnemonic(importData, opts, onProgress),
+        )) as Key;
+        dispatch(
+          Analytics.track('Imported Key', {
+            context: route.params?.context || '',
+            source: 'RecoveryPhrase',
+          }),
+        );
+        if (!seenEvts.has('IMPORT_SCANNING_FUNDS')) {
+          seenEvts.add('IMPORT_SCANNING_FUNDS');
+          dispatch(
+            setImportProgress(
+              Math.min(
+                seenEvts.size / IMPORT_PROGRESS_VISIBLE_EVENTS.length,
+                0.95,
+              ),
+            ),
+          );
+        }
+        await scanFunds(key);
+        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+        dispatch(setImportBannerMessage(null));
+        dispatch(setImportProgress(0));
+        dispatch(setPendingImport(false));
+        dispatch(setImportIsFirstKey(false));
+      } catch (err: any) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(errMsg);
+        dispatch(setImportBannerMessage(null));
+        dispatch(setPendingImport(false));
+        dispatch(setImportIsFirstKey(false));
+        setImportButtonState(undefined);
+        showErrorModal(err);
+      }
+    })();
   };
 
   const setOptsAndCreate = async (
@@ -629,6 +710,7 @@ const RecoveryPhrase = () => {
       testID="recovery-phrase-view"
       accessibilityLabel="Recovery phrase view"
       extraScrollHeight={90}
+      enableResetScrollToCoords={false}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
         <Paragraph>

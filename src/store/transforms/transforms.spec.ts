@@ -516,13 +516,13 @@ describe('transformPortfolioSnapshotSeries', () => {
   it('inbound: skips wallet entry when snaps array is empty', () => {
     const state: any = {snapshotsByWalletId: {w1: []}};
     const result = getInbound()(state);
-    expect(result.snapshotsByWalletId['w1']).toBeUndefined();
+    expect(result.snapshotsByWalletId.w1).toBeUndefined();
   });
 
   it('inbound: skips wallet entry when value is not array', () => {
     const state: any = {snapshotsByWalletId: {w1: 'not-an-array'}};
     const result = getInbound()(state);
-    expect(result.snapshotsByWalletId['w1']).toBeUndefined();
+    expect(result.snapshotsByWalletId.w1).toBeUndefined();
   });
 
   it('inbound: packs snapshots into series', () => {

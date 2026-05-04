@@ -95,6 +95,10 @@ export enum AppActionTypes {
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
+  SET_IMPORT_BANNER_MESSAGE = 'APP/SET_IMPORT_BANNER_MESSAGE',
+  SET_PENDING_IMPORT = 'APP/SET_PENDING_IMPORT',
+  SET_IMPORT_PROGRESS = 'APP/SET_IMPORT_PROGRESS',
+  SET_IMPORT_IS_FIRST_KEY = 'APP/SET_IMPORT_IS_FIRST_KEY',
 }
 
 interface ImportLedgerModalToggled {
@@ -433,6 +437,26 @@ interface DismissMarketingContentCard {
   payload: string;
 }
 
+interface SetImportBannerMessage {
+  type: typeof AppActionTypes.SET_IMPORT_BANNER_MESSAGE;
+  payload: string | null;
+}
+
+interface SetPendingImport {
+  type: typeof AppActionTypes.SET_PENDING_IMPORT;
+  payload: boolean;
+}
+
+interface SetImportProgress {
+  type: typeof AppActionTypes.SET_IMPORT_PROGRESS;
+  payload: number;
+}
+
+interface SetImportIsFirstKey {
+  type: typeof AppActionTypes.SET_IMPORT_IS_FIRST_KEY;
+  payload: boolean;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -506,4 +530,8 @@ export type AppActionType =
   | ShowWalletConnectStartModal
   | DismissWalletConnectStartModal
   | ShowArchaxBanner
-  | DismissMarketingContentCard;
+  | DismissMarketingContentCard
+  | SetImportBannerMessage
+  | SetPendingImport
+  | SetImportProgress
+  | SetImportIsFirstKey;

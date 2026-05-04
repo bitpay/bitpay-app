@@ -6,7 +6,10 @@ import {
   AppStateStatus,
   RefreshControl,
   ScrollView,
+  View,
 } from 'react-native';
+import styled from 'styled-components/native';
+import {BaseText} from '../../../components/styled/Text';
 import {
   EXCHANGE_RATES_CURRENCIES,
   STATIC_CONTENT_CARDS_ENABLED,
@@ -117,6 +120,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
+  const importIsFirstKey = useAppSelector(({APP}) => APP.importIsFirstKey);
   const hasKeys = Object.values(keys).length;
 
   const portfolioAllocationTotalFiat = useMemo(() => {
@@ -436,31 +441,38 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             ) : null}
 
             {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-            {hasKeys && showPortfolioValue ? (
-              <HomeSection style={{marginBottom: 25}}>
-                <LinkingButtons
-                  receive={{
-                    cta: () => {
-                      dispatch(
-                        Analytics.track('Clicked Receive Crypto', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      dispatch(receiveCrypto(navigation, 'HomeRoot'));
-                    },
-                  }}
-                  send={{
-                    cta: () => {
-                      dispatch(
-                        Analytics.track('Clicked Send Crypto', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      dispatch(sendCrypto('HomeRoot'));
-                    },
-                  }}
-                />
-              </HomeSection>
+            {(hasKeys || (pendingImport && importIsFirstKey)) &&
+            showPortfolioValue ? (
+              <View
+                style={{opacity: pendingImport && importIsFirstKey ? 0.4 : 1}}
+                pointerEvents={
+                  pendingImport && importIsFirstKey ? 'none' : 'auto'
+                }>
+                <HomeSection style={{marginBottom: 25}}>
+                  <LinkingButtons
+                    receive={{
+                      cta: () => {
+                        dispatch(
+                          Analytics.track('Clicked Receive Crypto', {
+                            context: 'HomeRoot',
+                          }),
+                        );
+                        dispatch(receiveCrypto(navigation, 'HomeRoot'));
+                      },
+                    }}
+                    send={{
+                      cta: () => {
+                        dispatch(
+                          Analytics.track('Clicked Send Crypto', {
+                            context: 'HomeRoot',
+                          }),
+                        );
+                        dispatch(sendCrypto('HomeRoot'));
+                      },
+                    }}
+                  />
+                </HomeSection>
+              </View>
             ) : null}
 
             {/* ////////////////////////////// MARKETING */}
@@ -472,7 +484,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
             {/* ////////////////////////////// CRYPTO */}
             <HomeSection>
-              <Crypto />
+              <Crypto scrollRef={scrollViewRef} />
             </HomeSection>
 
             {/* ////////////////////////////// SECURE WITH PASSKEY */}

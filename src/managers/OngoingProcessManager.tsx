@@ -80,6 +80,7 @@ export type OngoingProcessObjectData = {
   walletName?: string;
   count?: number;
   iteration?: number;
+  chainIteration?: number;
 };
 
 export type OngoingProcessData = number | OngoingProcessObjectData | undefined;
@@ -99,12 +100,29 @@ const getWalletName = (data?: OngoingProcessData): string | undefined =>
 const getIteration = (data?: OngoingProcessData): number =>
   typeof data === 'object' && data !== null ? data.iteration ?? 1 : 1;
 
+const getChainIteration = (data?: OngoingProcessData): number =>
+  typeof data === 'object' && data !== null ? data.chainIteration ?? 1 : 1;
+
 const getCount = (data?: OngoingProcessData): number =>
   typeof data === 'object' && data !== null
     ? data.count ?? 0
     : isNumberData(data)
     ? data
     : 0;
+
+export const getOngoingProcessMessage = (
+  key: OnGoingProcessMessages,
+  data?: OngoingProcessData,
+): string => translations[key]?.(data) ?? i18n.t('Loading');
+
+export const IMPORT_PROGRESS_VISIBLE_EVENTS: readonly string[] = [
+  'findingCopayers',
+  'foundCopayers',
+  'gettingStatuses',
+  'gatheringWalletsInfos',
+  'walletInfo.gatheringTokens',
+  'IMPORT_SCANNING_FUNDS',
+];
 
 const translations: Record<
   OnGoingProcessMessages,
@@ -213,7 +231,13 @@ const translations: Record<
   },
   'walletInfo.gatheringTokens': data => {
     const chain = getChain(data);
-    return i18n.t('Loading {{chain}} tokens...', {chain});
+    const chainIteration = getChainIteration(data);
+    return chainIteration > 1
+      ? i18n.t('Loading {{chain}} tokens (account {{chainIteration}})...', {
+          chain,
+          chainIteration,
+        })
+      : i18n.t('Loading {{chain}} tokens...', {chain});
   },
   'walletInfo.gatheringTokens.error': () =>
     i18n.t('Some tokens could not be loaded, continuing...'),

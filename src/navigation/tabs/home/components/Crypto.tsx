@@ -1,5 +1,9 @@
-import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {ReactElement, useEffect, useState} from 'react';
+import {
+  NavigationProp,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
+import React, {ReactElement, useEffect, useRef, useState} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
@@ -14,6 +18,8 @@ import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
   dismissDecryptPasswordModal,
+  setImportProgress,
+  setPendingImport,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
@@ -45,7 +51,7 @@ import {
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
-import {View} from 'react-native';
+import {Animated, ScrollView, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -54,6 +60,7 @@ import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCar
 import {
   HOME_CARD_HEIGHT,
   HOME_CARD_WIDTH,
+  IMPORT_CARD_HEIGHT,
 } from '../../../../components/home-card/HomeCard';
 import {
   getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
@@ -75,6 +82,8 @@ import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
+import ListKeySkeleton from './cards/ListKeySkeleton';
+import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
 const CryptoContainer = styled.View`
@@ -101,6 +110,18 @@ const ButtonContainer = styled.View`
 const NoKeysSectionHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: 0px;
 `;
+
+const MountFade = ({children}: {children: React.ReactNode}) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [opacity]);
+  return <Animated.View style={{opacity}}>{children}</Animated.View>;
+};
 
 const NoKeysButtonWrapper = styled.View`
   margin-bottom: 15px;
@@ -226,6 +247,7 @@ export const createHomeCardList = ({
   context,
   onPress,
   currency,
+  cardHeight,
 }: {
   navigation: any;
   keys: Key[];
@@ -246,6 +268,7 @@ export const createHomeCardList = ({
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
   currency?: any;
+  cardHeight?: number;
 }) => {
   let list: {id: string; component: ReactElement}[] = [];
   const defaults: {id: string; component: ReactElement}[] = [];
@@ -352,6 +375,7 @@ export const createHomeCardList = ({
             needsBackup={!backupComplete}
             context={context}
             pendingTssSession={hasPendingTssSession}
+            cardHeight={cardHeight}
             onPress={
               onPress
                 ? () => {
@@ -438,9 +462,15 @@ export const createHomeCardList = ({
   };
 };
 
-const Crypto = () => {
+interface CryptoProps {
+  scrollRef?: React.RefObject<ScrollView | null>;
+}
+
+const Crypto = ({scrollRef}: CryptoProps) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const skeletonRef = useRef<View>(null);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
@@ -455,7 +485,86 @@ const Crypto = () => {
     ({APP}) => APP.homeCarouselLayoutType,
   );
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const importMessage = useAppSelector(({APP}) => APP.importBannerMessage);
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
+  const importProgress = useAppSelector(({APP}) => APP.importProgress);
   const hasKeys = Object.values(keys).length;
+
+  const skeletonOpacity = useRef(
+    new Animated.Value(importMessage ? 1 : 0),
+  ).current;
+  const [skeletonVisible, setSkeletonVisible] = useState(!!importMessage);
+  const prevImportMessage = useRef(importMessage);
+
+  useEffect(() => {
+    const wasShowing = !!prevImportMessage.current;
+    const isShowing = !!importMessage;
+    prevImportMessage.current = importMessage;
+
+    if (!wasShowing && isShowing) {
+      setSkeletonVisible(true);
+      skeletonOpacity.setValue(0);
+      Animated.timing(skeletonOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else if (wasShowing && !isShowing) {
+      Animated.timing(skeletonOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setSkeletonVisible(false));
+    }
+  }, [importMessage, skeletonOpacity]);
+
+  useEffect(() => {
+    if (
+      !isFocused ||
+      (!skeletonVisible && !pendingImport) ||
+      homeCarouselLayoutType !== 'listView' ||
+      !scrollRef?.current ||
+      !skeletonRef.current
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!scrollRef.current || !skeletonRef.current) {
+        return;
+      }
+      (scrollRef.current as any).measure(
+        (_x: number, _y: number, _w: number, scrollViewHeight: number) => {
+          skeletonRef.current?.measureLayout(
+            scrollRef.current as any,
+            (
+              _sx: number,
+              skeletonY: number,
+              _sw: number,
+              skeletonHeight: number,
+            ) => {
+              const scrollY =
+                skeletonY + skeletonHeight - scrollViewHeight + 20;
+              scrollRef.current?.scrollTo({
+                y: Math.max(0, scrollY),
+                animated: true,
+              });
+            },
+            () => {},
+          );
+        },
+      );
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [
+    isFocused,
+    skeletonVisible,
+    pendingImport,
+    homeCarouselLayoutType,
+    scrollRef,
+  ]);
+  const activeCardHeight =
+    skeletonVisible || pendingImport ? IMPORT_CARD_HEIGHT : HOME_CARD_HEIGHT;
+
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
       navigation,
@@ -472,6 +581,7 @@ const Crypto = () => {
       lastDayRates,
       fiatRateSeriesCache,
       defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+      cardHeight: activeCardHeight,
     }),
   );
 
@@ -492,6 +602,7 @@ const Crypto = () => {
         lastDayRates,
         fiatRateSeriesCache,
         defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+        cardHeight: activeCardHeight,
       }),
     );
   }, [
@@ -509,9 +620,10 @@ const Crypto = () => {
     lastDayRates,
     fiatRateSeriesCache,
     defaultAltCurrency?.isoCode,
+    activeCardHeight,
   ]);
 
-  if (!hasKeys && !linkedCoinbase) {
+  if (!hasKeys && !linkedCoinbase && !importMessage && !pendingImport) {
     return (
       <CryptoContainer>
         <NoKeysSectionHeaderContainer>
@@ -597,14 +709,51 @@ const Crypto = () => {
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer>
           <Carousel
+            key={`carousel-${skeletonVisible || !!pendingImport}`}
             loop={false}
             autoFillData={false}
             vertical={false}
             style={{width: WIDTH}}
             width={HOME_CARD_WIDTH + 16}
-            height={HOME_CARD_HEIGHT + 20}
+            height={activeCardHeight + 20}
             autoPlay={false}
-            data={cardsList.list}
+            data={[
+              ...(skeletonVisible
+                ? [
+                    {
+                      id: '__import_skeleton__',
+                      component: (
+                        <Animated.View style={{opacity: skeletonOpacity}}>
+                          <CarouselKeySkeleton
+                            message={importMessage}
+                            progress={importProgress}
+                            cardHeight={activeCardHeight}
+                          />
+                        </Animated.View>
+                      ),
+                    },
+                  ]
+                : pendingImport
+                ? [
+                    {
+                      id: '__import_skeleton__',
+                      component: (
+                        <CarouselKeySkeleton
+                          failed
+                          progress={importProgress}
+                          cardHeight={activeCardHeight}
+                          onRetry={() => {
+                            dispatch(setPendingImport(false));
+                            dispatch(setImportProgress(0));
+                            navigation.navigate(WalletScreens.IMPORT, {});
+                          }}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
+              ...cardsList.list,
+            ]}
             scrollAnimationDuration={0}
             renderItem={_renderItem}
             enabled={true}
@@ -613,8 +762,30 @@ const Crypto = () => {
       ) : (
         <ListViewContainer>
           {cardsList.list.map(data => {
-            return <View key={data.id}>{data.component}</View>;
+            return <MountFade key={data.id}>{data.component}</MountFade>;
           })}
+          {skeletonVisible || pendingImport ? (
+            <View ref={skeletonRef}>
+              {skeletonVisible ? (
+                <Animated.View style={{opacity: skeletonOpacity}}>
+                  <ListKeySkeleton
+                    message={importMessage}
+                    progress={importProgress}
+                  />
+                </Animated.View>
+              ) : (
+                <ListKeySkeleton
+                  failed
+                  progress={importProgress}
+                  onRetry={() => {
+                    dispatch(setPendingImport(false));
+                    dispatch(setImportProgress(0));
+                    navigation.navigate(WalletScreens.IMPORT, {});
+                  }}
+                />
+              )}
+            </View>
+          ) : null}
         </ListViewContainer>
       )}
     </CryptoContainer>

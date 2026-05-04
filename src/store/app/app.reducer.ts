@@ -51,6 +51,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'tokensDataLoaded',
   'isImportLedgerModalVisible',
   'showArchaxBanner',
+  'importBannerMessage',
+  'importIsFirstKey',
 ];
 
 export type ModalId =
@@ -165,6 +167,10 @@ export interface AppState {
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
   dismissedMarketingCardIds: string[];
+  importBannerMessage: string | null;
+  pendingImport: boolean;
+  importProgress: number;
+  importIsFirstKey: boolean;
 }
 
 const initialState: AppState = {
@@ -262,6 +268,10 @@ const initialState: AppState = {
   tokensDataLoaded: false,
   showArchaxBanner: false,
   dismissedMarketingCardIds: [],
+  importBannerMessage: null,
+  pendingImport: false,
+  importProgress: 0,
+  importIsFirstKey: false,
 };
 
 export const appReducer = (
@@ -791,6 +801,18 @@ export const appReducer = (
         dismissedMarketingCardIds: [...state.dismissedMarketingCardIds, cardId],
       };
     }
+
+    case AppActionTypes.SET_IMPORT_BANNER_MESSAGE:
+      return {...state, importBannerMessage: action.payload};
+
+    case AppActionTypes.SET_PENDING_IMPORT:
+      return {...state, pendingImport: action.payload};
+
+    case AppActionTypes.SET_IMPORT_PROGRESS:
+      return {...state, importProgress: action.payload};
+
+    case AppActionTypes.SET_IMPORT_IS_FIRST_KEY:
+      return {...state, importIsFirstKey: action.payload};
 
     default:
       return state;
