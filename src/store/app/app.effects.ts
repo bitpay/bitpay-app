@@ -37,6 +37,7 @@ import {sleep} from '../../utils/helper-methods';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
+import {SumSubEffects} from '../sumsub';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
@@ -393,6 +394,7 @@ const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
     }
     dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
     dispatch(CardEffects.startCardStoreInit(data.user));
+    dispatch(SumSubEffects.startGetKycStatus());
   } catch (err: any) {
     if (isAxiosError(err)) {
       logManager.error(`${err.name}: ${err.message}`);

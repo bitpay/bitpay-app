@@ -73,7 +73,11 @@
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>This app requires access to Bluetooth for establishing secure connections with Ledger Nano devices, enabling seamless interaction and management of cryptocurrency transactions.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>We need permission to access your camera to scan QR codes.</string>
+	<string>We need permission to access your camera to scan QR codes and verify your identity.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need permission to access your microphone for identity verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need permission to access your photo library to upload identity documents.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
 	<key>NSUserTrackingUsageDescription</key>

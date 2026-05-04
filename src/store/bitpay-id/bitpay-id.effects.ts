@@ -17,6 +17,7 @@ import {isAnonymousBrazeEid, setEmailNotifications} from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {ShopActions, ShopEffects} from '../shop';
+import {SumSubActions, SumSubEffects} from '../sumsub';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
@@ -24,7 +25,12 @@ import {ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
-import {setBrazeEid, setEmailNotificationsAccepted} from '../app/app.actions';
+import {
+  resetKycGetVerifiedModal,
+  resetKycHomeBanner,
+  setBrazeEid,
+  setEmailNotificationsAccepted,
+} from '../app/app.actions';
 import {
   getPasskeyCredentials,
   getPasskeyStatus,
@@ -549,6 +555,7 @@ export const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
+      dispatch(SumSubEffects.startGetKycStatus());
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>
         dispatch(ShopEffects.redeemSyncedGiftCards()),
@@ -644,6 +651,9 @@ export const startDisconnectBitPayId =
     }
 
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+    dispatch(SumSubActions.resetKyc(APP.network));
+    dispatch(resetKycHomeBanner());
+    dispatch(resetKycGetVerifiedModal());
     dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));

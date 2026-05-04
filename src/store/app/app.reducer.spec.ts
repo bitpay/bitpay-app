@@ -1033,3 +1033,32 @@ describe('DISMISS_MARKETING_CONTENT_CARD', () => {
     expect(state.dismissedMarketingCardIds).toEqual(['card-1', 'card-2']);
   });
 });
+
+// ---------------------------------------------------------------------------
+// KYC home banner
+// ---------------------------------------------------------------------------
+
+describe('appReducer — KYC home banner', () => {
+  it('defaults kycHomeBannerDismissed to false', () => {
+    expect(freshState().kycHomeBannerDismissed).toBe(false);
+  });
+
+  it('DISMISS_KYC_HOME_BANNER sets the flag to true', () => {
+    const state = appReducer(freshState(), {
+      type: AppActionTypes.DISMISS_KYC_HOME_BANNER,
+    });
+    expect(state.kycHomeBannerDismissed).toBe(true);
+  });
+
+  it('RESET_KYC_HOME_BANNER sets the flag back to false (e.g. on logout)', () => {
+    const dismissed = appReducer(freshState(), {
+      type: AppActionTypes.DISMISS_KYC_HOME_BANNER,
+    });
+    expect(dismissed.kycHomeBannerDismissed).toBe(true);
+
+    const reset = appReducer(dismissed, {
+      type: AppActionTypes.RESET_KYC_HOME_BANNER,
+    });
+    expect(reset.kycHomeBannerDismissed).toBe(false);
+  });
+});

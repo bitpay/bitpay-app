@@ -223,6 +223,10 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
     navigator.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR);
   };
 
+  const onPressKycVerification = () => {
+    navigator.navigate('KycVerification');
+  };
+
   return (
     <>
       <SettingsComponent>
@@ -235,6 +239,12 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
         {passkeySupported && user && user.verified && (
           <Setting onPress={onPressPasskeys}>
             <SettingTitle>{t('Passkeys')}</SettingTitle>
+            <AngleRight />
+          </Setting>
+        )}
+        {user && (
+          <Setting onPress={onPressKycVerification}>
+            <SettingTitle>{t('Identity Verification')}</SettingTitle>
             <AngleRight />
           </Setting>
         )}
