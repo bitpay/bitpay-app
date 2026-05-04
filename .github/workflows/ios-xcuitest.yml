@@ -1,0 +1,183 @@
+name: iOS XCUITest
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+
+jobs:
+  ios-ui-tests:
+    runs-on: macos-latest
+    timeout-minutes: 180
+
+    steps:
+      # Checkout Repo
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      # Select Xcode
+      - name: Select Xcode 26.0.1
+        run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
+
+      # Setup Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+
+      # Install JS dependencies
+      - name: Install JS dependencies
+        run: yarn install --frozen-lockfile
+
+      # Setup Ruby
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: false
+
+      # Install Gems
+      - name: Install Gems
+        run: |
+          bundle config set deployment false
+          bundle install
+
+      # Disable Sentry upload
+      - name: Disable Sentry upload
+        run: |
+          echo "SENTRY_DISABLE_AUTO_UPLOAD=true" >> $GITHUB_ENV
+
+      # Install Pods
+      - name: Install Pods
+        run: |
+          cd ios
+          bundle exec pod install
+
+      # Generate React Native Bundle
+      - name: Generate React Native Bundle
+        run: |
+          npx react-native bundle \
+            --entry-file index.js \
+            --platform ios \
+            --dev false \
+            --bundle-output ios/main.jsbundle \
+            --assets-dest ios
+
+      # Boot Simulator
+      - name: Boot Simulator
+        run: |
+          xcrun simctl boot "iPhone 17" || true
+          xcrun simctl bootstatus "iPhone 17" -b
+
+      # Build for testing
+      - name: Build for testing
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/BitPayApp.xcworkspace \
+            -scheme BitPayApp \
+            -configuration Release \
+            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -derivedDataPath Build \
+            -only-testing:BitPayAppUITests \
+            build-for-testing
+
+      # Run XCUITest
+      - name: Run XCUITest
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/BitPayApp.xcworkspace \
+            -scheme BitPayApp \
+            -configuration Release \
+            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -derivedDataPath Build \
+            -resultBundlePath TestResults.xcresult \
+            -only-testing:BitPayAppUITests \
+            test-without-building
+
+      # Upload XCResult
+      - name: Upload XCUITest Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcuitest-results
+          path: TestResults.xcresult
+
+      # Install Allure CLI
+      - name: Install Allure CLI
+        if: always()
+        run: brew install allure || true
+
+      # Install allure-xcresult
+      - name: Install allure-xcresult
+        if: always()
+        run: |
+          if ! command -v allure-xcresult &> /dev/null; then
+            curl -L -o allure-xcresult https://github.com/kvld/allure-xcresult/releases/download/v1.5.0/allure-xcresult
+            chmod +x allure-xcresult
+            sudo mv allure-xcresult /usr/local/bin/
+          fi
+
+      # Convert to Allure
+      - name: Convert XCResult to Allure Results
+        if: always()
+        run: |
+          allure-xcresult \
+            --input TestResults.xcresult \
+            --output allure-results
+
+      # Zip Allure
+      - name: Zip Allure Results
+        if: always()
+        run: |
+          zip -r allure-results.zip allure-results
+
+      # Upload Allure Results
+      - name: Upload Allure Results Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results.zip
+
+      # Generate HTML
+      - name: Generate Allure HTML Report
+        if: always()
+        run: |
+          allure generate allure-results --clean -o allure-report
+
+      # Upload HTML
+      - name: Upload Allure HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-html-report
+          path: allure-report
+
+      # Install Testlio CLI
+      - name: Install Testlio CLI
+        if: always()
+        run: npm install -g @testlio/cli
+
+      # Upload to Testlio
+      - name: Upload Results to Testlio
+        if: always()
+        run: |
+          export RUN_API_TOKEN="${{ secrets.TESTLIO_RUN_TOKEN }}"
+
+          testlio create-run \
+            --testConfig testlio-cli/test-config.json \
+            --projectConfig testlio-cli/project-config.json \
+            --externalResults true \
+            --resultProvider local \
+            --automatedDeviceIds 363a5ce7-6cef-436c-8531-6c07195c8fe8
+
+          testlio parse-run-results \
+            --projectConfig testlio-cli/project-config.json \
+            --path allure-results.zip \
+            --automatedDeviceId 363a5ce7-6cef-436c-8531-6c07195c8fe8
+
+          testlio finalize-results \
+            --projectConfig testlio-cli/project-config.json

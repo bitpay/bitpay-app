@@ -38,6 +38,17 @@
                ReferencedContainer = "container:BitPayApp.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CD12DFF32FA86D5D004E0E3B"
+               BuildableName = "BitPayAppUITests.xctest"
+               BlueprintName = "BitPayAppUITests"
+               ReferencedContainer = "container:BitPayApp.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

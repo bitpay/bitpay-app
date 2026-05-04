@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -14,7 +14,7 @@
 		256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */; };
 		4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.mm */; };
 		523EFC4FD62CB0CD2FBD02FC /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */; };
-		52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */; };
+		52C9714B9004BCE190EA469D /* BitPayApp/BundleHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30DDDCF29E5E048D75CCF1A /* BitPayApp/BundleHash.swift */; };
 		5B31AAFE2786387B002765E1 /* RCTDosh.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.mm */; };
 		5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
 		5B5631782838854000C395A8 /* PassKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5631772838854000C395A8 /* PassKit.framework */; };
@@ -31,6 +31,16 @@
 		ECCB92782860B25D00F9CF8B /* SilentPushEvent.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */; };
 		F64C0BF216CE4402A51A5ACC /* Archivo-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CD12DFFA2FA86D5D004E0E3B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = BitPayApp;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* BitPayApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BitPayApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,7 +62,7 @@
 		5BCF1C342740B8B2006D872E /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = BitPayApp/BootSplash.storyboard; sourceTree = "<group>"; };
 		5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTPaymentPass.h; sourceTree = "<group>"; };
 		5BEA4BEF2838402700AB2121 /* RCTPaymentPass.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTPaymentPass.mm; sourceTree = "<group>"; };
-		5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = BitPayApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = BitPayApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6D615C4729725FD70063DB8E /* RCTTimer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTTimer.mm; sourceTree = "<group>"; };
 		6D615C4829725FD70063DB8E /* RCTTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTTimer.h; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Archivo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Light.ttf"; path = "../assets/fonts/Archivo-Light.ttf"; sourceTree = "<group>"; };
@@ -61,7 +71,8 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BitPayApp/AppDelegate.swift; sourceTree = "<group>"; };
 		B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Regular.ttf"; path = "../assets/fonts/Archivo-Regular.ttf"; sourceTree = "<group>"; };
-		E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BitPayApp/BundleHash.swift; sourceTree = "<group>"; };
+		CD12DFF42FA86D5D004E0E3B /* BitPayAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BitPayAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E30DDDCF29E5E048D75CCF1A /* BitPayApp/BundleHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BitPayApp/BundleHash.swift; sourceTree = "<group>"; };
 		E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InAppMessageModule.mm; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.mm; sourceTree = "<group>"; };
@@ -71,6 +82,10 @@
 		F4435EB64D2448EC885B3036 /* Archivo-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Black.ttf"; path = "../assets/fonts/Archivo-Black.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		CD12E04A2FA87645004E0E3B /* UITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UITests; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -78,6 +93,13 @@
 			files = (
 				5B5631782838854000C395A8 /* PassKit.framework in Frameworks */,
 				523EFC4FD62CB0CD2FBD02FC /* libPods-BitPayApp.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CD12DFF12FA86D5D004E0E3B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,7 +129,7 @@
 				5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */,
 				5BEA4BEF2838402700AB2121 /* RCTPaymentPass.mm */,
 				5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */,
-				E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */,
+				E30DDDCF29E5E048D75CCF1A /* BitPayApp/BundleHash.swift */,
 			);
 			name = BitPayApp;
 			sourceTree = "<group>";
@@ -156,12 +178,14 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				CD12E04A2FA87645004E0E3B /* UITests */,
 				13B07FAE1A68108700A75B9A /* BitPayApp */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				7950FCCDC90E6306EDD77BCD /* Pods */,
 				3A6F88D6BF7C4F7A8D93264A /* Resources */,
+				CD12DFEF2FA86C56004E0E3B /* Recovered References */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -172,8 +196,17 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* BitPayApp.app */,
+				CD12DFF42FA86D5D004E0E3B /* BitPayAppUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CD12DFEF2FA86C56004E0E3B /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				6D7C95E62E9007E200F0D481 /* RCTPushPermissionManager.mm */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -202,16 +235,44 @@
 			productReference = 13B07F961A680F5B00A75B9A /* BitPayApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CD12DFF32FA86D5D004E0E3B /* BitPayAppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CD12DFFE2FA86D5D004E0E3B /* Build configuration list for PBXNativeTarget "BitPayAppUITests" */;
+			buildPhases = (
+				CD12DFF02FA86D5D004E0E3B /* Sources */,
+				CD12DFF12FA86D5D004E0E3B /* Frameworks */,
+				CD12DFF22FA86D5D004E0E3B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CD12DFFB2FA86D5D004E0E3B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CD12E04A2FA87645004E0E3B /* UITests */,
+			);
+			name = BitPayAppUITests;
+			packageProductDependencies = (
+			);
+			productName = BitPayAppUITests;
+			productReference = CD12DFF42FA86D5D004E0E3B /* BitPayAppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1240;
+					};
+					CD12DFF32FA86D5D004E0E3B = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
 					};
 				};
 			};
@@ -229,6 +290,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* BitPayApp */,
+				CD12DFF32FA86D5D004E0E3B /* BitPayAppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -252,6 +314,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CD12DFF22FA86D5D004E0E3B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -268,20 +337,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nSENTRY_XCODE=\"../node_modules/@sentry/react-native/scripts/sentry-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $SENTRY_XCODE\"\n";
-		};
-		EBB510F948BF432C893398ED /* Upload Debug Symbols to Sentry */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Upload Debug Symbols to Sentry";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "export SENTRY_PROPERTIES=\"$SRCROOT/../sentry.properties\"\n/bin/sh \"$SRCROOT/../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\"\n";
 		};
 		3C1070649A3322DC1391852F /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -313,9 +368,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-BitPayApp/Pods-BitPayApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-BitPayApp/Pods-BitPayApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -349,14 +408,32 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-BitPayApp/Pods-BitPayApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-BitPayApp/Pods-BitPayApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BitPayApp/Pods-BitPayApp-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		EBB510F948BF432C893398ED /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export SENTRY_PROPERTIES=\"$SRCROOT/../sentry.properties\"\n/bin/sh \"$SRCROOT/../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -374,11 +451,26 @@
 				6D615C4929725FD70063DB8E /* RCTTimer.mm in Sources */,
 				ECCB92782860B25D00F9CF8B /* SilentPushEvent.mm in Sources */,
 				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
-				52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */,
+				52C9714B9004BCE190EA469D /* BitPayApp/BundleHash.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CD12DFF02FA86D5D004E0E3B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CD12DFFB2FA86D5D004E0E3B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* BitPayApp */;
+			targetProxy = CD12DFFA2FA86D5D004E0E3B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -386,7 +478,6 @@
 			baseConfigurationReference = 4221E54904CA4996330CEB54 /* Pods-BitPayApp.debug.xcconfig */;
 			buildSettings = {
 				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -430,7 +521,6 @@
 			baseConfigurationReference = E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */;
 			buildSettings = {
 				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -645,6 +735,79 @@
 			};
 			name = Release;
 		};
+		CD12DFFC2FA86D5D004E0E3B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.test.appium.BitPayAppUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BitPayApp;
+			};
+			name = Debug;
+		};
+		CD12DFFD2FA86D5D004E0E3B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.test.appium.BitPayAppUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BitPayApp;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -662,6 +825,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CD12DFFE2FA86D5D004E0E3B /* Build configuration list for PBXNativeTarget "BitPayAppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CD12DFFC2FA86D5D004E0E3B /* Debug */,
+				CD12DFFD2FA86D5D004E0E3B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
