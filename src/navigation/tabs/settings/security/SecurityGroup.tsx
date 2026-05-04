@@ -6,6 +6,7 @@ import {Root} from '../../../../Root';
 import {useStackScreenOptions} from '../../../utils/headerHelpers';
 import {HeaderTitle} from '@components/styled/Text';
 import SecurityHome from './screens/SecurityHome';
+import KycVerification from './screens/KycVerification';
 
 interface SecurityProps {
   Security: typeof Root;
@@ -20,6 +21,7 @@ export type SecurityGroupParamList = {
 export enum SecurityScreens {
   HOME = 'Home',
   PASSKEYS = 'Passkeys',
+  KYC_VERIFICATION = 'KycVerification',
 }
 
 const SecurityGroup = ({Security, theme}: SecurityProps) => {
@@ -39,6 +41,13 @@ const SecurityGroup = ({Security, theme}: SecurityProps) => {
         component={PasskeyScreen}
         options={{
           headerTitle: () => <HeaderTitle>Passkeys</HeaderTitle>,
+        }}
+      />
+      <Security.Screen
+        name={SecurityScreens.KYC_VERIFICATION}
+        component={KycVerification}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Verify Identity')}</HeaderTitle>,
         }}
       />
     </Security.Group>
