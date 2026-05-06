@@ -5,13 +5,18 @@
  * inputs and exact expected outputs, giving high-confidence regression coverage.
  */
 
-// ─── Module mocks (same pattern as assets.getWalletIdsToPopulateFromSnapshots.spec.ts) ───
+// ─── Module mocks ─────────────────────────────────────────────────────────────
 
-jest.mock('../../constants', () => ({
-  Network: {
-    mainnet: 'livenet',
-  },
-}));
+jest.mock('../../constants', () => {
+  const actual = jest.requireActual('../../constants');
+  return {
+    ...actual,
+    Network: {
+      ...actual.Network,
+      mainnet: 'livenet',
+    },
+  };
+});
 
 jest.mock('../../constants/currencies', () => ({
   BitpaySupportedCoins: {
@@ -29,10 +34,6 @@ jest.mock('./rate', () => ({
   getFiatRateFromSeriesCacheAtTimestamp: jest.fn(),
 }));
 
-jest.mock('./core/pnl/analysis', () => ({
-  buildPnlAnalysisSeries: jest.fn(() => ({points: []})),
-}));
-
 jest.mock('./core/pnl/rates', () => ({
   normalizeFiatRateSeriesCoin: jest.fn((c: string) => (c || '').toLowerCase()),
 }));
@@ -42,6 +43,14 @@ jest.mock('./core/format', () => ({
 }));
 
 jest.mock('../../store/rate/rate.models', () => ({
+  DateRanges: {
+    Day: 1,
+    Week: 7,
+    Month: 30,
+    Quarter: 90,
+    Year: 365,
+    FiveYears: 1825,
+  },
   hasValidSeriesForCoin: jest.fn(() => false),
 }));
 
@@ -102,25 +111,17 @@ import {
   getQuoteCurrency,
   getPercentageDifferenceFromPercentRatio,
   getKeyLastDayPercentageDifference,
-  getLatestSnapshot,
-  hasSnapshotsForWallets,
-  hasSnapshotsBeforeMsForWallets,
   buildWalletIdsByAssetGroupKey,
   isPopulateLoadingForWallets,
   getLegacyPercentageDifferenceFromTotals,
   getVisibleKeysFromKeys,
   getVisibleWalletsFromKeys,
-  isFiatLoadingForWallets,
   getWalletLiveAtomicBalance,
   walletHasNonZeroLiveBalance,
-  getSnapshotAtomicBalanceFromCryptoBalance,
   canNavigateToExchangeRateForAssetRowItem,
   getPopulateLoadingByAssetKey,
+  hasCompletedPopulateForWallets,
   findSupportedCurrencyOptionForAsset,
-  getWalletIdsToPopulateFromSnapshots,
-  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
-  buildPortfolioGainLossSummaryFromPortfolioSnapshots,
-  buildAssetRowItemsFromPortfolioSnapshots,
   type AssetRowItem,
 } from './assets';
 
@@ -369,141 +370,6 @@ describe('getKeyLastDayPercentageDifference', () => {
   });
 });
 
-// ─── getLatestSnapshot ───────────────────────────────────────────────────────
-
-describe('getLatestSnapshot', () => {
-  it('returns undefined for undefined input', () => {
-    expect(getLatestSnapshot(undefined)).toBeUndefined();
-  });
-
-  it('returns undefined for empty array', () => {
-    expect(getLatestSnapshot([])).toBeUndefined();
-  });
-
-  it('returns the last element of a single-item array', () => {
-    expect(getLatestSnapshot(['a'])).toBe('a');
-  });
-
-  it('returns the last element of a multi-item array', () => {
-    expect(getLatestSnapshot([1, 2, 3])).toBe(3);
-  });
-
-  it('returns the last element for object snapshots', () => {
-    const snaps = [{ts: 1}, {ts: 2}, {ts: 3}];
-    expect(getLatestSnapshot(snaps)).toEqual({ts: 3});
-  });
-});
-
-// ─── hasSnapshotsForWallets ───────────────────────────────────────────────────
-
-describe('hasSnapshotsForWallets', () => {
-  it('returns false when wallets is empty', () => {
-    expect(hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets: []})).toBe(
-      false,
-    );
-  });
-
-  it('returns false when wallets is undefined', () => {
-    expect(
-      hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets: undefined}),
-    ).toBe(false);
-  });
-
-  it('returns false when no wallet has snapshots', () => {
-    const wallets = [makeWallet('w1'), makeWallet('w2')];
-    expect(hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets})).toBe(
-      false,
-    );
-  });
-
-  it('returns false when snapshot array is empty', () => {
-    const wallets = [makeWallet('w1')];
-    expect(
-      hasSnapshotsForWallets({
-        snapshotsByWalletId: {w1: []},
-        wallets,
-      }),
-    ).toBe(false);
-  });
-
-  it('returns true when at least one wallet has a non-empty snapshot array', () => {
-    const wallets = [makeWallet('w1'), makeWallet('w2')];
-    expect(
-      hasSnapshotsForWallets({
-        snapshotsByWalletId: {w1: [], w2: [{timestamp: 1} as any]},
-        wallets,
-      }),
-    ).toBe(true);
-  });
-});
-
-// ─── hasSnapshotsBeforeMsForWallets ──────────────────────────────────────────
-
-describe('hasSnapshotsBeforeMsForWallets', () => {
-  const MS = 1_000_000;
-
-  it('returns false when wallets is undefined', () => {
-    expect(
-      hasSnapshotsBeforeMsForWallets({
-        snapshotsByWalletId: {},
-        wallets: undefined,
-        cutoffMs: MS,
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false when no snapshots exist', () => {
-    expect(
-      hasSnapshotsBeforeMsForWallets({
-        snapshotsByWalletId: {},
-        wallets: [makeWallet('w1')],
-        cutoffMs: MS,
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false when all snapshots are after the cutoff', () => {
-    expect(
-      hasSnapshotsBeforeMsForWallets({
-        snapshotsByWalletId: {w1: [{createdAt: MS + 1} as any]},
-        wallets: [makeWallet('w1')],
-        cutoffMs: MS,
-      }),
-    ).toBe(false);
-  });
-
-  it('returns true when a snapshot has createdAt before the cutoff', () => {
-    expect(
-      hasSnapshotsBeforeMsForWallets({
-        snapshotsByWalletId: {w1: [{createdAt: MS - 1} as any]},
-        wallets: [makeWallet('w1')],
-        cutoffMs: MS,
-      }),
-    ).toBe(true);
-  });
-
-  it('returns true when a snapshot has no createdAt (treated as before cutoff)', () => {
-    expect(
-      hasSnapshotsBeforeMsForWallets({
-        snapshotsByWalletId: {w1: [{} as any]},
-        wallets: [makeWallet('w1')],
-        cutoffMs: MS,
-      }),
-    ).toBe(true);
-  });
-
-  it('returns true when createdAt is exactly the cutoff value (not strictly before)', () => {
-    // cutoff check is `createdAt < cutoff`, so equal means false
-    expect(
-      hasSnapshotsBeforeMsForWallets({
-        snapshotsByWalletId: {w1: [{createdAt: MS} as any]},
-        wallets: [makeWallet('w1')],
-        cutoffMs: MS,
-      }),
-    ).toBe(false);
-  });
-});
-
 // ─── buildWalletIdsByAssetGroupKey ────────────────────────────────────────────
 
 describe('buildWalletIdsByAssetGroupKey', () => {
@@ -660,6 +526,67 @@ describe('isPopulateLoadingForWallets', () => {
   });
 });
 
+// ─── hasCompletedPopulateForWallets ─────────────────────────────────────────
+
+describe('hasCompletedPopulateForWallets', () => {
+  it('returns true when relevant in-scope wallets are terminal', () => {
+    expect(
+      hasCompletedPopulateForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'done', w2: 'error'},
+          walletsTotal: 3,
+        } as any,
+        wallets: [
+          makeWallet('w1'),
+          makeWallet('w2'),
+          makeWallet('zero-balance-wallet'),
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it('returns false when any relevant in-scope wallet is still in progress', () => {
+    expect(
+      hasCompletedPopulateForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'done', w2: 'in_progress'},
+          walletsTotal: 2,
+        } as any,
+        wallets: [makeWallet('w1'), makeWallet('w2')],
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when no wallets are in the active populate scope', () => {
+    expect(
+      hasCompletedPopulateForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {other_wallet: 'done'},
+          walletsTotal: 1,
+        } as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBe(false);
+  });
+
+  it('can require every provided wallet to be in the active populate scope', () => {
+    expect(
+      hasCompletedPopulateForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'done'},
+          walletsTotal: 2,
+        } as any,
+        wallets: [makeWallet('w1'), makeWallet('w2')],
+        requireAllWalletsInScope: true,
+      }),
+    ).toBe(false);
+  });
+});
+
 // ─── getLegacyPercentageDifferenceFromTotals ──────────────────────────────────
 
 describe('getLegacyPercentageDifferenceFromTotals', () => {
@@ -799,97 +726,6 @@ describe('getVisibleWalletsFromKeys', () => {
   });
 });
 
-// ─── isFiatLoadingForWallets ──────────────────────────────────────────────────
-
-describe('isFiatLoadingForWallets', () => {
-  const makeFullWallet = (id: string, network = 'livenet') =>
-    ({id, network} as any);
-
-  it('returns false when quoteCurrency is empty string', () => {
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: '',
-        wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {},
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false when wallets is empty', () => {
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'USD',
-        wallets: [],
-        snapshotsByWalletId: {},
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false for testnet wallets', () => {
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'USD',
-        wallets: [makeFullWallet('w1', 'testnet')],
-        snapshotsByWalletId: {
-          w1: [{timestamp: 1, quoteCurrency: 'EUR'} as any],
-        },
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false when latest snapshot quoteCurrency matches target', () => {
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'USD',
-        wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {
-          w1: [{timestamp: 1, quoteCurrency: 'USD'} as any],
-        },
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false when latest snapshot has no quoteCurrency', () => {
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'USD',
-        wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {w1: [{timestamp: 1} as any]},
-      }),
-    ).toBe(false);
-  });
-
-  it('returns true when quoteCurrency differs and rate series not available', () => {
-    // hasValidSeriesForCoin is mocked to return false → missing series → loading
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'EUR',
-        wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {
-          w1: [{timestamp: 1, quoteCurrency: 'USD'} as any],
-        },
-        fiatRateSeriesCache: {},
-      }),
-    ).toBe(true);
-  });
-
-  it('uses the snapshot with the highest timestamp as "latest"', () => {
-    // Both snapshots have quoteCurrency 'USD' — latest (ts=2) matches target 'USD' → false
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'USD',
-        wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {
-          w1: [
-            {timestamp: 1, quoteCurrency: 'EUR'} as any, // older
-            {timestamp: 2, quoteCurrency: 'USD'} as any, // latest
-          ],
-        },
-      }),
-    ).toBe(false);
-  });
-});
-
 // ─── getWalletLiveAtomicBalance ───────────────────────────────────────────────
 
 describe('getWalletLiveAtomicBalance', () => {
@@ -1004,44 +840,6 @@ describe('walletHasNonZeroLiveBalance', () => {
   it('returns true for an ETH wallet with crypto balance', () => {
     const wallet = {chain: 'eth', balance: {sat: 0, crypto: '0.5'}} as any;
     expect(walletHasNonZeroLiveBalance(wallet)).toBe(true);
-  });
-});
-
-// ─── getSnapshotAtomicBalanceFromCryptoBalance ────────────────────────────────
-
-describe('getSnapshotAtomicBalanceFromCryptoBalance', () => {
-  it('returns 0n when snapshot is undefined', () => {
-    expect(
-      getSnapshotAtomicBalanceFromCryptoBalance({
-        snapshot: undefined,
-        unitDecimals: 8,
-      }),
-    ).toBe(0n);
-  });
-
-  it('returns 0n when cryptoBalance is missing', () => {
-    expect(
-      getSnapshotAtomicBalanceFromCryptoBalance({
-        snapshot: {} as any,
-        unitDecimals: 8,
-      }),
-    ).toBe(0n);
-  });
-
-  it('converts cryptoBalance string to atomic bigint', () => {
-    const snapshot = {cryptoBalance: '1.5'} as any;
-    // unitStringToAtomicBigInt('1.5', 8) = 150_000_000
-    expect(
-      getSnapshotAtomicBalanceFromCryptoBalance({snapshot, unitDecimals: 8}),
-    ).toBe(150_000_000n);
-  });
-
-  it('strips commas from cryptoBalance before converting', () => {
-    const snapshot = {cryptoBalance: '1,234'} as any;
-    // unitStringToAtomicBigInt('1234', 8) = 123_400_000_000
-    expect(
-      getSnapshotAtomicBalanceFromCryptoBalance({snapshot, unitDecimals: 8}),
-    ).toBe(123_400_000_000n);
   });
 });
 
@@ -1329,520 +1127,5 @@ describe('findSupportedCurrencyOptionForAsset', () => {
       chain: 'btc',
     });
     expect(result).toBe(opt);
-  });
-});
-
-// ─── isFiatLoadingForWallets (additional branch coverage) ────────────────────
-
-describe('isFiatLoadingForWallets — null-entry in snapshot array', () => {
-  const makeFullWallet = (id: string, network = 'livenet') =>
-    ({id, network} as any);
-
-  it('skips null entries in snapshot array when finding latest', () => {
-    // Snapshot array contains a null-ish entry (null is not BalanceSnapshot but tests the null guard)
-    // null is skipped, the real snapshot matches target → no loading
-    expect(
-      isFiatLoadingForWallets({
-        quoteCurrency: 'USD',
-        wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {
-          w1: [null as any, {timestamp: 5, quoteCurrency: 'USD'} as any],
-        },
-      }),
-    ).toBe(false);
-  });
-});
-
-// ─── getWalletIdsToPopulateFromSnapshots ──────────────────────────────────────
-
-describe('getWalletIdsToPopulateFromSnapshots', () => {
-  const makeMainnetWallet = (id: string, balanceSat = 0, chain = 'btc') =>
-    ({
-      id,
-      network: 'livenet',
-      chain,
-      currencyAbbreviation: chain,
-      balance: {sat: balanceSat, crypto: balanceSat > 0 ? '1' : '0'},
-    } as any);
-
-  it('returns empty lists for no wallets', () => {
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [],
-      snapshotsByWalletId: {},
-    });
-    expect(result.walletIdsToPopulate).toEqual([]);
-    expect(result.snapshotBalanceMismatchUpdates).toEqual({});
-  });
-
-  it('skips non-mainnet wallets', () => {
-    const testnetWallet = {
-      id: 'w1',
-      network: 'testnet',
-      chain: 'btc',
-      currencyAbbreviation: 'btc',
-      balance: {sat: 1_000_000},
-    } as any;
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [testnetWallet],
-      snapshotsByWalletId: {},
-    });
-    expect(result.walletIdsToPopulate).toEqual([]);
-  });
-
-  it('adds wallet to populate list when it has non-zero balance but no snapshots', () => {
-    const wallet = makeMainnetWallet('w1', 1_000_000);
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {},
-    });
-    expect(result.walletIdsToPopulate).toContain('w1');
-  });
-
-  it('does NOT add wallet when balance is zero and no snapshots', () => {
-    const wallet = makeMainnetWallet('w1', 0);
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {},
-    });
-    expect(result.walletIdsToPopulate).not.toContain('w1');
-  });
-
-  it('does NOT add wallet when live balance matches snapshot balance', () => {
-    // sat=0 → falls back to crypto='0' → atomic=0
-    // snapshot cryptoBalance='0' → atomic=0
-    // 0 === 0 → no mismatch
-    const wallet = makeMainnetWallet('w1', 0, 'btc');
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {
-        w1: [{cryptoBalance: '0', timestamp: 1} as any],
-      },
-    });
-    expect(result.walletIdsToPopulate).not.toContain('w1');
-    expect(result.snapshotBalanceMismatchUpdates).toEqual({});
-  });
-
-  it('adds wallet when live balance differs from snapshot balance (mismatch)', () => {
-    // sat=100_000_000 → live atomic = 100_000_000n (1 BTC)
-    // snapshot cryptoBalance='0.5' → atomic = 50_000_000n
-    // mismatch detected → populate
-    const wallet = makeMainnetWallet('w1', 100_000_000, 'btc');
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {
-        w1: [{cryptoBalance: '0.5', timestamp: 1} as any],
-      },
-    });
-    expect(result.walletIdsToPopulate).toContain('w1');
-    expect(result.snapshotBalanceMismatchUpdates['w1']).toBeDefined();
-    expect(result.snapshotBalanceMismatchUpdates['w1']?.walletId).toBe('w1');
-  });
-
-  it('does not add to populate list when mismatch unchanged from previous', () => {
-    // Same mismatch as before (prevMismatch equals new mismatch) → no push to changed list
-    // but walletIdsToPopulate won't include it (already tracked)
-    const wallet = makeMainnetWallet('w1', 100_000_000, 'btc');
-    const previousMismatch = {
-      walletId: 'w1',
-      computedUnitsHeld: '0', // atomicToUnitString is mocked to return '0'
-      currentWalletBalance: '0',
-      delta: '0',
-    };
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {
-        w1: [{cryptoBalance: '0.5', timestamp: 1} as any],
-      },
-      previousSnapshotBalanceMismatchesByWalletId: {w1: previousMismatch},
-    });
-    // mismatch equals prevMismatch (all fields match because atomicToUnitString is mocked to '0')
-    expect(result.walletIdsToPopulate).not.toContain('w1');
-  });
-
-  it('clears mismatch entry when live balance now matches snapshot', () => {
-    // sat=0, crypto='0' → live=0n; snapshot='0' → snap=0n; same → no mismatch
-    // but prevMismatch existed → sets it to undefined in updates
-    const wallet = makeMainnetWallet('w1', 0, 'btc');
-    const previousMismatch = {
-      walletId: 'w1',
-      computedUnitsHeld: '0',
-      currentWalletBalance: '0',
-      delta: '0',
-    };
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {
-        w1: [{cryptoBalance: '0', timestamp: 1} as any],
-      },
-      previousSnapshotBalanceMismatchesByWalletId: {w1: previousMismatch},
-    });
-    expect(result.walletIdsToPopulate).not.toContain('w1');
-    expect('w1' in result.snapshotBalanceMismatchUpdates).toBe(true);
-    expect(result.snapshotBalanceMismatchUpdates['w1']).toBeUndefined();
-  });
-
-  it('skips wallet with no id', () => {
-    const wallet = {
-      network: 'livenet',
-      chain: 'btc',
-      currencyAbbreviation: 'btc',
-      balance: {sat: 1_000_000},
-    } as any;
-    const result = getWalletIdsToPopulateFromSnapshots({
-      wallets: [wallet],
-      snapshotsByWalletId: {},
-    });
-    expect(result.walletIdsToPopulate).toEqual([]);
-  });
-});
-
-// ─── getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots ──────────────────
-
-describe('getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots', () => {
-  const makeSnap = (timestamp: number, cryptoBalance = '1') =>
-    ({timestamp, cryptoBalance, quoteCurrency: 'USD', eventType: 'tx'} as any);
-
-  const makeWallet = (id: string) =>
-    ({
-      id,
-      network: 'livenet',
-      chain: 'btc',
-      currencyAbbreviation: 'btc',
-      balance: {sat: 100_000_000},
-    } as any);
-
-  it('returns unavailable result when fiatRateSeriesCache is missing', () => {
-    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [makeWallet('w1')],
-      quoteCurrency: 'USD',
-      timeframe: '1D',
-      nowMs: 2000,
-      // no fiatRateSeriesCache
-    });
-    expect(result.available).toBe(false);
-    expect(result.error).toMatch(/fiatRateSeriesCache/i);
-    expect(result.timeframe).toBe('1D');
-    expect(result.quoteCurrency).toBe('USD');
-  });
-
-  it('returns available zero result when no mainnet wallets with snapshots', () => {
-    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: {},
-      wallets: [],
-      quoteCurrency: 'USD',
-      timeframe: '1D',
-      fiatRateSeriesCache: {} as any,
-      nowMs: 2000,
-    });
-    expect(result.available).toBe(true);
-    expect(result.deltaFiat).toBe(0);
-    expect(result.percentRatio).toBe(0);
-  });
-
-  it('returns unavailable when buildPnlAnalysisSeries returns no points', () => {
-    // buildPnlAnalysisSeries mock returns {points: []} — no last point → unavailable
-    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [makeWallet('w1')],
-      quoteCurrency: 'USD',
-      timeframe: '1D',
-      fiatRateSeriesCache: {} as any,
-      nowMs: 2000,
-    });
-    expect(result.available).toBe(false);
-    expect(result.error).toMatch(/no points/i);
-  });
-
-  it('skips testnet wallets', () => {
-    const testnetWallet = {
-      id: 'w1',
-      network: 'testnet',
-      chain: 'btc',
-      currencyAbbreviation: 'btc',
-      balance: {sat: 100_000_000},
-    } as any;
-    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [testnetWallet],
-      quoteCurrency: 'USD',
-      timeframe: '1D',
-      fiatRateSeriesCache: {} as any,
-      nowMs: 2000,
-    });
-    // testnet wallet skipped → no pnlWallets → available:true zeroResult
-    expect(result.available).toBe(true);
-    expect(result.deltaFiat).toBe(0);
-  });
-
-  it('uses effective quoteCurrency from snapshots when portfolioQuoteCurrency is empty', () => {
-    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: {},
-      wallets: [],
-      quoteCurrency: '',
-      timeframe: '1D',
-      fiatRateSeriesCache: {} as any,
-      nowMs: 2000,
-    });
-    // no snaps → getEffectiveQuoteCurrencyFromSnapshots returns 'USD' as fallback
-    expect(result.quoteCurrency).toBe('USD');
-  });
-
-  it('uses provided nowMs for baselineTimestampMs', () => {
-    const nowMs = 9_999_999;
-    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: {},
-      wallets: [],
-      quoteCurrency: 'USD',
-      timeframe: '1D',
-      fiatRateSeriesCache: {} as any,
-      nowMs,
-    });
-    // getFiatRateBaselineTsForTimeframe is mocked to return undefined → falls back to nowMs
-    expect(result.baselineTimestampMs).toBe(nowMs);
-  });
-});
-
-// ─── buildPortfolioGainLossSummaryFromPortfolioSnapshots ──────────────────────
-
-describe('buildPortfolioGainLossSummaryFromPortfolioSnapshots', () => {
-  it('returns summary with today and total from two timeframes', () => {
-    const result = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
-      snapshotsByWalletId: {},
-      wallets: [],
-      quoteCurrency: 'USD',
-      fiatRateSeriesCache: {} as any,
-      nowMs: 1000,
-    });
-    expect(result).toHaveProperty('quoteCurrency');
-    expect(result).toHaveProperty('today');
-    expect(result).toHaveProperty('total');
-    expect(result.today).toHaveProperty('available');
-    expect(result.total).toHaveProperty('available');
-  });
-
-  it('returns provided quoteCurrency when preferred currency is given', () => {
-    const result = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
-      snapshotsByWalletId: {},
-      wallets: [],
-      quoteCurrency: 'EUR',
-      fiatRateSeriesCache: {} as any,
-      nowMs: 1000,
-    });
-    // 'EUR' is set as preferredQuoteCurrency → effectiveQuoteCurrency = 'EUR'
-    expect(result.quoteCurrency).toBe('EUR');
-  });
-
-  it('includes error fields when PnL engine returns unavailable', () => {
-    // No fiatRateSeriesCache → both today and total are unavailable
-    const result = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
-      snapshotsByWalletId: {},
-      wallets: [],
-      quoteCurrency: 'USD',
-      nowMs: 1000,
-    });
-    // missing fiatRateSeriesCache → available=false with error
-    expect(result.today.available).toBe(false);
-    expect(result.total.available).toBe(false);
-  });
-});
-
-// ─── buildAssetRowItemsFromPortfolioSnapshots ─────────────────────────────────
-
-describe('buildAssetRowItemsFromPortfolioSnapshots', () => {
-  const makeSnap = (timestamp: number, cryptoBalance = '1') =>
-    ({timestamp, cryptoBalance, quoteCurrency: 'USD', eventType: 'tx'} as any);
-
-  const makeWalletFull = (
-    id: string,
-    coin = 'btc',
-    chain = 'btc',
-    balanceSat = 100_000_000,
-    network = 'livenet',
-  ) =>
-    ({
-      id,
-      network,
-      chain,
-      currencyAbbreviation: coin,
-      balance: {sat: balanceSat},
-    } as any);
-
-  it('returns empty array when wallets list is empty', () => {
-    expect(
-      buildAssetRowItemsFromPortfolioSnapshots({
-        snapshotsByWalletId: {},
-        wallets: [],
-        quoteCurrency: 'USD',
-        gainLossMode: '1D',
-      }),
-    ).toEqual([]);
-  });
-
-  it('returns empty array when all wallets are testnet', () => {
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000, 'testnet');
-    expect(
-      buildAssetRowItemsFromPortfolioSnapshots({
-        snapshotsByWalletId: {w1: [makeSnap(1000)]},
-        wallets: [wallet],
-        quoteCurrency: 'USD',
-        gainLossMode: '1D',
-      }),
-    ).toEqual([]);
-  });
-
-  it('returns empty array when all wallets have zero live balance', () => {
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 0);
-    expect(
-      buildAssetRowItemsFromPortfolioSnapshots({
-        snapshotsByWalletId: {w1: [makeSnap(1000)]},
-        wallets: [wallet],
-        quoteCurrency: 'USD',
-        gainLossMode: '1D',
-      }),
-    ).toEqual([]);
-  });
-
-  it('returns one row for a single wallet with non-zero balance', () => {
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [wallet],
-      quoteCurrency: 'USD',
-      gainLossMode: '1D',
-    });
-    expect(rows).toHaveLength(1);
-    expect(rows[0].currencyAbbreviation).toBe('btc');
-    expect(rows[0].chain).toBe('btc');
-    expect(rows[0].hasRate).toBe(false); // no rates provided
-    expect(rows[0].hasPnl).toBe(false);
-    expect(rows[0].showPnlPlaceholder).toBe(true);
-  });
-
-  it('groups wallets by coin when collapseAcrossChains is true', () => {
-    const wallet1 = makeWalletFull(
-      'w1',
-      'eth',
-      'eth',
-      1_000_000_000_000_000_000n as any,
-    );
-    const wallet2 = makeWalletFull(
-      'w2',
-      'eth',
-      'base',
-      1_000_000_000_000_000_000n as any,
-    );
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {
-        w1: [makeSnap(1000)],
-        w2: [makeSnap(1000)],
-      },
-      wallets: [wallet1, wallet2],
-      quoteCurrency: 'USD',
-      gainLossMode: '1D',
-      collapseAcrossChains: true,
-    });
-    // Both collapse to key='eth'
-    expect(rows.length).toBeLessThanOrEqual(1);
-  });
-
-  it('does not group wallets by different coins when collapseAcrossChains is false', () => {
-    const btcWallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    const ethWallet = makeWalletFull('w2', 'eth', 'eth', 100_000_000);
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {
-        w1: [makeSnap(1000)],
-        w2: [makeSnap(1000)],
-      },
-      wallets: [btcWallet, ethWallet],
-      quoteCurrency: 'USD',
-      gainLossMode: '1D',
-      collapseAcrossChains: false,
-    });
-    expect(rows).toHaveLength(2);
-  });
-
-  it('returns rows sorted by fiatValue descending (all zero when no rates)', () => {
-    const btcWallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    const ethWallet = makeWalletFull('w2', 'eth', 'eth', 200_000_000);
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {
-        w1: [makeSnap(1000)],
-        w2: [makeSnap(1000)],
-      },
-      wallets: [btcWallet, ethWallet],
-      quoteCurrency: 'USD',
-      gainLossMode: '1D',
-    });
-    // Both fiatValue=0 (no rates) — order is stable but both present
-    expect(rows).toHaveLength(2);
-  });
-
-  it('sets showPnlPlaceholder=false when hasPnl=true', () => {
-    // buildPnlAnalysisSeries is mocked to return [] (no last point) → hasPnl stays false
-    // Even with fiatRateSeriesCache present → no points → hasPnl=false
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [wallet],
-      quoteCurrency: 'USD',
-      gainLossMode: '1D',
-      fiatRateSeriesCache: {} as any,
-    });
-    expect(rows).toHaveLength(1);
-    // hasPnl false + isTodayGainLoss=true + hasRate=false → showPnlPlaceholder=true
-    expect(rows[0].showPnlPlaceholder).toBe(true);
-  });
-
-  it('row has isPositive=true when pnlFiat is zero', () => {
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [wallet],
-      quoteCurrency: 'USD',
-      gainLossMode: 'ALL',
-    });
-    expect(rows[0].isPositive).toBe(true); // pnlFiat=0 → 0 >= 0
-  });
-
-  it('handles ALL timeframe (not isTodayGainLoss)', () => {
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {w1: [makeSnap(1000)]},
-      wallets: [wallet],
-      quoteCurrency: 'USD',
-      gainLossMode: 'ALL',
-    });
-    // showPnlPlaceholder = !hasPnl && (!isTodayGainLoss || !hasRate)
-    // hasPnl=false, isTodayGainLoss=false → !false=true → placeholder=true
-    expect(rows[0].showPnlPlaceholder).toBe(true);
-  });
-
-  it('uses out-of-order snapshots by sorting them (ensureSortedSnapshots branch)', () => {
-    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
-    // Provide out-of-order snapshots — second timestamp less than first
-    const rows = buildAssetRowItemsFromPortfolioSnapshots({
-      snapshotsByWalletId: {
-        w1: [
-          {
-            timestamp: 2000,
-            cryptoBalance: '0.5',
-            quoteCurrency: 'USD',
-            eventType: 'tx',
-          } as any,
-          {
-            timestamp: 500,
-            cryptoBalance: '0.3',
-            quoteCurrency: 'USD',
-            eventType: 'tx',
-          } as any,
-        ],
-      },
-      wallets: [wallet],
-      quoteCurrency: 'USD',
-      gainLossMode: '1D',
-    });
-    // Still produces a row (sorted internally)
-    expect(rows).toHaveLength(1);
   });
 });

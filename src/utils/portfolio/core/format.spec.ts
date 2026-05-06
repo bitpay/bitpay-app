@@ -101,14 +101,37 @@ describe('parseAtomicToBigint', () => {
   });
 
   it('drops fractional part from a decimal string', () => {
-    // The string "1.5" has a fractional part — integer portion only
-    expect(parseAtomicToBigint('100')).toBe(100n);
+    // Fractional decimal strings keep the integer portion only.
+    expect(parseAtomicToBigint('100.9')).toBe(100n);
+  });
+
+  it('parses scientific notation strings exactly', () => {
+    expect(parseAtomicToBigint('109890109890109899e0')).toBe(
+      109890109890109899n,
+    );
+    expect(parseAtomicToBigint('1.234567890123456789e18')).toBe(
+      1234567890123456789n,
+    );
+    expect(parseAtomicToBigint('.900719925474099312345e24')).toBe(
+      900719925474099312345000n,
+    );
+  });
+
+  it('parses scientific notation numbers', () => {
+    expect(parseAtomicToBigint(1e21)).toBe(1000000000000000000000n);
+    expect(parseAtomicToBigint(1.2345e5)).toBe(123450n);
   });
 
   it('converts a large safe-boundary number via string path', () => {
     // 1e15 is safe integer territory
     expect(parseAtomicToBigint(1_000_000_000_000_000)).toBe(
       1_000_000_000_000_000n,
+    );
+  });
+
+  it('converts very large atomic strings above Number.MAX_SAFE_INTEGER exactly', () => {
+    expect(parseAtomicToBigint('900719925474099312345')).toBe(
+      900719925474099312345n,
     );
   });
 
@@ -190,6 +213,14 @@ describe('formatBigIntDecimal', () => {
   it('returns integer string when decimals <= 0', () => {
     expect(formatBigIntDecimal(42n, 0)).toBe('42');
   });
+
+  it('preserves trailing zeros when trimTrailingZeros is false', () => {
+    expect(
+      formatBigIntDecimal(1000000000000000001n, 18, 6, {
+        trimTrailingZeros: false,
+      }),
+    ).toBe('1.000000');
+  });
 });
 
 // ─── formatAtomicAmount ──────────────────────────────────────────────────────
@@ -210,6 +241,12 @@ describe('formatAtomicAmount', () => {
 
   it('formats ETH wei as ETH', () => {
     expect(formatAtomicAmount('1000000000000000000', ethCredentials)).toBe('1');
+  });
+
+  it('formats very large ETH wei values without Number precision drift', () => {
+    expect(formatAtomicAmount('900719925474099312345', ethCredentials)).toBe(
+      '900.719925474099312345',
+    );
   });
 
   it('respects maxDecimals option', () => {

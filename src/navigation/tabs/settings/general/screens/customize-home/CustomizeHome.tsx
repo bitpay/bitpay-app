@@ -13,10 +13,8 @@ import HamburgerSvg from '../../../../../../../assets/img/hamburger.svg';
 import Button from '../../../../../../components/button/Button';
 import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector} from '../../../../../../utils/hooks';
-import {
-  setHomeCarouselConfig,
-  setHomeCarouselLayoutType,
-} from '../../../../../../store/app/app.actions';
+import {setHomeCarouselLayoutType} from '../../../../../../store/app/app.actions';
+import {setHomeCarouselConfigAndPopulateNewlyVisibleKeys} from '../../../../../../store/app/homeCarousel.effects';
 import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '@react-navigation/native';
 import {sleep} from '../../../../../../utils/helper-methods';
@@ -145,7 +143,7 @@ const CustomizeHomeSettings = () => {
                 layoutType: layoutType,
               }),
             );
-            dispatch(setHomeCarouselConfig(list));
+            dispatch(setHomeCarouselConfigAndPopulateNewlyVisibleKeys(list));
             dispatch(setHomeCarouselLayoutType(layoutType));
             hideOngoingProcess();
             await sleep(200);

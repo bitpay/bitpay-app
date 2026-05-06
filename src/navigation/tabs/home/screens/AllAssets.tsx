@@ -19,7 +19,7 @@ import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import SearchSvg from '../../../../../assets/img/search.svg';
 
 import {useAppSelector} from '../../../../utils/hooks';
-import usePortfolioAssetRows from '../hooks/usePortfolioAssetRows';
+import usePortfolioAssetRows from '../../../../portfolio/ui/hooks/usePortfolioAssetRows';
 import type {
   AssetRowItem,
   GainLossMode,
@@ -32,6 +32,19 @@ import {
 } from '../../../../constants/currencies';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
+import {FIAT_RATE_SERIES_CACHED_INTERVALS} from '../../../../store/rate/rate.models';
+import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
+import {getQuoteCurrency} from '../../../../utils/portfolio/assets';
+import {
+  getHistoricalRateAssetRequestFromItem,
+  type HistoricalRateAssetRequest,
+} from '../hooks/portfolioAssetHistoryRequests';
+import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
+import {
+  getAssetRowFiatLoading,
+  getAssetRowPopulateLoading,
+} from '../components/assetRowLoading';
+import useScreenFocusRefreshToken from '../hooks/useScreenFocusRefreshToken';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AllAssets'>;
 const LIST_HORIZONTAL_GUTTER = Number.parseInt(ScreenGutter, 10);
@@ -88,8 +101,11 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const theme = useTheme();
   const commonOptions = useStackScreenOptions(theme);
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const populateInProgress = !!portfolio.populateStatus?.inProgress;
   const {getAssetIconData, getSupportedOption} = useAssetIconResolver();
+  const focusRefreshToken = useScreenFocusRefreshToken();
+  const keyId = route.params?.keyId;
 
   const [gainLossMode, setGainLossMode] = useState<GainLossMode>('1D');
   const [query, setQuery] = useState('');
@@ -98,8 +114,13 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const {visibleItems, isFiatLoading, isPopulateLoadingByKey} =
     usePortfolioAssetRows({
       gainLossMode,
-      keyId: route.params?.keyId,
+      keyId,
+      externalRefreshToken: focusRefreshToken,
     });
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  }).toUpperCase();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -162,6 +183,32 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     visibleItems,
   ]);
 
+  const historicalRateRequests = useMemo(() => {
+    return filteredItems
+      .map(item =>
+        getHistoricalRateAssetRequestFromItem(
+          item,
+          defaultAltCurrency?.isoCode || 'USD',
+        ),
+      )
+      .filter(
+        (request): request is HistoricalRateAssetRequest => request != null,
+      )
+      .map(request => ({
+        coin: request.coin,
+        chain: request.chain,
+        tokenAddress: request.tokenAddress,
+        intervals: [...FIAT_RATE_SERIES_CACHED_INTERVALS],
+      }));
+  }, [defaultAltCurrency?.isoCode, filteredItems]);
+
+  const {cache: fiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
+    quoteCurrency,
+    requests: historicalRateRequests,
+    maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+    enabled: filteredItems.length > 0,
+  });
+
   const renderListHeader = useMemo(() => {
     return (
       <FiltersRow>
@@ -192,26 +239,40 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const renderItem = useCallback(
     ({item, index}: ListRenderItemInfo<AssetRowItem>) => {
       const {img, imgSrc} = getAssetIconData(item);
-
-      const isRowPopulateLoading =
-        isPopulateLoadingByKey?.[item.key] ?? populateInProgress;
+      const isRowPopulateLoading = getAssetRowPopulateLoading({
+        populateInProgress,
+        showPnlPlaceholder: item.showPnlPlaceholder,
+        rowLoadingByKey: isPopulateLoadingByKey,
+        rowKey: item.key,
+      });
+      const isRowScopedPnlLoading = !!item.showScopedPnlLoading;
+      const isRowFiatLoading = getAssetRowFiatLoading({
+        populateInProgress,
+        isFiatLoading,
+        isRowPopulateLoading,
+        showScopedPnlLoading: isRowScopedPnlLoading,
+      });
 
       return (
         <AssetRow
           item={item}
           isLast={index === filteredItems.length - 1}
-          isFiatLoading={isFiatLoading}
+          keyId={keyId}
+          isFiatLoading={isRowFiatLoading}
           isPopulateLoading={isRowPopulateLoading}
           img={img}
           imgSrc={imgSrc}
+          fiatRateSeriesCache={fiatRateSeriesCache}
         />
       );
     },
     [
+      fiatRateSeriesCache,
       filteredItems.length,
       getAssetIconData,
       isFiatLoading,
       isPopulateLoadingByKey,
+      keyId,
       populateInProgress,
     ],
   );

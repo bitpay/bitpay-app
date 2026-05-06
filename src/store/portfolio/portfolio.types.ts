@@ -1,5 +1,4 @@
 import type {
-  BalanceSnapshot,
   SnapshotBalanceMismatch,
   WalletPopulateState,
 } from './portfolio.models';
@@ -9,18 +8,15 @@ export enum PortfolioActionTypes {
   CANCEL_POPULATE_PORTFOLIO = 'PORTFOLIO/CANCEL_POPULATE_PORTFOLIO',
   START_POPULATE_PORTFOLIO = 'PORTFOLIO/START_POPULATE_PORTFOLIO',
   UPDATE_POPULATE_PROGRESS = 'PORTFOLIO/UPDATE_POPULATE_PROGRESS',
-  SET_WALLET_SNAPSHOTS = 'PORTFOLIO/SET_WALLET_SNAPSHOTS',
-  REMOVE_WALLET_SNAPSHOTS = 'PORTFOLIO/REMOVE_WALLET_SNAPSHOTS',
+  CLEAR_WALLET_PORTFOLIO_STATE = 'PORTFOLIO/CLEAR_WALLET_PORTFOLIO_STATE',
   FINISH_POPULATE_PORTFOLIO = 'PORTFOLIO/FINISH_POPULATE_PORTFOLIO',
   FAIL_POPULATE_PORTFOLIO = 'PORTFOLIO/FAIL_POPULATE_PORTFOLIO',
+  MARK_INITIAL_BASELINE_COMPLETE = 'PORTFOLIO/MARK_INITIAL_BASELINE_COMPLETE',
   SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES',
 }
 
 export interface ClearPortfolioAction {
   type: typeof PortfolioActionTypes.CLEAR_PORTFOLIO;
-  payload?: {
-    populateDisabled?: boolean;
-  };
 }
 
 export interface CancelPopulatePortfolioAction {
@@ -49,16 +45,8 @@ export interface UpdatePopulateProgressAction {
   };
 }
 
-export interface SetWalletSnapshotsAction {
-  type: typeof PortfolioActionTypes.SET_WALLET_SNAPSHOTS;
-  payload: {
-    walletId: string;
-    snapshots: BalanceSnapshot[];
-  };
-}
-
-export interface RemoveWalletSnapshotsAction {
-  type: typeof PortfolioActionTypes.REMOVE_WALLET_SNAPSHOTS;
+export interface ClearWalletPortfolioStateAction {
+  type: typeof PortfolioActionTypes.CLEAR_WALLET_PORTFOLIO_STATE;
   payload: {
     walletIds: string[];
   };
@@ -68,6 +56,9 @@ export interface FinishPopulatePortfolioAction {
   type: typeof PortfolioActionTypes.FINISH_POPULATE_PORTFOLIO;
   payload: {
     finishedAt: number;
+    lastFullPopulateCompletedAt?: number;
+    reason: string;
+    quoteCurrency: string;
   };
 }
 
@@ -75,6 +66,14 @@ export interface FailPopulatePortfolioAction {
   type: typeof PortfolioActionTypes.FAIL_POPULATE_PORTFOLIO;
   payload: {
     error: string;
+  };
+}
+
+export interface MarkInitialBaselineCompleteAction {
+  type: typeof PortfolioActionTypes.MARK_INITIAL_BASELINE_COMPLETE;
+  payload: {
+    completedAt: number;
+    quoteCurrency: string;
   };
 }
 
@@ -90,8 +89,8 @@ export type PortfolioActionType =
   | CancelPopulatePortfolioAction
   | StartPopulatePortfolioAction
   | UpdatePopulateProgressAction
-  | SetWalletSnapshotsAction
-  | RemoveWalletSnapshotsAction
+  | ClearWalletPortfolioStateAction
   | FinishPopulatePortfolioAction
   | FailPopulatePortfolioAction
+  | MarkInitialBaselineCompleteAction
   | SetSnapshotBalanceMismatchesByWalletIdUpdatesAction;

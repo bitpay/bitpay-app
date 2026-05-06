@@ -14,13 +14,7 @@ import {
   NoResultsImgContainer,
   NoResultsDescription,
 } from '../../../../../components/styled/Containers';
-import {
-  FlatList,
-  InteractionManager,
-  Keyboard,
-  SectionList,
-  View,
-} from 'react-native';
+import {FlatList, Keyboard, SectionList, View} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -31,10 +25,7 @@ import GhostSvg from '../../../../../../assets/img/ghost-cheeky.svg';
 import SearchSvg from '../../../../../../assets/img/search.svg';
 import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
-import {
-  cancelPopulatePortfolio,
-  preparePortfolioFiatRateCachesForQuoteCurrencySwitch,
-} from '../../../../../store/portfolio';
+import {cancelPopulatePortfolio} from '../../../../../store/portfolio';
 import {useTranslation} from 'react-i18next';
 import {coinbaseInitialize} from '../../../../../store/coinbase';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
@@ -192,24 +183,13 @@ const AltCurrencySettings = () => {
               const currentDisplayQuoteCurrency = (
                 selectedAltCurrency?.isoCode || ''
               ).toUpperCase();
-              const hasExistingSnapshots = Object.values(
-                portfolio.snapshotsByWalletId || {},
-              ).some(v => Array.isArray(v) && v.length);
               const isDisplayCurrencyChange =
                 !!nextQuoteCurrency &&
                 currentDisplayQuoteCurrency !== nextQuoteCurrency;
               const isPopulateInProgress =
                 !!portfolio.populateStatus?.inProgress;
-              const shouldRestartPopulate =
-                hasExistingSnapshots &&
-                isDisplayCurrencyChange &&
-                isPopulateInProgress;
-              const shouldRecalculatePortfolio =
-                hasExistingSnapshots &&
-                isDisplayCurrencyChange &&
-                !isPopulateInProgress;
 
-              if (shouldRestartPopulate) {
+              if (isDisplayCurrencyChange && isPopulateInProgress) {
                 dispatch(cancelPopulatePortfolio());
               }
 
@@ -226,27 +206,6 @@ const AltCurrencySettings = () => {
               hideOngoingProcess();
               await sleep(500);
               navigation.goBack();
-
-              if (shouldRestartPopulate) {
-                InteractionManager.runAfterInteractions(() => {
-                  dispatch(
-                    preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
-                      quoteCurrency: item.isoCode,
-                    }),
-                  );
-                });
-                return;
-              }
-
-              if (shouldRecalculatePortfolio) {
-                InteractionManager.runAfterInteractions(() => {
-                  dispatch(
-                    preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
-                      quoteCurrency: item.isoCode,
-                    }),
-                  );
-                });
-              }
             }}
           />
           {!selected ? <Hr /> : null}

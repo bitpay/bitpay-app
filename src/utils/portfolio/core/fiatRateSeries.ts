@@ -1,3 +1,9 @@
+import {
+  getFiatRateSeriesRuntimeCacheKey,
+  parseFiatRateSeriesCacheKey as parseFiatRateSeriesCacheKeyCore,
+} from '../../../portfolio/core/fiatRateIdentity';
+import type {FiatRateSeriesReaderIdentity as CoreFiatRateSeriesReaderIdentity} from '../../../portfolio/core/fiatRateIdentity';
+
 export type CachedFiatRateInterval =
   | '1D'
   | '1W'
@@ -22,23 +28,35 @@ export type FiatRateSeriesCache = {
   [key in string]?: FiatRateSeries;
 };
 
+export type {
+  FiatRateSeriesAssetIdentity,
+  FiatRateSeriesReaderIdentity,
+} from '../../../portfolio/core/fiatRateIdentity';
+export {
+  getFiatRateSeriesAssetKey,
+  getFiatRateSeriesReduxCacheKey,
+  normalizeFiatRateSeriesChain,
+  normalizeFiatRateSeriesCoin,
+  normalizeFiatRateSeriesTokenAddress,
+  parseFiatRateSeriesAssetKey,
+  parseFiatRateSeriesCacheKey,
+  parseFiatRateSeriesReduxCacheKey,
+  parseFiatRateSeriesRuntimeCacheKey,
+} from '../../../portfolio/core/fiatRateIdentity';
+
 export const getFiatRateSeriesCacheKey = (
   fiatCode: string,
   coin: string,
   interval: FiatRateInterval,
+  identity?: CoreFiatRateSeriesReaderIdentity,
 ): string => {
-  return `${(fiatCode || '').toUpperCase()}:${(
-    coin || ''
-  ).toLowerCase()}:${interval}`;
+  return getFiatRateSeriesRuntimeCacheKey(fiatCode, coin, interval, identity);
 };
 
 const getFiatCodeFromSeriesCacheKey = (
   cacheKey: string,
 ): string | undefined => {
-  if (!cacheKey || typeof cacheKey !== 'string') return undefined;
-  const idx = cacheKey.indexOf(':');
-  if (idx <= 0) return undefined;
-  return cacheKey.slice(0, idx).toUpperCase();
+  return parseFiatRateSeriesCacheKeyCore(cacheKey)?.fiatCode;
 };
 
 export function upsertFiatRateSeriesCache(

@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'react-native',
+  resolver: 'react-native-worklets/jest/resolver',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: [
     '<rootDir>/node_modules/react-native-gesture-handler/jestSetup.js',

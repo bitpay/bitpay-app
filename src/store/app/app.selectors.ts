@@ -45,6 +45,9 @@ export const selectBrazeMarketingCarousel = createSelector(
 export const selectNotificationsAccepted: AppSelector<boolean> = ({APP}) =>
   APP.notificationsAccepted;
 
+export const selectShowPortfolioValue: AppSelector<boolean> = ({APP}) =>
+  APP?.showPortfolioValue === true;
+
 export const selectConfirmedTxAccepted: AppSelector<boolean> = ({APP}) =>
   APP.confirmedTxAccepted;
 

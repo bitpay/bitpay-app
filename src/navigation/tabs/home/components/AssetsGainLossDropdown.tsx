@@ -1,5 +1,11 @@
-import React, {useCallback, useMemo, useRef, useState} from 'react';
-import {Modal, Pressable, View, useWindowDimensions} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {
+  AppState,
+  Modal,
+  Pressable,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
@@ -111,6 +117,20 @@ const AssetsGainLossDropdown: React.FC<Props> = ({value, onChange, height}) => {
   const close = useCallback(() => {
     setIsVisible(false);
   }, []);
+
+  useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
+
+    const subscription = AppState.addEventListener('change', status => {
+      if (status !== 'active') {
+        close();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [close, isVisible]);
 
   const select = useCallback(
     (next: GainLossMode) => {

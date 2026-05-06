@@ -155,12 +155,34 @@ const mockKeyMethods = {
   toObj: jest.fn(() => ({})),
 };
 
+const mockTssKey = jest.fn().mockImplementation(() => ({
+  decrypt: jest.fn(),
+  toObj: jest.fn(() => ({})),
+}));
+
 jest.mock('../../../../lib/bwc', () => ({
   BwcProvider: {
     getInstance: jest.fn(() => ({
       getClient: jest.fn(() => mockBwcClient),
       createKey: jest.fn(() => mockKeyMethods),
       getErrors: jest.fn(() => ({})),
+      getConstants: jest.fn(() => ({})),
+      getEncryption: jest.fn(() => ({
+        decryptWithPassword: jest.fn((value: string) => ({
+          toString: () => value,
+        })),
+      })),
+      getTssKey: jest.fn(() => mockTssKey),
+      getTssSign: jest.fn(() => jest.fn()),
+      getBitcore: jest.fn(() => ({})),
+      getBitcoreCash: jest.fn(() => ({})),
+      getBitcoreDoge: jest.fn(() => ({})),
+      getBitcoreLtc: jest.fn(() => ({})),
+      getCore: jest.fn(() => ({})),
+      getUtils: jest.fn(() => ({})),
+      getPayProV2: jest.fn(() => ({})),
+      getLogger: jest.fn(() => ({})),
+      parseSecret: jest.fn(),
     })),
     API: {},
   },

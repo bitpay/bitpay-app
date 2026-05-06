@@ -13,7 +13,7 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import styled from 'styled-components';
+import styled from 'styled-components/native';
 import {BuyCryptoExchangeKey} from '../../utils/buy-crypto-utils';
 
 export const ExchangeTermsContainer = styled.View`

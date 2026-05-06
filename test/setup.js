@@ -4,6 +4,10 @@ jest.mock('react-native-device-info', () => mockRNDeviceInfo);
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
+jest.mock('@react-native-clipboard/clipboard', () =>
+  require('@react-native-clipboard/clipboard/jest/clipboard-mock'),
+);
+
 jest.mock('react-native-haptic-feedback', () => {
   return {
     trigger: jest.fn(),
@@ -26,6 +30,11 @@ jest.mock('react-native-reanimated', () =>
   require('react-native-reanimated/mock'),
 );
 global.__reanimatedWorkletInit = jest.fn();
+jest.mock(
+  'react-native/Libraries/Animated/NativeAnimatedHelper',
+  () => ({}),
+  {virtual: true},
+);
 
 jest.mock('react-native-permissions', () =>
   require('react-native-permissions/mock'),
@@ -122,11 +131,22 @@ jest.mock('mixpanel-react-native', () => ({
   })),
 }));
 
+jest.mock('react-native-appsflyer', () => ({
+  __esModule: true,
+  default: {
+    initSdk: jest.fn(() => Promise.resolve()),
+    logEvent: jest.fn(),
+    getAppsFlyerUID: jest.fn(callback => callback(null, 'mock-appsflyer-id')),
+    onDeepLink: jest.fn(() => jest.fn()),
+    setResolveDeepLinkURLs: jest.fn((_hosts, onSuccess) => onSuccess?.()),
+  },
+}));
+
 jest.mock('@walletconnect/core', () => ({
   __esModule: true,
   default: () => jest.fn(),
   Core: jest.fn(),
-}));
+}), {virtual: true});
 
 jest.mock('@reown/walletkit', () => ({
   __esModule: true,
@@ -134,7 +154,7 @@ jest.mock('@reown/walletkit', () => ({
   WalletKit: jest.fn(() => ({
     init: jest.fn(),
   })),
-}));
+}), {virtual: true});
 
 jest.mock('react-native-share', () => ({
   default: jest.fn(),
