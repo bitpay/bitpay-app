@@ -59,6 +59,142 @@ describe('portfolioStaleness', () => {
     expect(client.getLatestSnapshot).not.toHaveBeenCalled();
   });
 
+  it('still marks wallets with no latest snapshot for populate', async () => {
+    const client = {
+      getInvalidHistory: jest.fn().mockResolvedValue(null),
+      getSnapshotIndex: jest.fn().mockResolvedValue({walletId: 'wallet-1'}),
+      getLatestSnapshot: jest.fn().mockResolvedValue(null),
+    } as any;
+
+    const decision = await getPortfolioPopulateDecisionForWallet({
+      client,
+      wallet,
+      unitDecimals: 8,
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'missing_snapshot',
+      index: {walletId: 'wallet-1'},
+      latestSnapshot: null,
+    });
+  });
+
+  it('marks alphabetic snapshot balance strings as invalid', async () => {
+    const latestSnapshot = {
+      walletId: 'wallet-1',
+      cryptoBalance: 'not-a-balance',
+    };
+    const client = {
+      getInvalidHistory: jest.fn().mockResolvedValue(null),
+      getSnapshotIndex: jest.fn().mockResolvedValue({walletId: 'wallet-1'}),
+      getLatestSnapshot: jest.fn().mockResolvedValue(latestSnapshot),
+    } as any;
+
+    const decision = await getPortfolioPopulateDecisionForWallet({
+      client,
+      wallet,
+      unitDecimals: 8,
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'invalid_snapshot_balance',
+      index: {walletId: 'wallet-1'},
+      latestSnapshot,
+    });
+    expect(decision.mismatch).toBeUndefined();
+  });
+
+  it('marks decimal snapshot balance strings as invalid', async () => {
+    const latestSnapshot = {
+      walletId: 'wallet-1',
+      cryptoBalance: '1.23',
+    };
+    const client = {
+      getInvalidHistory: jest.fn().mockResolvedValue(null),
+      getSnapshotIndex: jest.fn().mockResolvedValue({walletId: 'wallet-1'}),
+      getLatestSnapshot: jest.fn().mockResolvedValue(latestSnapshot),
+    } as any;
+
+    const decision = await getPortfolioPopulateDecisionForWallet({
+      client,
+      wallet,
+      unitDecimals: 8,
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'invalid_snapshot_balance',
+      index: {walletId: 'wallet-1'},
+      latestSnapshot,
+    });
+    expect(decision.mismatch).toBeUndefined();
+  });
+
+  it.each(['', '   '])(
+    'marks empty or whitespace snapshot balance %p as invalid',
+    async cryptoBalance => {
+      const latestSnapshot = {
+        walletId: 'wallet-1',
+        cryptoBalance,
+      };
+      const client = {
+        getInvalidHistory: jest.fn().mockResolvedValue(null),
+        getSnapshotIndex: jest.fn().mockResolvedValue({walletId: 'wallet-1'}),
+        getLatestSnapshot: jest.fn().mockResolvedValue(latestSnapshot),
+      } as any;
+
+      const decision = await getPortfolioPopulateDecisionForWallet({
+        client,
+        wallet,
+        unitDecimals: 8,
+      });
+
+      expect(decision).toMatchObject({
+        walletId: 'wallet-1',
+        shouldPopulate: true,
+        reason: 'invalid_snapshot_balance',
+        index: {walletId: 'wallet-1'},
+        latestSnapshot,
+      });
+      expect(decision.mismatch).toBeUndefined();
+    },
+  );
+
+  it.each([undefined, null])(
+    'marks missing or null snapshot balance %p as invalid',
+    async cryptoBalance => {
+      const latestSnapshot =
+        cryptoBalance === undefined
+          ? {walletId: 'wallet-1'}
+          : {walletId: 'wallet-1', cryptoBalance};
+      const client = {
+        getInvalidHistory: jest.fn().mockResolvedValue(null),
+        getSnapshotIndex: jest.fn().mockResolvedValue({walletId: 'wallet-1'}),
+        getLatestSnapshot: jest.fn().mockResolvedValue(latestSnapshot),
+      } as any;
+
+      const decision = await getPortfolioPopulateDecisionForWallet({
+        client,
+        wallet,
+        unitDecimals: 8,
+      });
+
+      expect(decision).toMatchObject({
+        walletId: 'wallet-1',
+        shouldPopulate: true,
+        reason: 'invalid_snapshot_balance',
+        index: {walletId: 'wallet-1'},
+        latestSnapshot,
+      });
+      expect(decision.mismatch).toBeUndefined();
+    },
+  );
+
   it('flags balance mismatches against the latest stored snapshot', async () => {
     const client = {
       getInvalidHistory: jest.fn().mockResolvedValue(null),

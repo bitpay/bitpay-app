@@ -19,6 +19,7 @@ export type PortfolioSnapshotBalanceMismatch = {
 export type PortfolioPopulateDecisionReason =
   | 'missing_index'
   | 'missing_snapshot'
+  | 'invalid_snapshot_balance'
   | 'balance_mismatch'
   | 'unchanged_balance_mismatch'
   | 'invalid_history'
@@ -63,6 +64,19 @@ function buildBalanceMismatch(args: {
   };
 }
 
+function parseStoredAtomicBalance(value: unknown): bigint | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  if (!/^\d+$/.test(normalized)) {
+    return null;
+  }
+
+  return BigInt(normalized);
+}
+
 export async function getPortfolioPopulateDecisionForWallet(args: {
   client: PortfolioRuntimeClient;
   wallet: Wallet;
@@ -103,11 +117,21 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
     };
   }
 
+  const snapshotAtomic = parseStoredAtomicBalance(latestSnapshot.cryptoBalance);
+  if (snapshotAtomic === null) {
+    return {
+      walletId,
+      shouldPopulate: true,
+      reason: 'invalid_snapshot_balance',
+      index,
+      latestSnapshot,
+    };
+  }
+
   const liveAtomic = getWalletLiveAtomicBalance({
     wallet: args.wallet,
     unitDecimals: args.unitDecimals,
   });
-  const snapshotAtomic = BigInt(String(latestSnapshot.cryptoBalance || '0'));
   const mismatch = buildBalanceMismatch({
     walletId,
     computedAtomic: snapshotAtomic,
