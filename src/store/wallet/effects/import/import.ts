@@ -388,7 +388,11 @@ export const startMigration =
         if (theme) {
           dispatch(
             setColorScheme(
-              theme.system ? null : theme.name === 'light' ? 'light' : 'dark',
+              theme.system
+                ? 'unspecified'
+                : theme.name === 'light'
+                ? 'light'
+                : 'dark',
             ),
           );
         }

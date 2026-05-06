@@ -227,7 +227,7 @@ const initialState: AppState = {
   currentSalt: undefined,
   pinBannedUntil: undefined,
   showBlur: false,
-  colorScheme: null as unknown as ColorSchemeName,
+  colorScheme: 'unspecified',
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   hideAllBalances: false,
