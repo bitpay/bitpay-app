@@ -161,6 +161,11 @@ import {Keys} from './store/wallet/wallet.reducer';
 import {logManager} from './managers/LogManager';
 import * as Sentry from '@sentry/react-native';
 import {navigationRef} from './navigation/NavigationService';
+import {
+  runPortfolioPopulateOnAppLaunch,
+  runPostUnlockStartupWork,
+} from './Root.helpers';
+import {maybePopulatePortfolioOnAppLaunch} from './store/portfolio';
 
 const BWC = BwcProvider.getInstance();
 const Logger = BWC.getLogger();
@@ -326,6 +331,7 @@ export default () => {
   const lastSystemEnabledRef = useRef<boolean | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const splashHiddenRef = useRef(false);
+  const launchPopulateStartedRef = useRef(false);
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
@@ -416,6 +422,18 @@ export default () => {
       }, 300),
     [dispatch],
   );
+
+  const runLaunchPortfolioPopulate = () => {
+    const currentAppState = (reduxStore.getState() as any).APP || {};
+
+    runPortfolioPopulateOnAppLaunch({
+      dispatch,
+      failedAppInit: !!currentAppState.failedAppInit,
+      launchPopulateStartedRef,
+      onboardingCompleted: !!currentAppState.onboardingCompleted,
+      populatePortfolioActionCreator: maybePopulatePortfolioOnAppLaunch,
+    });
+  };
 
   // MAIN APP INIT
   useEffect(() => {
@@ -930,43 +948,31 @@ export default () => {
               }
             };
 
+            const runPostUnlockStartupWorkForLaunch = () =>
+              runPostUnlockStartupWork({
+                accountEvmCreationMigrationComplete,
+                accountSvmCreationMigrationComplete,
+                runAddressFix,
+                runCompleteEvmWalletsAccountFix,
+                runCompleteSvmWalletsAccountFix,
+                runPortfolioPopulateOnAppLaunch: runLaunchPortfolioPopulate,
+                runSvmAddressCreationFix,
+                sleep,
+                svmAddressFixComplete,
+                urlHandler,
+              });
+
             if (pinLockActive || biometricLockActive) {
               const subscriptionToPinModalDismissed =
                 DeviceEventEmitter.addListener(
                   DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
                   async () => {
                     subscriptionToPinModalDismissed.remove();
-                    await runAddressFix();
-                    if (!accountEvmCreationMigrationComplete) {
-                      await sleep(1000);
-                      await runCompleteEvmWalletsAccountFix();
-                    }
-                    if (!accountSvmCreationMigrationComplete) {
-                      await sleep(1000);
-                      await runCompleteSvmWalletsAccountFix();
-                    }
-                    if (!svmAddressFixComplete) {
-                      await sleep(1000);
-                      await runSvmAddressCreationFix();
-                    }
-                    urlHandler();
+                    await runPostUnlockStartupWorkForLaunch();
                   },
                 );
             } else {
-              await runAddressFix();
-              if (!accountEvmCreationMigrationComplete) {
-                await sleep(1000);
-                await runCompleteEvmWalletsAccountFix();
-              }
-              if (!accountSvmCreationMigrationComplete) {
-                await sleep(1000);
-                await runCompleteSvmWalletsAccountFix();
-              }
-              if (!svmAddressFixComplete) {
-                await sleep(1000);
-                await runSvmAddressCreationFix();
-              }
-              urlHandler();
+              await runPostUnlockStartupWorkForLaunch();
             }
 
             logManager.info('QuickActions Initialized');

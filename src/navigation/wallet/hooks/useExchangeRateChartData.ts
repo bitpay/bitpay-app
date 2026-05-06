@@ -6,13 +6,15 @@ import {
   FiatRatePoint,
   FIAT_RATE_SERIES_TARGET_POINTS,
 } from '../../../store/rate/rate.models';
-import {calculatePercentageDifference} from '../../../utils/helper-methods';
 import {getFiatTimeframeMetadata} from '../../../utils/fiatTimeframes';
 import {
   normalizeGraphPointsForChart,
   recomputeMinMaxFromGraphPoints,
 } from '../../../utils/portfolio/chartGraph';
-import {downsampleSeries} from '../../../utils/portfolio/rate';
+import {
+  calculatePercentageDifferenceRaw,
+  downsampleSeries,
+} from '../../../utils/portfolio/rate';
 import {
   ensureSortedByTsAsc,
   lowerBoundByTs,
@@ -243,7 +245,7 @@ export const formatExchangeRateChartData = (
       renderedMinPoint,
     };
   }
-  const percentChange = calculatePercentageDifference(
+  const percentChange = calculatePercentageDifferenceRaw(
     rates[rates.length - 1].rate,
     rates[0].rate,
   );
@@ -262,15 +264,37 @@ type Args = {
   selectedTimeframe: FiatRateInterval;
   seriesDataInterval: CachedFiatRateInterval;
   currentFiatRate: number | undefined;
+  nowMs?: number;
 };
 
 type Result = {
   pointsForChartRaw: FiatRatePoint[] | undefined;
   displayData: ChartDataType | undefined;
+  displayedRangeMs: number | undefined;
 };
 
 type PrepareExchangeRateChartPointsArgs = Args & {
   nowMs?: number;
+};
+
+const resolveLiveTerminalTimestamp = (args: {
+  lastHistoricalTs: number;
+  nowMs?: number;
+}): number | undefined => {
+  const effectiveNowMs =
+    typeof args.nowMs === 'number' && Number.isFinite(args.nowMs)
+      ? args.nowMs
+      : Date.now();
+
+  if (!(Number.isFinite(effectiveNowMs) && effectiveNowMs > 0)) {
+    return undefined;
+  }
+
+  if (effectiveNowMs < args.lastHistoricalTs) {
+    return undefined;
+  }
+
+  return effectiveNowMs;
 };
 
 export const prepareExchangeRateChartPoints = ({
@@ -299,23 +323,72 @@ export const prepareExchangeRateChartPoints = ({
   if (!pointsToDisplay.length) {
     return pointsToDisplay;
   }
-  if (!Number.isFinite(currentFiatRate)) {
+  const currentSpotRate =
+    typeof currentFiatRate === 'number' && Number.isFinite(currentFiatRate)
+      ? currentFiatRate
+      : undefined;
+  if (typeof currentSpotRate !== 'number') {
     return pointsToDisplay;
   }
 
   const lastIdx = pointsToDisplay.length - 1;
   const last = pointsToDisplay[lastIdx];
-  if (
-    !last ||
-    Math.abs(last.rate - currentFiatRate) <= SPOT_RATE_MATCH_EPSILON
-  ) {
+  if (!last) {
     return pointsToDisplay;
   }
 
-  // Never mutate cached series points in Redux; only override in-memory for rendering.
-  const copy = [...pointsToDisplay];
-  copy[lastIdx] = {...last, rate: currentFiatRate};
-  return copy;
+  const liveTerminalTs = resolveLiveTerminalTimestamp({
+    lastHistoricalTs: last.ts,
+    nowMs,
+  });
+
+  if (typeof liveTerminalTs !== 'number') {
+    return pointsToDisplay;
+  }
+
+  if (liveTerminalTs === last.ts) {
+    if (Math.abs(last.rate - currentSpotRate) <= SPOT_RATE_MATCH_EPSILON) {
+      return pointsToDisplay;
+    }
+
+    // Never mutate cached series points in Redux; only override in-memory
+    // for rendering when the live terminal point resolves to the same ts.
+    const copy = [...pointsToDisplay];
+    copy[lastIdx] = {...last, rate: currentSpotRate};
+    return copy;
+  }
+
+  // Append an explicit live terminal point so the rendered chart tail is both
+  // rate-correct and timestamp-correct.
+  return [
+    ...pointsToDisplay,
+    {
+      ts: liveTerminalTs,
+      rate: currentSpotRate,
+    },
+  ];
+};
+
+export const getDisplayedExchangeRateRangeMs = (
+  points: FiatRatePoint[] | undefined,
+): number | undefined => {
+  if (!points?.length) {
+    return undefined;
+  }
+
+  const firstTimestamp = points[0]?.ts;
+  const lastTimestamp = points[points.length - 1]?.ts;
+
+  if (
+    typeof firstTimestamp !== 'number' ||
+    !Number.isFinite(firstTimestamp) ||
+    typeof lastTimestamp !== 'number' ||
+    !Number.isFinite(lastTimestamp)
+  ) {
+    return undefined;
+  }
+
+  return Math.max(0, lastTimestamp - firstTimestamp);
 };
 
 const useExchangeRateChartData = ({
@@ -323,6 +396,7 @@ const useExchangeRateChartData = ({
   selectedTimeframe,
   seriesDataInterval,
   currentFiatRate,
+  nowMs,
 }: Args): Result => {
   const pointsForChartRaw = useMemo<FiatRatePoint[] | undefined>(() => {
     return prepareExchangeRateChartPoints({
@@ -330,9 +404,11 @@ const useExchangeRateChartData = ({
       selectedTimeframe,
       seriesDataInterval,
       currentFiatRate,
+      nowMs,
     });
   }, [
     currentFiatRate,
+    nowMs,
     selectedSeriesPoints,
     selectedTimeframe,
     seriesDataInterval,
@@ -347,9 +423,14 @@ const useExchangeRateChartData = ({
     });
   }, [pointsForChartRaw]);
 
+  const displayedRangeMs = useMemo(() => {
+    return getDisplayedExchangeRateRangeMs(pointsForChartRaw);
+  }, [pointsForChartRaw]);
+
   return {
     pointsForChartRaw,
     displayData,
+    displayedRangeMs,
   };
 };
 

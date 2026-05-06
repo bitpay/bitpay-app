@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput, {INPUT_HEIGHT} from '../../../components/form/BoxInput';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
@@ -63,7 +63,6 @@ import UploadSvg from '../../../../assets/img/upload.svg';
 import UploadDarkSvg from '../../../../assets/img/upload-dark.svg';
 import CancelSvg from '../../../../assets/img/cancel.svg';
 import CancelDarkSvg from '../../../../assets/img/cancel-dark.svg';
-import {useTheme} from 'styled-components';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 const BWCProvider = BwcProvider.getInstance();

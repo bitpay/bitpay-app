@@ -2,6 +2,7 @@
  * Tests for src/utils/portfolio/rate.ts
  */
 import {
+  calculatePercentageDifferenceRaw,
   getFiatRateFromSeriesCacheAtTimestamp,
   getWindowMsForFiatRateTimeframe,
   getFiatRateBaselineTsForTimeframe,
@@ -97,8 +98,8 @@ describe('getWindowMsForFiatRateTimeframe', () => {
     expect(getWindowMsForFiatRateTimeframe('5Y')).toBe(1825 * MS_PER_DAY);
   });
 
-  it('returns 0 for ALL (no fixed window)', () => {
-    expect(getWindowMsForFiatRateTimeframe('ALL')).toBe(0);
+  it('returns undefined for ALL (no fixed window)', () => {
+    expect(getWindowMsForFiatRateTimeframe('ALL')).toBeUndefined();
   });
 });
 
@@ -212,9 +213,9 @@ describe('getFiatRateTimeframeConfig', () => {
     expect(typeof cfg.baselineTimestampMs).toBe('number');
   });
 
-  it('returns windowMs 0 for ALL and undefined baseline', () => {
+  it('returns undefined windowMs for ALL and undefined baseline', () => {
     const cfg = getFiatRateTimeframeConfig({timeframe: 'ALL', nowMs});
-    expect(cfg.windowMs).toBe(0);
+    expect(cfg.windowMs).toBeUndefined();
     expect(cfg.baselineTimestampMs).toBeUndefined();
     expect(cfg.seriesInterval).toBe('ALL');
   });
@@ -350,9 +351,44 @@ describe('getFiatRateFromSeriesCacheAtTimestamp', () => {
     });
     expect(result).toBe(200);
   });
+
+  it('finds token series cached under the runtime cache-key shape', () => {
+    const tokenPoints = makePoints(5, baseTs, stepMs, 1, 1);
+    const cacheKey = getFiatRateSeriesCacheKey('USD', 'USDC', '1D', {
+      chain: 'ETH',
+      tokenAddress: '0xABCDef',
+    });
+    const tokenCache: FiatRateSeriesCache = {
+      [cacheKey]: {fetchedOn: Date.now(), points: tokenPoints},
+    };
+
+    const result = getFiatRateFromSeriesCacheAtTimestamp({
+      fiatRateSeriesCache: tokenCache,
+      fiatCode: 'USD',
+      currencyAbbreviation: 'usdc',
+      interval: '1D',
+      timestampMs: baseTs,
+      identity: {
+        chain: 'eth',
+        tokenAddress: '0xabcdef',
+      },
+    });
+
+    expect(cacheKey).toBe('USD:usdc:1D:eth:0xabcdef');
+    expect(result).toBe(1);
+  });
 });
 
 // ─── getFiatRateChangeForTimeframe ────────────────────────────────────────────
+
+describe('calculatePercentageDifferenceRaw', () => {
+  it('preserves raw precision', () => {
+    expect(calculatePercentageDifferenceRaw(110.123456, 100)).toBeCloseTo(
+      10.123456,
+      6,
+    );
+  });
+});
 
 describe('getFiatRateChangeForTimeframe', () => {
   const nowMs = 10_000_000;
@@ -536,6 +572,30 @@ describe('getFiatRateChangeForTimeframe', () => {
     });
     expect(result).not.toBeUndefined();
     expect(result!.timeframe).toBe('3M');
+  });
+
+  it('returns an unrounded percent change for exchange rate timeframes', () => {
+    const fiatRateSeriesCache: FiatRateSeriesCache = {
+      [getFiatRateSeriesCacheKey('USD', 'eth', 'ALL')]: {
+        fetchedOn: 1,
+        points: [
+          {ts: 1, rate: 100},
+          {ts: 2, rate: 105},
+        ],
+      },
+    };
+
+    const result = getFiatRateChangeForTimeframe({
+      fiatRateSeriesCache,
+      fiatCode: 'USD',
+      currencyAbbreviation: 'eth',
+      timeframe: 'ALL',
+      currentRate: 110.123456,
+      nowMs: 2,
+    });
+
+    expect(result?.percentChange).toBeCloseTo(10.123456, 6);
+    expect(result?.percentRatio).toBeCloseTo(0.10123456, 8);
   });
 });
 

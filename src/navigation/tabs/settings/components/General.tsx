@@ -4,21 +4,17 @@ import React, {
   useLayoutEffect,
   useMemo,
   useCallback,
+  useRef,
 } from 'react';
 import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
-import {EXCHANGE_RATES_CURRENCIES} from '../../../../constants/config';
 import {AppActions} from '../../../../store/app';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {resetAllSettings} from '../../../../store/app/app.effects';
 import {
-  cancelPopulatePortfolio,
-  clearPortfolio,
-  populatePortfolio,
-} from '../../../../store/portfolio';
-import {clearPortfolioCharts} from '../../../../store/portfolio-charts';
-import {pruneFiatRateSeriesCache} from '../../../../store/rate/rate.actions';
+  resetAllSettings,
+  setShowPortfolioValueWithRuntimeReset,
+} from '../../../../store/app/app.effects';
 import {useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
@@ -72,6 +68,7 @@ type SettingItem =
       title: string;
       type: 'toggle';
       value: boolean;
+      isDisabled?: boolean;
       onPress: (value: boolean) => void;
     }
   | {
@@ -94,48 +91,39 @@ const General: React.FC<Props> = ({navigation}) => {
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
-  const fiatRateSeriesCache = useAppSelector(
-    ({RATE}: RootState) => RATE.fiatRateSeriesCache,
-  );
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const [appLanguageName, setAppLanguageName] = useState('');
+  const [pendingShowPortfolioValue, setPendingShowPortfolioValue] = useState<
+    boolean | undefined
+  >();
+  const showPortfolioTogglePendingRef = useRef(false);
+  const displayedShowPortfolioValue =
+    pendingShowPortfolioValue ?? showPortfolioValue;
 
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
 
   const handleToggleShowPortfolio = useCallback(
-    (value: boolean) => {
-      dispatch(AppActions.showPortfolioValue(value));
-      if (!value) {
-        dispatch(cancelPopulatePortfolio());
-        const selectedFiatCode = (
-          selectedAltCurrency?.isoCode || 'USD'
-        ).toUpperCase();
-        const fiatsInCache = new Set<string>();
-        for (const cacheKey of Object.keys(fiatRateSeriesCache || {})) {
-          const separatorIdx = cacheKey.indexOf(':');
-          if (separatorIdx > 0) {
-            fiatsInCache.add(cacheKey.slice(0, separatorIdx).toUpperCase());
-          }
-        }
-        for (const fiatCode of fiatsInCache) {
-          dispatch(
-            pruneFiatRateSeriesCache({
-              fiatCode,
-              keepCoins:
-                fiatCode === selectedFiatCode ? EXCHANGE_RATES_CURRENCIES : [],
-            }),
-          );
-        }
-        dispatch(clearPortfolio({populateDisabled: false}));
-        dispatch(clearPortfolioCharts());
+    async (value: boolean) => {
+      if (showPortfolioTogglePendingRef.current) {
         return;
       }
-      dispatch(
-        populatePortfolio({quoteCurrency: selectedAltCurrency?.isoCode}) as any,
-      );
+
+      showPortfolioTogglePendingRef.current = true;
+      setPendingShowPortfolioValue(value);
+      try {
+        await dispatch(setShowPortfolioValueWithRuntimeReset(value));
+      } catch (error) {
+        logManager.error(
+          'Could not update Show Portfolio setting',
+          error instanceof Error ? error.message : String(error),
+        );
+      } finally {
+        showPortfolioTogglePendingRef.current = false;
+        setPendingShowPortfolioValue(undefined);
+      }
     },
-    [dispatch, fiatRateSeriesCache, selectedAltCurrency?.isoCode],
+    [dispatch],
   );
 
   useEffect(() => {
@@ -176,7 +164,8 @@ const General: React.FC<Props> = ({navigation}) => {
         id: 'showPortfolio',
         title: t('Show Portfolio'),
         type: 'toggle' as const,
-        value: showPortfolioValue,
+        value: displayedShowPortfolioValue,
+        isDisabled: typeof pendingShowPortfolioValue === 'boolean',
         onPress: handleToggleShowPortfolio,
       },
       {
@@ -257,7 +246,8 @@ const General: React.FC<Props> = ({navigation}) => {
   }, [
     t,
     colorScheme,
-    showPortfolioValue,
+    displayedShowPortfolioValue,
+    pendingShowPortfolioValue,
     hideAllBalances,
     selectedAltCurrency.name,
     appLanguageName,
@@ -282,7 +272,11 @@ const General: React.FC<Props> = ({navigation}) => {
           <SettingTitle>{item.title}</SettingTitle>
           {item.type === 'navigation' && <AngleRight />}
           {item.type === 'toggle' && (
-            <ToggleSwitch onChange={item.onPress} isEnabled={item.value} />
+            <ToggleSwitch
+              onChange={item.onPress}
+              isEnabled={item.value}
+              isDisabled={item.isDisabled}
+            />
           )}
           {item.type === 'button' && (
             <Button

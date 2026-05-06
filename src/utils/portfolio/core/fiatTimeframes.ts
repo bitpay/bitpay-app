@@ -11,16 +11,6 @@ export type FiatTimeframeMetadata = Readonly<{
   seriesInterval: FiatTimeframeSeriesInterval;
 }>;
 
-export const FIAT_TIMEFRAME_VALUES = [
-  'ALL',
-  '1D',
-  '1W',
-  '1M',
-  '3M',
-  '1Y',
-  '5Y',
-] as const satisfies ReadonlyArray<FiatRateInterval>;
-
 export const FIAT_TIMEFRAME_METADATA = {
   ALL: {
     displayLabel: 'All',

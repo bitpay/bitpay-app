@@ -7,6 +7,10 @@
  * No Redux store or middleware is needed — reducers are pure functions.
  */
 
+jest.mock('./utils/wallet', () => ({
+  checkPrivateKeyEncrypted: jest.fn(() => false),
+}));
+
 import {walletReducer, initialState, WalletState} from './wallet.reducer';
 import {WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
@@ -315,6 +319,26 @@ describe('SUCCESS_UPDATE_KEYS_TOTAL_BALANCE', () => {
     expect(state.keys['key-1'].totalBalanceLastDay).toBe(8888);
   });
 
+  it('returns a new key object without mutating the previous state', () => {
+    const base = stateWithKey({
+      totalBalance: 1,
+      totalBalanceLastDay: 2,
+    });
+    const previousKey = base.keys['key-1'];
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE,
+      payload: [
+        {keyId: 'key-1', totalBalance: 9999, totalBalanceLastDay: 8888},
+      ],
+    });
+
+    expect(base.keys['key-1']).toBe(previousKey);
+    expect(base.keys['key-1'].totalBalance).toBe(1);
+    expect(base.keys['key-1'].totalBalanceLastDay).toBe(2);
+    expect(state.keys['key-1']).not.toBe(previousKey);
+  });
+
   it('sets a balanceCacheKey entry for the updated key', () => {
     const base = stateWithKey();
     const before = Date.now();
@@ -367,6 +391,40 @@ describe('SUCCESS_UPDATE_WALLET_STATUS', () => {
     });
     expect((state.keys['key-1'].wallets[0] as any).balance).toEqual(newBalance);
     expect((state.keys['key-1'].wallets[0] as any).singleAddress).toBe(true);
+  });
+
+  it('returns a new wallet object without mutating the previous state', () => {
+    const base = stateWithKey(
+      {},
+      {
+        id: 'wallet-1',
+        balance: makeBalance({sat: 1}) as any,
+        singleAddress: false,
+      },
+    );
+    const previousKey = base.keys['key-1'];
+    const previousWallets = previousKey.wallets;
+    const previousWallet = previousWallets[0];
+    const newBalance = makeBalance({sat: 12345});
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS,
+      payload: {
+        keyId: 'key-1',
+        walletId: 'wallet-1',
+        status: {balance: newBalance, pendingTxps: [], singleAddress: true},
+      },
+    });
+
+    expect(base.keys['key-1']).toBe(previousKey);
+    expect(base.keys['key-1'].wallets).toBe(previousWallets);
+    expect(base.keys['key-1'].wallets[0]).toBe(previousWallet);
+    expect((base.keys['key-1'].wallets[0] as any).balance.sat).toBe(1);
+    expect((base.keys['key-1'].wallets[0] as any).singleAddress).toBe(false);
+    expect(state.keys['key-1']).not.toBe(previousKey);
+    expect(state.keys['key-1'].wallets).not.toBe(previousWallets);
+    expect(state.keys['key-1'].wallets[0]).not.toBe(previousWallet);
+    expect((state.keys['key-1'].wallets[0] as any).balance).toEqual(newBalance);
   });
 
   it('sets a balanceCacheKey entry for the wallet', () => {
@@ -893,6 +951,45 @@ describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
     });
     expect((state.keys['key-1'].wallets[0] as any).balance).toEqual(newBalance);
     expect((state.keys['key-1'].wallets[0] as any).singleAddress).toBe(true);
+  });
+
+  it('returns a new wallet object for bulk status updates', () => {
+    const base = stateWithKey(
+      {},
+      {
+        id: 'wallet-1',
+        balance: makeBalance({sat: 1}) as any,
+        singleAddress: false,
+      },
+    );
+    const previousKey = base.keys['key-1'];
+    const previousWallets = previousKey.wallets;
+    const previousWallet = previousWallets[0];
+    const newBalance = makeBalance({sat: 9999});
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+      payload: {
+        keyBalances: [],
+        walletBalances: [
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-1',
+            status: {balance: newBalance, pendingTxps: [], singleAddress: true},
+          },
+        ],
+      },
+    });
+
+    expect(base.keys['key-1']).toBe(previousKey);
+    expect(base.keys['key-1'].wallets).toBe(previousWallets);
+    expect(base.keys['key-1'].wallets[0]).toBe(previousWallet);
+    expect((base.keys['key-1'].wallets[0] as any).balance.sat).toBe(1);
+    expect((base.keys['key-1'].wallets[0] as any).singleAddress).toBe(false);
+    expect(state.keys['key-1']).not.toBe(previousKey);
+    expect(state.keys['key-1'].wallets).not.toBe(previousWallets);
+    expect(state.keys['key-1'].wallets[0]).not.toBe(previousWallet);
+    expect((state.keys['key-1'].wallets[0] as any).balance).toEqual(newBalance);
   });
 
   it('recalculates portfolio balance based on updated key totals', () => {

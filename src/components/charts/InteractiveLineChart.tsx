@@ -135,8 +135,9 @@ const InteractiveLineChart = ({
     width: number;
     height: number;
   } | null>(null);
-  const firstPointGuideLineTop = useSharedValue(0);
-  const isGuideLineTopInitializedRef = React.useRef(false);
+  const firstPointGuideLineTranslateY = useSharedValue(0);
+  const [firstPointGuideLineBaseTop, setFirstPointGuideLineBaseTop] =
+    React.useState<number>();
   const resolvedChartWidth =
     typeof width === 'number' && width > 0 ? width : chartWidth;
   const resolvedChartWidthRef = React.useRef(resolvedChartWidth);
@@ -203,6 +204,14 @@ const InteractiveLineChart = ({
       ? compensatedLineThickness
       : effectiveLineThickness /
         Math.pow(safeStrokeScaleNumber, lineThicknessCompensationExponent);
+  const staticLineThicknessForGraph =
+    typeof lineThicknessForGraph === 'number' &&
+    Number.isFinite(lineThicknessForGraph)
+      ? lineThicknessForGraph
+      : effectiveLineThickness;
+  const resolvedLineThicknessForGraph = animated
+    ? lineThicknessForGraph
+    : staticLineThicknessForGraph;
 
   const firstPointGuideLineAnimatedProps =
     useAnimatedProps<SvgLineAnimatedProps>(() => {
@@ -447,26 +456,46 @@ const InteractiveLineChart = ({
       : null;
 
   const firstPointGuideLineAnimatedStyle = useAnimatedStyle(() => ({
-    top: firstPointGuideLineTop.value,
+    transform: [{translateY: firstPointGuideLineTranslateY.value}],
   }));
 
-  React.useEffect(() => {
+  const graphOpacity = isLoading ? (hideLineWhileLoading ? 0 : 0.25) : 1;
+
+  React.useLayoutEffect(() => {
     if (firstPointGuideLineTopTarget == null) {
-      isGuideLineTopInitializedRef.current = false;
+      setFirstPointGuideLineBaseTop(undefined);
+      firstPointGuideLineTranslateY.value = 0;
       return;
     }
 
-    if (!isGuideLineTopInitializedRef.current) {
-      firstPointGuideLineTop.value = firstPointGuideLineTopTarget;
-      isGuideLineTopInitializedRef.current = true;
+    if (firstPointGuideLineBaseTop == null) {
+      setFirstPointGuideLineBaseTop(firstPointGuideLineTopTarget);
+      firstPointGuideLineTranslateY.value = 0;
       return;
     }
 
-    firstPointGuideLineTop.value = withTiming(firstPointGuideLineTopTarget, {
+    const nextTranslateY =
+      firstPointGuideLineTopTarget - firstPointGuideLineBaseTop;
+
+    if (firstPointGuideLineTranslateY.value === nextTranslateY) {
+      return;
+    }
+
+    firstPointGuideLineTranslateY.value = withTiming(nextTranslateY, {
       duration: 260,
       easing: Easing.out(Easing.cubic),
     });
-  }, [firstPointGuideLineTop, firstPointGuideLineTopTarget]);
+  }, [
+    firstPointGuideLineBaseTop,
+    firstPointGuideLineTopTarget,
+    firstPointGuideLineTranslateY,
+  ]);
+
+  const shouldRenderFirstPointGuideLine =
+    firstPointGuideLine != null &&
+    firstPointGuideLineBaseTop != null &&
+    firstPointGuideLineTopTarget != null &&
+    graphOpacity > 0;
 
   const chartInner = (
     <ChartInner testID="interactive-line-chart-inner" onLayout={onChartLayout}>
@@ -475,9 +504,10 @@ const InteractiveLineChart = ({
           testID="interactive-line-chart-graph"
           points={pointsForGraph}
           animated={animated}
-          // `react-native-graph` can consume a Reanimated derived value here.
-          // Cast to avoid TS complaining (the lib types it as `number`).
-          lineThickness={lineThicknessForGraph as unknown as number}
+          // The animated graph can consume a Reanimated derived value here.
+          // The static graph computes JS path geometry from this prop, so it
+          // receives a plain number via resolvedLineThicknessForGraph.
+          lineThickness={resolvedLineThicknessForGraph as unknown as number}
           // Keep geometry stable across theme switches.
           verticalPadding={stableVerticalPadding}
           horizontalPadding={stableHorizontalPadding}
@@ -514,19 +544,22 @@ const InteractiveLineChart = ({
             width: resolvedChartWidth ?? '100%',
             height: graphHeight,
             marginTop: graphMarginTop,
-            opacity: isLoading ? (hideLineWhileLoading ? 0 : 0.25) : 1,
+            opacity: graphOpacity,
           }}
         />
       ) : null}
-      {firstPointGuideLine ? (
+      {shouldRenderFirstPointGuideLine ? (
         <Reanimated.View
           pointerEvents="none"
           style={[
             {
               position: 'absolute',
               left: firstPointGuideLine.left,
+              top:
+                firstPointGuideLineBaseTop ?? firstPointGuideLineTopTarget ?? 0,
               width: firstPointGuideLine.width,
               height: FIRST_POINT_GUIDE_LINE_SVG_HEIGHT,
+              opacity: graphOpacity,
             },
             firstPointGuideLineAnimatedStyle,
           ]}>

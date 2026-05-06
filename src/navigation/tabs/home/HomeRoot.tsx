@@ -6,6 +6,7 @@ import {
   AppStateStatus,
   RefreshControl,
   ScrollView,
+  View,
 } from 'react-native';
 import {
   EXCHANGE_RATES_CURRENCIES,
@@ -21,20 +22,13 @@ import {
   selectBrazeMarketingCarousel,
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
+import {maybePopulatePortfolioOnAppLaunch} from '../../../store/portfolio';
 import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
-import {
-  fetchFiatRateSeriesInterval,
-  refreshRatesForPortfolioPnl,
-} from '../../../store/wallet/effects';
+import {refreshRatesForPortfolioPnl} from '../../../store/wallet/effects';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
-import {
-  calculatePercentageDifference,
-  getCurrencyAbbreviation,
-  getLastDayTimestampStartOfHourMs,
-} from '../../../utils/helper-methods';
-import {getFiatRateFromSeriesCacheAtTimestamp} from '../../../utils/portfolio/rate';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import useRuntimeFiatRateSeriesCache from '../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import Crypto from './components/Crypto';
 import ExchangeRatesList, {
@@ -56,37 +50,35 @@ import {
   receiveCrypto,
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
-import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useStore} from 'react-redux';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../../../Root';
-import type {RootState} from '../../../store';
 import {TabsScreens, TabsStackParamList} from '../TabsStack';
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
 } from '../../../constants/currencies';
-import {Network} from '../../../constants';
-import SecurePasskeyBanner from './components/SecurePasskeyBanner';
+import {HISTORIC_RATES_CACHE_DURATION} from '../../../constants/wallet';
+import SecurePasskeyBannerGate from './components/SecurePasskeyBannerGate';
 import DefaultMarketingCards from './components/DefaultMarketingCards';
 import AllocationSection from './components/AllocationSection';
 import AssetsSection from './components/AssetsSection';
+import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
+import {getCoinAndChainFromCurrencyCode} from '../../bitpay-id/utils/bitpay-id-utils';
 import {getPortfolioAllocationTotalFiat} from '../../../utils/portfolio/allocation';
 import type {Key} from '../../../store/wallet/wallet.models';
-import type {Rate, Rates} from '../../../store/rate/rate.models';
-import {getCoinAndChainFromCurrencyCode} from '../../bitpay-id/utils/bitpay-id-utils';
+import type {Rates} from '../../../store/rate/rate.models';
 import {
-  findSupportedCurrencyOptionForAsset,
   getQuoteCurrency,
   getVisibleWalletsFromKeys,
   walletHasNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
 import {sortNewestFirst} from '../../../utils/braze';
+import buildHomeExchangeRateItems from './homeExchangeRates';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -98,7 +90,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
-  const reduxStore = useStore();
   const [refreshing, setRefreshing] = useState(false);
   const brazeMarketingCarousel = useAppSelector(selectBrazeMarketingCarousel);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
@@ -110,16 +101,13 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const rates = useAppSelector(({RATE}) => RATE.rates) as Rates;
-  const fiatRateSeriesCache = useAppSelector(
-    ({RATE}) => RATE.fiatRateSeriesCache,
-  );
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
   );
   const keyMigrationFailureModalHasBeenShown = useAppSelector(
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
-  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const hasKeys = Object.values(keys).length;
 
   const portfolioAllocationTotalFiat = useMemo(() => {
@@ -142,26 +130,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     portfolioAllocationTotalFiat > 0 || hasAnyVisibleWalletBalance;
 
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const network: Network = useAppSelector(({APP}) => APP.network);
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const passkeyCredentials = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.passkeyCredentials,
-  );
-  const [showSecureAccountBanner, setShowSecureAccountBanner] = useState(false);
-
-  // Check if user has passkey
-  useEffect(() => {
-    if (!user) {
-      setShowSecureAccountBanner(false);
-    } else if (
-      (passkeyCredentials && passkeyCredentials.length > 0) ||
-      !user?.verified
-    ) {
-      setShowSecureAccountBanner(false);
-    } else {
-      setShowSecureAccountBanner(true);
-    }
-  }, [passkeyCredentials, user]);
 
   const memoizedMarketingCards = useMemo(() => {
     const cards =
@@ -192,105 +160,34 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     portfolioQuoteCurrency: portfolio.quoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   }).toUpperCase();
+  const exchangeRateHistoricalRequests = useMemo(
+    () =>
+      EXCHANGE_RATES_CURRENCIES.map(coin => ({
+        coin,
+        intervals: ['1D'],
+      })),
+    [],
+  );
+  const {cache: fiatRateSeriesCache, reload: reloadFiatRateSeriesCache} =
+    useRuntimeFiatRateSeriesCache({
+      quoteCurrency,
+      requests: exchangeRateHistoricalRequests,
+      maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+      enabled: true,
+    });
   const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(() => {
-    const baselineTimestampMs = getLastDayTimestampStartOfHourMs();
-    const result = (
-      Object.entries(lastDayRates) as Array<[string, Rate[]]>
-    ).reduce((ratesList, [key, lastDayRate]) => {
-      const lastDayRateForDefaultCurrency = lastDayRate.find(
-        ({code}: {code: string}) => code === quoteCurrency,
-      );
-      const rateForDefaultCurrency = rates[key].find(
-        ({code}: {code: string}) => code === quoteCurrency,
-      );
-      const {coin: targetCoin, chain: targetChain} =
-        getCoinAndChainFromCurrencyCode(key);
-      const option = findSupportedCurrencyOptionForAsset({
-        options: SupportedCurrencyOptions,
-        currencyAbbreviation: targetCoin,
-        chain: targetChain,
-      });
-
-      if (option && option.chain && option.currencyAbbreviation) {
-        const currencyName = getCurrencyAbbreviation(
-          option?.tokenAddress
-            ? option?.tokenAddress
-            : option?.currencyAbbreviation,
-          option?.chain,
-        );
-        const isStableCoin =
+    return buildHomeExchangeRateItems({
+      fiatRateSeriesCache,
+      lastDayRates,
+      rates,
+      quoteCurrency,
+      exchangeRateCurrencies: EXCHANGE_RATES_CURRENCIES,
+      supportedCurrencyOptions: SupportedCurrencyOptions,
+      isStableCoinCurrencyName: currencyName =>
+        !!(
           BitpaySupportedCoins[currencyName]?.properties?.isStableCoin ||
-          BitpaySupportedTokens[currencyName]?.properties?.isStableCoin;
-
-        if (
-          rateForDefaultCurrency?.rate &&
-          !isStableCoin &&
-          EXCHANGE_RATES_CURRENCIES.includes(
-            option.currencyAbbreviation.toLowerCase(),
-          )
-        ) {
-          const prevRateFromSeries = getFiatRateFromSeriesCacheAtTimestamp({
-            fiatRateSeriesCache,
-            fiatCode: quoteCurrency,
-            currencyAbbreviation: option.currencyAbbreviation,
-            interval: '1D',
-            timestampMs: baselineTimestampMs,
-            method: 'linear',
-          });
-          const prevRate =
-            prevRateFromSeries ?? lastDayRateForDefaultCurrency?.rate;
-
-          if (!(prevRate && prevRate > 0)) {
-            return ratesList;
-          }
-
-          const {
-            id,
-            img,
-            currencyName,
-            currencyAbbreviation,
-            chain,
-            tokenAddress,
-          } = option;
-
-          const percentChange = calculatePercentageDifference(
-            rateForDefaultCurrency.rate,
-            prevRate,
-          );
-
-          ratesList.push({
-            id,
-            img,
-            currencyName,
-            currencyAbbreviation,
-            chain,
-            tokenAddress: tokenAddress,
-            average: percentChange,
-            currentPrice: rateForDefaultCurrency.rate,
-          });
-        }
-      }
-      return ratesList;
-    }, [] as ExchangeRateItemProps[]);
-
-    return result.sort((a, b) => {
-      const indexA = EXCHANGE_RATES_CURRENCIES.indexOf(
-        a.currencyAbbreviation.toLowerCase(),
-      );
-      const indexB = EXCHANGE_RATES_CURRENCIES.indexOf(
-        b.currencyAbbreviation.toLowerCase(),
-      );
-
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB;
-      }
-      if (indexA !== -1) {
-        return -1;
-      }
-      if (indexB !== -1) {
-        return 1;
-      }
-      return a.currencyName.localeCompare(b.currencyName);
+          BitpaySupportedTokens[currencyName]?.properties?.isStableCoin
+        ),
     });
   }, [fiatRateSeriesCache, lastDayRates, quoteCurrency, rates]);
 
@@ -299,8 +196,14 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
       if (!appIsLoading) {
         dispatch(updatePortfolioBalance());
       } // portfolio balance is updated in app init
+
+      // Detail screens can refresh the shared runtime fiat-series storage while
+      // Home stays mounted in the background. Reload on focus so the exchange
+      // rate list picks up the latest shared series without requiring a manual
+      // pull-to-refresh on Home.
+      reloadFiatRateSeriesCache().catch(() => undefined);
     });
-  }, [dispatch, navigation, appIsLoading]);
+  }, [appIsLoading, dispatch, navigation, reloadFiatRateSeriesCache]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -309,14 +212,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(
           refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
         ),
-        dispatch(
-          fetchFiatRateSeriesInterval({
-            fiatCode: quoteCurrency,
-            interval: '1D',
-            coinForCacheCheck: 'btc',
-            force: true,
-          }) as any,
-        ),
+        reloadFiatRateSeriesCache({force: true}).catch(() => ({})),
         dispatch(
           getAndDispatchUpdatedWalletBalances({
             context: 'homeRootOnRefresh',
@@ -326,30 +222,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         ),
         dispatch(requestBrazeContentRefresh()),
       ]);
-
-      const refreshedState = reduxStore.getState() as RootState;
-      const refreshedKeys = refreshedState.WALLET.keys as Record<string, Key>;
-      const refreshedVisibleWallets = getVisibleWalletsFromKeys(
-        refreshedKeys,
-        refreshedState.APP?.homeCarouselConfig,
-      );
-      const refreshedQuoteCurrency = getQuoteCurrency({
-        portfolioQuoteCurrency: refreshedState.PORTFOLIO?.quoteCurrency,
-        defaultAltCurrencyIsoCode:
-          refreshedState.APP?.defaultAltCurrency?.isoCode,
-      }).toUpperCase();
-
       await dispatch(
-        maybePopulatePortfolioForWallets({
-          // IMPORTANT: read wallets from the latest Redux state after the
-          // balance refresh finishes so portfolio snapshots (and thus the
-          // chart) are repopulated with up-to-date wallet balances and any
-          // newly created token wallets with funds.
-          wallets: refreshedVisibleWallets,
-          quoteCurrency: refreshedQuoteCurrency,
+        maybePopulatePortfolioOnAppLaunch({
+          quoteCurrency,
         }) as any,
       );
-    } catch (err) {
+    } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
       setRefreshing(false);
@@ -370,11 +248,68 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
+  const homeViewportRef = useRef<View>(null);
+  const homeAssetsSectionRef = useRef<View>(null);
+  const homeAssetsSectionVisibilityCheckInFlightRef = useRef(false);
+  const [shouldActivateHomeAssetsSection, setShouldActivateHomeAssetsSection] =
+    useState(false);
 
   const exchangeRatesRef = useRef(memoizedExchangeRates);
   useEffect(() => {
     exchangeRatesRef.current = memoizedExchangeRates;
   }, [memoizedExchangeRates]);
+
+  const maybeActivateHomeAssetsSection = useCallback(() => {
+    if (shouldActivateHomeAssetsSection) {
+      return;
+    }
+
+    const homeViewport = homeViewportRef.current;
+    const homeAssetsSection = homeAssetsSectionRef.current;
+    if (
+      homeAssetsSectionVisibilityCheckInFlightRef.current ||
+      !homeViewport?.measureInWindow ||
+      !homeAssetsSection?.measureInWindow
+    ) {
+      return;
+    }
+
+    homeAssetsSectionVisibilityCheckInFlightRef.current = true;
+
+    homeViewport.measureInWindow(
+      (_viewportX, viewportY, _viewportWidth, viewportHeight) => {
+        homeAssetsSection.measureInWindow(
+          (_sectionX, sectionY, _sectionWidth, sectionHeight) => {
+            homeAssetsSectionVisibilityCheckInFlightRef.current = false;
+
+            const viewportBottom = viewportY + viewportHeight;
+            const sectionBottom = sectionY + sectionHeight;
+            const isVisible =
+              viewportHeight > 0 &&
+              sectionHeight > 0 &&
+              sectionBottom >= viewportY &&
+              sectionY <= viewportBottom;
+
+            if (isVisible) {
+              setShouldActivateHomeAssetsSection(true);
+            }
+          },
+        );
+      },
+    );
+  }, [shouldActivateHomeAssetsSection]);
+
+  const onHomeViewportLayout = useCallback(() => {
+    maybeActivateHomeAssetsSection();
+  }, [maybeActivateHomeAssetsSection]);
+
+  const onHomeScroll = useCallback(() => {
+    maybeActivateHomeAssetsSection();
+  }, [maybeActivateHomeAssetsSection]);
+
+  const onHomeAssetsSectionLayout = useCallback(() => {
+    maybeActivateHomeAssetsSection();
+  }, [maybeActivateHomeAssetsSection]);
 
   const handleAppStateChange = useCallback(
     (status: AppStateStatus) => {
@@ -435,115 +370,122 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             ) : null}
             <ProfileButton />
           </HeaderContainer>
-          <ScrollView
-            ref={scrollViewRef}
-            // Prevent iOS from injecting automatic top insets which creates a gap
-            // between the Archax banner and the Home header when the scene is edge-to-edge
-            contentInsetAdjustmentBehavior="never"
-            refreshControl={
-              <RefreshControl
-                tintColor={theme.dark ? White : SlateDark}
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-              />
-            }>
-            {/* ////////////////////////////// PORTFOLIO BALANCE */}
-            {showPortfolioValue ? (
-              <HomeSection style={{marginTop: 20, marginBottom: 20}}>
-                <PortfolioBalance />
-              </HomeSection>
-            ) : null}
-
-            {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-            {hasKeys && showPortfolioValue ? (
-              <HomeSection style={{marginBottom: 25}}>
-                <LinkingButtons
-                  receive={{
-                    cta: () => {
-                      dispatch(
-                        Analytics.track('Clicked Receive Crypto', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      dispatch(receiveCrypto(navigation, 'HomeRoot'));
-                    },
-                  }}
-                  send={{
-                    cta: () => {
-                      dispatch(
-                        Analytics.track('Clicked Send Crypto', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      dispatch(sendCrypto('HomeRoot'));
-                    },
-                  }}
+          <View
+            ref={homeViewportRef}
+            onLayout={onHomeViewportLayout}
+            style={{flex: 1}}>
+            <ScrollView
+              ref={scrollViewRef}
+              onScroll={onHomeScroll}
+              scrollEventThrottle={32}
+              // Prevent iOS from injecting automatic top insets which creates a gap
+              // between the Archax banner and the Home header when the scene is edge-to-edge
+              contentInsetAdjustmentBehavior="never"
+              refreshControl={
+                <RefreshControl
+                  tintColor={theme.dark ? White : SlateDark}
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
                 />
-              </HomeSection>
-            ) : null}
+              }>
+              {/* ////////////////////////////// PORTFOLIO BALANCE */}
+              {showPortfolioValue ? (
+                <HomeSection style={{marginTop: 20, marginBottom: 20}}>
+                  <PortfolioBalance />
+                </HomeSection>
+              ) : null}
 
-            {/* ////////////////////////////// MARKETING */}
-            {memoizedMarketingCards.length ? (
+              {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
+              {hasKeys && showPortfolioValue ? (
+                <HomeSection style={{marginBottom: 25}}>
+                  <LinkingButtons
+                    receive={{
+                      cta: () => {
+                        dispatch(
+                          Analytics.track('Clicked Receive Crypto', {
+                            context: 'HomeRoot',
+                          }),
+                        );
+                        dispatch(receiveCrypto(navigation, 'HomeRoot'));
+                      },
+                    }}
+                    send={{
+                      cta: () => {
+                        dispatch(
+                          Analytics.track('Clicked Send Crypto', {
+                            context: 'HomeRoot',
+                          }),
+                        );
+                        dispatch(sendCrypto('HomeRoot'));
+                      },
+                    }}
+                  />
+                </HomeSection>
+              ) : null}
+
+              {/* ////////////////////////////// MARKETING */}
+              {memoizedMarketingCards.length ? (
+                <HomeSection>
+                  <MarketingCarousel contentCards={memoizedMarketingCards} />
+                </HomeSection>
+              ) : null}
+
+              {/* ////////////////////////////// CRYPTO */}
               <HomeSection>
-                <MarketingCarousel contentCards={memoizedMarketingCards} />
+                <Crypto />
               </HomeSection>
-            ) : null}
 
-            {/* ////////////////////////////// CRYPTO */}
-            <HomeSection>
-              <Crypto />
-            </HomeSection>
+              {/* ////////////////////////////// SECURE WITH PASSKEY */}
+              <SecurePasskeyBannerGate />
 
-            {/* ////////////////////////////// SECURE WITH PASSKEY */}
-            {showSecureAccountBanner ? (
-              <HomeSection>
-                <SecurePasskeyBanner />
-              </HomeSection>
-            ) : null}
+              {showPortfolioValue ? (
+                <HomeSection>
+                  <View
+                    ref={homeAssetsSectionRef}
+                    onLayout={onHomeAssetsSectionLayout}>
+                    <AssetsSection enabled={shouldActivateHomeAssetsSection} />
+                  </View>
+                </HomeSection>
+              ) : null}
 
-            {showPortfolioValue ? (
-              <HomeSection>
-                <AssetsSection />
-              </HomeSection>
-            ) : null}
+              {showPortfolioValue && showPortfolioAllocationSection ? (
+                <HomeSection>
+                  <AllocationSection />
+                </HomeSection>
+              ) : null}
 
-            {showPortfolioValue && showPortfolioAllocationSection ? (
-              <HomeSection>
-                <AllocationSection />
-              </HomeSection>
-            ) : null}
+              {/* ////////////////////////////// DO MORE */}
+              {memoizedShopWithCryptoCards.length ? (
+                <HomeSection
+                  style={{marginBottom: 20}}
+                  title={t('Do More')}
+                  // action={t('Shop all')}
+                  // onActionPress={() => {
+                  //   (navigation as any).navigate('Tabs', {screen: 'Shop'});
+                  //   dispatch(
+                  //     Analytics.track('Clicked Shop with Crypto', {
+                  //       context: 'HomeRoot',
+                  //     }),
+                  //   );
+                  // }}
+                >
+                  <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
+                </HomeSection>
+              ) : null}
 
-            {/* ////////////////////////////// DO MORE */}
-            {memoizedShopWithCryptoCards.length ? (
-              <HomeSection
-                style={{marginBottom: 20}}
-                title={t('Do More')}
-                // action={t('Shop all')}
-                // onActionPress={() => {
-                //   (navigation as any).navigate('Tabs', {screen: 'Shop'});
-                //   dispatch(
-                //     Analytics.track('Clicked Shop with Crypto', {
-                //       context: 'HomeRoot',
-                //     }),
-                //   );
-                // }}
-              >
-                <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
-              </HomeSection>
-            ) : null}
+              {/* ////////////////////////////// EXCHANGE RATES */}
+              {!showArchaxBanner && memoizedExchangeRates.length ? (
+                <HomeSection title={t('Exchange Rates')} label="24H">
+                  <ExchangeRatesList
+                    items={memoizedExchangeRates}
+                    defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+                  />
+                </HomeSection>
+              ) : null}
 
-            {/* ////////////////////////////// EXCHANGE RATES */}
-            {!showArchaxBanner && memoizedExchangeRates.length ? (
-              <HomeSection title={t('Exchange Rates')} label="24H">
-                <ExchangeRatesList
-                  items={memoizedExchangeRates}
-                  defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-                />
-              </HomeSection>
-            ) : null}
-
-            {showArchaxBanner && <ArchaxFooter />}
-          </ScrollView>
+              {showArchaxBanner && <ArchaxFooter />}
+            </ScrollView>
+          </View>
         </>
       )}
       <KeyMigrationFailureModal />

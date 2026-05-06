@@ -11,20 +11,10 @@ import {H7, Smallest, BaseText} from '../../../../../components/styled/Text';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmountObj,
-  getRateByCurrencyName,
 } from '../../../../../utils/helper-methods';
-import GainArrow from '../../../../../components/icons/trend-arrow/IncrementArrow';
-import LossArrow from '../../../../../components/icons/trend-arrow/DecrementArrow';
-import NeutralArrow from '../../../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
-import {
-  LuckySevens,
-  NeutralSlate,
-  Slate30,
-  SlateDark,
-} from '../../../../../styles/colors';
+import {NeutralSlate, Slate30, SlateDark} from '../../../../../styles/colors';
 import {View} from 'react-native';
-import {useAppSelector} from '../../../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Percentage from '../../../../../components/percentage/Percentage';
 
@@ -62,20 +52,6 @@ const ExchangeRateSubText = styled(Smallest)`
   color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
 `;
 
-const showLossGainOrNeutralArrow = (average: number | undefined) => {
-  if (average === undefined) {
-    return;
-  }
-
-  if (average > 0) {
-    return <GainArrow style={{marginRight: 5}} />;
-  } else if (average < 0) {
-    return <LossArrow style={{marginRight: 5}} />;
-  } else {
-    return <NeutralArrow style={{marginRight: 5}} />;
-  }
-};
-
 const ExchangeRateItem = ({
   item,
   onPress,
@@ -85,35 +61,10 @@ const ExchangeRateItem = ({
   onPress: () => void;
   defaultAltCurrencyIsoCode: string;
 }) => {
-  const allRates = useAppSelector(({RATE}) => RATE.rates);
-  let currentPriceToShow: number | undefined;
-  const {
-    img,
-    currencyName,
-    currentPrice,
-    average,
-    currencyAbbreviation,
-    chain,
-  } = item;
-
-  // Avoid displaying rounded values for low amounts
-  if (
-    currencyAbbreviation &&
-    allRates &&
-    ['doge', 'xrp'].includes(currencyAbbreviation.toLowerCase()) &&
-    getRateByCurrencyName(allRates, currencyAbbreviation.toLowerCase(), chain)
-  ) {
-    currentPriceToShow = getRateByCurrencyName(
-      allRates,
-      currencyAbbreviation.toLowerCase(),
-      chain,
-    ).find(r => r.code === defaultAltCurrencyIsoCode)!.rate;
-  } else {
-    currentPriceToShow = currentPrice;
-  }
+  const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
   const {amount, code} = formatFiatAmountObj(
-    currentPriceToShow!,
+    currentPrice!,
     defaultAltCurrencyIsoCode,
     {
       customPrecision: 'minimal',

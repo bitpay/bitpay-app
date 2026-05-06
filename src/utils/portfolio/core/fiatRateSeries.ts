@@ -1,3 +1,9 @@
+import {
+  getFiatRateSeriesRuntimeCacheKey,
+  parseFiatRateSeriesCacheKey as parseFiatRateSeriesCacheKeyCore,
+} from '../../../portfolio/core/fiatRateIdentity';
+import type {FiatRateSeriesReaderIdentity as CoreFiatRateSeriesReaderIdentity} from '../../../portfolio/core/fiatRateIdentity';
+
 export type CachedFiatRateInterval =
   | '1D'
   | '1W'
@@ -22,167 +28,35 @@ export type FiatRateSeriesCache = {
   [key in string]?: FiatRateSeries;
 };
 
-export type FiatRateSeriesAssetIdentity = {
-  coin?: string;
-  chain?: string;
-  tokenAddress?: string;
-};
-
-export type FiatRateSeriesReaderIdentity = Omit<
+export type {
   FiatRateSeriesAssetIdentity,
-  'coin'
->;
-
-const FIAT_RATE_SERIES_ASSET_KEY_SEPARATOR = '|';
-const FIAT_RATE_SERIES_SVM_CHAINS = new Set(['sol', 'solana']);
-
-export const normalizeFiatRateSeriesCoin = (
-  currencyAbbreviation?: string,
-): string => {
-  switch ((currencyAbbreviation || '').toLowerCase()) {
-    case 'matic':
-    case 'pol':
-      return 'pol';
-    default:
-      return (currencyAbbreviation || '').toLowerCase();
-  }
-};
-
-export const normalizeFiatRateSeriesChain = (
-  chain?: string,
-): string | undefined => {
-  const normalized = String(chain || '')
-    .trim()
-    .toLowerCase();
-  return normalized || undefined;
-};
-
-export const normalizeFiatRateSeriesTokenAddress = (
-  chain?: string,
-  tokenAddress?: string,
-): string | undefined => {
-  const normalized = String(tokenAddress || '').trim();
-  if (!normalized) {
-    return undefined;
-  }
-
-  return FIAT_RATE_SERIES_SVM_CHAINS.has(String(chain || '').toLowerCase())
-    ? normalized
-    : normalized.toLowerCase();
-};
-
-export const getFiatRateSeriesAssetKey = (
-  coin: string,
-  identity?: FiatRateSeriesReaderIdentity,
-): string => {
-  const normalizedCoin = normalizeFiatRateSeriesCoin(coin).trim();
-  if (!normalizedCoin) {
-    return '';
-  }
-
-  const normalizedChain = normalizeFiatRateSeriesChain(identity?.chain);
-  const normalizedTokenAddress = normalizeFiatRateSeriesTokenAddress(
-    normalizedChain,
-    identity?.tokenAddress,
-  );
-
-  if (!normalizedChain && !normalizedTokenAddress) {
-    return normalizedCoin;
-  }
-
-  return [
-    normalizedCoin,
-    normalizedChain || '',
-    ...(normalizedTokenAddress ? [normalizedTokenAddress] : []),
-  ].join(FIAT_RATE_SERIES_ASSET_KEY_SEPARATOR);
-};
-
-export const parseFiatRateSeriesAssetKey = (
-  assetKey: string,
-):
-  | (Required<Pick<FiatRateSeriesAssetIdentity, 'coin'>> &
-      Pick<FiatRateSeriesAssetIdentity, 'chain' | 'tokenAddress'>)
-  | undefined => {
-  if (!assetKey || typeof assetKey !== 'string') {
-    return undefined;
-  }
-
-  if (!assetKey.includes(FIAT_RATE_SERIES_ASSET_KEY_SEPARATOR)) {
-    const coin = normalizeFiatRateSeriesCoin(assetKey).trim();
-    return coin ? {coin} : undefined;
-  }
-
-  const [coinPart, chainPart = '', tokenPart = ''] = assetKey.split(
-    FIAT_RATE_SERIES_ASSET_KEY_SEPARATOR,
-  );
-  const coin = normalizeFiatRateSeriesCoin(coinPart).trim();
-  if (!coin) {
-    return undefined;
-  }
-
-  const chain = normalizeFiatRateSeriesChain(chainPart);
-  const tokenAddress = normalizeFiatRateSeriesTokenAddress(chain, tokenPart);
-
-  return {
-    coin,
-    ...(chain ? {chain} : {}),
-    ...(tokenAddress ? {tokenAddress} : {}),
-  };
-};
+  FiatRateSeriesReaderIdentity,
+} from '../../../portfolio/core/fiatRateIdentity';
+export {
+  getFiatRateSeriesAssetKey,
+  getFiatRateSeriesReduxCacheKey,
+  normalizeFiatRateSeriesChain,
+  normalizeFiatRateSeriesCoin,
+  normalizeFiatRateSeriesTokenAddress,
+  parseFiatRateSeriesAssetKey,
+  parseFiatRateSeriesCacheKey,
+  parseFiatRateSeriesReduxCacheKey,
+  parseFiatRateSeriesRuntimeCacheKey,
+} from '../../../portfolio/core/fiatRateIdentity';
 
 export const getFiatRateSeriesCacheKey = (
   fiatCode: string,
   coin: string,
   interval: FiatRateInterval,
-  identity?: FiatRateSeriesReaderIdentity,
+  identity?: CoreFiatRateSeriesReaderIdentity,
 ): string => {
-  return `${(fiatCode || '').toUpperCase()}:${getFiatRateSeriesAssetKey(
-    coin,
-    identity,
-  )}:${interval}`;
-};
-
-export const parseFiatRateSeriesCacheKey = (
-  cacheKey: string,
-):
-  | ({
-      fiatCode: string;
-      interval: string;
-      assetKey: string;
-    } & Required<Pick<FiatRateSeriesAssetIdentity, 'coin'>> &
-      Pick<FiatRateSeriesAssetIdentity, 'chain' | 'tokenAddress'>)
-  | undefined => {
-  if (!cacheKey || typeof cacheKey !== 'string') {
-    return undefined;
-  }
-
-  const first = cacheKey.indexOf(':');
-  const last = cacheKey.lastIndexOf(':');
-  if (first <= 0 || last <= first + 1) {
-    return undefined;
-  }
-
-  const fiatCode = cacheKey.slice(0, first).toUpperCase();
-  const interval = cacheKey.slice(last + 1);
-  const assetKey = cacheKey.slice(first + 1, last);
-  const parsedAssetKey = parseFiatRateSeriesAssetKey(assetKey);
-
-  if (!fiatCode || !interval || !parsedAssetKey?.coin) {
-    return undefined;
-  }
-
-  return {
-    fiatCode,
-    interval,
-    assetKey,
-    ...parsedAssetKey,
-  };
+  return getFiatRateSeriesRuntimeCacheKey(fiatCode, coin, interval, identity);
 };
 
 const getFiatCodeFromSeriesCacheKey = (
   cacheKey: string,
 ): string | undefined => {
-  return parseFiatRateSeriesCacheKey(cacheKey)?.fiatCode;
+  return parseFiatRateSeriesCacheKeyCore(cacheKey)?.fiatCode;
 };
 
 export function upsertFiatRateSeriesCache(

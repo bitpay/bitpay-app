@@ -1,33 +1,22 @@
-import type {FiatRateSeriesCache, Rates, RatesCacheKey} from './rate.models';
-import {parseFiatRateSeriesCacheKey} from './rate.models';
+import type {Rates, RatesCacheKey} from './rate.models';
 import {RateActionType, RateActionTypes} from './rate.types';
 import {DEFAULT_DATE_RANGE} from '../../constants/rate';
 
 type RateReduxPersistBlackList = string[];
 export const rateReduxPersistBlackList: RateReduxPersistBlackList = [];
 
-const getFiatCodeFromSeriesCacheKey = (
-  cacheKey: string,
-): string | undefined => {
-  return parseFiatRateSeriesCacheKey(cacheKey)?.fiatCode;
-};
-
-const getCoinFromSeriesCacheKey = (cacheKey: string): string | undefined => {
-  return parseFiatRateSeriesCacheKey(cacheKey)?.coin;
-};
-
 export interface RateState {
   lastDayRates: Rates;
   rates: Rates;
-  fiatRateSeriesCache: FiatRateSeriesCache;
   ratesCacheKey: RatesCacheKey;
+  ratesUpdatedAt?: number;
 }
 
 const initialState: RateState = {
   rates: {},
   lastDayRates: {},
-  fiatRateSeriesCache: {},
   ratesCacheKey: {},
+  ratesUpdatedAt: undefined,
 };
 
 export const rateReducer = (
@@ -41,6 +30,7 @@ export const rateReducer = (
 
     case RateActionTypes.SUCCESS_GET_RATES: {
       const {rates, lastDayRates} = action.payload;
+      const ratesUpdatedAt = Date.now();
       return {
         ...state,
         rates: {...initialState.rates, ...rates},
@@ -49,52 +39,7 @@ export const rateReducer = (
           [DEFAULT_DATE_RANGE]: Date.now(),
         },
         lastDayRates: {...initialState.lastDayRates, ...lastDayRates},
-      };
-    }
-
-    case RateActionTypes.PRUNE_FIAT_RATE_SERIES_CACHE: {
-      const fiatCode = (action.payload?.fiatCode || '').toUpperCase();
-      if (!fiatCode) {
-        return state;
-      }
-
-      const keepCoins = new Set(
-        (action.payload?.keepCoins || [])
-          .map(coin => (coin || '').toLowerCase())
-          .filter(Boolean),
-      );
-
-      const next: FiatRateSeriesCache = {};
-      for (const [cacheKey, series] of Object.entries(
-        state.fiatRateSeriesCache || {},
-      )) {
-        const keyFiat = getFiatCodeFromSeriesCacheKey(cacheKey);
-        if (keyFiat !== fiatCode) {
-          next[cacheKey] = series;
-          continue;
-        }
-
-        const keyCoin = getCoinFromSeriesCacheKey(cacheKey);
-        if (keyCoin && keepCoins.has(keyCoin)) {
-          next[cacheKey] = series;
-        }
-      }
-
-      return {
-        ...state,
-        fiatRateSeriesCache: next,
-      };
-    }
-
-    case RateActionTypes.UPSERT_FIAT_RATE_SERIES_CACHE: {
-      const {updates} = action.payload;
-      const fiatRateSeriesCache = {
-        ...state.fiatRateSeriesCache,
-        ...updates,
-      };
-      return {
-        ...state,
-        fiatRateSeriesCache,
+        ratesUpdatedAt,
       };
     }
 

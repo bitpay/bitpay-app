@@ -1,6 +1,6 @@
 import type {GraphPoint} from 'react-native-graph';
 import type {HydratedBalanceChartSeries} from '../../utils/portfolio/chartCache';
-import type {PnlAnalysisPoint} from '../../utils/portfolio/core/pnl/analysis';
+import type {PnlAnalysisPoint} from '../../portfolio/core/pnl/analysisStreaming';
 import {formatFiatAmount} from '../../utils/helper-methods';
 
 export type ChangeRowData = {
@@ -37,20 +37,20 @@ export const getLastBalanceHistoryAnalysisPoint = (
 export const getDisplayedBalanceHistoryAnalysisPoint = (args: {
   selectedPoint?: GraphPoint;
   activeSeries?: SeriesLike;
-  cachedSelectedSeries?: Pick<HydratedBalanceChartSeries, 'analysisPoints'>;
 }): PnlAnalysisPoint | undefined => {
   return (
     getSelectedBalanceHistoryAnalysisPoint({
       selectedPoint: args.selectedPoint,
       activeSeries: args.activeSeries,
-    }) ||
-    getLastBalanceHistoryAnalysisPoint(args.activeSeries) ||
-    getLastBalanceHistoryAnalysisPoint(args.cachedSelectedSeries)
+    }) || getLastBalanceHistoryAnalysisPoint(args.activeSeries)
   );
 };
 
 export const buildBalanceHistoryChartChangeRowData = (args: {
-  displayedAnalysisPoint?: PnlAnalysisPoint;
+  displayedAnalysisPoint?: Pick<
+    PnlAnalysisPoint,
+    'totalPnlChange' | 'totalPnlPercent'
+  >;
   quoteCurrency: string;
   label?: string;
 }): ChangeRowData | undefined => {
@@ -61,7 +61,7 @@ export const buildBalanceHistoryChartChangeRowData = (args: {
   return {
     percent: args.displayedAnalysisPoint.totalPnlPercent ?? 0,
     deltaFiatFormatted: formatFiatAmount(
-      args.displayedAnalysisPoint.totalUnrealizedPnlFiat ?? 0,
+      args.displayedAnalysisPoint.totalPnlChange ?? 0,
       args.quoteCurrency,
       {
         customPrecision: 'minimal',
@@ -70,17 +70,6 @@ export const buildBalanceHistoryChartChangeRowData = (args: {
     ),
     rangeLabel: args.label,
   };
-};
-
-export const areBalanceHistoryChartChangeRowDataEqual = (
-  a?: ChangeRowData,
-  b?: ChangeRowData,
-): boolean => {
-  return (
-    a?.percent === b?.percent &&
-    a?.deltaFiatFormatted === b?.deltaFiatFormatted &&
-    a?.rangeLabel === b?.rangeLabel
-  );
 };
 
 export const getSelectedBalanceHistoryValue = (args: {

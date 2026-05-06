@@ -218,7 +218,7 @@ export const updateKeyStatus =
         !force
       ) {
         logManager.debug(`Key: ${key.id} - skipping balance update`);
-        return;
+        return resolve(undefined);
       }
 
       const walletOptions = {} as Record<
@@ -272,7 +272,7 @@ export const updateKeyStatus =
       });
 
       if (!credentials.length) {
-        return;
+        return resolve(undefined);
       }
 
       const {bulkClient} = BwcProvider.getInstance().getClient();

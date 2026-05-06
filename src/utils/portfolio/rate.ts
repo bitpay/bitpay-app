@@ -7,7 +7,6 @@ import type {
 } from '../../store/rate/rate.models';
 import {getFiatRateSeriesCacheKey} from '../../store/rate/rate.models';
 import {normalizeFiatRateSeriesCoin} from './core/pnl/rates';
-import {getLastDayTimestampStartOfHourMs} from '../helper-methods';
 import {
   getFiatTimeframeSeriesInterval,
   getFiatTimeframeWindowMs,
@@ -159,6 +158,11 @@ export const getFiatRateFromSeriesCacheAtTimestamp = (args: {
 };
 
 const MS_PER_HOUR = 60 * 60 * 1000;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
+
+const getLastDayTimestampStartOfHourMs = (nowMs: number): number => {
+  return Math.floor((nowMs - MS_PER_DAY) / MS_PER_HOUR) * MS_PER_HOUR;
+};
 
 export const getWindowMsForFiatRateTimeframe = (
   timeframe: FiatRateInterval,
@@ -217,6 +221,13 @@ export const getFiatRateTimeframeConfig = (args: {
   const seriesInterval = getFiatRateSeriesIntervalForTimeframe(args.timeframe);
 
   return {windowMs, baselineTimestampMs, seriesInterval};
+};
+
+export const calculatePercentageDifferenceRaw = (
+  currentValue: number,
+  baselineValue: number,
+): number => {
+  return ((currentValue - baselineValue) * 100) / baselineValue;
 };
 
 export type FiatRateChangeForTimeframe = {
@@ -311,12 +322,14 @@ export const getFiatRateChangeForTimeframe = (args: {
   }
 
   const priceChange = currentRate - baseline.rate;
-  const percentRatio = priceChange / baseline.rate;
+  const percentChange = calculatePercentageDifferenceRaw(
+    currentRate,
+    baseline.rate,
+  );
+  const percentRatio = percentChange / 100;
   if (!Number.isFinite(priceChange) || !Number.isFinite(percentRatio)) {
     return undefined;
   }
-
-  const percentChange = Number((percentRatio * 100).toFixed(2));
   if (!Number.isFinite(percentChange)) {
     return undefined;
   }

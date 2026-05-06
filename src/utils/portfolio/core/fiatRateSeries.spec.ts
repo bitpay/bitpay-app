@@ -3,6 +3,7 @@
  */
 import {
   getFiatRateSeriesCacheKey,
+  getFiatRateSeriesReduxCacheKey,
   upsertFiatRateSeriesCache,
 } from './fiatRateSeries';
 import type {FiatRateSeries, FiatRateSeriesCache} from './fiatRateSeries';
@@ -39,6 +40,24 @@ describe('getFiatRateSeriesCacheKey', () => {
     const btc = getFiatRateSeriesCacheKey('USD', 'btc', '1D');
     const eth = getFiatRateSeriesCacheKey('USD', 'eth', '1D');
     expect(btc).not.toBe(eth);
+  });
+
+  it('uses the runtime cache-key shape for token series', () => {
+    expect(
+      getFiatRateSeriesCacheKey('USD', 'USDC', '1D', {
+        chain: 'ETH',
+        tokenAddress: '0xABCDef',
+      }),
+    ).toBe('USD:usdc:1D:eth:0xabcdef');
+  });
+
+  it('keeps the legacy Redux key shape available explicitly', () => {
+    expect(
+      getFiatRateSeriesReduxCacheKey('USD', 'USDC', '1D', {
+        chain: 'ETH',
+        tokenAddress: '0xABCDef',
+      }),
+    ).toBe('USD:usdc|eth|0xabcdef:1D');
   });
 });
 

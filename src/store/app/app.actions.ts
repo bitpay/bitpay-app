@@ -281,6 +281,15 @@ export const lockAuthorizedUntil = (
   payload: authorizedUntil,
 });
 
+export const setHomeChartCollapsed = (payload: boolean): AppActionType => ({
+  type: AppActionTypes.SET_HOME_CHART_COLLAPSED,
+  payload,
+});
+
+export const remountHomeChart = (): AppActionType => ({
+  type: AppActionTypes.REMOUNT_HOME_CHART,
+});
+
 export const setHomeCarouselConfig = (
   update: HomeCarouselConfig[] | HomeCarouselConfig,
 ): AppActionType => ({

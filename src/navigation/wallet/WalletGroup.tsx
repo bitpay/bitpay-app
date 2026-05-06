@@ -190,6 +190,7 @@ export type WalletGroupParamList = {
     currencyName: string;
     currencyAbbreviation: string;
     chain: string;
+    keyId?: string;
     tokenAddress?: string;
     network?: string;
     chartType?: 'assetBalanceHistory';

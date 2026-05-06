@@ -16,6 +16,53 @@ import {Network} from '../../../../constants';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
+jest.mock('@test/store', () => ({
+  __esModule: true,
+  default: jest.fn((overrides: any = {}) => {
+    const state = {
+      ...overrides,
+      APP: {
+        defaultAltCurrency: {isoCode: 'USD'},
+        ...(overrides.APP || {}),
+      },
+      RATE: {
+        lastDayRates: {},
+        rates: {},
+        ...(overrides.RATE || {}),
+      },
+      WALLET: {
+        balanceCacheKey: {},
+        keys: {},
+        useUnconfirmedFunds: false,
+        ...(overrides.WALLET || {}),
+      },
+    };
+    const actions: any[] = [];
+    const getState = () => state;
+    const dispatch = jest.fn((action: any): any => {
+      if (typeof action === 'function') {
+        return action(dispatch, getState);
+      }
+      actions.push(action);
+      return action;
+    });
+
+    return {
+      dispatch,
+      getActions: () => actions,
+      getState,
+    };
+  }),
+}));
+
+jest.mock('react-native-worklets', () => ({
+  createWorkletRuntime: jest.fn(() => ({
+    runAsync: jest.fn(),
+    runGuarded: jest.fn(),
+    runSync: jest.fn(),
+  })),
+}));
+
 // BwcProvider — isolate network calls and prevent native module crashes
 // (tss-send calls BwcProvider.getInstance().getTssSign() at module load time)
 jest.mock('../../../../lib/bwc', () => {
@@ -66,15 +113,12 @@ jest.mock('../amount/amount', () => ({
 
 // toFiat — simple pass-through so sats === fiat for testing
 jest.mock('../../utils/wallet', () => ({
-  ...jest.requireActual('../../utils/wallet'),
   isCacheKeyStale: jest.fn(() => true), // stale by default → updates proceed
-  findWalletById: jest.fn(),
   toFiat: (sats: number) => () => sats / 1e8, // 1 sat = 1e-8 "fiat"
 }));
 
 // convertToFiat — just return the first argument
 jest.mock('../../../../utils/helper-methods', () => ({
-  ...jest.requireActual('../../../../utils/helper-methods'),
   convertToFiat: jest.fn((fiatAmount: number) => fiatAmount ?? 0),
   checkEncryptedKeysForEddsaMigration: jest.fn(() => () => Promise.resolve()),
   isL2NoSideChainNetwork: jest.fn((chain: string) =>
@@ -90,7 +134,6 @@ jest.mock('../transactions/transactions', () => ({
 
 // detectAndCreateTokensForEachEvmWallet — no-op
 jest.mock('../create/create', () => ({
-  ...jest.requireActual('../create/create'),
   detectAndCreateTokensForEachEvmWallet: jest.fn(() => () => Promise.resolve()),
 }));
 
@@ -211,6 +254,7 @@ import {
   startUpdateAllWalletStatusForKey,
   startUpdateAllKeyAndWalletStatus,
   updateWalletStatus,
+  updateKeyStatus,
   FormatKeyBalances,
   startFormatBalanceAllWalletsForKey,
 } from './status';
@@ -693,6 +737,71 @@ describe('startUpdateAllWalletStatusForKeys', () => {
         startUpdateAllWalletStatusForKeys({keys: [key], force: true}),
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe('updateKeyStatus', () => {
+  it('resolves undefined when key balance cache is still fresh and force is false', async () => {
+    (isCacheKeyStale as jest.Mock).mockReturnValue(false);
+    const mockGetClient = jest.fn();
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: mockGetClient,
+    });
+    const key = makeKey([makeWallet()]);
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {'key-1': Date.now()},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await expect(
+      store.dispatch(updateKeyStatus({key, force: false})),
+    ).resolves.toBeUndefined();
+    expect(mockGetClient).not.toHaveBeenCalled();
+  });
+
+  it('resolves undefined when there are no eligible non-token complete wallet credentials', async () => {
+    (isCacheKeyStale as jest.Mock).mockReturnValue(true);
+    const mockGetClient = jest.fn();
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: mockGetClient,
+    });
+    const tokenWallet = makeWallet({
+      credentials: {
+        copayerId: 'token-copayer',
+        token: {address: '0xtoken'},
+        multisigEthInfo: null,
+        isComplete: () => true,
+      },
+    });
+    const incompleteWallet = makeWallet({
+      id: 'wallet-2',
+      credentials: {
+        copayerId: 'incomplete-copayer',
+        token: null,
+        multisigEthInfo: null,
+        isComplete: () => false,
+      },
+    });
+    const key = makeKey([tokenWallet, incompleteWallet]);
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await expect(
+      store.dispatch(updateKeyStatus({key, force: true})),
+    ).resolves.toBeUndefined();
+    expect(mockGetClient).not.toHaveBeenCalled();
   });
 });
 

@@ -3,6 +3,7 @@ import {
   type FiatRateSeriesReaderIdentity,
   getFiatRateSeriesAssetKey as getSharedFiatRateSeriesAssetKey,
   getFiatRateSeriesCacheKey as getSharedFiatRateSeriesCacheKey,
+  getFiatRateSeriesReduxCacheKey as getSharedFiatRateSeriesReduxCacheKey,
   parseFiatRateSeriesCacheKey as parseSharedFiatRateSeriesCacheKey,
 } from '../../utils/portfolio/core/fiatRateSeries';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../constants/wallet';
@@ -70,6 +71,8 @@ export type RatesCacheKey = {
 };
 
 export const getFiatRateSeriesAssetKey = getSharedFiatRateSeriesAssetKey;
+export const getFiatRateSeriesReduxCacheKey =
+  getSharedFiatRateSeriesReduxCacheKey;
 export const parseFiatRateSeriesCacheKey = parseSharedFiatRateSeriesCacheKey;
 
 export const getFiatRateSeriesCacheKey = (

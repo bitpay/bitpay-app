@@ -93,6 +93,16 @@ target 'BitPayApp' do
       :mac_catalyst_enabled => false
     )
 
+    # Some third-party pods still declare very old iOS minimums in their podspecs.
+    # React Native 0.82 builds pods with C++20/Folly, which can trigger availability
+    # failures (for example aligned new/delete in folly/lang/New.h) if a pod target
+    # compiles as iOS 9/10 while the app itself targets a newer iOS version.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
+      end
+    end
+
     # Adds the "Inject Bundle Hash" build phase to BitPayApp.xcodeproj the first time
     # `pod install` is run. The phase runs ios/scripts/inject-bundle-hash.sh after
     # "Bundle React Native code and images", hashing the built bundle and patching the

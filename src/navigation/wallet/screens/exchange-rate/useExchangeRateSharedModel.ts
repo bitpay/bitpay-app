@@ -22,15 +22,22 @@ import {buildUIFormattedWallet} from '../../../../store/wallet/utils/wallet';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   formatCurrencyAbbreviation,
+  formatFiat,
   formatFiatAmount,
-  getRateByCurrencyName,
 } from '../../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import {getAssetTheme} from '../../../../utils/portfolio/assetTheme';
+import {resolveCurrentRatesAsOfMs} from '../../../../portfolio/ui/common';
+import {
+  getAssetCurrentDisplayQuoteRate,
+  resolveActivePortfolioDisplayQuoteCurrency,
+} from '../../../../utils/portfolio/displayCurrency';
 import {
   findSupportedCurrencyOptionForAsset,
-  getQuoteCurrency,
+  getWalletLiveFiatBalance,
   getWalletsMatchingExchangeRateAsset,
+  getVisibleWalletsForKey,
   getVisibleWalletsFromKeys,
 } from '../../../../utils/portfolio/assets';
 import {normalizeFiatRateSeriesCoin} from '../../../../utils/portfolio/core/pnl/rates';
@@ -62,12 +69,13 @@ export type ExchangeRateSharedModel = {
   currencyImageSource: any;
   currencyName: string;
   currentFiatRate: number | undefined;
-  fiatRateSeriesCache: RootState['RATE']['fiatRateSeriesCache'];
+  asOfMs: number;
   formatDisplayPrice: (value?: number) => string;
   gradientBackgroundColor: string;
   hasValidNormalizedCoin: boolean;
   hasWalletsForAsset: boolean;
   hideAllBalances: boolean;
+  showPortfolioValue: boolean;
   historicalRateIdentity: {
     chain?: string;
     tokenAddress?: string;
@@ -99,8 +107,8 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     ({APP}: RootState) => APP.homeCarouselConfig,
   );
   const rates = useAppSelector(({RATE}: RootState) => RATE.rates);
-  const fiatRateSeriesCache = useAppSelector(
-    ({RATE}: RootState) => RATE.fiatRateSeriesCache,
+  const ratesUpdatedAt = useAppSelector(
+    ({RATE}: RootState) => RATE.ratesUpdatedAt,
   );
   const defaultAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
@@ -108,11 +116,10 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   const hideAllBalances = useAppSelector(
     ({APP}: RootState) => APP.hideAllBalances,
   );
-  const portfolioQuoteCurrency = useAppSelector(
-    ({PORTFOLIO}: RootState) => PORTFOLIO.quoteCurrency,
-  );
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'ExchangeRate'>>();
   const isAssetBalanceHistoryMode = params?.chartType === 'assetBalanceHistory';
+  const scopeKeyId = params?.keyId;
 
   const currencyAbbreviation = formatCurrencyAbbreviation(
     params?.currencyAbbreviation || 'BTC',
@@ -168,11 +175,10 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   );
 
   const resolvedQuoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency,
+    return resolveActivePortfolioDisplayQuoteCurrency({
       defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
     }).toUpperCase();
-  }, [defaultAltCurrency.isoCode, portfolioQuoteCurrency]);
+  }, [defaultAltCurrency.isoCode]);
 
   const normalizedCoin = normalizeFiatRateSeriesCoin(
     assetContext.currencyAbbreviation,
@@ -196,22 +202,13 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
       return undefined;
     }
 
-    const currencyRates = getRateByCurrencyName(
+    return getAssetCurrentDisplayQuoteRate({
       rates,
-      assetContext.currencyAbbreviation,
-      assetContext.chain,
-      assetContext.tokenAddress,
-    );
-
-    if (!currencyRates?.length) {
-      return undefined;
-    }
-
-    const matchingRate = currencyRates.find(
-      rate => rate.code?.toUpperCase() === resolvedQuoteCurrency,
-    );
-
-    return matchingRate?.rate;
+      currencyAbbreviation: assetContext.currencyAbbreviation,
+      chain: assetContext.chain,
+      tokenAddress: assetContext.tokenAddress,
+      quoteCurrency: resolvedQuoteCurrency,
+    });
   }, [
     assetContext.chain,
     assetContext.currencyAbbreviation,
@@ -219,6 +216,15 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     resolvedQuoteCurrency,
     rates,
   ]);
+  const fallbackAsOfMsRef = React.useRef<number>(Date.now());
+  const asOfMs = useMemo(() => {
+    return (
+      resolveCurrentRatesAsOfMs({
+        ratesUpdatedAt,
+        rates,
+      }) ?? fallbackAsOfMsRef.current
+    );
+  }, [rates, ratesUpdatedAt]);
 
   const formatDisplayPrice = useCallback(
     (value?: number) => {
@@ -234,35 +240,73 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     [assetContext.currencyAbbreviation, resolvedQuoteCurrency],
   );
 
+  const visibleWallets = useMemo(() => {
+    if (scopeKeyId) {
+      return getVisibleWalletsForKey(keys?.[scopeKeyId]);
+    }
+
+    return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+  }, [homeCarouselConfig, keys, scopeKeyId]);
+
   const assetWallets = useMemo(() => {
+    // Asset balance history needs the full historical wallet scope so ALL-time
+    // PnL matches the asset list even after some wallets reach zero balance.
     return getWalletsMatchingExchangeRateAsset({
-      wallets: getVisibleWalletsFromKeys(keys, homeCarouselConfig),
+      wallets: visibleWallets,
+      currencyAbbreviation: assetContext.currencyAbbreviation,
+      tokenAddress: assetContext.tokenAddress,
+      includeZeroBalance: isAssetBalanceHistoryMode,
+    });
+  }, [
+    assetContext.currencyAbbreviation,
+    assetContext.tokenAddress,
+    isAssetBalanceHistoryMode,
+    visibleWallets,
+  ]);
+
+  const walletsForAssetDisplay = useMemo(() => {
+    return getWalletsMatchingExchangeRateAsset({
+      wallets: visibleWallets,
       currencyAbbreviation: assetContext.currencyAbbreviation,
       tokenAddress: assetContext.tokenAddress,
     });
   }, [
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
-    homeCarouselConfig,
-    keys,
+    visibleWallets,
   ]);
 
   const walletsForAsset = useMemo<ExchangeRateWalletWithUi[]>(() => {
-    return assetWallets
+    return walletsForAssetDisplay
       .map(wallet => {
-        const ui = buildUIFormattedWallet(
+        const baseUi = buildUIFormattedWallet(
           wallet,
           resolvedQuoteCurrency,
           rates,
           dispatch,
           'symbol',
         );
+        const liveFiatBalance = getWalletLiveFiatBalance({
+          wallet,
+          rates,
+          quoteCurrency: resolvedQuoteCurrency,
+        });
+        const ui = {
+          ...baseUi,
+          fiatBalance: liveFiatBalance,
+          fiatBalanceFormat: formatFiat({
+            fiatAmount: liveFiatBalance,
+            defaultAltCurrencyIsoCode: resolvedQuoteCurrency,
+            currencyDisplay: 'symbol',
+          }),
+        };
+
         return {wallet, ui};
       })
       .sort((a, b) => (b.ui.fiatBalance || 0) - (a.ui.fiatBalance || 0));
-  }, [assetWallets, dispatch, rates, resolvedQuoteCurrency]);
+  }, [dispatch, rates, resolvedQuoteCurrency, walletsForAssetDisplay]);
 
-  const hasWalletsForAsset = walletsForAsset.length > 0;
+  const hasWalletsForAsset = assetWallets.length > 0;
 
   const assetTotalFiatBalance = useMemo(() => {
     return walletsForAsset.reduce((total, {ui}) => {
@@ -370,18 +414,19 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     assetContext,
     assetTotalFiatBalance,
     assetWallets,
+    asOfMs,
     chartLineColor,
     circulatingSupplyToDisplay,
     currencyAbbreviation,
     currencyImageSource: assetCurrencyOption?.img || coin.img,
     currencyName,
     currentFiatRate,
-    fiatRateSeriesCache,
     formatDisplayPrice,
     gradientBackgroundColor,
     hasValidNormalizedCoin,
     hasWalletsForAsset,
     hideAllBalances,
+    showPortfolioValue,
     historicalRateIdentity,
     isAssetBalanceHistoryMode,
     keys,

@@ -4,8 +4,7 @@ import {Effect} from '../../../index';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {logManager} from '../../../../managers/LogManager';
 import {formatUnknownError} from '../../../../utils/errors/formatUnknownError';
-import {getQuoteCurrency} from '../../../../utils/portfolio/assets';
-import {maybePopulatePortfolioForWallets} from '../../../portfolio';
+import {populatePortfolio} from '../../../portfolio';
 import {updatePortfolioBalance} from '../../wallet.actions';
 import {findWalletById} from '../../utils/wallet';
 import type {Key, Recipient, Status, Wallet} from '../../wallet.models';
@@ -14,46 +13,6 @@ import {startUpdateWalletStatus} from './status';
 const POLL_INTERVAL_MS = 5000;
 const MAX_STATUS_REQUESTS = 5;
 const MAX_POLLING_DURATION_MS = POLL_INTERVAL_MS * (MAX_STATUS_REQUESTS + 1);
-
-const maybePopulatePortfolioChartsForWalletIds = async ({
-  dispatch,
-  getState,
-  walletIds,
-}: {
-  dispatch: any;
-  getState: () => any;
-  walletIds: string[];
-}): Promise<void> => {
-  const uniqueWalletIds = new Set(
-    (walletIds || []).filter((walletId): walletId is string => !!walletId),
-  );
-
-  if (!uniqueWalletIds.size) {
-    return;
-  }
-
-  const state = getState();
-  const keys = (state.WALLET?.keys || {}) as Record<string, Key>;
-  const wallets = (Object.values(keys) as Key[])
-    .flatMap((walletKey: Key) => walletKey.wallets || [])
-    .filter((currentWallet: Wallet) => uniqueWalletIds.has(currentWallet.id));
-
-  if (!wallets.length) {
-    return;
-  }
-
-  const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: state.PORTFOLIO?.quoteCurrency,
-    defaultAltCurrencyIsoCode: state.APP?.defaultAltCurrency?.isoCode,
-  }).toUpperCase();
-
-  await dispatch(
-    maybePopulatePortfolioForWallets({
-      wallets,
-      quoteCurrency,
-    }) as any,
-  );
-};
 
 const getErrorMessage = (err: unknown): string => {
   return formatUnknownError(err);
@@ -180,11 +139,28 @@ const refreshWalletsAfterTargetAmount = async ({
 
   DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
   await dispatch(updatePortfolioBalance());
-  await maybePopulatePortfolioChartsForWalletIds({
-    dispatch,
-    getState,
-    walletIds: Array.from(updatedWalletIds),
-  });
+
+  const state = getState();
+  const quoteCurrency = String(
+    state.APP?.defaultAltCurrency?.isoCode ||
+      state.PORTFOLIO?.quoteCurrency ||
+      'USD',
+  ).toUpperCase();
+
+  try {
+    await dispatch(
+      populatePortfolio({
+        walletIds: Array.from(updatedWalletIds),
+        quoteCurrency,
+      }) as any,
+    );
+  } catch (err) {
+    logManager.warn(
+      `warning [waitForTargetAmountAndUpdateWallet]: failed post-send portfolio populate: ${getErrorMessage(
+        err,
+      )}`,
+    );
+  }
 };
 
 /*

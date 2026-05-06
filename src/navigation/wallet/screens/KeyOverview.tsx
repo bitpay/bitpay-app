@@ -15,11 +15,18 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {LogBox, RefreshControl, View, useWindowDimensions} from 'react-native';
+import {
+  LayoutChangeEvent,
+  LogBox,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  RefreshControl,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
-import {useStore} from 'react-redux';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   Balance,
@@ -44,6 +51,9 @@ import {
   showBottomNotificationModal,
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
+import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
+import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
+import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
   successAddWallet,
@@ -122,6 +132,7 @@ import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -133,12 +144,11 @@ import {
 } from '../../../utils/portfolio/allocation';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {
-  buildPortfolioGainLossSummaryFromPortfolioSnapshots,
   getVisibleWalletsForKey,
   getQuoteCurrency,
   isPopulateLoadingForWallets,
 } from '../../../utils/portfolio/assets';
-import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
+import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -318,6 +328,158 @@ const HeaderRightContainer = styled(_HeaderRightContainer)`
   align-items: center;
 `;
 
+const KeyOverviewAllocationGainLossFooter = React.memo(
+  ({
+    hideAllBalances,
+    isPopulateLoading,
+    liveFiatTotal,
+    wallets,
+  }: {
+    hideAllBalances: boolean;
+    isPopulateLoading: boolean;
+    liveFiatTotal: number;
+    wallets: Wallet[];
+  }) => {
+    const {summary: gainLossSummary, loading: isGainLossSummaryLoading} =
+      usePortfolioGainLossSummary({
+        wallets,
+        liveFiatTotal,
+      });
+
+    const allTimeGainLossText = useMemo(() => {
+      if (!gainLossSummary.total.available) {
+        return null;
+      }
+
+      if (hideAllBalances) {
+        const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
+        const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(
+          2,
+        );
+        return `****  (${pctSign}${pct}%)`;
+      }
+
+      const sign = gainLossSummary.total.deltaFiat >= 0 ? '+' : '-';
+      const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
+      const amt = formatFiatAmount(
+        Math.abs(gainLossSummary.total.deltaFiat),
+        gainLossSummary.quoteCurrency,
+        {
+          customPrecision: 'minimal',
+          currencyDisplay: 'symbol',
+        },
+      );
+      const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
+      return `${sign}${amt}  (${pctSign}${pct}%)`;
+    }, [
+      gainLossSummary.quoteCurrency,
+      gainLossSummary.total.available,
+      gainLossSummary.total.deltaFiat,
+      gainLossSummary.total.percentRatio,
+      hideAllBalances,
+    ]);
+
+    const allTimeIsPositive = useMemo(() => {
+      return gainLossSummary.total.available
+        ? gainLossSummary.total.deltaFiat >= 0
+        : true;
+    }, [gainLossSummary.total.available, gainLossSummary.total.deltaFiat]);
+
+    const todayGainLossText = useMemo(() => {
+      if (!gainLossSummary.today.available) {
+        return null;
+      }
+
+      if (hideAllBalances) {
+        const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
+        const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(
+          2,
+        );
+        return `****  (${pctSign}${pct}%)`;
+      }
+
+      const sign = gainLossSummary.today.deltaFiat >= 0 ? '+' : '-';
+      const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
+      const amt = formatFiatAmount(
+        Math.abs(gainLossSummary.today.deltaFiat),
+        gainLossSummary.quoteCurrency,
+        {
+          customPrecision: 'minimal',
+          currencyDisplay: 'symbol',
+        },
+      );
+      const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
+      return `${sign}${amt}  (${pctSign}${pct}%)`;
+    }, [
+      gainLossSummary.quoteCurrency,
+      gainLossSummary.today.available,
+      gainLossSummary.today.deltaFiat,
+      gainLossSummary.today.percentRatio,
+      hideAllBalances,
+    ]);
+
+    const todayIsPositive = useMemo(() => {
+      return gainLossSummary.today.available
+        ? gainLossSummary.today.deltaFiat >= 0
+        : true;
+    }, [gainLossSummary.today.available, gainLossSummary.today.deltaFiat]);
+
+    const showAllTimeGainLossSkeleton = useMemo(() => {
+      return (
+        isPopulateLoading ||
+        (isGainLossSummaryLoading && allTimeGainLossText === null)
+      );
+    }, [allTimeGainLossText, isGainLossSummaryLoading, isPopulateLoading]);
+
+    const showTodayGainLossSkeleton = useMemo(() => {
+      return (
+        isPopulateLoading ||
+        (isGainLossSummaryLoading && todayGainLossText === null)
+      );
+    }, [isGainLossSummaryLoading, isPopulateLoading, todayGainLossText]);
+
+    const showAllTimeGainLossColumn = useMemo(() => {
+      return allTimeGainLossText !== null || showAllTimeGainLossSkeleton;
+    }, [allTimeGainLossText, showAllTimeGainLossSkeleton]);
+
+    return (
+      <>
+        <AllocationDivider />
+
+        <AllocationRow>
+          {showAllTimeGainLossColumn ? (
+            <AllocationColumn style={{paddingRight: 12}}>
+              <AllocationLabel>All-Time Gain / Loss ($)</AllocationLabel>
+              {showAllTimeGainLossSkeleton ? (
+                <AllocationMetricSkeleton />
+              ) : allTimeGainLossText !== null ? (
+                <AllocationMetricValue positive={allTimeIsPositive}>
+                  {allTimeGainLossText}
+                </AllocationMetricValue>
+              ) : null}
+            </AllocationColumn>
+          ) : null}
+          <AllocationColumn
+            style={showAllTimeGainLossColumn ? {paddingLeft: 12} : undefined}>
+            <AllocationLabel style={{textAlign: 'right'}}>
+              Today's Gain / Loss ($)
+            </AllocationLabel>
+            {showTodayGainLossSkeleton ? (
+              <AllocationMetricSkeleton align="right" />
+            ) : todayGainLossText !== null ? (
+              <AllocationMetricValue
+                positive={todayIsPositive}
+                style={{textAlign: 'right'}}>
+                {todayGainLossText}
+              </AllocationMetricValue>
+            ) : null}
+          </AllocationColumn>
+        </AllocationRow>
+      </>
+    );
+  },
+);
+
 const KeyOverview = () => {
   const {t} = useTranslation();
   const {
@@ -325,7 +487,6 @@ const KeyOverview = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const reduxStore = useStore();
   const logger = useLogger();
   const theme = useTheme();
   const isFocused = useIsFocused();
@@ -335,14 +496,15 @@ const KeyOverview = () => {
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
     ({WALLET}) => WALLET,
   );
-  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
-  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
-  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
-    useAppSelector(({APP}) => APP);
+  const {rates} = useAppSelector(({RATE}) => RATE);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const canRenderPortfolioBalanceCharts = useAppSelector(
+    selectCanRenderPortfolioBalanceCharts,
+  );
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
@@ -355,9 +517,15 @@ const KeyOverview = () => {
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const viewedKeyId = key?.id;
+  const [shouldLoadAllocationGainLoss, setShouldLoadAllocationGainLoss] =
+    useState(false);
+  const allocationFooterViewRef = useRef<View | null>(null);
+  const overviewContainerRef = useRef<View | null>(null);
+  const allocationFooterVisibilityCheckInFlightRef = useRef(false);
 
   useEffect(() => {
-    setSelectedBalance(undefined);
+    setShouldLoadAllocationGainLoss(false);
+    allocationFooterVisibilityCheckInFlightRef.current = false;
   }, [id]);
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
@@ -368,6 +536,12 @@ const KeyOverview = () => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
+  const quoteCurrency = useMemo(() => {
+    return getQuoteCurrency({
+      portfolioQuoteCurrency: portfolio.quoteCurrency,
+      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+    });
+  }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
 
   const memoizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
@@ -515,12 +689,24 @@ const KeyOverview = () => {
     });
   }, [context, firstWallet, logger, navigation]);
 
-  const {totalBalance = 0, totalBalanceLastDay} =
+  const {totalBalance = 0} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
+  const visibleKeyWalletIds = useMemo(
+    () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
+    [visibleKeyWallets],
+  );
+  const balanceChartSurface = usePortfolioBalanceChartSurface({
+    wallets: visibleKeyWallets,
+    quoteCurrency,
+    fallbackBalance: totalBalance,
+    fallbackCurrency: defaultAltCurrency.isoCode,
+    enabled: canRenderPortfolioBalanceCharts,
+    resetKey: id,
+  });
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
     return visibleKeyWallets.map((w: Wallet) => {
@@ -541,94 +727,6 @@ const KeyOverview = () => {
     );
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
 
-  const quoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency: portfolio.quoteCurrency,
-      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-    });
-  }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
-
-  const visibleKeyWalletIdsSig = useMemo(() => {
-    return Array.from(
-      new Set(
-        visibleKeyWallets
-          .map(w => w?.id)
-          .filter(
-            (walletId): walletId is string =>
-              typeof walletId === 'string' && !!walletId,
-          ),
-      ),
-    )
-      .sort((a, b) => a.localeCompare(b))
-      .join(',');
-  }, [visibleKeyWallets]);
-
-  // If we try to populate portfolio snapshots while another populate pass is
-  // already running, the thunk may no-op. Track a pending request so we can
-  // retry once populate finishes, preventing the balance chart from getting
-  // stuck in a perpetual loading state.
-  const pendingKeyBalanceChartRefreshRef = useRef(false);
-
-  const maybeRefreshKeyBalanceChart = useCallback(async () => {
-    const state = reduxStore.getState() as RootState;
-    if (state.PORTFOLIO?.populateStatus?.inProgress) {
-      pendingKeyBalanceChartRefreshRef.current = true;
-      return;
-    }
-
-    pendingKeyBalanceChartRefreshRef.current = false;
-    const latestKey = state.WALLET?.keys?.[id] as Key | undefined;
-    const latestVisibleWallets = getVisibleWalletsForKey(latestKey);
-    if (!latestVisibleWallets.length) {
-      return;
-    }
-
-    const latestQuoteCurrency = getQuoteCurrency({
-      portfolioQuoteCurrency: state.PORTFOLIO?.quoteCurrency,
-      defaultAltCurrencyIsoCode: state.APP?.defaultAltCurrency?.isoCode,
-    }).toUpperCase();
-
-    await dispatch(
-      maybePopulatePortfolioForWallets({
-        // IMPORTANT: re-read the latest Redux wallet objects after any
-        // balance/rate refresh completes so chart snapshot population does not
-        // get stuck using stale wallet balances from the first render. Keep the
-        // wallet scope aligned with the wallets visible in KeyOverview.
-        wallets: latestVisibleWallets,
-        quoteCurrency: latestQuoteCurrency,
-      }) as any,
-    );
-  }, [dispatch, id, reduxStore]);
-
-  useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-
-    maybeRefreshKeyBalanceChart();
-  }, [
-    isFocused,
-    maybeRefreshKeyBalanceChart,
-    quoteCurrency,
-    visibleKeyWalletIdsSig,
-  ]);
-
-  useEffect(() => {
-    if (
-      !isFocused ||
-      portfolio.populateStatus?.inProgress ||
-      !pendingKeyBalanceChartRefreshRef.current
-    ) {
-      return;
-    }
-
-    maybeRefreshKeyBalanceChart();
-  }, [
-    isFocused,
-    maybeRefreshKeyBalanceChart,
-    portfolio.populateStatus?.inProgress,
-  ]);
-
   const isKeyPopulateLoading = useMemo(() => {
     return isPopulateLoadingForWallets({
       populateStatus: portfolio.populateStatus,
@@ -636,113 +734,68 @@ const KeyOverview = () => {
     });
   }, [portfolio.populateStatus, visibleKeyWallets]);
 
-  const showAllocationGainLossFooter = !portfolio.populateDisabled;
+  const showAllocationGainLossFooter = canRenderPortfolioBalanceCharts;
 
-  const gainLossSummary = useMemo(() => {
-    const summary = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-      quoteCurrency,
-      rates,
-      lastDayRates,
-      fiatRateSeriesCache,
-    });
-
-    if (summary.today.available) {
-      return summary;
+  const maybeActivateAllocationGainLoss = useCallback(() => {
+    if (shouldLoadAllocationGainLoss || !showAllocationGainLossFooter) {
+      return;
     }
 
-    const baseline =
-      typeof totalBalanceLastDay === 'number' ? totalBalanceLastDay : 0;
-    const deltaFiat = totalBalance - baseline;
-    const percentRatio = baseline > 0 ? deltaFiat / baseline : 0;
-
-    return {
-      ...summary,
-      today: {
-        ...summary.today,
-        deltaFiat,
-        percentRatio,
-        available: true,
-      },
-    };
-  }, [
-    fiatRateSeriesCache,
-    lastDayRates,
-    portfolio.snapshotsByWalletId,
-    quoteCurrency,
-    rates,
-    totalBalance,
-    totalBalanceLastDay,
-    visibleKeyWallets,
-  ]);
-
-  const allTimeGainLossText = useMemo(() => {
-    if (!gainLossSummary.total.available) {
-      return null;
+    const overviewContainer = overviewContainerRef.current;
+    const allocationFooterView = allocationFooterViewRef.current;
+    if (
+      allocationFooterVisibilityCheckInFlightRef.current ||
+      !overviewContainer?.measureInWindow ||
+      !allocationFooterView?.measureInWindow
+    ) {
+      return;
     }
 
-    if (hideAllBalances) {
-      const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
-      const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
-      return `****  (${pctSign}${pct}%)`;
-    }
+    allocationFooterVisibilityCheckInFlightRef.current = true;
 
-    const sign = gainLossSummary.total.deltaFiat >= 0 ? '+' : '-';
-    const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
-    const amt = formatFiatAmount(
-      Math.abs(gainLossSummary.total.deltaFiat),
-      gainLossSummary.quoteCurrency,
-      {
-        customPrecision: 'minimal',
-        currencyDisplay: 'symbol',
+    overviewContainer.measureInWindow(
+      (_overviewX, overviewY, _overviewWidth, overviewHeight) => {
+        allocationFooterView.measureInWindow(
+          (_footerX, footerY, _footerWidth, footerHeight) => {
+            allocationFooterVisibilityCheckInFlightRef.current = false;
+
+            const overviewBottom = overviewY + overviewHeight;
+            const footerBottom = footerY + footerHeight;
+            const isVisible =
+              overviewHeight > 0 &&
+              footerHeight > 0 &&
+              footerBottom >= overviewY &&
+              footerY <= overviewBottom;
+
+            if (isVisible) {
+              setShouldLoadAllocationGainLoss(true);
+            }
+          },
+        );
       },
     );
-    const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
-    return `${sign}${amt}  (${pctSign}${pct}%)`;
-  }, [
-    gainLossSummary.quoteCurrency,
-    gainLossSummary.total.available,
-    gainLossSummary.total.deltaFiat,
-    gainLossSummary.total.percentRatio,
-    hideAllBalances,
-  ]);
+  }, [shouldLoadAllocationGainLoss, showAllocationGainLossFooter]);
 
-  const allTimeIsPositive = useMemo(() => {
-    return gainLossSummary.total.available
-      ? gainLossSummary.total.deltaFiat >= 0
-      : true;
-  }, [gainLossSummary.total.available, gainLossSummary.total.deltaFiat]);
+  const onAllocationFooterLayout = useCallback(
+    (_event: LayoutChangeEvent) => {
+      maybeActivateAllocationGainLoss();
+    },
+    [maybeActivateAllocationGainLoss],
+  );
 
-  const todayGainLossText = useMemo(() => {
-    if (hideAllBalances) {
-      const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
-      const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
-      return `****  (${pctSign}${pct}%)`;
-    }
+  const onOverviewLayout = useCallback(
+    (_event: LayoutChangeEvent) => {
+      maybeActivateAllocationGainLoss();
+    },
+    [maybeActivateAllocationGainLoss],
+  );
 
-    const sign = gainLossSummary.today.deltaFiat >= 0 ? '+' : '-';
-    const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
-    const amt = formatFiatAmount(
-      Math.abs(gainLossSummary.today.deltaFiat),
-      gainLossSummary.quoteCurrency,
-      {
-        customPrecision: 'minimal',
-        currencyDisplay: 'symbol',
-      },
-    );
-    const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
-    return `${sign}${amt}  (${pctSign}${pct}%)`;
-  }, [
-    gainLossSummary.quoteCurrency,
-    gainLossSummary.today.deltaFiat,
-    gainLossSummary.today.percentRatio,
-    hideAllBalances,
-  ]);
-
-  const todayIsPositive = useMemo(() => {
-    return gainLossSummary.today.deltaFiat >= 0;
-  }, [gainLossSummary.today.deltaFiat]);
+  const onListScroll = useCallback(
+    (_event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      maybeActivateAllocationGainLoss();
+    },
+    [maybeActivateAllocationGainLoss],
+  );
 
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
@@ -982,14 +1035,13 @@ const KeyOverview = () => {
           sleep(1000),
         ]);
         dispatch(updatePortfolioBalance());
-        await maybeRefreshKeyBalanceChart();
         setIsViewUpdating(false);
       } catch {
         setIsViewUpdating(false);
         dispatch(showBottomNotificationModal(BalanceUpdateError()));
       }
     },
-    [dispatch, isViewUpdating, key, logger, maybeRefreshKeyBalanceChart],
+    [dispatch, isViewUpdating, key, logger],
   );
 
   const updateStatusForKeyRef = useRef(updateStatusForKey);
@@ -1011,6 +1063,14 @@ const KeyOverview = () => {
     setRefreshing(true);
     try {
       await updateStatusForKey(true);
+      await dispatch(
+        maybePopulatePortfolioForWallets({
+          walletIds: visibleKeyWalletIds,
+          quoteCurrency,
+        }) as any,
+      );
+    } catch {
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
       setRefreshing(false);
     }
@@ -1099,8 +1159,8 @@ const KeyOverview = () => {
             {!hideAllBalances ? (
               <Balance scale={shouldScale(totalBalance)}>
                 {formatFiatAmount(
-                  selectedBalance ?? totalBalance,
-                  defaultAltCurrency.isoCode,
+                  balanceChartSurface.displayedTopBalance ?? totalBalance,
+                  balanceChartSurface.displayedTopBalanceCurrency,
                   {
                     currencyDisplay: 'symbol',
                   },
@@ -1111,15 +1171,19 @@ const KeyOverview = () => {
             )}
           </TouchableOpacity>
 
-          {!hideAllBalances ? (
+          {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
             <BalanceHistoryChart
               wallets={visibleKeyWallets}
-              snapshotsByWalletId={portfolio?.snapshotsByWalletId || {}}
               quoteCurrency={quoteCurrency}
               rates={rates}
-              fiatRateSeriesCache={fiatRateSeriesCache}
               timeframeSelectorWidth={timeframeSelectorWidth}
-              onSelectedBalanceChange={setSelectedBalance}
+              onSelectedBalanceChange={
+                balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+              }
+              onDisplayedAnalysisPointChange={
+                balanceChartSurface.chartCallbacks
+                  .onDisplayedAnalysisPointChange
+              }
             />
           ) : null}
         </BalanceContainer>
@@ -1148,17 +1212,16 @@ const KeyOverview = () => {
       </>
     );
   }, [
+    canRenderPortfolioBalanceCharts,
     defaultAltCurrency.isoCode,
     dispatch,
-    fiatRateSeriesCache,
+    balanceChartSurface,
     hideAllBalances,
     memoizedAccountList,
-    portfolio?.snapshotsByWalletId,
     quoteCurrency,
     rates,
     searchResults,
     searchVal,
-    selectedBalance,
     t,
     timeframeSelectorWidth,
     totalBalance,
@@ -1234,47 +1297,14 @@ const KeyOverview = () => {
                       : '****'}
                   </AllocationValue>
 
-                  {showAllocationGainLossFooter ? (
-                    <>
-                      <AllocationDivider />
-
-                      <AllocationRow>
-                        {allTimeGainLossText !== null ? (
-                          <AllocationColumn style={{paddingRight: 12}}>
-                            <AllocationLabel>
-                              All-Time Gain / Loss ($)
-                            </AllocationLabel>
-                            {isKeyPopulateLoading ? (
-                              <AllocationMetricSkeleton />
-                            ) : (
-                              <AllocationMetricValue
-                                positive={allTimeIsPositive}>
-                                {allTimeGainLossText}
-                              </AllocationMetricValue>
-                            )}
-                          </AllocationColumn>
-                        ) : null}
-                        <AllocationColumn
-                          style={
-                            allTimeGainLossText !== null
-                              ? {paddingLeft: 12}
-                              : undefined
-                          }>
-                          <AllocationLabel style={{textAlign: 'right'}}>
-                            Today's Gain / Loss ($)
-                          </AllocationLabel>
-                          {isKeyPopulateLoading ? (
-                            <AllocationMetricSkeleton align="right" />
-                          ) : (
-                            <AllocationMetricValue
-                              positive={todayIsPositive}
-                              style={{textAlign: 'right'}}>
-                              {todayGainLossText}
-                            </AllocationMetricValue>
-                          )}
-                        </AllocationColumn>
-                      </AllocationRow>
-                    </>
+                  {showAllocationGainLossFooter &&
+                  shouldLoadAllocationGainLoss ? (
+                    <KeyOverviewAllocationGainLossFooter
+                      hideAllBalances={hideAllBalances}
+                      isPopulateLoading={isKeyPopulateLoading}
+                      liveFiatTotal={totalBalance}
+                      wallets={visibleKeyWallets}
+                    />
                   ) : null}
                 </AllocationFooter>
               }
@@ -1289,19 +1319,18 @@ const KeyOverview = () => {
     allocationData.legendItems,
     allocationData.slices,
     allocationData.totalFiat,
-    allTimeGainLossText,
-    allTimeIsPositive,
     defaultAltCurrency.isoCode,
     hideAllBalances,
     id,
     isKeyPopulateLoading,
     key,
     navigation,
+    shouldLoadAllocationGainLoss,
     showPortfolioValue,
     showArchaxBanner,
-    todayGainLossText,
-    todayIsPositive,
+    showAllocationGainLossFooter,
     totalBalance,
+    visibleKeyWallets,
   ]);
 
   const listEmptyComponent = useMemo(
@@ -1326,8 +1355,16 @@ const KeyOverview = () => {
     selectedChainFilterOption,
   ]);
 
+  const listFooterComponent = useMemo(() => {
+    return (
+      <View ref={allocationFooterViewRef} onLayout={onAllocationFooterLayout}>
+        {renderListFooterComponent()}
+      </View>
+    );
+  }, [onAllocationFooterLayout, renderListFooterComponent]);
+
   return (
-    <OverviewContainer>
+    <OverviewContainer ref={overviewContainerRef} onLayout={onOverviewLayout}>
       <FlashList<AccountRowProps>
         refreshControl={
           <RefreshControl
@@ -1336,8 +1373,10 @@ const KeyOverview = () => {
             onRefresh={() => onRefresh()}
           />
         }
+        onScroll={onListScroll}
+        scrollEventThrottle={32}
         ListHeaderComponent={listHeaderComponent}
-        ListFooterComponent={renderListFooterComponent}
+        ListFooterComponent={listFooterComponent}
         data={renderDataComponent}
         renderItem={memoizedRenderItem}
         ListEmptyComponent={listEmptyComponent}

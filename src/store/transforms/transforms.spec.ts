@@ -95,17 +95,6 @@ jest.mock('redux-persist', () => ({
   })),
 }));
 
-jest.mock('../../utils/portfolio/core/pnl/snapshotSeries', () => ({
-  packBalanceSnapshotsToSeries: jest.fn((opts: any) => ({
-    _packed: true,
-    snapshots: opts.snapshots,
-  })),
-  hydrateBalanceSnapshotsFromSeries: jest.fn(
-    (series: any) => series.snapshots || [],
-  ),
-  isBalanceSnapshotSeries: jest.fn((value: any) => value?._packed === true),
-}));
-
 // ─── Imports (after mocks) ────────────────────────────────────────────────────
 
 import {
@@ -114,7 +103,6 @@ import {
   bindWalletKeys,
   transformContacts,
   transformPortfolioPopulateStatus,
-  transformPortfolioSnapshotSeries,
   encryptSpecificFields,
 } from './transforms';
 
@@ -126,12 +114,6 @@ import {
   encryptShopStore,
   decryptShopStore,
 } from './encrypt';
-
-import {
-  packBalanceSnapshotsToSeries,
-  hydrateBalanceSnapshotsFromSeries,
-  isBalanceSnapshotSeries,
-} from '../../utils/portfolio/core/pnl/snapshotSeries';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -443,11 +425,16 @@ describe('transformPortfolioPopulateStatus', () => {
 
   it('sets inProgress to false when it was true', () => {
     const state: any = {
-      populateStatus: {inProgress: true, currentWalletId: 'w1'},
+      populateStatus: {
+        inProgress: true,
+        currentWalletId: 'w1',
+        walletStatusById: {w1: 'in_progress'},
+      },
     };
     const result = getOutbound()(state);
     expect(result.populateStatus.inProgress).toBe(false);
     expect(result.populateStatus.currentWalletId).toBeUndefined();
+    expect(result.populateStatus.walletStatusById).toEqual({});
   });
 
   it('returns state unchanged when inProgress is false', () => {
@@ -462,237 +449,6 @@ describe('transformPortfolioPopulateStatus', () => {
     const state: any = {};
     const result = getOutbound()(state);
     expect(result).toBe(state);
-  });
-});
-
-// ─── transformPortfolioSnapshotSeries ─────────────────────────────────────────
-
-describe('transformPortfolioSnapshotSeries', () => {
-  const getInbound = () => (transformPortfolioSnapshotSeries as any).in;
-  const getOutbound = () => (transformPortfolioSnapshotSeries as any).out;
-
-  const makeSnapshot = (overrides: any = {}): any => ({
-    id: 'snap-1',
-    walletId: 'wallet-1',
-    chain: 'eth',
-    coin: 'eth',
-    network: 'mainnet',
-    assetId: '',
-    timestamp: Date.now(),
-    eventType: 'daily',
-    txIds: undefined,
-    cryptoBalance: '1.0',
-    balanceDeltaAtomic: undefined,
-    remainingCostBasisFiat: 100,
-    quoteCurrency: 'USD',
-    markRate: 2000,
-    costBasisRateFiat: 2000,
-    createdAt: Date.now(),
-    ...overrides,
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (packBalanceSnapshotsToSeries as jest.Mock).mockImplementation(
-      (opts: any) => ({
-        _packed: true,
-        snapshots: opts.snapshots,
-      }),
-    );
-    (isBalanceSnapshotSeries as jest.Mock).mockImplementation(
-      (v: any) => v?._packed === true,
-    );
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockImplementation(
-      (series: any) => series.snapshots || [],
-    );
-  });
-
-  it('inbound: returns state unchanged when snapshotsByWalletId is empty', () => {
-    const state: any = {snapshotsByWalletId: {}};
-    const result = getInbound()(state);
-    expect(result.snapshotsByWalletId).toEqual({});
-  });
-
-  it('inbound: skips wallet entry when snaps array is empty', () => {
-    const state: any = {snapshotsByWalletId: {w1: []}};
-    const result = getInbound()(state);
-    expect(result.snapshotsByWalletId['w1']).toBeUndefined();
-  });
-
-  it('inbound: skips wallet entry when value is not array', () => {
-    const state: any = {snapshotsByWalletId: {w1: 'not-an-array'}};
-    const result = getInbound()(state);
-    expect(result.snapshotsByWalletId['w1']).toBeUndefined();
-  });
-
-  it('inbound: packs snapshots into series', () => {
-    const snap = makeSnapshot();
-    const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
-    const result = getInbound()(state);
-    expect(packBalanceSnapshotsToSeries).toHaveBeenCalled();
-    expect(result.snapshotsByWalletId['wallet-1']).toBeDefined();
-  });
-
-  it('inbound: handles tx eventType snapshots (compressionEnabled false)', () => {
-    const snap = makeSnapshot({eventType: 'tx'});
-    const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
-    getInbound()(state);
-    expect(packBalanceSnapshotsToSeries).toHaveBeenCalledWith(
-      expect.objectContaining({compressionEnabled: false}),
-    );
-  });
-
-  it('inbound: omits packed entry when packBalanceSnapshotsToSeries returns falsy', () => {
-    (packBalanceSnapshotsToSeries as jest.Mock).mockReturnValueOnce(null);
-    const snap = makeSnapshot();
-    const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
-    const result = getInbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1']).toBeUndefined();
-  });
-
-  it('inbound: sorts out-of-order snapshots chronologically', () => {
-    const snap1 = makeSnapshot({timestamp: 2000, id: 'late'});
-    const snap2 = makeSnapshot({timestamp: 1000, id: 'early'});
-    const state: any = {snapshotsByWalletId: {'wallet-1': [snap1, snap2]}};
-    getInbound()(state);
-    // packBalanceSnapshotsToSeries receives snapshots in sorted order
-    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock
-      .calls[0][0];
-    expect(callArgs.snapshots[0].timestamp).toBe(1000);
-    expect(callArgs.snapshots[1].timestamp).toBe(2000);
-  });
-
-  it('inbound: snapshot with txIds array maps txIds correctly', () => {
-    const snap = makeSnapshot({txIds: ['tx1', 'tx2']});
-    const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
-    getInbound()(state);
-    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock
-      .calls[0][0];
-    expect(callArgs.snapshots[0].txIds).toEqual(['tx1', 'tx2']);
-  });
-
-  it('inbound: snapshot without txIds keeps txIds undefined', () => {
-    const snap = makeSnapshot({txIds: undefined});
-    const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
-    getInbound()(state);
-    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock
-      .calls[0][0];
-    expect(callArgs.snapshots[0].txIds).toBeUndefined();
-  });
-
-  it('inbound: returns state on error', () => {
-    const broken: any = {
-      get snapshotsByWalletId() {
-        throw new Error('forced');
-      },
-    };
-    expect(() => getInbound()(broken)).not.toThrow();
-  });
-
-  it('outbound: unpacks series into BalanceSnapshot array', () => {
-    const packedSeries = {_packed: true, snapshots: [makeSnapshot()]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    expect(Array.isArray(result.snapshotsByWalletId['wallet-1'])).toBe(true);
-  });
-
-  it('outbound: passes through raw array when not a series', () => {
-    (isBalanceSnapshotSeries as jest.Mock).mockReturnValueOnce(false);
-    const rawSnaps = [makeSnapshot()];
-    const state: any = {snapshotsByWalletId: {'wallet-1': rawSnaps}};
-    const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1']).toBe(rawSnaps);
-  });
-
-  it('outbound: computes fiatBalance as units * markRate', () => {
-    const snap = makeSnapshot({
-      cryptoBalance: '2',
-      markRate: 1000,
-      costBasisRateFiat: undefined,
-      remainingCostBasisFiat: 0,
-    });
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
-      snap,
-    ]);
-    const packedSeries = {_packed: true, snapshots: [snap]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    const out = result.snapshotsByWalletId['wallet-1'][0];
-    // cryptoBalance is string '2', toFiniteNumber gives 2, markRate 1000 → fiatBalance = 2000
-    expect(out.costBasisRateFiat).toBe(1000);
-  });
-
-  it('outbound: dayStartMs is set for daily eventType', () => {
-    const ts = new Date('2024-01-15').getTime();
-    const snap = makeSnapshot({eventType: 'daily', timestamp: ts});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
-      snap,
-    ]);
-    const packedSeries = {_packed: true, snapshots: [snap]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1'][0].dayStartMs).toBeDefined();
-  });
-
-  it('outbound: dayStartMs is undefined for tx eventType', () => {
-    const snap = makeSnapshot({eventType: 'tx'});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
-      snap,
-    ]);
-    const packedSeries = {_packed: true, snapshots: [snap]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    expect(
-      result.snapshotsByWalletId['wallet-1'][0].dayStartMs,
-    ).toBeUndefined();
-  });
-
-  it('outbound: txIds with >1 element is preserved', () => {
-    const snap = makeSnapshot({txIds: ['a', 'b']});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
-      snap,
-    ]);
-    const packedSeries = {_packed: true, snapshots: [snap]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1'][0].txIds).toEqual(['a', 'b']);
-  });
-
-  it('outbound: txIds with <=1 element is set to undefined', () => {
-    const snap = makeSnapshot({txIds: ['only-one']});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
-      snap,
-    ]);
-    const packedSeries = {_packed: true, snapshots: [snap]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1'][0].txIds).toBeUndefined();
-  });
-
-  it('outbound: avgCostFiatPerUnit is 0 when units is 0', () => {
-    const snap = makeSnapshot({
-      cryptoBalance: '0',
-      markRate: 1000,
-      remainingCostBasisFiat: 50,
-    });
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
-      snap,
-    ]);
-    const packedSeries = {_packed: true, snapshots: [snap]};
-    const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
-    const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1'][0].avgCostFiatPerUnit).toBe(
-      0,
-    );
-  });
-
-  it('outbound: returns outboundState on error', () => {
-    const broken: any = {
-      get snapshotsByWalletId() {
-        throw new Error('forced');
-      },
-    };
-    expect(() => getOutbound()(broken)).not.toThrow();
   });
 });
 

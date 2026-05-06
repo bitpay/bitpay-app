@@ -1,17 +1,6 @@
 import {type AssetRowItem} from '../../../../utils/portfolio/assets';
-import type {
-  CachedFiatRateInterval,
-  FiatRateSeriesCache,
-} from '../../../../store/rate/rate.models';
-import {
-  getFiatRateSeriesAssetKey,
-  hasValidSeriesForCoin,
-} from '../../../../store/rate/rate.models';
-import {normalizeFiatRateSeriesCoin} from '../../../../utils/portfolio/core/pnl/rates';
-import {
-  normalizeFiatRateSeriesChain,
-  normalizeFiatRateSeriesTokenAddress,
-} from '../../../../utils/portfolio/core/fiatRateSeries';
+import {getFiatRateSeriesAssetKey} from '../../../../store/rate/rate.models';
+import {getFiatRateAssetRef} from '../../../../portfolio/core/fiatRateIdentity';
 
 export type HistoricalRateAssetRequest = {
   requestKey: string;
@@ -34,25 +23,19 @@ const normalizeHistoricalRateAssetIdentity = (
       tokenAddress?: string;
     }
   | undefined => {
-  const coin = normalizeFiatRateSeriesCoin(identity.currencyAbbreviation);
-  if (!coin) {
+  const asset = getFiatRateAssetRef({
+    currencyAbbreviation: identity.currencyAbbreviation,
+    chain: identity.chain,
+    tokenAddress: identity.tokenAddress,
+  });
+  if (!asset.coin) {
     return undefined;
   }
 
-  const rawTokenAddress =
-    String(identity.tokenAddress || '').trim() || undefined;
-  const chain = rawTokenAddress
-    ? normalizeFiatRateSeriesChain(identity.chain)
-    : undefined;
-  const tokenAddress = normalizeFiatRateSeriesTokenAddress(
-    chain,
-    rawTokenAddress,
-  );
-
   return {
-    currencyAbbreviation: coin,
-    ...(chain ? {chain} : {}),
-    ...(tokenAddress ? {tokenAddress} : {}),
+    currencyAbbreviation: asset.coin,
+    ...(asset.chain ? {chain: asset.chain} : {}),
+    ...(asset.tokenAddress ? {tokenAddress: asset.tokenAddress} : {}),
   };
 };
 
@@ -99,57 +82,4 @@ export const getHistoricalRateAssetRequestFromItem = (
     chain: normalized.chain,
     tokenAddress: normalized.tokenAddress,
   };
-};
-
-export const hasHistoricalRateSeriesForAsset = (args: {
-  cache: FiatRateSeriesCache | undefined;
-  fiatCode: string;
-  intervals: ReadonlyArray<CachedFiatRateInterval>;
-  coin: string;
-  chain?: string;
-  tokenAddress?: string;
-}): boolean => {
-  return hasValidSeriesForCoin({
-    cache: args.cache,
-    fiatCodeUpper: (args.fiatCode || 'USD').toUpperCase(),
-    normalizedCoin: args.coin,
-    intervals: args.intervals,
-    chain: args.chain,
-    tokenAddress: args.tokenAddress,
-  });
-};
-
-export const getMissingHistoricalRateAssetRequests = (args: {
-  fiatCode: string;
-  items: HistoricalRateAssetIdentityInput[];
-  cache: FiatRateSeriesCache | undefined;
-  intervals: ReadonlyArray<CachedFiatRateInterval>;
-}): HistoricalRateAssetRequest[] => {
-  const requestsByKey = new Map<string, HistoricalRateAssetRequest>();
-
-  for (const item of args.items) {
-    const request = getHistoricalRateAssetRequestFromItem(item, args.fiatCode);
-    if (!request) {
-      continue;
-    }
-
-    if (
-      hasHistoricalRateSeriesForAsset({
-        cache: args.cache,
-        fiatCode: args.fiatCode,
-        intervals: args.intervals,
-        coin: request.coin,
-        chain: request.chain,
-        tokenAddress: request.tokenAddress,
-      })
-    ) {
-      continue;
-    }
-
-    requestsByKey.set(request.requestKey, request);
-  }
-
-  return Array.from(requestsByKey.values()).sort((a, b) =>
-    a.requestKey.localeCompare(b.requestKey),
-  );
 };

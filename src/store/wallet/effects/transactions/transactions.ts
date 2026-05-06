@@ -44,6 +44,7 @@ import {
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import {prepareTokenWalletTxHistoryRow} from '../../../../portfolio/core/tokenTxHistory';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -379,7 +380,21 @@ const ProcessNewTxs =
         tx.coin = wallet.currencyAbbreviation;
         tx.chain = wallet.chain;
 
-        if (shouldFilterTx(tx, wallet)) {
+        if (wallet.tokenAddress) {
+          const preparedTokenTx = prepareTokenWalletTxHistoryRow({
+            tx,
+            context: {
+              tokenAddress: wallet.tokenAddress,
+              receiveAddress: wallet.receiveAddress,
+              chain: wallet.chain,
+              currencyAbbreviation: wallet.currencyAbbreviation,
+            },
+          });
+          if (!preparedTokenTx || preparedTokenTx.effectAmountAtomic === '0') {
+            continue;
+          }
+          tx = preparedTokenTx.tx;
+        } else if (shouldFilterTx(tx, wallet)) {
           continue;
         }
 

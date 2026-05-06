@@ -77,6 +77,16 @@ describe('normalizeFiatRateSeriesCoin', () => {
     expect(normalizeFiatRateSeriesCoin('POL')).toBe('pol');
   });
 
+  it('returns "btc" for "wbtc" (case-insensitive)', () => {
+    expect(normalizeFiatRateSeriesCoin('wbtc')).toBe('btc');
+    expect(normalizeFiatRateSeriesCoin('WBTC')).toBe('btc');
+  });
+
+  it('returns "eth" for "weth" (case-insensitive)', () => {
+    expect(normalizeFiatRateSeriesCoin('weth')).toBe('eth');
+    expect(normalizeFiatRateSeriesCoin('WETH')).toBe('eth');
+  });
+
   it('lowercases btc', () => {
     expect(normalizeFiatRateSeriesCoin('BTC')).toBe('btc');
   });

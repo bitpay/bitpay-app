@@ -26,7 +26,6 @@ import {
   bindWalletKeys,
   transformContacts,
   transformPortfolioPopulateStatus,
-  transformPortfolioSnapshotSeries,
   encryptSpecificFields,
 } from './transforms/transforms';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
@@ -87,11 +86,7 @@ import {
   portfolioReducer,
   portfolioReduxPersistBlackList,
 } from './portfolio/portfolio.reducer';
-import {
-  portfolioChartsReducer,
-  portfolioChartsReduxPersistBlackList,
-} from './portfolio-charts/portfolio-charts.reducer';
-import {removeWalletSnapshots} from './portfolio/portfolio.actions';
+import {clearWalletPortfolioDataWithRuntime} from './portfolio';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
@@ -174,16 +169,44 @@ const restoreFromBackup = (reason: string): Promise<string | null> => {
     .catch(() => null);
 };
 
+const removePortfolioChartsPersistRoot = (
+  rawJson: string,
+): {changed: boolean; value: string} => {
+  if (!rawJson || !rawJson.includes('"PORTFOLIO_CHARTS"')) {
+    return {changed: false, value: rawJson};
+  }
+
+  try {
+    const parsed = JSON.parse(rawJson);
+    if (
+      !Object.prototype.hasOwnProperty.call(parsed || {}, 'PORTFOLIO_CHARTS')
+    ) {
+      return {changed: false, value: rawJson};
+    }
+
+    delete parsed.PORTFOLIO_CHARTS;
+
+    return {changed: true, value: JSON.stringify(parsed)};
+  } catch (_) {
+    return {changed: false, value: rawJson};
+  }
+};
+
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
+    const valueToStore =
+      key === 'persist:root' && typeof value === 'string'
+        ? removePortfolioChartsPersistRoot(value).value
+        : value;
+
     try {
-      storage.set(key, value);
+      storage.set(key, valueToStore);
     } catch (err) {
       addLog(
         LogActions.persistLog(
           LogActions.error(
             `MMKV setItem failed - key:${key} len:${
-              value?.length ?? 0
+              valueToStore?.length ?? 0
             } - ${getErrorString(err)}`,
           ),
         ),
@@ -193,11 +216,11 @@ export const reduxStorage: Storage = {
       });
     }
     try {
-      if (key === 'persist:root' && typeof value === 'string') {
+      if (key === 'persist:root' && typeof valueToStore === 'string') {
         const hasBackup = await backupFileExists();
         if (backupTriggerAction || !hasBackup) {
           const triggerLabel = backupTriggerAction ?? 'no existing backup';
-          backupPersistRoot(value)
+          backupPersistRoot(valueToStore)
             .then(() =>
               logManager.debug(
                 `Backed up store to filesystem, triggered by ${triggerLabel}.`,
@@ -216,6 +239,20 @@ export const reduxStorage: Storage = {
         // Attempt restore from backup if MMKV has been wiped or is missing
         return restoreFromBackup('missing');
       }
+
+      if (key === 'persist:root' && typeof value === 'string') {
+        const sanitized = removePortfolioChartsPersistRoot(value);
+        if (sanitized.changed) {
+          try {
+            storage.set(key, sanitized.value);
+            logManager.info(
+              `MMKV persist:root removed PORTFOLIO_CHARTS - beforeBytes:${value.length} afterBytes:${sanitized.value.length}`,
+            );
+          } catch (_) {}
+        }
+        return Promise.resolve(sanitized.value);
+      }
+
       return Promise.resolve(value);
     } catch (err) {
       addLog(
@@ -279,7 +316,6 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
   MARKET_STATS: marketStatsReduxPersistBlackList,
   PORTFOLIO: portfolioReduxPersistBlackList,
-  PORTFOLIO_CHARTS: portfolioChartsReduxPersistBlackList,
 };
 
 /*
@@ -307,7 +343,6 @@ const reducers = {
   WALLET_CONNECT_V2: walletConnectV2Reducer,
   MARKET_STATS: marketStatsReducer,
   PORTFOLIO: portfolioReducer,
-  PORTFOLIO_CHARTS: portfolioChartsReducer,
 };
 
 const combinedReducer = combineReducers(reducers);
@@ -398,7 +433,7 @@ const getStore = async () => {
       const result = next(action);
 
       if (walletIds.length) {
-        store.dispatch(removeWalletSnapshots({walletIds}));
+        store.dispatch(clearWalletPortfolioDataWithRuntime({walletIds}) as any);
       }
 
       return result;
@@ -440,7 +475,6 @@ const getStore = async () => {
       bindWalletKeys,
       transformContacts,
       transformPortfolioPopulateStatus,
-      transformPortfolioSnapshotSeries,
       createTransform<RootState, RootState, RootState>((inboundState, key) => {
         // Clear out nested blacklisted fields before encrypting and persisting
         if (typeof key === 'string') {
@@ -476,7 +510,6 @@ const getStore = async () => {
           'APP',
           'MARKET_STATS',
           'PORTFOLIO',
-          'PORTFOLIO_CHARTS',
           'RATE',
           'SHOP',
           'SHOP_CATALOG',

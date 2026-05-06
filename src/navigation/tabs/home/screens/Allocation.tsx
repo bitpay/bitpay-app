@@ -17,6 +17,7 @@ import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {formatCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {
   buildAllocationDataFromWalletRows,
+  type AllocationRowItem,
   type AllocationWallet,
   toAllocationWallet,
 } from '../../../../utils/portfolio/allocation';
@@ -29,21 +30,6 @@ import {maskIfHidden} from '../../../../utils/hideBalances';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Allocation'>;
-
-export type AllocationRowItem = {
-  key: string;
-  currencyAbbreviation: string;
-  chain: string;
-  tokenAddress?: string;
-  name: string;
-  fiatAmount: string;
-  percent: string;
-  barColor: {
-    light: string;
-    dark: string;
-  };
-  progress: number;
-};
 
 const ScreenContainer = styled.SafeAreaView`
   flex: 1;

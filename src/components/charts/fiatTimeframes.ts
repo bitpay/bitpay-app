@@ -1,7 +1,6 @@
 import type {FiatRateInterval} from '../../store/rate/rate.models';
 import {
   getFiatTimeframeMetadata,
-  getFiatTimeframeSeriesInterval,
   getFiatTimeframeWindowMs,
 } from '../../utils/fiatTimeframes';
 
@@ -29,12 +28,6 @@ export const getFiatChartTimeframeOptions = (
     value,
     label: t(getFiatTimeframeMetadata(value).displayLabel),
   }));
-};
-
-export const getSeriesIntervalForFiatTimeframe = (
-  timeframe: FiatRateInterval,
-): FiatRateInterval => {
-  return getFiatTimeframeSeriesInterval(timeframe);
 };
 
 export const getRangeLabelForFiatTimeframe = (

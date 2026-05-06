@@ -35,6 +35,7 @@ import {
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import {
   Badge,
   Balance,
@@ -50,6 +51,9 @@ import {
   toggleHideAllBalances,
   setDefaultChainFilterOption,
 } from '../../../store/app/app.actions';
+import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
+import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
+import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {
   formatCryptoAddress,
   formatCurrencyAbbreviation,
@@ -173,6 +177,7 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
 import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
 import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
+import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -376,8 +381,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
   const {width: windowWidth} = useWindowDimensions();
-  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
-    useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const canRenderPortfolioBalanceCharts = useAppSelector(
+    selectCanRenderPortfolioBalanceCharts,
+  );
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
@@ -424,11 +432,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
-  const snapshotsByWalletId = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.snapshotsByWalletId,
+  const {rates} = useAppSelector(({RATE}) => RATE);
+  const committedPortfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
   );
-  const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
@@ -451,6 +458,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         },
       ),
     [key, selectedAccountAddress],
+  );
+  const accountWalletIds = useMemo(
+    () => keyFullWalletObjs.map(wallet => wallet.id).filter(Boolean),
+    [keyFullWalletObjs],
   );
   let pendingTxps: AccountProposalsProps = {};
   keyFullWalletObjs.forEach(x => {
@@ -482,14 +493,34 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const accountItem = memorizedAccountList.find(
     a => a.receiveAddress === selectedAccountAddress,
   )!;
+  const displayQuoteCurrency = useMemo(() => {
+    return getQuoteCurrency({
+      portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    });
+  }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
+  const balanceChartSurface = usePortfolioBalanceChartSurface({
+    wallets: keyFullWalletObjs,
+    quoteCurrency: displayQuoteCurrency,
+    fallbackCurrency: defaultAltCurrency.isoCode,
+    enabled: canRenderPortfolioBalanceCharts,
+    resetKey: `${keyId}:${selectedAccountAddress || ''}`,
+  });
   const totalBalance =
-    typeof selectedBalance === 'number'
-      ? formatFiatAmount(selectedBalance, defaultAltCurrency.isoCode, {
-          currencyDisplay: 'symbol',
-          customPrecision: 'minimal',
-        })
+    typeof balanceChartSurface.selectedBalance === 'number'
+      ? formatFiatAmount(
+          balanceChartSurface.selectedBalance,
+          displayQuoteCurrency,
+          {
+            currencyDisplay: 'symbol',
+            customPrecision: 'minimal',
+          },
+        )
       : accountItem?.fiatBalanceFormat;
   const hasMultipleAccounts = memorizedAccountList.length > 1;
+  const accountChartPreContent = useMemo(() => {
+    return <AccountAddressBadge address={accountItem?.receiveAddress} />;
+  }, [accountItem?.receiveAddress]);
 
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
@@ -1294,17 +1325,30 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     await sleep(1000);
     try {
       await dispatch(startGetRates({}));
-      activeTab === 'activity'
-        ? await debouncedLoadHistory(selectedChainFilterOption, true)
-        : await dispatch(
-            startUpdateAllWalletStatusForKey({
-              key,
-              accountAddress: accountItem?.receiveAddress,
-              force: true,
-              createTokenWalletWithFunds: true,
-            }),
-          );
+      const walletStatusRefresh = dispatch(
+        startUpdateAllWalletStatusForKey({
+          key,
+          accountAddress: accountItem?.receiveAddress,
+          force: true,
+          createTokenWalletWithFunds: true,
+        }),
+      ) as any;
+
+      if (activeTab === 'activity') {
+        await Promise.all([
+          debouncedLoadHistory(selectedChainFilterOption, true) as any,
+          walletStatusRefresh,
+        ]);
+      } else {
+        await walletStatusRefresh;
+      }
       dispatch(updatePortfolioBalance());
+      await dispatch(
+        maybePopulatePortfolioForWallets({
+          walletIds: accountWalletIds,
+          quoteCurrency: displayQuoteCurrency,
+        }) as any,
+      );
       setNeedActionTxps(pendingTxps);
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
@@ -1430,18 +1474,20 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               </Row>
             </TouchableOpacity>
 
-            {!hideAllBalances ? (
+            {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
               <BalanceHistoryChart
                 wallets={keyFullWalletObjs}
-                snapshotsByWalletId={snapshotsByWalletId || {}}
-                quoteCurrency={defaultAltCurrency.isoCode}
+                quoteCurrency={displayQuoteCurrency}
                 rates={rates}
-                fiatRateSeriesCache={fiatRateSeriesCache}
                 timeframeSelectorWidth={timeframeSelectorWidth}
-                onSelectedBalanceChange={setSelectedBalance}
-                preChartContent={
-                  <AccountAddressBadge address={accountItem?.receiveAddress} />
+                onSelectedBalanceChange={
+                  balanceChartSurface.chartCallbacks.onSelectedBalanceChange
                 }
+                onDisplayedAnalysisPointChange={
+                  balanceChartSurface.chartCallbacks
+                    .onDisplayedAnalysisPointChange
+                }
+                preChartContent={accountChartPreContent}
               />
             ) : null}
           </BalanceContainer>
@@ -1597,16 +1643,19 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [
     activeTab,
+    accountChartPreContent,
     accountItem?.fiatLockedBalanceFormat,
     accountItem?.receiveAddress,
+    canRenderPortfolioBalanceCharts,
     debouncedLoadHistory,
+    displayQuoteCurrency,
     defaultAltCurrency.isoCode,
     dispatch,
-    fiatRateSeriesCache,
     groupedHistory,
     hideAllBalances,
     isSmallScreen,
     isSvmAccount,
+    balanceChartSurface,
     keyFullWalletObjs,
     lockedBalanceCurrencyAbbreviation,
     memorizedAssetsByChainList,
@@ -1617,8 +1666,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     searchVal,
     selectedChainFilterOption,
     showPortfolioValue,
-    snapshotsByWalletId,
     t,
+    timeframeSelectorWidth,
     totalBalance,
   ]);
 

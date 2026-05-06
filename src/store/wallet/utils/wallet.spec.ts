@@ -96,6 +96,7 @@ import {
   buildAccountList,
   buildAssetsByChain,
   buildAssetsByChainList,
+  buildKeyWalletRowsFromAccountList,
 } from './wallet';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1687,6 +1688,99 @@ describe('buildAssetsByChain', () => {
     const result = buildAssetsByChain(account, 'USD');
     const chains = result.map(r => r.chain).sort();
     expect(chains).toEqual(['btc', 'eth']);
+  });
+});
+
+// ─── buildKeyWalletRowsFromAccountList ───────────────────────────────────────
+
+describe('buildKeyWalletRowsFromAccountList', () => {
+  const makeWalletRow = (chain: string, fiatBalance = 0, id?: string): any => ({
+    id: id || `wallet-${chain}-${fiatBalance}`,
+    chain,
+    chainName: chain.toUpperCase(),
+    img: '',
+    badgeImg: '',
+    currencyAbbreviation: chain,
+    currencyName: chain.toUpperCase(),
+    fiatBalance,
+    fiatLockedBalance: 0,
+    fiatConfirmedLockedBalance: 0,
+    fiatSpendableBalance: fiatBalance,
+    fiatPendingBalance: 0,
+    receiveAddress: `${chain}-address`,
+    network: Network.mainnet,
+    pendingTxps: [],
+  });
+
+  const makeAccountRow = (
+    chains: string[],
+    wallets = chains.map(chain => makeWalletRow(chain)),
+  ): any => ({
+    id: `account-${chains.join('-')}`,
+    keyId: 'key-1',
+    chains,
+    wallets,
+    accountName: 'Test Account',
+    accountNumber: 0,
+    receiveAddress: 'account-address',
+    isMultiNetworkSupported: true,
+    fiatBalance: wallets.reduce(
+      (total: number, wallet: any) => total + wallet.fiatBalance,
+      0,
+    ),
+    fiatLockedBalance: 0,
+    fiatConfirmedLockedBalance: 0,
+    fiatSpendableBalance: 0,
+    fiatPendingBalance: 0,
+    fiatBalanceFormat: '$0.00',
+    fiatLockedBalanceFormat: '$0.00',
+    fiatConfirmedLockedBalanceFormat: '$0.00',
+    fiatSpendableBalanceFormat: '$0.00',
+    fiatPendingBalanceFormat: '$0.00',
+  });
+
+  it('keeps VM account rows in accounts and expands UTXO accounts to wallet rows', () => {
+    const ethAccount = makeAccountRow('eth matic'.split(' '), [
+      makeWalletRow('eth', 20),
+      makeWalletRow('matic', 60),
+    ]);
+    const btcAccount = makeAccountRow(['btc'], [makeWalletRow('btc', 40)]);
+
+    const result = buildKeyWalletRowsFromAccountList(
+      [ethAccount, btcAccount],
+      'USD',
+    );
+
+    expect(result.accounts).toHaveLength(1);
+    expect(result.accounts[0].id).toBe(ethAccount.id);
+    expect(
+      result.accounts[0].assetsByChain?.map(({chain}) => chain).sort(),
+    ).toEqual(['eth', 'matic']);
+    expect(result.mergedUtxoAndEvmAccounts).toEqual([
+      expect.objectContaining({id: ethAccount.id}),
+      expect.objectContaining({id: 'wallet-btc-40'}),
+    ]);
+  });
+
+  it('sorts rows by the max fiat balance wallet for each VM account or UTXO chain', () => {
+    const ethAccount = makeAccountRow(['eth'], [makeWalletRow('eth', 60)]);
+    const btcAccount = makeAccountRow(
+      ['btc'],
+      [makeWalletRow('btc', 10), makeWalletRow('btc', 40)],
+    );
+    const ltcAccount = makeAccountRow(['ltc'], [makeWalletRow('ltc', 30)]);
+
+    const result = buildKeyWalletRowsFromAccountList(
+      [btcAccount, ltcAccount, ethAccount],
+      'USD',
+    );
+
+    expect(result.mergedUtxoAndEvmAccounts.map(row => row.id)).toEqual([
+      ethAccount.id,
+      'wallet-btc-10',
+      'wallet-btc-40',
+      'wallet-ltc-30',
+    ]);
   });
 });
 

@@ -1,8 +1,7 @@
-import React, {useCallback, useRef} from 'react';
+import {useRef} from 'react';
 import type {HydratedBalanceChartSeries} from '../../utils/portfolio/chartCache';
 import type {NumberSharedValue} from './sharedValueGuards';
-import ChartAxisLabel from './ChartAxisLabel';
-import type {InteractiveLineChartAxisLabelProps} from './InteractiveLineChart';
+import {useStableChartAxisLabels} from './useStableChartAxisLabels';
 
 export const useStableBalanceHistoryChartAxisLabels = (args: {
   activeSeries?: HydratedBalanceChartSeries;
@@ -18,54 +17,32 @@ export const useStableBalanceHistoryChartAxisLabels = (args: {
   const quoteCurrencyRef = useRef(args.quoteCurrency);
   quoteCurrencyRef.current = args.quoteCurrency;
 
-  const MaxAxisLabel = useCallback(
-    ({width}: InteractiveLineChartAxisLabelProps) => {
+  return useStableChartAxisLabels({
+    getMaxPayload: () => {
       const series = activeSeriesRef.current;
       if (!series?.graphPoints.length) {
-        return null;
+        return undefined;
       }
 
-      return (
-        <ChartAxisLabel
-          width={width}
-          value={series.maxPoint.value}
-          index={series.maxIndex}
-          arrayLength={series.graphPoints.length}
-          quoteCurrency={quoteCurrencyRef.current}
-          currencyAbbreviation={undefined}
-          type="max"
-          contentOpacity={axisLabelOpacityRef.current}
-        />
-      );
+      return {
+        value: series.maxPoint.value,
+        index: series.maxIndex,
+        arrayLength: series.graphPoints.length,
+      };
     },
-    [],
-  );
-
-  const MinAxisLabel = useCallback(
-    ({width}: InteractiveLineChartAxisLabelProps) => {
+    getMinPayload: () => {
       const series = activeSeriesRef.current;
       if (!series?.graphPoints.length) {
-        return null;
+        return undefined;
       }
 
-      return (
-        <ChartAxisLabel
-          width={width}
-          value={series.minPoint.value}
-          index={series.minIndex}
-          arrayLength={series.graphPoints.length}
-          quoteCurrency={quoteCurrencyRef.current}
-          currencyAbbreviation={undefined}
-          type="min"
-          contentOpacity={axisLabelOpacityRef.current}
-        />
-      );
+      return {
+        value: series.minPoint.value,
+        index: series.minIndex,
+        arrayLength: series.graphPoints.length,
+      };
     },
-    [],
-  );
-
-  return {
-    MaxAxisLabel,
-    MinAxisLabel,
-  };
+    quoteCurrencyRef,
+    contentOpacityRef: axisLabelOpacityRef,
+  });
 };

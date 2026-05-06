@@ -49,7 +49,11 @@ import {
 import {coinbaseGetFiatAmount} from '../../coinbase';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
+import {
+  KeyWalletsAccountRow,
+  KeyWalletsMergedAccountRow,
+  KeyWalletsRowProps,
+} from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import {toStringOrEmpty} from '../../../utils/text';
 import _, {find, isEqual} from 'lodash';
@@ -608,6 +612,69 @@ export const BuildCoinbaseWalletsList = ({
   ].filter(key => key.coinbaseAccounts.length);
 };
 
+const isKeyWalletsAccountRow = (
+  row: KeyWalletsMergedAccountRow,
+): row is KeyWalletsAccountRow => !('chain' in row);
+
+const getMaxFiatBalanceWallet = (
+  wallets: WalletRowProps[],
+  defaultWallet?: WalletRowProps,
+) => {
+  return wallets.reduce(
+    (max, wallet) =>
+      (wallet.fiatBalance ?? 0) > (max?.fiatBalance ?? 0) ? wallet : max,
+    defaultWallet,
+  );
+};
+
+const getBalanceRepresentativeWallet = (
+  row: KeyWalletsMergedAccountRow,
+  rows: KeyWalletsMergedAccountRow[],
+) => {
+  if (isKeyWalletsAccountRow(row)) {
+    return getMaxFiatBalanceWallet(row.wallets, row.wallets[0]);
+  }
+
+  return getMaxFiatBalanceWallet(
+    rows.filter(
+      (wallet): wallet is WalletRowProps =>
+        !isKeyWalletsAccountRow(wallet) && wallet.chain === row.chain,
+    ),
+    row,
+  );
+};
+
+export const buildKeyWalletRowsFromAccountList = (
+  accountList: AccountRowProps[],
+  defaultAltCurrencyIsoCode: string,
+): Pick<KeyWalletsRowProps, 'accounts' | 'mergedUtxoAndEvmAccounts'> => {
+  const mergedRows = accountList.flatMap<KeyWalletsMergedAccountRow>(
+    account => {
+      if (IsVMChain(account.chains[0])) {
+        const assetsByChain = buildAssetsByChain(
+          account,
+          defaultAltCurrencyIsoCode,
+        );
+        return [{...account, assetsByChain}];
+      }
+
+      return account.wallets;
+    },
+  );
+
+  const accounts = mergedRows.filter(isKeyWalletsAccountRow);
+  const mergedUtxoAndEvmAccounts = [...mergedRows].sort((a, b) => {
+    const balanceA =
+      getBalanceRepresentativeWallet(a, mergedRows)?.fiatBalance ?? 0;
+    const balanceB =
+      getBalanceRepresentativeWallet(b, mergedRows)?.fiatBalance ?? 0;
+
+    return balanceB - balanceA;
+  });
+
+  return {accounts, mergedUtxoAndEvmAccounts};
+};
+
 export const BuildKeysAndWalletsList = ({
   keys,
   network,
@@ -645,77 +712,8 @@ export const BuildKeysAndWalletsList = ({
         network,
       },
     );
-    const mergedAccounts = accountList
-      .map(account => {
-        if (IsVMChain(account.chains[0])) {
-          const assetsByChain = buildAssetsByChain(
-            account,
-            defaultAltCurrencyIsoCode,
-          );
-          return {...account, assetsByChain};
-        }
-        return account.wallets;
-      })
-      .filter(Boolean) as (
-      | WalletRowProps[]
-      | (AccountRowProps & {
-          assetsByChain?: AssetsByChainData[];
-        })
-    )[];
-
-    const getMaxFiatBalanceWallet = (
-      wallets: WalletRowProps[],
-      defaultWallet: any,
-    ) => {
-      return wallets.reduce(
-        (max, w) =>
-          w?.fiatBalance && w.fiatBalance > max.fiatBalance ? w : max,
-        defaultWallet,
-      );
-    };
-
-    const flatMergedAccounts = Object.values(mergedAccounts).flat();
-    const accounts = flatMergedAccounts.filter(a => {
-      !a.chain;
-    });
-
-    const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
-      const chainA = a.chains?.[0] ?? a.chain ?? '';
-      const chainB = b.chains?.[0] ?? b.chain ?? '';
-      const isEVMA = IsVMChain(chainA);
-      const isEVMB = IsVMChain(chainB);
-
-      const walletA = isEVMA
-        ? getMaxFiatBalanceWallet(
-            (a as AccountRowProps).wallets,
-            (a as AccountRowProps).wallets[0],
-          )
-        : getMaxFiatBalanceWallet(
-            flatMergedAccounts.filter(
-              wallet => wallet?.chain === a.chain,
-            ) as WalletRowProps[],
-            a,
-          );
-
-      const walletB = isEVMB
-        ? getMaxFiatBalanceWallet(
-            (b as AccountRowProps).wallets,
-            (b as AccountRowProps).wallets[0],
-          )
-        : getMaxFiatBalanceWallet(
-            flatMergedAccounts.filter(
-              wallet => wallet?.chain === b.chain,
-            ) as WalletRowProps[],
-            b,
-          );
-
-      const balanceA = walletA.fiatBalance || 0;
-      const balanceB = walletB.fiatBalance || 0;
-
-      return balanceB - balanceA;
-    }) as
-      | WalletRowProps[]
-      | (AccountRowProps & {assetsByChain?: AssetsByChainData[]});
+    const {accounts, mergedUtxoAndEvmAccounts} =
+      buildKeyWalletRowsFromAccountList(accountList, defaultAltCurrencyIsoCode);
 
     return {
       key: keyId,
