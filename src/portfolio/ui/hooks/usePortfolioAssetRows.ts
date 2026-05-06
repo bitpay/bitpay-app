@@ -162,12 +162,8 @@ function buildDisplayMetric(args: {
 
   return {
     ...args.baseMetric,
-    fiatValue: isFiniteNumber(summary.fiatValue)
-      ? summary.fiatValue
-      : args.baseMetric.fiatValue,
     pnlFiat: summary.pnlFiat,
     pnlPercent: summary.pnlPercent,
-    hasRate: args.baseMetric.hasRate || isFiniteNumber(summary.fiatValue),
     hasPnl: summary.hasPnl,
     showPnlPlaceholder: !summary.hasPnl,
   };
