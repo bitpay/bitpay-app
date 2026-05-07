@@ -56,7 +56,7 @@ final class ImportWalletRecoveryPhrase: XCTestCase {
       "(6 to 7) On the “Import” screen, tap the Recovery Phrase input field & Enter a valid Recovery Phrase. "
     ) {
       importRecoveryPhasePage.enterRecoveryPhrase(
-        "hobby short divert lady spare quit act settle body town license alone"
+        "**********************"
       )
     }
     
