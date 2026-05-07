@@ -25,8 +25,6 @@ import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/
 import axios from 'axios';
 import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {setBrazeEid, setEmailNotificationsAccepted} from '../app/app.actions';
-import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {DeviceEventEmitter} from 'react-native';
 import {
   getPasskeyCredentials,
   getPasskeyStatus,
@@ -39,6 +37,7 @@ import {
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
+import {sleep} from '../../utils/helper-methods';
 
 interface StartLoginParams {
   email?: string;
@@ -47,14 +46,10 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdAnalyticsInit =
-  (
-    user: BasicUserInfo,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect<void> =>
+  (user: BasicUserInfo): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     const acceptedEmailNotifications = !!APP.emailNotifications?.accepted;
-    const notificationsAccepted = APP.notificationsAccepted;
 
     if (user) {
       const {eid, name} = user;
@@ -74,39 +69,7 @@ export const startBitPayIdAnalyticsInit =
         }
       }
 
-      // Check if Braze EID exists and not the same
-      // Merge ONLY anonymous EIDs
-      // If login with any other BitPayID, we shouldn't delete/merge previous user
-      // Only switch to a new EID with setBrazeEid
-      if (
-        APP.brazeEid &&
-        APP.brazeEid !== eid &&
-        isAnonymousBrazeEid(APP.brazeEid)
-      ) {
-        Analytics.startMergingUser();
-        // Should migrate the user to the new EID
-        logManager.info(
-          '[startBitPayIdAnalyticsInit] Merging current user to new EID: ',
-          eid,
-        );
-        try {
-          await BrazeWrapper.merge(APP.brazeEid, eid);
-          // Emit event to delete old user
-          DeviceEventEmitter.emit(
-            DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-            {
-              oldEid: APP.brazeEid,
-              newEid: eid,
-            },
-          );
-        } catch (error) {
-          const errMsg =
-            error instanceof Error ? error.message : JSON.stringify(error);
-          logManager.error(
-            `[startBitPayIdAnalyticsInit] Merging current user failed: ${errMsg}`,
-          );
-        }
-      }
+      const previousBrazeEid = APP.brazeEid;
       dispatch(setBrazeEid(eid));
       await dispatch(
         Analytics.identify(eid, {
@@ -115,32 +78,42 @@ export const startBitPayIdAnalyticsInit =
           lastName: familyName,
         }),
       );
+
+      if (
+        previousBrazeEid &&
+        previousBrazeEid !== eid &&
+        isAnonymousBrazeEid(previousBrazeEid)
+      ) {
+        Analytics.startMergingUser();
+        try {
+          logManager.info(
+            '[Braze] Merge oldEid/newEid: ',
+            previousBrazeEid,
+            eid,
+          );
+          await BrazeWrapper.merge(previousBrazeEid, eid);
+        } catch (error) {
+          const errMsg =
+            error instanceof Error ? error.message : JSON.stringify(error);
+          logManager.error(`[Braze] Merge EID failed: ${errMsg}`);
+        }
+        await sleep(5000);
+        Analytics.endMergingUser();
+      }
+
       // Set email notifications and push notifications after Braze EID is set
-      dispatch(
-        setEmailNotifications(
-          acceptedEmailNotifications &&
-            user.optInEmailMarketing &&
-            user.verified,
-          email,
-          agreedToMarketingCommunications,
-        ),
-      );
+      dispatch(setEmailNotifications(acceptedEmailNotifications, email));
     }
   };
 
 export const startBitPayIdStoreInit =
-  (
-    initialData: InitialUserData,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect<void> =>
+  (initialData: InitialUserData): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     const {basicInfo: user} = initialData;
     dispatch(BitPayIdActions.successInitializeStore(APP.network, initialData));
     try {
-      dispatch(
-        startBitPayIdAnalyticsInit(user, agreedToMarketingCommunications),
-      );
+      dispatch(startBitPayIdAnalyticsInit(user));
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error(
@@ -193,12 +166,13 @@ export const startCreateAccount =
         hashedPassword: hashedPassword,
         salt: salt,
         agreedToTOSandPP: params.agreedToTOSandPP,
-        optInEmailMarketing: params.agreedToMarketingCommunications,
-        attribute: params.agreedToMarketingCommunications
-          ? 'App Signup'
-          : undefined,
+        optInEmailMarketing: agreedToMarketingCommunications,
+        attribute: agreedToMarketingCommunications ? 'App Signup' : undefined,
         gCaptchaResponse: params.gCaptchaResponse,
       });
+
+      // New users accept email notifications by default
+      dispatch(setEmailNotificationsAccepted(true, params.email));
 
       // refresh session
       const session = await AuthApi.fetchSession(APP.network);
@@ -208,14 +182,7 @@ export const startCreateAccount =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(
-        startPairAndLoadUser(
-          APP.network,
-          secret,
-          undefined,
-          agreedToMarketingCommunications,
-        ),
-      );
+      await dispatch(startPairAndLoadUser(APP.network, secret, undefined));
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
@@ -546,12 +513,7 @@ export const startDeeplinkPairing =
   };
 
 export const startPairAndLoadUser =
-  (
-    network: Network,
-    secret: string,
-    code?: string,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect<Promise<void>> =>
+  (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
@@ -585,9 +547,7 @@ export const startPairAndLoadUser =
         );
       }
 
-      dispatch(
-        startBitPayIdStoreInit(data.user, agreedToMarketingCommunications),
-      );
+      dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>

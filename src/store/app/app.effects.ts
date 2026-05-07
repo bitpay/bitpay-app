@@ -23,7 +23,7 @@ import {
   PERMISSIONS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
-import {AppActions} from '.';
+import * as AppActions from './app.actions';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
@@ -46,14 +46,9 @@ import {WalletActions} from '../wallet';
 import {
   startMigration,
   startAddEDDSAKey,
-  startWalletStoreInit,
   startGetRates,
 } from '../wallet/effects';
-import {
-  populatePortfolio,
-  preparePortfolioFiatRateCachesForQuoteCurrencySwitch,
-  setSnapshotBalanceMismatchesByWalletIdUpdates,
-} from '../portfolio';
+import {startWalletStoreInit} from '../wallet/effects/init/init';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -74,11 +69,6 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
-import {
-  getWalletIdsToPopulateFromSnapshots,
-  getVisibleWalletsFromKeys,
-  isFiatLoadingForWallets,
-} from '../../utils/portfolio/assets';
 import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
@@ -126,7 +116,7 @@ import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
-import {prefetchSwapCryptoData} from '../swap-crypto/swap-crypto.effects';
+import {prefetchExternalServicesData} from '../external-services/external-services.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
@@ -157,6 +147,10 @@ import {
   isSslPinningAvailable,
 } from 'react-native-ssl-public-key-pinning';
 import {DirectIntegrationApiObject} from '../shop/shop.models';
+import {setShowPortfolioValueWithRuntimeReset} from './showPortfolio.effects';
+
+export {setShowPortfolioValueWithRuntimeReset} from './showPortfolio.effects';
+export {setHomeCarouselConfigAndPopulateNewlyVisibleKeys} from './homeCarousel.effects';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -213,7 +207,20 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
 
-    const walletInitPromise = dispatch(startWalletStoreInit());
+    try {
+      const walletStoreInitResult = dispatch(startWalletStoreInit());
+      void Promise.resolve(walletStoreInitResult).catch(error => {
+        logManager.error(
+          'Failed background wallet store init: ' +
+            (error instanceof Error ? error.message : JSON.stringify(error)),
+        );
+      });
+    } catch (error: unknown) {
+      logManager.error(
+        'Failed starting background wallet store init: ' +
+          (error instanceof Error ? error.message : JSON.stringify(error)),
+      );
+    }
 
     const {
       contactMigrationComplete,
@@ -274,7 +281,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(initializeApi(network, identity));
 
-    dispatch(LocationEffects.getLocationData());
+    const locationDataPromise = dispatch(LocationEffects.getLocationData());
 
     dispatch(fetchInitialUserData());
 
@@ -292,92 +299,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
     logManager.info('Initialized app successfully.');
 
-    walletInitPromise
-      .then(() => {
-        const stateAfterWalletInit = getState();
-        if (stateAfterWalletInit.APP?.showPortfolioValue === false) {
-          return;
-        }
-        if (stateAfterWalletInit.PORTFOLIO?.populateStatus?.inProgress) {
-          return;
-        }
-
-        const quoteCurrency =
-          stateAfterWalletInit.APP?.defaultAltCurrency?.isoCode ||
-          stateAfterWalletInit.PORTFOLIO?.quoteCurrency ||
-          'USD';
-
-        const snapshotsByWalletId =
-          stateAfterWalletInit.PORTFOLIO?.snapshotsByWalletId || {};
-        const portfolioIsEmpty =
-          !snapshotsByWalletId || Object.keys(snapshotsByWalletId).length === 0;
-
-        const keys = stateAfterWalletInit.WALLET?.keys || {};
-        const homeCarouselConfig = stateAfterWalletInit.APP?.homeCarouselConfig;
-        const wallets = getVisibleWalletsFromKeys(
-          keys,
-          homeCarouselConfig,
-        ).filter((w: any) => w?.network === Network.mainnet);
-
-        if (!wallets.length) {
-          return;
-        }
-
-        if (portfolioIsEmpty) {
-          dispatch(populatePortfolio({quoteCurrency}));
-          return;
-        }
-
-        const {walletIdsToPopulate, snapshotBalanceMismatchUpdates} =
-          getWalletIdsToPopulateFromSnapshots({
-            wallets,
-            snapshotsByWalletId,
-            previousSnapshotBalanceMismatchesByWalletId:
-              stateAfterWalletInit.PORTFOLIO
-                ?.snapshotBalanceMismatchesByWalletId || {},
-          });
-
-        if (Object.keys(snapshotBalanceMismatchUpdates).length) {
-          dispatch(
-            setSnapshotBalanceMismatchesByWalletIdUpdates(
-              snapshotBalanceMismatchUpdates,
-            ),
-          );
-        }
-
-        const hasFiatLoading = isFiatLoadingForWallets({
-          quoteCurrency,
-          wallets,
-          snapshotsByWalletId,
-          fiatRateSeriesCache:
-            stateAfterWalletInit.RATE?.fiatRateSeriesCache || {},
-        });
-
-        if (hasFiatLoading) {
-          dispatch(
-            preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
-              quoteCurrency,
-            }),
-          );
-          return;
-        }
-
-        if (walletIdsToPopulate.length) {
-          dispatch(
-            populatePortfolio({
-              quoteCurrency,
-              walletIds: walletIdsToPopulate,
-            }),
-          );
-        }
-      })
-      .catch(() => {});
-
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
 
-    // Pre-fetch swap crypto config and currencies in background
-    dispatch(prefetchSwapCryptoData());
+    // Pre-fetch external services config and swap crypto currencies in background
+    await locationDataPromise;
+    dispatch(prefetchExternalServicesData());
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
@@ -944,11 +871,7 @@ export const setAnnouncementsNotifications =
   };
 
 export const setEmailNotifications =
-  (
-    accepted: boolean,
-    email: string | null,
-    agreedToMarketingCommunications?: boolean,
-  ): Effect =>
+  (accepted: boolean, email: string | null): Effect =>
   (dispatch, getState) => {
     const {
       WALLET: {keys},
@@ -965,10 +888,7 @@ export const setEmailNotifications =
         Braze.setEmail(email);
       }
       Braze.setEmailNotificationSubscriptionType(
-        (bitpayUser &&
-          bitpayUser?.verified &&
-          bitpayUser?.optInEmailMarketing) ||
-          agreedToMarketingCommunications
+        bitpayUser && bitpayUser?.verified && bitpayUser?.optInEmailMarketing
           ? Braze.NotificationSubscriptionTypes.OPTED_IN
           : Braze.NotificationSubscriptionTypes.SUBSCRIBED,
       );
@@ -1124,11 +1044,15 @@ export const handleBwsEvent =
 export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
   try {
     await dispatch(AppActions.setColorScheme('unspecified'));
-    await dispatch(AppActions.showPortfolioValue(true));
     await dispatch(AppActions.toggleHideAllBalances(false));
-    // Reset AltCurrency
+    // Reset AltCurrency before Show Portfolio repopulates so the fresh run uses USD.
     await dispatch(
       AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
+    );
+    await dispatch(
+      setShowPortfolioValueWithRuntimeReset(true, {
+        throwOnRuntimeClearFailure: true,
+      }),
     );
     dispatch(FormatKeyBalances());
     await dispatch(updatePortfolioBalance());

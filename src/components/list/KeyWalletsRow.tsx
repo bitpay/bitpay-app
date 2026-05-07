@@ -145,16 +145,21 @@ export interface KeyWallet extends Wallet {
   img: string | ((props: any) => ReactElement);
 }
 
+export type KeyWalletsAccountRow = AccountRowProps & {
+  assetsByChain?: AssetsByChainData[];
+  checked?: boolean;
+};
+
+export type KeyWalletsMergedAccountRow =
+  | WalletRowProps
+  | (AccountRowProps & {assetsByChain?: AssetsByChainData[]});
+
 export interface KeyWalletsRowProps extends SearchableItem {
   key: string;
   backupComplete?: boolean;
   keyName: string;
-  accounts: (AccountRowProps & {assetsByChain?: AssetsByChainData[]} & {
-    checked?: boolean;
-  })[];
-  mergedUtxoAndEvmAccounts:
-    | WalletRowProps[]
-    | (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
+  accounts: KeyWalletsAccountRow[];
+  mergedUtxoAndEvmAccounts: KeyWalletsMergedAccountRow[];
   coinbaseAccounts: WalletRowProps[];
 }
 

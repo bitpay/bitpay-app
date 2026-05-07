@@ -29,7 +29,6 @@ import {Effect, RootState} from '../../../../store';
 import {getErrorString, sleep} from '../../../../utils/helper-methods';
 import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
-import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
   ValidDataTypes,
@@ -70,7 +69,6 @@ import {
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {
-  IsVMChain,
   IsUtxoChain,
   IsOtherChain,
   IsEVMChain,
@@ -80,7 +78,7 @@ import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import {
   buildAccountList,
-  buildAssetsByChain,
+  buildKeyWalletRowsFromAccountList,
 } from '../../../../store/wallet/utils/wallet';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
@@ -92,11 +90,7 @@ import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {LogActions} from '../../../../store/log';
 import {Network, URL} from '../../../../constants';
-import {AccountRowProps} from '../../../../components/list/AccountListRow';
-import {AssetsByChainData} from '../AccountDetails';
-import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {useOngoingProcess} from '../../../../contexts';
 import {logManager} from '../../../../managers/LogManager';
@@ -200,77 +194,11 @@ export const BuildKeyAccountRow = (
           },
         );
 
-        const mergedAccounts = accountList
-          .map(account => {
-            if (IsVMChain(account.chains[0])) {
-              const assetsByChain = buildAssetsByChain(
-                account,
-                defaultAltCurrencyIsoCode,
-              );
-              return {...account, assetsByChain};
-            }
-            return account.wallets;
-          })
-          .filter(Boolean) as (
-          | WalletRowProps[]
-          | (AccountRowProps & {
-              assetsByChain?: AssetsByChainData[];
-            })
-        )[];
-
-        const getMaxFiatBalanceWallet = (
-          wallets: WalletRowProps[],
-          defaultWallet: any,
-        ) => {
-          return wallets.reduce(
-            (max, w) =>
-              w?.fiatBalance && w.fiatBalance > max.fiatBalance ? w : max,
-            defaultWallet,
+        const {accounts, mergedUtxoAndEvmAccounts} =
+          buildKeyWalletRowsFromAccountList(
+            accountList,
+            defaultAltCurrencyIsoCode,
           );
-        };
-
-        const flatMergedAccounts = Object.values(mergedAccounts).flat();
-        const accounts = flatMergedAccounts.filter(a => {
-          !a.chain;
-        });
-
-        const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
-          const chainA = a.chains?.[0] ?? a.chain ?? '';
-          const chainB = b.chains?.[0] ?? b.chain ?? '';
-          const isEVMA = IsVMChain(chainA);
-          const isEVMB = IsVMChain(chainB);
-
-          const walletA = isEVMA
-            ? getMaxFiatBalanceWallet(
-                (a as AccountRowProps).wallets,
-                (a as AccountRowProps).wallets[0],
-              )
-            : getMaxFiatBalanceWallet(
-                flatMergedAccounts.filter(
-                  wallet => wallet?.chain === a.chain,
-                ) as WalletRowProps[],
-                a,
-              );
-
-          const walletB = isEVMB
-            ? getMaxFiatBalanceWallet(
-                (b as AccountRowProps).wallets,
-                (b as AccountRowProps).wallets[0],
-              )
-            : getMaxFiatBalanceWallet(
-                flatMergedAccounts.filter(
-                  wallet => wallet?.chain === b.chain,
-                ) as WalletRowProps[],
-                b,
-              );
-
-          const balanceA = walletA.fiatBalance || 0;
-          const balanceB = walletB.fiatBalance || 0;
-
-          return balanceB - balanceA;
-        }) as
-          | WalletRowProps[]
-          | (AccountRowProps & {assetsByChain?: AssetsByChainData[]});
         return {
           key,
           keyName: value.keyName || 'My Key',
@@ -297,7 +225,9 @@ const SendTo = () => {
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const theme = useTheme();
@@ -578,8 +508,8 @@ const SendTo = () => {
       searching?: boolean;
     } = {},
   ) => {
-    const {context, name, email, destinationTag, searching} = opts;
-    if (isEmailAddress(text.trim())) {
+    const {context, name, email, destinationTag} = opts;
+    if (user && isEmailAddress(text.trim())) {
       setSearchIsEmailAddress(true);
       return;
     }

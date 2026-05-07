@@ -1,13 +1,17 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {InteractionManager, Platform, ScrollView} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useTranslation} from 'react-i18next';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import Clipboard from '@react-native-clipboard/clipboard';
+import type {RootStackParamList} from '../../../../../Root';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {getEncryptionKey, storage} from '../../../../../store';
-import {encryptTransform} from 'redux-persist-transform-encrypt';
+import {
+  atomicToUnitString,
+  formatCurrencyAbbreviation,
+  unitStringToAtomicBigInt,
+} from '../../../../../utils/helper-methods';
 import {AboutGroupParamList, AboutScreens} from '../AboutGroup';
 import {
   DebugButtonRow,
@@ -18,20 +22,45 @@ import {
   DebugPillButtonText,
   DebugScreenContainer,
 } from '../components/DebugUI';
-import {WalletScreens} from '../../../../wallet/WalletGroup';
+import {getPortfolioRuntimeClient} from '../../../../../portfolio/runtime/portfolioRuntime';
 import type {
-  BalanceSnapshot,
-  SnapshotBalanceMismatch,
-} from '../../../../../store/portfolio/portfolio.models';
+  SnapshotIndexV2,
+  SnapshotPersistDebugMode,
+} from '../../../../../portfolio/core/pnl/snapshotStore';
+import type {BalanceSnapshotStored} from '../../../../../portfolio/core/pnl/types';
+import type {
+  Tx,
+  WalletCredentials,
+  WalletSummary,
+} from '../../../../../portfolio/core/types';
+import {formatAtomicAmount} from '../../../../../portfolio/core/format';
+import {getTxHistoryLogicalPageSize} from '../../../../../portfolio/core/txHistoryPaging';
 import type {Wallet} from '../../../../../store/wallet/wallet.models';
-import {GetTransactionHistory} from '../../../../../store/wallet/effects/transactions/transactions';
+import {GetPrecision} from '../../../../../store/wallet/utils/currency';
+import {WalletScreens} from '../../../../wallet/WalletGroup';
+import {
+  clearWalletPortfolioDataWithRuntime,
+  populatePortfolio,
+} from '../../../../../store/portfolio';
+import {logManager} from '../../../../../managers/LogManager';
+import {getWalletLiveAtomicBalance} from '../../../../../utils/portfolio/assets';
+import {extractPortfolioWalletCredentialsSnapshot} from '../../../../../portfolio/adapters/rn/walletMappers';
+import {buildPortfolioTxHistoryRequestPath} from '../../../../../portfolio/adapters/rn/txHistoryRequest';
+import {BwcProvider} from '../../../../../lib/bwc';
+import {
+  buildTokenWalletTxHistoryContextFromCredentials,
+  normalizeTokenWalletTxHistoryPage,
+} from '../../../../../portfolio/core/tokenTxHistory';
+import {
+  buildWalletBalanceDiagnostic,
+  type BalanceDiagnosticTxPage,
+} from '../../../../../portfolio/debug/balanceDiagnostic';
+import type {PortfolioPopulateWalletDebugTrace} from '../../../../../portfolio/core/engine/populateDebug';
 
 type PortfolioWalletDebugScreenProps = NativeStackScreenProps<
   AboutGroupParamList,
   AboutScreens.PORTFOLIO_WALLET_DEBUG
 >;
-
-type WalletDebugDataView = 'redux' | 'disk';
 
 const JsonLineText = styled.Text`
   padding: 12px;
@@ -41,1220 +70,1104 @@ const JsonLineText = styled.Text`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const csvEscape = (v: unknown): string => {
-  const s = v == null ? '' : String(v);
-  if (/[\n\r,\"]/g.test(s)) {
-    return `"${s.replace(/"/g, '""')}"`;
+const SectionTitle = styled.Text`
+  padding: 0 12px;
+  color: ${({theme}) => theme.colors.text};
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+`;
+
+const SectionText = styled.Text`
+  padding: 0 12px 12px;
+  color: ${({theme}) => theme.colors.text};
+  font-size: 12px;
+  line-height: 18px;
+`;
+
+const ErrorText = styled(SectionText)`
+  color: ${({theme}) => theme.colors.notification};
+`;
+
+const ControlLabel = styled.Text`
+  color: ${({theme}) => theme.colors.text};
+  font-size: 12px;
+  line-height: 16px;
+  margin-top: 2px;
+  margin-bottom: 8px;
+  opacity: 0.7;
+`;
+
+const SNAPSHOT_DEBUG_MODE_OPTIONS: SnapshotPersistDebugMode[] = [
+  'none',
+  'link',
+  'full',
+];
+
+const formatSnapshotDebugModeLabel = (
+  mode: SnapshotPersistDebugMode,
+): string => {
+  switch (mode) {
+    case 'none':
+      return 'None';
+    case 'link':
+      return 'Link';
+    case 'full':
+      return 'Full';
   }
-  return s;
 };
 
-type DiskSnapshotData = {
-  ok: boolean;
-  error: string | null;
-  snapshotsCount: number;
-  json: string;
+const csvEscape = (value: unknown): string => {
+  const nextValue = value == null ? '' : String(value);
+  if (/[,"\n\r]/.test(nextValue)) {
+    return `"${nextValue.replace(/"/g, '""')}"`;
+  }
+  return nextValue;
 };
 
-const formatTimestampForCsv = (timestamp: unknown): string => {
-  const tsNum = Number(timestamp);
-  if (!Number.isFinite(tsNum)) {
-    return '';
+const toIso = (value?: number): string => {
+  if (!Number.isFinite(value)) {
+    return '—';
   }
-  const d = new Date(tsNum);
-  const ms = d.getTime();
-  if (!Number.isFinite(ms)) {
-    return '';
+
+  try {
+    return new Date(value as number).toISOString();
+  } catch {
+    return '—';
   }
-  return d.toISOString();
 };
 
-const getImpliedRateForCsv = (s: BalanceSnapshot): string => {
-  const balanceNum = Number(s.cryptoBalance);
-  if (!(Number.isFinite(balanceNum) && balanceNum > 0)) {
-    return '';
-  }
-  const basisNum = Number(s.remainingCostBasisFiat);
-  const pnlNum = Number(s.unrealizedPnlFiat);
-  if (!(Number.isFinite(basisNum) && Number.isFinite(pnlNum))) {
-    return '';
-  }
-  const rate = (basisNum + pnlNum) / balanceNum;
-  return Number.isFinite(rate) ? String(rate) : '';
-};
-
-const getDecimalPlaces = (v: unknown): number => {
-  const s = typeof v === 'string' ? v.replace(/,/g, '').trim() : '';
-  if (!s || !s.includes('.')) {
+const getRowCount = (index: SnapshotIndexV2 | null | undefined): number => {
+  if (!index?.chunks?.length) {
     return 0;
   }
-  return s.split('.')[1]?.length || 0;
+
+  return index.chunks.reduce((total, chunk) => {
+    const rows = Number(chunk?.rows);
+    return total + (Number.isFinite(rows) ? rows : 0);
+  }, 0);
 };
 
-const unitStringToAtomicStringForDebug = (
-  unitString: unknown,
-  decimals: number,
-): string | null => {
-  const raw =
-    typeof unitString === 'string' ? unitString.replace(/,/g, '').trim() : '';
-  if (!raw) {
-    return null;
+const formatChunkDebugModes = (
+  index: SnapshotIndexV2 | null | undefined,
+): string => {
+  if (!index?.chunks?.length) {
+    return '—';
   }
-  const sign = raw.startsWith('-') ? '-' : '';
-  const unsigned = sign ? raw.slice(1) : raw;
-  const [wholePartRaw, fracPartRaw = ''] = unsigned.split('.');
-  const wholePart = wholePartRaw || '0';
-  const frac = fracPartRaw
-    .slice(0, Math.max(0, decimals))
-    .padEnd(decimals, '0');
-  const normalized = `${wholePart}${frac}`.replace(/^0+(?=\d)/, '');
-  const out = `${sign}${normalized || '0'}`;
-  try {
-    return BigInt(out).toString();
-  } catch {
-    return null;
-  }
+
+  const counts = index.chunks.reduce<Record<string, number>>((acc, chunk) => {
+    const mode = String(chunk?.debugMode || 'none');
+    acc[mode] = (acc[mode] || 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(counts)
+    .map(([mode, count]) => `${mode}:${count}`)
+    .join(', ');
 };
 
-const redactIdForDebug = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
+const findWalletById = (
+  walletKeys: Record<string, any>,
+  walletId: string,
+): Wallet | undefined => {
+  for (const key of Object.values(walletKeys || {})) {
+    const wallets = Array.isArray((key as any)?.wallets)
+      ? (key as any).wallets
+      : [];
+    const match = wallets.find((wallet: Wallet) => wallet?.id === walletId);
+    if (match) {
+      return match;
+    }
   }
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-  const parts = trimmed.split(':');
-  if (parts.length >= 3 && (parts[0] === 'tx' || parts[0] === 'daily')) {
-    return `${parts[0]}:[redacted]:[redacted]`;
-  }
-  return '[redacted]';
+  return undefined;
 };
 
-const redactTxIdsForDebug = (txIds: unknown): string[] | null => {
-  if (!Array.isArray(txIds)) {
-    return null;
-  }
-  return txIds.map(() => '[redacted]');
+const toCsv = (snapshots: BalanceSnapshotStored[]): string => {
+  const headers = [
+    'id',
+    'walletId',
+    'chain',
+    'coin',
+    'network',
+    'assetId',
+    'timestamp',
+    'iso',
+    'eventType',
+    'cryptoBalance',
+    'remainingCostBasisFiat',
+    'markRate',
+    'quoteCurrency',
+    'createdAt',
+    'txIds',
+  ];
+
+  const rows = snapshots.map(snapshot => {
+    return [
+      snapshot.id,
+      snapshot.walletId,
+      snapshot.chain,
+      snapshot.coin,
+      snapshot.network,
+      snapshot.assetId,
+      snapshot.timestamp,
+      toIso(snapshot.timestamp),
+      snapshot.eventType,
+      snapshot.cryptoBalance,
+      snapshot.remainingCostBasisFiat,
+      snapshot.markRate,
+      snapshot.quoteCurrency,
+      snapshot.createdAt,
+      Array.isArray(snapshot.txIds) ? snapshot.txIds.join('|') : '',
+    ]
+      .map(csvEscape)
+      .join(',');
+  });
+
+  return [headers.join(','), ...rows].join('\n');
 };
 
-const redactMismatchForDebug = (
-  mismatch: SnapshotBalanceMismatch | undefined,
-): SnapshotBalanceMismatch | null => {
-  if (!mismatch) {
-    return null;
-  }
+const BWC = BwcProvider.getInstance();
+const DIAGNOSTIC_PAGE_SIZE = 1000;
+const MAX_DIAGNOSTIC_PAGES = 250;
+
+type WalletBwsSummaryState = {
+  fetchedAtMs: number;
+  summary: WalletSummary;
+};
+
+type WalletBalanceDiagnosticState = {
+  generatedAtMs: number;
+  summaryLine: string;
+  reportText: string;
+  pageCount: number;
+  txCount: number;
+};
+
+type WalletPopulateCheckpointCaptureState = {
+  capturedAtMs: number;
+  snapshotDebugMode: 'link' | 'full' | 'none';
+  beforeIndex: SnapshotIndexV2 | null;
+  afterIndex: SnapshotIndexV2 | null;
+  debugTrace?: PortfolioPopulateWalletDebugTrace | null;
+};
+
+const createPortfolioDebugBwcClient = (credentials: WalletCredentials): any => {
+  return BWC.getClient(JSON.stringify(credentials));
+};
+
+const fetchPortfolioDebugBwsWalletSummary = async (
+  client: any,
+  credentials: WalletCredentials,
+): Promise<WalletSummary> => {
+  const tokenAddress =
+    String(client?.credentials?.token?.address || '').trim() || undefined;
+  const multisigContractAddress =
+    String(
+      client?.credentials?.multisigEthInfo?.multisigContractAddress || '',
+    ).trim() || undefined;
+  const network =
+    String(client?.credentials?.network || '').trim() || undefined;
+
+  const status = await new Promise<any>((resolve, reject) => {
+    client.getStatus(
+      {
+        twoStep: true,
+        tokenAddress,
+        multisigContractAddress,
+        network,
+      },
+      (error: any, nextStatus: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(nextStatus);
+      },
+    );
+  });
+
+  const walletName = String(
+    status?.wallet?.name ||
+      credentials?.walletName ||
+      credentials?.walletId ||
+      'Wallet',
+  );
+  const chain = String(credentials?.chain || credentials?.coin || '')
+    .trim()
+    .toLowerCase();
+  const normalizedNetwork = String(credentials?.network || '')
+    .trim()
+    .toLowerCase();
+  const currencyAbbreviation = String(
+    credentials?.token?.symbol || credentials?.coin || chain,
+  )
+    .trim()
+    .toLowerCase();
+  const balanceAtomic = String(status?.balance?.totalAmount ?? '0');
+
   return {
-    ...mismatch,
-    walletId: '[redacted]',
+    walletId: String(credentials?.walletId || '').trim(),
+    walletName,
+    chain,
+    network: normalizedNetwork,
+    currencyAbbreviation,
+    tokenAddress,
+    balanceAtomic,
+    balanceFormatted: formatAtomicAmount(balanceAtomic, credentials),
   };
 };
 
-const summarizeSnapshotForDebug = (s?: BalanceSnapshot | null) => {
-  if (!s) {
-    return null;
-  }
-  return {
-    id: redactIdForDebug(s.id),
-    eventType: s.eventType,
-    timestamp: s.timestamp,
-    createdAt: s.createdAt ?? null,
-    cryptoBalance: s.cryptoBalance,
-    balanceDeltaAtomic: s.balanceDeltaAtomic ?? null,
-    txIdsCount: Array.isArray(s.txIds) ? s.txIds.length : 0,
-    direction: s.direction ?? null,
-  };
+const fetchPortfolioDebugTxHistoryPageByRequest = async (args: {
+  client: any;
+  credentials: WalletCredentials;
+  skip: number;
+  limit: number;
+  reverse?: boolean;
+}): Promise<Tx[]> => {
+  const requestPath = buildPortfolioTxHistoryRequestPath({
+    credentials: args.credentials,
+    skip: args.skip,
+    limit: args.limit,
+    reverse: args.reverse,
+  });
+
+  return new Promise((resolve, reject) => {
+    args.client.request.get(requestPath, (error: any, txs: Tx[]) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      const out = Array.isArray(txs) ? txs : [];
+      if (typeof args.client?._processTxps === 'function') {
+        args.client._processTxps(out);
+      }
+      resolve(
+        normalizeTokenWalletTxHistoryPage({
+          txs: out,
+          context: buildTokenWalletTxHistoryContextFromCredentials(
+            args.credentials,
+          ),
+        }),
+      );
+    });
+  });
 };
 
-const pickLatestSnapshotByOrderingForDebug = (
-  snapshots: BalanceSnapshot[],
-): BalanceSnapshot | undefined => {
-  const arr = Array.isArray(snapshots) ? snapshots : [];
-  if (!arr.length) {
-    return undefined;
+const collectPortfolioDebugTxHistoryPages = async (args: {
+  client: any;
+  credentials: WalletCredentials;
+  pageSize?: number;
+}): Promise<BalanceDiagnosticTxPage[]> => {
+  const pageSize =
+    Number.isFinite(Number(args.pageSize)) && Number(args.pageSize) > 0
+      ? Math.trunc(Number(args.pageSize))
+      : DIAGNOSTIC_PAGE_SIZE;
+
+  const pages: BalanceDiagnosticTxPage[] = [];
+  let skip = 0;
+
+  for (let pageNumber = 1; pageNumber <= MAX_DIAGNOSTIC_PAGES; pageNumber++) {
+    const txs = await fetchPortfolioDebugTxHistoryPageByRequest({
+      client: args.client,
+      credentials: args.credentials,
+      skip,
+      limit: pageSize,
+      reverse: true,
+    });
+
+    pages.push({
+      pageNumber,
+      skip,
+      txs,
+    });
+
+    if (!txs.length) {
+      return pages;
+    }
+
+    const logicalPageSize = getTxHistoryLogicalPageSize(txs);
+    if (logicalPageSize <= 0) {
+      return pages;
+    }
+    skip += logicalPageSize;
   }
-  return arr.reduce(
-    (best: BalanceSnapshot | undefined, current: BalanceSnapshot) => {
-      if (!best) {
-        return current;
-      }
-      const bestTs = typeof best.timestamp === 'number' ? best.timestamp : 0;
-      const currTs =
-        typeof current.timestamp === 'number' ? current.timestamp : 0;
-      if (currTs > bestTs) {
-        return current;
-      }
-      if (currTs < bestTs) {
-        return best;
-      }
 
-      const bestCreatedAt =
-        typeof best.createdAt === 'number' ? best.createdAt : 0;
-      const currCreatedAt =
-        typeof current.createdAt === 'number' ? current.createdAt : 0;
-      if (currCreatedAt > bestCreatedAt) {
-        return current;
-      }
-      if (currCreatedAt < bestCreatedAt) {
-        return best;
-      }
-
-      return String(current.id || '').localeCompare(String(best.id || '')) > 0
-        ? current
-        : best;
-    },
-    undefined,
+  throw new Error(
+    `Balance diagnostic exceeded ${MAX_DIAGNOSTIC_PAGES} tx-history pages.`,
   );
 };
 
-const summarizeDiskRowForDebug = (row: any) => {
-  if (!row || typeof row !== 'object') {
-    return null;
-  }
-  return {
-    id: redactIdForDebug(row.i),
-    timestamp: typeof row.t === 'number' ? row.t : null,
-    eventTypeCode: typeof row.e === 'number' ? row.e : null,
-    cryptoBalanceAtomic: typeof row.b === 'string' ? row.b : null,
-    deltaAtomic: typeof row.d === 'string' ? row.d : null,
-    txIdsCount: Array.isArray(row.x) ? row.x.length : 0,
-  };
-};
-
-const countDuplicateTimestampsForDebug = (
-  snapshots: BalanceSnapshot[],
-): number => {
-  const freq: Record<string, number> = {};
-  for (const s of snapshots || []) {
-    const ts = typeof s?.timestamp === 'number' ? String(s.timestamp) : '';
-    if (!ts) {
-      continue;
-    }
-    freq[ts] = (freq[ts] || 0) + 1;
-  }
-  return Object.values(freq).filter(n => n > 1).length;
-};
-
-const extractTxIdFromSnapshotIdForDebug = (
-  snapshotId: unknown,
-): string | null => {
-  if (typeof snapshotId !== 'string') {
-    return null;
-  }
-  if (!snapshotId.startsWith('tx:')) {
-    return null;
-  }
-  const txid = snapshotId.slice(3).trim();
-  return txid || null;
-};
-
-const countDuplicateSnapshotIdsForDebug = (
-  snapshots: BalanceSnapshot[],
-): number => {
-  const freq: Record<string, number> = {};
-  for (const s of snapshots || []) {
-    const id = typeof s?.id === 'string' ? s.id : '';
-    if (!id) {
-      continue;
-    }
-    freq[id] = (freq[id] || 0) + 1;
-  }
-  return Object.values(freq).filter(n => n > 1).length;
-};
-
-const countDuplicateSnapshotTxIdsForDebug = (
-  snapshots: BalanceSnapshot[],
-): number => {
-  const freq: Record<string, number> = {};
-  for (const s of snapshots || []) {
-    const txid = extractTxIdFromSnapshotIdForDebug(s?.id);
-    if (!txid) {
-      continue;
-    }
-    freq[txid] = (freq[txid] || 0) + 1;
-  }
-  return Object.values(freq).filter(n => n > 1).length;
-};
-
-const countSameTxIdDifferentBalanceForDebug = (
-  snapshots: BalanceSnapshot[],
-): number => {
-  const seen = new Map<string, string>();
-  let count = 0;
-  for (const s of snapshots || []) {
-    const txid = extractTxIdFromSnapshotIdForDebug(s?.id);
-    const balance =
-      typeof s?.cryptoBalance === 'string' ? s.cryptoBalance : null;
-    if (!txid || balance == null) {
-      continue;
-    }
-    const prev = seen.get(txid);
-    if (prev == null) {
-      seen.set(txid, balance);
-      continue;
-    }
-    if (prev !== balance) {
-      count++;
-    }
-  }
-  return count;
-};
-
-const buildLatestPopulateWindowStatsForDebug = (args: {
-  snapshots: BalanceSnapshot[];
-  populateStartedAt?: number | null;
-}) => {
-  const startedAt =
-    typeof args.populateStartedAt === 'number' ? args.populateStartedAt : null;
-  if (startedAt == null) {
-    return {
-      startedAt: null,
-      snapshotsCreatedInWindowCount: null,
-      firstCreatedInWindow: null,
-      lastCreatedInWindow: null,
-      deltaAtomicSumInWindow: null,
-      duplicateSnapshotIdsInWindow: null,
-      duplicateTxIdsInWindow: null,
-      sameTxIdDifferentBalanceInWindow: null,
-    };
-  }
-
-  const windowSnaps = (args.snapshots || []).filter(s => {
-    const createdAt = s?.createdAt;
-    return typeof createdAt === 'number' && createdAt >= startedAt;
-  });
-
-  let deltaAtomicSum = 0n;
-  for (const s of windowSnaps) {
-    try {
-      deltaAtomicSum += BigInt(
-        typeof s?.balanceDeltaAtomic === 'string' ? s.balanceDeltaAtomic : '0',
-      );
-    } catch {}
-  }
-
-  return {
-    startedAt,
-    snapshotsCreatedInWindowCount: windowSnaps.length,
-    firstCreatedInWindow: summarizeSnapshotForDebug(windowSnaps[0]),
-    lastCreatedInWindow: summarizeSnapshotForDebug(
-      windowSnaps.length ? windowSnaps[windowSnaps.length - 1] : null,
-    ),
-    deltaAtomicSumInWindow: deltaAtomicSum.toString(),
-    duplicateSnapshotIdsInWindow:
-      countDuplicateSnapshotIdsForDebug(windowSnaps),
-    duplicateTxIdsInWindow: countDuplicateSnapshotTxIdsForDebug(windowSnaps),
-    sameTxIdDifferentBalanceInWindow:
-      countSameTxIdDifferentBalanceForDebug(windowSnaps),
-  };
-};
-
-const getTxTimestampMsForDebug = (tx: any): number | null => {
-  const raw =
-    tx?.time ??
-    tx?.__portfolioTimestampMs ??
-    tx?.createdOn ??
-    tx?.ts ??
-    tx?.timestamp ??
-    tx?.createdTime ??
-    tx?.blockTime ??
-    tx?.block_time ??
-    tx?.blockTimeNormalized ??
-    tx?.block_time_normalized;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) {
-    return null;
-  }
-  return n > 1e12 ? n : n * 1000;
-};
-
-const summarizeTxForDebug = (tx: any) => ({
-  txidPresent: typeof tx?.txid === 'string' && tx.txid.trim().length > 0,
-  txidRedacted:
-    typeof tx?.txid === 'string' && tx.txid.trim().length > 0
-      ? '[redacted]'
-      : null,
-  action: typeof tx?.action === 'string' ? tx.action : null,
-  confirmations:
-    typeof tx?.confirmations === 'number'
-      ? tx.confirmations
-      : Number.isFinite(Number(tx?.confirmations))
-      ? Number(tx.confirmations)
-      : null,
-  amount:
-    typeof tx?.amount === 'number'
-      ? tx.amount
-      : Number.isFinite(Number(tx?.amount))
-      ? Number(tx.amount)
-      : null,
-  fees:
-    typeof tx?.fees === 'number'
-      ? tx.fees
-      : Number.isFinite(Number(tx?.fees))
-      ? Number(tx.fees)
-      : null,
-  timePresent: tx?.time != null,
-  createdOnPresent: tx?.createdOn != null,
-  timestampMs: getTxTimestampMsForDebug(tx),
-});
-
-const PortfolioWalletDebug = ({
-  route,
-  navigation,
-}: PortfolioWalletDebugScreenProps) => {
+const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   const {t} = useTranslation();
-  const theme = useTheme();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const dispatch = useAppDispatch();
-
   const {walletId} = route.params;
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
-  const walletKeys = useAppSelector(({WALLET}) => WALLET?.keys || {});
 
-  const [dataView, setDataView] = useState<WalletDebugDataView>('redux');
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const walletKeys = useAppSelector(({WALLET}) => WALLET?.keys || {});
+  const mismatch = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.snapshotBalanceMismatchesByWalletId?.[walletId],
+  );
+
+  const [index, setIndex] = useState<SnapshotIndexV2 | null>(null);
+  const [latestSnapshot, setLatestSnapshot] =
+    useState<BalanceSnapshotStored | null>(null);
+  const [snapshots, setSnapshots] = useState<BalanceSnapshotStored[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [runtimeError, setRuntimeError] = useState<string>('');
+  const [copyJsonState, setCopyJsonState] = useState<'idle' | 'copied'>('idle');
   const [copyCsvState, setCopyCsvState] = useState<'idle' | 'copied'>('idle');
-  const [copyReduxJsonState, setCopyReduxJsonState] = useState<
+  const [copyBalanceDiagnosticState, setCopyBalanceDiagnosticState] = useState<
     'idle' | 'copied'
   >('idle');
-  const [copyDiskJsonState, setCopyDiskJsonState] = useState<'idle' | 'copied'>(
-    'idle',
+  const [bwsSummary, setBwsSummary] = useState<WalletBwsSummaryState | null>(
+    null,
   );
-  const [copyDiagState, setCopyDiagState] = useState<'idle' | 'copied'>('idle');
-  const [copyTimelineState, setCopyTimelineState] = useState<'idle' | 'copied'>(
-    'idle',
+  const [balanceDiagnostic, setBalanceDiagnostic] =
+    useState<WalletBalanceDiagnosticState | null>(null);
+  const [lastDebugPopulate, setLastDebugPopulate] =
+    useState<WalletPopulateCheckpointCaptureState | null>(null);
+  const [isRefreshingBwsSummary, setIsRefreshingBwsSummary] =
+    useState<boolean>(false);
+  const [isRunningBalanceDiagnostic, setIsRunningBalanceDiagnostic] =
+    useState<boolean>(false);
+  const [populateDebugMode, setPopulateDebugMode] =
+    useState<SnapshotPersistDebugMode>('link');
+
+  const wallet = useMemo(
+    () => findWalletById(walletKeys, walletId),
+    [walletId, walletKeys],
   );
-
-  const walletSnapshots: BalanceSnapshot[] = useMemo(() => {
-    return (portfolio.snapshotsByWalletId?.[walletId] ||
-      []) as BalanceSnapshot[];
-  }, [portfolio.snapshotsByWalletId, walletId]);
-
-  const wallet = useMemo(() => {
-    for (const key of Object.values(walletKeys || {}) as any[]) {
-      const wallets: Wallet[] = Array.isArray(key?.wallets) ? key.wallets : [];
-      const found = wallets.find((w: Wallet) => w?.id === walletId);
-      if (found) {
-        return found;
-      }
-    }
-    return undefined;
-  }, [walletId, walletKeys]);
-
-  const cryptoBalanceString = useMemo(() => {
+  const walletUnitDecimals = useMemo(() => {
     if (!wallet) {
-      return '—';
+      return 0;
     }
-    if (typeof wallet.balance?.crypto === 'string') {
-      return wallet.balance.crypto;
+
+    const precision =
+      dispatch(
+        GetPrecision(
+          wallet.currencyAbbreviation,
+          wallet.chain,
+          wallet.tokenAddress,
+        ) as any,
+      ) || undefined;
+    return precision?.unitDecimals || 0;
+  }, [dispatch, wallet]);
+  const walletDetailsBalance = useMemo(() => {
+    if (!wallet) {
+      return undefined;
     }
-    if (typeof wallet.balance?.sat === 'number') {
-      return wallet.balance.sat.toString();
-    }
-    return '0';
+
+    const cryptoBalance = String((wallet as any)?.balance?.crypto || '0');
+    const currencyAbbreviation = formatCurrencyAbbreviation(
+      String((wallet as any)?.currencyAbbreviation || ''),
+    );
+
+    return [cryptoBalance, currencyAbbreviation].filter(Boolean).join(' ');
   }, [wallet]);
-
-  const cryptoBalanceSatString = useMemo(() => {
-    if (typeof wallet?.balance?.sat === 'number') {
-      return wallet.balance.sat;
+  const walletDetailsAtomicBalance = useMemo(() => {
+    if (!wallet) {
+      return undefined;
     }
-    return '—';
-  }, [wallet]);
-
-  const snapshotCryptoBalanceString = useMemo(() => {
-    const last = walletSnapshots.length
-      ? walletSnapshots[walletSnapshots.length - 1]
-      : undefined;
-    return last?.cryptoBalance ?? '—';
-  }, [walletSnapshots]);
-
-  const mismatch = useMemo(() => {
-    return (portfolio.snapshotBalanceMismatchesByWalletId || {})[walletId] as
-      | SnapshotBalanceMismatch
-      | undefined;
-  }, [portfolio.snapshotBalanceMismatchesByWalletId, walletId]);
-
-  const [diskSnapshotData, setDiskSnapshotData] = useState<DiskSnapshotData>({
-    ok: false,
-    error: null,
-    snapshotsCount: 0,
-    json: JSON.stringify({loading: true}, null, 2),
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      try {
-        setDiskSnapshotData({
-          ok: false,
-          error: null,
-          snapshotsCount: 0,
-          json: JSON.stringify({loading: true}, null, 2),
-        });
-
-        const rootStr = storage.getString('persist:root');
-        if (!rootStr) {
-          const json = JSON.stringify(
-            {error: 'persist:root is empty'},
-            null,
-            2,
-          );
-          if (!cancelled) {
-            setDiskSnapshotData({
-              ok: false,
-              error: 'persist:root is empty',
-              snapshotsCount: 0,
-              json,
-            });
-          }
-          return;
-        }
-
-        const root = JSON.parse(rootStr);
-        const portfolioStr = (root as any)?.PORTFOLIO;
-        if (!portfolioStr) {
-          const json = JSON.stringify(
-            {error: 'persist:root.PORTFOLIO missing'},
-            null,
-            2,
-          );
-          if (!cancelled) {
-            setDiskSnapshotData({
-              ok: false,
-              error: 'persist:root.PORTFOLIO missing',
-              snapshotsCount: 0,
-              json,
-            });
-          }
-          return;
-        }
-
-        // In redux-persist, each slice is typically stored as a JSON string.
-        // For encrypted reducers, JSON.parse(portfolioStr) yields the encrypted payload string.
-        const parsed =
-          typeof portfolioStr === 'string'
-            ? JSON.parse(portfolioStr)
-            : portfolioStr;
-
-        let portfolioRaw: any = parsed;
-        let encryptedPayload: string | null = null;
-
-        if (typeof parsed === 'string') {
-          encryptedPayload = parsed;
-          try {
-            // Decrypt using the same transform config used by the store.
-            const secretKey = await getEncryptionKey();
-            const decrypt = encryptTransform({
-              secretKey,
-              onError: () => {},
-              unencryptedStores: [
-                'APP',
-                'MARKET_STATS',
-                'PORTFOLIO',
-                'RATE',
-                'SHOP',
-                'SHOP_CATALOG',
-                'WALLET',
-              ],
-            });
-            portfolioRaw = decrypt.out(parsed as any, 'PORTFOLIO', undefined);
-          } catch (e) {
-            portfolioRaw = null;
-          }
-        }
-
-        if (!portfolioRaw || typeof portfolioRaw !== 'object') {
-          const json = JSON.stringify(
-            {
-              walletId,
-              error:
-                'Unable to decode PORTFOLIO from persisted storage (encrypted payload?)',
-              encryptedPayloadPreview: encryptedPayload
-                ? encryptedPayload.slice(0, 500)
-                : null,
-            },
-            null,
-            2,
-          );
-          if (!cancelled) {
-            setDiskSnapshotData({
-              ok: false,
-              error: 'Unable to decode PORTFOLIO from persisted storage',
-              snapshotsCount: 0,
-              json,
-            });
-          }
-          return;
-        }
-
-        const snapshotStorage =
-          (portfolioRaw?.snapshotsByWalletId || {})[walletId] ?? null;
-        const snapshotsCount = Array.isArray(snapshotStorage)
-          ? snapshotStorage.length
-          : typeof snapshotStorage?.rows?.length === 'number'
-          ? Number(snapshotStorage.rows.length)
-          : 0;
-
-        const jsonObj = {
-          walletId,
-          portfolioMeta: {
-            quoteCurrency: portfolioRaw?.quoteCurrency ?? null,
-            lastPopulatedAt: portfolioRaw?.lastPopulatedAt ?? null,
-            // populateStatus: portfolioRaw?.populateStatus ?? null,
-          },
-          snapshotStorage,
-          // Helpful when debugging encryption / transform issues.
-          encryptedPayloadPreview: encryptedPayload
-            ? encryptedPayload.slice(0, 200)
-            : null,
-        };
-
-        const json = JSON.stringify(jsonObj, null, 2);
-        if (!cancelled) {
-          setDiskSnapshotData({
-            ok: true,
-            error: null,
-            snapshotsCount,
-            json,
-          });
-        }
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        const json = JSON.stringify(
-          {error: 'Failed to read persisted portfolio data', message},
-          null,
-          2,
-        );
-        if (!cancelled) {
-          setDiskSnapshotData({
-            ok: false,
-            error: message,
-            snapshotsCount: 0,
-            json,
-          });
-        }
-      }
-    };
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [walletId]);
-
-  const reduxJsonString = useMemo(() => {
-    const json = {
-      walletId,
-      quoteCurrency: portfolio.quoteCurrency,
-      lastPopulatedAt: portfolio.lastPopulatedAt,
-      // populateStatus: portfolio.populateStatus,
-      balanceMismatch: mismatch,
-      snapshots: walletSnapshots,
-    };
 
     try {
-      return JSON.stringify(json, null, 2);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      return JSON.stringify(
-        {error: 'Failed to stringify wallet portfolio debug data', message},
-        null,
-        2,
+      return unitStringToAtomicBigInt(
+        String((wallet as any)?.balance?.crypto || '0').replace(/,/g, ''),
+        walletUnitDecimals,
+      ).toString();
+    } catch {
+      return undefined;
+    }
+  }, [wallet, walletUnitDecimals]);
+  const walletPopulateLogicAtomicBalance = useMemo(() => {
+    if (!wallet) {
+      return undefined;
+    }
+
+    try {
+      return getWalletLiveAtomicBalance({
+        wallet,
+        unitDecimals: walletUnitDecimals,
+      }).toString();
+    } catch {
+      return undefined;
+    }
+  }, [wallet, walletUnitDecimals]);
+  const liveRecomputedMismatch = useMemo(() => {
+    if (!wallet || !latestSnapshot) {
+      return undefined;
+    }
+
+    try {
+      const snapshotAtomic = BigInt(
+        String(latestSnapshot.cryptoBalance || '0'),
       );
+      const populateLiveAtomic = getWalletLiveAtomicBalance({
+        wallet,
+        unitDecimals: walletUnitDecimals,
+      });
+      const walletDetailsAtomic = unitStringToAtomicBigInt(
+        String((wallet as any)?.balance?.crypto || '0').replace(/,/g, ''),
+        walletUnitDecimals,
+      );
+
+      return {
+        hasPopulateMismatch: snapshotAtomic !== populateLiveAtomic,
+        hasWalletDetailsMismatch: snapshotAtomic !== walletDetailsAtomic,
+        populateLogicMatchesWalletDetails:
+          populateLiveAtomic === walletDetailsAtomic,
+        snapshotAtomic: snapshotAtomic.toString(),
+        snapshotUnitsHeld: atomicToUnitString(
+          snapshotAtomic,
+          walletUnitDecimals,
+        ),
+        unitDecimals: walletUnitDecimals,
+        populateLogicCurrentWalletBalance: atomicToUnitString(
+          populateLiveAtomic,
+          walletUnitDecimals,
+        ),
+        walletDetailsCurrentWalletBalance: atomicToUnitString(
+          walletDetailsAtomic,
+          walletUnitDecimals,
+        ),
+        populateLogicCurrentWalletAtomicBalance: populateLiveAtomic.toString(),
+        walletDetailsCurrentWalletAtomicBalance: walletDetailsAtomic.toString(),
+        populateLogicDelta: atomicToUnitString(
+          snapshotAtomic - populateLiveAtomic,
+          walletUnitDecimals,
+        ),
+        walletDetailsDelta: atomicToUnitString(
+          snapshotAtomic - walletDetailsAtomic,
+          walletUnitDecimals,
+        ),
+      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      return {
+        error: message,
+      };
     }
-  }, [mismatch, portfolio, walletId, walletSnapshots]);
+  }, [latestSnapshot, wallet, walletUnitDecimals]);
 
-  const displayJson = useMemo(() => {
-    const limit = 200000;
-    const raw = dataView === 'disk' ? diskSnapshotData.json : reduxJsonString;
-    if (raw.length > limit) {
-      return raw.slice(0, limit) + `\n...TRUNCATED (${raw.length} chars)`;
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setRuntimeError('');
+
+    try {
+      const client = getPortfolioRuntimeClient();
+      const [nextIndex, nextLatestSnapshot, nextSnapshots] = await Promise.all([
+        client.getSnapshotIndex({walletId}),
+        client.getLatestSnapshot({walletId}),
+        client.listSnapshots({walletId}),
+      ]);
+
+      setIndex(nextIndex || null);
+      setLatestSnapshot(nextLatestSnapshot || null);
+      setSnapshots(Array.isArray(nextSnapshots) ? nextSnapshots : []);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logManager.error('[PortfolioWalletDebug] refresh failed', message);
+      setRuntimeError(message);
+      setIndex(null);
+      setLatestSnapshot(null);
+      setSnapshots([]);
+    } finally {
+      setIsLoading(false);
     }
-    return raw;
-  }, [dataView, diskSnapshotData.json, reduxJsonString]);
+  }, [walletId]);
 
-  const copyReduxJson = useCallback(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      Clipboard.setString(reduxJsonString);
-      setCopyReduxJsonState('copied');
-      setTimeout(() => setCopyReduxJsonState('idle'), 1500);
-    });
-    return () => task.cancel();
-  }, [reduxJsonString]);
-
-  const copyDiskJson = useCallback(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      Clipboard.setString(diskSnapshotData.json);
-      setCopyDiskJsonState('copied');
-      setTimeout(() => setCopyDiskJsonState('idle'), 1500);
-    });
-    return () => task.cancel();
-  }, [diskSnapshotData.json]);
-
-  const copyCsv = useCallback(() => {
-    if (isGenerating) {
+  const refreshBwsSummary = useCallback(async () => {
+    if (!wallet) {
+      setRuntimeError('Wallet not found in current Redux wallet state.');
       return;
     }
 
-    setIsGenerating(true);
-    const task = InteractionManager.runAfterInteractions(() => {
-      try {
-        const headers = [
-          'chain',
-          'coin',
-          'network',
-          'assetId',
-          'timestamp',
-          'date',
-          'dayStartMs',
-          'eventType',
-          'direction',
-          'cryptoBalance',
-          'cryptoDelta',
-          'avgCostFiatPerUnit',
-          'remainingCostBasisFiat',
-          'unrealizedPnlFiat',
-          'impliedRateFiatPerUnit',
-          'costBasisRateFiat',
-          'quoteCurrency',
-          'createdAt',
-        ];
+    setIsRefreshingBwsSummary(true);
+    setRuntimeError('');
 
-        const rows = walletSnapshots.map(
-          (s: BalanceSnapshot, index: number) => {
-            const prevBalance =
-              index > 0 ? walletSnapshots[index - 1].cryptoBalance : '0';
-            const currentBalanceNum = Number(s.cryptoBalance);
-            const prevBalanceNum = Number(prevBalance);
-            const cryptoDelta =
-              Number.isFinite(currentBalanceNum) &&
-              Number.isFinite(prevBalanceNum)
-                ? (currentBalanceNum - prevBalanceNum).toString()
-                : '';
-
-            return [
-              s.chain,
-              s.coin,
-              s.network,
-              s.assetId,
-              s.timestamp,
-              formatTimestampForCsv(s.timestamp),
-              s.dayStartMs ?? '',
-              s.eventType,
-              s.direction ?? '',
-              s.cryptoBalance,
-              cryptoDelta,
-              s.avgCostFiatPerUnit,
-              s.remainingCostBasisFiat,
-              s.unrealizedPnlFiat,
-              getImpliedRateForCsv(s),
-              s.costBasisRateFiat ?? '',
-              s.quoteCurrency,
-              s.createdAt ?? '',
-            ]
-              .map(csvEscape)
-              .join(',');
-          },
-        );
-
-        const csv = [headers.join(','), ...rows].join('\n');
-        Clipboard.setString(csv);
-        setCopyCsvState('copied');
-        setTimeout(() => setCopyCsvState('idle'), 1500);
-      } finally {
-        setIsGenerating(false);
-      }
-    });
-
-    return () => task.cancel();
-  }, [isGenerating, walletSnapshots]);
-
-  const copyMismatchDiagnostics = useCallback(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      const lastSnapshot = walletSnapshots.length
-        ? walletSnapshots[walletSnapshots.length - 1]
-        : undefined;
-      const walletSat = wallet?.balance?.sat;
-      const walletCrypto =
-        typeof wallet?.balance?.crypto === 'string'
-          ? wallet.balance.crypto
-          : null;
-      const snapshotCrypto =
-        typeof lastSnapshot?.cryptoBalance === 'string'
-          ? lastSnapshot.cryptoBalance
-          : null;
-      const tokenDecimals = (wallet as any)?.credentials?.token?.decimals;
-      const decimalsGuess = Math.max(
-        0,
-        typeof tokenDecimals === 'number' ? tokenDecimals : 0,
-        getDecimalPlaces(snapshotCrypto),
-        getDecimalPlaces(walletCrypto),
+    try {
+      const credentials = extractPortfolioWalletCredentialsSnapshot(wallet);
+      const client = createPortfolioDebugBwcClient(credentials);
+      const summary = await fetchPortfolioDebugBwsWalletSummary(
+        client,
+        credentials,
       );
 
-      const walletSatAtomicFromNumber =
-        typeof walletSat === 'number' && Number.isFinite(walletSat)
-          ? walletSat.toString()
-          : null;
-      const walletAtomicFromCrypto =
-        walletCrypto == null
-          ? null
-          : unitStringToAtomicStringForDebug(walletCrypto, decimalsGuess);
-      const snapshotAtomicFromCrypto =
-        snapshotCrypto == null
-          ? null
-          : unitStringToAtomicStringForDebug(snapshotCrypto, decimalsGuess);
-      const diff = (() => {
-        try {
-          if (!walletSatAtomicFromNumber || !snapshotAtomicFromCrypto) {
-            return null;
-          }
-          return (
-            BigInt(snapshotAtomicFromCrypto) - BigInt(walletSatAtomicFromNumber)
-          ).toString();
-        } catch {
-          return null;
-        }
-      })();
-
-      const diagnostics = {
-        walletId: redactIdForDebug(walletId),
-        mismatchFromStore: redactMismatchForDebug(mismatch),
-        walletBalance: {
-          sat: walletSat ?? null,
-          satType: typeof walletSat,
-          satIsSafeInteger:
-            typeof walletSat === 'number'
-              ? Number.isSafeInteger(walletSat)
-              : null,
-          crypto: walletCrypto,
-          tokenDecimals:
-            typeof tokenDecimals === 'number' ? tokenDecimals : null,
-        },
-        snapshotLast: lastSnapshot
-          ? {
-              id: redactIdForDebug(lastSnapshot.id),
-              eventType: lastSnapshot.eventType,
-              timestamp: lastSnapshot.timestamp,
-              createdAt: lastSnapshot.createdAt ?? null,
-              cryptoBalance: lastSnapshot.cryptoBalance,
-              txIds: redactTxIdsForDebug(lastSnapshot.txIds),
-            }
-          : null,
-        derived: {
-          decimalsGuess,
-          walletSatAtomicFromNumber,
-          walletAtomicFromCrypto,
-          snapshotAtomicFromCrypto,
-          snapshotMinusWalletSatAtomic: diff,
-        },
-      };
-
-      Clipboard.setString(JSON.stringify(diagnostics, null, 2));
-      setCopyDiagState('copied');
-      setTimeout(() => setCopyDiagState('idle'), 1500);
-    });
-    return () => task.cancel();
-  }, [mismatch, wallet, walletId, walletSnapshots]);
-
-  const copyMismatchTimelineLogs = useCallback(() => {
-    const task = InteractionManager.runAfterInteractions(async () => {
-      const lastSnapshotByArray = walletSnapshots.length
-        ? walletSnapshots[walletSnapshots.length - 1]
-        : undefined;
-      const lastSnapshotByOrdering =
-        pickLatestSnapshotByOrderingForDebug(walletSnapshots);
-      const firstSnapshot = walletSnapshots.length
-        ? walletSnapshots[0]
-        : undefined;
-      const walletSat = wallet?.balance?.sat;
-      const walletCrypto =
-        typeof wallet?.balance?.crypto === 'string'
-          ? wallet.balance.crypto
-          : null;
-      const snapshotCrypto =
-        typeof lastSnapshotByArray?.cryptoBalance === 'string'
-          ? lastSnapshotByArray.cryptoBalance
-          : null;
-      const orderedSnapshotCrypto =
-        typeof lastSnapshotByOrdering?.cryptoBalance === 'string'
-          ? lastSnapshotByOrdering.cryptoBalance
-          : null;
-      const tokenDecimals = (wallet as any)?.credentials?.token?.decimals;
-      const decimalsGuess = Math.max(
-        0,
-        typeof tokenDecimals === 'number' ? tokenDecimals : 0,
-        getDecimalPlaces(snapshotCrypto),
-        getDecimalPlaces(orderedSnapshotCrypto),
-        getDecimalPlaces(walletCrypto),
+      setBwsSummary({
+        fetchedAtMs: Date.now(),
+        summary,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logManager.error(
+        '[PortfolioWalletDebug] refreshBwsSummary failed',
+        message,
       );
-      const walletAtomicFromSat =
-        typeof walletSat === 'number' && Number.isFinite(walletSat)
-          ? walletSat.toString()
-          : null;
-      const walletAtomicFromCrypto =
-        walletCrypto == null
-          ? null
-          : unitStringToAtomicStringForDebug(walletCrypto, decimalsGuess);
-      const snapshotAtomicFromCrypto =
-        snapshotCrypto == null
-          ? null
-          : unitStringToAtomicStringForDebug(snapshotCrypto, decimalsGuess);
-      const orderedSnapshotAtomicFromCrypto =
-        orderedSnapshotCrypto == null
-          ? null
-          : unitStringToAtomicStringForDebug(
-              orderedSnapshotCrypto,
-              decimalsGuess,
-            );
-      const mismatchNowArrayTail = (() => {
-        try {
-          if (!walletAtomicFromSat || !snapshotAtomicFromCrypto) {
-            return null;
-          }
-          return (
-            BigInt(snapshotAtomicFromCrypto) !== BigInt(walletAtomicFromSat)
-          );
-        } catch {
-          return null;
-        }
-      })();
-      const mismatchNowOrderedLatest = (() => {
-        try {
-          if (!walletAtomicFromSat || !orderedSnapshotAtomicFromCrypto) {
-            return null;
-          }
-          return (
-            BigInt(orderedSnapshotAtomicFromCrypto) !==
-            BigInt(walletAtomicFromSat)
-          );
-        } catch {
-          return null;
-        }
-      })();
+      setRuntimeError(message);
+    } finally {
+      setIsRefreshingBwsSummary(false);
+    }
+  }, [wallet]);
 
-      let diskJsonObj: any = null;
-      try {
-        diskJsonObj = JSON.parse(diskSnapshotData.json);
-      } catch {}
-      const diskRows = Array.isArray(diskJsonObj?.snapshotStorage?.rows)
-        ? (diskJsonObj.snapshotStorage.rows as any[])
-        : [];
-      const diskLastRowByArray = diskRows.length
-        ? diskRows[diskRows.length - 1]
-        : null;
-      const diskLastRowByOrdering = diskRows.length
-        ? diskRows.reduce((best: any, current: any) => {
-            if (!best) {
-              return current;
-            }
-            const bestTs = typeof best?.t === 'number' ? best.t : 0;
-            const currTs = typeof current?.t === 'number' ? current.t : 0;
-            if (currTs > bestTs) {
-              return current;
-            }
-            if (currTs < bestTs) {
-              return best;
-            }
-            return String(current?.i || '').localeCompare(
-              String(best?.i || ''),
-            ) > 0
-              ? current
-              : best;
-          }, null)
-        : null;
+  const runBalanceDiagnostic = useCallback(async () => {
+    if (!wallet) {
+      setRuntimeError('Wallet not found in current Redux wallet state.');
+      return;
+    }
 
-      let txHistoryRows: any[] = [];
-      let txHistoryProbeError: string | null = null;
-      if (wallet) {
-        try {
-          const txRes = await dispatch(
-            GetTransactionHistory({
-              wallet,
-              transactionsHistory: [],
-              limit: 200,
-              refresh: true,
-              contactList: [],
-              isAccountDetailsView: true,
-              skipWalletProcessing: true,
-              skipUiFriendlyList: true,
-            }) as any,
-          );
-          txHistoryRows = Array.isArray(txRes?.transactions)
-            ? txRes.transactions
-            : [];
-        } catch (e: any) {
-          txHistoryProbeError =
-            typeof e?.message === 'string' ? e.message : String(e);
-        }
-      }
+    setIsRunningBalanceDiagnostic(true);
+    setRuntimeError('');
 
-      const txPendingCount = txHistoryRows.filter(tx => {
-        const c = Number(tx?.confirmations);
-        return Number.isFinite(c) && c <= 0;
-      }).length;
-      const txMissingTxidCount = txHistoryRows.filter(
-        tx => !(typeof tx?.txid === 'string' && tx.txid.trim().length > 0),
-      ).length;
-      const txMissingTimestampCount = txHistoryRows.filter(
-        tx => getTxTimestampMsForDebug(tx) == null,
-      ).length;
-
-      const logs = {
-        capturedAtMs: Date.now(),
-        walletId: redactIdForDebug(walletId),
-        mismatchFromStore: redactMismatchForDebug(mismatch),
-        recomputedMismatchNowArrayTail: mismatchNowArrayTail,
-        recomputedMismatchNowOrderedLatest: mismatchNowOrderedLatest,
-        walletBalance: {
-          sat: walletSat ?? null,
-          satConfirmedLocked:
-            (wallet as any)?.balance?.satConfirmedLocked ?? null,
-          satPending: (wallet as any)?.balance?.satPending ?? null,
-          crypto: walletCrypto,
-          chain: wallet?.chain ?? null,
-          coin: wallet?.currencyAbbreviation ?? null,
-          tokenAddress: wallet?.tokenAddress ?? null,
-          tokenDecimals:
-            typeof tokenDecimals === 'number' ? tokenDecimals : null,
-        },
-        atomic: {
-          decimalsGuess,
-          walletAtomicFromSat,
-          walletAtomicFromCrypto,
-          snapshotAtomicFromArrayTail: snapshotAtomicFromCrypto,
-          snapshotAtomicFromOrderedLatest: orderedSnapshotAtomicFromCrypto,
-          snapshotMinusWalletSat:
-            walletAtomicFromSat && snapshotAtomicFromCrypto
-              ? (
-                  BigInt(snapshotAtomicFromCrypto) - BigInt(walletAtomicFromSat)
-                ).toString()
-              : null,
-          snapshotOrderedLatestMinusWalletSat:
-            walletAtomicFromSat && orderedSnapshotAtomicFromCrypto
-              ? (
-                  BigInt(orderedSnapshotAtomicFromCrypto) -
-                  BigInt(walletAtomicFromSat)
-                ).toString()
-              : null,
-        },
-        populateStatus: {
-          inProgress: portfolio.populateStatus?.inProgress ?? null,
-          startedAt: portfolio.populateStatus?.startedAt ?? null,
-          finishedAt: portfolio.populateStatus?.finishedAt ?? null,
-          currentWalletId: portfolio.populateStatus?.currentWalletId ?? null,
-          walletsTotal: portfolio.populateStatus?.walletsTotal ?? null,
-          walletsCompleted: portfolio.populateStatus?.walletsCompleted ?? null,
-          errorsCount: Array.isArray(portfolio.populateStatus?.errors)
-            ? portfolio.populateStatus.errors.length
-            : 0,
-          walletStatus:
-            portfolio.populateStatus?.walletStatusById?.[walletId] ?? null,
-          errorsForThisWallet: Array.isArray(portfolio.populateStatus?.errors)
-            ? portfolio.populateStatus.errors
-                .filter(e => e?.walletId === walletId)
-                .map(e => ({
-                  walletId: '[redacted]',
-                  message:
-                    typeof e?.message === 'string'
-                      ? e.message
-                      : String(e?.message),
-                }))
-            : [],
-        },
-        mechanismHints: {
-          mismatchCacheButNoArrayTailMismatch:
-            !!mismatch && mismatchNowArrayTail === false,
-          snapshotArrayTailPredatesLastPopulateStart:
-            typeof portfolio.populateStatus?.startedAt === 'number' &&
-            typeof lastSnapshotByArray?.createdAt === 'number'
-              ? lastSnapshotByArray.createdAt <
-                portfolio.populateStatus.startedAt
-              : null,
-          snapshotOrderedLatestPredatesLastPopulateStart:
-            typeof portfolio.populateStatus?.startedAt === 'number' &&
-            typeof lastSnapshotByOrdering?.createdAt === 'number'
-              ? lastSnapshotByOrdering.createdAt <
-                portfolio.populateStatus.startedAt
-              : null,
-          duplicateTimestampCountInRedux:
-            countDuplicateTimestampsForDebug(walletSnapshots),
-          sameTimestampDifferentBalances:
-            !!lastSnapshotByArray &&
-            !!lastSnapshotByOrdering &&
-            lastSnapshotByArray.timestamp ===
-              lastSnapshotByOrdering.timestamp &&
-            lastSnapshotByArray.cryptoBalance !==
-              lastSnapshotByOrdering.cryptoBalance,
-        },
-        snapshotsRedux: {
-          count: walletSnapshots.length,
-          first: summarizeSnapshotForDebug(firstSnapshot),
-          lastByArray: summarizeSnapshotForDebug(lastSnapshotByArray),
-          lastByOrdering: summarizeSnapshotForDebug(lastSnapshotByOrdering),
-          arrayTailIndex:
-            lastSnapshotByArray == null
-              ? null
-              : walletSnapshots.findIndex(s => s === lastSnapshotByArray),
-          orderedLatestIndex:
-            lastSnapshotByOrdering == null
-              ? null
-              : walletSnapshots.findIndex(s => s === lastSnapshotByOrdering),
-          last5Ids: walletSnapshots.slice(-5).map(s => redactIdForDebug(s.id)),
-          last5DeltaAtomic: walletSnapshots
-            .slice(-5)
-            .map(s =>
-              typeof s.balanceDeltaAtomic === 'string'
-                ? s.balanceDeltaAtomic
-                : null,
-            ),
-          missingBalanceDeltaAtomicCount: walletSnapshots.filter(
-            s => typeof s.balanceDeltaAtomic !== 'string',
-          ).length,
-          duplicateSnapshotIdsCount:
-            countDuplicateSnapshotIdsForDebug(walletSnapshots),
-          duplicateTxIdsCount:
-            countDuplicateSnapshotTxIdsForDebug(walletSnapshots),
-          sameTxIdDifferentBalanceCount:
-            countSameTxIdDifferentBalanceForDebug(walletSnapshots),
-        },
-        snapshotsDisk: {
-          ok: diskSnapshotData.ok,
-          error: diskSnapshotData.error,
-          count: diskSnapshotData.snapshotsCount,
-          quoteCurrency: diskJsonObj?.portfolioMeta?.quoteCurrency ?? null,
-          lastPopulatedAt: diskJsonObj?.portfolioMeta?.lastPopulatedAt ?? null,
-          storageType: Array.isArray(diskJsonObj?.snapshotStorage)
-            ? 'array'
-            : diskJsonObj?.snapshotStorage?.rows
-            ? 'series'
-            : typeof diskJsonObj?.snapshotStorage,
-          seriesRowsCount:
-            typeof diskJsonObj?.snapshotStorage?.rows?.length === 'number'
-              ? diskJsonObj.snapshotStorage.rows.length
-              : null,
-          rowLastByArray: summarizeDiskRowForDebug(diskLastRowByArray),
-          rowLastByOrdering: summarizeDiskRowForDebug(diskLastRowByOrdering),
-        },
-        latestPopulateWindow: buildLatestPopulateWindowStatsForDebug({
-          snapshots: walletSnapshots,
-          populateStartedAt: portfolio.populateStatus?.startedAt ?? null,
+    try {
+      const credentials = extractPortfolioWalletCredentialsSnapshot(wallet);
+      const client = createPortfolioDebugBwcClient(credentials);
+      const runtimeClient = getPortfolioRuntimeClient();
+      const [
+        nextIndex,
+        nextLatestSnapshot,
+        nextSnapshots,
+        nextPopulateTrace,
+        summary,
+        txPages,
+      ] = await Promise.all([
+        runtimeClient.getSnapshotIndex({walletId}),
+        runtimeClient.getLatestSnapshot({walletId}),
+        runtimeClient.listSnapshots({walletId}),
+        runtimeClient.getPopulateWalletTrace({walletId}),
+        fetchPortfolioDebugBwsWalletSummary(client, credentials),
+        collectPortfolioDebugTxHistoryPages({
+          client,
+          credentials,
+          pageSize: DIAGNOSTIC_PAGE_SIZE,
         }),
-        txHistoryProbe: {
-          ok: txHistoryProbeError == null,
-          error: txHistoryProbeError,
-          totalRows: txHistoryRows.length,
-          pendingCount: txPendingCount,
-          missingTxidCount: txMissingTxidCount,
-          missingTimestampCount: txMissingTimestampCount,
-          last10: txHistoryRows.slice(0, 10).map(summarizeTxForDebug),
-        },
-      };
+      ]);
 
-      Clipboard.setString(JSON.stringify(logs, null, 2));
-      setCopyTimelineState('copied');
-      setTimeout(() => setCopyTimelineState('idle'), 1500);
-    });
-    return () => task.cancel();
+      setIndex(nextIndex || null);
+      setLatestSnapshot(nextLatestSnapshot || null);
+      setSnapshots(Array.isArray(nextSnapshots) ? nextSnapshots : []);
+      setBwsSummary({
+        fetchedAtMs: Date.now(),
+        summary,
+      });
+      if (nextPopulateTrace) {
+        setLastDebugPopulate(current =>
+          current
+            ? {...current, debugTrace: nextPopulateTrace}
+            : {
+                capturedAtMs: Date.now(),
+                snapshotDebugMode: nextPopulateTrace.snapshotDebugMode,
+                beforeIndex: null,
+                afterIndex: nextIndex || null,
+                debugTrace: nextPopulateTrace,
+              },
+        );
+      }
+
+      const diagnostic = buildWalletBalanceDiagnostic({
+        wallet: summary,
+        credentials,
+        txPages,
+        index: nextIndex || null,
+        populateCapture: lastDebugPopulate
+          ? {
+              ...lastDebugPopulate,
+              debugTrace: nextPopulateTrace || lastDebugPopulate.debugTrace,
+            }
+          : nextPopulateTrace
+          ? {
+              capturedAtMs: Date.now(),
+              snapshotDebugMode: nextPopulateTrace.snapshotDebugMode,
+              beforeIndex: null,
+              afterIndex: nextIndex || null,
+              debugTrace: nextPopulateTrace,
+            }
+          : undefined,
+        snapshots: Array.isArray(nextSnapshots) ? nextSnapshots : [],
+      });
+      const txCount = txPages.reduce(
+        (total, page) => total + page.txs.length,
+        0,
+      );
+
+      setBalanceDiagnostic({
+        generatedAtMs: Date.now(),
+        summaryLine: diagnostic.summaryLine,
+        reportText: diagnostic.reportText,
+        pageCount: txPages.length,
+        txCount,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logManager.error(
+        '[PortfolioWalletDebug] runBalanceDiagnostic failed',
+        message,
+      );
+      setRuntimeError(message);
+    } finally {
+      setIsRunningBalanceDiagnostic(false);
+    }
+  }, [lastDebugPopulate, wallet, walletId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    setBwsSummary(null);
+    setBalanceDiagnostic(null);
+    setLastDebugPopulate(null);
+    setCopyBalanceDiagnosticState('idle');
+  }, [walletId]);
+
+  const previewJson = useMemo(() => {
+    const payload = {
+      wallet: wallet
+        ? {
+            walletId: wallet.id,
+            walletName: (wallet as any)?.walletName,
+            chain: (wallet as any)?.chain,
+            currencyAbbreviation: (wallet as any)?.currencyAbbreviation,
+            network: (wallet as any)?.network,
+            balance: (wallet as any)?.balance || null,
+          }
+        : null,
+      mismatch: mismatch || null,
+      index,
+      latestSnapshot,
+      bwsSummary,
+      balanceDiagnostic,
+      lastDebugPopulate,
+      snapshotsPreview: {
+        total: snapshots.length,
+        first: snapshots.slice(0, 10),
+        last: snapshots.slice(-10),
+      },
+    };
+
+    return JSON.stringify(payload, null, 2);
   }, [
-    dispatch,
-    diskSnapshotData,
+    balanceDiagnostic,
+    bwsSummary,
+    index,
+    lastDebugPopulate,
+    latestSnapshot,
     mismatch,
-    portfolio.populateStatus,
+    snapshots,
     wallet,
-    walletId,
-    walletSnapshots,
   ]);
+
+  const copyJson = useCallback(() => {
+    Clipboard.setString(
+      JSON.stringify(
+        {
+          wallet,
+          mismatch,
+          index,
+          latestSnapshot,
+          bwsSummary,
+          balanceDiagnostic,
+          lastDebugPopulate,
+          snapshots,
+        },
+        null,
+        2,
+      ),
+    );
+    setCopyJsonState('copied');
+    setTimeout(() => setCopyJsonState('idle'), 1200);
+  }, [
+    balanceDiagnostic,
+    bwsSummary,
+    index,
+    lastDebugPopulate,
+    latestSnapshot,
+    mismatch,
+    snapshots,
+    wallet,
+  ]);
+
+  const copyCsv = useCallback(() => {
+    Clipboard.setString(toCsv(snapshots));
+    setCopyCsvState('copied');
+    setTimeout(() => setCopyCsvState('idle'), 1200);
+  }, [snapshots]);
+
+  const copyBalanceDiagnostic = useCallback(() => {
+    if (!balanceDiagnostic?.reportText) {
+      return;
+    }
+
+    Clipboard.setString(balanceDiagnostic.reportText);
+    setCopyBalanceDiagnosticState('copied');
+    setTimeout(() => setCopyBalanceDiagnosticState('idle'), 1200);
+  }, [balanceDiagnostic]);
+
+  const clearWallet = useCallback(async () => {
+    try {
+      setBalanceDiagnostic(null);
+      setLastDebugPopulate(null);
+      setCopyBalanceDiagnosticState('idle');
+      await dispatch(
+        clearWalletPortfolioDataWithRuntime({walletIds: [walletId]}) as any,
+      );
+      await refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setRuntimeError(message);
+    }
+  }, [dispatch, refresh, walletId]);
+
+  const repopulateWallet = useCallback(async () => {
+    try {
+      setBalanceDiagnostic(null);
+      setCopyBalanceDiagnosticState('idle');
+      const runtimeClient = getPortfolioRuntimeClient();
+      const beforeIndex =
+        (await runtimeClient.getSnapshotIndex({walletId})) || null;
+      await dispatch(
+        populatePortfolio(
+          wallet
+            ? {
+                wallets: [wallet],
+                walletIds: [walletId],
+                snapshotDebugMode: populateDebugMode,
+              }
+            : {walletIds: [walletId], snapshotDebugMode: populateDebugMode},
+        ) as any,
+      );
+      const afterIndex =
+        (await runtimeClient.getSnapshotIndex({walletId})) || null;
+      const debugTrace =
+        (await runtimeClient.getPopulateWalletTrace({walletId})) || null;
+      setLastDebugPopulate({
+        capturedAtMs: Date.now(),
+        snapshotDebugMode: populateDebugMode,
+        beforeIndex,
+        afterIndex,
+        debugTrace,
+      });
+      await refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setRuntimeError(message);
+    }
+  }, [dispatch, populateDebugMode, refresh, wallet, walletId]);
+
+  const viewWallet = useCallback(() => {
+    if (!wallet) {
+      return;
+    }
+
+    navigation.navigate(WalletScreens.WALLET_DETAILS, {
+      walletId: wallet.id,
+    });
+  }, [navigation, wallet]);
+
+  const rowsCount = getRowCount(index);
+  const latestTimestamp = latestSnapshot?.timestamp;
+  const latestBalance = latestSnapshot?.cryptoBalance;
 
   return (
     <DebugScreenContainer>
-      <DebugHeaderContainer>
-        <DebugHeaderText>
-          {t('Wallet')}: {walletId}
-        </DebugHeaderText>
-        <DebugHeaderText>
-          {t('Snapshots')} (redux): {walletSnapshots.length} | (disk):{' '}
-          {diskSnapshotData.snapshotsCount} | mismatches:{' '}
-          {mismatch ? 'yes' : 'no'}
-        </DebugHeaderText>
-        <DebugHeaderText>
-          {t('Crypto balance')}: {cryptoBalanceString}
-        </DebugHeaderText>
-        <DebugHeaderText>
-          {t('Crypto balance (sat)')}: {cryptoBalanceSatString}
-        </DebugHeaderText>
-        <DebugHeaderText>
-          {t('Snapshot-based crypto balance')}: {snapshotCryptoBalanceString}
-        </DebugHeaderText>
+      <ScrollView>
+        <DebugHeaderContainer>
+          <DebugHeaderText>
+            {t('Runtime wallet debug view for a single portfolio wallet.')}
+          </DebugHeaderText>
+          <ControlLabel>
+            {`Populate debug mode: ${formatSnapshotDebugModeLabel(
+              populateDebugMode,
+            )}`}
+          </ControlLabel>
+          <DebugButtonRow>
+            {SNAPSHOT_DEBUG_MODE_OPTIONS.map(mode => {
+              const selected = populateDebugMode === mode;
+              return (
+                <DebugPillButton
+                  key={mode}
+                  onPress={() => setPopulateDebugMode(mode)}
+                  selected={selected}>
+                  <DebugPillButtonText selected={selected}>
+                    {formatSnapshotDebugModeLabel(mode)}
+                  </DebugPillButtonText>
+                </DebugPillButton>
+              );
+            })}
+          </DebugButtonRow>
+          <DebugButtonRow>
+            <DebugPillButton onPress={refresh}>
+              <DebugPillButtonText>
+                {isLoading ? t('Loading...') : t('Refresh')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton disabled={!wallet} onPress={refreshBwsSummary}>
+              <DebugPillButtonText>
+                {isRefreshingBwsSummary ? t('Loading...') : t('Refresh BWS')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton disabled={!wallet} onPress={viewWallet}>
+              <DebugPillButtonText>{t('View Wallet')}</DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton onPress={repopulateWallet}>
+              <DebugPillButtonText>
+                {`${t('Populate Wallet')} (${formatSnapshotDebugModeLabel(
+                  populateDebugMode,
+                )})`}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton onPress={clearWallet}>
+              <DebugPillButtonText>{t('Clear Wallet')}</DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton onPress={copyJson}>
+              <DebugPillButtonText>
+                {copyJsonState === 'copied' ? t('Copied') : t('Copy JSON')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton onPress={copyCsv}>
+              <DebugPillButtonText>
+                {copyCsvState === 'copied' ? t('Copied') : t('Copy CSV')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton disabled={!wallet} onPress={runBalanceDiagnostic}>
+              <DebugPillButtonText>
+                {isRunningBalanceDiagnostic
+                  ? t('Running...')
+                  : t('Run Diagnostic')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton
+              disabled={!balanceDiagnostic?.reportText}
+              onPress={copyBalanceDiagnostic}>
+              <DebugPillButtonText>
+                {copyBalanceDiagnosticState === 'copied'
+                  ? t('Copied')
+                  : t('Copy Diagnostic')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+          </DebugButtonRow>
+        </DebugHeaderContainer>
 
-        <DebugButtonRow>
-          <DebugPillButton
-            selected={dataView === 'redux'}
-            onPress={() => setDataView('redux')}>
-            <DebugPillButtonText selected={dataView === 'redux'}>
-              {t('Redux')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugPillButton
-            selected={dataView === 'disk'}
-            onPress={() => setDataView('disk')}>
-            <DebugPillButtonText selected={dataView === 'disk'}>
-              {t('On disk')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugButtonSpacer />
-          <DebugPillButton onPress={() => (isGenerating ? null : copyCsv())}>
-            <DebugPillButtonText>
-              {copyCsvState === 'copied' ? t('Copied') : t('Copy CSV')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugPillButton onPress={() => copyReduxJson()}>
-            <DebugPillButtonText>
-              {copyReduxJsonState === 'copied'
-                ? t('Copied')
-                : t('Copy Redux JSON')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugPillButton onPress={() => copyDiskJson()}>
-            <DebugPillButtonText>
-              {copyDiskJsonState === 'copied'
-                ? t('Copied')
-                : t('Copy Disk JSON')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugPillButton onPress={() => copyMismatchDiagnostics()}>
-            <DebugPillButtonText>
-              {copyDiagState === 'copied'
-                ? t('Copied')
-                : t('Copy Mismatch Diagnostics')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugPillButton onPress={() => copyMismatchTimelineLogs()}>
-            <DebugPillButtonText>
-              {copyTimelineState === 'copied'
-                ? t('Copied')
-                : t('Copy Mismatch Timeline')}
-            </DebugPillButtonText>
-          </DebugPillButton>
-          <DebugButtonSpacer />
-          <DebugPillButton
-            onPress={() =>
-              navigation.navigate(WalletScreens.WALLET_DETAILS as any, {
-                walletId,
-              })
-            }>
-            <DebugPillButtonText>{t('Wallet Details')}</DebugPillButtonText>
-          </DebugPillButton>
-        </DebugButtonRow>
-      </DebugHeaderContainer>
+        {runtimeError ? <ErrorText>{runtimeError}</ErrorText> : null}
 
-      <ScrollView
-        style={{flex: 1}}
-        contentContainerStyle={{
-          paddingBottom: 40,
-          backgroundColor: theme.colors.background,
-        }}>
-        <JsonLineText selectable>{displayJson}</JsonLineText>
+        <SectionTitle>{t('Wallet')}</SectionTitle>
+        <SectionText>
+          {wallet
+            ? [
+                `walletId: ${wallet.id}`,
+                `walletName: ${String(
+                  (wallet as any)?.walletName ||
+                    (wallet as any)?.name ||
+                    wallet.id,
+                )}`,
+                `chain: ${String((wallet as any)?.chain || '')}`,
+                `coin: ${String((wallet as any)?.currencyAbbreviation || '')}`,
+                `network: ${String((wallet as any)?.network || '')}`,
+                `unitDecimals: ${walletUnitDecimals}`,
+                `walletBalanceSat: ${String(
+                  (wallet as any)?.balance?.sat ?? '—',
+                )}`,
+                `walletDetailsBalance: ${walletDetailsBalance || '—'}`,
+                `walletDetailsAtomicBalance: ${
+                  walletDetailsAtomicBalance || '—'
+                }`,
+                `populateLogicAtomicBalance: ${
+                  walletPopulateLogicAtomicBalance || '—'
+                }`,
+              ].join('\n')
+            : `walletId: ${walletId}\nwallet not found in current Redux wallet state`}
+        </SectionText>
+
+        <SectionTitle>{t('Runtime snapshot index')}</SectionTitle>
+        <SectionText>
+          {index
+            ? [
+                `rows: ${rowsCount}`,
+                `chunks: ${index.chunks?.length || 0}`,
+                `chunkRows: ${index.chunkRows}`,
+                `chunkDebugModes: ${formatChunkDebugModes(index)}`,
+                `compressionEnabled: ${
+                  index.compressionEnabled ? 'yes' : 'no'
+                }`,
+                `checkpoint.nextSkip: ${index.checkpoint?.nextSkip ?? 0}`,
+                `checkpoint.balanceAtomic: ${
+                  index.checkpoint?.balanceAtomic ?? '—'
+                }`,
+                `checkpoint.lastTimestamp: ${
+                  index.checkpoint?.lastTimestamp ?? '—'
+                }`,
+                `checkpoint.lastTimestampIso: ${toIso(
+                  index.checkpoint?.lastTimestamp,
+                )}`,
+                `checkpoint.recentTxIds: ${
+                  Array.isArray(index.checkpoint?.recentTxIds) &&
+                  index.checkpoint.recentTxIds.length
+                    ? index.checkpoint.recentTxIds.join('|')
+                    : '—'
+                }`,
+                `checkpoint.carryoverGroup: ${
+                  Array.isArray(index.checkpoint?.carryoverGroup) &&
+                  index.checkpoint.carryoverGroup.length
+                    ? JSON.stringify(index.checkpoint.carryoverGroup)
+                    : '—'
+                }`,
+                `updatedAt: ${toIso(index.updatedAt)}`,
+              ].join('\n')
+            : 'No runtime snapshot index'}
+        </SectionText>
+
+        <SectionTitle>{t('Last debug populate')}</SectionTitle>
+        <SectionText>
+          {lastDebugPopulate
+            ? [
+                `capturedAt: ${toIso(lastDebugPopulate.capturedAtMs)}`,
+                `snapshotDebugMode: ${lastDebugPopulate.snapshotDebugMode}`,
+                `before.nextSkip: ${
+                  lastDebugPopulate.beforeIndex?.checkpoint?.nextSkip ?? '—'
+                }`,
+                `before.balanceAtomic: ${
+                  lastDebugPopulate.beforeIndex?.checkpoint?.balanceAtomic ??
+                  '—'
+                }`,
+                `after.nextSkip: ${
+                  lastDebugPopulate.afterIndex?.checkpoint?.nextSkip ?? '—'
+                }`,
+                `after.balanceAtomic: ${
+                  lastDebugPopulate.afterIndex?.checkpoint?.balanceAtomic ?? '—'
+                }`,
+                `after.chunkDebugModes: ${formatChunkDebugModes(
+                  lastDebugPopulate.afterIndex,
+                )}`,
+                `populateDebug.fetchedTxRows: ${
+                  lastDebugPopulate.debugTrace?.fetchedTxRows.length ?? 0
+                }`,
+                `populateDebug.processedTxRows: ${
+                  lastDebugPopulate.debugTrace?.processedTxRows.length ?? 0
+                }`,
+                `populateDebug.emittedSnapshotRows: ${
+                  lastDebugPopulate.debugTrace?.emittedSnapshotRows.length ?? 0
+                }`,
+              ].join('\n')
+            : 'No debug populate capture yet. Populate Wallet in this screen to store before/after checkpoint data.'}
+        </SectionText>
+
+        <SectionTitle>{t('Live BWS status')}</SectionTitle>
+        <SectionText>
+          {bwsSummary
+            ? [
+                `fetchedAt: ${toIso(bwsSummary.fetchedAtMs)}`,
+                `walletId: ${bwsSummary.summary.walletId}`,
+                `walletName: ${bwsSummary.summary.walletName}`,
+                `balanceAtomic: ${bwsSummary.summary.balanceAtomic}`,
+                `balanceFormatted: ${bwsSummary.summary.balanceFormatted}`,
+              ].join('\n')
+            : 'Not fetched yet. Use Refresh BWS to fetch the live wallet summary through the BWC request path.'}
+        </SectionText>
+
+        <SectionTitle>{t('Latest snapshot')}</SectionTitle>
+        <SectionText>
+          {latestSnapshot
+            ? [
+                `id: ${latestSnapshot.id}`,
+                `timestamp: ${latestSnapshot.timestamp}`,
+                `iso: ${toIso(latestTimestamp)}`,
+                `eventType: ${latestSnapshot.eventType}`,
+                `cryptoBalanceAtomic: ${latestBalance}`,
+                `remainingCostBasisFiat: ${latestSnapshot.remainingCostBasisFiat}`,
+                `markRate: ${latestSnapshot.markRate}`,
+                `quoteCurrency: ${latestSnapshot.quoteCurrency}`,
+              ].join('\n')
+            : 'No latest snapshot'}
+        </SectionText>
+
+        <SectionTitle>{t('Cached populate mismatch')}</SectionTitle>
+        <SectionText>
+          {mismatch
+            ? [
+                `delta: ${mismatch.delta}`,
+                `deltaAtomic: ${mismatch.deltaAtomic}`,
+                `currentWalletBalance: ${mismatch.currentWalletBalance}`,
+                `currentAtomic: ${mismatch.currentAtomic}`,
+                `computedUnitsHeld: ${mismatch.computedUnitsHeld}`,
+                `computedAtomic: ${mismatch.computedAtomic}`,
+              ].join('\n')
+            : 'No recorded mismatch from the last populate decision'}
+        </SectionText>
+
+        <SectionTitle>{t('Live recomputed mismatch')}</SectionTitle>
+        <SectionText>
+          {!wallet
+            ? 'Wallet not found in current Redux wallet state'
+            : !latestSnapshot
+            ? 'No latest snapshot available to compare'
+            : liveRecomputedMismatch?.error
+            ? `Unable to recompute mismatch: ${liveRecomputedMismatch.error}`
+            : [
+                `populateLogicStatus: ${
+                  liveRecomputedMismatch?.hasPopulateMismatch
+                    ? 'mismatch'
+                    : 'match'
+                }`,
+                `walletDetailsStatus: ${
+                  liveRecomputedMismatch?.hasWalletDetailsMismatch
+                    ? 'mismatch'
+                    : 'match'
+                }`,
+                `unitDecimals: ${liveRecomputedMismatch?.unitDecimals ?? '—'}`,
+                `snapshotAtomic: ${
+                  liveRecomputedMismatch?.snapshotAtomic || '—'
+                }`,
+                `snapshotUnitsHeld: ${
+                  liveRecomputedMismatch?.snapshotUnitsHeld || '—'
+                }`,
+                `populateLogicCurrentWalletAtomicBalance: ${
+                  liveRecomputedMismatch?.populateLogicCurrentWalletAtomicBalance ||
+                  '—'
+                }`,
+                `populateLogicCurrentWalletBalance: ${
+                  liveRecomputedMismatch?.populateLogicCurrentWalletBalance ||
+                  '—'
+                }`,
+                `walletDetailsCurrentWalletAtomicBalance: ${
+                  liveRecomputedMismatch?.walletDetailsCurrentWalletAtomicBalance ||
+                  '—'
+                }`,
+                `walletDetailsCurrentWalletBalance: ${
+                  liveRecomputedMismatch?.walletDetailsCurrentWalletBalance ||
+                  '—'
+                }`,
+                `populateLogicDelta: ${
+                  liveRecomputedMismatch?.populateLogicDelta || '—'
+                }`,
+                `walletDetailsDelta: ${
+                  liveRecomputedMismatch?.walletDetailsDelta || '—'
+                }`,
+                `populateLogicMatchesWalletDetails: ${
+                  liveRecomputedMismatch?.populateLogicMatchesWalletDetails
+                    ? 'yes'
+                    : 'no'
+                }`,
+              ].join('\n')}
+        </SectionText>
+
+        <SectionTitle>{t('Harness balance diagnostic')}</SectionTitle>
+        <SectionText>
+          {balanceDiagnostic
+            ? [
+                `generatedAt: ${toIso(balanceDiagnostic.generatedAtMs)}`,
+                `pages: ${balanceDiagnostic.pageCount}`,
+                `txs: ${balanceDiagnostic.txCount}`,
+                `summary: ${balanceDiagnostic.summaryLine}`,
+              ].join('\n')
+            : 'No diagnostic report yet. Run Diagnostic to fetch reverse tx history through the BWC request path and compare it against the stored runtime snapshots.'}
+        </SectionText>
+
+        {balanceDiagnostic?.reportText ? (
+          <JsonLineText>{balanceDiagnostic.reportText}</JsonLineText>
+        ) : null}
+
+        <SectionTitle>{t('Raw preview')}</SectionTitle>
+        <JsonLineText>{previewJson}</JsonLineText>
+        <DebugButtonSpacer />
       </ScrollView>
     </DebugScreenContainer>
   );

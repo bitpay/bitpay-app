@@ -2,6 +2,7 @@ import React, {memo} from 'react';
 import styled from 'styled-components/native';
 import {
   Action,
+  DisabledTextDark,
   LightBlack,
   NeutralSlate,
   SlateDark,
@@ -32,13 +33,7 @@ const AmountPill = styled(TouchableOpacity)<{
   hideFiatPills?: boolean;
 }>`
   background-color: ${({theme: {dark}, isSelected, disabled}) =>
-    disabled
-      ? NeutralSlate
-      : isSelected
-      ? Action
-      : dark
-      ? LightBlack
-      : NeutralSlate};
+    isSelected ? Action : dark ? LightBlack : NeutralSlate};
   min-width: ${({showMaxPill, hideFiatPills}) =>
     showMaxPill && !hideFiatPills ? '23%' : '31%'};
   max-width: ${({showMaxPill, hideFiatPills}) =>
@@ -62,7 +57,13 @@ const AmountPillText = styled(BaseText)<{
   line-height: ${({isSmallScreen}) => (isSmallScreen ? 18 : 30)}px;
   letter-spacing: 0px;
   color: ${({theme: {dark}, isSelected, disabled}) =>
-    disabled ? SlateDark : isSelected ? White : dark ? White : SlateDark};
+    disabled
+      ? DisabledTextDark
+      : isSelected
+      ? White
+      : dark
+      ? White
+      : SlateDark};
 `;
 
 const defaultPills = [

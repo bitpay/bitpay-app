@@ -19,11 +19,7 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {BiometricErrorNotification} from '../../../constants/BiometricError';
 import {AppActions, AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {
-  useAppDispatch,
-  useLogger,
-  useRequestTrackingPermissionHandler,
-} from '../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
@@ -65,18 +61,14 @@ const PinScreen = ({
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
-
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(
-        Analytics.track('Clicked Skip Protect Wallet', {
-          context: 'onboarding',
-        }),
-      );
-      navigation.navigate('CreateKey');
-    });
+    dispatch(
+      Analytics.track('Clicked Skip Protect Wallet', {
+        context: 'onboarding',
+      }),
+    );
+    navigation.navigate('CreateKey');
   });
 
   useLayoutEffect(() => {
@@ -89,6 +81,7 @@ const PinScreen = ({
             testID="skip-button"
             accessibilityLabel="Skip"
             buttonType={'pill'}
+            touchableLibrary={'react-native'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
@@ -99,9 +92,7 @@ const PinScreen = ({
 
   const onSetPinPress = () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
-    });
+    dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
   };
 
   const onSetBiometricPress = async () => {
@@ -117,7 +108,7 @@ const PinScreen = ({
       if (available) {
         logger.debug(`[Biometrics] ${biometryType} is supported`);
         dispatch(AppActions.biometricLockActive(true));
-        askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
+        navigation.navigate('CreateKey');
       } else {
         dispatch(
           showBottomNotificationModal(
@@ -173,6 +164,15 @@ const PinScreen = ({
               onPress={() => onSetBiometricPress()}
               buttonStyle={'secondary'}>
               {t('Biometric')}
+            </Button>
+          </ActionContainer>
+          <ActionContainer>
+            <Button
+              testID="skip-security-button"
+              accessibilityLabel="Skip security setup"
+              onPress={onSkipPressRef.current}
+              buttonStyle={'cancel'}>
+              {t('Maybe Later')}
             </Button>
           </ActionContainer>
         </CtaContainer>

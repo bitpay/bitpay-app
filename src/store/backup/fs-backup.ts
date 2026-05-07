@@ -13,6 +13,9 @@ const TEMP_FILE = BASE_DIR + '/persist-root.json.tmp';
 
 let cachedBackupExists: boolean = false;
 
+// Serial queue — ensures only one write uses the shared TEMP_FILE at a time
+let backupQueue: Promise<void> = Promise.resolve();
+
 async function ensureDir(): Promise<void> {
   try {
     const exists = await RNFS.exists(BASE_DIR);
@@ -42,13 +45,21 @@ export async function backupFileExists(): Promise<boolean> {
   }
 }
 
-export async function backupPersistRoot(rawJson: string): Promise<void> {
+export function backupPersistRoot(rawJson: string): Promise<void> {
+  backupQueue = backupQueue
+    .then(() => _backupPersistRoot(rawJson))
+    .catch(() => {});
+  return backupQueue;
+}
+
+async function _backupPersistRoot(rawJson: string): Promise<void> {
   try {
     let filtered = rawJson;
     try {
       const parsed = JSON.parse(rawJson);
       delete parsed.MARKET_STATS;
       delete parsed.PORTFOLIO;
+      delete parsed.PORTFOLIO_CHARTS;
       delete parsed.RATE;
       delete parsed.SHOP_CATALOG;
       filtered = JSON.stringify(parsed);

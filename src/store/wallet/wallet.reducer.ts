@@ -1,4 +1,10 @@
-import {Key, PendingJoinerSession, Token} from './wallet.models';
+import {
+  Key,
+  PendingJoinerSession,
+  Token,
+  Wallet,
+  WalletStatus,
+} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
@@ -75,6 +81,22 @@ export const initialState: WalletState = {
   tssEnabled: false,
 };
 
+const cloneWalletWithStatus = (
+  wallet: Wallet,
+  status: WalletStatus,
+): Wallet => {
+  const nextWallet = Object.create(
+    Object.getPrototypeOf(wallet) || Object.prototype,
+    Object.getOwnPropertyDescriptors(wallet),
+  ) as Wallet;
+
+  nextWallet.balance = status.balance as Wallet['balance'];
+  nextWallet.pendingTxps = status.pendingTxps;
+  nextWallet.singleAddress = status.singleAddress;
+
+  return nextWallet;
+};
+
 export const walletReducer = (
   state: WalletState = initialState,
   action: WalletActionType,
@@ -118,20 +140,16 @@ export const walletReducer = (
       if (!keyToUpdate) {
         return state;
       }
-      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === walletId) {
-          wallet.balance = status.balance;
-          wallet.pendingTxps = status.pendingTxps;
-          wallet.singleAddress = status.singleAddress;
-        }
-        return wallet;
-      });
+      const wallets = keyToUpdate.wallets.map(wallet =>
+        wallet.id === walletId ? cloneWalletWithStatus(wallet, status) : wallet,
+      );
       return {
         ...state,
         keys: {
           ...state.keys,
           [keyId]: {
             ...keyToUpdate,
+            wallets,
           },
         },
         balanceCacheKey: {
@@ -150,10 +168,11 @@ export const walletReducer = (
         const {keyId, totalBalance, totalBalanceLastDay} = updates;
         const keyToUpdate = state.keys[keyId];
         if (keyToUpdate) {
-          keyToUpdate.totalBalance = totalBalance;
-          keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
-
-          updatedKeys[keyId] = {...keyToUpdate};
+          updatedKeys[keyId] = {
+            ...keyToUpdate,
+            totalBalance,
+            totalBalanceLastDay,
+          };
           updatedBalanceCacheKeys[keyId] = dateNow;
         }
       });
@@ -584,17 +603,16 @@ export const walletReducer = (
 
       // Update wallet statuses
       walletBalances.forEach(({keyId, walletId, status}) => {
-        if (updatedKeys[keyId]?.wallets?.length > 0) {
-          updatedKeys[keyId].wallets = updatedKeys[keyId].wallets.map(
-            wallet => {
-              if (wallet.id === walletId) {
-                wallet.balance = status.balance;
-                wallet.pendingTxps = status.pendingTxps;
-                wallet.singleAddress = status.singleAddress;
-              }
-              return wallet;
-            },
-          );
+        const keyToUpdate = updatedKeys[keyId];
+        if (keyToUpdate?.wallets?.length > 0) {
+          updatedKeys[keyId] = {
+            ...keyToUpdate,
+            wallets: keyToUpdate.wallets.map(wallet =>
+              wallet.id === walletId
+                ? cloneWalletWithStatus(wallet, status)
+                : wallet,
+            ),
+          };
         }
       });
 

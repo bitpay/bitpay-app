@@ -1,6 +1,5 @@
 import {CacheKeys, DateRanges, Rates} from './rate.models';
 import {RateActionType, RateActionTypes} from './rate.types';
-import type {FiatRateSeriesCache} from './rate.models';
 
 export const successGetRates = (payload: {
   rates: Rates;
@@ -19,21 +18,6 @@ export const updateCacheKey = (payload: {
   dateRange?: DateRanges;
 }): RateActionType => ({
   type: RateActionTypes.UPDATE_CACHE_KEY,
-  payload,
-});
-
-export const upsertFiatRateSeriesCache = (payload: {
-  updates: FiatRateSeriesCache;
-}): RateActionType => ({
-  type: RateActionTypes.UPSERT_FIAT_RATE_SERIES_CACHE,
-  payload,
-});
-
-export const pruneFiatRateSeriesCache = (payload: {
-  fiatCode: string;
-  keepCoins?: string[];
-}): RateActionType => ({
-  type: RateActionTypes.PRUNE_FIAT_RATE_SERIES_CACHE,
   payload,
 });
 

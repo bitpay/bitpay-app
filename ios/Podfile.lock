@@ -90,13 +90,43 @@ PODS:
   - libwebp/sharpyuv (1.5.0)
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
-  - Mixpanel-swift (4.1.3):
-    - Mixpanel-swift/Complete (= 4.1.3)
-  - Mixpanel-swift/Complete (4.1.3)
-  - MixpanelReactNative (2.3.1):
-    - Mixpanel-swift (= 4.1.3)
+  - Mixpanel-swift (5.2.0):
+    - Mixpanel-swift/Complete (= 5.2.0)
+  - Mixpanel-swift/Complete (5.2.0)
+  - MixpanelReactNative (3.3.0):
+    - Mixpanel-swift (= 5.2.0)
     - React-Core
   - MultiplatformBleAdapter (0.2.0)
+  - NitroFetch (1.0.3):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - NitroModules
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - NitroModules (0.35.1):
     - boost
     - DoubleConversion
@@ -3131,7 +3161,7 @@ PODS:
     - React-Core
   - RNReactNativeHapticFeedback (1.14.0):
     - React-Core
-  - RNReanimated (4.1.3):
+  - RNReanimated (4.1.7):
     - boost
     - DoubleConversion
     - fast_float
@@ -3158,11 +3188,11 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated (= 4.1.3)
+    - RNReanimated/reanimated (= 4.1.7)
     - RNWorklets
     - SocketRocket
     - Yoga
-  - RNReanimated/reanimated (4.1.3):
+  - RNReanimated/reanimated (4.1.7):
     - boost
     - DoubleConversion
     - fast_float
@@ -3189,11 +3219,11 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated/apple (= 4.1.3)
+    - RNReanimated/reanimated/apple (= 4.1.7)
     - RNWorklets
     - SocketRocket
     - Yoga
-  - RNReanimated/reanimated/apple (4.1.3):
+  - RNReanimated/reanimated/apple (4.1.7):
     - boost
     - DoubleConversion
     - fast_float
@@ -3397,7 +3427,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNWorklets (0.6.1):
+  - RNWorklets (0.8.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -3424,10 +3454,11 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNWorklets/worklets (= 0.6.1)
+    - RNWorklets/apple (= 0.8.1)
+    - RNWorklets/common (= 0.8.1)
     - SocketRocket
     - Yoga
-  - RNWorklets/worklets (0.6.1):
+  - RNWorklets/apple (0.8.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -3454,10 +3485,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNWorklets/worklets/apple (= 0.6.1)
     - SocketRocket
     - Yoga
-  - RNWorklets/worklets/apple (0.6.1):
+  - RNWorklets/common (0.8.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -3517,6 +3547,7 @@ DEPENDENCIES:
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - MixpanelReactNative (from `../node_modules/mixpanel-react-native`)
+  - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3680,6 +3711,8 @@ EXTERNAL SOURCES:
     :tag: hermes-2025-09-01-RNv0.82.0-265ef62ff3eb7289d17e366664ac0da82303e101
   MixpanelReactNative:
     :path: "../node_modules/mixpanel-react-native"
+  NitroFetch:
+    :path: "../node_modules/react-native-nitro-fetch"
   NitroModules:
     :path: "../node_modules/react-native-nitro-modules"
   QuickCrypto:
@@ -3936,9 +3969,10 @@ SPEC CHECKSUMS:
   hermes-engine: 8642d8f14a548ab718ec112e9bebdfdd154138b5
   InputMask: 71d291dc54d2deaeac6512afb6ec2304228c0bb7
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  Mixpanel-swift: d7c7c6a2f7c65f735af3cb4746ed61a5aab0e551
-  MixpanelReactNative: 07c808338a1eb69b0c9077668e3acfb0b2dd6689
+  Mixpanel-swift: de454db5987bf6f601106520a44663fc556e8cfa
+  MixpanelReactNative: e6b7c6c37e88263744c9a5d46a1f05d209b68348
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
+  NitroFetch: 30653bc9871b9e929b76eaa63c0701125063faf8
   NitroModules: 944be1eb6b9235c902c6779263b35d5a533dce00
   QuickCrypto: 033c3aa0b39de28bb2369557fba5eeaeb8ab4956
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
@@ -4051,12 +4085,12 @@ SPEC CHECKSUMS:
   RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: ef3bcff84f39bb1d1e41c5593d3eea4aab2bd73a
   RNReactNativeHapticFeedback: 1e3efeca9628ff9876ee7cdd9edec1b336913f8c
-  RNReanimated: c76d99de4022813a27dc3745d8d2de4230ac5fef
+  RNReanimated: cfaebcc37cb421a96816371d20d5521535beb2d3
   RNScreens: 74985ca8e102294a60cec7513fa84c936fa0b20b
   RNSentry: 45be9e9f3bbbf982ffe661f912954bc795f191a4
   RNShare: 14a882c4b1202bd861e849cc60b1a18449fb3bb4
   RNSVG: 674a4656c5a2c84b18b6e1cc3c1bf43b2ecc6099
-  RNWorklets: daa0a3e7946a9c4042f3a962c87a12dc5bc0badd
+  RNWorklets: 129a1d32d6e0ffc76d0d37df90ff73c0f87e8955
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   Sentry: d587a8fe91ca13503ecd69a1905f3e8a0fcf61be
@@ -4065,6 +4099,6 @@ SPEC CHECKSUMS:
   VisionCamera: 05e4bc4783174689a5878a0797015ab32afae9e4
   Yoga: 93bc00d78638987f9ffd928f4a9f895d3e601bc3
 
-PODFILE CHECKSUM: 952017b0e6612cb4f6a51284e91d08856e0c2a13
+PODFILE CHECKSUM: 91e915b372fe50cffa909299965ad28bb54bc3f7
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

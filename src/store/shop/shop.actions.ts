@@ -12,6 +12,10 @@ import {
 } from './shop.models';
 import {Network} from '../../constants';
 
+export const clearShopStore = (): ShopActionType => ({
+  type: ShopActionTypes.CLEAR_SHOP_STORE,
+});
+
 export const successFetchCatalog = (payload: {
   availableCardMap: CardConfigMap;
   categoriesAndCurations: CategoriesAndCurations;
@@ -152,9 +156,7 @@ export const clearedShopCatalogFields = (): ShopActionType => ({
   type: ShopActionTypes.CLEARED_SHOP_CATALOG_FIELDS,
 });
 
-export const isJoinedWaitlist = (
-  isJoinedWaitlist: boolean,
-): ShopActionType => ({
+export const isJoinedWaitlist = (joinedWaitlist: boolean): ShopActionType => ({
   type: ShopActionTypes.IS_JOINED_WAITLIST,
-  payload: {isJoinedWaitlist},
+  payload: {isJoinedWaitlist: joinedWaitlist},
 });

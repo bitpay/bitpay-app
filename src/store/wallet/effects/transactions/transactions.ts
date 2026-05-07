@@ -44,6 +44,7 @@ import {
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import {prepareTokenWalletTxHistoryRow} from '../../../../portfolio/core/tokenTxHistory';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -379,7 +380,21 @@ const ProcessNewTxs =
         tx.coin = wallet.currencyAbbreviation;
         tx.chain = wallet.chain;
 
-        if (shouldFilterTx(tx, wallet)) {
+        if (wallet.tokenAddress) {
+          const preparedTokenTx = prepareTokenWalletTxHistoryRow({
+            tx,
+            context: {
+              tokenAddress: wallet.tokenAddress,
+              receiveAddress: wallet.receiveAddress,
+              chain: wallet.chain,
+              currencyAbbreviation: wallet.currencyAbbreviation,
+            },
+          });
+          if (!preparedTokenTx || preparedTokenTx.effectAmountAtomic === '0') {
+            continue;
+          }
+          tx = preparedTokenTx.tx;
+        } else if (shouldFilterTx(tx, wallet)) {
           continue;
         }
 
@@ -563,17 +578,24 @@ const IsFirstInCoinbaseGroup = (index: number, history: any[]) => {
   return !WithinSameMonthTimestamp(curTx.created_at, prevTx.created_at);
 };
 
-const getMonthName = (time: MomentInput): String => {
-  let month = '';
+const getMomentLocale = (language?: string): string => {
+  const lang = (language || '').toLowerCase();
+
+  if (lang.startsWith('zh')) return 'zh-cn';
+
+  const base = lang.split('-')[0];
+
+  return base || 'en';
+};
+
+const getMonthName = (time: MomentInput): string => {
   try {
-    month = moment(time).locale(i18n.language).format('MMMM');
+    return moment(time).locale(getMomentLocale(i18n.language)).format('MMMM');
   } catch (e) {
-    // Fallback to default locale if the language is not supported
     const error = e instanceof Error ? e.message : JSON.stringify(e);
     logManager.warn('Error formatting date:', error);
-    month = moment(time).format('MMMM');
+    return moment(time).locale('en').format('MMMM');
   }
-  return month;
 };
 
 export const GroupCoinbaseTransactions = (txs: any[]) => {

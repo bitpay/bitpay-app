@@ -14,10 +14,7 @@ import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
-import {
-  useAppDispatch,
-  useRequestTrackingPermissionHandler,
-} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
 import {
   WalletGroupParamList,
   WalletScreens,
@@ -79,8 +76,6 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   const dispatch = useAppDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
-
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const Terms: Array<TermsOfUseModel> = [
     {
@@ -180,6 +175,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
         <Button
           testID="agree-and-continue-button"
           accessibilityLabel="Agree and continue"
+<<<<<<< HEAD
           onPress={() => {
             askForTrackingThenNavigate(async () => {
               if (agreed.length >= 2) {
@@ -193,16 +189,29 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
                       params: {
                         screen: TabsScreens.HOME,
                       },
+=======
+          onPress={async () => {
+            if (agreed.length >= 2) {
+              dispatch(setWalletTermsAccepted());
+            }
+            navigation.dispatch(
+              CommonActions.reset({
+                routes: [
+                  {
+                    name: RootStacks.TABS,
+                    params: {
+                      screen: TabsScreens.HOME,
+>>>>>>> c22e129129325f5c727adb0e05929fde8aa32208
                     },
-                  ],
-                }),
-              );
-              await sleep(1000);
-              dispatch(setOnboardingCompleted());
-              DeviceEventEmitter.emit(
-                DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
-              );
-            });
+                  },
+                ],
+              }),
+            );
+            await sleep(1000);
+            dispatch(setOnboardingCompleted());
+            DeviceEventEmitter.emit(
+              DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
+            );
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>

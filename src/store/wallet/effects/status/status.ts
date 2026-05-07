@@ -5,7 +5,6 @@ import {
   WalletBalance,
   WalletStatus,
   Status,
-  Recipient,
   TransactionProposal,
   BulkStatus,
   CryptoBalance,
@@ -22,14 +21,9 @@ import {
   successUpdateWalletStatus,
   updatePortfolioBalance,
 } from '../../wallet.actions';
-import {findWalletById, isCacheKeyStale, toFiat} from '../../utils/wallet';
+import {isCacheKeyStale, toFiat} from '../../utils/wallet';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
-import {DeviceEventEmitter} from 'react-native';
-import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
-import {
-  ProcessPendingTxps,
-  RemoveTxProposal,
-} from '../transactions/transactions';
+import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import {IsERCToken, IsUtxoChain} from '../../utils/currency';
@@ -40,108 +34,6 @@ import {createWalletAddress} from '../address/address';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import uniqBy from 'lodash.uniqby';
 import {logManager} from '../../../../managers/LogManager';
-
-/*
- * post broadcasting of payment
- * poll for updated balance -> update balance for: wallet, key, portfolio and local recipient wallet if applicable
- * */
-export const waitForTargetAmountAndUpdateWallet =
-  ({
-    key,
-    wallet,
-    targetAmount,
-    recipient,
-  }: {
-    key: Key;
-    wallet: Wallet;
-    targetAmount: number;
-    recipient?: Recipient;
-  }): Effect =>
-  async (dispatch, getState) => {
-    try {
-      // Update history for showing confirming transactions
-      DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
-
-      let retry = 0;
-
-      // wait for expected balance
-      const interval = setInterval(() => {
-        logManager.debug('waiting for target balance', retry);
-        retry++;
-
-        if (retry > 5) {
-          DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, false);
-          clearInterval(interval);
-          return;
-        }
-
-        const {
-          credentials: {token, multisigEthInfo},
-        } = wallet;
-
-        wallet.getStatus(
-          {
-            tokenAddress: token ? token.address : null,
-            multisigContractAddress: multisigEthInfo
-              ? multisigEthInfo.multisigContractAddress
-              : null,
-            network: wallet.network,
-          },
-          async (err: any, status: Status) => {
-            if (err) {
-              const errStr =
-                err instanceof Error ? err.message : JSON.stringify(err);
-              logManager.error(
-                `error [waitForTargetAmountAndUpdateWallet]: ${errStr}`,
-              );
-            }
-            const {totalAmount} = status?.balance;
-            // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
-            // expected amount - update balance
-            if (totalAmount === targetAmount) {
-              clearInterval(interval);
-              dispatch(startUpdateWalletStatus({key, wallet, force: true}));
-
-              // update recipient balance if local
-              if (recipient) {
-                const {walletId, keyId} = recipient;
-                if (walletId && keyId) {
-                  const {
-                    WALLET: {keys},
-                  } = getState();
-                  const recipientKey = keys[keyId];
-                  const recipientWallet = findWalletById(key.wallets, walletId);
-                  if (recipientKey && recipientWallet) {
-                    await dispatch(
-                      startUpdateWalletStatus({
-                        key: recipientKey,
-                        wallet: recipientWallet as Wallet,
-                        force: true,
-                      }),
-                    );
-                    logManager.debug('updated recipient wallet');
-                  }
-                }
-              }
-              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
-              DeviceEventEmitter.emit(
-                DeviceEmitterEvents.SET_REFRESHING,
-                false,
-              );
-              await dispatch(updatePortfolioBalance());
-            }
-          },
-        );
-      }, 5000);
-    } catch (err) {
-      const errstring =
-        err instanceof Error ? err.message : JSON.stringify(err);
-      logManager.error(
-        `Error WaitingForTargetAmountAndUpdateWallet: ${errstring}`,
-      );
-    }
-  };
-
 export const startUpdateWalletStatus =
   ({key, wallet, force}: {key: Key; wallet: Wallet; force?: boolean}): Effect =>
   async (dispatch, getState) => {
@@ -326,7 +218,7 @@ export const updateKeyStatus =
         !force
       ) {
         logManager.debug(`Key: ${key.id} - skipping balance update`);
-        return;
+        return resolve(undefined);
       }
 
       const walletOptions = {} as Record<
@@ -380,7 +272,7 @@ export const updateKeyStatus =
       });
 
       if (!credentials.length) {
-        return;
+        return resolve(undefined);
       }
 
       const {bulkClient} = BwcProvider.getInstance().getClient();
