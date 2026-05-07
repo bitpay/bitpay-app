@@ -43,7 +43,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CD12DFF32FA86D5D004E0E3B"
+               BlueprintIdentifier = "CDF085062FACD8A500CA4C1B"
                BuildableName = "BitPayAppUITests.xctest"
                BlueprintName = "BitPayAppUITests"
                ReferencedContainer = "container:BitPayApp.xcodeproj">

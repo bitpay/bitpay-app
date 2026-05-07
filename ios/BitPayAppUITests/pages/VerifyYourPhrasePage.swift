@@ -1,6 +1,6 @@
 import XCTest
 
-class RecoveryPhrasePage {
+class VerifyYourPhrasePage {
 
   let app: XCUIApplication
 

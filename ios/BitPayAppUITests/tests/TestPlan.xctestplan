@@ -1,0 +1,26 @@
+{
+  "configurations" : [
+    {
+      "id" : "0232DDA3-81F2-4B5D-9BC1-2EB32AECE399",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepAlways",
+    "userAttachmentLifetime" : "keepAlways"
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:BitPayApp.xcodeproj",
+        "identifier" : "CDF085062FACD8A500CA4C1B",
+        "name" : "BitPayAppUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
