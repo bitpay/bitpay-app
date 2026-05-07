@@ -11,7 +11,7 @@ final class ImportWalletRecoveryPhrase: XCTestCase {
     app.launch()
     
     let onboardingPage = OnboardingPage(app: app)
-    // onboardingPage.handleTrackingPermissionIfDisplayed()
+    onboardingPage.handleTrackingPermissionIfDisplayed()
   }
   
   @MainActor
