@@ -154,8 +154,8 @@ const isEmailAddress = (text: string) => {
   if (!text.includes('@')) {
     return false;
   }
-
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
+  const reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w\w+)+$/;
+  return reg.test(text);
 };
 
 export const BuildKeyAccountRow = (

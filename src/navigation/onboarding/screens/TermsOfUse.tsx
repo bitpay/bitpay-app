@@ -175,21 +175,6 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
         <Button
           testID="agree-and-continue-button"
           accessibilityLabel="Agree and continue"
-<<<<<<< HEAD
-          onPress={() => {
-            askForTrackingThenNavigate(async () => {
-              if (agreed.length >= 2) {
-                dispatch(setWalletTermsAccepted());
-              }
-              navigation.dispatch(
-                CommonActions.reset({
-                  routes: [
-                    {
-                      name: RootStacks.TABS,
-                      params: {
-                        screen: TabsScreens.HOME,
-                      },
-=======
           onPress={async () => {
             if (agreed.length >= 2) {
               dispatch(setWalletTermsAccepted());
@@ -201,7 +186,6 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
                     name: RootStacks.TABS,
                     params: {
                       screen: TabsScreens.HOME,
->>>>>>> c22e129129325f5c727adb0e05929fde8aa32208
                     },
                   },
                 ],
