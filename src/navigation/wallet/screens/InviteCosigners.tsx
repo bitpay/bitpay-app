@@ -9,6 +9,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   startTSSCeremony,
   addCoSignerToTSS,
+  cancelTSSCeremony,
 } from '../../../store/wallet/effects/create-multisig/create-multisig';
 import {
   White,
@@ -459,6 +460,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     if (tssSession?.status === 'ceremony_in_progress') {
       handleStartCeremony();
     }
+    return () => {
+      dispatch(cancelTSSCeremony(keyId));
+    };
   }, []);
 
   const handleStartCeremony = async () => {
@@ -472,6 +476,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       setCreatedKey(updatedKey);
       setIsCeremonyComplete(true);
     } catch (err: any) {
+      if (err.message === 'CEREMONY_ALREADY_RUNNING') {
+        return;
+      }
       logger.error(`[TSS] Ceremony error: ${err.message}`);
       setIsCeremonyStarted(false);
       dispatch(
