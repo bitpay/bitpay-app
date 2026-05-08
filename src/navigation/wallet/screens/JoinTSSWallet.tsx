@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useLayoutEffect} from 'react';
+import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
 import {Share} from 'react-native';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ import {
   generateJoinerSessionId,
   joinTSSWithCode,
   validateJoinCode,
+  cancelTSSCeremony,
 } from '../../../store/wallet/effects/create-multisig/create-multisig';
 import {
   White,
@@ -187,6 +188,15 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [isCeremonyInRounds, setIsCeremonyInRounds] = useState(false);
 
   const resumeKeyId = route.params?.keyId;
+  const activeKeyIdRef = useRef<string | null>(resumeKeyId || null);
+
+  useEffect(() => {
+    return () => {
+      if (activeKeyIdRef.current) {
+        dispatch(cancelTSSCeremony(activeKeyIdRef.current));
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (resumeKeyId) {
@@ -203,6 +213,9 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           setCreatedKey(key);
           setIsWalletReady(true);
         } catch (err: any) {
+          if (err.message === 'CEREMONY_ALREADY_RUNNING') {
+            return;
+          }
           logger.error(`[TSS Join - resume] Error: ${err.message}`);
           dispatch(
             showBottomNotificationModal({
@@ -310,6 +323,9 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           partyKey,
           myName: copayerName,
           onRoundReady: () => setIsCeremonyInRounds(true),
+          onKeyCreated: (keyId: string) => {
+            activeKeyIdRef.current = keyId;
+          },
         }),
       );
 
