@@ -297,7 +297,10 @@ const StartupGate = () => {
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
   const hasRoutedRef = useRef(false);
 
-  const scheme = appColorScheme || Appearance.getColorScheme();
+  const scheme =
+    !appColorScheme || appColorScheme === 'unspecified'
+      ? Appearance.getColorScheme()
+      : appColorScheme;
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   useEffect(() => {
@@ -692,7 +695,10 @@ export default () => {
     patchLogger(Logger);
   }, []);
 
-  const scheme = appColorScheme || Appearance.getColorScheme();
+  const scheme =
+    !appColorScheme || appColorScheme === 'unspecified'
+      ? Appearance.getColorScheme()
+      : appColorScheme;
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   return (

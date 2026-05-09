@@ -91,10 +91,13 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
 
   const onSetThemePress = (setScheme: ColorSchemeName) => {
     dispatch(AppActions.setColorScheme(setScheme));
-    logManager.info('Theme updated to ' + (setScheme || 'system default'));
+    logManager.info(
+      'Theme updated to ' +
+        (setScheme === 'unspecified' ? 'system default' : setScheme),
+    );
     dispatch(
       Analytics.track('Saved Theme', {
-        theme: setScheme || 'system default',
+        theme: setScheme === 'unspecified' ? 'system default' : setScheme,
       }),
     );
   };
@@ -120,12 +123,12 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
           />
         </Setting>
         <Hr />
-        <Setting onPress={() => onSetThemePress(null)}>
+        <Setting onPress={() => onSetThemePress('unspecified')}>
           <SettingTitle>{t('System Default')}</SettingTitle>
           <Checkbox
             radio
-            onPress={() => onSetThemePress(null)}
-            checked={currentTheme === null}
+            onPress={() => onSetThemePress('unspecified')}
+            checked={!currentTheme || currentTheme === 'unspecified'}
           />
         </Setting>
       </View>
