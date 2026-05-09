@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.42.0",
+  "version": "14.42.1",
   "private": true,
   "engines": {
     "node": ">=20"
