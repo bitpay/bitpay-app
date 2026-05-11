@@ -83,7 +83,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CDF085082FACD8A500CA4C1B /* BitPayAppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BitPayAppUITests; sourceTree = "<group>"; };
+		CDF085082FACD8A500CA4C1B /* BitPayAppUITests */ = {isa = PBXGroup; explicitFileTypes = {}; explicitFolders = (); path = BitPayAppUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -247,9 +247,6 @@
 			);
 			dependencies = (
 				CDF0850E2FACD8A500CA4C1B /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				CDF085082FACD8A500CA4C1B /* BitPayAppUITests */,
 			);
 			name = BitPayAppUITests;
 			packageProductDependencies = (
