@@ -92,12 +92,12 @@ jobs:
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
-            -configuration Release \
+            -configuration Debug \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -derivedDataPath Build \
             -resultBundlePath TestResults.xcresult \
             -only-testing:BitPayAppUITests \
-            test-without-building
+            test
 
       # Upload XCResult
       - name: Upload XCUITest Results
