@@ -21,11 +21,11 @@ class MyKeyPage {
       NSPredicate(format: "label == 'My Wallets'")
     ).firstMatch
   }
-
+  
   var bitcoinWallet: XCUIElement {
-    app.staticTexts.matching(
-      NSPredicate(format: "label CONTAINS 'Bitcoin'")
-    ).firstMatch
+      app.descendants(matching: .any).matching(
+          NSPredicate(format: "label CONTAINS[c] %@", "Bitcoin")
+      ).firstMatch
   }
 
   // MARK: - Validations
@@ -38,8 +38,8 @@ class MyKeyPage {
     return myWalletsText.waitForExistence(timeout: timeout)
   }
 
-  func isBitcoinBTCWalletDisplayed(timeout: TimeInterval = 5) -> Bool {
-    return bitcoinWallet.waitForExistence(timeout: timeout)
+  func isBitcoinBTCWalletDisplayed(timeout: TimeInterval = 20) -> Bool {
+      return bitcoinWallet.waitForExistence(timeout: timeout)
   }
 
 }

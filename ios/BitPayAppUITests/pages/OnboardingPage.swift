@@ -55,10 +55,6 @@ class OnboardingPage {
     app.staticTexts["GOT IT"]
   }
 
-  //  var checkbox1: XCUIElement {
-  //    app.otherElements.matching(identifier: "checkboxBorder").element(boundBy: 0)
-  //  }
-
   var checkbox1: XCUIElement {
     app.descendants(matching: .any).element(
       matching: NSPredicate(
@@ -86,14 +82,6 @@ class OnboardingPage {
     ).firstMatch
   }
 
-  //  var checkbox2: XCUIElement {
-  //    app.otherElements.matching(identifier: "checkboxBorder").element(boundBy: 1)
-  //  }
-  //
-  //  var checkbox3: XCUIElement {
-  //    app.otherElements.matching(identifier: "checkboxBorder").element(boundBy: 2)
-  //  }
-
   var agreeAndContinueButton: XCUIElement {
     app.descendants(matching: .any).element(
       matching: NSPredicate(format: "label == 'Agree and continue'")
@@ -112,7 +100,7 @@ class OnboardingPage {
 
   // MARK: - Actions
 
-  func handleTrackingPermissionIfDisplayed() {
+  func handleTrackingPermissionIfDisplayed(timeout: TimeInterval = 30) {
     let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     let askAppNotToTrackButton = springboard.buttons["Ask App Not to Track"]
 

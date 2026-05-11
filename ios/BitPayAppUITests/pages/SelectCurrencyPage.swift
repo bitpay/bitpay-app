@@ -59,7 +59,10 @@ class SelectCurrencyPage {
   
   func enterRecipientAddress(address: String) {
     recipientAddress.tap()
-    recipientAddress.typeText(address)
+    for character in address {
+           recipientAddress.typeText(String(character))
+           // usleep(100000)
+       }
   }
 
 }

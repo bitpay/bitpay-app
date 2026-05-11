@@ -22,35 +22,26 @@ class PortfolioBalancePage {
     app.otherElements["Portfolio Balance"].firstMatch
   }
 
-
   var addCryptoButton: XCUIElement {
     app.descendants(matching: .any).element(
       matching: NSPredicate(format: "label == 'Add crypto wallet'")
     ).firstMatch
   }
-  
+
   var buyButton: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Buy'")
-    ).firstMatch
+    app.otherElements["Buy"].otherElements["Buy"].firstMatch
   }
   
   var sellButton: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Sell'")
-    ).firstMatch
+    app.otherElements["Sell"].otherElements["Sell"].firstMatch
   }
   
   var sendButton: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Send'")
-    ).firstMatch
+    app.otherElements["Send"].otherElements["Send"].firstMatch
   }
   
   var swapButton: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Swap'")
-    ).firstMatch
+    app.otherElements["Swap"].otherElements["Swap"].firstMatch
   }
 
   // MARK: - Actions

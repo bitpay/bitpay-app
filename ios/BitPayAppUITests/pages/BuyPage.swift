@@ -9,11 +9,8 @@ class BuyPage {
   }
 
   // MARK: - Elements
-
   var buyTitle: XCUIElement {
-    app.otherElements.matching(
-      NSPredicate(format: "label == 'Buy'")
-    ).firstMatch
+      app.staticTexts["Buy"].firstMatch
   }
   
   var bitcoin: XCUIElement {

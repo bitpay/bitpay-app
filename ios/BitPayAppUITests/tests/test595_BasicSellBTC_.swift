@@ -11,7 +11,7 @@ final class BasicSellBTC: XCTestCase {
     app.launch()
     
     let onboardingPage = OnboardingPage(app: app)
-    onboardingPage.handleTrackingPermissionIfDisplayed()
+    onboardingPage.handleTrackingPermissionIfDisplayed(timeout: 15)
   }
   
   @MainActor
@@ -51,6 +51,7 @@ final class BasicSellBTC: XCTestCase {
     
     AllureXCTestSupport.step("(8) On the Select Crypto screen, tap Bitcoin (BTC). ") {
       selectCurrencyPage.tapBitcoinCurrency()
+      //tap swap currency
     }
     
     AllureXCTestSupport.step("(9) Tap Continue with.") {
@@ -58,17 +59,6 @@ final class BasicSellBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(10) Wait for the browser / in-app webview to open. ") {
-      
-//            XCTAssertTrue(
-//              confirmPaymentPage.isConfirmPaymentTitleDisplayed(),
-//              "Confirm payment page not displayed"
-//            )
-//      
-//            XCTAssertTrue(
-//              confirmPaymentPage.isSummaryTextDisplayed(),
-//              "Confirm payment - Summary text not displayed"
-//            )
-      
     }
   }
 }

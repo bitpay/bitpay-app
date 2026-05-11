@@ -10,8 +10,8 @@ final class BTCConfirmPayment: XCTestCase {
     app = XCUIApplication()
     app.launch()
     
-    let onboardingPage = OnboardingPage(app: app)
-    onboardingPage.handleTrackingPermissionIfDisplayed()
+//    let onboardingPage = OnboardingPage(app: app)
+//    onboardingPage.handleTrackingPermissionIfDisplayed()
   }
   
   @MainActor
@@ -27,12 +27,12 @@ final class BTCConfirmPayment: XCTestCase {
     AllureXCTestSupport.addDescription(
       "Basic Send (BTC) -  Confirm Payment Screen"
     )
-    
+     
     let portfolioBalancePage = PortfolioBalancePage(app: app)
     let selectCurrencyPage = SelectCurrencyPage(app: app)
     let enterAmountPage = EnterAmountPage(app: app)
     let confirmPaymentPage = ConfirmPaymentPage(app: app)
-    
+                
     AllureXCTestSupport.step("(1 to 4) On the Home screen, tap Send in the top menu.") {
       portfolioBalancePage.tapSendButton()
     }

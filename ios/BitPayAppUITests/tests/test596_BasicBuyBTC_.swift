@@ -11,7 +11,7 @@ final class BasicBuyBTC: XCTestCase {
     app.launch()
     
     let onboardingPage = OnboardingPage(app: app)
-    onboardingPage.handleTrackingPermissionIfDisplayed()
+    onboardingPage.handleTrackingPermissionIfDisplayed(timeout: 15)
   }
   
   @MainActor
@@ -60,17 +60,6 @@ final class BasicBuyBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(10) Wait until best-offer search completes and at least one offer is displayed.") {
-      
-//            XCTAssertTrue(
-//              confirmPaymentPage.isConfirmPaymentTitleDisplayed(),
-//              "Confirm payment page not displayed"
-//            )
-//      
-//            XCTAssertTrue(
-//              confirmPaymentPage.isSummaryTextDisplayed(),
-//              "Confirm payment - Summary text not displayed"
-//            )
-      
     }
     
     AllureXCTestSupport.step("(11) Tap Continue with {ProviderName}.") {

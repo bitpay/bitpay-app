@@ -17,9 +17,8 @@ class EnterAmountPage {
   }
   
   // MARK: - Elements
-  
   var amountField: XCUIElement {
-    app.textFields.firstMatch
+      app.staticTexts.matching(identifier: "0").firstMatch
   }
   
   var continueButton: XCUIElement {
@@ -28,25 +27,13 @@ class EnterAmountPage {
     ).firstMatch
   }
   
-  
   // MARK: - Actions
-  
   func enterAmount(amount: String = "0") {
-    let element = amountField
-    
-    element.tap()
-    
-    if let currentValue = element.value as? String,
-       !currentValue.isEmpty {
-      
-      let deleteString = String(
-        repeating: XCUIKeyboardKey.delete.rawValue,
-        count: currentValue.count
-      )
-      element.typeText(deleteString)
-    }
-    
-    element.typeText(amount)
+      for char in amount {
+          let key = app.staticTexts[String(char)].firstMatch
+          XCTAssertTrue(key.waitForExistence(timeout: 5))
+          key.tap()
+      }
   }
   
   func tapContinue() {

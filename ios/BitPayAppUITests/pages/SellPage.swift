@@ -11,9 +11,7 @@ class SellPage {
   // MARK: - Elements
 
   var sellTitle: XCUIElement {
-    app.otherElements.matching(
-      NSPredicate(format: "label == 'Sell'")
-    ).firstMatch
+      app.staticTexts["Sell"].firstMatch
   }
   
   var chooseCrypto: XCUIElement {

@@ -10,8 +10,8 @@ final class ImportWalletRecoveryPhrase: XCTestCase {
     app = XCUIApplication()
     app.launch()
     
-    let onboardingPage = OnboardingPage(app: app)
-    onboardingPage.handleTrackingPermissionIfDisplayed()
+    // let onboardingPage = OnboardingPage(app: app)
+    // onboardingPage.handleTrackingPermissionIfDisplayed()
   }
   
   @MainActor
@@ -56,7 +56,7 @@ final class ImportWalletRecoveryPhrase: XCTestCase {
       "(6 to 7) On the “Import” screen, tap the Recovery Phrase input field & Enter a valid Recovery Phrase. "
     ) {
       importRecoveryPhasePage.enterRecoveryPhrase(
-        "**********************"
+        "hobby short divert lady spare quit act settle body town license alone"
       )
     }
     
@@ -72,6 +72,9 @@ final class ImportWalletRecoveryPhrase: XCTestCase {
         myKeyPage.isMyWalletsDisplayed(),
         "My Wallets not displayed"
       )
+      
+      print(app.debugDescription)
+      
       XCTAssertTrue(
         myKeyPage.isBitcoinBTCWalletDisplayed(),
         "Bitcoin BTC Wallet not displayed"
