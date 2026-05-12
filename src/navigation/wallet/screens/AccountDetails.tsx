@@ -177,7 +177,10 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
 import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
 import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
-import {getQuoteCurrency} from '../../../utils/portfolio/assets';
+import {
+  getQuoteCurrency,
+  walletsHaveNonZeroLiveBalance,
+} from '../../../utils/portfolio/assets';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -459,6 +462,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       ),
     [key, selectedAccountAddress],
   );
+  const hasAnyAccountWalletBalance = useMemo(() => {
+    return walletsHaveNonZeroLiveBalance(keyFullWalletObjs);
+  }, [keyFullWalletObjs]);
+  const canRenderAccountBalanceChart =
+    canRenderPortfolioBalanceCharts && hasAnyAccountWalletBalance;
   const accountWalletIds = useMemo(
     () => keyFullWalletObjs.map(wallet => wallet.id).filter(Boolean),
     [keyFullWalletObjs],
@@ -503,7 +511,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     wallets: keyFullWalletObjs,
     quoteCurrency: displayQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: canRenderAccountBalanceChart,
     resetKey: `${keyId}:${selectedAccountAddress || ''}`,
   });
   const totalBalance =
@@ -1474,7 +1482,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               </Row>
             </TouchableOpacity>
 
-            {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
+            {canRenderAccountBalanceChart && !hideAllBalances ? (
               <BalanceHistoryChart
                 wallets={keyFullWalletObjs}
                 quoteCurrency={displayQuoteCurrency}
@@ -1646,7 +1654,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     accountChartPreContent,
     accountItem?.fiatLockedBalanceFormat,
     accountItem?.receiveAddress,
-    canRenderPortfolioBalanceCharts,
+    canRenderAccountBalanceChart,
     debouncedLoadHistory,
     displayQuoteCurrency,
     defaultAltCurrency.isoCode,

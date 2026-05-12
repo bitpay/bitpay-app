@@ -953,6 +953,12 @@ export const walletHasNonZeroLiveBalance = (wallet: Wallet): boolean => {
   return liveAtomicBalance > 0n;
 };
 
+export const walletsHaveNonZeroLiveBalance = (
+  wallets: Wallet[] | undefined,
+): boolean => {
+  return (wallets || []).some(walletHasNonZeroLiveBalance);
+};
+
 export const getWalletsMatchingExchangeRateAsset = (args: {
   wallets: Wallet[] | undefined;
   currencyAbbreviation?: string;

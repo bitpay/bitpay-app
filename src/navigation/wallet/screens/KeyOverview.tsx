@@ -147,6 +147,7 @@ import {
   getVisibleWalletsForKey,
   getQuoteCurrency,
   isPopulateLoadingForWallets,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 
@@ -695,6 +696,11 @@ const KeyOverview = () => {
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
+  const hasAnyVisibleKeyWalletBalance = useMemo(() => {
+    return walletsHaveNonZeroLiveBalance(visibleKeyWallets);
+  }, [visibleKeyWallets]);
+  const canRenderKeyBalanceChart =
+    canRenderPortfolioBalanceCharts && hasAnyVisibleKeyWalletBalance;
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
     [visibleKeyWallets],
@@ -704,7 +710,7 @@ const KeyOverview = () => {
     quoteCurrency,
     fallbackBalance: totalBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: canRenderKeyBalanceChart,
     resetKey: id,
   });
 
@@ -734,7 +740,7 @@ const KeyOverview = () => {
     });
   }, [portfolio.populateStatus, visibleKeyWallets]);
 
-  const showAllocationGainLossFooter = canRenderPortfolioBalanceCharts;
+  const showAllocationGainLossFooter = canRenderKeyBalanceChart;
 
   const maybeActivateAllocationGainLoss = useCallback(() => {
     if (shouldLoadAllocationGainLoss || !showAllocationGainLossFooter) {
@@ -1171,7 +1177,7 @@ const KeyOverview = () => {
             )}
           </TouchableOpacity>
 
-          {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
+          {canRenderKeyBalanceChart && !hideAllBalances ? (
             <BalanceHistoryChart
               wallets={visibleKeyWallets}
               quoteCurrency={quoteCurrency}
@@ -1212,7 +1218,7 @@ const KeyOverview = () => {
       </>
     );
   }, [
-    canRenderPortfolioBalanceCharts,
+    canRenderKeyBalanceChart,
     defaultAltCurrency.isoCode,
     dispatch,
     balanceChartSurface,

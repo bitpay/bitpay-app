@@ -2,6 +2,7 @@ import type {BwsConfig} from '../../core/shared/bws';
 import type {Tx} from '../../core/types';
 import type {PortfolioRuntimeWalletCredentials} from '../../core/runtimeWalletCredentials';
 import type {NitroResponse as NitroFetchResponse} from 'react-native-nitro-fetch';
+import {version as bitcoreWalletClientVersion} from '@bitpay-labs/bitcore-wallet-client/package.json';
 import {
   buildTokenWalletTxHistoryContextFromCredentials,
   normalizeTokenWalletTxHistoryPage,
@@ -13,7 +14,7 @@ import {
   takeNextPortfolioTransferredSignHandleOnRuntime,
 } from './txHistorySigning';
 
-export const PORTFOLIO_BWS_CLIENT_VERSION_HEADER = 'bwc-11.7.0';
+export const PORTFOLIO_BWS_CLIENT_VERSION_HEADER = `bwc-${bitcoreWalletClientVersion}`;
 const TXHISTORY_BASE_PATH = '/v1/txhistory/';
 const TXHISTORY_CACHE_BUST_PARAM = 'r';
 
