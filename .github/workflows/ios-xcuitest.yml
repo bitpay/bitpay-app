@@ -92,7 +92,7 @@ jobs:
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
-            -configuration Debug \
+            -configuration Release \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -derivedDataPath Build \
             -resultBundlePath TestResults.xcresult \
