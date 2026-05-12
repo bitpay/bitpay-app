@@ -16,6 +16,7 @@ import {
   hasCompletedPopulateForWallets,
   isPopulateLoadingForWallets,
   walletHasNonZeroLiveBalance,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import {shouldUseCompactFiatAmountText} from '../../../../utils/fiatAmountText';
 import ExchangeRateScreenLayout from './ExchangeRateScreenLayout';
@@ -182,6 +183,9 @@ const AssetBalanceHistoryScreen = ({
   const hasCompletedFullPortfolioPopulate = useAppSelector(
     selectHasCompletedFullPortfolioPopulate,
   );
+  const hasAnyAssetWalletBalance = useMemo(() => {
+    return walletsHaveNonZeroLiveBalance(shared.assetWallets);
+  }, [shared.assetWallets]);
   const hasCompletedAssetPopulate = useMemo(() => {
     const liveBalanceWallets = shared.assetWallets.filter(
       walletHasNonZeroLiveBalance,
@@ -200,6 +204,7 @@ const AssetBalanceHistoryScreen = ({
   }, [hasCompletedFullPortfolioPopulate, populateStatus, shared.assetWallets]);
   const balanceHistoryEnabled =
     shared.showPortfolioValue &&
+    hasAnyAssetWalletBalance &&
     hasCompletedAssetPopulate &&
     shared.hasWalletsForAsset;
   const analysis = usePortfolioAnalysis({
@@ -313,11 +318,13 @@ const AssetBalanceHistoryScreen = ({
   const shouldRenderBalanceChart = useMemo(() => {
     return (
       shared.showPortfolioValue &&
+      hasAnyAssetWalletBalance &&
       hasCompletedAssetPopulate &&
       !shared.hideAllBalances &&
       shared.hasWalletsForAsset
     );
   }, [
+    hasAnyAssetWalletBalance,
     hasCompletedAssetPopulate,
     shared.showPortfolioValue,
     shared.hideAllBalances,

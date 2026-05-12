@@ -118,6 +118,7 @@ import {
   getVisibleWalletsFromKeys,
   getWalletLiveAtomicBalance,
   walletHasNonZeroLiveBalance,
+  walletsHaveNonZeroLiveBalance,
   canNavigateToExchangeRateForAssetRowItem,
   getPopulateLoadingByAssetKey,
   hasCompletedPopulateForWallets,
@@ -840,6 +841,31 @@ describe('walletHasNonZeroLiveBalance', () => {
   it('returns true for an ETH wallet with crypto balance', () => {
     const wallet = {chain: 'eth', balance: {sat: 0, crypto: '0.5'}} as any;
     expect(walletHasNonZeroLiveBalance(wallet)).toBe(true);
+  });
+});
+
+describe('walletsHaveNonZeroLiveBalance', () => {
+  it('returns false for empty or undefined wallet lists', () => {
+    expect(walletsHaveNonZeroLiveBalance(undefined)).toBe(false);
+    expect(walletsHaveNonZeroLiveBalance([])).toBe(false);
+  });
+
+  it('returns false when every wallet has zero balance', () => {
+    const wallets = [
+      {chain: 'btc', balance: {sat: 0, crypto: '0'}},
+      {chain: 'eth', balance: {sat: 0, crypto: '0'}},
+    ] as any;
+
+    expect(walletsHaveNonZeroLiveBalance(wallets)).toBe(false);
+  });
+
+  it('returns true when at least one wallet has a non-zero live balance', () => {
+    const wallets = [
+      {chain: 'btc', balance: {sat: 0, crypto: '0'}},
+      {chain: 'eth', balance: {sat: 0, crypto: '0.5'}},
+    ] as any;
+
+    expect(walletsHaveNonZeroLiveBalance(wallets)).toBe(true);
   });
 });
 

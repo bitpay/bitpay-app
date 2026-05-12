@@ -13,6 +13,7 @@ import {
   GainLossMode,
   buildAssetPreviewRowItemsFromWallets,
   getVisibleWalletsFromKeys,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import AssetsGainLossDropdown from './AssetsGainLossDropdown';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -89,6 +90,9 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const visibleWallets = useMemo(() => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keys]);
+  const hasAnyVisibleWalletBalance = useMemo(() => {
+    return walletsHaveNonZeroLiveBalance(visibleWallets);
+  }, [visibleWallets]);
   const topAssetKeys = useMemo(() => {
     const allocationData = buildAllocationDataFromWalletRows(
       visibleWallets.map(toAllocationWallet),
@@ -177,6 +181,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     return nextItems.slice(0, 4);
   }, [enabled, isFiatLoading, previewItems, topAssetKeys, visibleItems]);
   const shouldShowActivationPlaceholder =
+    hasAnyVisibleWalletBalance &&
     !items.length &&
     (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
 
