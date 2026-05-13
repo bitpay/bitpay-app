@@ -1186,10 +1186,6 @@ const KeyOverview = () => {
               onSelectedBalanceChange={
                 balanceChartSurface.chartCallbacks.onSelectedBalanceChange
               }
-              onDisplayedAnalysisPointChange={
-                balanceChartSurface.chartCallbacks
-                  .onDisplayedAnalysisPointChange
-              }
             />
           ) : null}
         </BalanceContainer>
