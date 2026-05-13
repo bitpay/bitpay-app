@@ -26,6 +26,7 @@ import {
 } from './assetBalanceHistorySummary';
 import useAssetScreenRefresh from './useAssetScreenRefresh';
 import type {ExchangeRateSharedModel} from './useExchangeRateSharedModel';
+import UkExchangeRateDisclosures from './UkExchangeRateDisclosures';
 
 type AssetBalanceHistoryScreenProps = {
   shared: ExchangeRateSharedModel;
@@ -95,6 +96,7 @@ const AssetBalanceChartSection = React.memo(
           onSelectionActiveChange={onSelectionActiveChange}
           onSelectedTimeframeChange={onSelectedTimeframeChange}
           showChangeRow={false}
+          postChartContent={<UkExchangeRateDisclosures />}
           timeframeSelectorHorizontalInset={ScreenGutter}
         />
       </View>

@@ -27,3 +27,5 @@ export const EUCountries = [
   'ES', // Spain
   'SE', // Sweden
 ];
+
+export const UnitedKingdomCountryCode = 'GB';

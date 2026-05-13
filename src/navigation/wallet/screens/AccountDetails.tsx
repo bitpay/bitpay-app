@@ -181,6 +181,7 @@ import {
   getQuoteCurrency,
   walletsHaveNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -384,7 +385,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
   const {width: windowWidth} = useWindowDimensions();
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency, hideAllBalances, showArchaxBanner} =
+    useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const canRenderPortfolioBalanceCharts = useAppSelector(
     selectCanRenderPortfolioBalanceCharts,
@@ -897,22 +899,26 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const listFooterComponentAssetsTab = () => {
     return (
-      <AddCustomTokenContainer
-        testID="add-custom-token-button"
-        accessibilityLabel="Add custom token"
-        onPress={() => {
-          haptic('soft');
-          if (memorizedAssetsByChainList?.[0].chains?.[0]) {
-            navigation.navigate('AddCustomToken', {
-              key,
-              selectedAccountAddress: accountItem?.receiveAddress,
-              selectedChain: memorizedAssetsByChainList[0].chains[0],
-            });
-          }
-        }}>
-        <BaseText>{t("Don't see your token?")}</BaseText>
-        <Link>{t('Add Custom Token')}</Link>
-      </AddCustomTokenContainer>
+      <>
+        <AddCustomTokenContainer
+          testID="add-custom-token-button"
+          accessibilityLabel="Add custom token"
+          onPress={() => {
+            haptic('soft');
+            if (memorizedAssetsByChainList?.[0].chains?.[0]) {
+              navigation.navigate('AddCustomToken', {
+                key,
+                selectedAccountAddress: accountItem?.receiveAddress,
+                selectedChain: memorizedAssetsByChainList[0].chains[0],
+              });
+            }
+          }}>
+          <BaseText>{t("Don't see your token?")}</BaseText>
+          <Link>{t('Add Custom Token')}</Link>
+        </AddCustomTokenContainer>
+
+        {showArchaxBanner && <ArchaxFooter />}
+      </>
     );
   };
 

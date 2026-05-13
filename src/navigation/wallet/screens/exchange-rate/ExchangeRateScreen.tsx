@@ -37,6 +37,7 @@ import {getExchangeRateTimeframeChange} from '../ExchangeRate.utils';
 import ExchangeRateScreenLayout from './ExchangeRateScreenLayout';
 import useAssetScreenRefresh from './useAssetScreenRefresh';
 import type {ExchangeRateSharedModel} from './useExchangeRateSharedModel';
+import UkExchangeRateDisclosures from './UkExchangeRateDisclosures';
 
 type ExchangeRateScreenProps = {
   shared: ExchangeRateSharedModel;
@@ -402,6 +403,8 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
             color={shared.chartLineColor}
             isLoading={isChartLoading}
           />
+
+          <UkExchangeRateDisclosures />
 
           <TimeframeSelector
             options={fiatChartTimeframeOptions}
