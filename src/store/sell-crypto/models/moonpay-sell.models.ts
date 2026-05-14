@@ -224,6 +224,8 @@ export interface MoonpaySellTransactionDetails {
   }[];
   type?: string;
   message?: string;
+  moonPayErrorCode?: string;
+  errors?: any[];
 }
 
 export interface MoonpayCancelSellTransactionRequestData {

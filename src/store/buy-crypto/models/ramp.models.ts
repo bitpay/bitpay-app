@@ -138,7 +138,6 @@ export interface RampPaymentUrlConfigParams {
   paymentMethodType?: RampPaymentMethodType;
   // hideExitButton: An optional boolean parameter to show or hide internal exit button on widget.
   hideExitButton?: boolean;
-  variant?: string;
   useSendCryptoCallbackVersion?: number;
 }
 

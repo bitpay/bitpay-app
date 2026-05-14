@@ -320,6 +320,22 @@ const MoonpaySellCheckout: React.FC = () => {
       return;
     }
 
+    if (
+      !sellTxDetails ||
+      sellTxDetails.type === 'NotFoundError' ||
+      sellTxDetails.moonPayErrorCode === '1_SYS_UNKNOWN'
+    ) {
+      const err = `No Sell Transaction Details found for id: ${sellOrder.transaction_id}`;
+      logger.debug(
+        `Empty Sell Transaction Details from MoonPay for id: ${sellOrder.transaction_id}`,
+      );
+      showError(
+        sellTxDetails?.message ?? err,
+        'moonpayGetSellTransactionDetails Error. Could not get order details from MoonPay',
+      );
+      return;
+    }
+
     if (sellTxDetails.flow === 'floating') {
       // The floating flow is for non-US users. Means the fiat price that MoonPay sends could have slight differences due to the fluctuating price of crypto.
       // For that reason we get an updated quote and set a custom payTill
@@ -387,9 +403,9 @@ const MoonpaySellCheckout: React.FC = () => {
     setTxData(sellTxDetails);
 
     if (
-      sellOrder.address_to !== sellTxDetails.depositWallet.walletAddress &&
+      sellOrder.address_to !== sellTxDetails.depositWallet?.walletAddress &&
       (wallet.currencyAbbreviation.toLowerCase() !== 'btc' ||
-        sellOrder.address_to !== sellTxDetails.depositWallet.btcLegacyAddress)
+        sellOrder.address_to !== sellTxDetails.depositWallet?.btcLegacyAddress)
     ) {
       const msg = `The destination address of the original Sell Order does not match the address expected by Moonpay for the id: ${sellOrder.transaction_id}`;
       showError(

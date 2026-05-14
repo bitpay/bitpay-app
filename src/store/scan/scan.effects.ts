@@ -1855,35 +1855,93 @@ const handleMoonpayUri =
         baseCurrencyAmount &&
         Number(baseCurrencyAmount) !== Number(order?.crypto_amount)
       ) {
+        const decimals = baseCurrencyAmount.includes('.')
+          ? baseCurrencyAmount.split('.')[1].length
+          : 0;
+        const factor = Math.pow(10, decimals);
+        const truncToDecimals = (n: number) => Math.trunc(n * factor) / factor;
+        const truncatedMatch =
+          Number(baseCurrencyAmount) ===
+          truncToDecimals(Number(order?.crypto_amount));
+
+        if (!truncatedMatch) {
+          // Amounts differ significantly
+          logManager.warn(
+            `baseCurrencyAmount mismatch: ${Number(
+              baseCurrencyAmount,
+            )} !== ${Number(
+              order?.crypto_amount,
+            )} (even truncated to ${decimals} decimals). Do not redir`,
+          );
+          await sleep(300);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('Something went wrong'),
+              message: t(
+                "Crypto amount mismatch: {{baseCurrencyAmount}} / {{cryptoAmount}} from the order id: {{transactionId}}. Can't continue.",
+                {
+                  baseCurrencyAmount,
+                  cryptoAmount: order?.crypto_amount,
+                  transactionId,
+                },
+              ),
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('OK'),
+                  action: () => {},
+                  primary: true,
+                },
+              ],
+            }),
+          );
+          return;
+        }
+
+        // Minor decimal difference — let user decide
         logManager.warn(
-          `baseCurrencyAmount mismatch: ${Number(
+          `baseCurrencyAmount minor mismatch: ${Number(
             baseCurrencyAmount,
-          )} !== ${Number(order?.crypto_amount)}. Do not redir`,
+          )} !== ${Number(
+            order?.crypto_amount,
+          )} (match when truncated to ${decimals} decimals). Asking user to confirm.`,
         );
-        await sleep(300);
-        dispatch(
-          showBottomNotificationModal({
-            type: 'warning',
-            title: t('Something went wrong'),
-            message: t(
-              "Crypto amount mismatch: {{baseCurrencyAmount}} / {{cryptoAmount}} from the order id: {{transactionId}}. Can't continue.",
-              {
-                baseCurrencyAmount,
-                cryptoAmount: order?.crypto_amount,
-                transactionId,
-              },
-            ),
-            enableBackdropDismiss: true,
-            actions: [
-              {
-                text: t('OK'),
-                action: () => {},
-                primary: true,
-              },
-            ],
-          }),
-        );
-        return;
+        const userConfirmed = await new Promise<boolean>(resolve => {
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('Minor amount difference'),
+              message: t(
+                'There is a minor decimal difference between the expected crypto amount ({{cryptoAmount}}) and the amount received from MoonPay ({{baseCurrencyAmount}}) for the order id: {{transactionId}}. Do you want to continue?',
+                {
+                  baseCurrencyAmount,
+                  cryptoAmount: order?.crypto_amount,
+                  transactionId,
+                },
+              ),
+              enableBackdropDismiss: false,
+              actions: [
+                {
+                  text: t('Continue'),
+                  action: () => resolve(true),
+                  primary: true,
+                },
+                {
+                  text: t('Cancel'),
+                  action: () => resolve(false),
+                },
+              ],
+            }),
+          );
+        });
+
+        if (!userConfirmed) {
+          logManager.info(
+            'User cancelled due to minor baseCurrencyAmount mismatch.',
+          );
+          return;
+        }
       }
 
       const stateParams: MoonpaySellIncomingData = {

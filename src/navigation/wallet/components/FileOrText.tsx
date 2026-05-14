@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput, {INPUT_HEIGHT} from '../../../components/form/BoxInput';
 import styled, {css} from 'styled-components/native';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -239,6 +239,7 @@ const FileOrText = () => {
   const plainTextRef = useRef<TextInput>(null);
   const {clearSensitive} = useSensitiveRefClear([plainTextRef]);
 
+  const [importButtonState, setImportButtonState] = useState<ButtonState>();
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isFromClipboard, setIsFromClipboard] = useState(false);
   const [fileFocused, setFileFocused] = useState(false);
@@ -255,6 +256,7 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
+      setImportButtonState('loading');
       showOngoingProcess('IMPORTING');
       await sleep(1000);
       // @ts-ignore
@@ -282,6 +284,11 @@ const FileOrText = () => {
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
+      setImportButtonState('success');
+      await sleep(500);
+      setImportButtonState(undefined);
+      hideOngoingProcess();
+
       backupRedirect({
         context: route.params?.context,
         navigation,
@@ -296,10 +303,12 @@ const FileOrText = () => {
         }),
       );
 
-      hideOngoingProcess();
     } catch (err: any) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);
+      setImportButtonState('failed');
+      await sleep(500);
+      setImportButtonState(undefined);
       hideOngoingProcess();
       await sleep(1000);
       showErrorModal(errMsg);
@@ -618,6 +627,7 @@ const FileOrText = () => {
           testID="import-wallet-button"
           accessibilityLabel="Import wallet"
           buttonStyle={'primary'}
+          state={importButtonState}
           onPress={onSubmit}>
           {t('Import Wallet')}
         </Button>
