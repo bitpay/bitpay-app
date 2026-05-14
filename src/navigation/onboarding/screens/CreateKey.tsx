@@ -5,11 +5,9 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import {OnboardingImage} from '../components/Containers';
 import Button from '../../../components/button/Button';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
   CtaContainer,
-  HeaderRightContainer,
   ImageContainer,
   isNarrowHeight,
   TextContainer,
@@ -19,11 +17,7 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {useTranslation} from 'react-i18next';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useRequestTrackingPermissionHandler,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
 import {
@@ -77,20 +71,6 @@ const CreateOrImportKey = ({
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
-
-  const onSkipPressRef = useRef(() => {
-    haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(
-        Analytics.track('Clicked Skip Key Creation', {
-          context: 'onboarding',
-        }),
-      );
-      navigation.navigate('TermsOfUse', {context: 'TOUOnly'});
-    });
-  });
-
   const showErrorModal = (e: string) => {
     dispatch(
       showBottomNotificationModal({
@@ -123,12 +103,10 @@ const CreateOrImportKey = ({
       dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
       hideOngoingProcess();
 
-      askForTrackingThenNavigate(() => {
-        dispatch(Analytics.track('Clicked Create New Key', {context}));
-        navigation.navigate('BackupKey', {
-          context,
-          key: createdKey,
-        });
+      dispatch(Analytics.track('Clicked Create New Key', {context}));
+      navigation.navigate('BackupKey', {
+        context,
+        key: createdKey,
       });
     } catch (err: any) {
       const errstring =
@@ -144,7 +122,6 @@ const CreateOrImportKey = ({
     navigation,
     showOngoingProcess,
     hideOngoingProcess,
-    askForTrackingThenNavigate,
     showErrorModal,
   ]);
 
@@ -197,20 +174,18 @@ const CreateOrImportKey = ({
               accessibilityLabel="I already have a key"
               buttonStyle={'secondary'}
               onPress={() => {
-                askForTrackingThenNavigate(() => {
-                  dispatch(
-                    Analytics.track('Clicked Import Key', {
-                      context: 'onboarding',
-                    }),
-                  );
-                  dispatch(
-                    Analytics.track('Clicked I already have a Key', {
-                      context: 'onboarding',
-                    }),
-                  );
-                  navigation.navigate('Import', {
+                dispatch(
+                  Analytics.track('Clicked Import Key', {
                     context: 'onboarding',
-                  });
+                  }),
+                );
+                dispatch(
+                  Analytics.track('Clicked I already have a Key', {
+                    context: 'onboarding',
+                  }),
+                );
+                navigation.navigate('Import', {
+                  context: 'onboarding',
                 });
               }}>
               {t('I already have a Key')}

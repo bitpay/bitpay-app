@@ -16,10 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {AppEffects} from '../../../store/app';
-import {
-  useAppDispatch,
-  useRequestTrackingPermissionHandler,
-} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
@@ -64,18 +61,14 @@ const NotificationsScreen = ({
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
-
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
-    await askForTrackingThenNavigate(() => {
-      dispatch(
-        Analytics.track('Clicked Skip Notifications', {
-          context: 'onboarding',
-        }),
-      );
-      navigation.navigate('Pin');
-    });
+    dispatch(
+      Analytics.track('Clicked Skip Notifications', {
+        context: 'onboarding',
+      }),
+    );
+    navigation.navigate('Pin');
   });
 
   useLayoutEffect(() => {
@@ -100,22 +93,20 @@ const NotificationsScreen = ({
     const setAndNavigate = (accepted: boolean) => {
       haptic('impactLight');
       dispatch(AppEffects.setNotifications(accepted));
-      askForTrackingThenNavigate(() => {
-        if (notificationsAccepted) {
-          dispatch(
-            Analytics.track('Clicked Allow Notifications', {
-              context: 'onboarding',
-            }),
-          );
-        } else {
-          dispatch(
-            Analytics.track('Clicked Deny Notifications', {
-              context: 'onboarding',
-            }),
-          );
-        }
-        navigation.navigate('Pin');
-      });
+      if (notificationsAccepted) {
+        dispatch(
+          Analytics.track('Clicked Allow Notifications', {
+            context: 'onboarding',
+          }),
+        );
+      } else {
+        dispatch(
+          Analytics.track('Clicked Deny Notifications', {
+            context: 'onboarding',
+          }),
+        );
+      }
+      navigation.navigate('Pin');
     };
 
     if (!notificationsAccepted) {

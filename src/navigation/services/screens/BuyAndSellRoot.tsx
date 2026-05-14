@@ -43,7 +43,7 @@ import {
   getRateByCurrencyName,
   sleep,
 } from '../../../utils/helper-methods';
-import {useAppDispatch, useMount} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {
@@ -62,16 +62,10 @@ import ExternalServicesAmountPills from '../components/externalServicesAmountPil
 import {AltCurrenciesRowProps} from '../../../components/list/AltCurrenciesRow';
 import {StackActions} from '@react-navigation/native';
 import ExternalServicesWalletSelector from '../components/externalServicesWalletSelector';
-import {
-  Key,
-  SendMaxInfo,
-  Token,
-  Wallet,
-} from '../../../store/wallet/wallet.models';
+import {Key, SendMaxInfo, Wallet} from '../../../store/wallet/wallet.models';
 import {
   BuyCryptoConfig,
   ExternalServicesConfig,
-  ExternalServicesConfigRequestParams,
   SellCryptoConfig,
 } from '../../../store/external-services/external-services.types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -80,7 +74,11 @@ import {
   ExternalServicesScreens,
 } from '../ExternalServicesGroup';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {getExternalServicesConfig} from '../../../store/external-services/external-services.effects';
+import {
+  getExternalServicesConfig,
+  getCachedExternalServicesConfig,
+  isExternalServicesConfigCacheFresh,
+} from '../../../store/external-services/external-services.effects';
 import {AppActions} from '../../../store/app';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {ToWalletSelectorCustomCurrency} from '../../wallet/screens/GlobalSelect';
@@ -215,7 +213,7 @@ import {SellCryptoActions} from '../../../store/sell-crypto';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
 import Modal from 'react-native-modal';
-import {Linking, View} from 'react-native';
+import {ActivityIndicator, Linking, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import WebView, {
   WebViewMessageEvent,
@@ -281,6 +279,18 @@ const VirtualKeyboardContainer = styled.View`
 
 const Row = styled.View`
   flex-direction: row;
+`;
+
+const SpinnerContainer = styled.View<{
+  isSmallScreen?: boolean;
+  addMarginBottom?: boolean;
+}>`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: ${({isSmallScreen}) => (isSmallScreen ? '50px' : '70px')};
+  margin-bottom: ${({addMarginBottom}) => (addMarginBottom ? '40px' : '0')};
 `;
 
 const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
@@ -558,7 +568,7 @@ const BuyAndSellRoot = ({
           fiatCurrency !== currentFiatCurrency
         ) {
           const _initialAmount = dispatch(
-            calculateAltFiatToUsd(DEFAULT_USD_VALUE, currentFiatCurrency),
+            calculateUsdToAltFiat(DEFAULT_USD_VALUE, currentFiatCurrency),
           );
           initialAmount = _initialAmount
             ? roundUpNice(_initialAmount)
@@ -657,6 +667,7 @@ const BuyAndSellRoot = ({
   const [selectedPillValue, setSelectedPillValue] = useState<
     number | string | null
   >(null);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | undefined>();
   const [externalServicesConfig, setExternalServicesConfig] = useState<
     ExternalServicesConfig | undefined
@@ -960,13 +971,6 @@ const BuyAndSellRoot = ({
   const initAmountRef = useRef(initAmount);
   initAmountRef.current = initAmount;
 
-  const initLimits = (): void => {
-    if (context === 'buyCrypto') {
-      setLimits(dispatch(getBuyCryptoFiatLimits(undefined, fiatCurrency)));
-    }
-    // Sell crypto limits are set when selling coin is selected (from selectedWallet)
-  };
-
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
     const foundToken = (
       Object.values(tokenDataByAddress) as CurrencyOpts[]
@@ -996,15 +1000,13 @@ const BuyAndSellRoot = ({
 
   const initBuyCrypto = async () => {
     try {
-      const requestData: ExternalServicesConfigRequestParams = {
-        currentLocationCountry: locationData?.countryShortCode,
-        currentLocationState: locationData?.stateShortCode,
-        bitpayIdLocationCountry: user?.country,
-        bitpayIdLocationState: user?.state,
-      };
-      const config: ExternalServicesConfig = await dispatch(
-        getExternalServicesConfig(requestData),
-      );
+      let config: ExternalServicesConfig;
+      if (isExternalServicesConfigCacheFresh()) {
+        config = getCachedExternalServicesConfig()!.config;
+        logger.debug('Using cached buyCryptoConfig');
+      } else {
+        config = await dispatch(getExternalServicesConfig());
+      }
       buyCryptoConfig = config?.buyCrypto;
       setExternalServicesConfig(config);
       logger.debug('buyCryptoConfig: ' + JSON.stringify(buyCryptoConfig));
@@ -1014,7 +1016,7 @@ const BuyAndSellRoot = ({
     }
 
     if (buyCryptoConfig?.disabled) {
-      hideOngoingProcess();
+      setIsInitializing(false);
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1044,31 +1046,30 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    if (preSetPartner) {
-      logger.debug(
-        `preSetPartner: ${preSetPartner} - fromAmount: ${fromAmount} - fromCurrencyAbbreviation: ${fromCurrencyAbbreviation} - fromChain: ${fromChain}`,
-      );
-    }
-
-    const limits = dispatch(
-      getBuyCryptoFiatLimits(preSetPartner, fiatCurrency),
+    logger.debug(
+      `[initBuyCrypto] preSetPartner: ${preSetPartner} - fromAmount: ${fromAmount} - fromCurrencyAbbreviation: ${fromCurrencyAbbreviation} - fromChain: ${fromChain}`,
     );
 
+    const _limits = dispatch(
+      getBuyCryptoFiatLimits(preSetPartner, fiatCurrency),
+    );
+    setLimits(_limits);
+
     if (
-      limits.min !== undefined &&
+      _limits.min !== undefined &&
       fromAmount !== undefined &&
-      fromAmount < limits.min
+      fromAmount < _limits.min
     ) {
-      curValRef.current = limits.min.toString();
-      updateAmountRef.current(limits.min.toString());
+      curValRef.current = _limits.min.toString();
+      updateAmountRef.current(_limits.min.toString());
     }
     if (
-      limits.max !== undefined &&
+      _limits.max !== undefined &&
       fromAmount !== undefined &&
-      fromAmount > limits.max
+      fromAmount > _limits.max
     ) {
-      curValRef.current = limits.max.toString();
-      updateAmountRef.current(limits.max.toString());
+      curValRef.current = _limits.max.toString();
+      updateAmountRef.current(_limits.max.toString());
     }
 
     if (!buyCryptoSupportedCoins) {
@@ -1143,13 +1144,14 @@ const BuyAndSellRoot = ({
           .filter(currency => !!currency.name);
 
       setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
+      setIsInitializing(false);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(
         'Buy crypto Error when trying to build the list of supported coins from: ' +
           JSON.stringify(supportedCoins),
       );
-      hideOngoingProcess();
+      setIsInitializing(false);
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1176,8 +1178,7 @@ const BuyAndSellRoot = ({
       );
       return;
     }
-    await sleep(600);
-    hideOngoingProcess();
+    setIsInitializing(false);
   };
 
   const filterMoonpayCurrenciesConditions = (
@@ -1494,17 +1495,19 @@ const BuyAndSellRoot = ({
   };
 
   const initSellCrypto = async () => {
+    if (fromDeeplink) {
+      await sleep(300);
+    }
     try {
-      const requestData: ExternalServicesConfigRequestParams = {
-        currentLocationCountry: locationData?.countryShortCode,
-        currentLocationState: locationData?.stateShortCode,
-        bitpayIdLocationCountry: user?.country,
-        bitpayIdLocationState: user?.state,
-      };
-      const config: ExternalServicesConfig = await dispatch(
-        getExternalServicesConfig(requestData),
-      );
+      let config: ExternalServicesConfig;
+      if (isExternalServicesConfigCacheFresh()) {
+        config = getCachedExternalServicesConfig()!.config;
+        logger.debug('Using cached sellCryptoConfig');
+      } else {
+        config = await dispatch(getExternalServicesConfig());
+      }
       sellCryptoConfig = config?.sellCrypto;
+      setExternalServicesConfig(config);
       logger.debug('sellCryptoConfig: ' + JSON.stringify(sellCryptoConfig));
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
@@ -1512,7 +1515,7 @@ const BuyAndSellRoot = ({
     }
 
     if (sellCryptoConfig?.disabled) {
-      hideOngoingProcess();
+      setIsInitializing(false);
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1597,7 +1600,7 @@ const BuyAndSellRoot = ({
       }
       const reason =
         'initSellCrypto Error. Could not get enabledExchanges for the user parameters';
-      hideOngoingProcess();
+      setIsInitializing(false);
       await sleep(100);
       showError(undefined, msg, reason);
       return;
@@ -1745,8 +1748,9 @@ const BuyAndSellRoot = ({
             ({symbol}) => symbol,
           );
           setSellCryptoSupportedCoins(_sellCryptoSupportedCoins);
-          await sleep(100);
-          hideOngoingProcess();
+          if (!fromWallet) {
+            setIsInitializing(false);
+          }
         } else {
           logger.error(
             'Sell crypto getCurrencies Error: allSupportedCoins array is empty',
@@ -1754,7 +1758,7 @@ const BuyAndSellRoot = ({
           const msg = t(
             'Sell Crypto feature is not available at this moment. Please try again later.',
           );
-          hideOngoingProcess();
+          setIsInitializing(false);
           await sleep(500);
           showError(undefined, msg, undefined, undefined, true);
         }
@@ -1765,20 +1769,11 @@ const BuyAndSellRoot = ({
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
-      hideOngoingProcess();
+      setIsInitializing(false);
       await sleep(500);
       showError(undefined, msg, undefined, undefined, true);
     }
   };
-
-  const init = async () => {
-    if (fromDeeplink) {
-      await sleep(200);
-    }
-    await sleep(100);
-    showOngoingProcess('GENERAL_AWAITING');
-  };
-
   const updateWalletStatus = async (
     wallet: Wallet,
     skipStatusUpdate?: boolean,
@@ -1940,10 +1935,12 @@ const BuyAndSellRoot = ({
         }
       }
       setLoadingEnterAmountBtn(false);
+      setIsInitializing(false);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error('Sell crypto getLimits Error: ' + errMsg);
       setLoadingEnterAmountBtn(false);
+      setIsInitializing(false);
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
@@ -2046,34 +2043,40 @@ const BuyAndSellRoot = ({
     return Promise.resolve(simplexLimits);
   };
 
-  useMount(() => {
-    init();
-    if (context === 'buyCrypto') {
-      try {
-        initBuyCrypto();
-      } catch (err: any) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error(`[Buy] could not initialize view: ${errStr}`);
-        hideOngoingProcess();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('transitionEnd', async () => {
+      logger.debug('BuyAndSellRoot transitionEnd, initializing...');
+      if (context === 'buyCrypto') {
+        try {
+          await initBuyCrypto();
+        } catch (err: any) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`[Buy] could not initialize view: ${errStr}`);
+          setIsInitializing(false);
+        }
+      } else if (context === 'sellCrypto') {
+        try {
+          await initSellCrypto();
+        } catch (err: any) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`[Sell] could not initialize view: ${errStr}`);
+          setIsInitializing(false);
+        }
       }
-    } else if (context === 'sellCrypto') {
-      try {
-        initSellCrypto();
-      } catch (err: any) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error(`[Sell] could not initialize view: ${errStr}`);
-        hideOngoingProcess();
-      }
-    }
 
-    try {
-      initAmountRef.current();
-    } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error(`[Buy/Sell Amount] could not initialize view: ${errStr}`);
-    }
-    initLimits();
-  });
+      try {
+        initAmountRef.current();
+      } catch (err: any) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`[Buy/Sell Amount] could not initialize view: ${errStr}`);
+      }
+    });
+
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     KeyEvent.onKeyUpListener((keyEvent: any) => {
@@ -3301,7 +3304,6 @@ const BuyAndSellRoot = ({
       defaultFlow: 'OFFRAMP',
       selectedCountryCode: country,
       defaultAsset: rampAsset,
-      variant: 'webview-mobile',
       useSendCryptoCallback: true,
       useSendCryptoCallbackVersion: 1,
       hideExitButton: false,
@@ -3801,26 +3803,38 @@ const BuyAndSellRoot = ({
         }}>
         <AmountHeroContainer isSmallScreen={_isSmallScreen}>
           <Row>
-            <AmountText
-              numberOfLines={1}
-              ellipsizeMode={'tail'}
-              bigAmount={
-                _isSmallScreen ? true : amountConfig.displayAmount?.length > 8
-              }>
-              {amountConfig.displayAmount || 0}
-            </AmountText>
-            {context !== 'sellCrypto' || selectedWallet ? (
-              <CurrencySuperScript>
-                <CurrencyText
+            {isInitializing ? (
+              <SpinnerContainer
+                isSmallScreen={_isSmallScreen}
+                addMarginBottom={!!(context === 'sellCrypto' && fromWallet)}>
+                <ActivityIndicator color={SlateDark} />
+              </SpinnerContainer>
+            ) : (
+              <>
+                <AmountText
+                  numberOfLines={1}
+                  ellipsizeMode={'tail'}
                   bigAmount={
                     _isSmallScreen
                       ? true
                       : amountConfig.displayAmount?.length > 8
                   }>
-                  {formatCurrencyAbbreviation(usingCurrency) || 'USD'}
-                </CurrencyText>
-              </CurrencySuperScript>
-            ) : null}
+                  {amountConfig.displayAmount || 0}
+                </AmountText>
+                {context !== 'sellCrypto' || selectedWallet ? (
+                  <CurrencySuperScript>
+                    <CurrencyText
+                      bigAmount={
+                        _isSmallScreen
+                          ? true
+                          : amountConfig.displayAmount?.length > 8
+                      }>
+                      {formatCurrencyAbbreviation(usingCurrency) || 'USD'}
+                    </CurrencyText>
+                  </CurrencySuperScript>
+                ) : null}
+              </>
+            )}
           </Row>
           {/* This section shows the equivalent amount (in crypto if usingCurrency is fiat / in fiat if usingCurrency is crypto)
               Do not remove commented section*/}
@@ -3902,6 +3916,7 @@ const BuyAndSellRoot = ({
             chain={fromChain}
             partner={preSetPartner}
             onWalletSelected={setSelectedWallet}
+            loading={isInitializing}
           />
         </AmountHeroContainer>
         <ActionContainer>
