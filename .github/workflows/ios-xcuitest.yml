@@ -97,7 +97,7 @@ jobs:
             -derivedDataPath Build \
             -resultBundlePath TestResults.xcresult \
             -only-testing:BitPayAppUITests \
-            test-without-building
+            test
 
       # Upload XCResult
       - name: Upload XCUITest Results
