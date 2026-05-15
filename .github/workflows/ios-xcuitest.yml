@@ -72,6 +72,12 @@ jobs:
           xcrun simctl boot "iPhone 17" || true
           xcrun simctl bootstatus "iPhone 17" -b
 
+      # Apply production configuration
+      - name: Apply production configuration
+        run: |
+          export NODE_ENV=production
+          yarn set:prod
+
       # Build for testing
       - name: Build for testing
         run: |
@@ -96,6 +102,7 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -derivedDataPath Build \
             -resultBundlePath TestResults.xcresult \
+            -parallel-testing-enabled NO \
             -only-testing:BitPayAppUITests \
             test
 
