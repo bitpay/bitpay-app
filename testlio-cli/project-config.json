@@ -1,0 +1,10 @@
+{
+    "baseURI": "https://api.testlio.com/",
+    "platformURI": "https://app.testlio.com/tmt/project/",
+    "projectId": "3307",
+    "automatedRunCollectionGuid": "2df42fa4-225b-430e-882d-e5fc3ec31de7",
+    "testRunCollectionGuid": "a77e695c-5061-4451-98fe-4f93b8a26d9b",
+    "resultCollectionGuid": "3688212d-e132-40a3-a4bd-aae8b664a2d8",
+    "workspaceName": "bitpay---sandbox"
+}
+
