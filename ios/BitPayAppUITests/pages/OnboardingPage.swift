@@ -104,9 +104,13 @@ class OnboardingPage {
     let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     let askAppNotToTrackButton = springboard.buttons["Ask App Not to Track"]
 
-    if askAppNotToTrackButton.waitForExistence(timeout: 30) {
+    if askAppNotToTrackButton.waitForExistence(timeout: timeout) {
       askAppNotToTrackButton.tap()
     }
+  }
+  
+  func isContinueWithoutAccountButtonDisplayed(timeout: TimeInterval = 15) -> Bool  {
+    return continueWithoutAnAccountButton.waitForExistence(timeout: timeout)
   }
 
   func tapContinuewithoutAnAccount() {

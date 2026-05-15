@@ -11,7 +11,9 @@ final class BasicSellBTC: XCTestCase {
     app.launch()
     
     let onboardingPage = OnboardingPage(app: app)
-    onboardingPage.handleTrackingPermissionIfDisplayed(timeout: 15)
+    onboardingPage.handleTrackingPermissionIfDisplayed()
+    
+    AppFlows.completeOnboardingIfRequired(app: app)
   }
   
   @MainActor

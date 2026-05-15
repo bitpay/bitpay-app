@@ -12,6 +12,8 @@ final class BasicSwapBTC: XCTestCase {
     
     let onboardingPage = OnboardingPage(app: app)
     onboardingPage.handleTrackingPermissionIfDisplayed()
+    
+    AppFlows.completeOnboardingIfRequired(app: app)
   }
   
   @MainActor

@@ -10,8 +10,10 @@ final class BTCConfirmPayment: XCTestCase {
     app = XCUIApplication()
     app.launch()
     
-//    let onboardingPage = OnboardingPage(app: app)
-//    onboardingPage.handleTrackingPermissionIfDisplayed()
+    let onboardingPage = OnboardingPage(app: app)
+    onboardingPage.handleTrackingPermissionIfDisplayed()
+    
+    AppFlows.completeOnboardingIfRequired(app: app)
   }
   
   @MainActor
