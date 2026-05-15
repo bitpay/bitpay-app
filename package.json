@@ -48,6 +48,7 @@
     "translation:download": "crowdin download --identity crowdin-credentials.yml"
   },
   "dependencies": {
+    "@bitpay-labs/bitcore-wallet-client": "11.8.0",
     "@braze/react-native-sdk": "16.1.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
@@ -83,6 +84,7 @@
     "@solana/sysvars": "3.0.2",
     "@solana/web3.js": "1.98.2",
     "@solana/webcrypto-ed25519-polyfill": "2.1.1",
+    "@sumsub/react-native-mobilesdk-module": "1.42.0",
     "@tradle/react-native-http": "2.0.1",
     "@walletconnect/jsonrpc-types": "1.0.4",
     "@walletconnect/react-native-compat": "2.21.8",
@@ -91,7 +93,6 @@
     "babel-plugin-module-resolver": "4.1.0",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
-    "@bitpay-labs/bitcore-wallet-client": "11.8.0",
     "bs58": "6.0.0",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",

@@ -17,6 +17,7 @@ import {isAnonymousBrazeEid, setEmailNotifications} from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {ShopActions, ShopEffects} from '../shop';
+import {SumSubActions} from '../sumsub';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
@@ -644,6 +645,7 @@ export const startDisconnectBitPayId =
     }
 
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+    dispatch(SumSubActions.resetKycStatus(APP.network));
     dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));

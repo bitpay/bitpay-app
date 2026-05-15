@@ -64,6 +64,7 @@ import {
 } from '../../../constants/currencies';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../constants/wallet';
 import SecurePasskeyBannerGate from './components/SecurePasskeyBannerGate';
+import KycBannerGate from './components/KycBannerGate';
 import DefaultMarketingCards from './components/DefaultMarketingCards';
 import AllocationSection from './components/AllocationSection';
 import AssetsSection from './components/AssetsSection';
@@ -388,6 +389,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                   onRefresh={onRefresh}
                 />
               }>
+              {/* ////////////////////////////// KYC NOTIFICATION */}
+              <KycBannerGate />
+
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
               {showPortfolioValue ? (
                 <HomeSection style={{marginTop: 20, marginBottom: 20}}>
