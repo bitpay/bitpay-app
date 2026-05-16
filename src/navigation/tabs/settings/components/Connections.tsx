@@ -17,6 +17,17 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 import {SettingsDetailsParamList} from '../SettingsDetails';
+import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
+import {
+  getMoonpayEmbeddedAnonymousCredentials,
+  getMoonpayEmbeddedEnabled,
+  getMoonpayEmbeddedStatus,
+  isMoonpayEmbeddedCredentialsValid,
+  setMoonpayEmbeddedCredentials,
+  setMoonpayEmbeddedStatus,
+} from '../../../../store/buy-crypto/buy-crypto.effects';
+import {ExternalServicesScreens} from '../../../services/ExternalServicesGroup';
+import {MoonpayClientCredentials} from '../../../services/utils/moonpayFrameCrypto';
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
 
@@ -42,6 +53,9 @@ const Connections = () => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+
+  const moonpayEmbeddedEnabled = getMoonpayEmbeddedEnabled();
+
   const goToWalletConnect = useCallback(() => {
     dispatch(
       Analytics.track('Clicked WalletConnect', {
@@ -86,6 +100,50 @@ const Connections = () => {
     );
   };
 
+  const goToMoonpay = () => {
+    haptic('impactLight');
+    const isConnected = isMoonpayEmbeddedCredentialsValid();
+    const embeddedStatus = getMoonpayEmbeddedStatus();
+
+    dispatch(
+      Analytics.track('Clicked Moonpay', {
+        context: 'Settings Connections',
+      }),
+    );
+
+    if (isConnected && embeddedStatus === 'active') {
+      navigation.navigate('MoonpayConnectionSettings');
+      return;
+    }
+
+    // Not connected — try to go directly to onboarding if anonymous creds are ready.
+    const anonymousCreds = getMoonpayEmbeddedAnonymousCredentials();
+    if (anonymousCreds) {
+      navigation.navigate(
+        ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
+        {
+          user,
+          anonymousCredentials: anonymousCreds,
+          onConnectAccount: async (
+            newCredentials: MoonpayClientCredentials,
+          ) => {
+            setMoonpayEmbeddedCredentials(newCredentials);
+            setMoonpayEmbeddedStatus('active');
+            navigation.navigate('MoonpayConnectionSettings');
+          },
+          onSkipConnection: async () => {
+            navigation.goBack();
+          },
+        },
+      );
+      return;
+    }
+
+    // Anonymous credentials not yet available (still checking) —
+    // navigate to the settings screen which shows the Connect button.
+    navigation.navigate('MoonpayConnectionSettings');
+  };
+
   useEffect(() => {
     if (redirectTo === 'walletconnect') {
       // reset params to prevent re-triggering
@@ -125,6 +183,23 @@ const Connections = () => {
         <AngleRight />
       </Setting>
       <Hr />
+      {moonpayEmbeddedEnabled ? (
+        <>
+          <Setting
+            testID="settings-connections-moonpay-row"
+            accessibilityLabel="Moonpay"
+            onPress={() => goToMoonpay()}>
+            <ConnectionItemContainer>
+              <ConnectionIconContainer style={{marginLeft: 3}}>
+                <MoonpayLogo iconOnly={true} widthIcon={26} heightIcon={25} />
+              </ConnectionIconContainer>
+              <SettingTitle>Moonpay</SettingTitle>
+            </ConnectionItemContainer>
+            <AngleRight />
+          </Setting>
+          <Hr />
+        </>
+      ) : null}
       <Setting
         testID="settings-connections-walletconnect-row"
         accessibilityLabel="WalletConnect"
