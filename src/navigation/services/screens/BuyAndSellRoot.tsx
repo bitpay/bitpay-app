@@ -50,7 +50,14 @@ import {
   calculateAltFiatToUsd,
   calculateUsdToAltFiat,
   getBuyCryptoFiatLimits,
+  getMoonpayEmbeddedAnonymousCredentials,
+  getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedEnabled,
+  getMoonpayEmbeddedStatus,
+  isMoonpayEmbeddedCredentialsValid,
   roundUpNice,
+  setMoonpayEmbeddedCredentials,
+  setMoonpayEmbeddedStatus,
 } from '../../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../../../components/archax/archax-footer';
@@ -60,7 +67,7 @@ import ExternalServicesOfferSelector, {
 } from '../components/externalServicesOfferSelector';
 import ExternalServicesAmountPills from '../components/externalServicesAmountPills';
 import {AltCurrenciesRowProps} from '../../../components/list/AltCurrenciesRow';
-import {StackActions} from '@react-navigation/native';
+import {CommonActions, StackActions} from '@react-navigation/native';
 import ExternalServicesWalletSelector from '../components/externalServicesWalletSelector';
 import {Key, SendMaxInfo, Wallet} from '../../../store/wallet/wallet.models';
 import {
@@ -186,6 +193,7 @@ import {
   moonpaySellEnv,
 } from '../sell-crypto/utils/moonpay-sell-utils';
 import {moonpayGetCurrencies} from '../../../store/buy-crypto/effects/moonpay/moonpay';
+import {MoonpayClientCredentials} from '../utils/moonpayFrameCrypto';
 import {
   getPayoutMethodKeyFromRampType,
   getRampSellCoinFormat,
@@ -233,6 +241,7 @@ import {
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {IS_ANDROID} from '../../../constants';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
+import {User} from '../../../store/bitpay-id/bitpay-id.models';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -486,11 +495,13 @@ const BuyAndSellRoot = ({
   );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const user: User | undefined = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.user[network],
+  );
+  const allRates = useAppSelector(({RATE}) => RATE.rates);
   const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
     ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
-  const allRates = useAppSelector(({RATE}) => RATE.rates);
   const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.opts,
   );
@@ -695,6 +706,11 @@ const BuyAndSellRoot = ({
     key?: 'moonpayBuy' | 'moonpaySell' | 'rampSell';
     rampOffer?: SellCryptoOffer;
   }>({open: false, url: undefined});
+  const embeddedWebViewRef = useRef<WebView>(null);
+  const hasInitializedRef = useRef(false);
+
+  const moonpayEmbeddedEnabled =
+    getMoonpayEmbeddedEnabled() && context === 'buyCrypto';
 
   const updateAmount = (_val: string) => {
     const val = Number(_val);
@@ -2046,6 +2062,15 @@ const BuyAndSellRoot = ({
   useEffect(() => {
     const unsubscribe = navigation.addListener('transitionEnd', async () => {
       logger.debug('BuyAndSellRoot transitionEnd, initializing...');
+      setButtonState(undefined);
+      setWebViewModal({open: false, url: undefined});
+      setOpeningBrowser(false);
+
+      if (hasInitializedRef.current) {
+        return;
+      }
+      hasInitializedRef.current = true;
+
       if (context === 'buyCrypto') {
         try {
           await initBuyCrypto();
@@ -2386,12 +2411,13 @@ const BuyAndSellRoot = ({
     if (offer.errorMsg || offer.outOfLimitMsg) {
       return;
     }
-    continueToMoonpay(offer, paymentMethod);
+    continueToMoonpay(offer, paymentMethod, false);
   };
 
   const continueToMoonpay = async (
     offer: CryptoOffer,
     paymentMethod: PaymentMethod,
+    skipEmbedded?: boolean,
   ) => {
     if (!selectedWallet) {
       return;
@@ -2415,6 +2441,77 @@ const BuyAndSellRoot = ({
     const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
     const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
 
+    if (!skipEmbedded) {
+      if (moonpayEmbeddedEnabled && paymentMethod?.method === 'applePay') {
+        const embeddedStatus = getMoonpayEmbeddedStatus();
+        const cachedCredentials = getMoonpayEmbeddedCredentials();
+
+        if (
+          embeddedStatus === 'active' &&
+          isMoonpayEmbeddedCredentialsValid() &&
+          cachedCredentials
+        ) {
+          dispatch(
+            Analytics.track('Requested Crypto Purchase', {
+              exchange: 'moonpay',
+              fiatAmount: offer.fiatAmount,
+              fiatCurrency: offer.fiatCurrency,
+              paymentMethod: paymentMethod.method,
+              coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+              chain: destinationChain?.toLowerCase(),
+              isEmbedded: true,
+            }),
+          );
+
+          // Credentials already available — go straight to embedded checkout
+          continueToMoonpayEmbeddedCheckout(
+            offer,
+            paymentMethod,
+            cachedCredentials,
+          );
+          return;
+        }
+
+        if (embeddedStatus === 'connectionRequired') {
+          // User needs to link their account first
+          const anonymousCreds = getMoonpayEmbeddedAnonymousCredentials();
+          if (anonymousCreds) {
+            navigation.navigate(
+              ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
+              {
+                user,
+                anonymousCredentials: anonymousCreds,
+                onConnectAccount: async (
+                  newCredentials: MoonpayClientCredentials,
+                ) => {
+                  setMoonpayEmbeddedCredentials(newCredentials);
+                  setMoonpayEmbeddedStatus('active');
+                  continueToMoonpayEmbeddedCheckout(
+                    offer,
+                    paymentMethod,
+                    newCredentials,
+                  );
+                },
+                onSkipConnection: async () => {
+                  hasInitializedRef.current = true;
+                  setButtonState('loading');
+                  setOpeningBrowser(true);
+                  navigation.goBack();
+                  await sleep(600);
+                  continueToMoonpay(offer, paymentMethod, true);
+                },
+              },
+            );
+            setOpeningBrowser(false);
+            return;
+          }
+          // Anonymous credentials not yet available — fall through to standard flow
+        }
+
+        // If still checking / unavailable / failed → fall through to standard MoonPay flow
+      }
+    }
+
     const newData: MoonpayPaymentData = {
       address,
       created_on: Date.now(),
@@ -2429,6 +2526,7 @@ const BuyAndSellRoot = ({
       payment_method: paymentMethod?.method,
       status: 'paymentRequestSent',
       user_id: selectedWallet.id,
+      is_embedded: false,
     };
 
     dispatch(
@@ -2445,6 +2543,7 @@ const BuyAndSellRoot = ({
         paymentMethod: paymentMethod.method,
         coin: selectedWallet.currencyAbbreviation.toLowerCase(),
         chain: destinationChain?.toLowerCase(),
+        isEmbedded: false,
       }),
     );
 
@@ -2491,6 +2590,97 @@ const BuyAndSellRoot = ({
       url: data.urlWithSignature,
       key: 'moonpayBuy',
     });
+    setOpeningBrowser(false);
+  };
+
+  const continueToMoonpayEmbeddedCheckout = async (
+    offer: CryptoOffer,
+    paymentMethod: PaymentMethod,
+    credentials: MoonpayClientCredentials,
+  ) => {
+    if (!selectedWallet) {
+      return;
+    }
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(` Moonpay createWalletAddress Error: ${errMsg}`);
+      const title = t('MoonPay Error');
+      const msg = getErrorMessage(err);
+      const reason = 'createWalletAddress Error';
+      showError(title, msg, reason);
+      return;
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'moonpay',
+        fiatAmount: offer.fiatAmount,
+        fiatCurrency: offer.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const moonpayFormatData = {
+      currencyCodeMoonpayFormat: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        destinationChain,
+      ),
+      paymentMethodMoonpayFormat:
+        getMoonpayPaymentMethodFormat(paymentMethod.method) ?? undefined,
+    };
+
+    const checkoutParams = {
+      wallet: selectedWallet,
+      toAddress: address,
+      moonpayFormatData,
+      offer,
+      credentials,
+      paymentMethod,
+    };
+
+    // If the onboarding screen is in the stack, replace it (and everything above
+    // it) with the checkout screen so pressing Back skips the onboarding.
+    navigation.dispatch(state => {
+      const hasOnboarding = state.routes.some(
+        r => r.name === ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
+      );
+
+      if (hasOnboarding) {
+        const routes = [
+          ...state.routes.filter(
+            r =>
+              r.name !==
+              ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
+          ),
+          {
+            name: ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_CHECKOUT,
+            params: checkoutParams,
+          },
+        ];
+        return CommonActions.reset({
+          ...state,
+          routes,
+          index: routes.length - 1,
+        });
+      }
+
+      // No onboarding in the stack — normal navigate
+      return CommonActions.navigate({
+        name: ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_CHECKOUT,
+        params: checkoutParams,
+      });
+    });
+
     setOpeningBrowser(false);
   };
 
@@ -3952,6 +4142,7 @@ const BuyAndSellRoot = ({
               onSelectOffer={setSelectedOffer}
               onSelectPaymentMethod={setSelectedPaymentMethod}
               refreshTrigger={refreshQuotesTrigger}
+              preferMoonpayApplePay={moonpayEmbeddedEnabled}
             />
           ) : null}
           {(context === 'buyCrypto' &&
@@ -4089,6 +4280,8 @@ const BuyAndSellRoot = ({
             </WebViewCloseButton>
           </WebViewModalHeader>
           <WebView
+            key={webViewModal.url}
+            ref={embeddedWebViewRef}
             style={{
               paddingBottom: insets.bottom + 30,
             }}
@@ -4097,7 +4290,24 @@ const BuyAndSellRoot = ({
             onShouldStartLoadWithRequest={
               webViewModal.key === 'moonpayBuy' ||
               webViewModal.key === 'moonpaySell'
-                ? handleMoonpayBuyNavigation
+                ? event => {
+                    // On iOS, window.open() triggers a navigation with
+                    // navigationType === 'other'. Allow those navigations to load
+                    // inside the same WebView instead of being blocked, so that
+                    // MoonPay can open popups / new pages it needs (e.g. 3DS, oauth).
+                    // We only do this when the URL is different from the current one
+                    // to avoid re-loading the frame itself.
+                    if (
+                      event.navigationType === 'other' &&
+                      event.url !== webViewModal.url
+                    ) {
+                      return true;
+                    }
+                    // For all other navigations (deeplinks, redirects, etc.)
+                    // delegate to the existing handler which intercepts bitpay://
+                    // deeplinks and lets normal https navigations through.
+                    return handleMoonpayBuyNavigation(event);
+                  }
                 : undefined
             }
             onMessage={
@@ -4110,6 +4320,10 @@ const BuyAndSellRoot = ({
             originWhitelist={['https://*', 'bitpay://*', 'about:*']}
             automaticallyAdjustContentInsets
             allowsInlineMediaPlayback={true}
+            // autoplay
+            mediaPlaybackRequiresUserAction={false}
+            // camera — iOS: grant automatically for the same host (accelerometer/gyroscope included)
+            mediaCapturePermissionGrantType={'grantIfSameHostElsePrompt'}
             javaScriptEnabled={true}
             domStorageEnabled={true}
             cacheEnabled={false}

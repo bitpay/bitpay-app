@@ -29,7 +29,6 @@ import {
   simplexEnv,
   getSimplexCoinFormat,
 } from '../buy-crypto/utils/simplex-utils';
-import {RootState} from '../../../store';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {
   BanxaGetQuoteRequestData,
@@ -37,7 +36,9 @@ import {
   BanxaQuoteData,
   BuyCryptoLimits,
   MoonpayGetCurrencyLimitsRequestData,
+  MoonpayGetQuoteEmbeddedRequestData,
   MoonpayPaymentType,
+  MoonpayQuoteEmbeddedData,
   SardineGetQuoteRequestData,
   SimplexGetQuoteRequestData,
   TransakGetQuoteRequestData,
@@ -47,6 +48,9 @@ import {
 import {
   calculateAnyFiatToAltFiat,
   getBuyCryptoFiatLimits,
+  getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedStatus,
+  isMoonpayEmbeddedCredentialsValid,
 } from '../../../store/buy-crypto/buy-crypto.effects';
 import {SendMaxInfo, Wallet} from '../../../store/wallet/wallet.models';
 import {
@@ -87,7 +91,10 @@ import {
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../store/app';
 import {banxaGetPaymentMethods} from '../../../store/buy-crypto/effects/banxa/banxa';
-import {moonpayGetCurrencyLimits} from '../../../store/buy-crypto/effects/moonpay/moonpay';
+import {
+  moonpayGetCurrencyLimits,
+  moonpayGetQuoteEmbedded,
+} from '../../../store/buy-crypto/effects/moonpay/moonpay';
 import {rampGetAssets} from '../../../store/buy-crypto/effects/ramp/ramp';
 import {
   getSardineChainFormat,
@@ -163,6 +170,7 @@ import {
   getSimplexSellCountryFormat,
   simplexSellEnv,
 } from '../sell-crypto/utils/simplex-sell-utils';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 export const ExternalServicesOfferSelectorContainer = styled.View``;
 
@@ -243,6 +251,7 @@ export type CryptoOffer = {
   paymentMethodId?: number; // Banxa
   paymentMethodKey?: TransakPaymentType; // Transak
   outOfLimitMsg?: string;
+  isEmbedded?: boolean; // Moonpay embedded flow
 };
 
 const offersDefault: {
@@ -275,6 +284,7 @@ const offersDefault: {
     fiatMoney: undefined,
     errorMsg: undefined,
     outOfLimitMsg: undefined,
+    isEmbedded: undefined,
   },
   ramp: {
     key: 'ramp',
@@ -453,6 +463,7 @@ interface ExternalServicesOfferSelectorProps {
     };
   };
   refreshTrigger?: number;
+  preferMoonpayApplePay?: boolean;
 }
 
 const ExternalServicesOfferSelector: React.FC<
@@ -479,6 +490,7 @@ const ExternalServicesOfferSelector: React.FC<
   preSetPartner,
   preLoadPartnersData,
   refreshTrigger,
+  preferMoonpayApplePay,
 }) => {
   const theme = useTheme();
   const {t} = useTranslation();
@@ -1005,6 +1017,168 @@ const ExternalServicesOfferSelector: React.FC<
       );
     }
 
+    // MoonPay embedded flow
+    if (
+      preferMoonpayApplePay &&
+      paymentMethod?.method === 'applePay' &&
+      selectedWallet
+    ) {
+      const embeddedStatus = getMoonpayEmbeddedStatus();
+      const cachedCredentials = getMoonpayEmbeddedCredentials();
+
+      if (
+        embeddedStatus === 'active' &&
+        isMoonpayEmbeddedCredentialsValid() &&
+        cachedCredentials
+      ) {
+        let _paymentMethod: MoonpayPaymentType | undefined =
+          getMoonpayPaymentMethodFormat(
+            (paymentMethod?.method as PaymentMethodKey) ?? 'applePay',
+            true,
+          );
+        let toAddress: string = '';
+        try {
+          toAddress = (await dispatch<any>(
+            createWalletAddress({wallet: selectedWallet, newAddress: false}),
+          )) as string;
+        } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          const _err = new Error(
+            `Moonpay Embedded createWalletAddress Error: ${errMsg}`,
+          );
+          logger.error(_err.message);
+          const reason = 'createWalletAddress Error';
+          showMoonpayError(_err, reason);
+          return;
+        }
+
+        let embeddedQuoteData: MoonpayQuoteEmbeddedData;
+        try {
+          const reqData: MoonpayGetQuoteEmbeddedRequestData = {
+            env: moonpayEnv,
+            accessToken: cachedCredentials.accessToken,
+            destinationAddress: toAddress,
+            currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
+              selectedWallet.currencyAbbreviation.toLowerCase(),
+              selectedWallet.chain,
+            ),
+            baseCurrencyAmount: offers.moonpay.fiatAmount,
+            baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
+            paymentMethod: _paymentMethod,
+            areFeesIncluded: true,
+          };
+
+          const MOONPAY_TIMEOUT = 8000; // 8 seconds
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error(t('Moonpay request timed out'))),
+              MOONPAY_TIMEOUT,
+            ),
+          );
+          const requestPromise = moonpayGetQuoteEmbedded(reqData);
+          embeddedQuoteData = (await Promise.race([
+            requestPromise,
+            timeoutPromise,
+          ])) as MoonpayQuoteEmbeddedData;
+
+          if (embeddedQuoteData?.destination) {
+            if (embeddedQuoteData.limits?.daily?.remaining?.amount) {
+              offers.moonpay.amountLimits = {
+                min: offers?.moonpay?.amountLimits?.min,
+                max: Number(embeddedQuoteData.limits?.daily?.remaining?.amount),
+              };
+
+              if (
+                offers.moonpay.amountLimits.max &&
+                offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max
+              ) {
+                offers.moonpay.amountReceiving = undefined;
+                offers.moonpay.fiatMoney = undefined;
+                offers.moonpay.quoteData = undefined;
+                offers.moonpay.errorMsg = undefined;
+                offers.moonpay.outOfLimitMsg = t(
+                  'There are no Moonpay offers available, as you are attempting to exceed the daily purchase limits. Remaining amount: {{max}} {{fiatCurrency}}',
+                  {
+                    max: offers.moonpay.amountLimits.max,
+                    fiatCurrency: offers.moonpay.fiatCurrency,
+                  },
+                );
+                setFinishedMoonpay(true);
+                return;
+              }
+            }
+
+            offers.moonpay.outOfLimitMsg = undefined;
+            offers.moonpay.errorMsg = undefined;
+            offers.moonpay.quoteData = embeddedQuoteData;
+            offers.moonpay.isEmbedded = true;
+
+            if (embeddedQuoteData.source?.amount) {
+              if (embeddedQuoteData.fees) {
+                const fee =
+                  Number(embeddedQuoteData.fees.moonpay?.amount ?? 0) +
+                  Number(embeddedQuoteData.fees.partner?.amount ?? 0) +
+                  Number(embeddedQuoteData.fees.network?.amount ?? 0);
+                offers.moonpay.fee = fee;
+                const receivingFiatAmount =
+                  Number(embeddedQuoteData.source.amount) - fee;
+                offers.moonpay.buyAmount = receivingFiatAmount;
+              }
+              offers.moonpay.amountCost = Number(
+                embeddedQuoteData.source.amount,
+              );
+            }
+
+            if (embeddedQuoteData.destination.amount) {
+              offers.moonpay.amountReceiving =
+                embeddedQuoteData.destination.amount;
+              const precision = dispatch(
+                GetPrecision(coin, chain, selectedWallet.tokenAddress),
+              );
+              if (offers.moonpay.buyAmount && coin && precision) {
+                offers.moonpay.fiatMoney = Number(
+                  offers.moonpay.buyAmount /
+                    Number(embeddedQuoteData.destination.amount),
+                ).toFixed(precision!.unitDecimals);
+              } else {
+                logger.error(
+                  `Moonpay error: Could not get precision for ${coin}`,
+                );
+              }
+            }
+            logger.debug('Moonpay Embedded getting quote: SUCCESS');
+            setFinishedMoonpay(true);
+            return;
+          } else {
+            if (!embeddedQuoteData) {
+              logger.error('Moonpay Embedded getQuote Error: No data received');
+            }
+
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason =
+              'moonpayGetQuoteEmbedded Error. Necessary data not included.';
+            showMoonpayError(err, reason);
+            return;
+          }
+        } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`Moonpay Embedded getQuote Error: ${errMsg}`);
+          const _err = t(
+            "Can't get rates at this moment. Please try again later",
+          );
+          const reason = 'moonpayGetQuoteEmbedded Error';
+          showMoonpayError(_err, reason);
+          return;
+        }
+        return;
+      }
+    }
+
+    // MoonPay kayak flow
     try {
       const requestData = {
         currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
@@ -1018,8 +1192,6 @@ const ExternalServicesOfferSelector: React.FC<
         areFeesIncluded: true,
         env: moonpayEnv,
       };
-
-      console.log('============= Moonpay get quote requestData', requestData);
 
       const MOONPAY_TIMEOUT = 8000; // 8 seconds
       const timeoutPromise = new Promise((_, reject) =>
@@ -1062,6 +1234,7 @@ const ExternalServicesOfferSelector: React.FC<
           offers.moonpay.outOfLimitMsg = undefined;
           offers.moonpay.errorMsg = undefined;
           offers.moonpay.quoteData = data;
+          offers.moonpay.isEmbedded = false;
           offers.moonpay.amountCost = data.totalAmount;
           offers.moonpay.buyAmount = data.baseCurrencyAmount;
           offers.moonpay.fee =
@@ -2745,22 +2918,34 @@ const ExternalServicesOfferSelector: React.FC<
           ? curr
           : prev,
       );
-      setSelectedOffer(_selectedOffer);
-      onSelectOffer?.(_selectedOffer);
+      const shouldPreferMoonpayOffer =
+        !!preferMoonpayApplePay && paymentMethod?.method === 'applePay';
+      const moonpayOffer = offers.moonpay;
+      const preferredMoonpayOfferIsAvailable =
+        shouldPreferMoonpayOffer &&
+        !!moonpayOffer?.showOffer &&
+        !!moonpayOffer?.amountReceiving &&
+        moonpayOffer.amountReceiving !== '0' &&
+        Number(moonpayOffer.amountReceiving) > 0;
+      const offerToSelect = preferredMoonpayOfferIsAvailable
+        ? moonpayOffer
+        : _selectedOffer;
+      setSelectedOffer(offerToSelect);
+      onSelectOffer?.(offerToSelect);
       setOfferWarnMsg(undefined);
       setOfferSelectorText(
-        _selectedOffer?.label + t(' using ') + paymentMethod?.label,
+        offerToSelect?.label + t(' using ') + paymentMethod?.label,
       );
 
       dispatch(
         Analytics.track('Buy - Our Best Offer Loaded', {
-          exchange: _selectedOffer?.key || 'unknown',
+          exchange: offerToSelect?.key || 'unknown',
           paymentMethod: paymentMethod?.method || '',
-          fiatAmount: Number(_selectedOffer?.fiatAmount) || '',
+          fiatAmount: Number(offerToSelect?.fiatAmount) || '',
           coin: coin?.toLowerCase() || '',
           chain: chain?.toLowerCase() || '',
-          fiatCurrency: _selectedOffer?.fiatCurrency || '',
-          cryptoAmount: Number(_selectedOffer?.amountReceiving) || '',
+          fiatCurrency: offerToSelect?.fiatCurrency || '',
+          cryptoAmount: Number(offerToSelect?.amountReceiving) || '',
         }),
       );
 
