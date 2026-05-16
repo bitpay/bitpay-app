@@ -19,6 +19,7 @@ import ThemeSettings from './general/screens/Theme';
 import CustomizeHomeSettings from './general/screens/customize-home/CustomizeHome';
 import AltCurrencySettings from './general/screens/AltCurrencySettings';
 import LanguageSettings from './general/screens/LanguageSettings';
+import MoonpayConnectionSettings from './components/MoonpayConnectionSettings';
 import {useStackScreenOptions} from '../../../navigation/utils/headerHelpers';
 
 export type SettingsDetailsParamList = {
@@ -35,6 +36,7 @@ export type SettingsDetailsParamList = {
   'Display Currency': undefined;
   Language: undefined;
   Theme: undefined;
+  MoonpayConnectionSettings: undefined;
   ContactsDetails: {contact: any};
   ContactsAdd: undefined;
   ContactsRoot: undefined;
@@ -164,6 +166,13 @@ const SettingsDetails = ({
         component={LanguageSettings}
         options={{
           headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="MoonpayConnectionSettings"
+        component={MoonpayConnectionSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>MoonPay</HeaderTitle>,
         }}
       />
     </Stack.Navigator>

@@ -166,6 +166,7 @@ import {
   runPostUnlockStartupWork,
 } from './Root.helpers';
 import {maybePopulatePortfolioOnAppLaunch} from './store/portfolio';
+import {MoonpayEmbeddedCredentialManager} from './navigation/services/components/MoonpayEmbeddedCredentialManager';
 
 const BWC = BwcProvider.getInstance();
 const Logger = BWC.getLogger();
@@ -1108,6 +1109,7 @@ export default () => {
           <WalletConnectStartModal />
           <ChainSelectorModal />
           <PaymentSent />
+          <MoonpayEmbeddedCredentialManager />
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

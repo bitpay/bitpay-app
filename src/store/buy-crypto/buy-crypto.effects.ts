@@ -6,11 +6,106 @@ import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/u
 import {getTransakFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/transak-utils';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
-import {BuyCryptoLimits} from './buy-crypto.models';
+import {BuyCryptoLimits, MoonpayEmbeddedCredentials} from './buy-crypto.models';
 import {Analytics} from '../analytics/analytics.effects';
 import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {logManager} from '../../managers/LogManager';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
+import {MoonpayClientCredentials} from '../../navigation/services/utils/moonpayFrameCrypto';
+
+// ---------------------------------------------------------------------------
+// MoonPay Embedded — module-level cache
+// ---------------------------------------------------------------------------
+// Credentials obtained from the check-connection frame. Reused across
+// purchases; refreshed automatically by MoonpayEmbeddedCredentialManager.
+let _moonpayEmbeddedCredentials: MoonpayEmbeddedCredentials | undefined;
+
+// Status of the last completed check-connection frame run.
+export type MoonpayEmbeddedCheckStatus =
+  | 'checking'
+  | 'active'
+  | 'connectionRequired'
+  | 'pending'
+  | 'unavailable'
+  | 'failed';
+
+let _moonpayEmbeddedStatus: MoonpayEmbeddedCheckStatus | undefined;
+
+// Anonymous credentials returned when the user is not yet connected.
+let _moonpayEmbeddedAnonymousCredentials: MoonpayClientCredentials | undefined;
+
+export const getMoonpayEmbeddedCredentials = ():
+  | MoonpayEmbeddedCredentials
+  | undefined => _moonpayEmbeddedCredentials;
+
+export const setMoonpayEmbeddedCredentials = (
+  data: MoonpayEmbeddedCredentials,
+): void => {
+  _moonpayEmbeddedCredentials = data;
+};
+
+export const clearMoonpayEmbeddedCredentials = (): void => {
+  _moonpayEmbeddedCredentials = undefined;
+};
+
+export const isMoonpayEmbeddedCredentialsValid = (): boolean => {
+  if (!_moonpayEmbeddedCredentials) return false;
+  if (!_moonpayEmbeddedCredentials.expiresAt) return false; // TODO: review this casae — should we consider credentials without expiry as valid indefinitely, or treat them as invalid/expired?
+  // Consider valid if more than 60 seconds remain
+  return (
+    new Date(_moonpayEmbeddedCredentials.expiresAt).getTime() - Date.now() >
+    60_000
+  );
+};
+
+export const getMoonpayEmbeddedStatus = ():
+  | MoonpayEmbeddedCheckStatus
+  | undefined => _moonpayEmbeddedStatus;
+
+export const setMoonpayEmbeddedStatus = (
+  status: MoonpayEmbeddedCheckStatus | undefined,
+): void => {
+  _moonpayEmbeddedStatus = status;
+};
+
+export const getMoonpayEmbeddedAnonymousCredentials = ():
+  | MoonpayClientCredentials
+  | undefined => _moonpayEmbeddedAnonymousCredentials;
+
+export const setMoonpayEmbeddedAnonymousCredentials = (
+  creds: MoonpayClientCredentials | undefined,
+): void => {
+  _moonpayEmbeddedAnonymousCredentials = creds;
+};
+
+// Whether the full MoonPay embedded feature is enabled for this device/user.
+// Set by MoonpayEmbeddedCredentialManager whenever conditions change.
+let _moonpayEmbeddedEnabled: boolean = false;
+
+export const getMoonpayEmbeddedEnabled = (): boolean => _moonpayEmbeddedEnabled;
+
+export const setMoonpayEmbeddedEnabled = (enabled: boolean): void => {
+  _moonpayEmbeddedEnabled = enabled;
+};
+
+// Listener registered by MoonpayEmbeddedCredentialManager to trigger a recheck
+// from anywhere in the app (e.g. after an unlink reset completes).
+let _moonpayEmbeddedRecheckListener: (() => void) | undefined;
+
+export const registerMoonpayEmbeddedRecheckListener = (
+  fn: () => void,
+): (() => void) => {
+  _moonpayEmbeddedRecheckListener = fn;
+  return () => {
+    _moonpayEmbeddedRecheckListener = undefined;
+  };
+};
+
+/** Call this after a reset/unlink to make the manager create a new session. */
+export const requestMoonpayEmbeddedRecheck = (): void => {
+  _moonpayEmbeddedRecheckListener?.();
+};
+// ---------------------------------------------------------------------------
 
 export const calculateAltFiatToUsd =
   (
