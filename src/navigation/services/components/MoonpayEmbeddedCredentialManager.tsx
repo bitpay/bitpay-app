@@ -177,7 +177,8 @@ export function MoonpayEmbeddedCredentialManager() {
         }
 
         const walletClient = BWC.getClient();
-        const data: MoonpayCreateSessionData = await walletClient.moonpayCreateSession(reqData);
+        const data: MoonpayCreateSessionData =
+          await walletClient.moonpayCreateSession(reqData);
 
         if (!cancelled) {
           setSessionToken(data.sessionToken);
