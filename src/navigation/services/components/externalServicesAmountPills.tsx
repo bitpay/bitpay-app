@@ -68,13 +68,13 @@ const AmountPillText = styled(BaseText)<{
 
 const defaultPills = [
   {
-    value: 20,
-  },
-  {
     value: 50,
   },
   {
     value: 100,
+  },
+  {
+    value: 300,
   },
 ];
 
