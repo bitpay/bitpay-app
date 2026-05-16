@@ -6,7 +6,8 @@ import {White} from '../../../../styles/colors';
 const MoonpayIconSvg: React.FC<{
   width: number;
   height: number;
-}> = ({width, height}) => {
+  fillColor?: string;
+}> = ({width, height, fillColor}) => {
   return (
     <Svg
       viewBox={'0 0 200 190'}
@@ -16,7 +17,7 @@ const MoonpayIconSvg: React.FC<{
       <G transform="translate(0,10) scale(0.55)" id="g12">
         <Path
           id="moonpay-path-icon"
-          fill="#7d00ff"
+          fill={fillColor || '#7d00ff'}
           d="M263.5879,95.7848a47.8924,47.8924,0,1,0-47.8924-47.8924,47.8894,47.8894,0,0,0,47.8924,47.8924M116.7378,311.48A116.7378,116.7378,0,1,1,233.4755,194.7426,116.7343,116.7343,0,0,1,116.7378,311.48"
         />
       </G>
@@ -52,18 +53,24 @@ const MoonpayLogo = ({
   widthLogo = 70,
   heightLogo = 30,
   iconOnly = false,
+  fillColorIcon = '#7d00ff',
 }: {
   widthIcon?: number;
   heightIcon?: number;
   widthLogo?: number;
   heightLogo?: number;
   iconOnly?: boolean;
+  fillColorIcon?: string;
 }) => {
   const theme = useTheme();
 
   return (
     <>
-      <MoonpayIconSvg width={widthIcon} height={heightIcon} />
+      <MoonpayIconSvg
+        width={widthIcon}
+        height={heightIcon}
+        fillColor={fillColorIcon}
+      />
       {!iconOnly && (
         <MoonpayLogoSvg
           isDark={theme.dark}
