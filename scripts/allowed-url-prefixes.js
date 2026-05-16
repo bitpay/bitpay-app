@@ -43,6 +43,8 @@ const allowedUrlPrefixes = [
   'https://api.coingecko.com/api/v3/simple/token_price/',
   'https://checkout.simplexcc.com/',
   'https://sandbox.test-simplexcc.com',
+  'https://api.moonpay.com/',
+  'https://api.moonpay.dev/',
   'https://api.zenledger.io/bitpay/wallets/',
   'https://rest.iad-05.braze.com/',
   'https://sdk.iad-05.braze.com/',
