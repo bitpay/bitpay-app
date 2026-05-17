@@ -8,6 +8,7 @@ import {
   parseAtomicToBigint,
   parseScientificToTruncatedIntegerString,
   ratioBigIntToNumber,
+  resolveWalletAtomicDecimals,
   toSignificantStr,
 } from './format';
 
@@ -43,6 +44,26 @@ describe('getAtomicDecimals', () => {
   it('prefers numeric token decimal overrides, including zero', () => {
     expect(getAtomicDecimals({chain: 'eth', token: {decimals: 6}})).toBe(6);
     expect(getAtomicDecimals({chain: 'eth', token: {decimals: 0}})).toBe(0);
+  });
+});
+
+describe('resolveWalletAtomicDecimals', () => {
+  it('prefers resolved wallet unit decimals over credential fallback', () => {
+    expect(
+      resolveWalletAtomicDecimals({
+        unitDecimals: 12,
+        credentials: {chain: 'sol', token: {decimals: 9}},
+      }),
+    ).toBe(12);
+  });
+
+  it('falls back to credential decimals when wallet unit decimals are unknown', () => {
+    expect(
+      resolveWalletAtomicDecimals({
+        unitDecimals: undefined,
+        credentials: {chain: 'eth', token: {decimals: 6}},
+      }),
+    ).toBe(6);
   });
 });
 

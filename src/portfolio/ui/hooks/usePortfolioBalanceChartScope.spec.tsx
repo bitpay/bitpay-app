@@ -11,6 +11,12 @@ jest.mock('../../../utils/hooks', () => ({
   useAppSelector: jest.fn(),
 }));
 
+const mockGetRatesSignature = (rates: Record<string, number>) =>
+  Object.keys(rates)
+    .sort()
+    .map(rateKey => `${rateKey}:${String(rates[rateKey])}`)
+    .join('|');
+
 jest.mock('../../../utils/portfolio/chartCache', () => ({
   buildBalanceChartScopeId: jest.fn(
     ({
@@ -42,13 +48,7 @@ jest.mock('../../../utils/portfolio/balanceChartData', () => ({
   buildCurrentSpotRatesByRateKey: jest.fn(() => ({
     'btc:btc': 100,
   })),
-  getCurrentSpotRatesByRateKeySignature: jest.fn(
-    (rates: Record<string, number>) =>
-      Object.keys(rates)
-        .sort()
-        .map(rateKey => `${rateKey}:${String(rates[rateKey])}`)
-        .join('|'),
-  ),
+  getCurrentSpotRatesByRateKeySignature: jest.fn(mockGetRatesSignature),
 }));
 
 jest.mock('../common', () => ({
@@ -61,12 +61,7 @@ jest.mock('../common', () => ({
   buildCurrentRatesByAssetId: jest.fn(() => ({
     'btc:btc': 100,
   })),
-  getCurrentRatesByAssetIdSignature: jest.fn((rates: Record<string, number>) =>
-    Object.keys(rates)
-      .sort()
-      .map(rateKey => `${rateKey}:${String(rates[rateKey])}`)
-      .join('|'),
-  ),
+  getCurrentRatesByAssetIdSignature: jest.fn(mockGetRatesSignature),
   getStoredWalletRequestSignature: jest.fn(
     (
       storedWallets: Array<{
@@ -168,6 +163,29 @@ const HookHarness = ({
   return null;
 };
 
+const expectChartRevision = (balanceAtomic = '1000') =>
+  expect(latestResult?.chartDataRevisionSig).toBe(
+    `111|wallet-1:btc:btc::${balanceAtomic}`,
+  );
+
+const expectScopeIdentity = (scopeIdentityKey: string) => {
+  expect(mockBuildBalanceChartScopeId).toHaveBeenLastCalledWith(
+    expect.objectContaining({scopeIdentityKey}),
+  );
+  expect(latestResult?.scopeId).toBe(`${scopeIdentityKey}|USD|0|wallet-1`);
+};
+
+const renderHarness = async (props: {
+  scopeIdentityKey?: string;
+  wallets: any[];
+}) => {
+  let view!: TestRenderer.ReactTestRenderer;
+  await act(async () => {
+    view = TestRenderer.create(<HookHarness {...props} />);
+  });
+  return view;
+};
+
 describe('usePortfolioBalanceChartScope', () => {
   beforeEach(() => {
     latestResult = undefined;
@@ -180,6 +198,8 @@ describe('usePortfolioBalanceChartScope', () => {
         defaultAltCurrency: {isoCode: 'USD'},
       },
       PORTFOLIO: {
+        excessiveBalanceMismatchesByWalletId: {},
+        invalidDecimalsByWalletId: {},
         lastPopulatedAt: 111,
       },
       RATE: {
@@ -193,15 +213,9 @@ describe('usePortfolioBalanceChartScope', () => {
   });
 
   it('keeps the historical chart revision stable when only the shared rate asOfMs changes', async () => {
-    let view: TestRenderer.ReactTestRenderer;
+    const view = await renderHarness({wallets: [walletFactory()]});
 
-    await act(async () => {
-      view = TestRenderer.create(<HookHarness wallets={[walletFactory()]} />);
-    });
-
-    expect(latestResult?.chartDataRevisionSig).toBe(
-      '111|wallet-1:btc:btc::1000',
-    );
+    expectChartRevision();
     expect(latestResult?.asOfMs).toBe(1234);
 
     mockState = {
@@ -216,22 +230,14 @@ describe('usePortfolioBalanceChartScope', () => {
       view!.update(<HookHarness wallets={[walletFactory()]} />);
     });
 
-    expect(latestResult?.chartDataRevisionSig).toBe(
-      '111|wallet-1:btc:btc::1000',
-    );
+    expectChartRevision();
     expect(latestResult?.asOfMs).toBe(5678);
   });
 
   it('changes the chart data revision when only the wallet live balance changes', async () => {
-    let view: TestRenderer.ReactTestRenderer;
+    const view = await renderHarness({wallets: [walletFactory()]});
 
-    await act(async () => {
-      view = TestRenderer.create(<HookHarness wallets={[walletFactory()]} />);
-    });
-
-    expect(latestResult?.chartDataRevisionSig).toBe(
-      '111|wallet-1:btc:btc::1000',
-    );
+    expectChartRevision();
 
     await act(async () => {
       view!.update(
@@ -248,23 +254,44 @@ describe('usePortfolioBalanceChartScope', () => {
       );
     });
 
-    expect(latestResult?.chartDataRevisionSig).toBe(
-      '111|wallet-1:btc:btc::700',
-    );
+    expectChartRevision('700');
+  });
+
+  it('excludes excessive balance mismatch quarantines from chart scope inputs', async () => {
+    mockState = {
+      ...mockState,
+      PORTFOLIO: {
+        ...mockState.PORTFOLIO,
+        excessiveBalanceMismatchesByWalletId: {
+          'wallet-1': {
+            walletId: 'wallet-1',
+            reason: 'excessive_balance_mismatch',
+            computedAtomic: '1100',
+            liveAtomic: '1000',
+            deltaAtomic: '100',
+            ratio: '1.1',
+            threshold: 0.1,
+            detectedAt: 1234,
+            message: 'Computed snapshot balance exceeds live balance.',
+          },
+        },
+      },
+    };
+
+    await renderHarness({wallets: [walletFactory()]});
+
+    expect(latestResult?.storedWallets).toEqual([]);
+    expect(latestResult?.eligibleWallets).toEqual([]);
+    expect(latestResult?.sortedWalletIds).toEqual([]);
   });
 
   it('refreshes the chart data revision when an existing wallet object balance is mutated', async () => {
     const wallet = walletFactory();
     const wallets = [wallet];
-    let view: TestRenderer.ReactTestRenderer;
 
-    await act(async () => {
-      view = TestRenderer.create(<HookHarness wallets={wallets} />);
-    });
+    const view = await renderHarness({wallets});
 
-    expect(latestResult?.chartDataRevisionSig).toBe(
-      '111|wallet-1:btc:btc::1000',
-    );
+    expectChartRevision();
 
     wallet.balance = {
       sat: 700,
@@ -274,31 +301,16 @@ describe('usePortfolioBalanceChartScope', () => {
       view!.update(<HookHarness wallets={wallets} />);
     });
 
-    expect(latestResult?.chartDataRevisionSig).toBe(
-      '111|wallet-1:btc:btc::700',
-    );
+    expectChartRevision('700');
   });
 
   it('includes the scope identity key in the scope id so different chart series do not collide', async () => {
-    let view: TestRenderer.ReactTestRenderer;
-
-    await act(async () => {
-      view = TestRenderer.create(
-        <HookHarness
-          scopeIdentityKey="balance_history_chart:89"
-          wallets={[walletFactory()]}
-        />,
-      );
+    const view = await renderHarness({
+      scopeIdentityKey: 'balance_history_chart:89',
+      wallets: [walletFactory()],
     });
 
-    expect(mockBuildBalanceChartScopeId).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        scopeIdentityKey: 'balance_history_chart:89',
-      }),
-    );
-    expect(latestResult?.scopeId).toBe(
-      'balance_history_chart:89|USD|0|wallet-1',
-    );
+    expectScopeIdentity('balance_history_chart:89');
 
     await act(async () => {
       view!.update(
@@ -309,13 +321,6 @@ describe('usePortfolioBalanceChartScope', () => {
       );
     });
 
-    expect(mockBuildBalanceChartScopeId).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        scopeIdentityKey: 'balance_gain_loss_summary:2',
-      }),
-    );
-    expect(latestResult?.scopeId).toBe(
-      'balance_gain_loss_summary:2|USD|0|wallet-1',
-    );
+    expectScopeIdentity('balance_gain_loss_summary:2');
   });
 });

@@ -10,6 +10,9 @@ export {
   parseAtomicToBigint,
   parseScientificToTruncatedIntegerString,
   ratioBigIntToNumber,
+  resolveKnownWalletAtomicDecimals,
+  resolveWalletAtomicDecimals,
+  normalizeWalletUnitDecimals,
   toSignificantStr,
 } from '../../../portfolio/core/format';
 

@@ -21,12 +21,17 @@ import {
   DebugPillButton,
   DebugPillButtonText,
   DebugScreenContainer,
+  SNAPSHOT_DEBUG_MODE_OPTIONS,
+  formatDebugIso,
+  formatSnapshotDebugModeLabel,
+  getSnapshotIndexRowCount,
 } from '../components/DebugUI';
 import {getPortfolioRuntimeClient} from '../../../../../portfolio/runtime/portfolioRuntime';
 import type {
   SnapshotIndexV2,
   SnapshotPersistDebugMode,
 } from '../../../../../portfolio/core/pnl/snapshotStore';
+import type {SnapshotInvalidHistoryMarkerV1} from '../../../../../portfolio/core/pnl/invalidHistory';
 import type {BalanceSnapshotStored} from '../../../../../portfolio/core/pnl/types';
 import type {
   Tx,
@@ -98,54 +103,12 @@ const ControlLabel = styled.Text`
   opacity: 0.7;
 `;
 
-const SNAPSHOT_DEBUG_MODE_OPTIONS: SnapshotPersistDebugMode[] = [
-  'none',
-  'link',
-  'full',
-];
-
-const formatSnapshotDebugModeLabel = (
-  mode: SnapshotPersistDebugMode,
-): string => {
-  switch (mode) {
-    case 'none':
-      return 'None';
-    case 'link':
-      return 'Link';
-    case 'full':
-      return 'Full';
-  }
-};
-
 const csvEscape = (value: unknown): string => {
   const nextValue = value == null ? '' : String(value);
   if (/[,"\n\r]/.test(nextValue)) {
     return `"${nextValue.replace(/"/g, '""')}"`;
   }
   return nextValue;
-};
-
-const toIso = (value?: number): string => {
-  if (!Number.isFinite(value)) {
-    return '—';
-  }
-
-  try {
-    return new Date(value as number).toISOString();
-  } catch {
-    return '—';
-  }
-};
-
-const getRowCount = (index: SnapshotIndexV2 | null | undefined): number => {
-  if (!index?.chunks?.length) {
-    return 0;
-  }
-
-  return index.chunks.reduce((total, chunk) => {
-    const rows = Number(chunk?.rows);
-    return total + (Number.isFinite(rows) ? rows : 0);
-  }, 0);
 };
 
 const formatChunkDebugModes = (
@@ -156,7 +119,9 @@ const formatChunkDebugModes = (
   }
 
   const counts = index.chunks.reduce<Record<string, number>>((acc, chunk) => {
-    const mode = String(chunk?.debugMode || 'none');
+    const mode = String(
+      (chunk as {debugMode?: SnapshotPersistDebugMode})?.debugMode || 'none',
+    );
     acc[mode] = (acc[mode] || 0) + 1;
     return acc;
   }, {});
@@ -170,16 +135,11 @@ const findWalletById = (
   walletKeys: Record<string, any>,
   walletId: string,
 ): Wallet | undefined => {
-  for (const key of Object.values(walletKeys || {})) {
-    const wallets = Array.isArray((key as any)?.wallets)
-      ? (key as any).wallets
-      : [];
-    const match = wallets.find((wallet: Wallet) => wallet?.id === walletId);
-    if (match) {
-      return match;
-    }
-  }
-  return undefined;
+  return Object.values(walletKeys || {})
+    .flatMap((key: any) =>
+      Array.isArray((key as any)?.wallets) ? (key as any).wallets : [],
+    )
+    .find((wallet: Wallet) => wallet?.id === walletId);
 };
 
 const toCsv = (snapshots: BalanceSnapshotStored[]): string => {
@@ -210,7 +170,7 @@ const toCsv = (snapshots: BalanceSnapshotStored[]): string => {
       snapshot.network,
       snapshot.assetId,
       snapshot.timestamp,
-      toIso(snapshot.timestamp),
+      formatDebugIso(snapshot.timestamp),
       snapshot.eventType,
       snapshot.cryptoBalance,
       snapshot.remainingCostBasisFiat,
@@ -408,11 +368,19 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   const mismatch = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.snapshotBalanceMismatchesByWalletId?.[walletId],
   );
+  const invalidDecimals = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.invalidDecimalsByWalletId?.[walletId],
+  );
+  const excessiveBalanceMismatch = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.excessiveBalanceMismatchesByWalletId?.[walletId],
+  );
 
   const [index, setIndex] = useState<SnapshotIndexV2 | null>(null);
   const [latestSnapshot, setLatestSnapshot] =
     useState<BalanceSnapshotStored | null>(null);
   const [snapshots, setSnapshots] = useState<BalanceSnapshotStored[]>([]);
+  const [invalidHistory, setInvalidHistory] =
+    useState<SnapshotInvalidHistoryMarkerV1 | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [runtimeError, setRuntimeError] = useState<string>('');
   const [copyJsonState, setCopyJsonState] = useState<'idle' | 'copied'>('idle');
@@ -548,6 +516,20 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
       };
     }
   }, [latestSnapshot, wallet, walletUnitDecimals]);
+  const lastQuarantineAttemptedAt = useMemo(() => {
+    const candidates = [
+      invalidHistory?.lastAttemptedAt,
+      excessiveBalanceMismatch?.lastAttemptedAt,
+    ].filter(
+      (value): value is number =>
+        typeof value === 'number' && Number.isFinite(value),
+    );
+
+    return candidates.length ? Math.max(...candidates) : undefined;
+  }, [
+    excessiveBalanceMismatch?.lastAttemptedAt,
+    invalidHistory?.lastAttemptedAt,
+  ]);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -555,15 +537,18 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
 
     try {
       const client = getPortfolioRuntimeClient();
-      const [nextIndex, nextLatestSnapshot, nextSnapshots] = await Promise.all([
-        client.getSnapshotIndex({walletId}),
-        client.getLatestSnapshot({walletId}),
-        client.listSnapshots({walletId}),
-      ]);
+      const [nextIndex, nextLatestSnapshot, nextSnapshots, nextInvalidHistory] =
+        await Promise.all([
+          client.getSnapshotIndex({walletId}),
+          client.getLatestSnapshot({walletId}),
+          client.listSnapshots({walletId}),
+          client.getInvalidHistory({walletId}),
+        ]);
 
       setIndex(nextIndex || null);
       setLatestSnapshot(nextLatestSnapshot || null);
       setSnapshots(Array.isArray(nextSnapshots) ? nextSnapshots : []);
+      setInvalidHistory(nextInvalidHistory || null);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       logManager.error('[PortfolioWalletDebug] refresh failed', message);
@@ -571,6 +556,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
       setIndex(null);
       setLatestSnapshot(null);
       setSnapshots([]);
+      setInvalidHistory(null);
     } finally {
       setIsLoading(false);
     }
@@ -626,6 +612,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
         nextIndex,
         nextLatestSnapshot,
         nextSnapshots,
+        nextInvalidHistory,
         nextPopulateTrace,
         summary,
         txPages,
@@ -633,6 +620,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
         runtimeClient.getSnapshotIndex({walletId}),
         runtimeClient.getLatestSnapshot({walletId}),
         runtimeClient.listSnapshots({walletId}),
+        runtimeClient.getInvalidHistory({walletId}),
         runtimeClient.getPopulateWalletTrace({walletId}),
         fetchPortfolioDebugBwsWalletSummary(client, credentials),
         collectPortfolioDebugTxHistoryPages({
@@ -645,6 +633,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
       setIndex(nextIndex || null);
       setLatestSnapshot(nextLatestSnapshot || null);
       setSnapshots(Array.isArray(nextSnapshots) ? nextSnapshots : []);
+      setInvalidHistory(nextInvalidHistory || null);
       setBwsSummary({
         fetchedAtMs: Date.now(),
         summary,
@@ -716,6 +705,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
     setBwsSummary(null);
     setBalanceDiagnostic(null);
     setLastDebugPopulate(null);
+    setInvalidHistory(null);
     setCopyBalanceDiagnosticState('idle');
   }, [walletId]);
 
@@ -732,6 +722,9 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
           }
         : null,
       mismatch: mismatch || null,
+      invalidHistory,
+      invalidDecimals: invalidDecimals || null,
+      excessiveBalanceMismatch: excessiveBalanceMismatch || null,
       index,
       latestSnapshot,
       bwsSummary,
@@ -748,7 +741,10 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   }, [
     balanceDiagnostic,
     bwsSummary,
+    excessiveBalanceMismatch,
     index,
+    invalidHistory,
+    invalidDecimals,
     lastDebugPopulate,
     latestSnapshot,
     mismatch,
@@ -762,6 +758,9 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
         {
           wallet,
           mismatch,
+          invalidHistory,
+          invalidDecimals,
+          excessiveBalanceMismatch,
           index,
           latestSnapshot,
           bwsSummary,
@@ -778,7 +777,10 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   }, [
     balanceDiagnostic,
     bwsSummary,
+    excessiveBalanceMismatch,
     index,
+    invalidHistory,
+    invalidDecimals,
     lastDebugPopulate,
     latestSnapshot,
     mismatch,
@@ -863,7 +865,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
     });
   }, [navigation, wallet]);
 
-  const rowsCount = getRowCount(index);
+  const rowsCount = getSnapshotIndexRowCount(index);
   const latestTimestamp = latestSnapshot?.timestamp;
   const latestBalance = latestSnapshot?.cryptoBalance;
 
@@ -973,6 +975,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
                 `populateLogicAtomicBalance: ${
                   walletPopulateLogicAtomicBalance || '—'
                 }`,
+                `lastAttemptedAt: ${formatDebugIso(lastQuarantineAttemptedAt)}`,
               ].join('\n')
             : `walletId: ${walletId}\nwallet not found in current Redux wallet state`}
         </SectionText>
@@ -995,7 +998,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
                 `checkpoint.lastTimestamp: ${
                   index.checkpoint?.lastTimestamp ?? '—'
                 }`,
-                `checkpoint.lastTimestampIso: ${toIso(
+                `checkpoint.lastTimestampIso: ${formatDebugIso(
                   index.checkpoint?.lastTimestamp,
                 )}`,
                 `checkpoint.recentTxIds: ${
@@ -1010,7 +1013,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
                     ? JSON.stringify(index.checkpoint.carryoverGroup)
                     : '—'
                 }`,
-                `updatedAt: ${toIso(index.updatedAt)}`,
+                `updatedAt: ${formatDebugIso(index.updatedAt)}`,
               ].join('\n')
             : 'No runtime snapshot index'}
         </SectionText>
@@ -1019,7 +1022,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
         <SectionText>
           {lastDebugPopulate
             ? [
-                `capturedAt: ${toIso(lastDebugPopulate.capturedAtMs)}`,
+                `capturedAt: ${formatDebugIso(lastDebugPopulate.capturedAtMs)}`,
                 `snapshotDebugMode: ${lastDebugPopulate.snapshotDebugMode}`,
                 `before.nextSkip: ${
                   lastDebugPopulate.beforeIndex?.checkpoint?.nextSkip ?? '—'
@@ -1054,7 +1057,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
         <SectionText>
           {bwsSummary
             ? [
-                `fetchedAt: ${toIso(bwsSummary.fetchedAtMs)}`,
+                `fetchedAt: ${formatDebugIso(bwsSummary.fetchedAtMs)}`,
                 `walletId: ${bwsSummary.summary.walletId}`,
                 `walletName: ${bwsSummary.summary.walletName}`,
                 `balanceAtomic: ${bwsSummary.summary.balanceAtomic}`,
@@ -1069,7 +1072,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
             ? [
                 `id: ${latestSnapshot.id}`,
                 `timestamp: ${latestSnapshot.timestamp}`,
-                `iso: ${toIso(latestTimestamp)}`,
+                `iso: ${formatDebugIso(latestTimestamp)}`,
                 `eventType: ${latestSnapshot.eventType}`,
                 `cryptoBalanceAtomic: ${latestBalance}`,
                 `remainingCostBasisFiat: ${latestSnapshot.remainingCostBasisFiat}`,
@@ -1091,6 +1094,50 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
                 `computedAtomic: ${mismatch.computedAtomic}`,
               ].join('\n')
             : 'No recorded mismatch from the last populate decision'}
+        </SectionText>
+
+        <SectionTitle>{t('Cached invalid history')}</SectionTitle>
+        <SectionText>
+          {invalidHistory
+            ? [
+                `reason: ${invalidHistory.reason}`,
+                `message: ${invalidHistory.message}`,
+                `detectedAt: ${invalidHistory.detectedAt}`,
+                `lastAttemptedAt: ${invalidHistory.lastAttemptedAt || ''}`,
+                `source: ${invalidHistory.source || ''}`,
+                `txId: ${invalidHistory.txId || ''}`,
+                `balanceAtomic: ${invalidHistory.balanceAtomic || ''}`,
+              ].join('\n')
+            : 'No recorded invalid history marker from runtime storage'}
+        </SectionText>
+
+        <SectionTitle>{t('Cached invalid decimals')}</SectionTitle>
+        <SectionText>
+          {invalidDecimals
+            ? [
+                `reason: ${invalidDecimals.reason}`,
+                `message: ${invalidDecimals.message}`,
+              ].join('\n')
+            : 'No recorded invalid decimals marker from the last populate decision'}
+        </SectionText>
+
+        <SectionTitle>{t('Cached excessive balance mismatch')}</SectionTitle>
+        <SectionText>
+          {excessiveBalanceMismatch
+            ? [
+                `reason: ${excessiveBalanceMismatch.reason}`,
+                `computedAtomic: ${excessiveBalanceMismatch.computedAtomic}`,
+                `liveAtomic: ${excessiveBalanceMismatch.liveAtomic}`,
+                `deltaAtomic: ${excessiveBalanceMismatch.deltaAtomic}`,
+                `ratio: ${excessiveBalanceMismatch.ratio}`,
+                `threshold: ${excessiveBalanceMismatch.threshold}`,
+                `detectedAt: ${excessiveBalanceMismatch.detectedAt}`,
+                `lastAttemptedAt: ${
+                  excessiveBalanceMismatch.lastAttemptedAt || ''
+                }`,
+                `message: ${excessiveBalanceMismatch.message}`,
+              ].join('\n')
+            : 'No recorded excessive balance mismatch marker from the last populate decision'}
         </SectionText>
 
         <SectionTitle>{t('Live recomputed mismatch')}</SectionTitle>
@@ -1153,7 +1200,9 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
         <SectionText>
           {balanceDiagnostic
             ? [
-                `generatedAt: ${toIso(balanceDiagnostic.generatedAtMs)}`,
+                `generatedAt: ${formatDebugIso(
+                  balanceDiagnostic.generatedAtMs,
+                )}`,
                 `pages: ${balanceDiagnostic.pageCount}`,
                 `txs: ${balanceDiagnostic.txCount}`,
                 `summary: ${balanceDiagnostic.summaryLine}`,

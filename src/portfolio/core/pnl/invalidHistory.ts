@@ -1,5 +1,5 @@
 export const SNAPSHOT_INVALID_HISTORY_VERSION = 1 as const;
-export const SNAPSHOT_INVALID_HISTORY_RETRY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+export const SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export const SNAPSHOT_INVALID_HISTORY_ERROR_NAME =
   'PortfolioInvalidHistoryError';
@@ -13,7 +13,7 @@ export type SnapshotInvalidHistoryMarkerV1 = {
   walletId: string;
   reason: SnapshotInvalidHistoryReason;
   detectedAt: number;
-  retryAfter: number;
+  lastAttemptedAt?: number;
   message: string;
   source?: string;
   txId?: string;
@@ -26,6 +26,11 @@ type SnapshotInvalidHistoryError = Error & {
   invalidHistorySource?: string;
   invalidHistoryTxId?: string;
   invalidHistoryBalanceAtomic?: string;
+};
+
+export type SnapshotRetryMarkerTimestamps = {
+  detectedAt?: number;
+  lastAttemptedAt?: number;
 };
 
 export function createNegativeBalanceInvalidHistoryError(args: {
@@ -71,7 +76,7 @@ export function toSnapshotInvalidHistoryMarker(args: {
   walletId: string;
   error: unknown;
   detectedAt?: number;
-  retryCooldownMs?: number;
+  lastAttemptedAt?: number;
 }): SnapshotInvalidHistoryMarkerV1 | null {
   'worklet';
 
@@ -80,11 +85,13 @@ export function toSnapshotInvalidHistoryMarker(args: {
   }
 
   const detectedAt = Number(args.detectedAt ?? Date.now());
-  const retryCooldownMs = Number(
-    args.retryCooldownMs ?? SNAPSHOT_INVALID_HISTORY_RETRY_COOLDOWN_MS,
-  );
+  const lastAttemptedAt = Number(args.lastAttemptedAt ?? detectedAt);
   const walletId = String(args.walletId || '').trim();
-  if (!walletId || !Number.isFinite(detectedAt)) {
+  if (
+    !walletId ||
+    !Number.isFinite(detectedAt) ||
+    !Number.isFinite(lastAttemptedAt)
+  ) {
     return null;
   }
 
@@ -93,11 +100,7 @@ export function toSnapshotInvalidHistoryMarker(args: {
     walletId,
     reason: args.error.invalidHistoryReason ?? 'negative_balance',
     detectedAt,
-    retryAfter:
-      detectedAt +
-      (Number.isFinite(retryCooldownMs) && retryCooldownMs > 0
-        ? retryCooldownMs
-        : SNAPSHOT_INVALID_HISTORY_RETRY_COOLDOWN_MS),
+    lastAttemptedAt,
     message: String(args.error.message || '').trim(),
     source: args.error.invalidHistorySource,
     txId: args.error.invalidHistoryTxId,
@@ -105,15 +108,65 @@ export function toSnapshotInvalidHistoryMarker(args: {
   };
 }
 
-export function isSnapshotInvalidHistoryMarkerActive(
-  marker: SnapshotInvalidHistoryMarkerV1 | null | undefined,
-  nowMs: number = Date.now(),
-): boolean {
+export const isSnapshotMarkerRetryDue = (
+  marker: SnapshotRetryMarkerTimestamps | null | undefined,
+  nowMs: number,
+  retryIntervalMs: number | undefined,
+  defaultRetryIntervalMs: number,
+): boolean => {
   'worklet';
 
   if (!marker) {
     return false;
   }
 
-  return Number.isFinite(marker.retryAfter) && marker.retryAfter > nowMs;
+  const lastAttemptedAt = Number(marker.lastAttemptedAt);
+  const retryAnchorMs = Number.isFinite(lastAttemptedAt)
+    ? lastAttemptedAt
+    : Number(marker.detectedAt);
+  const normalizedIntervalMs = Number(
+    retryIntervalMs ?? defaultRetryIntervalMs,
+  );
+  const intervalMs =
+    Number.isFinite(normalizedIntervalMs) && normalizedIntervalMs > 0
+      ? normalizedIntervalMs
+      : defaultRetryIntervalMs;
+
+  return !Number.isFinite(retryAnchorMs) || nowMs - retryAnchorMs >= intervalMs;
+};
+
+export function isSnapshotInvalidHistoryMarkerQuarantined(
+  marker: SnapshotInvalidHistoryMarkerV1 | null | undefined,
+): marker is SnapshotInvalidHistoryMarkerV1 {
+  'worklet';
+
+  return !!marker;
+}
+
+export function isSnapshotInvalidHistoryRetryDue(
+  marker: SnapshotInvalidHistoryMarkerV1 | null | undefined,
+  nowMs: number = Date.now(),
+  retryIntervalMs?: number,
+): boolean {
+  'worklet';
+
+  return isSnapshotMarkerRetryDue(
+    marker,
+    nowMs,
+    retryIntervalMs,
+    SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS,
+  );
+}
+
+export function isSnapshotInvalidHistoryMarkerActive(
+  marker: SnapshotInvalidHistoryMarkerV1 | null | undefined,
+  nowMs: number = Date.now(),
+  retryIntervalMs?: number,
+): boolean {
+  'worklet';
+
+  return (
+    !!marker &&
+    !isSnapshotInvalidHistoryRetryDue(marker, nowMs, retryIntervalMs)
+  );
 }

@@ -2,7 +2,6 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {GraphPoint} from 'react-native-graph';
 import type {FiatRateInterval} from '../../store/rate/rate.models';
 import {FIAT_RATE_SERIES_TARGET_POINTS} from '../../store/rate/rate.models';
-import type {Wallet} from '../../store/wallet/wallet.models';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../constants/wallet';
 import type {HydratedBalanceChartSeries} from '../../utils/portfolio/chartCache';
 import {
@@ -49,7 +48,6 @@ type BalanceChartCallbackChangeRowData = {
 };
 
 export type UseBalanceChartDisplayModelArgs = {
-  wallets: Wallet[];
   scope: PortfolioBalanceChartScope;
   initialSelectedTimeframe: FiatRateInterval;
   balanceOffset: number;
@@ -172,7 +170,6 @@ const preserveGraphPointsWhenEquivalent = (
 };
 
 export function useBalanceChartDisplayModel({
-  wallets,
   scope,
   initialSelectedTimeframe,
   balanceOffset,
@@ -198,11 +195,13 @@ export function useBalanceChartDisplayModel({
   } = scope;
   const hasAnyWallets = useMemo(
     () =>
-      wallets.some(wallet => {
-        const walletId = String(wallet?.id || '');
+      storedWallets.some(wallet => {
+        const walletId = String(
+          wallet?.walletId || wallet?.summary?.walletId || '',
+        );
         return !!walletId && !!wallet;
       }),
-    [wallets],
+    [storedWallets],
   );
 
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(

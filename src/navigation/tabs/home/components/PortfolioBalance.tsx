@@ -54,6 +54,7 @@ import {
 } from '../../../../utils/portfolio/assets';
 import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/ui/common';
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
+import usePortfolioChartableWallets from '../../../../portfolio/ui/hooks/usePortfolioChartableWallets';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
@@ -241,21 +242,29 @@ const PortfolioBalanceContent = () => {
     return Array.from(byId.values());
   }, [homeCarouselConfig, keys]);
 
+  const chartWalletsAcrossKeys = usePortfolioChartableWallets({
+    wallets: walletsAcrossKeys,
+    enabled: canRenderPortfolioBalanceCharts,
+  });
+  const chartWalletIdsSig = useMemo(() => {
+    return chartWalletsAcrossKeys
+      .map(wallet => String(wallet?.id || ''))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b))
+      .join(',');
+  }, [chartWalletsAcrossKeys]);
   const hasAnyChartWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(walletsAcrossKeys);
-  }, [walletsAcrossKeys]);
+    return walletsHaveNonZeroLiveBalance(chartWalletsAcrossKeys);
+  }, [chartWalletsAcrossKeys]);
   const balanceChartsEnabled =
     canRenderPortfolioBalanceCharts && hasAnyChartWalletBalance;
-  const hasChartData = useMemo(() => {
-    return balanceChartsEnabled && walletsAcrossKeys.length > 0;
-  }, [balanceChartsEnabled, walletsAcrossKeys.length]);
-  const shouldLeftAlignTopSection = hasChartData && !hideAllBalances;
+  const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
   const canCollapseChart =
     shouldLeftAlignTopSection && chartHasRenderableSeries;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
-    hasChartData &&
+    balanceChartsEnabled &&
     (populateInProgress ||
       !committedPortfolioLastPopulatedAt ||
       !chartHasRenderableSeries);
@@ -417,11 +426,12 @@ const PortfolioBalanceContent = () => {
   const collapseChartAccessibilityLabel = t('Collapse portfolio chart');
   const expandChartAccessibilityLabel = t('Expand portfolio chart');
   const chartLifecycleKey = useMemo(
-    () => `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}`,
-    [homeChartRemountNonce, visibleKeyIdsSig],
+    () =>
+      `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}:${chartWalletIdsSig}`,
+    [chartWalletIdsSig, homeChartRemountNonce, visibleKeyIdsSig],
   );
   const balanceChartSurface = usePortfolioBalanceChartSurface({
-    wallets: walletsAcrossKeys,
+    wallets: chartWalletsAcrossKeys,
     quoteCurrency,
     fallbackBalance: totalBalanceIncludingCoinbase,
     fallbackCurrency: defaultAltCurrency.isoCode,
@@ -429,7 +439,7 @@ const PortfolioBalanceContent = () => {
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
-    wallets: walletsAcrossKeys,
+    wallets: chartWalletsAcrossKeys,
     quoteCurrency,
     initialSelectedTimeframe: selectedChartTimeframeRef.current,
     rates,
@@ -623,77 +633,70 @@ const PortfolioBalanceContent = () => {
       ) : null}
 
       {!hideAllBalances && balanceChartsEnabled ? (
-        hasChartData ? (
-          <ChartStage
-            onLayout={e => {
-              const {width, y} = e.nativeEvent.layout;
-              if (width > 0 && width !== chartStageWidth) {
-                setChartStageWidth(width);
-              }
-              if (y !== chartStageY) {
-                setChartStageY(y);
-              }
-            }}>
-            <Animated.View style={chartSpacerAnimatedStyle} />
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  zIndex: isChartCollapsed ? 20 : 1,
-                },
-                chartWrapperAnimatedStyle,
-              ]}>
-              <View
-                onLayout={e => {
-                  const h = Math.round(e.nativeEvent.layout.height);
-                  if (h > 0 && h !== chartBlockHeight) {
-                    setChartBlockHeight(h);
-                  }
-                }}>
-                <BalanceHistoryChart
-                  key={chartLifecycleKey}
-                  {...commonBalanceHistoryChartProps}
-                  strokeScale={chartScale}
-                  minStrokeScale={collapsedScale}
-                  onChangeRowData={
-                    balanceChartSurface.chartCallbacks.onChangeRowData
-                  }
-                  axisLabelOpacity={axisLabelOpacity}
-                  showChangeRow={false}
-                  timeframeSelectorOpacity={timeframeSelectorOpacity}
-                  disablePanGesture={isChartCollapsed}
+        <ChartStage
+          onLayout={e => {
+            const {width, y} = e.nativeEvent.layout;
+            if (width > 0 && width !== chartStageWidth) {
+              setChartStageWidth(width);
+            }
+            if (y !== chartStageY) {
+              setChartStageY(y);
+            }
+          }}>
+          <Animated.View style={chartSpacerAnimatedStyle} />
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                zIndex: isChartCollapsed ? 20 : 1,
+              },
+              chartWrapperAnimatedStyle,
+            ]}>
+            <View
+              onLayout={e => {
+                const h = Math.round(e.nativeEvent.layout.height);
+                if (h > 0 && h !== chartBlockHeight) {
+                  setChartBlockHeight(h);
+                }
+              }}>
+              <BalanceHistoryChart
+                key={chartLifecycleKey}
+                {...commonBalanceHistoryChartProps}
+                strokeScale={chartScale}
+                minStrokeScale={collapsedScale}
+                onChangeRowData={
+                  balanceChartSurface.chartCallbacks.onChangeRowData
+                }
+                axisLabelOpacity={axisLabelOpacity}
+                showChangeRow={false}
+                timeframeSelectorOpacity={timeframeSelectorOpacity}
+                disablePanGesture={isChartCollapsed}
+              />
+              {isChartCollapsed && canCollapseChart ? (
+                <TouchableOpacity
+                  touchableLibrary="react-native"
+                  activeOpacity={ActiveOpacity}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    zIndex: 50,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={expandChartAccessibilityLabel}
+                  accessibilityState={{expanded: false}}
+                  onPress={onExpandChartPress}
                 />
-                {isChartCollapsed && canCollapseChart ? (
-                  <TouchableOpacity
-                    touchableLibrary="react-native"
-                    activeOpacity={ActiveOpacity}
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      zIndex: 50,
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={expandChartAccessibilityLabel}
-                    accessibilityState={{expanded: false}}
-                    onPress={onExpandChartPress}
-                  />
-                ) : null}
-              </View>
-            </Animated.View>
-          </ChartStage>
-        ) : (
-          <BalanceHistoryChart
-            key={chartLifecycleKey}
-            {...commonBalanceHistoryChartProps}
-          />
-        )
+              ) : null}
+            </View>
+          </Animated.View>
+        </ChartStage>
       ) : null}
     </PortfolioContainer>
   );

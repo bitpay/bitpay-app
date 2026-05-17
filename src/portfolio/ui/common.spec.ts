@@ -41,6 +41,10 @@ jest.mock('../../utils/portfolio/displayCurrency', () => ({
 
 jest.mock('../adapters/rn/walletMappers', () => ({
   isPortfolioRuntimeEligibleWallet: jest.fn(() => true),
+  resolvePortfolioWalletUnitDecimalsFromPrecision: jest.fn(
+    ({precisionUnitDecimals}: {precisionUnitDecimals?: number}) =>
+      precisionUnitDecimals,
+  ),
   toPortfolioStoredWallet: jest.fn(),
 }));
 

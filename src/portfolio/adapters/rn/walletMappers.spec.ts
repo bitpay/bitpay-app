@@ -1,4 +1,7 @@
 jest.mock('../../../utils/portfolio/assets', () => ({
+  getPortfolioWalletTokenAddress: jest.fn((wallet: any) =>
+    typeof wallet?.tokenAddress === 'string' ? wallet.tokenAddress : undefined,
+  ),
   getWalletLiveAtomicBalance: jest.fn(({wallet, unitDecimals}: any) => {
     const crypto = Number(wallet?.balance?.crypto || 0);
     return BigInt(Math.round(crypto * 10 ** unitDecimals));
@@ -62,6 +65,7 @@ describe('walletMappers', () => {
     expect(stored.summary.walletId).toBe('wallet-1');
     expect(stored.summary.currencyAbbreviation).toBe('usdc');
     expect(stored.summary.tokenAddress).toBe('0xToken');
+    expect(stored.summary.unitDecimals).toBe(6);
     expect(stored.summary.balanceAtomic).toBe('12500000');
   });
 

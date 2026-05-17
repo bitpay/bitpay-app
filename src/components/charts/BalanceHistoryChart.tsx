@@ -105,7 +105,6 @@ const BalanceHistoryChart = ({
     rates: _rates,
   });
   const displayModel = useBalanceChartDisplayModel({
-    wallets,
     scope,
     initialSelectedTimeframe,
     balanceOffset,

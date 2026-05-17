@@ -133,6 +133,7 @@ import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
+import usePortfolioChartableWallets from '../../../portfolio/ui/hooks/usePortfolioChartableWallets';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -696,9 +697,13 @@ const KeyOverview = () => {
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
+  const chartableVisibleKeyWallets = usePortfolioChartableWallets({
+    wallets: visibleKeyWallets,
+    enabled: canRenderPortfolioBalanceCharts,
+  });
   const hasAnyVisibleKeyWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(visibleKeyWallets);
-  }, [visibleKeyWallets]);
+    return walletsHaveNonZeroLiveBalance(chartableVisibleKeyWallets);
+  }, [chartableVisibleKeyWallets]);
   const canRenderKeyBalanceChart =
     canRenderPortfolioBalanceCharts && hasAnyVisibleKeyWalletBalance;
   const visibleKeyWalletIds = useMemo(
@@ -706,7 +711,7 @@ const KeyOverview = () => {
     [visibleKeyWallets],
   );
   const balanceChartSurface = usePortfolioBalanceChartSurface({
-    wallets: visibleKeyWallets,
+    wallets: chartableVisibleKeyWallets,
     quoteCurrency,
     fallbackBalance: totalBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
@@ -1179,7 +1184,7 @@ const KeyOverview = () => {
 
           {canRenderKeyBalanceChart && !hideAllBalances ? (
             <BalanceHistoryChart
-              wallets={visibleKeyWallets}
+              wallets={chartableVisibleKeyWallets}
               quoteCurrency={quoteCurrency}
               rates={rates}
               timeframeSelectorWidth={timeframeSelectorWidth}

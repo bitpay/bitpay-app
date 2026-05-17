@@ -156,6 +156,9 @@ jest.mock('../common', () => {
             wallet.summary.chain,
             wallet.summary.currencyAbbreviation,
             wallet.summary.tokenAddress || '',
+            typeof wallet.summary.unitDecimals === 'number'
+              ? String(wallet.summary.unitDecimals)
+              : '',
             wallet.summary.balanceAtomic || '',
           ].join(':'),
         )
@@ -393,6 +396,9 @@ const makeScope = (args?: {
           wallet.summary.chain,
           wallet.summary.currencyAbbreviation,
           '',
+          typeof wallet.summary.unitDecimals === 'number'
+            ? String(wallet.summary.unitDecimals)
+            : '',
           wallet.summary.balanceAtomic,
         ].join(':'),
       )
@@ -760,6 +766,9 @@ describe('usePortfolioAssetRows', () => {
           args.storedWallet.summary.chain,
           args.storedWallet.summary.currencyAbbreviation,
           '',
+          typeof args.storedWallet.summary.unitDecimals === 'number'
+            ? String(args.storedWallet.summary.unitDecimals)
+            : '',
           args.storedWallet.summary.balanceAtomic,
         ].join(':')}`,
         walletIds: [args.walletId],
@@ -988,6 +997,9 @@ describe('usePortfolioAssetRows', () => {
           args.storedWallet.summary.chain,
           args.storedWallet.summary.currencyAbbreviation,
           '',
+          typeof args.storedWallet.summary.unitDecimals === 'number'
+            ? String(args.storedWallet.summary.unitDecimals)
+            : '',
           args.storedWallet.summary.balanceAtomic,
         ].join(':')}`,
         walletIds: [args.walletId],

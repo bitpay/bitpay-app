@@ -528,7 +528,9 @@ const resetState = (
   showPortfolioValue: boolean | undefined,
   options: {
     completedFullPopulate?: boolean;
+    excessiveBalanceMismatchesByWalletId?: Record<string, any>;
     homeChartCollapsed?: boolean;
+    invalidDecimalsByWalletId?: Record<string, any>;
     populateStatus?: any;
   } = {},
 ) => {
@@ -591,6 +593,9 @@ const resetState = (
       locationData: {countryShortCode: 'US'},
     },
     PORTFOLIO: {
+      excessiveBalanceMismatchesByWalletId:
+        options.excessiveBalanceMismatchesByWalletId || {},
+      invalidDecimalsByWalletId: options.invalidDecimalsByWalletId || {},
       lastFullPopulateCompletedAt,
       lastPopulatedAt,
       populateStatus: options.populateStatus,
@@ -679,6 +684,18 @@ const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
   ],
 ];
 
+const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
+  computedAtomic: '110000000',
+  deltaAtomic: '10000000',
+  detectedAt: 1000,
+  liveAtomic: '100000000',
+  message: 'Computed snapshot balance exceeds live wallet balance by 10%.',
+  ratio: '1.1',
+  reason: 'excessive_balance_mismatch',
+  threshold: 0.1,
+  walletId,
+});
+
 describe('portfolio chart visibility guards', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -717,7 +734,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenCalledWith({
       enabled: false,
-      wallets: [mockWallet],
+      wallets: [],
     });
   });
 
@@ -809,6 +826,30 @@ describe('portfolio chart visibility guards', () => {
 
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['Home', () => <PortfolioBalance />, 'home_portfolio_balance_chart'],
+    ...chartSurfaceCases,
+  ])(
+    'does not mount the %s balance chart when all scope wallets are excessive-mismatch quarantined',
+    async (_screen, makeScreen) => {
+      mockWalletsHaveNonZeroLiveBalance.mockImplementation(
+        (wallets: any[]) => Array.isArray(wallets) && wallets.length > 0,
+      );
+      resetState(true, {
+        completedFullPopulate: true,
+        excessiveBalanceMismatchesByWalletId: {
+          'wallet-1': makeExcessiveBalanceMismatchMarker('wallet-1'),
+        },
+      });
+
+      await act(async () => {
+        renderWithTheme(makeScreen());
+      });
+
+      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+    },
+  );
 
   it('honors the persisted Home chart collapsed state before chart diagnostics arrive', async () => {
     resetState(true, {

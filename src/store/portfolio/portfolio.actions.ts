@@ -1,4 +1,10 @@
-import type {SnapshotBalanceMismatch} from './portfolio.models';
+import type {
+  ExcessiveBalanceMismatchMarker,
+  InvalidDecimalsMarker,
+  SnapshotBalanceMismatch,
+  WalletIdMap,
+  WalletPopulateState,
+} from './portfolio.models';
 import {PortfolioActionType, PortfolioActionTypes} from './portfolio.types';
 
 export const clearPortfolio = (): PortfolioActionType => ({
@@ -23,9 +29,7 @@ export const updatePopulateProgress = (payload: {
   txRequestsMade?: number;
   txsProcessed?: number;
   errorsToAdd?: Array<{walletId: string; message: string}>;
-  walletStatusByIdUpdates?: {
-    [walletId: string]: 'in_progress' | 'done' | 'error' | undefined;
-  };
+  walletStatusByIdUpdates?: WalletIdMap<WalletPopulateState>;
 }): PortfolioActionType => ({
   type: PortfolioActionTypes.UPDATE_POPULATE_PROGRESS,
   payload,
@@ -63,9 +67,23 @@ export const markInitialBaselineComplete = (payload: {
   payload,
 });
 
-export const setSnapshotBalanceMismatchesByWalletIdUpdates = (payload: {
-  [walletId: string]: SnapshotBalanceMismatch | undefined;
-}): PortfolioActionType => ({
+export const setSnapshotBalanceMismatchesByWalletIdUpdates = (
+  payload: WalletIdMap<SnapshotBalanceMismatch>,
+): PortfolioActionType => ({
   type: PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES,
+  payload,
+});
+
+export const setInvalidDecimalsByWalletIdUpdates = (
+  payload: WalletIdMap<InvalidDecimalsMarker>,
+): PortfolioActionType => ({
+  type: PortfolioActionTypes.SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES,
+  payload,
+});
+
+export const setExcessiveBalanceMismatchesByWalletIdUpdates = (
+  payload: WalletIdMap<ExcessiveBalanceMismatchMarker>,
+): PortfolioActionType => ({
+  type: PortfolioActionTypes.SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES,
   payload,
 });
