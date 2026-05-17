@@ -1,10 +1,12 @@
 import {
   SNAPSHOT_INVALID_HISTORY_ERROR_NAME,
   SNAPSHOT_INVALID_HISTORY_NEGATIVE_BALANCE_CODE,
-  SNAPSHOT_INVALID_HISTORY_RETRY_COOLDOWN_MS,
+  SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS,
   createNegativeBalanceInvalidHistoryError,
   isSnapshotInvalidHistoryError,
   isSnapshotInvalidHistoryMarkerActive,
+  isSnapshotInvalidHistoryMarkerQuarantined,
+  isSnapshotInvalidHistoryRetryDue,
   toSnapshotInvalidHistoryMarker,
 } from './invalidHistory';
 
@@ -33,7 +35,7 @@ describe('invalidHistory', () => {
       walletId: 'wallet-1',
       reason: 'negative_balance',
       detectedAt: 1000,
-      retryAfter: 1000 + SNAPSHOT_INVALID_HISTORY_RETRY_COOLDOWN_MS,
+      lastAttemptedAt: 1000,
       message: 'Invalid tx history: negative balance after tx tx-123 (-42).',
       source: 'unit_test',
       txId: 'tx-123',
@@ -41,7 +43,7 @@ describe('invalidHistory', () => {
     });
   });
 
-  it('ignores non-invalid-history errors and expired markers', () => {
+  it('ignores non-invalid-history errors and computes retry due from last attempt', () => {
     const genericError = new Error('something else');
 
     expect(isSnapshotInvalidHistoryError(genericError)).toBe(false);
@@ -53,31 +55,33 @@ describe('invalidHistory', () => {
       }),
     ).toBeNull();
 
+    const marker = {
+      v: 1 as const,
+      walletId: 'wallet-1',
+      reason: 'negative_balance' as const,
+      detectedAt: 1000,
+      lastAttemptedAt: 1500,
+      message: 'quarantined',
+    };
+
+    expect(isSnapshotInvalidHistoryMarkerQuarantined(marker)).toBe(true);
     expect(
       isSnapshotInvalidHistoryMarkerActive(
-        {
-          v: 1,
-          walletId: 'wallet-1',
-          reason: 'negative_balance',
-          detectedAt: 1000,
-          retryAfter: 1500,
-          message: 'expired',
-        },
-        1500,
-      ),
-    ).toBe(false);
-    expect(
-      isSnapshotInvalidHistoryMarkerActive(
-        {
-          v: 1,
-          walletId: 'wallet-1',
-          reason: 'negative_balance',
-          detectedAt: 1000,
-          retryAfter: 1501,
-          message: 'active',
-        },
-        1500,
+        marker,
+        1500 + SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS - 1,
       ),
     ).toBe(true);
+    expect(
+      isSnapshotInvalidHistoryRetryDue(
+        marker,
+        1500 + SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS,
+      ),
+    ).toBe(true);
+    expect(
+      isSnapshotInvalidHistoryMarkerActive(
+        marker,
+        1500 + SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS,
+      ),
+    ).toBe(false);
   });
 });

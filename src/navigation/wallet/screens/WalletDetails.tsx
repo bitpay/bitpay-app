@@ -28,6 +28,7 @@ import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
+import usePortfolioChartableWallets from '../../../portfolio/ui/hooks/usePortfolioChartableWallets';
 import Settings from '../../../components/settings/Settings';
 import {
   Balance,
@@ -361,7 +362,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     ScreenGutter,
   );
 
-  const wallets = Object.values(keys).flatMap(k => k.wallets);
+  const wallets = (Object.values(keys) as Key[]).flatMap(k => k.wallets);
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
@@ -604,13 +605,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
+  const chartableWallets = usePortfolioChartableWallets({
+    wallets: chartWallets,
+    enabled: canRenderPortfolioBalanceCharts,
+  });
   const walletHasLiveBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartWallets);
-  }, [chartWallets]);
+    return walletsHaveNonZeroLiveBalance(chartableWallets);
+  }, [chartableWallets]);
   const canRenderWalletBalanceChart =
     canRenderPortfolioBalanceCharts && walletHasLiveBalance;
   const balanceChartSurface = usePortfolioBalanceChartSurface({
-    wallets: chartWallets,
+    wallets: chartableWallets,
     quoteCurrency: chartQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: canRenderWalletBalanceChart,
@@ -673,7 +678,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const {hasAnySnapshots: walletHasSnapshots, checked: walletSnapshotsChecked} =
     usePortfolioWalletSnapshotPresence({
-      wallets: chartWallets,
+      wallets: chartableWallets,
       enabled: canRenderWalletBalanceChart,
     });
   const showWalletBalanceChart =
@@ -1371,7 +1376,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
                   showWalletBalanceChart ? (
                     <BalanceHistoryChart
-                      wallets={chartWallets}
+                      wallets={chartableWallets}
                       quoteCurrency={chartQuoteCurrency}
                       rates={rates}
                       lineColor={chartLineColor}

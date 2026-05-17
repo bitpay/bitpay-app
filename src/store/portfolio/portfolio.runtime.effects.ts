@@ -9,9 +9,12 @@ import {
 } from '../../utils/portfolio/assets';
 import {
   PortfolioPopulateService,
+  buildPortfolioExcessiveBalanceMismatchMarker,
   getPortfolioPopulateDecisionsForWallets,
+  getPortfolioInvalidDecimalsMessage,
   type PortfolioPopulateDecision,
   type PortfolioSnapshotBalanceMismatch,
+  type PortfolioUnitDecimalsResolution,
 } from '../../portfolio/service';
 import type {PortfolioPopulateJobStatus} from '../../portfolio/core/engine/populateJob';
 import type {StoredWallet} from '../../portfolio/core/types';
@@ -20,6 +23,7 @@ import {getPortfolioRuntimeClient} from '../../portfolio/runtime/portfolioRuntim
 import {waitForStartupWalletStoreInitForPortfolio} from '../wallet/effects/init/init';
 import {
   isPortfolioRuntimeEligibleWallet,
+  resolvePortfolioWalletUnitDecimalsFromPrecision,
   toPortfolioStoredWallet,
 } from '../../portfolio/adapters/rn/walletMappers';
 import {logManager} from '../../managers/LogManager';
@@ -30,10 +34,17 @@ import {
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
+  setExcessiveBalanceMismatchesByWalletIdUpdates,
+  setInvalidDecimalsByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   startPopulatePortfolio,
   updatePopulateProgress,
 } from './portfolio.actions';
+import type {
+  ExcessiveBalanceMismatchMarker,
+  InvalidDecimalsMarker,
+  WalletIdMap,
+} from './portfolio.models';
 
 let activeRuntimePopulateService: PortfolioPopulateService | undefined;
 let deferredPortfolioUnlockSubscription: {remove: () => void} | undefined;
@@ -179,17 +190,61 @@ const normalizeWalletIds = (walletIds?: string[]): string[] => {
   return result;
 };
 
+const getWalletsToPopulateAfterExcessiveBalanceRepair = async (args: {
+  client: ReturnType<typeof getPortfolioRuntimeClient>;
+  decisions: PortfolioPopulateDecision[];
+  walletIdsToPopulate: string[];
+  wallets: Wallet[];
+}): Promise<Wallet[]> => {
+  if (!args.walletIdsToPopulate.length) {
+    return [];
+  }
+
+  const repairWalletIds = normalizeWalletIds(
+    args.decisions.flatMap(decision =>
+      decision.reason === 'excessive_balance_mismatch' &&
+      decision.shouldPopulate
+        ? [decision.walletId]
+        : [],
+    ),
+  );
+  const failedRepairWalletIds = new Set<string>();
+  if (repairWalletIds.length) {
+    const results = await Promise.allSettled(
+      repairWalletIds.map(walletId => args.client.clearWallet({walletId})),
+    );
+
+    results.forEach((result, index) => {
+      if (result.status !== 'rejected') {
+        return;
+      }
+
+      const walletId = repairWalletIds[index];
+      failedRepairWalletIds.add(walletId);
+      logManager.warn(
+        `[portfolio] Failed clearing runtime wallet snapshots before excessive balance mismatch repair for ${walletId}: ${toErrorMessage(
+          result.reason,
+        )}`,
+      );
+    });
+  }
+
+  return args.wallets.filter(
+    wallet =>
+      args.walletIdsToPopulate.includes(wallet.id) &&
+      !failedRepairWalletIds.has(wallet.id),
+  );
+};
+
 const getScopedPopulateWalletIdsFromArgs = (
   args?: PopulatePortfolioWithRuntimeArgs,
 ): string[] => {
-  const walletIds = [
-    ...(Array.isArray(args?.walletIds) ? args?.walletIds || [] : []),
+  return normalizeWalletIds([
+    ...(Array.isArray(args?.walletIds) ? args.walletIds : []),
     ...(Array.isArray(args?.wallets)
-      ? (args?.wallets || []).map(wallet => wallet?.id)
+      ? args.wallets.map(wallet => wallet?.id)
       : []),
-  ];
-
-  return normalizeWalletIds(walletIds);
+  ]);
 };
 
 const queueScopedPopulateRequest = (
@@ -353,6 +408,20 @@ const RUNTIME_MUTATION_POLL_MS = 100;
 const ACTIVE_RUNTIME_POPULATE_MUTATION_ERROR_PATTERN =
   /background populate job is running/i;
 
+const resolveRuntimeMutationWaitOptions = (args?: {
+  timeoutMs?: number;
+  pollMs?: number;
+}) => ({
+  timeoutMs:
+    typeof args?.timeoutMs === 'number' && Number.isFinite(args.timeoutMs)
+      ? Math.max(0, Math.floor(args.timeoutMs))
+      : RUNTIME_MUTATION_WAIT_TIMEOUT_MS,
+  pollMs:
+    typeof args?.pollMs === 'number' && Number.isFinite(args.pollMs)
+      ? Math.max(50, Math.floor(args.pollMs))
+      : RUNTIME_MUTATION_POLL_MS,
+});
+
 const requestRuntimePopulateCancel = (): void => {
   void getPortfolioRuntimeClient()
     .cancelPopulateJob({})
@@ -363,14 +432,7 @@ const waitForRuntimePopulateToStop = async (args?: {
   timeoutMs?: number;
   pollMs?: number;
 }): Promise<boolean> => {
-  const timeoutMs =
-    typeof args?.timeoutMs === 'number' && Number.isFinite(args.timeoutMs)
-      ? Math.max(0, Math.floor(args.timeoutMs))
-      : RUNTIME_MUTATION_WAIT_TIMEOUT_MS;
-  const pollMs =
-    typeof args?.pollMs === 'number' && Number.isFinite(args.pollMs)
-      ? Math.max(50, Math.floor(args.pollMs))
-      : RUNTIME_MUTATION_POLL_MS;
+  const {timeoutMs, pollMs} = resolveRuntimeMutationWaitOptions(args);
   const deadline = Date.now() + timeoutMs;
   const client = getPortfolioRuntimeClient();
 
@@ -458,26 +520,53 @@ const hasCompletedInitialPortfolioBaseline = (state: RootState): boolean =>
 
 const isSettledInitialBaselineNoopDecision = (
   decision: PortfolioPopulateDecision,
-): boolean => decision.shouldPopulate === false;
+): boolean =>
+  decision.reason === 'up_to_date' ||
+  decision.reason === 'unchanged_balance_mismatch' ||
+  decision.reason === 'invalid_history' ||
+  decision.reason === 'invalid_decimals' ||
+  decision.reason === 'excessive_balance_mismatch';
 
-const canMarkInitialBaselineCompleteFromLaunchDecisions = (args: {
+const dispatchWalletIdMapUpdates = <T>(
+  dispatch: any,
+  updates: WalletIdMap<T> | undefined,
+  actionCreator: (updates: WalletIdMap<T>) => unknown,
+): void => {
+  if (updates && Object.keys(updates).length) {
+    dispatch(actionCreator(updates));
+  }
+};
+
+type PortfolioMarkerUpdates = {
+  invalidDecimalsByWalletId: WalletIdMap<InvalidDecimalsMarker>;
+  excessiveBalanceMismatchByWalletId: WalletIdMap<ExcessiveBalanceMismatchMarker>;
+};
+
+const dispatchPortfolioMarkerUpdates = (
+  dispatch: any,
+  updates: PortfolioMarkerUpdates,
+): void => {
+  dispatchWalletIdMapUpdates(
+    dispatch,
+    updates.invalidDecimalsByWalletId,
+    setInvalidDecimalsByWalletIdUpdates,
+  );
+  dispatchWalletIdMapUpdates(
+    dispatch,
+    updates.excessiveBalanceMismatchByWalletId,
+    setExcessiveBalanceMismatchesByWalletIdUpdates,
+  );
+};
+
+const canMarkInitialBaselineCompleteFromDecisions = (args: {
   decisions: PortfolioPopulateDecision[];
   eligibleWalletCount: number;
   walletIdsToPopulate: string[];
-}): boolean => {
-  if (args.walletIdsToPopulate.length) {
-    return false;
-  }
-
-  if (!args.eligibleWalletCount) {
-    return true;
-  }
-
-  return (
-    args.decisions.length === args.eligibleWalletCount &&
-    args.decisions.every(isSettledInitialBaselineNoopDecision)
-  );
-};
+}): boolean =>
+  !args.walletIdsToPopulate.length &&
+  (!args.eligibleWalletCount ||
+    (args.decisions.length === args.eligibleWalletCount &&
+      args.decisions.every(isSettledInitialBaselineNoopDecision)));
 
 const isMainnetLikeWallet = (wallet: Wallet): boolean => {
   const network = String(wallet?.network || '')
@@ -495,20 +584,13 @@ const getVisibleMainnetWalletsFromState = (state: RootState): Wallet[] => {
   );
 };
 
-const getAllMainnetWalletsFromState = (state: RootState): Wallet[] => {
-  const out: Wallet[] = [];
+const getWalletsFromState = (state: RootState): Wallet[] =>
+  Object.values(state.WALLET?.keys || {}).flatMap((key: any) =>
+    Array.isArray(key?.wallets) ? key.wallets : [],
+  );
 
-  Object.values(state.WALLET?.keys || {}).forEach((key: any) => {
-    const wallets = Array.isArray(key?.wallets) ? key.wallets : [];
-    wallets.forEach((wallet: Wallet) => {
-      if (isMainnetLikeWallet(wallet)) {
-        out.push(wallet);
-      }
-    });
-  });
-
-  return out;
-};
+const getAllMainnetWalletsFromState = (state: RootState): Wallet[] =>
+  getWalletsFromState(state).filter(isMainnetLikeWallet);
 
 const getMainnetWalletsByIdsFromState = (
   state: RootState,
@@ -522,50 +604,25 @@ const getMainnetWalletsByIdsFromState = (
   const out: Wallet[] = [];
   const seen = new Set<string>();
 
-  Object.values(state.WALLET?.keys || {}).forEach((key: any) => {
-    const wallets = Array.isArray(key?.wallets) ? key.wallets : [];
-    wallets.forEach((wallet: Wallet) => {
-      const walletId = String(wallet?.id || '').trim();
-      if (
-        !walletId ||
-        seen.has(walletId) ||
-        !wantedWalletIds.has(walletId) ||
-        !isMainnetLikeWallet(wallet)
-      ) {
-        return;
-      }
+  getAllMainnetWalletsFromState(state).forEach(wallet => {
+    const walletId = String(wallet?.id || '').trim();
+    if (!walletId || seen.has(walletId) || !wantedWalletIds.has(walletId)) {
+      return;
+    }
 
-      seen.add(walletId);
-      out.push(wallet);
-    });
+    seen.add(walletId);
+    out.push(wallet);
   });
 
   return out;
 };
 
-const getAllMainnetWalletIdsFromState = (state: RootState): string[] => {
-  const out: string[] = [];
-  const seen = new Set<string>();
-
-  Object.values(state.WALLET?.keys || {}).forEach((key: any) => {
-    const wallets = Array.isArray(key?.wallets) ? key.wallets : [];
-    wallets.forEach((wallet: Wallet) => {
-      if (!isMainnetLikeWallet(wallet)) {
-        return;
-      }
-
-      const walletId = String(wallet?.id || '').trim();
-      if (!walletId || seen.has(walletId)) {
-        return;
-      }
-
-      seen.add(walletId);
-      out.push(walletId);
-    });
-  });
-
-  return out;
-};
+const getAllMainnetWalletIdsFromState = (state: RootState): string[] =>
+  normalizeWalletIds(
+    getAllMainnetWalletsFromState(state).map(wallet =>
+      String(wallet?.id || '').trim(),
+    ),
+  );
 
 const resolvePopulateWallets = (args: {
   state: RootState;
@@ -585,73 +642,72 @@ const resolvePopulateWallets = (args: {
     .filter(isMainnetLikeWallet);
 };
 
-const toUnitDecimals = (dispatch: any, wallet: Wallet): number => {
-  const precision =
-    dispatch(
-      GetPrecision(
-        wallet.currencyAbbreviation,
-        wallet.chain,
-        wallet.tokenAddress,
-      ),
-    ) || undefined;
-  return precision?.unitDecimals || 0;
-};
-
-const getCompletedWalletIdsFromPopulateResult = (args: {
-  status?: {
-    walletStatusById?: {
-      [walletId: string]: 'in_progress' | 'done' | 'error' | undefined;
-    };
-  };
-  runResults?: Array<{
-    walletId: string;
-    cancelled?: boolean;
-  }>;
-}): string[] => {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  const add = (walletId: string) => {
-    if (!walletId || seen.has(walletId)) {
-      return;
-    }
-    seen.add(walletId);
-    out.push(walletId);
-  };
-
-  Object.entries(args.status?.walletStatusById || {}).forEach(
-    ([walletId, walletStatus]) => {
-      if (walletStatus !== 'done' || !walletId) {
-        return;
-      }
-      add(walletId);
-    },
+const resolveWalletUnitDecimalsForPortfolio = (
+  dispatch: any,
+  wallet: Wallet,
+): PortfolioUnitDecimalsResolution => {
+  const precision = dispatch(
+    GetPrecision(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+    ),
   );
-
-  (args.runResults || []).forEach(runResult => {
-    const walletId = String(runResult?.walletId || '').trim();
-    if (!walletId || runResult?.cancelled) {
-      return;
-    }
-    add(walletId);
+  const unitDecimals = resolvePortfolioWalletUnitDecimalsFromPrecision({
+    wallet,
+    precisionUnitDecimals: precision?.unitDecimals,
   });
+  if (typeof unitDecimals === 'number') {
+    return {ok: true, unitDecimals};
+  }
 
-  return out;
+  const walletId = String(wallet?.id || '').trim();
+  return {
+    ok: false,
+    reason: 'invalid_decimals',
+    message: getPortfolioInvalidDecimalsMessage(walletId),
+  };
 };
 
-const buildSnapshotMismatchUpdatesAfterPopulate = async (args: {
+const getPortfolioPopulateDecisionsForRuntimeWallets = (args: {
   client: ReturnType<typeof getPortfolioRuntimeClient>;
   dispatch: any;
-  previousMismatchByWalletId?: {
-    [walletId: string]: PortfolioSnapshotBalanceMismatch | undefined;
-  };
+  state: RootState;
+  wallets: Wallet[];
+}) =>
+  getPortfolioPopulateDecisionsForWallets({
+    client: args.client,
+    wallets: args.wallets,
+    getUnitDecimals: wallet =>
+      resolveWalletUnitDecimalsForPortfolio(args.dispatch, wallet),
+    previousMismatchByWalletId:
+      args.state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
+    excessiveBalanceMismatchByWalletId:
+      args.state.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
+  });
+
+type SnapshotBalanceHealthUpdates = {
+  mismatchByWalletId: WalletIdMap<PortfolioSnapshotBalanceMismatch>;
+  excessiveBalanceMismatchByWalletId: WalletIdMap<ExcessiveBalanceMismatchMarker>;
+};
+
+const createEmptySnapshotBalanceHealthUpdates =
+  (): SnapshotBalanceHealthUpdates => ({
+    mismatchByWalletId: {},
+    excessiveBalanceMismatchByWalletId: {},
+  });
+
+const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
+  client: ReturnType<typeof getPortfolioRuntimeClient>;
+  dispatch: any;
+  previousMismatchByWalletId?: WalletIdMap<PortfolioSnapshotBalanceMismatch>;
+  previousExcessiveBalanceMismatchByWalletId?: WalletIdMap<ExcessiveBalanceMismatchMarker>;
   walletIds: string[];
   wallets: Wallet[];
-}): Promise<{
-  [walletId: string]: PortfolioSnapshotBalanceMismatch | undefined;
-}> => {
+}): Promise<SnapshotBalanceHealthUpdates> => {
   const walletIds = normalizeWalletIds(args.walletIds);
   if (!walletIds.length) {
-    return {};
+    return createEmptySnapshotBalanceHealthUpdates();
   }
 
   const walletById = new Map<string, Wallet>();
@@ -666,37 +722,43 @@ const buildSnapshotMismatchUpdatesAfterPopulate = async (args: {
     .map(walletId => walletById.get(walletId))
     .filter((wallet): wallet is Wallet => !!wallet);
   if (!completedWallets.length) {
-    return {};
+    return createEmptySnapshotBalanceHealthUpdates();
   }
 
   const decisions = await getPortfolioPopulateDecisionsForWallets({
     client: args.client,
     wallets: completedWallets,
-    getUnitDecimals: wallet => toUnitDecimals(args.dispatch, wallet),
+    getUnitDecimals: wallet =>
+      resolveWalletUnitDecimalsForPortfolio(args.dispatch, wallet),
     previousMismatchByWalletId: args.previousMismatchByWalletId,
   });
 
-  const updates: {
-    [walletId: string]: PortfolioSnapshotBalanceMismatch | undefined;
-  } = {};
+  const updates = createEmptySnapshotBalanceHealthUpdates();
+  const detectedAt = Date.now();
 
   decisions.decisions.forEach(decision => {
     if (decision.mismatch) {
-      updates[decision.walletId] = decision.mismatch;
+      updates.mismatchByWalletId[decision.walletId] = decision.mismatch;
+      updates.excessiveBalanceMismatchByWalletId[decision.walletId] =
+        buildPortfolioExcessiveBalanceMismatchMarker({
+          mismatch: decision.mismatch,
+          detectedAt,
+          previousMarker:
+            args.previousExcessiveBalanceMismatchByWalletId?.[
+              decision.walletId
+            ],
+        });
       return;
     }
 
     if (decision.reason === 'up_to_date') {
-      updates[decision.walletId] = undefined;
+      updates.mismatchByWalletId[decision.walletId] = undefined;
+      updates.excessiveBalanceMismatchByWalletId[decision.walletId] = undefined;
     }
   });
 
   return updates;
 };
-
-const didPopulateReachCompletedState = (
-  status: PortfolioPopulateJobStatus,
-): boolean => status.state === 'completed' && !status.inProgress;
 
 const hasNoRemainingInitialPopulateWork = async (args: {
   client: ReturnType<typeof getPortfolioRuntimeClient>;
@@ -712,14 +774,18 @@ const hasNoRemainingInitialPopulateWork = async (args: {
   }
 
   try {
-    const decisions = await getPortfolioPopulateDecisionsForWallets({
+    const decisions = await getPortfolioPopulateDecisionsForRuntimeWallets({
       client: args.client,
+      dispatch: args.dispatch,
+      state: args.state,
       wallets,
-      getUnitDecimals: wallet => toUnitDecimals(args.dispatch, wallet),
-      previousMismatchByWalletId:
-        args.state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
     });
-    return !decisions.walletIdsToPopulate.length;
+    dispatchPortfolioMarkerUpdates(args.dispatch, decisions);
+    return canMarkInitialBaselineCompleteFromDecisions({
+      decisions: decisions.decisions,
+      eligibleWalletCount: wallets.length,
+      walletIdsToPopulate: decisions.walletIdsToPopulate,
+    });
   } catch (error: unknown) {
     logManager.warn(
       `[portfolio] Could not verify initial populate completion after scoped populate: ${toErrorMessage(
@@ -771,14 +837,7 @@ const waitForRuntimeStorageToClear = async (args: {
   timeoutMs?: number;
   pollMs?: number;
 }): Promise<void> => {
-  const timeoutMs =
-    typeof args.timeoutMs === 'number' && Number.isFinite(args.timeoutMs)
-      ? Math.max(0, Math.floor(args.timeoutMs))
-      : RUNTIME_MUTATION_WAIT_TIMEOUT_MS;
-  const pollMs =
-    typeof args.pollMs === 'number' && Number.isFinite(args.pollMs)
-      ? Math.max(50, Math.floor(args.pollMs))
-      : RUNTIME_MUTATION_POLL_MS;
+  const {timeoutMs, pollMs} = resolveRuntimeMutationWaitOptions(args);
   const deadline = Date.now() + timeoutMs;
   let lastError: unknown;
 
@@ -920,12 +979,11 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
     }
 
     const client = getPortfolioRuntimeClient();
-    const decisions = await getPortfolioPopulateDecisionsForWallets({
+    const decisions = await getPortfolioPopulateDecisionsForRuntimeWallets({
       client,
+      dispatch,
+      state,
       wallets: runtimeEligibleWallets,
-      getUnitDecimals: wallet => toUnitDecimals(dispatch, wallet),
-      previousMismatchByWalletId:
-        state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
     });
 
     dispatch(
@@ -933,14 +991,18 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
         decisions.mismatchByWalletId,
       ),
     );
+    dispatchPortfolioMarkerUpdates(dispatch, decisions);
 
-    if (!decisions.walletIdsToPopulate.length) {
+    const walletsToPopulate =
+      await getWalletsToPopulateAfterExcessiveBalanceRepair({
+        client,
+        decisions: decisions.decisions,
+        wallets: runtimeEligibleWallets,
+        walletIdsToPopulate: decisions.walletIdsToPopulate,
+      });
+    if (!walletsToPopulate.length) {
       return;
     }
-
-    const walletsToPopulate = runtimeEligibleWallets.filter(wallet =>
-      decisions.walletIdsToPopulate.includes(wallet.id),
-    );
 
     await dispatch(
       populatePortfolioWithRuntime({
@@ -1010,12 +1072,11 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
     }
 
     const client = getPortfolioRuntimeClient();
-    const decisions = await getPortfolioPopulateDecisionsForWallets({
+    const decisions = await getPortfolioPopulateDecisionsForRuntimeWallets({
       client,
+      dispatch,
+      state,
       wallets: runtimeEligibleWallets,
-      getUnitDecimals: wallet => toUnitDecimals(dispatch, wallet),
-      previousMismatchByWalletId:
-        state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
     });
 
     dispatch(
@@ -1023,31 +1084,34 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
         decisions.mismatchByWalletId,
       ),
     );
+    dispatchPortfolioMarkerUpdates(dispatch, decisions);
 
     if (
-      canMarkInitialBaselineCompleteFromLaunchDecisions({
+      canMarkInitialBaselineCompleteFromDecisions({
         decisions: decisions.decisions,
         eligibleWalletCount: runtimeEligibleWallets.length,
         walletIdsToPopulate: decisions.walletIdsToPopulate,
-      })
+      }) &&
+      !hasCompletedInitialPortfolioBaseline(getState())
     ) {
-      if (!hasCompletedInitialPortfolioBaseline(getState())) {
-        dispatch(
-          markInitialBaselineComplete({
-            completedAt: Date.now(),
-            quoteCurrency,
-          }),
-        );
-      }
+      dispatch(
+        markInitialBaselineComplete({
+          completedAt: Date.now(),
+          quoteCurrency,
+        }),
+      );
     }
 
-    if (!decisions.walletIdsToPopulate.length) {
+    const walletsToPopulate =
+      await getWalletsToPopulateAfterExcessiveBalanceRepair({
+        client,
+        decisions: decisions.decisions,
+        wallets: runtimeEligibleWallets,
+        walletIdsToPopulate: decisions.walletIdsToPopulate,
+      });
+    if (!walletsToPopulate.length) {
       return;
     }
-
-    const walletsToPopulate = runtimeEligibleWallets.filter(wallet =>
-      decisions.walletIdsToPopulate.includes(wallet.id),
-    );
 
     await dispatch(
       populatePortfolioWithRuntime({
@@ -1094,25 +1158,70 @@ export const populatePortfolioWithRuntime =
       sortWalletsByAssetFiatPriority(walletsToPopulate);
 
     const storedWallets: StoredWallet[] = [];
+    const invalidDecimalsErrors: Array<{walletId: string; message: string}> =
+      [];
+    const markerUpdates: PortfolioMarkerUpdates = {
+      invalidDecimalsByWalletId: {},
+      excessiveBalanceMismatchByWalletId: {},
+    };
 
     for (const wallet of prioritizedWalletsToPopulate) {
       if (!isPortfolioRuntimeEligibleWallet(wallet)) {
         continue;
       }
 
-      const unitDecimals = toUnitDecimals(dispatch, wallet);
+      const walletId = String(wallet?.id || '').trim();
+      const decimalsResolution = resolveWalletUnitDecimalsForPortfolio(
+        dispatch,
+        wallet,
+      );
+      if (!decimalsResolution.ok) {
+        if (walletId) {
+          markerUpdates.invalidDecimalsByWalletId[walletId] = {
+            walletId,
+            reason: 'invalid_decimals',
+            message: decimalsResolution.message,
+          };
+          markerUpdates.excessiveBalanceMismatchByWalletId[walletId] =
+            undefined;
+        }
+        invalidDecimalsErrors.push({
+          walletId,
+          message: decimalsResolution.message,
+        });
+        logManager.warn(`[portfolio] ${decimalsResolution.message}`);
+        continue;
+      }
+
+      if (walletId) {
+        markerUpdates.invalidDecimalsByWalletId[walletId] = undefined;
+      }
       const storedWallet = toPortfolioStoredWallet({
         wallet,
-        unitDecimals,
+        unitDecimals: decimalsResolution.unitDecimals,
       });
       storedWallets.push(storedWallet);
     }
+
+    dispatchPortfolioMarkerUpdates(dispatch, markerUpdates);
 
     if (!storedWallets.length) {
       return;
     }
 
     dispatch(startPopulatePortfolio({quoteCurrency}));
+    if (invalidDecimalsErrors.length) {
+      dispatch(
+        updatePopulateProgress({
+          errorsToAdd: invalidDecimalsErrors,
+          walletStatusByIdUpdates: Object.fromEntries(
+            invalidDecimalsErrors
+              .filter(error => error.walletId)
+              .map(error => [error.walletId, 'error' as const]),
+          ),
+        }),
+      );
+    }
     const reportedErrorKeys = new Set<string>();
 
     const runtimeClient = getPortfolioRuntimeClient();
@@ -1142,10 +1251,17 @@ export const populatePortfolioWithRuntime =
       }
 
       const finalStatus = result.status;
-      const completedWalletIds = getCompletedWalletIdsFromPopulateResult({
-        status: finalStatus,
-        runResults: result.results,
-      });
+      const completedWalletIds = normalizeWalletIds([
+        ...Object.entries(finalStatus.walletStatusById || {}).flatMap(
+          ([walletId, walletStatus]) =>
+            walletStatus === 'done' ? [walletId] : [],
+        ),
+        ...(result.results || []).flatMap(runResult =>
+          runResult?.cancelled
+            ? []
+            : [String(runResult?.walletId || '').trim()],
+        ),
+      ]);
 
       dispatchPopulateProgressStatus({
         dispatch,
@@ -1169,24 +1285,64 @@ export const populatePortfolioWithRuntime =
       if (!isCurrentPopulateService()) {
         return;
       }
-      let lastFullPopulateCompletedAt: number | undefined;
-      if (didPopulateReachCompletedState(finalStatus)) {
-        const hasCompletedFullPopulate = args?.completesInitialBaseline
-          ? true
-          : hasScopedPopulateArgs
-          ? await hasNoRemainingInitialPopulateWork({
-              client: runtimeClient,
-              dispatch,
-              state: getState(),
-            })
-          : true;
-        lastFullPopulateCompletedAt = hasCompletedFullPopulate
-          ? result.finishedAt
-          : undefined;
-      }
+      const hasCompletedFullPopulate =
+        finalStatus.state === 'completed' &&
+        !finalStatus.inProgress &&
+        (args?.completesInitialBaseline === true ||
+          !hasScopedPopulateArgs ||
+          (await hasNoRemainingInitialPopulateWork({
+            client: runtimeClient,
+            dispatch,
+            state: getState(),
+          })));
+      const lastFullPopulateCompletedAt = hasCompletedFullPopulate
+        ? result.finishedAt
+        : undefined;
       if (!isCurrentPopulateService()) {
         return;
       }
+
+      if (completedWalletIds.length) {
+        let balanceHealthUpdates = createEmptySnapshotBalanceHealthUpdates();
+        try {
+          const currentState = getState();
+          const currentWallets = getAllMainnetWalletsFromState(currentState);
+          balanceHealthUpdates =
+            await buildSnapshotBalanceHealthUpdatesAfterPopulate({
+              client: runtimeClient,
+              dispatch,
+              previousMismatchByWalletId:
+                currentState.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
+              previousExcessiveBalanceMismatchByWalletId:
+                currentState.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
+              walletIds: completedWalletIds,
+              wallets: currentWallets.length
+                ? currentWallets
+                : prioritizedWalletsToPopulate,
+            });
+        } catch (error: unknown) {
+          logManager.warn(
+            `[portfolio] Could not refresh snapshot balance mismatches after populate: ${toErrorMessage(
+              error,
+            )}`,
+          );
+        }
+
+        if (!isCurrentPopulateService()) {
+          return;
+        }
+        dispatchWalletIdMapUpdates(
+          dispatch,
+          balanceHealthUpdates.mismatchByWalletId,
+          setSnapshotBalanceMismatchesByWalletIdUpdates,
+        );
+        dispatchWalletIdMapUpdates(
+          dispatch,
+          balanceHealthUpdates.excessiveBalanceMismatchByWalletId,
+          setExcessiveBalanceMismatchesByWalletIdUpdates,
+        );
+      }
+
       dispatch(
         finishPopulatePortfolio({
           finishedAt: result.finishedAt,
@@ -1201,41 +1357,6 @@ export const populatePortfolioWithRuntime =
           quoteCurrency,
         }),
       );
-
-      if (completedWalletIds.length) {
-        let mismatchUpdates: {
-          [walletId: string]: PortfolioSnapshotBalanceMismatch | undefined;
-        } = {};
-        try {
-          const currentState = getState();
-          const currentWallets = getAllMainnetWalletsFromState(currentState);
-          mismatchUpdates = await buildSnapshotMismatchUpdatesAfterPopulate({
-            client: runtimeClient,
-            dispatch,
-            previousMismatchByWalletId:
-              currentState.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
-            walletIds: completedWalletIds,
-            wallets: currentWallets.length
-              ? currentWallets
-              : prioritizedWalletsToPopulate,
-          });
-        } catch (error: unknown) {
-          logManager.warn(
-            `[portfolio] Could not refresh snapshot balance mismatches after populate: ${toErrorMessage(
-              error,
-            )}`,
-          );
-        }
-
-        if (!isCurrentPopulateService()) {
-          return;
-        }
-        if (Object.keys(mismatchUpdates).length) {
-          dispatch(
-            setSnapshotBalanceMismatchesByWalletIdUpdates(mismatchUpdates),
-          );
-        }
-      }
     } catch (error: unknown) {
       if (!isCurrentPopulateService()) {
         return;

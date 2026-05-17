@@ -1,5 +1,5 @@
 import {PortfolioActionType, PortfolioActionTypes} from './portfolio.types';
-import type {PortfolioState} from './portfolio.models';
+import type {PortfolioState, WalletIdMap} from './portfolio.models';
 
 type PortfolioReduxPersistBlackList = string[];
 export const portfolioReduxPersistBlackList: PortfolioReduxPersistBlackList =
@@ -24,10 +24,59 @@ const initialState: PortfolioState = {
     walletStatusById: {},
   },
   snapshotBalanceMismatchesByWalletId: {},
+  invalidDecimalsByWalletId: {},
+  excessiveBalanceMismatchesByWalletId: {},
 };
 
 const isFiniteTimestamp = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+
+const resolveQuote = (next?: string, current?: string): string =>
+  String(next || current || 'USD') || 'USD';
+
+const pickDefinedUpdate = <T, K extends keyof T>(
+  updates: Partial<T>,
+  current: T,
+  key: K,
+): T[K] =>
+  typeof updates[key] !== 'undefined' ? (updates[key] as T[K]) : current[key];
+
+const clearWalletIdsFromMap = <T>(
+  current: WalletIdMap<T> | undefined,
+  walletIds: string[],
+): WalletIdMap<T> | undefined => {
+  if (!current) {
+    return undefined;
+  }
+
+  const next = {...current};
+  for (const id of walletIds) {
+    if (typeof id === 'string' && id) {
+      delete next[id];
+    }
+  }
+  return next;
+};
+
+const applyWalletIdMapUpdates = <T>(
+  current: WalletIdMap<T> | undefined,
+  updates: WalletIdMap<T> | undefined,
+): WalletIdMap<T> => {
+  const next = {...(current || {})};
+
+  for (const [walletId, value] of Object.entries(updates || {})) {
+    if (!walletId) {
+      continue;
+    }
+    if (value) {
+      next[walletId] = value;
+    } else {
+      delete next[walletId];
+    }
+  }
+
+  return next;
+};
 
 export const portfolioReducer = (
   state: PortfolioState = initialState,
@@ -38,6 +87,8 @@ export const portfolioReducer = (
       return {
         ...initialState,
         snapshotBalanceMismatchesByWalletId: {},
+        invalidDecimalsByWalletId: {},
+        excessiveBalanceMismatchesByWalletId: {},
       };
     }
 
@@ -84,30 +135,18 @@ export const portfolioReducer = (
             ...action.payload.walletStatusByIdUpdates,
           }
         : state.populateStatus.walletStatusById;
+      const nextProgressValue = <K extends keyof typeof state.populateStatus>(
+        key: K,
+      ) => pickDefinedUpdate(action.payload, state.populateStatus, key);
       return {
         ...state,
         populateStatus: {
           ...state.populateStatus,
-          currentWalletId:
-            typeof action.payload.currentWalletId !== 'undefined'
-              ? action.payload.currentWalletId
-              : state.populateStatus.currentWalletId,
-          walletsTotal:
-            typeof action.payload.walletsTotal !== 'undefined'
-              ? action.payload.walletsTotal
-              : state.populateStatus.walletsTotal,
-          walletsCompleted:
-            typeof action.payload.walletsCompleted !== 'undefined'
-              ? action.payload.walletsCompleted
-              : state.populateStatus.walletsCompleted,
-          txRequestsMade:
-            typeof action.payload.txRequestsMade !== 'undefined'
-              ? action.payload.txRequestsMade
-              : state.populateStatus.txRequestsMade,
-          txsProcessed:
-            typeof action.payload.txsProcessed !== 'undefined'
-              ? action.payload.txsProcessed
-              : state.populateStatus.txsProcessed,
+          currentWalletId: nextProgressValue('currentWalletId'),
+          walletsTotal: nextProgressValue('walletsTotal'),
+          walletsCompleted: nextProgressValue('walletsCompleted'),
+          txRequestsMade: nextProgressValue('txRequestsMade'),
+          txsProcessed: nextProgressValue('txsProcessed'),
           errors: nextErrors,
           walletStatusById: nextWalletStatusById,
         },
@@ -122,25 +161,22 @@ export const portfolioReducer = (
         return state;
       }
 
-      const nextSnapshotBalanceMismatchesByWalletId = {
-        ...(state.snapshotBalanceMismatchesByWalletId || {}),
-      };
-      for (const id of walletIds) {
-        if (typeof id === 'string' && id) {
-          delete nextSnapshotBalanceMismatchesByWalletId[id];
-        }
-      }
-
-      const nextWalletStatusById = state.populateStatus.walletStatusById
-        ? {...state.populateStatus.walletStatusById}
-        : undefined;
-      if (nextWalletStatusById) {
-        for (const id of walletIds) {
-          if (typeof id === 'string' && id) {
-            delete nextWalletStatusById[id];
-          }
-        }
-      }
+      const nextSnapshotBalanceMismatchesByWalletId = clearWalletIdsFromMap(
+        state.snapshotBalanceMismatchesByWalletId || {},
+        walletIds,
+      );
+      const nextInvalidDecimalsByWalletId = clearWalletIdsFromMap(
+        state.invalidDecimalsByWalletId || {},
+        walletIds,
+      );
+      const nextExcessiveBalanceMismatchesByWalletId = clearWalletIdsFromMap(
+        state.excessiveBalanceMismatchesByWalletId || {},
+        walletIds,
+      );
+      const nextWalletStatusById = clearWalletIdsFromMap(
+        state.populateStatus.walletStatusById,
+        walletIds,
+      );
 
       const currentWalletId =
         state.populateStatus.currentWalletId &&
@@ -157,35 +193,45 @@ export const portfolioReducer = (
         },
         snapshotBalanceMismatchesByWalletId:
           nextSnapshotBalanceMismatchesByWalletId,
+        invalidDecimalsByWalletId: nextInvalidDecimalsByWalletId,
+        excessiveBalanceMismatchesByWalletId:
+          nextExcessiveBalanceMismatchesByWalletId,
       };
     }
 
     case PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES: {
-      const updates = action.payload || {};
-      const nextSnapshotBalanceMismatchesByWalletId = {
-        ...(state.snapshotBalanceMismatchesByWalletId || {}),
-      };
-
-      for (const [walletId, mismatch] of Object.entries(updates)) {
-        if (!walletId) {
-          continue;
-        }
-        if (mismatch) {
-          nextSnapshotBalanceMismatchesByWalletId[walletId] = mismatch;
-        } else {
-          delete nextSnapshotBalanceMismatchesByWalletId[walletId];
-        }
-      }
-
       return {
         ...state,
-        snapshotBalanceMismatchesByWalletId:
-          nextSnapshotBalanceMismatchesByWalletId,
+        snapshotBalanceMismatchesByWalletId: applyWalletIdMapUpdates(
+          state.snapshotBalanceMismatchesByWalletId,
+          action.payload,
+        ),
+      };
+    }
+
+    case PortfolioActionTypes.SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES: {
+      return {
+        ...state,
+        invalidDecimalsByWalletId: applyWalletIdMapUpdates(
+          state.invalidDecimalsByWalletId,
+          action.payload,
+        ),
+      };
+    }
+
+    case PortfolioActionTypes.SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES: {
+      return {
+        ...state,
+        excessiveBalanceMismatchesByWalletId: applyWalletIdMapUpdates(
+          state.excessiveBalanceMismatchesByWalletId,
+          action.payload,
+        ),
       };
     }
 
     case PortfolioActionTypes.FINISH_POPULATE_PORTFOLIO: {
       const finishedAt = action.payload.finishedAt;
+      const quoteCurrency = action.payload.quoteCurrency;
       const startedAt = state.populateStatus.startedAt;
       const lastFullPopulateCompletedAt = isFiniteTimestamp(
         action.payload.lastFullPopulateCompletedAt,
@@ -198,10 +244,7 @@ export const portfolioReducer = (
         ...state,
         lastPopulatedAt: finishedAt,
         lastFullPopulateCompletedAt,
-        quoteCurrency:
-          String(
-            action.payload.quoteCurrency || state.quoteCurrency || 'USD',
-          ) || 'USD',
+        quoteCurrency: resolveQuote(quoteCurrency, state.quoteCurrency),
         populateStatus: {
           ...state.populateStatus,
           inProgress: false,
@@ -241,15 +284,13 @@ export const portfolioReducer = (
       if (isFiniteTimestamp(state.lastFullPopulateCompletedAt)) {
         return state;
       }
+      const quoteCurrency = action.payload.quoteCurrency;
 
       return {
         ...state,
         lastPopulatedAt: action.payload.completedAt,
         lastFullPopulateCompletedAt: action.payload.completedAt,
-        quoteCurrency:
-          String(
-            action.payload.quoteCurrency || state.quoteCurrency || 'USD',
-          ) || 'USD',
+        quoteCurrency: resolveQuote(quoteCurrency, state.quoteCurrency),
       };
     }
 

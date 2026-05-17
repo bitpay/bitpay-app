@@ -7,11 +7,33 @@ export function normalizeNonNegativeInteger(value: number): number {
   return Math.max(0, Math.trunc(value));
 }
 
+export function normalizeWalletUnitDecimals(
+  value: unknown,
+): number | undefined {
+  'worklet';
+
+  const numericValue =
+    typeof value === 'string' && value.trim() !== ''
+      ? Number(value.trim())
+      : value;
+
+  if (
+    typeof numericValue === 'number' &&
+    Number.isFinite(numericValue) &&
+    numericValue >= 0
+  ) {
+    return normalizeNonNegativeInteger(numericValue);
+  }
+
+  return undefined;
+}
+
 export function getAtomicDecimals(credentials: WalletCredentials): number {
   'worklet';
 
   const token = credentials?.token;
-  if (token && typeof token.decimals === 'number') return token.decimals;
+  const tokenDecimals = normalizeWalletUnitDecimals(token?.decimals);
+  if (typeof tokenDecimals === 'number') return tokenDecimals;
 
   const chain = String(
     credentials?.chain || credentials?.coin || '',
@@ -36,6 +58,32 @@ export function getAtomicDecimals(credentials: WalletCredentials): number {
       // Fallback to satoshi-like.
       return 8;
   }
+}
+
+export function resolveKnownWalletAtomicDecimals(args: {
+  unitDecimals?: unknown;
+  credentials: WalletCredentials;
+}): number | undefined {
+  'worklet';
+
+  return (
+    normalizeWalletUnitDecimals(args.unitDecimals) ??
+    normalizeWalletUnitDecimals(args.credentials?.token?.decimals)
+  );
+}
+
+export function resolveWalletAtomicDecimals(args: {
+  unitDecimals?: number | null;
+  credentials: WalletCredentials;
+}): number {
+  'worklet';
+
+  const resolved = resolveKnownWalletAtomicDecimals(args);
+  if (typeof resolved === 'number') {
+    return resolved;
+  }
+
+  return getAtomicDecimals(args.credentials);
 }
 
 export function toSignificantStr(n: number, maxDecimals: number): string {
@@ -232,11 +280,14 @@ export function formatBigIntDecimal(
 export function formatAtomicAmount(
   atomic: number | string | bigint,
   credentials: WalletCredentials,
-  opts?: {maxDecimals?: number},
+  opts?: {maxDecimals?: number; unitDecimals?: number},
 ): string {
   'worklet';
 
-  const decimals = getAtomicDecimals(credentials);
+  const decimals = resolveWalletAtomicDecimals({
+    unitDecimals: opts?.unitDecimals,
+    credentials,
+  });
   const maxDecimals = opts?.maxDecimals ?? decimals;
 
   // Prefer bigint-safe formatting (esp. for EVM 1e18 units), but keep a small

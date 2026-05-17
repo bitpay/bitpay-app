@@ -1,5 +1,9 @@
 import {Pressable, SafeAreaView} from 'react-native';
 import styled from 'styled-components/native';
+import type {
+  SnapshotIndexV2,
+  SnapshotPersistDebugMode,
+} from '../../../../../portfolio/core/pnl/snapshotStore';
 
 export const DebugScreenContainer = styled(SafeAreaView)`
   flex: 1;
@@ -43,3 +47,43 @@ export const DebugPillButtonText = styled.Text<{selected?: boolean}>`
     selected ? theme.colors.primary : theme.colors.text};
   font-size: 13px;
 `;
+
+export const SNAPSHOT_DEBUG_MODE_OPTIONS: SnapshotPersistDebugMode[] = [
+  'none',
+  'link',
+  'full',
+];
+
+export const formatSnapshotDebugModeLabel = (
+  mode: SnapshotPersistDebugMode,
+): string => {
+  switch (mode) {
+    case 'none':
+      return 'None';
+    case 'link':
+      return 'Link';
+    case 'full':
+      return 'Full';
+  }
+};
+
+export const formatDebugIso = (value?: number): string => {
+  if (!Number.isFinite(value)) {
+    return '—';
+  }
+
+  try {
+    return new Date(value as number).toISOString();
+  } catch {
+    return '—';
+  }
+};
+
+export const getSnapshotIndexRowCount = (
+  index: SnapshotIndexV2 | null | undefined,
+): number => {
+  return (index?.chunks || []).reduce((total, chunk) => {
+    const rows = Number(chunk?.rows);
+    return total + (Number.isFinite(rows) ? rows : 0);
+  }, 0);
+};
