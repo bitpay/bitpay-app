@@ -501,6 +501,7 @@ const mockUsePortfolioWalletSnapshotPresence =
 const makeWallet = () => ({
   balance: {
     fiat: 100,
+    fiatLastDay: 90,
     sat: 100000000,
     satSpendable: 100000000,
   },

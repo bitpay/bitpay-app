@@ -53,6 +53,7 @@ let deferredPortfolioWorkUntilUnlock: Array<() => unknown> = [];
 let pendingScopedPopulateRequest:
   | {
       walletIds: Set<string>;
+      walletsById: Map<string, Wallet>;
       quoteCurrency?: string;
     }
   | undefined;
@@ -88,6 +89,37 @@ type ImportedKeyPortfolioLogger = {
 const toImportedKeyPortfolioErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : JSON.stringify(error);
 
+const getImportedKeyWalletsFromState = (args: {
+  state: RootState;
+  keyId: string;
+  walletIds: string[];
+}): Wallet[] => {
+  const wantedWalletIds = new Set(args.walletIds);
+  if (!args.keyId || !wantedWalletIds.size) {
+    return [];
+  }
+
+  const key = args.state.WALLET?.keys?.[args.keyId];
+  const wallets = Array.isArray(key?.wallets) ? key.wallets : [];
+  return wallets.filter(wallet => wantedWalletIds.has(wallet.id));
+};
+
+const populateImportedKeyPortfolioWithRuntime =
+  (args: {keyId: string; walletIds: string[]}): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const wallets = getImportedKeyWalletsFromState({
+      state: getState(),
+      keyId: args.keyId,
+      walletIds: args.walletIds,
+    });
+
+    if (!wallets.length) {
+      return;
+    }
+
+    await dispatch(populatePortfolioWithRuntime({wallets}));
+  };
+
 export const populateImportedKeyPortfolio = ({
   dispatch,
   key,
@@ -106,7 +138,9 @@ export const populateImportedKeyPortfolio = ({
   }
 
   try {
-    const result = dispatch(populatePortfolioWithRuntime({walletIds}));
+    const result = dispatch(
+      populateImportedKeyPortfolioWithRuntime({keyId: key.id, walletIds}),
+    );
     void Promise.resolve(result).catch(error => {
       const errMsg = toImportedKeyPortfolioErrorMessage(error);
       logger.error(`[portfolio] Failed populating imported key: ${errMsg}`);
@@ -297,12 +331,24 @@ const queueScopedPopulateRequest = (
   }
 
   if (!pendingScopedPopulateRequest) {
-    pendingScopedPopulateRequest = {walletIds: new Set<string>()};
+    pendingScopedPopulateRequest = {
+      walletIds: new Set<string>(),
+      walletsById: new Map<string, Wallet>(),
+    };
   }
 
   walletIds.forEach(walletId => {
     pendingScopedPopulateRequest?.walletIds.add(walletId);
   });
+
+  if (Array.isArray(args.wallets)) {
+    args.wallets.forEach(wallet => {
+      const walletId = String(wallet?.id || '').trim();
+      if (walletId) {
+        pendingScopedPopulateRequest?.walletsById.set(walletId, wallet);
+      }
+    });
+  }
 
   if (args.quoteCurrency) {
     pendingScopedPopulateRequest.quoteCurrency = args.quoteCurrency;
@@ -322,8 +368,22 @@ const takePendingScopedPopulateRequest = ():
     return undefined;
   }
 
+  const wallets: Wallet[] = [];
+  const walletIdsToResolveFromState: string[] = [];
+  walletIds.forEach(walletId => {
+    const wallet = pending?.walletsById.get(walletId);
+    if (wallet) {
+      wallets.push(wallet);
+    } else {
+      walletIdsToResolveFromState.push(walletId);
+    }
+  });
+
   return {
-    walletIds,
+    ...(wallets.length ? {wallets} : {}),
+    ...(walletIdsToResolveFromState.length
+      ? {walletIds: walletIdsToResolveFromState}
+      : {}),
     quoteCurrency: pending?.quoteCurrency,
   };
 };
@@ -666,13 +726,37 @@ const resolvePopulateWallets = (args: {
   wallets?: Wallet[];
   walletIds?: string[];
 }): Wallet[] => {
+  const walletIdsFilter = Array.isArray(args.walletIds)
+    ? new Set(normalizeWalletIds(args.walletIds))
+    : undefined;
+
+  if (Array.isArray(args.wallets)) {
+    const seen = new Set<string>();
+    const out: Wallet[] = [];
+    const addWallet = (wallet: Wallet) => {
+      const walletId = String(wallet?.id || '').trim();
+      if (!walletId || seen.has(walletId) || !isMainnetLikeWallet(wallet)) {
+        return;
+      }
+
+      seen.add(walletId);
+      out.push(wallet);
+    };
+
+    args.wallets.forEach(addWallet);
+    if (walletIdsFilter?.size) {
+      getMainnetWalletsByIdsFromState(
+        args.state,
+        Array.from(walletIdsFilter),
+      ).forEach(addWallet);
+    }
+
+    return out;
+  }
+
   const providedWallets = Array.isArray(args.wallets)
     ? args.wallets
     : getVisibleMainnetWalletsFromState(args.state);
-
-  const walletIdsFilter = Array.isArray(args.walletIds)
-    ? new Set(args.walletIds)
-    : undefined;
 
   return providedWallets
     .filter(wallet => !walletIdsFilter || walletIdsFilter.has(wallet.id))
@@ -1201,6 +1285,7 @@ export const populatePortfolioWithRuntime =
       invalidDecimalsByWalletId: {},
       excessiveBalanceMismatchByWalletId: {},
     };
+    const storedWalletIds = new Set<string>();
 
     for (const wallet of prioritizedWalletsToPopulate) {
       if (!isPortfolioRuntimeEligibleWallet(wallet)) {
@@ -1208,6 +1293,10 @@ export const populatePortfolioWithRuntime =
       }
 
       const walletId = String(wallet?.id || '').trim();
+      if (walletId && storedWalletIds.has(walletId)) {
+        continue;
+      }
+
       const decimalsResolution = resolveWalletUnitDecimalsForPortfolio(
         dispatch,
         wallet,
@@ -1238,6 +1327,9 @@ export const populatePortfolioWithRuntime =
         unitDecimals: decimalsResolution.unitDecimals,
       });
       storedWallets.push(storedWallet);
+      if (walletId) {
+        storedWalletIds.add(walletId);
+      }
     }
 
     dispatchPortfolioMarkerUpdates(dispatch, markerUpdates);

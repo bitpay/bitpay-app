@@ -166,6 +166,7 @@ import {
   clearPortfolioRuntimeUnlockDeferralForTests,
   maybePopulatePortfolioForWalletsWithRuntime,
   maybePopulatePortfolioOnAppLaunchWithRuntime,
+  populateImportedKeyPortfolio,
   populatePortfolioWithRuntime,
 } from './portfolio.runtime.effects';
 
@@ -174,6 +175,9 @@ const mockGetVisibleWalletsFromKeys = jest.requireMock(
 ).getVisibleWalletsFromKeys as jest.Mock;
 const mockGetPrecision = jest.requireMock('../wallet/utils/currency')
   .GetPrecision as jest.Mock;
+const mockToPortfolioStoredWallet = jest.requireMock(
+  '../../portfolio/adapters/rn/walletMappers',
+).toPortfolioStoredWallet as jest.Mock;
 const mockPortfolioService = jest.requireMock('../../portfolio/service')
   .PortfolioPopulateService as jest.Mock;
 const mockStartPopulatePortfolio = jest.requireMock('./portfolio.actions')
@@ -195,6 +199,9 @@ const walletFactory = (overrides: Record<string, any> = {}): any => ({
   network: 'livenet',
   ...overrides,
 });
+
+const makeSharedWallet = (source: string) =>
+  walletFactory({id: 'shared-wallet', source});
 
 const excessiveMismatchDecisionResult = ({
   shouldPopulate = true,
@@ -533,6 +540,142 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockLogManager.warn).toHaveBeenCalledWith(
       expect.stringContaining('unresolved token decimals'),
     );
+  });
+
+  it('uses the current imported key wallets from state when populating an import', async () => {
+    const staleImportedWallet = makeSharedWallet('stale-import-return');
+    const existingSharedWallet = makeSharedWallet('previous-key');
+    const currentImportedWallet = makeSharedWallet(
+      'imported-key-current-state',
+    );
+    const state = makeState({
+      WALLET: {
+        keys: {
+          'previous-key': {
+            id: 'previous-key',
+            wallets: [existingSharedWallet],
+          },
+          'imported-key': {
+            id: 'imported-key',
+            wallets: [currentImportedWallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+    const logger = {error: jest.fn()};
+
+    populateImportedKeyPortfolio({
+      dispatch: dispatch as any,
+      key: {
+        id: 'imported-key',
+        wallets: [staleImportedWallet],
+      } as any,
+      logger,
+    });
+    await (dispatch as jest.Mock).mock.results[0]?.value;
+
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: currentImportedWallet}),
+    );
+    expect(mockToPortfolioStoredWallet).not.toHaveBeenCalledWith(
+      expect.objectContaining({wallet: existingSharedWallet}),
+    );
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+    expect(mockPopulateWallets.mock.calls[0][0].wallets).toHaveLength(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('preserves imported key wallet identity when import populate is queued', async () => {
+    const activeWallet = walletFactory({id: 'active-wallet'});
+    const staleImportedWallet = makeSharedWallet('stale-import-return');
+    const existingSharedWallet = makeSharedWallet('previous-key');
+    const currentImportedWallet = makeSharedWallet(
+      'imported-key-current-state',
+    );
+    const state = makeState({
+      WALLET: {
+        keys: {
+          'previous-key': {
+            id: 'previous-key',
+            wallets: [existingSharedWallet],
+          },
+          'imported-key': {
+            id: 'imported-key',
+            wallets: [currentImportedWallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+    const activePopulate = deferred<any>();
+    const logger = {error: jest.fn()};
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      existingSharedWallet,
+      currentImportedWallet,
+    ]);
+    mockPopulateWallets.mockImplementationOnce(() => activePopulate.promise);
+
+    const activePopulatePromise = dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [activeWallet],
+      }),
+    );
+    await Promise.resolve();
+
+    populateImportedKeyPortfolio({
+      dispatch: dispatch as any,
+      key: {
+        id: 'imported-key',
+        wallets: [staleImportedWallet],
+      } as any,
+      logger,
+    });
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+
+    activePopulate.resolve(
+      successfulPopulateResult({
+        results: [{walletId: 'active-wallet'}],
+        status: {
+          walletStatusById: {'active-wallet': 'done'},
+          walletsCompleted: 1,
+          walletsTotal: 1,
+        },
+      }),
+    );
+    await activePopulatePromise;
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(2);
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: currentImportedWallet}),
+    );
+    expect(mockToPortfolioStoredWallet).not.toHaveBeenCalledWith(
+      expect.objectContaining({wallet: existingSharedWallet}),
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('dedupes duplicate wallet ids before starting a runtime populate job', async () => {
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    const firstSharedWallet = makeSharedWallet('first');
+    const secondSharedWallet = makeSharedWallet('second');
+
+    await dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [firstSharedWallet, secondSharedWallet],
+      }),
+    );
+
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledTimes(1);
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: firstSharedWallet}),
+    );
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+    expect(mockPopulateWallets.mock.calls[0][0].wallets).toHaveLength(1);
   });
 
   it('marks a completed full populate as completing the initial baseline', async () => {
