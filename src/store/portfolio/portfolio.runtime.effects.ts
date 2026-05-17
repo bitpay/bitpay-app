@@ -117,6 +117,11 @@ const populateImportedKeyPortfolioWithRuntime =
       return;
     }
 
+    if (!hasCompletedInitialPortfolioBaseline(getState())) {
+      await dispatch(maybePopulatePortfolioOnAppLaunchWithRuntime());
+      return;
+    }
+
     await dispatch(populatePortfolioWithRuntime({wallets}));
   };
 
