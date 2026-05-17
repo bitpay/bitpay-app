@@ -1,5 +1,6 @@
 import type {Effect, RootState} from '..';
-import type {Wallet} from '../wallet/wallet.models';
+import type {AppDispatch} from '../../utils/hooks';
+import type {Key, Wallet} from '../wallet/wallet.models';
 import {DeviceEventEmitter} from 'react-native';
 import {GetPrecision} from '../wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
@@ -79,6 +80,42 @@ const resolveQuoteCurrency = (
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
+
+type ImportedKeyPortfolioLogger = {
+  error: (message: string) => void;
+};
+
+const toImportedKeyPortfolioErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : JSON.stringify(error);
+
+export const populateImportedKeyPortfolio = ({
+  dispatch,
+  key,
+  logger,
+}: {
+  dispatch: AppDispatch;
+  key: Key;
+  logger: ImportedKeyPortfolioLogger;
+}): void => {
+  const walletIds = key.wallets
+    .map(wallet => wallet.id)
+    .filter((walletId): walletId is string => !!walletId);
+
+  if (!walletIds.length) {
+    return;
+  }
+
+  try {
+    const result = dispatch(populatePortfolioWithRuntime({walletIds}));
+    void Promise.resolve(result).catch(error => {
+      const errMsg = toImportedKeyPortfolioErrorMessage(error);
+      logger.error(`[portfolio] Failed populating imported key: ${errMsg}`);
+    });
+  } catch (error) {
+    const errMsg = toImportedKeyPortfolioErrorMessage(error);
+    logger.error(`[portfolio] Failed populating imported key: ${errMsg}`);
+  }
+};
 
 const formatPopulateWalletError = (error: {
   walletId?: string;

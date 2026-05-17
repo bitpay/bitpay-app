@@ -14,6 +14,7 @@ export {
   cancelPopulatePortfolioWithRuntime as cancelPopulatePortfolio,
   maybePopulatePortfolioOnAppLaunchWithRuntime as maybePopulatePortfolioOnAppLaunch,
   maybePopulatePortfolioForWalletsWithRuntime as maybePopulatePortfolioForWallets,
+  populateImportedKeyPortfolio,
   populatePortfolioWithRuntime as populatePortfolio,
   cancelPopulatePortfolioWithRuntime,
   clearPortfolioWithRuntime,
