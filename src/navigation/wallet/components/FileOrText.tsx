@@ -45,6 +45,7 @@ import {RootState} from '../../../store';
 import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView, Keyboard, TextInput, AppState} from 'react-native';
@@ -277,6 +278,7 @@ const FileOrText = () => {
         );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
+        populateImportedKeyPortfolio({dispatch, key, logger});
       } catch (error) {
         // ignore error
       }
@@ -403,6 +405,7 @@ const FileOrText = () => {
         );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
+        populateImportedKeyPortfolio({dispatch, key, logger});
       } catch (error) {}
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
