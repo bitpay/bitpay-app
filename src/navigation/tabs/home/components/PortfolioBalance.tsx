@@ -201,19 +201,6 @@ const PortfolioBalanceContent = () => {
     [homeCarouselConfig, keys],
   );
 
-  const visibleCurrentBalance = useMemo(
-    () =>
-      visibleKeys.reduce((total, key) => total + (key.totalBalance || 0), 0),
-    [visibleKeys],
-  );
-  const visibleLastDayBalance = useMemo(
-    () =>
-      visibleKeys.reduce(
-        (total, key) => total + (key.totalBalanceLastDay || 0),
-        0,
-      ),
-    [visibleKeys],
-  );
   const visibleKeyIdsSig = useMemo(() => {
     return visibleKeys
       .map(key => String(key?.id || ''))
@@ -222,25 +209,31 @@ const PortfolioBalanceContent = () => {
       .join(',');
   }, [visibleKeys]);
 
+  const walletsAcrossKeys: Wallet[] = useMemo(() => {
+    return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+  }, [homeCarouselConfig, keys]);
+
+  const visibleCurrentBalance = useMemo(
+    () =>
+      walletsAcrossKeys.reduce(
+        (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
+        0,
+      ),
+    [walletsAcrossKeys],
+  );
+  const visibleLastDayBalance = useMemo(
+    () =>
+      walletsAcrossKeys.reduce(
+        (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
+        0,
+      ),
+    [walletsAcrossKeys],
+  );
+
   const totalBalanceIncludingCoinbase: number =
     visibleCurrentBalance + coinbaseBalance;
 
   const dispatch = useAppDispatch();
-
-  const walletsAcrossKeys: Wallet[] = useMemo(() => {
-    const allWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
-
-    const byId = new Map<string, Wallet>();
-    for (const w of allWallets) {
-      if (!w?.id) {
-        continue;
-      }
-      if (!byId.has(w.id)) {
-        byId.set(w.id, w);
-      }
-    }
-    return Array.from(byId.values());
-  }, [homeCarouselConfig, keys]);
 
   const chartWalletsAcrossKeys = usePortfolioChartableWallets({
     wallets: walletsAcrossKeys,
