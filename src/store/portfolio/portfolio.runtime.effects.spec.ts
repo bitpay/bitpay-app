@@ -549,6 +549,9 @@ describe('portfolio runtime effects lock deferral', () => {
       'imported-key-current-state',
     );
     const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: 1000,
+      },
       WALLET: {
         keys: {
           'previous-key': {
@@ -586,6 +589,54 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
+  it('uses launch-level populate when importing before the initial baseline is complete', async () => {
+    const staleImportedWallet = walletFactory({
+      id: 'wallet-1',
+      source: 'stale-import-return',
+    });
+    const importedWallet = walletFactory({id: 'wallet-1'});
+    const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: null,
+      },
+      WALLET: {
+        keys: {
+          'blank-key': {
+            id: 'blank-key',
+            wallets: [],
+          },
+          'imported-key': {
+            id: 'imported-key',
+            wallets: [importedWallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+    const logger = {error: jest.fn()};
+    mockGetVisibleWalletsFromKeys.mockReturnValue([importedWallet]);
+
+    populateImportedKeyPortfolio({
+      dispatch: dispatch as any,
+      key: {
+        id: 'imported-key',
+        wallets: [staleImportedWallet],
+      } as any,
+      logger,
+    });
+    await (dispatch as jest.Mock).mock.results[0]?.value;
+
+    expect(mockWaitForStartupWalletStoreInitForPortfolio).toHaveBeenCalled();
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: importedWallet}),
+    );
+    expect(mockToPortfolioStoredWallet).not.toHaveBeenCalledWith(
+      expect.objectContaining({wallet: staleImportedWallet}),
+    );
+    expectFinishedFullPopulate();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
   it('preserves imported key wallet identity when import populate is queued', async () => {
     const activeWallet = walletFactory({id: 'active-wallet'});
     const staleImportedWallet = makeSharedWallet('stale-import-return');
@@ -594,6 +645,9 @@ describe('portfolio runtime effects lock deferral', () => {
       'imported-key-current-state',
     );
     const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: 1000,
+      },
       WALLET: {
         keys: {
           'previous-key': {
