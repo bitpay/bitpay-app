@@ -886,6 +886,113 @@ const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
   return updates;
 };
 
+const getDoneWalletIdsFromPopulateStatus = (
+  status?: PortfolioPopulateJobStatus,
+): string[] =>
+  normalizeWalletIds(
+    Object.entries(status?.walletStatusById || {}).flatMap(
+      ([walletId, walletStatus]) => (walletStatus === 'done' ? [walletId] : []),
+    ),
+  );
+
+const maskUncheckedDoneWalletStatuses = (args: {
+  healthCheckedWalletIds: Set<string>;
+  status: PortfolioPopulateJobStatus;
+}): PortfolioPopulateJobStatus => {
+  const walletStatusById = args.status.walletStatusById || {};
+  let changed = false;
+  const nextWalletStatusById = {...walletStatusById};
+
+  Object.entries(walletStatusById).forEach(([walletId, walletStatus]) => {
+    if (walletStatus !== 'done' || args.healthCheckedWalletIds.has(walletId)) {
+      return;
+    }
+
+    nextWalletStatusById[walletId] = 'in_progress';
+    changed = true;
+  });
+
+  return changed
+    ? {
+        ...args.status,
+        walletStatusById: nextWalletStatusById,
+      }
+    : args.status;
+};
+
+const refreshCompletedWalletBalanceHealth = async (args: {
+  client: ReturnType<typeof getPortfolioRuntimeClient>;
+  dispatch: any;
+  fallbackWallets: Wallet[];
+  getState: () => RootState;
+  healthCheckedWalletIds: Set<string>;
+  isCurrentPopulateService: () => boolean;
+  walletIds: string[];
+}): Promise<void> => {
+  const uncheckedWalletIds = normalizeWalletIds(args.walletIds).filter(
+    walletId => !args.healthCheckedWalletIds.has(walletId),
+  );
+  if (!uncheckedWalletIds.length) {
+    return;
+  }
+
+  try {
+    const currentState = args.getState();
+    const currentWallets = getAllMainnetWalletsFromState(currentState);
+    const walletById = new Map<string, Wallet>();
+    (currentWallets.length ? currentWallets : args.fallbackWallets).forEach(
+      wallet => {
+        const walletId = String(wallet?.id || '').trim();
+        if (walletId) {
+          walletById.set(walletId, wallet);
+        }
+      },
+    );
+    const walletIdsToCheck = uncheckedWalletIds.filter(walletId =>
+      walletById.has(walletId),
+    );
+    if (!walletIdsToCheck.length) {
+      return;
+    }
+
+    const balanceHealthUpdates =
+      await buildSnapshotBalanceHealthUpdatesAfterPopulate({
+        client: args.client,
+        dispatch: args.dispatch,
+        previousMismatchByWalletId:
+          currentState.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
+        previousExcessiveBalanceMismatchByWalletId:
+          currentState.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
+        walletIds: walletIdsToCheck,
+        wallets: Array.from(walletById.values()),
+      });
+
+    if (!args.isCurrentPopulateService()) {
+      return;
+    }
+
+    dispatchWalletIdMapUpdates(
+      args.dispatch,
+      balanceHealthUpdates.mismatchByWalletId,
+      setSnapshotBalanceMismatchesByWalletIdUpdates,
+    );
+    dispatchWalletIdMapUpdates(
+      args.dispatch,
+      balanceHealthUpdates.excessiveBalanceMismatchByWalletId,
+      setExcessiveBalanceMismatchesByWalletIdUpdates,
+    );
+    walletIdsToCheck.forEach(walletId => {
+      args.healthCheckedWalletIds.add(walletId);
+    });
+  } catch (error: unknown) {
+    logManager.warn(
+      `[portfolio] Could not refresh snapshot balance mismatches after wallet progress: ${toErrorMessage(
+        error,
+      )}`,
+    );
+  }
+};
+
 const hasNoRemainingInitialPopulateWork = async (args: {
   client: ReturnType<typeof getPortfolioRuntimeClient>;
   dispatch: any;
@@ -1365,19 +1472,43 @@ export const populatePortfolioWithRuntime =
     activeRuntimePopulateService = service;
     const isCurrentPopulateService = () =>
       activeRuntimePopulateService === service;
+    const healthCheckedWalletIds = new Set<string>();
+
+    const dispatchPopulateProgressAfterBalanceHealth = async (
+      status: PortfolioPopulateJobStatus,
+    ): Promise<void> => {
+      await refreshCompletedWalletBalanceHealth({
+        client: runtimeClient,
+        dispatch,
+        fallbackWallets: prioritizedWalletsToPopulate,
+        getState,
+        healthCheckedWalletIds,
+        isCurrentPopulateService,
+        walletIds: getDoneWalletIdsFromPopulateStatus(status),
+      });
+
+      if (!isCurrentPopulateService()) {
+        return;
+      }
+
+      dispatchPopulateProgressStatus({
+        dispatch,
+        status: maskUncheckedDoneWalletStatuses({
+          healthCheckedWalletIds,
+          status,
+        }),
+        reportedErrorKeys,
+      });
+    };
 
     try {
       const result = await service.populateWallets({
         wallets: storedWallets,
-        onProgress: status => {
+        onProgress: async status => {
           if (!isCurrentPopulateService()) {
             return;
           }
-          dispatchPopulateProgressStatus({
-            dispatch,
-            status,
-            reportedErrorKeys,
-          });
+          await dispatchPopulateProgressAfterBalanceHealth(status);
         },
       });
       if (!isCurrentPopulateService()) {
@@ -1386,10 +1517,7 @@ export const populatePortfolioWithRuntime =
 
       const finalStatus = result.status;
       const completedWalletIds = normalizeWalletIds([
-        ...Object.entries(finalStatus.walletStatusById || {}).flatMap(
-          ([walletId, walletStatus]) =>
-            walletStatus === 'done' ? [walletId] : [],
-        ),
+        ...getDoneWalletIdsFromPopulateStatus(finalStatus),
         ...(result.results || []).flatMap(runResult =>
           runResult?.cancelled
             ? []
@@ -1397,9 +1525,24 @@ export const populatePortfolioWithRuntime =
         ),
       ]);
 
+      await refreshCompletedWalletBalanceHealth({
+        client: runtimeClient,
+        dispatch,
+        fallbackWallets: prioritizedWalletsToPopulate,
+        getState,
+        healthCheckedWalletIds,
+        isCurrentPopulateService,
+        walletIds: completedWalletIds,
+      });
+      if (!isCurrentPopulateService()) {
+        return;
+      }
       dispatchPopulateProgressStatus({
         dispatch,
-        status: finalStatus,
+        status: maskUncheckedDoneWalletStatuses({
+          healthCheckedWalletIds,
+          status: finalStatus,
+        }),
         reportedErrorKeys,
       });
       logPopulateWalletErrors({
@@ -1419,9 +1562,13 @@ export const populatePortfolioWithRuntime =
       if (!isCurrentPopulateService()) {
         return;
       }
+      const completedWalletHealthChecked = completedWalletIds.every(walletId =>
+        healthCheckedWalletIds.has(walletId),
+      );
       const hasCompletedFullPopulate =
         finalStatus.state === 'completed' &&
         !finalStatus.inProgress &&
+        completedWalletHealthChecked &&
         (args?.completesInitialBaseline === true ||
           !hasScopedPopulateArgs ||
           (await hasNoRemainingInitialPopulateWork({
@@ -1434,47 +1581,6 @@ export const populatePortfolioWithRuntime =
         : undefined;
       if (!isCurrentPopulateService()) {
         return;
-      }
-
-      if (completedWalletIds.length) {
-        let balanceHealthUpdates = createEmptySnapshotBalanceHealthUpdates();
-        try {
-          const currentState = getState();
-          const currentWallets = getAllMainnetWalletsFromState(currentState);
-          balanceHealthUpdates =
-            await buildSnapshotBalanceHealthUpdatesAfterPopulate({
-              client: runtimeClient,
-              dispatch,
-              previousMismatchByWalletId:
-                currentState.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
-              previousExcessiveBalanceMismatchByWalletId:
-                currentState.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
-              walletIds: completedWalletIds,
-              wallets: currentWallets.length
-                ? currentWallets
-                : prioritizedWalletsToPopulate,
-            });
-        } catch (error: unknown) {
-          logManager.warn(
-            `[portfolio] Could not refresh snapshot balance mismatches after populate: ${toErrorMessage(
-              error,
-            )}`,
-          );
-        }
-
-        if (!isCurrentPopulateService()) {
-          return;
-        }
-        dispatchWalletIdMapUpdates(
-          dispatch,
-          balanceHealthUpdates.mismatchByWalletId,
-          setSnapshotBalanceMismatchesByWalletIdUpdates,
-        );
-        dispatchWalletIdMapUpdates(
-          dispatch,
-          balanceHealthUpdates.excessiveBalanceMismatchByWalletId,
-          setExcessiveBalanceMismatchesByWalletIdUpdates,
-        );
       }
 
       dispatch(
