@@ -54,6 +54,7 @@ jest.mock('../../../../utils/portfolio/assets', () => ({
   hasCompletedPopulateForWallets: jest.fn(() => false),
   isPopulateLoadingForWallets: jest.fn(() => false),
   walletHasNonZeroLiveBalance: jest.fn(() => false),
+  walletsHaveNonZeroLiveBalance: jest.fn(() => true),
 }));
 
 jest.mock('../../../../utils/fiatAmountText', () => ({
@@ -114,6 +115,11 @@ const {hasCompletedPopulateForWallets} = jest.requireMock(
 ) as {
   hasCompletedPopulateForWallets: jest.Mock;
 };
+const {walletsHaveNonZeroLiveBalance} = jest.requireMock(
+  '../../../../utils/portfolio/assets',
+) as {
+  walletsHaveNonZeroLiveBalance: jest.Mock;
+};
 
 const sharedFactory = () =>
   ({
@@ -151,6 +157,8 @@ describe('AssetBalanceHistoryScreen', () => {
     usePortfolioAnalysis.mockClear();
     hasCompletedPopulateForWallets.mockClear();
     hasCompletedPopulateForWallets.mockReturnValue(false);
+    walletsHaveNonZeroLiveBalance.mockClear();
+    walletsHaveNonZeroLiveBalance.mockReturnValue(true);
   });
 
   it('updates parent analysis when the chart timeframe changes', async () => {

@@ -59,7 +59,10 @@ import {
   setPortfolioTxHistorySigningDispatchContextOnRuntime,
   takeNextPortfolioTransferredSignHandleOnRuntime,
 } from './txHistorySigning';
-import {fetchPortfolioTxHistoryPageByRequest} from './txHistoryRequest';
+import {
+  PORTFOLIO_BWS_CLIENT_VERSION_HEADER,
+  fetchPortfolioTxHistoryPageByRequest,
+} from './txHistoryRequest';
 
 describe('txHistorySigning runtime context', () => {
   beforeEach(() => {
@@ -146,6 +149,10 @@ describe('txHistorySigning runtime context', () => {
     );
     expect(request.headers).toEqual(
       expect.arrayContaining([
+        {
+          key: 'x-client-version',
+          value: PORTFOLIO_BWS_CLIENT_VERSION_HEADER,
+        },
         {key: 'x-identity', value: 'copayer-1'},
         {key: 'x-signature', value: '3006020101020101'},
       ]),

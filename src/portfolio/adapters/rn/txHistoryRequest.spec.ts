@@ -1,7 +1,18 @@
 import {
+  PORTFOLIO_BWS_CLIENT_VERSION_HEADER,
   appendPortfolioTxHistoryCacheBustParam,
   buildPortfolioTxHistoryRequestPath,
 } from './txHistoryRequest';
+import {version as bitcoreWalletClientVersion} from '@bitpay-labs/bitcore-wallet-client/package.json';
+
+describe('PORTFOLIO_BWS_CLIENT_VERSION_HEADER', () => {
+  it('matches the installed BWC package version in BWS-compatible format', () => {
+    expect(PORTFOLIO_BWS_CLIENT_VERSION_HEADER).toBe(
+      `bwc-${bitcoreWalletClientVersion}`,
+    );
+    expect(PORTFOLIO_BWS_CLIENT_VERSION_HEADER).toMatch(/^bwc-\d+\.\d+\.\d+$/);
+  });
+});
 
 describe('buildPortfolioTxHistoryRequestPath', () => {
   it('adds tokenAddress, reverse=1, and multisig params for oldest-first paging', () => {

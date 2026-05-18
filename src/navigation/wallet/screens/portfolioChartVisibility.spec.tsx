@@ -347,6 +347,7 @@ jest.mock('../components/WalletIcons', () => {
     default: {
       Cog: Icon,
       Encrypt: Icon,
+      Network: Icon,
       RequestAmount: Icon,
       Settings: Icon,
       ShareAddress: Icon,
@@ -401,6 +402,7 @@ jest.mock('../../../utils/portfolio/assets', () => ({
   getVisibleWalletsForKey: jest.fn((key: any) => key?.wallets || []),
   isPopulateLoadingForWallets: jest.fn(() => false),
   walletHasNonZeroLiveBalance: jest.fn(() => true),
+  walletsHaveNonZeroLiveBalance: jest.fn(() => true),
 }));
 
 jest.mock('../../../utils/portfolio/allocation', () => ({
@@ -490,6 +492,9 @@ jest.mock('@react-native-clipboard/clipboard', () => ({
 const mockBalanceHistoryChart = jest.requireMock(
   '../../../components/charts/BalanceHistoryChart',
 ) as jest.Mock;
+const mockWalletsHaveNonZeroLiveBalance = jest.requireMock(
+  '../../../utils/portfolio/assets',
+).walletsHaveNonZeroLiveBalance as jest.Mock;
 const mockUsePortfolioWalletSnapshotPresence =
   usePortfolioWalletSnapshotPresence as jest.Mock;
 
@@ -677,6 +682,7 @@ const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
 describe('portfolio chart visibility guards', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockWalletsHaveNonZeroLiveBalance.mockReturnValue(true);
     resetState(false);
   });
 
@@ -793,6 +799,17 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).toHaveBeenCalled();
   });
 
+  it('does not mount the Home portfolio balance chart when all visible wallets have zero balance', async () => {
+    resetState(true, {completedFullPopulate: true});
+    mockWalletsHaveNonZeroLiveBalance.mockReturnValue(false);
+
+    await act(async () => {
+      renderWithTheme(<PortfolioBalance />);
+    });
+
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
+
   it('honors the persisted Home chart collapsed state before chart diagnostics arrive', async () => {
     resetState(true, {
       completedFullPopulate: true,
@@ -878,6 +895,20 @@ describe('portfolio chart visibility guards', () => {
       });
 
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
+    },
+  );
+
+  it.each(chartSurfaceCases)(
+    'does not mount the %s balance chart when its wallet scope has zero balance',
+    async (_screen, makeScreen) => {
+      resetState(true);
+      mockWalletsHaveNonZeroLiveBalance.mockReturnValue(false);
+
+      await act(async () => {
+        renderWithTheme(makeScreen());
+      });
+
+      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     },
   );
 

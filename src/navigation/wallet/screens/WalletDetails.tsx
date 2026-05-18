@@ -153,7 +153,10 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import type {RootState} from '../../../store';
-import {getQuoteCurrency} from '../../../utils/portfolio/assets';
+import {
+  getQuoteCurrency,
+  walletsHaveNonZeroLiveBalance,
+} from '../../../utils/portfolio/assets';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -601,11 +604,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
+  const walletHasLiveBalance = useMemo(() => {
+    return walletsHaveNonZeroLiveBalance(chartWallets);
+  }, [chartWallets]);
+  const canRenderWalletBalanceChart =
+    canRenderPortfolioBalanceCharts && walletHasLiveBalance;
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartWallets,
     quoteCurrency: chartQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: canRenderWalletBalanceChart,
     resetKey: `${walletId}:${copayerId || ''}`,
   });
 
@@ -663,15 +671,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
-  const walletBalanceSat = Number(fullWalletObj.balance?.sat || 0);
   const {hasAnySnapshots: walletHasSnapshots, checked: walletSnapshotsChecked} =
     usePortfolioWalletSnapshotPresence({
       wallets: chartWallets,
-      enabled: canRenderPortfolioBalanceCharts,
+      enabled: canRenderWalletBalanceChart,
     });
   const showWalletBalanceChart =
-    canRenderPortfolioBalanceCharts &&
-    walletBalanceSat > 0 &&
+    canRenderWalletBalanceChart &&
     (!walletSnapshotsChecked || walletHasSnapshots);
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 

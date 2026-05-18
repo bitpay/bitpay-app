@@ -50,6 +50,7 @@ import {maskIfHidden} from '../../../../utils/hideBalances';
 import {
   getVisibleKeysFromKeys,
   getVisibleWalletsFromKeys,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/ui/common';
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
@@ -240,9 +241,14 @@ const PortfolioBalanceContent = () => {
     return Array.from(byId.values());
   }, [homeCarouselConfig, keys]);
 
+  const hasAnyChartWalletBalance = useMemo(() => {
+    return walletsHaveNonZeroLiveBalance(walletsAcrossKeys);
+  }, [walletsAcrossKeys]);
+  const balanceChartsEnabled =
+    canRenderPortfolioBalanceCharts && hasAnyChartWalletBalance;
   const hasChartData = useMemo(() => {
-    return canRenderPortfolioBalanceCharts && walletsAcrossKeys.length > 0;
-  }, [canRenderPortfolioBalanceCharts, walletsAcrossKeys.length]);
+    return balanceChartsEnabled && walletsAcrossKeys.length > 0;
+  }, [balanceChartsEnabled, walletsAcrossKeys.length]);
   const shouldLeftAlignTopSection = hasChartData && !hideAllBalances;
   const canCollapseChart =
     shouldLeftAlignTopSection && chartHasRenderableSeries;
@@ -419,7 +425,7 @@ const PortfolioBalanceContent = () => {
     quoteCurrency,
     fallbackBalance: totalBalanceIncludingCoinbase,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: balanceChartsEnabled,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
@@ -452,12 +458,12 @@ const PortfolioBalanceContent = () => {
   }, [chartLifecycleKey]);
 
   useEffect(() => {
-    if (canRenderPortfolioBalanceCharts) {
+    if (balanceChartsEnabled) {
       return;
     }
 
     setChartHasRenderableSeries(false);
-  }, [canRenderPortfolioBalanceCharts]);
+  }, [balanceChartsEnabled]);
 
   const displayedPortfolioBalance =
     typeof balanceChartSurface.selectedBalance === 'number'
@@ -503,7 +509,7 @@ const PortfolioBalanceContent = () => {
     visibleLastDayBalance,
   ]);
   const displayedChangeRowData =
-    canRenderPortfolioBalanceCharts && balanceChartSurface.changeRowData
+    balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData
       : lastDayChangeRowData;
   const shouldRenderPortfolioBalance = showPortfolioValue === true;
@@ -616,7 +622,7 @@ const PortfolioBalanceContent = () => {
         />
       ) : null}
 
-      {!hideAllBalances && canRenderPortfolioBalanceCharts ? (
+      {!hideAllBalances && balanceChartsEnabled ? (
         hasChartData ? (
           <ChartStage
             onLayout={e => {

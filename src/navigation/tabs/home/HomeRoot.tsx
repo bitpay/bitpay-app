@@ -75,7 +75,7 @@ import type {Rates} from '../../../store/rate/rate.models';
 import {
   getQuoteCurrency,
   getVisibleWalletsFromKeys,
-  walletHasNonZeroLiveBalance,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
 import {sortNewestFirst} from '../../../utils/braze';
 import buildHomeExchangeRateItems from './homeExchangeRates';
@@ -123,7 +123,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   );
 
   const hasAnyVisibleWalletBalance = useMemo(() => {
-    return visibleWallets.some(walletHasNonZeroLiveBalance);
+    return walletsHaveNonZeroLiveBalance(visibleWallets);
   }, [visibleWallets]);
 
   const showPortfolioAllocationSection =
