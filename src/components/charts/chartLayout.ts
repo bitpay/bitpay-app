@@ -27,13 +27,11 @@ export const getChartAxisLabelTranslateX = ({
   const location =
     getChartAxisLabelPointRatio(index, arrayLength) * chartWidth -
     textWidth / 2;
+  const minLocation = AXIS_LABEL_HORIZONTAL_PADDING;
   const maxLocation = Math.max(
-    AXIS_LABEL_HORIZONTAL_PADDING,
-    chartWidth - textWidth,
+    minLocation,
+    chartWidth - textWidth - AXIS_LABEL_HORIZONTAL_PADDING,
   );
 
-  return Math.min(
-    Math.max(location, AXIS_LABEL_HORIZONTAL_PADDING),
-    maxLocation,
-  );
+  return Math.min(Math.max(location, minLocation), maxLocation);
 };
