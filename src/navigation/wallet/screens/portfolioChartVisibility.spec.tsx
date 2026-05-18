@@ -536,6 +536,9 @@ const mockBalanceHistoryChart = jest.requireMock(
 const mockWalletsHaveNonZeroLiveBalance = jest.requireMock(
   '../../../utils/portfolio/assets',
 ).walletsHaveNonZeroLiveBalance as jest.Mock;
+const mockGetTransactionHistory = jest.requireMock(
+  '../../../store/wallet/effects/transactions/transactions',
+).GetTransactionHistory as jest.Mock;
 const mockUsePortfolioWalletSnapshotPresence =
   usePortfolioWalletSnapshotPresence as jest.Mock;
 
@@ -679,14 +682,16 @@ const makePopulateStatus = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
-const makeWalletDetailsScreen = () => (
+const makeWalletDetailsScreen = (
+  args: {skipInitializeHistory?: boolean} = {},
+) => (
   <WalletDetails
     navigation={mockNavigation as any}
     route={
       {
         params: {
           copayerId: 'copayer-1',
-          skipInitializeHistory: true,
+          skipInitializeHistory: args.skipInitializeHistory ?? true,
           walletId: 'wallet-1',
         },
       } as any
@@ -1013,6 +1018,25 @@ describe('portfolio chart visibility guards', () => {
       renderWithTheme(makeWalletDetailsScreen());
     });
 
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
+
+  it('does not keep the WalletDetails chart loader alive for transaction history loading alone', async () => {
+    resetState(true);
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      loading: false,
+    });
+    mockGetTransactionHistory.mockReturnValueOnce(new Promise(() => {}));
+
+    await act(async () => {
+      renderWithTheme(makeWalletDetailsScreen({skipInitializeHistory: false}));
+      await Promise.resolve();
+    });
+
+    expect(mockGetTransactionHistory).toHaveBeenCalled();
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 

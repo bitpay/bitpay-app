@@ -680,9 +680,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const isWalletChartDataPending =
     !walletSnapshotsChecked ||
     walletSnapshotsLoading ||
-    portfolioPopulateInProgress ||
-    isLoading === true ||
-    refreshing;
+    portfolioPopulateInProgress;
   const showWalletBalanceChart = walletHasSnapshots || isWalletChartDataPending;
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
