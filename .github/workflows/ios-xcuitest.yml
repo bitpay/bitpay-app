@@ -92,9 +92,27 @@ jobs:
             build-for-testing
 
       # Run XCUITest
-      - name: Run XCUITest
+      # - name: Run XCUITest
+      #   run: |
+      #     set -o pipefail
+      #     xcodebuild \
+      #       -workspace ios/BitPayApp.xcworkspace \
+      #       -scheme BitPayApp \
+      #       -configuration Release \
+      #       -destination 'platform=iOS Simulator,name=iPhone 17' \
+      #       -derivedDataPath Build \
+      #       -resultBundlePath TestResults.xcresult \
+      #       -parallel-testing-enabled NO \
+      #       -only-testing:BitPayAppUITests \
+      #       test
+      
+      - name: Run XCUITest in order
         run: |
+          set -e
           set -o pipefail
+
+          rm -rf TestResults.xcresult
+
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
@@ -103,7 +121,12 @@ jobs:
             -derivedDataPath Build \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
-            -only-testing:BitPayAppUITests \
+            -only-testing:BitPayAppUITests/Test591_OnboardingCreateWallet \
+            -only-testing:BitPayAppUITests/Test592_ImportWalletRecoveryPhrase \
+            -only-testing:BitPayAppUITests/Test593_BTCConfirmPaymentScreen \
+            -only-testing:BitPayAppUITests/Test594_BasicSwapBTC \
+            -only-testing:BitPayAppUITests/Test595_BasicSellBTC \
+            -only-testing:BitPayAppUITests/Test596_BasicBuyBTC \
             test
 
       # Upload XCResult
