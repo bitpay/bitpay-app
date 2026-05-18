@@ -9,32 +9,21 @@ export function getAssetRowPopulateLoading(args: {
   return args.rowLoadingByKey?.[args.rowKey] ?? !!args.populateInProgress;
 }
 
-export function getAssetRowFiatLoading(args: {
-  populateInProgress?: boolean;
-  isFiatLoading?: boolean;
+export function getAssetRowPnlLoading(args: {
+  isPnlLoading?: boolean;
   isRowPopulateLoading?: boolean;
   showScopedPnlLoading?: boolean;
 }): boolean {
   return (
-    (!!args.isFiatLoading && !!args.isRowPopulateLoading) ||
+    (!!args.isPnlLoading && !!args.isRowPopulateLoading) ||
     !!args.showScopedPnlLoading
   );
 }
 
 export function shouldForceAssetListSkeleton(args: {
-  items: AssetRowItem[];
   forceSkeleton?: boolean;
-  isFiatLoading?: boolean;
 }): boolean {
-  if (args.forceSkeleton) {
-    return true;
-  }
-
-  if (!args.isFiatLoading || !args.items.length) {
-    return false;
-  }
-
-  return args.items.every(item => !!item.showPnlPlaceholder);
+  return !!args.forceSkeleton;
 }
 
 export function resolveAssetRowDisplayPresentation(args: {

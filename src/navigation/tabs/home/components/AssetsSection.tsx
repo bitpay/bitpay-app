@@ -111,7 +111,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   }, [defaultAltCurrency.isoCode, topAssetKeys, visibleWallets]);
   const {
     visibleItems,
-    isFiatLoading,
+    isFiatLoading: isPnlLoading,
     isPopulateLoadingByKey,
     hasAnyPortfolioData,
   } = usePortfolioAssetRows({
@@ -135,7 +135,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     const nextItems: AssetRowItem[] = [];
     const seenKeys = new Set<string>();
     const shouldUsePreviewFallback =
-      !enabled || !!isFiatLoading || !visibleItems.length;
+      !enabled || !!isPnlLoading || !visibleItems.length;
     const resolveDisplayItem = (key: string): AssetRowItem | undefined => {
       const previewItem = previewItemsByKey.get(key);
       const visibleItem = visibleItemsByKey.get(key);
@@ -179,7 +179,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     }
 
     return nextItems.slice(0, 4);
-  }, [enabled, isFiatLoading, previewItems, topAssetKeys, visibleItems]);
+  }, [enabled, isPnlLoading, previewItems, topAssetKeys, visibleItems]);
   const shouldShowActivationPlaceholder =
     hasAnyVisibleWalletBalance &&
     !items.length &&
@@ -233,7 +233,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
 
       <AssetsList
         items={items}
-        isFiatLoading={isFiatLoading}
+        isPnlLoading={isPnlLoading}
         populateInProgress={!!portfolio.populateStatus?.inProgress}
         isPopulateLoadingByKey={isPopulateLoadingByKey}
       />

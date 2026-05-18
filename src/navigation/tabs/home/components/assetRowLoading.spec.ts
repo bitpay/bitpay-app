@@ -1,5 +1,5 @@
 import {
-  getAssetRowFiatLoading,
+  getAssetRowPnlLoading,
   getAssetRowPopulateLoading,
   resolveAssetRowDisplayPresentation,
   shouldForceAssetListSkeleton,
@@ -39,45 +39,41 @@ describe('getAssetRowPopulateLoading', () => {
   });
 });
 
-describe('getAssetRowFiatLoading', () => {
-  it('shows fiat loading when fiat loading and populate loading are both active', () => {
+describe('getAssetRowPnlLoading', () => {
+  it('shows PnL loading when portfolio PnL loading and populate loading are both active', () => {
     expect(
-      getAssetRowFiatLoading({
-        populateInProgress: true,
-        isFiatLoading: true,
+      getAssetRowPnlLoading({
+        isPnlLoading: true,
         isRowPopulateLoading: true,
         showScopedPnlLoading: false,
       }),
     ).toBe(true);
   });
 
-  it('keeps fiat loading active during populate when scoped pnl loading is pending', () => {
+  it('keeps PnL loading active during populate when scoped pnl loading is pending', () => {
     expect(
-      getAssetRowFiatLoading({
-        populateInProgress: true,
-        isFiatLoading: false,
+      getAssetRowPnlLoading({
+        isPnlLoading: false,
         isRowPopulateLoading: false,
         showScopedPnlLoading: true,
       }),
     ).toBe(true);
   });
 
-  it('shows fiat loading after populate completes when scoped pnl loading is pending', () => {
+  it('shows PnL loading after populate completes when scoped pnl loading is pending', () => {
     expect(
-      getAssetRowFiatLoading({
-        populateInProgress: false,
-        isFiatLoading: false,
+      getAssetRowPnlLoading({
+        isPnlLoading: false,
         isRowPopulateLoading: false,
         showScopedPnlLoading: true,
       }),
     ).toBe(true);
   });
 
-  it('does not show fiat loading when neither populate nor scoped loading is active', () => {
+  it('does not show PnL loading when neither populate nor scoped loading is active', () => {
     expect(
-      getAssetRowFiatLoading({
-        populateInProgress: false,
-        isFiatLoading: true,
+      getAssetRowPnlLoading({
+        isPnlLoading: true,
         isRowPopulateLoading: false,
         showScopedPnlLoading: false,
       }),
@@ -176,54 +172,18 @@ describe('resolveAssetRowDisplayPresentation', () => {
 });
 
 describe('shouldForceAssetListSkeleton', () => {
-  const placeholderItem = {
-    key: 'btc',
-    currencyAbbreviation: 'btc',
-    chain: 'btc',
-    name: 'Bitcoin',
-    cryptoAmount: '1.0',
-    fiatAmount: '$0.00',
-    deltaFiat: '—',
-    deltaPercent: '—',
-    isPositive: true,
-    hasRate: false,
-    hasPnl: false,
-    showPnlPlaceholder: true,
-  };
-
   it('forces skeletons when explicitly requested', () => {
     expect(
       shouldForceAssetListSkeleton({
-        items: [placeholderItem],
         forceSkeleton: true,
-        isFiatLoading: false,
       }),
     ).toBe(true);
   });
 
-  it('forces skeletons while fiat loading and all items are still placeholders', () => {
+  it('does not force skeletons for PnL-only loading', () => {
     expect(
       shouldForceAssetListSkeleton({
-        items: [placeholderItem],
-        isFiatLoading: true,
-      }),
-    ).toBe(true);
-  });
-
-  it('does not force skeletons once at least one row is resolved', () => {
-    expect(
-      shouldForceAssetListSkeleton({
-        items: [
-          placeholderItem,
-          {
-            ...placeholderItem,
-            key: 'eth',
-            showPnlPlaceholder: false,
-            hasRate: true,
-            hasPnl: true,
-          },
-        ],
-        isFiatLoading: true,
+        forceSkeleton: false,
       }),
     ).toBe(false);
   });

@@ -80,6 +80,11 @@ const Values = styled.View`
   margin-right: 12px;
 `;
 
+const DeltaFiatSkeletonContainer = styled.View`
+  align-items: flex-end;
+  margin-top: 6px;
+`;
+
 const FiatAmount = styled(BaseText)`
   font-size: 13px;
   font-style: normal;
@@ -124,7 +129,7 @@ interface Props {
   item: AssetRowItem;
   isLast: boolean;
   keyId?: string;
-  isFiatLoading?: boolean;
+  isPnlLoading?: boolean;
   isPopulateLoading?: boolean;
   forceSkeleton?: boolean;
   img?: SupportedCurrencyOption['img'];
@@ -135,7 +140,7 @@ const AssetRow: React.FC<Props> = ({
   item,
   isLast,
   keyId,
-  isFiatLoading,
+  isPnlLoading,
   isPopulateLoading,
   forceSkeleton,
   img,
@@ -144,7 +149,7 @@ const AssetRow: React.FC<Props> = ({
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
-  const rowLoading = !!(isFiatLoading || isPopulateLoading);
+  const rowLoading = !!(isPnlLoading || isPopulateLoading);
   const shouldForceSkeleton = !!forceSkeleton;
   const lastSettledItemRef = useRef<AssetRowItem | undefined>(undefined);
   const [loadingDelayElapsed, setLoadingDelayElapsed] = useState(false);
@@ -200,13 +205,14 @@ const AssetRow: React.FC<Props> = ({
     });
   }, [displayItem, option]);
   const shouldShowDeltaFiat = hasPnl;
-  const shouldShowDeltaFiatSkeleton =
-    shouldShowDeltaFiat || showPnlPlaceholder || showScopedPnlLoading;
   const isCryptoAmountLoading =
     shouldShowSkeleton &&
     !!isPopulateLoading &&
-    !isFiatLoading &&
+    !isPnlLoading &&
     !String(displayItem.cryptoAmount || '').trim();
+  const shouldShowDeltaFiatSkeleton =
+    shouldShowSkeleton &&
+    (shouldShowDeltaFiat || showPnlPlaceholder || showScopedPnlLoading);
 
   const fiatAmountDisplay = hasRate ? displayItem.fiatAmount : '— ';
 
@@ -349,29 +355,24 @@ const AssetRow: React.FC<Props> = ({
                   </DeltaFiat>
                 ) : null}
               </>
-            ) : shouldShowSkeleton ? (
-              <SkeletonPlaceholder
-                backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
-                highlightColor={theme.dark ? LightBlack : GhostWhite}>
-                <SkeletonPlaceholder.Item
-                  width={72}
-                  height={12}
-                  borderRadius={2}
-                  marginBottom={shouldShowDeltaFiatSkeleton ? 6 : 0}
-                  marginTop={3}
-                />
-                {shouldShowDeltaFiatSkeleton ? (
-                  <SkeletonPlaceholder.Item
-                    width={54}
-                    height={12}
-                    borderRadius={2}
-                  />
-                ) : null}
-              </SkeletonPlaceholder>
             ) : (
               <>
                 <FiatAmount>{fiatAmountDisplay}</FiatAmount>
-                {shouldShowDeltaFiat ? (
+                {shouldShowDeltaFiatSkeleton ? (
+                  <DeltaFiatSkeletonContainer>
+                    <SkeletonPlaceholder
+                      backgroundColor={
+                        theme.dark ? CharcoalBlack : NeutralSlate
+                      }
+                      highlightColor={theme.dark ? LightBlack : GhostWhite}>
+                      <SkeletonPlaceholder.Item
+                        width={54}
+                        height={12}
+                        borderRadius={2}
+                      />
+                    </SkeletonPlaceholder>
+                  </DeltaFiatSkeletonContainer>
+                ) : shouldShowDeltaFiat ? (
                   <DeltaFiat
                     isPositive={displayItem.isPositive}
                     hasPnl={hasPnl}>
