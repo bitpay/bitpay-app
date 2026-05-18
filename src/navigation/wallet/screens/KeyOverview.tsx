@@ -53,7 +53,6 @@ import {
 } from '../../../store/app/app.actions';
 import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
   successAddWallet,
@@ -133,7 +132,7 @@ import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioChartableWallets from '../../../portfolio/ui/hooks/usePortfolioChartableWallets';
+import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -148,7 +147,6 @@ import {
   getVisibleWalletsForKey,
   getQuoteCurrency,
   isPopulateLoadingForWallets,
-  walletsHaveNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 
@@ -504,9 +502,6 @@ const KeyOverview = () => {
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
@@ -697,15 +692,13 @@ const KeyOverview = () => {
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
-  const chartableVisibleKeyWallets = usePortfolioChartableWallets({
+  const {
+    canRenderBalanceChart: canRenderKeyBalanceChart,
+    chartableWallets: chartableVisibleKeyWallets,
+  } = usePortfolioScopeChartReadiness({
     wallets: visibleKeyWallets,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: showPortfolioValue === true,
   });
-  const hasAnyVisibleKeyWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartableVisibleKeyWallets);
-  }, [chartableVisibleKeyWallets]);
-  const canRenderKeyBalanceChart =
-    canRenderPortfolioBalanceCharts && hasAnyVisibleKeyWalletBalance;
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
     [visibleKeyWallets],

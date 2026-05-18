@@ -203,6 +203,12 @@ const walletFactory = (overrides: Record<string, any> = {}): any => ({
 const makeSharedWallet = (source: string) =>
   walletFactory({id: 'shared-wallet', source});
 
+const makeImportedKey = (wallet: ReturnType<typeof walletFactory>) =>
+  ({
+    id: 'imported-key',
+    wallets: [wallet],
+  }) as Parameters<typeof populateImportedKeyPortfolio>[0]['key'];
+
 const excessiveMismatchDecisionResult = ({
   shouldPopulate = true,
 }: {shouldPopulate?: boolean} = {}) => {
@@ -570,10 +576,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
     populateImportedKeyPortfolio({
       dispatch: dispatch as any,
-      key: {
-        id: 'imported-key',
-        wallets: [staleImportedWallet],
-      } as any,
+      key: makeImportedKey(staleImportedWallet),
       logger,
     });
     await (dispatch as jest.Mock).mock.results[0]?.value;
@@ -618,10 +621,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
     populateImportedKeyPortfolio({
       dispatch: dispatch as any,
-      key: {
-        id: 'imported-key',
-        wallets: [staleImportedWallet],
-      } as any,
+      key: makeImportedKey(staleImportedWallet),
       logger,
     });
     await (dispatch as jest.Mock).mock.results[0]?.value;
@@ -680,10 +680,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
     populateImportedKeyPortfolio({
       dispatch: dispatch as any,
-      key: {
-        id: 'imported-key',
-        wallets: [staleImportedWallet],
-      } as any,
+      key: makeImportedKey(staleImportedWallet),
       logger,
     });
 

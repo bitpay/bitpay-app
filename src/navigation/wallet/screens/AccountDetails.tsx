@@ -37,7 +37,7 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioChartableWallets from '../../../portfolio/ui/hooks/usePortfolioChartableWallets';
+import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import {
   Badge,
   Balance,
@@ -54,7 +54,6 @@ import {
   setDefaultChainFilterOption,
 } from '../../../store/app/app.actions';
 import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {
   formatCryptoAddress,
@@ -179,10 +178,7 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
 import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
 import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
-import {
-  getQuoteCurrency,
-  walletsHaveNonZeroLiveBalance,
-} from '../../../utils/portfolio/assets';
+import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type AccountDetailsScreenParamList = {
@@ -390,9 +386,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {defaultAltCurrency, hideAllBalances, showArchaxBanner} =
     useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
@@ -470,15 +463,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       ),
     [key, selectedAccountAddress],
   );
-  const chartableAccountWallets = usePortfolioChartableWallets({
+  const {
+    canRenderBalanceChart: canRenderAccountBalanceChart,
+    chartableWallets: chartableAccountWallets,
+  } = usePortfolioScopeChartReadiness({
     wallets: keyFullWalletObjs,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: showPortfolioValue === true,
   });
-  const hasAnyAccountWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartableAccountWallets);
-  }, [chartableAccountWallets]);
-  const canRenderAccountBalanceChart =
-    canRenderPortfolioBalanceCharts && hasAnyAccountWalletBalance;
   const accountWalletIds = useMemo(
     () => keyFullWalletObjs.map(wallet => wallet.id).filter(Boolean),
     [keyFullWalletObjs],
