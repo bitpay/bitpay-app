@@ -1003,8 +1003,8 @@ describe('portfolio runtime effects lock deferral', () => {
 
     mockGetPortfolioPopulateDecisionsForWallets
       .mockResolvedValueOnce(emptyScopedDecisionResult(['wallet-1']))
-      .mockResolvedValueOnce(populateDecisionResult())
-      .mockResolvedValueOnce(emptyScopedDecisionResult());
+      .mockResolvedValueOnce(emptyScopedDecisionResult())
+      .mockResolvedValueOnce(populateDecisionResult());
 
     await dispatch(
       maybePopulatePortfolioForWalletsWithRuntime({
@@ -1017,6 +1017,65 @@ describe('portfolio runtime effects lock deferral', () => {
       3,
     );
     expectFinishedFullPopulate();
+  });
+
+  it('dispatches done wallet progress only after balance health markers are applied', async () => {
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    const excessiveMismatch = {
+      walletId: 'wallet-1',
+      computedAtomic: '200000000',
+      currentAtomic: '100000000',
+    };
+
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      mismatchDecisionResult(excessiveMismatch),
+    );
+    mockPopulateWallets.mockImplementationOnce(async ({onProgress}) => {
+      await onProgress({
+        currentWalletId: 'wallet-1',
+        errors: [],
+        inProgress: true,
+        jobId: 'populate-job-1',
+        lastUpdatedAt: 1200,
+        startedAt: 1200,
+        state: 'running',
+        txRequestsMade: 1,
+        txsProcessed: 10,
+        walletStatusById: {'wallet-1': 'in_progress'},
+        walletsCompleted: 0,
+        walletsTotal: 1,
+      });
+      await onProgress({
+        currentWalletId: undefined,
+        errors: [],
+        inProgress: false,
+        jobId: 'populate-job-1',
+        lastUpdatedAt: 1234,
+        startedAt: 1200,
+        state: 'completed',
+        txRequestsMade: 1,
+        txsProcessed: 10,
+        walletStatusById: {'wallet-1': 'done'},
+        walletsCompleted: 1,
+        walletsTotal: 1,
+      });
+      return successfulPopulateResult();
+    });
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    const excessiveMarkerIndex = dispatched.findIndex(
+      action => action.type === 'SET_EXCESSIVE_BALANCE_MISMATCHES',
+    );
+    const doneProgressIndex = dispatched.findIndex(
+      action =>
+        action.type === 'UPDATE_PROGRESS' &&
+        action.payload?.walletStatusByIdUpdates?.['wallet-1'] === 'done',
+    );
+    expect(excessiveMarkerIndex).toBeGreaterThanOrEqual(0);
+    expect(doneProgressIndex).toBeGreaterThanOrEqual(0);
+    expect(excessiveMarkerIndex).toBeLessThan(doneProgressIndex);
   });
 
   it('logs all wallet errors from the terminal populate status', async () => {
@@ -1158,6 +1217,15 @@ describe('portfolio runtime effects lock deferral', () => {
         walletIdsToPopulate: ['wallet-from-state'],
       })
       .mockResolvedValueOnce(emptyScopedDecisionResult());
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [{walletId: 'wallet-from-state'}],
+        status: {
+          walletStatusById: {'wallet-from-state': 'done'},
+          walletsCompleted: 1,
+        },
+      }),
+    );
 
     await dispatch(
       maybePopulatePortfolioForWalletsWithRuntime({
