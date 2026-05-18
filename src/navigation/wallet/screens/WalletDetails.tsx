@@ -26,6 +26,7 @@ import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
@@ -1373,26 +1374,28 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
                 {canRenderWalletBalanceChart && !hideAllBalances ? (
                   showWalletBalanceChart ? (
-                    <BalanceHistoryChart
-                      wallets={chartableWallets}
-                      quoteCurrency={chartQuoteCurrency}
-                      rates={rates}
-                      lineColor={chartLineColor}
-                      gradientStartColor={chartGradientBackgroundColor}
-                      showLoaderWhenNoSnapshots={isWalletChartDataPending}
-                      onSelectedBalanceChange={
-                        balanceChartSurface.chartCallbacks
-                          .onSelectedBalanceChange
-                      }
-                      onDisplayedAnalysisPointChange={
-                        balanceChartSurface.chartCallbacks
-                          .onDisplayedAnalysisPointChange
-                      }
-                      timeframeSelectorWidth={timeframeSelectorWidth}
-                      changeRowStyle={walletChartChangeRowStyle}
-                      preChartContentTopMargin={12}
-                      preChartContent={walletChartPreContent}
-                    />
+                    <FullWidthBalanceChartContainer>
+                      <BalanceHistoryChart
+                        wallets={chartableWallets}
+                        quoteCurrency={chartQuoteCurrency}
+                        rates={rates}
+                        lineColor={chartLineColor}
+                        gradientStartColor={chartGradientBackgroundColor}
+                        showLoaderWhenNoSnapshots={isWalletChartDataPending}
+                        onSelectedBalanceChange={
+                          balanceChartSurface.chartCallbacks
+                            .onSelectedBalanceChange
+                        }
+                        onDisplayedAnalysisPointChange={
+                          balanceChartSurface.chartCallbacks
+                            .onDisplayedAnalysisPointChange
+                        }
+                        timeframeSelectorWidth={timeframeSelectorWidth}
+                        changeRowStyle={walletChartChangeRowStyle}
+                        preChartContentTopMargin={12}
+                        preChartContent={walletChartPreContent}
+                      />
+                    </FullWidthBalanceChartContainer>
                   ) : walletChartPreContent ? (
                     <View style={{marginTop: 12}}>{walletChartPreContent}</View>
                   ) : null

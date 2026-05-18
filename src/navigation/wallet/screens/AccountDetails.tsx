@@ -35,6 +35,7 @@ import {
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
@@ -1490,20 +1491,22 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             </TouchableOpacity>
 
             {canRenderAccountBalanceChart && !hideAllBalances ? (
-              <BalanceHistoryChart
-                wallets={chartableAccountWallets}
-                quoteCurrency={displayQuoteCurrency}
-                rates={rates}
-                timeframeSelectorWidth={timeframeSelectorWidth}
-                onSelectedBalanceChange={
-                  balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                }
-                onDisplayedAnalysisPointChange={
-                  balanceChartSurface.chartCallbacks
-                    .onDisplayedAnalysisPointChange
-                }
-                preChartContent={accountChartPreContent}
-              />
+              <FullWidthBalanceChartContainer>
+                <BalanceHistoryChart
+                  wallets={chartableAccountWallets}
+                  quoteCurrency={displayQuoteCurrency}
+                  rates={rates}
+                  timeframeSelectorWidth={timeframeSelectorWidth}
+                  onSelectedBalanceChange={
+                    balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                  }
+                  onDisplayedAnalysisPointChange={
+                    balanceChartSurface.chartCallbacks
+                      .onDisplayedAnalysisPointChange
+                  }
+                  preChartContent={accountChartPreContent}
+                />
+              </FullWidthBalanceChartContainer>
             ) : null}
           </BalanceContainer>
           <LinkingButtons

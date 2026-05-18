@@ -130,6 +130,7 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
@@ -1182,15 +1183,17 @@ const KeyOverview = () => {
           </TouchableOpacity>
 
           {canRenderKeyBalanceChart && !hideAllBalances ? (
-            <BalanceHistoryChart
-              wallets={chartableVisibleKeyWallets}
-              quoteCurrency={quoteCurrency}
-              rates={rates}
-              timeframeSelectorWidth={timeframeSelectorWidth}
-              onSelectedBalanceChange={
-                balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-              }
-            />
+            <FullWidthBalanceChartContainer>
+              <BalanceHistoryChart
+                wallets={chartableVisibleKeyWallets}
+                quoteCurrency={quoteCurrency}
+                rates={rates}
+                timeframeSelectorWidth={timeframeSelectorWidth}
+                onSelectedBalanceChange={
+                  balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                }
+              />
+            </FullWidthBalanceChartContainer>
           ) : null}
         </BalanceContainer>
 
