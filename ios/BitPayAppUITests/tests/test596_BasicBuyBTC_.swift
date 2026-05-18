@@ -1,6 +1,6 @@
 import XCTest
 
-final class BasicBuyBTC: XCTestCase {
+final class test596_BasicBuyBTC: XCTestCase {
   
   var app: XCUIApplication!
   

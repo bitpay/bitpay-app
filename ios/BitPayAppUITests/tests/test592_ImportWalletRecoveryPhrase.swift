@@ -1,6 +1,6 @@
 import XCTest
 
-final class ImportWalletRecoveryPhrase: XCTestCase {
+final class test592_ImportWalletRecoveryPhrase: XCTestCase {
   
   var app: XCUIApplication!
   

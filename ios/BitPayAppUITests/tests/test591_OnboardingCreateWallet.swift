@@ -1,6 +1,6 @@
 import XCTest
 
-final class OnboardingCreateWallet: XCTestCase {
+final class test591_OnboardingCreateWallet: XCTestCase {
   
   var app: XCUIApplication!
   

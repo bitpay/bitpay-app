@@ -1,6 +1,6 @@
 import XCTest
 
-final class BTCConfirmPayment: XCTestCase {
+final class test593_BTCConfirmPaymentScreen: XCTestCase {
   
   var app: XCUIApplication!
   
