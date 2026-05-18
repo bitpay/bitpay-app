@@ -4,6 +4,7 @@ import {ThemeProvider} from 'styled-components/native';
 import KeyOverview from './KeyOverview';
 import WalletDetails from './WalletDetails';
 import AccountDetails from './AccountDetails';
+import HomeRoot from '../../tabs/home/HomeRoot';
 import PortfolioBalance from '../../tabs/home/components/PortfolioBalance';
 import usePortfolioWalletSnapshotPresence from '../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
 
@@ -64,8 +65,13 @@ const mockDispatch: jest.Mock = jest.fn((action: any): any =>
   typeof action === 'function' ? action(mockDispatch, () => mockState) : action,
 );
 const mockNavigation = {
+  addListener: jest.fn((_event: string, _callback: () => void) => jest.fn()),
   dispatch: jest.fn(),
+  getParent: jest.fn(() => ({
+    navigate: jest.fn(),
+  })),
   navigate: jest.fn(),
+  setParams: jest.fn(),
   setOptions: jest.fn(),
 };
 const testTheme = {
@@ -98,6 +104,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({
     params: mockRouteParams,
   }),
+  useScrollToTop: jest.fn(),
   useTheme: () => ({
     dark: false,
     colors: {
@@ -131,6 +138,10 @@ jest.mock('../../tabs/TabsStack', () => ({
   TabsScreens: {
     HOME: 'Home',
   },
+}));
+
+jest.mock('../../tabs/TabScreenErrorFallback', () => ({
+  withErrorFallback: (Component: React.ComponentType<any>) => Component,
 }));
 
 jest.mock('../../coinbase/CoinbaseGroup', () => ({
@@ -302,6 +313,13 @@ jest.mock('../../../portfolio/ui/common', () => ({
   ),
 }));
 
+jest.mock('../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache', () =>
+  jest.fn(() => ({
+    cache: {},
+    reload: jest.fn(() => Promise.resolve()),
+  })),
+);
+
 jest.mock('../../../portfolio/ui/hooks/usePortfolioGainLossSummary', () =>
   jest.fn(() => ({
     data: undefined,
@@ -321,6 +339,37 @@ jest.mock('../../../components/button/Button', () => {
   return ({children}: {children?: React.ReactNode}) =>
     ReactLib.createElement(Text, null, children);
 });
+jest.mock('../../tabs/home/components/HomeSection', () => {
+  const ReactLib = require('react');
+  const {View} = require('react-native');
+  return ({children, style}: {children?: React.ReactNode; style?: any}) =>
+    ReactLib.createElement(View, {style, testID: 'home-section'}, children);
+});
+jest.mock('../../tabs/home/components/HeaderProfileButton', () => () => null);
+jest.mock('../../tabs/home/components/HeaderScanButton', () => () => null);
+jest.mock('../../tabs/home/components/Crypto', () => () => null);
+jest.mock('../../tabs/home/components/MarketingCarousel', () => () => null);
+jest.mock('../../tabs/home/components/DefaultMarketingCards', () =>
+  jest.fn(() => []),
+);
+jest.mock('../../tabs/home/components/offers/MockOffers', () =>
+  jest.fn(() => []),
+);
+jest.mock('../../tabs/home/components/offers/OffersCarousel', () => () => null);
+jest.mock(
+  '../../tabs/home/components/exchange-rates/ExchangeRatesList',
+  () => () => null,
+);
+jest.mock(
+  '../../tabs/home/components/SecurePasskeyBannerGate',
+  () => () => null,
+);
+jest.mock('../../tabs/home/components/AssetsSection', () => () => null);
+jest.mock(
+  '../../tabs/home/components/KeyMigrationFailureModal',
+  () => () => null,
+);
+jest.mock('../../tabs/home/homeExchangeRates', () => jest.fn(() => []));
 jest.mock('../../tabs/home/components/LinkingButtons', () => () => null);
 jest.mock('../../../components/list/AccountListRow', () => () => null);
 jest.mock('../../../components/list/TransactionRow', () => () => null);
@@ -332,7 +381,9 @@ jest.mock(
 jest.mock('../../../components/list/AssetsByChainRow', () => () => null);
 jest.mock('../../../components/archax/archax-footer', () => () => null);
 jest.mock('../../tabs/home/components/AllocationSection', () => ({
+  __esModule: true,
   AllocationDonutLegendCard: () => null,
+  default: () => null,
 }));
 jest.mock('../../tabs/home/screens/Allocation', () => ({
   AllocationRowsList: () => null,
@@ -541,6 +592,7 @@ jest.mock('../../../utils/portfolio/allocation', () => ({
     slices: [],
     totalFiat: 0,
   })),
+  getPortfolioAllocationTotalFiat: jest.fn(() => 100),
 }));
 
 jest.mock('../../../store/wallet/effects', () => ({
@@ -715,7 +767,9 @@ const resetState = (
   ];
   mockState = {
     APP: {
+      brazeContentCards: [],
       defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
+      dismissedMarketingCardIds: [],
       hideAllBalances: false,
       homeChartCollapsed: options.homeChartCollapsed === true,
       homeChartRemountNonce: 0,
@@ -747,6 +801,7 @@ const resetState = (
       quarantinesByWalletId: options.quarantinesByWalletId || {},
     },
     RATE: {
+      lastDayRates: {},
       rates: {},
     },
     SHOP: {
@@ -963,7 +1018,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('does not mount the Home portfolio balance chart or loader when Show Portfolio is disabled after initial success', async () => {
+  it('keeps the Home portfolio balance visible without mounting the chart when Show Portfolio is disabled after initial success', async () => {
     resetState(false, {completedFullPopulate: true});
 
     let view: TestRenderer.ReactTestRenderer;
@@ -971,16 +1026,45 @@ describe('portfolio chart visibility guards', () => {
       view = renderWithTheme(<PortfolioBalance />);
     });
 
-    expect(view!.toJSON()).toBeNull();
+    expect(view!.toJSON()).not.toBeNull();
     expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-info-button'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({testID: 'portfolio-balance-info-button'})
+        .length,
+    ).toBeGreaterThan(0);
     expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
+    ).toBeGreaterThan(0);
     expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
+
+  it('keeps the HomeRoot portfolio balance section visible when Show Portfolio is disabled', async () => {
+    resetState(false, {completedFullPopulate: true});
+
+    let view: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(
+        <HomeRoot
+          navigation={mockNavigation as any}
+          route={{params: {}} as any}
+        />,
+      );
+    });
+
+    expect(
+      view!.root.findAllByProps({testID: 'portfolio-balance-info-button'})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
+    ).toBeGreaterThan(0);
+    expect(
+      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
+        .length,
+    ).toBeGreaterThan(0);
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 

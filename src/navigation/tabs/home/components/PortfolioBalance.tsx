@@ -489,7 +489,6 @@ const PortfolioBalanceContent = () => {
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData
       : lastDayChangeRowData;
-  const shouldRenderPortfolioBalance = showPortfolioValue === true;
 
   const showPortfolioBalanceInfoModal = () => {
     dispatch(
@@ -510,10 +509,6 @@ const PortfolioBalanceContent = () => {
       }),
     );
   };
-
-  if (!shouldRenderPortfolioBalance) {
-    return null;
-  }
 
   return (
     <PortfolioContainer>
