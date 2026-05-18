@@ -42,6 +42,8 @@ import {
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {BwcProvider} from '../../../lib/bwc';
+import {getCachedExternalServicesConfig} from '../../../store/external-services/external-services.effects';
+import {ExternalServicesConfig} from '../../../store/external-services/external-services.types';
 
 const BWC = BwcProvider.getInstance();
 
@@ -65,11 +67,22 @@ export function MoonpayEmbeddedCredentialManager() {
   );
   const userEid = user?.eid;
 
-  const moonpayEmbeddedEnabled =
+  // If no cached external services config exists yet, use local conditions.
+  // Once the config is available, disable embedded MoonPay if embeddedBuyDisabled is true.
+  const cachedConfigObj = getCachedExternalServicesConfig();
+  const cachedConfig: ExternalServicesConfig | undefined =
+    cachedConfigObj?.config;
+  const embeddedBuyDisabled =
+    cachedConfig?.buyCrypto?.moonpay?.config?.embeddedBuyDisabled;
+
+  const localConditionsMet =
     Platform.OS === 'ios' &&
     (country === 'US' || user?.country === 'US') &&
     !!userEid &&
     applePaySupported;
+
+  const moonpayEmbeddedEnabled =
+    localConditionsMet && (!cachedConfigObj || embeddedBuyDisabled !== true);
 
   // -------------------------------------------------------------------------
   // Keep module-level cache in sync with the derived flag

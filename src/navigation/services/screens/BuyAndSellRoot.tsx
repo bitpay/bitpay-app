@@ -2441,7 +2441,10 @@ const BuyAndSellRoot = ({
     const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
     const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
 
-    if (!skipEmbedded) {
+    if (
+      !skipEmbedded &&
+      !buyCryptoConfig?.moonpay?.config?.embeddedBuyDisabled
+    ) {
       if (moonpayEmbeddedEnabled && paymentMethod?.method === 'applePay') {
         const embeddedStatus = getMoonpayEmbeddedStatus();
         const cachedCredentials = getMoonpayEmbeddedCredentials();
@@ -4142,7 +4145,10 @@ const BuyAndSellRoot = ({
               onSelectOffer={setSelectedOffer}
               onSelectPaymentMethod={setSelectedPaymentMethod}
               refreshTrigger={refreshQuotesTrigger}
-              preferMoonpayApplePay={moonpayEmbeddedEnabled}
+              preferMoonpayApplePay={
+                moonpayEmbeddedEnabled &&
+                !buyCryptoConfig?.moonpay?.config?.embeddedBuyDisabled
+              }
             />
           ) : null}
           {(context === 'buyCrypto' &&
