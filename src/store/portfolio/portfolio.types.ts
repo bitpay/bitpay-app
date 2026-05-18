@@ -1,5 +1,8 @@
 import type {
+  ExcessiveBalanceMismatchMarker,
+  InvalidDecimalsMarker,
   SnapshotBalanceMismatch,
+  WalletIdMap,
   WalletPopulateState,
 } from './portfolio.models';
 
@@ -13,6 +16,8 @@ export enum PortfolioActionTypes {
   FAIL_POPULATE_PORTFOLIO = 'PORTFOLIO/FAIL_POPULATE_PORTFOLIO',
   MARK_INITIAL_BASELINE_COMPLETE = 'PORTFOLIO/MARK_INITIAL_BASELINE_COMPLETE',
   SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES',
+  SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES',
+  SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES',
 }
 
 export interface ClearPortfolioAction {
@@ -39,9 +44,7 @@ export interface UpdatePopulateProgressAction {
     txRequestsMade?: number;
     txsProcessed?: number;
     errorsToAdd?: Array<{walletId: string; message: string}>;
-    walletStatusByIdUpdates?: {
-      [walletId: string]: WalletPopulateState | undefined;
-    };
+    walletStatusByIdUpdates?: WalletIdMap<WalletPopulateState>;
   };
 }
 
@@ -79,9 +82,17 @@ export interface MarkInitialBaselineCompleteAction {
 
 export interface SetSnapshotBalanceMismatchesByWalletIdUpdatesAction {
   type: typeof PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES;
-  payload: {
-    [walletId: string]: SnapshotBalanceMismatch | undefined;
-  };
+  payload: WalletIdMap<SnapshotBalanceMismatch>;
+}
+
+export interface SetInvalidDecimalsByWalletIdUpdatesAction {
+  type: typeof PortfolioActionTypes.SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES;
+  payload: WalletIdMap<InvalidDecimalsMarker>;
+}
+
+export interface SetExcessiveBalanceMismatchesByWalletIdUpdatesAction {
+  type: typeof PortfolioActionTypes.SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES;
+  payload: WalletIdMap<ExcessiveBalanceMismatchMarker>;
 }
 
 export type PortfolioActionType =
@@ -93,4 +104,6 @@ export type PortfolioActionType =
   | FinishPopulatePortfolioAction
   | FailPopulatePortfolioAction
   | MarkInitialBaselineCompleteAction
-  | SetSnapshotBalanceMismatchesByWalletIdUpdatesAction;
+  | SetSnapshotBalanceMismatchesByWalletIdUpdatesAction
+  | SetInvalidDecimalsByWalletIdUpdatesAction
+  | SetExcessiveBalanceMismatchesByWalletIdUpdatesAction;

@@ -5,6 +5,7 @@ import type {AppDispatch} from '../../utils/hooks';
 import type {Rates} from '../../store/rate/rate.models';
 import {
   isPortfolioRuntimeEligibleWallet,
+  resolvePortfolioWalletUnitDecimalsFromPrecision,
   toPortfolioStoredWallet,
 } from '../adapters/rn/walletMappers';
 import {getAssetIdFromWallet} from '../core/pnl/assetId';
@@ -66,18 +67,36 @@ export const resolvePortfolioQuoteCurrency =
   resolveCommittedPortfolioQuoteCurrency;
 export {buildCommittedPortfolioHoldingsRevisionToken};
 export {resolveActivePortfolioDisplayQuoteCurrency};
+export {
+  getAssetPnlCurrentRatesSignature as getCurrentRatesByAssetIdSignature,
+  getAssetPnlStoredWalletRequestSignature as getStoredWalletRequestSignature,
+} from './assetPnlSummaryCache';
 
-function getWalletUnitDecimals(dispatch: AppDispatch, wallet: Wallet): number {
-  const precision =
-    dispatch(
-      GetPrecision(
-        wallet.currencyAbbreviation,
-        wallet.chain,
-        wallet.tokenAddress,
-      ) as any,
-    ) || undefined;
+type PortfolioAnalysisRuntimeQueryArgs = {
+  wallets: StoredWallet[];
+  quoteCurrency: string;
+  timeframe: PnlTimeframe;
+  maxPoints?: number;
+  currentRatesByAssetId?: Record<string, number>;
+  asOfMs?: number;
+};
 
-  return precision?.unitDecimals || 0;
+function resolveWalletUnitDecimalsForAnalysis(
+  dispatch: AppDispatch,
+  wallet: Wallet,
+): number | undefined {
+  const precision = dispatch(
+    GetPrecision(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+    ) as any,
+  );
+
+  return resolvePortfolioWalletUnitDecimalsFromPrecision({
+    wallet,
+    precisionUnitDecimals: precision?.unitDecimals,
+  });
 }
 
 export function mapWalletsToStoredWallets(args: {
@@ -87,38 +106,30 @@ export function mapWalletsToStoredWallets(args: {
   eligibleWallets: Wallet[];
   storedWallets: StoredWallet[];
 } {
-  const eligibleWallets = (
-    Array.isArray(args.wallets) ? args.wallets : []
-  ).filter(isPortfolioRuntimeEligibleWallet);
+  const eligibleWallets: Wallet[] = [];
+  const storedWallets: StoredWallet[] = [];
+  for (const wallet of Array.isArray(args.wallets) ? args.wallets : []) {
+    if (!isPortfolioRuntimeEligibleWallet(wallet)) continue;
+    const unitDecimals = resolveWalletUnitDecimalsForAnalysis(
+      args.dispatch,
+      wallet,
+    );
+    if (typeof unitDecimals !== 'number') continue;
+
+    eligibleWallets.push(wallet);
+    storedWallets.push(
+      toPortfolioStoredWallet({
+        wallet,
+        unitDecimals,
+        addedAt: 0,
+      }),
+    );
+  }
 
   return {
     eligibleWallets,
-    storedWallets: eligibleWallets.map(wallet =>
-      toPortfolioStoredWallet({
-        wallet,
-        unitDecimals: getWalletUnitDecimals(args.dispatch, wallet),
-        addedAt: 0,
-      }),
-    ),
+    storedWallets,
   };
-}
-
-export function getStoredWalletRequestSignature(
-  storedWallets: StoredWallet[],
-): string {
-  return storedWallets
-    .map(wallet => {
-      const summary = wallet.summary;
-      return [
-        summary.walletId,
-        summary.chain,
-        summary.currencyAbbreviation,
-        summary.tokenAddress || '',
-        summary.balanceAtomic || '',
-      ].join(':');
-    })
-    .sort()
-    .join('|');
 }
 
 export function buildCurrentRatesByAssetId(args: {
@@ -157,19 +168,6 @@ export function buildCurrentRatesByAssetId(args: {
   return currentRatesByAssetId;
 }
 
-export function getCurrentRatesByAssetIdSignature(
-  currentRatesByAssetId: Record<string, number> | undefined,
-): string {
-  if (!currentRatesByAssetId) {
-    return '';
-  }
-
-  return Object.keys(currentRatesByAssetId)
-    .sort()
-    .map(assetId => `${assetId}:${String(currentRatesByAssetId[assetId])}`)
-    .join('|');
-}
-
 export function resolveCurrentRatesAsOfMs(args: {
   ratesUpdatedAt?: number;
   rates?: Rates;
@@ -206,15 +204,10 @@ export function resolveCurrentRatesAsOfMs(args: {
   return latestTimestamp;
 }
 
-export async function runPortfolioAnalysisQuery(args: {
-  wallets: StoredWallet[];
-  quoteCurrency: string;
-  timeframe: PnlTimeframe;
-  maxPoints?: number;
-  currentRatesByAssetId?: Record<string, number>;
-  asOfMs?: number;
-}): Promise<PnlAnalysisResult> {
-  return getPortfolioAnalysisRuntimeClient().computeAnalysis({
+function buildPortfolioAnalysisRuntimeRequest(
+  args: PortfolioAnalysisRuntimeQueryArgs,
+) {
+  return {
     cfg: createPortfolioQueryBwsConfig(),
     wallets: args.wallets,
     quoteCurrency: args.quoteCurrency,
@@ -222,26 +215,23 @@ export async function runPortfolioAnalysisQuery(args: {
     maxPoints: args.maxPoints,
     currentRatesByAssetId: args.currentRatesByAssetId,
     nowMs: args.asOfMs,
-  });
+  };
 }
 
-export async function preparePortfolioAnalysisSessionQuery(args: {
-  wallets: StoredWallet[];
-  quoteCurrency: string;
-  timeframe: PnlTimeframe;
-  maxPoints?: number;
-  currentRatesByAssetId?: Record<string, number>;
-  asOfMs?: number;
-}): Promise<{sessionId: string}> {
-  return getPortfolioAnalysisRuntimeClient().prepareAnalysisSession({
-    cfg: createPortfolioQueryBwsConfig(),
-    wallets: args.wallets,
-    quoteCurrency: args.quoteCurrency,
-    timeframe: args.timeframe,
-    maxPoints: args.maxPoints,
-    currentRatesByAssetId: args.currentRatesByAssetId,
-    nowMs: args.asOfMs,
-  });
+export async function runPortfolioAnalysisQuery(
+  args: PortfolioAnalysisRuntimeQueryArgs,
+): Promise<PnlAnalysisResult> {
+  return getPortfolioAnalysisRuntimeClient().computeAnalysis(
+    buildPortfolioAnalysisRuntimeRequest(args),
+  );
+}
+
+export async function preparePortfolioAnalysisSessionQuery(
+  args: PortfolioAnalysisRuntimeQueryArgs,
+): Promise<{sessionId: string}> {
+  return getPortfolioAnalysisRuntimeClient().prepareAnalysisSession(
+    buildPortfolioAnalysisRuntimeRequest(args),
+  );
 }
 
 export async function runPortfolioAnalysisSessionScopeQuery(args: {
@@ -262,49 +252,28 @@ export async function disposePortfolioAnalysisSessionQuery(args: {
   });
 }
 
-export async function runPortfolioChartQuery(args: {
-  wallets: StoredWallet[];
-  quoteCurrency: string;
-  timeframe: PnlTimeframe;
-  maxPoints?: number;
-  currentRatesByAssetId?: Record<string, number>;
-  asOfMs?: number;
-}): Promise<PnlAnalysisChartResult> {
-  return getPortfolioAnalysisRuntimeClient().computeAnalysisChart({
-    cfg: createPortfolioQueryBwsConfig(),
-    wallets: args.wallets,
-    quoteCurrency: args.quoteCurrency,
-    timeframe: args.timeframe,
-    maxPoints: args.maxPoints,
-    currentRatesByAssetId: args.currentRatesByAssetId,
-    nowMs: args.asOfMs,
-  });
+export async function runPortfolioChartQuery(
+  args: PortfolioAnalysisRuntimeQueryArgs,
+): Promise<PnlAnalysisChartResult> {
+  return getPortfolioAnalysisRuntimeClient().computeAnalysisChart(
+    buildPortfolioAnalysisRuntimeRequest(args),
+  );
 }
 
 // Staged migration note: BalanceHistoryChart consumes the complete view model
 // below. Chart-derived summary hooks still intentionally call
 // runPortfolioChartQuery until they are migrated in a later, lower-risk pass.
-export async function runPortfolioBalanceChartViewModelQuery(args: {
-  wallets: StoredWallet[];
-  quoteCurrency: string;
-  timeframe: PnlTimeframe;
-  maxPoints?: number;
-  currentRatesByAssetId?: Record<string, number>;
-  dataRevisionSig: string;
-  walletIds: string[];
-  balanceOffset?: number;
-  asOfMs?: number;
-  summaryCacheRevisionSig?: string;
-}): Promise<BalanceChartViewModel> {
+export async function runPortfolioBalanceChartViewModelQuery(
+  args: PortfolioAnalysisRuntimeQueryArgs & {
+    dataRevisionSig: string;
+    walletIds: string[];
+    balanceOffset?: number;
+    summaryCacheRevisionSig?: string;
+  },
+): Promise<BalanceChartViewModel> {
   const promise =
     getPortfolioAnalysisRuntimeClient().computeBalanceChartViewModel({
-      cfg: createPortfolioQueryBwsConfig(),
-      wallets: args.wallets,
-      quoteCurrency: args.quoteCurrency,
-      timeframe: args.timeframe,
-      maxPoints: args.maxPoints,
-      currentRatesByAssetId: args.currentRatesByAssetId,
-      nowMs: args.asOfMs,
+      ...buildPortfolioAnalysisRuntimeRequest(args),
       walletIds: args.walletIds,
       dataRevisionSig: args.dataRevisionSig,
       balanceOffset: args.balanceOffset,

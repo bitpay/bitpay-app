@@ -89,6 +89,7 @@ export type SnapshotWalletMetaV2 = {
   coin: string;
   assetId: string;
   quoteCurrency: string;
+  unitDecimals?: number;
 };
 
 export type SnapshotStoreWalletMeta = {
@@ -97,6 +98,7 @@ export type SnapshotStoreWalletMeta = {
   network: string;
   currencyAbbreviation: string;
   tokenAddress?: string;
+  unitDecimals?: number;
   quoteCurrency: string;
   compressionEnabled: boolean;
   chunkRows: number;

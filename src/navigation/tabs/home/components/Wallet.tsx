@@ -32,6 +32,7 @@ import {useTranslation} from 'react-i18next';
 import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {maskIfHidden} from '../../../../utils/hideBalances';
+import {isUnitedKingdomCountry} from '../../../../store/location/location.effects';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -205,6 +206,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
 }) => {
   const {t} = useTranslation();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const isUkLocation = useAppSelector(({LOCATION}) => {
+    return isUnitedKingdomCountry(LOCATION.locationData?.countryShortCode);
+  });
+  const percentageSuffix = isUkLocation ? ' in 24hr' : undefined;
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
   const isListView = layout === 'listView';
@@ -259,6 +264,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
                 <Percentage
                   percentageDifference={percentageDifference}
                   hideArrow={true}
+                  suffix={percentageSuffix}
                   fractionDigits={2}
                   textStyle={{
                     textAlign: 'right',
@@ -293,6 +299,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         title: keyName,
         value: formatFiatAmount(totalBalance, defaultAltCurrency.isoCode),
         percentageDifference,
+        percentageSuffix,
         needsBackup,
         hideKeyBalance,
         pendingTssSession,

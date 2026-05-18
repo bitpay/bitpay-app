@@ -9,6 +9,7 @@ import {
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import {usePortfolioAnalysis} from '../../../../portfolio/ui/hooks/usePortfolioAnalysis';
+import usePortfolioChartableWallets from '../../../../portfolio/ui/hooks/usePortfolioChartableWallets';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {useAppSelector} from '../../../../utils/hooks';
 import {selectHasCompletedFullPortfolioPopulate} from '../../../../store/portfolio/portfolio.selectors';
@@ -26,6 +27,7 @@ import {
 } from './assetBalanceHistorySummary';
 import useAssetScreenRefresh from './useAssetScreenRefresh';
 import type {ExchangeRateSharedModel} from './useExchangeRateSharedModel';
+import UkExchangeRateDisclosures from './UkExchangeRateDisclosures';
 
 type AssetBalanceHistoryScreenProps = {
   shared: ExchangeRateSharedModel;
@@ -95,6 +97,7 @@ const AssetBalanceChartSection = React.memo(
           onSelectionActiveChange={onSelectionActiveChange}
           onSelectedTimeframeChange={onSelectedTimeframeChange}
           showChangeRow={false}
+          postChartContent={<UkExchangeRateDisclosures />}
           timeframeSelectorHorizontalInset={ScreenGutter}
         />
       </View>
@@ -183,11 +186,15 @@ const AssetBalanceHistoryScreen = ({
   const hasCompletedFullPortfolioPopulate = useAppSelector(
     selectHasCompletedFullPortfolioPopulate,
   );
+  const chartableAssetWallets = usePortfolioChartableWallets({
+    wallets: shared.assetWallets,
+    enabled: shared.showPortfolioValue,
+  });
   const hasAnyAssetWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(shared.assetWallets);
-  }, [shared.assetWallets]);
+    return walletsHaveNonZeroLiveBalance(chartableAssetWallets);
+  }, [chartableAssetWallets]);
   const hasCompletedAssetPopulate = useMemo(() => {
-    const liveBalanceWallets = shared.assetWallets.filter(
+    const liveBalanceWallets = chartableAssetWallets.filter(
       walletHasNonZeroLiveBalance,
     );
 
@@ -197,18 +204,22 @@ const AssetBalanceHistoryScreen = ({
         populateStatus,
         wallets: liveBalanceWallets.length
           ? liveBalanceWallets
-          : shared.assetWallets,
+          : chartableAssetWallets,
         requireAllWalletsInScope: liveBalanceWallets.length > 0,
       })
     );
-  }, [hasCompletedFullPortfolioPopulate, populateStatus, shared.assetWallets]);
+  }, [
+    chartableAssetWallets,
+    hasCompletedFullPortfolioPopulate,
+    populateStatus,
+  ]);
   const balanceHistoryEnabled =
     shared.showPortfolioValue &&
     hasAnyAssetWalletBalance &&
     hasCompletedAssetPopulate &&
     shared.hasWalletsForAsset;
   const analysis = usePortfolioAnalysis({
-    wallets: shared.assetWallets,
+    wallets: chartableAssetWallets,
     timeframe: displayedTimeframe,
     maxPoints: 2,
     enabled: balanceHistoryEnabled,
@@ -216,16 +227,15 @@ const AssetBalanceHistoryScreen = ({
     allowCurrentWhilePopulate: true,
   });
 
-  const isAssetBalanceChartLoading = useMemo(() => {
-    if (!balanceHistoryEnabled) {
-      return false;
-    }
-
-    return isPopulateLoadingForWallets({
-      populateStatus,
-      wallets: shared.assetWallets,
-    });
-  }, [balanceHistoryEnabled, populateStatus, shared.assetWallets]);
+  const isAssetBalanceChartLoading = useMemo(
+    () =>
+      balanceHistoryEnabled &&
+      isPopulateLoadingForWallets({
+        populateStatus,
+        wallets: chartableAssetWallets,
+      }),
+    [balanceHistoryEnabled, chartableAssetWallets, populateStatus],
+  );
   const isTimeframeTransitionPending =
     requestedTimeframe !== displayedTimeframe;
 
@@ -391,7 +401,7 @@ const AssetBalanceHistoryScreen = ({
       chartSection={
         <AssetBalanceChartSection
           shouldRender={shouldRenderBalanceChart}
-          wallets={shared.assetWallets}
+          wallets={chartableAssetWallets}
           quoteCurrency={shared.resolvedQuoteCurrency}
           initialSelectedTimeframe={displayedTimeframe}
           rates={shared.rates}

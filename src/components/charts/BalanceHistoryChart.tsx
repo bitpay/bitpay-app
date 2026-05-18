@@ -35,6 +35,7 @@ export type BalanceHistoryChartProps = {
   onSelectedBalanceChange?: (balance?: number) => void;
   preChartContent?: React.ReactNode;
   preChartContentTopMargin?: number;
+  postChartContent?: React.ReactNode;
   changeRowStyle?: StyleProp<ViewStyle>;
   showChangeRow?: boolean;
   showTimeframeSelector?: boolean;
@@ -79,6 +80,7 @@ const BalanceHistoryChart = ({
   onSelectedBalanceChange,
   preChartContent,
   preChartContentTopMargin = 22,
+  postChartContent,
   changeRowStyle,
   showChangeRow = true,
   showTimeframeSelector = true,
@@ -103,7 +105,6 @@ const BalanceHistoryChart = ({
     rates: _rates,
   });
   const displayModel = useBalanceChartDisplayModel({
-    wallets,
     scope,
     initialSelectedTimeframe,
     balanceOffset,
@@ -212,6 +213,8 @@ const BalanceHistoryChart = ({
         onGestureEnd={displayModel.onGestureEnded}
         onPointSelected={displayModel.onPointSelected}
       />
+
+      {postChartContent}
 
       {showTimeframeSelector ? (
         <Animated.View style={timeframeSelectorAnimatedStyle}>

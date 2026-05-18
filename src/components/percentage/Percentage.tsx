@@ -33,6 +33,7 @@ export interface PercentageProps {
   hideSign?: boolean;
   priceChange?: string | number;
   rangeLabel?: string;
+  suffix?: string;
   textStyle?: any;
   fractionDigits?: number;
 }
@@ -50,6 +51,7 @@ const Percentage = ({
   hideSign = false,
   priceChange,
   rangeLabel,
+  suffix,
   textStyle,
   fractionDigits,
 }: PercentageProps) => {
@@ -115,6 +117,7 @@ const Percentage = ({
         ) : null}
         <PercentageContainer color={percentageColor} style={textStyle}>
           {wrappedPercentageValue}
+          {suffix}
         </PercentageContainer>
         {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
       </PercentageRow>

@@ -20,9 +20,11 @@ describe('getAtomicDecimals', () => {
     expect(getAtomicDecimals({token: {decimals: 0}})).toBe(0);
   });
 
-  it('ignores token.decimals when it is not a number', () => {
+  it('ignores token.decimals when it cannot be normalized as a number', () => {
     // should fall through to chain matching
-    expect(getAtomicDecimals({token: {decimals: '6'}, chain: 'btc'})).toBe(8);
+    expect(
+      getAtomicDecimals({token: {decimals: 'not-a-number'}, chain: 'btc'}),
+    ).toBe(8);
   });
 
   it('returns 8 for btc', () => {
