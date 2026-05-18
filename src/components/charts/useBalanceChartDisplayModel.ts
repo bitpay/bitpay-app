@@ -621,9 +621,8 @@ export function useBalanceChartDisplayModel({
     );
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
-  const hasRenderableSeries = !!visibleSeries?.graphPoints?.length;
-  const isBusy = loading;
-  const shouldDelayPendingOverlay = isBusy && hasRenderableSeries;
+  const hasRenderableSeries = (visibleSeries?.graphPoints?.length || 0) >= 2;
+  const shouldDelayPendingOverlay = loading && hasRenderableSeries;
 
   useEffect(() => {
     if (!shouldDelayPendingOverlay) {
@@ -642,8 +641,8 @@ export function useBalanceChartDisplayModel({
 
   const shouldShowLoader =
     pendingOverlayVisible ||
-    (isBusy && !hasRenderableSeries) ||
-    (!hasRenderableSeries && showLoaderWhenNoSnapshots && hasAnyWallets);
+    (!hasRenderableSeries &&
+      (loading || (showLoaderWhenNoSnapshots && hasAnyWallets)));
 
   const onGestureStarted = useCallback(() => {
     if (!hasRenderableSeries) {

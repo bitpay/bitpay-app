@@ -679,6 +679,21 @@ const makePopulateStatus = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
+const makeWalletDetailsScreen = () => (
+  <WalletDetails
+    navigation={mockNavigation as any}
+    route={
+      {
+        params: {
+          copayerId: 'copayer-1',
+          skipInitializeHistory: true,
+          walletId: 'wallet-1',
+        },
+      } as any
+    }
+  />
+);
+
 const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
   [
     'Key Overview',
@@ -688,24 +703,7 @@ const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
     },
     'key_overview_balance_chart',
   ],
-  [
-    'WalletDetails',
-    () => (
-      <WalletDetails
-        navigation={mockNavigation as any}
-        route={
-          {
-            params: {
-              copayerId: 'copayer-1',
-              skipInitializeHistory: true,
-              walletId: 'wallet-1',
-            },
-          } as any
-        }
-      />
-    ),
-    'wallet_details_balance_chart',
-  ],
+  ['WalletDetails', makeWalletDetailsScreen, 'wallet_details_balance_chart'],
   [
     'AccountDetails',
     () => (
@@ -980,6 +978,43 @@ describe('portfolio chart visibility guards', () => {
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
   );
+
+  it('keeps the WalletDetails chart shell mounted with a loader while populate can still create snapshots', async () => {
+    resetState(true, {populateStatus: makePopulateStatus()});
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      loading: false,
+    });
+
+    await act(async () => {
+      renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showLoaderWhenNoSnapshots: true,
+      }),
+      undefined,
+    );
+  });
+
+  it('hides the WalletDetails chart after snapshot presence settles with no rows and no pending work', async () => {
+    resetState(true);
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      loading: false,
+    });
+
+    await act(async () => {
+      renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
 
   it.each(chartSurfaceCases)(
     'does not mount the %s balance chart when its wallet scope has zero balance',

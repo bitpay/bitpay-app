@@ -37,91 +37,87 @@ const mockReadyHistoricalRateCache = {
 const mockPendingHistoricalRateCache = {};
 
 const mockOneDayPoint = {date: new Date(1_000), value: 100};
+const mockOneDayEndPoint = {date: new Date(1_500), value: 110};
 const mockOneWeekPoint = {date: new Date(2_000), value: 150};
+const mockOneWeekEndPoint = {date: new Date(2_500), value: 155};
 const mockUpdatedOneDayPoint = {date: new Date(3_000), value: 115};
+const mockUpdatedOneDayEndPoint = {date: new Date(3_500), value: 125};
 
-const mockOneDaySeries = {
-  graphPoints: [mockOneDayPoint],
-  analysisPoints: [
-    {
-      timestamp: mockOneDayPoint.date.getTime(),
-      totalFiatBalance: 100,
-      totalPnlChange: 10,
-      totalPnlPercent: 10,
-    },
-  ],
-  pointByTimestamp: new Map([
-    [
-      mockOneDayPoint.date.getTime(),
-      {
-        timestamp: mockOneDayPoint.date.getTime(),
-        totalFiatBalance: 100,
-        totalPnlChange: 10,
-        totalPnlPercent: 10,
-      },
-    ],
-  ]),
-  maxPoint: mockOneDayPoint,
-  minPoint: mockOneDayPoint,
-  maxIndex: 0,
-  minIndex: 0,
+type MockSeriesPoint = {
+  point: {date: Date; value: number};
+  totalFiatBalance: number;
+  totalPnlChange: number;
+  totalPnlPercent: number;
+  totalCryptoBalanceFormatted?: string;
 };
 
-const mockOneWeekSeries = {
-  graphPoints: [mockOneWeekPoint],
-  analysisPoints: [
-    {
-      timestamp: mockOneWeekPoint.date.getTime(),
-      totalFiatBalance: 150,
-      totalPnlChange: 20,
-      totalPnlPercent: 15,
-      totalCryptoBalanceFormatted: '1.5',
-    },
-  ],
-  pointByTimestamp: new Map([
-    [
-      mockOneWeekPoint.date.getTime(),
-      {
-        timestamp: mockOneWeekPoint.date.getTime(),
-        totalFiatBalance: 150,
-        totalPnlChange: 20,
-        totalPnlPercent: 15,
-        totalCryptoBalanceFormatted: '1.5',
-      },
-    ],
-  ]),
-  maxPoint: mockOneWeekPoint,
-  minPoint: mockOneWeekPoint,
-  maxIndex: 0,
-  minIndex: 0,
+const buildMockSeries = (points: MockSeriesPoint[]) => {
+  const toAnalysisPoint = ({point, ...analysis}: MockSeriesPoint) => ({
+    timestamp: point.date.getTime(),
+    ...analysis,
+  });
+  const graphPoints = points.map(({point}) => point);
+  const analysisPoints = points.map(toAnalysisPoint);
+
+  return {
+    graphPoints,
+    analysisPoints,
+    pointByTimestamp: new Map(
+      analysisPoints.map(point => [point.timestamp, {...point}]),
+    ),
+    maxPoint: graphPoints[graphPoints.length - 1],
+    minPoint: graphPoints[0],
+    maxIndex: graphPoints.length - 1,
+    minIndex: 0,
+  };
 };
 
-const mockUpdatedOneDaySeries = {
-  graphPoints: [mockUpdatedOneDayPoint],
-  analysisPoints: [
-    {
-      timestamp: mockUpdatedOneDayPoint.date.getTime(),
-      totalFiatBalance: 115,
-      totalPnlChange: 15,
-      totalPnlPercent: 12,
-    },
-  ],
-  pointByTimestamp: new Map([
-    [
-      mockUpdatedOneDayPoint.date.getTime(),
-      {
-        timestamp: mockUpdatedOneDayPoint.date.getTime(),
-        totalFiatBalance: 115,
-        totalPnlChange: 15,
-        totalPnlPercent: 12,
-      },
-    ],
-  ]),
-  maxPoint: mockUpdatedOneDayPoint,
-  minPoint: mockUpdatedOneDayPoint,
-  maxIndex: 0,
-  minIndex: 0,
-};
+const mockOneDaySeries = buildMockSeries([
+  {
+    point: mockOneDayPoint,
+    totalFiatBalance: 100,
+    totalPnlChange: 10,
+    totalPnlPercent: 10,
+  },
+  {
+    point: mockOneDayEndPoint,
+    totalFiatBalance: 110,
+    totalPnlChange: 12,
+    totalPnlPercent: 11,
+  },
+]);
+
+const mockOneWeekSeries = buildMockSeries([
+  {
+    point: mockOneWeekPoint,
+    totalFiatBalance: 150,
+    totalPnlChange: 20,
+    totalPnlPercent: 15,
+    totalCryptoBalanceFormatted: '1.5',
+  },
+  {
+    point: mockOneWeekEndPoint,
+    totalFiatBalance: 155,
+    totalPnlChange: 25,
+    totalPnlPercent: 16,
+    totalCryptoBalanceFormatted: '1.55',
+  },
+]);
+
+const mockUpdatedOneDaySeries = buildMockSeries([
+  {
+    point: mockUpdatedOneDayPoint,
+    totalFiatBalance: 115,
+    totalPnlChange: 15,
+    totalPnlPercent: 12,
+  },
+  {
+    point: mockUpdatedOneDayEndPoint,
+    totalFiatBalance: 125,
+    totalPnlChange: 18,
+    totalPnlPercent: 14,
+  },
+]);
 
 const buildEquivalentSeries = <T extends typeof mockOneDaySeries>(
   series: T,
@@ -1073,15 +1069,15 @@ describe('BalanceHistoryChart', () => {
       mockOneWeekSeries.graphPoints,
     );
     expect(onDisplayedAnalysisPointChange).toHaveBeenLastCalledWith({
-      timestamp: mockOneWeekPoint.date.getTime(),
-      totalFiatBalance: 150,
-      totalPnlChange: 20,
-      totalPnlPercent: 15,
-      totalCryptoBalanceFormatted: '1.5',
+      timestamp: mockOneWeekEndPoint.date.getTime(),
+      totalFiatBalance: 155,
+      totalPnlChange: 25,
+      totalPnlPercent: 16,
+      totalCryptoBalanceFormatted: '1.55',
     });
     expect(onChangeRowData).toHaveBeenLastCalledWith({
-      percent: 15,
-      deltaFiatFormatted: '20',
+      percent: 16,
+      deltaFiatFormatted: '25',
       rangeLabel: '1W',
     });
   });

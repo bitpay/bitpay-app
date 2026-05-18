@@ -351,6 +351,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const committedPortfolioQuoteCurrency = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
   );
+  const portfolioPopulateInProgress = useAppSelector(
+    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
+  );
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const timeframeSelectorWidth = getTimeframeSelectorWidth(
@@ -666,14 +669,21 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
-  const {hasAnySnapshots: walletHasSnapshots, checked: walletSnapshotsChecked} =
-    usePortfolioWalletSnapshotPresence({
-      wallets: chartableWallets,
-      enabled: canRenderWalletBalanceChart,
-    });
-  const showWalletBalanceChart =
-    canRenderWalletBalanceChart &&
-    (!walletSnapshotsChecked || walletHasSnapshots);
+  const {
+    hasAnySnapshots: walletHasSnapshots,
+    checked: walletSnapshotsChecked,
+    loading: walletSnapshotsLoading,
+  } = usePortfolioWalletSnapshotPresence({
+    wallets: chartableWallets,
+    enabled: canRenderWalletBalanceChart,
+  });
+  const isWalletChartDataPending =
+    !walletSnapshotsChecked ||
+    walletSnapshotsLoading ||
+    portfolioPopulateInProgress ||
+    isLoading === true ||
+    refreshing;
+  const showWalletBalanceChart = walletHasSnapshots || isWalletChartDataPending;
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
@@ -1371,9 +1381,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       rates={rates}
                       lineColor={chartLineColor}
                       gradientStartColor={chartGradientBackgroundColor}
-                      showLoaderWhenNoSnapshots={
-                        isLoading === undefined || !!isLoading || refreshing
-                      }
+                      showLoaderWhenNoSnapshots={isWalletChartDataPending}
                       onSelectedBalanceChange={
                         balanceChartSurface.chartCallbacks
                           .onSelectedBalanceChange
