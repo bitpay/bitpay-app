@@ -1,6 +1,6 @@
 import XCTest
 
-final class test591_OnboardingCreateWallet: XCTestCase {
+final class Test591_OnboardingCreateWallet: XCTestCase {
   
   var app: XCUIApplication!
   
@@ -15,7 +15,7 @@ final class test591_OnboardingCreateWallet: XCTestCase {
   }
   
   @MainActor
-  func testOnboardingCreateWallet() throws {
+  func test591_OnboardingCreateWallet() throws {
     
     AllureXCTestSupport.setDisplayName(
       "Onboarding Create Wallet (Continue Without Account)"

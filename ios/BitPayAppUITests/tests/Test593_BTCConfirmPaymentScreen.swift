@@ -1,6 +1,6 @@
 import XCTest
 
-final class test593_BTCConfirmPaymentScreen: XCTestCase {
+final class Test593_BTCConfirmPaymentScreen: XCTestCase {
   
   var app: XCUIApplication!
   
@@ -17,7 +17,7 @@ final class test593_BTCConfirmPaymentScreen: XCTestCase {
   }
   
   @MainActor
-  func testBTCConfirmPayment() throws {
+  func test593_BTCConfirmPaymentScreen() throws {
     
     AllureXCTestSupport.setDisplayName(
       "Basic Send (BTC) -  Confirm Payment Screen"

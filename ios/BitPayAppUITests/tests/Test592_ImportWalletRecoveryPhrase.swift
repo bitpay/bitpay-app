@@ -1,6 +1,6 @@
 import XCTest
 
-final class test592_ImportWalletRecoveryPhrase: XCTestCase {
+final class Test592_ImportWalletRecoveryPhrase: XCTestCase {
   
   var app: XCUIApplication!
   
@@ -17,7 +17,7 @@ final class test592_ImportWalletRecoveryPhrase: XCTestCase {
   }
   
   @MainActor
-  func testImportWalletRecoveryPhrase() throws {
+  func test592_ImportWalletRecoveryPhrase() throws {
     
     AllureXCTestSupport.setDisplayName(
       "Import Wallet via Recovery Phrase (BTC)"

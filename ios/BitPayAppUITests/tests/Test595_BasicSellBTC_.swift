@@ -1,6 +1,6 @@
 import XCTest
 
-final class test595_BasicSellBTC: XCTestCase {
+final class Test595_BasicSellBTC: XCTestCase {
   
   var app: XCUIApplication!
   
@@ -17,7 +17,7 @@ final class test595_BasicSellBTC: XCTestCase {
   }
   
   @MainActor
-  func testBasicSellBTC() throws {
+  func test595_BasicSellBTC() throws {
     
     AllureXCTestSupport.setDisplayName(
       "Basic Sell BTC"
