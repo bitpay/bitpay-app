@@ -79,6 +79,8 @@ import {
 } from '../../../utils/portfolio/assets';
 import {sortNewestFirst} from '../../../utils/braze';
 import buildHomeExchangeRateItems from './homeExchangeRates';
+import {logManager} from '../../../managers/LogManager';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -222,11 +224,21 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         ),
         dispatch(requestBrazeContentRefresh()),
       ]);
-      await dispatch(
-        maybePopulatePortfolioOnAppLaunch({
-          quoteCurrency,
-        }) as any,
-      );
+      void Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioOnAppLaunch({
+              quoteCurrency,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logManager.warn(
+            `[portfolio] Failed background home refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
     } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
