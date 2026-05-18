@@ -402,11 +402,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                 />
               }>
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
-              {showPortfolioValue ? (
-                <HomeSection style={{marginTop: 20, marginBottom: 20}}>
-                  <PortfolioBalance />
-                </HomeSection>
-              ) : null}
+              <HomeSection style={{marginTop: 20, marginBottom: 20}}>
+                <PortfolioBalance />
+              </HomeSection>
 
               {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
               {hasKeys && showPortfolioValue ? (
