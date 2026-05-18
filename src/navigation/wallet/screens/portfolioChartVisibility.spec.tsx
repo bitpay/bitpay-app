@@ -400,6 +400,47 @@ jest.mock('../../../utils/portfolio/assets', () => ({
     Object.values(keys || {}).flatMap((key: any) => key?.wallets || []),
   ),
   getVisibleWalletsForKey: jest.fn((key: any) => key?.wallets || []),
+  hasCompletedPopulateForWallets: jest.fn(
+    ({
+      populateStatus,
+      wallets,
+      requireAllWalletsInScope,
+    }: {
+      populateStatus?: any;
+      wallets?: any[];
+      requireAllWalletsInScope?: boolean;
+    }) => {
+      if (!populateStatus?.inProgress) {
+        return false;
+      }
+
+      const walletIds = (wallets || [])
+        .map(wallet => wallet?.id)
+        .filter(Boolean);
+      const activeWalletIds = new Set([
+        ...Object.keys(populateStatus.walletStatusById || {}),
+        ...(populateStatus.currentWalletId
+          ? [populateStatus.currentWalletId]
+          : []),
+      ]);
+      const scopedWalletIds = walletIds.filter(walletId =>
+        activeWalletIds.has(walletId),
+      );
+      if (!scopedWalletIds.length) {
+        return false;
+      }
+      if (
+        requireAllWalletsInScope &&
+        scopedWalletIds.length !== walletIds.length
+      ) {
+        return false;
+      }
+
+      return scopedWalletIds.every(walletId =>
+        ['done', 'error'].includes(populateStatus.walletStatusById?.[walletId]),
+      );
+    },
+  ),
   isPopulateLoadingForWallets: jest.fn(() => false),
   walletHasNonZeroLiveBalance: jest.fn(() => true),
   walletsHaveNonZeroLiveBalance: jest.fn(() => true),
@@ -892,7 +933,7 @@ describe('portfolio chart visibility guards', () => {
   );
 
   it.each(chartSurfaceCases)(
-    'does not mount the %s balance chart or loader during resumed initial populate',
+    'mounts the %s balance chart once its wallet scope is done during initial populate',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: false,
@@ -913,7 +954,7 @@ describe('portfolio chart visibility guards', () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+      expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
   );
 

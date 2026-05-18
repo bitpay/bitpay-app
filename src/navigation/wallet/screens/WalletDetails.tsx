@@ -28,7 +28,7 @@ import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioChartableWallets from '../../../portfolio/ui/hooks/usePortfolioChartableWallets';
+import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import Settings from '../../../components/settings/Settings';
 import {
   Balance,
@@ -47,7 +47,6 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {
   buildUIFormattedWallet,
@@ -154,10 +153,7 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import type {RootState} from '../../../store';
-import {
-  getQuoteCurrency,
-  walletsHaveNonZeroLiveBalance,
-} from '../../../utils/portfolio/assets';
+import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -365,10 +361,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const wallets = (Object.values(keys) as Key[]).flatMap(k => k.wallets);
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
+  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
+    useAppSelector(({APP}) => APP);
   const fullWalletObj = findWalletById(wallets, walletId, copayerId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
@@ -605,15 +599,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
-  const chartableWallets = usePortfolioChartableWallets({
-    wallets: chartWallets,
-    enabled: canRenderPortfolioBalanceCharts,
-  });
-  const walletHasLiveBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartableWallets);
-  }, [chartableWallets]);
-  const canRenderWalletBalanceChart =
-    canRenderPortfolioBalanceCharts && walletHasLiveBalance;
+  const {canRenderBalanceChart: canRenderWalletBalanceChart, chartableWallets} =
+    usePortfolioScopeChartReadiness({
+      wallets: chartWallets,
+      enabled: showPortfolioValue === true,
+    });
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartableWallets,
     quoteCurrency: chartQuoteCurrency,
@@ -1373,7 +1363,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </CryptoBalanceRow>
                 </TouchableOpacity>
 
-                {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
+                {canRenderWalletBalanceChart && !hideAllBalances ? (
                   showWalletBalanceChart ? (
                     <BalanceHistoryChart
                       wallets={chartableWallets}

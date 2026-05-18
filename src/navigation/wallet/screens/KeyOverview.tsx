@@ -53,7 +53,6 @@ import {
 } from '../../../store/app/app.actions';
 import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
   successAddWallet,
@@ -133,7 +132,7 @@ import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioChartableWallets from '../../../portfolio/ui/hooks/usePortfolioChartableWallets';
+import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -148,7 +147,6 @@ import {
   getVisibleWalletsForKey,
   getQuoteCurrency,
   isPopulateLoadingForWallets,
-  walletsHaveNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 
@@ -226,6 +224,10 @@ const AddWalletLink = styled(Link).attrs(() => ({
 
 const AddWalletLinkButton = styled(TouchableOpacity)`
   padding: 0 20px;
+`;
+
+const AddWalletSpacer = styled.View`
+  height: 10px;
 `;
 
 const AllocationHeader = styled.View`
@@ -504,9 +506,6 @@ const KeyOverview = () => {
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
@@ -697,15 +696,13 @@ const KeyOverview = () => {
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
-  const chartableVisibleKeyWallets = usePortfolioChartableWallets({
+  const {
+    canRenderBalanceChart: canRenderKeyBalanceChart,
+    chartableWallets: chartableVisibleKeyWallets,
+  } = usePortfolioScopeChartReadiness({
     wallets: visibleKeyWallets,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: showPortfolioValue === true,
   });
-  const hasAnyVisibleKeyWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartableVisibleKeyWallets);
-  }, [chartableVisibleKeyWallets]);
-  const canRenderKeyBalanceChart =
-    canRenderPortfolioBalanceCharts && hasAnyVisibleKeyWalletBalance;
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
     [visibleKeyWallets],
@@ -962,20 +959,22 @@ const KeyOverview = () => {
 
   const keyOptions: Array<Option> = [];
 
-  keyOptions.push({
-    img: <Icons.Wallet width="15" height="15" />,
-    title: t('Add Wallet'),
-    description: t(
-      'Choose another currency you would like to add to your key.',
-    ),
-    onPress: async () => {
-      haptic('impactLight');
-      await sleep(500);
-      navigation.navigate('AddingOptions', {
-        key,
-      });
-    },
-  });
+  if (key && !key.isReadOnly) {
+    keyOptions.push({
+      img: <Icons.Wallet width="15" height="15" />,
+      title: t('Add Wallet'),
+      description: t(
+        'Choose another currency you would like to add to your key.',
+      ),
+      onPress: async () => {
+        haptic('impactLight');
+        await sleep(500);
+        navigation.navigate('AddingOptions', {
+          key,
+        });
+      },
+    });
+  }
 
   if (hasMissingEvmNetworks) {
     keyOptions.push({
@@ -1248,7 +1247,7 @@ const KeyOverview = () => {
           See All Assets
         </Button>
 
-        {!isTSSKey(key) ? (
+        {key && !key.isReadOnly && !isTSSKey(key) ? (
           <AddWalletLinkContainer>
             <AddWalletLinkButton
               activeOpacity={ActiveOpacity}
@@ -1261,6 +1260,8 @@ const KeyOverview = () => {
               <AddWalletLink>Add Wallet</AddWalletLink>
             </AddWalletLinkButton>
           </AddWalletLinkContainer>
+        ) : key ? (
+          <AddWalletSpacer />
         ) : null}
 
         {showPortfolioValue && allocationData.totalFiat > 0 ? (
