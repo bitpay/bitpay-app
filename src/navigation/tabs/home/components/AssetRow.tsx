@@ -40,6 +40,7 @@ const supportedCurrencyOptionLookup = createSupportedCurrencyOptionLookup(
   SupportedCurrencyOptions,
 );
 const PRESERVED_ASSET_ROW_LOADING_DELAY_MS = 250;
+const PERCENT_PILL_SKELETON_FILL_VALUE = '-2.22%';
 
 const Row = styled(TouchableOpacity)<{isLast: boolean}>`
   flex-direction: row;
@@ -106,6 +107,7 @@ const DeltaFiat = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
 `;
 
 const PercentPill = styled.View`
+  position: relative;
   border-radius: 50px;
   padding: 8px 10px;
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
@@ -120,6 +122,20 @@ const PercentText = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
   line-height: 20px;
   color: ${({theme: {dark}, isPositive, hasPnl}) =>
     hasPnl ? getDifferenceColor(isPositive, dark) : dark ? Slate30 : SlateDark};
+`;
+
+const PercentSkeletonAnchor = styled(PercentText)`
+  opacity: 0;
+`;
+
+const PercentSkeletonOverlay = styled.View`
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
 `;
 
 const ChevronContainer = styled.View<{visible: boolean}>`
@@ -394,7 +410,7 @@ const AssetRow: React.FC<Props> = ({
                       }
                       highlightColor={theme.dark ? LightBlack : GhostWhite}>
                       <SkeletonPlaceholder.Item
-                        width={54}
+                        width={45}
                         height={12}
                         borderRadius={2}
                       />
@@ -413,15 +429,22 @@ const AssetRow: React.FC<Props> = ({
 
           <PercentPill>
             {shouldShowSkeleton ? (
-              <SkeletonPlaceholder
-                backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
-                highlightColor={theme.dark ? LightBlack : GhostWhite}>
-                <SkeletonPlaceholder.Item
-                  width={48}
-                  height={12}
-                  borderRadius={2}
-                />
-              </SkeletonPlaceholder>
+              <>
+                <PercentSkeletonAnchor isPositive={false} hasPnl>
+                  {PERCENT_PILL_SKELETON_FILL_VALUE}
+                </PercentSkeletonAnchor>
+                <PercentSkeletonOverlay>
+                  <SkeletonPlaceholder
+                    backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
+                    highlightColor={theme.dark ? LightBlack : GhostWhite}>
+                    <SkeletonPlaceholder.Item
+                      width={40}
+                      height={12}
+                      borderRadius={2}
+                    />
+                  </SkeletonPlaceholder>
+                </PercentSkeletonOverlay>
+              </>
             ) : (
               <PercentText isPositive={displayItem.isPositive} hasPnl={hasPnl}>
                 {displayItem.deltaPercent}
