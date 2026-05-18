@@ -41,11 +41,10 @@ import {
   MoonpayCreateSessionRequestData,
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {BwcProvider} from '../../../lib/bwc';
 import {getCachedExternalServicesConfig} from '../../../store/external-services/external-services.effects';
 import {ExternalServicesConfig} from '../../../store/external-services/external-services.types';
-
-const BWC = BwcProvider.getInstance();
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {RootState} from '../../../store';
 
 /** Refresh credentials this many ms before expiry. */
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 min
@@ -54,6 +53,9 @@ export function MoonpayEmbeddedCredentialManager() {
   const network = useAppSelector(({APP}) => APP.network);
   const user: User = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const country = locationData?.countryShortCode || 'US';
 
   const [applePaySupported, setApplePaySupported] = useState(false);
@@ -179,22 +181,72 @@ export function MoonpayEmbeddedCredentialManager() {
     const createSession = async () => {
       try {
         setMoonpayEmbeddedStatus('checking');
-        let reqData: MoonpayCreateSessionRequestData = {
-          env: moonpayEnv,
-          externalCustomerId: userEid,
-        };
+        const keysList: Key[] = Object.values(allKeys).filter(
+          key => key.backupComplete,
+        );
 
-        if (user?.email && user?.phone) {
-          reqData.phoneNumber = user.phone;
-          reqData.email = user.email;
+        let selectedWallet: Wallet | undefined;
+        if (keysList[0]) {
+          const walletIsSupported = (wallet: Wallet): boolean => {
+            return wallet.credentials && wallet.isComplete();
+          };
+
+          const keyHasSupportedWallets = (wallets: Wallet[]): boolean => {
+            const supportedWallets = wallets.filter(wallet =>
+              walletIsSupported(wallet),
+            );
+            return !!supportedWallets[0];
+          };
+
+          const availableKeys = keysList.filter(key => {
+            return key.wallets && keyHasSupportedWallets(key.wallets);
+          });
+
+          if (availableKeys[0]) {
+            const firstKey = availableKeys[0];
+
+            const firstKeyAllWallets: Wallet[] = firstKey?.wallets ?? [];
+            let allowedWallets = firstKeyAllWallets.filter(wallet =>
+              walletIsSupported(wallet),
+            );
+
+            selectedWallet = allowedWallets[0];
+          }
         }
 
-        const walletClient = BWC.getClient();
-        const data: MoonpayCreateSessionData =
-          await walletClient.moonpayCreateSession(reqData);
+        if (selectedWallet) {
+          let reqData: MoonpayCreateSessionRequestData = {
+            env: moonpayEnv,
+            externalCustomerId: userEid,
+          };
 
-        if (!cancelled) {
-          setSessionToken(data.sessionToken);
+          if (user?.email && user?.phone) {
+            reqData.phoneNumber = user.phone;
+            reqData.email = user.email;
+          }
+          const data: MoonpayCreateSessionData =
+            await selectedWallet.moonpayCreateSession(reqData);
+
+          if (!data?.sessionToken) {
+            if (!cancelled) {
+              logManager.debug(
+                `MoonpayEmbeddedCredentialManager: session creation failed. No session token returned for user ${userEid}.`,
+              );
+              setMoonpayEmbeddedStatus(undefined);
+            }
+            return;
+          }
+
+          if (!cancelled) {
+            setSessionToken(data.sessionToken);
+          }
+        } else {
+          if (!cancelled) {
+            logManager.debug(
+              `MoonpayEmbeddedCredentialManager: session creation failed. No eligible wallets found for user ${userEid}.`,
+            );
+            setMoonpayEmbeddedStatus(undefined);
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -213,9 +265,10 @@ export function MoonpayEmbeddedCredentialManager() {
     return () => {
       cancelled = true;
     };
-    // checkTrigger is intentionally included so a reset / expiry re-runs this
+    // checkTrigger is intentionally included so a reset / expiry re-runs this.
+    // allKeys is included so the effect retries if wallets load after mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moonpayEmbeddedEnabled, userEid, checkTrigger]);
+  }, [moonpayEmbeddedEnabled, userEid, checkTrigger, allKeys]);
 
   // -------------------------------------------------------------------------
   // Cleanup timer on unmount
