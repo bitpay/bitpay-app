@@ -26,8 +26,10 @@ import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import Settings from '../../../components/settings/Settings';
@@ -596,12 +598,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     network,
     pendingTxps,
   } = uiFormattedWallet;
-  const chartQuoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-    });
-  }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
+  const chartQuoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+  });
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
   const {canRenderBalanceChart: canRenderWalletBalanceChart, chartableWallets} =
     usePortfolioScopeChartReadiness({
@@ -632,6 +632,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     // @ts-ignore
     Number(cryptoBalance.replaceAll(',', '')) > 0 &&
     network !== Network.testnet;
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: chartWallets,
+    currentFiatBalance: fullWalletObj?.balance?.fiat,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: showPortfolioValue !== true && !hideAllBalances && showFiatBalance,
+  });
+  const walletHeaderChangeRowData =
+    showPortfolioValue === true
+      ? balanceChartSurface.changeRowData
+      : legacyLastDayChangeRowData;
   const selectedChartCryptoBalance =
     balanceChartSurface.displayedAnalysisPoint?.totalCryptoBalanceFormatted;
   const selectedCryptoBalance =
@@ -1372,9 +1382,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </CryptoBalanceRow>
                 </TouchableOpacity>
 
-                {canRenderWalletBalanceChart && !hideAllBalances ? (
-                  showWalletBalanceChart ? (
-                    <FullWidthBalanceChartContainer>
+                {!hideAllBalances &&
+                !fullWalletObj.isScanning &&
+                (showPortfolioValue !== true || canRenderWalletBalanceChart) ? (
+                  <FullWidthBalanceChartContainer>
+                    <BalanceHeaderSupplement
+                      changeRowData={walletHeaderChangeRowData}
+                      content={walletChartPreContent}
+                      contentTopMargin={12}
+                      changeRowStyle={walletChartChangeRowStyle}
+                      reserveChangeRowSpace={
+                        canRenderWalletBalanceChart && showWalletBalanceChart
+                      }
+                    />
+                    {canRenderWalletBalanceChart && showWalletBalanceChart ? (
                       <BalanceHistoryChart
                         wallets={chartableWallets}
                         quoteCurrency={chartQuoteCurrency}
@@ -1382,6 +1403,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         lineColor={chartLineColor}
                         gradientStartColor={chartGradientBackgroundColor}
                         showLoaderWhenNoSnapshots={isWalletChartDataPending}
+                        showChangeRow={false}
                         onSelectedBalanceChange={
                           balanceChartSurface.chartCallbacks
                             .onSelectedBalanceChange
@@ -1390,15 +1412,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           balanceChartSurface.chartCallbacks
                             .onDisplayedAnalysisPointChange
                         }
+                        onChangeRowData={
+                          balanceChartSurface.chartCallbacks.onChangeRowData
+                        }
                         timeframeSelectorWidth={timeframeSelectorWidth}
-                        changeRowStyle={walletChartChangeRowStyle}
-                        preChartContentTopMargin={12}
-                        preChartContent={walletChartPreContent}
                       />
-                    </FullWidthBalanceChartContainer>
-                  ) : walletChartPreContent ? (
-                    <View style={{marginTop: 12}}>{walletChartPreContent}</View>
-                  ) : null
+                    ) : null}
+                  </FullWidthBalanceChartContainer>
                 ) : null}
               </BalanceContainer>
 

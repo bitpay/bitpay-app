@@ -130,8 +130,10 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
@@ -538,12 +540,10 @@ const KeyOverview = () => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
-  const quoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency: portfolio.quoteCurrency,
-      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-    });
-  }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  });
 
   const memoizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
@@ -551,13 +551,11 @@ const KeyOverview = () => {
     });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
-  const pendingTxpCount = useMemo(() => {
-    return (
-      key?.wallets.reduce((count, wallet) => {
-        return count + (wallet.pendingTxps?.length || 0);
-      }, 0) || 0
-    );
-  }, [key?.wallets]);
+  const pendingTxpCount =
+    key?.wallets.reduce(
+      (count, wallet) => count + (wallet.pendingTxps?.length || 0),
+      0,
+    ) || 0;
 
   const missingChainsAccountsCount = useMemo(() => {
     const supportedEvmChainCount = Object.keys(BitpaySupportedEvmCoins).length;
@@ -716,17 +714,25 @@ const KeyOverview = () => {
     enabled: canRenderKeyBalanceChart,
     resetKey: id,
   });
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: visibleKeyWallets,
+    currentFiatBalance: totalBalance,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: showPortfolioValue !== true && !hideAllBalances,
+  });
+  const keyHeaderChangeRowData =
+    showPortfolioValue === true
+      ? balanceChartSurface.changeRowData
+      : legacyLastDayChangeRowData;
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
-    return visibleKeyWallets.map((w: Wallet) => {
-      return {
-        currencyAbbreviation: w.currencyAbbreviation,
-        chain: w.chain,
-        tokenAddress: w.tokenAddress,
-        currencyName: w.currencyName,
-        fiatBalance: (w.balance as any)?.fiat,
-      };
-    });
+    return visibleKeyWallets.map((w: Wallet) => ({
+      currencyAbbreviation: w.currencyAbbreviation,
+      chain: w.chain,
+      tokenAddress: w.tokenAddress,
+      currencyName: w.currencyName,
+      fiatBalance: (w.balance as any)?.fiat,
+    }));
   }, [visibleKeyWallets]);
 
   const allocationData = useMemo(() => {
@@ -736,12 +742,10 @@ const KeyOverview = () => {
     );
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
 
-  const isKeyPopulateLoading = useMemo(() => {
-    return isPopulateLoadingForWallets({
-      populateStatus: portfolio.populateStatus,
-      wallets: visibleKeyWallets,
-    });
-  }, [portfolio.populateStatus, visibleKeyWallets]);
+  const isKeyPopulateLoading = isPopulateLoadingForWallets({
+    populateStatus: portfolio.populateStatus,
+    wallets: visibleKeyWallets,
+  });
 
   const showAllocationGainLossFooter = canRenderKeyBalanceChart;
 
@@ -1182,17 +1186,28 @@ const KeyOverview = () => {
             )}
           </TouchableOpacity>
 
-          {canRenderKeyBalanceChart && !hideAllBalances ? (
+          {!hideAllBalances &&
+          (keyHeaderChangeRowData || canRenderKeyBalanceChart) ? (
             <FullWidthBalanceChartContainer>
-              <BalanceHistoryChart
-                wallets={chartableVisibleKeyWallets}
-                quoteCurrency={quoteCurrency}
-                rates={rates}
-                timeframeSelectorWidth={timeframeSelectorWidth}
-                onSelectedBalanceChange={
-                  balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                }
+              <BalanceHeaderSupplement
+                changeRowData={keyHeaderChangeRowData}
+                reserveChangeRowSpace={canRenderKeyBalanceChart}
               />
+              {canRenderKeyBalanceChart ? (
+                <BalanceHistoryChart
+                  wallets={chartableVisibleKeyWallets}
+                  quoteCurrency={quoteCurrency}
+                  rates={rates}
+                  timeframeSelectorWidth={timeframeSelectorWidth}
+                  showChangeRow={false}
+                  onSelectedBalanceChange={
+                    balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                  }
+                  onChangeRowData={
+                    balanceChartSurface.chartCallbacks.onChangeRowData
+                  }
+                />
+              ) : null}
             </FullWidthBalanceChartContainer>
           ) : null}
         </BalanceContainer>
@@ -1222,9 +1237,11 @@ const KeyOverview = () => {
     );
   }, [
     canRenderKeyBalanceChart,
+    chartableVisibleKeyWallets,
     defaultAltCurrency.isoCode,
     dispatch,
     balanceChartSurface,
+    keyHeaderChangeRowData,
     hideAllBalances,
     memoizedAccountList,
     quoteCurrency,

@@ -35,8 +35,10 @@ import {
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
 import {
@@ -505,12 +507,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const accountItem = memorizedAccountList.find(
     a => a.receiveAddress === selectedAccountAddress,
   )!;
-  const displayQuoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-    });
-  }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
+  const displayQuoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+  });
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartableAccountWallets,
     quoteCurrency: displayQuoteCurrency,
@@ -529,10 +529,21 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           },
         )
       : accountItem?.fiatBalanceFormat;
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: keyFullWalletObjs,
+    currentFiatBalance: accountItem?.fiatBalance,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: showPortfolioValue !== true && !hideAllBalances,
+  });
+  const accountHeaderChangeRowData =
+    showPortfolioValue === true
+      ? balanceChartSurface.changeRowData
+      : legacyLastDayChangeRowData;
   const hasMultipleAccounts = memorizedAccountList.length > 1;
-  const accountChartPreContent = useMemo(() => {
-    return <AccountAddressBadge address={accountItem?.receiveAddress} />;
-  }, [accountItem?.receiveAddress]);
+  const accountChartPreContent = useMemo(
+    () => <AccountAddressBadge address={accountItem?.receiveAddress} />,
+    [accountItem?.receiveAddress],
+  );
 
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
@@ -1490,22 +1501,33 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               </Row>
             </TouchableOpacity>
 
-            {canRenderAccountBalanceChart && !hideAllBalances ? (
+            {!hideAllBalances &&
+            (showPortfolioValue !== true || canRenderAccountBalanceChart) ? (
               <FullWidthBalanceChartContainer>
-                <BalanceHistoryChart
-                  wallets={chartableAccountWallets}
-                  quoteCurrency={displayQuoteCurrency}
-                  rates={rates}
-                  timeframeSelectorWidth={timeframeSelectorWidth}
-                  onSelectedBalanceChange={
-                    balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                  }
-                  onDisplayedAnalysisPointChange={
-                    balanceChartSurface.chartCallbacks
-                      .onDisplayedAnalysisPointChange
-                  }
-                  preChartContent={accountChartPreContent}
+                <BalanceHeaderSupplement
+                  changeRowData={accountHeaderChangeRowData}
+                  content={accountChartPreContent}
+                  reserveChangeRowSpace={canRenderAccountBalanceChart}
                 />
+                {canRenderAccountBalanceChart ? (
+                  <BalanceHistoryChart
+                    wallets={chartableAccountWallets}
+                    quoteCurrency={displayQuoteCurrency}
+                    rates={rates}
+                    timeframeSelectorWidth={timeframeSelectorWidth}
+                    showChangeRow={false}
+                    onSelectedBalanceChange={
+                      balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                    }
+                    onDisplayedAnalysisPointChange={
+                      balanceChartSurface.chartCallbacks
+                        .onDisplayedAnalysisPointChange
+                    }
+                    onChangeRowData={
+                      balanceChartSurface.chartCallbacks.onChangeRowData
+                    }
+                  />
+                ) : null}
               </FullWidthBalanceChartContainer>
             ) : null}
           </BalanceContainer>
@@ -1662,9 +1684,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   }, [
     activeTab,
     accountChartPreContent,
+    accountHeaderChangeRowData,
     accountItem?.fiatLockedBalanceFormat,
     accountItem?.receiveAddress,
     canRenderAccountBalanceChart,
+    chartableAccountWallets,
     debouncedLoadHistory,
     displayQuoteCurrency,
     defaultAltCurrency.isoCode,
