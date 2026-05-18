@@ -163,12 +163,19 @@ jest.mock('./portfolio.actions', () => ({
 import {DeviceEventEmitter} from 'react-native';
 import {
   cancelPopulatePortfolioWithRuntime,
+  clearPortfolioWithRuntime,
   clearPortfolioRuntimeUnlockDeferralForTests,
   maybePopulatePortfolioForWalletsWithRuntime,
   maybePopulatePortfolioOnAppLaunchWithRuntime,
   populateImportedKeyPortfolio,
   populatePortfolioWithRuntime,
 } from './portfolio.runtime.effects';
+import {
+  buildAssetPnlSummaryCacheKey,
+  clearAssetPnlSummaryCacheForTests,
+  getAssetPnlSummaryCacheEntry,
+  seedAssetPnlSummaryCache,
+} from '../../portfolio/ui/assetPnlSummaryCache';
 
 const mockGetVisibleWalletsFromKeys = jest.requireMock(
   '../../utils/portfolio/assets',
@@ -420,6 +427,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
   beforeEach(() => {
     clearPortfolioRuntimeUnlockDeferralForTests();
+    clearAssetPnlSummaryCacheForTests();
     jest.clearAllMocks();
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     mockGetVisibleWalletsFromKeys.mockReturnValue([walletFactory()]);
@@ -439,6 +447,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
   afterEach(() => {
     consoleLogSpy.mockRestore();
+    clearAssetPnlSummaryCacheForTests();
     clearPortfolioRuntimeUnlockDeferralForTests();
     jest.useRealTimers();
   });
@@ -450,6 +459,65 @@ describe('portfolio runtime effects lock deferral', () => {
       pinLockActive: true,
       showPortfolioValue: true,
     });
+  });
+
+  it('clears asset PnL summaries when full portfolio clear succeeds', async () => {
+    const identity = {
+      assetKey: 'btc',
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+      walletIds: ['wallet-1'],
+      storedWalletRequestSig: '',
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      currentRatesSignature: '',
+      chartDataRevisionSig: 'rev-1',
+      summaryCacheRevisionSig: '',
+      balanceOffset: 0,
+    } as const;
+    const cacheKey = buildAssetPnlSummaryCacheKey(identity);
+
+    seedAssetPnlSummaryCache({
+      identity,
+      viewModel: {
+        timeframe: '1D',
+        quoteCurrency: 'USD',
+        walletIds: ['wallet-1'],
+        dataRevisionSig: 'rev-1',
+        balanceOffset: 0,
+        graphPoints: [],
+        analysisPoints: [
+          {
+            timestamp: 1,
+            totalFiatBalance: 100,
+            totalRemainingCostBasisFiat: 90,
+            totalUnrealizedPnlFiat: 10,
+            totalPnlChange: 10,
+            totalPnlPercent: 11.11,
+          },
+        ],
+        latestTotalFiatBalance: 100,
+        latestDisplayedTotalFiatBalance: 100,
+        totalPnlChange: 10,
+        totalPnlPercent: 11.11,
+        changeRow: {
+          totalPnlChange: 10,
+          totalPnlPercent: 11.11,
+        },
+      } as any,
+    });
+    expect(getAssetPnlSummaryCacheEntry(cacheKey)?.summary?.hasPnl).toBe(true);
+
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+
+    await dispatch(clearPortfolioWithRuntime());
+
+    expect(mockRuntimeClient.clearAllStorage).toHaveBeenCalledTimes(1);
+    expect(getAssetPnlSummaryCacheEntry(cacheKey)).toBeUndefined();
+    expect(dispatched).toEqual(
+      expect.arrayContaining([{payload: undefined, type: 'CLEAR_PORTFOLIO'}]),
+    );
   });
 
   it('runtime populate defers when PIN lock is active and lockAuthorizedUntil is undefined', async () => {

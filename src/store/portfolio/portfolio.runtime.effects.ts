@@ -21,6 +21,7 @@ import type {PortfolioPopulateJobStatus} from '../../portfolio/core/engine/popul
 import type {StoredWallet} from '../../portfolio/core/types';
 import type {SnapshotPersistDebugMode} from '../../portfolio/core/pnl/snapshotStore';
 import {getPortfolioRuntimeClient} from '../../portfolio/runtime/portfolioRuntime';
+import {clearAssetPnlSummaryCache} from '../../portfolio/ui/assetPnlSummaryCache';
 import {waitForStartupWalletStoreInitForPortfolio} from '../wallet/effects/init/init';
 import {
   isPortfolioRuntimeEligibleWallet,
@@ -1136,6 +1137,7 @@ export const clearPortfolioWithRuntime =
         client,
         walletIds,
       });
+      clearAssetPnlSummaryCache();
     } catch (error: unknown) {
       logManager.warn(
         '[portfolio] Failed clearing runtime portfolio storage: ' +

@@ -31,7 +31,10 @@ import {
   canNavigateToExchangeRateForAssetRowItem,
 } from '../../../../utils/portfolio/assets';
 import {createSupportedCurrencyOptionLookup} from '../../../../utils/portfolio/supportedCurrencyOptionsLookup';
-import {resolveAssetRowDisplayPresentation} from './assetRowLoading';
+import {
+  type AssetRowPresentationResetToken,
+  resolveAssetRowDisplayPresentation,
+} from './assetRowLoading';
 
 const supportedCurrencyOptionLookup = createSupportedCurrencyOptionLookup(
   SupportedCurrencyOptions,
@@ -132,6 +135,7 @@ interface Props {
   isPnlLoading?: boolean;
   isPopulateLoading?: boolean;
   forceSkeleton?: boolean;
+  presentationResetToken?: AssetRowPresentationResetToken;
   img?: SupportedCurrencyOption['img'];
   imgSrc?: ImageRequireSource;
 }
@@ -143,6 +147,7 @@ const AssetRow: React.FC<Props> = ({
   isPnlLoading,
   isPopulateLoading,
   forceSkeleton,
+  presentationResetToken,
   img,
   imgSrc,
 }) => {
@@ -151,17 +156,31 @@ const AssetRow: React.FC<Props> = ({
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const rowLoading = !!(isPnlLoading || isPopulateLoading);
   const shouldForceSkeleton = !!forceSkeleton;
-  const lastSettledItemRef = useRef<AssetRowItem | undefined>(undefined);
+  const lastSettledItemRef = useRef<
+    | {
+        item: AssetRowItem;
+        presentationResetToken?: AssetRowPresentationResetToken;
+      }
+    | undefined
+  >(undefined);
   const [loadingDelayElapsed, setLoadingDelayElapsed] = useState(false);
+  const preservedEntry = lastSettledItemRef.current;
+  const preservedItem =
+    preservedEntry?.presentationResetToken === presentationResetToken
+      ? preservedEntry.item
+      : undefined;
 
   useEffect(() => {
     if (!rowLoading) {
-      lastSettledItemRef.current = item;
+      lastSettledItemRef.current = {
+        item,
+        presentationResetToken,
+      };
       setLoadingDelayElapsed(false);
       return;
     }
 
-    if (!lastSettledItemRef.current) {
+    if (!preservedItem) {
       setLoadingDelayElapsed(true);
       return;
     }
@@ -172,15 +191,24 @@ const AssetRow: React.FC<Props> = ({
     }, PRESERVED_ASSET_ROW_LOADING_DELAY_MS);
 
     return () => clearTimeout(timeout);
-  }, [item, rowLoading]);
+  }, [item, presentationResetToken, preservedItem, rowLoading]);
   const {displayItem, shouldShowSkeleton} = useMemo(() => {
     return resolveAssetRowDisplayPresentation({
       item,
-      preservedItem: lastSettledItemRef.current,
+      preservedItem,
+      preservedItemResetToken: preservedEntry?.presentationResetToken,
+      presentationResetToken,
       isLoading: rowLoading,
       loadingDelayElapsed,
     });
-  }, [item, loadingDelayElapsed, rowLoading]);
+  }, [
+    item,
+    loadingDelayElapsed,
+    preservedEntry?.presentationResetToken,
+    preservedItem,
+    presentationResetToken,
+    rowLoading,
+  ]);
   const option = useMemo(() => {
     return supportedCurrencyOptionLookup.getOption({
       currencyAbbreviation: displayItem.currencyAbbreviation,

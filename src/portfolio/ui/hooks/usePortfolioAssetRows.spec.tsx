@@ -7,6 +7,7 @@ import {
 import type {GainLossMode} from '../../../utils/portfolio/assets';
 import {
   buildAssetPnlSummaryIdentityFromViewModelQuery,
+  clearAssetPnlSummaryCache,
   seedAssetPnlSummaryCache,
 } from '../assetPnlSummaryCache';
 import {
@@ -585,6 +586,69 @@ describe('usePortfolioAssetRows', () => {
       ]);
     });
     expect(mockRunPortfolioBalanceChartViewModelQuery).not.toHaveBeenCalled();
+  });
+
+  it('does not preserve visible PnL rows after the summary cache is cleared', async () => {
+    const scope = makeScope();
+    const queryArgs = {
+      wallets: scope.storedWallets,
+      quoteCurrency: scope.quoteCurrency,
+      timeframe: '1D',
+      currentRatesByAssetId: scope.currentRatesByAssetId,
+      dataRevisionSig: `committed-1|${scope.storedWalletRequestSig}`,
+      walletIds: ['btc-wallet'],
+      balanceOffset: 0,
+      asOfMs: scope.asOfMs,
+      summaryCacheRevisionSig: getTestSummaryCacheRevisionSig({
+        storedWallets: scope.storedWallets,
+        quoteCurrency: scope.quoteCurrency,
+        timeframe: '1D',
+      }),
+    };
+    const identity = buildAssetPnlSummaryIdentityFromViewModelQuery(
+      queryArgs as any,
+    );
+    seedAssetPnlSummaryCache({
+      identity: identity!,
+      viewModel: makeViewModel({
+        queryArgs,
+        pnlFiat: 4.25,
+        pnlPercent: 2.1,
+      }),
+    });
+    mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
+      () => new Promise(() => undefined),
+    );
+
+    render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          deltaFiat: '+$4.25',
+          deltaPercent: '+2.10%',
+          hasPnl: true,
+          showScopedPnlLoading: false,
+        }),
+      ]);
+    });
+    const previousResetToken = latestResult?.presentationResetToken;
+
+    act(() => {
+      clearAssetPnlSummaryCache();
+    });
+
+    await waitFor(() => {
+      expect(latestResult?.presentationResetToken).not.toBe(previousResetToken);
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          hasPnl: false,
+          showScopedPnlLoading: true,
+        }),
+      ]);
+    });
   });
 
   it('uses a detail-chart seeded refreshed summary after focus refresh updates historical deps', async () => {

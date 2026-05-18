@@ -115,6 +115,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     visibleItems,
     isFiatLoading: isPnlLoading,
     isPopulateLoadingByKey,
+    presentationResetToken,
   } = usePortfolioAssetRows({
     gainLossMode,
     keyId,
@@ -262,6 +263,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
           keyId={keyId}
           isPnlLoading={isRowPnlLoading}
           isPopulateLoading={isRowPopulateLoading}
+          presentationResetToken={presentationResetToken}
           img={img}
           imgSrc={imgSrc}
         />
@@ -273,6 +275,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
       isPnlLoading,
       isPopulateLoadingByKey,
       keyId,
+      presentationResetToken,
       populateInProgress,
     ],
   );

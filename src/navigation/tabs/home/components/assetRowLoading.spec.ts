@@ -141,6 +141,23 @@ describe('resolveAssetRowDisplayPresentation', () => {
     });
   });
 
+  it('does not preserve stale PnL across a presentation reset', () => {
+    expect(
+      resolveAssetRowDisplayPresentation({
+        item: currentItem,
+        preservedItem,
+        presentationResetToken: 2,
+        preservedItemResetToken: 1,
+        isLoading: true,
+        loadingDelayElapsed: false,
+      }),
+    ).toEqual({
+      displayItem: currentItem,
+      shouldShowSkeleton: true,
+      usingPreservedItem: false,
+    });
+  });
+
   it('shows the skeleton after the loading delay elapses', () => {
     expect(
       resolveAssetRowDisplayPresentation({

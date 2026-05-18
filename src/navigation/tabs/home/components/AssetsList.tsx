@@ -5,6 +5,7 @@ import AssetRow from './AssetRow';
 import {AssetRowItem} from '../../../../utils/portfolio/assets';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 import {
+  type AssetRowPresentationResetToken,
   getAssetRowPnlLoading,
   getAssetRowPopulateLoading,
   shouldForceAssetListSkeleton,
@@ -19,6 +20,7 @@ interface Props {
   isPnlLoading?: boolean;
   populateInProgress?: boolean;
   isPopulateLoadingByKey?: Record<string, boolean>;
+  presentationResetToken?: AssetRowPresentationResetToken;
   forceSkeleton?: boolean;
 }
 
@@ -27,6 +29,7 @@ const AssetsList: React.FC<Props> = ({
   isPnlLoading,
   populateInProgress,
   isPopulateLoadingByKey,
+  presentationResetToken,
   forceSkeleton,
 }) => {
   const {getAssetIconData} = useAssetIconResolver();
@@ -59,6 +62,7 @@ const AssetsList: React.FC<Props> = ({
             isLast={index === items.length - 1}
             isPnlLoading={isRowPnlLoading}
             isPopulateLoading={isRowPopulateLoading}
+            presentationResetToken={presentationResetToken}
             forceSkeleton={shouldForceSkeletonMode}
             img={img}
             imgSrc={imgSrc}

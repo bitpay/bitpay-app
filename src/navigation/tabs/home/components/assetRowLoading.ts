@@ -1,5 +1,7 @@
 import type {AssetRowItem} from '../../../../utils/portfolio/assets';
 
+export type AssetRowPresentationResetToken = string | number;
+
 export function getAssetRowPopulateLoading(args: {
   populateInProgress?: boolean;
   showPnlPlaceholder?: boolean;
@@ -29,6 +31,8 @@ export function shouldForceAssetListSkeleton(args: {
 export function resolveAssetRowDisplayPresentation(args: {
   item: AssetRowItem;
   preservedItem?: AssetRowItem;
+  presentationResetToken?: AssetRowPresentationResetToken;
+  preservedItemResetToken?: AssetRowPresentationResetToken;
   isLoading: boolean;
   loadingDelayElapsed: boolean;
 }): {
@@ -36,7 +40,9 @@ export function resolveAssetRowDisplayPresentation(args: {
   shouldShowSkeleton: boolean;
   usingPreservedItem: boolean;
 } {
-  const hasPreservedItem = !!args.preservedItem;
+  const hasPreservedItem =
+    !!args.preservedItem &&
+    args.preservedItemResetToken === args.presentationResetToken;
   const hasPnlScopeKeys =
     typeof args.item.pnlScopeKey === 'string' ||
     typeof args.preservedItem?.pnlScopeKey === 'string';

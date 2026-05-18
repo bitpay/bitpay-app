@@ -114,6 +114,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     isFiatLoading: isPnlLoading,
     isPopulateLoadingByKey,
     hasAnyPortfolioData,
+    presentationResetToken,
   } = usePortfolioAssetRows({
     gainLossMode,
     enabled,
@@ -236,6 +237,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
         isPnlLoading={isPnlLoading}
         populateInProgress={!!portfolio.populateStatus?.inProgress}
         isPopulateLoadingByKey={isPopulateLoadingByKey}
+        presentationResetToken={presentationResetToken}
       />
 
       <ButtonContainer>
