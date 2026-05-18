@@ -224,8 +224,8 @@ export function MoonpayEmbeddedCredentialManager() {
             reqData.phoneNumber = user.phone;
             reqData.email = user.email;
           }
-          const data: MoonpayCreateSessionData =
-            await selectedWallet.moonpayCreateSession(reqData);
+          const _data: any = await selectedWallet.moonpayCreateSession(reqData);
+          const data: MoonpayCreateSessionData = _data?.body ?? _data;
 
           if (!data?.sessionToken) {
             if (!cancelled) {

@@ -245,7 +245,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     ['NY', 'WA'].includes(locationData?.stateShortCode || '');
   const userFromNYorWA =
     user?.country === 'US' && ['NY', 'WA'].includes(user?.state || '');
-  const isNYorWA: boolean = locatedInNYorWA || userFromNYorWA || true;
+  const isNYorWA: boolean = locatedInNYorWA || userFromNYorWA;
 
   const paymentTimeControl = (expires: string | number): void => {
     const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
