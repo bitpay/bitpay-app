@@ -9,6 +9,18 @@ export type ChangeRowData = {
   rangeLabel?: string;
 };
 
+const formatBalanceHistoryPnlChange = (
+  value: number,
+  quoteCurrency: string,
+): string => {
+  const normalizedValue = value === 0 ? 0 : value;
+
+  return formatFiatAmount(normalizedValue, quoteCurrency, {
+    ...(normalizedValue === 0 ? {} : {customPrecision: 'minimal' as const}),
+    currencyDisplay: 'symbol',
+  });
+};
+
 type SeriesLike = Pick<
   HydratedBalanceChartSeries,
   'analysisPoints' | 'pointByTimestamp'
@@ -60,13 +72,9 @@ export const buildBalanceHistoryChartChangeRowData = (args: {
 
   return {
     percent: args.displayedAnalysisPoint.totalPnlPercent ?? 0,
-    deltaFiatFormatted: formatFiatAmount(
+    deltaFiatFormatted: formatBalanceHistoryPnlChange(
       args.displayedAnalysisPoint.totalPnlChange ?? 0,
       args.quoteCurrency,
-      {
-        customPrecision: 'minimal',
-        currencyDisplay: 'symbol',
-      },
     ),
     rangeLabel: args.label,
   };
