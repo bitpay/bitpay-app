@@ -1764,6 +1764,26 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
   });
 
+  it('app launch marks the initial baseline complete for zero-balance no-history decisions', async () => {
+    const state = makeInitialBaselineState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            reason: 'zero_balance_no_history',
+          }),
+        ],
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectInitialBaselineCompleteAction(dispatched);
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+  });
+
   it('app launch marks the initial baseline complete and reports invalid-decimals no-op decisions', async () => {
     const state = makeInitialBaselineState();
     const {dispatch, dispatched} = makeStore(state);

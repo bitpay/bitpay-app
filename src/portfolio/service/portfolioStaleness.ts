@@ -23,6 +23,7 @@ export type PortfolioSnapshotBalanceMismatch = {
 export type PortfolioPopulateDecisionReason =
   | 'missing_index'
   | 'missing_snapshot'
+  | 'zero_balance_no_history'
   | 'invalid_snapshot_balance'
   | 'balance_mismatch'
   | 'unchanged_balance_mismatch'
@@ -313,6 +314,19 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
 
   const latestSnapshot = await args.client.getLatestSnapshot({walletId});
   if (!latestSnapshot) {
+    const liveAtomic = getWalletLiveAtomicBalance({
+      wallet: args.wallet,
+      unitDecimals: args.unitDecimals,
+    });
+    if (liveAtomic === 0n) {
+      return buildPortfolioPopulateDecision(
+        walletId,
+        false,
+        'zero_balance_no_history',
+        {index},
+      );
+    }
+
     return buildPortfolioPopulateDecision(walletId, true, 'missing_snapshot', {
       index,
     });

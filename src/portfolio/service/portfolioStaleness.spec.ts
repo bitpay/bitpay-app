@@ -138,6 +138,55 @@ describe('portfolioStaleness', () => {
     });
   });
 
+  it('skips populate when an indexed wallet has no snapshots and zero live balance', async () => {
+    const client = decisionClient({latestSnapshot: null});
+    const zeroBalanceWallet = {
+      ...wallet,
+      balance: {
+        ...wallet.balance,
+        sat: 0,
+        satConfirmed: 0,
+        satPending: 0,
+      },
+    };
+
+    const decision = await getWalletDecision(client, {
+      wallet: zeroBalanceWallet,
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: false,
+      reason: 'zero_balance_no_history',
+      index: {walletId: 'wallet-1'},
+      latestSnapshot: null,
+    });
+  });
+
+  it('still populates first-time zero-balance wallets with no snapshot index', async () => {
+    const client = decisionClient({snapshotIndex: null});
+    const zeroBalanceWallet = {
+      ...wallet,
+      balance: {
+        ...wallet.balance,
+        sat: 0,
+        satConfirmed: 0,
+        satPending: 0,
+      },
+    };
+
+    const decision = await getWalletDecision(client, {
+      wallet: zeroBalanceWallet,
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'missing_index',
+    });
+    expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+  });
+
   it('marks alphabetic snapshot balance strings as invalid', async () => {
     const latestSnapshot = snapshot('not-a-balance');
     const client = decisionClient({latestSnapshot});

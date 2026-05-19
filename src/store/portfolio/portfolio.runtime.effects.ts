@@ -727,6 +727,7 @@ const isSettledInitialBaselineNoopDecision = (
 ): boolean =>
   decision.reason === 'up_to_date' ||
   decision.reason === 'unchanged_balance_mismatch' ||
+  decision.reason === 'zero_balance_no_history' ||
   decision.reason === 'invalid_history' ||
   decision.reason === 'invalid_decimals' ||
   decision.reason === 'excessive_balance_mismatch';
