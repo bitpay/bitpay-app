@@ -88,6 +88,23 @@ const flatNonZeroPoints = [
   {date: new Date(2_000), value: 42},
 ];
 
+const findFirstPointGuideLineContainer = (
+  renderer: TestRenderer.ReactTestRenderer,
+) =>
+  renderer.root.findAll(node => {
+    const style = node.props.style;
+    return (
+      node.props.pointerEvents === 'none' &&
+      Array.isArray(style) &&
+      style.some(
+        styleItem =>
+          styleItem &&
+          styleItem.position === 'absolute' &&
+          styleItem.height === 4,
+      )
+    );
+  })[0];
+
 describe('InteractiveLineChart', () => {
   beforeEach(() => {
     mockLatestLineGraphProps = undefined;
@@ -243,19 +260,7 @@ describe('InteractiveLineChart', () => {
     );
     expect(guideLines.length).toBeGreaterThan(0);
 
-    const guideLineContainer = renderer.root.findAll(node => {
-      const style = node.props.style;
-      return (
-        node.props.pointerEvents === 'none' &&
-        Array.isArray(style) &&
-        style.some(
-          styleItem =>
-            styleItem &&
-            styleItem.position === 'absolute' &&
-            styleItem.height === 4,
-        )
-      );
-    })[0];
+    const guideLineContainer = findFirstPointGuideLineContainer(renderer);
     expect(guideLineContainer?.props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({top: 204})]),
     );
@@ -321,19 +326,7 @@ describe('InteractiveLineChart', () => {
       });
     });
 
-    const guideLineContainer = renderer.root.findAll(node => {
-      const style = node.props.style;
-      return (
-        node.props.pointerEvents === 'none' &&
-        Array.isArray(style) &&
-        style.some(
-          styleItem =>
-            styleItem &&
-            styleItem.position === 'absolute' &&
-            styleItem.height === 4,
-        )
-      );
-    })[0];
+    const guideLineContainer = findFirstPointGuideLineContainer(renderer);
     expect(guideLineContainer?.props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({opacity: 0.25})]),
     );
@@ -363,19 +356,7 @@ describe('InteractiveLineChart', () => {
       });
     });
 
-    const guideLineContainer = renderer.root.findAll(node => {
-      const style = node.props.style;
-      return (
-        node.props.pointerEvents === 'none' &&
-        Array.isArray(style) &&
-        style.some(
-          styleItem =>
-            styleItem &&
-            styleItem.position === 'absolute' &&
-            styleItem.height === 4,
-        )
-      );
-    })[0];
+    const guideLineContainer = findFirstPointGuideLineContainer(renderer);
     expect(guideLineContainer?.props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({top: 108})]),
     );
@@ -418,19 +399,7 @@ describe('InteractiveLineChart', () => {
       expect.objectContaining({duration: 260}),
     );
 
-    const guideLineContainer = renderer.root.findAll(node => {
-      const style = node.props.style;
-      return (
-        node.props.pointerEvents === 'none' &&
-        Array.isArray(style) &&
-        style.some(
-          styleItem =>
-            styleItem &&
-            styleItem.position === 'absolute' &&
-            styleItem.height === 4,
-        )
-      );
-    })[0];
+    const guideLineContainer = findFirstPointGuideLineContainer(renderer);
     expect(guideLineContainer?.props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({top: 204})]),
     );

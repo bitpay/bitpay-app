@@ -27,7 +27,10 @@ import {
 } from '../../utils/portfolio/chartCache';
 import {useStableBalanceHistoryChartAxisLabels} from './useStableBalanceHistoryChartAxisLabels';
 import {usePortfolioBalanceChartScope} from '../../portfolio/ui/hooks/usePortfolioBalanceChartScope';
-import useBalanceChartDisplayModel from './useBalanceChartDisplayModel';
+import useBalanceChartDisplayModel, {
+  type BalanceChartCallbackAnalysisPoint,
+} from './useBalanceChartDisplayModel';
+import type {ChangeRowData} from './balanceHistoryChartSelection';
 
 const ZERO_BALANCE_AXIS_LABEL_FADE_MS = 180;
 
@@ -55,22 +58,10 @@ export type BalanceHistoryChartProps = {
   timeframeSelectorHorizontalInset?: string;
   timeframeSelectorWidth?: number;
   disablePanGesture?: boolean;
-  onChangeRowData?: (
-    data:
-      | {
-          percent: number;
-          deltaFiatFormatted?: string;
-          rangeLabel?: string;
-        }
-      | undefined,
+  onChangeRowData?: (data: ChangeRowData | undefined) => void;
+  onDisplayedAnalysisPointChange?: (
+    point?: BalanceChartCallbackAnalysisPoint,
   ) => void;
-  onDisplayedAnalysisPointChange?: (point?: {
-    timestamp?: number;
-    totalFiatBalance?: number;
-    totalPnlChange?: number;
-    totalPnlPercent?: number;
-    totalCryptoBalanceFormatted?: string;
-  }) => void;
   onRenderableSeriesChange?: (hasRenderableSeries: boolean) => void;
   axisLabelOpacity?: number | NumberSharedValue;
   onSelectedTimeframeChange?: (timeframe: FiatRateInterval) => void;
@@ -79,14 +70,9 @@ export type BalanceHistoryChartProps = {
 
 const isZeroBalanceSeries = (series?: HydratedBalanceChartSeries): boolean => {
   const points = series?.graphPoints || [];
-  if (points.length < 2) {
-    return false;
-  }
-
-  return points.every(point => {
-    const value = Number(point?.value);
-    return Number.isFinite(value) && value === 0;
-  });
+  return (
+    points.length >= 2 && points.every(point => Number(point?.value) === 0)
+  );
 };
 
 const BalanceHistoryChart = ({
@@ -195,10 +181,9 @@ const BalanceHistoryChart = ({
   const gradientBackgroundColor =
     gradientStartColor || (theme.dark ? 'transparent' : White);
 
-  const timeframeSelectorOpacityIsSharedValue = isNumberSharedValue(
+  const sharedTimeframeSelectorOpacity = isNumberSharedValue(
     timeframeSelectorOpacity,
-  );
-  const sharedTimeframeSelectorOpacity = timeframeSelectorOpacityIsSharedValue
+  )
     ? timeframeSelectorOpacity
     : undefined;
   const timeframeSelectorOpacityNumber =
@@ -217,14 +202,10 @@ const BalanceHistoryChart = ({
     };
   }, [sharedTimeframeSelectorOpacity, timeframeSelectorOpacityNumber]);
 
-  if (!displayModel.hasAnyWallets && !preChartContent) {
-    return null;
-  }
-
   if (
-    !displayModel.hasRenderableSeries &&
-    !displayModel.shouldShowLoader &&
-    !preChartContent
+    !preChartContent &&
+    (!displayModel.hasAnyWallets ||
+      (!displayModel.hasRenderableSeries && !displayModel.shouldShowLoader))
   ) {
     return null;
   }

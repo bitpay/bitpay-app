@@ -18,13 +18,9 @@ export const getSelectedBalanceHistoryAnalysisPoint = (args: {
   selectedPoint?: GraphPoint;
   activeSeries?: SeriesLike;
 }): PnlAnalysisPoint | undefined => {
-  if (!args.selectedPoint || !args.activeSeries) {
-    return undefined;
-  }
-
-  return args.activeSeries.pointByTimestamp.get(
-    args.selectedPoint.date.getTime(),
-  );
+  return args.selectedPoint && args.activeSeries
+    ? args.activeSeries.pointByTimestamp.get(args.selectedPoint.date.getTime())
+    : undefined;
 };
 
 export const getLastBalanceHistoryAnalysisPoint = (
@@ -39,10 +35,8 @@ export const getDisplayedBalanceHistoryAnalysisPoint = (args: {
   activeSeries?: SeriesLike;
 }): PnlAnalysisPoint | undefined => {
   return (
-    getSelectedBalanceHistoryAnalysisPoint({
-      selectedPoint: args.selectedPoint,
-      activeSeries: args.activeSeries,
-    }) || getLastBalanceHistoryAnalysisPoint(args.activeSeries)
+    getSelectedBalanceHistoryAnalysisPoint(args) ||
+    getLastBalanceHistoryAnalysisPoint(args.activeSeries)
   );
 };
 
@@ -54,21 +48,19 @@ export const buildBalanceHistoryChartChangeRowData = (args: {
   quoteCurrency: string;
   label?: string;
 }): ChangeRowData | undefined => {
-  if (!args.displayedAnalysisPoint) {
-    return undefined;
-  }
-
-  return {
-    percent: args.displayedAnalysisPoint.totalPnlPercent ?? 0,
-    deltaFiatFormatted: formatFiatAmount(
-      args.displayedAnalysisPoint.totalPnlChange ?? 0,
-      args.quoteCurrency,
-      {
-        currencyDisplay: 'symbol',
-      },
-    ),
-    rangeLabel: args.label,
-  };
+  return args.displayedAnalysisPoint
+    ? {
+        percent: args.displayedAnalysisPoint.totalPnlPercent ?? 0,
+        deltaFiatFormatted: formatFiatAmount(
+          args.displayedAnalysisPoint.totalPnlChange ?? 0,
+          args.quoteCurrency,
+          {
+            currencyDisplay: 'symbol',
+          },
+        ),
+        rangeLabel: args.label,
+      }
+    : undefined;
 };
 
 export const getSelectedBalanceHistoryValue = (args: {

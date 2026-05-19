@@ -45,6 +45,32 @@ const mockUpdatedOneDayPoint = {date: new Date(3_000), value: 115};
 const mockUpdatedOneDayEndPoint = {date: new Date(3_500), value: 125};
 const mockZeroBalancePoint = {date: new Date(4_000), value: 0};
 const mockZeroBalanceEndPoint = {date: new Date(4_500), value: 0};
+const mockWallets = (id = 'wallet-1') => [{id} as any];
+const balanceHistoryChart = (
+  props: Partial<React.ComponentProps<typeof BalanceHistoryChart>> = {},
+) => (
+  <BalanceHistoryChart wallets={mockWallets()} quoteCurrency="USD" {...props} />
+);
+const mockChartScope = (overrides: Record<string, any> = {}) => ({
+  asOfMs: 1234,
+  chartDataRevisionSig: 'chart-rev',
+  currentRatesByAssetId: {},
+  currentRatesSignature: 'rates-rev',
+  currentSpotRatesByRateKey: {},
+  currentSpotRatesSignature: 'spot-rev',
+  quoteCurrency: 'USD',
+  scopeId: 'scope-1',
+  sortedWalletIds: ['wallet-1'],
+  storedWalletRequestSig: 'wallet-req',
+  storedWallets: [
+    {
+      summary: {
+        walletId: 'wallet-1',
+      },
+    },
+  ],
+  ...overrides,
+});
 
 type MockSeriesPoint = {
   point: {date: Date; value: number};
@@ -408,25 +434,7 @@ describe('BalanceHistoryChart', () => {
       };
     });
     mockUsePortfolioBalanceChartScope.mockReset();
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
+    mockUsePortfolioBalanceChartScope.mockReturnValue(mockChartScope());
     mockRunPortfolioBalanceChartViewModelQuery.mockReset();
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockOneDaySeries,
@@ -440,15 +448,7 @@ describe('BalanceHistoryChart', () => {
   it('uses the animated graph renderer on the initial render', async () => {
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -461,15 +461,7 @@ describe('BalanceHistoryChart', () => {
   it('renders a synthetic zero series when requested for an empty history scope', async () => {
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          renderZeroBalanceWhenNoSnapshots
-        />,
+        balanceHistoryChart({renderZeroBalanceWhenNoSnapshots: true}),
       );
     });
 
@@ -490,15 +482,7 @@ describe('BalanceHistoryChart', () => {
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -519,15 +503,7 @@ describe('BalanceHistoryChart', () => {
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -557,15 +533,7 @@ describe('BalanceHistoryChart', () => {
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -587,15 +555,7 @@ describe('BalanceHistoryChart', () => {
   it('commits a runtime series without dispatching chart state updates', async () => {
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -608,16 +568,7 @@ describe('BalanceHistoryChart', () => {
 
   it('renders a runtime series for default no-loader callers', async () => {
     await act(async () => {
-      TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-        />,
-      );
+      TestRenderer.create(balanceHistoryChart());
     });
 
     expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
@@ -637,15 +588,7 @@ describe('BalanceHistoryChart', () => {
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -687,15 +630,7 @@ describe('BalanceHistoryChart', () => {
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -740,38 +675,11 @@ describe('BalanceHistoryChart', () => {
 
   it('keeps the previous series visible and shows the delayed loader while a pending historical timeframe hydrates', async () => {
     jest.useFakeTimers();
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
 
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -822,17 +730,7 @@ describe('BalanceHistoryChart', () => {
     });
 
     await act(async () => {
-      renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
-      );
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
     });
 
     expect(latestInteractiveLineChartProps.isLoading).toBe(false);
@@ -857,15 +755,7 @@ describe('BalanceHistoryChart', () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -881,17 +771,7 @@ describe('BalanceHistoryChart', () => {
 
     mockHistoricalRateCacheLoading = true;
     await act(async () => {
-      renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
-      );
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
     });
 
     await act(async () => {
@@ -906,17 +786,7 @@ describe('BalanceHistoryChart', () => {
 
     mockHistoricalRateCacheLoading = false;
     await act(async () => {
-      renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
-      );
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
     });
 
     expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(2);
@@ -935,15 +805,7 @@ describe('BalanceHistoryChart', () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -952,38 +814,17 @@ describe('BalanceHistoryChart', () => {
     );
     expect(latestInteractiveLineChartProps.isLoading).toBe(false);
 
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1235,
-      chartDataRevisionSig: 'chart-rev-2',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev-2',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev-2',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
+    mockUsePortfolioBalanceChartScope.mockReturnValue(
+      mockChartScope({
+        asOfMs: 1235,
+        chartDataRevisionSig: 'chart-rev-2',
+        currentRatesSignature: 'rates-rev-2',
+        currentSpotRatesSignature: 'spot-rev-2',
+      }),
+    );
 
     await act(async () => {
-      renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
-      );
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
     });
 
     expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(2);
@@ -1021,15 +862,7 @@ describe('BalanceHistoryChart', () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -1037,37 +870,22 @@ describe('BalanceHistoryChart', () => {
       mockOneDaySeries.graphPoints,
     );
 
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1235,
-      chartDataRevisionSig: 'chart-rev-eur',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev-eur',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev-eur',
-      quoteCurrency: 'EUR',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
+    mockUsePortfolioBalanceChartScope.mockReturnValue(
+      mockChartScope({
+        asOfMs: 1235,
+        chartDataRevisionSig: 'chart-rev-eur',
+        currentRatesSignature: 'rates-rev-eur',
+        currentSpotRatesSignature: 'spot-rev-eur',
+        quoteCurrency: 'EUR',
+      }),
+    );
 
     await act(async () => {
       renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="EUR"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({
+          quoteCurrency: 'EUR',
+          showLoaderWhenNoSnapshots: true,
+        }),
       );
     });
 
@@ -1090,15 +908,7 @@ describe('BalanceHistoryChart', () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -1106,37 +916,31 @@ describe('BalanceHistoryChart', () => {
       mockOneDaySeries.graphPoints,
     );
 
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1235,
-      chartDataRevisionSig: 'chart-rev-wallet-2',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev-wallet-2',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev-wallet-2',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-2',
-      sortedWalletIds: ['wallet-2'],
-      storedWalletRequestSig: 'wallet-req-2',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-2',
+    mockUsePortfolioBalanceChartScope.mockReturnValue(
+      mockChartScope({
+        asOfMs: 1235,
+        chartDataRevisionSig: 'chart-rev-wallet-2',
+        currentRatesSignature: 'rates-rev-wallet-2',
+        currentSpotRatesSignature: 'spot-rev-wallet-2',
+        scopeId: 'scope-2',
+        sortedWalletIds: ['wallet-2'],
+        storedWalletRequestSig: 'wallet-req-2',
+        storedWallets: [
+          {
+            summary: {
+              walletId: 'wallet-2',
+            },
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
 
     await act(async () => {
       renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-2',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({
+          wallets: mockWallets('wallet-2'),
+          showLoaderWhenNoSnapshots: true,
+        }),
       );
     });
 
@@ -1157,40 +961,15 @@ describe('BalanceHistoryChart', () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
       deferred.promise,
     );
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          initialSelectedTimeframe="1W"
-          onChangeRowData={onChangeRowData}
-          onDisplayedAnalysisPointChange={onDisplayedAnalysisPointChange}
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({
+          initialSelectedTimeframe: '1W',
+          onChangeRowData,
+          onDisplayedAnalysisPointChange,
+          showLoaderWhenNoSnapshots: true,
+        }),
       );
     });
 
@@ -1225,38 +1004,11 @@ describe('BalanceHistoryChart', () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
       deferred.promise,
     );
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
 
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -1272,38 +1024,10 @@ describe('BalanceHistoryChart', () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValueOnce({
       __series: mockEquivalentUpdatedOneDaySeries,
     });
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
+    mockUsePortfolioBalanceChartScope.mockReturnValue(mockChartScope());
 
     await act(async () => {
-      renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
-      );
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
     });
 
     expect(latestInteractiveLineChartProps.points).toBe(runtimeGraphPoints);
@@ -1313,15 +1037,7 @@ describe('BalanceHistoryChart', () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -1330,38 +1046,17 @@ describe('BalanceHistoryChart', () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValueOnce({
       __series: mockEquivalentOneDaySeries,
     });
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1235,
-      chartDataRevisionSig: 'chart-rev-2',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev-2',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev-2',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
+    mockUsePortfolioBalanceChartScope.mockReturnValue(
+      mockChartScope({
+        asOfMs: 1235,
+        chartDataRevisionSig: 'chart-rev-2',
+        currentRatesSignature: 'rates-rev-2',
+        currentSpotRatesSignature: 'spot-rev-2',
+      }),
+    );
 
     await act(async () => {
-      renderer.update(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
-      );
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
     });
 
     expect(latestInteractiveLineChartProps.points).toBe(initialGraphPoints);
@@ -1371,40 +1066,15 @@ describe('BalanceHistoryChart', () => {
     const onSelectedBalanceChange = jest.fn();
     const onSelectedTimeframeChange = jest.fn();
     const onSelectionActiveChange = jest.fn();
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          onSelectedBalanceChange={onSelectedBalanceChange}
-          onSelectedTimeframeChange={onSelectedTimeframeChange}
-          onSelectionActiveChange={onSelectionActiveChange}
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({
+          onSelectedBalanceChange,
+          onSelectedTimeframeChange,
+          onSelectionActiveChange,
+          showLoaderWhenNoSnapshots: true,
+        }),
       );
     });
 
@@ -1434,37 +1104,10 @@ describe('BalanceHistoryChart', () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
       deferred.promise,
     );
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 
@@ -1484,40 +1127,13 @@ describe('BalanceHistoryChart', () => {
         },
       }),
     );
-    mockUsePortfolioBalanceChartScope.mockReturnValue({
-      asOfMs: 1234,
-      chartDataRevisionSig: 'chart-rev',
-      currentRatesByAssetId: {},
-      currentRatesSignature: 'rates-rev',
-      currentSpotRatesByRateKey: {},
-      currentSpotRatesSignature: 'spot-rev',
-      quoteCurrency: 'USD',
-      scopeId: 'scope-1',
-      sortedWalletIds: ['wallet-1'],
-      storedWalletRequestSig: 'wallet-req',
-      storedWallets: [
-        {
-          summary: {
-            walletId: 'wallet-1',
-          },
-        },
-      ],
-    });
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockUpdatedOneDaySeries,
     });
 
     await act(async () => {
       TestRenderer.create(
-        <BalanceHistoryChart
-          wallets={[
-            {
-              id: 'wallet-1',
-            } as any,
-          ]}
-          quoteCurrency="USD"
-          showLoaderWhenNoSnapshots
-        />,
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
       );
     });
 

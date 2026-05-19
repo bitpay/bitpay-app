@@ -233,6 +233,12 @@ interface AccountProposalsProps {
   [key: string]: TransactionProposal[];
 }
 
+const transactionItemLayout = (_data: any, index: number) => ({
+  length: TRANSACTION_ROW_HEIGHT,
+  offset: TRANSACTION_ROW_HEIGHT * index,
+  index,
+});
+
 const BorderBottom = styled.View`
   border-bottom-width: 1px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
@@ -879,28 +885,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return () => subscription.remove();
   }, [key]);
 
-  const keyExtractorAssets = useCallback(
-    (item: AssetsByChainData) => item.id,
-    [],
-  );
-  const keyExtractorTransaction = useCallback(
-    (item: {txid: string; walletId: string}) => `${item.txid}+${item.walletId}`,
-    [],
-  );
-  const pendingTxpsKeyExtractor = useCallback(
-    (item: TransactionProposal) => item.id,
-    [],
-  );
-
-  const getItemLayout = useCallback(
-    (data: any, index: number) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
-
   const listFooterComponentTxsTab = useCallback(() => {
     return (
       <>
@@ -913,30 +897,28 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [isLoading, groupedHistory]);
 
-  const listFooterComponentAssetsTab = () => {
-    return (
-      <>
-        <AddCustomTokenContainer
-          testID="add-custom-token-button"
-          accessibilityLabel="Add custom token"
-          onPress={() => {
-            haptic('soft');
-            if (memorizedAssetsByChainList?.[0].chains?.[0]) {
-              navigation.navigate('AddCustomToken', {
-                key,
-                selectedAccountAddress: accountItem?.receiveAddress,
-                selectedChain: memorizedAssetsByChainList[0].chains[0],
-              });
-            }
-          }}>
-          <BaseText>{t("Don't see your token?")}</BaseText>
-          <Link>{t('Add Custom Token')}</Link>
-        </AddCustomTokenContainer>
+  const listFooterComponentAssetsTab = () => (
+    <>
+      <AddCustomTokenContainer
+        testID="add-custom-token-button"
+        accessibilityLabel="Add custom token"
+        onPress={() => {
+          haptic('soft');
+          if (memorizedAssetsByChainList?.[0].chains?.[0]) {
+            navigation.navigate('AddCustomToken', {
+              key,
+              selectedAccountAddress: accountItem?.receiveAddress,
+              selectedChain: memorizedAssetsByChainList[0].chains[0],
+            });
+          }
+        }}>
+        <BaseText>{t("Don't see your token?")}</BaseText>
+        <Link>{t('Add Custom Token')}</Link>
+      </AddCustomTokenContainer>
 
-        {showArchaxBanner && <ArchaxFooter />}
-      </>
-    );
-  };
+      {showArchaxBanner && <ArchaxFooter />}
+    </>
+  );
 
   useLayoutEffect(() => {
     if (!key) {
@@ -1038,17 +1020,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return account ? account[account.type].merchantIcon : '';
   };
 
-  const getTxDescriptionDetails = (key: string | undefined) => {
-    if (!key) {
-      return undefined;
-    }
-    switch (key) {
-      case 'moonpay':
-        return 'MoonPay';
-      default:
-        return undefined;
-    }
-  };
+  const getTxDescriptionDetails = (key: string | undefined) =>
+    key === 'moonpay' ? 'MoonPay' : undefined;
 
   const goToTransactionDetails = (transaction: any) => {
     const onTxDescriptionChange = () =>
@@ -1446,35 +1419,21 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return buildAssetsByChainList(accountItem, defaultAltCurrency.isoCode);
   }, [key, accountItem, defaultAltCurrency.isoCode]);
 
-  const allocationHasAnyBalance = useMemo(() => {
-    const wallets = (accountItem?.wallets || []) as WalletRowProps[];
-    const filteredWallets = selectedChainFilterOption
-      ? wallets.filter(w => w.chain === selectedChainFilterOption)
-      : wallets;
+  const wallets = (accountItem?.wallets || []) as WalletRowProps[];
+  const filteredWallets = selectedChainFilterOption
+    ? wallets.filter(w => w.chain === selectedChainFilterOption)
+    : wallets;
 
-    return filteredWallets.some(w => {
-      const sat = Number((w as any)?.balance?.sat) || 0;
-      const fiat = Number((w as any)?.fiatBalance) || 0;
-      return sat > 0 || fiat > 0;
-    });
-  }, [accountItem?.wallets, selectedChainFilterOption]);
+  const allocationHasAnyBalance = filteredWallets.some(w => {
+    const sat = Number((w as any)?.balance?.sat) || 0;
+    const fiat = Number((w as any)?.fiatBalance) || 0;
+    return sat > 0 || fiat > 0;
+  });
 
-  const isAllocationLoading = useMemo(() => {
-    if (activeTab !== 'allocation') {
-      return false;
-    }
-
-    if (refreshing) {
-      return true;
-    }
-
-    return allocationHasAnyBalance && !accountAllocationData.rows?.length;
-  }, [
-    activeTab,
-    refreshing,
-    allocationHasAnyBalance,
-    accountAllocationData.rows,
-  ]);
+  const isAllocationLoading =
+    activeTab === 'allocation' &&
+    (refreshing ||
+      (allocationHasAnyBalance && !accountAllocationData.rows?.length));
 
   const lockedBalanceCurrencyAbbreviation =
     accountItem?.wallets?.[1]?.currencyAbbreviation ??
@@ -1783,16 +1742,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     memorizedAssetsByChainList,
   ]);
 
-  const listEmptyComponentForTab = useMemo(() => {
-    return activeTab === 'allocation' ? null : listEmptyComponent;
-  }, [activeTab, listEmptyComponent]);
+  const listEmptyComponentForTab =
+    activeTab === 'allocation' ? null : listEmptyComponent;
 
   const sectionListKeyExtractor = useCallback(
-    (item: any, _index: number) => {
-      return activeTab === 'activity'
-        ? `${item.txid}+${item.walletId}`
-        : item.id;
-    },
+    (item: any, _index: number) =>
+      activeTab === 'activity' ? `${item.txid}+${item.walletId}` : item.id,
     [activeTab],
   );
 
@@ -1841,7 +1796,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           maxToRenderPerBatch: 15,
         })}
         ListEmptyComponent={listEmptyComponentForTab}
-        getItemLayout={getItemLayout}
+        getItemLayout={transactionItemLayout}
       />
 
       <SheetModal

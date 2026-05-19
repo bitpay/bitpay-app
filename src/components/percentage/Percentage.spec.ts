@@ -6,34 +6,27 @@ import {
 
 describe('Percentage', () => {
   it('uses the range-label color for zero changes in light and dark mode', () => {
-    expect(
-      getPercentageColor({
-        percentageDifference: 0,
-        isDarkMode: false,
-      }),
-    ).toBe(getNeutralChangeColor(false));
-
-    expect(
-      getPercentageColor({
-        percentageDifference: 0,
-        isDarkMode: true,
-      }),
-    ).toBe(getNeutralChangeColor(true));
+    for (const isDarkMode of [false, true]) {
+      expect(
+        getPercentageColor({
+          percentageDifference: 0,
+          isDarkMode,
+        }),
+      ).toBe(getNeutralChangeColor(isDarkMode));
+    }
   });
 
   it('keeps non-zero values in gain and loss colors', () => {
-    expect(
-      getPercentageColor({
-        percentageDifference: 1,
-        isDarkMode: false,
-      }),
-    ).toBe(getDifferenceColor(true, false));
-
-    expect(
-      getPercentageColor({
-        percentageDifference: -1,
-        isDarkMode: false,
-      }),
-    ).toBe(getDifferenceColor(false, false));
+    for (const [percentageDifference, isPositive] of [
+      [1, true],
+      [-1, false],
+    ] as const) {
+      expect(
+        getPercentageColor({
+          percentageDifference,
+          isDarkMode: false,
+        }),
+      ).toBe(getDifferenceColor(isPositive, false));
+    }
   });
 });

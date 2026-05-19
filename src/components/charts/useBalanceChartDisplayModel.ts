@@ -34,7 +34,7 @@ type VisibleSeriesState = {
 
 type VisibleSeriesCandidate = Omit<VisibleSeriesState, 'seriesSignature'>;
 
-type BalanceChartCallbackAnalysisPoint = {
+export type BalanceChartCallbackAnalysisPoint = {
   timestamp?: number;
   totalFiatBalance?: number;
   totalPnlChange?: number;
@@ -42,11 +42,7 @@ type BalanceChartCallbackAnalysisPoint = {
   totalCryptoBalanceFormatted?: string;
 };
 
-type BalanceChartCallbackChangeRowData = {
-  percent: number;
-  deltaFiatFormatted?: string;
-  rangeLabel?: string;
-};
+type BalanceChartCallbackChangeRowData = ChangeRowData;
 
 export type UseBalanceChartDisplayModelArgs = {
   scope: PortfolioBalanceChartScope;
@@ -141,35 +137,26 @@ export const areGraphPointsEquivalent = (
     return false;
   }
 
-  for (let index = 0; index < left.length; index++) {
-    if (
-      left[index]?.date?.getTime?.() !== right[index]?.date?.getTime?.() ||
-      left[index]?.value !== right[index]?.value
-    ) {
-      return false;
-    }
-  }
-
-  return true;
+  return left.every(
+    (point, index) =>
+      point?.date?.getTime?.() === right[index]?.date?.getTime?.() &&
+      point?.value === right[index]?.value,
+  );
 };
 
 const preserveGraphPointsWhenEquivalent = (
   previous: HydratedBalanceChartSeries | undefined,
   next: HydratedBalanceChartSeries,
 ): HydratedBalanceChartSeries => {
-  if (
-    !previous ||
+  return !previous ||
     !areGraphPointsEquivalent(previous.graphPoints, next.graphPoints)
-  ) {
-    return next;
-  }
-
-  return {
-    ...next,
-    graphPoints: previous.graphPoints,
-    minPoint: previous.minPoint,
-    maxPoint: previous.maxPoint,
-  };
+    ? next
+    : {
+        ...next,
+        graphPoints: previous.graphPoints,
+        minPoint: previous.minPoint,
+        maxPoint: previous.maxPoint,
+      };
 };
 
 const buildZeroBalanceSeries = (args: {
@@ -240,16 +227,12 @@ export function useBalanceChartDisplayModel({
     storedWalletRequestSig,
     storedWallets,
   } = scope;
-  const hasAnyWallets = useMemo(
-    () =>
-      storedWallets.some(wallet => {
-        const walletId = String(
-          wallet?.walletId || wallet?.summary?.walletId || '',
-        );
-        return !!walletId && !!wallet;
-      }),
-    [storedWallets],
-  );
+  const hasAnyWallets = storedWallets.some(wallet => {
+    const walletId = String(
+      wallet?.walletId || wallet?.summary?.walletId || '',
+    );
+    return !!walletId && !!wallet;
+  });
 
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
     initialSelectedTimeframe,
@@ -322,17 +305,13 @@ export function useBalanceChartDisplayModel({
           prev?.scopeId === candidate.scopeId &&
           prev?.quoteCurrency === candidate.quoteCurrency &&
           prev?.timeframe === candidate.timeframe;
-        const graphPointsEquivalent =
-          sameVisibleOwner &&
-          areGraphPointsEquivalent(
-            prev?.series.graphPoints,
-            candidate.series.graphPoints,
-          );
-
         if (
           prev &&
           sameVisibleOwner &&
-          graphPointsEquivalent &&
+          areGraphPointsEquivalent(
+            prev.series.graphPoints,
+            candidate.series.graphPoints,
+          ) &&
           prev.seriesSignature === candidateSignature
         ) {
           animateNextSeriesCommitRef.current = false;
@@ -371,25 +350,15 @@ export function useBalanceChartDisplayModel({
     enabled: !!committedQueryQuoteCurrency && !renderZeroBalanceWhenNoSnapshots,
   });
 
-  const queryRevisionKey = useMemo(() => {
-    return [
-      scopeId,
-      selectedTimeframe,
-      chartDataRevisionSig,
-      storedWalletRequestSig,
-      currentRatesSignature,
-      currentSpotRatesSignature,
-      historicalRateCacheRevision,
-    ].join('|');
-  }, [
+  const queryRevisionKey = [
+    scopeId,
+    selectedTimeframe,
     chartDataRevisionSig,
+    storedWalletRequestSig,
     currentRatesSignature,
     currentSpotRatesSignature,
     historicalRateCacheRevision,
-    scopeId,
-    selectedTimeframe,
-    storedWalletRequestSig,
-  ]);
+  ].join('|');
 
   const chartQueryArgsRef = useRef({
     wallets: storedWallets,
@@ -617,30 +586,23 @@ export function useBalanceChartDisplayModel({
     );
   }, [balanceOffset, queryRevisionKey, visibleSeries]);
 
-  const rangeLabel = useMemo(
-    () => getRangeLabelForFiatTimeframe(t, visibleTimeframe),
-    [visibleTimeframe, t],
-  );
+  const rangeLabel = getRangeLabelForFiatTimeframe(t, visibleTimeframe);
 
-  const displayedRangeMs = useMemo(() => {
-    const firstTimestamp = visibleSeries?.analysisPoints?.[0]?.timestamp;
-    const lastTimestamp =
-      visibleSeries?.analysisPoints?.[
-        (visibleSeries.analysisPoints?.length || 1) - 1
-      ]?.timestamp;
-
-    return typeof firstTimestamp === 'number' &&
-      typeof lastTimestamp === 'number'
-      ? Math.max(0, lastTimestamp - firstTimestamp)
+  const firstVisibleTimestamp = visibleSeries?.analysisPoints?.[0]?.timestamp;
+  const lastVisibleTimestamp =
+    visibleSeries?.analysisPoints?.[
+      (visibleSeries.analysisPoints?.length || 1) - 1
+    ]?.timestamp;
+  const displayedRangeMs =
+    typeof firstVisibleTimestamp === 'number' &&
+    typeof lastVisibleTimestamp === 'number'
+      ? Math.max(0, lastVisibleTimestamp - firstVisibleTimestamp)
       : undefined;
-  }, [visibleSeries]);
 
-  const displayedAnalysisPoint = useMemo(() => {
-    return getDisplayedBalanceHistoryAnalysisPoint({
-      selectedPoint,
-      activeSeries: visibleSeries,
-    });
-  }, [selectedPoint, visibleSeries]);
+  const displayedAnalysisPoint = getDisplayedBalanceHistoryAnalysisPoint({
+    selectedPoint,
+    activeSeries: visibleSeries,
+  });
 
   const displayedChangeRowData = useMemo<ChangeRowData | undefined>(() => {
     return buildBalanceHistoryChartChangeRowData({

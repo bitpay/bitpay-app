@@ -1,4 +1,3 @@
-import {useMemo} from 'react';
 import {selectHasCompletedFullPortfolioPopulate} from '../../../store/portfolio/portfolio.selectors';
 import type {Wallet} from '../../../store/wallet/wallet.models';
 import {useAppSelector} from '../../../utils/hooks';
@@ -43,41 +42,26 @@ export default function usePortfolioBalanceChartReadiness(args: {
   const hasChartableWallets = chartableWallets.length > 0;
   const baseEnabled = enabled && !args.hideAllBalances && hasChartableWallets;
 
-  const hasCompletedScopePopulate = useMemo(() => {
-    if (!baseEnabled) {
-      return false;
-    }
-
-    if (hasCompletedFullPortfolioPopulate) {
-      return true;
-    }
-
-    return hasCompletedPopulateForWallets({
-      populateStatus,
-      wallets: chartableWallets,
-      requireAllWalletsInScope: true,
-    });
-  }, [
-    baseEnabled,
-    chartableWallets,
-    hasCompletedFullPortfolioPopulate,
-    populateStatus,
-  ]);
+  const hasCompletedScopePopulate =
+    baseEnabled &&
+    (hasCompletedFullPortfolioPopulate ||
+      hasCompletedPopulateForWallets({
+        populateStatus,
+        wallets: chartableWallets,
+        requireAllWalletsInScope: true,
+      }));
   const canCheckSnapshotPresence = baseEnabled && hasCompletedScopePopulate;
   const snapshotPresence = usePortfolioWalletSnapshotPresence({
     wallets: chartableWallets,
     enabled: canCheckSnapshotPresence,
   });
 
-  const isScopePopulateLoading = useMemo(() => {
-    return (
-      baseEnabled &&
-      isPopulateLoadingForWallets({
-        populateStatus,
-        wallets: chartableWallets,
-      })
-    );
-  }, [baseEnabled, chartableWallets, populateStatus]);
+  const isScopePopulateLoading =
+    baseEnabled &&
+    isPopulateLoadingForWallets({
+      populateStatus,
+      wallets: chartableWallets,
+    });
 
   const isSnapshotPresenceLoading =
     canCheckSnapshotPresence &&

@@ -190,33 +190,23 @@ const PortfolioBalanceContent = () => {
     [homeCarouselConfig, keys],
   );
 
-  const visibleKeyIdsSig = useMemo(() => {
-    return visibleKeys
-      .map(key => String(key?.id || ''))
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b))
-      .join(',');
-  }, [visibleKeys]);
+  const visibleKeyIdsSig = visibleKeys
+    .map(key => String(key?.id || ''))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+    .join(',');
 
   const walletsAcrossKeys: Wallet[] = useMemo(() => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keys]);
 
-  const visibleCurrentBalance = useMemo(
-    () =>
-      walletsAcrossKeys.reduce(
-        (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
-        0,
-      ),
-    [walletsAcrossKeys],
+  const visibleCurrentBalance = walletsAcrossKeys.reduce(
+    (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
+    0,
   );
-  const visibleLastDayBalance = useMemo(
-    () =>
-      walletsAcrossKeys.reduce(
-        (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
-        0,
-      ),
-    [walletsAcrossKeys],
+  const visibleLastDayBalance = walletsAcrossKeys.reduce(
+    (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
+    0,
   );
 
   const totalBalanceIncludingCoinbase: number =
@@ -230,13 +220,11 @@ const PortfolioBalanceContent = () => {
     hideAllBalances,
   });
   const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
-  const chartWalletIdsSig = useMemo(() => {
-    return chartWalletsAcrossKeys
-      .map(wallet => String(wallet?.id || ''))
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b))
-      .join(',');
-  }, [chartWalletsAcrossKeys]);
+  const chartWalletIdsSig = chartWalletsAcrossKeys
+    .map(wallet => String(wallet?.id || ''))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+    .join(',');
   const balanceChartsEnabled = balanceChartReadiness.shouldMountBalanceChart;
   const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
   const canCollapseChart =
@@ -403,11 +391,7 @@ const PortfolioBalanceContent = () => {
   });
   const collapseChartAccessibilityLabel = t('Collapse portfolio chart');
   const expandChartAccessibilityLabel = t('Expand portfolio chart');
-  const chartLifecycleKey = useMemo(
-    () =>
-      `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}:${chartWalletIdsSig}`,
-    [chartWalletIdsSig, homeChartRemountNonce, visibleKeyIdsSig],
-  );
+  const chartLifecycleKey = `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}:${chartWalletIdsSig}`;
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartWalletsAcrossKeys,
     quoteCurrency,
@@ -458,15 +442,11 @@ const PortfolioBalanceContent = () => {
       ? balanceChartSurface.selectedBalance
       : totalBalanceIncludingCoinbase;
   const displayedPortfolioBalanceCurrency = defaultAltCurrency.isoCode;
-  const formattedPortfolioBalance = useMemo(() => {
-    return formatFiatAmount(
-      displayedPortfolioBalance,
-      displayedPortfolioBalanceCurrency,
-      {
-        currencyDisplay: 'symbol',
-      },
-    );
-  }, [displayedPortfolioBalance, displayedPortfolioBalanceCurrency]);
+  const formattedPortfolioBalance = formatFiatAmount(
+    displayedPortfolioBalance,
+    displayedPortfolioBalanceCurrency,
+    {currencyDisplay: 'symbol'},
+  );
   const shouldUseCompactPortfolioBalanceText = useMemo(() => {
     return shouldUseCompactFiatAmountText(formattedPortfolioBalance);
   }, [formattedPortfolioBalance]);

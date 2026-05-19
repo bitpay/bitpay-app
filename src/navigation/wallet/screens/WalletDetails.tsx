@@ -343,6 +343,8 @@ const formatSelectedCryptoBalance = (balance: string): string => {
     : balance;
 };
 
+const transactionKeyExtractor = (_item: any, index: number) => index.toString();
+
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -535,15 +537,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ),
   });
 
-  const getAssetOptions = (): Option[] => {
-    const options = [
+  const getAssetOptions = (): Option[] =>
+    [
       createViewOnBlockchainOption(),
       createRequestAmountOption(),
       createShareAddressOption(),
       createWalletSettingsOption(),
     ].filter(Boolean) as Option[];
-    return options;
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -668,16 +668,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       }),
     [chain, currencyAbbreviation, tokenAddress],
   );
-  const chartLineColor = useMemo(() => {
-    const coinColor = assetTheme?.coinColor;
-    if (!coinColor) {
-      return undefined;
-    }
-    return theme.dark && coinColor === Black ? White : coinColor;
-  }, [assetTheme, theme.dark]);
-  const chartGradientBackgroundColor = useMemo(() => {
-    return assetTheme?.gradientBackgroundColor;
-  }, [assetTheme]);
+  const coinColor = assetTheme?.coinColor;
+  const chartLineColor = !coinColor
+    ? undefined
+    : theme.dark && coinColor === Black
+    ? White
+    : coinColor;
+  const chartGradientBackgroundColor = assetTheme?.gradientBackgroundColor;
 
   const [history, setHistory] = useState<any[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
@@ -830,42 +827,38 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
-  const listFooterComponent = () => {
-    return (
-      <>
-        {!groupedHistory?.length ? null : (
-          <View style={{marginBottom: 20}}>
-            <BorderBottom />
-          </View>
-        )}
-        {isLoading ? (
-          <SkeletonContainer>
-            <WalletTransactionSkeletonRow />
-          </SkeletonContainer>
-        ) : null}
-      </>
-    );
-  };
+  const listFooterComponent = () => (
+    <>
+      {!groupedHistory?.length ? null : (
+        <View style={{marginBottom: 20}}>
+          <BorderBottom />
+        </View>
+      )}
+      {isLoading ? (
+        <SkeletonContainer>
+          <WalletTransactionSkeletonRow />
+        </SkeletonContainer>
+      ) : null}
+    </>
+  );
 
-  const listEmptyComponent = () => {
-    return (
-      <>
-        {!isLoading && !errorLoadingTxs && (
-          <EmptyListContainer>
-            <H5>{t("It's a ghost town in here")}</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        )}
+  const listEmptyComponent = () => (
+    <>
+      {!isLoading && !errorLoadingTxs && (
+        <EmptyListContainer>
+          <H5>{t("It's a ghost town in here")}</H5>
+          <GhostSvg style={{marginTop: 20}} />
+        </EmptyListContainer>
+      )}
 
-        {!isLoading && errorLoadingTxs && (
-          <EmptyListContainer>
-            <H5>{t('Could not update transaction history')}</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        )}
-      </>
-    );
-  };
+      {!isLoading && errorLoadingTxs && (
+        <EmptyListContainer>
+          <H5>{t('Could not update transaction history')}</H5>
+          <GhostSvg style={{marginTop: 20}} />
+        </EmptyListContainer>
+      )}
+    </>
+  );
 
   const goToTransactionDetails = (transaction: any) => {
     const onTxDescriptionChange = () => debouncedLoadHistory(true);
@@ -966,12 +959,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
-  const showBalanceDetailsButton = (): boolean => {
-    if (!fullWalletObj) {
-      return false;
-    }
-    return fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
-  };
+  const showBalanceDetailsButton = (): boolean =>
+    !!fullWalletObj &&
+    fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
 
   const viewOnBlockchain = async (withConfirmation?: boolean) => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
@@ -1125,17 +1115,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return account ? account[account.type].merchantIcon : '';
   };
 
-  const getTxDescriptionDetails = (key: string | undefined) => {
-    if (!key) {
-      return undefined;
-    }
-    switch (key) {
-      case 'moonpay':
-        return 'MoonPay';
-      default:
-        return undefined;
-    }
-  };
+  const getTxDescriptionDetails = (key: string | undefined) =>
+    key === 'moonpay' ? 'MoonPay' : undefined;
 
   const renderTransaction = useCallback(({item}) => {
     return (
@@ -1195,11 +1176,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       );
     },
     [needActionPendingTxps, needActionUnsentTxps],
-  );
-
-  const keyExtractor = useCallback(
-    (item, index: number) => index.toString(),
-    [],
   );
 
   const protocolName = getProtocolName(chain, network);
@@ -1573,7 +1549,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           </>
         }
         data={groupedHistory}
-        keyExtractor={keyExtractor}
+        keyExtractor={transactionKeyExtractor}
         renderItem={({item}) => {
           if (typeof item === 'string') {
             return (

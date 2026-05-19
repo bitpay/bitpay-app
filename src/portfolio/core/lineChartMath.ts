@@ -50,9 +50,7 @@ export function normalizeLineChartPoints<TInput, TOutput>(
       ts = prevTs + 1;
     }
 
-    const fallbackValue = normalizedValues.length
-      ? normalizedValues[normalizedValues.length - 1]
-      : 0;
+    const fallbackValue = normalizedValues[normalizedValues.length - 1] ?? 0;
     const value = toFiniteNumber(options.getValue(src, i), fallbackValue);
 
     normalized.push(

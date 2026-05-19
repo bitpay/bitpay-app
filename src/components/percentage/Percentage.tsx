@@ -41,12 +41,8 @@ export interface PercentageProps {
   fractionDigits?: number;
 }
 
-export const getDifferenceColor = (
-  isPositive: boolean,
-  isDarkMode: boolean,
-) => {
-  return isPositive ? (isDarkMode ? '#00954F' : '#004D27') : '#DA3636';
-};
+export const getDifferenceColor = (isPositive: boolean, isDarkMode: boolean) =>
+  isPositive ? (isDarkMode ? '#00954F' : '#004D27') : '#DA3636';
 
 export const getPercentageColor = ({
   percentageDifference,
@@ -54,17 +50,10 @@ export const getPercentageColor = ({
 }: {
   percentageDifference: number;
   isDarkMode: boolean;
-}) => {
-  if (!Number.isFinite(percentageDifference)) {
-    return getNeutralChangeColor(isDarkMode);
-  }
-
-  if (percentageDifference === 0) {
-    return getNeutralChangeColor(isDarkMode);
-  }
-
-  return getDifferenceColor(percentageDifference >= 0, isDarkMode);
-};
+}) =>
+  !Number.isFinite(percentageDifference) || percentageDifference === 0
+    ? getNeutralChangeColor(isDarkMode)
+    : getDifferenceColor(percentageDifference >= 0, isDarkMode);
 
 const Percentage = ({
   percentageDifference,
@@ -103,45 +92,38 @@ const Percentage = ({
     }
   }, [locale, fractionDigits]);
   const formattedPriceChange =
-    priceChange === null || priceChange === undefined
-      ? undefined
-      : String(priceChange);
+    priceChange == null ? undefined : String(priceChange);
   const shouldShowPriceChange = Boolean(formattedPriceChange?.length);
   const signPrefix =
     !isFiniteDifference || hideSign ? '' : safeDifference < 0 ? '- ' : '+ ';
-  const formattedPercentageDifference = isFiniteDifference
-    ? formatter.format(Math.abs(safeDifference))
-    : '--';
   const percentageValue = isFiniteDifference
-    ? `${signPrefix}${formattedPercentageDifference}%`
+    ? `${signPrefix}${formatter.format(Math.abs(safeDifference))}%`
     : '--';
   const wrappedPercentageValue = shouldShowPriceChange
     ? `(${percentageValue})`
     : percentageValue;
 
   return (
-    <>
-      <PercentageRow>
-        {!hideArrow && isFiniteDifference && safeDifference > 0 ? (
-          <IncrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {!hideArrow && isFiniteDifference && safeDifference < 0 ? (
-          <DecrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {shouldShowPriceChange ? (
-          <PercentageContainer
-            color={percentageColor}
-            style={[textStyle, {marginRight: 3}]}>
-            {formattedPriceChange}
-          </PercentageContainer>
-        ) : null}
-        <PercentageContainer color={percentageColor} style={textStyle}>
-          {wrappedPercentageValue}
-          {suffix}
+    <PercentageRow>
+      {!hideArrow && isFiniteDifference && safeDifference > 0 ? (
+        <IncrementArrow style={{marginRight: 5}} />
+      ) : null}
+      {!hideArrow && isFiniteDifference && safeDifference < 0 ? (
+        <DecrementArrow style={{marginRight: 5}} />
+      ) : null}
+      {shouldShowPriceChange ? (
+        <PercentageContainer
+          color={percentageColor}
+          style={[textStyle, {marginRight: 3}]}>
+          {formattedPriceChange}
         </PercentageContainer>
-        {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
-      </PercentageRow>
-    </>
+      ) : null}
+      <PercentageContainer color={percentageColor} style={textStyle}>
+        {wrappedPercentageValue}
+        {suffix}
+      </PercentageContainer>
+      {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
+    </PercentageRow>
   );
 };
 

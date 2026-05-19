@@ -386,11 +386,9 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
       hideAllBalances,
     ]);
 
-    const allTimeIsPositive = useMemo(() => {
-      return gainLossSummary.total.available
-        ? gainLossSummary.total.deltaFiat >= 0
-        : true;
-    }, [gainLossSummary.total.available, gainLossSummary.total.deltaFiat]);
+    const allTimeIsPositive = gainLossSummary.total.available
+      ? gainLossSummary.total.deltaFiat >= 0
+      : true;
 
     const todayGainLossText = useMemo(() => {
       if (!gainLossSummary.today.available) {
@@ -425,29 +423,20 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
       hideAllBalances,
     ]);
 
-    const todayIsPositive = useMemo(() => {
-      return gainLossSummary.today.available
-        ? gainLossSummary.today.deltaFiat >= 0
-        : true;
-    }, [gainLossSummary.today.available, gainLossSummary.today.deltaFiat]);
+    const todayIsPositive = gainLossSummary.today.available
+      ? gainLossSummary.today.deltaFiat >= 0
+      : true;
 
-    const showAllTimeGainLossSkeleton = useMemo(() => {
-      return (
-        isPopulateLoading ||
-        (isGainLossSummaryLoading && allTimeGainLossText === null)
-      );
-    }, [allTimeGainLossText, isGainLossSummaryLoading, isPopulateLoading]);
+    const showAllTimeGainLossSkeleton =
+      isPopulateLoading ||
+      (isGainLossSummaryLoading && allTimeGainLossText === null);
 
-    const showTodayGainLossSkeleton = useMemo(() => {
-      return (
-        isPopulateLoading ||
-        (isGainLossSummaryLoading && todayGainLossText === null)
-      );
-    }, [isGainLossSummaryLoading, isPopulateLoading, todayGainLossText]);
+    const showTodayGainLossSkeleton =
+      isPopulateLoading ||
+      (isGainLossSummaryLoading && todayGainLossText === null);
 
-    const showAllTimeGainLossColumn = useMemo(() => {
-      return allTimeGainLossText !== null || showAllTimeGainLossSkeleton;
-    }, [allTimeGainLossText, showAllTimeGainLossSkeleton]);
+    const showAllTimeGainLossColumn =
+      allTimeGainLossText !== null || showAllTimeGainLossSkeleton;
 
     return (
       <>

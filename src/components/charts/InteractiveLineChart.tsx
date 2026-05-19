@@ -101,13 +101,6 @@ type FiniteYRange = ChartYRange & {
   count: number;
 };
 
-const clonePointsForGraph = (
-  points: GraphPoint[],
-  _refreshInputs: readonly [string, number, number],
-): GraphPoint[] => {
-  return points.slice();
-};
-
 const getFiniteYRange = (points: GraphPoint[]): FiniteYRange | undefined => {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
@@ -119,12 +112,8 @@ const getFiniteYRange = (points: GraphPoint[]): FiniteYRange | undefined => {
       continue;
     }
     count += 1;
-    if (value < min) {
-      min = value;
-    }
-    if (value > max) {
-      max = value;
-    }
+    min = Math.min(min, value);
+    max = Math.max(max, value);
   }
 
   return count ? {min, max, count} : undefined;
@@ -136,10 +125,7 @@ const getFlatYRange = (points: GraphPoint[]): ChartYRange | undefined => {
     return undefined;
   }
 
-  const pad =
-    range.min === 0
-      ? GRAPH_DRAWABLE_EPSILON
-      : Math.max(Math.abs(range.min) * 0.001, GRAPH_DRAWABLE_EPSILON);
+  const pad = Math.max(Math.abs(range.min) * 0.001, GRAPH_DRAWABLE_EPSILON);
 
   return {min: range.min - pad, max: range.max + pad};
 };
@@ -199,13 +185,11 @@ const InteractiveLineChart = ({
 
   const strokeScaleIsSharedValue = isNumberSharedValue(strokeScale);
   const sharedStrokeScale = strokeScaleIsSharedValue ? strokeScale : undefined;
-  const firstPointGuideLineOpacityIsSharedValue = isNumberSharedValue(
+  const sharedFirstPointGuideLineOpacity = isNumberSharedValue(
     firstPointGuideLineOpacity,
-  );
-  const sharedFirstPointGuideLineOpacity =
-    firstPointGuideLineOpacityIsSharedValue
-      ? firstPointGuideLineOpacity
-      : undefined;
+  )
+    ? firstPointGuideLineOpacity
+    : undefined;
   const firstPointGuideLineOpacityNumber =
     typeof firstPointGuideLineOpacity === 'number' &&
     Number.isFinite(firstPointGuideLineOpacity)
@@ -237,11 +221,7 @@ const InteractiveLineChart = ({
     const opacity =
       sharedFirstPointGuideLineOpacity?.value ??
       firstPointGuideLineOpacityNumber;
-    if (!Number.isFinite(opacity)) {
-      return 1;
-    }
-
-    return Math.min(1, Math.max(0, opacity));
+    return Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1;
   }, [sharedFirstPointGuideLineOpacity, firstPointGuideLineOpacityNumber]);
 
   // IMPORTANT: react-native-graph's LineGraph is implemented as a composite
@@ -274,14 +254,12 @@ const InteractiveLineChart = ({
       ? compensatedLineThickness
       : effectiveLineThickness /
         Math.pow(safeStrokeScaleNumber, lineThicknessCompensationExponent);
-  const staticLineThicknessForGraph =
-    typeof lineThicknessForGraph === 'number' &&
-    Number.isFinite(lineThicknessForGraph)
-      ? lineThicknessForGraph
-      : effectiveLineThickness;
   const resolvedLineThicknessForGraph = animated
     ? lineThicknessForGraph
-    : staticLineThicknessForGraph;
+    : typeof lineThicknessForGraph === 'number' &&
+      Number.isFinite(lineThicknessForGraph)
+    ? lineThicknessForGraph
+    : effectiveLineThickness;
 
   const firstPointGuideLineAnimatedProps =
     useAnimatedProps<SvgLineAnimatedProps>(() => {
@@ -410,12 +388,7 @@ const InteractiveLineChart = ({
   //   - we regain focus after a theme switch (ensures redraw is visible),
   //   - layout happens after a theme switch (handles detach/reattach cases).
   const pointsForGraph = React.useMemo(
-    () =>
-      clonePointsForGraph(points, [
-        styleSignature,
-        focusRefreshNonce,
-        layoutRefreshNonce,
-      ]),
+    () => points.slice(),
     [points, styleSignature, focusRefreshNonce, layoutRefreshNonce],
   );
   const flatYRange = React.useMemo(
