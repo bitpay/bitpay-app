@@ -40,7 +40,6 @@ import {
   dismissBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
-import MoonpaySellCheckoutSkeleton from '../sell-crypto/screens/MoonpaySellCheckoutSkeleton';
 import {
   PaymentMethod,
   PaymentMethodKey,
@@ -77,11 +76,12 @@ import {MoonpaySettingsProps} from '../../../navigation/tabs/settings/external-s
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
+import MoonpayEmbeddedCheckoutSkeleton from '../components/MoonpayEmbeddedCheckoutSkeleton';
 
 const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms';
 
 // Styled
-export const SellCheckoutContainer = styled.SafeAreaView`
+export const MoonpayEmbeddedCheckoutContainer = styled.SafeAreaView`
   flex: 1;
   margin: 14px;
 `;
@@ -491,7 +491,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   }, [remainingTimeStr, expiredAnalyticSent]);
 
   return (
-    <SellCheckoutContainer>
+    <MoonpayEmbeddedCheckoutContainer>
       <ScrollView ref={scrollViewRef}>
         <HeaderContainer>
           <IconRow>
@@ -511,12 +511,14 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           <Title>
             {formatFiatAmount(Number(offer.fiatAmount), offer.fiatCurrency)}
           </Title>
-          {embeddedQuoteData?.destination ? (
+          {isLoading || !embeddedQuoteData?.destination ? (
+            <MoonpayEmbeddedCheckoutSkeleton context="amount" />
+          ) : (
             <Subtitle>
               {embeddedQuoteData.destination.amount}{' '}
               {embeddedQuoteData.destination.asset.code}
             </Subtitle>
-          ) : null}
+          )}
         </HeaderContainer>
 
         <RowDataContainer>
@@ -575,7 +577,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         </RowDataContainer> 
         <ItemDivisor />*/}
         {isLoading ? (
-          <MoonpaySellCheckoutSkeleton />
+          <MoonpayEmbeddedCheckoutSkeleton context="data" />
         ) : (
           <>
             {embeddedQuoteData?.exchangeRate ? (
@@ -832,7 +834,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           <PoweredByPartner>MoonPay Rails</PoweredByPartner>
         </PoweredByContainer>
       </BottomSection>
-    </SellCheckoutContainer>
+    </MoonpayEmbeddedCheckoutContainer>
   );
 };
 
