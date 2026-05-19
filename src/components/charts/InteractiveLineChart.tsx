@@ -140,9 +140,7 @@ const getFlatYRange = (points: GraphPoint[]): ChartYRange | undefined => {
       ? GRAPH_DRAWABLE_EPSILON
       : Math.max(Math.abs(range.min) * 0.001, GRAPH_DRAWABLE_EPSILON);
 
-  return range.min === 0
-    ? {min: 0, max: pad}
-    : {min: range.min - pad, max: range.max + pad};
+  return {min: range.min - pad, max: range.max + pad};
 };
 
 const InteractiveLineChart = ({

@@ -160,7 +160,7 @@ describe('InteractiveLineChart', () => {
       mockLatestLineGraphProps?.points.map((point: any) => point.value),
     ).toEqual([0, 0]);
     expect(mockLatestLineGraphProps?.range).toEqual({
-      y: {min: 0, max: GRAPH_DRAWABLE_EPSILON},
+      y: {min: -GRAPH_DRAWABLE_EPSILON, max: GRAPH_DRAWABLE_EPSILON},
     });
   });
 
@@ -334,7 +334,7 @@ describe('InteractiveLineChart', () => {
       );
     })[0];
     expect(guideLineContainer?.props.style).toEqual(
-      expect.arrayContaining([expect.objectContaining({top: 204})]),
+      expect.arrayContaining([expect.objectContaining({top: 108})]),
     );
   });
 
