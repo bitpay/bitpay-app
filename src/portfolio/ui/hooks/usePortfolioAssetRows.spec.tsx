@@ -47,6 +47,8 @@ jest.mock('../../../utils/portfolio/assets', () => {
   };
 
   return {
+    UNAVAILABLE_ASSET_ROW_DELTA_FIAT: '—     ',
+    UNAVAILABLE_ASSET_ROW_DELTA_PERCENT: '  —  %',
     buildAssetFiatPriorityByKey: jest.fn(buildPriorityByKey),
     buildWalletIdsByAssetGroupKey: jest.fn((wallets: any[] = []) => {
       const next: Record<string, string[]> = {};
@@ -59,6 +61,14 @@ jest.mock('../../../utils/portfolio/assets', () => {
         next[key] = [...(next[key] || []), id];
       }
       return next;
+    }),
+    formatAssetRowDeltaFiat: jest.fn((delta: number) => {
+      const prefix = delta >= 0 ? '+' : '-';
+      return `${prefix}$${Math.abs(delta).toFixed(2)}`;
+    }),
+    formatAssetRowDeltaPercent: jest.fn((percent: number) => {
+      const prefix = percent >= 0 ? '+' : '-';
+      return `${prefix}${Math.abs(percent).toFixed(2)}%`;
     }),
     getPortfolioWalletCurrencyAbbreviationLower: jest.fn((wallet: any) =>
       String(wallet?.currencyAbbreviation || '').toLowerCase(),

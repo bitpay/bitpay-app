@@ -19,10 +19,14 @@ import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import SearchSvg from '../../../../../assets/img/search.svg';
 
 import {useAppSelector} from '../../../../utils/hooks';
+import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import usePortfolioAssetRows from '../../../../portfolio/ui/hooks/usePortfolioAssetRows';
-import type {
-  AssetRowItem,
-  GainLossMode,
+import {
+  buildAssetPreviewRowItemsFromWallets,
+  getQuoteCurrency,
+  getVisibleWalletsFromKeys,
+  type AssetRowItem,
+  type GainLossMode,
 } from '../../../../utils/portfolio/assets';
 import AssetRow from '../components/AssetRow';
 import AssetsGainLossDropdown from '../components/AssetsGainLossDropdown';
@@ -34,7 +38,6 @@ import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 import {FIAT_RATE_SERIES_CACHED_INTERVALS} from '../../../../store/rate/rate.models';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
-import {getQuoteCurrency} from '../../../../utils/portfolio/assets';
 import {
   getHistoricalRateAssetRequestFromItem,
   type HistoricalRateAssetRequest,
@@ -45,6 +48,7 @@ import {
   getAssetRowPopulateLoading,
 } from '../components/assetRowLoading';
 import useScreenFocusRefreshToken from '../hooks/useScreenFocusRefreshToken';
+import type {Key} from '../../../../store/wallet/wallet.models';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AllAssets'>;
 const LIST_HORIZONTAL_GUTTER = Number.parseInt(ScreenGutter, 10);
@@ -102,7 +106,11 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const commonOptions = useStackScreenOptions(theme);
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const populateInProgress = !!portfolio.populateStatus?.inProgress;
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+  const populateInProgress =
+    showPortfolioValue === true && !!portfolio.populateStatus?.inProgress;
   const {getAssetIconData, getSupportedOption} = useAssetIconResolver();
   const focusRefreshToken = useScreenFocusRefreshToken();
   const keyId = route.params?.keyId;
@@ -111,8 +119,26 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
 
+  const visibleWallets = useMemo(() => {
+    if (keyId && keys[keyId]) {
+      return getVisibleWalletsFromKeys({[keyId]: keys[keyId]});
+    }
+
+    return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+  }, [homeCarouselConfig, keyId, keys]);
+  const legacyVisibleItems = useMemo(() => {
+    if (showPortfolioValue === true) {
+      return [];
+    }
+
+    return buildAssetPreviewRowItemsFromWallets({
+      wallets: visibleWallets,
+      quoteCurrency: defaultAltCurrency.isoCode,
+      includeLegacyLastDayPnl: true,
+    });
+  }, [defaultAltCurrency.isoCode, showPortfolioValue, visibleWallets]);
   const {
-    visibleItems,
+    visibleItems: portfolioVisibleItems,
     isFiatLoading: isPnlLoading,
     isPopulateLoadingByKey,
     presentationResetToken,
@@ -120,7 +146,10 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     gainLossMode,
     keyId,
     externalRefreshToken: focusRefreshToken,
+    enabled: showPortfolioValue === true,
   });
+  const visibleItems =
+    showPortfolioValue === true ? portfolioVisibleItems : legacyVisibleItems;
   const quoteCurrency = getQuoteCurrency({
     portfolioQuoteCurrency: portfolio.quoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
@@ -232,13 +261,15 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
           />
         </SearchInputContainer>
 
-        <AssetsGainLossDropdown
-          value={gainLossMode}
-          onChange={setGainLossMode}
-        />
+        {showPortfolioValue === true ? (
+          <AssetsGainLossDropdown
+            value={gainLossMode}
+            onChange={setGainLossMode}
+          />
+        ) : null}
       </FiltersRow>
     );
-  }, [gainLossMode, query, t, theme.dark]);
+  }, [gainLossMode, query, showPortfolioValue, t, theme.dark]);
 
   const renderItem = useCallback(
     ({item, index}: ListRenderItemInfo<AssetRowItem>) => {

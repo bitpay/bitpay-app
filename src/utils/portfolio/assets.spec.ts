@@ -36,7 +36,12 @@ jest.mock('../helper-methods', () => ({
       currencyAbbreviation: string,
     ) => rates[currencyAbbreviation] || [],
   ),
-  calculatePercentageDifference: jest.fn(() => 0),
+  calculatePercentageDifference: jest.fn(
+    (currentBalance: number, lastDayBalance: number) =>
+      Number(
+        (((currentBalance - lastDayBalance) * 100) / lastDayBalance).toFixed(2),
+      ),
+  ),
   unitStringToAtomicBigInt: jest.fn((value: string, unitDecimals: number) => {
     const [intPartRaw, fracPartRaw = ''] = String(value || '0').split('.');
     const intPart = BigInt(intPartRaw || '0');
@@ -158,6 +163,7 @@ describe('buildAssetPreviewRowItemsFromWallets', () => {
     chain?: string;
     currencyName?: string;
     fiat: number;
+    fiatLastDay?: number;
     crypto: string;
     tokenAddress?: string;
   }): Wallet =>
@@ -170,6 +176,7 @@ describe('buildAssetPreviewRowItemsFromWallets', () => {
       network: 'livenet',
       balance: {
         fiat: args.fiat,
+        fiatLastDay: args.fiatLastDay,
         crypto: args.crypto,
       },
     } as Wallet);
@@ -253,6 +260,56 @@ describe('buildAssetPreviewRowItemsFromWallets', () => {
         tokenAddress: undefined,
         name: 'ETH',
         cryptoAmount: '0.3',
+      }),
+    ]);
+  });
+
+  it('can include legacy 1D PnL from aggregated wallet fiatLastDay balances', () => {
+    const rows = buildAssetPreviewRowItemsFromWallets({
+      wallets: [
+        makeWallet({
+          id: 'btc-1',
+          coin: 'btc',
+          fiat: 100,
+          fiatLastDay: 80,
+          crypto: '1',
+        }),
+        makeWallet({
+          id: 'btc-2',
+          coin: 'btc',
+          fiat: 50,
+          fiatLastDay: 40,
+          crypto: '0.25',
+        }),
+        makeWallet({
+          id: 'doge-1',
+          coin: 'doge',
+          fiat: 25,
+          fiatLastDay: 0,
+          crypto: '100',
+        }),
+      ],
+      quoteCurrency: 'USD',
+      includeLegacyLastDayPnl: true,
+      showScopedPnlLoading: true,
+    });
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        key: 'btc',
+        deltaFiat: '+USD:30.00',
+        deltaPercent: '+25.00%',
+        hasPnl: true,
+        isPositive: true,
+        showScopedPnlLoading: false,
+      }),
+      expect.objectContaining({
+        key: 'doge',
+        deltaFiat: '—     ',
+        deltaPercent: '  —  %',
+        hasPnl: false,
+        showPnlPlaceholder: true,
+        showScopedPnlLoading: false,
       }),
     ]);
   });
