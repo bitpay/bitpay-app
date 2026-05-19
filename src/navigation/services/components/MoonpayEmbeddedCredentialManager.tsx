@@ -230,7 +230,7 @@ export function MoonpayEmbeddedCredentialManager() {
           if (!data?.sessionToken) {
             if (!cancelled) {
               logManager.debug(
-                `MoonpayEmbeddedCredentialManager: session creation failed. No session token returned for user ${userEid}.`,
+                `[MoonpayEmbeddedCredentialManager]: session creation failed. No session token returned for user ${userEid}.`,
               );
               setMoonpayEmbeddedStatus(undefined);
             }
@@ -243,7 +243,7 @@ export function MoonpayEmbeddedCredentialManager() {
         } else {
           if (!cancelled) {
             logManager.debug(
-              `MoonpayEmbeddedCredentialManager: session creation failed. No eligible wallets found for user ${userEid}.`,
+              `[MoonpayEmbeddedCredentialManager]: session creation failed. No eligible wallets found for user ${userEid}.`,
             );
             setMoonpayEmbeddedStatus(undefined);
           }
@@ -251,7 +251,7 @@ export function MoonpayEmbeddedCredentialManager() {
       } catch (err) {
         if (!cancelled) {
           logManager.debug(
-            `MoonpayEmbeddedCredentialManager: session creation failed. ${
+            `[MoonpayEmbeddedCredentialManager]: session creation failed. ${
               err instanceof Error ? err.message : JSON.stringify(err)
             }`,
           );
@@ -298,7 +298,7 @@ export function MoonpayEmbeddedCredentialManager() {
         }}
         onError={error => {
           logManager.error(
-            `MoonpayEmbeddedCredentialManager: reset error [${error.code}] ${error.message}`,
+            `[MoonpayEmbeddedCredentialManager]: reset error [${error.code}] ${error.message}`,
           );
           setRunReset(false);
           setMoonpayEmbeddedStatus(undefined);

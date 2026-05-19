@@ -122,6 +122,7 @@ const Connections = () => {
       navigation.navigate(
         ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
         {
+          context: 'connections',
           user,
           anonymousCredentials: anonymousCreds,
           onConnectAccount: async (

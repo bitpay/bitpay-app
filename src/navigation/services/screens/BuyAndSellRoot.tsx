@@ -2448,6 +2448,9 @@ const BuyAndSellRoot = ({
       if (moonpayEmbeddedEnabled && paymentMethod?.method === 'applePay') {
         const embeddedStatus = getMoonpayEmbeddedStatus();
         const cachedCredentials = getMoonpayEmbeddedCredentials();
+        logger.debug(
+          '[MoonpayEmbeddedBuy] enabled with status: ' + embeddedStatus,
+        );
 
         if (
           embeddedStatus === 'active' &&
@@ -2482,6 +2485,7 @@ const BuyAndSellRoot = ({
             navigation.navigate(
               ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
               {
+                context: 'buyAndSellRoot',
                 user,
                 anonymousCredentials: anonymousCreds,
                 onConnectAccount: async (
@@ -2489,17 +2493,38 @@ const BuyAndSellRoot = ({
                 ) => {
                   setMoonpayEmbeddedCredentials(newCredentials);
                   setMoonpayEmbeddedStatus('active');
+                  logger.debug(
+                    '[MoonpayEmbeddedBuy] Account connected, received new credentials and set status to active.',
+                  );
+
+                  dispatch(
+                    Analytics.track('Requested Crypto Purchase', {
+                      exchange: 'moonpay',
+                      fiatAmount: offer.fiatAmount,
+                      fiatCurrency: offer.fiatCurrency,
+                      paymentMethod: paymentMethod.method,
+                      coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+                      chain: destinationChain?.toLowerCase(),
+                      isEmbedded: true,
+                    }),
+                  );
+
                   continueToMoonpayEmbeddedCheckout(
                     offer,
                     paymentMethod,
                     newCredentials,
                   );
                 },
-                onSkipConnection: async () => {
+                onSkipConnection: async (manualSkip: boolean) => {
                   hasInitializedRef.current = true;
                   setButtonState('loading');
                   setOpeningBrowser(true);
                   navigation.goBack();
+                  logger.debug(
+                    `[MoonpayEmbeddedBuy] ${
+                      manualSkip ? 'User manually skipped' : 'Skipped'
+                    } account connection, falling back to standard Moonpay flow.`,
+                  );
                   await sleep(600);
                   continueToMoonpay(offer, paymentMethod, true);
                 },
@@ -2509,9 +2534,14 @@ const BuyAndSellRoot = ({
             return;
           }
           // Anonymous credentials not yet available — fall through to standard flow
+          logger.debug(
+            '[MoonpayEmbeddedBuy] embedded onboarding required but no anonymous credentials available.',
+          );
         }
-
         // If still checking / unavailable / failed → fall through to standard MoonPay flow
+        logger.debug(
+          `[MoonpayEmbeddedBuy] enabled but not available (status: ${embeddedStatus}). Falling back to standard Moonpay flow.`,
+        );
       }
     }
 

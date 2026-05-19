@@ -408,26 +408,24 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     title?: string,
     actions?: any[],
   ) => {
-    // setIsLoading(false);
-    // hideOngoingProcess();
+    setIsLoading(false);
 
     let msg = getErrorMsgFromError(err);
 
     logger.error('Moonpay error: ' + msg);
 
-    // dispatch(
-    //   Analytics.track('Failed Crypto Sell', {
-    //     exchange: 'moonpay',
-    //     context: 'MoonpayBuyEmbeddedCheckout',
-    //     reasonForFailure: reason || 'unknown',
-    //     errorMsg: errorMsgLog || 'unknown',
-    //     amountFrom: amountExpected || '',
-    //     fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-    //     fromChain: wallet.chain?.toLowerCase() || '',
-    //     fiatAmount: sellOrder?.fiat_receiving_amount || '',
-    //     fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
-    //   }),
-    // );
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'moonpay',
+        context: 'MoonpayBuyEmbeddedCheckout',
+        reason: reason ? `[${reason}]: ${msg}` : msg,
+        paymentMethod: paymentMethod?.method || '',
+        amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+        coin: cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() || '',
+        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+        fiatCurrency: offer?.fiatCurrency || '',
+      }),
+    );
 
     await sleep(700);
     dispatch(
@@ -475,17 +473,18 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
 
   useEffect(() => {
     if (remainingTimeStr === 'expired' && !expiredAnalyticSent) {
-      // dispatch(
-      //   Analytics.track('Failed Crypto Sell', {
-      //     exchange: 'moonpay',
-      //     context: 'MoonpayBuyEmbeddedCheckout',
-      //     reasonForFailure: 'Time to make the payment expired',
-      //     amountFrom: amountExpected || '',
-      //     fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-      //     fiatAmount: sellOrder?.fiat_receiving_amount || '',
-      //     fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
-      //   }),
-      // );
+      dispatch(
+        Analytics.track('Failed Buy Crypto', {
+          exchange: 'moonpay',
+          context: 'MoonpayBuyEmbeddedCheckout',
+          reason: 'Time to make the payment expired',
+          paymentMethod: paymentMethod?.method || '',
+          amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+          coin: cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() || '',
+          chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+          fiatCurrency: offer?.fiatCurrency || '',
+        }),
+      );
       setExpiredAnalyticSent(true);
     }
   }, [remainingTimeStr, expiredAnalyticSent]);

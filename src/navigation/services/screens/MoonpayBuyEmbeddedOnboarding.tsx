@@ -13,7 +13,7 @@ import {
   White,
 } from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch, useLogger} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {AppEffects} from '../../../store/app';
 import WebView, {
   WebViewMessageEvent,
@@ -42,6 +42,9 @@ import {
 } from '../ExternalServicesGroup';
 import MoonpayConnectImage from '../../../components/icons/external-services/moonpay/moonpay-connect';
 import MoonpayConnectIcon from '../../../components/icons/external-services/moonpay/moonpay-connect-icons';
+import {FrameMessage} from '../components/MoonPayWebView';
+import {getErrorString} from '../../../utils/helper-methods';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms_of_use_usa';
 const MOONPAY_PRIVACY_URL = 'https://www.moonpay.com/legal/privacy_policy';
@@ -152,10 +155,11 @@ const WebViewCloseText = styled(BaseText)`
 
 export interface MoonpayBuyEmbeddedOnboardingProps {
   route?: any;
+  context: 'buyAndSellRoot' | 'connections';
   user: User | undefined;
   anonymousCredentials: MoonpayClientCredentials;
   onConnectAccount: (newCredentials: MoonpayClientCredentials) => void;
-  onSkipConnection: () => void;
+  onSkipConnection: (manualSkip: boolean) => void;
 }
 
 const MoonpayBuyEmbeddedOnboarding = ({
@@ -170,7 +174,10 @@ const MoonpayBuyEmbeddedOnboarding = ({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
+  const user = route.params?.user;
+  const context = route.params?.context;
   const anonymousCredentials = route.params?.anonymousCredentials;
   const onConnectAccount = route.params?.onConnectAccount;
   const onSkipConnection = route.params?.onSkipConnection;
@@ -201,7 +208,20 @@ const MoonpayBuyEmbeddedOnboarding = ({
 
   const initConnection = async () => {
     try {
-      logger.debug(`Moonpay initConnection: opening connect frame`);
+      logger.debug(
+        `[MoonpayConnectFrame] initConnection: opening connect frame`,
+      );
+
+      dispatch(
+        Analytics.track('Moonpay Connect Frame: init connection', {
+          user: user?.eid ?? '',
+          context,
+          bitpayIdLocationCountry: user?.country ?? '',
+          bitpayIdLocationState: user?.state ?? '',
+          currentLocationCountry: locationData?.countryShortCode ?? '',
+          currentLocationState: locationData?.stateShortCode ?? '',
+        }),
+      );
 
       // Generate a fresh ephemeral keypair and channelId for the connect frame
       const connectKeyPair = generateKeyPair();
@@ -225,9 +245,7 @@ const MoonpayBuyEmbeddedOnboarding = ({
       }));
     } catch (err) {
       logger.error(
-        `[MoonpayConnectFrame] initConnection failed: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
+        `[MoonpayConnectFrame] initConnection failed: ${getErrorString(err)}`,
       );
       setConnectModalWebView({open: false, url: undefined});
       setOpeningBrowser(false);
@@ -236,7 +254,13 @@ const MoonpayBuyEmbeddedOnboarding = ({
   };
 
   const skipConnection = () => {
-    onSkipConnection ? onSkipConnection() : null;
+    dispatch(
+      Analytics.track('Moonpay Connect Frame: manual skip connection', {
+        user: user?.eid ?? '',
+        context,
+      }),
+    );
+    onSkipConnection ? onSkipConnection(true) : null;
   };
 
   const openUrl = (url: string) => {
@@ -249,7 +273,7 @@ const MoonpayBuyEmbeddedOnboarding = ({
       return;
     }
 
-    let message: any;
+    let message: FrameMessage;
     try {
       message = JSON.parse(rawData);
     } catch {
@@ -297,16 +321,34 @@ const MoonpayBuyEmbeddedOnboarding = ({
         }: {status?: string; credentials?: string; reason?: string} =
           payload ?? {};
 
+        dispatch(
+          Analytics.track('Moonpay Connect Frame: connection complete', {
+            user: user?.eid ?? '',
+            context,
+            status: status ?? 'unknown',
+            reason: reason ?? 'none',
+            bitpayIdLocationCountry: user?.country ?? '',
+            bitpayIdLocationState: user?.state ?? '',
+            currentLocationCountry: locationData?.countryShortCode ?? '',
+            currentLocationState: locationData?.stateShortCode ?? '',
+          }),
+        );
+
         switch (status) {
           case 'active': {
             // An active status means the connection is valid and can be used. Active connections typically remain live for 180 days without revalidation. If the connection expires, refresh it via the connect flow.
-            if (!credentials || !moonpayConnectSession?.keyPair.privateKeyHex) {
+            if (
+              !credentials ||
+              !moonpayConnectSession?.keyPair?.privateKeyHex
+            ) {
               logger.error(
-                `[MoonpayConnectFrame]: missing credentials or private key`,
+                `[MoonpayConnectFrame]: missing credentials (${!!credentials}) or private key (${!!moonpayConnectSession
+                  ?.keyPair?.privateKeyHex}) for active connection.`,
               );
               setConnectModalWebView({open: false, url: undefined});
               setOpeningBrowser(false);
               setButtonState(undefined);
+              onSkipConnection ? onSkipConnection(false) : null;
               break;
             }
             try {
@@ -327,43 +369,57 @@ const MoonpayBuyEmbeddedOnboarding = ({
               onConnectAccount ? onConnectAccount(decrypted) : null;
             } catch (err) {
               logger.error(
-                `[MoonpayConnectFrame]: decryption failed: ${
-                  err instanceof Error ? err.message : String(err)
-                }`,
+                `[MoonpayConnectFrame]: decryption failed: ${getErrorString(
+                  err,
+                )}`,
               );
               setConnectModalWebView({open: false, url: undefined});
               setOpeningBrowser(false);
               setButtonState(undefined);
+              onSkipConnection ? onSkipConnection(false) : null;
             }
             break;
           }
 
           case 'pending': {
             // A pending status typically occurs for customers whose KYC decisions are delayed. Often these cases are resolved out of band and the customer can connect on a subsequent visit to the app.
-            // TODO: show pending state UI
+            logger.debug(
+              `[MoonpayConnectFrame] status=pending: ${
+                reason ?? 'Unknown reason'
+              }`,
+            );
             setConnectModalWebView({open: false, url: undefined});
             setOpeningBrowser(false);
             setButtonState(undefined);
+            onSkipConnection ? onSkipConnection(false) : null;
             break;
           }
 
           case 'unavailable': {
             // An unavailable status means the connection cannot be used at the current time. This typically occurs when a KYC-verified customer is using a device or application from a restricted location.
+            logger.debug(
+              `[MoonpayConnectFrame] status=unavailable: ${
+                reason ?? 'Unknown reason'
+              }`,
+            );
             setConnectModalWebView({open: false, url: undefined});
             setOpeningBrowser(false);
             setButtonState(undefined);
+            onSkipConnection ? onSkipConnection(false) : null;
             break;
           }
 
           case 'failed': {
             // A failed status is a terminal state. This usually happens if the customer fails KYC or cannot be onboarded to MoonPay. It can also happen if the customer rejects the connection. In these cases, direct the customer to an alternate flow in the app.
-            // TODO: for failed status we should get the user to the kayak model
             logger.error(
-              `[MoonpayConnectFrame] failed: ${reason ?? 'Unknown reason'}`,
+              `[MoonpayConnectFrame] status=failed: ${
+                reason ?? 'Unknown reason'
+              }`,
             );
             setConnectModalWebView({open: false, url: undefined});
             setOpeningBrowser(false);
             setButtonState(undefined);
+            onSkipConnection ? onSkipConnection(false) : null;
             break;
           }
         }
@@ -371,11 +427,30 @@ const MoonpayBuyEmbeddedOnboarding = ({
       }
 
       case 'error': {
-        const {code, message: errMessage} = payload ?? {};
-        logger.error(`[MoonpayConnectFrame] error: ${code} - ${errMessage}`);
+        const {code, message}: {code?: string; message?: string} =
+          payload ?? {};
+        const errMessage = `code=${code ?? 'unknown'}; message=${
+          getErrorString(message) ?? 'no message'
+        }`;
+        logger.error(`[MoonpayConnectFrame] status=error: ${errMessage}`);
+
+        dispatch(
+          Analytics.track('Moonpay Connect Frame: connection error', {
+            user: user?.eid ?? '',
+            context,
+            errorCode: code ?? 'unknown',
+            errorMessage: errMessage ?? 'no message',
+            bitpayIdLocationCountry: user?.country ?? '',
+            bitpayIdLocationState: user?.state ?? '',
+            currentLocationCountry: locationData?.countryShortCode ?? '',
+            currentLocationState: locationData?.stateShortCode ?? '',
+          }),
+        );
+
         setConnectModalWebView({open: false, url: undefined});
         setOpeningBrowser(false);
         setButtonState(undefined);
+        onSkipConnection ? onSkipConnection(false) : null;
         break;
       }
     }
