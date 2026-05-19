@@ -877,7 +877,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('mounts the Home portfolio balance chart loader while initial populate can create snapshots', async () => {
+  it('does not mount the Home portfolio balance chart while its initial populate scope is still running', async () => {
     resetState(true, {
       completedFullPopulate: false,
       populateStatus: makePopulateStatus(),
@@ -896,12 +896,7 @@ describe('portfolio chart visibility guards', () => {
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
     ).toBeGreaterThan(0);
-    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
-      expect.objectContaining({
-        showLoaderWhenNoSnapshots: true,
-      }),
-      undefined,
-    );
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
         .length,
@@ -996,7 +991,7 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(chartSurfaceCases)(
-    'mounts the %s balance chart loader during initial populate',
+    'does not mount the %s balance chart while its initial populate scope is still running',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: false,
@@ -1007,12 +1002,7 @@ describe('portfolio chart visibility guards', () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
-        expect.objectContaining({
-          showLoaderWhenNoSnapshots: true,
-        }),
-        undefined,
-      );
+      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     },
   );
 

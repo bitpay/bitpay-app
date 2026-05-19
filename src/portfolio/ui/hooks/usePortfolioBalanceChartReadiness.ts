@@ -40,10 +40,6 @@ export default function usePortfolioBalanceChartReadiness(args: {
   });
   const hasChartableWallets = chartableWallets.length > 0;
   const baseEnabled = enabled && !args.hideAllBalances && hasChartableWallets;
-  const snapshotPresence = usePortfolioWalletSnapshotPresence({
-    wallets: chartableWallets,
-    enabled: baseEnabled,
-  });
 
   const hasCompletedScopePopulate = useMemo(() => {
     if (!baseEnabled) {
@@ -65,6 +61,11 @@ export default function usePortfolioBalanceChartReadiness(args: {
     hasCompletedFullPortfolioPopulate,
     populateStatus,
   ]);
+  const canCheckSnapshotPresence = baseEnabled && hasCompletedScopePopulate;
+  const snapshotPresence = usePortfolioWalletSnapshotPresence({
+    wallets: chartableWallets,
+    enabled: canCheckSnapshotPresence,
+  });
 
   const isScopePopulateLoading = useMemo(() => {
     return (
@@ -77,13 +78,17 @@ export default function usePortfolioBalanceChartReadiness(args: {
   }, [baseEnabled, chartableWallets, populateStatus]);
 
   const isSnapshotPresenceLoading =
-    baseEnabled && (!snapshotPresence.checked || snapshotPresence.loading);
+    canCheckSnapshotPresence &&
+    (!snapshotPresence.checked || snapshotPresence.loading);
   const hasHistoricalChartData =
-    baseEnabled && snapshotPresence.checked && snapshotPresence.hasAnySnapshots;
+    canCheckSnapshotPresence &&
+    snapshotPresence.checked &&
+    snapshotPresence.hasAnySnapshots;
   const isChartDataPending =
-    baseEnabled && (isSnapshotPresenceLoading || isScopePopulateLoading);
+    canCheckSnapshotPresence &&
+    (isSnapshotPresenceLoading || isScopePopulateLoading);
   const canRenderBalanceChart =
-    baseEnabled && hasCompletedScopePopulate && hasHistoricalChartData;
+    canCheckSnapshotPresence && hasHistoricalChartData;
   const shouldShowChartLoader = !canRenderBalanceChart && isChartDataPending;
   const shouldMountBalanceChart =
     canRenderBalanceChart || shouldShowChartLoader;
