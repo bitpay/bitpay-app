@@ -113,6 +113,7 @@ jest.mock('../../managers/LogManager', () => ({
     error: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
+    warnWithSentryMessage: jest.fn(),
   },
 }));
 
@@ -165,6 +166,7 @@ import {
   cancelPopulatePortfolioWithRuntime,
   clearPortfolioWithRuntime,
   clearPortfolioRuntimeUnlockDeferralForTests,
+  clearWalletPortfolioDataWithRuntime,
   maybePopulatePortfolioForWalletsWithRuntime,
   maybePopulatePortfolioOnAppLaunchWithRuntime,
   populateImportedKeyPortfolio,
@@ -194,6 +196,7 @@ const mockFinishPopulatePortfolio = jest.requireMock('./portfolio.actions')
 const mockLogManager = jest.requireMock('../../managers/LogManager')
   .logManager as {
   warn: jest.Mock;
+  warnWithSentryMessage: jest.Mock;
 };
 
 type State = Record<string, any>;
@@ -611,9 +614,39 @@ describe('portfolio runtime effects lock deferral', () => {
         },
       ]),
     );
-    expect(mockLogManager.warn).toHaveBeenCalledWith(
-      expect.stringContaining('unresolved token decimals'),
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').includes('unresolved token decimals'),
     );
+    expect(warning).toBeDefined();
+    expect(String(warning![0] || '')).toContain('token-wallet');
+    expect(String(warning![1] || '')).toContain('[redacted]');
+    expect(String(warning![1] || '')).not.toContain('token-wallet');
+  });
+
+  it('redacts wallet ids from sentry wallet storage clearing failures', async () => {
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockRuntimeClient.clearWallet.mockRejectedValueOnce(
+      new Error('clear failed for wallet-2'),
+    );
+
+    await dispatch(
+      clearWalletPortfolioDataWithRuntime({walletIds: ['wallet-2']}),
+    );
+
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').includes(
+        'Failed clearing runtime wallet storage for wallet-2',
+      ),
+    );
+    expect(warning).toBeDefined();
+    expect(String(warning![0] || '')).toContain('wallet-2');
+    expect(String(warning![1] || '')).toContain('[redacted]');
+    expect(String(warning![1] || '')).not.toContain('wallet-2');
+    expect(dispatched).toContainEqual({
+      payload: {walletIds: ['wallet-2']},
+      type: 'CLEAR_WALLET_PORTFOLIO_STATE',
+    });
   });
 
   it('uses the current imported key wallets from state when populating an import', async () => {
@@ -1147,7 +1180,7 @@ describe('portfolio runtime effects lock deferral', () => {
     const state = makeState();
     const {dispatch, dispatched} = makeStore(state);
     const errors = [
-      {walletId: 'wallet-1', message: 'first failure'},
+      {walletId: 'wallet-1', message: 'first failure for wallet-1'},
       {walletId: 'wallet-2', message: 'second failure'},
     ];
 
@@ -1175,12 +1208,16 @@ describe('portfolio runtime effects lock deferral', () => {
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
-    const warning = mockLogManager.warn.mock.calls.find(
-      call => call[0] === '[portfolio] Populate completed with wallet errors',
+    const logPrefix = '[portfolio] Populate completed with wallet errors';
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').startsWith(logPrefix),
     );
     expect(warning).toBeDefined();
 
-    const payload = JSON.parse(warning![1]);
+    const payload = JSON.parse(String(warning![0]).slice(logPrefix.length + 1));
+    const sentryPayload = JSON.parse(
+      String(warning![1]).slice(logPrefix.length + 1),
+    );
     expect(payload).toMatchObject({
       completedWalletCount: 0,
       errorCount: 2,
@@ -1193,8 +1230,16 @@ describe('portfolio runtime effects lock deferral', () => {
       walletsTotal: 2,
     });
     expect(payload.errors).toEqual([
-      {index: 0, walletId: 'wallet-1', message: 'first failure'},
+      {index: 0, walletId: 'wallet-1', message: 'first failure for wallet-1'},
       {index: 1, walletId: 'wallet-2', message: 'second failure'},
+    ]);
+    expect(sentryPayload.errors).toEqual([
+      {
+        index: 0,
+        walletId: '[redacted]',
+        message: 'first failure for [redacted]',
+      },
+      {index: 1, walletId: '[redacted]', message: 'second failure'},
     ]);
     expect(dispatched).toContainEqual({
       payload: {
@@ -1206,6 +1251,70 @@ describe('portfolio runtime effects lock deferral', () => {
       },
       type: 'FINISH_POPULATE',
     });
+  });
+
+  it('redacts overlapping wallet ids from sentry populate wallet error logs without leaking suffixes', async () => {
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    const errors = [
+      {walletId: 'wallet-1', message: 'short wallet wallet-1 failed'},
+      {
+        walletId: 'wallet-10',
+        message: 'long wallet wallet-10 failed after wallet-1',
+      },
+    ];
+
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      walletFactory({id: 'wallet-1'}),
+      walletFactory({id: 'wallet-10'}),
+    ]);
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {
+          disabledForLargeHistory: false,
+          errors,
+          txRequestsMade: 3,
+          txsProcessed: 31,
+          walletStatusById: {
+            'wallet-1': 'error',
+            'wallet-10': 'error',
+          },
+          walletsCompleted: 0,
+          walletsTotal: 2,
+        },
+      }),
+    );
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    const logPrefix = '[portfolio] Populate completed with wallet errors';
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').startsWith(logPrefix),
+    );
+    expect(warning).toBeDefined();
+
+    const localMessage = String(warning![0] || '');
+    const sentryMessage = String(warning![1] || '');
+    const sentryPayload = JSON.parse(sentryMessage.slice(logPrefix.length + 1));
+
+    expect(localMessage).toContain('wallet-1');
+    expect(localMessage).toContain('wallet-10');
+    expect(sentryMessage).not.toContain('wallet-1');
+    expect(sentryMessage).not.toContain('wallet-10');
+    expect(sentryMessage).not.toContain('[redacted]0');
+    expect(sentryPayload.errors).toEqual([
+      {
+        index: 0,
+        walletId: '[redacted]',
+        message: 'short wallet [redacted] failed',
+      },
+      {
+        index: 1,
+        walletId: '[redacted]',
+        message: 'long wallet [redacted] failed after [redacted]',
+      },
+    ]);
   });
 
   it('re-dispatches deferred populate after unlock without registering duplicate listeners', async () => {
@@ -1618,11 +1727,15 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockRuntimeClient.clearWallet).toHaveBeenCalledWith({
       walletId: 'wallet-1',
     });
-    expect(mockLogManager.warn).toHaveBeenCalledWith(
-      expect.stringContaining(
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').includes(
         'Failed clearing runtime wallet snapshots before excessive balance mismatch repair for wallet-1',
       ),
     );
+    expect(warning).toBeDefined();
+    expect(String(warning![0] || '')).toContain('wallet-1');
+    expect(String(warning![1] || '')).toContain('[redacted]');
+    expect(String(warning![1] || '')).not.toContain('wallet-1');
     expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
     expect(mockPopulateWallets).not.toHaveBeenCalled();
   });

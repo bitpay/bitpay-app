@@ -83,6 +83,41 @@ const resolveQuoteCurrency = (
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+const getWalletIdsForRedaction = (
+  walletIds: Iterable<string | null | undefined>,
+): string[] => {
+  return Array.from(
+    new Set(
+      Array.from(walletIds)
+        .map(walletId => String(walletId || '').trim())
+        .filter(walletId => walletId.length > 0),
+    ),
+  ).sort((a, b) => b.length - a.length);
+};
+
+const redactWalletIdsFromMessage = (
+  value: string,
+  walletIds: string[],
+): string => {
+  let redacted = value;
+  walletIds.forEach(walletId => {
+    redacted = redacted.split(walletId).join('[redacted]');
+  });
+  return redacted;
+};
+
+const warnPortfolioWithRedactedWalletIds = (args: {
+  messages: string[];
+  walletIds: Iterable<string | null | undefined>;
+}): void => {
+  const localMessage = args.messages.join(' ');
+  const walletIdsToRedact = getWalletIdsForRedaction(args.walletIds);
+  logManager.warnWithSentryMessage(
+    localMessage,
+    redactWalletIdsFromMessage(localMessage, walletIdsToRedact),
+  );
+};
+
 type ImportedKeyPortfolioLogger = {
   error: (message: string) => void;
 };
@@ -202,24 +237,38 @@ const logPopulateWalletErrors = (args: {
     return;
   }
 
-  logManager.warn(
-    '[portfolio] Populate completed with wallet errors',
-    JSON.stringify({
-      completedWalletCount: args.status.walletsCompleted,
-      errorCount: args.errors.length,
-      errors: args.errors.map((error, index) => ({
-        index,
-        message: String(error.message || ''),
-        walletId: String(error.walletId || ''),
-      })),
-      jobId: args.status.jobId,
-      quoteCurrency: args.quoteCurrency,
-      requestedWalletCount: args.requestedWalletCount,
-      state: args.status.state,
-      txRequestsMade: args.status.txRequestsMade,
-      txsProcessed: args.status.txsProcessed,
-      walletsTotal: args.status.walletsTotal,
-    }),
+  const walletIdsToRedact = getWalletIdsForRedaction(
+    args.errors.map(error => error.walletId),
+  );
+  const localPayload = {
+    completedWalletCount: args.status.walletsCompleted,
+    errorCount: args.errors.length,
+    errors: args.errors.map((error, index) => ({
+      index,
+      message: String(error.message || ''),
+      walletId: String(error.walletId || ''),
+    })),
+    jobId: args.status.jobId,
+    quoteCurrency: args.quoteCurrency,
+    requestedWalletCount: args.requestedWalletCount,
+    state: args.status.state,
+    txRequestsMade: args.status.txRequestsMade,
+    txsProcessed: args.status.txsProcessed,
+    walletsTotal: args.status.walletsTotal,
+  };
+  const sentryPayload = {
+    ...localPayload,
+    errors: localPayload.errors.map(error => ({
+      ...error,
+      message: redactWalletIdsFromMessage(error.message, walletIdsToRedact),
+      walletId: error.walletId ? '[redacted]' : '',
+    })),
+  };
+  const message = '[portfolio] Populate completed with wallet errors';
+
+  logManager.warnWithSentryMessage(
+    `${message} ${JSON.stringify(localPayload)}`,
+    `${message} ${JSON.stringify(sentryPayload)}`,
   );
 };
 
@@ -298,11 +347,14 @@ const getWalletsToPopulateAfterExcessiveBalanceRepair = async (args: {
 
       const walletId = repairWalletIds[index];
       failedRepairWalletIds.add(walletId);
-      logManager.warn(
-        `[portfolio] Failed clearing runtime wallet snapshots before excessive balance mismatch repair for ${walletId}: ${toErrorMessage(
-          result.reason,
-        )}`,
-      );
+      warnPortfolioWithRedactedWalletIds({
+        messages: [
+          `[portfolio] Failed clearing runtime wallet snapshots before excessive balance mismatch repair for ${walletId}: ${toErrorMessage(
+            result.reason,
+          )}`,
+        ],
+        walletIds: [walletId],
+      });
     });
   }
 
@@ -439,10 +491,14 @@ const drainPendingScopedPopulateRequestsAfterRuntimeStop = async (
   });
   if (!didStop) {
     const dropped = takePendingScopedPopulateRequest();
-    logManager.warn(
-      '[portfolio] Dropped pending scoped populate after cancelled populate did not stop before timeout',
-      JSON.stringify({walletIds: dropped?.walletIds || []}),
-    );
+    const droppedWalletIds = getScopedPopulateWalletIdsFromArgs(dropped);
+    warnPortfolioWithRedactedWalletIds({
+      messages: [
+        '[portfolio] Dropped pending scoped populate after cancelled populate did not stop before timeout',
+        JSON.stringify({walletIds: droppedWalletIds}),
+      ],
+      walletIds: droppedWalletIds,
+    });
     return;
   }
 
@@ -937,6 +993,7 @@ const refreshCompletedWalletBalanceHealth = async (args: {
     return;
   }
 
+  let walletIdsToCheck: string[] = [];
   try {
     const currentState = args.getState();
     const currentWallets = getAllMainnetWalletsFromState(currentState);
@@ -949,7 +1006,7 @@ const refreshCompletedWalletBalanceHealth = async (args: {
         }
       },
     );
-    const walletIdsToCheck = uncheckedWalletIds.filter(walletId =>
+    walletIdsToCheck = uncheckedWalletIds.filter(walletId =>
       walletById.has(walletId),
     );
     if (!walletIdsToCheck.length) {
@@ -986,11 +1043,14 @@ const refreshCompletedWalletBalanceHealth = async (args: {
       args.healthCheckedWalletIds.add(walletId);
     });
   } catch (error: unknown) {
-    logManager.warn(
-      `[portfolio] Could not refresh snapshot balance mismatches after wallet progress: ${toErrorMessage(
-        error,
-      )}`,
-    );
+    warnPortfolioWithRedactedWalletIds({
+      messages: [
+        `[portfolio] Could not refresh snapshot balance mismatches after wallet progress: ${toErrorMessage(
+          error,
+        )}`,
+      ],
+      walletIds: walletIdsToCheck,
+    });
   }
 };
 
@@ -1021,11 +1081,14 @@ const hasNoRemainingInitialPopulateWork = async (args: {
       walletIdsToPopulate: decisions.walletIdsToPopulate,
     });
   } catch (error: unknown) {
-    logManager.warn(
-      `[portfolio] Could not verify initial populate completion after scoped populate: ${toErrorMessage(
-        error,
-      )}`,
-    );
+    warnPortfolioWithRedactedWalletIds({
+      messages: [
+        `[portfolio] Could not verify initial populate completion after scoped populate: ${toErrorMessage(
+          error,
+        )}`,
+      ],
+      walletIds: wallets.map(wallet => wallet.id),
+    });
     return false;
   }
 };
@@ -1139,10 +1202,13 @@ export const clearPortfolioWithRuntime =
       });
       clearAssetPnlSummaryCache();
     } catch (error: unknown) {
-      logManager.warn(
-        '[portfolio] Failed clearing runtime portfolio storage: ' +
-          toErrorMessage(error),
-      );
+      warnPortfolioWithRedactedWalletIds({
+        messages: [
+          '[portfolio] Failed clearing runtime portfolio storage: ' +
+            toErrorMessage(error),
+        ],
+        walletIds,
+      });
       throw error;
     }
 
@@ -1171,11 +1237,15 @@ export const clearWalletPortfolioDataWithRuntime =
         return;
       }
 
-      logManager.warn(
-        `[portfolio] Failed clearing runtime wallet storage for ${
-          walletIds[index]
-        }: ${toErrorMessage(result.reason)}`,
-      );
+      const walletId = walletIds[index];
+      warnPortfolioWithRedactedWalletIds({
+        messages: [
+          `[portfolio] Failed clearing runtime wallet storage for ${walletId}: ${toErrorMessage(
+            result.reason,
+          )}`,
+        ],
+        walletIds: [walletId],
+      });
     });
 
     dispatch(clearWalletPortfolioState({walletIds}));
@@ -1429,7 +1499,10 @@ export const populatePortfolioWithRuntime =
           walletId,
           message: decimalsResolution.message,
         });
-        logManager.warn(`[portfolio] ${decimalsResolution.message}`);
+        warnPortfolioWithRedactedWalletIds({
+          messages: [`[portfolio] ${decimalsResolution.message}`],
+          walletIds: [walletId],
+        });
         continue;
       }
 
