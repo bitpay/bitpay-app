@@ -469,7 +469,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               {/* ////////////////////////////// DO MORE */}
               {memoizedShopWithCryptoCards.length ? (
                 <HomeSection
-                  style={{marginBottom: 20}}
+                  style={{marginBottom: -8}}
                   title={t('Do More')}
                   // action={t('Shop all')}
                   // onActionPress={() => {
