@@ -33,6 +33,7 @@ import {
   getAssetCurrentDisplayQuoteRate,
   resolveActivePortfolioDisplayQuoteCurrency,
 } from '../../../../utils/portfolio/displayCurrency';
+import usePortfolioWalletSnapshotPresence from '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
 import {
   findSupportedCurrencyOptionForAsset,
   getWalletLiveFiatBalance,
@@ -264,15 +265,52 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     visibleWallets,
   ]);
 
+  const assetWalletSnapshotPresence = usePortfolioWalletSnapshotPresence({
+    wallets: assetWallets,
+    enabled:
+      isAssetBalanceHistoryMode &&
+      showPortfolioValue === true &&
+      assetWallets.length > 0,
+  });
+
   const walletsForAssetDisplay = useMemo(() => {
-    return getWalletsMatchingExchangeRateAsset({
+    const liveBalanceWallets = getWalletsMatchingExchangeRateAsset({
       wallets: visibleWallets,
       currencyAbbreviation: assetContext.currencyAbbreviation,
       tokenAddress: assetContext.tokenAddress,
     });
+
+    if (
+      !isAssetBalanceHistoryMode ||
+      showPortfolioValue !== true ||
+      !assetWalletSnapshotPresence.checked
+    ) {
+      return liveBalanceWallets;
+    }
+
+    const liveBalanceWalletIds = new Set(
+      liveBalanceWallets
+        .map(wallet => String(wallet?.id || '').trim())
+        .filter(Boolean),
+    );
+    const historicalZeroBalanceWallets = assetWallets.filter(wallet => {
+      const walletId = String(wallet?.id || '').trim();
+      return (
+        walletId &&
+        !liveBalanceWalletIds.has(walletId) &&
+        assetWalletSnapshotPresence.hasSnapshotsByWalletId[walletId] === true
+      );
+    });
+
+    return [...liveBalanceWallets, ...historicalZeroBalanceWallets];
   }, [
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
+    assetWalletSnapshotPresence.checked,
+    assetWalletSnapshotPresence.hasSnapshotsByWalletId,
+    assetWallets,
+    isAssetBalanceHistoryMode,
+    showPortfolioValue,
     visibleWallets,
   ]);
 

@@ -8,6 +8,7 @@ import {useAppSelector} from '../../../utils/hooks';
 type PortfolioWalletSnapshotPresenceState = {
   hasAnySnapshots: boolean;
   hasAllSnapshots: boolean;
+  hasSnapshotsByWalletId: Record<string, boolean>;
   loading: boolean;
   checked: boolean;
 };
@@ -15,6 +16,7 @@ type PortfolioWalletSnapshotPresenceState = {
 type CachedSnapshotPresence = {
   hasAnySnapshots: boolean;
   hasAllSnapshots: boolean;
+  hasSnapshotsByWalletId: Record<string, boolean>;
 };
 
 const snapshotPresenceByWalletIdsKey = new Map<
@@ -65,6 +67,8 @@ export default function usePortfolioWalletSnapshotPresence(args: {
   const [state, setState] = useState<PortfolioWalletSnapshotPresenceState>({
     hasAnySnapshots: cachedSnapshotPresence?.hasAnySnapshots ?? true,
     hasAllSnapshots: cachedSnapshotPresence?.hasAllSnapshots ?? true,
+    hasSnapshotsByWalletId:
+      cachedSnapshotPresence?.hasSnapshotsByWalletId ?? {},
     loading: false,
     checked: !!cachedSnapshotPresence,
   });
@@ -74,6 +78,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
       setState({
         hasAnySnapshots: false,
         hasAllSnapshots: false,
+        hasSnapshotsByWalletId: {},
         loading: false,
         checked: true,
       });
@@ -86,6 +91,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
       setState({
         hasAnySnapshots: false,
         hasAllSnapshots: false,
+        hasSnapshotsByWalletId: {},
         loading: false,
         checked: true,
       });
@@ -98,6 +104,8 @@ export default function usePortfolioWalletSnapshotPresence(args: {
     setState({
       hasAnySnapshots: cachedPresenceForRequest?.hasAnySnapshots ?? true,
       hasAllSnapshots: cachedPresenceForRequest?.hasAllSnapshots ?? true,
+      hasSnapshotsByWalletId:
+        cachedPresenceForRequest?.hasSnapshotsByWalletId ?? {},
       loading: true,
       checked: !!cachedPresenceForRequest,
     });
@@ -117,13 +125,21 @@ export default function usePortfolioWalletSnapshotPresence(args: {
 
         const hasAnySnapshots = results.some(Boolean);
         const hasAllSnapshots = results.every(Boolean);
+        const hasSnapshotsByWalletId = requestedWalletIds.reduce<
+          Record<string, boolean>
+        >((presenceByWalletId, walletId, index) => {
+          presenceByWalletId[walletId] = !!results[index];
+          return presenceByWalletId;
+        }, {});
         snapshotPresenceByWalletIdsKey.set(walletIdsKey, {
           hasAnySnapshots,
           hasAllSnapshots,
+          hasSnapshotsByWalletId,
         });
         setState({
           hasAnySnapshots,
           hasAllSnapshots,
+          hasSnapshotsByWalletId,
           loading: false,
           checked: true,
         });
@@ -136,6 +152,8 @@ export default function usePortfolioWalletSnapshotPresence(args: {
         setState({
           hasAnySnapshots: cachedPresenceForRequest?.hasAnySnapshots ?? true,
           hasAllSnapshots: cachedPresenceForRequest?.hasAllSnapshots ?? true,
+          hasSnapshotsByWalletId:
+            cachedPresenceForRequest?.hasSnapshotsByWalletId ?? {},
           loading: false,
           checked: !!cachedPresenceForRequest,
         });
