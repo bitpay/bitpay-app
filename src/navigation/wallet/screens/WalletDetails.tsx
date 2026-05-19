@@ -608,13 +608,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
   });
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
+  const showFiatBalance = network !== Network.testnet;
   const {
     shouldMountBalanceChart: shouldMountWalletBalanceChart,
     shouldShowChartLoader: shouldShowWalletChartLoader,
     chartableWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: chartWallets,
-    enabled: showPortfolioValue === true,
+    enabled: showPortfolioValue === true && showFiatBalance,
     hideAllBalances,
   });
   const balanceChartSurface = usePortfolioBalanceChartSurface({
@@ -636,7 +637,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         )
       : fiatBalanceFormat;
 
-  const showFiatBalance = network !== Network.testnet;
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
     wallets: chartWallets,
     currentFiatBalance: fullWalletObj?.balance?.fiat,
@@ -1317,6 +1317,15 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     theme.dark,
     walletType,
   ]);
+  const canShowWalletHeaderExtras =
+    !hideAllBalances && !fullWalletObj.isScanning;
+  const shouldRenderWalletChart =
+    canShowWalletHeaderExtras && shouldMountWalletBalanceChart;
+  const shouldRenderWalletHeaderSupplement =
+    canShowWalletHeaderExtras &&
+    (!!walletChartPreContent ||
+      !!walletHeaderChangeRowData ||
+      shouldRenderWalletChart);
 
   return (
     <WalletDetailsContainer>
@@ -1374,19 +1383,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </CryptoBalanceRow>
                 </TouchableOpacity>
 
-                {!hideAllBalances &&
-                !fullWalletObj.isScanning &&
-                (showPortfolioValue !== true ||
-                  shouldMountWalletBalanceChart) ? (
+                {shouldRenderWalletHeaderSupplement ? (
                   <FullWidthBalanceChartContainer>
                     <BalanceHeaderSupplement
                       changeRowData={walletHeaderChangeRowData}
                       content={walletChartPreContent}
                       contentTopMargin={12}
                       changeRowStyle={walletChartChangeRowStyle}
-                      reserveChangeRowSpace={shouldMountWalletBalanceChart}
+                      reserveChangeRowSpace={shouldRenderWalletChart}
                     />
-                    {shouldMountWalletBalanceChart ? (
+                    {shouldRenderWalletChart ? (
                       <BalanceHistoryChart
                         wallets={chartableWallets}
                         quoteCurrency={chartQuoteCurrency}

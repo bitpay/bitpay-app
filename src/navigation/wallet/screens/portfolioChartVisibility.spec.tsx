@@ -386,6 +386,36 @@ jest.mock('../../../store/wallet/utils/wallet', () => ({
 }));
 
 jest.mock('../../../utils/portfolio/assets', () => ({
+  getLegacyLastDayPnlFromTotals: jest.fn(
+    ({
+      currentFiatBalance,
+      lastDayFiatBalance,
+    }: {
+      currentFiatBalance?: number;
+      lastDayFiatBalance?: number;
+    }) => {
+      const current =
+        typeof currentFiatBalance === 'number' &&
+        Number.isFinite(currentFiatBalance)
+          ? currentFiatBalance
+          : 0;
+      const lastDay =
+        typeof lastDayFiatBalance === 'number' &&
+        Number.isFinite(lastDayFiatBalance)
+          ? lastDayFiatBalance
+          : 0;
+
+      if (lastDay === 0) {
+        return undefined;
+      }
+
+      const deltaFiat = current - lastDay;
+      return {
+        deltaFiat,
+        percent: (deltaFiat / lastDay) * 100,
+      };
+    },
+  ),
   getQuoteCurrency: jest.fn(
     ({
       defaultAltCurrencyIsoCode,
@@ -830,6 +860,34 @@ describe('portfolio chart visibility guards', () => {
 
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenCalledWith({
+      enabled: false,
+      wallets: [],
+    });
+  });
+
+  it('keeps WalletDetails testnet metadata visible without mounting portfolio chart work', async () => {
+    resetState(true);
+    mockWallet.network = 'testnet';
+    mockState.APP.network = 'testnet';
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      loading: false,
+    });
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    const renderedText = collectRenderedText(view.toJSON());
+    expect(renderedText).toContain('1.00 BTC');
+    expect(renderedText).toContain('Testnet4');
+    expect(renderedText).not.toContain('$100.00');
+    expect(renderedText).not.toContain('Last Day');
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+    expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenLastCalledWith({
       enabled: false,
       wallets: [],
     });
