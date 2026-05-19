@@ -95,6 +95,26 @@ export type ExchangeRateSharedModel = {
   circulatingSupplyToDisplay: string;
 };
 
+const ZERO_ASSET_WALLET_CRYPTO_BALANCE = '0.000000';
+
+const formatAssetWalletCryptoBalance = (value: unknown): string => {
+  if (value == null) {
+    return '';
+  }
+
+  const text = String(value);
+  const trimmedText = text.trim();
+  if (!trimmedText) {
+    return '';
+  }
+
+  const numericValue = Number(trimmedText.replace(/,/g, ''));
+
+  return Number.isFinite(numericValue) && numericValue === 0
+    ? ZERO_ASSET_WALLET_CRYPTO_BALANCE
+    : text;
+};
+
 const HeaderTitleText = styled(HeaderTitle)`
   font-size: 20px;
 `;
@@ -338,6 +358,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
         });
         const ui = {
           ...baseUi,
+          cryptoBalance: formatAssetWalletCryptoBalance(baseUi.cryptoBalance),
           fiatBalance: liveFiatBalance,
           fiatBalanceFormat: formatFiat({
             fiatAmount: liveFiatBalance,

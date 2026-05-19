@@ -152,12 +152,23 @@ const mockGetVisibleWalletsFromKeys =
 const mockUsePortfolioWalletSnapshotPresence = jest.requireMock(
   '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
 ) as jest.Mock;
+const mockBuildUIFormattedWallet = jest.requireMock(
+  '../../../../store/wallet/utils/wallet',
+).buildUIFormattedWallet as jest.Mock;
 
 describe('useExchangeRateSharedModel', () => {
   beforeEach(() => {
     latestSharedModel = undefined;
     mockDispatch.mockReset();
     mockSetOptions.mockReset();
+    mockBuildUIFormattedWallet.mockReset();
+    mockBuildUIFormattedWallet.mockImplementation((wallet: any) => ({
+      id: wallet?.id,
+      walletName: wallet?.walletName || wallet?.id,
+      cryptoBalance: wallet?.balance?.crypto ?? '0.00',
+      fiatBalance: 0,
+      fiatBalanceFormat: '$0.00',
+    }));
     mockGetWalletsMatchingExchangeRateAsset.mockReset();
     mockGetWalletsMatchingExchangeRateAsset.mockImplementation(
       ({wallets}: {wallets?: unknown[]}) => wallets || [],
@@ -268,13 +279,13 @@ describe('useExchangeRateSharedModel', () => {
   it('includes zero-balance asset wallets with snapshots in asset balance details', async () => {
     const liveWallet = {
       id: 'wallet-live',
-      balance: {sat: 1},
+      balance: {crypto: '1.234567', sat: 1},
       currencyAbbreviation: 'eth',
       chain: 'eth',
     };
     const zeroHistoricalWallet = {
       id: 'wallet-zero-history',
-      balance: {sat: 0},
+      balance: {crypto: '0.00', sat: 0},
       currencyAbbreviation: 'eth',
       chain: 'eth',
     };
@@ -334,18 +345,21 @@ describe('useExchangeRateSharedModel', () => {
     expect(
       latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
     ).toEqual([liveWallet, zeroHistoricalWallet]);
+    expect(
+      latestSharedModel?.walletsForAsset.map(({ui}) => ui.cryptoBalance),
+    ).toEqual(['1.234567', '0.000000']);
   });
 
   it('includes zero-balance asset wallets with snapshots in exchange rate details', async () => {
     const liveWallet = {
       id: 'exchange-wallet-live',
-      balance: {sat: 1},
+      balance: {crypto: '2.345678', sat: 1},
       currencyAbbreviation: 'eth',
       chain: 'eth',
     };
     const zeroHistoricalWallet = {
       id: 'exchange-wallet-zero-history',
-      balance: {sat: 0},
+      balance: {crypto: '0.00', sat: 0},
       currencyAbbreviation: 'eth',
       chain: 'eth',
     };
@@ -397,5 +411,8 @@ describe('useExchangeRateSharedModel', () => {
     expect(
       latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
     ).toEqual([liveWallet, zeroHistoricalWallet]);
+    expect(
+      latestSharedModel?.walletsForAsset.map(({ui}) => ui.cryptoBalance),
+    ).toEqual(['2.345678', '0.000000']);
   });
 });
