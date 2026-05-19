@@ -21,7 +21,6 @@ import {
   toggleHideAllBalances,
 } from '../../../../store/app/app.actions';
 import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../../store/portfolio/portfolio.selectors';
 import BalanceHistoryChart, {
   type BalanceHistoryChartProps,
 } from '../../../../components/charts/BalanceHistoryChart';
@@ -50,11 +49,10 @@ import {maskIfHidden} from '../../../../utils/hideBalances';
 import {
   getVisibleKeysFromKeys,
   getVisibleWalletsFromKeys,
-  walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/ui/common';
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioChartableWallets from '../../../../portfolio/ui/hooks/usePortfolioChartableWallets';
+import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
@@ -161,16 +159,7 @@ const PortfolioBalanceContent = () => {
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const {rates} = useSelector(({RATE}: RootState) => RATE);
 
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const committedPortfolioLastPopulatedAt = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.lastPopulatedAt,
-  );
-  const populateInProgress = useAppSelector(
-    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
-  );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
@@ -235,10 +224,12 @@ const PortfolioBalanceContent = () => {
 
   const dispatch = useAppDispatch();
 
-  const chartWalletsAcrossKeys = usePortfolioChartableWallets({
+  const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: walletsAcrossKeys,
-    enabled: canRenderPortfolioBalanceCharts,
+    enabled: showPortfolioValue === true,
+    hideAllBalances,
   });
+  const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
   const chartWalletIdsSig = useMemo(() => {
     return chartWalletsAcrossKeys
       .map(wallet => String(wallet?.id || ''))
@@ -246,21 +237,15 @@ const PortfolioBalanceContent = () => {
       .sort((a, b) => a.localeCompare(b))
       .join(',');
   }, [chartWalletsAcrossKeys]);
-  const hasAnyChartWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartWalletsAcrossKeys);
-  }, [chartWalletsAcrossKeys]);
-  const balanceChartsEnabled =
-    canRenderPortfolioBalanceCharts && hasAnyChartWalletBalance;
+  const balanceChartsEnabled = balanceChartReadiness.shouldMountBalanceChart;
   const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
   const canCollapseChart =
     shouldLeftAlignTopSection && chartHasRenderableSeries;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
-    balanceChartsEnabled &&
-    (populateInProgress ||
-      !committedPortfolioLastPopulatedAt ||
-      !chartHasRenderableSeries);
+    balanceChartReadiness.shouldShowChartLoader ||
+    (balanceChartsEnabled && !chartHasRenderableSeries);
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;

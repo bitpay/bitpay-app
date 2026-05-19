@@ -40,6 +40,17 @@ jest.mock('../../../../portfolio/ui/hooks/usePortfolioAnalysis', () => ({
   })),
 }));
 
+jest.mock(
+  '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
+  () =>
+    jest.fn(() => ({
+      checked: true,
+      hasAllSnapshots: true,
+      hasAnySnapshots: true,
+      loading: false,
+    })),
+);
+
 jest.mock('../../../../utils/helper-methods', () => ({
   formatFiatAmount: jest.fn(() => '$100.00'),
 }));
@@ -115,11 +126,14 @@ const {hasCompletedPopulateForWallets} = jest.requireMock(
 ) as {
   hasCompletedPopulateForWallets: jest.Mock;
 };
-const {walletsHaveNonZeroLiveBalance} = jest.requireMock(
+const {isPopulateLoadingForWallets} = jest.requireMock(
   '../../../../utils/portfolio/assets',
 ) as {
-  walletsHaveNonZeroLiveBalance: jest.Mock;
+  isPopulateLoadingForWallets: jest.Mock;
 };
+const mockUsePortfolioWalletSnapshotPresence = jest.requireMock(
+  '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
+) as jest.Mock;
 
 const sharedFactory = () =>
   ({
@@ -157,8 +171,15 @@ describe('AssetBalanceHistoryScreen', () => {
     usePortfolioAnalysis.mockClear();
     hasCompletedPopulateForWallets.mockClear();
     hasCompletedPopulateForWallets.mockReturnValue(false);
-    walletsHaveNonZeroLiveBalance.mockClear();
-    walletsHaveNonZeroLiveBalance.mockReturnValue(true);
+    isPopulateLoadingForWallets.mockClear();
+    isPopulateLoadingForWallets.mockReturnValue(false);
+    mockUsePortfolioWalletSnapshotPresence.mockClear();
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: true,
+      hasAnySnapshots: true,
+      loading: false,
+    });
   });
 
   it('updates parent analysis when the chart timeframe changes', async () => {
@@ -225,8 +246,9 @@ describe('AssetBalanceHistoryScreen', () => {
     );
   });
 
-  it('does not mount chart work before the asset populate completes', async () => {
+  it('mounts chart work with a loader while the asset populate can create snapshots', async () => {
     const shared = sharedFactory();
+    isPopulateLoadingForWallets.mockReturnValue(true);
     mockState.PORTFOLIO = {
       lastFullPopulateCompletedAt: undefined,
       lastPopulatedAt: undefined,
@@ -246,10 +268,11 @@ describe('AssetBalanceHistoryScreen', () => {
       TestRenderer.create(<AssetBalanceHistoryScreen shared={shared} />);
     });
 
-    expect(latestBalanceHistoryChartProps).toBeUndefined();
+    expect(latestBalanceHistoryChartProps).toBeDefined();
+    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(true);
     expect(usePortfolioAnalysis).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        enabled: false,
+        enabled: true,
       }),
     );
   });
@@ -303,5 +326,27 @@ describe('AssetBalanceHistoryScreen', () => {
     });
 
     expect(latestBalanceHistoryChartProps).toBeDefined();
+  });
+
+  it('does not mount chart work when snapshot presence settles with no rows and no pending work', async () => {
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      loading: false,
+    });
+
+    await act(async () => {
+      TestRenderer.create(
+        <AssetBalanceHistoryScreen shared={sharedFactory()} />,
+      );
+    });
+
+    expect(latestBalanceHistoryChartProps).toBeUndefined();
+    expect(usePortfolioAnalysis).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      }),
+    );
   });
 });

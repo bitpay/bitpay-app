@@ -9,16 +9,8 @@ import {
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import {usePortfolioAnalysis} from '../../../../portfolio/ui/hooks/usePortfolioAnalysis';
-import usePortfolioChartableWallets from '../../../../portfolio/ui/hooks/usePortfolioChartableWallets';
+import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
-import {useAppSelector} from '../../../../utils/hooks';
-import {selectHasCompletedFullPortfolioPopulate} from '../../../../store/portfolio/portfolio.selectors';
-import {
-  hasCompletedPopulateForWallets,
-  isPopulateLoadingForWallets,
-  walletHasNonZeroLiveBalance,
-  walletsHaveNonZeroLiveBalance,
-} from '../../../../utils/portfolio/assets';
 import {shouldUseCompactFiatAmountText} from '../../../../utils/fiatAmountText';
 import ExchangeRateScreenLayout from './ExchangeRateScreenLayout';
 import {
@@ -158,9 +150,6 @@ const AssetBalanceHistoryScreen = ({
   shared,
 }: AssetBalanceHistoryScreenProps) => {
   const {t} = useTranslation();
-  const populateStatus = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
-  );
   const [displayedTimeframe, setDisplayedTimeframe] =
     useState<FiatRateInterval>(DEFAULT_BALANCE_CHART_TIMEFRAME);
   const [requestedTimeframe, setRequestedTimeframe] =
@@ -183,41 +172,14 @@ const AssetBalanceHistoryScreen = ({
       }
     | undefined
   >(undefined);
-  const hasCompletedFullPortfolioPopulate = useAppSelector(
-    selectHasCompletedFullPortfolioPopulate,
-  );
-  const chartableAssetWallets = usePortfolioChartableWallets({
+  const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: shared.assetWallets,
-    enabled: shared.showPortfolioValue,
+    enabled: shared.showPortfolioValue === true && shared.hasWalletsForAsset,
+    hideAllBalances: shared.hideAllBalances,
   });
-  const hasAnyAssetWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartableAssetWallets);
-  }, [chartableAssetWallets]);
-  const hasCompletedAssetPopulate = useMemo(() => {
-    const liveBalanceWallets = chartableAssetWallets.filter(
-      walletHasNonZeroLiveBalance,
-    );
-
-    return (
-      hasCompletedFullPortfolioPopulate ||
-      hasCompletedPopulateForWallets({
-        populateStatus,
-        wallets: liveBalanceWallets.length
-          ? liveBalanceWallets
-          : chartableAssetWallets,
-        requireAllWalletsInScope: liveBalanceWallets.length > 0,
-      })
-    );
-  }, [
-    chartableAssetWallets,
-    hasCompletedFullPortfolioPopulate,
-    populateStatus,
-  ]);
+  const chartableAssetWallets = balanceChartReadiness.chartableWallets;
   const balanceHistoryEnabled =
-    shared.showPortfolioValue &&
-    hasAnyAssetWalletBalance &&
-    hasCompletedAssetPopulate &&
-    shared.hasWalletsForAsset;
+    balanceChartReadiness.shouldMountBalanceChart && shared.hasWalletsForAsset;
   const analysis = usePortfolioAnalysis({
     wallets: chartableAssetWallets,
     timeframe: displayedTimeframe,
@@ -227,15 +189,8 @@ const AssetBalanceHistoryScreen = ({
     allowCurrentWhilePopulate: true,
   });
 
-  const isAssetBalanceChartLoading = useMemo(
-    () =>
-      balanceHistoryEnabled &&
-      isPopulateLoadingForWallets({
-        populateStatus,
-        wallets: chartableAssetWallets,
-      }),
-    [balanceHistoryEnabled, chartableAssetWallets, populateStatus],
-  );
+  const isAssetBalanceChartLoading =
+    balanceChartReadiness.shouldShowChartLoader;
   const isTimeframeTransitionPending =
     requestedTimeframe !== displayedTimeframe;
 
@@ -325,21 +280,8 @@ const AssetBalanceHistoryScreen = ({
   }, [selectedAssetBalanceToDisplay, shared.resolvedQuoteCurrency]);
 
   const marketPriceDisplay = shared.formatDisplayPrice(shared.currentFiatRate);
-  const shouldRenderBalanceChart = useMemo(() => {
-    return (
-      shared.showPortfolioValue &&
-      hasAnyAssetWalletBalance &&
-      hasCompletedAssetPopulate &&
-      !shared.hideAllBalances &&
-      shared.hasWalletsForAsset
-    );
-  }, [
-    hasAnyAssetWalletBalance,
-    hasCompletedAssetPopulate,
-    shared.showPortfolioValue,
-    shared.hideAllBalances,
-    shared.hasWalletsForAsset,
-  ]);
+  const shouldRenderBalanceChart =
+    balanceChartReadiness.shouldMountBalanceChart && shared.hasWalletsForAsset;
 
   const topValue = shared.hideAllBalances ? '****' : formattedAssetBalance;
   const topValueIsLarge = shouldUseCompactFiatAmountText(formattedAssetBalance);

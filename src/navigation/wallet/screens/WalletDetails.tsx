@@ -31,7 +31,7 @@ import FullWidthBalanceChartContainer from '../../../components/charts/FullWidth
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
+import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import Settings from '../../../components/settings/Settings';
 import {
   Balance,
@@ -100,7 +100,6 @@ import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
-import usePortfolioWalletSnapshotPresence from '../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
   BuildUiFriendlyList,
@@ -354,9 +353,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const committedPortfolioQuoteCurrency = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
   );
-  const portfolioPopulateInProgress = useAppSelector(
-    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
-  );
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const timeframeSelectorWidth = getTimeframeSelectorWidth(
@@ -603,16 +599,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
   });
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
-  const {canRenderBalanceChart: canRenderWalletBalanceChart, chartableWallets} =
-    usePortfolioScopeChartReadiness({
-      wallets: chartWallets,
-      enabled: showPortfolioValue === true,
-    });
+  const {
+    shouldMountBalanceChart: shouldMountWalletBalanceChart,
+    shouldShowChartLoader: shouldShowWalletChartLoader,
+    chartableWallets,
+  } = usePortfolioBalanceChartReadiness({
+    wallets: chartWallets,
+    enabled: showPortfolioValue === true,
+    hideAllBalances,
+  });
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartableWallets,
     quoteCurrency: chartQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderWalletBalanceChart,
+    enabled: shouldMountWalletBalanceChart,
     resetKey: `${walletId}:${copayerId || ''}`,
   });
 
@@ -680,19 +680,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
-  const {
-    hasAnySnapshots: walletHasSnapshots,
-    checked: walletSnapshotsChecked,
-    loading: walletSnapshotsLoading,
-  } = usePortfolioWalletSnapshotPresence({
-    wallets: chartableWallets,
-    enabled: canRenderWalletBalanceChart,
-  });
-  const isWalletChartDataPending =
-    !walletSnapshotsChecked ||
-    walletSnapshotsLoading ||
-    portfolioPopulateInProgress;
-  const showWalletBalanceChart = walletHasSnapshots || isWalletChartDataPending;
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
@@ -1384,25 +1371,24 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
                 {!hideAllBalances &&
                 !fullWalletObj.isScanning &&
-                (showPortfolioValue !== true || canRenderWalletBalanceChart) ? (
+                (showPortfolioValue !== true ||
+                  shouldMountWalletBalanceChart) ? (
                   <FullWidthBalanceChartContainer>
                     <BalanceHeaderSupplement
                       changeRowData={walletHeaderChangeRowData}
                       content={walletChartPreContent}
                       contentTopMargin={12}
                       changeRowStyle={walletChartChangeRowStyle}
-                      reserveChangeRowSpace={
-                        canRenderWalletBalanceChart && showWalletBalanceChart
-                      }
+                      reserveChangeRowSpace={shouldMountWalletBalanceChart}
                     />
-                    {canRenderWalletBalanceChart && showWalletBalanceChart ? (
+                    {shouldMountWalletBalanceChart ? (
                       <BalanceHistoryChart
                         wallets={chartableWallets}
                         quoteCurrency={chartQuoteCurrency}
                         rates={rates}
                         lineColor={chartLineColor}
                         gradientStartColor={chartGradientBackgroundColor}
-                        showLoaderWhenNoSnapshots={isWalletChartDataPending}
+                        showLoaderWhenNoSnapshots={shouldShowWalletChartLoader}
                         showChangeRow={false}
                         onSelectedBalanceChange={
                           balanceChartSurface.chartCallbacks

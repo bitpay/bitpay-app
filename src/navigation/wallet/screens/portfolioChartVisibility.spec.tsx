@@ -441,7 +441,33 @@ jest.mock('../../../utils/portfolio/assets', () => ({
       );
     },
   ),
-  isPopulateLoadingForWallets: jest.fn(() => false),
+  isPopulateLoadingForWallets: jest.fn(
+    ({populateStatus, wallets}: {populateStatus?: any; wallets?: any[]}) => {
+      if (!populateStatus?.inProgress) {
+        return false;
+      }
+
+      const walletIds = (wallets || [])
+        .map(wallet => wallet?.id)
+        .filter(Boolean);
+      const activeWalletIds = new Set([
+        ...Object.keys(populateStatus.walletStatusById || {}),
+        ...(populateStatus.currentWalletId
+          ? [populateStatus.currentWalletId]
+          : []),
+      ]);
+      const scopedWalletIds = walletIds.filter(walletId =>
+        activeWalletIds.has(walletId),
+      );
+
+      return scopedWalletIds.some(walletId => {
+        if (walletId === populateStatus.currentWalletId) {
+          return true;
+        }
+        return populateStatus.walletStatusById?.[walletId] === 'in_progress';
+      });
+    },
+  ),
   walletHasNonZeroLiveBalance: jest.fn(() => true),
   walletsHaveNonZeroLiveBalance: jest.fn(() => true),
 }));
@@ -533,9 +559,6 @@ jest.mock('@react-native-clipboard/clipboard', () => ({
 const mockBalanceHistoryChart = jest.requireMock(
   '../../../components/charts/BalanceHistoryChart',
 ) as jest.Mock;
-const mockWalletsHaveNonZeroLiveBalance = jest.requireMock(
-  '../../../utils/portfolio/assets',
-).walletsHaveNonZeroLiveBalance as jest.Mock;
 const mockGetTransactionHistory = jest.requireMock(
   '../../../store/wallet/effects/transactions/transactions',
 ).GetTransactionHistory as jest.Mock;
@@ -728,6 +751,12 @@ const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
     'account_details_balance_chart',
   ],
 ];
+const portfolioChartSurfaceCases: Array<
+  [string, () => React.ReactElement, string]
+> = [
+  ['Home', () => <PortfolioBalance />, 'home_portfolio_balance_chart'],
+  ...chartSurfaceCases,
+];
 
 const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
   computedAtomic: '110000000',
@@ -744,7 +773,12 @@ const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
 describe('portfolio chart visibility guards', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWalletsHaveNonZeroLiveBalance.mockReturnValue(true);
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: true,
+      hasAnySnapshots: true,
+      loading: false,
+    });
     resetState(false);
   });
 
@@ -825,7 +859,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('does not mount the Home portfolio balance chart or loader before initial populate completes', async () => {
+  it('mounts the Home portfolio balance chart loader while initial populate can create snapshots', async () => {
     resetState(true, {
       completedFullPopulate: false,
       populateStatus: makePopulateStatus(),
@@ -844,7 +878,12 @@ describe('portfolio chart visibility guards', () => {
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
     ).toBeGreaterThan(0);
-    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showLoaderWhenNoSnapshots: true,
+      }),
+      undefined,
+    );
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
         .length,
@@ -861,9 +900,34 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).toHaveBeenCalled();
   });
 
-  it('does not mount the Home portfolio balance chart when all visible wallets have zero balance', async () => {
+  it('renders the Home portfolio balance chart when visible wallets have zero balance but snapshot rows exist', async () => {
     resetState(true, {completedFullPopulate: true});
-    mockWalletsHaveNonZeroLiveBalance.mockReturnValue(false);
+    mockWallet.balance = {
+      ...mockWallet.balance,
+      crypto: '0',
+      fiat: 0,
+      fiatLastDay: 0,
+      sat: 0,
+      satSpendable: 0,
+    };
+    mockKey.totalBalance = 0;
+    mockKey.totalBalanceLastDay = 0;
+
+    await act(async () => {
+      renderWithTheme(<PortfolioBalance />);
+    });
+
+    expect(mockBalanceHistoryChart).toHaveBeenCalled();
+  });
+
+  it('does not mount the Home portfolio balance chart when snapshot presence settles with no rows', async () => {
+    resetState(true, {completedFullPopulate: true});
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      loading: false,
+    });
 
     await act(async () => {
       renderWithTheme(<PortfolioBalance />);
@@ -872,15 +936,9 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['Home', () => <PortfolioBalance />, 'home_portfolio_balance_chart'],
-    ...chartSurfaceCases,
-  ])(
+  it.each(portfolioChartSurfaceCases)(
     'does not mount the %s balance chart when all scope wallets are excessive-mismatch quarantined',
     async (_screen, makeScreen) => {
-      mockWalletsHaveNonZeroLiveBalance.mockImplementation(
-        (wallets: any[]) => Array.isArray(wallets) && wallets.length > 0,
-      );
       resetState(true, {
         completedFullPopulate: true,
         excessiveBalanceMismatchesByWalletId: {
@@ -920,7 +978,7 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(chartSurfaceCases)(
-    'does not mount the %s balance chart or loader during initial populate',
+    'mounts the %s balance chart loader during initial populate',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: false,
@@ -931,7 +989,12 @@ describe('portfolio chart visibility guards', () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          showLoaderWhenNoSnapshots: true,
+        }),
+        undefined,
+      );
     },
   );
 
@@ -1005,21 +1068,24 @@ describe('portfolio chart visibility guards', () => {
     );
   });
 
-  it('hides the WalletDetails chart after snapshot presence settles with no rows and no pending work', async () => {
-    resetState(true);
-    mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
-      checked: true,
-      hasAllSnapshots: false,
-      hasAnySnapshots: false,
-      loading: false,
-    });
+  it.each(chartSurfaceCases)(
+    'hides the %s chart after snapshot presence settles with no rows and no pending work',
+    async (_screen, makeScreen) => {
+      resetState(true);
+      mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+        checked: true,
+        hasAllSnapshots: false,
+        hasAnySnapshots: false,
+        loading: false,
+      });
 
-    await act(async () => {
-      renderWithTheme(makeWalletDetailsScreen());
-    });
+      await act(async () => {
+        renderWithTheme(makeScreen());
+      });
 
-    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
-  });
+      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+    },
+  );
 
   it('does not keep the WalletDetails chart loader alive for transaction history loading alone', async () => {
     resetState(true);
@@ -1041,23 +1107,29 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(chartSurfaceCases)(
-    'does not mount the %s balance chart when its wallet scope has zero balance',
+    'mounts the %s balance chart when its wallet scope has zero balance but snapshot rows exist',
     async (_screen, makeScreen) => {
       resetState(true);
-      mockWalletsHaveNonZeroLiveBalance.mockReturnValue(false);
+      mockWallet.balance = {
+        ...mockWallet.balance,
+        crypto: '0',
+        fiat: 0,
+        fiatLastDay: 0,
+        sat: 0,
+        satSpendable: 0,
+      };
+      mockKey.totalBalance = 0;
+      mockKey.totalBalanceLastDay = 0;
 
       await act(async () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+      expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
   );
 
-  it.each([
-    ['Home', () => <PortfolioBalance />, 'home_portfolio_balance_chart'],
-    ...chartSurfaceCases,
-  ])(
+  it.each(portfolioChartSurfaceCases)(
     'keeps %s chart rendering during later incremental populate after initial success',
     async (_screen, makeScreen) => {
       resetState(true, {

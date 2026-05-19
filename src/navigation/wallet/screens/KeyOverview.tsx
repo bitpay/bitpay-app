@@ -135,7 +135,7 @@ import FullWidthBalanceChartContainer from '../../../components/charts/FullWidth
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
-import usePortfolioScopeChartReadiness from '../../../portfolio/ui/hooks/usePortfolioScopeChartReadiness';
+import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -697,10 +697,13 @@ const KeyOverview = () => {
   }, [key]);
   const {
     canRenderBalanceChart: canRenderKeyBalanceChart,
+    shouldMountBalanceChart: shouldMountKeyBalanceChart,
+    shouldShowChartLoader: shouldShowKeyChartLoader,
     chartableWallets: chartableVisibleKeyWallets,
-  } = usePortfolioScopeChartReadiness({
+  } = usePortfolioBalanceChartReadiness({
     wallets: visibleKeyWallets,
     enabled: showPortfolioValue === true,
+    hideAllBalances,
   });
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
@@ -711,7 +714,7 @@ const KeyOverview = () => {
     quoteCurrency,
     fallbackBalance: totalBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderKeyBalanceChart,
+    enabled: shouldMountKeyBalanceChart,
     resetKey: id,
   });
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
@@ -1187,18 +1190,19 @@ const KeyOverview = () => {
           </TouchableOpacity>
 
           {!hideAllBalances &&
-          (keyHeaderChangeRowData || canRenderKeyBalanceChart) ? (
+          (keyHeaderChangeRowData || shouldMountKeyBalanceChart) ? (
             <FullWidthBalanceChartContainer>
               <BalanceHeaderSupplement
                 changeRowData={keyHeaderChangeRowData}
-                reserveChangeRowSpace={canRenderKeyBalanceChart}
+                reserveChangeRowSpace={shouldMountKeyBalanceChart}
               />
-              {canRenderKeyBalanceChart ? (
+              {shouldMountKeyBalanceChart ? (
                 <BalanceHistoryChart
                   wallets={chartableVisibleKeyWallets}
                   quoteCurrency={quoteCurrency}
                   rates={rates}
                   timeframeSelectorWidth={timeframeSelectorWidth}
+                  showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
                   showChangeRow={false}
                   onSelectedBalanceChange={
                     balanceChartSurface.chartCallbacks.onSelectedBalanceChange
@@ -1236,7 +1240,6 @@ const KeyOverview = () => {
       </>
     );
   }, [
-    canRenderKeyBalanceChart,
     chartableVisibleKeyWallets,
     defaultAltCurrency.isoCode,
     dispatch,
@@ -1248,6 +1251,8 @@ const KeyOverview = () => {
     rates,
     searchResults,
     searchVal,
+    shouldMountKeyBalanceChart,
+    shouldShowKeyChartLoader,
     t,
     timeframeSelectorWidth,
     totalBalance,
