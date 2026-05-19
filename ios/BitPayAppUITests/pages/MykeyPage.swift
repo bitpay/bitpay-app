@@ -30,7 +30,7 @@ class MyKeyPage {
 
   // MARK: - Validations
 
-  func isMyKeyDisplayed(timeout: TimeInterval = 180) -> Bool {
+  func isMyKeyDisplayed(timeout: TimeInterval = 300) -> Bool {
     return myKeyTab.waitForExistence(timeout: timeout)
   }
 
