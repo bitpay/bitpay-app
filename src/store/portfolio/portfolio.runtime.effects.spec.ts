@@ -1416,6 +1416,137 @@ describe('portfolio runtime effects lock deferral', () => {
     ]);
   });
 
+  it('passes manual quarantine retry intent into scoped populate decisions', async () => {
+    const wallet = walletFactory({id: 'wallet-from-state'});
+    const state = makeState({
+      WALLET: {
+        keys: {
+          'key-1': {
+            wallets: [wallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({walletId: 'wallet-from-state'})],
+        walletIdsToPopulate: [],
+      }),
+    );
+
+    await dispatch(
+      maybePopulatePortfolioForWalletsWithRuntime({
+        quoteCurrency: 'USD',
+        walletIds: ['wallet-from-state'],
+        forceRetryQuarantined: true,
+      }),
+    );
+
+    expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        forceRetryQuarantined: true,
+        wallets: [wallet],
+      }),
+    );
+    expect(mockPopulateWallets).not.toHaveBeenCalled();
+  });
+
+  it('passes manual quarantine retry intent into home-scope launch decisions', async () => {
+    const wallet = walletFactory({id: 'home-wallet'});
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    mockGetVisibleWalletsFromKeys.mockReturnValue([wallet]);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({walletId: 'home-wallet'})],
+        walletIdsToPopulate: [],
+      }),
+    );
+
+    await dispatch(
+      maybePopulatePortfolioOnAppLaunchWithRuntime({
+        quoteCurrency: 'USD',
+        forceRetryQuarantined: true,
+      }),
+    );
+
+    expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        forceRetryQuarantined: true,
+        wallets: [wallet],
+      }),
+    );
+    expect(mockPopulateWallets).not.toHaveBeenCalled();
+  });
+
+  it('queues forced scoped populate decisions made during an active populate', async () => {
+    const wallet1 = walletFactory({id: 'wallet-1'});
+    const wallet2 = walletFactory({id: 'wallet-2'});
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    const activePopulate = deferred<any>();
+    mockGetVisibleWalletsFromKeys.mockReturnValue([wallet1, wallet2]);
+    mockPopulateWallets
+      .mockImplementationOnce(() => activePopulate.promise)
+      .mockResolvedValueOnce(
+        successfulPopulateResult({
+          results: [{walletId: 'wallet-2'}],
+          status: {
+            walletStatusById: {'wallet-2': 'done'},
+            walletsCompleted: 1,
+          },
+        }),
+      );
+    mockGetPortfolioPopulateDecisionsForWallets.mockImplementation(
+      async ({wallets}: {wallets: any[]}) =>
+        populateDecisionResult({
+          decisions: wallets.map(wallet =>
+            populateDecision({
+              reason: 'missing_snapshot',
+              shouldPopulate: true,
+              walletId: wallet.id,
+            }),
+          ),
+          walletIdsToPopulate: wallets.map(wallet => wallet.id),
+        }),
+    );
+
+    const firstPopulatePromise = dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [wallet1],
+      }),
+    );
+
+    await Promise.resolve();
+    await dispatch(
+      maybePopulatePortfolioForWalletsWithRuntime({
+        quoteCurrency: 'EUR',
+        wallets: [wallet2],
+        forceRetryQuarantined: true,
+      }),
+    );
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+
+    activePopulate.resolve(successfulPopulateResult());
+    await firstPopulatePromise;
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(2);
+    expect(mockPopulateWallets.mock.calls[1][0].wallets).toEqual([
+      expect.objectContaining({walletId: 'wallet-2'}),
+    ]);
+    expect(
+      mockGetPortfolioPopulateDecisionsForWallets.mock.calls.some(
+        ([callArgs]) =>
+          callArgs.forceRetryQuarantined === true &&
+          callArgs.wallets?.some((wallet: any) => wallet.id === 'wallet-2'),
+      ),
+    ).toBe(true);
+  });
+
   it('app launch selective populate skips wallets with unchanged persisted mismatch', async () => {
     const wallet = walletFactory();
     const persistedMismatch = {

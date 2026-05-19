@@ -581,6 +581,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
             defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           }),
+          forceRetryQuarantined: true,
         }) as any,
       );
     } catch (err) {

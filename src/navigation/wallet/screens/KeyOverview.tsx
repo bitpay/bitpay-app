@@ -1078,6 +1078,7 @@ const KeyOverview = () => {
         maybePopulatePortfolioForWallets({
           walletIds: visibleKeyWalletIds,
           quoteCurrency,
+          forceRetryQuarantined: true,
         }) as any,
       );
     } catch {

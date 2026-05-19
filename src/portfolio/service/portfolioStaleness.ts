@@ -293,13 +293,15 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
   wallet: Wallet;
   unitDecimals: number;
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
+  forceRetryQuarantined?: boolean;
 }): Promise<PortfolioPopulateDecision> {
   const walletId = String(args.wallet?.id || '').trim();
   const invalidHistory = await args.client.getInvalidHistory({walletId});
   if (invalidHistory) {
     return buildPortfolioPopulateDecision(
       walletId,
-      isSnapshotInvalidHistoryRetryDue(invalidHistory),
+      args.forceRetryQuarantined === true ||
+        isSnapshotInvalidHistoryRetryDue(invalidHistory),
       'invalid_history',
     );
   }
@@ -380,6 +382,7 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
     | undefined;
   previousMismatchByWalletId?: WalletIdUpdateMap<PortfolioSnapshotBalanceMismatch>;
   excessiveBalanceMismatchByWalletId?: WalletIdUpdateMap<PortfolioExcessiveBalanceMismatchMarker>;
+  forceRetryQuarantined?: boolean;
 }): Promise<{
   decisions: PortfolioPopulateDecision[];
   walletIdsToPopulate: string[];
@@ -430,10 +433,12 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
     const excessiveBalanceMismatch =
       args.excessiveBalanceMismatchByWalletId?.[walletId];
     if (excessiveBalanceMismatch) {
-      const retryDue = isPortfolioExcessiveBalanceMismatchRetryDue(
-        excessiveBalanceMismatch,
-        nowMs,
-      );
+      const retryDue =
+        args.forceRetryQuarantined === true ||
+        isPortfolioExcessiveBalanceMismatchRetryDue(
+          excessiveBalanceMismatch,
+          nowMs,
+        );
 
       recordDecision(
         buildPortfolioPopulateDecision(
@@ -458,6 +463,7 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
       wallet,
       unitDecimals: decimalsResolution.unitDecimals,
       previousMismatch: args.previousMismatchByWalletId?.[walletId],
+      forceRetryQuarantined: args.forceRetryQuarantined,
     });
     recordDecision(decision);
   }

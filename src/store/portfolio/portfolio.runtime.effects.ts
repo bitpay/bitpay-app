@@ -56,8 +56,14 @@ let pendingScopedPopulateRequest:
       walletIds: Set<string>;
       walletsById: Map<string, Wallet>;
       quoteCurrency?: string;
+      forceRetryQuarantined?: boolean;
+      runPopulateDecision?: boolean;
     }
   | undefined;
+
+type PortfolioQuarantineRetryOptions = {
+  forceRetryQuarantined?: boolean;
+};
 
 type PopulatePortfolioWithRuntimeArgs = {
   wallets?: Wallet[];
@@ -65,13 +71,17 @@ type PopulatePortfolioWithRuntimeArgs = {
   quoteCurrency?: string;
   snapshotDebugMode?: SnapshotPersistDebugMode;
   completesInitialBaseline?: boolean;
-};
+} & PortfolioQuarantineRetryOptions;
 
 type MaybePopulatePortfolioForWalletsWithRuntimeArgs = {
   wallets?: Wallet[];
   walletIds?: string[];
   quoteCurrency?: string;
-};
+} & PortfolioQuarantineRetryOptions;
+
+type MaybePopulatePortfolioOnAppLaunchWithRuntimeArgs = {
+  quoteCurrency?: string;
+} & PortfolioQuarantineRetryOptions;
 
 const resolveQuoteCurrency = (
   ...candidates: Array<string | undefined>
@@ -378,6 +388,7 @@ const getScopedPopulateWalletIdsFromArgs = (
 
 const queueScopedPopulateRequest = (
   args?: PopulatePortfolioWithRuntimeArgs,
+  options?: {runPopulateDecision?: boolean},
 ): boolean => {
   if (!args?.wallets && !args?.walletIds) {
     return false;
@@ -392,7 +403,10 @@ const queueScopedPopulateRequest = (
     pendingScopedPopulateRequest = {
       walletIds: new Set<string>(),
       walletsById: new Map<string, Wallet>(),
+      runPopulateDecision: options?.runPopulateDecision === true,
     };
+  } else if (options?.runPopulateDecision !== true) {
+    pendingScopedPopulateRequest.runPopulateDecision = false;
   }
 
   walletIds.forEach(walletId => {
@@ -412,11 +426,15 @@ const queueScopedPopulateRequest = (
     pendingScopedPopulateRequest.quoteCurrency = args.quoteCurrency;
   }
 
+  if (args.forceRetryQuarantined === true) {
+    pendingScopedPopulateRequest.forceRetryQuarantined = true;
+  }
+
   return true;
 };
 
 const takePendingScopedPopulateRequest = ():
-  | PopulatePortfolioWithRuntimeArgs
+  | (PopulatePortfolioWithRuntimeArgs & {runPopulateDecision?: boolean})
   | undefined => {
   const pending = pendingScopedPopulateRequest;
   pendingScopedPopulateRequest = undefined;
@@ -443,6 +461,12 @@ const takePendingScopedPopulateRequest = ():
       ? {walletIds: walletIdsToResolveFromState}
       : {}),
     quoteCurrency: pending?.quoteCurrency,
+    ...(pending?.forceRetryQuarantined === true
+      ? {forceRetryQuarantined: true}
+      : {}),
+    ...(pending?.runPopulateDecision === true
+      ? {runPopulateDecision: true}
+      : {}),
   };
 };
 
@@ -470,11 +494,32 @@ const drainPendingScopedPopulateRequests = async (
   }
 
   if (state.PORTFOLIO?.populateStatus?.inProgress) {
-    queueScopedPopulateRequest(pending);
+    queueScopedPopulateRequest(pending, {
+      runPopulateDecision: pending.runPopulateDecision,
+    });
     return;
   }
 
-  await dispatch(populatePortfolioWithRuntime(pending));
+  if (pending.runPopulateDecision) {
+    await dispatch(
+      maybePopulatePortfolioForWalletsWithRuntime({
+        wallets: pending.wallets,
+        walletIds: pending.walletIds,
+        quoteCurrency: pending.quoteCurrency,
+        forceRetryQuarantined: pending.forceRetryQuarantined,
+      }),
+    );
+    return;
+  }
+
+  await dispatch(
+    populatePortfolioWithRuntime({
+      wallets: pending.wallets,
+      walletIds: pending.walletIds,
+      quoteCurrency: pending.quoteCurrency,
+      forceRetryQuarantined: pending.forceRetryQuarantined,
+    }),
+  );
 };
 
 const drainPendingScopedPopulateRequestsAfterRuntimeStop = async (
@@ -857,6 +902,7 @@ const getPortfolioPopulateDecisionsForRuntimeWallets = (args: {
   dispatch: any;
   state: RootState;
   wallets: Wallet[];
+  forceRetryQuarantined?: boolean;
 }) =>
   getPortfolioPopulateDecisionsForWallets({
     client: args.client,
@@ -867,6 +913,7 @@ const getPortfolioPopulateDecisionsForRuntimeWallets = (args: {
       args.state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
     excessiveBalanceMismatchByWalletId:
       args.state.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
+    forceRetryQuarantined: args.forceRetryQuarantined,
   });
 
 type SnapshotBalanceHealthUpdates = {
@@ -1267,6 +1314,9 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
       return;
     }
     if (state.PORTFOLIO?.populateStatus?.inProgress) {
+      if (args.forceRetryQuarantined === true) {
+        queueScopedPopulateRequest(args, {runPopulateDecision: true});
+      }
       return;
     }
 
@@ -1289,6 +1339,7 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
       dispatch,
       state,
       wallets: runtimeEligibleWallets,
+      forceRetryQuarantined: args.forceRetryQuarantined,
     });
 
     dispatch(
@@ -1318,7 +1369,9 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
   };
 
 export const maybePopulatePortfolioOnAppLaunchWithRuntime =
-  (args?: {quoteCurrency?: string}): Effect<Promise<void>> =>
+  (
+    args?: MaybePopulatePortfolioOnAppLaunchWithRuntimeArgs,
+  ): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     const initialState = getState();
     if (!isPortfolioEnabled(initialState)) {
@@ -1331,6 +1384,16 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
       return;
     }
     if (initialState.PORTFOLIO?.populateStatus?.inProgress) {
+      if (args?.forceRetryQuarantined === true) {
+        queueScopedPopulateRequest(
+          {
+            wallets: getVisibleMainnetWalletsFromState(initialState),
+            quoteCurrency: args?.quoteCurrency,
+            forceRetryQuarantined: true,
+          },
+          {runPopulateDecision: true},
+        );
+      }
       return;
     }
 
@@ -1382,6 +1445,7 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
       dispatch,
       state,
       wallets: runtimeEligibleWallets,
+      forceRetryQuarantined: args?.forceRetryQuarantined,
     });
 
     dispatch(

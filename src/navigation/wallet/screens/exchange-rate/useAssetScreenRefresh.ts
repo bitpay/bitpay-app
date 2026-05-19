@@ -1,4 +1,5 @@
 import {useCallback, useState} from 'react';
+import {maybePopulatePortfolioForWallets} from '../../../../store/portfolio';
 import {startGetRates} from '../../../../store/wallet/effects';
 import {getAndDispatchUpdatedWalletBalances} from '../../../../store/wallet/effects/status/statusv2';
 import {useAppDispatch} from '../../../../utils/hooks';
@@ -9,7 +10,10 @@ type UseAssetScreenRefreshOptions = {
 };
 
 const useAssetScreenRefresh = (
-  shared: Pick<ExchangeRateSharedModel, 'hasWalletsForAsset'>,
+  shared: Pick<
+    ExchangeRateSharedModel,
+    'assetWallets' | 'hasWalletsForAsset' | 'resolvedQuoteCurrency'
+  >,
   options: UseAssetScreenRefreshOptions = {},
 ) => {
   const dispatch = useAppDispatch();
@@ -25,6 +29,15 @@ const useAssetScreenRefresh = (
             context: 'homeRootOnRefresh',
           }),
         );
+        await dispatch(
+          maybePopulatePortfolioForWallets({
+            walletIds: shared.assetWallets
+              .map(wallet => String(wallet?.id || '').trim())
+              .filter(Boolean),
+            quoteCurrency: shared.resolvedQuoteCurrency,
+            forceRetryQuarantined: true,
+          }) as any,
+        );
       } else {
         await dispatch(
           startGetRates({
@@ -38,7 +51,13 @@ const useAssetScreenRefresh = (
     } finally {
       setIsRefreshing(false);
     }
-  }, [afterBaseRefresh, dispatch, shared.hasWalletsForAsset]);
+  }, [
+    afterBaseRefresh,
+    dispatch,
+    shared.assetWallets,
+    shared.hasWalletsForAsset,
+    shared.resolvedQuoteCurrency,
+  ]);
 
   return {
     isRefreshing,

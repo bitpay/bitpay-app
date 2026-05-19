@@ -1352,6 +1352,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         maybePopulatePortfolioForWallets({
           walletIds: accountWalletIds,
           quoteCurrency: displayQuoteCurrency,
+          forceRetryQuarantined: true,
         }) as any,
       );
       setNeedActionTxps(pendingTxps);

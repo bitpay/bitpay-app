@@ -229,6 +229,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           dispatch(
             maybePopulatePortfolioOnAppLaunch({
               quoteCurrency,
+              forceRetryQuarantined: true,
             }) as any,
           ),
         )
