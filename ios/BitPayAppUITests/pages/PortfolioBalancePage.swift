@@ -58,8 +58,28 @@ class PortfolioBalancePage {
     sellButton.tap()
   }
 
+//  func tapAddCryptoButton() {
+//    addCryptoButton.tap()
+//  }
+  
   func tapAddCryptoButton() {
-    addCryptoButton.tap()
+    
+    let selectAnOptionPage = AddCryptoOptionPage(app: app)
+    
+    for attempt in 1...5 {
+      
+      addCryptoButton.tap()
+      
+      if selectAnOptionPage.isSelectAnOptionTitleDisplayed() {
+        return
+      }
+      
+      if attempt < 5 {
+        sleep(60)
+      }
+    }
+    
+    XCTFail("Failed to open 'Select an Option' screen after 5 attempts")
   }
   
   func tapSendButton() {
