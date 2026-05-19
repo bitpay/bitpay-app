@@ -42,6 +42,7 @@ export type BalanceHistoryChartProps = {
   minStrokeScale?: number;
   gradientStartColor?: string;
   showLoaderWhenNoSnapshots?: boolean;
+  renderZeroBalanceWhenNoSnapshots?: boolean;
   balanceOffset?: number;
   onSelectedBalanceChange?: (balance?: number) => void;
   preChartContent?: React.ReactNode;
@@ -99,6 +100,7 @@ const BalanceHistoryChart = ({
   minStrokeScale,
   gradientStartColor,
   showLoaderWhenNoSnapshots = false,
+  renderZeroBalanceWhenNoSnapshots = false,
   balanceOffset = 0,
   onSelectedBalanceChange,
   preChartContent,
@@ -132,6 +134,7 @@ const BalanceHistoryChart = ({
     initialSelectedTimeframe,
     balanceOffset,
     showLoaderWhenNoSnapshots,
+    renderZeroBalanceWhenNoSnapshots,
     t,
     onSelectedBalanceChange,
     onChangeRowData,

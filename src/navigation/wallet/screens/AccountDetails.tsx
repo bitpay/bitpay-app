@@ -469,11 +469,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {
     shouldMountBalanceChart: shouldMountAccountBalanceChart,
     shouldShowChartLoader: shouldShowAccountChartLoader,
+    shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: keyFullWalletObjs,
     enabled: showPortfolioValue === true,
     hideAllBalances,
+    renderZeroBalanceChartWhenNoSnapshots: true,
   });
   const accountWalletIds = useMemo(
     () => keyFullWalletObjs.map(wallet => wallet.id).filter(Boolean),
@@ -1517,6 +1519,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     rates={rates}
                     timeframeSelectorWidth={timeframeSelectorWidth}
                     showLoaderWhenNoSnapshots={shouldShowAccountChartLoader}
+                    renderZeroBalanceWhenNoSnapshots={
+                      shouldRenderZeroAccountBalanceChart
+                    }
                     showChangeRow={false}
                     onSelectedBalanceChange={
                       balanceChartSurface.chartCallbacks.onSelectedBalanceChange

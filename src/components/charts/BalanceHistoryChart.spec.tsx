@@ -458,6 +458,31 @@ describe('BalanceHistoryChart', () => {
     );
   });
 
+  it('renders a synthetic zero series when requested for an empty history scope', async () => {
+    await act(async () => {
+      TestRenderer.create(
+        <BalanceHistoryChart
+          wallets={[
+            {
+              id: 'wallet-1',
+            } as any,
+          ]}
+          quoteCurrency="USD"
+          renderZeroBalanceWhenNoSnapshots
+        />,
+      );
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).not.toHaveBeenCalled();
+    expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+    expect(latestInteractiveLineChartProps.points.length).toBeGreaterThan(1);
+    expect(
+      latestInteractiveLineChartProps.points.every(
+        (point: {value: number}) => point.value === 0,
+      ),
+    ).toBe(true);
+  });
+
   it('fades out the axis labels for a zero balance interval', async () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockZeroBalanceSeries,

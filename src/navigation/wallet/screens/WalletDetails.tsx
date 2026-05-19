@@ -612,11 +612,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {
     shouldMountBalanceChart: shouldMountWalletBalanceChart,
     shouldShowChartLoader: shouldShowWalletChartLoader,
+    shouldRenderZeroBalanceChart: shouldRenderZeroWalletBalanceChart,
     chartableWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: chartWallets,
     enabled: showPortfolioValue === true && showFiatBalance,
     hideAllBalances,
+    renderZeroBalanceChartWhenNoSnapshots: true,
   });
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartableWallets,
@@ -1400,6 +1402,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         lineColor={chartLineColor}
                         gradientStartColor={chartGradientBackgroundColor}
                         showLoaderWhenNoSnapshots={shouldShowWalletChartLoader}
+                        renderZeroBalanceWhenNoSnapshots={
+                          shouldRenderZeroWalletBalanceChart
+                        }
                         showChangeRow={false}
                         onSelectedBalanceChange={
                           balanceChartSurface.chartCallbacks

@@ -18,6 +18,7 @@ export type PortfolioBalanceChartReadiness = {
   isChartDataPending: boolean;
   isScopePopulateLoading: boolean;
   isSnapshotPresenceLoading: boolean;
+  shouldRenderZeroBalanceChart: boolean;
   shouldMountBalanceChart: boolean;
   shouldShowChartLoader: boolean;
 };
@@ -25,6 +26,7 @@ export type PortfolioBalanceChartReadiness = {
 export default function usePortfolioBalanceChartReadiness(args: {
   enabled?: boolean;
   hideAllBalances?: boolean;
+  renderZeroBalanceChartWhenNoSnapshots?: boolean;
   wallets: Wallet[];
 }): PortfolioBalanceChartReadiness {
   const enabled = args.enabled !== false;
@@ -84,11 +86,17 @@ export default function usePortfolioBalanceChartReadiness(args: {
     canCheckSnapshotPresence &&
     snapshotPresence.checked &&
     snapshotPresence.hasAnySnapshots;
+  const shouldRenderZeroBalanceChart =
+    canCheckSnapshotPresence &&
+    args.renderZeroBalanceChartWhenNoSnapshots === true &&
+    snapshotPresence.checked &&
+    !snapshotPresence.hasAnySnapshots;
   const isChartDataPending =
     canCheckSnapshotPresence &&
     (isSnapshotPresenceLoading || isScopePopulateLoading);
   const canRenderBalanceChart =
-    canCheckSnapshotPresence && hasHistoricalChartData;
+    canCheckSnapshotPresence &&
+    (hasHistoricalChartData || shouldRenderZeroBalanceChart);
   const shouldShowChartLoader = !canRenderBalanceChart && isChartDataPending;
   const shouldMountBalanceChart =
     canRenderBalanceChart || shouldShowChartLoader;
@@ -102,6 +110,7 @@ export default function usePortfolioBalanceChartReadiness(args: {
     isChartDataPending,
     isScopePopulateLoading,
     isSnapshotPresenceLoading,
+    shouldRenderZeroBalanceChart,
     shouldMountBalanceChart,
     shouldShowChartLoader,
   };

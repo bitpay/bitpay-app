@@ -1113,7 +1113,7 @@ describe('portfolio chart visibility guards', () => {
     },
   );
 
-  it('keeps the WalletDetails chart shell mounted with a loader while populate can still create snapshots', async () => {
+  it('renders the WalletDetails zero chart when snapshot presence settles with no rows', async () => {
     resetState(true, {populateStatus: makePopulateStatus()});
     mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
       checked: true,
@@ -1128,14 +1128,15 @@ describe('portfolio chart visibility guards', () => {
 
     expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
       expect.objectContaining({
-        showLoaderWhenNoSnapshots: true,
+        renderZeroBalanceWhenNoSnapshots: true,
+        showLoaderWhenNoSnapshots: false,
       }),
       undefined,
     );
   });
 
   it.each(chartSurfaceCases)(
-    'hides the %s chart after snapshot presence settles with no rows and no pending work',
+    'renders the %s zero chart after snapshot presence settles with no rows',
     async (_screen, makeScreen) => {
       resetState(true);
       mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
@@ -1149,11 +1150,17 @@ describe('portfolio chart visibility guards', () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          renderZeroBalanceWhenNoSnapshots: true,
+          showLoaderWhenNoSnapshots: false,
+        }),
+        undefined,
+      );
     },
   );
 
-  it('does not keep the WalletDetails chart loader alive for transaction history loading alone', async () => {
+  it('renders the WalletDetails zero chart while transaction history loading alone', async () => {
     resetState(true);
     mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
@@ -1169,7 +1176,13 @@ describe('portfolio chart visibility guards', () => {
     });
 
     expect(mockGetTransactionHistory).toHaveBeenCalled();
-    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderZeroBalanceWhenNoSnapshots: true,
+        showLoaderWhenNoSnapshots: false,
+      }),
+      undefined,
+    );
   });
 
   it.each(chartSurfaceCases)(

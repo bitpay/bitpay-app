@@ -699,11 +699,13 @@ const KeyOverview = () => {
     canRenderBalanceChart: canRenderKeyBalanceChart,
     shouldMountBalanceChart: shouldMountKeyBalanceChart,
     shouldShowChartLoader: shouldShowKeyChartLoader,
+    shouldRenderZeroBalanceChart: shouldRenderZeroKeyBalanceChart,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: visibleKeyWallets,
     enabled: showPortfolioValue === true,
     hideAllBalances,
+    renderZeroBalanceChartWhenNoSnapshots: true,
   });
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
@@ -1203,6 +1205,9 @@ const KeyOverview = () => {
                   rates={rates}
                   timeframeSelectorWidth={timeframeSelectorWidth}
                   showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
+                  renderZeroBalanceWhenNoSnapshots={
+                    shouldRenderZeroKeyBalanceChart
+                  }
                   showChangeRow={false}
                   onSelectedBalanceChange={
                     balanceChartSurface.chartCallbacks.onSelectedBalanceChange
