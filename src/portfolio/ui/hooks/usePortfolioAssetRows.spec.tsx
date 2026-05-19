@@ -743,6 +743,92 @@ describe('usePortfolioAssetRows', () => {
     expect(mockRunPortfolioBalanceChartViewModelQuery).not.toHaveBeenCalled();
   });
 
+  it('keeps a compatible summary visible while an exact refreshed summary loads', async () => {
+    const scope = makeScope();
+    const depKeys = getBalanceChartHistoricalRateCacheKeys({
+      wallets: scope.storedWallets,
+      quoteCurrency: scope.quoteCurrency,
+      timeframes: ['1D'],
+    });
+    const oldHistoricalRateCache = buildReadyHistoricalRateCache(depKeys, 1000);
+    const refreshedHistoricalRateCache = buildReadyHistoricalRateCache(
+      depKeys,
+      3000,
+    );
+    const makeQueryArgs = (
+      fiatRateSeriesCache: typeof oldHistoricalRateCache,
+    ) => ({
+      wallets: scope.storedWallets,
+      quoteCurrency: scope.quoteCurrency,
+      timeframe: '1D',
+      currentRatesByAssetId: scope.currentRatesByAssetId,
+      dataRevisionSig: `committed-1|${scope.storedWalletRequestSig}`,
+      walletIds: ['btc-wallet'],
+      balanceOffset: 0,
+      asOfMs: scope.asOfMs,
+      summaryCacheRevisionSig: getTestSummaryCacheRevisionSig({
+        storedWallets: scope.storedWallets,
+        quoteCurrency: scope.quoteCurrency,
+        timeframe: '1D',
+        fiatRateSeriesCache,
+      }),
+    });
+    const oldQueryArgs = makeQueryArgs(oldHistoricalRateCache);
+    const oldIdentity = buildAssetPnlSummaryIdentityFromViewModelQuery(
+      oldQueryArgs as any,
+    );
+    seedAssetPnlSummaryCache({
+      identity: oldIdentity!,
+      viewModel: makeViewModel({
+        queryArgs: oldQueryArgs,
+        pnlFiat: 1.11,
+        pnlPercent: 1.11,
+      }),
+    });
+    mockUsePortfolioHistoricalRateDepsCache.mockImplementation(args =>
+      makeHistoricalRateDepsState({
+        ...args,
+        cache:
+          args.refreshToken === 1
+            ? refreshedHistoricalRateCache
+            : oldHistoricalRateCache,
+      }),
+    );
+    mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
+      () => new Promise(() => undefined),
+    );
+
+    const view = render(<HookHarness externalRefreshToken={0} />);
+
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          deltaFiat: '+$1.11',
+          deltaPercent: '+1.11%',
+          showScopedPnlLoading: false,
+        }),
+      ]);
+    });
+    expect(mockRunPortfolioBalanceChartViewModelQuery).not.toHaveBeenCalled();
+
+    view.rerender(<HookHarness externalRefreshToken={1} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          deltaFiat: '+$1.11',
+          deltaPercent: '+1.11%',
+          showScopedPnlLoading: false,
+        }),
+      ]);
+    });
+  });
+
   it('reuses Home preview summaries when AllAssets opens with the same global scope', async () => {
     let resolveSummary: ((value: any) => void) | undefined;
     mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
