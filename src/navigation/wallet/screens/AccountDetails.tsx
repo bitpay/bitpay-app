@@ -527,7 +527,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           displayQuoteCurrency,
           {
             currencyDisplay: 'symbol',
-            customPrecision: 'minimal',
           },
         )
       : accountItem?.fiatBalanceFormat;

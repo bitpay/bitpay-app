@@ -334,6 +334,15 @@ const getWalletType = (
   return;
 };
 
+const formatSelectedCryptoBalance = (balance: string): string => {
+  const trimmed = String(balance || '').trim();
+  const numericValue = Number(trimmed.replace(/,/g, ''));
+
+  return trimmed && Number.isFinite(numericValue) && numericValue === 0
+    ? '0.00'
+    : balance;
+};
+
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -623,7 +632,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           chartQuoteCurrency,
           {
             currencyDisplay: 'symbol',
-            customPrecision: 'minimal',
           },
         )
       : fiatBalanceFormat;
@@ -644,7 +652,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const selectedCryptoBalance =
     typeof balanceChartSurface.selectedBalance === 'number' &&
     typeof selectedChartCryptoBalance === 'string'
-      ? selectedChartCryptoBalance
+      ? formatSelectedCryptoBalance(selectedChartCryptoBalance)
       : undefined;
   const formattedCryptoBalance = `${
     selectedCryptoBalance ?? cryptoBalance
