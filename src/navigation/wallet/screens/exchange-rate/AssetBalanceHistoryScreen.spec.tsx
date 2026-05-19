@@ -21,6 +21,10 @@ jest.mock('../../../../components/charts/BalanceHistoryChart', () => {
   };
 });
 
+jest.mock('../../../../components/charts/useLegacyLastDayChangeRowData', () =>
+  jest.fn(),
+);
+
 jest.mock('../../../../components/styled/Containers', () => ({
   ScreenGutter: 16,
 }));
@@ -121,6 +125,9 @@ const {usePortfolioAnalysis} = jest.requireMock(
 ) as {
   usePortfolioAnalysis: jest.Mock;
 };
+const useLegacyLastDayChangeRowData = jest.requireMock(
+  '../../../../components/charts/useLegacyLastDayChangeRowData',
+) as jest.Mock;
 const {hasCompletedPopulateForWallets} = jest.requireMock(
   '../../../../utils/portfolio/assets',
 ) as {
@@ -175,6 +182,8 @@ describe('AssetBalanceHistoryScreen', () => {
     };
     usePortfolioAnalysis.mockClear();
     buildAssetBalanceHistoryDisplayedSummary.mockClear();
+    useLegacyLastDayChangeRowData.mockReset();
+    useLegacyLastDayChangeRowData.mockReturnValue(undefined);
     hasCompletedPopulateForWallets.mockClear();
     hasCompletedPopulateForWallets.mockReturnValue(false);
     isPopulateLoadingForWallets.mockClear();
@@ -233,6 +242,37 @@ describe('AssetBalanceHistoryScreen', () => {
       expect.objectContaining({
         enabled: false,
       }),
+    );
+    expect(useLegacyLastDayChangeRowData).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        currentFiatBalance: 100,
+        enabled: true,
+        quoteCurrency: 'USD',
+        wallets: shared.assetWallets,
+      }),
+    );
+  });
+
+  it('shows the legacy Last Day PnL row when Show Portfolio is disabled', async () => {
+    const shared = sharedFactory();
+    shared.showPortfolioValue = false;
+    const legacyChangeRow = {
+      percent: 11.11,
+      deltaFiatFormatted: '$10.00',
+      rangeLabel: 'Last Day',
+    };
+    useLegacyLastDayChangeRowData.mockReturnValue(legacyChangeRow);
+
+    await act(async () => {
+      TestRenderer.create(<AssetBalanceHistoryScreen shared={shared} />);
+    });
+
+    expect(latestBalanceHistoryChartProps).toBeUndefined();
+    expect(latestExchangeRateScreenLayoutProps.changeRow).toEqual(
+      legacyChangeRow,
+    );
+    expect(latestExchangeRateScreenLayoutProps.reserveChangeRowSpace).toBe(
+      false,
     );
   });
 
