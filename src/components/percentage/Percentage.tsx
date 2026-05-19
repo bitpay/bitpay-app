@@ -34,7 +34,6 @@ export interface PercentageProps {
   percentageDifference: number;
   hideArrow?: boolean;
   hideSign?: boolean;
-  neutralZeroChange?: boolean;
   priceChange?: string | number;
   rangeLabel?: string;
   suffix?: string;
@@ -52,17 +51,15 @@ export const getDifferenceColor = (
 export const getPercentageColor = ({
   percentageDifference,
   isDarkMode,
-  neutralZeroChange = false,
 }: {
   percentageDifference: number;
   isDarkMode: boolean;
-  neutralZeroChange?: boolean;
 }) => {
   if (!Number.isFinite(percentageDifference)) {
     return getNeutralChangeColor(isDarkMode);
   }
 
-  if (neutralZeroChange && percentageDifference === 0) {
+  if (percentageDifference === 0) {
     return getNeutralChangeColor(isDarkMode);
   }
 
@@ -73,7 +70,6 @@ const Percentage = ({
   percentageDifference,
   hideArrow = false,
   hideSign = false,
-  neutralZeroChange = false,
   priceChange,
   rangeLabel,
   suffix,
@@ -90,7 +86,6 @@ const Percentage = ({
   const percentageColor = getPercentageColor({
     percentageDifference,
     isDarkMode,
-    neutralZeroChange,
   });
 
   const formatter = useMemo(() => {

@@ -30,7 +30,6 @@ const BalanceHeaderSupplement = ({
         <ChartChangeRow
           percent={changeRowData?.percent ?? 0}
           deltaFiatFormatted={changeRowData?.deltaFiatFormatted}
-          neutralZeroChange
           rangeLabel={changeRowData?.rangeLabel}
           style={[changeRowStyle, !changeRowData ? {opacity: 0} : undefined]}
         />

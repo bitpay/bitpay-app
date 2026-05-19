@@ -234,7 +234,6 @@ const BalanceHistoryChart = ({
           deltaFiatFormatted={
             displayModel.displayedChangeRowData?.deltaFiatFormatted
           }
-          neutralZeroChange
           rangeLabel={displayModel.displayedChangeRowData?.rangeLabel}
           style={[
             changeRowStyle,

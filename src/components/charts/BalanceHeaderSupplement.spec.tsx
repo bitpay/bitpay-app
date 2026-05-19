@@ -14,7 +14,7 @@ describe('BalanceHeaderSupplement', () => {
     mockChartChangeRow.mockClear();
   });
 
-  it('renders balance PnL rows with neutral zero coloring enabled', () => {
+  it('renders balance PnL rows with change data', () => {
     act(() => {
       TestRenderer.create(
         <BalanceHeaderSupplement
@@ -30,7 +30,6 @@ describe('BalanceHeaderSupplement', () => {
     expect(mockChartChangeRow).toHaveBeenCalledWith(
       expect.objectContaining({
         deltaFiatFormatted: '$0.00',
-        neutralZeroChange: true,
         percent: 0,
         rangeLabel: 'Last Day',
       }),

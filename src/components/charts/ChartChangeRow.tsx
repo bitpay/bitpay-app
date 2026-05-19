@@ -12,7 +12,6 @@ const PercentRow = styled.View`
 export type ChartChangeRowProps = {
   percent: number;
   deltaFiatFormatted?: string;
-  neutralZeroChange?: boolean;
   rangeLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
@@ -20,7 +19,6 @@ export type ChartChangeRowProps = {
 const ChartChangeRow = ({
   percent,
   deltaFiatFormatted,
-  neutralZeroChange = false,
   rangeLabel,
   style,
 }: ChartChangeRowProps): React.ReactElement => {
@@ -30,7 +28,6 @@ const ChartChangeRow = ({
         percentageDifference={percent}
         hideArrow
         hideSign
-        neutralZeroChange={neutralZeroChange}
         priceChange={deltaFiatFormatted}
         rangeLabel={rangeLabel}
         fractionDigits={2}
