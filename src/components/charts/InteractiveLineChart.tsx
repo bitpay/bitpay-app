@@ -16,6 +16,7 @@ import Reanimated, {
 import Loader from '../loader/Loader';
 import {Slate, SlateDark} from '../../styles/colors';
 import {isNumberSharedValue, type NumberSharedValue} from './sharedValueGuards';
+import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
 
 const ChartContainer = styled.View`
   width: 100%;
@@ -91,12 +92,57 @@ type AxisLabelRenderer = (
   props?: AxisLabelRendererProps,
 ) => React.ReactElement | null;
 type SvgLineAnimatedProps = Partial<React.ComponentProps<typeof Line>>;
+type ChartYRange = {
+  min: number;
+  max: number;
+};
+type FiniteYRange = ChartYRange & {
+  count: number;
+};
 
 const clonePointsForGraph = (
   points: GraphPoint[],
   _refreshInputs: readonly [string, number, number],
 ): GraphPoint[] => {
   return points.slice();
+};
+
+const getFiniteYRange = (points: GraphPoint[]): FiniteYRange | undefined => {
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  let count = 0;
+
+  for (const point of points) {
+    const value = Number(point?.value);
+    if (!Number.isFinite(value)) {
+      continue;
+    }
+    count += 1;
+    if (value < min) {
+      min = value;
+    }
+    if (value > max) {
+      max = value;
+    }
+  }
+
+  return count ? {min, max, count} : undefined;
+};
+
+const getFlatYRange = (points: GraphPoint[]): ChartYRange | undefined => {
+  const range = getFiniteYRange(points);
+  if (!range || range.count < 2 || range.min !== range.max) {
+    return undefined;
+  }
+
+  const pad =
+    range.min === 0
+      ? GRAPH_DRAWABLE_EPSILON
+      : Math.max(Math.abs(range.min) * 0.001, GRAPH_DRAWABLE_EPSILON);
+
+  return range.min === 0
+    ? {min: 0, max: pad}
+    : {min: range.min - pad, max: range.max + pad};
 };
 
 const InteractiveLineChart = ({
@@ -348,6 +394,14 @@ const InteractiveLineChart = ({
       ]),
     [points, styleSignature, focusRefreshNonce, layoutRefreshNonce],
   );
+  const flatYRange = React.useMemo(
+    () => getFlatYRange(pointsForGraph),
+    [pointsForGraph],
+  );
+  const lineGraphRange = React.useMemo<{y: ChartYRange} | undefined>(
+    () => (flatYRange ? {y: flatYRange} : undefined),
+    [flatYRange],
+  );
   const hasDrawablePoints = pointsForGraph.length >= 2;
   const ResolvedTopAxisLabel = React.useCallback<AxisLabelRenderer>(props => {
     const CurrentAxisLabel = topAxisLabelRef.current;
@@ -388,28 +442,14 @@ const InteractiveLineChart = ({
       return null;
     }
 
-    let minValue = Number.POSITIVE_INFINITY;
-    let maxValue = Number.NEGATIVE_INFINITY;
-    for (const point of pointsForGraph) {
-      const value = Number(point?.value);
-      if (!Number.isFinite(value)) {
-        continue;
-      }
-      if (value < minValue) {
-        minValue = value;
-      }
-      if (value > maxValue) {
-        maxValue = value;
-      }
-    }
-
-    if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
+    const valueRange = flatYRange || getFiniteYRange(pointsForGraph);
+    if (!valueRange) {
       return null;
     }
 
     const firstPointValue = Number.isFinite(pointsForGraph[0]?.value)
       ? Number(pointsForGraph[0]?.value)
-      : minValue;
+      : valueRange.min;
     const topAxisInset = TopAxisLabel ? axisLabelPadding + axisRowHeight : 0;
     const bottomAxisInset = BottomAxisLabel
       ? axisLabelPadding + axisRowHeight
@@ -423,9 +463,10 @@ const InteractiveLineChart = ({
     const drawingHeight = Math.max(0, canvasHeight - stableVerticalPadding * 2);
 
     const yPositionInRange =
-      maxValue === minValue
+      valueRange.max === valueRange.min
         ? 0.5
-        : (firstPointValue - minValue) / (maxValue - minValue);
+        : (firstPointValue - valueRange.min) /
+          (valueRange.max - valueRange.min);
     const yInRange = Math.floor(drawingHeight * yPositionInRange);
     const y = drawingHeight - yInRange + stableVerticalPadding;
     const top = lineGraphLayout.y + topAxisInset + y;
@@ -442,6 +483,7 @@ const InteractiveLineChart = ({
     axisLabelPadding,
     axisRowHeight,
     firstPointGuideLineColor,
+    flatYRange,
     lineGraphLayout,
     pointsForGraph,
     showFirstPointGuideLine,
@@ -504,6 +546,7 @@ const InteractiveLineChart = ({
           testID="interactive-line-chart-graph"
           points={pointsForGraph}
           animated={animated}
+          range={lineGraphRange}
           // The animated graph can consume a Reanimated derived value here.
           // The static graph computes JS path geometry from this prop, so it
           // receives a plain number via resolvedLineThicknessForGraph.

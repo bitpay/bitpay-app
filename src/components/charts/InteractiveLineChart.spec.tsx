@@ -5,6 +5,7 @@ import {ThemeProvider} from 'styled-components/native';
 import InteractiveLineChart from './InteractiveLineChart';
 import {SlateDark} from '../../styles/colors';
 import {withTiming} from 'react-native-reanimated';
+import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -78,6 +79,14 @@ const invertedPoints = [
   {date: new Date(1_000), value: 105},
   {date: new Date(2_000), value: 100},
 ];
+const flatZeroPoints = [
+  {date: new Date(1_000), value: 0},
+  {date: new Date(2_000), value: 0},
+];
+const flatNonZeroPoints = [
+  {date: new Date(1_000), value: 42},
+  {date: new Date(2_000), value: 42},
+];
 
 describe('InteractiveLineChart', () => {
   beforeEach(() => {
@@ -130,6 +139,70 @@ describe('InteractiveLineChart', () => {
         value: expect.any(Number),
       }),
     );
+  });
+
+  it('passes an explicit y range for flat zero series without changing point values', () => {
+    act(() => {
+      TestRenderer.create(
+        <ThemeProvider theme={theme}>
+          <View>
+            <InteractiveLineChart
+              points={flatZeroPoints}
+              color="#000000"
+              gradientFillColors={['#ffffff', '#ffffff']}
+            />
+          </View>
+        </ThemeProvider>,
+      );
+    });
+
+    expect(
+      mockLatestLineGraphProps?.points.map((point: any) => point.value),
+    ).toEqual([0, 0]);
+    expect(mockLatestLineGraphProps?.range).toEqual({
+      y: {min: 0, max: GRAPH_DRAWABLE_EPSILON},
+    });
+  });
+
+  it('passes a padded y range for flat non-zero series', () => {
+    act(() => {
+      TestRenderer.create(
+        <ThemeProvider theme={theme}>
+          <View>
+            <InteractiveLineChart
+              points={flatNonZeroPoints}
+              color="#000000"
+              gradientFillColors={['#ffffff', '#ffffff']}
+            />
+          </View>
+        </ThemeProvider>,
+      );
+    });
+
+    expect(
+      mockLatestLineGraphProps?.points.map((point: any) => point.value),
+    ).toEqual([42, 42]);
+    expect(mockLatestLineGraphProps?.range).toEqual({
+      y: {min: 41.958, max: 42.042},
+    });
+  });
+
+  it('does not pass an explicit y range for non-flat series', () => {
+    act(() => {
+      TestRenderer.create(
+        <ThemeProvider theme={theme}>
+          <View>
+            <InteractiveLineChart
+              points={points}
+              color="#000000"
+              gradientFillColors={['#ffffff', '#ffffff']}
+            />
+          </View>
+        </ThemeProvider>,
+      );
+    });
+
+    expect(mockLatestLineGraphProps?.range).toBeUndefined();
   });
 
   it('waits until the first point guide line position is initialized before rendering it', () => {
@@ -221,6 +294,48 @@ describe('InteractiveLineChart', () => {
           node.props.strokeLinecap === 'butt',
       ),
     ).toHaveLength(0);
+  });
+
+  it('aligns the first point guide line with the explicit flat zero y range', () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ThemeProvider theme={theme}>
+          <View>
+            <InteractiveLineChart
+              points={flatZeroPoints}
+              color="#000000"
+              gradientFillColors={['#ffffff', '#ffffff']}
+              showFirstPointGuideLine
+            />
+          </View>
+        </ThemeProvider>,
+      );
+    });
+
+    act(() => {
+      renderer.root.findByType('LineGraph').props.onLayout({
+        nativeEvent: {layout: {x: 0, y: 10, width: 300, height: 200}},
+      });
+    });
+
+    const guideLineContainer = renderer.root.findAll(node => {
+      const style = node.props.style;
+      return (
+        node.props.pointerEvents === 'none' &&
+        Array.isArray(style) &&
+        style.some(
+          styleItem =>
+            styleItem &&
+            styleItem.position === 'absolute' &&
+            styleItem.height === 4,
+        )
+      );
+    })[0];
+    expect(guideLineContainer?.props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({top: 204})]),
+    );
   });
 
   it('animates the first point guide line between computed chart positions', () => {
