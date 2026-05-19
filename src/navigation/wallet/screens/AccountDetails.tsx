@@ -476,6 +476,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     shouldMountBalanceChart: shouldMountAccountBalanceChart,
     shouldShowChartLoader: shouldShowAccountChartLoader,
     shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
+    isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: keyFullWalletObjs,
@@ -526,6 +527,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     quoteCurrency: displayQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: shouldMountAccountBalanceChart,
+    isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
     resetKey: `${keyId}:${selectedAccountAddress || ''}`,
   });
   const totalBalance =
@@ -1480,6 +1482,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     showLoaderWhenNoSnapshots={shouldShowAccountChartLoader}
                     renderZeroBalanceWhenNoSnapshots={
                       shouldRenderZeroAccountBalanceChart
+                    }
+                    isBalanceChartDataReadyToQuery={
+                      isAccountBalanceChartDataReadyToQuery
                     }
                     showChangeRow={false}
                     onSelectedBalanceChange={

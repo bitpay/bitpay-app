@@ -475,6 +475,48 @@ describe('BalanceHistoryChart', () => {
     ).toBe(true);
   });
 
+  it('keeps the loader up and skips chart queries until chart data is ready to query', async () => {
+    await act(async () => {
+      TestRenderer.create(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: true,
+          isBalanceChartDataReadyToQuery: false,
+        }),
+      );
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).not.toHaveBeenCalled();
+    expect(latestInteractiveLineChartProps.isLoading).toBe(true);
+    expect(latestInteractiveLineChartProps.points).toEqual([]);
+  });
+
+  it('hides an already visible series as soon as chart data is no longer ready to query', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+
+    await act(async () => {
+      renderer = TestRenderer.create(
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
+      );
+    });
+
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+
+    await act(async () => {
+      renderer.update(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: true,
+          isBalanceChartDataReadyToQuery: false,
+        }),
+      );
+    });
+
+    expect(latestInteractiveLineChartProps.isLoading).toBe(true);
+    expect(latestInteractiveLineChartProps.points).toEqual([]);
+    expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(true);
+  });
+
   it('fades out the axis labels for a zero balance interval', async () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockZeroBalanceSeries,

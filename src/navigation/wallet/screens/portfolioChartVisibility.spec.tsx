@@ -1143,7 +1143,7 @@ describe('portfolio chart visibility guards', () => {
   );
 
   it('renders the WalletDetails zero chart when snapshot presence settles with no rows', async () => {
-    resetState(true, {populateStatus: makePopulateStatus()});
+    resetState(true);
     setMockWalletZeroBalance();
     mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
       checked: true,
@@ -1279,7 +1279,7 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(portfolioChartSurfaceCases)(
-    'keeps %s chart rendering during later incremental populate after initial success',
+    'keeps the %s chart in loader mode during later incremental populate after initial success',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: true,
@@ -1290,7 +1290,13 @@ describe('portfolio chart visibility guards', () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).toHaveBeenCalled();
+      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          showLoaderWhenNoSnapshots: true,
+          isBalanceChartDataReadyToQuery: false,
+        }),
+        undefined,
+      );
     },
   );
 

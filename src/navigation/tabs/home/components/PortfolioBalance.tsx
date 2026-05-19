@@ -398,6 +398,8 @@ const PortfolioBalanceContent = () => {
     fallbackBalance: totalBalanceIncludingCoinbase,
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: balanceChartsEnabled,
+    isBalanceChartDataReadyToQuery:
+      balanceChartReadiness.isBalanceChartDataReadyToQuery,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
@@ -409,6 +411,8 @@ const PortfolioBalanceContent = () => {
     showTimeframeSelector: true,
     timeframeSelectorHorizontalInset: ScreenGutter,
     showLoaderWhenNoSnapshots: showChartLoaderWhenNoSnapshots,
+    isBalanceChartDataReadyToQuery:
+      balanceChartReadiness.isBalanceChartDataReadyToQuery,
     // NOTE: Coinbase balance is intentionally excluded from the balance chart
     // (Option B per product requirements) because we do not have historized
     // Coinbase balance snapshots.

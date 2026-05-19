@@ -50,6 +50,7 @@ export type UseBalanceChartDisplayModelArgs = {
   balanceOffset: number;
   showLoaderWhenNoSnapshots: boolean;
   renderZeroBalanceWhenNoSnapshots: boolean;
+  isBalanceChartDataReadyToQuery?: boolean;
   t: (key: string) => string;
   onSelectedBalanceChange?: (balance?: number) => void;
   onChangeRowData?: (data?: BalanceChartCallbackChangeRowData) => void;
@@ -208,6 +209,7 @@ export function useBalanceChartDisplayModel({
   balanceOffset,
   showLoaderWhenNoSnapshots,
   renderZeroBalanceWhenNoSnapshots,
+  isBalanceChartDataReadyToQuery = true,
   t,
   onSelectedBalanceChange,
   onChangeRowData,
@@ -392,6 +394,19 @@ export function useBalanceChartDisplayModel({
   };
 
   useEffect(() => {
+    if (!isBalanceChartDataReadyToQuery) {
+      activeRequestIdRef.current += 1;
+      pendingSelectedTimestampRef.current = undefined;
+      gestureStartedRef.current = false;
+      lastHapticPointTsRef.current = undefined;
+      setSelectedPoint(undefined);
+      setVisibleState(undefined);
+      setLoading(true);
+      setError(undefined);
+      onSelectedBalanceChangeRef.current?.(undefined);
+      return;
+    }
+
     if (renderZeroBalanceWhenNoSnapshots) {
       commitVisibleSeries({
         series: buildZeroBalanceSeries({
@@ -499,6 +514,7 @@ export function useBalanceChartDisplayModel({
     commitVisibleSeries,
     chartDataRevisionSig,
     committedQueryQuoteCurrency,
+    isBalanceChartDataReadyToQuery,
     queryRevisionKey,
     renderZeroBalanceWhenNoSnapshots,
     shouldWaitForHistoricalRates,
@@ -537,11 +553,8 @@ export function useBalanceChartDisplayModel({
     onSelectedBalanceChangeRef.current?.(undefined);
   }, [committedQueryQuoteCurrency, queryRevisionKey, scopeId]);
 
-  useEffect(() => {
-    onSelectionActiveChangeRef.current?.(!!selectedPoint);
-  }, [selectedPoint]);
-
   const activeVisibleState =
+    isBalanceChartDataReadyToQuery &&
     visibleState?.scopeId === scopeId &&
     visibleState?.quoteCurrency === committedQueryQuoteCurrency
       ? visibleState
@@ -550,6 +563,13 @@ export function useBalanceChartDisplayModel({
   const visibleTimeframe = activeVisibleState?.timeframe ?? selectedTimeframe;
   const visibleQuoteCurrency =
     activeVisibleState?.quoteCurrency ?? committedQueryQuoteCurrency;
+  const displayedSelectedPoint = isBalanceChartDataReadyToQuery
+    ? selectedPoint
+    : undefined;
+
+  useEffect(() => {
+    onSelectionActiveChangeRef.current?.(!!displayedSelectedPoint);
+  }, [displayedSelectedPoint]);
 
   useEffect(() => {
     const pendingTimestamp = pendingSelectedTimestampRef.current;
@@ -600,7 +620,7 @@ export function useBalanceChartDisplayModel({
       : undefined;
 
   const displayedAnalysisPoint = getDisplayedBalanceHistoryAnalysisPoint({
-    selectedPoint,
+    selectedPoint: displayedSelectedPoint,
     activeSeries: visibleSeries,
   });
 
@@ -611,7 +631,7 @@ export function useBalanceChartDisplayModel({
       label: formatRangeOrSelectedPointLabel({
         rangeLabel,
         selectedTimeframe: visibleTimeframe,
-        selectedDate: selectedPoint?.date,
+        selectedDate: displayedSelectedPoint?.date,
         displayedRangeMs,
       }),
     });
@@ -619,7 +639,7 @@ export function useBalanceChartDisplayModel({
     displayedAnalysisPoint,
     displayedRangeMs,
     rangeLabel,
-    selectedPoint?.date,
+    displayedSelectedPoint?.date,
     visibleQuoteCurrency,
     visibleTimeframe,
   ]);
@@ -651,8 +671,11 @@ export function useBalanceChartDisplayModel({
     );
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
-  const hasRenderableSeries = (visibleSeries?.graphPoints?.length || 0) >= 2;
-  const shouldDelayPendingOverlay = loading && hasRenderableSeries;
+  const hasRenderableSeries =
+    isBalanceChartDataReadyToQuery &&
+    (visibleSeries?.graphPoints?.length || 0) >= 2;
+  const shouldDelayPendingOverlay =
+    isBalanceChartDataReadyToQuery && loading && hasRenderableSeries;
 
   useEffect(() => {
     if (!shouldDelayPendingOverlay) {
@@ -670,6 +693,7 @@ export function useBalanceChartDisplayModel({
   }, [shouldDelayPendingOverlay]);
 
   const shouldShowLoader =
+    !isBalanceChartDataReadyToQuery ||
     pendingOverlayVisible ||
     (!hasRenderableSeries &&
       (loading || (showLoaderWhenNoSnapshots && hasAnyWallets)));
@@ -698,7 +722,11 @@ export function useBalanceChartDisplayModel({
 
   const onPointSelected = useCallback(
     (point: GraphPoint) => {
-      if (!gestureStartedRef.current) {
+      if (
+        !isBalanceChartDataReadyToQuery ||
+        !visibleSeries ||
+        !gestureStartedRef.current
+      ) {
         return;
       }
 
@@ -718,7 +746,7 @@ export function useBalanceChartDisplayModel({
         lastHapticPointTsRef.current = pointTs;
       }
     },
-    [balanceOffset, visibleSeries],
+    [balanceOffset, isBalanceChartDataReadyToQuery, visibleSeries],
   );
 
   const onTimeframeSelect = useCallback(
@@ -743,11 +771,13 @@ export function useBalanceChartDisplayModel({
     visibleSeries,
     visibleTimeframe,
     visibleQuoteCurrency,
-    isLoading: loading,
-    pendingOverlayVisible,
+    isLoading: loading || !isBalanceChartDataReadyToQuery,
+    pendingOverlayVisible: isBalanceChartDataReadyToQuery
+      ? pendingOverlayVisible
+      : false,
     shouldShowLoader,
-    error,
-    selectedPoint,
+    error: isBalanceChartDataReadyToQuery ? error : undefined,
+    selectedPoint: displayedSelectedPoint,
     displayedAnalysisPoint,
     displayedChangeRowData,
     hasRenderableSeries,

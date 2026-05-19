@@ -21,9 +21,12 @@ export function usePortfolioBalanceChartSurface(args: {
   fallbackBalance?: number;
   fallbackCurrency?: string;
   enabled?: boolean;
+  isBalanceChartDataReadyToQuery?: boolean;
   resetKey?: string;
 }) {
   const enabled = args.enabled !== false;
+  const canUseChartDrivenState =
+    enabled && args.isBalanceChartDataReadyToQuery !== false;
   const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const [displayedBalance, setDisplayedBalance] = useState<
     number | undefined
@@ -48,7 +51,13 @@ export function usePortfolioBalanceChartSurface(args: {
     setDisplayedBalance(undefined);
     setDisplayedAnalysisPoint(undefined);
     setChangeRowData(undefined);
-  }, [args.quoteCurrency, args.resetKey, enabled, walletIdsSignature]);
+  }, [
+    args.isBalanceChartDataReadyToQuery,
+    args.quoteCurrency,
+    args.resetKey,
+    enabled,
+    walletIdsSignature,
+  ]);
 
   const onDisplayedAnalysisPointChange = useCallback(
     (point?: PortfolioBalanceChartSurfaceAnalysisPoint) => {
@@ -58,11 +67,22 @@ export function usePortfolioBalanceChartSurface(args: {
     [],
   );
 
+  const effectiveSelectedBalance = canUseChartDrivenState
+    ? selectedBalance
+    : undefined;
+  const effectiveDisplayedBalance = canUseChartDrivenState
+    ? displayedBalance
+    : undefined;
+  const effectiveDisplayedAnalysisPoint = canUseChartDrivenState
+    ? displayedAnalysisPoint
+    : undefined;
+  const effectiveChangeRowData = canUseChartDrivenState
+    ? changeRowData
+    : undefined;
   const chartDrivenBalance =
-    enabled &&
-    (typeof selectedBalance === 'number' ||
-      typeof displayedBalance === 'number')
-      ? selectedBalance ?? displayedBalance
+    typeof effectiveSelectedBalance === 'number' ||
+    typeof effectiveDisplayedBalance === 'number'
+      ? effectiveSelectedBalance ?? effectiveDisplayedBalance
       : undefined;
   const displayedTopBalance =
     typeof chartDrivenBalance === 'number'
@@ -83,24 +103,24 @@ export function usePortfolioBalanceChartSurface(args: {
 
   return useMemo(
     () => ({
-      selectedBalance,
-      displayedBalance,
-      displayedAnalysisPoint,
-      changeRowData,
+      selectedBalance: effectiveSelectedBalance,
+      displayedBalance: effectiveDisplayedBalance,
+      displayedAnalysisPoint: effectiveDisplayedAnalysisPoint,
+      changeRowData: effectiveChangeRowData,
       chartDrivenBalance,
       displayedTopBalance,
       displayedTopBalanceCurrency,
       chartCallbacks,
     }),
     [
-      changeRowData,
       chartCallbacks,
       chartDrivenBalance,
-      displayedAnalysisPoint,
-      displayedBalance,
       displayedTopBalance,
       displayedTopBalanceCurrency,
-      selectedBalance,
+      effectiveChangeRowData,
+      effectiveDisplayedAnalysisPoint,
+      effectiveDisplayedBalance,
+      effectiveSelectedBalance,
     ],
   );
 }

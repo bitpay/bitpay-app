@@ -689,6 +689,7 @@ const KeyOverview = () => {
     shouldMountBalanceChart: shouldMountKeyBalanceChart,
     shouldShowChartLoader: shouldShowKeyChartLoader,
     shouldRenderZeroBalanceChart: shouldRenderZeroKeyBalanceChart,
+    isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: visibleKeyWallets,
@@ -706,6 +707,7 @@ const KeyOverview = () => {
     fallbackBalance: totalBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: shouldMountKeyBalanceChart,
+    isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
     resetKey: id,
   });
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
@@ -1196,6 +1198,9 @@ const KeyOverview = () => {
                   showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
                   renderZeroBalanceWhenNoSnapshots={
                     shouldRenderZeroKeyBalanceChart
+                  }
+                  isBalanceChartDataReadyToQuery={
+                    isKeyBalanceChartDataReadyToQuery
                   }
                   showChangeRow={false}
                   onSelectedBalanceChange={

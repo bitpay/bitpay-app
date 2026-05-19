@@ -134,6 +134,11 @@ const {isPopulateLoadingForWallets} = jest.requireMock(
 const mockUsePortfolioWalletSnapshotPresence = jest.requireMock(
   '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
 ) as jest.Mock;
+const {buildAssetBalanceHistoryDisplayedSummary} = jest.requireMock(
+  './assetBalanceHistorySummary',
+) as {
+  buildAssetBalanceHistoryDisplayedSummary: jest.Mock;
+};
 
 const sharedFactory = () =>
   ({
@@ -169,6 +174,7 @@ describe('AssetBalanceHistoryScreen', () => {
       },
     };
     usePortfolioAnalysis.mockClear();
+    buildAssetBalanceHistoryDisplayedSummary.mockClear();
     hasCompletedPopulateForWallets.mockClear();
     hasCompletedPopulateForWallets.mockReturnValue(false);
     isPopulateLoadingForWallets.mockClear();
@@ -306,7 +312,8 @@ describe('AssetBalanceHistoryScreen', () => {
     );
   });
 
-  it('keeps chart work eligible during later incremental populate after initial success', async () => {
+  it('keeps asset chart work in loader mode during later incremental populate after initial success', async () => {
+    isPopulateLoadingForWallets.mockReturnValue(true);
     mockState.PORTFOLIO.populateStatus = {
       currentWalletId: 'wallet-1',
       errors: [],
@@ -325,6 +332,68 @@ describe('AssetBalanceHistoryScreen', () => {
     });
 
     expect(latestBalanceHistoryChartProps).toBeDefined();
+    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(true);
+    expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
+      false,
+    );
+  });
+
+  it('ignores stale chart summary state while asset chart data is not ready', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = TestRenderer.create(
+        <AssetBalanceHistoryScreen shared={sharedFactory()} />,
+      );
+    });
+
+    await act(async () => {
+      latestBalanceHistoryChartProps.onDisplayedAnalysisPointChange({
+        totalFiatBalance: 200,
+      });
+      latestBalanceHistoryChartProps.onChangeRowData({
+        percent: 20,
+        deltaFiatFormatted: '$20.00',
+        rangeLabel: '1D',
+      });
+      latestBalanceHistoryChartProps.onSelectionActiveChange(true);
+    });
+
+    expect(buildAssetBalanceHistoryDisplayedSummary).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        chartDisplayedPoint: expect.objectContaining({
+          totalFiatBalance: 200,
+        }),
+        chartChangeRow: expect.objectContaining({
+          percent: 20,
+        }),
+      }),
+    );
+
+    isPopulateLoadingForWallets.mockReturnValue(true);
+    mockState.PORTFOLIO.populateStatus = {
+      currentWalletId: 'wallet-1',
+      errors: [],
+      inProgress: true,
+      txRequestsMade: 1,
+      txsProcessed: 100,
+      walletsCompleted: 0,
+      walletsTotal: 1,
+      walletStatusById: {'wallet-1': 'in_progress'},
+    };
+
+    await act(async () => {
+      renderer.update(<AssetBalanceHistoryScreen shared={sharedFactory()} />);
+    });
+
+    expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
+      false,
+    );
+    expect(buildAssetBalanceHistoryDisplayedSummary).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        chartDisplayedPoint: undefined,
+        chartChangeRow: undefined,
+      }),
+    );
   });
 
   it('does not mount chart work when snapshot presence settles with no rows and no pending work', async () => {

@@ -43,6 +43,7 @@ const AssetBalanceChartSection = React.memo(
     lineColor,
     gradientStartColor,
     showLoaderWhenNoSnapshots,
+    isBalanceChartDataReadyToQuery,
     onChangeRowData,
     onDisplayedAnalysisPointChange,
     onSelectionActiveChange,
@@ -56,6 +57,7 @@ const AssetBalanceChartSection = React.memo(
     lineColor: string;
     gradientStartColor: string;
     showLoaderWhenNoSnapshots: boolean;
+    isBalanceChartDataReadyToQuery?: boolean;
     onChangeRowData: (data: AssetChartChangeRow) => void;
     onDisplayedAnalysisPointChange: (
       point: AssetDisplayedAnalysisPoint,
@@ -77,6 +79,7 @@ const AssetBalanceChartSection = React.memo(
           lineColor={lineColor}
           gradientStartColor={gradientStartColor}
           showLoaderWhenNoSnapshots={showLoaderWhenNoSnapshots}
+          isBalanceChartDataReadyToQuery={isBalanceChartDataReadyToQuery}
           onChangeRowData={onChangeRowData}
           onDisplayedAnalysisPointChange={onDisplayedAnalysisPointChange}
           onSelectionActiveChange={onSelectionActiveChange}
@@ -139,6 +142,8 @@ const AssetBalanceHistoryScreen = ({
 
   const isAssetBalanceChartLoading =
     balanceChartReadiness.shouldShowChartLoader;
+  const isAssetBalanceChartDataReadyToQuery =
+    balanceChartReadiness.isBalanceChartDataReadyToQuery;
   const isTimeframeTransitionPending =
     requestedTimeframe !== displayedTimeframe;
 
@@ -167,10 +172,16 @@ const AssetBalanceHistoryScreen = ({
 
   const {isRefreshing, onRefresh} = useAssetScreenRefresh(shared);
 
+  const effectiveChartDisplayedPoint = isAssetBalanceChartDataReadyToQuery
+    ? chartDisplayedPoint
+    : undefined;
+  const effectiveChartChangeRow = isAssetBalanceChartDataReadyToQuery
+    ? chartChangeRow
+    : undefined;
   const displayedSummary = buildAssetBalanceHistoryDisplayedSummary({
     idleSummary,
-    chartDisplayedPoint,
-    chartChangeRow,
+    chartDisplayedPoint: effectiveChartDisplayedPoint,
+    chartChangeRow: effectiveChartChangeRow,
   });
 
   const selectedAssetBalanceToDisplay = !shared.hasWalletsForAsset
@@ -250,6 +261,7 @@ const AssetBalanceHistoryScreen = ({
             isRefreshing ||
             isTimeframeTransitionPending
           }
+          isBalanceChartDataReadyToQuery={isAssetBalanceChartDataReadyToQuery}
           onChangeRowData={handleChartChangeRowData}
           onDisplayedAnalysisPointChange={handleDisplayedAnalysisPointChange}
           onSelectionActiveChange={setSelectionActive}
