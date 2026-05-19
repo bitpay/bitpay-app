@@ -6,6 +6,9 @@ import DecrementArrow from '../icons/trend-arrow/DecrementArrow';
 import {BaseText} from '../styled/Text';
 import {Slate30, SlateDark} from '../../styles/colors';
 
+export const getNeutralChangeColor = (isDarkMode: boolean) =>
+  isDarkMode ? Slate30 : SlateDark;
+
 const PercentageContainer = styled(BaseText)<{
   color?: string;
 }>`
@@ -22,7 +25,7 @@ const PercentageRow = styled.View`
 const RangeLabel = styled(BaseText)`
   font-size: 13px;
   line-height: 18px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
+  color: ${({theme}) => getNeutralChangeColor(theme.dark)};
   font-weight: 400;
   margin-left: 5px;
 `;
@@ -31,6 +34,7 @@ export interface PercentageProps {
   percentageDifference: number;
   hideArrow?: boolean;
   hideSign?: boolean;
+  neutralZeroChange?: boolean;
   priceChange?: string | number;
   rangeLabel?: string;
   suffix?: string;
@@ -45,10 +49,31 @@ export const getDifferenceColor = (
   return isPositive ? (isDarkMode ? '#00954F' : '#004D27') : '#DA3636';
 };
 
+export const getPercentageColor = ({
+  percentageDifference,
+  isDarkMode,
+  neutralZeroChange = false,
+}: {
+  percentageDifference: number;
+  isDarkMode: boolean;
+  neutralZeroChange?: boolean;
+}) => {
+  if (!Number.isFinite(percentageDifference)) {
+    return getNeutralChangeColor(isDarkMode);
+  }
+
+  if (neutralZeroChange && percentageDifference === 0) {
+    return getNeutralChangeColor(isDarkMode);
+  }
+
+  return getDifferenceColor(percentageDifference >= 0, isDarkMode);
+};
+
 const Percentage = ({
   percentageDifference,
   hideArrow = false,
   hideSign = false,
+  neutralZeroChange = false,
   priceChange,
   rangeLabel,
   suffix,
@@ -62,11 +87,11 @@ const Percentage = ({
 
   const isFiniteDifference = Number.isFinite(percentageDifference);
   const safeDifference = isFiniteDifference ? percentageDifference : 0;
-  const percentageColor = isFiniteDifference
-    ? getDifferenceColor(safeDifference >= 0, isDarkMode)
-    : isDarkMode
-    ? Slate30
-    : SlateDark;
+  const percentageColor = getPercentageColor({
+    percentageDifference,
+    isDarkMode,
+    neutralZeroChange,
+  });
 
   const formatter = useMemo(() => {
     const options: Intl.NumberFormatOptions | undefined =
