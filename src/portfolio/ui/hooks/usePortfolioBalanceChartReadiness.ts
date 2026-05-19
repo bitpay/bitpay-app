@@ -4,6 +4,7 @@ import {useAppSelector} from '../../../utils/hooks';
 import {
   hasCompletedPopulateForWallets,
   isPopulateLoadingForWallets,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../utils/portfolio/assets';
 import usePortfolioChartableWallets from './usePortfolioChartableWallets';
 import usePortfolioWalletSnapshotPresence from './usePortfolioWalletSnapshotPresence';
@@ -70,11 +71,14 @@ export default function usePortfolioBalanceChartReadiness(args: {
     canCheckSnapshotPresence &&
     snapshotPresence.checked &&
     snapshotPresence.hasAnySnapshots;
+  const hasNonZeroLiveBalance =
+    baseEnabled && walletsHaveNonZeroLiveBalance(chartableWallets);
   const shouldRenderZeroBalanceChart =
     canCheckSnapshotPresence &&
     args.renderZeroBalanceChartWhenNoSnapshots === true &&
     snapshotPresence.checked &&
-    !snapshotPresence.hasAnySnapshots;
+    !snapshotPresence.hasAnySnapshots &&
+    !hasNonZeroLiveBalance;
   const isChartDataPending =
     canCheckSnapshotPresence &&
     (isSnapshotPresenceLoading || isScopePopulateLoading);

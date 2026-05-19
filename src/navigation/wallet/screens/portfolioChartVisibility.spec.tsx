@@ -498,8 +498,24 @@ jest.mock('../../../utils/portfolio/assets', () => ({
       });
     },
   ),
-  walletHasNonZeroLiveBalance: jest.fn(() => true),
-  walletsHaveNonZeroLiveBalance: jest.fn(() => true),
+  walletHasNonZeroLiveBalance: jest.fn((wallet: any) => {
+    const balance = wallet?.balance || {};
+    return (
+      Number(balance.sat || 0) > 0 ||
+      Number(balance.fiat || 0) > 0 ||
+      Number(String(balance.crypto || '0').replace(/,/g, '')) > 0
+    );
+  }),
+  walletsHaveNonZeroLiveBalance: jest.fn((wallets?: any[]) =>
+    (wallets || []).some((wallet: any) => {
+      const balance = wallet?.balance || {};
+      return (
+        Number(balance.sat || 0) > 0 ||
+        Number(balance.fiat || 0) > 0 ||
+        Number(String(balance.crypto || '0').replace(/,/g, '')) > 0
+      );
+    }),
+  ),
 }));
 
 jest.mock('../../../utils/portfolio/allocation', () => ({
@@ -624,6 +640,19 @@ const makeWallet = () => ({
   tokens: [],
   walletName: 'BTC Wallet',
 });
+
+const setMockWalletZeroBalance = () => {
+  mockWallet.balance = {
+    ...mockWallet.balance,
+    crypto: '0',
+    fiat: 0,
+    fiatLastDay: 0,
+    sat: 0,
+    satSpendable: 0,
+  };
+  mockKey.totalBalance = 0;
+  mockKey.totalBalanceLastDay = 0;
+};
 
 const resetState = (
   showPortfolioValue: boolean | undefined,
@@ -1115,6 +1144,7 @@ describe('portfolio chart visibility guards', () => {
 
   it('renders the WalletDetails zero chart when snapshot presence settles with no rows', async () => {
     resetState(true, {populateStatus: makePopulateStatus()});
+    setMockWalletZeroBalance();
     mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
       checked: true,
       hasAllSnapshots: false,
@@ -1136,9 +1166,29 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(chartSurfaceCases)(
+    'does not render the %s zero chart when a non-zero live-balance scope has no snapshots',
+    async (_screen, makeScreen) => {
+      resetState(true);
+      mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+        checked: true,
+        hasAllSnapshots: false,
+        hasAnySnapshots: false,
+        loading: false,
+      });
+
+      await act(async () => {
+        renderWithTheme(makeScreen());
+      });
+
+      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(chartSurfaceCases)(
     'renders the %s zero chart after snapshot presence settles with no rows',
     async (_screen, makeScreen) => {
       resetState(true);
+      setMockWalletZeroBalance();
       mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
         checked: true,
         hasAllSnapshots: false,
@@ -1162,6 +1212,7 @@ describe('portfolio chart visibility guards', () => {
 
   it('renders the WalletDetails zero chart while transaction history loading alone', async () => {
     resetState(true);
+    setMockWalletZeroBalance();
     mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
       hasAllSnapshots: false,
@@ -1189,16 +1240,7 @@ describe('portfolio chart visibility guards', () => {
     'mounts the %s balance chart when its wallet scope has zero balance but snapshot rows exist',
     async (_screen, makeScreen) => {
       resetState(true);
-      mockWallet.balance = {
-        ...mockWallet.balance,
-        crypto: '0',
-        fiat: 0,
-        fiatLastDay: 0,
-        sat: 0,
-        satSpendable: 0,
-      };
-      mockKey.totalBalance = 0;
-      mockKey.totalBalanceLastDay = 0;
+      setMockWalletZeroBalance();
 
       await act(async () => {
         renderWithTheme(makeScreen());
@@ -1210,14 +1252,7 @@ describe('portfolio chart visibility guards', () => {
 
   it('renders the WalletDetails zero balance header with fiat primary and crypto secondary balance', async () => {
     resetState(true);
-    mockWallet.balance = {
-      ...mockWallet.balance,
-      crypto: '0',
-      fiat: 0,
-      fiatLastDay: 0,
-      sat: 0,
-      satSpendable: 0,
-    };
+    setMockWalletZeroBalance();
     mockBuildUIFormattedWallet.mockReturnValueOnce({
       chain: mockWallet.chain,
       cryptoBalance: '0.00',
