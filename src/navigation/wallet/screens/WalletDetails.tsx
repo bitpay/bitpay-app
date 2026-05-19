@@ -628,10 +628,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         )
       : fiatBalanceFormat;
 
-  const showFiatBalance =
-    // @ts-ignore
-    Number(cryptoBalance.replaceAll(',', '')) > 0 &&
-    network !== Network.testnet;
+  const showFiatBalance = network !== Network.testnet;
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
     wallets: chartWallets,
     currentFiatBalance: fullWalletObj?.balance?.fiat,

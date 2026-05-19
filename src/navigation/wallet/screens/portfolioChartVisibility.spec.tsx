@@ -562,6 +562,9 @@ const mockBalanceHistoryChart = jest.requireMock(
 const mockGetTransactionHistory = jest.requireMock(
   '../../../store/wallet/effects/transactions/transactions',
 ).GetTransactionHistory as jest.Mock;
+const mockBuildUIFormattedWallet = jest.requireMock(
+  '../../../store/wallet/utils/wallet',
+).buildUIFormattedWallet as jest.Mock;
 const mockUsePortfolioWalletSnapshotPresence =
   usePortfolioWalletSnapshotPresence as jest.Mock;
 
@@ -691,6 +694,21 @@ const renderWithTheme = (element: React.ReactElement) =>
   TestRenderer.create(
     <ThemeProvider theme={testTheme as any}>{element}</ThemeProvider>,
   );
+
+const collectRenderedText = (node: unknown): string[] => {
+  if (typeof node === 'string') {
+    return [node];
+  }
+  if (!node || typeof node !== 'object') {
+    return [];
+  }
+  if (Array.isArray(node)) {
+    return node.flatMap(collectRenderedText);
+  }
+
+  const children = (node as {children?: unknown}).children;
+  return Array.isArray(children) ? children.flatMap(collectRenderedText) : [];
+};
 
 const makePopulateStatus = (overrides: Record<string, any> = {}) => ({
   currentWalletId: 'wallet-1',
@@ -1128,6 +1146,41 @@ describe('portfolio chart visibility guards', () => {
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
   );
+
+  it('renders the WalletDetails zero balance header with fiat primary and crypto secondary balance', async () => {
+    resetState(true);
+    mockWallet.balance = {
+      ...mockWallet.balance,
+      crypto: '0',
+      fiat: 0,
+      fiatLastDay: 0,
+      sat: 0,
+      satSpendable: 0,
+    };
+    mockBuildUIFormattedWallet.mockReturnValueOnce({
+      chain: mockWallet.chain,
+      cryptoBalance: '0.00',
+      cryptoLockedBalance: '0',
+      cryptoSpendableBalance: '0.00',
+      currencyAbbreviation: mockWallet.currencyAbbreviation,
+      fiatBalanceFormat: '$0.00',
+      fiatLockedBalanceFormat: '$0.00',
+      fiatSpendableBalanceFormat: '$0.00',
+      network: mockWallet.network,
+      pendingTxps: [],
+      tokenAddress: mockWallet.tokenAddress,
+      walletName: mockWallet.walletName,
+    });
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    const renderedText = collectRenderedText(view.toJSON());
+    expect(renderedText).toContain('$0.00');
+    expect(renderedText).toContain('0.00 BTC');
+  });
 
   it.each(portfolioChartSurfaceCases)(
     'keeps %s chart rendering during later incremental populate after initial success',
