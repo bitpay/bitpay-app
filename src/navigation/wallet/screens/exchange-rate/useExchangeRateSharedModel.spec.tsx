@@ -335,4 +335,71 @@ describe('useExchangeRateSharedModel', () => {
       latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
     ).toEqual([liveWallet, zeroHistoricalWallet]);
   });
+
+  it('includes zero-balance asset wallets with snapshots in exchange rate details', async () => {
+    const liveWallet = {
+      id: 'exchange-wallet-live',
+      balance: {sat: 1},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+    const zeroHistoricalWallet = {
+      id: 'exchange-wallet-zero-history',
+      balance: {sat: 0},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+    const zeroEmptyWallet = {
+      id: 'exchange-wallet-zero-empty',
+      balance: {sat: 0},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      liveWallet,
+      zeroHistoricalWallet,
+      zeroEmptyWallet,
+    ]);
+    mockGetWalletsMatchingExchangeRateAsset.mockImplementation(
+      ({
+        includeZeroBalance,
+        wallets,
+      }: {
+        includeZeroBalance?: boolean;
+        wallets?: Array<{balance?: {sat?: number}}>;
+      }) => {
+        return (wallets || []).filter(wallet => {
+          return includeZeroBalance || Number(wallet.balance?.sat || 0) > 0;
+        });
+      },
+    );
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: true,
+      hasSnapshotsByWalletId: {
+        'exchange-wallet-zero-history': true,
+        'exchange-wallet-zero-empty': false,
+      },
+      loading: false,
+    });
+
+    await act(async () => {
+      TestRenderer.create(<HookHarness />);
+    });
+
+    expect(latestSharedModel?.assetWallets).toEqual([
+      liveWallet,
+      zeroHistoricalWallet,
+      zeroEmptyWallet,
+    ]);
+    expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenCalledWith({
+      wallets: [liveWallet, zeroHistoricalWallet, zeroEmptyWallet],
+      enabled: true,
+    });
+    expect(
+      latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
+    ).toEqual([liveWallet, zeroHistoricalWallet]);
+  });
 });

@@ -250,27 +250,23 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   }, [homeCarouselConfig, keys, scopeKeyId]);
 
   const assetWallets = useMemo(() => {
-    // Asset balance history needs the full historical wallet scope so ALL-time
-    // PnL matches the asset list even after some wallets reach zero balance.
+    // Asset detail screens need the full historical wallet scope so the wallet
+    // list and ALL-time PnL keep wallets that reached zero after activity.
     return getWalletsMatchingExchangeRateAsset({
       wallets: visibleWallets,
       currencyAbbreviation: assetContext.currencyAbbreviation,
       tokenAddress: assetContext.tokenAddress,
-      includeZeroBalance: isAssetBalanceHistoryMode,
+      includeZeroBalance: true,
     });
   }, [
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
-    isAssetBalanceHistoryMode,
     visibleWallets,
   ]);
 
   const assetWalletSnapshotPresence = usePortfolioWalletSnapshotPresence({
     wallets: assetWallets,
-    enabled:
-      isAssetBalanceHistoryMode &&
-      showPortfolioValue === true &&
-      assetWallets.length > 0,
+    enabled: showPortfolioValue === true && assetWallets.length > 0,
   });
 
   const walletsForAssetDisplay = useMemo(() => {
@@ -280,11 +276,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
       tokenAddress: assetContext.tokenAddress,
     });
 
-    if (
-      !isAssetBalanceHistoryMode ||
-      showPortfolioValue !== true ||
-      !assetWalletSnapshotPresence.checked
-    ) {
+    if (showPortfolioValue !== true || !assetWalletSnapshotPresence.checked) {
       return liveBalanceWallets;
     }
 
@@ -309,7 +301,6 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     assetWalletSnapshotPresence.checked,
     assetWalletSnapshotPresence.hasSnapshotsByWalletId,
     assetWallets,
-    isAssetBalanceHistoryMode,
     showPortfolioValue,
     visibleWallets,
   ]);
