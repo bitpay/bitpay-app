@@ -17,6 +17,7 @@ import {
 } from '../../../../utils/portfolio/assets';
 import AssetsGainLossDropdown from './AssetsGainLossDropdown';
 import {useAppSelector} from '../../../../utils/hooks';
+import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import {
   CharcoalBlack,
   GhostWhite,
@@ -84,6 +85,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const [gainLossMode, setGainLossMode] = useState<GainLossMode>('1D');
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const focusRefreshToken = useScreenFocusRefreshToken();
@@ -106,9 +108,16 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       wallets: visibleWallets,
       quoteCurrency: defaultAltCurrency.isoCode,
       orderedAssetKeys: topAssetKeys,
-      showScopedPnlLoading: topAssetKeys.length > 0,
+      showScopedPnlLoading:
+        showPortfolioValue === true && topAssetKeys.length > 0,
+      includeLegacyLastDayPnl: showPortfolioValue !== true,
     });
-  }, [defaultAltCurrency.isoCode, topAssetKeys, visibleWallets]);
+  }, [
+    defaultAltCurrency.isoCode,
+    showPortfolioValue,
+    topAssetKeys,
+    visibleWallets,
+  ]);
   const {
     visibleItems,
     isFiatLoading: isPnlLoading,
@@ -117,7 +126,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     presentationResetToken,
   } = usePortfolioAssetRows({
     gainLossMode,
-    enabled,
+    enabled: enabled && showPortfolioValue === true,
     assetKeys: topAssetKeys,
     externalRefreshToken: focusRefreshToken,
   });
@@ -136,7 +145,10 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     const nextItems: AssetRowItem[] = [];
     const seenKeys = new Set<string>();
     const shouldUsePreviewFallback =
-      !enabled || !!isPnlLoading || !visibleItems.length;
+      showPortfolioValue !== true ||
+      !enabled ||
+      !!isPnlLoading ||
+      !visibleItems.length;
     const resolveDisplayItem = (key: string): AssetRowItem | undefined => {
       const previewItem = previewItemsByKey.get(key);
       const visibleItem = visibleItemsByKey.get(key);
@@ -180,8 +192,16 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     }
 
     return nextItems.slice(0, 4);
-  }, [enabled, isPnlLoading, previewItems, topAssetKeys, visibleItems]);
+  }, [
+    enabled,
+    isPnlLoading,
+    previewItems,
+    showPortfolioValue,
+    topAssetKeys,
+    visibleItems,
+  ]);
   const shouldShowActivationPlaceholder =
+    showPortfolioValue === true &&
     hasAnyVisibleWalletBalance &&
     !items.length &&
     (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
@@ -191,10 +211,12 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       <Container>
         <Header>
           <HomeSectionTitle>{t('Assets')}</HomeSectionTitle>
-          <AssetsGainLossDropdown
-            value={gainLossMode}
-            onChange={setGainLossMode}
-          />
+          {showPortfolioValue === true ? (
+            <AssetsGainLossDropdown
+              value={gainLossMode}
+              onChange={setGainLossMode}
+            />
+          ) : null}
         </Header>
 
         <AssetsList items={SKELETON_ASSET_ITEMS} forceSkeleton />
@@ -226,16 +248,20 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     <Container>
       <Header>
         <HomeSectionTitle>{t('Assets')}</HomeSectionTitle>
-        <AssetsGainLossDropdown
-          value={gainLossMode}
-          onChange={setGainLossMode}
-        />
+        {showPortfolioValue === true ? (
+          <AssetsGainLossDropdown
+            value={gainLossMode}
+            onChange={setGainLossMode}
+          />
+        ) : null}
       </Header>
 
       <AssetsList
         items={items}
         isPnlLoading={isPnlLoading}
-        populateInProgress={!!portfolio.populateStatus?.inProgress}
+        populateInProgress={
+          showPortfolioValue === true && !!portfolio.populateStatus?.inProgress
+        }
         isPopulateLoadingByKey={isPopulateLoadingByKey}
         presentationResetToken={presentationResetToken}
       />

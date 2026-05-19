@@ -72,6 +72,57 @@ export type PortfolioGainLossSummary = {
   };
 };
 
+export type LegacyLastDayPnl = {
+  deltaFiat: number;
+  percent: number;
+  isPositive: boolean;
+};
+
+export const UNAVAILABLE_ASSET_ROW_DELTA_FIAT = '—     ';
+export const UNAVAILABLE_ASSET_ROW_DELTA_PERCENT = '  —  %';
+
+export const formatAssetRowDeltaFiat = (
+  delta: number,
+  quoteCurrency: string,
+): string => {
+  const abs = Math.abs(delta);
+  const prefix = delta >= 0 ? '+' : '-';
+  return `${prefix}${formatFiatAmount(abs, quoteCurrency, {
+    customPrecision: 'minimal',
+  })}`;
+};
+
+export const formatAssetRowDeltaPercent = (percent: number): string => {
+  const normalized = Number.isFinite(percent) ? percent : 0;
+  const abs = Math.abs(normalized);
+  const prefix = normalized >= 0 ? '+' : '-';
+  return `${prefix}${abs.toFixed(2)}%`;
+};
+
+export const getLegacyLastDayPnlFromTotals = (args: {
+  currentFiatBalance: number | undefined;
+  lastDayFiatBalance: number | undefined;
+}): LegacyLastDayPnl | undefined => {
+  const currentFiatBalance = toNumber(args.currentFiatBalance);
+  const lastDayFiatBalance = toNumber(args.lastDayFiatBalance);
+
+  if (!(currentFiatBalance > 0) || !(lastDayFiatBalance > 0)) {
+    return undefined;
+  }
+
+  const deltaFiat = currentFiatBalance - lastDayFiatBalance;
+  const percent = calculatePercentageDifference(
+    currentFiatBalance,
+    lastDayFiatBalance,
+  );
+
+  return {
+    deltaFiat,
+    percent,
+    isPositive: deltaFiat >= 0,
+  };
+};
+
 export const sortAssetRowItemsByHasRate = (
   items: AssetRowItem[],
 ): AssetRowItem[] => {
@@ -170,6 +221,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
   quoteCurrency?: string;
   orderedAssetKeys?: string[];
   showScopedPnlLoading?: boolean;
+  includeLegacyLastDayPnl?: boolean;
 }): AssetRowItem[] => {
   const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
     quoteCurrency: args.quoteCurrency,
@@ -184,6 +236,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
       representativeWallet: Wallet;
       representativeUnitDecimals: number;
       fiatValue: number;
+      lastDayFiatValue: number;
       totalAtomic: bigint;
       firstIndex: number;
     }
@@ -201,6 +254,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
       unitDecimals,
     });
     const fiatValue = Math.max(0, toNumber(wallet.balance?.fiat));
+    const lastDayFiatValue = Math.max(0, toNumber(wallet.balance?.fiatLastDay));
     const existing = groupByKey.get(key);
 
     if (!existing) {
@@ -212,6 +266,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
         representativeWallet: wallet,
         representativeUnitDecimals: unitDecimals,
         fiatValue,
+        lastDayFiatValue,
         totalAtomic: atomicBalance,
         firstIndex: index,
       });
@@ -219,6 +274,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
     }
 
     existing.fiatValue += fiatValue;
+    existing.lastDayFiatValue += lastDayFiatValue;
     existing.totalAtomic += atomicBalance;
     existing.firstIndex = Math.min(existing.firstIndex, index);
 
@@ -256,27 +312,47 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
           return left.firstIndex - right.firstIndex;
         });
 
-  return orderedGroups.map(group => ({
-    key: group.key,
-    currencyAbbreviation: group.currencyAbbreviation,
-    chain: group.chain,
-    tokenAddress: group.tokenAddress,
-    name: formatCurrencyAbbreviation(group.currencyAbbreviation),
-    cryptoAmount: formatBigIntDecimal(
-      group.totalAtomic,
-      group.representativeUnitDecimals,
-      Math.min(group.representativeUnitDecimals, 8),
-    ),
-    fiatAmount: formatFiatAmount(group.fiatValue, quoteCurrency, {
-      customPrecision: 'minimal',
-    }),
-    deltaFiat: '',
-    deltaPercent: '',
-    isPositive: true,
-    hasRate: group.fiatValue > 0,
-    hasPnl: false,
-    showScopedPnlLoading: !!args.showScopedPnlLoading,
-  }));
+  return orderedGroups.map(group => {
+    const legacyPnl = args.includeLegacyLastDayPnl
+      ? getLegacyLastDayPnlFromTotals({
+          currentFiatBalance: group.fiatValue,
+          lastDayFiatBalance: group.lastDayFiatValue,
+        })
+      : undefined;
+    const showPnlPlaceholder = args.includeLegacyLastDayPnl && !legacyPnl;
+
+    return {
+      key: group.key,
+      currencyAbbreviation: group.currencyAbbreviation,
+      chain: group.chain,
+      tokenAddress: group.tokenAddress,
+      name: formatCurrencyAbbreviation(group.currencyAbbreviation),
+      cryptoAmount: formatBigIntDecimal(
+        group.totalAtomic,
+        group.representativeUnitDecimals,
+        Math.min(group.representativeUnitDecimals, 8),
+      ),
+      fiatAmount: formatFiatAmount(group.fiatValue, quoteCurrency, {
+        customPrecision: 'minimal',
+      }),
+      deltaFiat: legacyPnl
+        ? formatAssetRowDeltaFiat(legacyPnl.deltaFiat, quoteCurrency)
+        : showPnlPlaceholder
+        ? UNAVAILABLE_ASSET_ROW_DELTA_FIAT
+        : '',
+      deltaPercent: legacyPnl
+        ? formatAssetRowDeltaPercent(legacyPnl.percent)
+        : showPnlPlaceholder
+        ? UNAVAILABLE_ASSET_ROW_DELTA_PERCENT
+        : '',
+      isPositive: legacyPnl?.isPositive ?? true,
+      hasRate: group.fiatValue > 0,
+      hasPnl: !!legacyPnl,
+      showPnlPlaceholder,
+      showScopedPnlLoading:
+        !legacyPnl && !showPnlPlaceholder && !!args.showScopedPnlLoading,
+    };
+  });
 };
 
 type AssetRowItemSupportInfo = {
@@ -566,13 +642,11 @@ export const getLegacyPercentageDifferenceFromTotals = (args: {
   totalBalance: number;
   totalBalanceLastDay: number | undefined;
 }): number | null => {
-  if (!args.totalBalanceLastDay) {
-    return null;
-  }
-
-  return calculatePercentageDifference(
-    args.totalBalance,
-    args.totalBalanceLastDay,
+  return (
+    getLegacyLastDayPnlFromTotals({
+      currentFiatBalance: args.totalBalance,
+      lastDayFiatBalance: args.totalBalanceLastDay,
+    })?.percent ?? null
   );
 };
 

@@ -451,12 +451,17 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               {/* ////////////////////////////// SECURE WITH PASSKEY */}
               <SecurePasskeyBannerGate />
 
-              {showPortfolioValue ? (
+              {hasKeys ? (
                 <HomeSection>
                   <View
                     ref={homeAssetsSectionRef}
                     onLayout={onHomeAssetsSectionLayout}>
-                    <AssetsSection enabled={shouldActivateHomeAssetsSection} />
+                    <AssetsSection
+                      enabled={
+                        showPortfolioValue === true &&
+                        shouldActivateHomeAssetsSection
+                      }
+                    />
                   </View>
                 </HomeSection>
               ) : null}

@@ -1,7 +1,7 @@
 import {useMemo} from 'react';
 import {useTranslation} from 'react-i18next';
 import type {Wallet} from '../../store/wallet/wallet.models';
-import {calculatePercentageDifference} from '../../utils/helper-methods';
+import {getLegacyLastDayPnlFromTotals} from '../../utils/portfolio/assets';
 import {
   buildBalanceHistoryChartChangeRowData,
   type ChangeRowData,
@@ -32,18 +32,19 @@ export const buildLegacyLastDayChangeRowData = (args: {
 }): ChangeRowData | undefined => {
   const currentFiatBalance = toFiniteNumber(args.currentFiatBalance);
   const lastDayFiatBalance = getLegacyLastDayFiatBalance(args.wallets);
+  const legacyPnl = getLegacyLastDayPnlFromTotals({
+    currentFiatBalance,
+    lastDayFiatBalance,
+  });
 
-  if (!(currentFiatBalance > 0) || !(lastDayFiatBalance > 0)) {
+  if (!legacyPnl) {
     return undefined;
   }
 
   return buildBalanceHistoryChartChangeRowData({
     displayedAnalysisPoint: {
-      totalPnlChange: currentFiatBalance - lastDayFiatBalance,
-      totalPnlPercent: calculatePercentageDifference(
-        currentFiatBalance,
-        lastDayFiatBalance,
-      ),
+      totalPnlChange: legacyPnl.deltaFiat,
+      totalPnlPercent: legacyPnl.percent,
     },
     quoteCurrency: args.quoteCurrency,
     label: args.label,

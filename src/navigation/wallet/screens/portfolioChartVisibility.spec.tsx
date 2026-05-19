@@ -434,6 +434,27 @@ jest.mock('../../../utils/portfolio/assets', () => ({
       portfolioQuoteCurrency?: string;
     }) => portfolioQuoteCurrency || defaultAltCurrencyIsoCode || 'USD',
   ),
+  getLegacyLastDayPnlFromTotals: jest.fn(
+    ({
+      currentFiatBalance,
+      lastDayFiatBalance,
+    }: {
+      currentFiatBalance?: number;
+      lastDayFiatBalance?: number;
+    }) => {
+      const current = Number(currentFiatBalance) || 0;
+      const lastDay = Number(lastDayFiatBalance) || 0;
+      if (!(current > 0) || !(lastDay > 0)) {
+        return undefined;
+      }
+      const deltaFiat = current - lastDay;
+      return {
+        deltaFiat,
+        percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
+        isPositive: deltaFiat >= 0,
+      };
+    },
+  ),
   getVisibleKeysFromKeys: jest.fn((keys: any) => Object.values(keys || {})),
   getVisibleWalletsFromKeys: jest.fn((keys: any) =>
     Object.values(keys || {}).flatMap((key: any) => key?.wallets || []),
