@@ -227,8 +227,7 @@ const PortfolioBalanceContent = () => {
     .join(',');
   const balanceChartsEnabled = balanceChartReadiness.shouldMountBalanceChart;
   const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
-  const canCollapseChart =
-    shouldLeftAlignTopSection && chartHasRenderableSeries;
+  const canCollapseChart = shouldLeftAlignTopSection;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =

@@ -1054,7 +1054,7 @@ describe('portfolio chart visibility guards', () => {
     },
   );
 
-  it('honors the persisted Home chart collapsed state before chart diagnostics arrive', async () => {
+  it('keeps the persisted Home chart expand control before chart diagnostics arrive', async () => {
     resetState(true, {
       completedFullPopulate: true,
       homeChartCollapsed: true,
@@ -1073,8 +1073,9 @@ describe('portfolio chart visibility guards', () => {
       }),
     );
     expect(
-      view!.root.findAllByProps({accessibilityLabel: 'Expand portfolio chart'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({accessibilityLabel: 'Expand portfolio chart'})
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it.each(chartSurfaceCases)(
@@ -1286,8 +1287,9 @@ describe('portfolio chart visibility guards', () => {
         populateStatus: makePopulateStatus(),
       });
 
+      let view!: TestRenderer.ReactTestRenderer;
       await act(async () => {
-        renderWithTheme(makeScreen());
+        view = renderWithTheme(makeScreen());
       });
 
       expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
@@ -1297,6 +1299,13 @@ describe('portfolio chart visibility guards', () => {
         }),
         undefined,
       );
+      if (_screen === 'Home') {
+        expect(
+          view.root.findAllByProps({
+            accessibilityLabel: 'Collapse portfolio chart',
+          }).length,
+        ).toBeGreaterThan(0);
+      }
     },
   );
 
