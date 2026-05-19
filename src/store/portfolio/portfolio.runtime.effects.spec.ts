@@ -29,23 +29,30 @@ jest.mock('../../portfolio/service', () => ({
       const computedAtomic = BigInt(mismatch.computedAtomic);
       const liveAtomic = BigInt(mismatch.currentAtomic);
       const deltaAtomic = computedAtomic - liveAtomic;
+      const absDeltaAtomic = deltaAtomic < 0n ? -deltaAtomic : deltaAtomic;
+      const absLiveAtomic = liveAtomic < 0n ? -liveAtomic : liveAtomic;
       const isExcessive =
-        deltaAtomic > 0n &&
-        (liveAtomic === 0n || deltaAtomic * 10000n >= liveAtomic * 1000n);
+        absDeltaAtomic > 0n &&
+        (absLiveAtomic === 0n ||
+          absDeltaAtomic * 10000n >= absLiveAtomic * 1000n);
       if (!isExcessive) {
         return undefined;
       }
+      const ratio =
+        absLiveAtomic === 0n
+          ? 'Infinity'
+          : (Number(absDeltaAtomic) / Number(absLiveAtomic)).toString();
       return {
         walletId: mismatch.walletId,
         reason: 'excessive_balance_mismatch',
         computedAtomic: computedAtomic.toString(),
         liveAtomic: liveAtomic.toString(),
         deltaAtomic: deltaAtomic.toString(),
-        ratio: liveAtomic === 0n ? 'Infinity' : '1.1',
+        ratio,
         threshold: 0.1,
         detectedAt: previousMarker?.detectedAt ?? detectedAt,
         lastAttemptedAt: lastAttemptedAt ?? detectedAt,
-        message: `Wallet ${mismatch.walletId} snapshot balance exceeds live balance by 1.1x (threshold 10%).`,
+        message: `Wallet ${mismatch.walletId} snapshot balance differs from live balance by ${ratio}x (threshold 10%).`,
       };
     },
   ),

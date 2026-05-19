@@ -69,7 +69,7 @@ const excessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
   threshold: 0.1,
   detectedAt: 1234,
   message:
-    'Wallet wallet-1 snapshot balance exceeds live balance by 2x (threshold 10%).',
+    'Wallet wallet-1 snapshot balance differs from live balance by 2x (threshold 10%).',
 });
 
 const invalidDecimalsMarker = (walletId = 'wallet-1') => ({

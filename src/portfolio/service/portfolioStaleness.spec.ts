@@ -67,7 +67,7 @@ describe('portfolioStaleness', () => {
     detectedAt: 1234,
     lastAttemptedAt,
     message:
-      'Wallet wallet-1 snapshot balance exceeds live balance by 2x (threshold 10%).',
+      'Wallet wallet-1 snapshot balance differs from live balance by 2x (threshold 10%).',
   });
 
   const snapshot = (cryptoBalance?: unknown) =>
@@ -124,7 +124,7 @@ describe('portfolioStaleness', () => {
     expect(client.getLatestSnapshot).not.toHaveBeenCalled();
   });
 
-  it('still marks wallets with no latest snapshot for populate', async () => {
+  it('treats indexed wallets with no snapshots as zero computed balance mismatches when live balance is nonzero', async () => {
     const client = decisionClient({latestSnapshot: null});
 
     const decision = await getWalletDecision(client);
@@ -132,10 +132,43 @@ describe('portfolioStaleness', () => {
     expect(decision).toMatchObject({
       walletId: 'wallet-1',
       shouldPopulate: true,
-      reason: 'missing_snapshot',
+      reason: 'balance_mismatch',
       index: {walletId: 'wallet-1'},
       latestSnapshot: null,
+      mismatch: {
+        walletId: 'wallet-1',
+        computedAtomic: '0',
+        currentAtomic: '150000000',
+        deltaAtomic: '-150000000',
+        computedUnitsHeld: '0',
+        currentWalletBalance: '1.5',
+        delta: '-1.5',
+      },
     });
+  });
+
+  it('still marks indexed wallets with no latest snapshot for populate when checkpoint balance matches live balance', async () => {
+    const client = decisionClient({
+      latestSnapshot: null,
+      snapshotIndex: {
+        walletId: 'wallet-1',
+        checkpoint: {balanceAtomic: '150000000'},
+      },
+    });
+
+    const decision = await getWalletDecision(client);
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'missing_snapshot',
+      index: {
+        walletId: 'wallet-1',
+        checkpoint: {balanceAtomic: '150000000'},
+      },
+      latestSnapshot: null,
+    });
+    expect(decision.mismatch).toBeUndefined();
   });
 
   it('skips populate when an indexed wallet has no snapshots and zero live balance', async () => {
@@ -527,7 +560,7 @@ describe('portfolioStaleness', () => {
     }
   });
 
-  it('builds excessive balance mismatch markers only when computed balance is high by the threshold', () => {
+  it('builds excessive balance mismatch markers from absolute balance deltas at the threshold', () => {
     const marker = buildPortfolioExcessiveBalanceMismatchMarker({
       detectedAt: 1234,
       mismatch: {
@@ -547,10 +580,12 @@ describe('portfolioStaleness', () => {
       computedAtomic: '110000000',
       liveAtomic: '100000000',
       deltaAtomic: '10000000',
-      ratio: '1.1',
+      ratio: '0.1',
       threshold: 0.1,
       detectedAt: 1234,
       lastAttemptedAt: 1234,
+      message:
+        'Wallet wallet-1 snapshot balance differs from live balance by 0.1x (threshold 10%).',
     });
 
     expect(
@@ -567,16 +602,43 @@ describe('portfolioStaleness', () => {
       }),
     ).toBeUndefined();
 
+    const lowSideMarker = buildPortfolioExcessiveBalanceMismatchMarker({
+      detectedAt: 5678,
+      mismatch: {
+        walletId: 'wallet-1',
+        computedAtomic: '90000000',
+        currentAtomic: '100000000',
+        deltaAtomic: '-10000000',
+        computedUnitsHeld: '0.9',
+        currentWalletBalance: '1',
+        delta: '-0.1',
+      },
+    });
+
+    expect(lowSideMarker).toMatchObject({
+      walletId: 'wallet-1',
+      reason: 'excessive_balance_mismatch',
+      computedAtomic: '90000000',
+      liveAtomic: '100000000',
+      deltaAtomic: '-10000000',
+      ratio: '0.1',
+      threshold: 0.1,
+      detectedAt: 5678,
+      lastAttemptedAt: 5678,
+      message:
+        'Wallet wallet-1 snapshot balance differs from live balance by 0.1x (threshold 10%).',
+    });
+
     expect(
       buildPortfolioExcessiveBalanceMismatchMarker({
         mismatch: {
           walletId: 'wallet-1',
-          computedAtomic: '100000000',
-          currentAtomic: '110000000',
-          deltaAtomic: '-10000000',
-          computedUnitsHeld: '1',
-          currentWalletBalance: '1.1',
-          delta: '-0.1',
+          computedAtomic: '90000001',
+          currentAtomic: '100000000',
+          deltaAtomic: '-9999999',
+          computedUnitsHeld: '0.90000001',
+          currentWalletBalance: '1',
+          delta: '-0.09999999',
         },
       }),
     ).toBeUndefined();

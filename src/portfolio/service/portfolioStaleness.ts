@@ -128,6 +128,8 @@ const formatBigIntRatio = (numerator: bigint, denominator: bigint): string => {
   return trimmedFraction ? `${whole}.${trimmedFraction}` : whole.toString();
 };
 
+const absBigInt = (value: bigint): bigint => (value < 0n ? -value : value);
+
 const parseAtomicString = (
   value: unknown,
   allowNegative = true,
@@ -153,7 +155,7 @@ export const getPortfolioExcessiveBalanceMismatchMessage = (args: {
   const thresholdPercent = Math.round(args.threshold * 10000) / 100;
   return `Wallet ${
     args.walletId || 'unknown'
-  } snapshot balance exceeds live balance by ${
+  } snapshot balance differs from live balance by ${
     args.ratio
   }x (threshold ${thresholdPercent}%).`;
 };
@@ -175,21 +177,23 @@ export function buildPortfolioExcessiveBalanceMismatchMarker(args: {
   }
 
   const deltaAtomic = computedAtomic - liveAtomic;
-  if (deltaAtomic <= 0n) {
+  const absDeltaAtomic = absBigInt(deltaAtomic);
+  if (absDeltaAtomic === 0n) {
     return undefined;
   }
 
   const thresholdBasisPoints = toThresholdBasisPoints(threshold);
+  const absLiveAtomic = absBigInt(liveAtomic);
   const isExcessive =
-    liveAtomic === 0n
-      ? computedAtomic > 0n
-      : deltaAtomic * BigInt(PERCENT_BASIS_POINTS) >=
-        liveAtomic * thresholdBasisPoints;
+    absLiveAtomic === 0n
+      ? absDeltaAtomic > 0n
+      : absDeltaAtomic * BigInt(PERCENT_BASIS_POINTS) >=
+        absLiveAtomic * thresholdBasisPoints;
   if (!isExcessive) {
     return undefined;
   }
 
-  const ratio = formatBigIntRatio(computedAtomic, liveAtomic);
+  const ratio = formatBigIntRatio(absDeltaAtomic, absLiveAtomic);
   const markerDetectedAt = isFiniteNumber(args.detectedAt)
     ? args.detectedAt
     : Date.now();
@@ -318,6 +322,33 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
       wallet: args.wallet,
       unitDecimals: args.unitDecimals,
     });
+    const checkpointAtomic =
+      parseAtomicString(index?.checkpoint?.balanceAtomic, false) ?? 0n;
+    const mismatch = buildBalanceMismatch({
+      walletId,
+      computedAtomic: checkpointAtomic,
+      actualAtomic: liveAtomic,
+      unitDecimals: args.unitDecimals,
+    });
+    if (mismatch) {
+      const extras = {index, mismatch};
+      if (args.previousMismatch?.deltaAtomic === mismatch.deltaAtomic) {
+        return buildPortfolioPopulateDecision(
+          walletId,
+          false,
+          'unchanged_balance_mismatch',
+          extras,
+        );
+      }
+
+      return buildPortfolioPopulateDecision(
+        walletId,
+        true,
+        'balance_mismatch',
+        extras,
+      );
+    }
+
     if (liveAtomic === 0n) {
       return buildPortfolioPopulateDecision(
         walletId,
