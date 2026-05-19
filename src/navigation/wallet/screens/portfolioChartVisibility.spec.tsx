@@ -370,7 +370,11 @@ jest.mock(
   () => () => null,
 );
 jest.mock('../../tabs/home/homeExchangeRates', () => jest.fn(() => []));
-jest.mock('../../tabs/home/components/LinkingButtons', () => () => null);
+jest.mock('../../tabs/home/components/LinkingButtons', () => {
+  const ReactLib = require('react');
+  const {View} = require('react-native');
+  return () => ReactLib.createElement(View, {testID: 'home-linking-buttons'});
+});
 jest.mock('../../../components/list/AccountListRow', () => () => null);
 jest.mock('../../../components/list/TransactionRow', () => () => null);
 jest.mock('../../../components/list/TransactionProposalRow', () => () => null);
@@ -1041,7 +1045,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('keeps the HomeRoot portfolio balance section visible when Show Portfolio is disabled', async () => {
+  it('keeps the HomeRoot balance section and linking buttons visible when Show Portfolio is disabled', async () => {
     resetState(false, {completedFullPopulate: true});
 
     let view: TestRenderer.ReactTestRenderer;
@@ -1064,6 +1068,9 @@ describe('portfolio chart visibility guards', () => {
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
         .length,
+    ).toBeGreaterThan(0);
+    expect(
+      view!.root.findAllByProps({testID: 'home-linking-buttons'}).length,
     ).toBeGreaterThan(0);
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });

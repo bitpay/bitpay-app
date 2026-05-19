@@ -407,7 +407,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               </HomeSection>
 
               {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-              {hasKeys && showPortfolioValue ? (
+              {hasKeys ? (
                 <HomeSection style={{marginBottom: 25}}>
                   <LinkingButtons
                     receive={{
