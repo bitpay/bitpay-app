@@ -1,4 +1,5 @@
 import React from 'react';
+import {View} from 'react-native';
 import TestRenderer, {act} from 'react-test-renderer';
 import BalanceHistoryChart from './BalanceHistoryChart';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
@@ -42,6 +43,8 @@ const mockOneWeekPoint = {date: new Date(2_000), value: 150};
 const mockOneWeekEndPoint = {date: new Date(2_500), value: 155};
 const mockUpdatedOneDayPoint = {date: new Date(3_000), value: 115};
 const mockUpdatedOneDayEndPoint = {date: new Date(3_500), value: 125};
+const mockZeroBalancePoint = {date: new Date(4_000), value: 0};
+const mockZeroBalanceEndPoint = {date: new Date(4_500), value: 0};
 
 type MockSeriesPoint = {
   point: {date: Date; value: number};
@@ -119,6 +122,21 @@ const mockUpdatedOneDaySeries = buildMockSeries([
   },
 ]);
 
+const mockZeroBalanceSeries = buildMockSeries([
+  {
+    point: mockZeroBalancePoint,
+    totalFiatBalance: 0,
+    totalPnlChange: 0,
+    totalPnlPercent: 0,
+  },
+  {
+    point: mockZeroBalanceEndPoint,
+    totalFiatBalance: 0,
+    totalPnlChange: 0,
+    totalPnlPercent: 0,
+  },
+]);
+
 const buildEquivalentSeries = <T extends typeof mockOneDaySeries>(
   series: T,
 ): T => {
@@ -154,7 +172,9 @@ jest.mock('react-native-reanimated', () => {
       View: ({children, ...props}: any) =>
         ReactLib.createElement(View, props, children),
     },
-    useAnimatedStyle: () => ({}),
+    useAnimatedStyle: (factory: () => any) => factory(),
+    useDerivedValue: (factory: () => number) => ({value: factory()}),
+    withTiming: (value: number) => value,
   };
 });
 
@@ -319,6 +339,26 @@ const mockRunPortfolioBalanceChartViewModelQuery =
   runPortfolioBalanceChartViewModelQuery as jest.Mock;
 let mockDispatch: jest.Mock;
 
+const renderTopAxisLabelOpacity = () => {
+  const TopAxisLabel = latestInteractiveLineChartProps?.TopAxisLabel;
+  expect(TopAxisLabel).toBeDefined();
+
+  let renderer!: TestRenderer.ReactTestRenderer;
+  act(() => {
+    renderer = TestRenderer.create(<TopAxisLabel width={300} />);
+  });
+
+  const style = renderer.root.findByType(View).props.style;
+  const opacityStyle = Array.isArray(style)
+    ? style.find(
+        styleItem =>
+          styleItem && typeof styleItem === 'object' && 'opacity' in styleItem,
+      )
+    : style;
+
+  return opacityStyle?.opacity;
+};
+
 describe('BalanceHistoryChart', () => {
   beforeEach(() => {
     jest.useRealTimers();
@@ -414,6 +454,63 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.points).toBe(
       mockOneDaySeries.graphPoints,
     );
+  });
+
+  it('fades out the max axis label for a zero balance interval', async () => {
+    mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
+      __series: mockZeroBalanceSeries,
+    });
+
+    await act(async () => {
+      TestRenderer.create(
+        <BalanceHistoryChart
+          wallets={[
+            {
+              id: 'wallet-1',
+            } as any,
+          ]}
+          quoteCurrency="USD"
+          showLoaderWhenNoSnapshots
+        />,
+      );
+    });
+
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockZeroBalanceSeries.graphPoints,
+    );
+    expect(renderTopAxisLabelOpacity()).toBe(0);
+  });
+
+  it('fades the max axis label back in when the visible interval is non-zero', async () => {
+    mockRunPortfolioBalanceChartViewModelQuery
+      .mockResolvedValueOnce({__series: mockZeroBalanceSeries})
+      .mockResolvedValueOnce({__series: mockOneWeekSeries});
+
+    await act(async () => {
+      TestRenderer.create(
+        <BalanceHistoryChart
+          wallets={[
+            {
+              id: 'wallet-1',
+            } as any,
+          ]}
+          quoteCurrency="USD"
+          showLoaderWhenNoSnapshots
+        />,
+      );
+    });
+
+    expect(renderTopAxisLabelOpacity()).toBe(0);
+
+    await act(async () => {
+      latestTimeframeSelectorProps.onSelect('1W');
+      await Promise.resolve();
+    });
+
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneWeekSeries.graphPoints,
+    );
+    expect(renderTopAxisLabelOpacity()).toBe(1);
   });
 
   it('defers the initial chart query until after the first visible render window', async () => {
