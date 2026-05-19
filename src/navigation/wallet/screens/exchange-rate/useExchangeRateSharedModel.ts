@@ -250,8 +250,22 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   }, [homeCarouselConfig, keys, scopeKeyId]);
 
   const assetWallets = useMemo(() => {
-    // Asset detail screens need the full historical wallet scope so the wallet
-    // list and ALL-time PnL keep wallets that reached zero after activity.
+    // Asset balance history needs the full historical wallet scope so ALL-time
+    // PnL matches the asset list even after some wallets reach zero balance.
+    return getWalletsMatchingExchangeRateAsset({
+      wallets: visibleWallets,
+      currencyAbbreviation: assetContext.currencyAbbreviation,
+      tokenAddress: assetContext.tokenAddress,
+      includeZeroBalance: isAssetBalanceHistoryMode,
+    });
+  }, [
+    assetContext.currencyAbbreviation,
+    assetContext.tokenAddress,
+    isAssetBalanceHistoryMode,
+    visibleWallets,
+  ]);
+
+  const historicalAssetWallets = useMemo(() => {
     return getWalletsMatchingExchangeRateAsset({
       wallets: visibleWallets,
       currencyAbbreviation: assetContext.currencyAbbreviation,
@@ -265,8 +279,8 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   ]);
 
   const assetWalletSnapshotPresence = usePortfolioWalletSnapshotPresence({
-    wallets: assetWallets,
-    enabled: showPortfolioValue === true && assetWallets.length > 0,
+    wallets: historicalAssetWallets,
+    enabled: showPortfolioValue === true && historicalAssetWallets.length > 0,
   });
 
   const walletsForAssetDisplay = useMemo(() => {
@@ -285,14 +299,16 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
         .map(wallet => String(wallet?.id || '').trim())
         .filter(Boolean),
     );
-    const historicalZeroBalanceWallets = assetWallets.filter(wallet => {
-      const walletId = String(wallet?.id || '').trim();
-      return (
-        walletId &&
-        !liveBalanceWalletIds.has(walletId) &&
-        assetWalletSnapshotPresence.hasSnapshotsByWalletId[walletId] === true
-      );
-    });
+    const historicalZeroBalanceWallets = historicalAssetWallets.filter(
+      wallet => {
+        const walletId = String(wallet?.id || '').trim();
+        return (
+          walletId &&
+          !liveBalanceWalletIds.has(walletId) &&
+          assetWalletSnapshotPresence.hasSnapshotsByWalletId[walletId] === true
+        );
+      },
+    );
 
     return [...liveBalanceWallets, ...historicalZeroBalanceWallets];
   }, [
@@ -300,7 +316,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     assetContext.tokenAddress,
     assetWalletSnapshotPresence.checked,
     assetWalletSnapshotPresence.hasSnapshotsByWalletId,
-    assetWallets,
+    historicalAssetWallets,
     showPortfolioValue,
     visibleWallets,
   ]);

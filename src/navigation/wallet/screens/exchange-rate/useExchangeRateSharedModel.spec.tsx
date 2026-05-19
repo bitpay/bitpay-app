@@ -389,11 +389,7 @@ describe('useExchangeRateSharedModel', () => {
       TestRenderer.create(<HookHarness />);
     });
 
-    expect(latestSharedModel?.assetWallets).toEqual([
-      liveWallet,
-      zeroHistoricalWallet,
-      zeroEmptyWallet,
-    ]);
+    expect(latestSharedModel?.assetWallets).toEqual([liveWallet]);
     expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenCalledWith({
       wallets: [liveWallet, zeroHistoricalWallet, zeroEmptyWallet],
       enabled: true,
