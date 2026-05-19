@@ -29,7 +29,7 @@ import {useStableBalanceHistoryChartAxisLabels} from './useStableBalanceHistoryC
 import {usePortfolioBalanceChartScope} from '../../portfolio/ui/hooks/usePortfolioBalanceChartScope';
 import useBalanceChartDisplayModel from './useBalanceChartDisplayModel';
 
-const ZERO_BALANCE_MAX_AXIS_LABEL_FADE_MS = 180;
+const ZERO_BALANCE_AXIS_LABEL_FADE_MS = 180;
 
 export type BalanceHistoryChartProps = {
   wallets: Wallet[];
@@ -149,21 +149,25 @@ const BalanceHistoryChart = ({
     axisLabelOpacity,
     quoteCurrency: displayModel.visibleQuoteCurrency,
   });
-  const shouldHideMaxAxisLabel = isZeroBalanceSeries(
-    displayModel.visibleSeries,
-  );
-  const maxAxisLabelZeroBalanceOpacity = useDerivedValue(
+  const shouldHideAxisLabels = isZeroBalanceSeries(displayModel.visibleSeries);
+  const zeroBalanceAxisLabelOpacity = useDerivedValue(
     () =>
-      withTiming(shouldHideMaxAxisLabel ? 0 : 1, {
-        duration: ZERO_BALANCE_MAX_AXIS_LABEL_FADE_MS,
+      withTiming(shouldHideAxisLabels ? 0 : 1, {
+        duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS,
       }),
-    [shouldHideMaxAxisLabel],
+    [shouldHideAxisLabels],
   );
   const maxAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(
     () => ({
-      opacity: maxAxisLabelZeroBalanceOpacity.value,
+      opacity: zeroBalanceAxisLabelOpacity.value,
     }),
-    [maxAxisLabelZeroBalanceOpacity],
+    [zeroBalanceAxisLabelOpacity],
+  );
+  const minAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: zeroBalanceAxisLabelOpacity.value,
+    }),
+    [zeroBalanceAxisLabelOpacity],
   );
   const FadingMaxAxisLabel = React.useCallback(
     (props: InteractiveLineChartAxisLabelProps) => (
@@ -173,6 +177,15 @@ const BalanceHistoryChart = ({
       </Animated.View>
     ),
     [MaxAxisLabel, maxAxisLabelZeroBalanceAnimatedStyle],
+  );
+  const FadingMinAxisLabel = React.useCallback(
+    (props: InteractiveLineChartAxisLabelProps) => (
+      <Animated.View
+        style={[{width: '100%'}, minAxisLabelZeroBalanceAnimatedStyle]}>
+        <MinAxisLabel {...props} />
+      </Animated.View>
+    ),
+    [MinAxisLabel, minAxisLabelZeroBalanceAnimatedStyle],
   );
 
   const chartColor = lineColor || (theme.dark ? LinkBlue : Action);
@@ -256,7 +269,7 @@ const BalanceHistoryChart = ({
         animated={true}
         SelectionDot={ChartSelectionDot}
         TopAxisLabel={FadingMaxAxisLabel}
-        BottomAxisLabel={MinAxisLabel}
+        BottomAxisLabel={FadingMinAxisLabel}
         onGestureStart={displayModel.onGestureStarted}
         onGestureEnd={displayModel.onGestureEnded}
         onPointSelected={displayModel.onPointSelected}

@@ -339,13 +339,15 @@ const mockRunPortfolioBalanceChartViewModelQuery =
   runPortfolioBalanceChartViewModelQuery as jest.Mock;
 let mockDispatch: jest.Mock;
 
-const renderTopAxisLabelOpacity = () => {
-  const TopAxisLabel = latestInteractiveLineChartProps?.TopAxisLabel;
-  expect(TopAxisLabel).toBeDefined();
+const renderAxisLabelOpacity = (
+  propName: 'TopAxisLabel' | 'BottomAxisLabel',
+) => {
+  const AxisLabel = latestInteractiveLineChartProps?.[propName];
+  expect(AxisLabel).toBeDefined();
 
   let renderer!: TestRenderer.ReactTestRenderer;
   act(() => {
-    renderer = TestRenderer.create(<TopAxisLabel width={300} />);
+    renderer = TestRenderer.create(<AxisLabel width={300} />);
   });
 
   const style = renderer.root.findByType(View).props.style;
@@ -456,7 +458,7 @@ describe('BalanceHistoryChart', () => {
     );
   });
 
-  it('fades out the max axis label for a zero balance interval', async () => {
+  it('fades out the axis labels for a zero balance interval', async () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockZeroBalanceSeries,
     });
@@ -478,10 +480,11 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.points).toBe(
       mockZeroBalanceSeries.graphPoints,
     );
-    expect(renderTopAxisLabelOpacity()).toBe(0);
+    expect(renderAxisLabelOpacity('TopAxisLabel')).toBe(0);
+    expect(renderAxisLabelOpacity('BottomAxisLabel')).toBe(0);
   });
 
-  it('fades the max axis label back in when the visible interval is non-zero', async () => {
+  it('fades the axis labels back in when the visible interval is non-zero', async () => {
     mockRunPortfolioBalanceChartViewModelQuery
       .mockResolvedValueOnce({__series: mockZeroBalanceSeries})
       .mockResolvedValueOnce({__series: mockOneWeekSeries});
@@ -500,7 +503,8 @@ describe('BalanceHistoryChart', () => {
       );
     });
 
-    expect(renderTopAxisLabelOpacity()).toBe(0);
+    expect(renderAxisLabelOpacity('TopAxisLabel')).toBe(0);
+    expect(renderAxisLabelOpacity('BottomAxisLabel')).toBe(0);
 
     await act(async () => {
       latestTimeframeSelectorProps.onSelect('1W');
@@ -510,7 +514,8 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.points).toBe(
       mockOneWeekSeries.graphPoints,
     );
-    expect(renderTopAxisLabelOpacity()).toBe(1);
+    expect(renderAxisLabelOpacity('TopAxisLabel')).toBe(1);
+    expect(renderAxisLabelOpacity('BottomAxisLabel')).toBe(1);
   });
 
   it('defers the initial chart query until after the first visible render window', async () => {
