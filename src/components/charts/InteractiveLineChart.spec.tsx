@@ -296,6 +296,49 @@ describe('InteractiveLineChart', () => {
     ).toHaveLength(0);
   });
 
+  it('applies first point guide line opacity', () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ThemeProvider theme={theme}>
+          <View>
+            <InteractiveLineChart
+              points={points}
+              color="#000000"
+              gradientFillColors={['#ffffff', '#ffffff']}
+              showFirstPointGuideLine
+              firstPointGuideLineOpacity={0.25}
+            />
+          </View>
+        </ThemeProvider>,
+      );
+    });
+
+    act(() => {
+      renderer.root.findByType('LineGraph').props.onLayout({
+        nativeEvent: {layout: {x: 0, y: 10, width: 300, height: 200}},
+      });
+    });
+
+    const guideLineContainer = renderer.root.findAll(node => {
+      const style = node.props.style;
+      return (
+        node.props.pointerEvents === 'none' &&
+        Array.isArray(style) &&
+        style.some(
+          styleItem =>
+            styleItem &&
+            styleItem.position === 'absolute' &&
+            styleItem.height === 4,
+        )
+      );
+    })[0];
+    expect(guideLineContainer?.props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({opacity: 0.25})]),
+    );
+  });
+
   it('aligns the first point guide line with the explicit flat zero y range', () => {
     let renderer!: TestRenderer.ReactTestRenderer;
 

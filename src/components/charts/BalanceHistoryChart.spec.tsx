@@ -505,6 +505,9 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.points).toBe(
       mockZeroBalanceSeries.graphPoints,
     );
+    expect(
+      latestInteractiveLineChartProps.firstPointGuideLineOpacity.value,
+    ).toBe(0);
     expect(renderAxisLabelOpacity('TopAxisLabel')).toBe(0);
     expect(renderAxisLabelOpacity('BottomAxisLabel')).toBe(0);
   });
@@ -530,6 +533,9 @@ describe('BalanceHistoryChart', () => {
 
     expect(renderAxisLabelOpacity('TopAxisLabel')).toBe(0);
     expect(renderAxisLabelOpacity('BottomAxisLabel')).toBe(0);
+    expect(
+      latestInteractiveLineChartProps.firstPointGuideLineOpacity.value,
+    ).toBe(0);
 
     await act(async () => {
       latestTimeframeSelectorProps.onSelect('1W');
@@ -539,6 +545,9 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.points).toBe(
       mockOneWeekSeries.graphPoints,
     );
+    expect(
+      latestInteractiveLineChartProps.firstPointGuideLineOpacity.value,
+    ).toBe(1);
     expect(renderAxisLabelOpacity('TopAxisLabel')).toBe(1);
     expect(renderAxisLabelOpacity('BottomAxisLabel')).toBe(1);
   });

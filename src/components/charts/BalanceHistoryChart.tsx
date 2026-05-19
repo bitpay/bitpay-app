@@ -262,6 +262,7 @@ const BalanceHistoryChart = ({
           theme.dark ? 'transparent' : White,
         ]}
         showFirstPointGuideLine={displayModel.hasRenderableSeries}
+        firstPointGuideLineOpacity={zeroBalanceAxisLabelOpacity}
         isLoading={displayModel.shouldShowLoader}
         hideLineWhileLoading={!displayModel.hasRenderableSeries}
         enablePanGesture={

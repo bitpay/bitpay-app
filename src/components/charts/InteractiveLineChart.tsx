@@ -85,6 +85,7 @@ export type InteractiveLineChartProps = {
   onPointSelected?: (point: GraphPoint) => void;
   showFirstPointGuideLine?: boolean;
   firstPointGuideLineColor?: string;
+  firstPointGuideLineOpacity?: number | NumberSharedValue;
 };
 
 type AxisLabelRendererProps = Record<string, unknown>;
@@ -164,6 +165,7 @@ const InteractiveLineChart = ({
   onPointSelected,
   showFirstPointGuideLine = false,
   firstPointGuideLineColor,
+  firstPointGuideLineOpacity = 1,
 }: InteractiveLineChartProps): React.ReactElement => {
   const theme = useTheme();
   const isFocused = useIsFocused();
@@ -197,6 +199,18 @@ const InteractiveLineChart = ({
 
   const strokeScaleIsSharedValue = isNumberSharedValue(strokeScale);
   const sharedStrokeScale = strokeScaleIsSharedValue ? strokeScale : undefined;
+  const firstPointGuideLineOpacityIsSharedValue = isNumberSharedValue(
+    firstPointGuideLineOpacity,
+  );
+  const sharedFirstPointGuideLineOpacity =
+    firstPointGuideLineOpacityIsSharedValue
+      ? firstPointGuideLineOpacity
+      : undefined;
+  const firstPointGuideLineOpacityNumber =
+    typeof firstPointGuideLineOpacity === 'number' &&
+    Number.isFinite(firstPointGuideLineOpacity)
+      ? firstPointGuideLineOpacity
+      : 1;
 
   const strokeScaleNumber =
     typeof strokeScale === 'number' && Number.isFinite(strokeScale)
@@ -217,6 +231,18 @@ const InteractiveLineChart = ({
     const scale = sharedStrokeScale?.value ?? strokeScaleNumber;
     return Number.isFinite(scale) ? scale : 1;
   }, [sharedStrokeScale, strokeScaleNumber]);
+  const firstPointGuideLineOpacityValue = useDerivedValue(() => {
+    'worklet';
+
+    const opacity =
+      sharedFirstPointGuideLineOpacity?.value ??
+      firstPointGuideLineOpacityNumber;
+    if (!Number.isFinite(opacity)) {
+      return 1;
+    }
+
+    return Math.min(1, Math.max(0, opacity));
+  }, [sharedFirstPointGuideLineOpacity, firstPointGuideLineOpacityNumber]);
 
   // IMPORTANT: react-native-graph's LineGraph is implemented as a composite
   // component that renders Skia primitives. Reanimated's `animatedProps`
@@ -495,11 +521,12 @@ const InteractiveLineChart = ({
       ? firstPointGuideLine.top - FIRST_POINT_GUIDE_LINE_SVG_HEIGHT / 2
       : null;
 
+  const graphOpacity = isLoading ? (hideLineWhileLoading ? 0 : 0.25) : 1;
+
   const firstPointGuideLineAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: graphOpacity * firstPointGuideLineOpacityValue.value,
     transform: [{translateY: firstPointGuideLineTranslateY.value}],
   }));
-
-  const graphOpacity = isLoading ? (hideLineWhileLoading ? 0 : 0.25) : 1;
 
   React.useLayoutEffect(() => {
     if (firstPointGuideLineTopTarget == null) {
@@ -600,7 +627,6 @@ const InteractiveLineChart = ({
                 firstPointGuideLineBaseTop ?? firstPointGuideLineTopTarget ?? 0,
               width: firstPointGuideLine.width,
               height: FIRST_POINT_GUIDE_LINE_SVG_HEIGHT,
-              opacity: graphOpacity,
             },
             firstPointGuideLineAnimatedStyle,
           ]}>
