@@ -8,9 +8,9 @@ jest.mock('../../utils/helper-methods', () => ({
     (
       amount: number,
       quoteCurrency: string,
-      opts?: {customPrecision?: string},
+      opts?: {currencyDisplay?: string},
     ) => {
-      return `${quoteCurrency}:${amount}:${opts?.customPrecision || 'default'}`;
+      return `${quoteCurrency}:${amount}:${opts?.currencyDisplay || 'default'}`;
     },
   ),
 }));
@@ -32,7 +32,6 @@ describe('balanceHistoryChartSelection', () => {
     expect(changeRow).toEqual({
       percent: 12.34,
       deltaFiatFormatted: formatFiatAmount(40, 'USD', {
-        customPrecision: 'minimal',
         currencyDisplay: 'symbol',
       }),
       rangeLabel: '1D',
