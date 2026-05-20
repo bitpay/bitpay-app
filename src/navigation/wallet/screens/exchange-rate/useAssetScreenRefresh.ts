@@ -2,6 +2,8 @@ import {useCallback, useState} from 'react';
 import {maybePopulatePortfolioForWallets} from '../../../../store/portfolio';
 import {startGetRates} from '../../../../store/wallet/effects';
 import {getAndDispatchUpdatedWalletBalances} from '../../../../store/wallet/effects/status/statusv2';
+import {logManager} from '../../../../managers/LogManager';
+import {formatUnknownError} from '../../../../utils/errors/formatUnknownError';
 import {useAppDispatch} from '../../../../utils/hooks';
 import type {ExchangeRateSharedModel} from './useExchangeRateSharedModel';
 
@@ -29,15 +31,26 @@ const useAssetScreenRefresh = (
             context: 'homeRootOnRefresh',
           }),
         );
-        await dispatch(
-          maybePopulatePortfolioForWallets({
-            walletIds: shared.assetWallets
-              .map(wallet => String(wallet?.id || '').trim())
-              .filter(Boolean),
-            quoteCurrency: shared.resolvedQuoteCurrency,
-            forceRetryQuarantined: true,
-          }) as any,
-        );
+        const walletIds = shared.assetWallets
+          .map(wallet => String(wallet?.id || '').trim())
+          .filter(Boolean);
+        Promise.resolve()
+          .then(() =>
+            dispatch(
+              maybePopulatePortfolioForWallets({
+                walletIds,
+                quoteCurrency: shared.resolvedQuoteCurrency,
+                forceRetryQuarantined: true,
+              }) as any,
+            ),
+          )
+          .catch(error => {
+            logManager.warn(
+              `[portfolio] Failed background asset screen refresh populate: ${formatUnknownError(
+                error,
+              )}`,
+            );
+          });
       } else {
         await dispatch(
           startGetRates({

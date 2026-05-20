@@ -156,6 +156,7 @@ import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import type {RootState} from '../../../store';
 import {getQuoteCurrency} from '../../../utils/portfolio/assets';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -574,17 +575,27 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         );
       }
 
-      await dispatch(
-        maybePopulatePortfolioForWallets({
-          walletIds: [latestWallet?.id || fullWalletObj.id],
-          quoteCurrency: getQuoteCurrency({
-            portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-            defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-          }),
-          forceRetryQuarantined: true,
-        }) as any,
-      );
-    } catch (err) {
+      Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioForWallets({
+              walletIds: [latestWallet?.id || fullWalletObj.id],
+              quoteCurrency: getQuoteCurrency({
+                portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+              }),
+              forceRetryQuarantined: true,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logManager.warn(
+            `[portfolio] Failed background wallet details refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
+    } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
       setRefreshing(false);

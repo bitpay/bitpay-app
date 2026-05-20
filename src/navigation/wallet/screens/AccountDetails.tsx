@@ -183,6 +183,7 @@ import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
 import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
 import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -1348,15 +1349,25 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         await walletStatusRefresh;
       }
       dispatch(updatePortfolioBalance());
-      await dispatch(
-        maybePopulatePortfolioForWallets({
-          walletIds: accountWalletIds,
-          quoteCurrency: displayQuoteCurrency,
-          forceRetryQuarantined: true,
-        }) as any,
-      );
+      Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioForWallets({
+              walletIds: accountWalletIds,
+              quoteCurrency: displayQuoteCurrency,
+              forceRetryQuarantined: true,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logManager.warn(
+            `[portfolio] Failed background account details refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
       setNeedActionTxps(pendingTxps);
-    } catch (err) {
+    } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);

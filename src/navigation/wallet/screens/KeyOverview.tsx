@@ -152,6 +152,7 @@ import {
   isPopulateLoadingForWallets,
 } from '../../../utils/portfolio/assets';
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -1074,13 +1075,23 @@ const KeyOverview = () => {
     setRefreshing(true);
     try {
       await updateStatusForKey(true);
-      await dispatch(
-        maybePopulatePortfolioForWallets({
-          walletIds: visibleKeyWalletIds,
-          quoteCurrency,
-          forceRetryQuarantined: true,
-        }) as any,
-      );
+      Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioForWallets({
+              walletIds: visibleKeyWalletIds,
+              quoteCurrency,
+              forceRetryQuarantined: true,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logger.warn(
+            `[portfolio] Failed background key overview refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
     } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
