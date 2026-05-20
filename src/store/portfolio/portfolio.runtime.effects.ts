@@ -36,6 +36,7 @@ import {
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
+  markPopulateResumeSettled,
   setInvalidDecimalsByWalletIdUpdates,
   setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
@@ -1534,10 +1535,12 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
     ).filter(isPortfolioRuntimeEligibleWallet);
 
     if (!runtimeEligibleWallets.length) {
+      const settledAt = Date.now();
+      dispatch(markPopulateResumeSettled({settledAt}));
       if (!hasCompletedInitialPortfolioBaseline(state)) {
         dispatch(
           markInitialBaselineComplete({
-            completedAt: Date.now(),
+            completedAt: settledAt,
             quoteCurrency,
           }),
         );
@@ -1585,6 +1588,7 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
         walletIdsToPopulate: decisions.walletIdsToPopulate,
       });
     if (!walletsToPopulate.length) {
+      dispatch(markPopulateResumeSettled({settledAt: Date.now()}));
       return;
     }
 

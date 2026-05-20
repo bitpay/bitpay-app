@@ -146,6 +146,10 @@ jest.mock('./portfolio.actions', () => ({
     payload,
     type: 'MARK_INITIAL_BASELINE_COMPLETE',
   })),
+  markPopulateResumeSettled: jest.fn((payload: any) => ({
+    payload,
+    type: 'MARK_POPULATE_RESUME_SETTLED',
+  })),
   setSnapshotBalanceMismatchesByWalletIdUpdates: jest.fn((payload: any) => ({
     payload,
     type: 'SET_MISMATCHES',
@@ -394,6 +398,16 @@ const expectInitialBaselineCompleteAction = (dispatched: any[]) =>
       {
         payload: expect.objectContaining({quoteCurrency: 'USD'}),
         type: 'MARK_INITIAL_BASELINE_COMPLETE',
+      },
+    ]),
+  );
+
+const expectPopulateResumeSettledAction = (dispatched: any[]) =>
+  expect(dispatched).toEqual(
+    expect.arrayContaining([
+      {
+        payload: {settledAt: expect.any(Number)},
+        type: 'MARK_POPULATE_RESUME_SETTLED',
       },
     ]),
   );
@@ -1983,7 +1997,46 @@ describe('portfolio runtime effects lock deferral', () => {
     await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
+    expectPopulateResumeSettledAction(dispatched);
     expectInitialBaselineCompleteAction(dispatched);
+  });
+
+  it('app launch marks interrupted populate resume settled when an existing baseline has no work', async () => {
+    const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: 1000,
+        populateStatus: {
+          inProgress: false,
+          startedAt: 900,
+          finishedAt: undefined,
+          stopReason: undefined,
+          currentWalletId: undefined,
+          walletStatusById: {},
+        },
+      },
+    });
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            latestSnapshot: walletSnapshot('100000000'),
+          }),
+        ],
+        walletIdsToPopulate: [],
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectPopulateResumeSettledAction(dispatched);
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({type: 'MARK_INITIAL_BASELINE_COMPLETE'}),
+      ]),
+    );
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
   });
 
   it('does not dispatch stale progress or finish after active runtime populate is cancelled', async () => {

@@ -61,6 +61,9 @@ type AssetGroupSpec = AssetPnlSummarySpec & {
   eligibleWalletIds: string[];
 };
 
+const UNAVAILABLE_SUMMARY_READY_REVISION_SIG = 'unavailable-pnl:ready';
+const UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG = 'unavailable-pnl:pending';
+
 function stabilizeVisibleItemOrder(args: {
   items: AssetRowItem[];
   previousKeys: string[];
@@ -121,6 +124,30 @@ function hasCompletedAssetGroupPopulate(args: {
   });
 }
 
+function hasStrictCompletedAssetGroupPopulate(args: {
+  spec: Pick<AssetGroupSpec, 'eligibleWalletIds' | 'storedWalletIds'>;
+  populateStatus: PortfolioPopulateStatus | undefined;
+}): boolean {
+  if (!args.populateStatus?.inProgress) {
+    return false;
+  }
+
+  if (
+    !args.populateStatus.currentWalletId &&
+    !Object.keys(args.populateStatus.walletStatusById || {}).length
+  ) {
+    return false;
+  }
+
+  return hasCompletedPopulateForWalletIds({
+    populateStatus: args.populateStatus,
+    walletIds: args.spec.eligibleWalletIds.length
+      ? args.spec.eligibleWalletIds
+      : args.spec.storedWalletIds,
+    requireAllWalletsInScope: true,
+  });
+}
+
 export function clearPortfolioAssetGroupPopulateCacheForTests(): void {
   clearAssetPnlSummaryCacheForTests();
 }
@@ -163,6 +190,51 @@ function getChartDataRevisionSig(args: {
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+
+function hasCompletedInitialPortfolioBaseline(value: unknown): boolean {
+  return isFiniteNumber(value);
+}
+
+function isResumingInterruptedPopulate(
+  populateStatus: PortfolioPopulateStatus | undefined,
+): boolean {
+  return (
+    !!populateStatus &&
+    !populateStatus.inProgress &&
+    isFiniteNumber(populateStatus.startedAt) &&
+    !isFiniteNumber(populateStatus.finishedAt) &&
+    !populateStatus.stopReason
+  );
+}
+
+function getUnavailableSummaryReadiness(args: {
+  eligibleWalletIds: string[];
+  storedWalletIds: string[];
+  lastFullPopulateCompletedAt?: number | null;
+  populateStatus: PortfolioPopulateStatus | undefined;
+}): {
+  allowUnavailableSummary: boolean;
+  unavailableSummaryRevisionSig: string;
+} {
+  const spec = {
+    eligibleWalletIds: args.eligibleWalletIds,
+    storedWalletIds: args.storedWalletIds,
+  };
+  const allowUnavailableSummary = args.populateStatus?.inProgress
+    ? hasStrictCompletedAssetGroupPopulate({
+        spec,
+        populateStatus: args.populateStatus,
+      })
+    : hasCompletedInitialPortfolioBaseline(args.lastFullPopulateCompletedAt) &&
+      !isResumingInterruptedPopulate(args.populateStatus);
+
+  return {
+    allowUnavailableSummary,
+    unavailableSummaryRevisionSig: allowUnavailableSummary
+      ? UNAVAILABLE_SUMMARY_READY_REVISION_SIG
+      : UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG,
+  };
+}
 
 function buildDisplayMetric(args: {
   baseMetric: AssetRowMetrics;
@@ -316,6 +388,12 @@ export function usePortfolioAssetRows({
       ).sort((a, b) => a.localeCompare(b));
       const groupStoredWalletRequestSig =
         getStoredWalletRequestSignature(groupStoredWallets);
+      const unavailableSummaryReadiness = getUnavailableSummaryReadiness({
+        eligibleWalletIds,
+        storedWalletIds,
+        lastFullPopulateCompletedAt: portfolio.lastFullPopulateCompletedAt,
+        populateStatus: portfolio.populateStatus,
+      });
 
       nextSpecs.push({
         key: groupKey,
@@ -347,6 +425,10 @@ export function usePortfolioAssetRows({
         }),
         asOfMs,
         balanceOffset: 0,
+        allowUnavailableSummary:
+          unavailableSummaryReadiness.allowUnavailableSummary,
+        unavailableSummaryRevisionSig:
+          unavailableSummaryReadiness.unavailableSummaryRevisionSig,
         enabled:
           !portfolio.populateStatus?.inProgress ||
           hasCompletedAssetGroupPopulate({
@@ -402,6 +484,7 @@ export function usePortfolioAssetRows({
     currentRatesByAssetId,
     eligibleWallets,
     gainLossMode,
+    portfolio.lastFullPopulateCompletedAt,
     portfolio.populateStatus,
     quoteCurrency,
     rates,

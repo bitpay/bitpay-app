@@ -7,6 +7,7 @@ import {
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
+  markPopulateResumeSettled,
   setInvalidDecimalsByWalletIdUpdates,
   setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
@@ -281,6 +282,38 @@ describe('portfolioReducer', () => {
           quoteCurrency: 'USD',
         }),
       ),
+    ).toBe(state);
+  });
+
+  it('marks an interrupted populate resume settled without overwriting an existing baseline', () => {
+    const state = makeState({
+      lastFullPopulateCompletedAt: 200,
+      lastPopulatedAt: 200,
+      populateStatus: {
+        ...makeState().populateStatus,
+        inProgress: false,
+        finishedAt: undefined,
+        stopReason: undefined,
+        currentWalletId: undefined,
+        walletStatusById: {},
+      },
+    });
+
+    const result = portfolioReducer(
+      state,
+      markPopulateResumeSettled({settledAt: 300}),
+    );
+
+    expect(result.lastFullPopulateCompletedAt).toBe(200);
+    expect(result.populateStatus.finishedAt).toBe(300);
+    expect(result.populateStatus.stopReason).toBeUndefined();
+  });
+
+  it('does not mark an active populate resume settled', () => {
+    const state = makeState();
+
+    expect(
+      portfolioReducer(state, markPopulateResumeSettled({settledAt: 300})),
     ).toBe(state);
   });
 });

@@ -5,6 +5,7 @@ export {
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
+  markPopulateResumeSettled,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   startPopulatePortfolio,
   updatePopulateProgress,

@@ -182,6 +182,8 @@ const mockGetVisibleWalletsFromKeys = jest.requireMock(
 ).getVisibleWalletsFromKeys as jest.Mock;
 
 let latestResult: ReturnType<typeof usePortfolioAssetRows> | undefined;
+const UNAVAILABLE_SUMMARY_READY_REVISION_SIG = 'unavailable-pnl:ready';
+const UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG = 'unavailable-pnl:pending';
 
 const HookHarness = ({
   assetKeys,
@@ -284,6 +286,7 @@ const getTestSummaryCacheRevisionSig = (args: {
   storedWallets: any[];
   quoteCurrency: string;
   timeframe: GainLossMode;
+  unavailableSummaryRevisionSig?: string;
   fiatRateSeriesCache?: Record<
     string,
     {fetchedOn: number; points: Array<{ts: number; rate: number}>}
@@ -303,6 +306,8 @@ const getTestSummaryCacheRevisionSig = (args: {
       depKeys,
       fiatRateSeriesCache,
     }),
+    args.unavailableSummaryRevisionSig ??
+      UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG,
   ].join('|');
 };
 
@@ -464,6 +469,11 @@ describe('usePortfolioAssetRows', () => {
     render(<HookHarness assetKeys={['btc']} />);
 
     await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+    await waitFor(() => {
       expect(latestResult?.visibleItems).toEqual([
         expect.objectContaining({
           key: 'btc',
@@ -540,6 +550,230 @@ describe('usePortfolioAssetRows', () => {
       expect(latestResult?.isPopulateLoadingByKey).toEqual({
         btc: false,
       });
+    });
+  });
+
+  it('treats no-PnL summaries from an unresolved resumed populate as provisional and reruns after the asset settles', async () => {
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = null;
+    mockState.PORTFOLIO.populateStatus = {
+      inProgress: true,
+      startedAt: 11,
+      errors: [],
+      walletStatusById: {},
+    };
+    mockRunPortfolioBalanceChartViewModelQuery
+      .mockImplementationOnce((queryArgs: any) =>
+        Promise.resolve({
+          ...makeViewModel({queryArgs}),
+          changeRow: undefined,
+        } as any),
+      )
+      .mockImplementationOnce((queryArgs: any) =>
+        Promise.resolve(
+          makeViewModel({
+            queryArgs,
+            pnlFiat: 9,
+            pnlPercent: 3,
+          }),
+        ),
+      );
+
+    const view = render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          hasPnl: false,
+          showPnlPlaceholder: false,
+          showScopedPnlLoading: true,
+        }),
+      ]);
+      expect(latestResult?.isPopulateLoadingByKey).toEqual({
+        btc: true,
+      });
+    });
+
+    mockState.PORTFOLIO.populateStatus = {
+      ...mockState.PORTFOLIO.populateStatus,
+      walletStatusById: {
+        'btc-wallet': 'done',
+      },
+    };
+    view.rerender(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        2,
+      );
+    });
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          deltaFiat: '+$9',
+          deltaPercent: '+3.00%',
+          hasPnl: true,
+          showPnlPlaceholder: false,
+          showScopedPnlLoading: false,
+        }),
+      ]);
+    });
+  });
+
+  it('shows a no-PnL placeholder once that asset has terminal populate state', async () => {
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = null;
+    mockState.PORTFOLIO.populateStatus = {
+      inProgress: true,
+      startedAt: 11,
+      errors: [],
+      walletStatusById: {
+        'btc-wallet': 'done',
+      },
+    };
+    mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
+      (queryArgs: any) =>
+        Promise.resolve({
+          ...makeViewModel({queryArgs}),
+          changeRow: undefined,
+        } as any),
+    );
+
+    render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          hasPnl: false,
+          showPnlPlaceholder: true,
+          showScopedPnlLoading: false,
+        }),
+      ]);
+      expect(latestResult?.isPopulateLoadingByKey).toEqual({
+        btc: false,
+      });
+    });
+  });
+
+  it('keeps no-PnL summaries provisional while rehydrated state indicates an interrupted populate even after a previous baseline', async () => {
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 10;
+    mockState.PORTFOLIO.populateStatus = {
+      inProgress: false,
+      startedAt: 11,
+      finishedAt: undefined,
+      stopReason: undefined,
+      errors: [],
+      walletStatusById: {},
+    };
+    mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
+      (queryArgs: any) =>
+        Promise.resolve({
+          ...makeViewModel({queryArgs}),
+          changeRow: undefined,
+        } as any),
+    );
+
+    render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          hasPnl: false,
+          showPnlPlaceholder: false,
+          showScopedPnlLoading: true,
+        }),
+      ]);
+    });
+  });
+
+  it('allows no-PnL placeholders after an interrupted resume has been settled with finishedAt', async () => {
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 10;
+    mockState.PORTFOLIO.populateStatus = {
+      inProgress: false,
+      startedAt: 9,
+      finishedAt: 11,
+      stopReason: undefined,
+      errors: [],
+      walletStatusById: {},
+    };
+    mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
+      (queryArgs: any) =>
+        Promise.resolve({
+          ...makeViewModel({queryArgs}),
+          changeRow: undefined,
+        } as any),
+    );
+
+    render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          hasPnl: false,
+          showPnlPlaceholder: true,
+          showScopedPnlLoading: false,
+        }),
+      ]);
+    });
+  });
+
+  it('allows no-PnL placeholders after a completed baseline when no populate is pending', async () => {
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 10;
+    mockState.PORTFOLIO.populateStatus = {
+      inProgress: false,
+      finishedAt: 10,
+      stopReason: 'completed',
+      errors: [],
+      walletStatusById: {},
+    };
+    mockRunPortfolioBalanceChartViewModelQuery.mockImplementation(
+      (queryArgs: any) =>
+        Promise.resolve({
+          ...makeViewModel({queryArgs}),
+          changeRow: undefined,
+        } as any),
+    );
+
+    render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+          hasPnl: false,
+          showPnlPlaceholder: true,
+          showScopedPnlLoading: false,
+        }),
+      ]);
     });
   });
 

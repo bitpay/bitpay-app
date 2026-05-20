@@ -31,6 +31,15 @@ const initialState: PortfolioState = {
 const isFiniteTimestamp = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
+const isInterruptedPopulateResumeStatus = (
+  populateStatus: PortfolioState['populateStatus'] | undefined,
+): boolean =>
+  !!populateStatus &&
+  !populateStatus.inProgress &&
+  isFiniteTimestamp(populateStatus.startedAt) &&
+  !isFiniteTimestamp(populateStatus.finishedAt) &&
+  !populateStatus.stopReason;
+
 const resolveQuote = (next?: string, current?: string): string =>
   String(next || current || 'USD') || 'USD';
 
@@ -290,6 +299,20 @@ export const portfolioReducer = (
         lastPopulatedAt: action.payload.completedAt,
         lastFullPopulateCompletedAt: action.payload.completedAt,
         quoteCurrency: resolveQuote(quoteCurrency, state.quoteCurrency),
+      };
+    }
+
+    case PortfolioActionTypes.MARK_POPULATE_RESUME_SETTLED: {
+      if (!isInterruptedPopulateResumeStatus(state.populateStatus)) {
+        return state;
+      }
+
+      return {
+        ...state,
+        populateStatus: {
+          ...state.populateStatus,
+          finishedAt: action.payload.settledAt,
+        },
       };
     }
 

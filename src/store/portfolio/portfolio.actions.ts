@@ -67,6 +67,13 @@ export const markInitialBaselineComplete = (payload: {
   payload,
 });
 
+export const markPopulateResumeSettled = (payload: {
+  settledAt: number;
+}): PortfolioActionType => ({
+  type: PortfolioActionTypes.MARK_POPULATE_RESUME_SETTLED,
+  payload,
+});
+
 export const setSnapshotBalanceMismatchesByWalletIdUpdates = (
   payload: WalletIdMap<SnapshotBalanceMismatch>,
 ): PortfolioActionType => ({
