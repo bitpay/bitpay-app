@@ -19,11 +19,7 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {BiometricErrorNotification} from '../../../constants/BiometricError';
 import {AppActions, AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {
-  useAppDispatch,
-  useLogger,
-  useRequestTrackingPermissionHandler,
-} from '../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
@@ -65,18 +61,14 @@ const PinScreen = ({
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
-
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(
-        Analytics.track('Clicked Skip Protect Wallet', {
-          context: 'onboarding',
-        }),
-      );
-      navigation.navigate('CreateKey');
-    });
+    dispatch(
+      Analytics.track('Clicked Skip Protect Wallet', {
+        context: 'onboarding',
+      }),
+    );
+    navigation.navigate('CreateKey');
   });
 
   useLayoutEffect(() => {
@@ -99,9 +91,7 @@ const PinScreen = ({
 
   const onSetPinPress = () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
-    });
+    dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
   };
 
   const onSetBiometricPress = async () => {
@@ -117,7 +107,7 @@ const PinScreen = ({
       if (available) {
         logger.debug(`[Biometrics] ${biometryType} is supported`);
         dispatch(AppActions.biometricLockActive(true));
-        askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
+        navigation.navigate('CreateKey');
       } else {
         dispatch(
           showBottomNotificationModal(

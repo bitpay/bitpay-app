@@ -169,10 +169,9 @@ export const toBwsSignatureFormat = (sig: any, chain: string): string => {
 
 export const generateSessionId = (
   txp: TransactionProposal,
-  derivationPath: string,
   i: number,
 ): string => {
-  return `${txp.id}:${derivationPath.replace(/\//g, '-')}-input${i}`;
+  return `${txp.id}:input${i}`;
 };
 
 const signInput = async (params: {
@@ -184,7 +183,6 @@ const signInput = async (params: {
   sessionId: string;
   inputIndex: number;
   callbacks: TSSSigningCallbacks;
-  timeout: number;
   password?: string | undefined;
 }): Promise<string> => {
   const {
@@ -196,7 +194,6 @@ const signInput = async (params: {
     sessionId,
     inputIndex,
     callbacks,
-    timeout,
     password,
   } = params;
 
@@ -215,14 +212,6 @@ const signInput = async (params: {
 
   const signature = await new Promise<string>(
     async (resolveSign, rejectSign) => {
-      let timeoutId: NodeJS.Timeout | null = null;
-
-      timeoutId = setTimeout(() => {
-        tssSign.unsubscribe();
-        clearSigningSession(sessionId);
-        rejectSign(new Error('This proposal has expired, please try again'));
-      }, timeout);
-
       tssSign.on('copayerReady', (copayerId: string) => {
         logManager.debug(`[TSS Sign] Copayer ready: ${copayerId}`);
         callbacks.onCopayerStatusChange(copayerId, 'signed');
@@ -252,10 +241,6 @@ const signInput = async (params: {
               password,
             });
           } catch (startError: any) {
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              timeoutId = null;
-            }
             tssSign.unsubscribe();
             const errorMsg = startError?.message || '';
             logManager.error(
@@ -296,10 +281,6 @@ const signInput = async (params: {
             );
           }
         } catch (startError: any) {
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
           tssSign.unsubscribe();
           const errorMsg = startError?.message || '';
           logManager.error(
@@ -327,13 +308,6 @@ const signInput = async (params: {
                 logManager.debug(
                   `[TSS Sign] Session restored, re-registering listeners and subscribing`,
                 );
-                timeoutId = setTimeout(() => {
-                  tssSign.unsubscribe();
-                  clearSigningSession(sessionId);
-                  rejectSign(
-                    new Error('This proposal has expired, please try again'),
-                  );
-                }, timeout);
               } catch (restoreErr: any) {
                 logManager.warn(
                   `[TSS Sign] Restore failed after ROUND_MESSAGE_EXISTS: ${restoreErr?.message}`,
@@ -405,11 +379,6 @@ const signInput = async (params: {
         .on('complete', () => {
           logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
           try {
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              timeoutId = null;
-            }
-
             const sig = tssSign.getSignature();
             logManager.debug(
               `[TSS Sign] Input ${
@@ -445,10 +414,6 @@ const signInput = async (params: {
               logManager.debug(
                 `[TSS Sign] Recovered signature from server after error event`,
               );
-              if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-              }
               tssSign.unsubscribe();
               clearSigningSession(sessionId);
               resolveSign(toBwsSignatureFormat(sig, txp.chain));
@@ -456,10 +421,6 @@ const signInput = async (params: {
             return;
           }
 
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
           tssSign.unsubscribe();
           clearSigningSession(sessionId);
           rejectSign(error);
@@ -481,11 +442,10 @@ export const startTSSSigning =
     wallet: Wallet;
     txp: TransactionProposal;
     callbacks: TSSSigningCallbacks;
-    timeout?: number;
     password?: string | undefined;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
-    const {key, wallet, txp, callbacks, timeout = 600000, password} = opts;
+    const {key, wallet, txp, callbacks, password} = opts;
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -554,7 +514,7 @@ export const startTSSSigning =
             // sigtype: SIGHASH_TYPE,
           });
           const messageHash = Buffer.from(sighashHex, 'hex');
-          const sessionId = generateSessionId(txp, derivationPath!, i + 1);
+          const sessionId = generateSessionId(txp, i);
           logManager.debug(`Session ID for input ${i + 1}: ${sessionId}`);
           const signature = await signInput({
             tssKey,
@@ -565,7 +525,6 @@ export const startTSSSigning =
             sessionId,
             inputIndex: i,
             callbacks,
-            timeout,
             password,
           });
           signatures.push(signature);

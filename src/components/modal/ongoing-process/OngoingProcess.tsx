@@ -25,50 +25,6 @@ const {height: SCREEN_HEIGHT, width: SCREEN_WIDTH} = Dimensions.get(
   Platform.OS === 'android' ? 'screen' : 'window',
 );
 
-export type OnGoingProcessMessages =
-  | 'GENERAL_AWAITING'
-  | 'CREATING_KEY'
-  | 'LOGGING_IN'
-  | 'LOGGING_OUT'
-  | 'PAIRING'
-  | 'CREATING_ACCOUNT'
-  | 'UPDATING_ACCOUNT'
-  | 'IMPORTING'
-  | 'IMPORT_SCANNING_FUNDS'
-  | 'DELETING_KEY'
-  | 'ADDING_WALLET'
-  | 'ADDING_ACCOUNT'
-  | 'ADDING_EVM_CHAINS'
-  | 'ADDING_SPL_CHAINS'
-  | 'LOADING'
-  | 'FETCHING_PAYMENT_OPTIONS'
-  | 'FETCHING_PAYMENT_INFO'
-  | 'JOIN_WALLET'
-  | 'SENDING_PAYMENT'
-  | 'ACCEPTING_PAYMENT'
-  | 'GENERATING_ADDRESS'
-  | 'GENERATING_GIFT_CARD'
-  | 'SYNCING_WALLETS'
-  | 'REJECTING_CALL_REQUEST'
-  | 'SAVING_LAYOUT'
-  | 'SAVING_ADDRESSES'
-  | 'EXCHANGE_GETTING_DATA'
-  | 'CALCULATING_FEE'
-  | 'CONNECTING_COINBASE'
-  | 'FETCHING_COINBASE_DATA'
-  | 'UPDATING_TXP'
-  | 'CREATING_TXP'
-  | 'SENDING_EMAIL'
-  | 'REDIRECTING'
-  | 'REMOVING_BILL'
-  | 'BROADCASTING_TXP'
-  | 'SWEEPING_WALLET'
-  | 'SCANNING_FUNDS'
-  | 'SCANNING_FUNDS_WITH_PASSPHRASE'
-  | 'CREATING_PASSKEY'
-  | 'DELETING_PASSKEY'
-  | 'WAITING_FOR_MAX_AMOUNT';
-
 const Row = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
   border-radius: 10px;

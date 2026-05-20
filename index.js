@@ -119,7 +119,27 @@ configureReanimatedLogger({
   strict: false,
 });
 
+// Android can mount ReduxProvider twice due to Activity recreation edge cases.
+// Only the first instance initializes the store — subsequent mounts render nothing.
+let reduxProviderMounted = false;
+
 const ReduxProvider = () => {
+  const [isPrimary] = useState(() => {
+    if (reduxProviderMounted) {
+      return false;
+    }
+    reduxProviderMounted = true;
+    return true;
+  });
+
+  useEffect(() => {
+    return () => {
+      if (isPrimary) {
+        reduxProviderMounted = false;
+      }
+    };
+  }, [isPrimary]);
+
   const [storeReady, setStoreReady] = useState(false);
   const [{store: reduxStore, persistor: reduxPersistor}, setStore] = useState({
     store: null,
@@ -127,26 +147,38 @@ const ReduxProvider = () => {
   });
 
   useEffect(() => {
+    if (!isPrimary) {
+      return;
+    }
+
+    let cancelled = false;
+
     getStore().then(({store, persistor}) => {
+      if (cancelled) {
+        return;
+      }
+
       setStore({store, persistor});
       setStoreReady(true);
       setJSExceptionHandler(makeErrorHandler(store), true);
       setNativeExceptionHandler(makeNativeExceptionHandler(store));
     });
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPrimary]);
+
+  if (!isPrimary || !storeReady) {
+    return null;
+  }
 
   return (
-    <>
-      {storeReady ? (
-        <Provider store={reduxStore}>
-          <PersistGate loading={null} persistor={reduxPersistor}>
-            {storeRehydrated =>
-              storeRehydrated ? <AppWrapper/> : null
-            }
-          </PersistGate>
-        </Provider>
-      ) : null}
-    </>
+    <Provider store={reduxStore}>
+      <PersistGate loading={null} persistor={reduxPersistor}>
+        {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
+      </PersistGate>
+    </Provider>
   );
 };
 

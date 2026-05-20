@@ -179,7 +179,16 @@ export const getBanxaSelectedPaymentMethodData = (
   let selectedBanxaPMData: BanxaPaymentMethod | undefined;
 
   switch (selectedPaymentMethod.method) {
-    // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "other"
+    // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "paypal" | "other"
+    case 'ach':
+      selectedBanxaPMData = banxaPaymentMethods.find(
+        (banxaPaymentMethod: BanxaPaymentMethod) => {
+          if (['BRDGACHBUY'].includes(banxaPaymentMethod.paymentType)) {
+            return true;
+          }
+        },
+      );
+      break;
     case 'applePay':
       // Prioritize PRIMERAP or WORLDPAYAPPLE, if it is not included, look for cards type
       selectedBanxaPMData = banxaPaymentMethods.find(
@@ -237,6 +246,15 @@ export const getBanxaSelectedPaymentMethodData = (
       selectedBanxaPMData = banxaPaymentMethods.find(
         (banxaPaymentMethod: BanxaPaymentMethod) => {
           if (['CLEARJUNCTION'].includes(banxaPaymentMethod.paymentType)) {
+            return true;
+          }
+        },
+      );
+      break;
+    case 'paypal':
+      selectedBanxaPMData = banxaPaymentMethods.find(
+        (banxaPaymentMethod: BanxaPaymentMethod) => {
+          if (['PRIMERPAYPAL'].includes(banxaPaymentMethod.paymentType)) {
             return true;
           }
         },

@@ -3,6 +3,7 @@ import axios from 'axios';
 import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
 import {checkNotifications, RESULTS} from 'react-native-permissions';
 import {NativeModules, Platform} from 'react-native';
+import {logManager} from '../../managers/LogManager';
 
 const nonCustomAttributes = [
   'country',
@@ -148,78 +149,151 @@ export type BrazeUserAttributes = {
   [K in (typeof nonCustomAttributes)[number]]?: string;
 } & Record<string, any>;
 
-export const BrazeWrapper = (() => {
-  let lastSeenIdentity: {
+export type BrazeStatus = 'idle' | 'initializing' | 'ready' | 'failed';
+
+class BrazeClientWrapper {
+  private status: BrazeStatus = 'idle';
+  private initPromise: Promise<void> | null = null;
+  private initError: unknown = null;
+  private lastSeenIdentity: {
     userId?: string;
     attributes?: BrazeUserAttributes;
   } = {};
 
-  return {
-    init() {
-      return Promise.resolve();
-    },
+  async init(): Promise<void> {
+    if (this.status === 'ready') {
+      return;
+    }
 
-    async identify(
-      userId: string | undefined,
-      attributes?: BrazeUserAttributes | undefined,
-    ) {
-      if (!lastSeenIdentity) {
-        lastSeenIdentity = {};
-      }
+    if (this.initPromise) {
+      return this.initPromise;
+    }
 
-      if (
-        lastSeenIdentity.userId &&
-        lastSeenIdentity.userId === userId &&
-        lastSeenIdentity.attributes &&
-        lastSeenIdentity.attributes === attributes
-      ) {
-        return;
-      }
+    this.status = 'initializing';
 
-      if (userId) {
-        Braze.changeUser(userId);
-        const {status} = await checkNotifications().catch(() => ({
-          status: null,
-        }));
-        const normalized = status?.toLowerCase?.();
-        const granted =
-          normalized === RESULTS.GRANTED || normalized === RESULTS.LIMITED;
-        if (granted) {
-          Braze.requestPushPermission();
-          if (Platform.OS === 'ios') {
-            await NativeModules.PushPermissionManager.askForPermission();
-          }
+    this.initPromise = (async () => {
+      try {
+        await this.initializeSdk();
+        this.status = 'ready';
+        this.initError = null;
+        logManager.debug('[Braze] initialized successfully');
+      } catch (err) {
+        this.status = 'failed';
+        this.initError = err;
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.error('[Braze] initialization failed', errMsg);
+        throw err;
+      } finally {
+        if (this.status !== 'initializing') {
+          this.initPromise = null;
         }
       }
+    })();
 
-      if (attributes) {
-        setUserAttributes(attributes);
+    return this.initPromise;
+  }
+
+  isReady(): boolean {
+    return this.status === 'ready';
+  }
+
+  getStatus(): BrazeStatus {
+    return this.status;
+  }
+
+  getInitError(): unknown {
+    return this.initError;
+  }
+
+  async identify(
+    userId: string | undefined,
+    attributes?: BrazeUserAttributes,
+  ): Promise<void> {
+    if (!(await this.ensureReady())) {
+      return;
+    }
+
+    if (
+      this.lastSeenIdentity.userId === userId &&
+      this.lastSeenIdentity.attributes === attributes
+    ) {
+      return;
+    }
+
+    if (userId) {
+      Braze.changeUser(userId);
+      const {status} = await checkNotifications().catch(() => ({
+        status: null,
+      }));
+      const normalized = status?.toLowerCase?.();
+      const granted =
+        normalized === RESULTS.GRANTED || normalized === RESULTS.LIMITED;
+
+      if (granted) {
+        Braze.requestPushPermission();
+
+        if (Platform.OS === 'ios') {
+          await NativeModules.PushPermissionManager.askForPermission();
+        }
       }
+    }
 
-      lastSeenIdentity = {
-        userId,
-        attributes,
-      };
-      return Promise.resolve();
-    },
+    if (attributes) {
+      setUserAttributes(attributes);
+    }
 
-    merge(userToMerge: string, userToKeep: string) {
-      return mergeUsers(userToMerge, userToKeep);
-    },
+    this.lastSeenIdentity = {
+      userId,
+      attributes,
+    };
+  }
 
-    delete(eid: string) {
-      return deleteUser(eid);
-    },
+  merge(userToMerge: string, userToKeep: string) {
+    return mergeUsers(userToMerge, userToKeep);
+  }
 
-    screen(name: string, properties: Record<string, any> = {}) {
-      const screenName = `Viewed ${name} Screen`;
-      Braze.logCustomEvent(screenName, properties);
-    },
+  delete(eid: string) {
+    return deleteUser(eid);
+  }
 
-    track(eventName: string, properties: Record<string, any> = {}) {
-      Braze.logCustomEvent(eventName, properties);
-    },
-  };
-})();
+  async screen(name: string, properties: Record<string, any> = {}) {
+    if (!(await this.ensureReady())) {
+      return;
+    }
 
-export default BrazeWrapper;
+    const screenName = `Viewed ${name} Screen`;
+    Braze.logCustomEvent(screenName, properties);
+  }
+
+  async track(eventName: string, properties: Record<string, any> = {}) {
+    if (!(await this.ensureReady())) {
+      return;
+    }
+
+    Braze.logCustomEvent(eventName, properties);
+  }
+
+  private async ensureReady(): Promise<boolean> {
+    if (this.status === 'ready') {
+      return true;
+    }
+
+    if (this.initPromise) {
+      try {
+        await this.initPromise;
+        return this.getStatus() === 'ready';
+      } catch {
+        return false;
+      }
+    }
+
+    logManager.warn('[Braze] called before SDK was ready');
+    return false;
+  }
+
+  private async initializeSdk(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
+export const BrazeWrapper = new BrazeClientWrapper();

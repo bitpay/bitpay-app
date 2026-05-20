@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import {
+  OngoingProcessData,
   ongoingProcessManager,
   OnGoingProcessMessages,
   OngoingProcessState,
@@ -15,7 +16,10 @@ import {logManager} from '../managers/LogManager';
 interface OngoingProcessContextType {
   isVisible: boolean;
   message: string | undefined;
-  showOngoingProcess: (key: OnGoingProcessMessages) => void;
+  showOngoingProcess: (
+    key: OnGoingProcessMessages,
+    data?: OngoingProcessData,
+  ) => void;
   hideOngoingProcess: () => void;
 }
 
@@ -65,8 +69,11 @@ export const OngoingProcessProvider: React.FC<{children: ReactNode}> = ({
   const contextValue: OngoingProcessContextType = {
     isVisible: state.isVisible,
     message: state.message,
-    showOngoingProcess: (key: OnGoingProcessMessages) => {
-      ongoingProcessManager.show(key);
+    showOngoingProcess: (
+      key: OnGoingProcessMessages,
+      data?: OngoingProcessData,
+    ) => {
+      ongoingProcessManager.show(key, data);
     },
     hideOngoingProcess: () => {
       ongoingProcessManager.hide();

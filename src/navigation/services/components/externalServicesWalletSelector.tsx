@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+import {View} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {orderBy} from 'lodash';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
@@ -48,6 +49,7 @@ import {useOngoingProcess} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {HomeCarouselConfig} from '../../../store/app/app.models';
+import ExternalServicesLoadingWalletSkeleton from './ExternalServicesLoadingWalletSkeleton';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -113,6 +115,7 @@ interface ExternalServicesWalletSelectorScreenProps {
   currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
   chain?: string | undefined; // used from charts and deeplinks.
   partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
+  loading?: boolean; // shows skeleton while initializing
 }
 
 const ExternalServicesWalletSelector: React.FC<
@@ -129,6 +132,7 @@ const ExternalServicesWalletSelector: React.FC<
   fromWallet,
   currencyAbbreviation,
   chain,
+  loading,
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -189,7 +193,7 @@ const ExternalServicesWalletSelector: React.FC<
     );
 
     if (!keysList[0]) {
-      await sleep(500);
+      await sleep(300);
       walletError('emptyKeyList');
       return;
     }
@@ -208,8 +212,7 @@ const ExternalServicesWalletSelector: React.FC<
       fromWalletData = allWallets.find(wallet => wallet.id === walletIdToFind);
       if (fromWalletData) {
         setWallet(fromWalletData);
-        await sleep(500);
-        hideOngoingProcess();
+        return;
       } else {
         if (preSetWallet?.id) {
           walletError(
@@ -303,8 +306,6 @@ const ExternalServicesWalletSelector: React.FC<
 
       if (allowedWallets[0]) {
         _setSelectedWallet(allowedWallets[0]);
-        await sleep(500);
-        hideOngoingProcess();
       } else {
         if (fromCurrencyAbbreviation) {
           walletError(
@@ -580,56 +581,64 @@ const ExternalServicesWalletSelector: React.FC<
 
   return (
     <ExternalServicesWalletSelectorContainer>
-      <WalletSelector
-        style={selectedWallet ? {} : {backgroundColor: Action}}
-        onPress={() => {
-          setWalletSelectorModalVisible(true);
-        }}>
-        <WalletSelectorLeft>
-          {selectedWallet ? (
-            <>
-              <CurrencyImage
-                img={selectedWallet.img}
-                badgeUri={getBadgeImg(
-                  getCurrencyAbbreviation(
-                    selectedWallet.currencyAbbreviation,
+      {loading ? (
+        <WalletSelector disabled>
+          <WalletSelectorLeft>
+            <ExternalServicesLoadingWalletSkeleton />
+          </WalletSelectorLeft>
+        </WalletSelector>
+      ) : (
+        <WalletSelector
+          style={selectedWallet ? {} : {backgroundColor: Action}}
+          onPress={() => {
+            setWalletSelectorModalVisible(true);
+          }}>
+          <WalletSelectorLeft>
+            {selectedWallet ? (
+              <>
+                <CurrencyImage
+                  img={selectedWallet.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      selectedWallet.currencyAbbreviation,
+                      selectedWallet.chain,
+                    ),
                     selectedWallet.chain,
-                  ),
-                  selectedWallet.chain,
-                )}
-                size={20}
-              />
-              <WalletSelectorName ellipsizeMode="tail" numberOfLines={1}>
-                {selectedWallet.walletName
-                  ? selectedWallet.walletName
-                  : selectedWallet.currencyName}
+                  )}
+                  size={20}
+                />
+                <WalletSelectorName ellipsizeMode="tail" numberOfLines={1}>
+                  {selectedWallet.walletName
+                    ? selectedWallet.walletName
+                    : selectedWallet.currencyName}
+                </WalletSelectorName>
+              </>
+            ) : (
+              <WalletSelectorName
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={{fontWeight: '500', color: White}}>
+                {t('Choose Crypto')}
               </WalletSelectorName>
-            </>
-          ) : (
-            <WalletSelectorName
-              ellipsizeMode="tail"
-              numberOfLines={1}
-              style={{fontWeight: '500', color: White}}>
-              {t('Choose Crypto')}
-            </WalletSelectorName>
-          )}
-        </WalletSelectorLeft>
-        <WalletSelectorRight>
-          <ArrowContainer style={{marginRight: 10}}>
-            <SelectorArrowRight
-              {...{
-                width: 5,
-                height: 9,
-                color: selectedWallet
-                  ? theme.dark
-                    ? Slate
-                    : SlateDark
-                  : White,
-              }}
-            />
-          </ArrowContainer>
-        </WalletSelectorRight>
-      </WalletSelector>
+            )}
+          </WalletSelectorLeft>
+          <WalletSelectorRight>
+            <ArrowContainer style={{marginRight: 10}}>
+              <SelectorArrowRight
+                {...{
+                  width: 5,
+                  height: 9,
+                  color: selectedWallet
+                    ? theme.dark
+                      ? Slate
+                      : SlateDark
+                    : White,
+                }}
+              />
+            </ArrowContainer>
+          </WalletSelectorRight>
+        </WalletSelector>
+      )}
 
       <SheetModal
         modalLibrary="bottom-sheet"

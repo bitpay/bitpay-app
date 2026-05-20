@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import {logManager} from './LogManager';
 
-export type OnGoingProcessMessages =
+export type BaseOnGoingProcessMessages =
   | 'GENERAL_AWAITING'
   | 'CREATING_KEY'
   | 'LOGGING_IN'
@@ -45,12 +45,71 @@ export type OnGoingProcessMessages =
   | 'DELETING_PASSKEY'
   | 'WAITING_FOR_MAX_AMOUNT';
 
+export type ImportProgressMessages =
+  | 'keyConfig.count'
+  | 'keyConfig.start'
+  | 'keyConfig.keyCreated'
+  | 'keyConfig.noCopayersFound'
+  | 'chainPermutations.count'
+  | 'chainPermutations.getKey'
+  | 'findingCopayers'
+  | 'foundCopayers'
+  | 'foundCopayers.count'
+  | 'creatingCredentials'
+  | 'gettingStatuses'
+  | 'gatheringWalletsInfos'
+  | 'walletInfo.gatheringTokens'
+  | 'walletInfo.gatheringTokens.error'
+  | 'walletInfo.importingToken'
+  | 'walletInfo.gatheringMultisig'
+  | 'walletInfo.multisig.creatingCredentials'
+  | 'walletInfo.multisig.importingToken';
+
+export type OnGoingProcessMessages =
+  | BaseOnGoingProcessMessages
+  | ImportProgressMessages;
+
 export interface OngoingProcessState {
   isVisible: boolean;
   message: string | undefined;
 }
 
-const translations: Record<OnGoingProcessMessages, () => string> = {
+export type OngoingProcessObjectData = {
+  chain?: string;
+  tokenName?: string;
+  walletName?: string;
+  count?: number;
+  iteration?: number;
+};
+
+export type OngoingProcessData = number | OngoingProcessObjectData | undefined;
+
+const isNumberData = (data: OngoingProcessData): data is number =>
+  typeof data === 'number';
+
+const getChain = (data?: OngoingProcessData): string | undefined =>
+  typeof data === 'object' && data !== null ? data.chain : undefined;
+
+const getTokenName = (data?: OngoingProcessData): string | undefined =>
+  typeof data === 'object' && data !== null ? data.tokenName : undefined;
+
+const getWalletName = (data?: OngoingProcessData): string | undefined =>
+  typeof data === 'object' && data !== null ? data.walletName : undefined;
+
+const getIteration = (data?: OngoingProcessData): number =>
+  typeof data === 'object' && data !== null ? data.iteration ?? 1 : 1;
+
+const getCount = (data?: OngoingProcessData): number =>
+  typeof data === 'object' && data !== null
+    ? data.count ?? 0
+    : isNumberData(data)
+    ? data
+    : 0;
+
+const translations: Record<
+  OnGoingProcessMessages,
+  (data?: OngoingProcessData) => string
+> = {
   GENERAL_AWAITING: () =>
     i18n.t("Just a second, we're setting a few things up"),
   CREATING_KEY: () =>
@@ -97,13 +156,114 @@ const translations: Record<OnGoingProcessMessages, () => string> = {
   CREATING_PASSKEY: () => i18n.t('Creating Passkey...'),
   DELETING_PASSKEY: () => i18n.t('Deleting Passkey...'),
   WAITING_FOR_MAX_AMOUNT: () => i18n.t('Calculating maximum amount...'),
+  'keyConfig.count': data =>
+    i18n.t('Checking {{count}} key configurations...', {
+      count: isNumberData(data) ? data : 0,
+    }),
+  'keyConfig.start': data =>
+    i18n.t('Checking key configuration {{index}}...', {
+      index: isNumberData(data) ? data + 1 : 1,
+    }),
+  'keyConfig.keyCreated': () => i18n.t('Key created, searching for wallets...'),
+  'keyConfig.noCopayersFound': () =>
+    i18n.t('No wallets found for this configuration, trying next...'),
+  'chainPermutations.count': data =>
+    i18n.t('Checking {{count}} chain permutations...', {
+      count: isNumberData(data) ? data : 0,
+    }),
+  'chainPermutations.getKey': data =>
+    i18n.t('Deriving key for chain permutation {{index}}...', {
+      index: isNumberData(data) ? data + 1 : 1,
+    }),
+  findingCopayers: data =>
+    getIteration(data) > 1
+      ? i18n.t('Checking for additional wallets...')
+      : i18n.t('Searching for your wallets...'),
+  foundCopayers: data => {
+    const iteration = getIteration(data);
+    const count = getCount(data);
+    if (iteration > 1 && count === 0) {
+      return i18n.t('No more wallets found...');
+    }
+    if (iteration > 1) {
+      return i18n.t('{{count}} more wallets found! Loading details...', {
+        count,
+      });
+    }
+    if (iteration === 1 && count === 0) {
+      return i18n.t('No wallets found...');
+    }
+    return count === 1
+      ? i18n.t('Found 1 wallet! Loading details...')
+      : i18n.t('Found {{count}} wallets! Loading details...', {count});
+  },
+  'foundCopayers.count': data => {
+    const count = getCount(data);
+    return count === 1
+      ? i18n.t('Found 1 wallet! Loading details...')
+      : i18n.t('Found {{count}} wallets! Loading details...', {count});
+  },
+  creatingCredentials: () => i18n.t('Almost there...'),
+  gettingStatuses: () => i18n.t('Getting wallet info...'),
+  gatheringWalletsInfos: data => {
+    const count = getCount(data);
+    return count === 1
+      ? i18n.t('Loading 1 wallet...')
+      : i18n.t('Loading {{count}} wallets...', {count});
+  },
+  'walletInfo.gatheringTokens': data => {
+    const chain = getChain(data);
+    return i18n.t('Loading {{chain}} tokens...', {chain});
+  },
+  'walletInfo.gatheringTokens.error': () =>
+    i18n.t('Some tokens could not be loaded, continuing...'),
+  'walletInfo.importingToken': data => {
+    const tokenName = getTokenName(data);
+    return i18n.t('Adding {{tokenName}}...', {tokenName});
+  },
+  'walletInfo.gatheringMultisig': data => {
+    const chain = getChain(data);
+    return i18n.t('Loading {{chain}} shared wallets...', {chain});
+  },
+  'walletInfo.multisig.creatingCredentials': data => {
+    const walletName = getWalletName(data);
+    return i18n.t('Setting up {{walletName}}...', {walletName});
+  },
+
+  'walletInfo.multisig.importingToken': data => {
+    const tokenName = getTokenName(data);
+    return i18n.t('Adding {{tokenName}}...', {tokenName});
+  },
 };
+
+export const importProgressEvents: ImportProgressMessages[] = [
+  'keyConfig.count',
+  'keyConfig.start',
+  'keyConfig.keyCreated',
+  'keyConfig.noCopayersFound',
+  'chainPermutations.count',
+  'chainPermutations.getKey',
+  'findingCopayers',
+  'foundCopayers',
+  'foundCopayers.count',
+  'creatingCredentials',
+  'gettingStatuses',
+  'gatheringWalletsInfos',
+  'walletInfo.gatheringTokens',
+  'walletInfo.gatheringTokens.error',
+  'walletInfo.importingToken',
+  'walletInfo.gatheringMultisig',
+  'walletInfo.multisig.creatingCredentials',
+  'walletInfo.multisig.importingToken',
+];
 
 const LONG_RUNNING_PROCESSES: OnGoingProcessMessages[] = [
   'IMPORTING',
   'IMPORT_SCANNING_FUNDS',
   'SCANNING_FUNDS_WITH_PASSPHRASE',
   'CREATING_KEY',
+  'SYNCING_WALLETS',
+  ...importProgressEvents,
 ];
 
 class OngoingProcessManager {
@@ -124,9 +284,6 @@ class OngoingProcessManager {
     return OngoingProcessManager.instance;
   }
 
-  /**
-   * Obtiene el estado actual
-   */
   getState(): OngoingProcessState {
     return {
       isVisible: this.state.isVisible,
@@ -134,13 +291,14 @@ class OngoingProcessManager {
     };
   }
 
-  show(key: OnGoingProcessMessages): void {
+  show(key: OnGoingProcessMessages, data?: OngoingProcessData): void {
     if (this.timeoutRef) {
       clearTimeout(this.timeoutRef);
       this.timeoutRef = null;
     }
 
-    const translatedMessage = translations[key]();
+    const translatedMessage = translations[key]?.(data) ?? i18n.t('Loading');
+
     this.state = {
       isVisible: true,
       message: translatedMessage,

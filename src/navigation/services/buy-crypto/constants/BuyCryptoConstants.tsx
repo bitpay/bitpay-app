@@ -74,7 +74,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       />
     ),
     supportedExchanges: {
-      banxa: false,
+      banxa: true,
       moonpay: false,
       ramp: false,
       sardine: true,
@@ -262,7 +262,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       />
     ),
     supportedExchanges: {
-      banxa: false,
+      banxa: true,
       moonpay: true,
       ramp: false,
       sardine: false,

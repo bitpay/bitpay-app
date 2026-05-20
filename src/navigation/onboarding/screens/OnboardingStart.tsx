@@ -16,11 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useRequestTrackingPermissionHandler,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
@@ -145,22 +141,18 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
-
   const onLoginPress = () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(
-        Analytics.track('Clicked Log In', {
-          context: 'onboarding',
-        }),
-      );
-      navigation.navigate('Login', {
-        onLoginSuccess: async () => {
-          haptic('impactLight');
-          navigation.navigate('Notifications');
-        },
-      });
+    dispatch(
+      Analytics.track('Clicked Log In', {
+        context: 'onboarding',
+      }),
+    );
+    navigation.navigate('Login', {
+      onLoginSuccess: async () => {
+        haptic('impactLight');
+        navigation.navigate('Notifications');
+      },
     });
   };
   const onLoginPressRef = useRef(onLoginPress);
@@ -254,14 +246,12 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           scrollAnimationDuration={1000}
           onProgressChange={(_, index) => {
             progressValue.value = index;
-            askForTrackingThenNavigate(() => {
-              dispatch(
-                Analytics.track(`Swiped Feature`, {
-                  context: 'onboarding',
-                  pageSwiped: index + 1,
-                }),
-              );
-            });
+            dispatch(
+              Analytics.track(`Swiped Feature`, {
+                context: 'onboarding',
+                pageSwiped: index + 1,
+              }),
+            );
           }}
           onConfigurePanGesture={gesture => gesture.activeOffsetX([-10, 10])}
           renderItem={({item}) => <OnboardingSlide item={item} />}
@@ -302,15 +292,13 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
-                  askForTrackingThenNavigate(() => {
-                    dispatch(
-                      Analytics.track('Clicked Get Started', {
-                        context: 'onboarding',
-                      }),
-                    );
-                    navigation.navigate('CreateAccount', {
+                  dispatch(
+                    Analytics.track('Clicked Get Started', {
                       context: 'onboarding',
-                    });
+                    }),
+                  );
+                  navigation.navigate('CreateAccount', {
+                    context: 'onboarding',
                   });
                 }}>
                 {t('Get Started')}
@@ -322,9 +310,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
-                  askForTrackingThenNavigate(() => {
-                    navigation.navigate('Notifications');
-                  });
+                  navigation.navigate('Notifications');
                 }}>
                 {t('Continue')}
               </Button>
@@ -339,14 +325,12 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 accessibilityLabel="Continue without an account"
                 buttonType={'link'}
                 onPress={() => {
-                  askForTrackingThenNavigate(() => {
-                    dispatch(
-                      Analytics.track('Clicked Continue without an account', {
-                        context: 'onboarding',
-                      }),
-                    );
-                    navigation.navigate('Notifications');
-                  });
+                  dispatch(
+                    Analytics.track('Clicked Continue without an account', {
+                      context: 'onboarding',
+                    }),
+                  );
+                  navigation.navigate('Notifications');
                 }}>
                 <LinkText>{t('Continue without an account')}</LinkText>
               </Button>

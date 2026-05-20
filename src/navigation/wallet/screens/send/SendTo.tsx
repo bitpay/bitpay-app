@@ -29,7 +29,6 @@ import {Effect, RootState} from '../../../../store';
 import {getErrorString, sleep} from '../../../../utils/helper-methods';
 import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
-import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
   ValidDataTypes,
@@ -92,7 +91,6 @@ import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {LogActions} from '../../../../store/log';
 import {Network, URL} from '../../../../constants';
 import {AccountRowProps} from '../../../../components/list/AccountListRow';
 import {AssetsByChainData} from '../AccountDetails';
@@ -297,7 +295,9 @@ const SendTo = () => {
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const theme = useTheme();
@@ -578,8 +578,8 @@ const SendTo = () => {
       searching?: boolean;
     } = {},
   ) => {
-    const {context, name, email, destinationTag, searching} = opts;
-    if (isEmailAddress(text.trim())) {
+    const {context, name, email, destinationTag} = opts;
+    if (user && isEmailAddress(text.trim())) {
       setSearchIsEmailAddress(true);
       return;
     }

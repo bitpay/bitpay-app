@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.41.1",
+  "version": "14.42.1",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -89,7 +89,7 @@
     "babel-plugin-module-resolver": "4.1.0",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
-    "@bitpay-labs/bitcore-wallet-client": "11.7.0",
+    "@bitpay-labs/bitcore-wallet-client": "11.8.0",
     "bs58": "6.0.0",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
@@ -109,7 +109,7 @@
     "lodash.sortby": "4.7.0",
     "lodash.throttle": "4.1.1",
     "lodash.uniqby": "4.7.0",
-    "mixpanel-react-native": "2.3.1",
+    "mixpanel-react-native": "3.3.0",
     "moment": "2.29.1",
     "moralis": "2.25.2",
     "papaparse": "5.3.2",

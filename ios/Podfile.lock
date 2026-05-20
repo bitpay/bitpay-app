@@ -90,11 +90,11 @@ PODS:
   - libwebp/sharpyuv (1.5.0)
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
-  - Mixpanel-swift (4.1.3):
-    - Mixpanel-swift/Complete (= 4.1.3)
-  - Mixpanel-swift/Complete (4.1.3)
-  - MixpanelReactNative (2.3.1):
-    - Mixpanel-swift (= 4.1.3)
+  - Mixpanel-swift (5.2.0):
+    - Mixpanel-swift/Complete (= 5.2.0)
+  - Mixpanel-swift/Complete (5.2.0)
+  - MixpanelReactNative (3.3.0):
+    - Mixpanel-swift (= 5.2.0)
     - React-Core
   - MultiplatformBleAdapter (0.2.0)
   - NitroModules (0.35.1):
@@ -3936,8 +3936,8 @@ SPEC CHECKSUMS:
   hermes-engine: 8642d8f14a548ab718ec112e9bebdfdd154138b5
   InputMask: 71d291dc54d2deaeac6512afb6ec2304228c0bb7
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  Mixpanel-swift: d7c7c6a2f7c65f735af3cb4746ed61a5aab0e551
-  MixpanelReactNative: 07c808338a1eb69b0c9077668e3acfb0b2dd6689
+  Mixpanel-swift: de454db5987bf6f601106520a44663fc556e8cfa
+  MixpanelReactNative: e6b7c6c37e88263744c9a5d46a1f05d209b68348
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   NitroModules: 944be1eb6b9235c902c6779263b35d5a533dce00
   QuickCrypto: 033c3aa0b39de28bb2369557fba5eeaeb8ab4956

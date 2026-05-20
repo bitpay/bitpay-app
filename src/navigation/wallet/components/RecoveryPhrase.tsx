@@ -26,7 +26,7 @@ import {
   ScreenGutter,
   SheetContainer,
 } from '../../../components/styled/Containers';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {
   setHomeCarouselConfig,
   showBottomNotificationModal,
@@ -225,6 +225,7 @@ const RecoveryPhrase = () => {
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
+  const [importButtonState, setImportButtonState] = useState<ButtonState>();
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [derivationPathEnabled, setDerivationPathEnabled] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -444,6 +445,7 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
+      setImportButtonState('loading');
       showOngoingProcess('IMPORTING');
       await sleep(1000);
       const key = !derivationPathEnabled
@@ -454,6 +456,10 @@ const RecoveryPhrase = () => {
       await sleep(1000);
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       await scanFunds(key);
+      setImportButtonState('success');
+      await sleep(500);
+      setImportButtonState(undefined);
+      hideOngoingProcess();
       backupRedirect({
         context: route.params?.context,
         navigation,
@@ -466,10 +472,12 @@ const RecoveryPhrase = () => {
           source: 'RecoveryPhrase',
         }),
       );
-      hideOngoingProcess();
     } catch (err: any) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);
+      setImportButtonState('failed');
+      await sleep(500);
+      setImportButtonState(undefined);
       hideOngoingProcess();
       await sleep(600);
       showErrorModal(err);
@@ -908,6 +916,7 @@ const RecoveryPhrase = () => {
           testID="import-wallet-button"
           accessibilityLabel="Import wallet"
           buttonStyle={'primary'}
+          state={importButtonState}
           onPress={handleSubmit(onSubmit)}>
           {t('Import Wallet')}
         </Button>
