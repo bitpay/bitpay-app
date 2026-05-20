@@ -265,6 +265,21 @@ const buildPortfolioPopulateDecision = (
   ...extras,
 });
 
+const buildBalanceMismatchDecision = (args: {
+  walletId: string;
+  mismatch: PortfolioSnapshotBalanceMismatch;
+  previousMismatch?: PortfolioSnapshotBalanceMismatch;
+  extras: Partial<PortfolioPopulateDecision>;
+}): PortfolioPopulateDecision =>
+  buildPortfolioPopulateDecision(
+    args.walletId,
+    args.previousMismatch?.deltaAtomic !== args.mismatch.deltaAtomic,
+    args.previousMismatch?.deltaAtomic === args.mismatch.deltaAtomic
+      ? 'unchanged_balance_mismatch'
+      : 'balance_mismatch',
+    {...args.extras, mismatch: args.mismatch},
+  );
+
 function normalizeUnitDecimalsResolution(
   value: PortfolioUnitDecimalsResolution | number | undefined,
   walletId: string,
@@ -331,22 +346,12 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
       unitDecimals: args.unitDecimals,
     });
     if (mismatch) {
-      const extras = {index, mismatch};
-      if (args.previousMismatch?.deltaAtomic === mismatch.deltaAtomic) {
-        return buildPortfolioPopulateDecision(
-          walletId,
-          false,
-          'unchanged_balance_mismatch',
-          extras,
-        );
-      }
-
-      return buildPortfolioPopulateDecision(
+      return buildBalanceMismatchDecision({
         walletId,
-        true,
-        'balance_mismatch',
-        extras,
-      );
+        mismatch,
+        previousMismatch: args.previousMismatch,
+        extras: {index},
+      });
     }
 
     if (liveAtomic === 0n) {
@@ -386,25 +391,12 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
   });
 
   if (mismatch) {
-    const extras = {
-      ...snapshotDecisionExtras,
-      mismatch,
-    };
-    if (args.previousMismatch?.deltaAtomic === mismatch.deltaAtomic) {
-      return buildPortfolioPopulateDecision(
-        walletId,
-        false,
-        'unchanged_balance_mismatch',
-        extras,
-      );
-    }
-
-    return buildPortfolioPopulateDecision(
+    return buildBalanceMismatchDecision({
       walletId,
-      true,
-      'balance_mismatch',
-      extras,
-    );
+      mismatch,
+      previousMismatch: args.previousMismatch,
+      extras: snapshotDecisionExtras,
+    });
   }
 
   return buildPortfolioPopulateDecision(

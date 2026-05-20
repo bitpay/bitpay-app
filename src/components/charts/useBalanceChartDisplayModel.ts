@@ -362,22 +362,7 @@ export function useBalanceChartDisplayModel({
     historicalRateCacheRevision,
   ].join('|');
 
-  const chartQueryArgsRef = useRef({
-    wallets: storedWallets,
-    quoteCurrency: committedQueryQuoteCurrency,
-    timeframe: selectedTimeframe,
-    maxPoints: FIAT_RATE_SERIES_TARGET_POINTS,
-    currentRatesByAssetId,
-    dataRevisionSig: chartDataRevisionSig,
-    walletIds: sortedWalletIds,
-    balanceOffset,
-    asOfMs,
-    summaryCacheRevisionSig: [
-      currentSpotRatesSignature,
-      historicalRateCacheRevision,
-    ].join('|'),
-  });
-  chartQueryArgsRef.current = {
+  const chartQueryArgs = {
     wallets: storedWallets,
     quoteCurrency: committedQueryQuoteCurrency,
     timeframe: selectedTimeframe,
@@ -392,6 +377,8 @@ export function useBalanceChartDisplayModel({
       historicalRateCacheRevision,
     ].join('|'),
   };
+  const chartQueryArgsRef = useRef(chartQueryArgs);
+  chartQueryArgsRef.current = chartQueryArgs;
 
   useEffect(() => {
     if (!isBalanceChartDataReadyToQuery) {

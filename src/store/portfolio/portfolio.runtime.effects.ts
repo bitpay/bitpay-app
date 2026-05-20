@@ -95,26 +95,23 @@ const toErrorMessage = (error: unknown): string =>
 
 const getWalletIdsForRedaction = (
   walletIds: Iterable<string | null | undefined>,
-): string[] => {
-  return Array.from(
+): string[] =>
+  Array.from(
     new Set(
       Array.from(walletIds)
         .map(walletId => String(walletId || '').trim())
         .filter(walletId => walletId.length > 0),
     ),
   ).sort((a, b) => b.length - a.length);
-};
 
 const redactWalletIdsFromMessage = (
   value: string,
   walletIds: string[],
-): string => {
-  let redacted = value;
-  walletIds.forEach(walletId => {
-    redacted = redacted.split(walletId).join('[redacted]');
-  });
-  return redacted;
-};
+): string =>
+  walletIds.reduce(
+    (redacted, walletId) => redacted.split(walletId).join('[redacted]'),
+    value,
+  );
 
 const warnPortfolioWithRedactedWalletIds = (args: {
   messages: string[];

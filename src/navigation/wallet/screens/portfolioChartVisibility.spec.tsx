@@ -385,6 +385,15 @@ jest.mock('../../../store/wallet/utils/wallet', () => ({
   })),
 }));
 
+const mockWalletHasNonZeroLiveBalance = (wallet: any) => {
+  const balance = wallet?.balance || {};
+  return (
+    Number(balance.sat || 0) > 0 ||
+    Number(balance.fiat || 0) > 0 ||
+    Number(String(balance.crypto || '0').replace(/,/g, '')) > 0
+  );
+};
+
 jest.mock('../../../utils/portfolio/assets', () => ({
   getLegacyLastDayPnlFromTotals: jest.fn(
     ({
@@ -498,23 +507,9 @@ jest.mock('../../../utils/portfolio/assets', () => ({
       });
     },
   ),
-  walletHasNonZeroLiveBalance: jest.fn((wallet: any) => {
-    const balance = wallet?.balance || {};
-    return (
-      Number(balance.sat || 0) > 0 ||
-      Number(balance.fiat || 0) > 0 ||
-      Number(String(balance.crypto || '0').replace(/,/g, '')) > 0
-    );
-  }),
+  walletHasNonZeroLiveBalance: jest.fn(mockWalletHasNonZeroLiveBalance),
   walletsHaveNonZeroLiveBalance: jest.fn((wallets?: any[]) =>
-    (wallets || []).some((wallet: any) => {
-      const balance = wallet?.balance || {};
-      return (
-        Number(balance.sat || 0) > 0 ||
-        Number(balance.fiat || 0) > 0 ||
-        Number(String(balance.crypto || '0').replace(/,/g, '')) > 0
-      );
-    }),
+    (wallets || []).some(mockWalletHasNonZeroLiveBalance),
   ),
 }));
 

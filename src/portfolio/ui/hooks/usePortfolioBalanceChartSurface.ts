@@ -67,22 +67,11 @@ export function usePortfolioBalanceChartSurface(args: {
     [],
   );
 
-  const effectiveSelectedBalance = canUseChartDrivenState
-    ? selectedBalance
-    : undefined;
-  const effectiveDisplayedBalance = canUseChartDrivenState
-    ? displayedBalance
-    : undefined;
-  const effectiveDisplayedAnalysisPoint = canUseChartDrivenState
-    ? displayedAnalysisPoint
-    : undefined;
-  const effectiveChangeRowData = canUseChartDrivenState
-    ? changeRowData
-    : undefined;
   const chartDrivenBalance =
-    typeof effectiveSelectedBalance === 'number' ||
-    typeof effectiveDisplayedBalance === 'number'
-      ? effectiveSelectedBalance ?? effectiveDisplayedBalance
+    canUseChartDrivenState &&
+    (typeof selectedBalance === 'number' ||
+      typeof displayedBalance === 'number')
+      ? selectedBalance ?? displayedBalance
       : undefined;
   const displayedTopBalance =
     typeof chartDrivenBalance === 'number'
@@ -103,24 +92,27 @@ export function usePortfolioBalanceChartSurface(args: {
 
   return useMemo(
     () => ({
-      selectedBalance: effectiveSelectedBalance,
-      displayedBalance: effectiveDisplayedBalance,
-      displayedAnalysisPoint: effectiveDisplayedAnalysisPoint,
-      changeRowData: effectiveChangeRowData,
+      selectedBalance: canUseChartDrivenState ? selectedBalance : undefined,
+      displayedBalance: canUseChartDrivenState ? displayedBalance : undefined,
+      displayedAnalysisPoint: canUseChartDrivenState
+        ? displayedAnalysisPoint
+        : undefined,
+      changeRowData: canUseChartDrivenState ? changeRowData : undefined,
       chartDrivenBalance,
       displayedTopBalance,
       displayedTopBalanceCurrency,
       chartCallbacks,
     }),
     [
+      canUseChartDrivenState,
       chartCallbacks,
       chartDrivenBalance,
+      changeRowData,
+      displayedAnalysisPoint,
+      displayedBalance,
       displayedTopBalance,
       displayedTopBalanceCurrency,
-      effectiveChangeRowData,
-      effectiveDisplayedAnalysisPoint,
-      effectiveDisplayedBalance,
-      effectiveSelectedBalance,
+      selectedBalance,
     ],
   );
 }
