@@ -75,8 +75,6 @@ final class Test592_ImportWalletRecoveryPhrase: XCTestCase {
         "My Wallets not displayed"
       )
       
-      print(app.debugDescription)
-      
       XCTAssertTrue(
         myKeyPage.isBitcoinBTCWalletDisplayed(),
         "Bitcoin BTC Wallet not displayed"

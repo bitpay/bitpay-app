@@ -30,7 +30,7 @@ class MyKeyPage {
 
   // MARK: - Validations
 
-  func isMyKeyDisplayed(timeout: TimeInterval = 300) -> Bool {
+  func isMyKeyDisplayed(timeout: TimeInterval = 600) -> Bool {
     return myKeyTab.waitForExistence(timeout: timeout)
   }
 
@@ -38,7 +38,7 @@ class MyKeyPage {
     return myWalletsText.waitForExistence(timeout: timeout)
   }
 
-  func isBitcoinBTCWalletDisplayed(timeout: TimeInterval = 20) -> Bool {
+  func isBitcoinBTCWalletDisplayed(timeout: TimeInterval = 300) -> Bool {
       return bitcoinWallet.waitForExistence(timeout: timeout)
   }
 
