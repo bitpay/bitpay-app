@@ -1,6 +1,6 @@
 import type {
-  ExcessiveBalanceMismatchMarker,
   InvalidDecimalsMarker,
+  PortfolioQuarantineMarker,
   SnapshotBalanceMismatch,
   WalletIdMap,
   WalletPopulateState,
@@ -81,9 +81,9 @@ export const setInvalidDecimalsByWalletIdUpdates = (
   payload,
 });
 
-export const setExcessiveBalanceMismatchesByWalletIdUpdates = (
-  payload: WalletIdMap<ExcessiveBalanceMismatchMarker>,
+export const setQuarantinesByWalletIdUpdates = (
+  payload: WalletIdMap<PortfolioQuarantineMarker>,
 ): PortfolioActionType => ({
-  type: PortfolioActionTypes.SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES,
+  type: PortfolioActionTypes.SET_QUARANTINES_BY_WALLET_ID_UPDATES,
   payload,
 });

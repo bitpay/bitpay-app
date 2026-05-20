@@ -154,9 +154,9 @@ jest.mock('./portfolio.actions', () => ({
     payload,
     type: 'SET_INVALID_DECIMALS',
   })),
-  setExcessiveBalanceMismatchesByWalletIdUpdates: jest.fn((payload: any) => ({
+  setQuarantinesByWalletIdUpdates: jest.fn((payload: any) => ({
     payload,
-    type: 'SET_EXCESSIVE_BALANCE_MISMATCHES',
+    type: 'SET_QUARANTINES',
   })),
   startPopulatePortfolio: jest.fn((payload: any) => ({
     payload,
@@ -230,7 +230,7 @@ const excessiveMismatchDecisionResult = ({
   shouldPopulate = true,
 }: {shouldPopulate?: boolean} = {}) => {
   const walletId = 'wallet-1';
-  const excessiveBalanceMismatch = {
+  const quarantine = {
     reason: 'excessive_balance_mismatch',
     walletId,
   };
@@ -238,14 +238,14 @@ const excessiveMismatchDecisionResult = ({
   return {
     decisions: [
       {
-        excessiveBalanceMismatch,
+        quarantine,
         reason: 'excessive_balance_mismatch',
         shouldPopulate,
         walletId,
       },
     ],
-    excessiveBalanceMismatchByWalletId: {
-      [walletId]: excessiveBalanceMismatch,
+    quarantinesByWalletId: {
+      [walletId]: quarantine,
     },
     mismatchByWalletId: {[walletId]: undefined},
     walletIdsToPopulate: shouldPopulate ? [walletId] : [],
@@ -285,7 +285,7 @@ const makeState = (overrides: State = {}) => {
       lastPopulatedAt: undefined,
       populateStatus: {inProgress: false},
       invalidDecimalsByWalletId: {},
-      excessiveBalanceMismatchesByWalletId: {},
+      quarantinesByWalletId: {},
       ...portfolioOverrides,
     },
     WALLET: {
@@ -448,7 +448,7 @@ describe('portfolio runtime effects lock deferral', () => {
     mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValue(
       populateDecisionResult({
         invalidDecimalsByWalletId: {},
-        excessiveBalanceMismatchByWalletId: {},
+        quarantinesByWalletId: {},
         walletIdsToPopulate: ['wallet-1'],
       }),
     );
@@ -1016,14 +1016,71 @@ describe('portfolio runtime effects lock deferral', () => {
               threshold: 0.1,
             }),
           },
-          type: 'SET_EXCESSIVE_BALANCE_MISMATCHES',
+          type: 'SET_QUARANTINES',
         },
       ]),
     );
     const dispatchedTypes = dispatched.map(action => action.type);
-    expect(
-      dispatchedTypes.indexOf('SET_EXCESSIVE_BALANCE_MISMATCHES'),
-    ).toBeLessThan(dispatchedTypes.indexOf('FINISH_POPULATE'));
+    expect(dispatchedTypes.indexOf('SET_QUARANTINES')).toBeLessThan(
+      dispatchedTypes.indexOf('FINISH_POPULATE'),
+    );
+  });
+
+  it('quarantines zero-balance token missing-index wallets after a failed populate attempt', async () => {
+    const quarantine = {
+      walletId: 'wallet-1',
+      reason: 'zero_balance_token_missing_index',
+      tokenAddress: 'token-1',
+      liveAtomic: '0',
+      chain: 'sol',
+      detectedAt: 1234,
+      lastAttemptedAt: 1234,
+      message:
+        'Wallet wallet-1 is a zero-balance token wallet with no portfolio snapshot index for token token-1.',
+    };
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {
+          errors: [{walletId: 'wallet-1', message: 'tx history failed'}],
+          walletStatusById: {'wallet-1': 'error'},
+          walletsCompleted: 0,
+        },
+      }),
+    );
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
+      decisions: [
+        {
+          quarantine,
+          reason: 'zero_balance_token_missing_index',
+          shouldPopulate: false,
+          walletId: 'wallet-1',
+        },
+      ],
+      mismatchByWalletId: {'wallet-1': undefined},
+      quarantinesByWalletId: {'wallet-1': quarantine},
+      walletIdsToPopulate: [],
+    });
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        zeroBalanceTokenMissingIndexErrorByWalletId: {
+          'wallet-1': 'tx history failed',
+        },
+      }),
+    );
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        {
+          payload: {'wallet-1': quarantine},
+          type: 'SET_QUARANTINES',
+        },
+      ]),
+    );
   });
 
   it('marks a completed full populate with wallet errors as completing the initial baseline', async () => {
@@ -1171,7 +1228,7 @@ describe('portfolio runtime effects lock deferral', () => {
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
     const excessiveMarkerIndex = dispatched.findIndex(
-      action => action.type === 'SET_EXCESSIVE_BALANCE_MISMATCHES',
+      action => action.type === 'SET_QUARANTINES',
     );
     const doneProgressIndex = dispatched.findIndex(
       action =>
@@ -1840,8 +1897,8 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(dispatched).toEqual(
       expect.arrayContaining([
         {
-          payload: excessiveMismatchDecision.excessiveBalanceMismatchByWalletId,
-          type: 'SET_EXCESSIVE_BALANCE_MISMATCHES',
+          payload: excessiveMismatchDecision.quarantinesByWalletId,
+          type: 'SET_QUARANTINES',
         },
         {
           payload: expect.objectContaining({quoteCurrency: 'USD'}),

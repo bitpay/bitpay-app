@@ -27,8 +27,8 @@ import type {
 import type {SnapshotInvalidHistoryMarkerV1} from '../../../../../portfolio/core/pnl/invalidHistory';
 import type {Wallet} from '../../../../../store/wallet/wallet.models';
 import type {
-  ExcessiveBalanceMismatchMarker,
   InvalidDecimalsMarker,
+  PortfolioQuarantineMarker,
   SnapshotBalanceMismatch,
 } from '../../../../../store/portfolio/portfolio.models';
 import {
@@ -67,7 +67,7 @@ type RuntimeWalletRow = {
   mismatch?: SnapshotBalanceMismatch;
   invalidHistory?: SnapshotInvalidHistoryMarkerV1;
   invalidDecimals?: InvalidDecimalsMarker;
-  excessiveBalanceMismatch?: ExcessiveBalanceMismatchMarker;
+  quarantine?: PortfolioQuarantineMarker;
 };
 
 function useLatestRef<T>(value: T) {
@@ -185,15 +185,14 @@ const getWalletBalanceLabel = (wallet?: Wallet): string => {
 };
 
 const getAllMainnetWallets = (walletKeys: Record<string, any>): Wallet[] => {
-  const rows = Object.values(walletKeys || {})
+  return Object.values(walletKeys || {})
     .flatMap((key: any) => (Array.isArray(key?.wallets) ? key.wallets : []))
-    .filter((wallet: Wallet) => (wallet as any)?.network === Network.mainnet);
-
-  return rows.sort((a, b) => {
-    const aName = String((a as any)?.walletName || (a as any)?.id || '');
-    const bName = String((b as any)?.walletName || (b as any)?.id || '');
-    return aName.localeCompare(bName);
-  });
+    .filter((wallet: Wallet) => (wallet as any)?.network === Network.mainnet)
+    .sort((a, b) => {
+      const aName = String((a as any)?.walletName || (a as any)?.id || '');
+      const bName = String((b as any)?.walletName || (b as any)?.id || '');
+      return aName.localeCompare(bName);
+    });
 };
 
 const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
@@ -226,8 +225,8 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
   const invalidDecimalsByWalletIdRef = useLatestRef(
     portfolio.invalidDecimalsByWalletId,
   );
-  const excessiveBalanceMismatchByWalletIdRef = useLatestRef(
-    portfolio.excessiveBalanceMismatchesByWalletId,
+  const quarantinesByWalletIdRef = useLatestRef(
+    portfolio.quarantinesByWalletId,
   );
   const populateStartProbeRef = useRef<
     | {
@@ -242,32 +241,28 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
     !!portfolio.populateStatus?.inProgress,
   );
 
-  const invalidDecimalsRefreshKey = useMemo(() => {
-    const invalidDecimalsByWalletId: {
-      [walletId: string]: InvalidDecimalsMarker | undefined;
-    } = portfolio.invalidDecimalsByWalletId || {};
+  const invalidDecimalsRefreshKey = useMemo(
+    () =>
+      Object.entries(portfolio.invalidDecimalsByWalletId || {})
+        .map(([walletId, marker]) => `${walletId}:${marker?.message || ''}`)
+        .sort()
+        .join('|'),
+    [portfolio.invalidDecimalsByWalletId],
+  );
 
-    return Object.entries(invalidDecimalsByWalletId)
-      .map(([walletId, marker]) => `${walletId}:${marker?.message || ''}`)
-      .sort()
-      .join('|');
-  }, [portfolio.invalidDecimalsByWalletId]);
-
-  const excessiveBalanceMismatchRefreshKey = useMemo(() => {
-    const excessiveBalanceMismatchesByWalletId: {
-      [walletId: string]: ExcessiveBalanceMismatchMarker | undefined;
-    } = portfolio.excessiveBalanceMismatchesByWalletId || {};
-
-    return Object.entries(excessiveBalanceMismatchesByWalletId)
-      .map(
-        ([walletId, marker]) =>
-          `${walletId}:${marker?.detectedAt || ''}:${
-            marker?.lastAttemptedAt || ''
-          }:${marker?.computedAtomic || ''}:${marker?.liveAtomic || ''}`,
-      )
-      .sort()
-      .join('|');
-  }, [portfolio.excessiveBalanceMismatchesByWalletId]);
+  const quarantineRefreshKey = useMemo(
+    () =>
+      Object.entries(portfolio.quarantinesByWalletId || {})
+        .map(
+          ([walletId, marker]) =>
+            `${walletId}:${marker?.reason || ''}:${marker?.detectedAt || ''}:${
+              marker?.lastAttemptedAt || ''
+            }:${marker?.message || ''}`,
+        )
+        .sort()
+        .join('|'),
+    [portfolio.quarantinesByWalletId],
+  );
 
   const refreshToken = useMemo(() => {
     return [
@@ -275,14 +270,14 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
       portfolio.populateStatus?.inProgress ? 1 : 0,
       portfolio.populateStatus?.errors?.length || 0,
       invalidDecimalsRefreshKey,
-      excessiveBalanceMismatchRefreshKey,
+      quarantineRefreshKey,
       wallets.length,
     ].join(':');
   }, [
-    excessiveBalanceMismatchRefreshKey,
     invalidDecimalsRefreshKey,
     portfolio.lastPopulatedAt,
     portfolio.populateStatus,
+    quarantineRefreshKey,
     wallets.length,
   ]);
 
@@ -337,19 +332,18 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
             mismatch: mismatchByWalletIdRef.current?.[wallet.id],
             invalidHistory: invalidHistoryMarkers[index] || undefined,
             invalidDecimals: invalidDecimalsByWalletIdRef.current?.[wallet.id],
-            excessiveBalanceMismatch:
-              excessiveBalanceMismatchByWalletIdRef.current?.[wallet.id],
+            quarantine: quarantinesByWalletIdRef.current?.[wallet.id],
           };
         })
         .sort((a, b) => {
           const quarantineScoreA =
             (a.invalidHistory ? 1 : 0) +
             (a.invalidDecimals ? 1 : 0) +
-            (a.excessiveBalanceMismatch ? 1 : 0);
+            (a.quarantine ? 1 : 0);
           const quarantineScoreB =
             (b.invalidHistory ? 1 : 0) +
             (b.invalidDecimals ? 1 : 0) +
-            (b.excessiveBalanceMismatch ? 1 : 0);
+            (b.quarantine ? 1 : 0);
           if (quarantineScoreA !== quarantineScoreB) {
             return quarantineScoreB - quarantineScoreA;
           }
@@ -423,25 +417,17 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
   ]);
 
   const summary = useMemo(() => {
-    const walletsWithSnapshots = walletRows.filter(row => !!row.index).length;
-    const totalRows = walletRows.reduce(
-      (total, row) => total + row.rowCount,
-      0,
-    );
-    const totalChunks = walletRows.reduce(
-      (total, row) => total + row.chunkCount,
-      0,
-    );
-    const mismatchCount = walletRows.filter(row => !!row.mismatch).length;
-    const invalidHistoryCount = walletRows.filter(
-      row => !!row.invalidHistory,
-    ).length;
-    const invalidDecimalsCount = walletRows.filter(
-      row => !!row.invalidDecimals,
-    ).length;
-    const excessiveBalanceMismatchCount = walletRows.filter(
-      row => !!row.excessiveBalanceMismatch,
-    ).length;
+    const countRows = (predicate: (row: RuntimeWalletRow) => boolean) =>
+      walletRows.filter(predicate).length;
+    const sumRows = (value: (row: RuntimeWalletRow) => number) =>
+      walletRows.reduce((total, row) => total + value(row), 0);
+    const walletsWithSnapshots = countRows(row => !!row.index);
+    const totalRows = sumRows(row => row.rowCount);
+    const totalChunks = sumRows(row => row.chunkCount);
+    const mismatchCount = countRows(row => !!row.mismatch);
+    const invalidHistoryCount = countRows(row => !!row.invalidHistory);
+    const invalidDecimalsCount = countRows(row => !!row.invalidDecimals);
+    const quarantineCount = countRows(row => !!row.quarantine);
 
     return {
       walletsTotal: wallets.length,
@@ -451,7 +437,7 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
       mismatchCount,
       invalidHistoryCount,
       invalidDecimalsCount,
-      excessiveBalanceMismatchCount,
+      quarantineCount,
       rateEntries: rateEntries.length,
       kvStats,
       populateStatus: portfolio.populateStatus,
@@ -504,7 +490,7 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
         mismatch: row.mismatch || null,
         invalidHistory: row.invalidHistory || null,
         invalidDecimals: row.invalidDecimals || null,
-        excessiveBalanceMismatch: row.excessiveBalanceMismatch || null,
+        quarantine: row.quarantine || null,
       })),
       rates: rateEntries,
     };
@@ -780,7 +766,7 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
           {`Mismatches: ${summary.mismatchCount}\n`}
           {`Invalid history: ${summary.invalidHistoryCount}\n`}
           {`Invalid decimals: ${summary.invalidDecimalsCount}\n`}
-          {`Excessive mismatches: ${summary.excessiveBalanceMismatchCount}\n`}
+          {`Quarantines: ${summary.quarantineCount}\n`}
           {`Last populated: ${formatDebugIso(summary.lastPopulatedAt)}\n`}
           {`Last refreshed: ${formatDebugIso(summary.lastRefreshedAt)}`}
         </SectionText>
@@ -856,9 +842,9 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
                   {`invalid decimals • ${row.invalidDecimals.message}`}
                 </WalletRowMismatchText>
               ) : null}
-              {row.excessiveBalanceMismatch ? (
+              {row.quarantine ? (
                 <WalletRowMismatchText>
-                  {`excessive mismatch • ${row.excessiveBalanceMismatch.message}`}
+                  {`quarantine • ${row.quarantine.reason} • ${row.quarantine.message}`}
                 </WalletRowMismatchText>
               ) : null}
             </WalletRow>

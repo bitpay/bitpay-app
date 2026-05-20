@@ -15,12 +15,14 @@ jest.mock('../../utils/helper-methods', () => ({
 }));
 
 jest.mock('../../utils/portfolio/assets', () => ({
+  getPortfolioWalletTokenAddress: (wallet: any) =>
+    typeof wallet?.tokenAddress === 'string' ? wallet.tokenAddress : undefined,
   getWalletLiveAtomicBalance: ({wallet}: {wallet: any}) =>
     BigInt(String(wallet?.balance?.sat || 0)),
 }));
 
 import {
-  PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_RETRY_INTERVAL_MS,
+  PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS,
   buildPortfolioExcessiveBalanceMismatchMarker,
   getPortfolioPopulateDecisionForWallet,
   getPortfolioPopulateDecisionsForWallets,
@@ -40,6 +42,19 @@ describe('portfolioStaleness', () => {
       satPending: 0,
     },
   } as any;
+
+  const makeZeroBalanceWallet = (overrides: Record<string, any> = {}) => ({
+    ...wallet,
+    ...overrides,
+    balance: {
+      ...wallet.balance,
+      sat: 0,
+      satConfirmed: 0,
+      satPending: 0,
+    },
+  });
+  const makeZeroBalanceSolTokenWallet = () =>
+    makeZeroBalanceWallet({chain: 'sol', tokenAddress: 'token-1'});
 
   const decisionClient = ({
     invalidHistory = null,
@@ -68,6 +83,18 @@ describe('portfolioStaleness', () => {
     lastAttemptedAt,
     message:
       'Wallet wallet-1 snapshot balance differs from live balance by 2x (threshold 10%).',
+  });
+
+  const makeZeroBalanceTokenMissingIndex = (lastAttemptedAt: number) => ({
+    walletId: 'wallet-1',
+    reason: 'zero_balance_token_missing_index' as const,
+    tokenAddress: 'token-1',
+    liveAtomic: '0' as const,
+    chain: 'sol',
+    detectedAt: 1234,
+    lastAttemptedAt,
+    message:
+      'Wallet wallet-1 is a zero-balance token wallet with no portfolio snapshot index for token token-1.',
   });
 
   const snapshot = (cryptoBalance?: unknown) =>
@@ -173,18 +200,9 @@ describe('portfolioStaleness', () => {
 
   it('skips populate when an indexed wallet has no snapshots and zero live balance', async () => {
     const client = decisionClient({latestSnapshot: null});
-    const zeroBalanceWallet = {
-      ...wallet,
-      balance: {
-        ...wallet.balance,
-        sat: 0,
-        satConfirmed: 0,
-        satPending: 0,
-      },
-    };
 
     const decision = await getWalletDecision(client, {
-      wallet: zeroBalanceWallet,
+      wallet: makeZeroBalanceWallet(),
     });
 
     expect(decision).toMatchObject({
@@ -196,26 +214,81 @@ describe('portfolioStaleness', () => {
     });
   });
 
-  it('still populates first-time zero-balance wallets with no snapshot index', async () => {
+  it('still populates first-time zero-balance non-token wallets with no snapshot index', async () => {
     const client = decisionClient({snapshotIndex: null});
-    const zeroBalanceWallet = {
-      ...wallet,
-      balance: {
-        ...wallet.balance,
-        sat: 0,
-        satConfirmed: 0,
-        satPending: 0,
-      },
-    };
 
     const decision = await getWalletDecision(client, {
-      wallet: zeroBalanceWallet,
+      wallet: makeZeroBalanceWallet(),
     });
 
     expect(decision).toMatchObject({
       walletId: 'wallet-1',
       shouldPopulate: true,
       reason: 'missing_index',
+    });
+    expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('keeps zero-balance token wallets with no snapshot index eligible until populate fails', async () => {
+    const client = decisionClient({snapshotIndex: null});
+
+    const decision = await getWalletDecision(client, {
+      wallet: makeZeroBalanceSolTokenWallet(),
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'missing_index',
+    });
+    expect(decision.quarantine).toBeUndefined();
+    expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('quarantines zero-balance token wallets with no snapshot index after a populate error', async () => {
+    const client = decisionClient({snapshotIndex: null});
+
+    const decision = await getWalletDecision(client, {
+      wallet: makeZeroBalanceSolTokenWallet(),
+      zeroBalanceTokenMissingIndexErrorMessage: 'tx history failed',
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: false,
+      reason: 'zero_balance_token_missing_index',
+      quarantine: {
+        walletId: 'wallet-1',
+        reason: 'zero_balance_token_missing_index',
+        tokenAddress: 'token-1',
+        liveAtomic: '0',
+        chain: 'sol',
+      },
+    });
+    expect(decision.quarantine?.message).toContain('tx history failed');
+    expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('force-retries error-qualified zero-balance token missing-index quarantines', async () => {
+    const client = decisionClient({snapshotIndex: null});
+
+    const decision = await getWalletDecision(client, {
+      wallet: makeZeroBalanceWallet({
+        tokenAddress: 'token-1',
+      }),
+      forceRetryQuarantined: true,
+      zeroBalanceTokenMissingIndexErrorMessage: 'tx history failed',
+    });
+
+    expect(decision).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'zero_balance_token_missing_index',
+      quarantine: {
+        walletId: 'wallet-1',
+        reason: 'zero_balance_token_missing_index',
+        tokenAddress: 'token-1',
+      },
     });
     expect(client.getLatestSnapshot).not.toHaveBeenCalled();
   });
@@ -456,7 +529,7 @@ describe('portfolioStaleness', () => {
       client,
       wallets: [wallet],
       getUnitDecimals: () => 8,
-      excessiveBalanceMismatchByWalletId: {
+      quarantinesByWalletId: {
         'wallet-1': excessiveBalanceMismatch,
       },
     });
@@ -466,15 +539,139 @@ describe('portfolioStaleness', () => {
       walletId: 'wallet-1',
       shouldPopulate: false,
       reason: 'excessive_balance_mismatch',
-      excessiveBalanceMismatch,
+      quarantine: excessiveBalanceMismatch,
     });
-    expect(decisions.excessiveBalanceMismatchByWalletId['wallet-1']).toBe(
+    expect(decisions.quarantinesByWalletId['wallet-1']).toBe(
       excessiveBalanceMismatch,
     );
     expect(decisions.mismatchByWalletId['wallet-1']).toBeUndefined();
     expect(client.getInvalidHistory).not.toHaveBeenCalled();
     expect(client.getSnapshotIndex).not.toHaveBeenCalled();
     expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('suppresses auto-populate for existing zero-balance token missing-index quarantines', async () => {
+    const client = decisionClient({snapshotIndex: null});
+    const quarantine = makeZeroBalanceTokenMissingIndex(Date.now() - 1000);
+
+    const decisions = await getPortfolioPopulateDecisionsForWallets({
+      client,
+      wallets: [makeZeroBalanceWallet({tokenAddress: 'token-1'})],
+      getUnitDecimals: () => 8,
+      quarantinesByWalletId: {
+        'wallet-1': quarantine,
+      },
+    });
+
+    expect(decisions.walletIdsToPopulate).toEqual([]);
+    expect(decisions.decisions[0]).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: false,
+      reason: 'zero_balance_token_missing_index',
+      quarantine,
+    });
+    expect(decisions.quarantinesByWalletId['wallet-1']).toBe(quarantine);
+    expect(client.getInvalidHistory).not.toHaveBeenCalled();
+    expect(client.getSnapshotIndex).toHaveBeenCalledWith({
+      walletId: 'wallet-1',
+    });
+    expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('allows a repair populate for zero-balance token missing-index quarantines after the retry interval', async () => {
+    const nowMs = 50_000;
+    const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(nowMs);
+    const client = decisionClient({snapshotIndex: null});
+    const quarantine = makeZeroBalanceTokenMissingIndex(
+      nowMs - PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS - 1,
+    );
+
+    try {
+      const decisions = await getPortfolioPopulateDecisionsForWallets({
+        client,
+        wallets: [makeZeroBalanceWallet({tokenAddress: 'token-1'})],
+        getUnitDecimals: () => 8,
+        quarantinesByWalletId: {
+          'wallet-1': quarantine,
+        },
+      });
+
+      expect(decisions.walletIdsToPopulate).toEqual(['wallet-1']);
+      expect(decisions.decisions[0]).toMatchObject({
+        walletId: 'wallet-1',
+        shouldPopulate: true,
+        reason: 'zero_balance_token_missing_index',
+        quarantine: {
+          detectedAt: 1234,
+          lastAttemptedAt: nowMs,
+        },
+      });
+      expect(decisions.quarantinesByWalletId['wallet-1']).toMatchObject({
+        detectedAt: 1234,
+        lastAttemptedAt: nowMs,
+      });
+      expect(client.getInvalidHistory).not.toHaveBeenCalled();
+      expect(client.getSnapshotIndex).toHaveBeenCalledWith({
+        walletId: 'wallet-1',
+      });
+      expect(client.getLatestSnapshot).not.toHaveBeenCalled();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it('clears zero-balance token missing-index quarantines when live balance becomes nonzero', async () => {
+    const client = decisionClient({snapshotIndex: null});
+    const quarantine = makeZeroBalanceTokenMissingIndex(Date.now() - 1000);
+    const fundedTokenWallet = {
+      ...wallet,
+      tokenAddress: 'token-1',
+    };
+
+    const decisions = await getPortfolioPopulateDecisionsForWallets({
+      client,
+      wallets: [fundedTokenWallet],
+      getUnitDecimals: () => 8,
+      quarantinesByWalletId: {
+        'wallet-1': quarantine,
+      },
+    });
+
+    expect(decisions.walletIdsToPopulate).toEqual(['wallet-1']);
+    expect(decisions.decisions[0]).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: true,
+      reason: 'missing_index',
+    });
+    expect(decisions.quarantinesByWalletId['wallet-1']).toBeUndefined();
+  });
+
+  it('clears zero-balance token missing-index quarantines when a local index appears', async () => {
+    const client = decisionClient({
+      latestSnapshot: null,
+      snapshotIndex: {
+        walletId: 'wallet-1',
+        checkpoint: {balanceAtomic: '0'},
+      },
+    });
+    const quarantine = makeZeroBalanceTokenMissingIndex(Date.now() - 1000);
+
+    const decisions = await getPortfolioPopulateDecisionsForWallets({
+      client,
+      wallets: [makeZeroBalanceWallet({tokenAddress: 'token-1'})],
+      getUnitDecimals: () => 8,
+      quarantinesByWalletId: {
+        'wallet-1': quarantine,
+      },
+    });
+
+    expect(decisions.walletIdsToPopulate).toEqual([]);
+    expect(decisions.decisions[0]).toMatchObject({
+      walletId: 'wallet-1',
+      shouldPopulate: false,
+      reason: 'zero_balance_no_history',
+    });
+    expect(decisions.quarantinesByWalletId['wallet-1']).toBeUndefined();
   });
 
   it('force-retries excessive balance mismatch quarantines before cooldown expires', async () => {
@@ -488,7 +685,7 @@ describe('portfolioStaleness', () => {
         client,
         wallets: [wallet],
         getUnitDecimals: () => 8,
-        excessiveBalanceMismatchByWalletId: {
+        quarantinesByWalletId: {
           'wallet-1': excessiveBalanceMismatch,
         },
         forceRetryQuarantined: true,
@@ -499,14 +696,12 @@ describe('portfolioStaleness', () => {
         walletId: 'wallet-1',
         shouldPopulate: true,
         reason: 'excessive_balance_mismatch',
-        excessiveBalanceMismatch: {
+        quarantine: {
           detectedAt: 1234,
           lastAttemptedAt: nowMs,
         },
       });
-      expect(
-        decisions.excessiveBalanceMismatchByWalletId['wallet-1'],
-      ).toMatchObject({
+      expect(decisions.quarantinesByWalletId['wallet-1']).toMatchObject({
         detectedAt: 1234,
         lastAttemptedAt: nowMs,
       });
@@ -523,7 +718,7 @@ describe('portfolioStaleness', () => {
     const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(nowMs);
     const client = decisionClient();
     const excessiveBalanceMismatch = makeExcessiveBalanceMismatch(
-      nowMs - PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_RETRY_INTERVAL_MS - 1,
+      nowMs - PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS - 1,
     );
 
     try {
@@ -531,7 +726,7 @@ describe('portfolioStaleness', () => {
         client,
         wallets: [wallet],
         getUnitDecimals: () => 8,
-        excessiveBalanceMismatchByWalletId: {
+        quarantinesByWalletId: {
           'wallet-1': excessiveBalanceMismatch,
         },
       });
@@ -541,14 +736,12 @@ describe('portfolioStaleness', () => {
         walletId: 'wallet-1',
         shouldPopulate: true,
         reason: 'excessive_balance_mismatch',
-        excessiveBalanceMismatch: {
+        quarantine: {
           detectedAt: 1234,
           lastAttemptedAt: nowMs,
         },
       });
-      expect(
-        decisions.excessiveBalanceMismatchByWalletId['wallet-1'],
-      ).toMatchObject({
+      expect(decisions.quarantinesByWalletId['wallet-1']).toMatchObject({
         detectedAt: 1234,
         lastAttemptedAt: nowMs,
       });

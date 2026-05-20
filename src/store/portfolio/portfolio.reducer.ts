@@ -25,7 +25,7 @@ const initialState: PortfolioState = {
   },
   snapshotBalanceMismatchesByWalletId: {},
   invalidDecimalsByWalletId: {},
-  excessiveBalanceMismatchesByWalletId: {},
+  quarantinesByWalletId: {},
 };
 
 const isFiniteTimestamp = (value: unknown): value is number =>
@@ -88,7 +88,7 @@ export const portfolioReducer = (
         ...initialState,
         snapshotBalanceMismatchesByWalletId: {},
         invalidDecimalsByWalletId: {},
-        excessiveBalanceMismatchesByWalletId: {},
+        quarantinesByWalletId: {},
       };
     }
 
@@ -169,8 +169,8 @@ export const portfolioReducer = (
         state.invalidDecimalsByWalletId || {},
         walletIds,
       );
-      const nextExcessiveBalanceMismatchesByWalletId = clearWalletIdsFromMap(
-        state.excessiveBalanceMismatchesByWalletId || {},
+      const nextQuarantinesByWalletId = clearWalletIdsFromMap(
+        state.quarantinesByWalletId || {},
         walletIds,
       );
       const nextWalletStatusById = clearWalletIdsFromMap(
@@ -194,8 +194,7 @@ export const portfolioReducer = (
         snapshotBalanceMismatchesByWalletId:
           nextSnapshotBalanceMismatchesByWalletId,
         invalidDecimalsByWalletId: nextInvalidDecimalsByWalletId,
-        excessiveBalanceMismatchesByWalletId:
-          nextExcessiveBalanceMismatchesByWalletId,
+        quarantinesByWalletId: nextQuarantinesByWalletId,
       };
     }
 
@@ -219,11 +218,11 @@ export const portfolioReducer = (
       };
     }
 
-    case PortfolioActionTypes.SET_EXCESSIVE_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES: {
+    case PortfolioActionTypes.SET_QUARANTINES_BY_WALLET_ID_UPDATES: {
       return {
         ...state,
-        excessiveBalanceMismatchesByWalletId: applyWalletIdMapUpdates(
-          state.excessiveBalanceMismatchesByWalletId,
+        quarantinesByWalletId: applyWalletIdMapUpdates(
+          state.quarantinesByWalletId,
           action.payload,
         ),
       };

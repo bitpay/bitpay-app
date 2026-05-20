@@ -211,9 +211,8 @@ type WalletPopulateCheckpointCaptureState = {
   debugTrace?: PortfolioPopulateWalletDebugTrace | null;
 };
 
-const createPortfolioDebugBwcClient = (credentials: WalletCredentials): any => {
-  return BWC.getClient(JSON.stringify(credentials));
-};
+const createPortfolioDebugBwcClient = (credentials: WalletCredentials): any =>
+  BWC.getClient(JSON.stringify(credentials));
 
 const fetchPortfolioDebugBwsWalletSummary = async (
   client: any,
@@ -371,8 +370,8 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   const invalidDecimals = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.invalidDecimalsByWalletId?.[walletId],
   );
-  const excessiveBalanceMismatch = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.excessiveBalanceMismatchesByWalletId?.[walletId],
+  const quarantine = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quarantinesByWalletId?.[walletId],
   );
 
   const [index, setIndex] = useState<SnapshotIndexV2 | null>(null);
@@ -519,17 +518,14 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   const lastQuarantineAttemptedAt = useMemo(() => {
     const candidates = [
       invalidHistory?.lastAttemptedAt,
-      excessiveBalanceMismatch?.lastAttemptedAt,
+      quarantine?.lastAttemptedAt,
     ].filter(
       (value): value is number =>
         typeof value === 'number' && Number.isFinite(value),
     );
 
     return candidates.length ? Math.max(...candidates) : undefined;
-  }, [
-    excessiveBalanceMismatch?.lastAttemptedAt,
-    invalidHistory?.lastAttemptedAt,
-  ]);
+  }, [invalidHistory?.lastAttemptedAt, quarantine?.lastAttemptedAt]);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -724,7 +720,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
       mismatch: mismatch || null,
       invalidHistory,
       invalidDecimals: invalidDecimals || null,
-      excessiveBalanceMismatch: excessiveBalanceMismatch || null,
+      quarantine: quarantine || null,
       index,
       latestSnapshot,
       bwsSummary,
@@ -741,13 +737,13 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   }, [
     balanceDiagnostic,
     bwsSummary,
-    excessiveBalanceMismatch,
     index,
     invalidHistory,
     invalidDecimals,
     lastDebugPopulate,
     latestSnapshot,
     mismatch,
+    quarantine,
     snapshots,
     wallet,
   ]);
@@ -760,7 +756,7 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
           mismatch,
           invalidHistory,
           invalidDecimals,
-          excessiveBalanceMismatch,
+          quarantine,
           index,
           latestSnapshot,
           bwsSummary,
@@ -777,13 +773,13 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
   }, [
     balanceDiagnostic,
     bwsSummary,
-    excessiveBalanceMismatch,
     index,
     invalidHistory,
     invalidDecimals,
     lastDebugPopulate,
     latestSnapshot,
     mismatch,
+    quarantine,
     snapshots,
     wallet,
   ]);
@@ -1121,23 +1117,29 @@ const PortfolioWalletDebug = ({route}: PortfolioWalletDebugScreenProps) => {
             : 'No recorded invalid decimals marker from the last populate decision'}
         </SectionText>
 
-        <SectionTitle>{t('Cached excessive balance mismatch')}</SectionTitle>
+        <SectionTitle>{t('Cached portfolio quarantine')}</SectionTitle>
         <SectionText>
-          {excessiveBalanceMismatch
+          {quarantine
             ? [
-                `reason: ${excessiveBalanceMismatch.reason}`,
-                `computedAtomic: ${excessiveBalanceMismatch.computedAtomic}`,
-                `liveAtomic: ${excessiveBalanceMismatch.liveAtomic}`,
-                `deltaAtomic: ${excessiveBalanceMismatch.deltaAtomic}`,
-                `ratio: ${excessiveBalanceMismatch.ratio}`,
-                `threshold: ${excessiveBalanceMismatch.threshold}`,
-                `detectedAt: ${excessiveBalanceMismatch.detectedAt}`,
-                `lastAttemptedAt: ${
-                  excessiveBalanceMismatch.lastAttemptedAt || ''
-                }`,
-                `message: ${excessiveBalanceMismatch.message}`,
+                `reason: ${quarantine.reason}`,
+                `detectedAt: ${quarantine.detectedAt}`,
+                `lastAttemptedAt: ${quarantine.lastAttemptedAt || ''}`,
+                `message: ${quarantine.message}`,
+                quarantine.reason === 'excessive_balance_mismatch'
+                  ? [
+                      `computedAtomic: ${quarantine.computedAtomic}`,
+                      `liveAtomic: ${quarantine.liveAtomic}`,
+                      `deltaAtomic: ${quarantine.deltaAtomic}`,
+                      `ratio: ${quarantine.ratio}`,
+                      `threshold: ${quarantine.threshold}`,
+                    ].join('\n')
+                  : [
+                      `tokenAddress: ${quarantine.tokenAddress}`,
+                      `liveAtomic: ${quarantine.liveAtomic}`,
+                      `chain: ${quarantine.chain || ''}`,
+                    ].join('\n'),
               ].join('\n')
-            : 'No recorded excessive balance mismatch marker from the last populate decision'}
+            : 'No recorded portfolio quarantine marker from the last populate decision'}
         </SectionText>
 
         <SectionTitle>{t('Live recomputed mismatch')}</SectionTitle>

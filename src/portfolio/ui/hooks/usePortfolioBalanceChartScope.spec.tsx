@@ -198,8 +198,8 @@ describe('usePortfolioBalanceChartScope', () => {
         defaultAltCurrency: {isoCode: 'USD'},
       },
       PORTFOLIO: {
-        excessiveBalanceMismatchesByWalletId: {},
         invalidDecimalsByWalletId: {},
+        quarantinesByWalletId: {},
         lastPopulatedAt: 111,
       },
       RATE: {
@@ -257,12 +257,12 @@ describe('usePortfolioBalanceChartScope', () => {
     expectChartRevision('700');
   });
 
-  it('excludes excessive balance mismatch quarantines from chart scope inputs', async () => {
+  it('excludes portfolio quarantines from chart scope inputs', async () => {
     mockState = {
       ...mockState,
       PORTFOLIO: {
         ...mockState.PORTFOLIO,
-        excessiveBalanceMismatchesByWalletId: {
+        quarantinesByWalletId: {
           'wallet-1': {
             walletId: 'wallet-1',
             reason: 'excessive_balance_mismatch',

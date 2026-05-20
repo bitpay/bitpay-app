@@ -7,8 +7,8 @@ import {
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
-  setExcessiveBalanceMismatchesByWalletIdUpdates,
   setInvalidDecimalsByWalletIdUpdates,
+  setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
 } from './portfolio.actions';
 import {selectCanRenderPortfolioBalanceCharts} from './portfolio.selectors';
@@ -35,7 +35,7 @@ const makeState = (
   },
   snapshotBalanceMismatchesByWalletId: {},
   invalidDecimalsByWalletId: {},
-  excessiveBalanceMismatchesByWalletId: {},
+  quarantinesByWalletId: {},
   ...overrides,
 });
 
@@ -188,11 +188,11 @@ describe('portfolioReducer', () => {
     });
   });
 
-  it('stores and clears excessive balance mismatch markers by wallet id', () => {
+  it('stores and clears portfolio quarantine markers by wallet id', () => {
     const marker = excessiveBalanceMismatchMarker();
     expectStoresAndClearsWalletMapValue({
-      actionCreator: setExcessiveBalanceMismatchesByWalletIdUpdates,
-      selectMap: state => state.excessiveBalanceMismatchesByWalletId,
+      actionCreator: setQuarantinesByWalletIdUpdates,
+      selectMap: state => state.quarantinesByWalletId,
       value: marker,
     });
   });
@@ -221,10 +221,10 @@ describe('portfolioReducer', () => {
     });
   });
 
-  it('clears excessive balance mismatch markers with wallet portfolio state', () => {
+  it('clears portfolio quarantine markers with wallet portfolio state', () => {
     const marker = excessiveBalanceMismatchMarker();
     const withMarker = makeState({
-      excessiveBalanceMismatchesByWalletId: {
+      quarantinesByWalletId: {
         'wallet-1': marker,
         'wallet-2': {
           ...marker,
@@ -238,10 +238,8 @@ describe('portfolioReducer', () => {
       clearWalletPortfolioState({walletIds: ['wallet-1']}),
     );
 
-    expect(
-      cleared.excessiveBalanceMismatchesByWalletId?.['wallet-1'],
-    ).toBeUndefined();
-    expect(cleared.excessiveBalanceMismatchesByWalletId?.['wallet-2']).toEqual({
+    expect(cleared.quarantinesByWalletId?.['wallet-1']).toBeUndefined();
+    expect(cleared.quarantinesByWalletId?.['wallet-2']).toEqual({
       ...marker,
       walletId: 'wallet-2',
     });

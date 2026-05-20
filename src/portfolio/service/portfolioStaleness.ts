@@ -7,7 +7,10 @@ import {
 import type {PortfolioRuntimeClient} from '../runtime/portfolioClient';
 import type {Wallet} from '../../store/wallet/wallet.models';
 import {atomicToUnitString} from '../../utils/helper-methods';
-import {getWalletLiveAtomicBalance} from '../../utils/portfolio/assets';
+import {
+  getPortfolioWalletTokenAddress,
+  getWalletLiveAtomicBalance,
+} from '../../utils/portfolio/assets';
 import {normalizeWalletUnitDecimals} from '../core/format';
 
 export type PortfolioSnapshotBalanceMismatch = {
@@ -28,6 +31,7 @@ export type PortfolioPopulateDecisionReason =
   | 'balance_mismatch'
   | 'unchanged_balance_mismatch'
   | 'excessive_balance_mismatch'
+  | 'zero_balance_token_missing_index'
   | 'invalid_decimals'
   | 'invalid_history'
   | 'up_to_date';
@@ -51,6 +55,21 @@ export type PortfolioExcessiveBalanceMismatchMarker = {
   message: string;
 };
 
+export type PortfolioZeroBalanceTokenMissingIndexMarker = {
+  walletId: string;
+  reason: 'zero_balance_token_missing_index';
+  tokenAddress: string;
+  liveAtomic: '0';
+  chain?: string;
+  detectedAt: number;
+  lastAttemptedAt?: number;
+  message: string;
+};
+
+export type PortfolioQuarantineMarker =
+  | PortfolioExcessiveBalanceMismatchMarker
+  | PortfolioZeroBalanceTokenMissingIndexMarker;
+
 export type PortfolioUnitDecimalsResolution =
   | {ok: true; unitDecimals: number}
   | {ok: false; reason: 'invalid_decimals'; message: string};
@@ -63,7 +82,7 @@ export type PortfolioPopulateDecision = {
   latestSnapshot: BalanceSnapshotStored | null;
   mismatch?: PortfolioSnapshotBalanceMismatch;
   invalidDecimals?: PortfolioInvalidDecimalsMarker;
-  excessiveBalanceMismatch?: PortfolioExcessiveBalanceMismatchMarker;
+  quarantine?: PortfolioQuarantineMarker;
 };
 
 type WalletIdUpdateMap<T> = {[walletId: string]: T | undefined};
@@ -72,16 +91,17 @@ export const getPortfolioInvalidDecimalsMessage = (walletId: string): string =>
   `Wallet ${walletId || 'unknown'} has unresolved token decimals.`;
 
 export const PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_THRESHOLD = 0.1;
+export const PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS = 24 * 60 * 60 * 1000;
 export const PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_RETRY_INTERVAL_MS =
-  24 * 60 * 60 * 1000;
+  PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS;
 
 const PERCENT_BASIS_POINTS = 10_000;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
-export const isPortfolioExcessiveBalanceMismatchRetryDue = (
-  marker: PortfolioExcessiveBalanceMismatchMarker | null | undefined,
+export const isPortfolioQuarantineRetryDue = (
+  marker: PortfolioQuarantineMarker | null | undefined,
   nowMs: number = Date.now(),
   retryIntervalMs?: number,
 ): boolean =>
@@ -89,13 +109,18 @@ export const isPortfolioExcessiveBalanceMismatchRetryDue = (
     marker,
     nowMs,
     retryIntervalMs,
-    PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_RETRY_INTERVAL_MS,
+    PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS,
   );
 
-export const markPortfolioExcessiveBalanceMismatchAttempted = (
-  marker: PortfolioExcessiveBalanceMismatchMarker,
+export const isPortfolioExcessiveBalanceMismatchRetryDue =
+  isPortfolioQuarantineRetryDue;
+
+export const markPortfolioQuarantineAttempted = <
+  T extends PortfolioQuarantineMarker,
+>(
+  marker: T,
   lastAttemptedAt: number = Date.now(),
-): PortfolioExcessiveBalanceMismatchMarker => {
+): T => {
   const detectedAt = Number.isFinite(Number(marker.detectedAt))
     ? Number(marker.detectedAt)
     : lastAttemptedAt;
@@ -106,6 +131,9 @@ export const markPortfolioExcessiveBalanceMismatchAttempted = (
     lastAttemptedAt,
   };
 };
+
+export const markPortfolioExcessiveBalanceMismatchAttempted =
+  markPortfolioQuarantineAttempted;
 
 const toThresholdBasisPoints = (threshold: number): bigint => {
   if (!Number.isFinite(threshold) || threshold <= 0) {
@@ -152,12 +180,26 @@ export const getPortfolioExcessiveBalanceMismatchMessage = (args: {
   ratio: string;
   threshold: number;
 }): string => {
-  const thresholdPercent = Math.round(args.threshold * 10000) / 100;
   return `Wallet ${
     args.walletId || 'unknown'
-  } snapshot balance differs from live balance by ${
-    args.ratio
-  }x (threshold ${thresholdPercent}%).`;
+  } snapshot balance differs from live balance by ${args.ratio}x (threshold ${
+    Math.round(args.threshold * 10000) / 100
+  }%).`;
+};
+
+export const getPortfolioZeroBalanceTokenMissingIndexMessage = (args: {
+  walletId: string;
+  tokenAddress: string;
+  populateErrorMessage?: string;
+}): string => {
+  const populateErrorMessage = String(args.populateErrorMessage || '').trim();
+  return `Wallet ${
+    args.walletId || 'unknown'
+  } is a zero-balance token wallet with no portfolio snapshot index for token ${
+    args.tokenAddress || 'unknown'
+  }.${
+    populateErrorMessage ? ` Last populate error: ${populateErrorMessage}` : ''
+  }`;
 };
 
 export function buildPortfolioExcessiveBalanceMismatchMarker(args: {
@@ -219,6 +261,41 @@ export function buildPortfolioExcessiveBalanceMismatchMarker(args: {
       walletId: args.mismatch.walletId,
       ratio,
       threshold,
+    }),
+  };
+}
+
+export function buildPortfolioZeroBalanceTokenMissingIndexMarker(args: {
+  walletId: string;
+  wallet: Wallet;
+  detectedAt?: number;
+  lastAttemptedAt?: number;
+  populateErrorMessage?: string;
+}): PortfolioZeroBalanceTokenMissingIndexMarker | undefined {
+  const walletId = String(args.walletId || '').trim();
+  const tokenAddress = getPortfolioWalletTokenAddress(args.wallet);
+  if (!walletId || !tokenAddress) {
+    return undefined;
+  }
+
+  const detectedAt = isFiniteNumber(args.detectedAt)
+    ? args.detectedAt
+    : Date.now();
+
+  return {
+    walletId,
+    reason: 'zero_balance_token_missing_index',
+    tokenAddress,
+    liveAtomic: '0',
+    chain: String(args.wallet?.chain || '').trim() || undefined,
+    detectedAt,
+    lastAttemptedAt: isFiniteNumber(args.lastAttemptedAt)
+      ? args.lastAttemptedAt
+      : detectedAt,
+    message: getPortfolioZeroBalanceTokenMissingIndexMessage({
+      walletId,
+      tokenAddress,
+      populateErrorMessage: args.populateErrorMessage,
     }),
   };
 }
@@ -314,6 +391,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
   unitDecimals: number;
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
   forceRetryQuarantined?: boolean;
+  zeroBalanceTokenMissingIndexErrorMessage?: string;
 }): Promise<PortfolioPopulateDecision> {
   const walletId = String(args.wallet?.id || '').trim();
   const invalidHistory = await args.client.getInvalidHistory({walletId});
@@ -328,6 +406,30 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
 
   const index = await args.client.getSnapshotIndex({walletId});
   if (!index) {
+    const liveAtomic = getWalletLiveAtomicBalance({
+      wallet: args.wallet,
+      unitDecimals: args.unitDecimals,
+    });
+    if (
+      liveAtomic === 0n &&
+      getPortfolioWalletTokenAddress(args.wallet) &&
+      String(args.zeroBalanceTokenMissingIndexErrorMessage || '').trim()
+    ) {
+      const quarantine = buildPortfolioZeroBalanceTokenMissingIndexMarker({
+        walletId,
+        wallet: args.wallet,
+        populateErrorMessage: args.zeroBalanceTokenMissingIndexErrorMessage,
+      });
+      if (quarantine) {
+        return buildPortfolioPopulateDecision(
+          walletId,
+          args.forceRetryQuarantined === true,
+          'zero_balance_token_missing_index',
+          {quarantine},
+        );
+      }
+    }
+
     return buildPortfolioPopulateDecision(walletId, true, 'missing_index');
   }
 
@@ -418,14 +520,15 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
     | number
     | undefined;
   previousMismatchByWalletId?: WalletIdUpdateMap<PortfolioSnapshotBalanceMismatch>;
-  excessiveBalanceMismatchByWalletId?: WalletIdUpdateMap<PortfolioExcessiveBalanceMismatchMarker>;
+  quarantinesByWalletId?: WalletIdUpdateMap<PortfolioQuarantineMarker>;
+  zeroBalanceTokenMissingIndexErrorByWalletId?: WalletIdUpdateMap<string>;
   forceRetryQuarantined?: boolean;
 }): Promise<{
   decisions: PortfolioPopulateDecision[];
   walletIdsToPopulate: string[];
   mismatchByWalletId: WalletIdUpdateMap<PortfolioSnapshotBalanceMismatch>;
   invalidDecimalsByWalletId: WalletIdUpdateMap<PortfolioInvalidDecimalsMarker>;
-  excessiveBalanceMismatchByWalletId: WalletIdUpdateMap<PortfolioExcessiveBalanceMismatchMarker>;
+  quarantinesByWalletId: WalletIdUpdateMap<PortfolioQuarantineMarker>;
 }> {
   const decisions: PortfolioPopulateDecision[] = [];
   const walletIdsToPopulate: string[] = [];
@@ -434,14 +537,13 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
     {};
   const invalidDecimalsByWalletId: WalletIdUpdateMap<PortfolioInvalidDecimalsMarker> =
     {};
-  const excessiveBalanceMismatchByWalletId: WalletIdUpdateMap<PortfolioExcessiveBalanceMismatchMarker> =
+  const quarantinesByWalletId: WalletIdUpdateMap<PortfolioQuarantineMarker> =
     {};
   const recordDecision = (decision: PortfolioPopulateDecision) => {
     decisions.push(decision);
     mismatchByWalletId[decision.walletId] = decision.mismatch;
     invalidDecimalsByWalletId[decision.walletId] = decision.invalidDecimals;
-    excessiveBalanceMismatchByWalletId[decision.walletId] =
-      decision.excessiveBalanceMismatch;
+    quarantinesByWalletId[decision.walletId] = decision.quarantine;
     if (decision.shouldPopulate) {
       walletIdsToPopulate.push(decision.walletId);
     }
@@ -467,42 +569,47 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
       continue;
     }
 
-    const excessiveBalanceMismatch =
-      args.excessiveBalanceMismatchByWalletId?.[walletId];
-    if (excessiveBalanceMismatch) {
+    const quarantine = args.quarantinesByWalletId?.[walletId];
+    const getWalletDecision = () =>
+      getPortfolioPopulateDecisionForWallet({
+        client: args.client,
+        wallet,
+        unitDecimals: decimalsResolution.unitDecimals,
+        previousMismatch: args.previousMismatchByWalletId?.[walletId],
+        forceRetryQuarantined: args.forceRetryQuarantined,
+        zeroBalanceTokenMissingIndexErrorMessage:
+          args.zeroBalanceTokenMissingIndexErrorByWalletId?.[walletId],
+      });
+    if (quarantine?.reason === 'zero_balance_token_missing_index') {
+      const liveAtomic = getWalletLiveAtomicBalance({
+        wallet,
+        unitDecimals: decimalsResolution.unitDecimals,
+      });
+      const tokenAddress = getPortfolioWalletTokenAddress(wallet);
+      const index = await args.client.getSnapshotIndex({walletId});
+
+      if (liveAtomic !== 0n || !tokenAddress || index) {
+        recordDecision(await getWalletDecision());
+        continue;
+      }
+    }
+
+    if (quarantine) {
       const retryDue =
         args.forceRetryQuarantined === true ||
-        isPortfolioExcessiveBalanceMismatchRetryDue(
-          excessiveBalanceMismatch,
-          nowMs,
-        );
+        isPortfolioQuarantineRetryDue(quarantine, nowMs);
 
       recordDecision(
-        buildPortfolioPopulateDecision(
-          walletId,
-          retryDue,
-          'excessive_balance_mismatch',
-          {
-            excessiveBalanceMismatch: retryDue
-              ? markPortfolioExcessiveBalanceMismatchAttempted(
-                  excessiveBalanceMismatch,
-                  nowMs,
-                )
-              : excessiveBalanceMismatch,
-          },
-        ),
+        buildPortfolioPopulateDecision(walletId, retryDue, quarantine.reason, {
+          quarantine: retryDue
+            ? markPortfolioQuarantineAttempted(quarantine, nowMs)
+            : quarantine,
+        }),
       );
       continue;
     }
 
-    const decision = await getPortfolioPopulateDecisionForWallet({
-      client: args.client,
-      wallet,
-      unitDecimals: decimalsResolution.unitDecimals,
-      previousMismatch: args.previousMismatchByWalletId?.[walletId],
-      forceRetryQuarantined: args.forceRetryQuarantined,
-    });
-    recordDecision(decision);
+    recordDecision(await getWalletDecision());
   }
 
   return {
@@ -510,6 +617,6 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
     walletIdsToPopulate,
     mismatchByWalletId,
     invalidDecimalsByWalletId,
-    excessiveBalanceMismatchByWalletId,
+    quarantinesByWalletId,
   };
 }

@@ -36,15 +36,15 @@ import {
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
-  setExcessiveBalanceMismatchesByWalletIdUpdates,
   setInvalidDecimalsByWalletIdUpdates,
+  setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   startPopulatePortfolio,
   updatePopulateProgress,
 } from './portfolio.actions';
 import type {
-  ExcessiveBalanceMismatchMarker,
   InvalidDecimalsMarker,
+  PortfolioQuarantineMarker,
   WalletIdMap,
 } from './portfolio.models';
 
@@ -323,7 +323,7 @@ const normalizeWalletIds = (walletIds?: string[]): string[] => {
   return result;
 };
 
-const getWalletsToPopulateAfterExcessiveBalanceRepair = async (args: {
+const getWalletsToPopulateAfterQuarantinePreparation = async (args: {
   client: ReturnType<typeof getPortfolioRuntimeClient>;
   decisions: PortfolioPopulateDecision[];
   walletIdsToPopulate: string[];
@@ -374,14 +374,13 @@ const getWalletsToPopulateAfterExcessiveBalanceRepair = async (args: {
 
 const getScopedPopulateWalletIdsFromArgs = (
   args?: PopulatePortfolioWithRuntimeArgs,
-): string[] => {
-  return normalizeWalletIds([
+): string[] =>
+  normalizeWalletIds([
     ...(Array.isArray(args?.walletIds) ? args.walletIds : []),
     ...(Array.isArray(args?.wallets)
       ? args.wallets.map(wallet => wallet?.id)
       : []),
   ]);
-};
 
 const queueScopedPopulateRequest = (
   args?: PopulatePortfolioWithRuntimeArgs,
@@ -727,7 +726,8 @@ const isSettledInitialBaselineNoopDecision = (
   decision.reason === 'zero_balance_no_history' ||
   decision.reason === 'invalid_history' ||
   decision.reason === 'invalid_decimals' ||
-  decision.reason === 'excessive_balance_mismatch';
+  decision.reason === 'excessive_balance_mismatch' ||
+  decision.reason === 'zero_balance_token_missing_index';
 
 const dispatchWalletIdMapUpdates = <T>(
   dispatch: any,
@@ -741,7 +741,7 @@ const dispatchWalletIdMapUpdates = <T>(
 
 type PortfolioMarkerUpdates = {
   invalidDecimalsByWalletId: WalletIdMap<InvalidDecimalsMarker>;
-  excessiveBalanceMismatchByWalletId: WalletIdMap<ExcessiveBalanceMismatchMarker>;
+  quarantinesByWalletId: WalletIdMap<PortfolioQuarantineMarker>;
 };
 
 const dispatchPortfolioMarkerUpdates = (
@@ -755,8 +755,8 @@ const dispatchPortfolioMarkerUpdates = (
   );
   dispatchWalletIdMapUpdates(
     dispatch,
-    updates.excessiveBalanceMismatchByWalletId,
-    setExcessiveBalanceMismatchesByWalletIdUpdates,
+    updates.quarantinesByWalletId,
+    setQuarantinesByWalletIdUpdates,
   );
 };
 
@@ -909,27 +909,35 @@ const getPortfolioPopulateDecisionsForRuntimeWallets = (args: {
       resolveWalletUnitDecimalsForPortfolio(args.dispatch, wallet),
     previousMismatchByWalletId:
       args.state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
-    excessiveBalanceMismatchByWalletId:
-      args.state.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
+    quarantinesByWalletId: args.state.PORTFOLIO?.quarantinesByWalletId,
     forceRetryQuarantined: args.forceRetryQuarantined,
   });
 
+const getWalletById = (wallets: Wallet[]): Map<string, Wallet> =>
+  wallets.reduce((walletById, wallet) => {
+    const walletId = String(wallet?.id || '').trim();
+    if (walletId) {
+      walletById.set(walletId, wallet);
+    }
+    return walletById;
+  }, new Map<string, Wallet>());
+
 type SnapshotBalanceHealthUpdates = {
   mismatchByWalletId: WalletIdMap<PortfolioSnapshotBalanceMismatch>;
-  excessiveBalanceMismatchByWalletId: WalletIdMap<ExcessiveBalanceMismatchMarker>;
+  quarantinesByWalletId: WalletIdMap<PortfolioQuarantineMarker>;
 };
 
 const createEmptySnapshotBalanceHealthUpdates =
   (): SnapshotBalanceHealthUpdates => ({
     mismatchByWalletId: {},
-    excessiveBalanceMismatchByWalletId: {},
+    quarantinesByWalletId: {},
   });
 
 const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
   client: ReturnType<typeof getPortfolioRuntimeClient>;
   dispatch: any;
   previousMismatchByWalletId?: WalletIdMap<PortfolioSnapshotBalanceMismatch>;
-  previousExcessiveBalanceMismatchByWalletId?: WalletIdMap<ExcessiveBalanceMismatchMarker>;
+  previousQuarantinesByWalletId?: WalletIdMap<PortfolioQuarantineMarker>;
   walletIds: string[];
   wallets: Wallet[];
 }): Promise<SnapshotBalanceHealthUpdates> => {
@@ -938,14 +946,7 @@ const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
     return createEmptySnapshotBalanceHealthUpdates();
   }
 
-  const walletById = new Map<string, Wallet>();
-  args.wallets.forEach(wallet => {
-    const walletId = String(wallet?.id || '').trim();
-    if (walletId) {
-      walletById.set(walletId, wallet);
-    }
-  });
-
+  const walletById = getWalletById(args.wallets);
   const completedWallets = walletIds
     .map(walletId => walletById.get(walletId))
     .filter((wallet): wallet is Wallet => !!wallet);
@@ -966,22 +967,34 @@ const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
 
   decisions.decisions.forEach(decision => {
     if (decision.mismatch) {
+      const previousQuarantine =
+        args.previousQuarantinesByWalletId?.[decision.walletId];
+      const previousExcessiveMarker =
+        previousQuarantine?.reason === 'excessive_balance_mismatch'
+          ? previousQuarantine
+          : undefined;
       updates.mismatchByWalletId[decision.walletId] = decision.mismatch;
-      updates.excessiveBalanceMismatchByWalletId[decision.walletId] =
+      updates.quarantinesByWalletId[decision.walletId] =
         buildPortfolioExcessiveBalanceMismatchMarker({
           mismatch: decision.mismatch,
           detectedAt,
-          previousMarker:
-            args.previousExcessiveBalanceMismatchByWalletId?.[
-              decision.walletId
-            ],
+          previousMarker: previousExcessiveMarker,
         });
       return;
     }
 
-    if (decision.reason === 'up_to_date') {
+    if (decision.quarantine) {
       updates.mismatchByWalletId[decision.walletId] = undefined;
-      updates.excessiveBalanceMismatchByWalletId[decision.walletId] = undefined;
+      updates.quarantinesByWalletId[decision.walletId] = decision.quarantine;
+      return;
+    }
+
+    if (
+      decision.reason === 'up_to_date' ||
+      decision.reason === 'zero_balance_no_history'
+    ) {
+      updates.mismatchByWalletId[decision.walletId] = undefined;
+      updates.quarantinesByWalletId[decision.walletId] = undefined;
     }
   });
 
@@ -996,6 +1009,41 @@ const getDoneWalletIdsFromPopulateStatus = (
       ([walletId, walletStatus]) => (walletStatus === 'done' ? [walletId] : []),
     ),
   );
+
+const getErrorMessageByWalletIdFromPopulateStatus = (
+  status?: PortfolioPopulateJobStatus,
+): WalletIdMap<string> => {
+  const errorMessageByWalletId: WalletIdMap<string> = {};
+
+  (status?.errors || []).forEach(error => {
+    const walletId = String(error?.walletId || '').trim();
+    if (!walletId) {
+      return;
+    }
+
+    errorMessageByWalletId[walletId] =
+      String(error?.message || '').trim() ||
+      'Portfolio populate failed for wallet.';
+  });
+
+  Object.entries(status?.walletStatusById || {}).forEach(
+    ([walletId, walletStatus]) => {
+      const normalizedWalletId = String(walletId || '').trim();
+      if (
+        !normalizedWalletId ||
+        walletStatus !== 'error' ||
+        errorMessageByWalletId[normalizedWalletId]
+      ) {
+        return;
+      }
+
+      errorMessageByWalletId[normalizedWalletId] =
+        'Portfolio populate failed for wallet.';
+    },
+  );
+
+  return errorMessageByWalletId;
+};
 
 const maskUncheckedDoneWalletStatuses = (args: {
   healthCheckedWalletIds: Set<string>;
@@ -1042,14 +1090,8 @@ const refreshCompletedWalletBalanceHealth = async (args: {
   try {
     const currentState = args.getState();
     const currentWallets = getAllMainnetWalletsFromState(currentState);
-    const walletById = new Map<string, Wallet>();
-    (currentWallets.length ? currentWallets : args.fallbackWallets).forEach(
-      wallet => {
-        const walletId = String(wallet?.id || '').trim();
-        if (walletId) {
-          walletById.set(walletId, wallet);
-        }
-      },
+    const walletById = getWalletById(
+      currentWallets.length ? currentWallets : args.fallbackWallets,
     );
     walletIdsToCheck = uncheckedWalletIds.filter(walletId =>
       walletById.has(walletId),
@@ -1064,8 +1106,8 @@ const refreshCompletedWalletBalanceHealth = async (args: {
         dispatch: args.dispatch,
         previousMismatchByWalletId:
           currentState.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
-        previousExcessiveBalanceMismatchByWalletId:
-          currentState.PORTFOLIO?.excessiveBalanceMismatchesByWalletId,
+        previousQuarantinesByWalletId:
+          currentState.PORTFOLIO?.quarantinesByWalletId,
         walletIds: walletIdsToCheck,
         wallets: Array.from(walletById.values()),
       });
@@ -1081,8 +1123,8 @@ const refreshCompletedWalletBalanceHealth = async (args: {
     );
     dispatchWalletIdMapUpdates(
       args.dispatch,
-      balanceHealthUpdates.excessiveBalanceMismatchByWalletId,
-      setExcessiveBalanceMismatchesByWalletIdUpdates,
+      balanceHealthUpdates.quarantinesByWalletId,
+      setQuarantinesByWalletIdUpdates,
     );
     walletIdsToCheck.forEach(walletId => {
       args.healthCheckedWalletIds.add(walletId);
@@ -1091,6 +1133,72 @@ const refreshCompletedWalletBalanceHealth = async (args: {
     warnPortfolioWithRedactedWalletIds({
       messages: [
         `[portfolio] Could not refresh snapshot balance mismatches after wallet progress: ${toErrorMessage(
+          error,
+        )}`,
+      ],
+      walletIds: walletIdsToCheck,
+    });
+  }
+};
+
+const refreshFailedWalletQuarantinesAfterPopulate = async (args: {
+  client: ReturnType<typeof getPortfolioRuntimeClient>;
+  dispatch: any;
+  fallbackWallets: Wallet[];
+  getState: () => RootState;
+  isCurrentPopulateService: () => boolean;
+  status: PortfolioPopulateJobStatus;
+}): Promise<void> => {
+  const errorMessageByWalletId = getErrorMessageByWalletIdFromPopulateStatus(
+    args.status,
+  );
+  const errorWalletIds = normalizeWalletIds(
+    Object.keys(errorMessageByWalletId),
+  );
+  if (!errorWalletIds.length) {
+    return;
+  }
+
+  let walletIdsToCheck: string[] = [];
+  try {
+    const currentState = args.getState();
+    const currentWallets = getAllMainnetWalletsFromState(currentState);
+    const walletById = getWalletById(
+      currentWallets.length ? currentWallets : args.fallbackWallets,
+    );
+    walletIdsToCheck = errorWalletIds.filter(walletId =>
+      walletById.has(walletId),
+    );
+    if (!walletIdsToCheck.length) {
+      return;
+    }
+
+    const decisions = await getPortfolioPopulateDecisionsForWallets({
+      client: args.client,
+      wallets: walletIdsToCheck
+        .map(walletId => walletById.get(walletId))
+        .filter((wallet): wallet is Wallet => !!wallet),
+      getUnitDecimals: wallet =>
+        resolveWalletUnitDecimalsForPortfolio(args.dispatch, wallet),
+      previousMismatchByWalletId:
+        currentState.PORTFOLIO?.snapshotBalanceMismatchesByWalletId,
+      quarantinesByWalletId: currentState.PORTFOLIO?.quarantinesByWalletId,
+      zeroBalanceTokenMissingIndexErrorByWalletId: errorMessageByWalletId,
+    });
+
+    if (!args.isCurrentPopulateService()) {
+      return;
+    }
+
+    dispatchWalletIdMapUpdates(
+      args.dispatch,
+      decisions.quarantinesByWalletId,
+      setQuarantinesByWalletIdUpdates,
+    );
+  } catch (error: unknown) {
+    warnPortfolioWithRedactedWalletIds({
+      messages: [
+        `[portfolio] Could not refresh failed-wallet portfolio quarantines after populate: ${toErrorMessage(
           error,
         )}`,
       ],
@@ -1348,7 +1456,7 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
     dispatchPortfolioMarkerUpdates(dispatch, decisions);
 
     const walletsToPopulate =
-      await getWalletsToPopulateAfterExcessiveBalanceRepair({
+      await getWalletsToPopulateAfterQuarantinePreparation({
         client,
         decisions: decisions.decisions,
         wallets: runtimeEligibleWallets,
@@ -1470,7 +1578,7 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
     }
 
     const walletsToPopulate =
-      await getWalletsToPopulateAfterExcessiveBalanceRepair({
+      await getWalletsToPopulateAfterQuarantinePreparation({
         client,
         decisions: decisions.decisions,
         wallets: runtimeEligibleWallets,
@@ -1529,7 +1637,7 @@ export const populatePortfolioWithRuntime =
       [];
     const markerUpdates: PortfolioMarkerUpdates = {
       invalidDecimalsByWalletId: {},
-      excessiveBalanceMismatchByWalletId: {},
+      quarantinesByWalletId: {},
     };
     const storedWalletIds = new Set<string>();
 
@@ -1554,8 +1662,7 @@ export const populatePortfolioWithRuntime =
             reason: 'invalid_decimals',
             message: decimalsResolution.message,
           };
-          markerUpdates.excessiveBalanceMismatchByWalletId[walletId] =
-            undefined;
+          markerUpdates.quarantinesByWalletId[walletId] = undefined;
         }
         invalidDecimalsErrors.push({
           walletId,
@@ -1670,6 +1777,17 @@ export const populatePortfolioWithRuntime =
         healthCheckedWalletIds,
         isCurrentPopulateService,
         walletIds: completedWalletIds,
+      });
+      if (!isCurrentPopulateService()) {
+        return;
+      }
+      await refreshFailedWalletQuarantinesAfterPopulate({
+        client: runtimeClient,
+        dispatch,
+        fallbackWallets: prioritizedWalletsToPopulate,
+        getState,
+        isCurrentPopulateService,
+        status: finalStatus,
       });
       if (!isCurrentPopulateService()) {
         return;

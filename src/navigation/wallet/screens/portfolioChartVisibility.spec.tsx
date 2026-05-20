@@ -653,10 +653,10 @@ const resetState = (
   showPortfolioValue: boolean | undefined,
   options: {
     completedFullPopulate?: boolean;
-    excessiveBalanceMismatchesByWalletId?: Record<string, any>;
     homeChartCollapsed?: boolean;
     invalidDecimalsByWalletId?: Record<string, any>;
     populateStatus?: any;
+    quarantinesByWalletId?: Record<string, any>;
   } = {},
 ) => {
   const completedFullPopulate =
@@ -718,13 +718,12 @@ const resetState = (
       locationData: {countryShortCode: 'US'},
     },
     PORTFOLIO: {
-      excessiveBalanceMismatchesByWalletId:
-        options.excessiveBalanceMismatchesByWalletId || {},
       invalidDecimalsByWalletId: options.invalidDecimalsByWalletId || {},
       lastFullPopulateCompletedAt,
       lastPopulatedAt,
       populateStatus: options.populateStatus,
       quoteCurrency: 'USD',
+      quarantinesByWalletId: options.quarantinesByWalletId || {},
     },
     RATE: {
       rates: {},
@@ -1032,11 +1031,11 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(portfolioChartSurfaceCases)(
-    'does not mount the %s balance chart when all scope wallets are excessive-mismatch quarantined',
+    'does not mount the %s balance chart when all scope wallets are quarantined',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: true,
-        excessiveBalanceMismatchesByWalletId: {
+        quarantinesByWalletId: {
           'wallet-1': makeExcessiveBalanceMismatchMarker('wallet-1'),
         },
       });

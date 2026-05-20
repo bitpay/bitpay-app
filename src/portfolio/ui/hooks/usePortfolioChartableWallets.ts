@@ -24,8 +24,8 @@ export default function usePortfolioChartableWallets(args: {
   const invalidDecimalsByWalletId = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.invalidDecimalsByWalletId,
   );
-  const excessiveBalanceMismatchesByWalletId = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.excessiveBalanceMismatchesByWalletId,
+  const quarantinesByWalletId = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quarantinesByWalletId,
   );
 
   return useMemo(() => {
@@ -35,10 +35,7 @@ export default function usePortfolioChartableWallets(args: {
 
     const quarantinedWalletIds = new Set<string>();
     addMarkedWalletIds(quarantinedWalletIds, invalidDecimalsByWalletId);
-    addMarkedWalletIds(
-      quarantinedWalletIds,
-      excessiveBalanceMismatchesByWalletId,
-    );
+    addMarkedWalletIds(quarantinedWalletIds, quarantinesByWalletId);
     if (!quarantinedWalletIds.size) {
       return args.wallets;
     }
@@ -47,10 +44,5 @@ export default function usePortfolioChartableWallets(args: {
       const walletId = String(wallet?.id || '').trim();
       return !walletId || !quarantinedWalletIds.has(walletId);
     });
-  }, [
-    args.wallets,
-    enabled,
-    excessiveBalanceMismatchesByWalletId,
-    invalidDecimalsByWalletId,
-  ]);
+  }, [args.wallets, enabled, invalidDecimalsByWalletId, quarantinesByWalletId]);
 }
