@@ -479,9 +479,12 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
           (row.wallet as any)?.name ||
           row.wallet.id,
       );
+      const walletId = String(row.wallet.id || '');
       const chain = String((row.wallet as any)?.chain || '');
       const coin = String((row.wallet as any)?.currencyAbbreviation || '');
-      const searchText = [walletName, chain, coin].join('\u0000').toLowerCase();
+      const searchText = [walletName, walletId, chain, coin]
+        .join('\u0000')
+        .toLowerCase();
       return searchText.includes(normalizedQuery);
     });
   }, [hasActiveQuery, normalizedQuery, walletRows]);
@@ -788,7 +791,7 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
           </SearchIconContainer>
           <SearchField
             value={query}
-            placeholder={t('Search wallets')}
+            placeholder={t('Search wallets or wallet IDs')}
             placeholderTextColor={theme.dark ? '#9BA3AE' : '#6B7280'}
             autoCapitalize="none"
             autoCorrect={false}
