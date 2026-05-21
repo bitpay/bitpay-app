@@ -700,6 +700,7 @@ const BuyAndSellRoot = ({
     },
   });
   const [refreshQuotesTrigger, setRefreshQuotesTrigger] = useState(0);
+  const [userModifiedAmount, setUserModifiedAmount] = useState(false);
   const [webViewModal, setWebViewModal] = useState<{
     open: boolean;
     url: string | undefined;
@@ -793,6 +794,7 @@ const BuyAndSellRoot = ({
     haptic('soft');
     setUseSendMax(false);
     setSelectedPillValue(null);
+    setUserModifiedAmount(true);
     let newValue;
     switch (val) {
       case 'reset':
@@ -2517,15 +2519,31 @@ const BuyAndSellRoot = ({
                 },
                 onSkipConnection: async (manualSkip: boolean) => {
                   hasInitializedRef.current = true;
-                  setButtonState('loading');
-                  setOpeningBrowser(true);
                   navigation.goBack();
                   logger.debug(
                     `[MoonpayEmbeddedBuy] ${
                       manualSkip ? 'User manually skipped' : 'Skipped'
                     } account connection, falling back to standard Moonpay flow.`,
                   );
-                  await sleep(600);
+                  // Wait for the back-transition to complete before setting loading
+                  // state, because the transitionEnd listener in BuyAndSellRoot
+                  // resets buttonState and openingBrowser on every transition.
+                  // Race against a 2500ms timeout in case transitionEnd never fires.
+                  await Promise.race([
+                    new Promise<void>(resolve => {
+                      const unsubscribe = navigation.addListener(
+                        'transitionEnd',
+                        () => {
+                          unsubscribe();
+                          resolve();
+                        },
+                      );
+                    }),
+                    new Promise<void>(resolve => setTimeout(resolve, 2500)),
+                  ]);
+                  setButtonState('loading');
+                  setOpeningBrowser(true);
+                  await sleep(2000);
                   continueToMoonpay(offer, paymentMethod, true);
                 },
               },
@@ -4175,6 +4193,9 @@ const BuyAndSellRoot = ({
               onSelectOffer={setSelectedOffer}
               onSelectPaymentMethod={setSelectedPaymentMethod}
               refreshTrigger={refreshQuotesTrigger}
+              immediateQuote={
+                !userModifiedAmount && !!fromAmount && !isNaN(fromAmount)
+              }
               preferMoonpayApplePay={
                 moonpayEmbeddedEnabled &&
                 !buyCryptoConfig?.moonpay?.config?.embeddedBuyDisabled
@@ -4197,6 +4218,7 @@ const BuyAndSellRoot = ({
               }
               onPillPress={(pillValue: number | string) => {
                 try {
+                  setUserModifiedAmount(true);
                   const pillValueStr = pillValue?.toString();
                   if (pillValueStr) {
                     if (context === 'buyCrypto') {

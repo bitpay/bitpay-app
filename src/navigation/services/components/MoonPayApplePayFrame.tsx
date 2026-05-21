@@ -35,6 +35,7 @@ interface MoonPayApplePayFrameProps {
   signature: string;
   onReady?: () => void;
   onComplete: (payload: ApplePayCompletePayload) => void;
+  onChallenge: (url: string) => void;
   onError: (error: ApplePayErrorPayload) => void;
   onQuoteExpired?: () => void;
 }
@@ -44,7 +45,15 @@ export const MoonPayApplePayFrame = forwardRef<
   MoonPayApplePayFrameProps
 >(
   (
-    {clientToken, signature, onReady, onComplete, onError, onQuoteExpired},
+    {
+      clientToken,
+      signature,
+      onReady,
+      onComplete,
+      onChallenge,
+      onError,
+      onQuoteExpired,
+    },
     ref,
   ) => {
     const [channelId] = useState(generateChannelId);
@@ -98,6 +107,14 @@ export const MoonPayApplePayFrame = forwardRef<
             }
             break;
           }
+          case 'challenge': {
+            const challengePayload = data.payload as {
+              kind: string;
+              url: string;
+            };
+            onChallenge(challengePayload.url);
+            break;
+          }
           case 'error': {
             const error = data.payload as ApplePayErrorPayload;
             if (error.code === 'quoteExpired') {
@@ -109,7 +126,7 @@ export const MoonPayApplePayFrame = forwardRef<
           }
         }
       },
-      [onReady, onComplete, onError, onQuoteExpired],
+      [onReady, onComplete, onChallenge, onError, onQuoteExpired],
     );
 
     return (

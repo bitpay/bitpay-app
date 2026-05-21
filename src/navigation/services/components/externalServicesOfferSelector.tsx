@@ -464,6 +464,7 @@ interface ExternalServicesOfferSelectorProps {
   };
   refreshTrigger?: number;
   preferMoonpayApplePay?: boolean;
+  immediateQuote?: boolean;
 }
 
 const ExternalServicesOfferSelector: React.FC<
@@ -491,6 +492,7 @@ const ExternalServicesOfferSelector: React.FC<
   preLoadPartnersData,
   refreshTrigger,
   preferMoonpayApplePay,
+  immediateQuote,
 }) => {
   const theme = useTheme();
   const {t} = useTranslation();
@@ -2824,10 +2826,13 @@ const ExternalServicesOfferSelector: React.FC<
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      if (context === 'buyCrypto') getBuyCryptoQuotes(selectedWallet);
-      if (context === 'sellCrypto') getSellCryptoQuotes(selectedWallet);
-    }, 2000);
+    timeoutRef.current = setTimeout(
+      () => {
+        if (context === 'buyCrypto') getBuyCryptoQuotes(selectedWallet);
+        if (context === 'sellCrypto') getSellCryptoQuotes(selectedWallet);
+      },
+      immediateQuote ? 0 : 2000,
+    );
 
     // Clean up the timeout on unmount
     return () => {

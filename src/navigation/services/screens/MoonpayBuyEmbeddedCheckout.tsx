@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, ScrollView} from 'react-native';
+import {ActivityIndicator, ScrollView, View, StyleSheet} from 'react-native';
 import {
   useTheme,
   RouteProp,
@@ -62,6 +62,10 @@ import {
   ApplePayErrorPayload,
   ApplePayFrameRef,
 } from '../components/MoonPayApplePayFrame';
+import {
+  MoonPayChallengeFrame,
+  ChallengeCompletePayload,
+} from '../components/MoonPayChallengeFrame';
 import {AppEffects} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import MoonpayLogo from '../../../components/icons/external-services/moonpay/moonpay-logo';
@@ -214,7 +218,6 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const BWC = BwcProvider.getInstance();
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user: User | undefined = useAppSelector(
@@ -238,6 +241,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const [initialQuoteSignature, setInitialQuoteSignature] = useState<
     string | null
   >(null);
+  const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
 
   const locatedInNYorWA =
@@ -458,6 +462,102 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     hidePaymentSent();
   };
 
+  const handleTransactionComplete = async (transaction: {
+    id: string;
+    status: string;
+  }) => {
+    cancelQuoteRefresh();
+    logger.debug(
+      'MoonPay transaction complete: ' + JSON.stringify(transaction),
+    );
+
+    showPaymentSent({
+      onCloseModal,
+      title: t('Transaction Submitted'),
+    });
+
+    const externalTransactionId = `${wallet.id}-${Date.now()}`;
+    const destinationChain = wallet.chain;
+    const coin = cloneDeep(wallet.currencyAbbreviation).toLowerCase();
+    const cryptoAmountReceiving = embeddedQuoteData?.destination?.amount
+      ? Number(embeddedQuoteData.destination.amount)
+      : Number(offer.amountReceiving);
+
+    const newData: MoonpayPaymentData = {
+      address: toAddress,
+      created_on: Date.now(),
+      crypto_amount: cryptoAmountReceiving,
+      chain: destinationChain,
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offer.buyAmount!,
+      fiat_total_amount: offer.amountCost!,
+      fiat_total_amount_currency: offer.fiatCurrency,
+      external_id: externalTransactionId,
+      payment_method: paymentMethod?.method,
+      status: 'embeddedPaymentRequestSent',
+      user_id: wallet.id,
+      user_eid: user?.eid,
+      is_embedded: true,
+      transaction_id: transaction.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestMoonpay({
+        moonpayPaymentData: newData,
+      }),
+    );
+
+    const analyticsData = {
+      exchange: 'moonpay',
+      fiatAmount: offer.amountCost || '',
+      feeAmount:
+        (offer.amountCost &&
+          offer.buyAmount &&
+          Number(offer.amountCost) - Number(offer.buyAmount)) ||
+        '',
+      fiatCurrency: offer.fiatCurrency || '',
+      coin: coin?.toLowerCase() || '',
+      chain: destinationChain.toLowerCase() || '',
+      cryptoAmount: cryptoAmountReceiving || '',
+      paymentMethod: paymentMethod?.method || '',
+      exchangeRate:
+        (cryptoAmountReceiving &&
+          offer.buyAmount &&
+          Number(offer.buyAmount) / cryptoAmountReceiving) ||
+        '',
+      isEmbedded: true,
+    };
+
+    dispatch(Analytics.track('Purchased Buy Crypto', analyticsData));
+
+    await sleep(1200);
+    const moonpaySettingsParams: MoonpaySettingsProps = {
+      incomingPaymentRequest: {
+        externalId: externalTransactionId,
+        transactionId: transaction.id,
+        status: transaction.status ?? newData.status,
+        flow: 'buy',
+      },
+    };
+
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 1,
+        routes: [
+          {
+            name: RootStacks.TABS,
+            params: {screen: TabsScreens.HOME},
+          },
+          {
+            name: ExternalServicesSettingsScreens.MOONPAY_SETTINGS,
+            params: moonpaySettingsParams,
+          },
+        ],
+      }),
+    );
+  };
+
   useEffect(() => {
     init();
 
@@ -472,7 +572,11 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (remainingTimeStr === 'expired' && !expiredAnalyticSent) {
+    if (
+      remainingTimeStr === 'expired' &&
+      !expiredAnalyticSent &&
+      !challengeUrl
+    ) {
       dispatch(
         Analytics.track('Failed Buy Crypto', {
           exchange: 'moonpay',
@@ -487,50 +591,14 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
-  }, [remainingTimeStr, expiredAnalyticSent]);
+  }, [remainingTimeStr, expiredAnalyticSent, challengeUrl]);
 
   return (
-    <MoonpayEmbeddedCheckoutContainer>
-      <ScrollView ref={scrollViewRef}>
-        <HeaderContainer>
-          <IconRow>
-            <CurrencyImage
-              img={wallet.img}
-              badgeUri={getBadgeImg(
-                getCurrencyAbbreviation(
-                  wallet.currencyAbbreviation,
-                  wallet.chain,
-                ),
-                wallet.chain,
-              )}
-              size={40}
-            />
-          </IconRow>
-
-          <Title>
-            {formatFiatAmount(Number(offer.fiatAmount), offer.fiatCurrency)}
-          </Title>
-          {isLoading || !embeddedQuoteData?.destination ? (
-            <MoonpayEmbeddedCheckoutSkeleton context="amount" />
-          ) : (
-            <Subtitle>
-              {embeddedQuoteData.destination.amount}{' '}
-              {embeddedQuoteData.destination.asset.code}
-            </Subtitle>
-          )}
-        </HeaderContainer>
-
-        <RowDataContainer>
-          <RowLabel>{t('Using')}</RowLabel>
-          <RowData>
-            {t('MoonPay using')} {paymentMethod?.label || 'Apple Pay'}
-          </RowData>
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
-          <RowLabel>{t('Destination')}</RowLabel>
-          <SelectedOptionContainer style={{height: 30}}>
-            <SelectedOptionCol>
+    <View style={styles.root}>
+      <MoonpayEmbeddedCheckoutContainer>
+        <ScrollView ref={scrollViewRef}>
+          <HeaderContainer>
+            <IconRow>
               <CurrencyImage
                 img={wallet.img}
                 badgeUri={getBadgeImg(
@@ -540,19 +608,56 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   ),
                   wallet.chain,
                 )}
-                size={12}
+                size={40}
               />
-              <SelectedOptionText
-                numberOfLines={1}
-                ellipsizeMode={'tail'}
-                style={{marginLeft: 5}}>
-                {wallet.walletName ? wallet.walletName : wallet.currencyName}
-              </SelectedOptionText>
-            </SelectedOptionCol>
-          </SelectedOptionContainer>
-        </RowDataContainer>
-        <ItemDivisor />
-        {/* <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
+            </IconRow>
+
+            <Title>
+              {formatFiatAmount(Number(offer.fiatAmount), offer.fiatCurrency)}
+            </Title>
+            {isLoading || !embeddedQuoteData?.destination ? (
+              <MoonpayEmbeddedCheckoutSkeleton context="amount" />
+            ) : (
+              <Subtitle>
+                {embeddedQuoteData.destination.amount}{' '}
+                {embeddedQuoteData.destination.asset.code}
+              </Subtitle>
+            )}
+          </HeaderContainer>
+
+          <RowDataContainer>
+            <RowLabel>{t('Using')}</RowLabel>
+            <RowData>
+              {t('MoonPay using')} {paymentMethod?.label || 'Apple Pay'}
+            </RowData>
+          </RowDataContainer>
+          <ItemDivisor />
+          <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
+            <RowLabel>{t('Destination')}</RowLabel>
+            <SelectedOptionContainer style={{height: 30}}>
+              <SelectedOptionCol>
+                <CurrencyImage
+                  img={wallet.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      wallet.currencyAbbreviation,
+                      wallet.chain,
+                    ),
+                    wallet.chain,
+                  )}
+                  size={12}
+                />
+                <SelectedOptionText
+                  numberOfLines={1}
+                  ellipsizeMode={'tail'}
+                  style={{marginLeft: 5}}>
+                  {wallet.walletName ? wallet.walletName : wallet.currencyName}
+                </SelectedOptionText>
+              </SelectedOptionCol>
+            </SelectedOptionContainer>
+          </RowDataContainer>
+          <ItemDivisor />
+          {/* <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
           <RowLabel>{t('Deposit Address')}</RowLabel>
           <SendToPill
             icon={
@@ -575,266 +680,236 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           />
         </RowDataContainer> 
         <ItemDivisor />*/}
-        {isLoading ? (
-          <MoonpayEmbeddedCheckoutSkeleton context="data" />
-        ) : (
-          <>
-            {embeddedQuoteData?.exchangeRate ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('Exchange Rate')}</RowLabel>
-                  {embeddedQuoteData?.exchangeRate ? (
-                    <RowData>
-                      {'1 ' + embeddedQuoteData.destination.asset.code + ' @ '}
-                      {formatFiatAmount(
-                        Number(embeddedQuoteData.exchangeRate),
-                        embeddedQuoteData.source.asset.code,
-                      )}
-                    </RowData>
-                  ) : (
-                    <RowData>...</RowData>
-                  )}
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : null}
-            <RowDataContainer>
-              <RowLabel>{t('New quote in')}</RowLabel>
-              {!!remainingTimeStr && (
-                <RowData
-                  style={{
-                    color: paymentExpired
-                      ? Caution
-                      : theme.dark
-                      ? White
-                      : Black,
-                  }}>
-                  {remainingTimeStr === 'expired'
-                    ? t('Expired')
-                    : remainingTimeStr}
-                </RowData>
-              )}
-            </RowDataContainer>
-            <ItemDivisor />
-            {embeddedQuoteData?.fees?.network ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('Network Fee')}</RowLabel>
-                  {embeddedQuoteData?.fees?.network ? (
-                    <RowData>
-                      {formatFiatAmount(
-                        Number(embeddedQuoteData.fees.network.amount),
-                        embeddedQuoteData.fees.network.asset.code,
-                      )}
-                    </RowData>
-                  ) : (
-                    <RowData>...</RowData>
-                  )}
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : null}
-            {embeddedQuoteData?.fees?.moonpay ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('Partner Fee')}</RowLabel>
-                  {embeddedQuoteData?.fees?.moonpay?.amount ? (
-                    <RowData>
-                      {formatFiatAmount(
-                        Number(embeddedQuoteData.fees.moonpay.amount),
-                        embeddedQuoteData.fees.moonpay.asset.code,
-                      )}
-                    </RowData>
-                  ) : (
-                    <RowData>...</RowData>
-                  )}
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : null}
-            <ItemDivisor />
-            {embeddedQuoteData?.fees?.partner ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('BitPay Fee')}</RowLabel>
-                  {embeddedQuoteData?.fees?.partner?.amount ? (
-                    <RowData>
-                      {formatFiatAmount(
-                        Number(embeddedQuoteData.fees.partner.amount),
-                        embeddedQuoteData.fees.partner.asset.code,
-                      )}
-                    </RowData>
-                  ) : (
-                    <RowData>...</RowData>
-                  )}
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : null}
-            {embeddedQuoteData && totalFiatAmount ? (
+          {isLoading ? (
+            <MoonpayEmbeddedCheckoutSkeleton context="data" />
+          ) : (
+            <>
+              {embeddedQuoteData?.exchangeRate ? (
+                <>
+                  <RowDataContainer>
+                    <RowLabel>{t('Exchange Rate')}</RowLabel>
+                    {embeddedQuoteData?.exchangeRate ? (
+                      <RowData>
+                        {'1 ' +
+                          embeddedQuoteData.destination.asset.code +
+                          ' @ '}
+                        {formatFiatAmount(
+                          Number(embeddedQuoteData.exchangeRate),
+                          embeddedQuoteData.source.asset.code,
+                        )}
+                      </RowData>
+                    ) : (
+                      <RowData>...</RowData>
+                    )}
+                  </RowDataContainer>
+                  <ItemDivisor />
+                </>
+              ) : null}
               <RowDataContainer>
-                <H7>{t('Receiving')}</H7>
-                {!!embeddedQuoteData?.destination && (
-                  <TotalContainer>
-                    <CryptoTotalText>
-                      {embeddedQuoteData.destination.amount}{' '}
-                      {embeddedQuoteData.destination.asset.code}
-                    </CryptoTotalText>
-                    <FiatTotalText>
-                      {'≈ '}
-                      {formatFiatAmount(
-                        totalFiatAmount,
-                        embeddedQuoteData.source.asset.code,
-                      )}
-                    </FiatTotalText>
-                  </TotalContainer>
+                <RowLabel>{t('New quote in')}</RowLabel>
+                {!!remainingTimeStr && (
+                  <RowData
+                    style={{
+                      color: paymentExpired
+                        ? Caution
+                        : theme.dark
+                        ? White
+                        : Black,
+                    }}>
+                    {remainingTimeStr === 'expired'
+                      ? t('Expired')
+                      : remainingTimeStr}
+                  </RowData>
                 )}
               </RowDataContainer>
-            ) : null}
-          </>
-        )}
-      </ScrollView>
+              <ItemDivisor />
+              {embeddedQuoteData?.fees?.network ? (
+                <>
+                  <RowDataContainer>
+                    <RowLabel>{t('Network Fee')}</RowLabel>
+                    {embeddedQuoteData?.fees?.network ? (
+                      <RowData>
+                        {formatFiatAmount(
+                          Number(embeddedQuoteData.fees.network.amount),
+                          embeddedQuoteData.fees.network.asset.code,
+                        )}
+                      </RowData>
+                    ) : (
+                      <RowData>...</RowData>
+                    )}
+                  </RowDataContainer>
+                  <ItemDivisor />
+                </>
+              ) : null}
+              {embeddedQuoteData?.fees?.moonpay ? (
+                <>
+                  <RowDataContainer>
+                    <RowLabel>{t('Partner Fee')}</RowLabel>
+                    {embeddedQuoteData?.fees?.moonpay?.amount ? (
+                      <RowData>
+                        {formatFiatAmount(
+                          Number(embeddedQuoteData.fees.moonpay.amount),
+                          embeddedQuoteData.fees.moonpay.asset.code,
+                        )}
+                      </RowData>
+                    ) : (
+                      <RowData>...</RowData>
+                    )}
+                  </RowDataContainer>
+                  <ItemDivisor />
+                </>
+              ) : null}
+              <ItemDivisor />
+              {embeddedQuoteData?.fees?.partner ? (
+                <>
+                  <RowDataContainer>
+                    <RowLabel>{t('BitPay Fee')}</RowLabel>
+                    {embeddedQuoteData?.fees?.partner?.amount ? (
+                      <RowData>
+                        {formatFiatAmount(
+                          Number(embeddedQuoteData.fees.partner.amount),
+                          embeddedQuoteData.fees.partner.asset.code,
+                        )}
+                      </RowData>
+                    ) : (
+                      <RowData>...</RowData>
+                    )}
+                  </RowDataContainer>
+                  <ItemDivisor />
+                </>
+              ) : null}
+              {embeddedQuoteData && totalFiatAmount ? (
+                <RowDataContainer>
+                  <H7>{t('Receiving')}</H7>
+                  {!!embeddedQuoteData?.destination && (
+                    <TotalContainer>
+                      <CryptoTotalText>
+                        {embeddedQuoteData.destination.amount}{' '}
+                        {embeddedQuoteData.destination.asset.code}
+                      </CryptoTotalText>
+                      <FiatTotalText>
+                        {'≈ '}
+                        {formatFiatAmount(
+                          totalFiatAmount,
+                          embeddedQuoteData.source.asset.code,
+                        )}
+                      </FiatTotalText>
+                    </TotalContainer>
+                  )}
+                </RowDataContainer>
+              ) : null}
+            </>
+          )}
+        </ScrollView>
 
-      <BottomSection>
-        {isNYorWA ? (
-          <LegalText>
-            {t("I agree to MoonPay's")}{' '}
-            <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
-              {t('Terms of Use')}
-            </LegalLink>{' '}
-            {t(
-              'and understand that, once executed, this transaction cannot be cancelled, recalled, refunded, or otherwise undone. Fraudulent transactions may result in the loss of funds with no recourse.',
-            )}
-          </LegalText>
-        ) : (
-          <LegalText>
-            {t("By clicking below, you agree to MoonPay's")}{' '}
-            <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
-              {t('Terms of Use')}
-            </LegalLink>
-            {'.'}
-          </LegalText>
-        )}
-        {!isLoading && !paymentExpired && initialQuoteSignature ? (
-          <MoonPayApplePayFrame
-            ref={applePayFrameRef}
-            clientToken={credentials.clientToken}
-            signature={initialQuoteSignature}
-            onComplete={async (payload: ApplePayCompletePayload) => {
-              cancelQuoteRefresh();
-              logger.debug('Apple Pay complete: ' + JSON.stringify(payload));
-
-              showPaymentSent({
-                onCloseModal,
-                title: t('Transaction Submitted'),
-              });
-
-              const externalTransactionId = `${wallet.id}-${Date.now()}`;
-              const destinationChain = wallet.chain;
-              const coin = cloneDeep(wallet.currencyAbbreviation).toLowerCase();
-              const cryptoAmountReceiving = embeddedQuoteData?.destination
-                ?.amount
-                ? Number(embeddedQuoteData.destination.amount)
-                : Number(offer.amountReceiving);
-
-              const newData: MoonpayPaymentData = {
-                address: toAddress,
-                created_on: Date.now(),
-                crypto_amount: cryptoAmountReceiving,
-                chain: destinationChain,
-                coin: coin.toUpperCase(),
-                env: __DEV__ ? 'dev' : 'prod',
-                fiat_base_amount: offer.buyAmount!,
-                fiat_total_amount: offer.amountCost!,
-                fiat_total_amount_currency: offer.fiatCurrency,
-                external_id: externalTransactionId,
-                payment_method: paymentMethod?.method,
-                status: 'embeddedPaymentRequestSent',
-                user_id: wallet.id,
-                user_eid: user?.eid,
-                is_embedded: true,
-                transaction_id: payload.transaction.id,
-              };
-
-              dispatch(
-                BuyCryptoActions.successPaymentRequestMoonpay({
-                  moonpayPaymentData: newData,
-                }),
-              );
-
-              const analyticsData = {
-                exchange: 'moonpay',
-                fiatAmount: offer.amountCost || '',
-                feeAmount:
-                  (offer.amountCost &&
-                    offer.buyAmount &&
-                    Number(offer.amountCost) - Number(offer.buyAmount)) ||
-                  '',
-                fiatCurrency: offer.fiatCurrency || '',
-                coin: coin?.toLowerCase() || '',
-                chain: destinationChain.toLowerCase() || '',
-                cryptoAmount: cryptoAmountReceiving || '',
-                paymentMethod: paymentMethod?.method || '',
-                exchangeRate:
-                  (cryptoAmountReceiving &&
-                    offer.buyAmount &&
-                    Number(offer.buyAmount) / cryptoAmountReceiving) ||
-                  '',
-                isEmbedded: true,
-              };
-
-              dispatch(Analytics.track('Purchased Buy Crypto', analyticsData));
-
-              await sleep(1200);
-              const moonpaySettingsParams: MoonpaySettingsProps = {
-                incomingPaymentRequest: {
-                  externalId: externalTransactionId,
-                  transactionId: payload.transaction.id,
-                  status: payload.transaction.status ?? newData.status,
-                  flow: 'buy',
-                },
-              };
-
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 1,
-                  routes: [
-                    {
-                      name: RootStacks.TABS,
-                      params: {screen: TabsScreens.HOME},
-                    },
-                    {
-                      name: ExternalServicesSettingsScreens.MOONPAY_SETTINGS,
-                      params: moonpaySettingsParams,
-                    },
-                  ],
-                }),
-              );
+        <BottomSection>
+          {isNYorWA ? (
+            <LegalText>
+              {t("I agree to MoonPay's")}{' '}
+              <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
+                {t('Terms of Use')}
+              </LegalLink>{' '}
+              {t(
+                'and understand that, once executed, this transaction cannot be cancelled, recalled, refunded, or otherwise undone. Fraudulent transactions may result in the loss of funds with no recourse.',
+              )}
+            </LegalText>
+          ) : (
+            <LegalText>
+              {t("By clicking below, you agree to MoonPay's")}{' '}
+              <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
+                {t('Terms of Use')}
+              </LegalLink>
+              {'.'}
+            </LegalText>
+          )}
+          {!isLoading && !paymentExpired && initialQuoteSignature ? (
+            <MoonPayApplePayFrame
+              ref={applePayFrameRef}
+              clientToken={credentials.clientToken}
+              signature={initialQuoteSignature}
+              onComplete={async (payload: ApplePayCompletePayload) => {
+                await handleTransactionComplete(payload.transaction);
+              }}
+              onChallenge={(url: string) => {
+                cancelQuoteRefresh();
+                logger.debug(
+                  'MoonPay Apple Pay challenge required, opening challenge frame',
+                );
+                setChallengeUrl(url);
+              }}
+              onQuoteExpired={refreshQuote}
+              onError={(error: ApplePayErrorPayload) => {
+                cancelQuoteRefresh();
+                showError(error, error.code, error.message);
+              }}
+            />
+          ) : (
+            <SpinnerContainer>
+              <ActivityIndicator color={ProgressBlue} />
+            </SpinnerContainer>
+          )}
+          <PoweredByContainer>
+            <PoweredByText>{t('Powered by')}</PoweredByText>
+            <MoonpayLogo
+              iconOnly={true}
+              widthIcon={13}
+              heightIcon={13}
+              fillColorIcon={theme.dark ? White : '#565656'}
+            />
+            <PoweredByPartner>MoonPay Rails</PoweredByPartner>
+          </PoweredByContainer>
+        </BottomSection>
+      </MoonpayEmbeddedCheckoutContainer>
+      {challengeUrl ? (
+        <View style={StyleSheet.absoluteFill}>
+          <MoonPayChallengeFrame
+            challengeUrl={challengeUrl}
+            onComplete={async (payload: ChallengeCompletePayload) => {
+              setChallengeUrl(null);
+              if (payload?.transaction) {
+                logger.debug(
+                  'MoonPay challenge completed, transaction: ' +
+                    JSON.stringify(payload.transaction),
+                );
+                await handleTransactionComplete(payload.transaction);
+              } else {
+                logger.error(
+                  'MoonPay challenge completed but no transaction data received',
+                );
+                showError(
+                  t('Transaction completed but no transaction data received.'),
+                  'Challenge completed without transaction data',
+                );
+              }
             }}
-            onQuoteExpired={refreshQuote}
-            onError={(error: ApplePayErrorPayload) => {
+            onCancelled={async () => {
+              setChallengeUrl(null);
+              setExpiredAnalyticSent(false);
+              logger.debug('MoonPay challenge cancelled.');
+              if (countDown) {
+                clearInterval(countDown);
+              }
+              setIsLoading(true);
+              try {
+                await init();
+              } catch (err) {
+                showError(err);
+              }
+            }}
+            onError={error => {
+              setChallengeUrl(null);
               cancelQuoteRefresh();
               showError(error, error.code, error.message);
             }}
           />
-        ) : (
-          <SpinnerContainer>
-            <ActivityIndicator color={ProgressBlue} />
-          </SpinnerContainer>
-        )}
-        <PoweredByContainer>
-          <PoweredByText>{t('Powered by')}</PoweredByText>
-          <MoonpayLogo
-            iconOnly={true}
-            widthIcon={13}
-            heightIcon={13}
-            fillColorIcon={theme.dark ? White : '#565656'}
-          />
-          <PoweredByPartner>MoonPay Rails</PoweredByPartner>
-        </PoweredByContainer>
-      </BottomSection>
-    </MoonpayEmbeddedCheckoutContainer>
+        </View>
+      ) : null}
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {flex: 1},
+});
 
 export default MoonpayBuyEmbeddedCheckout;

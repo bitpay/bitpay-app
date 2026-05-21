@@ -56,7 +56,7 @@ export function MoonpayEmbeddedCredentialManager() {
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
   );
-  const country = locationData?.countryShortCode || 'US';
+  const country = locationData?.countryShortCode;
 
   const [applePaySupported, setApplePaySupported] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | undefined>();
@@ -79,7 +79,7 @@ export function MoonpayEmbeddedCredentialManager() {
 
   const localConditionsMet =
     Platform.OS === 'ios' &&
-    (country === 'US' || user?.country === 'US') &&
+    country === 'US' &&
     !!userEid &&
     applePaySupported;
 
