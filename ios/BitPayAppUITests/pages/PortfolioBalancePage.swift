@@ -82,11 +82,39 @@ class PortfolioBalancePage {
     XCTFail("Failed to open 'Select an Option' screen after 5 attempts")
   }
   
+//  func tapSendButton(timeout: TimeInterval = 900) {
+//    XCTAssertTrue(
+//        sendButton.waitForExistence(timeout: timeout),
+//        "Send button did not appear within \(timeout) seconds"
+//      )
+//    sendButton.tap()
+//  }
+  
   func tapSendButton(timeout: TimeInterval = 900) {
-    XCTAssertTrue(
-        sendButton.waitForExistence(timeout: timeout),
+    
+    let isDisplayed = sendButton.waitForExistence(timeout: timeout)
+    
+    if !isDisplayed {
+      
+      // Attach full app hierarchy/page source into xcresult
+      let pageSourceAttachment = XCTAttachment(
+        string: app.debugDescription
+      )
+      
+      pageSourceAttachment.name = "App Debug Description XML"
+      pageSourceAttachment.lifetime = .keepAlways
+      
+      XCTContext.runActivity(
+        named: "Attach App Debug Description"
+      ) { activity in
+        activity.add(pageSourceAttachment)
+      }
+      
+      XCTFail(
         "Send button did not appear within \(timeout) seconds"
       )
+    }
+    
     sendButton.tap()
   }
   
