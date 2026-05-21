@@ -31,6 +31,7 @@ interface BodyProps {
   pillText?: string;
   needsBackup?: boolean;
   percentageDifference?: number | null;
+  percentageSuffix?: string;
   hideKeyBalance: boolean;
   pendingTssSession?: boolean;
 }
@@ -108,6 +109,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
     pillText,
     description,
     needsBackup,
+    percentageSuffix,
     hideKeyBalance,
     pendingTssSession,
   } = body;
@@ -125,6 +127,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
           {percentageDifference || percentageDifference === 0 ? (
             <Percentage
               percentageDifference={percentageDifference}
+              suffix={percentageSuffix}
               fractionDigits={2}
             />
           ) : null}

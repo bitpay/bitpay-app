@@ -2,7 +2,6 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {GraphPoint} from 'react-native-graph';
 import type {FiatRateInterval} from '../../store/rate/rate.models';
 import {FIAT_RATE_SERIES_TARGET_POINTS} from '../../store/rate/rate.models';
-import type {Wallet} from '../../store/wallet/wallet.models';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../constants/wallet';
 import type {HydratedBalanceChartSeries} from '../../utils/portfolio/chartCache';
 import {
@@ -15,6 +14,7 @@ import {
   formatRangeOrSelectedPointLabel,
   getRangeLabelForFiatTimeframe,
 } from './fiatTimeframes';
+import {getFiatTimeframeWindowMs} from '../../utils/fiatTimeframes';
 import {runPortfolioBalanceChartViewModelQuery} from '../../portfolio/ui/common';
 import type {PortfolioBalanceChartScope} from '../../portfolio/ui/hooks/usePortfolioBalanceChartScope';
 import usePortfolioHistoricalRateDepsCache from '../../portfolio/ui/hooks/usePortfolioHistoricalRateDepsCache';
@@ -34,7 +34,7 @@ type VisibleSeriesState = {
 
 type VisibleSeriesCandidate = Omit<VisibleSeriesState, 'seriesSignature'>;
 
-type BalanceChartCallbackAnalysisPoint = {
+export type BalanceChartCallbackAnalysisPoint = {
   timestamp?: number;
   totalFiatBalance?: number;
   totalPnlChange?: number;
@@ -42,18 +42,15 @@ type BalanceChartCallbackAnalysisPoint = {
   totalCryptoBalanceFormatted?: string;
 };
 
-type BalanceChartCallbackChangeRowData = {
-  percent: number;
-  deltaFiatFormatted?: string;
-  rangeLabel?: string;
-};
+type BalanceChartCallbackChangeRowData = ChangeRowData;
 
 export type UseBalanceChartDisplayModelArgs = {
-  wallets: Wallet[];
   scope: PortfolioBalanceChartScope;
   initialSelectedTimeframe: FiatRateInterval;
   balanceOffset: number;
   showLoaderWhenNoSnapshots: boolean;
+  renderZeroBalanceWhenNoSnapshots: boolean;
+  isBalanceChartDataReadyToQuery?: boolean;
   t: (key: string) => string;
   onSelectedBalanceChange?: (balance?: number) => void;
   onChangeRowData?: (data?: BalanceChartCallbackChangeRowData) => void;
@@ -86,6 +83,7 @@ export type BalanceChartDisplayModel = {
 };
 
 const PENDING_CHART_OVERLAY_DELAY_MS = 120;
+const ZERO_BALANCE_ALL_TIME_WINDOW_MS = 5 * 365 * 24 * 60 * 60 * 1000;
 
 const getFinitePointTimestamp = (point: GraphPoint | undefined): number => {
   const timestamp = point?.date?.getTime?.();
@@ -140,43 +138,78 @@ export const areGraphPointsEquivalent = (
     return false;
   }
 
-  for (let index = 0; index < left.length; index++) {
-    if (
-      left[index]?.date?.getTime?.() !== right[index]?.date?.getTime?.() ||
-      left[index]?.value !== right[index]?.value
-    ) {
-      return false;
-    }
-  }
-
-  return true;
+  return left.every(
+    (point, index) =>
+      point?.date?.getTime?.() === right[index]?.date?.getTime?.() &&
+      point?.value === right[index]?.value,
+  );
 };
 
 const preserveGraphPointsWhenEquivalent = (
   previous: HydratedBalanceChartSeries | undefined,
   next: HydratedBalanceChartSeries,
 ): HydratedBalanceChartSeries => {
-  if (
-    !previous ||
+  return !previous ||
     !areGraphPointsEquivalent(previous.graphPoints, next.graphPoints)
-  ) {
-    return next;
-  }
+    ? next
+    : {
+        ...next,
+        graphPoints: previous.graphPoints,
+        minPoint: previous.minPoint,
+        maxPoint: previous.maxPoint,
+      };
+};
+
+const buildZeroBalanceSeries = (args: {
+  asOfMs?: number;
+  timeframe: FiatRateInterval;
+}): HydratedBalanceChartSeries => {
+  const endMs =
+    typeof args.asOfMs === 'number' && Number.isFinite(args.asOfMs)
+      ? args.asOfMs
+      : Date.now();
+  const windowMs =
+    getFiatTimeframeWindowMs(args.timeframe) || ZERO_BALANCE_ALL_TIME_WINDOW_MS;
+  const pointCount = Math.max(2, FIAT_RATE_SERIES_TARGET_POINTS);
+  const startMs = endMs - windowMs;
+  const stepMs = windowMs / (pointCount - 1);
+  const graphPoints = Array.from({length: pointCount}, (_, index) => ({
+    date: new Date(Math.round(startMs + stepMs * index)),
+    value: 0,
+  }));
+  const analysisPoints = graphPoints.map(point => ({
+    timestamp: point.date.getTime(),
+    totalCryptoBalanceAtomic: '0',
+    totalCryptoBalanceFormatted: '0',
+    totalFiatBalance: 0,
+    totalRemainingCostBasisFiat: 0,
+    totalUnrealizedPnlFiat: 0,
+    totalPnlChange: 0,
+    totalPnlPercent: 0,
+    byWalletId: {},
+  }));
+  const pointByTimestamp = new Map<number, PnlAnalysisPoint>(
+    analysisPoints.map(point => [point.timestamp, point]),
+  );
 
   return {
-    ...next,
-    graphPoints: previous.graphPoints,
-    minPoint: previous.minPoint,
-    maxPoint: previous.maxPoint,
+    graphPoints,
+    analysisPoints,
+    pointByTimestamp,
+    minIndex: 0,
+    maxIndex: 0,
+    minPoint: graphPoints[0],
+    maxPoint: graphPoints[0],
   };
 };
 
 export function useBalanceChartDisplayModel({
-  wallets,
   scope,
   initialSelectedTimeframe,
   balanceOffset,
   showLoaderWhenNoSnapshots,
+  renderZeroBalanceWhenNoSnapshots,
+  isBalanceChartDataReadyToQuery = true,
   t,
   onSelectedBalanceChange,
   onChangeRowData,
@@ -196,14 +229,12 @@ export function useBalanceChartDisplayModel({
     storedWalletRequestSig,
     storedWallets,
   } = scope;
-  const hasAnyWallets = useMemo(
-    () =>
-      wallets.some(wallet => {
-        const walletId = String(wallet?.id || '');
-        return !!walletId && !!wallet;
-      }),
-    [wallets],
-  );
+  const hasAnyWallets = storedWallets.some(wallet => {
+    const walletId = String(
+      wallet?.walletId || wallet?.summary?.walletId || '',
+    );
+    return !!walletId && !!wallet;
+  });
 
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
     initialSelectedTimeframe,
@@ -212,7 +243,9 @@ export function useBalanceChartDisplayModel({
     VisibleSeriesState | undefined
   >();
   const [selectedPoint, setSelectedPoint] = useState<GraphPoint | undefined>();
-  const [loading, setLoading] = useState(hasAnyWallets);
+  const [loading, setLoading] = useState(
+    hasAnyWallets && !renderZeroBalanceWhenNoSnapshots,
+  );
   const [pendingOverlayVisible, setPendingOverlayVisible] = useState(false);
   const [error, setError] = useState<Error | undefined>();
 
@@ -274,17 +307,13 @@ export function useBalanceChartDisplayModel({
           prev?.scopeId === candidate.scopeId &&
           prev?.quoteCurrency === candidate.quoteCurrency &&
           prev?.timeframe === candidate.timeframe;
-        const graphPointsEquivalent =
-          sameVisibleOwner &&
-          areGraphPointsEquivalent(
-            prev?.series.graphPoints,
-            candidate.series.graphPoints,
-          );
-
         if (
           prev &&
           sameVisibleOwner &&
-          graphPointsEquivalent &&
+          areGraphPointsEquivalent(
+            prev.series.graphPoints,
+            candidate.series.graphPoints,
+          ) &&
           prev.seriesSignature === candidateSignature
         ) {
           animateNextSeriesCommitRef.current = false;
@@ -320,45 +349,20 @@ export function useBalanceChartDisplayModel({
     quoteCurrency: committedQueryQuoteCurrency,
     timeframes: [selectedTimeframe],
     maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
-    enabled: !!committedQueryQuoteCurrency,
+    enabled: !!committedQueryQuoteCurrency && !renderZeroBalanceWhenNoSnapshots,
   });
 
-  const queryRevisionKey = useMemo(() => {
-    return [
-      scopeId,
-      selectedTimeframe,
-      chartDataRevisionSig,
-      storedWalletRequestSig,
-      currentRatesSignature,
-      currentSpotRatesSignature,
-      historicalRateCacheRevision,
-    ].join('|');
-  }, [
+  const queryRevisionKey = [
+    scopeId,
+    selectedTimeframe,
     chartDataRevisionSig,
+    storedWalletRequestSig,
     currentRatesSignature,
     currentSpotRatesSignature,
     historicalRateCacheRevision,
-    scopeId,
-    selectedTimeframe,
-    storedWalletRequestSig,
-  ]);
+  ].join('|');
 
-  const chartQueryArgsRef = useRef({
-    wallets: storedWallets,
-    quoteCurrency: committedQueryQuoteCurrency,
-    timeframe: selectedTimeframe,
-    maxPoints: FIAT_RATE_SERIES_TARGET_POINTS,
-    currentRatesByAssetId,
-    dataRevisionSig: chartDataRevisionSig,
-    walletIds: sortedWalletIds,
-    balanceOffset,
-    asOfMs,
-    summaryCacheRevisionSig: [
-      currentSpotRatesSignature,
-      historicalRateCacheRevision,
-    ].join('|'),
-  });
-  chartQueryArgsRef.current = {
+  const chartQueryArgs = {
     wallets: storedWallets,
     quoteCurrency: committedQueryQuoteCurrency,
     timeframe: selectedTimeframe,
@@ -373,8 +377,39 @@ export function useBalanceChartDisplayModel({
       historicalRateCacheRevision,
     ].join('|'),
   };
+  const chartQueryArgsRef = useRef(chartQueryArgs);
+  chartQueryArgsRef.current = chartQueryArgs;
 
   useEffect(() => {
+    if (!isBalanceChartDataReadyToQuery) {
+      activeRequestIdRef.current += 1;
+      pendingSelectedTimestampRef.current = undefined;
+      gestureStartedRef.current = false;
+      lastHapticPointTsRef.current = undefined;
+      setSelectedPoint(undefined);
+      setVisibleState(undefined);
+      setLoading(true);
+      setError(undefined);
+      onSelectedBalanceChangeRef.current?.(undefined);
+      return;
+    }
+
+    if (renderZeroBalanceWhenNoSnapshots) {
+      commitVisibleSeries({
+        series: buildZeroBalanceSeries({
+          asOfMs,
+          timeframe: selectedTimeframe,
+        }),
+        timeframe: selectedTimeframe,
+        queryRevisionKey,
+        quoteCurrency: committedQueryQuoteCurrency,
+        scopeId,
+      });
+      setLoading(false);
+      setError(undefined);
+      return;
+    }
+
     if (shouldWaitForHistoricalRates) {
       setLoading(true);
       setError(undefined);
@@ -466,10 +501,14 @@ export function useBalanceChartDisplayModel({
     commitVisibleSeries,
     chartDataRevisionSig,
     committedQueryQuoteCurrency,
+    isBalanceChartDataReadyToQuery,
     queryRevisionKey,
+    renderZeroBalanceWhenNoSnapshots,
     shouldWaitForHistoricalRates,
     scopeId,
     sortedWalletIds,
+    asOfMs,
+    selectedTimeframe,
   ]);
 
   useEffect(() => {
@@ -501,11 +540,8 @@ export function useBalanceChartDisplayModel({
     onSelectedBalanceChangeRef.current?.(undefined);
   }, [committedQueryQuoteCurrency, queryRevisionKey, scopeId]);
 
-  useEffect(() => {
-    onSelectionActiveChangeRef.current?.(!!selectedPoint);
-  }, [selectedPoint]);
-
   const activeVisibleState =
+    isBalanceChartDataReadyToQuery &&
     visibleState?.scopeId === scopeId &&
     visibleState?.quoteCurrency === committedQueryQuoteCurrency
       ? visibleState
@@ -514,6 +550,13 @@ export function useBalanceChartDisplayModel({
   const visibleTimeframe = activeVisibleState?.timeframe ?? selectedTimeframe;
   const visibleQuoteCurrency =
     activeVisibleState?.quoteCurrency ?? committedQueryQuoteCurrency;
+  const displayedSelectedPoint = isBalanceChartDataReadyToQuery
+    ? selectedPoint
+    : undefined;
+
+  useEffect(() => {
+    onSelectionActiveChangeRef.current?.(!!displayedSelectedPoint);
+  }, [displayedSelectedPoint]);
 
   useEffect(() => {
     const pendingTimestamp = pendingSelectedTimestampRef.current;
@@ -550,30 +593,23 @@ export function useBalanceChartDisplayModel({
     );
   }, [balanceOffset, queryRevisionKey, visibleSeries]);
 
-  const rangeLabel = useMemo(
-    () => getRangeLabelForFiatTimeframe(t, visibleTimeframe),
-    [visibleTimeframe, t],
-  );
+  const rangeLabel = getRangeLabelForFiatTimeframe(t, visibleTimeframe);
 
-  const displayedRangeMs = useMemo(() => {
-    const firstTimestamp = visibleSeries?.analysisPoints?.[0]?.timestamp;
-    const lastTimestamp =
-      visibleSeries?.analysisPoints?.[
-        (visibleSeries.analysisPoints?.length || 1) - 1
-      ]?.timestamp;
-
-    return typeof firstTimestamp === 'number' &&
-      typeof lastTimestamp === 'number'
-      ? Math.max(0, lastTimestamp - firstTimestamp)
+  const firstVisibleTimestamp = visibleSeries?.analysisPoints?.[0]?.timestamp;
+  const lastVisibleTimestamp =
+    visibleSeries?.analysisPoints?.[
+      (visibleSeries.analysisPoints?.length || 1) - 1
+    ]?.timestamp;
+  const displayedRangeMs =
+    typeof firstVisibleTimestamp === 'number' &&
+    typeof lastVisibleTimestamp === 'number'
+      ? Math.max(0, lastVisibleTimestamp - firstVisibleTimestamp)
       : undefined;
-  }, [visibleSeries]);
 
-  const displayedAnalysisPoint = useMemo(() => {
-    return getDisplayedBalanceHistoryAnalysisPoint({
-      selectedPoint,
-      activeSeries: visibleSeries,
-    });
-  }, [selectedPoint, visibleSeries]);
+  const displayedAnalysisPoint = getDisplayedBalanceHistoryAnalysisPoint({
+    selectedPoint: displayedSelectedPoint,
+    activeSeries: visibleSeries,
+  });
 
   const displayedChangeRowData = useMemo<ChangeRowData | undefined>(() => {
     return buildBalanceHistoryChartChangeRowData({
@@ -582,7 +618,7 @@ export function useBalanceChartDisplayModel({
       label: formatRangeOrSelectedPointLabel({
         rangeLabel,
         selectedTimeframe: visibleTimeframe,
-        selectedDate: selectedPoint?.date,
+        selectedDate: displayedSelectedPoint?.date,
         displayedRangeMs,
       }),
     });
@@ -590,7 +626,7 @@ export function useBalanceChartDisplayModel({
     displayedAnalysisPoint,
     displayedRangeMs,
     rangeLabel,
-    selectedPoint?.date,
+    displayedSelectedPoint?.date,
     visibleQuoteCurrency,
     visibleTimeframe,
   ]);
@@ -622,9 +658,11 @@ export function useBalanceChartDisplayModel({
     );
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
-  const hasRenderableSeries = !!visibleSeries?.graphPoints?.length;
-  const isBusy = loading;
-  const shouldDelayPendingOverlay = isBusy && hasRenderableSeries;
+  const hasRenderableSeries =
+    isBalanceChartDataReadyToQuery &&
+    (visibleSeries?.graphPoints?.length || 0) >= 2;
+  const shouldDelayPendingOverlay =
+    isBalanceChartDataReadyToQuery && loading && hasRenderableSeries;
 
   useEffect(() => {
     if (!shouldDelayPendingOverlay) {
@@ -642,9 +680,10 @@ export function useBalanceChartDisplayModel({
   }, [shouldDelayPendingOverlay]);
 
   const shouldShowLoader =
+    !isBalanceChartDataReadyToQuery ||
     pendingOverlayVisible ||
-    (isBusy && !hasRenderableSeries) ||
-    (!hasRenderableSeries && showLoaderWhenNoSnapshots && hasAnyWallets);
+    (!hasRenderableSeries &&
+      (loading || (showLoaderWhenNoSnapshots && hasAnyWallets)));
 
   const onGestureStarted = useCallback(() => {
     if (!hasRenderableSeries) {
@@ -670,7 +709,11 @@ export function useBalanceChartDisplayModel({
 
   const onPointSelected = useCallback(
     (point: GraphPoint) => {
-      if (!gestureStartedRef.current) {
+      if (
+        !isBalanceChartDataReadyToQuery ||
+        !visibleSeries ||
+        !gestureStartedRef.current
+      ) {
         return;
       }
 
@@ -690,7 +733,7 @@ export function useBalanceChartDisplayModel({
         lastHapticPointTsRef.current = pointTs;
       }
     },
-    [balanceOffset, visibleSeries],
+    [balanceOffset, isBalanceChartDataReadyToQuery, visibleSeries],
   );
 
   const onTimeframeSelect = useCallback(
@@ -715,11 +758,13 @@ export function useBalanceChartDisplayModel({
     visibleSeries,
     visibleTimeframe,
     visibleQuoteCurrency,
-    isLoading: loading,
-    pendingOverlayVisible,
+    isLoading: loading || !isBalanceChartDataReadyToQuery,
+    pendingOverlayVisible: isBalanceChartDataReadyToQuery
+      ? pendingOverlayVisible
+      : false,
     shouldShowLoader,
-    error,
-    selectedPoint,
+    error: isBalanceChartDataReadyToQuery ? error : undefined,
+    selectedPoint: displayedSelectedPoint,
     displayedAnalysisPoint,
     displayedChangeRowData,
     hasRenderableSeries,

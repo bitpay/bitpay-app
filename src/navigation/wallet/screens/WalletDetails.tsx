@@ -26,8 +26,12 @@ import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
+import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
+import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import Settings from '../../../components/settings/Settings';
 import {
   Balance,
@@ -46,7 +50,6 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {
   buildUIFormattedWallet,
@@ -97,7 +100,6 @@ import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
-import usePortfolioWalletSnapshotPresence from '../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
   BuildUiFriendlyList,
@@ -153,10 +155,8 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import type {RootState} from '../../../store';
-import {
-  getQuoteCurrency,
-  walletsHaveNonZeroLiveBalance,
-} from '../../../utils/portfolio/assets';
+import {getQuoteCurrency} from '../../../utils/portfolio/assets';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -335,6 +335,17 @@ const getWalletType = (
   return;
 };
 
+const formatSelectedCryptoBalance = (balance: string): string => {
+  const trimmed = String(balance || '').trim();
+  const numericValue = Number(trimmed.replace(/,/g, ''));
+
+  return trimmed && Number.isFinite(numericValue) && numericValue === 0
+    ? '0.00'
+    : balance;
+};
+
+const transactionKeyExtractor = (_item: any, index: number) => index.toString();
+
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -361,13 +372,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     ScreenGutter,
   );
 
-  const wallets = Object.values(keys).flatMap(k => k.wallets);
+  const wallets = (Object.values(keys) as Key[]).flatMap(k => k.wallets);
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
+  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
+    useAppSelector(({APP}) => APP);
   const fullWalletObj = findWalletById(wallets, walletId, copayerId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
@@ -529,15 +538,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ),
   });
 
-  const getAssetOptions = (): Option[] => {
-    const options = [
+  const getAssetOptions = (): Option[] =>
+    [
       createViewOnBlockchainOption(),
       createRequestAmountOption(),
       createShareAddressOption(),
       createWalletSettingsOption(),
     ].filter(Boolean) as Option[];
-    return options;
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -568,16 +575,27 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         );
       }
 
-      await dispatch(
-        maybePopulatePortfolioForWallets({
-          walletIds: [latestWallet?.id || fullWalletObj.id],
-          quoteCurrency: getQuoteCurrency({
-            portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-            defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-          }),
-        }) as any,
-      );
-    } catch (err) {
+      Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioForWallets({
+              walletIds: [latestWallet?.id || fullWalletObj.id],
+              quoteCurrency: getQuoteCurrency({
+                portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+              }),
+              forceRetryQuarantined: true,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logManager.warn(
+            `[portfolio] Failed background wallet details refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
+    } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
       setRefreshing(false);
@@ -597,23 +615,30 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     network,
     pendingTxps,
   } = uiFormattedWallet;
-  const chartQuoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-    });
-  }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
+  const chartQuoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+  });
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
-  const walletHasLiveBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(chartWallets);
-  }, [chartWallets]);
-  const canRenderWalletBalanceChart =
-    canRenderPortfolioBalanceCharts && walletHasLiveBalance;
-  const balanceChartSurface = usePortfolioBalanceChartSurface({
+  const showFiatBalance = network !== Network.testnet;
+  const {
+    shouldMountBalanceChart: shouldMountWalletBalanceChart,
+    shouldShowChartLoader: shouldShowWalletChartLoader,
+    shouldRenderZeroBalanceChart: shouldRenderZeroWalletBalanceChart,
+    isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
+    chartableWallets,
+  } = usePortfolioBalanceChartReadiness({
     wallets: chartWallets,
+    enabled: showPortfolioValue === true && showFiatBalance,
+    hideAllBalances,
+    renderZeroBalanceChartWhenNoSnapshots: true,
+  });
+  const balanceChartSurface = usePortfolioBalanceChartSurface({
+    wallets: chartableWallets,
     quoteCurrency: chartQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderWalletBalanceChart,
+    enabled: shouldMountWalletBalanceChart,
+    isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
     resetKey: `${walletId}:${copayerId || ''}`,
   });
 
@@ -624,21 +649,26 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           chartQuoteCurrency,
           {
             currencyDisplay: 'symbol',
-            customPrecision: 'minimal',
           },
         )
       : fiatBalanceFormat;
 
-  const showFiatBalance =
-    // @ts-ignore
-    Number(cryptoBalance.replaceAll(',', '')) > 0 &&
-    network !== Network.testnet;
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: chartWallets,
+    currentFiatBalance: fullWalletObj?.balance?.fiat,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: showPortfolioValue !== true && !hideAllBalances && showFiatBalance,
+  });
+  const walletHeaderChangeRowData =
+    showPortfolioValue === true
+      ? balanceChartSurface.changeRowData
+      : legacyLastDayChangeRowData;
   const selectedChartCryptoBalance =
     balanceChartSurface.displayedAnalysisPoint?.totalCryptoBalanceFormatted;
   const selectedCryptoBalance =
     typeof balanceChartSurface.selectedBalance === 'number' &&
     typeof selectedChartCryptoBalance === 'string'
-      ? selectedChartCryptoBalance
+      ? formatSelectedCryptoBalance(selectedChartCryptoBalance)
       : undefined;
   const formattedCryptoBalance = `${
     selectedCryptoBalance ?? cryptoBalance
@@ -652,16 +682,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       }),
     [chain, currencyAbbreviation, tokenAddress],
   );
-  const chartLineColor = useMemo(() => {
-    const coinColor = assetTheme?.coinColor;
-    if (!coinColor) {
-      return undefined;
-    }
-    return theme.dark && coinColor === Black ? White : coinColor;
-  }, [assetTheme, theme.dark]);
-  const chartGradientBackgroundColor = useMemo(() => {
-    return assetTheme?.gradientBackgroundColor;
-  }, [assetTheme]);
+  const coinColor = assetTheme?.coinColor;
+  const chartLineColor = !coinColor
+    ? undefined
+    : theme.dark && coinColor === Black
+    ? White
+    : coinColor;
+  const chartGradientBackgroundColor = assetTheme?.gradientBackgroundColor;
 
   const [history, setHistory] = useState<any[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
@@ -671,14 +698,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
-  const {hasAnySnapshots: walletHasSnapshots, checked: walletSnapshotsChecked} =
-    usePortfolioWalletSnapshotPresence({
-      wallets: chartWallets,
-      enabled: canRenderWalletBalanceChart,
-    });
-  const showWalletBalanceChart =
-    canRenderWalletBalanceChart &&
-    (!walletSnapshotsChecked || walletHasSnapshots);
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
@@ -822,42 +841,38 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
-  const listFooterComponent = () => {
-    return (
-      <>
-        {!groupedHistory?.length ? null : (
-          <View style={{marginBottom: 20}}>
-            <BorderBottom />
-          </View>
-        )}
-        {isLoading ? (
-          <SkeletonContainer>
-            <WalletTransactionSkeletonRow />
-          </SkeletonContainer>
-        ) : null}
-      </>
-    );
-  };
+  const listFooterComponent = () => (
+    <>
+      {!groupedHistory?.length ? null : (
+        <View style={{marginBottom: 20}}>
+          <BorderBottom />
+        </View>
+      )}
+      {isLoading ? (
+        <SkeletonContainer>
+          <WalletTransactionSkeletonRow />
+        </SkeletonContainer>
+      ) : null}
+    </>
+  );
 
-  const listEmptyComponent = () => {
-    return (
-      <>
-        {!isLoading && !errorLoadingTxs && (
-          <EmptyListContainer>
-            <H5>{t("It's a ghost town in here")}</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        )}
+  const listEmptyComponent = () => (
+    <>
+      {!isLoading && !errorLoadingTxs && (
+        <EmptyListContainer>
+          <H5>{t("It's a ghost town in here")}</H5>
+          <GhostSvg style={{marginTop: 20}} />
+        </EmptyListContainer>
+      )}
 
-        {!isLoading && errorLoadingTxs && (
-          <EmptyListContainer>
-            <H5>{t('Could not update transaction history')}</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        )}
-      </>
-    );
-  };
+      {!isLoading && errorLoadingTxs && (
+        <EmptyListContainer>
+          <H5>{t('Could not update transaction history')}</H5>
+          <GhostSvg style={{marginTop: 20}} />
+        </EmptyListContainer>
+      )}
+    </>
+  );
 
   const goToTransactionDetails = (transaction: any) => {
     const onTxDescriptionChange = () => debouncedLoadHistory(true);
@@ -958,12 +973,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
-  const showBalanceDetailsButton = (): boolean => {
-    if (!fullWalletObj) {
-      return false;
-    }
-    return fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
-  };
+  const showBalanceDetailsButton = (): boolean =>
+    !!fullWalletObj &&
+    fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
 
   const viewOnBlockchain = async (withConfirmation?: boolean) => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
@@ -1117,17 +1129,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return account ? account[account.type].merchantIcon : '';
   };
 
-  const getTxDescriptionDetails = (key: string | undefined) => {
-    if (!key) {
-      return undefined;
-    }
-    switch (key) {
-      case 'moonpay':
-        return 'MoonPay';
-      default:
-        return undefined;
-    }
-  };
+  const getTxDescriptionDetails = (key: string | undefined) =>
+    key === 'moonpay' ? 'MoonPay' : undefined;
 
   const renderTransaction = useCallback(({item}) => {
     return (
@@ -1187,11 +1190,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       );
     },
     [needActionPendingTxps, needActionUnsentTxps],
-  );
-
-  const keyExtractor = useCallback(
-    (item, index: number) => index.toString(),
-    [],
   );
 
   const protocolName = getProtocolName(chain, network);
@@ -1311,6 +1309,15 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     theme.dark,
     walletType,
   ]);
+  const canShowWalletHeaderExtras =
+    !hideAllBalances && !fullWalletObj.isScanning;
+  const shouldRenderWalletChart =
+    canShowWalletHeaderExtras && shouldMountWalletBalanceChart;
+  const shouldRenderWalletHeaderSupplement =
+    canShowWalletHeaderExtras &&
+    (!!walletChartPreContent ||
+      !!walletHeaderChangeRowData ||
+      shouldRenderWalletChart);
 
   return (
     <WalletDetailsContainer>
@@ -1368,33 +1375,45 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </CryptoBalanceRow>
                 </TouchableOpacity>
 
-                {canRenderPortfolioBalanceCharts && !hideAllBalances ? (
-                  showWalletBalanceChart ? (
-                    <BalanceHistoryChart
-                      wallets={chartWallets}
-                      quoteCurrency={chartQuoteCurrency}
-                      rates={rates}
-                      lineColor={chartLineColor}
-                      gradientStartColor={chartGradientBackgroundColor}
-                      showLoaderWhenNoSnapshots={
-                        isLoading === undefined || !!isLoading || refreshing
-                      }
-                      onSelectedBalanceChange={
-                        balanceChartSurface.chartCallbacks
-                          .onSelectedBalanceChange
-                      }
-                      onDisplayedAnalysisPointChange={
-                        balanceChartSurface.chartCallbacks
-                          .onDisplayedAnalysisPointChange
-                      }
-                      timeframeSelectorWidth={timeframeSelectorWidth}
+                {shouldRenderWalletHeaderSupplement ? (
+                  <FullWidthBalanceChartContainer>
+                    <BalanceHeaderSupplement
+                      changeRowData={walletHeaderChangeRowData}
+                      content={walletChartPreContent}
+                      contentTopMargin={12}
                       changeRowStyle={walletChartChangeRowStyle}
-                      preChartContentTopMargin={12}
-                      preChartContent={walletChartPreContent}
+                      reserveChangeRowSpace={shouldRenderWalletChart}
                     />
-                  ) : walletChartPreContent ? (
-                    <View style={{marginTop: 12}}>{walletChartPreContent}</View>
-                  ) : null
+                    {shouldRenderWalletChart ? (
+                      <BalanceHistoryChart
+                        wallets={chartableWallets}
+                        quoteCurrency={chartQuoteCurrency}
+                        rates={rates}
+                        lineColor={chartLineColor}
+                        gradientStartColor={chartGradientBackgroundColor}
+                        showLoaderWhenNoSnapshots={shouldShowWalletChartLoader}
+                        renderZeroBalanceWhenNoSnapshots={
+                          shouldRenderZeroWalletBalanceChart
+                        }
+                        isBalanceChartDataReadyToQuery={
+                          isWalletBalanceChartDataReadyToQuery
+                        }
+                        showChangeRow={false}
+                        onSelectedBalanceChange={
+                          balanceChartSurface.chartCallbacks
+                            .onSelectedBalanceChange
+                        }
+                        onDisplayedAnalysisPointChange={
+                          balanceChartSurface.chartCallbacks
+                            .onDisplayedAnalysisPointChange
+                        }
+                        onChangeRowData={
+                          balanceChartSurface.chartCallbacks.onChangeRowData
+                        }
+                        timeframeSelectorWidth={timeframeSelectorWidth}
+                      />
+                    ) : null}
+                  </FullWidthBalanceChartContainer>
                 ) : null}
               </BalanceContainer>
 
@@ -1547,7 +1566,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           </>
         }
         data={groupedHistory}
-        keyExtractor={keyExtractor}
+        keyExtractor={transactionKeyExtractor}
         renderItem={({item}) => {
           if (typeof item === 'string') {
             return (

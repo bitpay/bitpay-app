@@ -36,6 +36,7 @@ import {
   iterateWorkletPoints,
   loadWorkletSnapshotIndex,
 } from './portfolioWorkletSnapshots';
+import {resolveKnownWalletAtomicDecimals} from '../../core/format';
 
 function getAssetIdFromWallet(wallet: {
   chain?: string;
@@ -109,11 +110,10 @@ function snapshotIndexHasRows(
 ): boolean {
   'worklet';
 
-  if (!Array.isArray(index?.chunks) || !index?.chunks.length) {
-    return false;
-  }
-
-  return index.chunks.some(chunk => Number(chunk?.rows) > 0);
+  return (
+    Array.isArray(index?.chunks) &&
+    index.chunks.some(chunk => Number(chunk?.rows) > 0)
+  );
 }
 
 type PreparedWorkletAnalysisSessionData = {
@@ -182,6 +182,29 @@ function buildEmptyPreparedWorkletAnalysisSessionData(args: {
   };
 }
 
+function getStoredWalletKnownUnitDecimals(wallet: any): number | undefined {
+  'worklet';
+
+  return resolveKnownWalletAtomicDecimals({
+    unitDecimals: wallet?.summary?.unitDecimals,
+    credentials: wallet?.credentials || {},
+  });
+}
+
+function isStoredWalletDecimalsResolvedForAnalysis(wallet: any): boolean {
+  'worklet';
+
+  const tokenAddress = normalizeFiatRateSeriesTokenAddress(
+    wallet?.summary?.chain,
+    wallet?.summary?.tokenAddress || wallet?.credentials?.token?.address,
+  );
+  if (!tokenAddress) {
+    return true;
+  }
+
+  return typeof getStoredWalletKnownUnitDecimals(wallet) === 'number';
+}
+
 async function prepareWorkletAnalysisSessionData(
   config: PortfolioWorkletKvConfig,
   args: ComputeAnalysisArgs,
@@ -199,7 +222,10 @@ async function prepareWorkletAnalysisSessionData(
   }
 
   const targetQuoteCurrency = String(args.quoteCurrency || 'USD').toUpperCase();
-  const walletMetas: WalletForAnalysisMeta[] = args.wallets.map(wallet => ({
+  const analysisWallets = args.wallets.filter(
+    isStoredWalletDecimalsResolvedForAnalysis,
+  );
+  const walletMetas: WalletForAnalysisMeta[] = analysisWallets.map(wallet => ({
     walletId: wallet.summary.walletId,
     walletName: wallet.summary.walletName,
     assetId: getAssetIdFromWallet(wallet.summary),
@@ -210,6 +236,7 @@ async function prepareWorkletAnalysisSessionData(
       wallet.summary.chain,
       wallet.summary.tokenAddress,
     ),
+    unitDecimals: getStoredWalletKnownUnitDecimals(wallet),
     liveBalanceAtomic: wallet.summary.balanceAtomic,
     credentials: wallet.credentials,
   }));
@@ -219,7 +246,7 @@ async function prepareWorkletAnalysisSessionData(
 
   const snapshotIndexesByWalletId = new Map(
     await Promise.all(
-      args.wallets.map(async wallet => {
+      analysisWallets.map(async wallet => {
         return [
           wallet.summary.walletId,
           await loadWorkletSnapshotIndex(config, wallet.summary.walletId),
@@ -228,7 +255,7 @@ async function prepareWorkletAnalysisSessionData(
     ),
   );
   const walletIdsWithSnapshots = new Set(
-    args.wallets
+    analysisWallets
       .filter(wallet =>
         snapshotIndexHasRows(
           snapshotIndexesByWalletId.get(wallet.summary.walletId),
@@ -236,7 +263,7 @@ async function prepareWorkletAnalysisSessionData(
       )
       .map(wallet => wallet.summary.walletId),
   );
-  const walletsWithSnapshots = args.wallets.filter(wallet =>
+  const walletsWithSnapshots = analysisWallets.filter(wallet =>
     walletIdsWithSnapshots.has(wallet.summary.walletId),
   );
 
@@ -392,9 +419,9 @@ async function buildWorkletStreamedAnalysisArgsFromPreparedSessionData(
     };
   }
 
-  const selectedWalletMetas = selectedWalletIds
-    .map(walletId => prepared.walletMetasById[walletId])
-    .filter((wallet): wallet is WalletForAnalysisMeta => !!wallet);
+  const selectedWalletMetas = selectedWalletIds.map(
+    walletId => prepared.walletMetasById[walletId],
+  );
   const firstNonZeroTs =
     prepared.timeframe === 'ALL'
       ? selectedWalletIds.reduce<number | null>((best, walletId) => {
@@ -426,9 +453,6 @@ async function buildWorkletStreamedAnalysisArgsFromPreparedSessionData(
   const wallets: WalletForStreamedAnalysis[] = [];
   for (const walletId of selectedWalletIds) {
     const walletMeta = prepared.walletMetasById[walletId];
-    if (!walletMeta) {
-      continue;
-    }
     const basePoint = await findWorkletLastPointAtOrBefore({
       storage: config.storage,
       registryKey: config.registryKey,

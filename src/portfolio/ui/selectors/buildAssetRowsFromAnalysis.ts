@@ -5,8 +5,8 @@ import {
 import type {AssetRowItem, GainLossMode} from '../../../utils/portfolio/assets';
 import {
   formatBigIntDecimal,
-  getAtomicDecimals,
   parseAtomicToBigint,
+  resolveWalletAtomicDecimals,
 } from '../../core/format';
 import {getAssetIdFromWallet} from '../../core/pnl/assetId';
 import type {
@@ -62,28 +62,26 @@ function formatDeltaPercent(percent: number): string {
 function aggregateAssetSummaries(
   summaries: AssetPnlSummary[],
 ): AggregatedAssetSummary {
-  const fiatValue = summaries.reduce(
-    (total, summary) => total + (summary.fiatBalanceEnd || 0),
-    0,
-  );
-  const pnlChange = summaries.reduce(
-    (total, summary) => total + (summary.pnlChange || 0),
-    0,
-  );
-  const pnlEnd = summaries.reduce(
-    (total, summary) => total + (summary.pnlEnd || 0),
-    0,
-  );
-  const remainingCostBasisFiatEnd = summaries.reduce(
-    (total, summary) => total + (summary.remainingCostBasisFiatEnd || 0),
-    0,
-  );
-  const hasRate = summaries.some(
-    summary =>
+  let fiatValue = 0;
+  let pnlChange = 0;
+  let pnlEnd = 0;
+  let remainingCostBasisFiatEnd = 0;
+  let hasRate = false;
+
+  for (const summary of summaries) {
+    fiatValue += summary.fiatBalanceEnd || 0;
+    pnlChange += summary.pnlChange || 0;
+    pnlEnd += summary.pnlEnd || 0;
+    remainingCostBasisFiatEnd += summary.remainingCostBasisFiatEnd || 0;
+    if (
+      !hasRate &&
       typeof summary.rateEnd === 'number' &&
       Number.isFinite(summary.rateEnd) &&
-      summary.rateEnd > 0,
-  );
+      summary.rateEnd > 0
+    ) {
+      hasRate = true;
+    }
+  }
   const hasPnl = summaries.length > 0;
 
   return {
@@ -159,7 +157,10 @@ export function buildAssetRowMetricsFromAnalysis(args: {
       const assetId = getAssetIdFromWallet(wallet.summary);
       uniqueAssetIds.add(assetId);
 
-      const decimals = getAtomicDecimals(wallet.credentials);
+      const decimals = resolveWalletAtomicDecimals({
+        unitDecimals: wallet.summary.unitDecimals,
+        credentials: wallet.credentials,
+      });
       const atomic = parseAtomicToBigint(wallet.summary.balanceAtomic || '0');
       totalAtomic += atomic;
       const currentRate = args.currentRatesByAssetId?.[assetId];
@@ -183,7 +184,10 @@ export function buildAssetRowMetricsFromAnalysis(args: {
       .map(assetId => assetSummaryByAssetId.get(assetId))
       .filter((summary): summary is AssetPnlSummary => !!summary);
     const aggregatedSummary = aggregateAssetSummaries(summaries);
-    const repDecimals = getAtomicDecimals(repWallet.credentials);
+    const repDecimals = resolveWalletAtomicDecimals({
+      unitDecimals: repWallet.summary.unitDecimals,
+      credentials: repWallet.credentials,
+    });
     const cryptoAmount = formatBigIntDecimal(
       totalAtomic,
       repDecimals,

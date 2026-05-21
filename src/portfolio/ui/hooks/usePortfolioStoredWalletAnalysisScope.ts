@@ -13,10 +13,8 @@ import {
   resolveCurrentRatesAsOfMs,
 } from '../common';
 
-export const getPortfolioWalletsInputSignature = (
-  wallets: Wallet[],
-): string => {
-  return (wallets || [])
+export const getPortfolioWalletsInputSignature = (wallets: Wallet[]): string =>
+  (wallets || [])
     .map(wallet =>
       [
         wallet?.id,
@@ -24,6 +22,7 @@ export const getPortfolioWalletsInputSignature = (
         wallet?.chain,
         wallet?.currencyAbbreviation,
         wallet?.tokenAddress,
+        (wallet as any)?.credentials?.token?.decimals,
         wallet?.network,
         wallet?.balance?.crypto,
         wallet?.balance?.sat,
@@ -36,7 +35,6 @@ export const getPortfolioWalletsInputSignature = (
     )
     .sort()
     .join('|');
-};
 
 export function buildPortfolioStoredWalletAnalysisScope(args: {
   dispatch: AppDispatch;

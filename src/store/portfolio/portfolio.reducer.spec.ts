@@ -1,10 +1,15 @@
 import {portfolioReducer} from './portfolio.reducer';
-import type {PortfolioState} from './portfolio.models';
+import type {PortfolioState, WalletIdMap} from './portfolio.models';
+import type {PortfolioActionType} from './portfolio.types';
 import {
   cancelPopulatePortfolio,
+  clearWalletPortfolioState,
   failPopulatePortfolio,
   finishPopulatePortfolio,
   markInitialBaselineComplete,
+  markPopulateResumeSettled,
+  setInvalidDecimalsByWalletIdUpdates,
+  setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
 } from './portfolio.actions';
 import {selectCanRenderPortfolioBalanceCharts} from './portfolio.selectors';
@@ -30,7 +35,48 @@ const makeState = (
     walletStatusById: {'wallet-1': 'in_progress'},
   },
   snapshotBalanceMismatchesByWalletId: {},
+  invalidDecimalsByWalletId: {},
+  quarantinesByWalletId: {},
   ...overrides,
+});
+
+const expectStoresAndClearsWalletMapValue = <T>(args: {
+  actionCreator: (payload: WalletIdMap<T>) => PortfolioActionType;
+  selectMap: (state: PortfolioState) => WalletIdMap<T> | undefined;
+  value: T;
+}) => {
+  const withValue = portfolioReducer(
+    makeState(),
+    args.actionCreator({'wallet-1': args.value}),
+  );
+
+  expect(args.selectMap(withValue)?.['wallet-1']).toBe(args.value);
+
+  const cleared = portfolioReducer(
+    withValue,
+    args.actionCreator({'wallet-1': undefined}),
+  );
+
+  expect(args.selectMap(cleared)?.['wallet-1']).toBeUndefined();
+};
+
+const excessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
+  walletId,
+  reason: 'excessive_balance_mismatch' as const,
+  computedAtomic: '200000000',
+  liveAtomic: '100000000',
+  deltaAtomic: '100000000',
+  ratio: '2',
+  threshold: 0.1,
+  detectedAt: 1234,
+  message:
+    'Wallet wallet-1 snapshot balance differs from live balance by 2x (threshold 10%).',
+});
+
+const invalidDecimalsMarker = (walletId = 'wallet-1') => ({
+  walletId,
+  reason: 'invalid_decimals' as const,
+  message: 'Wallet wallet-1 has unresolved token decimals.',
 });
 
 describe('portfolioReducer', () => {
@@ -45,13 +91,7 @@ describe('portfolioReducer', () => {
 
   it('sets lastFullPopulateCompletedAt when a populate finish includes a completed full-populate timestamp', () => {
     const result = portfolioReducer(
-      makeState({
-        populateStatus: {
-          ...makeState().populateStatus,
-          inProgress: true,
-          startedAt: 100,
-        },
-      }),
+      makeState(),
       finishPopulatePortfolio({
         finishedAt: 200,
         lastFullPopulateCompletedAt: 200,
@@ -68,11 +108,6 @@ describe('portfolioReducer', () => {
     const result = portfolioReducer(
       makeState({
         lastPopulatedAt: undefined,
-        populateStatus: {
-          ...makeState().populateStatus,
-          inProgress: true,
-          startedAt: 100,
-        },
       }),
       finishPopulatePortfolio({
         finishedAt: 200,
@@ -96,11 +131,6 @@ describe('portfolioReducer', () => {
       makeState({
         lastFullPopulateCompletedAt: 150,
         lastPopulatedAt: 150,
-        populateStatus: {
-          ...makeState().populateStatus,
-          inProgress: true,
-          startedAt: 100,
-        },
       }),
       finishPopulatePortfolio({
         finishedAt: 200,
@@ -117,11 +147,6 @@ describe('portfolioReducer', () => {
     const failed = portfolioReducer(
       makeState({
         lastFullPopulateCompletedAt: 150,
-        populateStatus: {
-          ...makeState().populateStatus,
-          inProgress: true,
-          startedAt: 100,
-        },
       }),
       failPopulatePortfolio({error: 'boom'}),
     );
@@ -131,10 +156,6 @@ describe('portfolioReducer', () => {
     const cancelled = portfolioReducer(
       makeState({
         lastFullPopulateCompletedAt: 150,
-        populateStatus: {
-          ...makeState().populateStatus,
-          inProgress: true,
-        },
       }),
       cancelPopulatePortfolio(),
     );
@@ -152,27 +173,77 @@ describe('portfolioReducer', () => {
       currentWalletBalance: '1.5',
       delta: '-0.5',
     };
-    const withMismatch = portfolioReducer(
-      makeState(),
-      setSnapshotBalanceMismatchesByWalletIdUpdates({
-        'wallet-1': mismatch,
-      }),
-    );
+    expectStoresAndClearsWalletMapValue({
+      actionCreator: setSnapshotBalanceMismatchesByWalletIdUpdates,
+      selectMap: state => state.snapshotBalanceMismatchesByWalletId,
+      value: mismatch,
+    });
+  });
 
-    expect(withMismatch.snapshotBalanceMismatchesByWalletId?.['wallet-1']).toBe(
-      mismatch,
-    );
+  it('stores and clears invalid-decimals markers by wallet id', () => {
+    const marker = invalidDecimalsMarker();
+    expectStoresAndClearsWalletMapValue({
+      actionCreator: setInvalidDecimalsByWalletIdUpdates,
+      selectMap: state => state.invalidDecimalsByWalletId,
+      value: marker,
+    });
+  });
+
+  it('stores and clears portfolio quarantine markers by wallet id', () => {
+    const marker = excessiveBalanceMismatchMarker();
+    expectStoresAndClearsWalletMapValue({
+      actionCreator: setQuarantinesByWalletIdUpdates,
+      selectMap: state => state.quarantinesByWalletId,
+      value: marker,
+    });
+  });
+
+  it('clears invalid-decimals markers with wallet portfolio state', () => {
+    const marker = invalidDecimalsMarker();
+    const withMarker = makeState({
+      invalidDecimalsByWalletId: {
+        'wallet-1': marker,
+        'wallet-2': {
+          ...marker,
+          walletId: 'wallet-2',
+        },
+      },
+    });
 
     const cleared = portfolioReducer(
-      withMismatch,
-      setSnapshotBalanceMismatchesByWalletIdUpdates({
-        'wallet-1': undefined,
-      }),
+      withMarker,
+      clearWalletPortfolioState({walletIds: ['wallet-1']}),
     );
 
-    expect(
-      cleared.snapshotBalanceMismatchesByWalletId?.['wallet-1'],
-    ).toBeUndefined();
+    expect(cleared.invalidDecimalsByWalletId?.['wallet-1']).toBeUndefined();
+    expect(cleared.invalidDecimalsByWalletId?.['wallet-2']).toEqual({
+      ...marker,
+      walletId: 'wallet-2',
+    });
+  });
+
+  it('clears portfolio quarantine markers with wallet portfolio state', () => {
+    const marker = excessiveBalanceMismatchMarker();
+    const withMarker = makeState({
+      quarantinesByWalletId: {
+        'wallet-1': marker,
+        'wallet-2': {
+          ...marker,
+          walletId: 'wallet-2',
+        },
+      },
+    });
+
+    const cleared = portfolioReducer(
+      withMarker,
+      clearWalletPortfolioState({walletIds: ['wallet-1']}),
+    );
+
+    expect(cleared.quarantinesByWalletId?.['wallet-1']).toBeUndefined();
+    expect(cleared.quarantinesByWalletId?.['wallet-2']).toEqual({
+      ...marker,
+      walletId: 'wallet-2',
+    });
   });
 
   it('marks the initial baseline complete and unblocks last-populated render paths', () => {
@@ -211,6 +282,38 @@ describe('portfolioReducer', () => {
           quoteCurrency: 'USD',
         }),
       ),
+    ).toBe(state);
+  });
+
+  it('marks an interrupted populate resume settled without overwriting an existing baseline', () => {
+    const state = makeState({
+      lastFullPopulateCompletedAt: 200,
+      lastPopulatedAt: 200,
+      populateStatus: {
+        ...makeState().populateStatus,
+        inProgress: false,
+        finishedAt: undefined,
+        stopReason: undefined,
+        currentWalletId: undefined,
+        walletStatusById: {},
+      },
+    });
+
+    const result = portfolioReducer(
+      state,
+      markPopulateResumeSettled({settledAt: 300}),
+    );
+
+    expect(result.lastFullPopulateCompletedAt).toBe(200);
+    expect(result.populateStatus.finishedAt).toBe(300);
+    expect(result.populateStatus.stopReason).toBeUndefined();
+  });
+
+  it('does not mark an active populate resume settled', () => {
+    const state = makeState();
+
+    expect(
+      portfolioReducer(state, markPopulateResumeSettled({settledAt: 300})),
     ).toBe(state);
   });
 });

@@ -5,6 +5,8 @@ export interface PortfolioPopulateError {
 
 export type WalletPopulateState = 'in_progress' | 'done' | 'error';
 
+export type WalletIdMap<T> = {[walletId: string]: T | undefined};
+
 export interface SnapshotBalanceMismatch {
   walletId: string;
   computedAtomic: string;
@@ -14,6 +16,42 @@ export interface SnapshotBalanceMismatch {
   currentWalletBalance: string;
   delta: string;
 }
+
+export interface InvalidDecimalsMarker {
+  walletId: string;
+  reason: 'invalid_decimals';
+  message: string;
+}
+
+interface BasePortfolioQuarantineMarker {
+  walletId: string;
+  reason: 'excessive_balance_mismatch' | 'zero_balance_token_missing_index';
+  detectedAt: number;
+  lastAttemptedAt?: number;
+  message: string;
+}
+
+export interface ExcessiveBalanceMismatchMarker
+  extends BasePortfolioQuarantineMarker {
+  reason: 'excessive_balance_mismatch';
+  computedAtomic: string;
+  liveAtomic: string;
+  deltaAtomic: string;
+  ratio: string;
+  threshold: number;
+}
+
+export interface ZeroBalanceTokenMissingIndexMarker
+  extends BasePortfolioQuarantineMarker {
+  reason: 'zero_balance_token_missing_index';
+  tokenAddress: string;
+  liveAtomic: '0';
+  chain?: string;
+}
+
+export type PortfolioQuarantineMarker =
+  | ExcessiveBalanceMismatchMarker
+  | ZeroBalanceTokenMissingIndexMarker;
 
 export interface PortfolioPopulateStatus {
   inProgress: boolean;
@@ -27,7 +65,7 @@ export interface PortfolioPopulateStatus {
   txRequestsMade: number;
   txsProcessed: number;
   errors: PortfolioPopulateError[];
-  walletStatusById?: {[walletId: string]: WalletPopulateState | undefined};
+  walletStatusById?: WalletIdMap<WalletPopulateState>;
 }
 
 export interface PortfolioState {
@@ -35,7 +73,7 @@ export interface PortfolioState {
   lastFullPopulateCompletedAt?: number | null;
   quoteCurrency?: string;
   populateStatus: PortfolioPopulateStatus;
-  snapshotBalanceMismatchesByWalletId?: {
-    [walletId: string]: SnapshotBalanceMismatch | undefined;
-  };
+  snapshotBalanceMismatchesByWalletId?: WalletIdMap<SnapshotBalanceMismatch>;
+  invalidDecimalsByWalletId?: WalletIdMap<InvalidDecimalsMarker>;
+  quarantinesByWalletId?: WalletIdMap<PortfolioQuarantineMarker>;
 }

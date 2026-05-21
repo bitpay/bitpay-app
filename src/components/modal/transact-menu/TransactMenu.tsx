@@ -25,6 +25,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {css} from 'styled-components/native';
 import {ExternalServicesScreens} from '../../../navigation/services/ExternalServicesGroup';
 import {Keys} from '../../../store/wallet/wallet.reducer';
+import ArchaxFooter from '../../archax/archax-footer';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -121,6 +122,7 @@ const TransactModal = () => {
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const availableWallets = Object.values(keys as Keys)
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets)
@@ -304,6 +306,7 @@ const TransactModal = () => {
               </View>
               <ScanButtonText>{ScanButton.title}</ScanButtonText>
             </ScanButtonContainer>
+            {showArchaxBanner && <ArchaxFooter matchParentWidth />}
             <CloseButtonContainer onPress={hideModal}>
               <View>
                 <Icons.Close />

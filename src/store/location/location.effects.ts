@@ -1,8 +1,7 @@
 import axios from 'axios';
 import {LocationActions} from '.';
 import {Effect} from '..';
-import {EUCountries} from './location.constants';
-import cloneDeep from 'lodash.clonedeep';
+import {EUCountries, UnitedKingdomCountryCode} from './location.constants';
 import {logManager} from '../../managers/LogManager';
 import {NO_CACHE_HEADERS} from '../../constants/config';
 import {LocationData} from './location.models';
@@ -11,7 +10,16 @@ export const isEuCountry = (countryShortCode: string | undefined): boolean => {
   if (!countryShortCode) {
     return false;
   }
-  return EUCountries.includes(cloneDeep(countryShortCode).toUpperCase());
+  return EUCountries.includes(countryShortCode.toUpperCase());
+};
+
+export const isUnitedKingdomCountry = (
+  countryShortCode: string | undefined,
+): boolean => {
+  if (!countryShortCode) {
+    return false;
+  }
+  return countryShortCode.toUpperCase() === UnitedKingdomCountryCode;
 };
 
 export const getLocationData =

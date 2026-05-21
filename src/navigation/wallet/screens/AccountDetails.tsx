@@ -15,6 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
+  Key,
   Wallet,
   TransactionProposal,
   KeyMethods,
@@ -34,8 +35,12 @@ import {
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
+import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
+import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import {
   Badge,
   Balance,
@@ -52,7 +57,6 @@ import {
   setDefaultChainFilterOption,
 } from '../../../store/app/app.actions';
 import {selectShowPortfolioValue} from '../../../store/app/app.selectors';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../store/portfolio/portfolio.selectors';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {
   formatCryptoAddress,
@@ -177,10 +181,9 @@ import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
 import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
 import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
-import {
-  getQuoteCurrency,
-  walletsHaveNonZeroLiveBalance,
-} from '../../../utils/portfolio/assets';
+import {getQuoteCurrency} from '../../../utils/portfolio/assets';
+import ArchaxFooter from '../../../components/archax/archax-footer';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -230,6 +233,12 @@ export interface GroupedHistoryProps extends SearchableItem {
 interface AccountProposalsProps {
   [key: string]: TransactionProposal[];
 }
+
+const transactionItemLayout = (_data: any, index: number) => ({
+  length: TRANSACTION_ROW_HEIGHT,
+  offset: TRANSACTION_ROW_HEIGHT * index,
+  index,
+});
 
 const BorderBottom = styled.View`
   border-bottom-width: 1px;
@@ -384,16 +393,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
   const {width: windowWidth} = useWindowDimensions();
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency, hideAllBalances, showArchaxBanner} =
+    useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
-  const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[keyId]);
+  const key = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys[keyId],
+  ) as Key;
   const [searchVal, setSearchVal] = useState('');
   const [activeTab, setActiveTab] = useState<AccountDetailsTab>('wallets');
 
@@ -452,21 +461,30 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
 
-  const keyFullWalletObjs = useMemo(
+  const keyFullWalletObjs = useMemo<Wallet[]>(
     () =>
       uniqBy(
-        key.wallets.filter(w => w.receiveAddress === selectedAccountAddress),
-        wallet => {
+        key.wallets.filter(
+          (w: Wallet) => w.receiveAddress === selectedAccountAddress,
+        ),
+        (wallet: Wallet) => {
           return wallet.id;
         },
       ),
     [key, selectedAccountAddress],
   );
-  const hasAnyAccountWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(keyFullWalletObjs);
-  }, [keyFullWalletObjs]);
-  const canRenderAccountBalanceChart =
-    canRenderPortfolioBalanceCharts && hasAnyAccountWalletBalance;
+  const {
+    shouldMountBalanceChart: shouldMountAccountBalanceChart,
+    shouldShowChartLoader: shouldShowAccountChartLoader,
+    shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
+    isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
+    chartableWallets: chartableAccountWallets,
+  } = usePortfolioBalanceChartReadiness({
+    wallets: keyFullWalletObjs,
+    enabled: showPortfolioValue === true,
+    hideAllBalances,
+    renderZeroBalanceChartWhenNoSnapshots: true,
+  });
   const accountWalletIds = useMemo(
     () => keyFullWalletObjs.map(wallet => wallet.id).filter(Boolean),
     [keyFullWalletObjs],
@@ -501,17 +519,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const accountItem = memorizedAccountList.find(
     a => a.receiveAddress === selectedAccountAddress,
   )!;
-  const displayQuoteCurrency = useMemo(() => {
-    return getQuoteCurrency({
-      portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-    });
-  }, [committedPortfolioQuoteCurrency, defaultAltCurrency.isoCode]);
+  const displayQuoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+  });
   const balanceChartSurface = usePortfolioBalanceChartSurface({
-    wallets: keyFullWalletObjs,
+    wallets: chartableAccountWallets,
     quoteCurrency: displayQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: canRenderAccountBalanceChart,
+    enabled: shouldMountAccountBalanceChart,
+    isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
     resetKey: `${keyId}:${selectedAccountAddress || ''}`,
   });
   const totalBalance =
@@ -521,14 +538,24 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           displayQuoteCurrency,
           {
             currencyDisplay: 'symbol',
-            customPrecision: 'minimal',
           },
         )
       : accountItem?.fiatBalanceFormat;
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: keyFullWalletObjs,
+    currentFiatBalance: accountItem?.fiatBalance,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: showPortfolioValue !== true && !hideAllBalances,
+  });
+  const accountHeaderChangeRowData =
+    showPortfolioValue === true
+      ? balanceChartSurface.changeRowData
+      : legacyLastDayChangeRowData;
   const hasMultipleAccounts = memorizedAccountList.length > 1;
-  const accountChartPreContent = useMemo(() => {
-    return <AccountAddressBadge address={accountItem?.receiveAddress} />;
-  }, [accountItem?.receiveAddress]);
+  const accountChartPreContent = useMemo(
+    () => <AccountAddressBadge address={accountItem?.receiveAddress} />,
+    [accountItem?.receiveAddress],
+  );
 
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
@@ -861,28 +888,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return () => subscription.remove();
   }, [key]);
 
-  const keyExtractorAssets = useCallback(
-    (item: AssetsByChainData) => item.id,
-    [],
-  );
-  const keyExtractorTransaction = useCallback(
-    (item: {txid: string; walletId: string}) => `${item.txid}+${item.walletId}`,
-    [],
-  );
-  const pendingTxpsKeyExtractor = useCallback(
-    (item: TransactionProposal) => item.id,
-    [],
-  );
-
-  const getItemLayout = useCallback(
-    (data: any, index: number) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
-
   const listFooterComponentTxsTab = useCallback(() => {
     return (
       <>
@@ -895,8 +900,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [isLoading, groupedHistory]);
 
-  const listFooterComponentAssetsTab = () => {
-    return (
+  const listFooterComponentAssetsTab = () => (
+    <>
       <AddCustomTokenContainer
         testID="add-custom-token-button"
         accessibilityLabel="Add custom token"
@@ -913,8 +918,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         <BaseText>{t("Don't see your token?")}</BaseText>
         <Link>{t('Add Custom Token')}</Link>
       </AddCustomTokenContainer>
-    );
-  };
+
+      {showArchaxBanner && <ArchaxFooter />}
+    </>
+  );
 
   useLayoutEffect(() => {
     if (!key) {
@@ -1016,17 +1023,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return account ? account[account.type].merchantIcon : '';
   };
 
-  const getTxDescriptionDetails = (key: string | undefined) => {
-    if (!key) {
-      return undefined;
-    }
-    switch (key) {
-      case 'moonpay':
-        return 'MoonPay';
-      default:
-        return undefined;
-    }
-  };
+  const getTxDescriptionDetails = (key: string | undefined) =>
+    key === 'moonpay' ? 'MoonPay' : undefined;
 
   const goToTransactionDetails = (transaction: any) => {
     const onTxDescriptionChange = () =>
@@ -1351,14 +1349,25 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         await walletStatusRefresh;
       }
       dispatch(updatePortfolioBalance());
-      await dispatch(
-        maybePopulatePortfolioForWallets({
-          walletIds: accountWalletIds,
-          quoteCurrency: displayQuoteCurrency,
-        }) as any,
-      );
+      Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioForWallets({
+              walletIds: accountWalletIds,
+              quoteCurrency: displayQuoteCurrency,
+              forceRetryQuarantined: true,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logManager.warn(
+            `[portfolio] Failed background account details refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
       setNeedActionTxps(pendingTxps);
-    } catch (err) {
+    } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
@@ -1424,35 +1433,21 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return buildAssetsByChainList(accountItem, defaultAltCurrency.isoCode);
   }, [key, accountItem, defaultAltCurrency.isoCode]);
 
-  const allocationHasAnyBalance = useMemo(() => {
-    const wallets = (accountItem?.wallets || []) as WalletRowProps[];
-    const filteredWallets = selectedChainFilterOption
-      ? wallets.filter(w => w.chain === selectedChainFilterOption)
-      : wallets;
+  const wallets = (accountItem?.wallets || []) as WalletRowProps[];
+  const filteredWallets = selectedChainFilterOption
+    ? wallets.filter(w => w.chain === selectedChainFilterOption)
+    : wallets;
 
-    return filteredWallets.some(w => {
-      const sat = Number((w as any)?.balance?.sat) || 0;
-      const fiat = Number((w as any)?.fiatBalance) || 0;
-      return sat > 0 || fiat > 0;
-    });
-  }, [accountItem?.wallets, selectedChainFilterOption]);
+  const allocationHasAnyBalance = filteredWallets.some(w => {
+    const sat = Number((w as any)?.balance?.sat) || 0;
+    const fiat = Number((w as any)?.fiatBalance) || 0;
+    return sat > 0 || fiat > 0;
+  });
 
-  const isAllocationLoading = useMemo(() => {
-    if (activeTab !== 'allocation') {
-      return false;
-    }
-
-    if (refreshing) {
-      return true;
-    }
-
-    return allocationHasAnyBalance && !accountAllocationData.rows?.length;
-  }, [
-    activeTab,
-    refreshing,
-    allocationHasAnyBalance,
-    accountAllocationData.rows,
-  ]);
+  const isAllocationLoading =
+    activeTab === 'allocation' &&
+    (refreshing ||
+      (allocationHasAnyBalance && !accountAllocationData.rows?.length));
 
   const lockedBalanceCurrencyAbbreviation =
     accountItem?.wallets?.[1]?.currencyAbbreviation ??
@@ -1482,21 +1477,41 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               </Row>
             </TouchableOpacity>
 
-            {canRenderAccountBalanceChart && !hideAllBalances ? (
-              <BalanceHistoryChart
-                wallets={keyFullWalletObjs}
-                quoteCurrency={displayQuoteCurrency}
-                rates={rates}
-                timeframeSelectorWidth={timeframeSelectorWidth}
-                onSelectedBalanceChange={
-                  balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                }
-                onDisplayedAnalysisPointChange={
-                  balanceChartSurface.chartCallbacks
-                    .onDisplayedAnalysisPointChange
-                }
-                preChartContent={accountChartPreContent}
-              />
+            {!hideAllBalances &&
+            (showPortfolioValue !== true || shouldMountAccountBalanceChart) ? (
+              <FullWidthBalanceChartContainer>
+                <BalanceHeaderSupplement
+                  changeRowData={accountHeaderChangeRowData}
+                  content={accountChartPreContent}
+                  reserveChangeRowSpace={shouldMountAccountBalanceChart}
+                />
+                {shouldMountAccountBalanceChart ? (
+                  <BalanceHistoryChart
+                    wallets={chartableAccountWallets}
+                    quoteCurrency={displayQuoteCurrency}
+                    rates={rates}
+                    timeframeSelectorWidth={timeframeSelectorWidth}
+                    showLoaderWhenNoSnapshots={shouldShowAccountChartLoader}
+                    renderZeroBalanceWhenNoSnapshots={
+                      shouldRenderZeroAccountBalanceChart
+                    }
+                    isBalanceChartDataReadyToQuery={
+                      isAccountBalanceChartDataReadyToQuery
+                    }
+                    showChangeRow={false}
+                    onSelectedBalanceChange={
+                      balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                    }
+                    onDisplayedAnalysisPointChange={
+                      balanceChartSurface.chartCallbacks
+                        .onDisplayedAnalysisPointChange
+                    }
+                    onChangeRowData={
+                      balanceChartSurface.chartCallbacks.onChangeRowData
+                    }
+                  />
+                ) : null}
+              </FullWidthBalanceChartContainer>
             ) : null}
           </BalanceContainer>
           <LinkingButtons
@@ -1652,9 +1667,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   }, [
     activeTab,
     accountChartPreContent,
+    accountHeaderChangeRowData,
     accountItem?.fiatLockedBalanceFormat,
     accountItem?.receiveAddress,
-    canRenderAccountBalanceChart,
+    chartableAccountWallets,
     debouncedLoadHistory,
     displayQuoteCurrency,
     defaultAltCurrency.isoCode,
@@ -1673,6 +1689,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     searchResultsHistory,
     searchVal,
     selectedChainFilterOption,
+    shouldMountAccountBalanceChart,
+    shouldShowAccountChartLoader,
     showPortfolioValue,
     t,
     timeframeSelectorWidth,
@@ -1741,16 +1759,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     memorizedAssetsByChainList,
   ]);
 
-  const listEmptyComponentForTab = useMemo(() => {
-    return activeTab === 'allocation' ? null : listEmptyComponent;
-  }, [activeTab, listEmptyComponent]);
+  const listEmptyComponentForTab =
+    activeTab === 'allocation' ? null : listEmptyComponent;
 
   const sectionListKeyExtractor = useCallback(
-    (item: any, _index: number) => {
-      return activeTab === 'activity'
-        ? `${item.txid}+${item.walletId}`
-        : item.id;
-    },
+    (item: any, _index: number) =>
+      activeTab === 'activity' ? `${item.txid}+${item.walletId}` : item.id,
     [activeTab],
   );
 
@@ -1799,7 +1813,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           maxToRenderPerBatch: 15,
         })}
         ListEmptyComponent={listEmptyComponentForTab}
-        getItemLayout={getItemLayout}
+        getItemLayout={transactionItemLayout}
       />
 
       <SheetModal

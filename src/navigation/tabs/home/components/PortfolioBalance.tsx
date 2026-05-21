@@ -21,7 +21,6 @@ import {
   toggleHideAllBalances,
 } from '../../../../store/app/app.actions';
 import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
-import {selectCanRenderPortfolioBalanceCharts} from '../../../../store/portfolio/portfolio.selectors';
 import BalanceHistoryChart, {
   type BalanceHistoryChartProps,
 } from '../../../../components/charts/BalanceHistoryChart';
@@ -50,10 +49,10 @@ import {maskIfHidden} from '../../../../utils/hideBalances';
 import {
   getVisibleKeysFromKeys,
   getVisibleWalletsFromKeys,
-  walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/ui/common';
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
+import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
@@ -160,16 +159,7 @@ const PortfolioBalanceContent = () => {
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const {rates} = useSelector(({RATE}: RootState) => RATE);
 
-  const canRenderPortfolioBalanceCharts = useAppSelector(
-    selectCanRenderPortfolioBalanceCharts,
-  );
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const committedPortfolioLastPopulatedAt = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.lastPopulatedAt,
-  );
-  const populateInProgress = useAppSelector(
-    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
-  );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
@@ -200,65 +190,49 @@ const PortfolioBalanceContent = () => {
     [homeCarouselConfig, keys],
   );
 
-  const visibleCurrentBalance = useMemo(
-    () =>
-      visibleKeys.reduce((total, key) => total + (key.totalBalance || 0), 0),
-    [visibleKeys],
+  const visibleKeyIdsSig = visibleKeys
+    .map(key => String(key?.id || ''))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+    .join(',');
+
+  const walletsAcrossKeys: Wallet[] = useMemo(() => {
+    return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+  }, [homeCarouselConfig, keys]);
+
+  const visibleCurrentBalance = walletsAcrossKeys.reduce(
+    (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
+    0,
   );
-  const visibleLastDayBalance = useMemo(
-    () =>
-      visibleKeys.reduce(
-        (total, key) => total + (key.totalBalanceLastDay || 0),
-        0,
-      ),
-    [visibleKeys],
+  const visibleLastDayBalance = walletsAcrossKeys.reduce(
+    (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
+    0,
   );
-  const visibleKeyIdsSig = useMemo(() => {
-    return visibleKeys
-      .map(key => String(key?.id || ''))
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b))
-      .join(',');
-  }, [visibleKeys]);
 
   const totalBalanceIncludingCoinbase: number =
     visibleCurrentBalance + coinbaseBalance;
 
   const dispatch = useAppDispatch();
 
-  const walletsAcrossKeys: Wallet[] = useMemo(() => {
-    const allWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
-
-    const byId = new Map<string, Wallet>();
-    for (const w of allWallets) {
-      if (!w?.id) {
-        continue;
-      }
-      if (!byId.has(w.id)) {
-        byId.set(w.id, w);
-      }
-    }
-    return Array.from(byId.values());
-  }, [homeCarouselConfig, keys]);
-
-  const hasAnyChartWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(walletsAcrossKeys);
-  }, [walletsAcrossKeys]);
-  const balanceChartsEnabled =
-    canRenderPortfolioBalanceCharts && hasAnyChartWalletBalance;
-  const hasChartData = useMemo(() => {
-    return balanceChartsEnabled && walletsAcrossKeys.length > 0;
-  }, [balanceChartsEnabled, walletsAcrossKeys.length]);
-  const shouldLeftAlignTopSection = hasChartData && !hideAllBalances;
-  const canCollapseChart =
-    shouldLeftAlignTopSection && chartHasRenderableSeries;
+  const balanceChartReadiness = usePortfolioBalanceChartReadiness({
+    wallets: walletsAcrossKeys,
+    enabled: showPortfolioValue === true,
+    hideAllBalances,
+  });
+  const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
+  const chartWalletIdsSig = chartWalletsAcrossKeys
+    .map(wallet => String(wallet?.id || ''))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+    .join(',');
+  const balanceChartsEnabled = balanceChartReadiness.shouldMountBalanceChart;
+  const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
+  const canCollapseChart = shouldLeftAlignTopSection;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
-    hasChartData &&
-    (populateInProgress ||
-      !committedPortfolioLastPopulatedAt ||
-      !chartHasRenderableSeries);
+    balanceChartReadiness.shouldShowChartLoader ||
+    (balanceChartsEnabled && !chartHasRenderableSeries);
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;
@@ -416,20 +390,19 @@ const PortfolioBalanceContent = () => {
   });
   const collapseChartAccessibilityLabel = t('Collapse portfolio chart');
   const expandChartAccessibilityLabel = t('Expand portfolio chart');
-  const chartLifecycleKey = useMemo(
-    () => `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}`,
-    [homeChartRemountNonce, visibleKeyIdsSig],
-  );
+  const chartLifecycleKey = `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}:${chartWalletIdsSig}`;
   const balanceChartSurface = usePortfolioBalanceChartSurface({
-    wallets: walletsAcrossKeys,
+    wallets: chartWalletsAcrossKeys,
     quoteCurrency,
     fallbackBalance: totalBalanceIncludingCoinbase,
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: balanceChartsEnabled,
+    isBalanceChartDataReadyToQuery:
+      balanceChartReadiness.isBalanceChartDataReadyToQuery,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
-    wallets: walletsAcrossKeys,
+    wallets: chartWalletsAcrossKeys,
     quoteCurrency,
     initialSelectedTimeframe: selectedChartTimeframeRef.current,
     rates,
@@ -437,6 +410,8 @@ const PortfolioBalanceContent = () => {
     showTimeframeSelector: true,
     timeframeSelectorHorizontalInset: ScreenGutter,
     showLoaderWhenNoSnapshots: showChartLoaderWhenNoSnapshots,
+    isBalanceChartDataReadyToQuery:
+      balanceChartReadiness.isBalanceChartDataReadyToQuery,
     // NOTE: Coinbase balance is intentionally excluded from the balance chart
     // (Option B per product requirements) because we do not have historized
     // Coinbase balance snapshots.
@@ -470,15 +445,11 @@ const PortfolioBalanceContent = () => {
       ? balanceChartSurface.selectedBalance
       : totalBalanceIncludingCoinbase;
   const displayedPortfolioBalanceCurrency = defaultAltCurrency.isoCode;
-  const formattedPortfolioBalance = useMemo(() => {
-    return formatFiatAmount(
-      displayedPortfolioBalance,
-      displayedPortfolioBalanceCurrency,
-      {
-        currencyDisplay: 'symbol',
-      },
-    );
-  }, [displayedPortfolioBalance, displayedPortfolioBalanceCurrency]);
+  const formattedPortfolioBalance = formatFiatAmount(
+    displayedPortfolioBalance,
+    displayedPortfolioBalanceCurrency,
+    {currencyDisplay: 'symbol'},
+  );
   const shouldUseCompactPortfolioBalanceText = useMemo(() => {
     return shouldUseCompactFiatAmountText(formattedPortfolioBalance);
   }, [formattedPortfolioBalance]);
@@ -623,77 +594,70 @@ const PortfolioBalanceContent = () => {
       ) : null}
 
       {!hideAllBalances && balanceChartsEnabled ? (
-        hasChartData ? (
-          <ChartStage
-            onLayout={e => {
-              const {width, y} = e.nativeEvent.layout;
-              if (width > 0 && width !== chartStageWidth) {
-                setChartStageWidth(width);
-              }
-              if (y !== chartStageY) {
-                setChartStageY(y);
-              }
-            }}>
-            <Animated.View style={chartSpacerAnimatedStyle} />
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  zIndex: isChartCollapsed ? 20 : 1,
-                },
-                chartWrapperAnimatedStyle,
-              ]}>
-              <View
-                onLayout={e => {
-                  const h = Math.round(e.nativeEvent.layout.height);
-                  if (h > 0 && h !== chartBlockHeight) {
-                    setChartBlockHeight(h);
-                  }
-                }}>
-                <BalanceHistoryChart
-                  key={chartLifecycleKey}
-                  {...commonBalanceHistoryChartProps}
-                  strokeScale={chartScale}
-                  minStrokeScale={collapsedScale}
-                  onChangeRowData={
-                    balanceChartSurface.chartCallbacks.onChangeRowData
-                  }
-                  axisLabelOpacity={axisLabelOpacity}
-                  showChangeRow={false}
-                  timeframeSelectorOpacity={timeframeSelectorOpacity}
-                  disablePanGesture={isChartCollapsed}
+        <ChartStage
+          onLayout={e => {
+            const {width, y} = e.nativeEvent.layout;
+            if (width > 0 && width !== chartStageWidth) {
+              setChartStageWidth(width);
+            }
+            if (y !== chartStageY) {
+              setChartStageY(y);
+            }
+          }}>
+          <Animated.View style={chartSpacerAnimatedStyle} />
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                zIndex: isChartCollapsed ? 20 : 1,
+              },
+              chartWrapperAnimatedStyle,
+            ]}>
+            <View
+              onLayout={e => {
+                const h = Math.round(e.nativeEvent.layout.height);
+                if (h > 0 && h !== chartBlockHeight) {
+                  setChartBlockHeight(h);
+                }
+              }}>
+              <BalanceHistoryChart
+                key={chartLifecycleKey}
+                {...commonBalanceHistoryChartProps}
+                strokeScale={chartScale}
+                minStrokeScale={collapsedScale}
+                onChangeRowData={
+                  balanceChartSurface.chartCallbacks.onChangeRowData
+                }
+                axisLabelOpacity={axisLabelOpacity}
+                showChangeRow={false}
+                timeframeSelectorOpacity={timeframeSelectorOpacity}
+                disablePanGesture={isChartCollapsed}
+              />
+              {isChartCollapsed && canCollapseChart ? (
+                <TouchableOpacity
+                  touchableLibrary="react-native"
+                  activeOpacity={ActiveOpacity}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    zIndex: 50,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={expandChartAccessibilityLabel}
+                  accessibilityState={{expanded: false}}
+                  onPress={onExpandChartPress}
                 />
-                {isChartCollapsed && canCollapseChart ? (
-                  <TouchableOpacity
-                    touchableLibrary="react-native"
-                    activeOpacity={ActiveOpacity}
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      zIndex: 50,
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={expandChartAccessibilityLabel}
-                    accessibilityState={{expanded: false}}
-                    onPress={onExpandChartPress}
-                  />
-                ) : null}
-              </View>
-            </Animated.View>
-          </ChartStage>
-        ) : (
-          <BalanceHistoryChart
-            key={chartLifecycleKey}
-            {...commonBalanceHistoryChartProps}
-          />
-        )
+              ) : null}
+            </View>
+          </Animated.View>
+        </ChartStage>
       ) : null}
     </PortfolioContainer>
   );

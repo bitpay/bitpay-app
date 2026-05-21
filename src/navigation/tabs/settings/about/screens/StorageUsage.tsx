@@ -361,7 +361,7 @@ const StorageUsage: React.FC = () => {
           spotRatesBytes + (stats.rateBytes || 0),
         );
         nextMetrics.portfolioPersistedStorage = formatBytes(
-          stats.totalBytes || 0,
+          Math.max(0, (stats.totalBytes || 0) - (stats.rateBytes || 0)),
         );
       } catch (err) {
         nextMetrics.ratesStorage = '0 Bytes';
