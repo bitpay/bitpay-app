@@ -37,7 +37,7 @@ class PortfolioBalancePage {
   }
   
   var sendButton: XCUIElement {
-    app.otherElements["Send"].otherElements["Send"].firstMatch
+    app.buttons["send-button"]
   }
   
   var swapButton: XCUIElement {
@@ -82,7 +82,11 @@ class PortfolioBalancePage {
     XCTFail("Failed to open 'Select an Option' screen after 5 attempts")
   }
   
-  func tapSendButton() {
+  func tapSendButton(timeout: TimeInterval = 900) {
+    XCTAssertTrue(
+        sendButton.waitForExistence(timeout: timeout),
+        "Send button did not appear within \(timeout) seconds"
+      )
     sendButton.tap()
   }
   
