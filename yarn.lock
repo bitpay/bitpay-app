@@ -1384,10 +1384,10 @@
     paillier-bigint "3.3.0"
     secp256k1 "5.0.1"
 
-"@bitpay-labs/bitcore-lib-cash@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-cash/-/bitcore-lib-cash-11.7.3.tgz#0f6ea1555590c10fddb82a6c7660e58138f227c1"
-  integrity sha512-KKGgLwREKu5cqnqMeLLLbw3HzJvNcLozFZLe1OX9gVbppSBPMuN69h2J+L3pKUNHETV4QngPY2xE+78asDfqjQ==
+"@bitpay-labs/bitcore-lib-cash@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-cash/-/bitcore-lib-cash-11.9.0.tgz#79530241057495efaaac831e51cca215cc895e20"
+  integrity sha512-ksVDJyyMZr+94KsrWp5D7O342DqHdQKGQxN6M3eQTyq1svJnYbQmQbNcEKvbM9Bql9BAbXeBnma2KZeR2DSjnQ==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -1396,10 +1396,10 @@
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"@bitpay-labs/bitcore-lib-doge@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-doge/-/bitcore-lib-doge-11.7.3.tgz#6ebc5e92b7f797260c6e79a6c1111dff58fc02d0"
-  integrity sha512-DLhtMrdYnqYpQrH48qOYGEB8Z18VoQRUkM3kB4zvhPiOVXeB3QzD+NT1sM89tGt6R+lzoLm1Mdstzo/NUjAMTQ==
+"@bitpay-labs/bitcore-lib-doge@^11.8.1":
+  version "11.8.1"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-doge/-/bitcore-lib-doge-11.8.1.tgz#b5922114702d874f4989fbac37980bf4f77c3c13"
+  integrity sha512-U0P+RDPuxO3Qu9rZ0AMuJE+4NG51xPviADxLq3v9rEt0KkEYb+mMlb8qQoM1FCBXqsH1l2DsbwoVAa+aKTfV1A==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -1409,10 +1409,10 @@
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-"@bitpay-labs/bitcore-lib-ltc@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-ltc/-/bitcore-lib-ltc-11.7.3.tgz#b449dc460afde8aa1b07bff8500aefeaa1ef58b9"
-  integrity sha512-RFDf0BFVYc+gpBDOAwODX3v9ms0HldbIJ1CKi2UkG/e9FkwZLd/HMlgWAYRU753J+ZT7wDtmI4MGVZB1PAdEzQ==
+"@bitpay-labs/bitcore-lib-ltc@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-ltc/-/bitcore-lib-ltc-11.9.0.tgz#be0d7d07c405ec4914a5bf07a8595fadcd2ba1a4"
+  integrity sha512-aC0oZixFueKiaRVNwVAsK/ho3FsKuMPMZHJh1GcXLBWb/lpqsIoo531guFlMDn6CPUI3YMqvqDj2qLbuFTvFuA==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -1423,10 +1423,10 @@
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-"@bitpay-labs/bitcore-lib@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib/-/bitcore-lib-11.7.3.tgz#306e224e32fdf5118a01ab586cda8570cfdfe9d0"
-  integrity sha512-g64MYV3Zhm1zsW9gjgHcZrGgiJbJ7od9tuIx7iGQtEILfTgTtgYfd27rEplSgTIxAY1LOBW0TktA73tzDs0qXg==
+"@bitpay-labs/bitcore-lib@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib/-/bitcore-lib-11.9.0.tgz#cf38ff8fa0c22c63c7f09f06d4542891d753014b"
+  integrity sha512-1wCjL0d4JHDs/BhtGCIO3x3m1J70rziOylUItWA7jGEOchgr1Wr3fh/neFHpXM6n2YESrPY2VXPKFvDCysJXiw==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -1436,30 +1436,30 @@
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"@bitpay-labs/bitcore-mnemonic@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-mnemonic/-/bitcore-mnemonic-11.7.3.tgz#cc21d7737abd9239e60d1fafe14c925f115c63a7"
-  integrity sha512-wUFAdERIImLP99EtJbSe1idbvLrcpE5ogMzLasDWligDiqU/w5kD1qsF2KhY1QPYmyVpP2OJVmv7RzwdIciRQw==
+"@bitpay-labs/bitcore-mnemonic@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-mnemonic/-/bitcore-mnemonic-11.9.0.tgz#9063b57a9da5aaea32318726edce5f74601766d9"
+  integrity sha512-qMhbwY8o2CDIV0xjv5OKG0ZaP7gkbWrPIftdu+HW1fSMGMUaZxkrLWsomr1WIakdgxk+Wh32L0y8y6VXtEL9ig==
   dependencies:
-    "@bitpay-labs/bitcore-lib" "^11.7.3"
+    "@bitpay-labs/bitcore-lib" "^11.9.0"
     unorm "^1.4.1"
 
-"@bitpay-labs/bitcore-tss@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-tss/-/bitcore-tss-11.7.3.tgz#5c5ac8107e57774de87e9a4e2f448fa1a0e11cb8"
-  integrity sha512-gdxeZeZJgtI4B4+8zXFn1v1YE+0nb2VewcDXSL2Mn+J0UCVTexANIuKyTKky9ARimjjSBlgHem4zDH503wV0wA==
+"@bitpay-labs/bitcore-tss@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-tss/-/bitcore-tss-11.9.0.tgz#0bb891b772c24903824d216ff37ad345dcac9848"
+  integrity sha512-A9Rl7xE6LKACrK3IlugqKNwe/CYRKDG0TH4+jXC7hl77rmYg+S2UClaQ/KA7RhqRP3yJrEdebKSmM0d3nGrzqg==
   dependencies:
     "@bitgo/sdk-lib-mpc" "^10.1.2"
-    "@bitpay-labs/bitcore-lib" "^11.7.3"
+    "@bitpay-labs/bitcore-lib" "^11.9.0"
 
-"@bitpay-labs/bitcore-wallet-client@11.8.0":
-  version "11.8.0"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-wallet-client/-/bitcore-wallet-client-11.8.0.tgz#b417947b2401abf8481107946791d90ba4f67e1e"
-  integrity sha512-Y5tGipu709nvdMg9gp3xNpdO1tuabPu3pGFpgKhnZ3fT2oBbK4/KQqWnZtGeA9nRCZQADleydt1e/mqJeLUehQ==
+"@bitpay-labs/bitcore-wallet-client@11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-wallet-client/-/bitcore-wallet-client-11.9.0.tgz#acdced9f1d8caf9100bc701a0df142062968683d"
+  integrity sha512-IzPAaP+ZmdZTry93rv9VWfU+uecEj+aYgXt9fCkJx/MrGC+Ttq/0Xi/J4I+FGzz/U2uU3LeYb2uuVYwQR4LPJA==
   dependencies:
-    "@bitpay-labs/bitcore-mnemonic" "^11.7.3"
-    "@bitpay-labs/bitcore-tss" "^11.7.3"
-    "@bitpay-labs/crypto-wallet-core" "^11.7.3"
+    "@bitpay-labs/bitcore-mnemonic" "^11.9.0"
+    "@bitpay-labs/bitcore-tss" "^11.9.0"
+    "@bitpay-labs/crypto-wallet-core" "^11.9.0"
     async "0.9.2"
     bip38 "1.4.0"
     json-stable-stringify "1.0.1"
@@ -1469,15 +1469,15 @@
     typescript "5.7.3"
     uuid "^11.1.0"
 
-"@bitpay-labs/crypto-wallet-core@^11.7.3":
-  version "11.7.3"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/crypto-wallet-core/-/crypto-wallet-core-11.7.3.tgz#8311763cb783e15d384c30e9aa7537da1026bfba"
-  integrity sha512-ToNveq7XGmqSGuVmC+mlLCHNyklRLgsen64yZUQhhaEb64vYXZi1vxIwl8NZcMXrzlEY65MpA9u3QJOsJQqPrQ==
+"@bitpay-labs/crypto-wallet-core@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/crypto-wallet-core/-/crypto-wallet-core-11.9.0.tgz#96e79e4666cb2294983a7d558fa21029b0a40055"
+  integrity sha512-zzux4tLlhH+UwfALeGITDWofXMkPfUMQB8ePg3pcIjT8iNZU4t17XTqSQHIxeRS9w/6izdzw2Z70uKCcGUShxQ==
   dependencies:
-    "@bitpay-labs/bitcore-lib" "^11.7.3"
-    "@bitpay-labs/bitcore-lib-cash" "^11.7.3"
-    "@bitpay-labs/bitcore-lib-doge" "^11.7.3"
-    "@bitpay-labs/bitcore-lib-ltc" "^11.7.3"
+    "@bitpay-labs/bitcore-lib" "^11.9.0"
+    "@bitpay-labs/bitcore-lib-cash" "^11.9.0"
+    "@bitpay-labs/bitcore-lib-doge" "^11.8.1"
+    "@bitpay-labs/bitcore-lib-ltc" "^11.9.0"
     "@solana-program/compute-budget" "0.7.0"
     "@solana-program/memo" "0.7.0"
     "@solana-program/system" "0.7.0"
