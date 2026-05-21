@@ -78,10 +78,7 @@ export function MoonpayEmbeddedCredentialManager() {
     cachedConfig?.buyCrypto?.moonpay?.config?.embeddedBuyDisabled;
 
   const localConditionsMet =
-    Platform.OS === 'ios' &&
-    country === 'US' &&
-    !!userEid &&
-    applePaySupported;
+    Platform.OS === 'ios' && country === 'US' && !!userEid && applePaySupported;
 
   const moonpayEmbeddedEnabled =
     localConditionsMet && (!cachedConfigObj || embeddedBuyDisabled !== true);
