@@ -3508,6 +3508,7 @@ const SwapCryptoRoot: React.FC = () => {
               <SwapCheckBoxContainer>
                 <Checkbox
                   testID="swap-crypto-changelly-terms-checkbox"
+                  // @ts-ignore
                   accessibilityLabel="Accept Changelly terms"
                   radio={false}
                   onPress={() => {

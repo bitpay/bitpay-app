@@ -270,6 +270,7 @@ export const getMoonpayFixedCurrencyAbbreviation = (
 
 export const getMoonpayPaymentMethodFormat = (
   method: PaymentMethodKey | undefined,
+  isEmbeddedFlow?: boolean,
 ): MoonpayPaymentType | undefined => {
   let moonpayPaymentMethod: MoonpayPaymentType | undefined;
   if (method) {
@@ -282,7 +283,7 @@ export const getMoonpayPaymentMethodFormat = (
         moonpayPaymentMethod = 'sepa_bank_transfer';
         break;
       case 'applePay':
-        moonpayPaymentMethod = 'mobile_wallet';
+        moonpayPaymentMethod = isEmbeddedFlow ? 'apple_pay' : 'mobile_wallet';
         break;
       case 'paypal':
         moonpayPaymentMethod = 'paypal';
@@ -313,6 +314,12 @@ export interface MoonpayStatus {
 export const moonpayGetStatusDetails = (status: string): MoonpayStatus => {
   let statusDescription, statusTitle;
   switch (status) {
+    case 'embeddedPaymentRequestSent':
+      statusTitle = t('Attempted payment request');
+      statusDescription = t(
+        'The transaction was created and payment is accepted. The transfer is in progress.',
+      );
+      break;
     case 'paymentRequestSent':
       statusTitle = t('Attempted payment request');
       statusDescription = t(
