@@ -39,6 +39,8 @@ export type AssetPnlSummarySpec = {
   asOfMs?: number;
   balanceOffset?: number;
   enabled?: boolean;
+  allowUnavailableSummary?: boolean;
+  unavailableSummaryRevisionSig?: string;
 };
 
 export type AssetPnlSummaryState = {
@@ -134,31 +136,44 @@ export function useAssetPnlSummaries(args: {
         summaryCacheRevisionSig: [
           spec.currentSpotRatesSignature || '',
           historicalRateCacheRevision,
+          spec.unavailableSummaryRevisionSig || '',
         ].join('|'),
         asOfMs: spec.asOfMs,
         balanceOffset: spec.balanceOffset,
       });
       const cacheKey = buildAssetPnlSummaryCacheKey(identity);
       const exactCacheEntry = getAssetPnlSummaryCacheEntry(cacheKey);
-      const shouldUseExactCacheEntry =
-        historicalRatesReady || !!exactCacheEntry?.summary?.hasPnl;
+      const allowUnavailableSummary = spec.allowUnavailableSummary !== false;
+      const hasDisplayableExactSummary =
+        !!exactCacheEntry?.summary &&
+        (!!exactCacheEntry.summary.hasPnl ||
+          (allowUnavailableSummary && historicalRatesReady));
+      const hasDisplayableExactError =
+        allowUnavailableSummary &&
+        historicalRatesReady &&
+        !!exactCacheEntry?.error;
       const compatibleCacheEntry =
-        !shouldUseExactCacheEntry && !exactCacheEntry?.summary
+        !hasDisplayableExactSummary && !hasDisplayableExactError
           ? findCompatibleAssetPnlSummaryCacheEntry(identity)
           : undefined;
-      const cacheEntry = shouldUseExactCacheEntry
-        ? exactCacheEntry
-        : compatibleCacheEntry;
+      const cacheEntry =
+        hasDisplayableExactSummary || hasDisplayableExactError
+          ? exactCacheEntry
+          : compatibleCacheEntry;
       const specEnabled =
         enabled && spec.enabled !== false && spec.storedWallets.length > 0;
-      const exactReady =
-        !!exactCacheEntry?.summary ||
-        (shouldUseExactCacheEntry && !!exactCacheEntry?.error);
+      const exactReady = hasDisplayableExactSummary || hasDisplayableExactError;
       const ready = !!cacheEntry?.summary || !!cacheEntry?.error;
+      const hasNonDisplayableExactResult =
+        (!!exactCacheEntry?.summary && !hasDisplayableExactSummary) ||
+        (!!exactCacheEntry?.error && !hasDisplayableExactError);
       const loading =
         specEnabled &&
         !exactReady &&
-        (!historicalRatesReady || !!cacheEntry?.loading || !cacheEntry);
+        (!historicalRatesReady ||
+          !!exactCacheEntry?.loading ||
+          !exactCacheEntry ||
+          hasNonDisplayableExactResult);
 
       next[spec.key] = {
         key: spec.key,
@@ -198,7 +213,7 @@ export function useAssetPnlSummaries(args: {
       if (
         !state ||
         exactCacheEntry?.summary ||
-        state.error ||
+        exactCacheEntry?.error ||
         exactCacheEntry?.loading
       ) {
         continue;

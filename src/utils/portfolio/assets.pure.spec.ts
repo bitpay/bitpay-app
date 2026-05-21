@@ -720,6 +720,29 @@ describe('getVisibleWalletsFromKeys', () => {
     expect(result).toHaveLength(2);
   });
 
+  it('dedupes the same visible wallet across multiple keys', () => {
+    const walletFromFirstKey = {
+      id: 'shared-wallet',
+      keyId: 'k1',
+      hideWallet: false,
+      hideWalletByAccount: false,
+    };
+    const walletFromSecondKey = {
+      id: 'shared-wallet',
+      keyId: 'k2',
+      hideWallet: false,
+      hideWalletByAccount: false,
+    };
+    const keys = {
+      k1: makeKeyWithWallets('k1', [walletFromFirstKey]),
+      k2: makeKeyWithWallets('k2', [walletFromSecondKey]),
+    };
+
+    const result = getVisibleWalletsFromKeys(keys as any);
+
+    expect(result).toEqual([walletFromFirstKey]);
+  });
+
   it('handles keys with undefined wallets gracefully', () => {
     const keys = {k1: {id: 'k1', wallets: undefined} as any};
     const result = getVisibleWalletsFromKeys(keys);

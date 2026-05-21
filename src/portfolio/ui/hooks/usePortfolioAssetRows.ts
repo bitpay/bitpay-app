@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import type {AssetRowItem, GainLossMode} from '../../../utils/portfolio/assets';
 import {
   buildAssetFiatPriorityByKey,
@@ -34,7 +34,11 @@ import {
   buildCurrentSpotRatesByRateKey,
   getCurrentSpotRatesByRateKeySignature,
 } from '../../../utils/portfolio/balanceChartData';
-import {clearAssetPnlSummaryCacheForTests} from '../assetPnlSummaryCache';
+import {
+  clearAssetPnlSummaryCacheForTests,
+  getAssetPnlSummaryCacheClearEpoch,
+  subscribeAssetPnlSummaryCache,
+} from '../assetPnlSummaryCache';
 
 type Args = {
   gainLossMode: GainLossMode;
@@ -49,12 +53,16 @@ type Result = {
   isFiatLoading: boolean;
   isPopulateLoadingByKey: Record<string, boolean> | undefined;
   hasAnyPortfolioData: boolean;
+  presentationResetToken: number;
 };
 
 type AssetGroupSpec = AssetPnlSummarySpec & {
   storedWalletIds: string[];
   eligibleWalletIds: string[];
 };
+
+const UNAVAILABLE_SUMMARY_READY_REVISION_SIG = 'unavailable-pnl:ready';
+const UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG = 'unavailable-pnl:pending';
 
 function stabilizeVisibleItemOrder(args: {
   items: AssetRowItem[];
@@ -116,8 +124,46 @@ function hasCompletedAssetGroupPopulate(args: {
   });
 }
 
+function hasStrictCompletedAssetGroupPopulate(args: {
+  spec: Pick<AssetGroupSpec, 'eligibleWalletIds' | 'storedWalletIds'>;
+  populateStatus: PortfolioPopulateStatus | undefined;
+}): boolean {
+  if (!args.populateStatus?.inProgress) {
+    return false;
+  }
+
+  if (
+    !args.populateStatus.currentWalletId &&
+    !Object.keys(args.populateStatus.walletStatusById || {}).length
+  ) {
+    return false;
+  }
+
+  return hasCompletedPopulateForWalletIds({
+    populateStatus: args.populateStatus,
+    walletIds: args.spec.eligibleWalletIds.length
+      ? args.spec.eligibleWalletIds
+      : args.spec.storedWalletIds,
+    requireAllWalletsInScope: true,
+  });
+}
+
 export function clearPortfolioAssetGroupPopulateCacheForTests(): void {
   clearAssetPnlSummaryCacheForTests();
+}
+
+function useAssetPnlSummaryClearEpoch(): number {
+  const [clearEpoch, setClearEpoch] = useState(
+    getAssetPnlSummaryCacheClearEpoch,
+  );
+
+  useEffect(() => {
+    return subscribeAssetPnlSummaryCache(() => {
+      setClearEpoch(getAssetPnlSummaryCacheClearEpoch());
+    });
+  }, []);
+
+  return clearEpoch;
 }
 
 function getRepresentativeStoredWallet(args: {
@@ -144,6 +190,51 @@ function getChartDataRevisionSig(args: {
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+
+function hasCompletedInitialPortfolioBaseline(value: unknown): boolean {
+  return isFiniteNumber(value);
+}
+
+function isResumingInterruptedPopulate(
+  populateStatus: PortfolioPopulateStatus | undefined,
+): boolean {
+  return (
+    !!populateStatus &&
+    !populateStatus.inProgress &&
+    isFiniteNumber(populateStatus.startedAt) &&
+    !isFiniteNumber(populateStatus.finishedAt) &&
+    !populateStatus.stopReason
+  );
+}
+
+function getUnavailableSummaryReadiness(args: {
+  eligibleWalletIds: string[];
+  storedWalletIds: string[];
+  lastFullPopulateCompletedAt?: number | null;
+  populateStatus: PortfolioPopulateStatus | undefined;
+}): {
+  allowUnavailableSummary: boolean;
+  unavailableSummaryRevisionSig: string;
+} {
+  const spec = {
+    eligibleWalletIds: args.eligibleWalletIds,
+    storedWalletIds: args.storedWalletIds,
+  };
+  const allowUnavailableSummary = args.populateStatus?.inProgress
+    ? hasStrictCompletedAssetGroupPopulate({
+        spec,
+        populateStatus: args.populateStatus,
+      })
+    : hasCompletedInitialPortfolioBaseline(args.lastFullPopulateCompletedAt) &&
+      !isResumingInterruptedPopulate(args.populateStatus);
+
+  return {
+    allowUnavailableSummary,
+    unavailableSummaryRevisionSig: allowUnavailableSummary
+      ? UNAVAILABLE_SUMMARY_READY_REVISION_SIG
+      : UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG,
+  };
+}
 
 function buildDisplayMetric(args: {
   baseMetric: AssetRowMetrics;
@@ -183,6 +274,7 @@ export function usePortfolioAssetRows({
   enabled,
 }: Args): Result {
   const analysisEnabled = enabled !== false;
+  const assetPnlSummaryClearEpoch = useAssetPnlSummaryClearEpoch();
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
@@ -213,14 +305,11 @@ export function usePortfolioAssetRows({
     enabled: analysisEnabled,
     wallets,
   });
-  const committedPortfolioRevisionToken = useMemo(() => {
-    return (
-      committedRevisionToken ||
-      buildCommittedPortfolioRevisionToken({
-        lastPopulatedAt: portfolio.lastPopulatedAt,
-      })
-    );
-  }, [committedRevisionToken, portfolio.lastPopulatedAt]);
+  const committedPortfolioRevisionToken =
+    committedRevisionToken ||
+    buildCommittedPortfolioRevisionToken({
+      lastPopulatedAt: portfolio.lastPopulatedAt,
+    });
 
   const assetGroupSpecs = useMemo<AssetGroupSpec[]>(() => {
     if (!analysisEnabled || !storedWallets.length) {
@@ -299,6 +388,12 @@ export function usePortfolioAssetRows({
       ).sort((a, b) => a.localeCompare(b));
       const groupStoredWalletRequestSig =
         getStoredWalletRequestSignature(groupStoredWallets);
+      const unavailableSummaryReadiness = getUnavailableSummaryReadiness({
+        eligibleWalletIds,
+        storedWalletIds,
+        lastFullPopulateCompletedAt: portfolio.lastFullPopulateCompletedAt,
+        populateStatus: portfolio.populateStatus,
+      });
 
       nextSpecs.push({
         key: groupKey,
@@ -330,6 +425,10 @@ export function usePortfolioAssetRows({
         }),
         asOfMs,
         balanceOffset: 0,
+        allowUnavailableSummary:
+          unavailableSummaryReadiness.allowUnavailableSummary,
+        unavailableSummaryRevisionSig:
+          unavailableSummaryReadiness.unavailableSummaryRevisionSig,
         enabled:
           !portfolio.populateStatus?.inProgress ||
           hasCompletedAssetGroupPopulate({
@@ -385,6 +484,7 @@ export function usePortfolioAssetRows({
     currentRatesByAssetId,
     eligibleWallets,
     gainLossMode,
+    portfolio.lastFullPopulateCompletedAt,
     portfolio.populateStatus,
     quoteCurrency,
     rates,
@@ -442,30 +542,46 @@ export function usePortfolioAssetRows({
     summaryStatesByKey,
     wallets,
   ]);
-  const lastNonEmptyVisibleItemsRef = useRef<AssetRowItem[]>([]);
+  const lastNonEmptyVisibleItemsRef = useRef<{
+    clearEpoch: number;
+    items: AssetRowItem[];
+  }>({
+    clearEpoch: assetPnlSummaryClearEpoch,
+    items: [],
+  });
   useEffect(() => {
     if (items.length) {
-      lastNonEmptyVisibleItemsRef.current = items;
+      lastNonEmptyVisibleItemsRef.current = {
+        clearEpoch: assetPnlSummaryClearEpoch,
+        items,
+      };
     }
-  }, [items]);
+  }, [assetPnlSummaryClearEpoch, items]);
 
-  const hasSummaryLoading = useMemo(() => {
-    return Object.values(summaryStatesByKey).some(state => state.loading);
-  }, [summaryStatesByKey]);
+  const hasSummaryLoading = Object.values(summaryStatesByKey).some(
+    state => state.loading,
+  );
   const visibleItems = useMemo(() => {
     if (items.length) {
       return items;
     }
 
-    if (
-      (portfolio.populateStatus?.inProgress || hasSummaryLoading) &&
-      lastNonEmptyVisibleItemsRef.current.length
-    ) {
-      return lastNonEmptyVisibleItemsRef.current;
-    }
+    const lastNonEmptyVisibleItems =
+      lastNonEmptyVisibleItemsRef.current.clearEpoch ===
+      assetPnlSummaryClearEpoch
+        ? lastNonEmptyVisibleItemsRef.current.items
+        : [];
 
-    return items;
-  }, [hasSummaryLoading, items, portfolio.populateStatus?.inProgress]);
+    return (portfolio.populateStatus?.inProgress || hasSummaryLoading) &&
+      lastNonEmptyVisibleItems.length
+      ? lastNonEmptyVisibleItems
+      : items;
+  }, [
+    assetPnlSummaryClearEpoch,
+    hasSummaryLoading,
+    items,
+    portfolio.populateStatus?.inProgress,
+  ]);
 
   const walletIdsByAssetKey = useMemo(() => {
     if (!portfolio.populateStatus?.inProgress) {
@@ -475,15 +591,15 @@ export function usePortfolioAssetRows({
     return buildWalletIdsByAssetGroupKey(wallets);
   }, [portfolio.populateStatus?.inProgress, wallets]);
 
-  const populateLoadingByKeyPrevRef = useRef<
-    Record<string, boolean> | undefined
-  >(undefined);
+  const populateLoadingByKeyPrevRef = useRef<{
+    clearEpoch: number;
+    value: Record<string, boolean> | undefined;
+  }>({
+    clearEpoch: assetPnlSummaryClearEpoch,
+    value: undefined,
+  });
   const isPopulateLoadingByKeyRaw = useMemo(() => {
-    if (!portfolio.populateStatus?.inProgress) {
-      return undefined;
-    }
-
-    if (!walletIdsByAssetKey) {
+    if (!portfolio.populateStatus?.inProgress || !walletIdsByAssetKey) {
       return undefined;
     }
 
@@ -491,9 +607,18 @@ export function usePortfolioAssetRows({
       items: visibleItems,
       walletIdsByAssetKey,
       populateStatus: portfolio.populateStatus,
-      prev: populateLoadingByKeyPrevRef.current,
+      prev:
+        populateLoadingByKeyPrevRef.current.clearEpoch ===
+        assetPnlSummaryClearEpoch
+          ? populateLoadingByKeyPrevRef.current.value
+          : undefined,
     });
-  }, [portfolio.populateStatus, visibleItems, walletIdsByAssetKey]);
+  }, [
+    assetPnlSummaryClearEpoch,
+    portfolio.populateStatus,
+    visibleItems,
+    walletIdsByAssetKey,
+  ]);
   const hasSettledFreshPopulateByKey = useMemo(() => {
     if (!portfolio.populateStatus?.inProgress || !isPopulateLoadingByKeyRaw) {
       return undefined;
@@ -535,12 +660,14 @@ export function usePortfolioAssetRows({
       typeof portfolio.populateStatus?.startedAt === 'number'
         ? String(portfolio.populateStatus.startedAt)
         : '',
+      String(assetPnlSummaryClearEpoch),
       gainLossMode,
       quoteCurrency,
       assetKeys?.join(',') || '',
     ].join('|');
   }, [
     assetKeys,
+    assetPnlSummaryClearEpoch,
     gainLossMode,
     portfolio.populateStatus?.startedAt,
     quoteCurrency,
@@ -553,20 +680,15 @@ export function usePortfolioAssetRows({
     itemsByKey: {},
   });
   useEffect(() => {
-    if (!portfolio.populateStatus?.inProgress) {
-      resolvedPopulateItemsRef.current = {
-        sessionToken: '',
-        itemsByKey: {},
-      };
-      return;
-    }
-
     if (
+      !portfolio.populateStatus?.inProgress ||
       resolvedPopulateItemsRef.current.sessionToken !==
-      resolvedPopulateItemsSessionToken
+        resolvedPopulateItemsSessionToken
     ) {
       resolvedPopulateItemsRef.current = {
-        sessionToken: resolvedPopulateItemsSessionToken,
+        sessionToken: portfolio.populateStatus?.inProgress
+          ? resolvedPopulateItemsSessionToken
+          : '',
         itemsByKey: {},
       };
     }
@@ -597,10 +719,8 @@ export function usePortfolioAssetRows({
     };
     const nextItems = visibleItems.map(item => {
       const cachedItem = resolvedItemsByKey[item.key];
-      const hasSettledPopulate =
-        hasSettledFreshPopulateByKey?.[item.key] === true;
 
-      if (hasSettledPopulate) {
+      if (hasSettledFreshPopulateByKey?.[item.key] === true) {
         if (cachedItem !== item) {
           resolvedItemsByKey[item.key] = item;
         }
@@ -641,26 +761,36 @@ export function usePortfolioAssetRows({
   ]);
 
   useEffect(() => {
-    populateLoadingByKeyPrevRef.current =
-      stablePopulatePresentation.isPopulateLoadingByKey;
-  }, [stablePopulatePresentation.isPopulateLoadingByKey]);
-  const hasPendingVisibleOrderStabilization = useMemo(() => {
-    return !!portfolio.populateStatus?.inProgress || hasSummaryLoading;
-  }, [hasSummaryLoading, portfolio.populateStatus?.inProgress]);
-  const lastStableVisibleItemOrderRef = useRef<string[]>([]);
+    populateLoadingByKeyPrevRef.current = {
+      clearEpoch: assetPnlSummaryClearEpoch,
+      value: stablePopulatePresentation.isPopulateLoadingByKey,
+    };
+  }, [
+    assetPnlSummaryClearEpoch,
+    stablePopulatePresentation.isPopulateLoadingByKey,
+  ]);
+  const hasPendingVisibleOrderStabilization =
+    !!portfolio.populateStatus?.inProgress || hasSummaryLoading;
+  const lastStableVisibleItemOrderRef = useRef<{
+    clearEpoch: number;
+    keys: string[];
+  }>({
+    clearEpoch: assetPnlSummaryClearEpoch,
+    keys: [],
+  });
   const visibleItemsForDisplay = useMemo(() => {
     const nextItems = stablePopulatePresentation.visibleItems;
-    const previousKeys = lastStableVisibleItemOrderRef.current;
+    const previousKeys =
+      lastStableVisibleItemOrderRef.current.clearEpoch ===
+      assetPnlSummaryClearEpoch
+        ? lastStableVisibleItemOrderRef.current.keys
+        : [];
 
-    if (!hasPendingVisibleOrderStabilization || !previousKeys.length) {
-      return nextItems;
-    }
-
-    return stabilizeVisibleItemOrder({
-      items: nextItems,
-      previousKeys,
-    });
+    return !hasPendingVisibleOrderStabilization || !previousKeys.length
+      ? nextItems
+      : stabilizeVisibleItemOrder({items: nextItems, previousKeys});
   }, [
+    assetPnlSummaryClearEpoch,
     hasPendingVisibleOrderStabilization,
     stablePopulatePresentation.visibleItems,
   ]);
@@ -670,14 +800,21 @@ export function usePortfolioAssetRows({
     }
 
     if (
-      !lastStableVisibleItemOrderRef.current.length ||
+      lastStableVisibleItemOrderRef.current.clearEpoch !==
+        assetPnlSummaryClearEpoch ||
+      !lastStableVisibleItemOrderRef.current.keys.length ||
       !hasPendingVisibleOrderStabilization
     ) {
-      lastStableVisibleItemOrderRef.current = visibleItemsForDisplay.map(
-        item => item.key,
-      );
+      lastStableVisibleItemOrderRef.current = {
+        clearEpoch: assetPnlSummaryClearEpoch,
+        keys: visibleItemsForDisplay.map(item => item.key),
+      };
     }
-  }, [hasPendingVisibleOrderStabilization, visibleItemsForDisplay]);
+  }, [
+    assetPnlSummaryClearEpoch,
+    hasPendingVisibleOrderStabilization,
+    visibleItemsForDisplay,
+  ]);
 
   const hasAnySummaryData = Object.values(summaryStatesByKey).some(
     state => !!state.summary,
@@ -694,6 +831,7 @@ export function usePortfolioAssetRows({
     visibleItems: visibleItemsForDisplay,
     isFiatLoading,
     isPopulateLoadingByKey: stablePopulatePresentation.isPopulateLoadingByKey,
+    presentationResetToken: assetPnlSummaryClearEpoch,
     hasAnyPortfolioData:
       visibleItemsForDisplay.length > 0 ||
       storedWalletRequestSig.length > 0 ||

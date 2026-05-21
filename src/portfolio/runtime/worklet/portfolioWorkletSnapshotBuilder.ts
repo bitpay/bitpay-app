@@ -5,6 +5,7 @@ import {
   makeAtomicToUnitNumberConverter,
   parseAtomicToBigint,
   ratioBigIntToNumber,
+  resolveKnownWalletAtomicDecimals,
 } from '../../core/format';
 import {
   getTxHistoryEntryId,
@@ -487,6 +488,20 @@ export function createPortfolioSnapshotBuilderState(args: {
   const normalizedCoin = normalizeFiatRateSeriesCoin(
     args.wallet.currencyAbbreviation,
   );
+  const tokenAddress = String(
+    args.wallet.tokenAddress || args.credentials?.token?.address || '',
+  ).trim();
+  const knownUnitDecimals = resolveKnownWalletAtomicDecimals({
+    unitDecimals: args.wallet.unitDecimals,
+    credentials: args.credentials,
+  });
+  if (tokenAddress && typeof knownUnitDecimals !== 'number') {
+    throw new Error(
+      `Invalid token metadata: wallet ${
+        args.wallet.walletId || args.credentials.walletId || 'unknown'
+      } has unresolved token decimals.`,
+    );
+  }
 
   return {
     wallet: args.wallet,
@@ -502,7 +517,7 @@ export function createPortfolioSnapshotBuilderState(args: {
     nowMs: args.nowMs ?? Date.now(),
     compressionEnabled: !!args.compressionEnabled,
     atomicToUnitNumber: makeAtomicToUnitNumberConverter(
-      getAtomicDecimals(args.credentials),
+      knownUnitDecimals ?? getAtomicDecimals(args.credentials),
     ),
     balanceAtomic: parseAtomicToBigint(checkpoint?.balanceAtomic ?? '0'),
     remainingCostBasisFiat:

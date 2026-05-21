@@ -1,5 +1,7 @@
 import type {AssetRowItem} from '../../../../utils/portfolio/assets';
 
+export type AssetRowPresentationResetToken = string | number;
+
 export function getAssetRowPopulateLoading(args: {
   populateInProgress?: boolean;
   showPnlPlaceholder?: boolean;
@@ -9,37 +11,28 @@ export function getAssetRowPopulateLoading(args: {
   return args.rowLoadingByKey?.[args.rowKey] ?? !!args.populateInProgress;
 }
 
-export function getAssetRowFiatLoading(args: {
-  populateInProgress?: boolean;
-  isFiatLoading?: boolean;
+export function getAssetRowPnlLoading(args: {
+  isPnlLoading?: boolean;
   isRowPopulateLoading?: boolean;
   showScopedPnlLoading?: boolean;
 }): boolean {
   return (
-    (!!args.isFiatLoading && !!args.isRowPopulateLoading) ||
+    (!!args.isPnlLoading && !!args.isRowPopulateLoading) ||
     !!args.showScopedPnlLoading
   );
 }
 
 export function shouldForceAssetListSkeleton(args: {
-  items: AssetRowItem[];
   forceSkeleton?: boolean;
-  isFiatLoading?: boolean;
 }): boolean {
-  if (args.forceSkeleton) {
-    return true;
-  }
-
-  if (!args.isFiatLoading || !args.items.length) {
-    return false;
-  }
-
-  return args.items.every(item => !!item.showPnlPlaceholder);
+  return !!args.forceSkeleton;
 }
 
 export function resolveAssetRowDisplayPresentation(args: {
   item: AssetRowItem;
   preservedItem?: AssetRowItem;
+  presentationResetToken?: AssetRowPresentationResetToken;
+  preservedItemResetToken?: AssetRowPresentationResetToken;
   isLoading: boolean;
   loadingDelayElapsed: boolean;
 }): {
@@ -47,7 +40,9 @@ export function resolveAssetRowDisplayPresentation(args: {
   shouldShowSkeleton: boolean;
   usingPreservedItem: boolean;
 } {
-  const hasPreservedItem = !!args.preservedItem;
+  const hasPreservedItem =
+    !!args.preservedItem &&
+    args.preservedItemResetToken === args.presentationResetToken;
   const hasPnlScopeKeys =
     typeof args.item.pnlScopeKey === 'string' ||
     typeof args.preservedItem?.pnlScopeKey === 'string';

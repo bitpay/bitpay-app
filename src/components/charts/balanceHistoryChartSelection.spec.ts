@@ -4,9 +4,15 @@ import {
 } from './balanceHistoryChartSelection';
 
 jest.mock('../../utils/helper-methods', () => ({
-  formatFiatAmount: jest.fn((amount: number, quoteCurrency: string) => {
-    return `${quoteCurrency}:${amount}`;
-  }),
+  formatFiatAmount: jest.fn(
+    (
+      amount: number,
+      quoteCurrency: string,
+      opts?: {currencyDisplay?: string},
+    ) => {
+      return `${quoteCurrency}:${amount}:${opts?.currencyDisplay || 'default'}`;
+    },
+  ),
 }));
 
 import {formatFiatAmount} from '../../utils/helper-methods';
@@ -26,7 +32,25 @@ describe('balanceHistoryChartSelection', () => {
     expect(changeRow).toEqual({
       percent: 12.34,
       deltaFiatFormatted: formatFiatAmount(40, 'USD', {
-        customPrecision: 'minimal',
+        currencyDisplay: 'symbol',
+      }),
+      rangeLabel: '1D',
+    });
+  });
+
+  it('keeps cents for exact zero pnl change', () => {
+    const changeRow = buildBalanceHistoryChartChangeRowData({
+      displayedAnalysisPoint: {
+        totalPnlPercent: 0,
+        totalPnlChange: 0,
+      } as any,
+      quoteCurrency: 'USD',
+      label: '1D',
+    });
+
+    expect(changeRow).toEqual({
+      percent: 0,
+      deltaFiatFormatted: formatFiatAmount(0, 'USD', {
         currencyDisplay: 'symbol',
       }),
       rangeLabel: '1D',

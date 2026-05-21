@@ -8,6 +8,7 @@ export type WalletSummary = {
   // for tokens, these may differ
   currencyAbbreviation: string; // e.g. btc, eth, usdc
   tokenAddress?: string;
+  unitDecimals?: number;
   // Atomic units as a decimal string (keeps precision for large EVM values).
   balanceAtomic: string;
   balanceFormatted: string;

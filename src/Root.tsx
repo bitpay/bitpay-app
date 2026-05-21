@@ -167,6 +167,7 @@ import {
 } from './Root.helpers';
 import {maybePopulatePortfolioOnAppLaunch} from './store/portfolio';
 import {MoonpayEmbeddedCredentialManager} from './navigation/services/components/MoonpayEmbeddedCredentialManager';
+import {isUnitedKingdomCountry} from './store/location/location.effects';
 
 const BWC = BwcProvider.getInstance();
 const Logger = BWC.getLogger();
@@ -455,7 +456,7 @@ export default () => {
   // LOCATION
   useEffect(() => {
     if (currentLocation) {
-      if (currentLocation.countryShortCode.toUpperCase() === 'GB') {
+      if (isUnitedKingdomCountry(currentLocation.countryShortCode)) {
         dispatch(AppActions.showArchaxBanner(true));
       } else {
         dispatch(AppActions.showArchaxBanner(false));
