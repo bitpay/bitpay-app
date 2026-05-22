@@ -37,7 +37,9 @@ class PortfolioBalancePage {
   }
   
   var sendButton: XCUIElement {
-    app.buttons["send-button"]
+    app.descendants(matching: .any)
+      .matching(identifier: "send-button")
+      .firstMatch
   }
   
   var swapButton: XCUIElement {
