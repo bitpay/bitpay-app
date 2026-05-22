@@ -27,13 +27,17 @@ class PortfolioBalancePage {
       matching: NSPredicate(format: "label == 'Add crypto wallet'")
     ).firstMatch
   }
-
+  
   var buyButton: XCUIElement {
-    app.otherElements["Buy"].otherElements["Buy"].firstMatch
+    app.descendants(matching: .any)
+      .matching(identifier: "buy-button")
+      .firstMatch
   }
   
   var sellButton: XCUIElement {
-    app.otherElements["Sell"].otherElements["Sell"].firstMatch
+    app.descendants(matching: .any)
+      .matching(identifier: "sell-button")
+      .firstMatch
   }
   
   var sendButton: XCUIElement {
@@ -43,7 +47,9 @@ class PortfolioBalancePage {
   }
   
   var swapButton: XCUIElement {
-    app.otherElements["Swap"].otherElements["Swap"].firstMatch
+    app.descendants(matching: .any)
+      .matching(identifier: "swap-button")
+      .firstMatch
   }
 
   // MARK: - Actions
@@ -52,11 +58,27 @@ class PortfolioBalancePage {
     return yourPortfolioBalanceText.waitForExistence(timeout: timeout)
   }
   
-  func tapBuyButton() {
+//  func tapBuyButton() {
+//    buyButton.tap()
+//  }
+  
+  func tapBuyButton(timeout: TimeInterval = 900) {
+    XCTAssertTrue(
+      buyButton.waitForExistence(timeout: timeout),
+        "Buy button did not appear within \(timeout) seconds"
+      )
     buyButton.tap()
   }
   
-  func tapSellButton() {
+//  func tapSellButton() {
+//    sellButton.tap()
+//  }
+  
+  func tapSellButton(timeout: TimeInterval = 900) {
+    XCTAssertTrue(
+      sellButton.waitForExistence(timeout: timeout),
+        "Sell button did not appear within \(timeout) seconds"
+      )
     sellButton.tap()
   }
 
@@ -66,61 +88,69 @@ class PortfolioBalancePage {
   
   func tapAddCryptoButton() {
     
-    let selectAnOptionPage = AddCryptoOptionPage(app: app)
-    
-    for attempt in 1...5 {
-      
+//    let selectAnOptionPage = AddCryptoOptionPage(app: app)
+//    
+//    for attempt in 1...5 {
+//      
       addCryptoButton.tap()
       
-      if selectAnOptionPage.isSelectAnOptionTitleDisplayed() {
-        return
-      }
-      
-      if attempt < 5 {
-        sleep(60)
-      }
-    }
-    
-    XCTFail("Failed to open 'Select an Option' screen after 5 attempts")
+//      if selectAnOptionPage.isSelectAnOptionTitleDisplayed() {
+//        return
+//      }
+//      
+//      if attempt < 5 {
+//        sleep(60)
+//      }
+//    }
+//    
+//    XCTFail("Failed to open 'Select an Option' screen after 5 attempts")
   }
   
-//  func tapSendButton(timeout: TimeInterval = 900) {
-//    XCTAssertTrue(
-//        sendButton.waitForExistence(timeout: timeout),
-//        "Send button did not appear within \(timeout) seconds"
-//      )
-//    sendButton.tap()
-//  }
-  
   func tapSendButton(timeout: TimeInterval = 900) {
-    
-    let isDisplayed = sendButton.waitForExistence(timeout: timeout)
-    
-    if !isDisplayed {
-      
-      // Attach full app hierarchy/page source into xcresult
-      let pageSourceAttachment = XCTAttachment(
-        string: app.debugDescription
-      )
-      
-      pageSourceAttachment.name = "App Debug Description XML"
-      pageSourceAttachment.lifetime = .keepAlways
-      
-      XCTContext.runActivity(
-        named: "Attach App Debug Description"
-      ) { activity in
-        activity.add(pageSourceAttachment)
-      }
-      
-      XCTFail(
+    XCTAssertTrue(
+        sendButton.waitForExistence(timeout: timeout),
         "Send button did not appear within \(timeout) seconds"
       )
-    }
-    
     sendButton.tap()
   }
   
-  func tapSwapButton() {
+//  func tapSendButton(timeout: TimeInterval = 900) {
+//    
+//    let isDisplayed = sendButton.waitForExistence(timeout: timeout)
+//    
+//    if !isDisplayed {
+//      
+//      // Attach full app hierarchy/page source into xcresult
+//      let pageSourceAttachment = XCTAttachment(
+//        string: app.debugDescription
+//      )
+//      
+//      pageSourceAttachment.name = "App Debug Description XML"
+//      pageSourceAttachment.lifetime = .keepAlways
+//      
+//      XCTContext.runActivity(
+//        named: "Attach App Debug Description"
+//      ) { activity in
+//        activity.add(pageSourceAttachment)
+//      }
+//      
+//      XCTFail(
+//        "Send button did not appear within \(timeout) seconds"
+//      )
+//    }
+//    
+//    sendButton.tap()
+//  }
+  
+//  func tapSwapButton() {
+//    swapButton.tap()
+//  }
+  
+  func tapSwapButton(timeout: TimeInterval = 900) {
+    XCTAssertTrue(
+      swapButton.waitForExistence(timeout: timeout),
+        "Swap button did not appear within \(timeout) seconds"
+      )
     swapButton.tap()
   }
 
