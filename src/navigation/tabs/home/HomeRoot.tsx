@@ -79,6 +79,8 @@ import {
 } from '../../../utils/portfolio/assets';
 import {sortNewestFirst} from '../../../utils/braze';
 import buildHomeExchangeRateItems from './homeExchangeRates';
+import {logManager} from '../../../managers/LogManager';
+import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -222,11 +224,22 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         ),
         dispatch(requestBrazeContentRefresh()),
       ]);
-      await dispatch(
-        maybePopulatePortfolioOnAppLaunch({
-          quoteCurrency,
-        }) as any,
-      );
+      void Promise.resolve()
+        .then(() =>
+          dispatch(
+            maybePopulatePortfolioOnAppLaunch({
+              quoteCurrency,
+              forceRetryQuarantined: true,
+            }) as any,
+          ),
+        )
+        .catch(error => {
+          logManager.warn(
+            `[portfolio] Failed background home refresh populate: ${formatUnknownError(
+              error,
+            )}`,
+          );
+        });
     } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     } finally {
@@ -457,7 +470,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               {/* ////////////////////////////// DO MORE */}
               {memoizedShopWithCryptoCards.length ? (
                 <HomeSection
-                  style={{marginBottom: 20}}
+                  style={{marginBottom: -8}}
                   title={t('Do More')}
                   // action={t('Shop all')}
                   // onActionPress={() => {
@@ -474,7 +487,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               ) : null}
 
               {/* ////////////////////////////// EXCHANGE RATES */}
-              {!showArchaxBanner && memoizedExchangeRates.length ? (
+              {memoizedExchangeRates.length ? (
                 <HomeSection title={t('Exchange Rates')} label="24H">
                   <ExchangeRatesList
                     items={memoizedExchangeRates}

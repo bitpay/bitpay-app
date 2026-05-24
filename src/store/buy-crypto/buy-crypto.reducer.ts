@@ -19,8 +19,8 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList = [
 ];
 
 export interface BuyCryptoStateOpts {
-  selectedPaymentMethod: PaymentMethodKey | undefined;
   lastPurchaseData: LastPurchaseData | undefined;
+  selectedPaymentMethod: PaymentMethodKey | undefined;
 }
 
 export interface BuyCryptoState {
@@ -39,8 +39,8 @@ export interface BuyCryptoState {
 
 const initialState: BuyCryptoState = {
   opts: {
-    selectedPaymentMethod: undefined,
     lastPurchaseData: undefined,
+    selectedPaymentMethod: undefined,
   },
   banxa: {},
   moonpay: {},
@@ -167,6 +167,15 @@ export const buyCryptoReducer = (
           state.moonpay[moonpayIncomingData.externalId].transaction_id =
             moonpayIncomingData.transactionId;
         }
+        if (moonpayIncomingData.cryptoAmount) {
+          state.moonpay[moonpayIncomingData.externalId].crypto_amount =
+            moonpayIncomingData.cryptoAmount;
+        }
+        if (moonpayIncomingData.fiatBaseAmount) {
+          state.moonpay[moonpayIncomingData.externalId].fiat_base_amount =
+            moonpayIncomingData.fiatBaseAmount;
+        }
+
         return {
           ...state,
           moonpay: {

@@ -99,6 +99,18 @@ jest.mock('../../../../portfolio/ui/common', () => ({
   resolveCurrentRatesAsOfMs: jest.fn(() => 1234),
 }));
 
+jest.mock(
+  '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
+  () =>
+    jest.fn(() => ({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      hasSnapshotsByWalletId: {},
+      loading: false,
+    })),
+);
+
 jest.mock('../../../../utils/portfolio/assets', () => ({
   findSupportedCurrencyOptionForAsset: jest.fn(() => undefined),
   getWalletLiveFiatBalance: jest.fn(() => 0),
@@ -137,12 +149,26 @@ const mockGetVisibleWalletsForKey =
   mockPortfolioAssets.getVisibleWalletsForKey as jest.Mock;
 const mockGetVisibleWalletsFromKeys =
   mockPortfolioAssets.getVisibleWalletsFromKeys as jest.Mock;
+const mockUsePortfolioWalletSnapshotPresence = jest.requireMock(
+  '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
+) as jest.Mock;
+const mockBuildUIFormattedWallet = jest.requireMock(
+  '../../../../store/wallet/utils/wallet',
+).buildUIFormattedWallet as jest.Mock;
 
 describe('useExchangeRateSharedModel', () => {
   beforeEach(() => {
     latestSharedModel = undefined;
     mockDispatch.mockReset();
     mockSetOptions.mockReset();
+    mockBuildUIFormattedWallet.mockReset();
+    mockBuildUIFormattedWallet.mockImplementation((wallet: any) => ({
+      id: wallet?.id,
+      walletName: wallet?.walletName || wallet?.id,
+      cryptoBalance: wallet?.balance?.crypto ?? '0.00',
+      fiatBalance: 0,
+      fiatBalanceFormat: '$0.00',
+    }));
     mockGetWalletsMatchingExchangeRateAsset.mockReset();
     mockGetWalletsMatchingExchangeRateAsset.mockImplementation(
       ({wallets}: {wallets?: unknown[]}) => wallets || [],
@@ -153,6 +179,14 @@ describe('useExchangeRateSharedModel', () => {
     );
     mockGetVisibleWalletsFromKeys.mockReset();
     mockGetVisibleWalletsFromKeys.mockReturnValue([]);
+    mockUsePortfolioWalletSnapshotPresence.mockReset();
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: false,
+      hasSnapshotsByWalletId: {},
+      loading: false,
+    });
     mockRouteParams = {
       currencyAbbreviation: 'eth',
       chain: 'eth',
@@ -240,5 +274,145 @@ describe('useExchangeRateSharedModel', () => {
     expect(
       latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
     ).toEqual([keyWallet]);
+  });
+
+  it('includes zero-balance asset wallets with snapshots in asset balance details', async () => {
+    const liveWallet = {
+      id: 'wallet-live',
+      balance: {crypto: '1.234567', sat: 1},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+    const zeroHistoricalWallet = {
+      id: 'wallet-zero-history',
+      balance: {crypto: '0.00', sat: 0},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+    const zeroEmptyWallet = {
+      id: 'wallet-zero-empty',
+      balance: {sat: 0},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+
+    mockRouteParams = {
+      ...mockRouteParams,
+      chartType: 'assetBalanceHistory',
+    };
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      liveWallet,
+      zeroHistoricalWallet,
+      zeroEmptyWallet,
+    ]);
+    mockGetWalletsMatchingExchangeRateAsset.mockImplementation(
+      ({
+        includeZeroBalance,
+        wallets,
+      }: {
+        includeZeroBalance?: boolean;
+        wallets?: Array<{balance?: {sat?: number}}>;
+      }) => {
+        return (wallets || []).filter(wallet => {
+          return includeZeroBalance || Number(wallet.balance?.sat || 0) > 0;
+        });
+      },
+    );
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: true,
+      hasSnapshotsByWalletId: {
+        'wallet-zero-history': true,
+        'wallet-zero-empty': false,
+      },
+      loading: false,
+    });
+
+    await act(async () => {
+      TestRenderer.create(<HookHarness />);
+    });
+
+    expect(latestSharedModel?.assetWallets).toEqual([
+      liveWallet,
+      zeroHistoricalWallet,
+      zeroEmptyWallet,
+    ]);
+    expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenCalledWith({
+      wallets: [liveWallet, zeroHistoricalWallet, zeroEmptyWallet],
+      enabled: true,
+    });
+    expect(
+      latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
+    ).toEqual([liveWallet, zeroHistoricalWallet]);
+    expect(
+      latestSharedModel?.walletsForAsset.map(({ui}) => ui.cryptoBalance),
+    ).toEqual(['1.234567', '0.000000']);
+  });
+
+  it('includes zero-balance asset wallets with snapshots in exchange rate details', async () => {
+    const liveWallet = {
+      id: 'exchange-wallet-live',
+      balance: {crypto: '2.345678', sat: 1},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+    const zeroHistoricalWallet = {
+      id: 'exchange-wallet-zero-history',
+      balance: {crypto: '0.00', sat: 0},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+    const zeroEmptyWallet = {
+      id: 'exchange-wallet-zero-empty',
+      balance: {sat: 0},
+      currencyAbbreviation: 'eth',
+      chain: 'eth',
+    };
+
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      liveWallet,
+      zeroHistoricalWallet,
+      zeroEmptyWallet,
+    ]);
+    mockGetWalletsMatchingExchangeRateAsset.mockImplementation(
+      ({
+        includeZeroBalance,
+        wallets,
+      }: {
+        includeZeroBalance?: boolean;
+        wallets?: Array<{balance?: {sat?: number}}>;
+      }) => {
+        return (wallets || []).filter(wallet => {
+          return includeZeroBalance || Number(wallet.balance?.sat || 0) > 0;
+        });
+      },
+    );
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: false,
+      hasAnySnapshots: true,
+      hasSnapshotsByWalletId: {
+        'exchange-wallet-zero-history': true,
+        'exchange-wallet-zero-empty': false,
+      },
+      loading: false,
+    });
+
+    await act(async () => {
+      TestRenderer.create(<HookHarness />);
+    });
+
+    expect(latestSharedModel?.assetWallets).toEqual([liveWallet]);
+    expect(mockUsePortfolioWalletSnapshotPresence).toHaveBeenCalledWith({
+      wallets: [liveWallet, zeroHistoricalWallet, zeroEmptyWallet],
+      enabled: true,
+    });
+    expect(
+      latestSharedModel?.walletsForAsset.map(({wallet}) => wallet),
+    ).toEqual([liveWallet, zeroHistoricalWallet]);
+    expect(
+      latestSharedModel?.walletsForAsset.map(({ui}) => ui.cryptoBalance),
+    ).toEqual(['2.345678', '0.000000']);
   });
 });

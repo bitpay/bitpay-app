@@ -4,6 +4,7 @@ import {
   portfolioSnapshotBuilderFinish,
   portfolioSnapshotBuilderIngestPageWithSnapshotLimit,
 } from './portfolioWorkletSnapshotBuilder';
+import {getFiatRateSeriesCacheKey} from '../../core/fiatRatesShared';
 
 const makeReceivedTx = (args: {
   txid: string;
@@ -36,26 +37,130 @@ const makeSentTx = (args: {
     fees: args.feeAtomic ?? '0',
   } as any);
 
+const createBtcBuilderState = ({
+  walletId,
+  walletName,
+  fiatRateSeriesCache,
+  nowMs,
+  compressionEnabled,
+  checkpoint,
+}: any) =>
+  createPortfolioSnapshotBuilderState({
+    wallet: {
+      walletId,
+      walletName,
+      chain: 'btc',
+      network: 'livenet',
+      currencyAbbreviation: 'btc',
+      balanceAtomic: '0',
+      balanceFormatted: '0',
+    } as any,
+    credentials: {
+      walletId,
+      chain: 'btc',
+      network: 'livenet',
+      coin: 'btc',
+    } as any,
+    quoteCurrency: 'USD',
+    fiatRateSeriesCache,
+    nowMs,
+    compressionEnabled,
+    checkpoint,
+  });
+
+const createTokenBuilderState = ({
+  walletId,
+  walletName,
+  tokenAddress,
+  unitDecimals,
+  fiatRateSeriesCache,
+}: any) =>
+  createPortfolioSnapshotBuilderState({
+    wallet: {
+      walletId,
+      walletName,
+      chain: 'sol',
+      network: 'livenet',
+      currencyAbbreviation: 'weird',
+      tokenAddress,
+      ...(unitDecimals === undefined ? {} : {unitDecimals}),
+      balanceAtomic: '0',
+      balanceFormatted: '0',
+    } as any,
+    credentials: {
+      walletId,
+      chain: 'sol',
+      network: 'livenet',
+      coin: 'sol',
+      token: {
+        address: tokenAddress,
+        symbol: 'WEIRD',
+      },
+    } as any,
+    quoteCurrency: 'USD',
+    fiatRateSeriesCache,
+    nowMs: Date.parse('2024-05-01T00:00:00Z'),
+    compressionEnabled: false,
+  });
+
 describe('portfolioWorkletSnapshotBuilder return-struct flush state', () => {
+  it('uses wallet unit decimals for token cost basis when token credentials omit decimals', () => {
+    const walletId = 'wallet-token-decimals';
+    const tokenAddress = 'soltokenmint111111111111111111111111111111';
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
+    const state = createTokenBuilderState({
+      walletId,
+      walletName: 'Token Decimals Wallet',
+      tokenAddress,
+      unitDecimals: 12,
+      fiatRateSeriesCache: {
+        [getFiatRateSeriesCacheKey('USD', 'weird', 'ALL', {
+          chain: 'sol',
+          tokenAddress,
+        })]: {
+          fetchedOn: Date.now(),
+          points: [{ts: t0, rate: 2}],
+        },
+      },
+    });
+
+    const ingestResult = portfolioSnapshotBuilderIngestPageWithSnapshotLimit(
+      state,
+      [
+        makeReceivedTx({
+          txid: 'fund',
+          timeSeconds: Math.floor(t0 / 1000),
+          blockheight: 0,
+          amountAtomic: '1000000000000',
+        }),
+      ],
+    );
+
+    expect(ingestResult.snapshots).toHaveLength(1);
+    expect(
+      getPortfolioSnapshotBuilderCheckpoint(state).remainingCostBasisFiat,
+    ).toBe(2);
+  });
+
+  it('rejects token snapshot builders when token decimals are unresolved', () => {
+    const walletId = 'wallet-token-missing-decimals';
+    const tokenAddress = 'soltokenmint111111111111111111111111111111';
+
+    expect(() =>
+      createTokenBuilderState({
+        walletId,
+        walletName: 'Token Missing Decimals Wallet',
+        tokenAddress,
+        fiatRateSeriesCache: {},
+      }),
+    ).toThrow('has unresolved token decimals');
+  });
+
   it('throws an invalid-history error when a tx drives the running balance negative', () => {
     const walletId = 'wallet-negative';
-    const state = createPortfolioSnapshotBuilderState({
-      wallet: {
-        walletId,
-        walletName: 'Wallet Negative',
-        chain: 'btc',
-        network: 'livenet',
-        currencyAbbreviation: 'btc',
-        balanceAtomic: '0',
-        balanceFormatted: '0',
-      } as any,
-      credentials: {
-        walletId,
-        chain: 'btc',
-        network: 'livenet',
-        coin: 'btc',
-      } as any,
-      quoteCurrency: 'USD',
+    const state = createBtcBuilderState({
+      walletId,
+      walletName: 'Wallet Negative',
       fiatRateSeriesCache: {} as any,
       nowMs: Date.UTC(2026, 0, 1),
       compressionEnabled: false,
@@ -73,25 +178,56 @@ describe('portfolioWorkletSnapshotBuilder return-struct flush state', () => {
     ).toThrow('Invalid tx history: negative balance after tx spend (-400).');
   });
 
-  it('emits the prior compressed day balance before a newer day mutates builder state', () => {
-    const walletId = 'wallet-2';
+  it('uses resolved wallet unit decimals for snapshot cost basis math', () => {
+    const walletId = 'wallet-custom-decimals';
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
     const state = createPortfolioSnapshotBuilderState({
       wallet: {
         walletId,
-        walletName: 'Wallet 2',
-        chain: 'btc',
+        walletName: 'Wallet Custom Decimals',
+        chain: 'sol',
         network: 'livenet',
-        currencyAbbreviation: 'btc',
+        currencyAbbreviation: 'sol',
+        unitDecimals: 12,
         balanceAtomic: '0',
         balanceFormatted: '0',
       } as any,
       credentials: {
         walletId,
-        chain: 'btc',
+        chain: 'sol',
         network: 'livenet',
-        coin: 'btc',
+        coin: 'sol',
       } as any,
       quoteCurrency: 'USD',
+      fiatRateSeriesCache: {
+        'USD:sol:ALL': {
+          fetchedOn: Date.now(),
+          points: [{ts: t0, rate: 2}],
+        },
+      } as any,
+      nowMs: Date.UTC(2026, 0, 1),
+      compressionEnabled: false,
+    });
+
+    portfolioSnapshotBuilderIngestPageWithSnapshotLimit(state, [
+      makeReceivedTx({
+        txid: 'fund',
+        timeSeconds: Math.floor(t0 / 1000),
+        blockheight: 0,
+        amountAtomic: '1000000000000',
+      }),
+    ]);
+
+    expect(
+      getPortfolioSnapshotBuilderCheckpoint(state).remainingCostBasisFiat,
+    ).toBe(2);
+  });
+
+  it('emits the prior compressed day balance before a newer day mutates builder state', () => {
+    const walletId = 'wallet-2';
+    const state = createBtcBuilderState({
+      walletId,
+      walletName: 'Wallet 2',
       fiatRateSeriesCache: {
         'USD:btc:ALL': {
           fetchedOn: Date.now(),
@@ -144,23 +280,9 @@ describe('portfolioWorkletSnapshotBuilder return-struct flush state', () => {
     const thirtyDaysAgo = nowMs - 30 * dayMs;
     const olderThanThirtyDays = thirtyDaysAgo - 1000;
     const newerThanThirtyDays = thirtyDaysAgo + 1000;
-    const state = createPortfolioSnapshotBuilderState({
-      wallet: {
-        walletId,
-        walletName: 'Wallet 30 Day Threshold',
-        chain: 'btc',
-        network: 'livenet',
-        currencyAbbreviation: 'btc',
-        balanceAtomic: '0',
-        balanceFormatted: '0',
-      } as any,
-      credentials: {
-        walletId,
-        chain: 'btc',
-        network: 'livenet',
-        coin: 'btc',
-      } as any,
-      quoteCurrency: 'USD',
+    const state = createBtcBuilderState({
+      walletId,
+      walletName: 'Wallet 30 Day Threshold',
       fiatRateSeriesCache: {
         'USD:btc:ALL': {
           fetchedOn: Date.now(),
@@ -226,23 +348,9 @@ describe('portfolioWorkletSnapshotBuilder return-struct flush state', () => {
       },
     } as any;
 
-    const firstState = createPortfolioSnapshotBuilderState({
-      wallet: {
-        walletId,
-        walletName: 'Wallet 2b',
-        chain: 'btc',
-        network: 'livenet',
-        currencyAbbreviation: 'btc',
-        balanceAtomic: '0',
-        balanceFormatted: '0',
-      } as any,
-      credentials: {
-        walletId,
-        chain: 'btc',
-        network: 'livenet',
-        coin: 'btc',
-      } as any,
-      quoteCurrency: 'USD',
+    const firstState = createBtcBuilderState({
+      walletId,
+      walletName: 'Wallet 2b',
       fiatRateSeriesCache: cache,
       nowMs: Date.parse('2024-05-01T00:00:00Z'),
       compressionEnabled: true,
@@ -266,23 +374,9 @@ describe('portfolioWorkletSnapshotBuilder return-struct flush state', () => {
     expect(checkpoint.daily?.balanceAtomic).toBe('1000');
     expect(checkpoint.daily?.remainingCostBasisFiat).toBe(0.00001);
 
-    const resumedState = createPortfolioSnapshotBuilderState({
-      wallet: {
-        walletId,
-        walletName: 'Wallet 2b',
-        chain: 'btc',
-        network: 'livenet',
-        currencyAbbreviation: 'btc',
-        balanceAtomic: '0',
-        balanceFormatted: '0',
-      } as any,
-      credentials: {
-        walletId,
-        chain: 'btc',
-        network: 'livenet',
-        coin: 'btc',
-      } as any,
-      quoteCurrency: 'USD',
+    const resumedState = createBtcBuilderState({
+      walletId,
+      walletName: 'Wallet 2b',
       fiatRateSeriesCache: cache,
       nowMs: Date.parse('2024-05-01T00:00:00Z'),
       compressionEnabled: true,

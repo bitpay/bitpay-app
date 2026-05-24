@@ -50,6 +50,8 @@ export type ButtonType = 'button' | 'link' | 'pill' | undefined;
 interface ButtonProps extends BaseButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
+  backgroundColor?: string;
+  borderRadius?: number;
   buttonOutline?: boolean;
   onPress?: () => any;
   onPressDisabled?: () => any;
@@ -66,6 +68,8 @@ interface ButtonProps extends BaseButtonProps {
 
 interface ButtonOptionProps {
   secondary?: boolean;
+  backgroundColor?: string;
+  borderRadius?: number;
   outline?: boolean;
   cancel?: boolean;
   danger?: boolean;
@@ -87,18 +91,26 @@ const ButtonBaseText = styled(BaseText)`
 `;
 
 const ButtonContainer = styled(TouchableOpacity)<ButtonProps>`
-  border-radius: ${({buttonType}) =>
-    buttonType === 'link'
+  border-radius: ${({borderRadius, buttonType}) =>
+    borderRadius ??
+    (buttonType === 'link'
       ? LINK_RADIUS
       : buttonType === 'pill'
       ? PILL_RADIUS
-      : BUTTON_RADIUS}px;
+      : BUTTON_RADIUS)}px;
   position: relative;
   overflow: hidden;
 `;
 
 const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({disabled, theme, outline, danger, secondary}) => {
+  background: ${({
+    disabled,
+    theme,
+    outline,
+    danger,
+    secondary,
+    backgroundColor,
+  }) => {
     if (disabled) {
       return theme.dark ? DisabledDark : Disabled;
     }
@@ -115,15 +127,22 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       }
     }
 
+    if (backgroundColor) {
+      return backgroundColor;
+    }
+
     return Action;
   }};
   border: 2px solid
-    ${({danger, disabled, secondary, outline, theme}) => {
+    ${({danger, disabled, secondary, outline, theme, backgroundColor}) => {
       if (disabled) {
         return theme.dark ? DisabledDark : Disabled;
       }
 
       if (secondary) {
+        if (backgroundColor) {
+          return backgroundColor;
+        }
         return Action;
       }
 
@@ -135,9 +154,13 @@ const ButtonContent = styled.View<ButtonOptionProps>`
         }
       }
 
+      if (backgroundColor) {
+        return backgroundColor;
+      }
+
       return Action;
     }};
-  border-radius: ${BUTTON_RADIUS}px;
+  border-radius: ${({borderRadius}) => borderRadius ?? BUTTON_RADIUS}px;
   height: ${({height}) => height || BUTTON_HEIGHT}px;
   justify-content: center;
 `;
@@ -311,6 +334,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     buttonStyle = 'primary',
     buttonType = 'button',
     buttonOutline,
+    backgroundColor,
+    borderRadius,
     children,
     disabled,
     debounceTime,
@@ -408,7 +433,9 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         outline={outline}
         cancel={cancel}
         disabled={disabled}
-        action={action}>
+        action={action}
+        backgroundColor={backgroundColor}
+        borderRadius={borderRadius}>
         <Animated.View style={childrenStyle}>
           <ButtonContainerFlex hasIcon={!!icon}>
             <ButtonTextContainer>

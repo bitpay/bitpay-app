@@ -18,6 +18,7 @@ import type {
 import type {WalletCredentials} from '../core/types';
 import type {WalletSummary} from '../core/types';
 import {toPortfolioRuntimeWalletCredentials} from '../core/runtimeWalletCredentials';
+import {normalizeWalletUnitDecimals} from '../core/format';
 import type {PortfolioClientTransport} from './portfolioClient';
 import type {PortfolioRuntimeHostBootstrapConfig} from './portfolioRuntimeHostConfig';
 import {shouldDispatchPortfolioRequestOnRuntimeWorklet} from './portfolioRequestRouting';
@@ -74,7 +75,7 @@ function sanitizeWalletSummaryForRuntime(
     return undefined;
   }
 
-  return {
+  const sanitized: WalletSummary = {
     walletId: String(summary.walletId || ''),
     walletName: String(summary.walletName || ''),
     chain: String(summary.chain || ''),
@@ -87,6 +88,13 @@ function sanitizeWalletSummaryForRuntime(
     balanceAtomic: String(summary.balanceAtomic || ''),
     balanceFormatted: String(summary.balanceFormatted || ''),
   };
+
+  const unitDecimals = normalizeWalletUnitDecimals(summary.unitDecimals);
+  if (typeof unitDecimals === 'number') {
+    sanitized.unitDecimals = unitDecimals;
+  }
+
+  return sanitized;
 }
 
 function sanitizeStoredWalletForRuntime(wallet: any): any {
@@ -114,19 +122,8 @@ function buildRuntimeRequestForWorklet(request: WorkerRequest): WorkerRequest {
     } as WorkerRequest;
   }
 
-  if (request.method === 'populate.startJob') {
-    const params = (request.params || {}) as any;
-    const wallets = Array.isArray(params.wallets) ? params.wallets : [];
-    return {
-      ...request,
-      params: {
-        ...params,
-        wallets: wallets.map(sanitizeStoredWalletForRuntime),
-      },
-    } as WorkerRequest;
-  }
-
   if (
+    request.method === 'populate.startJob' ||
     request.method === 'analysis.compute' ||
     request.method === 'analysis.prepareSession' ||
     request.method === 'analysis.computeChart' ||
@@ -214,7 +211,6 @@ function buildPopulateJobSigningContextsForRequest(
     : [];
 
   const out: PortfolioPopulateJobSigningContextMap = {};
-  let populated = false;
 
   try {
     for (const wallet of wallets) {
@@ -232,14 +228,13 @@ function buildPopulateJobSigningContextsForRequest(
         signingAuthority,
         requestCount: 4,
       });
-      populated = true;
     }
   } catch (error: unknown) {
     clearPopulateSigningContextMapOnJS(out);
     throw error;
   }
 
-  return populated ? out : undefined;
+  return Object.keys(out).length ? out : undefined;
 }
 
 function clearPopulateSigningContextMapOnJS(
@@ -348,11 +343,10 @@ function reconcileSessionCredentialsAfterFatalError(args: {
 function shouldAwaitPopulateTerminalResponse(
   request: WorkerRequest,
 ): request is WorkerRequest<'populate.startJob'> {
-  if (request.method !== 'populate.startJob') {
-    return false;
-  }
-
-  return (request.params as {awaitTerminal?: boolean})?.awaitTerminal === true;
+  return (
+    request.method === 'populate.startJob' &&
+    (request.params as {awaitTerminal?: boolean})?.awaitTerminal === true
+  );
 }
 
 export function createWorkletPortfolioTransport(

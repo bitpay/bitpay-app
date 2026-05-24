@@ -27,6 +27,7 @@ import {
   clearWorkletWalletSnapshots,
   buildWorkletWalletMetaForStore,
   ensureWorkletWalletIndex,
+  loadWorkletInvalidHistoryMarker,
   saveWorkletInvalidHistoryMarker,
   updateWorkletSnapshotCheckpoint,
 } from './portfolioWorkletSnapshots';
@@ -246,11 +247,20 @@ async function handleInvalidHistoryOnPopulateWorklet(args: {
     return;
   }
 
+  const kvConfig = getKvConfig(args.config);
+  const previousMarker = await loadWorkletInvalidHistoryMarker(
+    kvConfig,
+    args.walletId,
+  );
+  const detectedAt = Number.isFinite(Number(previousMarker?.detectedAt))
+    ? Number(previousMarker?.detectedAt)
+    : Date.now();
   const marker = toSnapshotInvalidHistoryMarker({
     walletId: args.walletId,
     error: args.error,
+    detectedAt,
+    lastAttemptedAt: Date.now(),
   });
-  const kvConfig = getKvConfig(args.config);
   if (marker) {
     await saveWorkletInvalidHistoryMarker(kvConfig, marker);
   }

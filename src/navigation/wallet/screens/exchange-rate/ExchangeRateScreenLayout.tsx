@@ -30,12 +30,13 @@ import {
 } from '../../../../store/wallet/effects/send/send';
 import {ExternalServicesScreens} from '../../../services/ExternalServicesGroup';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import type {ExchangeRateSharedModel} from './useExchangeRateSharedModel';
 import {
   resolveExchangeRateTopChangeRow,
   type ExchangeRateChangeRow,
 } from './exchangeRateTopChangeRow';
+import ArchaxFooter from '../../../../components/archax/archax-footer';
 
 const ScreenContainer = styled.SafeAreaView`
   flex: 1;
@@ -235,6 +236,7 @@ const ExchangeRateScreenLayout = ({
 }: ExchangeRateScreenLayoutProps) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const navigation = useNavigation<NavigationProp<any>>();
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
 
@@ -476,6 +478,8 @@ const ExchangeRateScreenLayout = ({
             </MarketBody>
           </CardContainer>
         </MarketCardContainer>
+
+        {showArchaxBanner && <ArchaxFooter />}
       </ScrollView>
     </ScreenContainer>
   );

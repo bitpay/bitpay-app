@@ -41,7 +41,7 @@ import {
 } from '../hooks/portfolioAssetHistoryRequests';
 import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {
-  getAssetRowFiatLoading,
+  getAssetRowPnlLoading,
   getAssetRowPopulateLoading,
 } from '../components/assetRowLoading';
 import useScreenFocusRefreshToken from '../hooks/useScreenFocusRefreshToken';
@@ -111,12 +111,16 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
 
-  const {visibleItems, isFiatLoading, isPopulateLoadingByKey} =
-    usePortfolioAssetRows({
-      gainLossMode,
-      keyId,
-      externalRefreshToken: focusRefreshToken,
-    });
+  const {
+    visibleItems,
+    isFiatLoading: isPnlLoading,
+    isPopulateLoadingByKey,
+    presentationResetToken,
+  } = usePortfolioAssetRows({
+    gainLossMode,
+    keyId,
+    externalRefreshToken: focusRefreshToken,
+  });
   const quoteCurrency = getQuoteCurrency({
     portfolioQuoteCurrency: portfolio.quoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
@@ -202,7 +206,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
       }));
   }, [defaultAltCurrency?.isoCode, filteredItems]);
 
-  const {cache: fiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
+  useRuntimeFiatRateSeriesCache({
     quoteCurrency,
     requests: historicalRateRequests,
     maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
@@ -246,9 +250,8 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
         rowKey: item.key,
       });
       const isRowScopedPnlLoading = !!item.showScopedPnlLoading;
-      const isRowFiatLoading = getAssetRowFiatLoading({
-        populateInProgress,
-        isFiatLoading,
+      const isRowPnlLoading = getAssetRowPnlLoading({
+        isPnlLoading,
         isRowPopulateLoading,
         showScopedPnlLoading: isRowScopedPnlLoading,
       });
@@ -258,21 +261,21 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
           item={item}
           isLast={index === filteredItems.length - 1}
           keyId={keyId}
-          isFiatLoading={isRowFiatLoading}
+          isPnlLoading={isRowPnlLoading}
           isPopulateLoading={isRowPopulateLoading}
+          presentationResetToken={presentationResetToken}
           img={img}
           imgSrc={imgSrc}
-          fiatRateSeriesCache={fiatRateSeriesCache}
         />
       );
     },
     [
-      fiatRateSeriesCache,
       filteredItems.length,
       getAssetIconData,
-      isFiatLoading,
+      isPnlLoading,
       isPopulateLoadingByKey,
       keyId,
+      presentationResetToken,
       populateInProgress,
     ],
   );

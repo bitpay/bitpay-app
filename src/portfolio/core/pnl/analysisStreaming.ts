@@ -2,10 +2,11 @@ import type {FiatRateInterval, FiatRatePoint} from '../fiatRatesShared';
 import type {WalletCredentials} from '../types';
 import {
   formatAtomicAmount,
-  getAtomicDecimals,
   makeAtomicToUnitNumberConverter,
   parseAtomicToBigint,
   ratioBigIntToNumber,
+  resolveKnownWalletAtomicDecimals,
+  resolveWalletAtomicDecimals,
 } from '../format';
 import type {SnapshotPointV2} from './snapshotStore';
 
@@ -38,9 +39,37 @@ export type WalletForAnalysisMeta = {
   currencyAbbreviation: string;
   chain?: string;
   tokenAddress?: string;
+  unitDecimals?: number;
   liveBalanceAtomic?: string;
   credentials: WalletCredentials;
 };
+
+function hasResolvedWalletAnalysisDecimals(
+  wallet: WalletForAnalysisMeta,
+): boolean {
+  'worklet';
+
+  if (!wallet.tokenAddress) {
+    return true;
+  }
+
+  return (
+    typeof resolveKnownWalletAtomicDecimals({
+      unitDecimals: wallet.unitDecimals,
+      credentials: wallet.credentials,
+    }) === 'number'
+  );
+}
+
+function filterAnalysisEntriesWithResolvedDecimals<
+  T extends {wallet: WalletForAnalysisMeta},
+>(entries: T[]): T[] {
+  'worklet';
+
+  return entries.filter(entry =>
+    hasResolvedWalletAnalysisDecimals(entry.wallet),
+  );
+}
 
 export type WalletForPreloadedAnalysis = {
   wallet: WalletForAnalysisMeta;
@@ -234,6 +263,14 @@ type WalletAnalysisState = {
   basisFiat: number;
 };
 
+type AnalysisPointTotals = {
+  totalFiatBalance: number;
+  totalBasis: number;
+  totalCryptoAtomic: bigint;
+  totalCryptoCreds: WalletCredentials | null;
+  totalCryptoUnitDecimals?: number;
+};
+
 type StreamedWalletState = WalletAnalysisState & {
   iterator: SnapshotPointStream;
   nextPoint: PreparedWalletPoint | null;
@@ -263,6 +300,21 @@ function notifyFormattedCryptoBalance(): void {
   'worklet';
 
   pnlAnalysisDebugHooksForTests?.onFormattedCryptoBalance?.();
+}
+
+function formatTotalCryptoBalance(
+  atomic: bigint,
+  credentials: WalletCredentials | null | undefined,
+  unitDecimals?: number,
+): string | undefined {
+  'worklet';
+
+  if (!credentials) {
+    return undefined;
+  }
+
+  notifyFormattedCryptoBalance();
+  return formatAtomicAmount(atomic, credentials, {unitDecimals});
 }
 
 function notifyFinalizeAnalysisResult(): void {
@@ -550,6 +602,7 @@ function getAnalysisRateAtTimestamp(args: {
   liveTerminalTs?: number;
   rateCursorByAssetId: Record<string, RateCursor>;
   currentRatesByAssetId: Record<string, number>;
+  fallbackRateByAssetId?: Record<string, number>;
 }): number {
   'worklet';
 
@@ -561,29 +614,7 @@ function getAnalysisRateAtTimestamp(args: {
   return (
     overrideRate ??
     args.rateCursorByAssetId[args.assetId].getRateAt(args.ts) ??
-    0
-  );
-}
-
-function getAnalysisBasisRateAtTimestamp(args: {
-  assetId: string;
-  ts: number;
-  liveTerminalTs?: number;
-  rateCursorByAssetId: Record<string, RateCursor>;
-  baselineRateByAssetId: Record<string, number>;
-  currentRatesByAssetId: Record<string, number>;
-}): number {
-  'worklet';
-
-  const overrideRate =
-    typeof args.liveTerminalTs === 'number' && args.ts === args.liveTerminalTs
-      ? getCurrentRateOverride(args.currentRatesByAssetId, args.assetId)
-      : undefined;
-
-  return (
-    overrideRate ??
-    args.rateCursorByAssetId[args.assetId].getRateAt(args.ts) ??
-    args.baselineRateByAssetId[args.assetId] ??
+    args.fallbackRateByAssetId?.[args.assetId] ??
     0
   );
 }
@@ -740,7 +771,7 @@ export function resolvePnlAnalysisPreloadWindow(args: {
     typeof args.nowMs === 'number' ? args.nowMs : Date.now();
   const maxPoints = typeof args.maxPoints === 'number' ? args.maxPoints : 91;
 
-  const wallets = args.wallets.slice();
+  const wallets = args.wallets.filter(hasResolvedWalletAnalysisDecimals);
   const quoteCurrency = args.cfg.quoteCurrency.toUpperCase();
   const assetIds = Array.from(new Set(wallets.map(w => w.assetId))).sort(
     (a, b) => a.localeCompare(b),
@@ -765,6 +796,8 @@ export function resolvePnlAnalysisPreloadWindow(args: {
   const rawPointsByAssetId: Record<string, FiatRatePoint[]> = {};
   let driverAssetId = assetIds[0];
   let driverLen = -1;
+  let overlapStart = -Infinity;
+  let overlapEnd = Infinity;
 
   for (const assetId of assetIds) {
     const points = (args.ratePointsByAssetId[assetId] ?? [])
@@ -779,6 +812,8 @@ export function resolvePnlAnalysisPreloadWindow(args: {
     }
 
     rawPointsByAssetId[assetId] = points;
+    overlapStart = Math.max(overlapStart, points[0].ts);
+    overlapEnd = Math.min(overlapEnd, points[points.length - 1].ts);
     if (
       points.length > driverLen ||
       (points.length === driverLen && assetId < driverAssetId)
@@ -788,13 +823,6 @@ export function resolvePnlAnalysisPreloadWindow(args: {
     }
   }
 
-  let overlapStart = -Infinity;
-  let overlapEnd = Infinity;
-  for (const assetId of assetIds) {
-    const pts = rawPointsByAssetId[assetId];
-    overlapStart = Math.max(overlapStart, pts[0].ts);
-    overlapEnd = Math.min(overlapEnd, pts[pts.length - 1].ts);
-  }
   if (
     !Number.isFinite(overlapStart) ||
     !Number.isFinite(overlapEnd) ||
@@ -959,19 +987,15 @@ function buildAnalysisContext(args: {
       ? resolved.liveTerminalTs
       : undefined;
   const rateCursorByAssetId: Record<string, RateCursor> = {};
-  for (const assetId of assetIds) {
-    rateCursorByAssetId[assetId] = makeLinearRateCursor(
-      rawPointsByAssetId[assetId],
-    );
-  }
-
   const baselineRateByAssetId: Record<string, number> = {};
   for (const assetId of assetIds) {
-    const r0 = rateCursorByAssetId[assetId].getRateAt(timeline[0]);
+    const rateCursor = makeLinearRateCursor(rawPointsByAssetId[assetId]);
+    const r0 = rateCursor.getRateAt(timeline[0]);
     if (r0 === undefined)
       throw new Error(
         `Missing ${quoteCurrency}:${assetId} rate at ts=${timeline[0]}.`,
       );
+    rateCursorByAssetId[assetId] = rateCursor;
     baselineRateByAssetId[assetId] = r0;
   }
 
@@ -1006,7 +1030,10 @@ function createWalletAnalysisState(
 ): WalletAnalysisState {
   'worklet';
 
-  const decimals = getAtomicDecimals(wallet.credentials);
+  const decimals = resolveWalletAtomicDecimals({
+    unitDecimals: wallet.unitDecimals,
+    credentials: wallet.credentials,
+  });
   const atomicToUnitNumber = makeAtomicToUnitNumberConverter(decimals);
   const unitsAtomic = basePoint
     ? parseAtomicToBigint(basePoint.cryptoBalance)
@@ -1077,12 +1104,12 @@ function applyAnalysisPointToWalletState(args: {
 
   if (delta !== 0n) {
     if (delta > 0n) {
-      const rateForBasis = getAnalysisBasisRateAtTimestamp({
+      const rateForBasis = getAnalysisRateAtTimestamp({
         assetId: state.wallet.assetId,
         ts: point.timestamp,
         liveTerminalTs,
         rateCursorByAssetId,
-        baselineRateByAssetId,
+        fallbackRateByAssetId: baselineRateByAssetId,
         currentRatesByAssetId,
       });
       state.basisFiat += state.atomicToUnitNumber(delta) * rateForBasis;
@@ -1187,6 +1214,108 @@ function clampWalletAnalysisState(state: WalletAnalysisState): void {
 
   if (!Number.isFinite(state.basisFiat) || state.basisFiat < 0)
     state.basisFiat = 0;
+}
+
+function addWalletAnalysisPoint(args: {
+  state: WalletAnalysisState;
+  wallet: WalletForAnalysisMeta;
+  ts: number;
+  context: AnalysisContext;
+  singleAsset: boolean;
+  byWalletId: Record<string, WalletPoint>;
+  totals: AnalysisPointTotals;
+}): void {
+  'worklet';
+
+  const {state, wallet, ts, context, singleAsset, byWalletId, totals} = args;
+  const rate = getAnalysisRateAtTimestamp({
+    assetId: state.wallet.assetId,
+    ts,
+    liveTerminalTs: context.liveTerminalTs,
+    rateCursorByAssetId: context.rateCursorByAssetId,
+    currentRatesByAssetId: context.currentRatesByAssetId,
+  });
+  const units = state.atomicToUnitNumber(state.unitsAtomic);
+  const fiatBalance = units * rate;
+  const unrealized = fiatBalance - state.basisFiat;
+
+  const baseRate = context.baselineRateByAssetId[state.wallet.assetId] ?? rate;
+  const ratePct = baseRate > 0 ? ((rate - baseRate) / baseRate) * 100 : 0;
+  const pnlPct = state.basisFiat > 0 ? (unrealized / state.basisFiat) * 100 : 0;
+
+  notifyFormattedCryptoBalance();
+  byWalletId[wallet.walletId] = {
+    balanceAtomic: state.unitsAtomic.toString(),
+    formattedCryptoBalance: formatAtomicAmount(
+      state.unitsAtomic,
+      wallet.credentials,
+      {unitDecimals: wallet.unitDecimals},
+    ),
+    fiatBalance,
+    remainingCostBasisFiat: state.basisFiat,
+    unrealizedPnlFiat: unrealized,
+    markRate: rate,
+    ratePercentChange: ratePct,
+    pnlPercent: pnlPct,
+  };
+
+  totals.totalFiatBalance += fiatBalance;
+  totals.totalBasis += state.basisFiat;
+
+  if (singleAsset) {
+    totals.totalCryptoAtomic += state.unitsAtomic;
+    totals.totalCryptoCreds = totals.totalCryptoCreds || wallet.credentials;
+    totals.totalCryptoUnitDecimals =
+      totals.totalCryptoUnitDecimals ?? wallet.unitDecimals;
+  }
+}
+
+function pushPnlAnalysisPoint(args: {
+  points: PnlAnalysisPoint[];
+  ts: number;
+  driverRate: number;
+  singleAsset: boolean;
+  context: AnalysisContext;
+  byWalletId: Record<string, WalletPoint>;
+  totals: AnalysisPointTotals;
+}): void {
+  'worklet';
+
+  const {points, ts, driverRate, singleAsset, context, byWalletId, totals} =
+    args;
+  const totalUnrealized = totals.totalFiatBalance - totals.totalBasis;
+  const pnlStart =
+    points.length > 0 ? points[0].totalUnrealizedPnlFiat : totalUnrealized;
+  const totalPnlPercent =
+    totals.totalBasis > 0 ? (totalUnrealized / totals.totalBasis) * 100 : 0;
+
+  const driverBase =
+    context.baselineRateByAssetId[context.driverAssetId] || driverRate;
+  const ratePercentChange =
+    driverBase > 0 ? ((driverRate - driverBase) / driverBase) * 100 : undefined;
+
+  notifyPnlAnalysisPointConstruction();
+  points.push({
+    timestamp: ts,
+    markRate: singleAsset ? driverRate : undefined,
+    ratePercentChange: singleAsset ? ratePercentChange : undefined,
+    totalCryptoBalanceAtomic: singleAsset
+      ? totals.totalCryptoAtomic.toString()
+      : undefined,
+    totalCryptoBalanceFormatted: singleAsset
+      ? formatTotalCryptoBalance(
+          totals.totalCryptoAtomic,
+          totals.totalCryptoCreds,
+          totals.totalCryptoUnitDecimals,
+        )
+      : undefined,
+    totalFiatBalance: totals.totalFiatBalance,
+    totalRemainingCostBasisFiat: totals.totalBasis,
+    totalUnrealizedPnlFiat: totalUnrealized,
+    totalPnlChange: totalUnrealized - pnlStart,
+    totalPnlPercent,
+    byWalletId,
+  });
 }
 
 function finalizeAnalysisResult(args: {
@@ -1354,7 +1483,7 @@ export function buildPnlAnalysisSeriesFromPreloaded(
 ): PnlAnalysisResult {
   'worklet';
 
-  const wallets = args.wallets.slice();
+  const wallets = filterAnalysisEntriesWithResolvedDecimals(args.wallets);
   const walletMetas = wallets.map(w => w.wallet);
   const firstNonZeroTs =
     typeof args.firstNonZeroTs === 'number' &&
@@ -1417,10 +1546,12 @@ export function buildPnlAnalysisSeriesFromPreloaded(
     const byWalletId: Record<string, WalletPoint> = {};
     notifyByWalletIdConstruction();
 
-    let totalFiatBalance = 0;
-    let totalBasis = 0;
-    let totalCryptoAtomic = 0n;
-    let totalCryptoCreds: WalletCredentials | null = null;
+    const totals: AnalysisPointTotals = {
+      totalFiatBalance: 0,
+      totalBasis: 0,
+      totalCryptoAtomic: 0n,
+      totalCryptoCreds: null,
+    };
 
     const driverRate = getAnalysisRateAtTimestamp({
       assetId: context.driverAssetId,
@@ -1458,83 +1589,25 @@ export function buildPnlAnalysisSeriesFromPreloaded(
       });
       clampWalletAnalysisState(st);
 
-      const rate = getAnalysisRateAtTimestamp({
-        assetId: st.wallet.assetId,
+      addWalletAnalysisPoint({
+        state: st,
+        wallet,
         ts,
-        liveTerminalTs: context.liveTerminalTs,
-        rateCursorByAssetId: context.rateCursorByAssetId,
-        currentRatesByAssetId: context.currentRatesByAssetId,
+        context,
+        singleAsset,
+        byWalletId,
+        totals,
       });
-      const units = st.atomicToUnitNumber(st.unitsAtomic);
-      const fiatBalance = units * rate;
-      const unrealized = fiatBalance - st.basisFiat;
-
-      const baseRate = context.baselineRateByAssetId[st.wallet.assetId] ?? rate;
-      const ratePct = baseRate > 0 ? ((rate - baseRate) / baseRate) * 100 : 0;
-      const pnlPct = st.basisFiat > 0 ? (unrealized / st.basisFiat) * 100 : 0;
-
-      notifyFormattedCryptoBalance();
-      byWalletId[wallet.walletId] = {
-        balanceAtomic: st.unitsAtomic.toString(),
-        formattedCryptoBalance: formatAtomicAmount(
-          st.unitsAtomic,
-          wallet.credentials,
-        ),
-        fiatBalance,
-        remainingCostBasisFiat: st.basisFiat,
-        unrealizedPnlFiat: unrealized,
-        markRate: rate,
-        ratePercentChange: ratePct,
-        pnlPercent: pnlPct,
-      };
-
-      totalFiatBalance += fiatBalance;
-      totalBasis += st.basisFiat;
-
-      if (singleAsset) {
-        totalCryptoAtomic += st.unitsAtomic;
-        totalCryptoCreds = totalCryptoCreds || wallet.credentials;
-      }
     }
 
-    const totalUnrealized = totalFiatBalance - totalBasis;
-    const pnlStart =
-      points.length > 0 ? points[0].totalUnrealizedPnlFiat : totalUnrealized;
-    const totalPnlPercent =
-      totalBasis > 0 ? (totalUnrealized / totalBasis) * 100 : 0;
-
-    const driverBase =
-      context.baselineRateByAssetId[context.driverAssetId] || driverRate;
-    const ratePercentChange =
-      driverBase > 0
-        ? ((driverRate - driverBase) / driverBase) * 100
-        : undefined;
-
-    const totalCryptoBalanceAtomic = singleAsset
-      ? totalCryptoAtomic.toString()
-      : undefined;
-    let totalCryptoBalanceFormatted: string | undefined;
-    if (singleAsset && totalCryptoCreds) {
-      notifyFormattedCryptoBalance();
-      totalCryptoBalanceFormatted = formatAtomicAmount(
-        totalCryptoAtomic,
-        totalCryptoCreds,
-      );
-    }
-
-    notifyPnlAnalysisPointConstruction();
-    points.push({
-      timestamp: ts,
-      markRate: singleAsset ? driverRate : undefined,
-      ratePercentChange: singleAsset ? ratePercentChange : undefined,
-      totalCryptoBalanceAtomic,
-      totalCryptoBalanceFormatted,
-      totalFiatBalance,
-      totalRemainingCostBasisFiat: totalBasis,
-      totalUnrealizedPnlFiat: totalUnrealized,
-      totalPnlChange: totalUnrealized - pnlStart,
-      totalPnlPercent,
+    pushPnlAnalysisPoint({
+      points,
+      ts,
+      driverRate,
+      singleAsset,
+      context,
       byWalletId,
+      totals,
     });
   }
 
@@ -1565,7 +1638,7 @@ export async function buildPnlAnalysisSeriesFromStreamed(
 ): Promise<PnlAnalysisResult> {
   'worklet';
 
-  const wallets = args.wallets.slice();
+  const wallets = filterAnalysisEntriesWithResolvedDecimals(args.wallets);
   const walletMetas = wallets.map(w => w.wallet);
   const firstNonZeroTs =
     typeof args.firstNonZeroTs === 'number' &&
@@ -1600,10 +1673,12 @@ export async function buildPnlAnalysisSeriesFromStreamed(
     const byWalletId: Record<string, WalletPoint> = {};
     notifyByWalletIdConstruction();
 
-    let totalFiatBalance = 0;
-    let totalBasis = 0;
-    let totalCryptoAtomic = 0n;
-    let totalCryptoCreds: WalletCredentials | null = null;
+    const totals: AnalysisPointTotals = {
+      totalFiatBalance: 0,
+      totalBasis: 0,
+      totalCryptoAtomic: 0n,
+      totalCryptoCreds: null,
+    };
 
     const driverRate = getAnalysisRateAtTimestamp({
       assetId: context.driverAssetId,
@@ -1633,83 +1708,25 @@ export async function buildPnlAnalysisSeriesFromStreamed(
       });
       clampWalletAnalysisState(st);
 
-      const rate = getAnalysisRateAtTimestamp({
-        assetId: st.wallet.assetId,
+      addWalletAnalysisPoint({
+        state: st,
+        wallet,
         ts,
-        liveTerminalTs: context.liveTerminalTs,
-        rateCursorByAssetId: context.rateCursorByAssetId,
-        currentRatesByAssetId: context.currentRatesByAssetId,
+        context,
+        singleAsset,
+        byWalletId,
+        totals,
       });
-      const units = st.atomicToUnitNumber(st.unitsAtomic);
-      const fiatBalance = units * rate;
-      const unrealized = fiatBalance - st.basisFiat;
-
-      const baseRate = context.baselineRateByAssetId[st.wallet.assetId] ?? rate;
-      const ratePct = baseRate > 0 ? ((rate - baseRate) / baseRate) * 100 : 0;
-      const pnlPct = st.basisFiat > 0 ? (unrealized / st.basisFiat) * 100 : 0;
-
-      notifyFormattedCryptoBalance();
-      byWalletId[wallet.walletId] = {
-        balanceAtomic: st.unitsAtomic.toString(),
-        formattedCryptoBalance: formatAtomicAmount(
-          st.unitsAtomic,
-          wallet.credentials,
-        ),
-        fiatBalance,
-        remainingCostBasisFiat: st.basisFiat,
-        unrealizedPnlFiat: unrealized,
-        markRate: rate,
-        ratePercentChange: ratePct,
-        pnlPercent: pnlPct,
-      };
-
-      totalFiatBalance += fiatBalance;
-      totalBasis += st.basisFiat;
-
-      if (singleAsset) {
-        totalCryptoAtomic += st.unitsAtomic;
-        totalCryptoCreds = totalCryptoCreds || wallet.credentials;
-      }
     }
 
-    const totalUnrealized = totalFiatBalance - totalBasis;
-    const pnlStart =
-      points.length > 0 ? points[0].totalUnrealizedPnlFiat : totalUnrealized;
-    const totalPnlPercent =
-      totalBasis > 0 ? (totalUnrealized / totalBasis) * 100 : 0;
-
-    const driverBase =
-      context.baselineRateByAssetId[context.driverAssetId] || driverRate;
-    const ratePercentChange =
-      driverBase > 0
-        ? ((driverRate - driverBase) / driverBase) * 100
-        : undefined;
-
-    const totalCryptoBalanceAtomic = singleAsset
-      ? totalCryptoAtomic.toString()
-      : undefined;
-    let totalCryptoBalanceFormatted: string | undefined;
-    if (singleAsset && totalCryptoCreds) {
-      notifyFormattedCryptoBalance();
-      totalCryptoBalanceFormatted = formatAtomicAmount(
-        totalCryptoAtomic,
-        totalCryptoCreds,
-      );
-    }
-
-    notifyPnlAnalysisPointConstruction();
-    points.push({
-      timestamp: ts,
-      markRate: singleAsset ? driverRate : undefined,
-      ratePercentChange: singleAsset ? ratePercentChange : undefined,
-      totalCryptoBalanceAtomic,
-      totalCryptoBalanceFormatted,
-      totalFiatBalance,
-      totalRemainingCostBasisFiat: totalBasis,
-      totalUnrealizedPnlFiat: totalUnrealized,
-      totalPnlChange: totalUnrealized - pnlStart,
-      totalPnlPercent,
+    pushPnlAnalysisPoint({
+      points,
+      ts,
+      driverRate,
+      singleAsset,
+      context,
       byWalletId,
+      totals,
     });
   }
 
@@ -1740,7 +1757,7 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
 ): Promise<PnlAnalysisChartResult> {
   'worklet';
 
-  const wallets = args.wallets.slice();
+  const wallets = filterAnalysisEntriesWithResolvedDecimals(args.wallets);
   const walletMetas = wallets.map(w => w.wallet);
   const firstNonZeroTs =
     typeof args.firstNonZeroTs === 'number' &&
@@ -1798,6 +1815,7 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
     let totalCryptoCreds:
       | (typeof walletMetas)[number]['credentials']
       | undefined;
+    let totalCryptoUnitDecimals: number | undefined;
 
     const driverRate = getAnalysisRateAtTimestamp({
       assetId: context.driverAssetId,
@@ -1841,6 +1859,8 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
       if (singleAsset) {
         totalCryptoAtomicForPoint += state.unitsAtomic;
         totalCryptoCreds = totalCryptoCreds || wallet.credentials;
+        totalCryptoUnitDecimals =
+          totalCryptoUnitDecimals ?? wallet.unitDecimals;
       }
     }
 
@@ -1857,12 +1877,12 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
     totalPnlPercent[i] =
       totalBasis > 0 ? (totalUnrealized / totalBasis) * 100 : 0;
     if (totalCryptoBalanceFormatted) {
-      if (totalCryptoCreds) {
-        notifyFormattedCryptoBalance();
-      }
-      totalCryptoBalanceFormatted[i] = totalCryptoCreds
-        ? formatAtomicAmount(totalCryptoAtomicForPoint, totalCryptoCreds)
-        : null;
+      totalCryptoBalanceFormatted[i] =
+        formatTotalCryptoBalance(
+          totalCryptoAtomicForPoint,
+          totalCryptoCreds,
+          totalCryptoUnitDecimals,
+        ) ?? null;
     }
 
     if (driverMarkRate) {

@@ -640,11 +640,13 @@ export const getVisibleKeysFromKeys = (
   return all.filter(k => !hiddenKeyIds.has(k.id));
 };
 
-export const getVisibleWalletsForKey = (key: Key | undefined): Wallet[] => {
+const getUniqueWalletsByStableDeduplicationId = (
+  wallets: Wallet[] | undefined,
+): Wallet[] => {
   const seenWalletIds = new Set<string>();
   const uniqueWallets: Wallet[] = [];
 
-  for (const wallet of key?.wallets || []) {
+  for (const wallet of wallets || []) {
     const stableWalletId = getWalletStableDeduplicationId(wallet);
     if (stableWalletId && seenWalletIds.has(stableWalletId)) {
       continue;
@@ -656,15 +658,23 @@ export const getVisibleWalletsForKey = (key: Key | undefined): Wallet[] => {
     uniqueWallets.push(wallet);
   }
 
-  return uniqueWallets.filter(wallet => isWalletVisibleForKey(key, wallet));
+  return uniqueWallets;
 };
+
+export const getVisibleWalletsForKey = (key: Key | undefined): Wallet[] =>
+  getUniqueWalletsByStableDeduplicationId(key?.wallets).filter(wallet =>
+    isWalletVisibleForKey(key, wallet),
+  );
 
 export const getVisibleWalletsFromKeys = (
   keys: Record<string, Key> | undefined,
   homeCarouselConfig?: HomeCarouselConfig[] | undefined,
 ): Wallet[] => {
-  const visibleKeys = getVisibleKeysFromKeys(keys, homeCarouselConfig);
-  return visibleKeys.flatMap(getVisibleWalletsForKey);
+  return getUniqueWalletsByStableDeduplicationId(
+    getVisibleKeysFromKeys(keys, homeCarouselConfig).flatMap(
+      getVisibleWalletsForKey,
+    ),
+  );
 };
 
 export const buildWalletIdsByAssetGroupKey = (

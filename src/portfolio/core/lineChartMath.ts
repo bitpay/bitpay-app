@@ -2,7 +2,6 @@ export const GRAPH_DRAWABLE_EPSILON = 0.0001;
 
 export type LineChartPointFactoryArgs<TInput, TOutput> = {
   source: TInput;
-  currentPoint?: TOutput;
   index: number;
   timestamp: number;
   value: number;
@@ -40,12 +39,9 @@ export function normalizeLineChartPoints<TInput, TOutput>(
   }
 
   const normalized: TOutput[] = [];
-  const normalizedTimestamps: number[] = [];
   const normalizedValues: number[] = [];
   const fallbackTsBase = toFiniteNumber(options.fallbackTimestamp, Date.now());
   let prevTs = Number.NEGATIVE_INFINITY;
-  let minV = Number.POSITIVE_INFINITY;
-  let maxV = Number.NEGATIVE_INFINITY;
 
   for (let i = 0; i < points.length; i++) {
     const src = points[i];
@@ -54,9 +50,7 @@ export function normalizeLineChartPoints<TInput, TOutput>(
       ts = prevTs + 1;
     }
 
-    const fallbackValue = normalizedValues.length
-      ? normalizedValues[normalizedValues.length - 1]
-      : 0;
+    const fallbackValue = normalizedValues[normalizedValues.length - 1] ?? 0;
     const value = toFiniteNumber(options.getValue(src, i), fallbackValue);
 
     normalized.push(
@@ -67,29 +61,8 @@ export function normalizeLineChartPoints<TInput, TOutput>(
         value,
       }),
     );
-    normalizedTimestamps.push(ts);
     normalizedValues.push(value);
     prevTs = ts;
-
-    if (value < minV) {
-      minV = value;
-    }
-    if (value > maxV) {
-      maxV = value;
-    }
-  }
-
-  if (normalized.length >= 2 && minV === maxV) {
-    const lastIndex = normalized.length - 1;
-    const value = normalizedValues[lastIndex] + GRAPH_DRAWABLE_EPSILON;
-    normalizedValues[lastIndex] = value;
-    normalized[lastIndex] = options.makePoint({
-      source: points[lastIndex],
-      currentPoint: normalized[lastIndex],
-      index: lastIndex,
-      timestamp: normalizedTimestamps[lastIndex],
-      value,
-    });
   }
 
   return normalized;

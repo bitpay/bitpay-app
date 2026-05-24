@@ -5,7 +5,8 @@ import AssetRow from './AssetRow';
 import {AssetRowItem} from '../../../../utils/portfolio/assets';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 import {
-  getAssetRowFiatLoading,
+  type AssetRowPresentationResetToken,
+  getAssetRowPnlLoading,
   getAssetRowPopulateLoading,
   shouldForceAssetListSkeleton,
 } from './assetRowLoading';
@@ -16,27 +17,27 @@ const List = styled.View`
 
 interface Props {
   items: AssetRowItem[];
-  isFiatLoading?: boolean;
+  isPnlLoading?: boolean;
   populateInProgress?: boolean;
   isPopulateLoadingByKey?: Record<string, boolean>;
+  presentationResetToken?: AssetRowPresentationResetToken;
   forceSkeleton?: boolean;
 }
 
 const AssetsList: React.FC<Props> = ({
   items,
-  isFiatLoading,
+  isPnlLoading,
   populateInProgress,
   isPopulateLoadingByKey,
+  presentationResetToken,
   forceSkeleton,
 }) => {
   const {getAssetIconData} = useAssetIconResolver();
   const shouldForceSkeletonMode = useMemo(() => {
     return shouldForceAssetListSkeleton({
-      items,
       forceSkeleton,
-      isFiatLoading,
     });
-  }, [forceSkeleton, isFiatLoading, items]);
+  }, [forceSkeleton]);
   return (
     <List>
       {items.map((item, index) => {
@@ -48,9 +49,8 @@ const AssetsList: React.FC<Props> = ({
           rowKey: item.key,
         });
         const isRowScopedPnlLoading = !!item.showScopedPnlLoading;
-        const isRowFiatLoading = getAssetRowFiatLoading({
-          populateInProgress,
-          isFiatLoading,
+        const isRowPnlLoading = getAssetRowPnlLoading({
+          isPnlLoading,
           isRowPopulateLoading,
           showScopedPnlLoading: isRowScopedPnlLoading,
         });
@@ -60,8 +60,9 @@ const AssetsList: React.FC<Props> = ({
             key={item.key}
             item={item}
             isLast={index === items.length - 1}
-            isFiatLoading={isRowFiatLoading}
+            isPnlLoading={isRowPnlLoading}
             isPopulateLoading={isRowPopulateLoading}
+            presentationResetToken={presentationResetToken}
             forceSkeleton={shouldForceSkeletonMode}
             img={img}
             imgSrc={imgSrc}

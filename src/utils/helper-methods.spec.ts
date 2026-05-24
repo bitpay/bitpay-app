@@ -374,6 +374,10 @@ describe('formatFiatAmount', () => {
     expect(result).toContain('0');
   });
 
+  it('formats zero with cents by default', () => {
+    expect(formatFiatAmount(0, 'USD')).toBe('$0.00');
+  });
+
   it('applies customPrecision minimal for integers', () => {
     const result = formatFiatAmount(100, 'USD', {customPrecision: 'minimal'});
     // should format without decimal fraction
