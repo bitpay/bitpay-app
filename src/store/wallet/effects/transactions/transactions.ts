@@ -223,17 +223,21 @@ const ProcessTx =
           tx.recipientCount = outputsNr;
           tx.hasMultiplesOutputs = true;
         }
-        tx.amount = '0x' + tx.outputs.reduce((total: bigint, o: any) => {
-          o.amountStr = dispatch(
-            FormatAmountStr(
-              tokenSymbol || coin,
-              chain,
-              tokenAddress,
-              Number(o.amount),
-            ),
-          );
-          return total + BigInt(o.amount);
-        }, 0n).toString(16);
+        tx.amount =
+          '0x' +
+          tx.outputs
+            .reduce((total: bigint, o: any) => {
+              o.amountStr = dispatch(
+                FormatAmountStr(
+                  tokenSymbol || coin,
+                  chain,
+                  tokenAddress,
+                  Number(o.amount),
+                ),
+              );
+              return total + BigInt(o.amount);
+            }, 0n)
+            .toString(16);
       }
       if (tx.outputs.length) {
         tx.toAddress = tx.outputs[0].toAddress!;
@@ -263,16 +267,22 @@ const ProcessTx =
 
     // New data structure for ERC20 token transactions
     if (tx.effects?.[0] && IsERCToken(tx.coin, tx.chain)) {
-      tx.amount = '0x' + tx.effects.reduce(
-        (total, {amount}) => total + BigInt(amount),
-        0n,
-      ).toString(16);
+      tx.amount =
+        '0x' +
+        tx.effects
+          .reduce((total, {amount}) => total + BigInt(amount), 0n)
+          .toString(16);
       tokenAddress = tx.effects[0].contractAddress?.toLowerCase();
     }
 
     if (tx.coin === wallet.currencyAbbreviation) {
       tx.amountStr = dispatch(
-        FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, Number(tx.amount)),
+        FormatAmountStr(
+          tokenSymbol || coin,
+          chain,
+          tokenAddress,
+          Number(tx.amount),
+        ),
       );
     }
 
@@ -1396,7 +1406,9 @@ export const buildTransactionDetails =
 
         if (IsUtxoChain(chain)) {
           _transaction.feeRateStr =
-            ((Number(_fee) / (Number(amount) + Number(_fee)) * 100).toFixed(2) + '%');
+            ((Number(_fee) / (Number(amount) + Number(_fee))) * 100).toFixed(
+              2,
+            ) + '%';
           try {
             const minFee = await GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
