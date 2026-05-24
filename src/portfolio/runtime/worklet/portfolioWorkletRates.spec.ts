@@ -1,5 +1,9 @@
 import {clearPortfolioTxHistorySigningDispatchContextOnRuntime} from '../../adapters/rn/txHistorySigning';
 import {
+  PORTFOLIO_REMOTE_REQUEST_ERROR_CODE,
+  isPortfolioRemoteRequestError,
+} from '../../core/remoteRequestError';
+import {
   createFakeWorkletStorage,
   installNitroFetchMock,
   type FakeNitroRequest,
@@ -243,6 +247,94 @@ describe('portfolioWorkletRates', () => {
         method: 'GET',
       }),
     );
+  });
+
+  it('tags native coin fiat-rate Nitro Fetch failures across snapshot intervals', async () => {
+    const requestSyncMock = installNitroFetchMock(() => {
+      throw new Error('socket timed out');
+    });
+
+    const promise = ensureWorkletSnapshotRateSeriesCache({
+      storage: createFakeWorkletStorage(),
+      registryKey: '__registry__',
+      cfg: {baseUrl: 'https://bws.bitpay.com/bws/api'},
+      quoteCurrency: 'USD',
+      wallet: {
+        walletId: 'w-native-fail',
+        walletName: 'BCH Wallet',
+        chain: 'bch',
+        network: 'livenet',
+        currencyAbbreviation: 'bch',
+        balanceAtomic: '0',
+        balanceFormatted: '0',
+      },
+    });
+
+    await expect(promise).rejects.toThrow(
+      'Portfolio Nitro Fetch fiat-rate request failed for https://bws.bitpay.com/bws/api/v4/fiatrates/USD: socket timed out',
+    );
+    await expect(promise).rejects.toMatchObject({
+      code: PORTFOLIO_REMOTE_REQUEST_ERROR_CODE,
+      portfolioRemoteRequestKind: 'fiat-rate',
+      portfolioRemoteRequestFailureKind: 'nitro-fetch',
+      portfolioRemoteRequestUrl:
+        'https://bws.bitpay.com/bws/api/v4/fiatrates/USD',
+    });
+    await expect(promise.catch(isPortfolioRemoteRequestError)).resolves.toBe(
+      true,
+    );
+    expect(requestSyncMock.mock.calls.map(call => call[0].url)).toEqual([
+      'https://bws.bitpay.com/bws/api/v4/fiatrates/USD?days=1',
+      'https://bws.bitpay.com/bws/api/v4/fiatrates/USD?days=7',
+      'https://bws.bitpay.com/bws/api/v4/fiatrates/USD?days=30',
+      'https://bws.bitpay.com/bws/api/v4/fiatrates/USD',
+    ]);
+  });
+
+  it('tags token fiat-rate non-OK responses across snapshot intervals with chain and tokenAddress params', async () => {
+    const tokenAddress = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const requestSyncMock = installNitroFetchMock(() => ({
+      ok: false,
+      status: 503,
+      bodyString: 'rate service down',
+    }));
+
+    const promise = ensureWorkletSnapshotRateSeriesCache({
+      storage: createFakeWorkletStorage(),
+      registryKey: '__registry__',
+      cfg: {baseUrl: 'https://bws.bitpay.com/bws/api'},
+      quoteCurrency: 'USD',
+      wallet: {
+        walletId: 'w-token-fail',
+        walletName: 'USDC SOL Wallet',
+        chain: 'sol',
+        network: 'livenet',
+        currencyAbbreviation: 'usdc',
+        tokenAddress,
+        balanceAtomic: '0',
+        balanceFormatted: '0',
+      },
+    });
+
+    await expect(promise).rejects.toThrow(
+      `Failed to fetch fiat rates (503) for https://bws.bitpay.com/bws/api/v4/fiatrates/USD?chain=sol&tokenAddress=${tokenAddress}. rate service down`,
+    );
+    await expect(promise).rejects.toMatchObject({
+      code: PORTFOLIO_REMOTE_REQUEST_ERROR_CODE,
+      portfolioRemoteRequestKind: 'fiat-rate',
+      portfolioRemoteRequestFailureKind: 'http-status',
+      portfolioRemoteRequestStatus: 503,
+      portfolioRemoteRequestUrl: `https://bws.bitpay.com/bws/api/v4/fiatrates/USD?chain=sol&tokenAddress=${tokenAddress}`,
+    });
+    await expect(promise.catch(isPortfolioRemoteRequestError)).resolves.toBe(
+      true,
+    );
+    expect(requestSyncMock.mock.calls.map(call => call[0].url)).toEqual([
+      `https://bws.bitpay.com/bws/api/v4/fiatrates/USD?days=1&chain=sol&tokenAddress=${tokenAddress}`,
+      `https://bws.bitpay.com/bws/api/v4/fiatrates/USD?days=7&chain=sol&tokenAddress=${tokenAddress}`,
+      `https://bws.bitpay.com/bws/api/v4/fiatrates/USD?days=30&chain=sol&tokenAddress=${tokenAddress}`,
+      `https://bws.bitpay.com/bws/api/v4/fiatrates/USD?chain=sol&tokenAddress=${tokenAddress}`,
+    ]);
   });
 
   it('continues fetching later intervals for a token when earlier rate requests fail', async () => {

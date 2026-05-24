@@ -13,6 +13,7 @@ import type {
   WorkerRequest,
   WorkerResponse,
 } from '../../core/engine/workerProtocol';
+import {isPortfolioRemoteRequestError} from '../../core/remoteRequestError';
 import {toPortfolioRuntimeWalletCredentials} from '../../core/runtimeWalletCredentials';
 import {
   clearPortfolioTxHistorySigningDispatchContextOnRuntime,
@@ -663,20 +664,22 @@ async function runPortfolioPopulateJobLoop(args: {
           error instanceof Error
             ? error.message
             : String(error || 'Unknown error');
-        try {
-          await clearWorkletWalletSnapshots(
-            {
-              storage: config.storage,
-              registryKey: config.registryKey,
-            },
-            walletId,
-            {
-              preserveInvalidHistoryMarker:
-                isSnapshotInvalidHistoryError(error),
-            },
-          );
-        } catch {
-          // Ignore cleanup failures so the job can continue with the next wallet.
+        if (!isPortfolioRemoteRequestError(error)) {
+          try {
+            await clearWorkletWalletSnapshots(
+              {
+                storage: config.storage,
+                registryKey: config.registryKey,
+              },
+              walletId,
+              {
+                preserveInvalidHistoryMarker:
+                  isSnapshotInvalidHistoryError(error),
+              },
+            );
+          } catch {
+            // Ignore cleanup failures so the job can continue with the next wallet.
+          }
         }
         markWalletStatus(job, walletId, 'error');
         appendJobError(job, walletId, message);

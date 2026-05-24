@@ -3,6 +3,7 @@ import type {Tx} from '../../core/types';
 import type {PortfolioRuntimeWalletCredentials} from '../../core/runtimeWalletCredentials';
 import type {NitroResponse as NitroFetchResponse} from 'react-native-nitro-fetch';
 import {version as bitcoreWalletClientVersion} from '@bitpay-labs/bitcore-wallet-client/package.json';
+import {createPortfolioRemoteRequestError} from '../../core/remoteRequestError';
 import {
   buildTokenWalletTxHistoryContextFromCredentials,
   normalizeTokenWalletTxHistoryPage,
@@ -163,6 +164,64 @@ function tryParseJson(text: string): unknown {
   }
 }
 
+function formatThrownErrorForMessage(error: unknown): string {
+  'worklet';
+
+  if (error instanceof Error) {
+    const name = String(error.name || 'Error').trim();
+    const message = String(error.message || '').trim();
+    return message ? `${name}: ${message}` : name;
+  }
+
+  if (typeof error === 'string') {
+    return error.trim();
+  }
+
+  if (error == null) {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function buildNitroFetchTxHistoryError(error: unknown, url: string): Error {
+  'worklet';
+
+  const details = formatThrownErrorForMessage(error);
+  return createPortfolioRemoteRequestError({
+    kind: 'txhistory',
+    failureKind: 'nitro-fetch',
+    url,
+    message: details
+      ? `Portfolio Nitro Fetch txhistory request failed: ${details}`
+      : 'Portfolio Nitro Fetch txhistory request failed.',
+  });
+}
+
+function formatFailedNitroFetchResponseDetails(
+  response: NitroFetchResponse,
+  rawResponseText: string,
+): string {
+  'worklet';
+
+  const details: string[] = [];
+  const statusText = String(response.statusText || '').trim();
+  const body = String(rawResponseText || '').trim();
+
+  if (statusText) {
+    details.push(statusText);
+  }
+  if (body && body !== statusText) {
+    details.push(body.slice(0, 500));
+  }
+
+  return details.length ? ` ${details.join(' ')}` : '';
+}
+
 export async function fetchPortfolioTxHistoryPageByRequest(args: {
   credentials: PortfolioRuntimeWalletCredentials;
   cfg: BwsConfig;
@@ -193,25 +252,34 @@ export async function fetchPortfolioTxHistoryPageByRequest(args: {
   });
 
   const nitroFetchClient = getPortfolioNitroFetchClientOnRuntime();
+  const url = `${baseUrl}${signedRequestPath}`;
   let response: NitroFetchResponse;
   try {
     response = nitroFetchClient.requestSync({
-      url: `${baseUrl}${signedRequestPath}`,
+      url,
       method: 'GET',
       headers,
       timeoutMs: DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS,
       followRedirects: false,
     });
-  } catch {
-    throw new Error('Portfolio Nitro Fetch txhistory request failed.');
+  } catch (error: unknown) {
+    throw buildNitroFetchTxHistoryError(error, url);
   }
 
   const rawResponseText =
     typeof response.bodyString === 'string' ? response.bodyString : '';
   if (!response.ok) {
-    throw new Error(
-      `BWS txhistory request failed with status ${response.status}.`,
+    const responseDetails = formatFailedNitroFetchResponseDetails(
+      response,
+      rawResponseText,
     );
+    throw createPortfolioRemoteRequestError({
+      kind: 'txhistory',
+      failureKind: 'http-status',
+      status: response.status,
+      url,
+      message: `BWS txhistory request failed with status ${response.status}.${responseDetails}`,
+    });
   }
 
   const parsed = tryParseJson(rawResponseText);

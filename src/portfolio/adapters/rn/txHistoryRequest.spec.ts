@@ -1,9 +1,98 @@
+const mockRequestSync = jest.fn();
+const mockSignBwsGetRequestWithTransferredNitro = jest.fn(() => 'signature');
+const mockTakeNextPortfolioTransferredSignHandleOnRuntime = jest.fn(() => ({
+  firstHashHybrid: {},
+  signHandleHybrid: {},
+  privateKeyHandle: {},
+}));
+
+jest.mock('./txHistorySigning', () => ({
+  DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS: 15000,
+  getPortfolioNitroFetchClientOnRuntime: () => ({
+    requestSync: mockRequestSync,
+  }),
+  signBwsGetRequestWithTransferredNitro: (...args: unknown[]) =>
+    mockSignBwsGetRequestWithTransferredNitro(...args),
+  takeNextPortfolioTransferredSignHandleOnRuntime: () =>
+    mockTakeNextPortfolioTransferredSignHandleOnRuntime(),
+}));
+
 import {
   PORTFOLIO_BWS_CLIENT_VERSION_HEADER,
   appendPortfolioTxHistoryCacheBustParam,
   buildPortfolioTxHistoryRequestPath,
+  fetchPortfolioTxHistoryPageByRequest,
 } from './txHistoryRequest';
+import {
+  PORTFOLIO_REMOTE_REQUEST_ERROR_CODE,
+  isPortfolioRemoteRequestError,
+} from '../../core/remoteRequestError';
 import {version as bitcoreWalletClientVersion} from '@bitpay-labs/bitcore-wallet-client/package.json';
+
+const fetchTxHistoryArgs = {
+  credentials: {
+    walletId: 'wallet-1',
+    copayerId: 'copayer-1',
+    chain: 'btc',
+    coin: 'btc',
+  },
+  cfg: {baseUrl: 'https://bws.example'},
+  skip: 0,
+  limit: 1000,
+  reverse: true,
+} as const;
+
+describe('fetchPortfolioTxHistoryPageByRequest', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('includes native Nitro Fetch error details when requestSync throws', async () => {
+    const error = new Error('socket timed out');
+    error.name = 'TimeoutError';
+    mockRequestSync.mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const promise = fetchPortfolioTxHistoryPageByRequest(fetchTxHistoryArgs);
+
+    await expect(promise).rejects.toThrow(
+      'Portfolio Nitro Fetch txhistory request failed: TimeoutError: socket timed out',
+    );
+    await expect(promise).rejects.toMatchObject({
+      code: PORTFOLIO_REMOTE_REQUEST_ERROR_CODE,
+      portfolioRemoteRequestKind: 'txhistory',
+      portfolioRemoteRequestFailureKind: 'nitro-fetch',
+    });
+    await expect(promise.catch(isPortfolioRemoteRequestError)).resolves.toBe(
+      true,
+    );
+  });
+
+  it('includes native Nitro Fetch error details when requestSync returns a non-HTTP failure response', async () => {
+    mockRequestSync.mockReturnValueOnce({
+      ok: false,
+      status: 0,
+      statusText: 'NSURLErrorDomain(-1001): The request timed out.',
+      bodyString: 'NSURLErrorDomain(-1001): The request timed out.',
+    });
+
+    const promise = fetchPortfolioTxHistoryPageByRequest(fetchTxHistoryArgs);
+
+    await expect(promise).rejects.toThrow(
+      'BWS txhistory request failed with status 0. NSURLErrorDomain(-1001): The request timed out.',
+    );
+    await expect(promise).rejects.toMatchObject({
+      code: PORTFOLIO_REMOTE_REQUEST_ERROR_CODE,
+      portfolioRemoteRequestKind: 'txhistory',
+      portfolioRemoteRequestFailureKind: 'http-status',
+      portfolioRemoteRequestStatus: 0,
+    });
+    await expect(promise.catch(isPortfolioRemoteRequestError)).resolves.toBe(
+      true,
+    );
+  });
+});
 
 describe('PORTFOLIO_BWS_CLIENT_VERSION_HEADER', () => {
   it('matches the installed BWC package version in BWS-compatible format', () => {
