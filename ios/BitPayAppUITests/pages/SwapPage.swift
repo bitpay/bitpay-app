@@ -85,7 +85,32 @@ class SwapPage {
     return cryptoToSwapPage.waitForExistence(timeout: timeout)
   }
   
-  func tapBitcoin() {
+//  func tapBitcoin() {
+//    bitcoin.tap()
+//  }
+  
+  func tapBitcoin(timeout: TimeInterval = 10) {
+    
+    let isDisplayed = bitcoin.waitForExistence(timeout: timeout)
+    
+    if !isDisplayed {
+      
+      let pageSourceAttachment = XCTAttachment(
+        string: app.debugDescription
+      )
+      
+      pageSourceAttachment.name = "Bitcoin Tap Failure - Page Source"
+      pageSourceAttachment.lifetime = .keepAlways
+      
+      XCTContext.runActivity(
+        named: "Attach App Debug Description"
+      ) { activity in
+        activity.add(pageSourceAttachment)
+      }
+      
+      XCTFail("Bitcoin wallet row not displayed within \(timeout) seconds")
+    }
+    
     bitcoin.tap()
   }
   
