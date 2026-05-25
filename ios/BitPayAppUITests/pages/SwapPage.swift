@@ -30,7 +30,7 @@ class SwapPage {
   
   var bitcoin: XCUIElement {
     app.otherElements.matching(
-      NSPredicate(format: "label == 'Bitcoin, BTC'")
+      NSPredicate(format: "label CONTAINS 'Bitcoin, BTC'")
     ).firstMatch
   }
   
