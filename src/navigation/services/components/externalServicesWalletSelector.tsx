@@ -34,6 +34,7 @@ import {
   WrongPasswordError,
 } from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
+import {toggleHideAccount} from '../../../store/wallet/wallet.actions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect, {
@@ -542,6 +543,21 @@ const ExternalServicesWalletSelector: React.FC<
         logger.debug(
           `Added ${createdToWallet?.currencyAbbreviation} wallet from Buy Crypto`,
         );
+        if (
+          context === 'buyCrypto' &&
+          createdToWallet?.receiveAddress &&
+          createNewWalletData.key.evmAccountsInfo?.[
+            createdToWallet.receiveAddress
+          ]?.hideAccount
+        ) {
+          dispatch(
+            toggleHideAccount({
+              keyId: createNewWalletData.key.id,
+              accountAddress: createdToWallet.receiveAddress,
+              accountToggleSelected: false,
+            }),
+          );
+        }
         dispatch(
           Analytics.track('Created Basic Wallet', {
             coin: createNewWalletData.currency.currencyAbbreviation,
