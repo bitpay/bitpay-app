@@ -62,10 +62,11 @@ final class Test594_BasicSwapBTC: XCTestCase {
     
     AllureXCTestSupport.step("(10) On the Select Key to Deposit to screen, tap My Key (choose the entry that has funds available if multiple are shown).") {
       XCTAssertTrue(selectKeyToDepositPage.isSelectKeyToDepositToDisplayed(), "Select Key to Deposit to dialog not displayed")
-      selectKeyToDepositPage.tapMyKeyWallet()
+      selectKeyToDepositPage.tapSecondMyKeyWallet()
     }
     
     AllureXCTestSupport.step("(11) On the Swap Crypto screen, tap Enter Amount.") {
+      sleep(5)
     }
     
     AllureXCTestSupport.step("(12) On the Swap Amount bottom sheet, enter 0.0006 BTC.") {

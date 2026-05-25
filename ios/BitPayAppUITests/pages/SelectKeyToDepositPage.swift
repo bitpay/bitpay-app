@@ -9,10 +9,10 @@ class SelectKeyToDepositPage {
   }
 
   // MARK: - Elements
-
+  
   var selectKeyToDeposit: XCUIElement {
-    app.otherElements.matching(
-      NSPredicate(format: "label == 'Select Key to Deposit to'")
+    app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS 'Select Key to Deposit to'")
     ).firstMatch
   }
   
@@ -20,6 +20,12 @@ class SelectKeyToDepositPage {
     app.otherElements.matching(
       NSPredicate(format: "label == 'My Key wallet'")
     ).firstMatch
+  }
+  
+  var secondMyKeyWallet: XCUIElement {
+    app.descendants(matching: .any)
+      .matching(NSPredicate(format: "label CONTAINS 'My Key'"))
+      .element(boundBy: 1)
   }
   
 
@@ -31,6 +37,10 @@ class SelectKeyToDepositPage {
   
   func tapMyKeyWallet() {
     myKeyWallet.tap()
+  }
+  
+  func tapSecondMyKeyWallet() {
+    secondMyKeyWallet.tap()
   }
 
 

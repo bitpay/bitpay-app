@@ -40,6 +40,12 @@ class OnboardingPage {
       matching: NSPredicate(format: "label == 'Create a key'")
     ).firstMatch
   }
+  
+  var alreadyHaveWalletKeyButton: XCUIElement {
+    app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'I already have a key'")
+    ).firstMatch
+  }
 
   var backupKeyLabel: XCUIElement {
     app.staticTexts["Would you like to backup your key?"]
@@ -127,6 +133,10 @@ class OnboardingPage {
 
   func createWallet() {
     createKeyButton.tap()
+  }
+  
+  func alreadyHaveWalletKey() {
+    alreadyHaveWalletKeyButton.tap()
   }
 
   func isBackupKeyLabelDisplayed(timeout: TimeInterval = 120) -> Bool {
