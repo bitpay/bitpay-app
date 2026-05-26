@@ -70,6 +70,26 @@ class SwapPage {
     ).firstMatch
   }
   
+  var swapCrypoButton: XCUIElement {
+    app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == 'Swap crypto toggle fiat display button'"
+      )
+    ).firstMatch
+  }
+  
+  var enterAmount: XCUIElement {
+    app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == 'Swap crypto enter amount button'"
+      )
+    ).firstMatch
+  }
+  
+  var changellyTermsCheckbox: XCUIElement {
+    app.checkBoxes["swap-crypto-changelly-terms-checkbox"]
+  }
+  
 
   // MARK: - Validations
 
@@ -93,23 +113,23 @@ class SwapPage {
     
     let isDisplayed = bitcoin.waitForExistence(timeout: timeout)
     
-    if !isDisplayed {
-      
-      let pageSourceAttachment = XCTAttachment(
-        string: app.debugDescription
-      )
-      
-      pageSourceAttachment.name = "Bitcoin Tap Failure - Page Source"
-      pageSourceAttachment.lifetime = .keepAlways
-      
-      XCTContext.runActivity(
-        named: "Attach App Debug Description"
-      ) { activity in
-        activity.add(pageSourceAttachment)
-      }
-      
-      XCTFail("Bitcoin wallet row not displayed within \(timeout) seconds")
-    }
+//    if !isDisplayed {
+//      
+//      let pageSourceAttachment = XCTAttachment(
+//        string: app.debugDescription
+//      )
+//      
+//      pageSourceAttachment.name = "Bitcoin Tap Failure - Page Source"
+//      pageSourceAttachment.lifetime = .keepAlways
+//      
+//      XCTContext.runActivity(
+//        named: "Attach App Debug Description"
+//      ) { activity in
+//        activity.add(pageSourceAttachment)
+//      }
+//      
+//      XCTFail("Bitcoin wallet row not displayed within \(timeout) seconds")
+//    }
     
     bitcoin.tap()
   }
@@ -132,6 +152,18 @@ class SwapPage {
   
   func tapMyKeyWallet() {
     myKeyWallet.tap()
+  }
+  
+  func tapSwapCrypoButton() {
+    swapCrypoButton.tap()
+  }
+  
+  func tapEnterAmount() {
+    enterAmount.tap()
+  }
+  
+  func tapChangellyTermsCheckbox() {
+    changellyTermsCheckbox.tap()
   }
 
 

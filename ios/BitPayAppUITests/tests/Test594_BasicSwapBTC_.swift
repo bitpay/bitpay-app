@@ -66,13 +66,18 @@ final class Test594_BasicSwapBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(11) On the Swap Crypto screen, tap Enter Amount.") {
-      sleep(5)
+      selectKeyToDepositPage.tapEVMAccount()
+      swapPage.tapSwapCrypoButton()
     }
     
     AllureXCTestSupport.step("(12) On the Swap Amount bottom sheet, enter 0.0006 BTC.") {
+      swapPage.tapEnterAmount()
+      enterAmountPage.enterAmount(amount: "0.0007")
+      swapPage.tapEnterAmount()
     }
     
     AllureXCTestSupport.step("(13) Tap Continue.") {
+      swapPage.tapChangellyTermsCheckbox()
     }
     
     AllureXCTestSupport.step("(14) Tap View Offers.") {

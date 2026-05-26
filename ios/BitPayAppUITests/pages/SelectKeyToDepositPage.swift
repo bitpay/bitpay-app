@@ -28,6 +28,12 @@ class SelectKeyToDepositPage {
       .element(boundBy: 1)
   }
   
+  var evmAccount: XCUIElement {
+    app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == 'EVM Account'")
+    ).firstMatch
+  }
+  
 
   // MARK: - Validations
 
@@ -41,6 +47,10 @@ class SelectKeyToDepositPage {
   
   func tapSecondMyKeyWallet() {
     secondMyKeyWallet.tap()
+  }
+  
+  func tapEVMAccount() {
+    evmAccount.tap()
   }
 
 
