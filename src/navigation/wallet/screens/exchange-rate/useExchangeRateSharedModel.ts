@@ -33,6 +33,7 @@ import {
   getAssetCurrentDisplayQuoteRate,
   resolveActivePortfolioDisplayQuoteCurrency,
 } from '../../../../utils/portfolio/displayCurrency';
+import usePortfolioWalletSnapshotPresence from '../../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
 import {
   findSupportedCurrencyOptionForAsset,
   getWalletLiveFiatBalance,
@@ -92,6 +93,26 @@ export type ExchangeRateSharedModel = {
   resolvedQuoteCurrency: string;
   walletsForAsset: ExchangeRateWalletWithUi[];
   circulatingSupplyToDisplay: string;
+};
+
+const ZERO_ASSET_WALLET_CRYPTO_BALANCE = '0.000000';
+
+const formatAssetWalletCryptoBalance = (value: unknown): string => {
+  if (value == null) {
+    return '';
+  }
+
+  const text = String(value);
+  const trimmedText = text.trim();
+  if (!trimmedText) {
+    return '';
+  }
+
+  const numericValue = Number(trimmedText.replace(/,/g, ''));
+
+  return Number.isFinite(numericValue) && numericValue === 0
+    ? ZERO_ASSET_WALLET_CRYPTO_BALANCE
+    : text;
 };
 
 const HeaderTitleText = styled(HeaderTitle)`
@@ -174,11 +195,9 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     ],
   );
 
-  const resolvedQuoteCurrency = useMemo(() => {
-    return resolveActivePortfolioDisplayQuoteCurrency({
-      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-    }).toUpperCase();
-  }, [defaultAltCurrency.isoCode]);
+  const resolvedQuoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+  }).toUpperCase();
 
   const normalizedCoin = normalizeFiatRateSeriesCoin(
     assetContext.currencyAbbreviation,
@@ -193,38 +212,22 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     [assetContext.chain, assetContext.tokenAddress],
   );
 
-  const currentFiatRate = useMemo(() => {
-    if (
-      !rates ||
-      !assetContext.currencyAbbreviation ||
-      !resolvedQuoteCurrency
-    ) {
-      return undefined;
-    }
-
-    return getAssetCurrentDisplayQuoteRate({
-      rates,
-      currencyAbbreviation: assetContext.currencyAbbreviation,
-      chain: assetContext.chain,
-      tokenAddress: assetContext.tokenAddress,
-      quoteCurrency: resolvedQuoteCurrency,
-    });
-  }, [
-    assetContext.chain,
-    assetContext.currencyAbbreviation,
-    assetContext.tokenAddress,
-    resolvedQuoteCurrency,
-    rates,
-  ]);
+  const currentFiatRate =
+    !rates || !assetContext.currencyAbbreviation || !resolvedQuoteCurrency
+      ? undefined
+      : getAssetCurrentDisplayQuoteRate({
+          rates,
+          currencyAbbreviation: assetContext.currencyAbbreviation,
+          chain: assetContext.chain,
+          tokenAddress: assetContext.tokenAddress,
+          quoteCurrency: resolvedQuoteCurrency,
+        });
   const fallbackAsOfMsRef = React.useRef<number>(Date.now());
-  const asOfMs = useMemo(() => {
-    return (
-      resolveCurrentRatesAsOfMs({
-        ratesUpdatedAt,
-        rates,
-      }) ?? fallbackAsOfMsRef.current
-    );
-  }, [rates, ratesUpdatedAt]);
+  const asOfMs =
+    resolveCurrentRatesAsOfMs({
+      ratesUpdatedAt,
+      rates,
+    }) ?? fallbackAsOfMsRef.current;
 
   const formatDisplayPrice = useCallback(
     (value?: number) => {
@@ -264,15 +267,59 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     visibleWallets,
   ]);
 
-  const walletsForAssetDisplay = useMemo(() => {
+  const historicalAssetWallets = useMemo(() => {
     return getWalletsMatchingExchangeRateAsset({
       wallets: visibleWallets,
       currencyAbbreviation: assetContext.currencyAbbreviation,
       tokenAddress: assetContext.tokenAddress,
+      includeZeroBalance: true,
     });
   }, [
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
+    visibleWallets,
+  ]);
+
+  const assetWalletSnapshotPresence = usePortfolioWalletSnapshotPresence({
+    wallets: historicalAssetWallets,
+    enabled: showPortfolioValue === true && historicalAssetWallets.length > 0,
+  });
+
+  const walletsForAssetDisplay = useMemo(() => {
+    const liveBalanceWallets = getWalletsMatchingExchangeRateAsset({
+      wallets: visibleWallets,
+      currencyAbbreviation: assetContext.currencyAbbreviation,
+      tokenAddress: assetContext.tokenAddress,
+    });
+
+    if (showPortfolioValue !== true || !assetWalletSnapshotPresence.checked) {
+      return liveBalanceWallets;
+    }
+
+    const liveBalanceWalletIds = new Set(
+      liveBalanceWallets
+        .map(wallet => String(wallet?.id || '').trim())
+        .filter(Boolean),
+    );
+    const historicalZeroBalanceWallets = historicalAssetWallets.filter(
+      wallet => {
+        const walletId = String(wallet?.id || '').trim();
+        return (
+          walletId &&
+          !liveBalanceWalletIds.has(walletId) &&
+          assetWalletSnapshotPresence.hasSnapshotsByWalletId[walletId] === true
+        );
+      },
+    );
+
+    return [...liveBalanceWallets, ...historicalZeroBalanceWallets];
+  }, [
+    assetContext.currencyAbbreviation,
+    assetContext.tokenAddress,
+    assetWalletSnapshotPresence.checked,
+    assetWalletSnapshotPresence.hasSnapshotsByWalletId,
+    historicalAssetWallets,
+    showPortfolioValue,
     visibleWallets,
   ]);
 
@@ -293,6 +340,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
         });
         const ui = {
           ...baseUi,
+          cryptoBalance: formatAssetWalletCryptoBalance(baseUi.cryptoBalance),
           fiatBalance: liveFiatBalance,
           fiatBalanceFormat: formatFiat({
             fiatAmount: liveFiatBalance,
@@ -308,18 +356,14 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
 
   const hasWalletsForAsset = assetWallets.length > 0;
 
-  const assetTotalFiatBalance = useMemo(() => {
-    return walletsForAsset.reduce((total, {ui}) => {
-      return total + (ui.fiatBalance || 0);
-    }, 0);
-  }, [walletsForAsset]);
+  const assetTotalFiatBalance = walletsForAsset.reduce((total, {ui}) => {
+    return total + (ui.fiatBalance || 0);
+  }, 0);
 
-  const marketStatsCacheKey = useMemo(() => {
-    return getMarketStatsCacheKey({
-      fiatCode: resolvedQuoteCurrency,
-      coin: normalizedCoin,
-    });
-  }, [normalizedCoin, resolvedQuoteCurrency]);
+  const marketStatsCacheKey = getMarketStatsCacheKey({
+    fiatCode: resolvedQuoteCurrency,
+    coin: normalizedCoin,
+  });
 
   const marketStats = useAppSelector(
     ({MARKET_STATS}: RootState) => MARKET_STATS.itemsByKey[marketStatsCacheKey],
@@ -339,42 +383,32 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     );
   }, [dispatch, historicalRateIdentity, normalizedCoin, resolvedQuoteCurrency]);
 
-  const marketHigh52wToDisplay = useMemo(() => {
-    if (marketStats?.high52w == null) {
-      return '--';
-    }
-    return formatCompactCurrency(marketStats.high52w, resolvedQuoteCurrency);
-  }, [marketStats?.high52w, resolvedQuoteCurrency]);
+  const marketHigh52wToDisplay =
+    marketStats?.high52w == null
+      ? '--'
+      : formatCompactCurrency(marketStats.high52w, resolvedQuoteCurrency);
 
-  const marketLow52wToDisplay = useMemo(() => {
-    if (marketStats?.low52w == null) {
-      return '--';
-    }
-    return formatCompactCurrency(marketStats.low52w, resolvedQuoteCurrency);
-  }, [marketStats?.low52w, resolvedQuoteCurrency]);
+  const marketLow52wToDisplay =
+    marketStats?.low52w == null
+      ? '--'
+      : formatCompactCurrency(marketStats.low52w, resolvedQuoteCurrency);
 
-  const marketVolume24hToDisplay = useMemo(() => {
-    if (marketStats?.volume24h == null) {
-      return '--';
-    }
-    return formatCompactCurrency(marketStats.volume24h, resolvedQuoteCurrency);
-  }, [marketStats?.volume24h, resolvedQuoteCurrency]);
+  const marketVolume24hToDisplay =
+    marketStats?.volume24h == null
+      ? '--'
+      : formatCompactCurrency(marketStats.volume24h, resolvedQuoteCurrency);
 
-  const marketCapToDisplay = useMemo(() => {
-    if (marketStats?.marketCap == null) {
-      return '--';
-    }
-    return formatCompactCurrency(marketStats.marketCap, resolvedQuoteCurrency);
-  }, [marketStats?.marketCap, resolvedQuoteCurrency]);
+  const marketCapToDisplay =
+    marketStats?.marketCap == null
+      ? '--'
+      : formatCompactCurrency(marketStats.marketCap, resolvedQuoteCurrency);
 
-  const circulatingSupplyToDisplay = useMemo(() => {
-    if (marketStats?.circulatingSupply == null) {
-      return '--';
-    }
-    return `${formatSupply(
-      marketStats.circulatingSupply,
-    )} ${currencyAbbreviation}`;
-  }, [currencyAbbreviation, marketStats?.circulatingSupply]);
+  const circulatingSupplyToDisplay =
+    marketStats?.circulatingSupply == null
+      ? '--'
+      : `${formatSupply(
+          marketStats.circulatingSupply,
+        )} ${currencyAbbreviation}`;
 
   const aboutToDisplay = useMemo(() => {
     const about =

@@ -14,11 +14,13 @@ const HookHarness = ({
   quoteCurrency = 'EUR',
   fallbackCurrency = 'USD',
   fallbackBalance = 100,
+  isBalanceChartDataReadyToQuery = true,
   resetKey = 'a',
 }: {
   quoteCurrency?: string;
   fallbackCurrency?: string;
   fallbackBalance?: number;
+  isBalanceChartDataReadyToQuery?: boolean;
   resetKey?: string;
 }) => {
   latestResult = usePortfolioBalanceChartSurface({
@@ -26,6 +28,7 @@ const HookHarness = ({
     quoteCurrency,
     fallbackCurrency,
     fallbackBalance,
+    isBalanceChartDataReadyToQuery,
     resetKey,
   });
   return null;
@@ -87,5 +90,50 @@ describe('usePortfolioBalanceChartSurface', () => {
     expect(latestResult?.displayedBalance).toBeUndefined();
     expect(latestResult?.displayedTopBalance).toBe(100);
     expect(latestResult?.displayedTopBalanceCurrency).toBe('USD');
+  });
+
+  it('ignores chart-driven values while chart data is not ready to query', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = TestRenderer.create(<HookHarness />);
+    });
+
+    await act(async () => {
+      latestResult?.chartCallbacks.onDisplayedAnalysisPointChange({
+        totalFiatBalance: 125,
+        totalPnlChange: 10,
+        totalPnlPercent: 5,
+        totalCryptoBalanceFormatted: '1.25',
+      });
+      latestResult?.chartCallbacks.onChangeRowData({
+        percent: 5,
+        deltaFiatFormatted: '$10.00',
+        rangeLabel: '1D',
+      });
+      latestResult?.chartCallbacks.onSelectedBalanceChange(140);
+    });
+
+    expect(latestResult?.displayedTopBalance).toBe(140);
+    expect(latestResult?.changeRowData?.percent).toBe(5);
+
+    await act(async () => {
+      renderer.update(<HookHarness isBalanceChartDataReadyToQuery={false} />);
+    });
+
+    expect(latestResult?.selectedBalance).toBeUndefined();
+    expect(latestResult?.displayedBalance).toBeUndefined();
+    expect(latestResult?.displayedAnalysisPoint).toBeUndefined();
+    expect(latestResult?.changeRowData).toBeUndefined();
+    expect(latestResult?.chartDrivenBalance).toBeUndefined();
+    expect(latestResult?.displayedTopBalance).toBe(100);
+    expect(latestResult?.displayedTopBalanceCurrency).toBe('USD');
+
+    await act(async () => {
+      renderer.update(<HookHarness />);
+    });
+
+    expect(latestResult?.displayedTopBalance).toBe(100);
+    expect(latestResult?.displayedTopBalanceCurrency).toBe('USD');
+    expect(latestResult?.changeRowData).toBeUndefined();
   });
 });

@@ -23,6 +23,12 @@ import RampSellCheckout, {
 import SimplexSellCheckout, {
   SimplexSellCheckoutProps,
 } from './sell-crypto/screens/SimplexSellCheckout';
+import MoonpayBuyEmbeddedCheckout, {
+  MoonpayBuyEmbeddedCheckoutProps,
+} from './screens/MoonpayBuyEmbeddedCheckout';
+import MoonpayBuyEmbeddedOnboarding, {
+  MoonpayBuyEmbeddedOnboardingProps,
+} from './screens/MoonpayBuyEmbeddedOnboarding';
 
 interface ExternalServicesProps {
   ExternalServices: typeof Root;
@@ -31,6 +37,8 @@ interface ExternalServicesProps {
 
 export type ExternalServicesGroupParamList = {
   BuyAndSellRoot: BuyAndSellRootProps;
+  MoonpayBuyEmbeddedCheckout: MoonpayBuyEmbeddedCheckoutProps;
+  MoonpayBuyEmbeddedOnboarding: MoonpayBuyEmbeddedOnboardingProps;
   MoonpaySellCheckout: MoonpaySellCheckoutProps;
   RampSellCheckout: RampSellCheckoutProps;
   SimplexSellCheckout: SimplexSellCheckoutProps;
@@ -38,6 +46,8 @@ export type ExternalServicesGroupParamList = {
 
 export enum ExternalServicesScreens {
   ROOT_BUY_AND_SELL = 'BuyAndSellRoot',
+  MOONPAY_BUY_EMBEDDED_CHECKOUT = 'MoonpayBuyEmbeddedCheckout',
+  MOONPAY_BUY_EMBEDDED_ONBOARDING = 'MoonpayBuyEmbeddedOnboarding',
   MOONPAY_SELL_CHECKOUT = 'MoonpaySellCheckout',
   RAMP_SELL_CHECKOUT = 'RampSellCheckout',
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
@@ -98,6 +108,20 @@ const ExternalServicesGroup = ({
               ) : null
             ) : null,
         })}
+      />
+      <ExternalServices.Screen
+        name={ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_CHECKOUT}
+        component={MoonpayBuyEmbeddedCheckout}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Confirm Buy')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServices.Screen
+        name={ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING}
+        component={MoonpayBuyEmbeddedOnboarding}
+        options={{
+          headerTitle: '',
+        }}
       />
       <ExternalServices.Screen
         name={ExternalServicesScreens.MOONPAY_SELL_CHECKOUT}

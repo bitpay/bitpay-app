@@ -34,6 +34,7 @@ export type AssetPnlSummary = {
 export type AssetPnlSummaryCacheEntry = {
   key: string;
   identity: AssetPnlSummaryIdentity;
+  generation: number;
   loading: boolean;
   summary?: AssetPnlSummary;
   error?: Error;
@@ -54,6 +55,7 @@ type BalanceChartViewModelQueryLike = {
 
 const assetPnlSummaryCache = new Map<string, AssetPnlSummaryCacheEntry>();
 const listeners = new Set<() => void>();
+let assetPnlSummaryCacheGeneration = 0;
 
 const normalizeString = (value: unknown): string => String(value || '').trim();
 
@@ -63,25 +65,22 @@ const normalizeLower = (value: unknown): string =>
 const normalizeUpper = (value: unknown): string =>
   normalizeString(value).toUpperCase();
 
-const normalizeWalletIds = (walletIds: string[] | undefined): string[] => {
-  return Array.from(
+const normalizeWalletIds = (walletIds: string[] | undefined): string[] =>
+  Array.from(
     new Set(
       (walletIds || [])
         .map(walletId => normalizeString(walletId))
         .filter(Boolean),
     ),
   ).sort((a, b) => a.localeCompare(b));
-};
 
-const normalizeBalanceOffset = (value: unknown): number => {
-  const normalized = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(normalized) ? normalized : 0;
-};
-
-const normalizeAsOfMs = (value: unknown): number | undefined => {
+const normalizeFiniteNumber = (value: unknown): number | undefined => {
   const normalized = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(normalized) ? normalized : undefined;
 };
+
+const normalizeBalanceOffset = (value: unknown): number =>
+  normalizeFiniteNumber(value) ?? 0;
 
 export function getAssetPnlStoredWalletRequestSignature(
   storedWallets: StoredWallet[],
@@ -94,6 +93,9 @@ export function getAssetPnlStoredWalletRequestSignature(
         summary.chain,
         summary.currencyAbbreviation,
         summary.tokenAddress || '',
+        typeof summary.unitDecimals === 'number'
+          ? String(summary.unitDecimals)
+          : '',
         summary.balanceAtomic || '',
       ].join(':');
     })
@@ -104,13 +106,10 @@ export function getAssetPnlStoredWalletRequestSignature(
 export function getAssetPnlCurrentRatesSignature(
   currentRatesByAssetId: Record<string, number> | undefined,
 ): string {
-  if (!currentRatesByAssetId) {
-    return '';
-  }
-
-  return Object.keys(currentRatesByAssetId)
+  const ratesByAssetId = currentRatesByAssetId || {};
+  return Object.keys(ratesByAssetId)
     .sort()
-    .map(assetId => `${assetId}:${String(currentRatesByAssetId[assetId])}`)
+    .map(assetId => `${assetId}:${String(ratesByAssetId[assetId])}`)
     .join('|');
 }
 
@@ -129,7 +128,7 @@ export function normalizeAssetPnlSummaryIdentity(
     currentRatesSignature: normalizeString(identity.currentRatesSignature),
     chartDataRevisionSig: normalizeString(identity.chartDataRevisionSig),
     summaryCacheRevisionSig: normalizeString(identity.summaryCacheRevisionSig),
-    asOfMs: normalizeAsOfMs(identity.asOfMs),
+    asOfMs: normalizeFiniteNumber(identity.asOfMs),
     balanceOffset: normalizeBalanceOffset(identity.balanceOffset),
   };
 }
@@ -177,6 +176,10 @@ export function getAssetPnlSummaryCacheEntry(
   return cacheKey ? assetPnlSummaryCache.get(cacheKey) : undefined;
 }
 
+export function getAssetPnlSummaryCacheClearEpoch(): number {
+  return assetPnlSummaryCacheGeneration;
+}
+
 const getSpotRatesRevisionSig = (summaryCacheRevisionSig: string): string => {
   const separatorIndex = summaryCacheRevisionSig.indexOf('|');
   return separatorIndex === -1
@@ -212,24 +215,22 @@ const identitiesMatchForProvisionalDisplay = (
 export function findCompatibleAssetPnlSummaryCacheEntry(
   identity: AssetPnlSummaryIdentity,
 ): AssetPnlSummaryCacheEntry | undefined {
-  let match: AssetPnlSummaryCacheEntry | undefined;
-
-  for (const entry of assetPnlSummaryCache.values()) {
-    if (
-      entry.summary?.hasPnl &&
-      identitiesMatchForProvisionalDisplay(entry.identity, identity)
-    ) {
-      match = entry;
-    }
-  }
-
-  return match;
+  return Array.from(assetPnlSummaryCache.values())
+    .reverse()
+    .find(
+      entry =>
+        entry.summary?.hasPnl &&
+        identitiesMatchForProvisionalDisplay(entry.identity, identity),
+    );
 }
 
-export function clearAssetPnlSummaryCacheForTests(): void {
+export function clearAssetPnlSummaryCache(): void {
+  assetPnlSummaryCacheGeneration += 1;
   assetPnlSummaryCache.clear();
   emitChange();
 }
+
+export const clearAssetPnlSummaryCacheForTests = clearAssetPnlSummaryCache;
 
 function getSingleAssetIdentityFromStoredWallets(
   storedWallets: StoredWallet[],
@@ -239,34 +240,26 @@ function getSingleAssetIdentityFromStoredWallets(
       'assetKey' | 'currencyAbbreviation' | 'chain' | 'tokenAddress'
     >
   | undefined {
-  const groups = new Map<string, StoredWallet[]>();
+  let assetKey = '';
+  let representative: StoredWallet | undefined;
+  let representativeIsBaseAsset = false;
 
   for (const wallet of storedWallets || []) {
     const groupKey = normalizeLower(wallet.summary.currencyAbbreviation);
-    if (!groupKey) {
-      continue;
+    if (!groupKey) continue;
+    if (assetKey && groupKey !== assetKey) return undefined;
+    assetKey = groupKey;
+
+    const isBaseAsset =
+      normalizeLower(wallet.summary.chain) === assetKey &&
+      !wallet.summary.tokenAddress;
+    if (!representative || (isBaseAsset && !representativeIsBaseAsset)) {
+      representative = wallet;
+      representativeIsBaseAsset = isBaseAsset;
     }
-
-    const list = groups.get(groupKey) || [];
-    list.push(wallet);
-    groups.set(groupKey, list);
   }
 
-  if (groups.size !== 1) {
-    return undefined;
-  }
-
-  const [assetKey, groupWallets] = Array.from(groups.entries())[0];
-  const representative =
-    groupWallets.find(
-      wallet =>
-        normalizeLower(wallet.summary.chain) === assetKey &&
-        !wallet.summary.tokenAddress,
-    ) || groupWallets[0];
-
-  if (!representative) {
-    return undefined;
-  }
+  if (!assetKey || !representative) return undefined;
 
   return {
     assetKey,
@@ -312,13 +305,9 @@ export function buildAssetPnlSummaryIdentityFromViewModelQuery(
   });
 }
 
-const areStringArraysEqual = (left: string[], right: string[]): boolean => {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((value, index) => value === right[index]);
-};
+const areStringArraysEqual = (left: string[], right: string[]): boolean =>
+  left.length === right.length &&
+  left.every((value, index) => value === right[index]);
 
 function viewModelMatchesIdentity(args: {
   viewModel: BalanceChartViewModel;
@@ -384,10 +373,15 @@ export function buildAssetPnlSummaryFromBalanceChartViewModel(args: {
   };
 }
 
-export function seedAssetPnlSummaryCache(args: {
+function seedAssetPnlSummaryCacheForGeneration(args: {
   identity: AssetPnlSummaryIdentity;
   viewModel: BalanceChartViewModel;
+  generation: number;
 }): boolean {
+  if (args.generation !== assetPnlSummaryCacheGeneration) {
+    return false;
+  }
+
   const identity = normalizeAssetPnlSummaryIdentity(args.identity);
   const key = buildAssetPnlSummaryCacheKey(identity);
   const summary = buildAssetPnlSummaryFromBalanceChartViewModel({
@@ -402,6 +396,7 @@ export function seedAssetPnlSummaryCache(args: {
   assetPnlSummaryCache.set(key, {
     key,
     identity,
+    generation: args.generation,
     loading: false,
     summary,
     error: undefined,
@@ -411,47 +406,99 @@ export function seedAssetPnlSummaryCache(args: {
   return true;
 }
 
+export function seedAssetPnlSummaryCache(args: {
+  identity: AssetPnlSummaryIdentity;
+  viewModel: BalanceChartViewModel;
+}): boolean {
+  return seedAssetPnlSummaryCacheForGeneration({
+    ...args,
+    generation: assetPnlSummaryCacheGeneration,
+  });
+}
+
 function setAssetPnlSummaryLoading(args: {
   identity: AssetPnlSummaryIdentity;
   promise: Promise<BalanceChartViewModel>;
-}): string {
+}): {key: string; generation: number} {
   const identity = normalizeAssetPnlSummaryIdentity(args.identity);
   const key = buildAssetPnlSummaryCacheKey(identity);
+  const generation = assetPnlSummaryCacheGeneration;
 
   assetPnlSummaryCache.set(key, {
     key,
     identity,
+    generation,
     loading: true,
     summary: assetPnlSummaryCache.get(key)?.summary,
     error: undefined,
     promise: args.promise,
   });
   emitChange();
-  return key;
+  return {key, generation};
 }
 
 function setAssetPnlSummaryError(args: {
   identity: AssetPnlSummaryIdentity;
   promise: Promise<BalanceChartViewModel>;
   error: Error;
+  generation: number;
 }): void {
+  if (args.generation !== assetPnlSummaryCacheGeneration) {
+    return;
+  }
+
   const identity = normalizeAssetPnlSummaryIdentity(args.identity);
   const key = buildAssetPnlSummaryCacheKey(identity);
   const current = assetPnlSummaryCache.get(key);
 
-  if (current?.promise !== args.promise) {
+  if (
+    current?.promise !== args.promise ||
+    current.generation !== args.generation
+  ) {
     return;
   }
 
   assetPnlSummaryCache.set(key, {
     key,
     identity,
+    generation: args.generation,
     loading: false,
     summary: current.summary,
     error: args.error,
     promise: undefined,
   });
   emitChange();
+}
+
+function attachAssetPnlSummaryPromiseHandlers(args: {
+  identity: AssetPnlSummaryIdentity;
+  promise: Promise<BalanceChartViewModel>;
+  generation: number;
+}): void {
+  args.promise
+    .then(viewModel => {
+      const seeded = seedAssetPnlSummaryCacheForGeneration({
+        identity: args.identity,
+        viewModel,
+        generation: args.generation,
+      });
+      if (!seeded) {
+        setAssetPnlSummaryError({
+          identity: args.identity,
+          promise: args.promise,
+          error: new Error('Asset PnL summary view model identity mismatch'),
+          generation: args.generation,
+        });
+      }
+    })
+    .catch(reason => {
+      setAssetPnlSummaryError({
+        identity: args.identity,
+        promise: args.promise,
+        error: reason instanceof Error ? reason : new Error(String(reason)),
+        generation: args.generation,
+      });
+    });
 }
 
 export function trackAssetPnlSummaryViewModelPromise(args: {
@@ -465,28 +512,11 @@ export function trackAssetPnlSummaryViewModelPromise(args: {
     return;
   }
 
-  setAssetPnlSummaryLoading(args);
-  args.promise
-    .then(viewModel => {
-      const seeded = seedAssetPnlSummaryCache({
-        identity: args.identity,
-        viewModel,
-      });
-      if (!seeded) {
-        setAssetPnlSummaryError({
-          identity: args.identity,
-          promise: args.promise,
-          error: new Error('Asset PnL summary view model identity mismatch'),
-        });
-      }
-    })
-    .catch(reason => {
-      setAssetPnlSummaryError({
-        identity: args.identity,
-        promise: args.promise,
-        error: reason instanceof Error ? reason : new Error(String(reason)),
-      });
-    });
+  const {generation} = setAssetPnlSummaryLoading(args);
+  attachAssetPnlSummaryPromiseHandlers({
+    ...args,
+    generation,
+  });
 }
 
 export function loadAssetPnlSummary(args: {
@@ -505,31 +535,15 @@ export function loadAssetPnlSummary(args: {
   }
 
   const promise = args.query();
-  setAssetPnlSummaryLoading({
+  const {generation} = setAssetPnlSummaryLoading({
     identity: args.identity,
     promise,
   });
-  promise
-    .then(viewModel => {
-      const seeded = seedAssetPnlSummaryCache({
-        identity: args.identity,
-        viewModel,
-      });
-      if (!seeded) {
-        setAssetPnlSummaryError({
-          identity: args.identity,
-          promise,
-          error: new Error('Asset PnL summary view model identity mismatch'),
-        });
-      }
-    })
-    .catch(reason => {
-      setAssetPnlSummaryError({
-        identity: args.identity,
-        promise,
-        error: reason instanceof Error ? reason : new Error(String(reason)),
-      });
-    });
+  attachAssetPnlSummaryPromiseHandlers({
+    identity: args.identity,
+    promise,
+    generation,
+  });
 
   return promise;
 }

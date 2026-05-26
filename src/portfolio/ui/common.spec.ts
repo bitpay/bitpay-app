@@ -5,6 +5,7 @@ import {
 import {
   buildAssetPnlSummaryCacheKey,
   buildAssetPnlSummaryIdentityFromViewModelQuery,
+  clearAssetPnlSummaryCache,
   clearAssetPnlSummaryCacheForTests,
   getAssetPnlSummaryCacheEntry,
 } from './assetPnlSummaryCache';
@@ -41,6 +42,10 @@ jest.mock('../../utils/portfolio/displayCurrency', () => ({
 
 jest.mock('../adapters/rn/walletMappers', () => ({
   isPortfolioRuntimeEligibleWallet: jest.fn(() => true),
+  resolvePortfolioWalletUnitDecimalsFromPrecision: jest.fn(
+    ({precisionUnitDecimals}: {precisionUnitDecimals?: number}) =>
+      precisionUnitDecimals,
+  ),
   toPortfolioStoredWallet: jest.fn(),
 }));
 
@@ -247,5 +252,96 @@ describe('runPortfolioChartQuery', () => {
         hasPnl: true,
       }),
     );
+  });
+
+  it('does not seed asset PnL summaries from a query that resolves after cache clear', async () => {
+    let resolveQuery: ((value: any) => void) | undefined;
+    const wallets = [
+      {
+        walletId: 'wallet-1',
+        addedAt: 0,
+        summary: {
+          walletId: 'wallet-1',
+          walletName: 'Wallet 1',
+          chain: 'btc',
+          network: 'livenet',
+          currencyAbbreviation: 'btc',
+          balanceAtomic: '0',
+          balanceFormatted: '0',
+        },
+        credentials: {
+          walletId: 'wallet-1',
+          chain: 'btc',
+          network: 'livenet',
+          coin: 'btc',
+        },
+      },
+    ] as any;
+    const queryArgs = {
+      wallets,
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      maxPoints: 5,
+      currentRatesByAssetId: {'btc:btc': 100},
+      dataRevisionSig: 'rev-1',
+      walletIds: ['wallet-1'],
+      balanceOffset: 0,
+      asOfMs: 1234,
+    } as const;
+    const identity = buildAssetPnlSummaryIdentityFromViewModelQuery({
+      ...queryArgs,
+      summaryCacheRevisionSig: '',
+    });
+    expect(identity).toBeDefined();
+    const cacheKey = buildAssetPnlSummaryCacheKey(identity!);
+
+    mockComputeBalanceChartViewModel.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveQuery = resolve;
+        }),
+    );
+
+    const queryPromise = runPortfolioBalanceChartViewModelQuery(queryArgs);
+
+    expect(getAssetPnlSummaryCacheEntry(cacheKey)).toEqual(
+      expect.objectContaining({loading: true}),
+    );
+
+    clearAssetPnlSummaryCache();
+
+    resolveQuery?.({
+      timeframe: '1D',
+      quoteCurrency: 'USD',
+      walletIds: ['wallet-1'],
+      dataRevisionSig: 'rev-1',
+      balanceOffset: 0,
+      graphPoints: [{ts: 1, value: 100}],
+      analysisPoints: [
+        {
+          timestamp: 1,
+          totalFiatBalance: 100,
+          totalRemainingCostBasisFiat: 90,
+          totalUnrealizedPnlFiat: 10,
+          totalPnlChange: 10,
+          totalPnlPercent: 11.11,
+        },
+      ],
+      latestTotalFiatBalance: 100,
+      latestDisplayedTotalFiatBalance: 100,
+      totalPnlChange: 10,
+      totalPnlPercent: 11.11,
+      changeRow: {
+        totalPnlChange: 10,
+        totalPnlPercent: 11.11,
+      },
+    });
+
+    await expect(queryPromise).resolves.toEqual(
+      expect.objectContaining({dataRevisionSig: 'rev-1'}),
+    );
+    await Promise.resolve();
+
+    expect(getAssetPnlSummaryCacheEntry(cacheKey)).toBeUndefined();
   });
 });

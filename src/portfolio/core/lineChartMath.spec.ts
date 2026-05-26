@@ -1,6 +1,5 @@
 import {
   computePointExtrema,
-  GRAPH_DRAWABLE_EPSILON,
   normalizeLineChartPoints,
   toFiniteNumber,
   type LineChartPointFactoryArgs,
@@ -57,7 +56,7 @@ describe('lineChartMath', () => {
     ]);
   });
 
-  it('adds a tiny range to flat multi-point series', () => {
+  it('preserves flat multi-point series values', () => {
     const normalized = normalizeLineChartPoints(
       [
         {ts: 1000, value: 42},
@@ -72,7 +71,7 @@ describe('lineChartMath', () => {
 
     expect(normalized).toEqual([
       {ts: 1000, value: 42},
-      {ts: 2000, value: 42 + GRAPH_DRAWABLE_EPSILON},
+      {ts: 2000, value: 42},
     ]);
   });
 

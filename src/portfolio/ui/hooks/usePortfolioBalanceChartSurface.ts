@@ -21,9 +21,12 @@ export function usePortfolioBalanceChartSurface(args: {
   fallbackBalance?: number;
   fallbackCurrency?: string;
   enabled?: boolean;
+  isBalanceChartDataReadyToQuery?: boolean;
   resetKey?: string;
 }) {
   const enabled = args.enabled !== false;
+  const canUseChartDrivenState =
+    enabled && args.isBalanceChartDataReadyToQuery !== false;
   const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const [displayedBalance, setDisplayedBalance] = useState<
     number | undefined
@@ -48,7 +51,13 @@ export function usePortfolioBalanceChartSurface(args: {
     setDisplayedBalance(undefined);
     setDisplayedAnalysisPoint(undefined);
     setChangeRowData(undefined);
-  }, [args.quoteCurrency, args.resetKey, enabled, walletIdsSignature]);
+  }, [
+    args.isBalanceChartDataReadyToQuery,
+    args.quoteCurrency,
+    args.resetKey,
+    enabled,
+    walletIdsSignature,
+  ]);
 
   const onDisplayedAnalysisPointChange = useCallback(
     (point?: PortfolioBalanceChartSurfaceAnalysisPoint) => {
@@ -59,7 +68,7 @@ export function usePortfolioBalanceChartSurface(args: {
   );
 
   const chartDrivenBalance =
-    enabled &&
+    canUseChartDrivenState &&
     (typeof selectedBalance === 'number' ||
       typeof displayedBalance === 'number')
       ? selectedBalance ?? displayedBalance
@@ -83,19 +92,22 @@ export function usePortfolioBalanceChartSurface(args: {
 
   return useMemo(
     () => ({
-      selectedBalance,
-      displayedBalance,
-      displayedAnalysisPoint,
-      changeRowData,
+      selectedBalance: canUseChartDrivenState ? selectedBalance : undefined,
+      displayedBalance: canUseChartDrivenState ? displayedBalance : undefined,
+      displayedAnalysisPoint: canUseChartDrivenState
+        ? displayedAnalysisPoint
+        : undefined,
+      changeRowData: canUseChartDrivenState ? changeRowData : undefined,
       chartDrivenBalance,
       displayedTopBalance,
       displayedTopBalanceCurrency,
       chartCallbacks,
     }),
     [
-      changeRowData,
+      canUseChartDrivenState,
       chartCallbacks,
       chartDrivenBalance,
+      changeRowData,
       displayedAnalysisPoint,
       displayedBalance,
       displayedTopBalance,

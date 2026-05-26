@@ -9,6 +9,7 @@ jest.mock('../../constants/device-emitter-events', () => ({
 }));
 
 jest.mock('../../utils/portfolio/assets', () => ({
+  getPortfolioWalletTokenAddress: jest.fn((wallet: any) => wallet.tokenAddress),
   getVisibleWalletsFromKeys: jest.fn(() => []),
   sortWalletsByAssetFiatPriority: jest.fn((wallets: any[]) => wallets),
 }));
@@ -23,6 +24,40 @@ jest.mock('../../portfolio/service', () => ({
     cancel: mockCancel,
     populateWallets: mockPopulateWallets,
   })),
+  buildPortfolioExcessiveBalanceMismatchMarker: jest.fn(
+    ({mismatch, detectedAt, lastAttemptedAt, previousMarker}: any) => {
+      const computedAtomic = BigInt(mismatch.computedAtomic);
+      const liveAtomic = BigInt(mismatch.currentAtomic);
+      const deltaAtomic = computedAtomic - liveAtomic;
+      const absDeltaAtomic = deltaAtomic < 0n ? -deltaAtomic : deltaAtomic;
+      const absLiveAtomic = liveAtomic < 0n ? -liveAtomic : liveAtomic;
+      const isExcessive =
+        absDeltaAtomic > 0n &&
+        (absLiveAtomic === 0n ||
+          absDeltaAtomic * 10000n >= absLiveAtomic * 1000n);
+      if (!isExcessive) {
+        return undefined;
+      }
+      const ratio =
+        absLiveAtomic === 0n
+          ? 'Infinity'
+          : (Number(absDeltaAtomic) / Number(absLiveAtomic)).toString();
+      return {
+        walletId: mismatch.walletId,
+        reason: 'excessive_balance_mismatch',
+        computedAtomic: computedAtomic.toString(),
+        liveAtomic: liveAtomic.toString(),
+        deltaAtomic: deltaAtomic.toString(),
+        ratio,
+        threshold: 0.1,
+        detectedAt: previousMarker?.detectedAt ?? detectedAt,
+        lastAttemptedAt: lastAttemptedAt ?? detectedAt,
+        message: `Wallet ${mismatch.walletId} snapshot balance differs from live balance by ${ratio}x (threshold 10%).`,
+      };
+    },
+  ),
+  getPortfolioInvalidDecimalsMessage: (walletId: string) =>
+    `Wallet ${walletId || 'unknown'} has unresolved token decimals.`,
   getPortfolioPopulateDecisionsForWallets: (...args: any[]) =>
     mockGetPortfolioPopulateDecisionsForWallets(...args),
 }));
@@ -43,6 +78,27 @@ jest.mock('../../portfolio/runtime/portfolioRuntime', () => ({
 
 jest.mock('../../portfolio/adapters/rn/walletMappers', () => ({
   isPortfolioRuntimeEligibleWallet: jest.fn(() => true),
+  resolvePortfolioWalletUnitDecimalsFromPrecision: jest.fn(
+    ({
+      wallet,
+      precisionUnitDecimals,
+    }: {
+      wallet: any;
+      precisionUnitDecimals?: number;
+    }) => {
+      if (typeof precisionUnitDecimals === 'number') {
+        return precisionUnitDecimals;
+      }
+      if (
+        wallet?.tokenAddress ||
+        wallet?.credentials?.token?.address ||
+        wallet?.credentials?.tokenAddress
+      ) {
+        return undefined;
+      }
+      return 8;
+    },
+  ),
   toPortfolioStoredWallet: jest.fn(({wallet}: {wallet: any}) => ({
     walletId: wallet.id,
     summary: {walletId: wallet.id},
@@ -64,6 +120,7 @@ jest.mock('../../managers/LogManager', () => ({
     error: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
+    warnWithSentryMessage: jest.fn(),
   },
 }));
 
@@ -89,9 +146,21 @@ jest.mock('./portfolio.actions', () => ({
     payload,
     type: 'MARK_INITIAL_BASELINE_COMPLETE',
   })),
+  markPopulateResumeSettled: jest.fn((payload: any) => ({
+    payload,
+    type: 'MARK_POPULATE_RESUME_SETTLED',
+  })),
   setSnapshotBalanceMismatchesByWalletIdUpdates: jest.fn((payload: any) => ({
     payload,
     type: 'SET_MISMATCHES',
+  })),
+  setInvalidDecimalsByWalletIdUpdates: jest.fn((payload: any) => ({
+    payload,
+    type: 'SET_INVALID_DECIMALS',
+  })),
+  setQuarantinesByWalletIdUpdates: jest.fn((payload: any) => ({
+    payload,
+    type: 'SET_QUARANTINES',
   })),
   startPopulatePortfolio: jest.fn((payload: any) => ({
     payload,
@@ -106,15 +175,29 @@ jest.mock('./portfolio.actions', () => ({
 import {DeviceEventEmitter} from 'react-native';
 import {
   cancelPopulatePortfolioWithRuntime,
+  clearPortfolioWithRuntime,
   clearPortfolioRuntimeUnlockDeferralForTests,
+  clearWalletPortfolioDataWithRuntime,
   maybePopulatePortfolioForWalletsWithRuntime,
   maybePopulatePortfolioOnAppLaunchWithRuntime,
+  populateImportedKeyPortfolio,
   populatePortfolioWithRuntime,
 } from './portfolio.runtime.effects';
+import {
+  buildAssetPnlSummaryCacheKey,
+  clearAssetPnlSummaryCacheForTests,
+  getAssetPnlSummaryCacheEntry,
+  seedAssetPnlSummaryCache,
+} from '../../portfolio/ui/assetPnlSummaryCache';
 
 const mockGetVisibleWalletsFromKeys = jest.requireMock(
   '../../utils/portfolio/assets',
 ).getVisibleWalletsFromKeys as jest.Mock;
+const mockGetPrecision = jest.requireMock('../wallet/utils/currency')
+  .GetPrecision as jest.Mock;
+const mockToPortfolioStoredWallet = jest.requireMock(
+  '../../portfolio/adapters/rn/walletMappers',
+).toPortfolioStoredWallet as jest.Mock;
 const mockPortfolioService = jest.requireMock('../../portfolio/service')
   .PortfolioPopulateService as jest.Mock;
 const mockStartPopulatePortfolio = jest.requireMock('./portfolio.actions')
@@ -124,11 +207,12 @@ const mockFinishPopulatePortfolio = jest.requireMock('./portfolio.actions')
 const mockLogManager = jest.requireMock('../../managers/LogManager')
   .logManager as {
   warn: jest.Mock;
+  warnWithSentryMessage: jest.Mock;
 };
 
 type State = Record<string, any>;
 
-const walletFactory = (overrides: Record<string, any> = {}) => ({
+const walletFactory = (overrides: Record<string, any> = {}): any => ({
   chain: 'btc',
   currencyAbbreviation: 'btc',
   id: 'wallet-1',
@@ -136,6 +220,41 @@ const walletFactory = (overrides: Record<string, any> = {}) => ({
   network: 'livenet',
   ...overrides,
 });
+
+const makeSharedWallet = (source: string) =>
+  walletFactory({id: 'shared-wallet', source});
+
+const makeImportedKey = (wallet: ReturnType<typeof walletFactory>) =>
+  ({
+    id: 'imported-key',
+    wallets: [wallet],
+  } as Parameters<typeof populateImportedKeyPortfolio>[0]['key']);
+
+const excessiveMismatchDecisionResult = ({
+  shouldPopulate = true,
+}: {shouldPopulate?: boolean} = {}) => {
+  const walletId = 'wallet-1';
+  const quarantine = {
+    reason: 'excessive_balance_mismatch',
+    walletId,
+  };
+
+  return {
+    decisions: [
+      {
+        quarantine,
+        reason: 'excessive_balance_mismatch',
+        shouldPopulate,
+        walletId,
+      },
+    ],
+    quarantinesByWalletId: {
+      [walletId]: quarantine,
+    },
+    mismatchByWalletId: {[walletId]: undefined},
+    walletIdsToPopulate: shouldPopulate ? [walletId] : [],
+  };
+};
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -169,6 +288,8 @@ const makeState = (overrides: State = {}) => {
     PORTFOLIO: {
       lastPopulatedAt: undefined,
       populateStatus: {inProgress: false},
+      invalidDecimalsByWalletId: {},
+      quarantinesByWalletId: {},
       ...portfolioOverrides,
     },
     WALLET: {
@@ -202,6 +323,124 @@ const makeStore = (state: State) => {
   return {dispatch, dispatched, getState};
 };
 
+const expectOnlyStartAndCancelPopulateActions = (dispatched: any[]) => {
+  const dispatchedTypes = dispatched.map(action => action.type);
+  expect(dispatchedTypes).toContain('START_POPULATE');
+  expect(dispatchedTypes).toContain('CANCEL_POPULATE');
+  expect(dispatchedTypes).not.toEqual(
+    expect.arrayContaining([
+      'UPDATE_PROGRESS',
+      'SET_MISMATCHES',
+      'FINISH_POPULATE',
+      'FAIL_POPULATE',
+    ]),
+  );
+};
+
+const successfulPopulateResult = ({
+  results = [{walletId: 'wallet-1'}],
+  status = {},
+}: {results?: any[]; status?: Record<string, any>} = {}) => ({
+  cancelled: false,
+  finishedAt: 1234,
+  results,
+  status: {
+    currentWalletId: undefined,
+    errors: [],
+    inProgress: false,
+    jobId: 'populate-job-1',
+    lastUpdatedAt: 1234,
+    startedAt: 1200,
+    state: 'completed',
+    txRequestsMade: 0,
+    txsProcessed: 0,
+    walletStatusById: {'wallet-1': 'done'},
+    walletsCompleted: 1,
+    walletsTotal: 1,
+    ...status,
+  },
+});
+
+const populateDecision = (overrides: Record<string, any> = {}) => ({
+  latestSnapshot: null,
+  index: null,
+  reason: 'up_to_date',
+  shouldPopulate: false,
+  walletId: 'wallet-1',
+  ...overrides,
+});
+
+const populateDecisionResult = (overrides: Record<string, any> = {}) => ({
+  decisions: [populateDecision()],
+  mismatchByWalletId: {'wallet-1': undefined},
+  walletIdsToPopulate: [],
+  ...overrides,
+});
+
+const walletSnapshot = (cryptoBalance: string) => ({
+  walletId: 'wallet-1',
+  cryptoBalance,
+});
+
+const mismatchDecisionResult = (mismatch: Record<string, any>) => ({
+  decisions: [{mismatch, walletId: 'wallet-1'}],
+});
+
+const emptyScopedDecisionResult = (walletIdsToPopulate: string[] = []) => ({
+  decisions: [],
+  mismatchByWalletId: {},
+  walletIdsToPopulate,
+});
+
+const expectInitialBaselineCompleteAction = (dispatched: any[]) =>
+  expect(dispatched).toEqual(
+    expect.arrayContaining([
+      {
+        payload: expect.objectContaining({quoteCurrency: 'USD'}),
+        type: 'MARK_INITIAL_BASELINE_COMPLETE',
+      },
+    ]),
+  );
+
+const expectPopulateResumeSettledAction = (dispatched: any[]) =>
+  expect(dispatched).toEqual(
+    expect.arrayContaining([
+      {
+        payload: {settledAt: expect.any(Number)},
+        type: 'MARK_POPULATE_RESUME_SETTLED',
+      },
+    ]),
+  );
+
+const expectStartPopulateWithUsd = () =>
+  expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
+    quoteCurrency: 'USD',
+  });
+
+const expectFinishedFullPopulate = (overrides: Record<string, any> = {}) =>
+  expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
+    expect.objectContaining({
+      finishedAt: 1234,
+      lastFullPopulateCompletedAt: 1234,
+      quoteCurrency: 'USD',
+      reason: 'completed',
+      ...overrides,
+    }),
+  );
+
+const dispatchAppLaunchPopulateWithUsd = (dispatch: any) =>
+  dispatch(
+    maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+  );
+
+const makeInitialBaselineState = (portfolio: Record<string, any> = {}) =>
+  makeState({
+    PORTFOLIO: {
+      lastFullPopulateCompletedAt: null,
+      ...portfolio,
+    },
+  });
+
 const getUnlockCallback = () =>
   (DeviceEventEmitter.addListener as jest.Mock).mock.calls[0]?.[1] as
     | (() => Promise<void>)
@@ -212,6 +451,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
   beforeEach(() => {
     clearPortfolioRuntimeUnlockDeferralForTests();
+    clearAssetPnlSummaryCacheForTests();
     jest.clearAllMocks();
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     mockGetVisibleWalletsFromKeys.mockReturnValue([walletFactory()]);
@@ -219,42 +459,19 @@ describe('portfolio runtime effects lock deferral', () => {
       status: 'completed',
       walletInitSuccess: true,
     });
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValue({
-      decisions: [
-        {
-          latestSnapshot: null,
-          index: null,
-          reason: 'up_to_date',
-          shouldPopulate: false,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': undefined},
-      walletIdsToPopulate: ['wallet-1'],
-    });
-    mockPopulateWallets.mockResolvedValue({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [{walletId: 'wallet-1'}],
-      status: {
-        currentWalletId: undefined,
-        errors: [],
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 0,
-        txsProcessed: 0,
-        walletStatusById: {'wallet-1': 'done'},
-        walletsCompleted: 1,
-        walletsTotal: 1,
-      },
-    });
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValue(
+      populateDecisionResult({
+        invalidDecimalsByWalletId: {},
+        quarantinesByWalletId: {},
+        walletIdsToPopulate: ['wallet-1'],
+      }),
+    );
+    mockPopulateWallets.mockResolvedValue(successfulPopulateResult());
   });
 
   afterEach(() => {
     consoleLogSpy.mockRestore();
+    clearAssetPnlSummaryCacheForTests();
     clearPortfolioRuntimeUnlockDeferralForTests();
     jest.useRealTimers();
   });
@@ -266,6 +483,65 @@ describe('portfolio runtime effects lock deferral', () => {
       pinLockActive: true,
       showPortfolioValue: true,
     });
+  });
+
+  it('clears asset PnL summaries when full portfolio clear succeeds', async () => {
+    const identity = {
+      assetKey: 'btc',
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+      walletIds: ['wallet-1'],
+      storedWalletRequestSig: '',
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      currentRatesSignature: '',
+      chartDataRevisionSig: 'rev-1',
+      summaryCacheRevisionSig: '',
+      balanceOffset: 0,
+    } as const;
+    const cacheKey = buildAssetPnlSummaryCacheKey(identity);
+
+    seedAssetPnlSummaryCache({
+      identity,
+      viewModel: {
+        timeframe: '1D',
+        quoteCurrency: 'USD',
+        walletIds: ['wallet-1'],
+        dataRevisionSig: 'rev-1',
+        balanceOffset: 0,
+        graphPoints: [],
+        analysisPoints: [
+          {
+            timestamp: 1,
+            totalFiatBalance: 100,
+            totalRemainingCostBasisFiat: 90,
+            totalUnrealizedPnlFiat: 10,
+            totalPnlChange: 10,
+            totalPnlPercent: 11.11,
+          },
+        ],
+        latestTotalFiatBalance: 100,
+        latestDisplayedTotalFiatBalance: 100,
+        totalPnlChange: 10,
+        totalPnlPercent: 11.11,
+        changeRow: {
+          totalPnlChange: 10,
+          totalPnlPercent: 11.11,
+        },
+      } as any,
+    });
+    expect(getAssetPnlSummaryCacheEntry(cacheKey)?.summary?.hasPnl).toBe(true);
+
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+
+    await dispatch(clearPortfolioWithRuntime());
+
+    expect(mockRuntimeClient.clearAllStorage).toHaveBeenCalledTimes(1);
+    expect(getAssetPnlSummaryCacheEntry(cacheKey)).toBeUndefined();
+    expect(dispatched).toEqual(
+      expect.arrayContaining([{payload: undefined, type: 'CLEAR_PORTFOLIO'}]),
+    );
   });
 
   it('runtime populate defers when PIN lock is active and lockAuthorizedUntil is undefined', async () => {
@@ -312,10 +588,267 @@ describe('portfolio runtime effects lock deferral', () => {
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
     expect(DeviceEventEmitter.addListener).not.toHaveBeenCalled();
-    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
-      quoteCurrency: 'USD',
-    });
+    expectStartPopulateWithUsd();
     expect(mockPortfolioService).toHaveBeenCalledTimes(1);
+  });
+
+  it('quarantines token wallets with unresolved decimals before runtime populate', async () => {
+    mockGetPrecision.mockReturnValueOnce(undefined);
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+
+    await dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [
+          walletFactory({
+            id: 'token-wallet',
+            chain: 'sol',
+            currencyAbbreviation: 'weird',
+            tokenAddress: 'soltokenmint111111111111111111111111111111',
+            credentials: {
+              chain: 'sol',
+              coin: 'sol',
+              token: {
+                address: 'soltokenmint111111111111111111111111111111',
+                symbol: 'WEIRD',
+              },
+            },
+          }),
+        ],
+      }),
+    );
+
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+    expect(mockPortfolioService).not.toHaveBeenCalled();
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        {
+          type: 'SET_INVALID_DECIMALS',
+          payload: {
+            'token-wallet': {
+              walletId: 'token-wallet',
+              reason: 'invalid_decimals',
+              message: 'Wallet token-wallet has unresolved token decimals.',
+            },
+          },
+        },
+      ]),
+    );
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').includes('unresolved token decimals'),
+    );
+    expect(warning).toBeDefined();
+    expect(String(warning![0] || '')).toContain('token-wallet');
+    expect(String(warning![1] || '')).toContain('[redacted]');
+    expect(String(warning![1] || '')).not.toContain('token-wallet');
+  });
+
+  it('redacts wallet ids from sentry wallet storage clearing failures', async () => {
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockRuntimeClient.clearWallet.mockRejectedValueOnce(
+      new Error('clear failed for wallet-2'),
+    );
+
+    await dispatch(
+      clearWalletPortfolioDataWithRuntime({walletIds: ['wallet-2']}),
+    );
+
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').includes(
+        'Failed clearing runtime wallet storage for wallet-2',
+      ),
+    );
+    expect(warning).toBeDefined();
+    expect(String(warning![0] || '')).toContain('wallet-2');
+    expect(String(warning![1] || '')).toContain('[redacted]');
+    expect(String(warning![1] || '')).not.toContain('wallet-2');
+    expect(dispatched).toContainEqual({
+      payload: {walletIds: ['wallet-2']},
+      type: 'CLEAR_WALLET_PORTFOLIO_STATE',
+    });
+  });
+
+  it('uses the current imported key wallets from state when populating an import', async () => {
+    const staleImportedWallet = makeSharedWallet('stale-import-return');
+    const existingSharedWallet = makeSharedWallet('previous-key');
+    const currentImportedWallet = makeSharedWallet(
+      'imported-key-current-state',
+    );
+    const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: 1000,
+      },
+      WALLET: {
+        keys: {
+          'previous-key': {
+            id: 'previous-key',
+            wallets: [existingSharedWallet],
+          },
+          'imported-key': {
+            id: 'imported-key',
+            wallets: [currentImportedWallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+    const logger = {error: jest.fn()};
+
+    populateImportedKeyPortfolio({
+      dispatch: dispatch as any,
+      key: makeImportedKey(staleImportedWallet),
+      logger,
+    });
+    await (dispatch as jest.Mock).mock.results[0]?.value;
+
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: currentImportedWallet}),
+    );
+    expect(mockToPortfolioStoredWallet).not.toHaveBeenCalledWith(
+      expect.objectContaining({wallet: existingSharedWallet}),
+    );
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+    expect(mockPopulateWallets.mock.calls[0][0].wallets).toHaveLength(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('uses launch-level populate when importing before the initial baseline is complete', async () => {
+    const staleImportedWallet = walletFactory({
+      id: 'wallet-1',
+      source: 'stale-import-return',
+    });
+    const importedWallet = walletFactory({id: 'wallet-1'});
+    const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: null,
+      },
+      WALLET: {
+        keys: {
+          'blank-key': {
+            id: 'blank-key',
+            wallets: [],
+          },
+          'imported-key': {
+            id: 'imported-key',
+            wallets: [importedWallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+    const logger = {error: jest.fn()};
+    mockGetVisibleWalletsFromKeys.mockReturnValue([importedWallet]);
+
+    populateImportedKeyPortfolio({
+      dispatch: dispatch as any,
+      key: makeImportedKey(staleImportedWallet),
+      logger,
+    });
+    await (dispatch as jest.Mock).mock.results[0]?.value;
+
+    expect(mockWaitForStartupWalletStoreInitForPortfolio).toHaveBeenCalled();
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: importedWallet}),
+    );
+    expect(mockToPortfolioStoredWallet).not.toHaveBeenCalledWith(
+      expect.objectContaining({wallet: staleImportedWallet}),
+    );
+    expectFinishedFullPopulate();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('preserves imported key wallet identity when import populate is queued', async () => {
+    const activeWallet = walletFactory({id: 'active-wallet'});
+    const staleImportedWallet = makeSharedWallet('stale-import-return');
+    const existingSharedWallet = makeSharedWallet('previous-key');
+    const currentImportedWallet = makeSharedWallet(
+      'imported-key-current-state',
+    );
+    const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: 1000,
+      },
+      WALLET: {
+        keys: {
+          'previous-key': {
+            id: 'previous-key',
+            wallets: [existingSharedWallet],
+          },
+          'imported-key': {
+            id: 'imported-key',
+            wallets: [currentImportedWallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+    const activePopulate = deferred<any>();
+    const logger = {error: jest.fn()};
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      existingSharedWallet,
+      currentImportedWallet,
+    ]);
+    mockPopulateWallets.mockImplementationOnce(() => activePopulate.promise);
+
+    const activePopulatePromise = dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [activeWallet],
+      }),
+    );
+    await Promise.resolve();
+
+    populateImportedKeyPortfolio({
+      dispatch: dispatch as any,
+      key: makeImportedKey(staleImportedWallet),
+      logger,
+    });
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+
+    activePopulate.resolve(
+      successfulPopulateResult({
+        results: [{walletId: 'active-wallet'}],
+        status: {
+          walletStatusById: {'active-wallet': 'done'},
+          walletsCompleted: 1,
+          walletsTotal: 1,
+        },
+      }),
+    );
+    await activePopulatePromise;
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(2);
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: currentImportedWallet}),
+    );
+    expect(mockToPortfolioStoredWallet).not.toHaveBeenCalledWith(
+      expect.objectContaining({wallet: existingSharedWallet}),
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('dedupes duplicate wallet ids before starting a runtime populate job', async () => {
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    const firstSharedWallet = makeSharedWallet('first');
+    const secondSharedWallet = makeSharedWallet('second');
+
+    await dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [firstSharedWallet, secondSharedWallet],
+      }),
+    );
+
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledTimes(1);
+    expect(mockToPortfolioStoredWallet).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: firstSharedWallet}),
+    );
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+    expect(mockPopulateWallets.mock.calls[0][0].wallets).toHaveLength(1);
   });
 
   it('marks a completed full populate as completing the initial baseline', async () => {
@@ -324,14 +857,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
-    expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
-      expect.objectContaining({
-        finishedAt: 1234,
-        lastFullPopulateCompletedAt: 1234,
-        quoteCurrency: 'USD',
-        reason: 'completed',
-      }),
-    );
+    expectFinishedFullPopulate();
   });
 
   it('updates the completed full-populate timestamp on later full populates', async () => {
@@ -342,14 +868,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
-    expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
-      expect.objectContaining({
-        finishedAt: 1234,
-        lastFullPopulateCompletedAt: 1234,
-        quoteCurrency: 'USD',
-        reason: 'completed',
-      }),
-    );
+    expectFinishedFullPopulate();
   });
 
   it('queues scoped wallet populate requests made during an active populate', async () => {
@@ -378,25 +897,7 @@ describe('portfolio runtime effects lock deferral', () => {
 
     expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
 
-    activePopulate.resolve({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [{walletId: 'wallet-1'}],
-      status: {
-        currentWalletId: undefined,
-        errors: [],
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 0,
-        txsProcessed: 0,
-        walletStatusById: {'wallet-1': 'done'},
-        walletsCompleted: 1,
-        walletsTotal: 1,
-      },
-    });
+    activePopulate.resolve(successfulPopulateResult());
     await firstPopulatePromise;
 
     expect(mockPopulateWallets).toHaveBeenCalledTimes(2);
@@ -447,25 +948,7 @@ describe('portfolio runtime effects lock deferral', () => {
       expect.objectContaining({walletId: 'wallet-2'}),
     ]);
 
-    activePopulate.resolve({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [{walletId: 'wallet-1'}],
-      status: {
-        currentWalletId: undefined,
-        errors: [],
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 0,
-        txsProcessed: 0,
-        walletStatusById: {'wallet-1': 'done'},
-        walletsCompleted: 1,
-        walletsTotal: 1,
-      },
-    });
+    activePopulate.resolve(successfulPopulateResult());
     await firstPopulatePromise;
 
     const dispatchedTypes = dispatched.map(action => action.type);
@@ -492,9 +975,6 @@ describe('portfolio runtime effects lock deferral', () => {
       computedAtomic: '100000000',
       currentAtomic: '150000000',
       deltaAtomic: '-50000000',
-      computedUnitsHeld: '1',
-      currentWalletBalance: '1.5',
-      delta: '-0.5',
     };
     const state = makeState({
       PORTFOLIO: {
@@ -507,20 +987,9 @@ describe('portfolio runtime effects lock deferral', () => {
       },
     });
     const {dispatch, dispatched} = makeStore(state);
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [
-        {
-          index: {walletId: 'wallet-1'},
-          latestSnapshot: {walletId: 'wallet-1', cryptoBalance: '100000000'},
-          mismatch: refreshedMismatch,
-          reason: 'balance_mismatch',
-          shouldPopulate: true,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': refreshedMismatch},
-      walletIdsToPopulate: ['wallet-1'],
-    });
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      mismatchDecisionResult(refreshedMismatch),
+    );
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
@@ -529,8 +998,102 @@ describe('portfolio runtime effects lock deferral', () => {
       type: 'SET_MISMATCHES',
     });
     const dispatchedTypes = dispatched.map(action => action.type);
-    expect(dispatchedTypes.indexOf('FINISH_POPULATE')).toBeLessThan(
-      dispatchedTypes.indexOf('SET_MISMATCHES'),
+    expect(dispatchedTypes.indexOf('SET_MISMATCHES')).toBeLessThan(
+      dispatchedTypes.indexOf('FINISH_POPULATE'),
+    );
+  });
+
+  it('quarantines excessive balance mismatches after a completed populate', async () => {
+    const excessiveMismatch = {
+      walletId: 'wallet-1',
+      computedAtomic: '200000000',
+      currentAtomic: '100000000',
+    };
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      mismatchDecisionResult(excessiveMismatch),
+    );
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        {
+          payload: {
+            'wallet-1': expect.objectContaining({
+              walletId: 'wallet-1',
+              reason: 'excessive_balance_mismatch',
+              computedAtomic: '200000000',
+              liveAtomic: '100000000',
+              deltaAtomic: '100000000',
+              threshold: 0.1,
+            }),
+          },
+          type: 'SET_QUARANTINES',
+        },
+      ]),
+    );
+    const dispatchedTypes = dispatched.map(action => action.type);
+    expect(dispatchedTypes.indexOf('SET_QUARANTINES')).toBeLessThan(
+      dispatchedTypes.indexOf('FINISH_POPULATE'),
+    );
+  });
+
+  it('quarantines zero-balance token missing-index wallets after a failed populate attempt', async () => {
+    const quarantine = {
+      walletId: 'wallet-1',
+      reason: 'zero_balance_token_missing_index',
+      tokenAddress: 'token-1',
+      liveAtomic: '0',
+      chain: 'sol',
+      detectedAt: 1234,
+      lastAttemptedAt: 1234,
+      message:
+        'Wallet wallet-1 is a zero-balance token wallet with no portfolio snapshot index for token token-1.',
+    };
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {
+          errors: [{walletId: 'wallet-1', message: 'tx history failed'}],
+          walletStatusById: {'wallet-1': 'error'},
+          walletsCompleted: 0,
+        },
+      }),
+    );
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
+      decisions: [
+        {
+          quarantine,
+          reason: 'zero_balance_token_missing_index',
+          shouldPopulate: false,
+          walletId: 'wallet-1',
+        },
+      ],
+      mismatchByWalletId: {'wallet-1': undefined},
+      quarantinesByWalletId: {'wallet-1': quarantine},
+      walletIdsToPopulate: [],
+    });
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        zeroBalanceTokenMissingIndexErrorByWalletId: {
+          'wallet-1': 'tx history failed',
+        },
+      }),
+    );
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        {
+          payload: {'wallet-1': quarantine},
+          type: 'SET_QUARANTINES',
+        },
+      ]),
     );
   });
 
@@ -538,39 +1101,27 @@ describe('portfolio runtime effects lock deferral', () => {
     const state = makeState();
     const {dispatch} = makeStore(state);
 
-    mockPopulateWallets.mockResolvedValueOnce({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [],
-      status: {
-        currentWalletId: undefined,
-        disabledForLargeHistory: false,
-        errors: [{walletId: 'wallet-1', message: 'first failure'}],
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 3,
-        txsProcessed: 31,
-        walletStatusById: {
-          'wallet-1': 'error',
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {
+          disabledForLargeHistory: false,
+          errors: [{walletId: 'wallet-1', message: 'first failure'}],
+          txRequestsMade: 3,
+          txsProcessed: 31,
+          walletStatusById: {
+            'wallet-1': 'error',
+          },
+          walletsCompleted: 0,
         },
-        walletsCompleted: 0,
-        walletsTotal: 1,
-      },
-    });
+      }),
+    );
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
-    expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
-      expect.objectContaining({
-        finishedAt: 1234,
-        lastFullPopulateCompletedAt: 1234,
-        quoteCurrency: 'USD',
-        reason: 'completed with wallet error: wallet-1: first failure',
-      }),
-    );
+    expectFinishedFullPopulate({
+      reason: 'completed with wallet error: wallet-1: first failure',
+    });
   });
 
   it('marks scoped wallet populates incomplete when remaining initial work exists', async () => {
@@ -594,35 +1145,42 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(payload).not.toHaveProperty('lastFullPopulateCompletedAt');
   });
 
+  it('does not complete the initial baseline from scoped non-terminal no-op decisions', async () => {
+    const wallet = walletFactory();
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({reason: 'missing_snapshot'})],
+        invalidDecimalsByWalletId: {},
+      }),
+    );
+
+    await dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [wallet as any],
+      }),
+    );
+
+    const payload = mockFinishPopulatePortfolio.mock.calls[0]?.[0];
+    expect(payload).toMatchObject({
+      finishedAt: 1234,
+      quoteCurrency: 'USD',
+      reason: 'completed',
+    });
+    expect(payload).not.toHaveProperty('lastFullPopulateCompletedAt');
+  });
+
   it('marks a scoped resumed populate as completing the initial baseline when no remaining wallets need work', async () => {
     const wallet = walletFactory();
     const state = makeState();
     const {dispatch} = makeStore(state);
 
     mockGetPortfolioPopulateDecisionsForWallets
-      .mockResolvedValueOnce({
-        decisions: [],
-        mismatchByWalletId: {},
-        walletIdsToPopulate: ['wallet-1'],
-      })
-      .mockResolvedValueOnce({
-        decisions: [
-          {
-            latestSnapshot: null,
-            index: null,
-            reason: 'up_to_date',
-            shouldPopulate: false,
-            walletId: 'wallet-1',
-          },
-        ],
-        mismatchByWalletId: {'wallet-1': undefined},
-        walletIdsToPopulate: [],
-      })
-      .mockResolvedValueOnce({
-        decisions: [],
-        mismatchByWalletId: {},
-        walletIdsToPopulate: [],
-      });
+      .mockResolvedValueOnce(emptyScopedDecisionResult(['wallet-1']))
+      .mockResolvedValueOnce(emptyScopedDecisionResult())
+      .mockResolvedValueOnce(populateDecisionResult());
 
     await dispatch(
       maybePopulatePortfolioForWalletsWithRuntime({
@@ -634,21 +1192,73 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledTimes(
       3,
     );
-    expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
-      expect.objectContaining({
-        finishedAt: 1234,
-        lastFullPopulateCompletedAt: 1234,
-        quoteCurrency: 'USD',
-        reason: 'completed',
-      }),
+    expectFinishedFullPopulate();
+  });
+
+  it('dispatches done wallet progress only after balance health markers are applied', async () => {
+    const state = makeState();
+    const {dispatch, dispatched} = makeStore(state);
+    const excessiveMismatch = {
+      walletId: 'wallet-1',
+      computedAtomic: '200000000',
+      currentAtomic: '100000000',
+    };
+
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      mismatchDecisionResult(excessiveMismatch),
     );
+    mockPopulateWallets.mockImplementationOnce(async ({onProgress}) => {
+      await onProgress({
+        currentWalletId: 'wallet-1',
+        errors: [],
+        inProgress: true,
+        jobId: 'populate-job-1',
+        lastUpdatedAt: 1200,
+        startedAt: 1200,
+        state: 'running',
+        txRequestsMade: 1,
+        txsProcessed: 10,
+        walletStatusById: {'wallet-1': 'in_progress'},
+        walletsCompleted: 0,
+        walletsTotal: 1,
+      });
+      await onProgress({
+        currentWalletId: undefined,
+        errors: [],
+        inProgress: false,
+        jobId: 'populate-job-1',
+        lastUpdatedAt: 1234,
+        startedAt: 1200,
+        state: 'completed',
+        txRequestsMade: 1,
+        txsProcessed: 10,
+        walletStatusById: {'wallet-1': 'done'},
+        walletsCompleted: 1,
+        walletsTotal: 1,
+      });
+      return successfulPopulateResult();
+    });
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    const excessiveMarkerIndex = dispatched.findIndex(
+      action => action.type === 'SET_QUARANTINES',
+    );
+    const doneProgressIndex = dispatched.findIndex(
+      action =>
+        action.type === 'UPDATE_PROGRESS' &&
+        action.payload?.walletStatusByIdUpdates?.['wallet-1'] === 'done',
+    );
+    expect(excessiveMarkerIndex).toBeGreaterThanOrEqual(0);
+    expect(doneProgressIndex).toBeGreaterThanOrEqual(0);
+    expect(excessiveMarkerIndex).toBeLessThan(doneProgressIndex);
   });
 
   it('logs all wallet errors from the terminal populate status', async () => {
     const state = makeState();
     const {dispatch, dispatched} = makeStore(state);
     const errors = [
-      {walletId: 'wallet-1', message: 'first failure'},
+      {walletId: 'wallet-1', message: 'first failure for wallet-1'},
       {walletId: 'wallet-2', message: 'second failure'},
     ];
 
@@ -656,38 +1266,36 @@ describe('portfolio runtime effects lock deferral', () => {
       walletFactory({id: 'wallet-1'}),
       walletFactory({id: 'wallet-2'}),
     ]);
-    mockPopulateWallets.mockResolvedValueOnce({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [],
-      status: {
-        currentWalletId: undefined,
-        disabledForLargeHistory: false,
-        errors,
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 3,
-        txsProcessed: 31,
-        walletStatusById: {
-          'wallet-1': 'error',
-          'wallet-2': 'error',
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {
+          disabledForLargeHistory: false,
+          errors,
+          txRequestsMade: 3,
+          txsProcessed: 31,
+          walletStatusById: {
+            'wallet-1': 'error',
+            'wallet-2': 'error',
+          },
+          walletsCompleted: 0,
+          walletsTotal: 2,
         },
-        walletsCompleted: 0,
-        walletsTotal: 2,
-      },
-    });
+      }),
+    );
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
-    const warning = mockLogManager.warn.mock.calls.find(
-      call => call[0] === '[portfolio] Populate completed with wallet errors',
+    const logPrefix = '[portfolio] Populate completed with wallet errors';
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').startsWith(logPrefix),
     );
     expect(warning).toBeDefined();
 
-    const payload = JSON.parse(warning![1]);
+    const payload = JSON.parse(String(warning![0]).slice(logPrefix.length + 1));
+    const sentryPayload = JSON.parse(
+      String(warning![1]).slice(logPrefix.length + 1),
+    );
     expect(payload).toMatchObject({
       completedWalletCount: 0,
       errorCount: 2,
@@ -700,8 +1308,16 @@ describe('portfolio runtime effects lock deferral', () => {
       walletsTotal: 2,
     });
     expect(payload.errors).toEqual([
-      {index: 0, walletId: 'wallet-1', message: 'first failure'},
+      {index: 0, walletId: 'wallet-1', message: 'first failure for wallet-1'},
       {index: 1, walletId: 'wallet-2', message: 'second failure'},
+    ]);
+    expect(sentryPayload.errors).toEqual([
+      {
+        index: 0,
+        walletId: '[redacted]',
+        message: 'first failure for [redacted]',
+      },
+      {index: 1, walletId: '[redacted]', message: 'second failure'},
     ]);
     expect(dispatched).toContainEqual({
       payload: {
@@ -713,6 +1329,70 @@ describe('portfolio runtime effects lock deferral', () => {
       },
       type: 'FINISH_POPULATE',
     });
+  });
+
+  it('redacts overlapping wallet ids from sentry populate wallet error logs without leaking suffixes', async () => {
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    const errors = [
+      {walletId: 'wallet-1', message: 'short wallet wallet-1 failed'},
+      {
+        walletId: 'wallet-10',
+        message: 'long wallet wallet-10 failed after wallet-1',
+      },
+    ];
+
+    mockGetVisibleWalletsFromKeys.mockReturnValue([
+      walletFactory({id: 'wallet-1'}),
+      walletFactory({id: 'wallet-10'}),
+    ]);
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {
+          disabledForLargeHistory: false,
+          errors,
+          txRequestsMade: 3,
+          txsProcessed: 31,
+          walletStatusById: {
+            'wallet-1': 'error',
+            'wallet-10': 'error',
+          },
+          walletsCompleted: 0,
+          walletsTotal: 2,
+        },
+      }),
+    );
+
+    await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
+
+    const logPrefix = '[portfolio] Populate completed with wallet errors';
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').startsWith(logPrefix),
+    );
+    expect(warning).toBeDefined();
+
+    const localMessage = String(warning![0] || '');
+    const sentryMessage = String(warning![1] || '');
+    const sentryPayload = JSON.parse(sentryMessage.slice(logPrefix.length + 1));
+
+    expect(localMessage).toContain('wallet-1');
+    expect(localMessage).toContain('wallet-10');
+    expect(sentryMessage).not.toContain('wallet-1');
+    expect(sentryMessage).not.toContain('wallet-10');
+    expect(sentryMessage).not.toContain('[redacted]0');
+    expect(sentryPayload.errors).toEqual([
+      {
+        index: 0,
+        walletId: '[redacted]',
+        message: 'short wallet [redacted] failed',
+      },
+      {
+        index: 1,
+        walletId: '[redacted]',
+        message: 'long wallet [redacted] failed after [redacted]',
+      },
+    ]);
   });
 
   it('re-dispatches deferred populate after unlock without registering duplicate listeners', async () => {
@@ -788,11 +1468,16 @@ describe('portfolio runtime effects lock deferral', () => {
         mismatchByWalletId: {},
         walletIdsToPopulate: ['wallet-from-state'],
       })
-      .mockResolvedValueOnce({
-        decisions: [],
-        mismatchByWalletId: {},
-        walletIdsToPopulate: [],
-      });
+      .mockResolvedValueOnce(emptyScopedDecisionResult());
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [{walletId: 'wallet-from-state'}],
+        status: {
+          walletStatusById: {'wallet-from-state': 'done'},
+          walletsCompleted: 1,
+        },
+      }),
+    );
 
     await dispatch(
       maybePopulatePortfolioForWalletsWithRuntime({
@@ -807,6 +1492,137 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockPopulateWallets.mock.calls[0][0].wallets).toEqual([
       {walletId: 'wallet-from-state', summary: {walletId: 'wallet-from-state'}},
     ]);
+  });
+
+  it('passes manual quarantine retry intent into scoped populate decisions', async () => {
+    const wallet = walletFactory({id: 'wallet-from-state'});
+    const state = makeState({
+      WALLET: {
+        keys: {
+          'key-1': {
+            wallets: [wallet],
+          },
+        },
+      },
+    });
+    const {dispatch} = makeStore(state);
+
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({walletId: 'wallet-from-state'})],
+        walletIdsToPopulate: [],
+      }),
+    );
+
+    await dispatch(
+      maybePopulatePortfolioForWalletsWithRuntime({
+        quoteCurrency: 'USD',
+        walletIds: ['wallet-from-state'],
+        forceRetryQuarantined: true,
+      }),
+    );
+
+    expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        forceRetryQuarantined: true,
+        wallets: [wallet],
+      }),
+    );
+    expect(mockPopulateWallets).not.toHaveBeenCalled();
+  });
+
+  it('passes manual quarantine retry intent into home-scope launch decisions', async () => {
+    const wallet = walletFactory({id: 'home-wallet'});
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    mockGetVisibleWalletsFromKeys.mockReturnValue([wallet]);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({walletId: 'home-wallet'})],
+        walletIdsToPopulate: [],
+      }),
+    );
+
+    await dispatch(
+      maybePopulatePortfolioOnAppLaunchWithRuntime({
+        quoteCurrency: 'USD',
+        forceRetryQuarantined: true,
+      }),
+    );
+
+    expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        forceRetryQuarantined: true,
+        wallets: [wallet],
+      }),
+    );
+    expect(mockPopulateWallets).not.toHaveBeenCalled();
+  });
+
+  it('queues forced scoped populate decisions made during an active populate', async () => {
+    const wallet1 = walletFactory({id: 'wallet-1'});
+    const wallet2 = walletFactory({id: 'wallet-2'});
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    const activePopulate = deferred<any>();
+    mockGetVisibleWalletsFromKeys.mockReturnValue([wallet1, wallet2]);
+    mockPopulateWallets
+      .mockImplementationOnce(() => activePopulate.promise)
+      .mockResolvedValueOnce(
+        successfulPopulateResult({
+          results: [{walletId: 'wallet-2'}],
+          status: {
+            walletStatusById: {'wallet-2': 'done'},
+            walletsCompleted: 1,
+          },
+        }),
+      );
+    mockGetPortfolioPopulateDecisionsForWallets.mockImplementation(
+      async ({wallets}: {wallets: any[]}) =>
+        populateDecisionResult({
+          decisions: wallets.map(wallet =>
+            populateDecision({
+              reason: 'missing_snapshot',
+              shouldPopulate: true,
+              walletId: wallet.id,
+            }),
+          ),
+          walletIdsToPopulate: wallets.map(wallet => wallet.id),
+        }),
+    );
+
+    const firstPopulatePromise = dispatch(
+      populatePortfolioWithRuntime({
+        quoteCurrency: 'USD',
+        wallets: [wallet1],
+      }),
+    );
+
+    await Promise.resolve();
+    await dispatch(
+      maybePopulatePortfolioForWalletsWithRuntime({
+        quoteCurrency: 'EUR',
+        wallets: [wallet2],
+        forceRetryQuarantined: true,
+      }),
+    );
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(1);
+
+    activePopulate.resolve(successfulPopulateResult());
+    await firstPopulatePromise;
+
+    expect(mockPopulateWallets).toHaveBeenCalledTimes(2);
+    expect(mockPopulateWallets.mock.calls[1][0].wallets).toEqual([
+      expect.objectContaining({walletId: 'wallet-2'}),
+    ]);
+    expect(
+      mockGetPortfolioPopulateDecisionsForWallets.mock.calls.some(
+        ([callArgs]) =>
+          callArgs.forceRetryQuarantined === true &&
+          callArgs.wallets?.some((wallet: any) => wallet.id === 'wallet-2'),
+      ),
+    ).toBe(true);
   });
 
   it('app launch selective populate skips wallets with unchanged persisted mismatch', async () => {
@@ -829,24 +1645,21 @@ describe('portfolio runtime effects lock deferral', () => {
     });
     const {dispatch, dispatched} = makeStore(state);
     mockGetVisibleWalletsFromKeys.mockReturnValue([wallet]);
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [
-        {
-          index: {walletId: 'wallet-1'},
-          latestSnapshot: {walletId: 'wallet-1', cryptoBalance: '100000000'},
-          mismatch: persistedMismatch,
-          reason: 'unchanged_balance_mismatch',
-          shouldPopulate: false,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': persistedMismatch},
-      walletIdsToPopulate: [],
-    });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            latestSnapshot: walletSnapshot('100000000'),
+            mismatch: persistedMismatch,
+            reason: 'unchanged_balance_mismatch',
+          }),
+        ],
+        mismatchByWalletId: {'wallet-1': persistedMismatch},
+      }),
     );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expect(mockGetPortfolioPopulateDecisionsForWallets).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -873,15 +1686,11 @@ describe('portfolio runtime effects lock deferral', () => {
     mockWaitForStartupWalletStoreInitForPortfolio.mockReturnValueOnce(
       walletInitWait.promise,
     );
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [],
-      mismatchByWalletId: {'wallet-1': undefined},
-      walletIdsToPopulate: [],
-    });
-
-    const launchPromise = dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({decisions: []}),
     );
+
+    const launchPromise = dispatchAppLaunchPopulateWithUsd(dispatch);
     await Promise.resolve();
 
     expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
@@ -901,38 +1710,21 @@ describe('portfolio runtime effects lock deferral', () => {
       status: 'failed',
       walletInitSuccess: false,
     });
-    mockPopulateWallets.mockResolvedValueOnce({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [],
-      status: {
-        currentWalletId: undefined,
-        errors: [],
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 0,
-        txsProcessed: 0,
-        walletStatusById: {},
-        walletsCompleted: 0,
-        walletsTotal: 1,
-      },
-    });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {walletStatusById: {}, walletsCompleted: 0},
+      }),
     );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expect(mockLogManager.warn).toHaveBeenCalledWith(
       '[portfolio] Launch wallet status refresh did not complete before populate decision',
       expect.any(String),
     );
     expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
-    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
-      quoteCurrency: 'USD',
-    });
+    expectStartPopulateWithUsd();
     expect(mockPortfolioService).toHaveBeenCalledTimes(1);
   });
 
@@ -943,101 +1735,55 @@ describe('portfolio runtime effects lock deferral', () => {
       status: 'skipped',
       walletInitSuccess: false,
     });
-    mockPopulateWallets.mockResolvedValueOnce({
-      cancelled: false,
-      finishedAt: 1234,
-      results: [],
-      status: {
-        currentWalletId: undefined,
-        errors: [],
-        inProgress: false,
-        jobId: 'populate-job-1',
-        lastUpdatedAt: 1234,
-        startedAt: 1200,
-        state: 'completed',
-        txRequestsMade: 0,
-        txsProcessed: 0,
-        walletStatusById: {},
-        walletsCompleted: 0,
-        walletsTotal: 1,
-      },
-    });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockPopulateWallets.mockResolvedValueOnce(
+      successfulPopulateResult({
+        results: [],
+        status: {walletStatusById: {}, walletsCompleted: 0},
+      }),
     );
 
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
     expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
-    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
-      quoteCurrency: 'USD',
-    });
+    expectStartPopulateWithUsd();
     expect(mockPortfolioService).toHaveBeenCalledTimes(1);
   });
 
   it('app launch marks the initial baseline complete when all wallets are up to date', async () => {
-    const state = makeState({
-      PORTFOLIO: {
-        lastFullPopulateCompletedAt: null,
-      },
-    });
+    const state = makeInitialBaselineState();
     const {dispatch, dispatched} = makeStore(state);
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [
-        {
-          index: {walletId: 'wallet-1'},
-          latestSnapshot: {walletId: 'wallet-1', cryptoBalance: '100000000'},
-          reason: 'up_to_date',
-          shouldPopulate: false,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': undefined},
-      walletIdsToPopulate: [],
-    });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            latestSnapshot: walletSnapshot('100000000'),
+          }),
+        ],
+      }),
     );
 
-    expect(dispatched).toEqual(
-      expect.arrayContaining([
-        {
-          payload: expect.objectContaining({quoteCurrency: 'USD'}),
-          type: 'MARK_INITIAL_BASELINE_COMPLETE',
-        },
-      ]),
-    );
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectInitialBaselineCompleteAction(dispatched);
     expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
   });
 
   it('app launch marks a scoped initial wallet-work pass as completing the baseline', async () => {
-    const state = makeState({
-      PORTFOLIO: {
-        lastFullPopulateCompletedAt: null,
-      },
-    });
+    const state = makeInitialBaselineState();
     const {dispatch} = makeStore(state);
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [
-        {
-          index: null,
-          latestSnapshot: null,
-          reason: 'missing_index',
-          shouldPopulate: true,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': undefined},
-      walletIdsToPopulate: ['wallet-1'],
-    });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({reason: 'missing_index', shouldPopulate: true}),
+        ],
+        walletIdsToPopulate: ['wallet-1'],
+      }),
     );
 
-    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
-      quoteCurrency: 'USD',
-    });
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectStartPopulateWithUsd();
     expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
       expect.objectContaining({
         finishedAt: 1234,
@@ -1057,34 +1803,90 @@ describe('portfolio runtime effects lock deferral', () => {
       currentWalletBalance: '1.5',
       delta: '-0.5',
     };
-    const state = makeState({
-      PORTFOLIO: {
-        lastFullPopulateCompletedAt: null,
-        snapshotBalanceMismatchesByWalletId: {'wallet-1': mismatch},
-      },
+    const state = makeInitialBaselineState({
+      snapshotBalanceMismatchesByWalletId: {'wallet-1': mismatch},
     });
     const {dispatch, dispatched} = makeStore(state);
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [
-        {
-          index: {walletId: 'wallet-1'},
-          latestSnapshot: {walletId: 'wallet-1', cryptoBalance: '100000000'},
-          mismatch,
-          reason: 'unchanged_balance_mismatch',
-          shouldPopulate: false,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': mismatch},
-      walletIdsToPopulate: [],
-    });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            latestSnapshot: walletSnapshot('100000000'),
+            mismatch,
+            reason: 'unchanged_balance_mismatch',
+          }),
+        ],
+        mismatchByWalletId: {'wallet-1': mismatch},
+      }),
     );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectInitialBaselineCompleteAction(dispatched);
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+  });
+
+  it('app launch marks the initial baseline complete for invalid-history no-op decisions', async () => {
+    const state = makeInitialBaselineState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({reason: 'invalid_history'})],
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectInitialBaselineCompleteAction(dispatched);
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+  });
+
+  it('app launch marks the initial baseline complete for zero-balance no-history decisions', async () => {
+    const state = makeInitialBaselineState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            reason: 'zero_balance_no_history',
+          }),
+        ],
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectInitialBaselineCompleteAction(dispatched);
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+  });
+
+  it('app launch marks the initial baseline complete and reports invalid-decimals no-op decisions', async () => {
+    const state = makeInitialBaselineState();
+    const {dispatch, dispatched} = makeStore(state);
+    const invalidDecimals = {
+      walletId: 'wallet-1',
+      reason: 'invalid_decimals',
+      message: 'Wallet wallet-1 has unresolved token decimals.',
+    };
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({invalidDecimals, reason: 'invalid_decimals'}),
+        ],
+        invalidDecimalsByWalletId: {'wallet-1': invalidDecimals},
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expect(dispatched).toEqual(
       expect.arrayContaining([
+        {
+          payload: {'wallet-1': invalidDecimals},
+          type: 'SET_INVALID_DECIMALS',
+        },
         {
           payload: expect.objectContaining({quoteCurrency: 'USD'}),
           type: 'MARK_INITIAL_BASELINE_COMPLETE',
@@ -1094,64 +1896,147 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
   });
 
-  it('app launch marks the initial baseline complete for invalid-history no-op decisions', async () => {
-    const state = makeState({
-      PORTFOLIO: {
-        lastFullPopulateCompletedAt: null,
-      },
-    });
+  it('app launch marks the initial baseline complete and reports excessive-mismatch no-op decisions', async () => {
+    const state = makeInitialBaselineState();
     const {dispatch, dispatched} = makeStore(state);
-    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce({
-      decisions: [
-        {
-          index: null,
-          latestSnapshot: null,
-          reason: 'invalid_history',
-          shouldPopulate: false,
-          walletId: 'wallet-1',
-        },
-      ],
-      mismatchByWalletId: {'wallet-1': undefined},
-      walletIdsToPopulate: [],
+    const excessiveMismatchDecision = excessiveMismatchDecisionResult({
+      shouldPopulate: false,
     });
-
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      excessiveMismatchDecision,
     );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expect(dispatched).toEqual(
       expect.arrayContaining([
         {
+          payload: excessiveMismatchDecision.quarantinesByWalletId,
+          type: 'SET_QUARANTINES',
+        },
+        {
           payload: expect.objectContaining({quoteCurrency: 'USD'}),
           type: 'MARK_INITIAL_BASELINE_COMPLETE',
         },
+      ]),
+    );
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+  });
+
+  it('app launch clears existing excessive-mismatch snapshots before repair populate', async () => {
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets
+      .mockResolvedValueOnce(excessiveMismatchDecisionResult())
+      .mockResolvedValueOnce({decisions: []});
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expect(mockRuntimeClient.clearWallet).toHaveBeenCalledWith({
+      walletId: 'wallet-1',
+    });
+    expectStartPopulateWithUsd();
+    expect(
+      mockRuntimeClient.clearWallet.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockPopulateWallets.mock.invocationCallOrder[0]);
+  });
+
+  it('app launch skips excessive-mismatch repair populate when snapshot clearing fails', async () => {
+    const state = makeState();
+    const {dispatch} = makeStore(state);
+    mockRuntimeClient.clearWallet.mockRejectedValueOnce(
+      new Error('clear failed'),
+    );
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      excessiveMismatchDecisionResult(),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expect(mockRuntimeClient.clearWallet).toHaveBeenCalledWith({
+      walletId: 'wallet-1',
+    });
+    const warning = mockLogManager.warnWithSentryMessage.mock.calls.find(call =>
+      String(call[0] || '').includes(
+        'Failed clearing runtime wallet snapshots before excessive balance mismatch repair for wallet-1',
+      ),
+    );
+    expect(warning).toBeDefined();
+    expect(String(warning![0] || '')).toContain('wallet-1');
+    expect(String(warning![1] || '')).toContain('[redacted]');
+    expect(String(warning![1] || '')).not.toContain('wallet-1');
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
+    expect(mockPopulateWallets).not.toHaveBeenCalled();
+  });
+
+  it('app launch does not mark the initial baseline complete for non-terminal no-op decisions', async () => {
+    const state = makeInitialBaselineState();
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [populateDecision({reason: 'missing_snapshot'})],
+        invalidDecimalsByWalletId: {},
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({type: 'MARK_INITIAL_BASELINE_COMPLETE'}),
       ]),
     );
     expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
   });
 
   it('app launch marks the initial baseline complete when there are zero eligible wallets', async () => {
-    const state = makeState({
-      PORTFOLIO: {
-        lastFullPopulateCompletedAt: null,
-      },
-    });
+    const state = makeInitialBaselineState();
     const {dispatch, dispatched} = makeStore(state);
     mockGetVisibleWalletsFromKeys.mockReturnValueOnce([]);
 
-    await dispatch(
-      maybePopulatePortfolioOnAppLaunchWithRuntime({quoteCurrency: 'USD'}),
-    );
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
-    expect(dispatched).toEqual(
-      expect.arrayContaining([
-        {
-          payload: expect.objectContaining({quoteCurrency: 'USD'}),
-          type: 'MARK_INITIAL_BASELINE_COMPLETE',
+    expectPopulateResumeSettledAction(dispatched);
+    expectInitialBaselineCompleteAction(dispatched);
+  });
+
+  it('app launch marks interrupted populate resume settled when an existing baseline has no work', async () => {
+    const state = makeState({
+      PORTFOLIO: {
+        lastFullPopulateCompletedAt: 1000,
+        populateStatus: {
+          inProgress: false,
+          startedAt: 900,
+          finishedAt: undefined,
+          stopReason: undefined,
+          currentWalletId: undefined,
+          walletStatusById: {},
         },
+      },
+    });
+    const {dispatch, dispatched} = makeStore(state);
+    mockGetPortfolioPopulateDecisionsForWallets.mockResolvedValueOnce(
+      populateDecisionResult({
+        decisions: [
+          populateDecision({
+            index: {walletId: 'wallet-1'},
+            latestSnapshot: walletSnapshot('100000000'),
+          }),
+        ],
+        walletIdsToPopulate: [],
+      }),
+    );
+
+    await dispatchAppLaunchPopulateWithUsd(dispatch);
+
+    expectPopulateResumeSettledAction(dispatched);
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({type: 'MARK_INITIAL_BASELINE_COMPLETE'}),
       ]),
     );
+    expect(mockStartPopulatePortfolio).not.toHaveBeenCalled();
   });
 
   it('does not dispatch stale progress or finish after active runtime populate is cancelled', async () => {
@@ -1189,17 +2074,7 @@ describe('portfolio runtime effects lock deferral', () => {
     });
     await populatePromise;
 
-    const dispatchedTypes = dispatched.map(action => action.type);
-    expect(dispatchedTypes).toContain('START_POPULATE');
-    expect(dispatchedTypes).toContain('CANCEL_POPULATE');
-    expect(dispatchedTypes).not.toEqual(
-      expect.arrayContaining([
-        'UPDATE_PROGRESS',
-        'SET_MISMATCHES',
-        'FINISH_POPULATE',
-        'FAIL_POPULATE',
-      ]),
-    );
+    expectOnlyStartAndCancelPopulateActions(dispatched);
   });
 
   it('does not dispatch stale failure after active runtime populate is cancelled', async () => {
@@ -1216,16 +2091,6 @@ describe('portfolio runtime effects lock deferral', () => {
     populateDeferred.reject(new Error('late failure'));
     await populatePromise;
 
-    const dispatchedTypes = dispatched.map(action => action.type);
-    expect(dispatchedTypes).toContain('START_POPULATE');
-    expect(dispatchedTypes).toContain('CANCEL_POPULATE');
-    expect(dispatchedTypes).not.toEqual(
-      expect.arrayContaining([
-        'UPDATE_PROGRESS',
-        'SET_MISMATCHES',
-        'FINISH_POPULATE',
-        'FAIL_POPULATE',
-      ]),
-    );
+    expectOnlyStartAndCancelPopulateActions(dispatched);
   });
 });

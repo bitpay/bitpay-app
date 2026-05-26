@@ -8,7 +8,7 @@ const MockOffers = (): ClassicContentCard[] => {
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,
       id: 'dev_1',
-      title: t('Buy movie tickets with crypto'),
+      title: t('Buy movie tickets'),
       cardDescription: t(
         'Buy an AMC Theatres gift card with crypto in the BitPay app.',
       ),

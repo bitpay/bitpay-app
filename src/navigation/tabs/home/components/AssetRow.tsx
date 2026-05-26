@@ -31,12 +31,16 @@ import {
   canNavigateToExchangeRateForAssetRowItem,
 } from '../../../../utils/portfolio/assets';
 import {createSupportedCurrencyOptionLookup} from '../../../../utils/portfolio/supportedCurrencyOptionsLookup';
-import {resolveAssetRowDisplayPresentation} from './assetRowLoading';
+import {
+  type AssetRowPresentationResetToken,
+  resolveAssetRowDisplayPresentation,
+} from './assetRowLoading';
 
 const supportedCurrencyOptionLookup = createSupportedCurrencyOptionLookup(
   SupportedCurrencyOptions,
 );
 const PRESERVED_ASSET_ROW_LOADING_DELAY_MS = 250;
+const PERCENT_PILL_SKELETON_FILL_VALUE = '-2.22%';
 
 const Row = styled(TouchableOpacity)<{isLast: boolean}>`
   flex-direction: row;
@@ -80,6 +84,11 @@ const Values = styled.View`
   margin-right: 12px;
 `;
 
+const DeltaFiatSkeletonContainer = styled.View`
+  align-items: flex-end;
+  margin-top: 6px;
+`;
+
 const FiatAmount = styled(BaseText)`
   font-size: 13px;
   font-style: normal;
@@ -98,6 +107,7 @@ const DeltaFiat = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
 `;
 
 const PercentPill = styled.View`
+  position: relative;
   border-radius: 50px;
   padding: 8px 10px;
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
@@ -114,6 +124,20 @@ const PercentText = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
     hasPnl ? getDifferenceColor(isPositive, dark) : dark ? Slate30 : SlateDark};
 `;
 
+const PercentSkeletonAnchor = styled(PercentText)`
+  opacity: 0;
+`;
+
+const PercentSkeletonOverlay = styled.View`
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+`;
+
 const ChevronContainer = styled.View<{visible: boolean}>`
   width: 9px;
   align-items: flex-end;
@@ -124,9 +148,10 @@ interface Props {
   item: AssetRowItem;
   isLast: boolean;
   keyId?: string;
-  isFiatLoading?: boolean;
+  isPnlLoading?: boolean;
   isPopulateLoading?: boolean;
   forceSkeleton?: boolean;
+  presentationResetToken?: AssetRowPresentationResetToken;
   img?: SupportedCurrencyOption['img'];
   imgSrc?: ImageRequireSource;
 }
@@ -135,28 +160,43 @@ const AssetRow: React.FC<Props> = ({
   item,
   isLast,
   keyId,
-  isFiatLoading,
+  isPnlLoading,
   isPopulateLoading,
   forceSkeleton,
+  presentationResetToken,
   img,
   imgSrc,
 }) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
-  const rowLoading = !!(isFiatLoading || isPopulateLoading);
+  const rowLoading = !!(isPnlLoading || isPopulateLoading);
   const shouldForceSkeleton = !!forceSkeleton;
-  const lastSettledItemRef = useRef<AssetRowItem | undefined>(undefined);
+  const lastSettledItemRef = useRef<
+    | {
+        item: AssetRowItem;
+        presentationResetToken?: AssetRowPresentationResetToken;
+      }
+    | undefined
+  >(undefined);
   const [loadingDelayElapsed, setLoadingDelayElapsed] = useState(false);
+  const preservedEntry = lastSettledItemRef.current;
+  const preservedItem =
+    preservedEntry?.presentationResetToken === presentationResetToken
+      ? preservedEntry.item
+      : undefined;
 
   useEffect(() => {
     if (!rowLoading) {
-      lastSettledItemRef.current = item;
+      lastSettledItemRef.current = {
+        item,
+        presentationResetToken,
+      };
       setLoadingDelayElapsed(false);
       return;
     }
 
-    if (!lastSettledItemRef.current) {
+    if (!preservedItem) {
       setLoadingDelayElapsed(true);
       return;
     }
@@ -167,15 +207,24 @@ const AssetRow: React.FC<Props> = ({
     }, PRESERVED_ASSET_ROW_LOADING_DELAY_MS);
 
     return () => clearTimeout(timeout);
-  }, [item, rowLoading]);
+  }, [item, presentationResetToken, preservedItem, rowLoading]);
   const {displayItem, shouldShowSkeleton} = useMemo(() => {
     return resolveAssetRowDisplayPresentation({
       item,
-      preservedItem: lastSettledItemRef.current,
+      preservedItem,
+      preservedItemResetToken: preservedEntry?.presentationResetToken,
+      presentationResetToken,
       isLoading: rowLoading,
       loadingDelayElapsed,
     });
-  }, [item, loadingDelayElapsed, rowLoading]);
+  }, [
+    item,
+    loadingDelayElapsed,
+    preservedEntry?.presentationResetToken,
+    preservedItem,
+    presentationResetToken,
+    rowLoading,
+  ]);
   const option = useMemo(() => {
     return supportedCurrencyOptionLookup.getOption({
       currencyAbbreviation: displayItem.currencyAbbreviation,
@@ -200,13 +249,14 @@ const AssetRow: React.FC<Props> = ({
     });
   }, [displayItem, option]);
   const shouldShowDeltaFiat = hasPnl;
-  const shouldShowDeltaFiatSkeleton =
-    shouldShowDeltaFiat || showPnlPlaceholder || showScopedPnlLoading;
   const isCryptoAmountLoading =
     shouldShowSkeleton &&
     !!isPopulateLoading &&
-    !isFiatLoading &&
+    !isPnlLoading &&
     !String(displayItem.cryptoAmount || '').trim();
+  const shouldShowDeltaFiatSkeleton =
+    shouldShowSkeleton &&
+    (shouldShowDeltaFiat || showPnlPlaceholder || showScopedPnlLoading);
 
   const fiatAmountDisplay = hasRate ? displayItem.fiatAmount : '— ';
 
@@ -349,29 +399,24 @@ const AssetRow: React.FC<Props> = ({
                   </DeltaFiat>
                 ) : null}
               </>
-            ) : shouldShowSkeleton ? (
-              <SkeletonPlaceholder
-                backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
-                highlightColor={theme.dark ? LightBlack : GhostWhite}>
-                <SkeletonPlaceholder.Item
-                  width={72}
-                  height={12}
-                  borderRadius={2}
-                  marginBottom={shouldShowDeltaFiatSkeleton ? 6 : 0}
-                  marginTop={3}
-                />
-                {shouldShowDeltaFiatSkeleton ? (
-                  <SkeletonPlaceholder.Item
-                    width={54}
-                    height={12}
-                    borderRadius={2}
-                  />
-                ) : null}
-              </SkeletonPlaceholder>
             ) : (
               <>
                 <FiatAmount>{fiatAmountDisplay}</FiatAmount>
-                {shouldShowDeltaFiat ? (
+                {shouldShowDeltaFiatSkeleton ? (
+                  <DeltaFiatSkeletonContainer>
+                    <SkeletonPlaceholder
+                      backgroundColor={
+                        theme.dark ? CharcoalBlack : NeutralSlate
+                      }
+                      highlightColor={theme.dark ? LightBlack : GhostWhite}>
+                      <SkeletonPlaceholder.Item
+                        width={45}
+                        height={12}
+                        borderRadius={2}
+                      />
+                    </SkeletonPlaceholder>
+                  </DeltaFiatSkeletonContainer>
+                ) : shouldShowDeltaFiat ? (
                   <DeltaFiat
                     isPositive={displayItem.isPositive}
                     hasPnl={hasPnl}>
@@ -384,15 +429,22 @@ const AssetRow: React.FC<Props> = ({
 
           <PercentPill>
             {shouldShowSkeleton ? (
-              <SkeletonPlaceholder
-                backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
-                highlightColor={theme.dark ? LightBlack : GhostWhite}>
-                <SkeletonPlaceholder.Item
-                  width={48}
-                  height={12}
-                  borderRadius={2}
-                />
-              </SkeletonPlaceholder>
+              <>
+                <PercentSkeletonAnchor isPositive={false} hasPnl>
+                  {PERCENT_PILL_SKELETON_FILL_VALUE}
+                </PercentSkeletonAnchor>
+                <PercentSkeletonOverlay>
+                  <SkeletonPlaceholder
+                    backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
+                    highlightColor={theme.dark ? LightBlack : GhostWhite}>
+                    <SkeletonPlaceholder.Item
+                      width={40}
+                      height={12}
+                      borderRadius={2}
+                    />
+                  </SkeletonPlaceholder>
+                </PercentSkeletonOverlay>
+              </>
             ) : (
               <PercentText isPositive={displayItem.isPositive} hasPnl={hasPnl}>
                 {displayItem.deltaPercent}

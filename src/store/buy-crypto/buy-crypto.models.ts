@@ -273,6 +273,7 @@ export interface MoonpayGetCurrencyLimitsRequestData {
 export type MoonpayPaymentType =
   | 'venmo'
   | 'paypal'
+  | 'apple_pay' // applePay embedded flow
   | 'mobile_wallet' // applePay
   | 'sepa_bank_transfer'
   | 'credit_debit_card';
@@ -296,6 +297,155 @@ export interface MoonpayGetSignedPaymentUrlReqData {
 export interface MoonpayGetSignedPaymentUrlData {
   urlWithSignature: string;
 }
+export interface MoonpayCreateSessionRequestData {
+  env: 'sandbox' | 'production';
+  externalCustomerId: string;
+  deviceIp?: string; // if not sent, it will be taken from the request
+  email?: string; // The customer's email address. Must be a valid email. If provided, phoneNumber must also be provided.
+  phoneNumber?: string; // The customer's phone number in E.164 format. If provided, email must also be provided.
+}
+
+export interface MoonpayCreateSessionData {
+  // An opaque session token used to set up a connection on the frontend. This token is single-use and must be generated each time the customer visits the app.
+  sessionToken: string;
+}
+
+export interface MoonpayRevokeActiveSessionRequestData {
+  env: 'sandbox' | 'production';
+  externalCustomerId: string;
+}
+
+export interface MoonpayEmbeddedCredentials {
+  accessToken: string;
+  clientToken: string;
+  expiresAt?: string;
+}
+
+export interface MoonpayGetQuoteEmbeddedRequestData {
+  accessToken: string;
+  destinationAddress: string;
+  currencyAbbreviation: string;
+  baseCurrencyAmount: number;
+  baseCurrencyCode: string;
+  paymentMethod: MoonpayPaymentType | undefined;
+  areFeesIncluded: boolean;
+  env: string;
+}
+
+export interface MoonpayQuoteEmbeddedData {
+  source: MoonpayEmbeddedAmount;
+  destination: MoonpayEmbeddedAmount;
+  fees: MoonpayEmbeddedFees;
+  paymentMethod: 'apple_pay';
+  wallet: {
+    address: string;
+  };
+  limits: MoonpayEmbeddedLimits;
+  expiresAt: string; // ISO date string
+  exchangeRate: string; // numeric string
+  signature: string; // long JWT
+  executable: boolean;
+}
+
+interface MoonpayEmbeddedAmount {
+  amount: string;
+  asset: MoonpayEmbeddedAssetDetailed;
+}
+
+interface MoonpayEmbeddedAssetDetailed {
+  code: string;
+  name: string;
+  precision: number;
+}
+
+interface MoonpayEmbeddedFees {
+  moonpay: MoonpayEmbeddedFeeAmount;
+  network: MoonpayEmbeddedFeeAmount;
+  ecosystem: MoonpayEmbeddedFeeAmount;
+  partner: MoonpayEmbeddedFeeAmount;
+}
+
+interface MoonpayEmbeddedLimits {
+  daily: MoonpayEmbeddedLimitPeriod;
+  monthly: MoonpayEmbeddedLimitPeriod;
+  yearly: MoonpayEmbeddedLimitPeriod;
+}
+
+interface MoonpayEmbeddedLimitPeriod {
+  limit: MoonpayEmbeddedAmount;
+  remaining: MoonpayEmbeddedAmount;
+}
+
+interface MoonpayEmbeddedFeeAmount {
+  amount: string;
+  asset: {
+    code: string;
+  };
+}
+
+export interface MoonpayGetTransactionDetailsEmbeddedRequestData {
+  transactionId: string;
+  accessToken: string;
+}
+
+export type MoonpayTransactionEmbeddedStatus =
+  | 'embeddedPaymentRequestSent' // this is a custom status used to indicate that the payment request has been sent from the embedded flow
+  | 'pending'
+  | 'completed'
+  | 'failed';
+
+export type MoonpayTransactionStageStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'success'
+  | 'failed';
+
+export type MoonpayTransactionStageKind =
+  | 'ordering'
+  | 'waiting_payment'
+  | 'waiting_authentication'
+  | 'verification'
+  | 'processing'
+  | 'delivery'
+  | 'crypto_hold';
+
+interface MoonpayTransactionStage {
+  kind: MoonpayTransactionStageKind;
+  name: string;
+  status: MoonpayTransactionStageStatus;
+  failureReason: string | null;
+}
+
+interface MoonpayEmbeddedTxAmount {
+  amount: string;
+  asset: {
+    code: string;
+  };
+}
+
+export interface MoonpayTransactionDetailsEmbeddedData {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  status: MoonpayTransactionEmbeddedStatus;
+  source: MoonpayEmbeddedTxAmount;
+  destination: MoonpayEmbeddedTxAmount;
+  fees: {
+    moonpay: MoonpayEmbeddedFeeAmount;
+    network: MoonpayEmbeddedFeeAmount;
+    partner: MoonpayEmbeddedFeeAmount;
+  };
+  wallet: {
+    address: string;
+  };
+  customer: {
+    id: string;
+  };
+  paymentMethod: {
+    type: MoonpayPaymentType;
+  };
+  stages: MoonpayTransactionStage[];
+}
 
 export interface MoonpayPaymentData {
   address: string;
@@ -310,14 +460,18 @@ export interface MoonpayPaymentData {
   payment_method?: PaymentMethodKey;
   external_id: string; // bitpay-app custom id
   status: string;
-  user_id: string;
+  user_id: string; // wallet id
   transaction_id?: string; // id form moonpay
+  user_eid?: string; // user id
+  is_embedded?: boolean; // whether the transaction was made through the embedded flow or not
 }
 
 export interface MoonpayIncomingData {
   externalId: string;
   transactionId?: string;
   status?: string;
+  cryptoAmount?: number; // embedded
+  fiatBaseAmount?: number; // embedded
 }
 
 export interface SardineGetAuthTokenRequestData {

@@ -2,7 +2,11 @@ import React from 'react';
 import {StyleProp, View, ViewStyle} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {useTheme} from 'styled-components/native';
-import Animated, {useAnimatedStyle} from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import type {FiatRateInterval, Rates} from '../../store/rate/rate.models';
 import type {Wallet} from '../../store/wallet/wallet.models';
 import {
@@ -10,15 +14,25 @@ import {
   getFiatChartTimeframeOptions,
 } from './fiatTimeframes';
 import TimeframeSelector from './TimeframeSelector';
-import InteractiveLineChart from './InteractiveLineChart';
+import InteractiveLineChart, {
+  type InteractiveLineChartAxisLabelProps,
+} from './InteractiveLineChart';
 import ChartSelectionDot from './ChartSelectionDot';
 import ChartChangeRow from './ChartChangeRow';
 import {Action, LinkBlue, White} from '../../styles/colors';
 import {isNumberSharedValue, type NumberSharedValue} from './sharedValueGuards';
-import {BALANCE_HISTORY_CHART_SCOPE_IDENTITY_KEY} from '../../utils/portfolio/chartCache';
+import {
+  BALANCE_HISTORY_CHART_SCOPE_IDENTITY_KEY,
+  type HydratedBalanceChartSeries,
+} from '../../utils/portfolio/chartCache';
 import {useStableBalanceHistoryChartAxisLabels} from './useStableBalanceHistoryChartAxisLabels';
 import {usePortfolioBalanceChartScope} from '../../portfolio/ui/hooks/usePortfolioBalanceChartScope';
-import useBalanceChartDisplayModel from './useBalanceChartDisplayModel';
+import useBalanceChartDisplayModel, {
+  type BalanceChartCallbackAnalysisPoint,
+} from './useBalanceChartDisplayModel';
+import type {ChangeRowData} from './balanceHistoryChartSelection';
+
+const ZERO_BALANCE_AXIS_LABEL_FADE_MS = 180;
 
 export type BalanceHistoryChartProps = {
   wallets: Wallet[];
@@ -31,10 +45,13 @@ export type BalanceHistoryChartProps = {
   minStrokeScale?: number;
   gradientStartColor?: string;
   showLoaderWhenNoSnapshots?: boolean;
+  renderZeroBalanceWhenNoSnapshots?: boolean;
+  isBalanceChartDataReadyToQuery?: boolean;
   balanceOffset?: number;
   onSelectedBalanceChange?: (balance?: number) => void;
   preChartContent?: React.ReactNode;
   preChartContentTopMargin?: number;
+  postChartContent?: React.ReactNode;
   changeRowStyle?: StyleProp<ViewStyle>;
   showChangeRow?: boolean;
   showTimeframeSelector?: boolean;
@@ -42,26 +59,21 @@ export type BalanceHistoryChartProps = {
   timeframeSelectorHorizontalInset?: string;
   timeframeSelectorWidth?: number;
   disablePanGesture?: boolean;
-  onChangeRowData?: (
-    data:
-      | {
-          percent: number;
-          deltaFiatFormatted?: string;
-          rangeLabel?: string;
-        }
-      | undefined,
+  onChangeRowData?: (data: ChangeRowData | undefined) => void;
+  onDisplayedAnalysisPointChange?: (
+    point?: BalanceChartCallbackAnalysisPoint,
   ) => void;
-  onDisplayedAnalysisPointChange?: (point?: {
-    timestamp?: number;
-    totalFiatBalance?: number;
-    totalPnlChange?: number;
-    totalPnlPercent?: number;
-    totalCryptoBalanceFormatted?: string;
-  }) => void;
   onRenderableSeriesChange?: (hasRenderableSeries: boolean) => void;
   axisLabelOpacity?: number | NumberSharedValue;
   onSelectedTimeframeChange?: (timeframe: FiatRateInterval) => void;
   onSelectionActiveChange?: (active: boolean) => void;
+};
+
+const isZeroBalanceSeries = (series?: HydratedBalanceChartSeries): boolean => {
+  const points = series?.graphPoints || [];
+  return (
+    points.length >= 2 && points.every(point => Number(point?.value) === 0)
+  );
 };
 
 const BalanceHistoryChart = ({
@@ -75,10 +87,13 @@ const BalanceHistoryChart = ({
   minStrokeScale,
   gradientStartColor,
   showLoaderWhenNoSnapshots = false,
+  renderZeroBalanceWhenNoSnapshots = false,
+  isBalanceChartDataReadyToQuery = true,
   balanceOffset = 0,
   onSelectedBalanceChange,
   preChartContent,
   preChartContentTopMargin = 22,
+  postChartContent,
   changeRowStyle,
   showChangeRow = true,
   showTimeframeSelector = true,
@@ -103,11 +118,12 @@ const BalanceHistoryChart = ({
     rates: _rates,
   });
   const displayModel = useBalanceChartDisplayModel({
-    wallets,
     scope,
     initialSelectedTimeframe,
     balanceOffset,
     showLoaderWhenNoSnapshots,
+    renderZeroBalanceWhenNoSnapshots,
+    isBalanceChartDataReadyToQuery,
     t,
     onSelectedBalanceChange,
     onChangeRowData,
@@ -125,15 +141,52 @@ const BalanceHistoryChart = ({
     axisLabelOpacity,
     quoteCurrency: displayModel.visibleQuoteCurrency,
   });
+  const shouldHideAxisLabels = isZeroBalanceSeries(displayModel.visibleSeries);
+  const zeroBalanceAxisLabelOpacity = useDerivedValue(
+    () =>
+      withTiming(shouldHideAxisLabels ? 0 : 1, {
+        duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS,
+      }),
+    [shouldHideAxisLabels],
+  );
+  const maxAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: zeroBalanceAxisLabelOpacity.value,
+    }),
+    [zeroBalanceAxisLabelOpacity],
+  );
+  const minAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: zeroBalanceAxisLabelOpacity.value,
+    }),
+    [zeroBalanceAxisLabelOpacity],
+  );
+  const FadingMaxAxisLabel = React.useCallback(
+    (props: InteractiveLineChartAxisLabelProps) => (
+      <Animated.View
+        style={[{width: '100%'}, maxAxisLabelZeroBalanceAnimatedStyle]}>
+        <MaxAxisLabel {...props} />
+      </Animated.View>
+    ),
+    [MaxAxisLabel, maxAxisLabelZeroBalanceAnimatedStyle],
+  );
+  const FadingMinAxisLabel = React.useCallback(
+    (props: InteractiveLineChartAxisLabelProps) => (
+      <Animated.View
+        style={[{width: '100%'}, minAxisLabelZeroBalanceAnimatedStyle]}>
+        <MinAxisLabel {...props} />
+      </Animated.View>
+    ),
+    [MinAxisLabel, minAxisLabelZeroBalanceAnimatedStyle],
+  );
 
   const chartColor = lineColor || (theme.dark ? LinkBlue : Action);
   const gradientBackgroundColor =
     gradientStartColor || (theme.dark ? 'transparent' : White);
 
-  const timeframeSelectorOpacityIsSharedValue = isNumberSharedValue(
+  const sharedTimeframeSelectorOpacity = isNumberSharedValue(
     timeframeSelectorOpacity,
-  );
-  const sharedTimeframeSelectorOpacity = timeframeSelectorOpacityIsSharedValue
+  )
     ? timeframeSelectorOpacity
     : undefined;
   const timeframeSelectorOpacityNumber =
@@ -152,14 +205,10 @@ const BalanceHistoryChart = ({
     };
   }, [sharedTimeframeSelectorOpacity, timeframeSelectorOpacityNumber]);
 
-  if (!displayModel.hasAnyWallets && !preChartContent) {
-    return null;
-  }
-
   if (
-    !displayModel.hasRenderableSeries &&
-    !displayModel.shouldShowLoader &&
-    !preChartContent
+    !preChartContent &&
+    (!displayModel.hasAnyWallets ||
+      (!displayModel.hasRenderableSeries && !displayModel.shouldShowLoader))
   ) {
     return null;
   }
@@ -197,6 +246,7 @@ const BalanceHistoryChart = ({
           theme.dark ? 'transparent' : White,
         ]}
         showFirstPointGuideLine={displayModel.hasRenderableSeries}
+        firstPointGuideLineOpacity={zeroBalanceAxisLabelOpacity}
         isLoading={displayModel.shouldShowLoader}
         hideLineWhileLoading={!displayModel.hasRenderableSeries}
         enablePanGesture={
@@ -206,12 +256,14 @@ const BalanceHistoryChart = ({
         }
         animated={true}
         SelectionDot={ChartSelectionDot}
-        TopAxisLabel={MaxAxisLabel}
-        BottomAxisLabel={MinAxisLabel}
+        TopAxisLabel={FadingMaxAxisLabel}
+        BottomAxisLabel={FadingMinAxisLabel}
         onGestureStart={displayModel.onGestureStarted}
         onGestureEnd={displayModel.onGestureEnded}
         onPointSelected={displayModel.onPointSelected}
       />
+
+      {postChartContent}
 
       {showTimeframeSelector ? (
         <Animated.View style={timeframeSelectorAnimatedStyle}>

@@ -535,6 +535,54 @@ describe('analysisStreaming preload helpers', () => {
     expect(last.totalUnrealizedPnlFiat).toBe(35);
   });
 
+  it('uses resolved wallet unit decimals over chain defaults for analysis math', () => {
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
+    const t1 = Date.parse('2024-01-01T01:00:00Z');
+    const tokenWallet = mkWallet({
+      walletId: 'w1',
+      currencyAbbreviation: 'custom',
+      chain: 'sol',
+      tokenAddress: 'TokenMint111111111111111111111111111111',
+      unitDecimals: 12,
+      credentials: {
+        chain: 'sol',
+        coin: 'custom',
+        network: 'livenet',
+        token: {
+          address: 'TokenMint111111111111111111111111111111',
+          symbol: 'custom',
+        },
+      } as WalletCredentials,
+    });
+
+    const res = buildPnlAnalysisSeriesFromPreloaded({
+      cfg: {quoteCurrency: 'USD'},
+      timeframe: '1D',
+      nowMs: t1,
+      maxPoints: 2,
+      startTs: t0,
+      endTs: t1,
+      ratePointsByAssetId: {
+        [tokenWallet.assetId]: [
+          {ts: t0, rate: 2},
+          {ts: t1, rate: 2},
+        ],
+      },
+      wallets: [
+        {
+          wallet: tokenWallet,
+          basePoint: mkPoint(t0, '1000000000000'),
+          points: [],
+        },
+      ],
+    });
+
+    const last = res.points[res.points.length - 1];
+
+    expect(last.totalFiatBalance).toBe(2);
+    expect(last.byWalletId.w1?.formattedCryptoBalance).toBe('1');
+  });
+
   it('uses the overridden current rate for basis updates on end-timestamp balance changes', () => {
     const t0 = Date.parse('2024-01-01T00:00:00Z');
     const t1 = Date.parse('2024-01-01T01:00:00Z');
@@ -719,6 +767,101 @@ describe('analysisStreaming preload helpers', () => {
       formattedCryptoBalance: 0,
       finalizeAnalysisResult: 0,
     });
+  });
+
+  it('uses wallet unit decimals for token balance chart values when token credentials omit decimals', async () => {
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
+    const t1 = Date.parse('2024-01-02T00:00:00Z');
+    const tokenAddress = 'soltokenmint111111111111111111111111111111';
+    const tokenWallet = mkWallet({
+      walletId: 'sol-token-wallet',
+      walletName: 'SOL Token Wallet',
+      chain: 'sol',
+      currencyAbbreviation: 'weird',
+      tokenAddress,
+      unitDecimals: 12,
+      credentials: {
+        chain: 'sol',
+        coin: 'sol',
+        network: 'livenet',
+        token: {
+          address: tokenAddress,
+          symbol: 'WEIRD',
+        },
+      } as WalletCredentials,
+    } as any);
+
+    const chart = await buildPnlAnalysisChartSeriesFromStreamed({
+      cfg: {quoteCurrency: 'USD'},
+      timeframe: '1D',
+      nowMs: t1,
+      maxPoints: 2,
+      startTs: t0,
+      endTs: t1,
+      ratePointsByAssetId: {
+        [tokenWallet.assetId]: [
+          {ts: t0, rate: 2},
+          {ts: t1, rate: 2},
+        ],
+      },
+      wallets: [
+        {
+          wallet: tokenWallet,
+          basePoint: mkPoint(t0, '1000000000000'),
+          points: emitPoints([]),
+        },
+      ],
+    });
+
+    expect(chart.totalFiatBalance).toEqual([2, 2]);
+    expect(chart.totalCryptoBalanceFormatted).toEqual(['1', '1']);
+  });
+
+  it('excludes token wallets from chart analysis when decimals are unresolved', async () => {
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
+    const t1 = Date.parse('2024-01-02T00:00:00Z');
+    const tokenAddress = 'soltokenmint111111111111111111111111111111';
+    const tokenWallet = mkWallet({
+      walletId: 'sol-token-wallet',
+      walletName: 'SOL Token Wallet',
+      chain: 'sol',
+      currencyAbbreviation: 'weird',
+      tokenAddress,
+      credentials: {
+        chain: 'sol',
+        coin: 'sol',
+        network: 'livenet',
+        token: {
+          address: tokenAddress,
+          symbol: 'WEIRD',
+        },
+      } as WalletCredentials,
+    });
+
+    const chart = await buildPnlAnalysisChartSeriesFromStreamed({
+      cfg: {quoteCurrency: 'USD'},
+      timeframe: '1D',
+      nowMs: t1,
+      maxPoints: 2,
+      startTs: t0,
+      endTs: t1,
+      ratePointsByAssetId: {
+        [tokenWallet.assetId]: [
+          {ts: t0, rate: 2},
+          {ts: t1, rate: 2},
+        ],
+      },
+      wallets: [
+        {
+          wallet: tokenWallet,
+          basePoint: mkPoint(t0, '1000000000000'),
+          points: emitPoints([]),
+        },
+      ],
+    });
+
+    expect(chart.timestamps).toEqual([]);
+    expect(chart.totalFiatBalance).toEqual([]);
   });
 
   it('matches compacted full streamed analysis for a mixed-portfolio chart fixture', async () => {
