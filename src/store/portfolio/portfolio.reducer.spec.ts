@@ -11,6 +11,7 @@ import {
   setInvalidDecimalsByWalletIdUpdates,
   setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
+  startPopulatePortfolio,
 } from './portfolio.actions';
 import {selectCanRenderPortfolioBalanceCharts} from './portfolio.selectors';
 
@@ -163,6 +164,22 @@ describe('portfolioReducer', () => {
     expect(cancelled.lastFullPopulateCompletedAt).toBe(150);
   });
 
+  it('stores active populate decision reasons when populate starts', () => {
+    const result = portfolioReducer(
+      makeState(),
+      startPopulatePortfolio({
+        quoteCurrency: 'USD',
+        decisionReasonByWalletId: {'wallet-1': 'missing_index'},
+        decisionSource: 'app_launch_staleness',
+      }),
+    );
+
+    expect(result.populateStatus.decisionReasonByWalletId).toEqual({
+      'wallet-1': 'missing_index',
+    });
+    expect(result.populateStatus.decisionSource).toBe('app_launch_staleness');
+  });
+
   it('stores and clears atomic snapshot balance mismatches by wallet id', () => {
     const mismatch = {
       walletId: 'wallet-1',
@@ -244,6 +261,28 @@ describe('portfolioReducer', () => {
       ...marker,
       walletId: 'wallet-2',
     });
+  });
+
+  it('clears populate decision reasons with wallet portfolio state', () => {
+    const cleared = portfolioReducer(
+      makeState({
+        populateStatus: {
+          ...makeState().populateStatus,
+          decisionReasonByWalletId: {
+            'wallet-1': 'missing_index',
+            'wallet-2': 'balance_mismatch',
+          },
+        },
+      }),
+      clearWalletPortfolioState({walletIds: ['wallet-1']}),
+    );
+
+    expect(
+      cleared.populateStatus.decisionReasonByWalletId?.['wallet-1'],
+    ).toBeUndefined();
+    expect(cleared.populateStatus.decisionReasonByWalletId?.['wallet-2']).toBe(
+      'balance_mismatch',
+    );
   });
 
   it('marks the initial baseline complete and unblocks last-populated render paths', () => {

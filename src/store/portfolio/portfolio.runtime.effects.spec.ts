@@ -413,9 +413,11 @@ const expectPopulateResumeSettledAction = (dispatched: any[]) =>
   );
 
 const expectStartPopulateWithUsd = () =>
-  expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
-    quoteCurrency: 'USD',
-  });
+  expect(mockStartPopulatePortfolio).toHaveBeenCalledWith(
+    expect.objectContaining({
+      quoteCurrency: 'USD',
+    }),
+  );
 
 const expectFinishedFullPopulate = (overrides: Record<string, any> = {}) =>
   expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
@@ -1489,6 +1491,12 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(
       mockGetPortfolioPopulateDecisionsForWallets.mock.calls[0][0].wallets,
     ).toEqual([wallet]);
+    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        decisionReasonByWalletId: {'wallet-from-state': 'missing_snapshot'},
+        decisionSource: 'scoped_staleness',
+      }),
+    );
     expect(mockPopulateWallets.mock.calls[0][0].wallets).toEqual([
       {walletId: 'wallet-from-state', summary: {walletId: 'wallet-from-state'}},
     ]);
@@ -1763,6 +1771,12 @@ describe('portfolio runtime effects lock deferral', () => {
     await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expectStartPopulateWithUsd();
+    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        decisionReasonByWalletId: {'wallet-1': 'missing_index'},
+        decisionSource: 'app_launch_staleness',
+      }),
+    );
     expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
       expect.objectContaining({
         finishedAt: 1234,

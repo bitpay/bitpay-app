@@ -1,3 +1,5 @@
+import type {PortfolioPopulateDecisionReason} from '../../portfolio/service';
+
 export interface PortfolioPopulateError {
   walletId: string;
   message: string;
@@ -66,6 +68,8 @@ export interface PortfolioPopulateStatus {
   txsProcessed: number;
   errors: PortfolioPopulateError[];
   walletStatusById?: WalletIdMap<WalletPopulateState>;
+  decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecisionReason>;
+  decisionSource?: string;
 }
 
 export interface PortfolioState {

@@ -20,6 +20,7 @@ import SearchSvg from '../../../../../../assets/img/search.svg';
 import {Network} from '../../../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {getPortfolioRuntimeClient} from '../../../../../portfolio/runtime/portfolioRuntime';
+import usePortfolioBalanceChartReadiness from '../../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import type {
   SnapshotIndexV2,
   SnapshotPersistDebugMode,
@@ -28,6 +29,7 @@ import type {SnapshotInvalidHistoryMarkerV1} from '../../../../../portfolio/core
 import type {Wallet} from '../../../../../store/wallet/wallet.models';
 import type {
   InvalidDecimalsMarker,
+  PortfolioPopulateStatus,
   PortfolioQuarantineMarker,
   SnapshotBalanceMismatch,
 } from '../../../../../store/portfolio/portfolio.models';
@@ -38,6 +40,7 @@ import {
 import {remountHomeChart} from '../../../../../store/app/app.actions';
 import {clearShopStore} from '../../../../../store/shop/shop.actions';
 import {clearShopCatalogStore} from '../../../../../store/shop-catalog/shop-catalog.actions';
+import {getVisibleWalletsFromKeys} from '../../../../../utils/portfolio/assets';
 import {AboutGroupParamList, AboutScreens} from '../AboutGroup';
 import {
   DebugButtonRow,
@@ -195,6 +198,79 @@ const getAllMainnetWallets = (walletKeys: Record<string, any>): Wallet[] => {
     });
 };
 
+const getWalletLabel = (wallet: Wallet): string =>
+  [
+    wallet.currencyAbbreviation,
+    wallet.chain,
+    wallet.tokenAddress,
+    wallet.network,
+  ]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+    .join(':');
+
+const buildHomeBalanceChartPopulateDebugPayload = (args: {
+  chartWallets: Wallet[];
+  populateStatus?: PortfolioPopulateStatus;
+  readiness: {
+    isBalanceChartDataReadyToQuery: boolean;
+    isScopePopulateLoading: boolean;
+    isSnapshotPresenceLoading: boolean;
+    shouldShowChartLoader: boolean;
+  };
+}) => {
+  const populateStatus = args.populateStatus;
+  const statusByWalletId = populateStatus?.walletStatusById || {};
+  const decisionReasonByWalletId =
+    populateStatus?.decisionReasonByWalletId || {};
+  const chartWalletSummaries = args.chartWallets
+    .map(wallet => {
+      const walletId = String(wallet?.id || '').trim();
+      if (!walletId) {
+        return undefined;
+      }
+      const reason = decisionReasonByWalletId[walletId];
+
+      return {
+        walletId,
+        label: getWalletLabel(wallet),
+        status: statusByWalletId[walletId],
+        reason: reason || null,
+        isCurrent: populateStatus?.currentWalletId === walletId,
+      };
+    })
+    .filter(Boolean);
+  const blockingWallets = chartWalletSummaries.filter(
+    wallet =>
+      wallet?.isCurrent === true ||
+      (wallet?.walletId && statusByWalletId[wallet.walletId] === 'in_progress'),
+  );
+  const selectedPopulateWallets = chartWalletSummaries.filter(
+    wallet => !!wallet?.reason,
+  );
+
+  return {
+    copiedAt: new Date().toISOString(),
+    chartReadiness: args.readiness,
+    populateStatus: {
+      inProgress: populateStatus?.inProgress === true,
+      currentWalletId: populateStatus?.currentWalletId,
+      decisionSource: populateStatus?.decisionSource,
+      startedAt: populateStatus?.startedAt,
+      finishedAt: populateStatus?.finishedAt,
+      elapsedMs: populateStatus?.elapsedMs,
+      stopReason: populateStatus?.stopReason,
+      walletsCompleted: populateStatus?.walletsCompleted,
+      walletsTotal: populateStatus?.walletsTotal,
+      txRequestsMade: populateStatus?.txRequestsMade,
+      txsProcessed: populateStatus?.txsProcessed,
+    },
+    blockingWallets,
+    selectedPopulateWallets,
+    decisionReasonByWalletId,
+  };
+};
+
 const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -202,6 +278,9 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
 
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const walletKeys = useAppSelector(({WALLET}) => WALLET?.keys || {});
+  const homeCarouselConfig = useAppSelector(({APP}) => APP?.homeCarouselConfig);
+  const hideAllBalances = useAppSelector(({APP}) => APP?.hideAllBalances);
+  const showPortfolioValue = useAppSelector(({APP}) => APP?.showPortfolioValue);
 
   const [walletRows, setWalletRows] = useState<RuntimeWalletRow[]>([]);
   const [rateEntries, setRateEntries] = useState<any[]>([]);
@@ -210,12 +289,24 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
   const [isClearing, setIsClearing] = useState<boolean>(false);
   const [isClearingShop, setIsClearingShop] = useState<boolean>(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+  const [copyHomeChartState, setCopyHomeChartState] = useState<
+    'idle' | 'copied'
+  >('idle');
   const [runtimeError, setRuntimeError] = useState<string>('');
   const [lastRefreshedAt, setLastRefreshedAt] = useState<number | undefined>();
   const [query, setQuery] = useState('');
   const [populateDebugMode, setPopulateDebugMode] =
     useState<SnapshotPersistDebugMode>('link');
   const wallets = useMemo(() => getAllMainnetWallets(walletKeys), [walletKeys]);
+  const homeChartWallets = useMemo(
+    () => getVisibleWalletsFromKeys(walletKeys, homeCarouselConfig),
+    [homeCarouselConfig, walletKeys],
+  );
+  const homeChartReadiness = usePortfolioBalanceChartReadiness({
+    wallets: homeChartWallets,
+    enabled: showPortfolioValue === true,
+    hideAllBalances,
+  });
   const deferredQuery = useDeferredValue(query);
   const loadRequestIdRef = useRef(0);
   const walletsRef = useLatestRef(wallets);
@@ -500,6 +591,36 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
     setTimeout(() => setCopyState('idle'), 1200);
   }, [rateEntries, summary, walletRows]);
 
+  const copyHomeChartPopulateDebug = useCallback(() => {
+    Clipboard.setString(
+      JSON.stringify(
+        buildHomeBalanceChartPopulateDebugPayload({
+          chartWallets: homeChartReadiness.chartableWallets,
+          populateStatus: portfolio.populateStatus,
+          readiness: {
+            isBalanceChartDataReadyToQuery:
+              homeChartReadiness.isBalanceChartDataReadyToQuery,
+            isScopePopulateLoading: homeChartReadiness.isScopePopulateLoading,
+            isSnapshotPresenceLoading:
+              homeChartReadiness.isSnapshotPresenceLoading,
+            shouldShowChartLoader: homeChartReadiness.shouldShowChartLoader,
+          },
+        }),
+        null,
+        2,
+      ),
+    );
+    setCopyHomeChartState('copied');
+    setTimeout(() => setCopyHomeChartState('idle'), 1200);
+  }, [
+    homeChartReadiness.chartableWallets,
+    homeChartReadiness.isBalanceChartDataReadyToQuery,
+    homeChartReadiness.isScopePopulateLoading,
+    homeChartReadiness.isSnapshotPresenceLoading,
+    homeChartReadiness.shouldShowChartLoader,
+    portfolio.populateStatus,
+  ]);
+
   const repopulate = useCallback(async () => {
     const startedAtMs = nowMs();
     const walletCount = wallets.length;
@@ -739,6 +860,15 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
             <DebugPillButton onPress={copySummary}>
               <DebugPillButtonText>
                 {copyState === 'copied' ? t('Copied') : t('Copy JSON')}
+              </DebugPillButtonText>
+            </DebugPillButton>
+            <DebugPillButton
+              testID="portfolio-debug-copy-home-chart-populate-json"
+              onPress={copyHomeChartPopulateDebug}>
+              <DebugPillButtonText>
+                {copyHomeChartState === 'copied'
+                  ? t('Copied')
+                  : t('Copy PnL Debug')}
               </DebugPillButtonText>
             </DebugPillButton>
           </DebugButtonRow>

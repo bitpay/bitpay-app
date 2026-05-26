@@ -5,6 +5,7 @@ import type {
   WalletIdMap,
   WalletPopulateState,
 } from './portfolio.models';
+import type {PortfolioPopulateDecisionReason} from '../../portfolio/service';
 
 export enum PortfolioActionTypes {
   CLEAR_PORTFOLIO = 'PORTFOLIO/CLEAR_PORTFOLIO',
@@ -33,7 +34,11 @@ export type PortfolioActionType =
   | PortfolioAction<PortfolioActionTypes.CANCEL_POPULATE_PORTFOLIO>
   | PortfolioPayloadAction<
       PortfolioActionTypes.START_POPULATE_PORTFOLIO,
-      {quoteCurrency: string}
+      {
+        quoteCurrency: string;
+        decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecisionReason>;
+        decisionSource?: string;
+      }
     >
   | PortfolioPayloadAction<
       PortfolioActionTypes.UPDATE_POPULATE_PROGRESS,

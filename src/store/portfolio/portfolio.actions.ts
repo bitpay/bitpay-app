@@ -5,6 +5,7 @@ import type {
   WalletIdMap,
   WalletPopulateState,
 } from './portfolio.models';
+import type {PortfolioPopulateDecisionReason} from '../../portfolio/service';
 import {PortfolioActionType, PortfolioActionTypes} from './portfolio.types';
 
 export const clearPortfolio = (): PortfolioActionType => ({
@@ -17,6 +18,8 @@ export const cancelPopulatePortfolio = (): PortfolioActionType => ({
 
 export const startPopulatePortfolio = (payload: {
   quoteCurrency: string;
+  decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecisionReason>;
+  decisionSource?: string;
 }): PortfolioActionType => ({
   type: PortfolioActionTypes.START_POPULATE_PORTFOLIO,
   payload,
