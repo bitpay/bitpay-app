@@ -1115,7 +1115,10 @@ const KeyOverview = () => {
         k =>
           k.id === item.wallets[0].id &&
           (!item.copayerId || k.credentials?.copayerId === item.copayerId),
-      )!;
+      );
+      if (!fullWalletObj) {
+        return;
+      }
       if (!fullWalletObj.isComplete()) {
         fullWalletObj.getStatus({}, (err, status) => {
           if (err) {
