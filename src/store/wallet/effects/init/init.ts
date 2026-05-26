@@ -9,17 +9,13 @@ import {formatUnknownError} from '../../../../utils/errors/formatUnknownError';
 export type WalletStoreInitResult = {walletInitSuccess: boolean};
 
 export type StartupWalletStoreInitWaitResult = {
-  status: 'completed' | 'failed' | 'skipped' | 'timeout';
+  status: 'completed' | 'failed';
   walletInitSuccess: boolean;
   errorMessage?: string;
 };
 
-const STARTUP_WALLET_STORE_INIT_PORTFOLIO_WAIT_MS = 15000;
-const STARTUP_WALLET_STORE_INIT_BEGIN_WAIT_MS = 1000;
-
 let activeWalletStoreInitPromise: Promise<WalletStoreInitResult> | undefined;
 let lastWalletStoreInitWaitResult: StartupWalletStoreInitWaitResult | undefined;
-let walletStoreInitHasStarted = false;
 let walletStoreInitStartListeners: Array<() => void> = [];
 
 const runWalletStoreInit = async (
@@ -54,14 +50,6 @@ const runWalletStoreInit = async (
   }
 };
 
-const normalizeTimeoutMs = (
-  value: number | undefined,
-  fallback: number,
-): number =>
-  typeof value === 'number' && Number.isFinite(value)
-    ? Math.max(0, Math.floor(value))
-    : fallback;
-
 const toStartupWaitResult = (
   result: WalletStoreInitResult,
 ): StartupWalletStoreInitWaitResult => ({
@@ -83,128 +71,46 @@ const notifyWalletStoreInitStarted = (): void => {
   listeners.forEach(listener => listener());
 };
 
-const waitForWalletStoreInitToStart = (timeoutMs: number): Promise<boolean> => {
-  if (
-    activeWalletStoreInitPromise ||
-    lastWalletStoreInitWaitResult ||
-    walletStoreInitHasStarted
-  ) {
-    return Promise.resolve(true);
-  }
-
-  if (timeoutMs <= 0) {
-    return Promise.resolve(false);
+const waitForWalletStoreInitToStart = (): Promise<void> => {
+  if (activeWalletStoreInitPromise || lastWalletStoreInitWaitResult) {
+    return Promise.resolve();
   }
 
   return new Promise(resolve => {
-    let settled = false;
-    let listener: (() => void) | undefined;
-    const settle = (didStart: boolean) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      clearTimeout(timeoutId);
-      if (listener) {
-        walletStoreInitStartListeners = walletStoreInitStartListeners.filter(
-          candidate => candidate !== listener,
-        );
-      }
-      resolve(didStart);
+    const listener = () => {
+      walletStoreInitStartListeners = walletStoreInitStartListeners.filter(
+        candidate => candidate !== listener,
+      );
+      resolve();
     };
-    const timeoutId = setTimeout(() => settle(false), timeoutMs);
-    listener = () => settle(true);
     walletStoreInitStartListeners.push(listener);
   });
 };
 
 const waitForActiveWalletStoreInit = (
   activePromise: Promise<WalletStoreInitResult>,
-  timeoutMs: number,
-): Promise<StartupWalletStoreInitWaitResult> => {
-  if (timeoutMs <= 0) {
-    return Promise.resolve({
-      status: 'timeout',
-      walletInitSuccess: false,
-    });
-  }
+): Promise<StartupWalletStoreInitWaitResult> =>
+  activePromise.then(toStartupWaitResult, toStartupFailureWaitResult);
 
-  return new Promise(resolve => {
-    let settled = false;
-    const settle = (result: StartupWalletStoreInitWaitResult) => {
-      if (settled) {
-        return;
+export const waitForStartupWalletStoreInitForPortfolio =
+  async (): Promise<StartupWalletStoreInitWaitResult> => {
+    while (true) {
+      if (lastWalletStoreInitWaitResult) {
+        return lastWalletStoreInitWaitResult;
       }
-      settled = true;
-      clearTimeout(timeoutId);
-      resolve(result);
-    };
-    const timeoutId = setTimeout(() => {
-      settle({
-        status: 'timeout',
-        walletInitSuccess: false,
-      });
-    }, timeoutMs);
 
-    activePromise.then(
-      result => settle(toStartupWaitResult(result)),
-      error => settle(toStartupFailureWaitResult(error)),
-    );
-  });
-};
+      const activePromise = activeWalletStoreInitPromise;
+      if (activePromise) {
+        return waitForActiveWalletStoreInit(activePromise);
+      }
 
-export const waitForStartupWalletStoreInitForPortfolio = (args?: {
-  timeoutMs?: number;
-  beginTimeoutMs?: number;
-}): Promise<StartupWalletStoreInitWaitResult> => {
-  const timeoutMs = normalizeTimeoutMs(
-    args?.timeoutMs,
-    STARTUP_WALLET_STORE_INIT_PORTFOLIO_WAIT_MS,
-  );
-  const beginTimeoutMs = Math.min(
-    timeoutMs,
-    normalizeTimeoutMs(
-      args?.beginTimeoutMs,
-      STARTUP_WALLET_STORE_INIT_BEGIN_WAIT_MS,
-    ),
-  );
-
-  const wait = async (): Promise<StartupWalletStoreInitWaitResult> => {
-    if (lastWalletStoreInitWaitResult) {
-      return lastWalletStoreInitWaitResult;
+      await waitForWalletStoreInitToStart();
     }
-
-    const activePromise = activeWalletStoreInitPromise;
-    if (activePromise) {
-      return waitForActiveWalletStoreInit(activePromise, timeoutMs);
-    }
-
-    const startedAt = Date.now();
-    const didStart = await waitForWalletStoreInitToStart(beginTimeoutMs);
-    if (lastWalletStoreInitWaitResult) {
-      return lastWalletStoreInitWaitResult;
-    }
-    if (activeWalletStoreInitPromise) {
-      const elapsedMs = Date.now() - startedAt;
-      return waitForActiveWalletStoreInit(
-        activeWalletStoreInitPromise,
-        Math.max(0, timeoutMs - elapsedMs),
-      );
-    }
-
-    return {
-      status: didStart ? 'skipped' : 'timeout',
-      walletInitSuccess: false,
-    };
   };
-
-  return wait();
-};
 
 export const clearWalletStoreInitPromiseForTests = (): void => {
   activeWalletStoreInitPromise = undefined;
   lastWalletStoreInitWaitResult = undefined;
-  walletStoreInitHasStarted = false;
   walletStoreInitStartListeners = [];
 };
 
@@ -215,7 +121,6 @@ export const startWalletStoreInit =
       return activeWalletStoreInitPromise;
     }
 
-    walletStoreInitHasStarted = true;
     lastWalletStoreInitWaitResult = undefined;
     const initPromise = runWalletStoreInit(dispatch, getState)
       .then(

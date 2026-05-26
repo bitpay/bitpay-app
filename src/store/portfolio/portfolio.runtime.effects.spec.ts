@@ -1728,27 +1728,6 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockPortfolioService).toHaveBeenCalledTimes(1);
   });
 
-  it('app launch falls back to full populate when startup wallet init is not confirmed completed', async () => {
-    const state = makeState();
-    const {dispatch} = makeStore(state);
-    mockWaitForStartupWalletStoreInitForPortfolio.mockResolvedValueOnce({
-      status: 'skipped',
-      walletInitSuccess: false,
-    });
-    mockPopulateWallets.mockResolvedValueOnce(
-      successfulPopulateResult({
-        results: [],
-        status: {walletStatusById: {}, walletsCompleted: 0},
-      }),
-    );
-
-    await dispatchAppLaunchPopulateWithUsd(dispatch);
-
-    expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
-    expectStartPopulateWithUsd();
-    expect(mockPortfolioService).toHaveBeenCalledTimes(1);
-  });
-
   it('app launch marks the initial baseline complete when all wallets are up to date', async () => {
     const state = makeInitialBaselineState();
     const {dispatch, dispatched} = makeStore(state);

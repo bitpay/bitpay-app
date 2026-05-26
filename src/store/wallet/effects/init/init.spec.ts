@@ -72,10 +72,7 @@ describe('wallet store init portfolio wait', () => {
   });
 
   it('waits when called before wallet init starts, then joins completion', async () => {
-    const waitPromise = waitForStartupWalletStoreInitForPortfolio({
-      beginTimeoutMs: 1000,
-      timeoutMs: 1000,
-    });
+    const waitPromise = waitForStartupWalletStoreInitForPortfolio();
     const {dispatch} = makeStore();
 
     await expect(dispatch(startWalletStoreInit())).resolves.toEqual({
@@ -93,7 +90,7 @@ describe('wallet store init portfolio wait', () => {
     await dispatch(startWalletStoreInit());
 
     await expect(
-      waitForStartupWalletStoreInitForPortfolio({timeoutMs: 1000}),
+      waitForStartupWalletStoreInitForPortfolio(),
     ).resolves.toMatchObject({
       status: 'completed',
       walletInitSuccess: true,
@@ -110,25 +107,32 @@ describe('wallet store init portfolio wait', () => {
       walletInitSuccess: false,
     });
     await expect(
-      waitForStartupWalletStoreInitForPortfolio({timeoutMs: 1000}),
+      waitForStartupWalletStoreInitForPortfolio(),
     ).resolves.toMatchObject({
       status: 'failed',
       walletInitSuccess: false,
     });
   });
 
-  it('resolves with timeout when startup wallet init never begins', async () => {
-    jest.useFakeTimers();
-
-    const waitPromise = waitForStartupWalletStoreInitForPortfolio({
-      beginTimeoutMs: 25,
-      timeoutMs: 25,
+  it('keeps waiting while startup wallet init has not begun', async () => {
+    const waitPromise = waitForStartupWalletStoreInitForPortfolio();
+    let settled = false;
+    void waitPromise.then(() => {
+      settled = true;
     });
-    jest.advanceTimersByTime(25);
+
+    await Promise.resolve();
+
+    expect(settled).toBe(false);
+
+    const {dispatch} = makeStore();
+    await expect(dispatch(startWalletStoreInit())).resolves.toEqual({
+      walletInitSuccess: true,
+    });
 
     await expect(waitPromise).resolves.toMatchObject({
-      status: 'timeout',
-      walletInitSuccess: false,
+      status: 'completed',
+      walletInitSuccess: true,
     });
   });
 });
