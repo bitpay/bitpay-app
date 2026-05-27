@@ -3,7 +3,10 @@ import type {Tx} from '../../core/types';
 import type {PortfolioRuntimeWalletCredentials} from '../../core/runtimeWalletCredentials';
 import type {NitroResponse as NitroFetchResponse} from 'react-native-nitro-fetch';
 import {version as bitcoreWalletClientVersion} from '@bitpay-labs/bitcore-wallet-client/package.json';
-import {createPortfolioRemoteRequestError} from '../../core/remoteRequestError';
+import {
+  createPortfolioRemoteNitroFetchError,
+  createPortfolioRemoteRequestError,
+} from '../../core/remoteRequestError';
 import {
   buildTokenWalletTxHistoryContextFromCredentials,
   normalizeTokenWalletTxHistoryPage,
@@ -164,44 +167,6 @@ function tryParseJson(text: string): unknown {
   }
 }
 
-function formatThrownErrorForMessage(error: unknown): string {
-  'worklet';
-
-  if (error instanceof Error) {
-    const name = String(error.name || 'Error').trim();
-    const message = String(error.message || '').trim();
-    return message ? `${name}: ${message}` : name;
-  }
-
-  if (typeof error === 'string') {
-    return error.trim();
-  }
-
-  if (error == null) {
-    return '';
-  }
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
-}
-
-function buildNitroFetchTxHistoryError(error: unknown, url: string): Error {
-  'worklet';
-
-  const details = formatThrownErrorForMessage(error);
-  return createPortfolioRemoteRequestError({
-    kind: 'txhistory',
-    failureKind: 'nitro-fetch',
-    url,
-    message: details
-      ? `Portfolio Nitro Fetch txhistory request failed: ${details}`
-      : 'Portfolio Nitro Fetch txhistory request failed.',
-  });
-}
-
 function formatFailedNitroFetchResponseDetails(
   response: NitroFetchResponse,
   rawResponseText: string,
@@ -263,7 +228,13 @@ export async function fetchPortfolioTxHistoryPageByRequest(args: {
       followRedirects: false,
     });
   } catch (error: unknown) {
-    throw buildNitroFetchTxHistoryError(error, url);
+    throw createPortfolioRemoteNitroFetchError({
+      kind: 'txhistory',
+      url,
+      messagePrefix: 'Portfolio Nitro Fetch txhistory request failed',
+      error,
+      includeErrorName: true,
+    });
   }
 
   const rawResponseText =

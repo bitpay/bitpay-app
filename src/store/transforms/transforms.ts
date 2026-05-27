@@ -211,24 +211,25 @@ export const transformPortfolioPopulateStatus = createTransform<
       !!populateStatus.decisionSource ||
       !!Object.keys(populateStatus.decisionReasonByWalletId || {}).length;
 
-    if (populateStatus.inProgress || hasPersistedPopulateDebugData) {
-      return {
-        ...outboundState,
-        populateStatus: {
-          ...populateStatus,
-          ...(populateStatus.inProgress
-            ? {
-                inProgress: false,
-                currentWalletId: undefined,
-                walletStatusById: {},
-              }
-            : {}),
-          decisionReasonByWalletId: {},
-          decisionSource: undefined,
-        },
-      };
+    if (!populateStatus.inProgress && !hasPersistedPopulateDebugData) {
+      return outboundState;
     }
-    return outboundState;
+
+    return {
+      ...outboundState,
+      populateStatus: {
+        ...populateStatus,
+        ...(populateStatus.inProgress
+          ? {
+              inProgress: false,
+              currentWalletId: undefined,
+              walletStatusById: {},
+            }
+          : {}),
+        decisionReasonByWalletId: {},
+        decisionSource: undefined,
+      },
+    };
   },
   {whitelist: ['PORTFOLIO']},
 );

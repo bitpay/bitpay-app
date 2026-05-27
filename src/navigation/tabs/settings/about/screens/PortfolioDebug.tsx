@@ -209,6 +209,18 @@ const getWalletLabel = (wallet: Wallet): string =>
     .filter(Boolean)
     .join(':');
 
+const formatDebugPayloadIso = (value?: number): string | undefined => {
+  if (!Number.isFinite(value)) {
+    return undefined;
+  }
+
+  try {
+    return new Date(value as number).toISOString();
+  } catch {
+    return undefined;
+  }
+};
+
 const buildHomeBalanceChartPopulateDebugPayload = (args: {
   chartWallets: Wallet[];
   populateStatus?: PortfolioPopulateStatus;
@@ -223,30 +235,29 @@ const buildHomeBalanceChartPopulateDebugPayload = (args: {
   const statusByWalletId = populateStatus?.walletStatusById || {};
   const decisionReasonByWalletId =
     populateStatus?.decisionReasonByWalletId || {};
-  const chartWalletSummaries = args.chartWallets
-    .map(wallet => {
-      const walletId = String(wallet?.id || '').trim();
-      if (!walletId) {
-        return undefined;
-      }
-      const reason = decisionReasonByWalletId[walletId];
+  const chartWalletSummaries = args.chartWallets.flatMap(wallet => {
+    const walletId = String(wallet?.id || '').trim();
+    if (!walletId) {
+      return [];
+    }
+    const reason = decisionReasonByWalletId[walletId];
 
-      return {
+    return [
+      {
         walletId,
         label: getWalletLabel(wallet),
         status: statusByWalletId[walletId],
         reason: reason || null,
         isCurrent: populateStatus?.currentWalletId === walletId,
-      };
-    })
-    .filter(Boolean);
+      },
+    ];
+  });
   const blockingWallets = chartWalletSummaries.filter(
     wallet =>
-      wallet?.isCurrent === true ||
-      (wallet?.walletId && statusByWalletId[wallet.walletId] === 'in_progress'),
+      wallet.isCurrent || statusByWalletId[wallet.walletId] === 'in_progress',
   );
   const selectedPopulateWallets = chartWalletSummaries.filter(
-    wallet => !!wallet?.reason,
+    wallet => !!wallet.reason,
   );
 
   return {
@@ -256,8 +267,8 @@ const buildHomeBalanceChartPopulateDebugPayload = (args: {
       inProgress: populateStatus?.inProgress === true,
       currentWalletId: populateStatus?.currentWalletId,
       decisionSource: populateStatus?.decisionSource,
-      startedAt: populateStatus?.startedAt,
-      finishedAt: populateStatus?.finishedAt,
+      startedAt: formatDebugPayloadIso(populateStatus?.startedAt),
+      finishedAt: formatDebugPayloadIso(populateStatus?.finishedAt),
       elapsedMs: populateStatus?.elapsedMs,
       stopReason: populateStatus?.stopReason,
       walletsCompleted: populateStatus?.walletsCompleted,

@@ -12,6 +12,35 @@ export type PortfolioRemoteRequestError = Error & {
   portfolioRemoteRequestUrl?: string;
 };
 
+function formatThrownErrorForPortfolioRequest(
+  error: unknown,
+  options?: {includeErrorName?: boolean},
+): string {
+  'worklet';
+
+  if (error instanceof Error) {
+    const name = String(error.name || 'Error').trim();
+    const message = String(error.message || '').trim();
+    return options?.includeErrorName && message
+      ? `${name}: ${message}`
+      : message || name;
+  }
+
+  if (typeof error === 'string') {
+    return error.trim();
+  }
+
+  if (error == null) {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(error) || '';
+  } catch {
+    return String(error);
+  }
+}
+
 export function createPortfolioRemoteRequestError(args: {
   kind: PortfolioRemoteRequestKind;
   failureKind: PortfolioRemoteRequestFailureKind;
@@ -40,6 +69,28 @@ export function createPortfolioRemoteRequestError(args: {
   }
 
   return error;
+}
+
+export function createPortfolioRemoteNitroFetchError(args: {
+  kind: PortfolioRemoteRequestKind;
+  url: string;
+  messagePrefix: string;
+  error: unknown;
+  includeErrorName?: boolean;
+}): Error {
+  'worklet';
+
+  const details = formatThrownErrorForPortfolioRequest(args.error, {
+    includeErrorName: args.includeErrorName,
+  });
+  return createPortfolioRemoteRequestError({
+    kind: args.kind,
+    failureKind: 'nitro-fetch',
+    url: args.url,
+    message: details
+      ? `${args.messagePrefix}: ${details}`
+      : `${args.messagePrefix}.`,
+  });
 }
 
 export function isPortfolioRemoteRequestError(

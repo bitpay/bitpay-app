@@ -1,6 +1,9 @@
 import type {BwsConfig} from '../../core/shared/bws';
 import type {NitroResponse as NitroFetchResponse} from 'react-native-nitro-fetch';
-import {createPortfolioRemoteRequestError} from '../../core/remoteRequestError';
+import {
+  createPortfolioRemoteNitroFetchError,
+  createPortfolioRemoteRequestError,
+} from '../../core/remoteRequestError';
 import {
   CANONICAL_FIAT_QUOTE,
   DEFAULT_STORED_FIAT_RATE_INTERVALS,
@@ -158,13 +161,11 @@ async function fetchFiatRatePayload(args: {
       followRedirects: true,
     });
   } catch (error: unknown) {
-    const runtimeError =
-      error instanceof Error ? error : new Error(String(error));
-    throw createPortfolioRemoteRequestError({
+    throw createPortfolioRemoteNitroFetchError({
       kind: 'fiat-rate',
-      failureKind: 'nitro-fetch',
       url,
-      message: `Portfolio Nitro Fetch fiat-rate request failed for ${url}: ${runtimeError.message}`,
+      messagePrefix: `Portfolio Nitro Fetch fiat-rate request failed for ${url}`,
+      error,
     });
   }
 

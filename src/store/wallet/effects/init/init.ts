@@ -77,20 +77,9 @@ const waitForWalletStoreInitToStart = (): Promise<void> => {
   }
 
   return new Promise(resolve => {
-    const listener = () => {
-      walletStoreInitStartListeners = walletStoreInitStartListeners.filter(
-        candidate => candidate !== listener,
-      );
-      resolve();
-    };
-    walletStoreInitStartListeners.push(listener);
+    walletStoreInitStartListeners.push(resolve);
   });
 };
-
-const waitForActiveWalletStoreInit = (
-  activePromise: Promise<WalletStoreInitResult>,
-): Promise<StartupWalletStoreInitWaitResult> =>
-  activePromise.then(toStartupWaitResult, toStartupFailureWaitResult);
 
 export const waitForStartupWalletStoreInitForPortfolio =
   async (): Promise<StartupWalletStoreInitWaitResult> => {
@@ -101,7 +90,10 @@ export const waitForStartupWalletStoreInitForPortfolio =
 
       const activePromise = activeWalletStoreInitPromise;
       if (activePromise) {
-        return waitForActiveWalletStoreInit(activePromise);
+        return activePromise.then(
+          toStartupWaitResult,
+          toStartupFailureWaitResult,
+        );
       }
 
       await waitForWalletStoreInitToStart();
