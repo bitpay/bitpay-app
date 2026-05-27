@@ -14,8 +14,6 @@ import type {PortfolioRuntimeHostBootstrapConfig} from './portfolioRuntimeHostCo
 import {createWorkletPortfolioTransport} from './portfolioWorkletTransport';
 
 let portfolioWorkletRuntime: WorkletRuntime | undefined;
-let portfolioRateWorkletRuntime: WorkletRuntime | undefined;
-let portfolioAnalysisWorkletRuntime: WorkletRuntime | undefined;
 let portfolioRuntimeClient: PortfolioRuntimeClient | undefined;
 let portfolioRateRuntimeClient: PortfolioRuntimeClient | undefined;
 let portfolioAnalysisRuntimeClient: PortfolioRuntimeClient | undefined;
@@ -28,66 +26,24 @@ export function getPortfolioRuntimeHostConfigOnRN(): PortfolioRuntimeHostBootstr
   };
 }
 
-function createPortfolioWorkletRuntime(name: string): WorkletRuntime {
-  return createWorkletRuntime({
-    name,
-    initializer: () => {
-      'worklet';
-      initializePortfolioRuntimeGlobals();
-    },
-    enableEventLoop: true,
-  });
-}
-
 export function getPortfolioWorkletRuntime(): WorkletRuntime {
   if (!portfolioWorkletRuntime) {
-    portfolioWorkletRuntime = createPortfolioWorkletRuntime(
-      PORTFOLIO_WORKLET_RUNTIME_NAME,
-    );
+    portfolioWorkletRuntime = createWorkletRuntime({
+      name: PORTFOLIO_WORKLET_RUNTIME_NAME,
+      initializer: () => {
+        'worklet';
+        initializePortfolioRuntimeGlobals();
+      },
+      enableEventLoop: true,
+    });
   }
   return portfolioWorkletRuntime;
-}
-
-export function getPortfolioRateWorkletRuntime(): WorkletRuntime {
-  if (!portfolioRateWorkletRuntime) {
-    portfolioRateWorkletRuntime = createPortfolioWorkletRuntime(
-      `${PORTFOLIO_WORKLET_RUNTIME_NAME}:rates`,
-    );
-  }
-  return portfolioRateWorkletRuntime;
-}
-
-export function getPortfolioAnalysisWorkletRuntime(): WorkletRuntime {
-  if (!portfolioAnalysisWorkletRuntime) {
-    portfolioAnalysisWorkletRuntime = createPortfolioWorkletRuntime(
-      `${PORTFOLIO_WORKLET_RUNTIME_NAME}:analysis`,
-    );
-  }
-  return portfolioAnalysisWorkletRuntime;
 }
 
 export function createPortfolioRuntimeClient(): PortfolioRuntimeClient {
   return new PortfolioRuntimeClient(
     createWorkletPortfolioTransport({
       runtime: getPortfolioWorkletRuntime(),
-      host: getPortfolioRuntimeHostConfigOnRN(),
-    }),
-  );
-}
-
-export function createPortfolioRateRuntimeClient(): PortfolioRuntimeClient {
-  return new PortfolioRuntimeClient(
-    createWorkletPortfolioTransport({
-      runtime: getPortfolioRateWorkletRuntime(),
-      host: getPortfolioRuntimeHostConfigOnRN(),
-    }),
-  );
-}
-
-export function createPortfolioAnalysisRuntimeClient(): PortfolioRuntimeClient {
-  return new PortfolioRuntimeClient(
-    createWorkletPortfolioTransport({
-      runtime: getPortfolioAnalysisWorkletRuntime(),
       host: getPortfolioRuntimeHostConfigOnRN(),
     }),
   );
@@ -103,7 +59,12 @@ export function getPortfolioRuntimeClient(): PortfolioRuntimeClient {
 
 export function getPortfolioRateRuntimeClient(): PortfolioRuntimeClient {
   if (!portfolioRateRuntimeClient) {
-    portfolioRateRuntimeClient = createPortfolioRateRuntimeClient();
+    portfolioRateRuntimeClient = new PortfolioRuntimeClient(
+      createWorkletPortfolioTransport({
+        runtime: getPortfolioWorkletRuntime(),
+        host: getPortfolioRuntimeHostConfigOnRN(),
+      }),
+    );
   }
 
   return portfolioRateRuntimeClient;
@@ -111,7 +72,12 @@ export function getPortfolioRateRuntimeClient(): PortfolioRuntimeClient {
 
 export function getPortfolioAnalysisRuntimeClient(): PortfolioRuntimeClient {
   if (!portfolioAnalysisRuntimeClient) {
-    portfolioAnalysisRuntimeClient = createPortfolioAnalysisRuntimeClient();
+    portfolioAnalysisRuntimeClient = new PortfolioRuntimeClient(
+      createWorkletPortfolioTransport({
+        runtime: getPortfolioWorkletRuntime(),
+        host: getPortfolioRuntimeHostConfigOnRN(),
+      }),
+    );
   }
 
   return portfolioAnalysisRuntimeClient;
@@ -132,6 +98,6 @@ export function resetPortfolioRuntimeClient(): void {
     portfolioAnalysisRuntimeClient.terminate();
     portfolioAnalysisRuntimeClient = undefined;
   }
-  portfolioRateWorkletRuntime = undefined;
-  portfolioAnalysisWorkletRuntime = undefined;
+
+  portfolioWorkletRuntime = undefined;
 }
