@@ -51,6 +51,7 @@ export type UseBalanceChartDisplayModelArgs = {
   showLoaderWhenNoSnapshots: boolean;
   renderZeroBalanceWhenNoSnapshots: boolean;
   isBalanceChartDataReadyToQuery?: boolean;
+  preserveVisibleSeriesWhileNotReady?: boolean;
   t: (key: string) => string;
   onSelectedBalanceChange?: (balance?: number) => void;
   onChangeRowData?: (data?: BalanceChartCallbackChangeRowData) => void;
@@ -210,6 +211,7 @@ export function useBalanceChartDisplayModel({
   showLoaderWhenNoSnapshots,
   renderZeroBalanceWhenNoSnapshots,
   isBalanceChartDataReadyToQuery = true,
+  preserveVisibleSeriesWhileNotReady = false,
   t,
   onSelectedBalanceChange,
   onChangeRowData,
@@ -382,13 +384,21 @@ export function useBalanceChartDisplayModel({
 
   useEffect(() => {
     if (!isBalanceChartDataReadyToQuery) {
+      const visibleOwner = visibleStateRef.current;
+      const canPreserveVisibleSeries =
+        preserveVisibleSeriesWhileNotReady &&
+        visibleOwner?.scopeId === scopeId &&
+        visibleOwner?.quoteCurrency === committedQueryQuoteCurrency;
+
       activeRequestIdRef.current += 1;
       pendingSelectedTimestampRef.current = undefined;
       gestureStartedRef.current = false;
       lastHapticPointTsRef.current = undefined;
       setSelectedPoint(undefined);
-      setVisibleState(undefined);
-      setLoading(true);
+      if (!canPreserveVisibleSeries) {
+        setVisibleState(undefined);
+      }
+      setLoading(!canPreserveVisibleSeries);
       setError(undefined);
       onSelectedBalanceChangeRef.current?.(undefined);
       return;
@@ -502,6 +512,7 @@ export function useBalanceChartDisplayModel({
     chartDataRevisionSig,
     committedQueryQuoteCurrency,
     isBalanceChartDataReadyToQuery,
+    preserveVisibleSeriesWhileNotReady,
     queryRevisionKey,
     renderZeroBalanceWhenNoSnapshots,
     shouldWaitForHistoricalRates,
@@ -540,8 +551,10 @@ export function useBalanceChartDisplayModel({
     onSelectedBalanceChangeRef.current?.(undefined);
   }, [committedQueryQuoteCurrency, queryRevisionKey, scopeId]);
 
+  const canDisplayVisibleState =
+    isBalanceChartDataReadyToQuery || preserveVisibleSeriesWhileNotReady;
   const activeVisibleState =
-    isBalanceChartDataReadyToQuery &&
+    canDisplayVisibleState &&
     visibleState?.scopeId === scopeId &&
     visibleState?.quoteCurrency === committedQueryQuoteCurrency
       ? visibleState
@@ -658,9 +671,7 @@ export function useBalanceChartDisplayModel({
     );
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
-  const hasRenderableSeries =
-    isBalanceChartDataReadyToQuery &&
-    (visibleSeries?.graphPoints?.length || 0) >= 2;
+  const hasRenderableSeries = (visibleSeries?.graphPoints?.length || 0) >= 2;
   const shouldDelayPendingOverlay =
     isBalanceChartDataReadyToQuery && loading && hasRenderableSeries;
 
@@ -680,7 +691,7 @@ export function useBalanceChartDisplayModel({
   }, [shouldDelayPendingOverlay]);
 
   const shouldShowLoader =
-    !isBalanceChartDataReadyToQuery ||
+    (!isBalanceChartDataReadyToQuery && !hasRenderableSeries) ||
     pendingOverlayVisible ||
     (!hasRenderableSeries &&
       (loading || (showLoaderWhenNoSnapshots && hasAnyWallets)));

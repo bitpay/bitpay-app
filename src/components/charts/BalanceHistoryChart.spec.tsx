@@ -517,6 +517,39 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(true);
   });
 
+  it('preserves an already visible series while chart data is not ready when requested', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+
+    await act(async () => {
+      renderer = TestRenderer.create(
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
+      );
+    });
+
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      renderer.update(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: false,
+          isBalanceChartDataReadyToQuery: false,
+          preserveVisibleSeriesWhileNotReady: true,
+        }),
+      );
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+    expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+    expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(false);
+    expect(latestInteractiveLineChartProps.enablePanGesture).toBe(false);
+  });
+
   it('fades out the axis labels for a zero balance interval', async () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockZeroBalanceSeries,

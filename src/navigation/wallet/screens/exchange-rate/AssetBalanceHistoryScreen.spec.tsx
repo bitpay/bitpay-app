@@ -312,7 +312,7 @@ describe('AssetBalanceHistoryScreen', () => {
     );
   });
 
-  it('keeps asset chart work in loader mode during later incremental populate after initial success', async () => {
+  it('keeps asset chart work mounted with stale preservation during later incremental populate after initial success', async () => {
     isPopulateLoadingForWallets.mockReturnValue(true);
     mockState.PORTFOLIO.populateStatus = {
       currentWalletId: 'wallet-1',
@@ -332,13 +332,18 @@ describe('AssetBalanceHistoryScreen', () => {
     });
 
     expect(latestBalanceHistoryChartProps).toBeDefined();
-    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(true);
+    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(
+      false,
+    );
     expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
       false,
     );
+    expect(
+      latestBalanceHistoryChartProps.preserveVisibleSeriesWhileNotReady,
+    ).toBe(true);
   });
 
-  it('ignores stale chart summary state while asset chart data is not ready', async () => {
+  it('preserves stale chart summary state while asset chart data is not ready during incremental populate', async () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
@@ -388,10 +393,17 @@ describe('AssetBalanceHistoryScreen', () => {
     expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
       false,
     );
+    expect(
+      latestBalanceHistoryChartProps.preserveVisibleSeriesWhileNotReady,
+    ).toBe(true);
     expect(buildAssetBalanceHistoryDisplayedSummary).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        chartDisplayedPoint: undefined,
-        chartChangeRow: undefined,
+        chartDisplayedPoint: expect.objectContaining({
+          totalFiatBalance: 200,
+        }),
+        chartChangeRow: expect.objectContaining({
+          percent: 20,
+        }),
       }),
     );
   });
