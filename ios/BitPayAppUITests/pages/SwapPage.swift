@@ -86,6 +86,14 @@ class SwapPage {
     ).firstMatch
   }
   
+  var minAmount: XCUIElement {
+    app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == 'MIN'"
+      )
+    ).firstMatch
+  }
+  
   var changellyTermsCheckbox: XCUIElement {
     app.checkBoxes["swap-crypto-changelly-terms-checkbox"]
   }
@@ -164,6 +172,10 @@ class SwapPage {
   
   func tapChangellyTermsCheckbox() {
     changellyTermsCheckbox.tap()
+  }
+  
+  func tapMinAmount() {
+    minAmount.tap()
   }
 
 
