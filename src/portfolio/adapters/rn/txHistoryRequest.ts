@@ -187,6 +187,17 @@ function formatFailedNitroFetchResponseDetails(
   return details.length ? ` ${details.join(' ')}` : '';
 }
 
+function resolveTxHistoryTimeoutMs(cfg: BwsConfig): number {
+  'worklet';
+
+  const timeoutMs = Number(cfg?.timeoutMs);
+  if (Number.isFinite(timeoutMs)) {
+    return Math.max(0, Math.floor(timeoutMs));
+  }
+
+  return DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS;
+}
+
 export async function fetchPortfolioTxHistoryPageByRequest(args: {
   credentials: PortfolioRuntimeWalletCredentials;
   cfg: BwsConfig;
@@ -224,7 +235,7 @@ export async function fetchPortfolioTxHistoryPageByRequest(args: {
       url,
       method: 'GET',
       headers,
-      timeoutMs: DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS,
+      timeoutMs: resolveTxHistoryTimeoutMs(args.cfg),
       followRedirects: false,
     });
   } catch (error: unknown) {

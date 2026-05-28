@@ -7,7 +7,7 @@ const mockTakeNextPortfolioTransferredSignHandleOnRuntime = jest.fn(() => ({
 }));
 
 jest.mock('./txHistorySigning', () => ({
-  DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS: 15000,
+  DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS: 100000,
   getPortfolioNitroFetchClientOnRuntime: () => ({
     requestSync: mockRequestSync,
   }),
@@ -45,6 +45,50 @@ const fetchTxHistoryArgs = {
 describe('fetchPortfolioTxHistoryPageByRequest', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('uses the BWS config timeout for Nitro Fetch requests', async () => {
+    mockRequestSync.mockReturnValueOnce({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      bodyString: '[]',
+    });
+
+    await expect(
+      fetchPortfolioTxHistoryPageByRequest({
+        ...fetchTxHistoryArgs,
+        cfg: {
+          ...fetchTxHistoryArgs.cfg,
+          timeoutMs: 100000,
+        },
+      }),
+    ).resolves.toEqual([]);
+
+    expect(mockRequestSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timeoutMs: 100000,
+      }),
+    );
+  });
+
+  it('falls back to the default 100 second Nitro Fetch timeout', async () => {
+    mockRequestSync.mockReturnValueOnce({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      bodyString: '[]',
+    });
+
+    await expect(
+      fetchPortfolioTxHistoryPageByRequest(fetchTxHistoryArgs),
+    ).resolves.toEqual([]);
+
+    expect(mockRequestSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timeoutMs: 100000,
+      }),
+    );
   });
 
   it('includes native Nitro Fetch error details when requestSync throws', async () => {
