@@ -170,12 +170,23 @@ class SwapPage {
     enterAmount.tap()
   }
   
+  func isChangellyTermsCheckboxDisplayed(timeout: TimeInterval = 5) -> Bool {
+    return changellyTermsCheckbox.waitForExistence(timeout: timeout)
+  }
+  
   func tapChangellyTermsCheckbox() {
     changellyTermsCheckbox.tap()
   }
   
   func tapMinAmount() {
     minAmount.tap()
+  }
+  
+  func tapCenterOfScreen() {
+      let center = app.coordinate(
+          withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+      )
+      center.tap()
   }
 
 
