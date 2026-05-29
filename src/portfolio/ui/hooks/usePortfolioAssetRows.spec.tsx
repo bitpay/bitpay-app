@@ -626,7 +626,7 @@ describe('usePortfolioAssetRows', () => {
       expect(latestResult?.visibleItems).toEqual([
         expect.objectContaining({
           key: 'btc',
-          deltaFiat: '+$9',
+          deltaFiat: '+$9.00',
           deltaPercent: '+3.00%',
           hasPnl: true,
           showPnlPlaceholder: false,
