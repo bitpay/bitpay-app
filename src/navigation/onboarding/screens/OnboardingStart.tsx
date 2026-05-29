@@ -135,6 +135,10 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();
+  const notificationsInteractionDone = useAppSelector(
+    ({APP}) => APP.notificationsInteractionDone,
+  );
+  const pinInteractionDone = useAppSelector(({APP}) => APP.pinInteractionDone);
   const isPaired = useAppSelector(
     ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
   );
@@ -197,16 +201,6 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const progressValue = useSharedValue<number>(0);
 
   const onboardingSlides = [
-    // {
-    //   title: t('Turn crypto into dollars with our BitPay Card'),
-    //   text: t(
-    //     'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
-    //   ),
-    //   subText: t(
-    //     '*Currently available in the USA. More countries coming soon.',
-    //   ),
-    //   img: () => OnboardingImages.card[themeType],
-    // },
     {
       title: t('Seamlessly buy & swap'),
       text: t(
@@ -229,6 +223,17 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
       img: () => OnboardingImages.wallet[themeType],
     },
   ];
+
+  const continueWithoutAnAccount = () => {
+    haptic('impactLight');
+    if (!notificationsInteractionDone) {
+      navigation.navigate('Notifications');
+    } else if (!pinInteractionDone) {
+      navigation.navigate('Pin');
+    } else {
+      navigation.navigate('CreateKey');
+    }
+  };
 
   return (
     <OnboardingContainer testID="onboarding-start-view">
@@ -309,8 +314,12 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 accessibilityLabel="Continue"
                 buttonStyle={'primary'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Notifications');
+                  dispatch(
+                    Analytics.track('Clicked Continue', {
+                      context: 'onboarding',
+                    }),
+                  );
+                  continueWithoutAnAccount();
                 }}>
                 {t('Continue')}
               </Button>
@@ -330,7 +339,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                       context: 'onboarding',
                     }),
                   );
-                  navigation.navigate('Notifications');
+                  continueWithoutAnAccount();
                 }}>
                 <LinkText>{t('Continue without an account')}</LinkText>
               </Button>
