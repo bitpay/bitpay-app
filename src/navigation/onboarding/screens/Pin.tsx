@@ -63,6 +63,7 @@ const PinScreen = ({
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
+    dispatch(AppActions.setPinInteractionDone());
     dispatch(
       Analytics.track('Clicked Skip Protect Wallet', {
         context: 'onboarding',
@@ -108,6 +109,7 @@ const PinScreen = ({
       if (available) {
         logger.debug(`[Biometrics] ${biometryType} is supported`);
         dispatch(AppActions.biometricLockActive(true));
+        dispatch(AppActions.setPinInteractionDone());
         navigation.navigate('CreateKey');
       } else {
         dispatch(

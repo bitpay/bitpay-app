@@ -46,8 +46,10 @@ export enum AppActionTypes {
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
+  SET_NOTIFICATIONS_INTERACTION_DONE = 'APP/SET_NOTIFICATIONS_INTERACTION_DONE',
   SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
   SET_ANNOUNCEMENTS_ACCEPTED = 'APP/SET_ANNOUNCEMENTS_ACCEPTED',
+  SET_PIN_INTERACTION_DONE = 'APP/SET_PIN_INTERACTION_DONE',
   SET_EMAIL_NOTIFICATIONS_ACCEPTED = 'APP/SET_EMAIL_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
@@ -212,6 +214,10 @@ interface SetNotificationsAccepted {
   payload: boolean;
 }
 
+interface SetNotificationsInteractionDone {
+  type: typeof AppActionTypes.SET_NOTIFICATIONS_INTERACTION_DONE;
+}
+
 interface SetConfirmedTxAccepted {
   type: typeof AppActionTypes.SET_CONFIRMED_TX_ACCEPTED;
   payload: boolean;
@@ -220,6 +226,10 @@ interface SetConfirmedTxAccepted {
 interface SetAnnouncementsAccepted {
   type: typeof AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED;
   payload: boolean;
+}
+
+interface SetPinInteractionDone {
+  type: typeof AppActionTypes.SET_PIN_INTERACTION_DONE;
 }
 
 interface SetEmailNotificationsAccepted {
@@ -465,8 +475,10 @@ export type AppActionType =
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
+  | SetNotificationsInteractionDone
   | SetConfirmedTxAccepted
   | SetAnnouncementsAccepted
+  | SetPinInteractionDone
   | SetEmailNotificationsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
