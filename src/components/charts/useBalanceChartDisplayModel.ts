@@ -389,6 +389,9 @@ export function useBalanceChartDisplayModel({
         preserveVisibleSeriesWhileNotReady &&
         visibleOwner?.scopeId === scopeId &&
         visibleOwner?.quoteCurrency === committedQueryQuoteCurrency;
+      const selectedTimeframeIsVisible =
+        canPreserveVisibleSeries &&
+        visibleOwner?.timeframe === selectedTimeframe;
 
       activeRequestIdRef.current += 1;
       pendingSelectedTimestampRef.current = undefined;
@@ -398,7 +401,7 @@ export function useBalanceChartDisplayModel({
       if (!canPreserveVisibleSeries) {
         setVisibleState(undefined);
       }
-      setLoading(!canPreserveVisibleSeries);
+      setLoading(!selectedTimeframeIsVisible);
       setError(undefined);
       onSelectedBalanceChangeRef.current?.(undefined);
       return;
@@ -563,7 +566,12 @@ export function useBalanceChartDisplayModel({
   const visibleTimeframe = activeVisibleState?.timeframe ?? selectedTimeframe;
   const visibleQuoteCurrency =
     activeVisibleState?.quoteCurrency ?? committedQueryQuoteCurrency;
-  const displayedSelectedPoint = isBalanceChartDataReadyToQuery
+  const canInteractWithVisibleSeries =
+    isBalanceChartDataReadyToQuery ||
+    (!!activeVisibleState &&
+      preserveVisibleSeriesWhileNotReady &&
+      activeVisibleState.timeframe === selectedTimeframe);
+  const displayedSelectedPoint = canInteractWithVisibleSeries
     ? selectedPoint
     : undefined;
 
@@ -672,8 +680,7 @@ export function useBalanceChartDisplayModel({
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
   const hasRenderableSeries = (visibleSeries?.graphPoints?.length || 0) >= 2;
-  const shouldDelayPendingOverlay =
-    isBalanceChartDataReadyToQuery && loading && hasRenderableSeries;
+  const shouldDelayPendingOverlay = loading && hasRenderableSeries;
 
   useEffect(() => {
     if (!shouldDelayPendingOverlay) {
@@ -721,7 +728,7 @@ export function useBalanceChartDisplayModel({
   const onPointSelected = useCallback(
     (point: GraphPoint) => {
       if (
-        !isBalanceChartDataReadyToQuery ||
+        !canInteractWithVisibleSeries ||
         !visibleSeries ||
         !gestureStartedRef.current
       ) {
@@ -744,7 +751,7 @@ export function useBalanceChartDisplayModel({
         lastHapticPointTsRef.current = pointTs;
       }
     },
-    [balanceOffset, isBalanceChartDataReadyToQuery, visibleSeries],
+    [balanceOffset, canInteractWithVisibleSeries, visibleSeries],
   );
 
   const onTimeframeSelect = useCallback(
@@ -769,10 +776,10 @@ export function useBalanceChartDisplayModel({
     visibleSeries,
     visibleTimeframe,
     visibleQuoteCurrency,
-    isLoading: loading || !isBalanceChartDataReadyToQuery,
-    pendingOverlayVisible: isBalanceChartDataReadyToQuery
-      ? pendingOverlayVisible
-      : false,
+    isLoading:
+      loading ||
+      (!isBalanceChartDataReadyToQuery && !canInteractWithVisibleSeries),
+    pendingOverlayVisible,
     shouldShowLoader,
     error: isBalanceChartDataReadyToQuery ? error : undefined,
     selectedPoint: displayedSelectedPoint,
