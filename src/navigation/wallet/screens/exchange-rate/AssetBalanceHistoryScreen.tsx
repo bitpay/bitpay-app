@@ -129,9 +129,10 @@ const AssetBalanceHistoryScreen = ({
   const [selectionActive, setSelectionActive] = useState(false);
   const [chartDisplayedPoint, setChartDisplayedPoint] =
     useState<AssetDisplayedAnalysisPoint>(undefined);
+  const portfolioChartsEnabled = shared.showPortfolioValue === true;
   const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: shared.assetWallets,
-    enabled: shared.showPortfolioValue === true && shared.hasWalletsForAsset,
+    enabled: portfolioChartsEnabled && shared.hasWalletsForAsset,
     hideAllBalances: shared.hideAllBalances,
   });
   const chartableAssetWallets = balanceChartReadiness.chartableWallets;
@@ -200,7 +201,7 @@ const AssetBalanceHistoryScreen = ({
     mode: 'representativeAsset',
     representativeAsset: shared.assetContext,
     enabled:
-      shared.showPortfolioValue !== true &&
+      !portfolioChartsEnabled &&
       !shared.hideAllBalances &&
       shared.hasWalletsForAsset,
   });
@@ -213,7 +214,7 @@ const AssetBalanceHistoryScreen = ({
 
   const changeRow = shared.hideAllBalances
     ? undefined
-    : shared.showPortfolioValue === true
+    : portfolioChartsEnabled
     ? displayedSummary.changeRow
     : legacyLastDayChangeRowData;
 

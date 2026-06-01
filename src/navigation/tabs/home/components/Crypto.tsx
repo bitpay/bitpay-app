@@ -205,6 +205,27 @@ export const keyBackupRequired = (
   };
 };
 
+const getLegacyPercentageDifferenceForKey = (args: {
+  key: Key;
+  legacyPercentageDifferenceByKey?: Record<string, number | null | undefined>;
+}): number | null => {
+  const {key, legacyPercentageDifferenceByKey} = args;
+  if (
+    legacyPercentageDifferenceByKey &&
+    Object.prototype.hasOwnProperty.call(
+      legacyPercentageDifferenceByKey,
+      key.id,
+    )
+  ) {
+    return legacyPercentageDifferenceByKey[key.id] ?? null;
+  }
+
+  return getLegacyPercentageDifferenceFromTotals({
+    totalBalance: key.totalBalance || 0,
+    totalBalanceLastDay: key.totalBalanceLastDay || 0,
+  });
+};
+
 export const createHomeCardList = ({
   navigation,
   keys,
@@ -245,12 +266,7 @@ export const createHomeCardList = ({
 
   if (hasKeys) {
     const walletCards = keys.map(key => {
-      let {
-        wallets,
-        totalBalance = 0,
-        totalBalanceLastDay = 0,
-        backupComplete,
-      } = key;
+      let {wallets, totalBalance = 0, backupComplete} = key;
 
       wallets = getVisibleWalletsForKey(key);
 
@@ -259,17 +275,10 @@ export const createHomeCardList = ({
         wallets,
       });
 
-      const legacyPercentageDifference =
-        legacyPercentageDifferenceByKey &&
-        Object.prototype.hasOwnProperty.call(
-          legacyPercentageDifferenceByKey,
-          key.id,
-        )
-          ? legacyPercentageDifferenceByKey[key.id] ?? null
-          : getLegacyPercentageDifferenceFromTotals({
-              totalBalance,
-              totalBalanceLastDay,
-            });
+      const legacyPercentageDifference = getLegacyPercentageDifferenceForKey({
+        key,
+        legacyPercentageDifferenceByKey,
+      });
 
       const portfolioPercentageDifference =
         portfolioPercentageDifferenceByKey?.[key.id] ?? null;
@@ -408,12 +417,13 @@ const Crypto = () => {
   const hasCompletedFullPortfolioPopulate = useAppSelector(
     selectHasCompletedFullPortfolioPopulate,
   );
+  const portfolioChartsRequested = showPortfolioValue === true;
   const portfolioChartsEnabled =
-    showPortfolioValue && hasCompletedFullPortfolioPopulate;
+    portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
   const keyList = useMemo(() => Object.values(keys), [keys]);
   const hasKeys = keyList.length;
   const legacyKeyPercentagesEnabled =
-    showPortfolioValue !== true && !hideAllBalances;
+    !portfolioChartsRequested && !hideAllBalances;
   const legacyKeyRateRequests = useMemo(() => {
     if (!legacyKeyPercentagesEnabled) {
       return [];

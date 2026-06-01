@@ -119,38 +119,20 @@ export const formatAssetRowDeltaPercent = (percent: number): string => {
   return `${prefix}${abs.toFixed(2)}%`;
 };
 
-export const getLegacyLastDayPnlFromTotals = (args: {
-  currentFiatBalance: number | undefined;
-  lastDayFiatBalance: number | undefined;
-}): LegacyLastDayPnl | undefined => {
-  const currentFiatBalance = toNumber(args.currentFiatBalance);
-  const lastDayFiatBalance = toNumber(args.lastDayFiatBalance);
+const isPositiveFiniteNumber = (value: number): boolean =>
+  Number.isFinite(value) && value > 0;
 
-  if (!(currentFiatBalance > 0) || !(lastDayFiatBalance > 0)) {
-    return undefined;
-  }
-
-  const deltaFiat = currentFiatBalance - lastDayFiatBalance;
-  const percent = calculatePercentageDifference(
-    currentFiatBalance,
-    lastDayFiatBalance,
-  );
-
-  return {
-    deltaFiat,
-    percent,
-    isPositive: deltaFiat >= 0,
-  };
-};
-
-const getLegacyLastDayPnlFromPreviousFiat = (args: {
+const getLegacyLastDayPnlFromBalances = (args: {
   currentFiatBalance: number | undefined;
   previousFiatBalance: number | undefined;
 }): LegacyLastDayPnl | undefined => {
   const currentFiatBalance = toNumber(args.currentFiatBalance);
   const previousFiatBalance = toNumber(args.previousFiatBalance);
 
-  if (!(currentFiatBalance > 0) || !(previousFiatBalance > 0)) {
+  if (
+    !isPositiveFiniteNumber(currentFiatBalance) ||
+    !isPositiveFiniteNumber(previousFiatBalance)
+  ) {
     return undefined;
   }
 
@@ -170,6 +152,15 @@ const getLegacyLastDayPnlFromPreviousFiat = (args: {
     isPositive: deltaFiat >= 0,
   };
 };
+
+export const getLegacyLastDayPnlFromTotals = (args: {
+  currentFiatBalance: number | undefined;
+  lastDayFiatBalance: number | undefined;
+}): LegacyLastDayPnl | undefined =>
+  getLegacyLastDayPnlFromBalances({
+    currentFiatBalance: args.currentFiatBalance,
+    previousFiatBalance: args.lastDayFiatBalance,
+  });
 
 const normalizeLegacyLastDayAssetIdentity = (
   identity: LegacyLastDayAssetIdentity | undefined,
@@ -232,6 +223,13 @@ const dedupeLegacyLastDayRateRequests = (
   return out;
 };
 
+const buildLegacyLastDayRateRequestsForAssetIdentities = (
+  identities: LegacyLastDayAssetIdentity[],
+): FiatRateCacheRequest[] =>
+  dedupeLegacyLastDayRateRequests(
+    identities.map(getLegacyLastDayRateRequestForAsset),
+  );
+
 const getV4PreviousFiatForAsset = (args: {
   currentFiatBalance: number | undefined;
   rates?: Rates;
@@ -241,7 +239,7 @@ const getV4PreviousFiatForAsset = (args: {
   identity: LegacyLastDayAssetIdentity;
 }): number | undefined => {
   const currentFiatBalance = toNumber(args.currentFiatBalance);
-  if (!(currentFiatBalance > 0)) {
+  if (!isPositiveFiniteNumber(currentFiatBalance)) {
     return undefined;
   }
 
@@ -260,10 +258,7 @@ const getV4PreviousFiatForAsset = (args: {
     tokenAddress: asset.tokenAddress,
     quoteCurrency,
   });
-  if (!(typeof currentRate === 'number' && Number.isFinite(currentRate))) {
-    return undefined;
-  }
-  if (!(currentRate > 0)) {
+  if (typeof currentRate !== 'number' || !isPositiveFiniteNumber(currentRate)) {
     return undefined;
   }
 
@@ -282,15 +277,15 @@ const getV4PreviousFiatForAsset = (args: {
     method: 'linear',
     identity,
   });
-  if (!(typeof previousRate === 'number' && Number.isFinite(previousRate))) {
-    return undefined;
-  }
-  if (!(previousRate > 0)) {
+  if (
+    typeof previousRate !== 'number' ||
+    !isPositiveFiniteNumber(previousRate)
+  ) {
     return undefined;
   }
 
   const previousFiatBalance = currentFiatBalance * (previousRate / currentRate);
-  return Number.isFinite(previousFiatBalance) && previousFiatBalance > 0
+  return isPositiveFiniteNumber(previousFiatBalance)
     ? previousFiatBalance
     : undefined;
 };
@@ -305,7 +300,7 @@ export const getLegacyLastDayPnlForRepresentativeAsset = (args: {
   identity: LegacyLastDayAssetIdentity;
 }): LegacyLastDayPnl | undefined => {
   const previousFiatFromV4 = getV4PreviousFiatForAsset(args);
-  const v4Pnl = getLegacyLastDayPnlFromPreviousFiat({
+  const v4Pnl = getLegacyLastDayPnlFromBalances({
     currentFiatBalance: args.currentFiatBalance,
     previousFiatBalance: previousFiatFromV4,
   });
@@ -322,16 +317,8 @@ export const getLegacyLastDayPnlForRepresentativeAsset = (args: {
 export const buildLegacyLastDayRateRequestsForWallets = (args: {
   wallets: Wallet[] | undefined;
 }): FiatRateCacheRequest[] => {
-  return dedupeLegacyLastDayRateRequests(
-    (args.wallets || [])
-      .filter(wallet => toNumber(wallet?.balance?.fiat) > 0)
-      .map(wallet =>
-        getLegacyLastDayRateRequestForAsset({
-          currencyAbbreviation: wallet.currencyAbbreviation,
-          chain: wallet.chain,
-          tokenAddress: wallet.tokenAddress,
-        }),
-      ),
+  return buildLegacyLastDayRateRequestsForAssetIdentities(
+    (args.wallets || []).filter(wallet => toNumber(wallet?.balance?.fiat) > 0),
   );
 };
 
@@ -345,14 +332,14 @@ export const getLegacyLastDayPnlForWallets = (args: {
 }): LegacyLastDayPnl | undefined => {
   const wallets = args.wallets || [];
   const currentFiatBalance = toNumber(args.currentFiatBalance);
-  if (!(currentFiatBalance > 0)) {
+  if (!isPositiveFiniteNumber(currentFiatBalance)) {
     return undefined;
   }
 
   let previousFiatTotal = 0;
   for (const wallet of wallets) {
     const walletCurrentFiat = toNumber(wallet?.balance?.fiat);
-    if (!(walletCurrentFiat > 0)) {
+    if (!isPositiveFiniteNumber(walletCurrentFiat)) {
       continue;
     }
 
@@ -370,14 +357,15 @@ export const getLegacyLastDayPnlForWallets = (args: {
     });
     const fallbackLastDayFiat = toNumber(wallet?.balance?.fiatLastDay);
     const previousFiat =
-      previousFiatFromV4 ?? (fallbackLastDayFiat > 0 ? fallbackLastDayFiat : 0);
+      previousFiatFromV4 ??
+      (isPositiveFiniteNumber(fallbackLastDayFiat) ? fallbackLastDayFiat : 0);
 
-    if (previousFiat > 0) {
+    if (isPositiveFiniteNumber(previousFiat)) {
       previousFiatTotal += previousFiat;
     }
   }
 
-  return getLegacyLastDayPnlFromPreviousFiat({
+  return getLegacyLastDayPnlFromBalances({
     currentFiatBalance,
     previousFiatBalance: previousFiatTotal,
   });
@@ -572,19 +560,11 @@ export const buildLegacyLastDayRateRequestsForAssetRows = (args: {
   wallets: Wallet[] | undefined;
   orderedAssetKeys?: string[];
 }): FiatRateCacheRequest[] => {
-  return dedupeLegacyLastDayRateRequests(
+  return buildLegacyLastDayRateRequestsForAssetIdentities(
     buildAssetPreviewGroupsFromWallets({
       wallets: args.wallets,
       orderedAssetKeys: args.orderedAssetKeys,
-    })
-      .filter(group => group.fiatValue > 0)
-      .map(group =>
-        getLegacyLastDayRateRequestForAsset({
-          currencyAbbreviation: group.currencyAbbreviation,
-          chain: group.chain,
-          tokenAddress: group.tokenAddress,
-        }),
-      ),
+    }).filter(group => group.fiatValue > 0),
   );
 };
 

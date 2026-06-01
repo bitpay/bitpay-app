@@ -138,6 +138,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     ({APP}: RootState) => APP.hideAllBalances,
   );
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const portfolioChartsEnabled = showPortfolioValue === true;
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'ExchangeRate'>>();
   const isAssetBalanceHistoryMode = params?.chartType === 'assetBalanceHistory';
   const scopeKeyId = params?.keyId;
@@ -282,7 +283,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
 
   const assetWalletSnapshotPresence = usePortfolioWalletSnapshotPresence({
     wallets: historicalAssetWallets,
-    enabled: showPortfolioValue === true && historicalAssetWallets.length > 0,
+    enabled: portfolioChartsEnabled && historicalAssetWallets.length > 0,
   });
 
   const walletsForAssetDisplay = useMemo(() => {
@@ -292,7 +293,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
       tokenAddress: assetContext.tokenAddress,
     });
 
-    if (showPortfolioValue !== true || !assetWalletSnapshotPresence.checked) {
+    if (!portfolioChartsEnabled || !assetWalletSnapshotPresence.checked) {
       return liveBalanceWallets;
     }
 
@@ -319,7 +320,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     assetWalletSnapshotPresence.checked,
     assetWalletSnapshotPresence.hasSnapshotsByWalletId,
     historicalAssetWallets,
-    showPortfolioValue,
+    portfolioChartsEnabled,
     visibleWallets,
   ]);
 

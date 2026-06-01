@@ -110,6 +110,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const portfolioChartsRequested = showPortfolioValue === true;
   const hasKeys = Object.values(keys).length;
 
   const portfolioAllocationTotalFiat = useMemo(() => {
@@ -456,7 +457,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                     onLayout={onHomeAssetsSectionLayout}>
                     <AssetsSection
                       enabled={
-                        showPortfolioValue === true &&
+                        portfolioChartsRequested &&
                         shouldActivateHomeAssetsSection
                       }
                     />

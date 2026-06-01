@@ -206,10 +206,11 @@ const PortfolioBalanceContent = () => {
     visibleCurrentBalance + coinbaseBalance;
 
   const dispatch = useAppDispatch();
+  const portfolioChartsRequested = showPortfolioValue === true;
 
   const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: walletsAcrossKeys,
-    enabled: showPortfolioValue === true,
+    enabled: portfolioChartsRequested,
     hideAllBalances,
   });
   const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
@@ -456,7 +457,7 @@ const PortfolioBalanceContent = () => {
     wallets: walletsAcrossKeys,
     currentFiatBalance: visibleCurrentBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances,
+    enabled: !portfolioChartsRequested && !hideAllBalances,
   });
   const displayedChangeRowData =
     balanceChartsEnabled && balanceChartSurface.changeRowData
