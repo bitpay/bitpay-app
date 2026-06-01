@@ -450,6 +450,72 @@ const mockWalletHasNonZeroLiveBalance = (wallet: any) => {
 };
 
 jest.mock('../../../utils/portfolio/assets', () => ({
+  buildLegacyLastDayRateRequestsForWallets: jest.fn(
+    ({wallets}: {wallets?: any[]}) =>
+      (wallets || [])
+        .filter(wallet => Number(wallet?.balance?.fiat || 0) > 0)
+        .map(wallet => ({
+          coin: wallet.currencyAbbreviation,
+          chain: wallet.chain,
+          tokenAddress: wallet.tokenAddress,
+          intervals: ['1D'],
+        })),
+  ),
+  getLegacyLastDayPnlForRepresentativeAsset: jest.fn(
+    ({
+      currentFiatBalance,
+      fallbackLastDayFiatBalance,
+    }: {
+      currentFiatBalance?: number;
+      fallbackLastDayFiatBalance?: number;
+    }) => {
+      const current = Number(currentFiatBalance) || 0;
+      const lastDay = Number(fallbackLastDayFiatBalance) || 0;
+      if (!(current > 0) || !(lastDay > 0)) {
+        return undefined;
+      }
+      const deltaFiat = current - lastDay;
+      return {
+        deltaFiat,
+        percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
+        isPositive: deltaFiat >= 0,
+      };
+    },
+  ),
+  getLegacyLastDayPnlForWallets: jest.fn(
+    ({
+      wallets,
+      currentFiatBalance,
+    }: {
+      wallets?: any[];
+      currentFiatBalance?: number;
+    }) => {
+      const current = Number(currentFiatBalance) || 0;
+      const lastDay = (wallets || []).reduce(
+        (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
+        0,
+      );
+      if (!(current > 0) || !(lastDay > 0)) {
+        return undefined;
+      }
+      const deltaFiat = current - lastDay;
+      return {
+        deltaFiat,
+        percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
+        isPositive: deltaFiat >= 0,
+      };
+    },
+  ),
+  getLegacyLastDayRateRequestForAsset: jest.fn((identity?: any) =>
+    identity?.currencyAbbreviation
+      ? {
+          coin: identity.currencyAbbreviation,
+          chain: identity.chain,
+          tokenAddress: identity.tokenAddress,
+          intervals: ['1D'],
+        }
+      : undefined,
+  ),
   getLegacyLastDayPnlFromTotals: jest.fn(
     ({
       currentFiatBalance,
@@ -1098,7 +1164,7 @@ describe('portfolio chart visibility guards', () => {
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
         .length,
-    ).toBeGreaterThan(0);
+    ).toBe(0);
   });
 
   it('renders the Home portfolio balance chart when a full-populate timestamp exists', async () => {

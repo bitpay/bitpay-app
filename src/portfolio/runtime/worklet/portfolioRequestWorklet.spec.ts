@@ -3,7 +3,7 @@ import {clearPortfolioTxHistorySigningDispatchContextOnRuntime} from '../../adap
 import {
   createFakeWorkletStorage,
   installNitroFetchMock,
-} from './__tests__/workletTestUtils';
+} from './workletTestUtils';
 import {
   appendWorkletSnapshotChunk,
   buildWorkletWalletMetaForStore,

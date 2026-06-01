@@ -7,7 +7,7 @@ import {
   createFakeWorkletStorage,
   installNitroFetchMock,
   type FakeNitroRequest,
-} from './__tests__/workletTestUtils';
+} from './workletTestUtils';
 import {
   ensureWorkletRates,
   ensureWorkletSnapshotRateSeriesCache,
