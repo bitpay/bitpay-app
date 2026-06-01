@@ -36,7 +36,7 @@
 		CD1957F62FB37AD40072A9AE /* ConfirmPaymentPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957D72FB37AD40072A9AE /* ConfirmPaymentPage.swift */; };
 		CD1957F72FB37AD40072A9AE /* AllureXCTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957D32FB37AD40072A9AE /* AllureXCTestSupport.swift */; };
 		CD1957F82FB37AD40072A9AE /* EnterAmountPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957D82FB37AD40072A9AE /* EnterAmountPage.swift */; };
-		CD1957F92FB37AD40072A9AE /* Test594_BasicSwapBTC_.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC_.swift */; };
+		CD1957F92FB37AD40072A9AE /* Test594_BasicSwapBTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC.swift */; };
 		CD1957FA2FB37AD40072A9AE /* AddCryptoOptionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957D52FB37AD40072A9AE /* AddCryptoOptionPage.swift */; };
 		CD1957FB2FB37AD40072A9AE /* OnboardingPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957DD2FB37AD40072A9AE /* OnboardingPage.swift */; };
 		CD1957FC2FB37AD40072A9AE /* ImportRecoveryPhrasePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957DA2FB37AD40072A9AE /* ImportRecoveryPhrasePage.swift */; };
@@ -114,7 +114,7 @@
 		CD1957E52FB37AD40072A9AE /* Test591_OnboardingCreateWallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test591_OnboardingCreateWallet.swift; sourceTree = "<group>"; };
 		CD1957E62FB37AD40072A9AE /* Test592_ImportWalletRecoveryPhrase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test592_ImportWalletRecoveryPhrase.swift; sourceTree = "<group>"; };
 		CD1957E72FB37AD40072A9AE /* Test593_BTCConfirmPaymentScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test593_BTCConfirmPaymentScreen.swift; sourceTree = "<group>"; };
-		CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC_.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test594_BasicSwapBTC_.swift; sourceTree = "<group>"; };
+		CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test594_BasicSwapBTC.swift; sourceTree = "<group>"; };
 		CD1957E92FB37AD40072A9AE /* Test595_BasicSellBTC_.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test595_BasicSellBTC_.swift; sourceTree = "<group>"; };
 		CD1957EA2FB37AD40072A9AE /* Test596_BasicBuyBTC_.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test596_BasicBuyBTC_.swift; sourceTree = "<group>"; };
 		CD1957EB2FB37AD40072A9AE /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
@@ -281,7 +281,7 @@
 				CD1957E52FB37AD40072A9AE /* Test591_OnboardingCreateWallet.swift */,
 				CD1957E62FB37AD40072A9AE /* Test592_ImportWalletRecoveryPhrase.swift */,
 				CD1957E72FB37AD40072A9AE /* Test593_BTCConfirmPaymentScreen.swift */,
-				CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC_.swift */,
+				CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC.swift */,
 				CD1957E92FB37AD40072A9AE /* Test595_BasicSellBTC_.swift */,
 				CD1957EA2FB37AD40072A9AE /* Test596_BasicBuyBTC_.swift */,
 				CD1957EB2FB37AD40072A9AE /* TestPlan.xctestplan */,
@@ -575,7 +575,7 @@
 				CD1957F62FB37AD40072A9AE /* ConfirmPaymentPage.swift in Sources */,
 				CD1957F72FB37AD40072A9AE /* AllureXCTestSupport.swift in Sources */,
 				CD1957F82FB37AD40072A9AE /* EnterAmountPage.swift in Sources */,
-				CD1957F92FB37AD40072A9AE /* Test594_BasicSwapBTC_.swift in Sources */,
+				CD1957F92FB37AD40072A9AE /* Test594_BasicSwapBTC.swift in Sources */,
 				CD1957FA2FB37AD40072A9AE /* AddCryptoOptionPage.swift in Sources */,
 				CD1957FB2FB37AD40072A9AE /* OnboardingPage.swift in Sources */,
 				CD1957FC2FB37AD40072A9AE /* ImportRecoveryPhrasePage.swift in Sources */,
@@ -603,7 +603,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4221E54904CA4996330CEB54 /* Pods-BitPayApp.debug.xcconfig */;
 			buildSettings = {
-				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
+				ALLOWED_URL_PREFIXES = "https://bitpay.com/,https://test.bitpay.com/,https://staging.bitpay.com/,https://bws.bitpay.com/,https://www.coinbase.com/,https://api.coinbase.com/,https://api.1inch.dev/swap/v5.2/,https://api.coingecko.com/api/v3/simple/token_price/,https://checkout.simplexcc.com/,https://sandbox.test-simplexcc.com,https://api.moonpay.com/,https://api.moonpay.dev/,https://api.zenledger.io/bitpay/wallets/,https://rest.iad-05.braze.com/,https://sdk.iad-05.braze.com/,https://cloudflare-eth.com/,https://sepolia.infura.io/v3/,https://polygon-rpc.com/,https://polygon-amoy.core.chainstack.com/,https://static.methodfi.com/,https://api.zenledger.io/,https://api.blockcypher.com/v1/,https://api.fullstack.cash/v5/,https://deep-index.moralis.io/api/v2.2/,https://api.bitcore.io/api,https://api-eth.bitcore.io/api,https://api-matic.bitcore.io/api,https://api-arb.bitcore.io/api,https://api-base.bitcore.io/api,https://api-op.bitcore.io/api,https://api-xrp.bitcore.io/api,https://api-sol.bitcore.io/api,https://portal.polygon.technology/bridge,https://bridge.arbitrum.io/,https://bridge.base.org/,https://app.optimism.io/bridge/,https://mainnet.optimism.io/,https://arb1.arbitrum.io/rpc,https://mainnet.base.org/,https://goerli.optimism.io,https://goerli-rollup.arbitrum.io/rpc,https://goerli.base.org,https://verify.walletconnect.com/,https://verify.walletconnect.org/,https://api.etherscan.io/v2/api,https://solana-gateway.moralis.io/,https://tokens-data.1inch.io/images/501/";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -648,7 +648,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */;
 			buildSettings = {
-				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
+				ALLOWED_URL_PREFIXES = "https://bitpay.com/,https://test.bitpay.com/,https://staging.bitpay.com/,https://bws.bitpay.com/,https://www.coinbase.com/,https://api.coinbase.com/,https://api.1inch.dev/swap/v5.2/,https://api.coingecko.com/api/v3/simple/token_price/,https://checkout.simplexcc.com/,https://sandbox.test-simplexcc.com,https://api.moonpay.com/,https://api.moonpay.dev/,https://api.zenledger.io/bitpay/wallets/,https://rest.iad-05.braze.com/,https://sdk.iad-05.braze.com/,https://cloudflare-eth.com/,https://sepolia.infura.io/v3/,https://polygon-rpc.com/,https://polygon-amoy.core.chainstack.com/,https://static.methodfi.com/,https://api.zenledger.io/,https://api.blockcypher.com/v1/,https://api.fullstack.cash/v5/,https://deep-index.moralis.io/api/v2.2/,https://api.bitcore.io/api,https://api-eth.bitcore.io/api,https://api-matic.bitcore.io/api,https://api-arb.bitcore.io/api,https://api-base.bitcore.io/api,https://api-op.bitcore.io/api,https://api-xrp.bitcore.io/api,https://api-sol.bitcore.io/api,https://portal.polygon.technology/bridge,https://bridge.arbitrum.io/,https://bridge.base.org/,https://app.optimism.io/bridge/,https://mainnet.optimism.io/,https://arb1.arbitrum.io/rpc,https://mainnet.base.org/,https://goerli.optimism.io,https://goerli-rollup.arbitrum.io/rpc,https://goerli.base.org,https://verify.walletconnect.com/,https://verify.walletconnect.org/,https://api.etherscan.io/v2/api,https://solana-gateway.moralis.io/,https://tokens-data.1inch.io/images/501/";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
