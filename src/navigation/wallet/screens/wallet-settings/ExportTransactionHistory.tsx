@@ -15,7 +15,8 @@ import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import RNFS from 'react-native-fs';
 import {PermissionsAndroid, Platform} from 'react-native';
-import Share, {ShareOptions} from 'react-native-share';
+import {ShareOptions} from 'react-native-share';
+import {shareFile as shareFileUtil} from '../../../../utils/share';
 import Papa from 'papaparse';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
@@ -237,7 +238,7 @@ const ExportTransactionHistory = () => {
       await RNFS.writeFile(filePath, csv, 'utf8');
 
       if (option === 'download') {
-        await Share.open(opts);
+        await dispatch(shareFileUtil(opts));
       } else {
         handleEmail(opts.subject!, filePath);
       }

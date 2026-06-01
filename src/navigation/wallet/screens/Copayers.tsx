@@ -4,7 +4,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import styled, {useTheme} from 'styled-components/native';
-import {Image, ScrollView, RefreshControl, Share} from 'react-native';
+import {Image, ScrollView, RefreshControl} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   Paragraph,
@@ -26,6 +26,8 @@ import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {useLogger} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
+import {shareNative} from '../../../utils/share';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
@@ -69,6 +71,7 @@ const CopayersContainer = styled(RowContainer)`
 const Copayers: React.FC<CopayersProps> = props => {
   const {t} = useTranslation();
   const logger = useLogger();
+  const dispatch = useAppDispatch();
   const route = useRoute<RouteProp<WalletGroupParamList, 'Copayers'>>();
   const {wallet, status} = route.params || {};
   const [walletStatus, setWalletStatus] = useState(status);
@@ -151,9 +154,7 @@ const Copayers: React.FC<CopayersProps> = props => {
   };
 
   const shareInvitation = async () => {
-    await Share.share({
-      message: walletStatus.secret,
-    });
+    await dispatch(shareNative({message: walletStatus.secret}));
   };
 
   return (

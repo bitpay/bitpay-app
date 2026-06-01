@@ -9,7 +9,8 @@ import {
   ScreenGutter,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {Share, View} from 'react-native';
+import {View} from 'react-native';
+import {shareNative} from '../../../../utils/share';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {SlateDark, White} from '../../../../styles/colors';
@@ -137,7 +138,7 @@ const AllAddresses = () => {
         .join('\n');
 
       const subject = appName + ' Addresses';
-      await Share.share({title: subject, message: body});
+      await dispatch(shareNative({title: subject, message: body}));
       setButtonState('success');
       await sleep(200);
       setButtonState(undefined);

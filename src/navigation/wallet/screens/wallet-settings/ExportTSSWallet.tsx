@@ -38,7 +38,8 @@ import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import Share, {ShareOptions} from 'react-native-share';
+import {ShareOptions} from 'react-native-share';
+import {shareFile} from '../../../../utils/share';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {logManager} from '../../../../managers/LogManager';
@@ -291,7 +292,7 @@ const ExportTSSWallet = () => {
         type: 'text/plain',
       };
 
-      await Share.open(opts);
+      await dispatch(shareFile(opts));
 
       RNFS.unlink(filePath).catch(() => {});
 

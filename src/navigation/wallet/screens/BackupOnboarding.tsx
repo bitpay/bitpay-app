@@ -23,7 +23,8 @@ import {getMnemonic, sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import Share, {ShareOptions} from 'react-native-share';
+import {ShareOptions} from 'react-native-share';
+import {shareFile} from '../../../utils/share';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
@@ -128,7 +129,7 @@ const BackupOnboarding: React.FC = () => {
       };
 
       logger.debug('Trying to execute Share.open');
-      Share.open(opts);
+      dispatch(shareFile(opts));
     } catch (err) {
       let errMsg = '';
       if (err instanceof Error) {
