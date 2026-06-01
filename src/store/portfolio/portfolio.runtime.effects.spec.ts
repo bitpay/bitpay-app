@@ -413,9 +413,11 @@ const expectPopulateResumeSettledAction = (dispatched: any[]) =>
   );
 
 const expectStartPopulateWithUsd = () =>
-  expect(mockStartPopulatePortfolio).toHaveBeenCalledWith({
-    quoteCurrency: 'USD',
-  });
+  expect(mockStartPopulatePortfolio).toHaveBeenCalledWith(
+    expect.objectContaining({
+      quoteCurrency: 'USD',
+    }),
+  );
 
 const expectFinishedFullPopulate = (overrides: Record<string, any> = {}) =>
   expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
@@ -1489,6 +1491,12 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(
       mockGetPortfolioPopulateDecisionsForWallets.mock.calls[0][0].wallets,
     ).toEqual([wallet]);
+    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        decisionReasonByWalletId: {'wallet-from-state': 'missing_snapshot'},
+        decisionSource: 'scoped_staleness',
+      }),
+    );
     expect(mockPopulateWallets.mock.calls[0][0].wallets).toEqual([
       {walletId: 'wallet-from-state', summary: {walletId: 'wallet-from-state'}},
     ]);
@@ -1728,27 +1736,6 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(mockPortfolioService).toHaveBeenCalledTimes(1);
   });
 
-  it('app launch falls back to full populate when startup wallet init is not confirmed completed', async () => {
-    const state = makeState();
-    const {dispatch} = makeStore(state);
-    mockWaitForStartupWalletStoreInitForPortfolio.mockResolvedValueOnce({
-      status: 'skipped',
-      walletInitSuccess: false,
-    });
-    mockPopulateWallets.mockResolvedValueOnce(
-      successfulPopulateResult({
-        results: [],
-        status: {walletStatusById: {}, walletsCompleted: 0},
-      }),
-    );
-
-    await dispatchAppLaunchPopulateWithUsd(dispatch);
-
-    expect(mockGetPortfolioPopulateDecisionsForWallets).not.toHaveBeenCalled();
-    expectStartPopulateWithUsd();
-    expect(mockPortfolioService).toHaveBeenCalledTimes(1);
-  });
-
   it('app launch marks the initial baseline complete when all wallets are up to date', async () => {
     const state = makeInitialBaselineState();
     const {dispatch, dispatched} = makeStore(state);
@@ -1784,6 +1771,12 @@ describe('portfolio runtime effects lock deferral', () => {
     await dispatchAppLaunchPopulateWithUsd(dispatch);
 
     expectStartPopulateWithUsd();
+    expect(mockStartPopulatePortfolio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        decisionReasonByWalletId: {'wallet-1': 'missing_index'},
+        decisionSource: 'app_launch_staleness',
+      }),
+    );
     expect(mockFinishPopulatePortfolio).toHaveBeenCalledWith(
       expect.objectContaining({
         finishedAt: 1234,

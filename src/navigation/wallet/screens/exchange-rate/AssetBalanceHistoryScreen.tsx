@@ -44,6 +44,7 @@ const AssetBalanceChartSection = React.memo(
     gradientStartColor,
     showLoaderWhenNoSnapshots,
     isBalanceChartDataReadyToQuery,
+    preserveVisibleSeriesWhileNotReady,
     onChangeRowData,
     onDisplayedAnalysisPointChange,
     onSelectionActiveChange,
@@ -58,6 +59,7 @@ const AssetBalanceChartSection = React.memo(
     gradientStartColor: string;
     showLoaderWhenNoSnapshots: boolean;
     isBalanceChartDataReadyToQuery?: boolean;
+    preserveVisibleSeriesWhileNotReady?: boolean;
     onChangeRowData: (data: AssetChartChangeRow) => void;
     onDisplayedAnalysisPointChange: (
       point: AssetDisplayedAnalysisPoint,
@@ -80,6 +82,9 @@ const AssetBalanceChartSection = React.memo(
           gradientStartColor={gradientStartColor}
           showLoaderWhenNoSnapshots={showLoaderWhenNoSnapshots}
           isBalanceChartDataReadyToQuery={isBalanceChartDataReadyToQuery}
+          preserveVisibleSeriesWhileNotReady={
+            preserveVisibleSeriesWhileNotReady
+          }
           onChangeRowData={onChangeRowData}
           onDisplayedAnalysisPointChange={onDisplayedAnalysisPointChange}
           onSelectionActiveChange={onSelectionActiveChange}
@@ -144,6 +149,10 @@ const AssetBalanceHistoryScreen = ({
     balanceChartReadiness.shouldShowChartLoader;
   const isAssetBalanceChartDataReadyToQuery =
     balanceChartReadiness.isBalanceChartDataReadyToQuery;
+  const shouldPreserveStaleAssetBalanceChart =
+    balanceChartReadiness.shouldPreserveStaleBalanceChart;
+  const canUseChartDisplayedState =
+    isAssetBalanceChartDataReadyToQuery || shouldPreserveStaleAssetBalanceChart;
   const isTimeframeTransitionPending =
     requestedTimeframe !== displayedTimeframe;
 
@@ -172,10 +181,10 @@ const AssetBalanceHistoryScreen = ({
 
   const {isRefreshing, onRefresh} = useAssetScreenRefresh(shared);
 
-  const effectiveChartDisplayedPoint = isAssetBalanceChartDataReadyToQuery
+  const effectiveChartDisplayedPoint = canUseChartDisplayedState
     ? chartDisplayedPoint
     : undefined;
-  const effectiveChartChangeRow = isAssetBalanceChartDataReadyToQuery
+  const effectiveChartChangeRow = canUseChartDisplayedState
     ? chartChangeRow
     : undefined;
   const displayedSummary = buildAssetBalanceHistoryDisplayedSummary({
@@ -262,6 +271,9 @@ const AssetBalanceHistoryScreen = ({
             isTimeframeTransitionPending
           }
           isBalanceChartDataReadyToQuery={isAssetBalanceChartDataReadyToQuery}
+          preserveVisibleSeriesWhileNotReady={
+            shouldPreserveStaleAssetBalanceChart
+          }
           onChangeRowData={handleChartChangeRowData}
           onDisplayedAnalysisPointChange={handleDisplayedAnalysisPointChange}
           onSelectionActiveChange={setSelectionActive}

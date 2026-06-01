@@ -202,18 +202,34 @@ export const transformPortfolioPopulateStatus = createTransform<
 >(
   inboundState => inboundState,
   outboundState => {
-    if (outboundState?.populateStatus?.inProgress) {
-      return {
-        ...outboundState,
-        populateStatus: {
-          ...outboundState.populateStatus,
-          inProgress: false,
-          currentWalletId: undefined,
-          walletStatusById: {},
-        },
-      };
+    const populateStatus = outboundState?.populateStatus;
+    if (!populateStatus) {
+      return outboundState;
     }
-    return outboundState;
+
+    const hasPersistedPopulateDebugData =
+      !!populateStatus.decisionSource ||
+      !!Object.keys(populateStatus.decisionReasonByWalletId || {}).length;
+
+    if (!populateStatus.inProgress && !hasPersistedPopulateDebugData) {
+      return outboundState;
+    }
+
+    return {
+      ...outboundState,
+      populateStatus: {
+        ...populateStatus,
+        ...(populateStatus.inProgress
+          ? {
+              inProgress: false,
+              currentWalletId: undefined,
+              walletStatusById: {},
+            }
+          : {}),
+        decisionReasonByWalletId: {},
+        decisionSource: undefined,
+      },
+    };
   },
   {whitelist: ['PORTFOLIO']},
 );

@@ -743,10 +743,12 @@ const resetState = (
   };
 };
 
+const withTheme = (element: React.ReactElement) => (
+  <ThemeProvider theme={testTheme as any}>{element}</ThemeProvider>
+);
+
 const renderWithTheme = (element: React.ReactElement) =>
-  TestRenderer.create(
-    <ThemeProvider theme={testTheme as any}>{element}</ThemeProvider>,
-  );
+  TestRenderer.create(withTheme(element));
 
 const collectRenderedText = (node: unknown): string[] => {
   if (typeof node === 'string') {
@@ -822,6 +824,9 @@ const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
     'account_details_balance_chart',
   ],
 ];
+const memoizedHeaderChartSurfaceCases = chartSurfaceCases.filter(([screen]) =>
+  ['Key Overview', 'AccountDetails'].includes(screen),
+);
 const portfolioChartSurfaceCases: Array<
   [string, () => React.ReactElement, string]
 > = [
@@ -1274,7 +1279,7 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(portfolioChartSurfaceCases)(
-    'keeps the %s chart in loader mode during later incremental populate after initial success',
+    'keeps the %s chart mounted with stale preservation during later incremental populate after initial success',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: true,
@@ -1288,8 +1293,9 @@ describe('portfolio chart visibility guards', () => {
 
       expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
         expect.objectContaining({
-          showLoaderWhenNoSnapshots: true,
+          showLoaderWhenNoSnapshots: false,
           isBalanceChartDataReadyToQuery: false,
+          preserveVisibleSeriesWhileNotReady: true,
         }),
         undefined,
       );
@@ -1300,6 +1306,43 @@ describe('portfolio chart visibility guards', () => {
           }).length,
         ).toBeGreaterThan(0);
       }
+    },
+  );
+
+  it.each(memoizedHeaderChartSurfaceCases)(
+    'updates the memoized %s chart props when an already-mounted chart enters incremental populate',
+    async (_screen, makeScreen) => {
+      resetState(true, {completedFullPopulate: true});
+
+      let view!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        view = renderWithTheme(makeScreen());
+      });
+
+      expect(mockBalanceHistoryChart).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          showLoaderWhenNoSnapshots: false,
+          isBalanceChartDataReadyToQuery: true,
+          preserveVisibleSeriesWhileNotReady: false,
+        }),
+        undefined,
+      );
+
+      mockBalanceHistoryChart.mockClear();
+      mockState.PORTFOLIO.populateStatus = makePopulateStatus();
+
+      await act(async () => {
+        view.update(withTheme(makeScreen()));
+      });
+
+      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          showLoaderWhenNoSnapshots: false,
+          isBalanceChartDataReadyToQuery: false,
+          preserveVisibleSeriesWhileNotReady: true,
+        }),
+        undefined,
+      );
     },
   );
 

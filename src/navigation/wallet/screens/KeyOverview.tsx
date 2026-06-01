@@ -690,6 +690,7 @@ const KeyOverview = () => {
     shouldMountBalanceChart: shouldMountKeyBalanceChart,
     shouldShowChartLoader: shouldShowKeyChartLoader,
     shouldRenderZeroBalanceChart: shouldRenderZeroKeyBalanceChart,
+    shouldPreserveStaleBalanceChart: shouldPreserveStaleKeyBalanceChart,
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
@@ -709,6 +710,7 @@ const KeyOverview = () => {
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: shouldMountKeyBalanceChart,
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
+    preserveChartDrivenStateWhileNotReady: shouldPreserveStaleKeyBalanceChart,
     resetKey: id,
   });
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
@@ -1214,6 +1216,9 @@ const KeyOverview = () => {
                   isBalanceChartDataReadyToQuery={
                     isKeyBalanceChartDataReadyToQuery
                   }
+                  preserveVisibleSeriesWhileNotReady={
+                    shouldPreserveStaleKeyBalanceChart
+                  }
                   showChangeRow={false}
                   onSelectedBalanceChange={
                     balanceChartSurface.chartCallbacks.onSelectedBalanceChange
@@ -1262,7 +1267,10 @@ const KeyOverview = () => {
     rates,
     searchResults,
     searchVal,
+    isKeyBalanceChartDataReadyToQuery,
     shouldMountKeyBalanceChart,
+    shouldPreserveStaleKeyBalanceChart,
+    shouldRenderZeroKeyBalanceChart,
     shouldShowKeyChartLoader,
     t,
     timeframeSelectorWidth,

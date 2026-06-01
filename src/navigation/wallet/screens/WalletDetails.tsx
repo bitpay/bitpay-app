@@ -625,6 +625,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     shouldMountBalanceChart: shouldMountWalletBalanceChart,
     shouldShowChartLoader: shouldShowWalletChartLoader,
     shouldRenderZeroBalanceChart: shouldRenderZeroWalletBalanceChart,
+    shouldPreserveStaleBalanceChart: shouldPreserveStaleWalletBalanceChart,
     isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
     chartableWallets,
   } = usePortfolioBalanceChartReadiness({
@@ -639,6 +640,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: shouldMountWalletBalanceChart,
     isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
+    preserveChartDrivenStateWhileNotReady:
+      shouldPreserveStaleWalletBalanceChart,
     resetKey: `${walletId}:${copayerId || ''}`,
   });
 
@@ -1397,6 +1400,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         }
                         isBalanceChartDataReadyToQuery={
                           isWalletBalanceChartDataReadyToQuery
+                        }
+                        preserveVisibleSeriesWhileNotReady={
+                          shouldPreserveStaleWalletBalanceChart
                         }
                         showChangeRow={false}
                         onSelectedBalanceChange={
