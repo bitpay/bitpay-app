@@ -550,11 +550,11 @@ const PortfolioBalanceContent = () => {
         </TouchableOpacity>
       </PortfolioTopContent>
 
-      {!hideAllBalances && displayedChangeRowData ? (
+      {!hideAllBalances && (displayedChangeRowData || balanceChartsEnabled) ? (
         <PortfolioBalanceChangeRow
-          percent={displayedChangeRowData.percent}
-          deltaFiatFormatted={displayedChangeRowData.deltaFiatFormatted}
-          rangeLabel={displayedChangeRowData.rangeLabel}
+          percent={displayedChangeRowData?.percent ?? 0}
+          deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
+          rangeLabel={displayedChangeRowData?.rangeLabel}
           style={[
             {
               width: '100%',
@@ -563,6 +563,7 @@ const PortfolioBalanceContent = () => {
                 : 'center',
               paddingLeft: shouldLeftAlignTopSection ? 12 : 0,
             },
+            !displayedChangeRowData ? {opacity: 0} : null,
           ]}
         />
       ) : null}
