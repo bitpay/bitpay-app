@@ -21,6 +21,7 @@ import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import {selectHasCompletedFullPortfolioPopulate} from '../../../../store/portfolio/portfolio.selectors';
 import {
   checkEncryptedKeysForEddsaMigration,
+  getLastDayTimestampStartOfHourMs,
   getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -51,12 +52,16 @@ import {
   HOME_CARD_WIDTH,
 } from '../../../../components/home-card/HomeCard';
 import {
+  buildLegacyLastDayRateRequestsForWallets,
+  getLegacyLastDayPnlForWallets,
   getLegacyPercentageDifferenceFromTotals,
   getKeyLastDayPercentageDifference,
   getVisibleWalletsForKey,
   isPopulateLoadingForWallets,
 } from '../../../../utils/portfolio/assets';
 import usePortfolioKeyPercentages from '../../../../portfolio/ui/hooks/usePortfolioKeyPercentages';
+import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
+import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
@@ -208,6 +213,7 @@ export const createHomeCardList = ({
   homeCarouselConfig,
   homeCarouselLayoutType,
   hideKeyBalance,
+  legacyPercentageDifferenceByKey,
   portfolioPercentageDifferenceByKey,
   populateStatus,
   context,
@@ -221,6 +227,7 @@ export const createHomeCardList = ({
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
+  legacyPercentageDifferenceByKey?: Record<string, number | null | undefined>;
   portfolioPercentageDifferenceByKey?: Record<
     string,
     number | null | undefined
@@ -253,10 +260,16 @@ export const createHomeCardList = ({
       });
 
       const legacyPercentageDifference =
-        getLegacyPercentageDifferenceFromTotals({
-          totalBalance,
-          totalBalanceLastDay,
-        });
+        legacyPercentageDifferenceByKey &&
+        Object.prototype.hasOwnProperty.call(
+          legacyPercentageDifferenceByKey,
+          key.id,
+        )
+          ? legacyPercentageDifferenceByKey[key.id] ?? null
+          : getLegacyPercentageDifferenceFromTotals({
+              totalBalance,
+              totalBalanceLastDay,
+            });
 
       const portfolioPercentageDifference =
         portfolioPercentageDifferenceByKey?.[key.id] ?? null;
@@ -388,8 +401,10 @@ const Crypto = () => {
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const hasCompletedFullPortfolioPopulate = useAppSelector(
     selectHasCompletedFullPortfolioPopulate,
   );
@@ -397,6 +412,59 @@ const Crypto = () => {
     showPortfolioValue && hasCompletedFullPortfolioPopulate;
   const keyList = useMemo(() => Object.values(keys), [keys]);
   const hasKeys = keyList.length;
+  const legacyKeyPercentagesEnabled =
+    showPortfolioValue !== true && !hideAllBalances;
+  const legacyKeyRateRequests = useMemo(() => {
+    if (!legacyKeyPercentagesEnabled) {
+      return [];
+    }
+
+    return buildLegacyLastDayRateRequestsForWallets({
+      wallets: keyList.flatMap(key => getVisibleWalletsForKey(key)),
+    });
+  }, [keyList, legacyKeyPercentagesEnabled]);
+  const legacyKeyBaselineTimestampMs = useMemo(
+    () => getLastDayTimestampStartOfHourMs(),
+    [defaultAltCurrency.isoCode],
+  );
+  const {cache: legacyKeyFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
+    quoteCurrency: defaultAltCurrency.isoCode,
+    requests: legacyKeyRateRequests,
+    maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+    enabled: legacyKeyPercentagesEnabled && legacyKeyRateRequests.length > 0,
+    clearOnRequestChange: true,
+  });
+  const legacyPercentageDifferenceByKey = useMemo(() => {
+    if (!legacyKeyPercentagesEnabled) {
+      return undefined;
+    }
+
+    const out: Record<string, number | null> = {};
+    for (const key of keyList) {
+      if (!key?.id) {
+        continue;
+      }
+
+      const legacyPnl = getLegacyLastDayPnlForWallets({
+        wallets: getVisibleWalletsForKey(key),
+        currentFiatBalance: key.totalBalance,
+        rates,
+        fiatRateSeriesCache: legacyKeyFiatRateSeriesCache,
+        quoteCurrency: defaultAltCurrency.isoCode,
+        baselineTimestampMs: legacyKeyBaselineTimestampMs,
+      });
+      out[key.id] = legacyPnl?.percent ?? null;
+    }
+
+    return out;
+  }, [
+    defaultAltCurrency.isoCode,
+    keyList,
+    legacyKeyBaselineTimestampMs,
+    legacyKeyFiatRateSeriesCache,
+    legacyKeyPercentagesEnabled,
+    rates,
+  ]);
   const portfolioPercentageDifferenceByKey = usePortfolioKeyPercentages({
     keys: keyList,
     enabled: portfolioChartsEnabled,
@@ -416,6 +484,7 @@ const Crypto = () => {
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
       hideKeyBalance: hideAllBalances,
+      legacyPercentageDifferenceByKey,
       portfolioPercentageDifferenceByKey:
         visiblePortfolioPercentageDifferenceByKey,
       populateStatus: portfolioPopulateStatus,
@@ -432,6 +501,7 @@ const Crypto = () => {
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
+        legacyPercentageDifferenceByKey,
         portfolioPercentageDifferenceByKey:
           visiblePortfolioPercentageDifferenceByKey,
         populateStatus: portfolioPopulateStatus,
@@ -445,6 +515,7 @@ const Crypto = () => {
     homeCarouselConfig,
     homeCarouselLayoutType,
     hideAllBalances,
+    legacyPercentageDifferenceByKey,
     portfolioPopulateStatus,
     visiblePortfolioPercentageDifferenceByKey,
   ]);

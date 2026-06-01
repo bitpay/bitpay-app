@@ -4,10 +4,7 @@ import {BaseText, H2} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
-import {
-  calculatePercentageDifference,
-  formatFiatAmount,
-} from '../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {shouldUseCompactFiatAmountText} from '../../../../utils/fiatAmountText';
 import InfoSvg from './InfoSvg';
 import {
@@ -56,6 +53,7 @@ import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/us
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
+import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -204,11 +202,6 @@ const PortfolioBalanceContent = () => {
     (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
     0,
   );
-  const visibleLastDayBalance = walletsAcrossKeys.reduce(
-    (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
-    0,
-  );
-
   const totalBalanceIncludingCoinbase: number =
     visibleCurrentBalance + coinbaseBalance;
 
@@ -459,32 +452,12 @@ const PortfolioBalanceContent = () => {
   const shouldUseCompactPortfolioBalanceText = useMemo(() => {
     return shouldUseCompactFiatAmountText(formattedPortfolioBalance);
   }, [formattedPortfolioBalance]);
-  const lastDayChangeRowData = useMemo(() => {
-    if (!(visibleCurrentBalance > 0) || !(visibleLastDayBalance > 0)) {
-      return undefined;
-    }
-
-    return {
-      percent: calculatePercentageDifference(
-        visibleCurrentBalance,
-        visibleLastDayBalance,
-      ),
-      deltaFiatFormatted: formatFiatAmount(
-        visibleCurrentBalance - visibleLastDayBalance,
-        defaultAltCurrency.isoCode,
-        {
-          customPrecision: 'minimal',
-          currencyDisplay: 'symbol',
-        },
-      ),
-      rangeLabel: t('Last Day'),
-    };
-  }, [
-    defaultAltCurrency.isoCode,
-    t,
-    visibleCurrentBalance,
-    visibleLastDayBalance,
-  ]);
+  const lastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: walletsAcrossKeys,
+    currentFiatBalance: visibleCurrentBalance,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: showPortfolioValue !== true && !hideAllBalances,
+  });
   const displayedChangeRowData =
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData

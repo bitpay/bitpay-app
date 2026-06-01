@@ -247,7 +247,9 @@ describe('AssetBalanceHistoryScreen', () => {
       expect.objectContaining({
         currentFiatBalance: 100,
         enabled: true,
+        mode: 'representativeAsset',
         quoteCurrency: 'USD',
+        representativeAsset: shared.assetContext,
         wallets: shared.assetWallets,
       }),
     );

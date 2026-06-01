@@ -11,6 +11,7 @@ import AssetsList from './AssetsList';
 import {
   AssetRowItem,
   GainLossMode,
+  buildLegacyLastDayRateRequestsForAssetRows,
   buildAssetPreviewRowItemsFromWallets,
   getVisibleWalletsFromKeys,
   walletsHaveNonZeroLiveBalance,
@@ -31,6 +32,9 @@ import {
   toAllocationWallet,
 } from '../../../../utils/portfolio/allocation';
 import type {Key} from '../../../../store/wallet/wallet.models';
+import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
+import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
+import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
 
 const Container = styled.View`
   margin-top: 5px;
@@ -84,6 +88,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [gainLossMode, setGainLossMode] = useState<GainLossMode>('1D');
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
@@ -103,6 +108,30 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
 
     return allocationData.rows.slice(0, 4).map(row => row.key);
   }, [defaultAltCurrency.isoCode, visibleWallets]);
+  const legacyAssetRowsEnabled = showPortfolioValue !== true;
+  const legacyAssetRateRequests = useMemo(() => {
+    if (!legacyAssetRowsEnabled) {
+      return [];
+    }
+
+    return buildLegacyLastDayRateRequestsForAssetRows({
+      wallets: visibleWallets,
+      orderedAssetKeys: topAssetKeys,
+    });
+  }, [legacyAssetRowsEnabled, topAssetKeys, visibleWallets]);
+  const legacyAssetBaselineTimestampMs = useMemo(
+    () => getLastDayTimestampStartOfHourMs(),
+    [defaultAltCurrency.isoCode, focusRefreshToken],
+  );
+  const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(
+    {
+      quoteCurrency: defaultAltCurrency.isoCode,
+      requests: legacyAssetRateRequests,
+      maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+      enabled: legacyAssetRowsEnabled && legacyAssetRateRequests.length > 0,
+      clearOnRequestChange: true,
+    },
+  );
   const previewItems = useMemo(() => {
     return buildAssetPreviewRowItemsFromWallets({
       wallets: visibleWallets,
@@ -111,9 +140,15 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       showScopedPnlLoading:
         showPortfolioValue === true && topAssetKeys.length > 0,
       includeLegacyLastDayPnl: showPortfolioValue !== true,
+      rates,
+      fiatRateSeriesCache: legacyAssetFiatRateSeriesCache,
+      baselineTimestampMs: legacyAssetBaselineTimestampMs,
     });
   }, [
     defaultAltCurrency.isoCode,
+    legacyAssetBaselineTimestampMs,
+    legacyAssetFiatRateSeriesCache,
+    rates,
     showPortfolioValue,
     topAssetKeys,
     visibleWallets,

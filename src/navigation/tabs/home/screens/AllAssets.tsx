@@ -22,6 +22,7 @@ import {useAppSelector} from '../../../../utils/hooks';
 import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import usePortfolioAssetRows from '../../../../portfolio/ui/hooks/usePortfolioAssetRows';
 import {
+  buildLegacyLastDayRateRequestsForAssetRows,
   buildAssetPreviewRowItemsFromWallets,
   getQuoteCurrency,
   getVisibleWalletsFromKeys,
@@ -49,6 +50,7 @@ import {
 } from '../components/assetRowLoading';
 import useScreenFocusRefreshToken from '../hooks/useScreenFocusRefreshToken';
 import type {Key} from '../../../../store/wallet/wallet.models';
+import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AllAssets'>;
 const LIST_HORIZONTAL_GUTTER = Number.parseInt(ScreenGutter, 10);
@@ -105,6 +107,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const theme = useTheme();
   const commonOptions = useStackScreenOptions(theme);
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
@@ -126,6 +129,33 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
 
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keyId, keys]);
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  }).toUpperCase();
+  const legacyAssetRowsEnabled = showPortfolioValue !== true;
+  const legacyAssetRateRequests = useMemo(() => {
+    if (!legacyAssetRowsEnabled) {
+      return [];
+    }
+
+    return buildLegacyLastDayRateRequestsForAssetRows({
+      wallets: visibleWallets,
+    });
+  }, [legacyAssetRowsEnabled, visibleWallets]);
+  const legacyAssetBaselineTimestampMs = useMemo(
+    () => getLastDayTimestampStartOfHourMs(),
+    [quoteCurrency],
+  );
+  const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(
+    {
+      quoteCurrency,
+      requests: legacyAssetRateRequests,
+      maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+      enabled: legacyAssetRowsEnabled && legacyAssetRateRequests.length > 0,
+      clearOnRequestChange: true,
+    },
+  );
   const legacyVisibleItems = useMemo(() => {
     if (showPortfolioValue === true) {
       return [];
@@ -135,8 +165,18 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
       wallets: visibleWallets,
       quoteCurrency: defaultAltCurrency.isoCode,
       includeLegacyLastDayPnl: true,
+      rates,
+      fiatRateSeriesCache: legacyAssetFiatRateSeriesCache,
+      baselineTimestampMs: legacyAssetBaselineTimestampMs,
     });
-  }, [defaultAltCurrency.isoCode, showPortfolioValue, visibleWallets]);
+  }, [
+    defaultAltCurrency.isoCode,
+    legacyAssetBaselineTimestampMs,
+    legacyAssetFiatRateSeriesCache,
+    rates,
+    showPortfolioValue,
+    visibleWallets,
+  ]);
   const {
     visibleItems: portfolioVisibleItems,
     isFiatLoading: isPnlLoading,
@@ -150,11 +190,6 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   });
   const visibleItems =
     showPortfolioValue === true ? portfolioVisibleItems : legacyVisibleItems;
-  const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
-    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-  }).toUpperCase();
-
   useLayoutEffect(() => {
     navigation.setOptions({
       ...commonOptions,
