@@ -49,6 +49,7 @@ final class Test594_BasicSwapBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(7) On the Crypto to Swap screen, tap Bitcoin (BTC)") {
+      XCTAssertTrue(swapPage.isBitcoinOptionDisplayed(), "Bitcoin option not displayed")
       swapPage.tapBitcoin()
     }
     
@@ -75,10 +76,19 @@ final class Test594_BasicSwapBTC: XCTestCase {
       enterAmountPage.enterAmount(amount: "0.0007")
     }
     
-    AllureXCTestSupport.step("(13) Tap Continue.") {
+    AllureXCTestSupport.step("(13) Tap Changelly checkbox.") {
       swapPage.tapCenterOfScreen()
       XCTAssertTrue(swapPage.isChangellyTermsCheckboxDisplayed(),  "Changelly Terms and Conditions checkbox not displayed")
       swapPage.tapChangellyTermsCheckbox()
+    }
+    
+    AllureXCTestSupport.step(
+      "(14) Verify Slide to Swap button is displayed."
+    ) {
+      XCTAssertTrue(
+        swapPage.isSlideToSwapButtonDisplayed(),
+        "Slide to Swap button not displayed"
+      )
     }
   }
 }

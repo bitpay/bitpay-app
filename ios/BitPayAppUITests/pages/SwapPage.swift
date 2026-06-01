@@ -1,15 +1,15 @@
 import XCTest
 
 class SwapPage {
-
+  
   let app: XCUIApplication
-
+  
   init(app: XCUIApplication) {
     self.app = app
   }
-
+  
   // MARK: - Elements
-
+  
   var swapTitle: XCUIElement {
     app.otherElements.matching(
       NSPredicate(format: "label == 'Swap'")
@@ -95,12 +95,24 @@ class SwapPage {
   }
   
   var changellyTermsCheckbox: XCUIElement {
-    app.checkBoxes["swap-crypto-changelly-terms-checkbox"]
+    app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "identifier == 'swap-crypto-changelly-terms-checkbox'"
+      )
+    ).firstMatch
   }
   
-
+  var slideToSwapButton: XCUIElement {
+    app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == 'Swap crypto slide to swap button'"
+      )
+    ).firstMatch
+  }
+  
+  
   // MARK: - Validations
-
+  
   func isSwapPageTitleDisplayed(timeout: TimeInterval = 5) -> Bool {
     return swapTitle.waitForExistence(timeout: timeout)
   }
@@ -113,32 +125,11 @@ class SwapPage {
     return cryptoToSwapPage.waitForExistence(timeout: timeout)
   }
   
-//  func tapBitcoin() {
-//    bitcoin.tap()
-//  }
+  func isBitcoinOptionDisplayed(timeout: TimeInterval = 10) -> Bool {
+    return bitcoin.waitForExistence(timeout: timeout)
+  }
   
-  func tapBitcoin(timeout: TimeInterval = 10) {
-    
-    let isDisplayed = bitcoin.waitForExistence(timeout: timeout)
-    
-//    if !isDisplayed {
-//      
-//      let pageSourceAttachment = XCTAttachment(
-//        string: app.debugDescription
-//      )
-//      
-//      pageSourceAttachment.name = "Bitcoin Tap Failure - Page Source"
-//      pageSourceAttachment.lifetime = .keepAlways
-//      
-//      XCTContext.runActivity(
-//        named: "Attach App Debug Description"
-//      ) { activity in
-//        activity.add(pageSourceAttachment)
-//      }
-//      
-//      XCTFail("Bitcoin wallet row not displayed within \(timeout) seconds")
-//    }
-    
+  func tapBitcoin() {
     bitcoin.tap()
   }
   
@@ -175,6 +166,8 @@ class SwapPage {
   }
   
   func tapChangellyTermsCheckbox() {
+    app.swipeUp()
+    sleep(1)
     changellyTermsCheckbox.tap()
   }
   
@@ -183,11 +176,14 @@ class SwapPage {
   }
   
   func tapCenterOfScreen() {
-      let center = app.coordinate(
-          withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
-      )
-      center.tap()
+    let center = app.coordinate(
+      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+    )
+    center.tap()
   }
-
-
+  
+  func isSlideToSwapButtonDisplayed(timeout: TimeInterval = 10) -> Bool {
+    return slideToSwapButton.waitForExistence(timeout: timeout)
+  }
+  
 }

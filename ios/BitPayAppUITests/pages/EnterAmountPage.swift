@@ -18,7 +18,7 @@ class EnterAmountPage {
   
   // MARK: - Elements
   var amountField: XCUIElement {
-      app.staticTexts.matching(identifier: "0").firstMatch
+    app.staticTexts.matching(identifier: "0").firstMatch
   }
   
   var continueButton: XCUIElement {
@@ -29,15 +29,57 @@ class EnterAmountPage {
   
   // MARK: - Actions
   func enterAmount(amount: String = "0") {
-      for char in amount {
-          let key = app.staticTexts[String(char)].firstMatch
-          XCTAssertTrue(key.waitForExistence(timeout: 5))
-          key.tap()
-      }
+    for char in amount {
+      let key = app.staticTexts[String(char)].firstMatch
+      XCTAssertTrue(key.waitForExistence(timeout: 5))
+      key.tap()
+    }
   }
   
   func tapContinue() {
     continueButton.tap()
+  }
+  
+  /**
+   Backspace key does not expose a unique accessibility identifier.
+   Calculate its position dynamically using the relative spacing
+   between the keypad keys "6" and "9".
+   */
+  func tapBackspace(count: Int = 1) {
+    
+    let sixKey = app.staticTexts["6"].firstMatch
+    let nineKey = app.staticTexts["9"].firstMatch
+    
+    XCTAssertTrue(
+      sixKey.waitForExistence(timeout: 5),
+      "6 key not found"
+    )
+    
+    XCTAssertTrue(
+      nineKey.waitForExistence(timeout: 5),
+      "9 key not found"
+    )
+    
+    let sixFrame = sixKey.frame
+    let nineFrame = nineKey.frame
+    
+    let rowHeight = abs(nineFrame.midY - sixFrame.midY)
+    
+    let backspaceX = nineFrame.midX
+    let backspaceY = nineFrame.midY + rowHeight
+    
+    let backspaceCoordinate = app.coordinate(
+      withNormalizedOffset: CGVector(dx: 0, dy: 0)
+    ).withOffset(
+      CGVector(
+        dx: backspaceX,
+        dy: backspaceY
+      )
+    )
+    
+    for _ in 0..<count {
+      backspaceCoordinate.tap()
+    }
   }
   
   

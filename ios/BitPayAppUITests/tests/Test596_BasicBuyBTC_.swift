@@ -45,6 +45,7 @@ final class Test596_BasicBuyBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(6) Enter $30 as the buy amount.") {
+      enterAmountPage.tapBackspace(count: 3)
       enterAmountPage.enterAmount(amount: "30")
     }
     
