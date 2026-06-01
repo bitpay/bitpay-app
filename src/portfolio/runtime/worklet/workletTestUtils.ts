@@ -1,4 +1,4 @@
-import {setPortfolioTxHistorySigningDispatchContextOnRuntime} from '../../../adapters/rn/txHistorySigning';
+import {setPortfolioTxHistorySigningDispatchContextOnRuntime} from '../../adapters/rn/txHistorySigning';
 
 export type FakeWorkletStorage = {
   contains: (key: string) => boolean;
