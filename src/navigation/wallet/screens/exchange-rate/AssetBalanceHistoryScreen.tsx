@@ -197,6 +197,8 @@ const AssetBalanceHistoryScreen = ({
     wallets: shared.assetWallets,
     currentFiatBalance: shared.assetTotalFiatBalance,
     quoteCurrency: shared.resolvedQuoteCurrency,
+    mode: 'representativeAsset',
+    representativeAsset: shared.assetContext,
     enabled:
       shared.showPortfolioValue !== true &&
       !shared.hideAllBalances &&

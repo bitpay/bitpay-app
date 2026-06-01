@@ -54,8 +54,11 @@ jest.mock('../helper-methods', () => ({
 }));
 
 import type {Wallet} from '../../store/wallet/wallet.models';
+import {getFiatRateSeriesCacheKey} from '../../store/rate/rate.models';
 import {
+  buildLegacyLastDayRateRequestsForWallets,
   buildAssetPreviewRowItemsFromWallets,
+  getLegacyLastDayPnlForWallets,
   getWalletsMatchingExchangeRateAsset,
   getWalletLiveFiatBalance,
   sortAssetRowItemsByAssetFiatPriority,
@@ -157,6 +160,7 @@ describe('sortAssetRowItemsByAssetFiatPriority', () => {
 });
 
 describe('buildAssetPreviewRowItemsFromWallets', () => {
+  const baselineTimestampMs = 1000;
   const makeWallet = (args: {
     id: string;
     coin: string;
@@ -311,6 +315,162 @@ describe('buildAssetPreviewRowItemsFromWallets', () => {
         showPnlPlaceholder: true,
         showScopedPnlLoading: false,
       }),
+    ]);
+  });
+
+  it('prefers representative V4 1D PnL over aggregated fiatLastDay balances', () => {
+    const rows = buildAssetPreviewRowItemsFromWallets({
+      wallets: [
+        makeWallet({
+          id: 'btc-1',
+          coin: 'btc',
+          fiat: 150,
+          fiatLastDay: 120,
+          crypto: '1',
+        }),
+      ],
+      quoteCurrency: 'USD',
+      includeLegacyLastDayPnl: true,
+      rates: {
+        btc: [{code: 'USD', rate: 150}],
+      } as any,
+      fiatRateSeriesCache: {
+        [getFiatRateSeriesCacheKey('USD', 'btc', '1D')]: {
+          fetchedOn: baselineTimestampMs,
+          points: [{ts: baselineTimestampMs, rate: 100}],
+        },
+      },
+      baselineTimestampMs,
+    });
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        key: 'btc',
+        deltaFiat: '+USD:50.00',
+        deltaPercent: '+50.00%',
+        hasPnl: true,
+        isPositive: true,
+      }),
+    ]);
+  });
+
+  it('applies the representative V4 percent to a grouped asset row total', () => {
+    const rows = buildAssetPreviewRowItemsFromWallets({
+      wallets: [
+        makeWallet({
+          id: 'eth-base',
+          coin: 'eth',
+          chain: 'base',
+          fiat: 50,
+          fiatLastDay: 49,
+          crypto: '0.25',
+        }),
+        makeWallet({
+          id: 'eth-native',
+          coin: 'eth',
+          chain: 'eth',
+          fiat: 150,
+          fiatLastDay: 149,
+          crypto: '0.75',
+        }),
+      ],
+      quoteCurrency: 'USD',
+      includeLegacyLastDayPnl: true,
+      rates: {
+        eth: [{code: 'USD', rate: 200}],
+      } as any,
+      fiatRateSeriesCache: {
+        [getFiatRateSeriesCacheKey('USD', 'eth', '1D')]: {
+          fetchedOn: baselineTimestampMs,
+          points: [{ts: baselineTimestampMs, rate: 100}],
+        },
+      },
+      baselineTimestampMs,
+    });
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        key: 'eth',
+        chain: 'eth',
+        deltaFiat: '+USD:100.00',
+        deltaPercent: '+100.00%',
+      }),
+    ]);
+  });
+});
+
+describe('legacy wallet-level V4 last-day PnL helpers', () => {
+  const baselineTimestampMs = 1000;
+  const makeWallet = (args: {
+    id: string;
+    coin: string;
+    chain?: string;
+    fiat: number;
+    fiatLastDay?: number;
+  }): Wallet =>
+    ({
+      id: args.id,
+      currencyAbbreviation: args.coin,
+      chain: args.chain || args.coin,
+      network: 'livenet',
+      balance: {
+        fiat: args.fiat,
+        fiatLastDay: args.fiatLastDay,
+      },
+    } as Wallet);
+
+  it('mixes V4-derived previous fiat and per-wallet V3 fallback before aggregating', () => {
+    const wallets = [
+      makeWallet({
+        id: 'btc',
+        coin: 'btc',
+        fiat: 150,
+        fiatLastDay: 90,
+      }),
+      makeWallet({
+        id: 'doge',
+        coin: 'doge',
+        fiat: 50,
+        fiatLastDay: 25,
+      }),
+    ];
+
+    const pnl = getLegacyLastDayPnlForWallets({
+      wallets,
+      currentFiatBalance: 200,
+      rates: {
+        btc: [{code: 'USD', rate: 150}],
+      } as any,
+      fiatRateSeriesCache: {
+        [getFiatRateSeriesCacheKey('USD', 'btc', '1D')]: {
+          fetchedOn: baselineTimestampMs,
+          points: [{ts: baselineTimestampMs, rate: 100}],
+        },
+      },
+      quoteCurrency: 'USD',
+      baselineTimestampMs,
+    });
+
+    expect(pnl?.deltaFiat).toBe(75);
+    expect(pnl?.percent).toBe(60);
+  });
+
+  it('dedupes wallet-level V4 requests by normalized asset identity', () => {
+    const requests = buildLegacyLastDayRateRequestsForWallets({
+      wallets: [
+        makeWallet({id: 'btc-1', coin: 'btc', fiat: 100}),
+        makeWallet({id: 'btc-2', coin: 'btc', fiat: 50}),
+        makeWallet({id: 'zero-doge', coin: 'doge', fiat: 0}),
+      ],
+    });
+
+    expect(requests).toEqual([
+      {
+        coin: 'btc',
+        chain: undefined,
+        tokenAddress: undefined,
+        intervals: ['1D'],
+      },
     ]);
   });
 });
