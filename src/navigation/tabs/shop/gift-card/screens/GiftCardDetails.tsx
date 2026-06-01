@@ -2,12 +2,12 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   ScrollView,
   Linking,
-  Share,
   RefreshControl,
   Image,
   DeviceEventEmitter,
   Platform,
 } from 'react-native';
+import {shareNative} from '../../../../../utils/share';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
@@ -351,7 +351,7 @@ const GiftCardDetails = ({
           Platform.OS === 'ios' && giftCard.claimLink
             ? {url: giftCard.claimLink}
             : {message: giftCard.claimLink || giftCard.claimCode};
-        Share.share(dataToShare);
+        dispatch(shareNative(dataToShare));
       },
     },
     ...(defaultClaimCodeType !== 'link'

@@ -17,11 +17,11 @@ import {
   DeviceEventEmitter,
   Linking,
   RefreshControl,
-  Share,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
+import {shareNative} from '../../../utils/share';
 import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
@@ -441,25 +441,24 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         createWalletAddress({wallet: fullWalletObj, newAddress: false}),
       )) as string;
 
-      Share.share(
-        {
-          message: address,
-          title: t('Share Address'),
-        },
-        {
-          dialogTitle: t('Share Address'),
-          subject: t('Share Address'),
-          excludedActivityTypes: [
-            'print',
-            'addToReadingList',
-            'markupAsPDF',
-            'openInIbooks',
-            'postToFacebook',
-            'postToTwitter',
-            'saveToCameraRoll',
-            'sharePlay',
-          ],
-        },
+      dispatch(
+        shareNative(
+          {message: address, title: t('Share Address')},
+          {
+            dialogTitle: t('Share Address'),
+            subject: t('Share Address'),
+            excludedActivityTypes: [
+              'print',
+              'addToReadingList',
+              'markupAsPDF',
+              'openInIbooks',
+              'postToFacebook',
+              'postToTwitter',
+              'saveToCameraRoll',
+              'sharePlay',
+            ],
+          },
+        ),
       );
     } catch (e) {}
   };
