@@ -94,6 +94,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const focusRefreshToken = useScreenFocusRefreshToken();
+  const portfolioChartsEnabled = showPortfolioValue === true;
   const visibleWallets = useMemo(() => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keys]);
@@ -108,7 +109,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
 
     return allocationData.rows.slice(0, 4).map(row => row.key);
   }, [defaultAltCurrency.isoCode, visibleWallets]);
-  const legacyAssetRowsEnabled = showPortfolioValue !== true;
+  const legacyAssetRowsEnabled = !portfolioChartsEnabled;
   const legacyAssetRateRequests = useMemo(() => {
     if (!legacyAssetRowsEnabled) {
       return [];
@@ -137,9 +138,8 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       wallets: visibleWallets,
       quoteCurrency: defaultAltCurrency.isoCode,
       orderedAssetKeys: topAssetKeys,
-      showScopedPnlLoading:
-        showPortfolioValue === true && topAssetKeys.length > 0,
-      includeLegacyLastDayPnl: showPortfolioValue !== true,
+      showScopedPnlLoading: portfolioChartsEnabled && topAssetKeys.length > 0,
+      includeLegacyLastDayPnl: !portfolioChartsEnabled,
       rates,
       fiatRateSeriesCache: legacyAssetFiatRateSeriesCache,
       baselineTimestampMs: legacyAssetBaselineTimestampMs,
@@ -148,8 +148,8 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     defaultAltCurrency.isoCode,
     legacyAssetBaselineTimestampMs,
     legacyAssetFiatRateSeriesCache,
+    portfolioChartsEnabled,
     rates,
-    showPortfolioValue,
     topAssetKeys,
     visibleWallets,
   ]);
@@ -161,7 +161,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     presentationResetToken,
   } = usePortfolioAssetRows({
     gainLossMode,
-    enabled: enabled && showPortfolioValue === true,
+    enabled: enabled && portfolioChartsEnabled,
     assetKeys: topAssetKeys,
     externalRefreshToken: focusRefreshToken,
   });
@@ -180,7 +180,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     const nextItems: AssetRowItem[] = [];
     const seenKeys = new Set<string>();
     const shouldUsePreviewFallback =
-      showPortfolioValue !== true ||
+      !portfolioChartsEnabled ||
       !enabled ||
       !!isPnlLoading ||
       !visibleItems.length;
@@ -230,13 +230,13 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   }, [
     enabled,
     isPnlLoading,
+    portfolioChartsEnabled,
     previewItems,
-    showPortfolioValue,
     topAssetKeys,
     visibleItems,
   ]);
   const shouldShowActivationPlaceholder =
-    showPortfolioValue === true &&
+    portfolioChartsEnabled &&
     hasAnyVisibleWalletBalance &&
     !items.length &&
     (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
@@ -246,7 +246,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       <Container>
         <Header>
           <HomeSectionTitle>{t('Assets')}</HomeSectionTitle>
-          {showPortfolioValue === true ? (
+          {portfolioChartsEnabled ? (
             <AssetsGainLossDropdown
               value={gainLossMode}
               onChange={setGainLossMode}
@@ -283,7 +283,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     <Container>
       <Header>
         <HomeSectionTitle>{t('Assets')}</HomeSectionTitle>
-        {showPortfolioValue === true ? (
+        {portfolioChartsEnabled ? (
           <AssetsGainLossDropdown
             value={gainLossMode}
             onChange={setGainLossMode}
@@ -295,7 +295,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
         items={items}
         isPnlLoading={isPnlLoading}
         populateInProgress={
-          showPortfolioValue === true && !!portfolio.populateStatus?.inProgress
+          portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress
         }
         isPopulateLoadingByKey={isPopulateLoadingByKey}
         presentationResetToken={presentationResetToken}

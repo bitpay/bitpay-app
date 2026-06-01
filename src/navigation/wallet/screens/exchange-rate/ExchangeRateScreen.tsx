@@ -442,9 +442,13 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
 
     await Promise.all([
       reloadCanonicalFiatRateSeriesCache({force: true}).catch(() => ({})),
-      displayQuoteRequests.length
-        ? reloadDisplayQuoteFiatRateSeriesCache({force: true}).catch(() => ({}))
-        : Promise.resolve({}),
+      ...(displayQuoteRequests.length
+        ? [
+            reloadDisplayQuoteFiatRateSeriesCache({force: true}).catch(
+              () => ({}),
+            ),
+          ]
+        : []),
     ]);
   }, [
     displayQuoteRequests.length,

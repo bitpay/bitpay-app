@@ -112,8 +112,9 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+  const portfolioChartsEnabled = showPortfolioValue === true;
   const populateInProgress =
-    showPortfolioValue === true && !!portfolio.populateStatus?.inProgress;
+    portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress;
   const {getAssetIconData, getSupportedOption} = useAssetIconResolver();
   const focusRefreshToken = useScreenFocusRefreshToken();
   const keyId = route.params?.keyId;
@@ -133,7 +134,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     portfolioQuoteCurrency: portfolio.quoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   }).toUpperCase();
-  const legacyAssetRowsEnabled = showPortfolioValue !== true;
+  const legacyAssetRowsEnabled = !portfolioChartsEnabled;
   const legacyAssetRateRequests = useMemo(() => {
     if (!legacyAssetRowsEnabled) {
       return [];
@@ -157,7 +158,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     },
   );
   const legacyVisibleItems = useMemo(() => {
-    if (showPortfolioValue === true) {
+    if (portfolioChartsEnabled) {
       return [];
     }
 
@@ -173,8 +174,8 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     defaultAltCurrency.isoCode,
     legacyAssetBaselineTimestampMs,
     legacyAssetFiatRateSeriesCache,
+    portfolioChartsEnabled,
     rates,
-    showPortfolioValue,
     visibleWallets,
   ]);
   const {
@@ -186,10 +187,11 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     gainLossMode,
     keyId,
     externalRefreshToken: focusRefreshToken,
-    enabled: showPortfolioValue === true,
+    enabled: portfolioChartsEnabled,
   });
-  const visibleItems =
-    showPortfolioValue === true ? portfolioVisibleItems : legacyVisibleItems;
+  const visibleItems = portfolioChartsEnabled
+    ? portfolioVisibleItems
+    : legacyVisibleItems;
   useLayoutEffect(() => {
     navigation.setOptions({
       ...commonOptions,
@@ -296,7 +298,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
           />
         </SearchInputContainer>
 
-        {showPortfolioValue === true ? (
+        {portfolioChartsEnabled ? (
           <AssetsGainLossDropdown
             value={gainLossMode}
             onChange={setGainLossMode}
@@ -304,7 +306,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
         ) : null}
       </FiltersRow>
     );
-  }, [gainLossMode, query, showPortfolioValue, t, theme.dark]);
+  }, [gainLossMode, portfolioChartsEnabled, query, t, theme.dark]);
 
   const renderItem = useCallback(
     ({item, index}: ListRenderItemInfo<AssetRowItem>) => {

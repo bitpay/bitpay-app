@@ -10,6 +10,7 @@ import {
   getLegacyLastDayPnlFromTotals,
   getLegacyLastDayRateRequestForAsset,
   type LegacyLastDayAssetIdentity,
+  type LegacyLastDayPnl,
   type LegacyLastDayPnlMode,
 } from '../../utils/portfolio/assets';
 import {
@@ -36,6 +37,20 @@ export const getLegacyLastDayFiatBalance = (
     0,
   );
 
+const buildLegacyLastDayChangeRowDataFromPnl = (args: {
+  legacyPnl: LegacyLastDayPnl;
+  quoteCurrency: string;
+  label: string;
+}): ChangeRowData =>
+  buildBalanceHistoryChartChangeRowData({
+    displayedAnalysisPoint: {
+      totalPnlChange: args.legacyPnl.deltaFiat,
+      totalPnlPercent: args.legacyPnl.percent,
+    },
+    quoteCurrency: args.quoteCurrency,
+    label: args.label,
+  });
+
 export const buildLegacyLastDayChangeRowData = (args: {
   wallets: Wallet[] | undefined;
   currentFiatBalance: number | undefined;
@@ -53,11 +68,8 @@ export const buildLegacyLastDayChangeRowData = (args: {
     return undefined;
   }
 
-  return buildBalanceHistoryChartChangeRowData({
-    displayedAnalysisPoint: {
-      totalPnlChange: legacyPnl.deltaFiat,
-      totalPnlPercent: legacyPnl.percent,
-    },
+  return buildLegacyLastDayChangeRowDataFromPnl({
+    legacyPnl,
     quoteCurrency: args.quoteCurrency,
     label: args.label,
   });
@@ -136,11 +148,8 @@ const useLegacyLastDayChangeRowData = (args: {
       return undefined;
     }
 
-    return buildBalanceHistoryChartChangeRowData({
-      displayedAnalysisPoint: {
-        totalPnlChange: legacyPnl.deltaFiat,
-        totalPnlPercent: legacyPnl.percent,
-      },
+    return buildLegacyLastDayChangeRowDataFromPnl({
+      legacyPnl,
       quoteCurrency,
       label: lastDayLabel,
     });

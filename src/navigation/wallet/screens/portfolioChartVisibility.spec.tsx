@@ -449,6 +449,20 @@ const mockWalletHasNonZeroLiveBalance = (wallet: any) => {
   );
 };
 
+const mockLegacyLastDayPnl = (currentFiat: unknown, lastDayFiat: unknown) => {
+  const current = Number(currentFiat) || 0;
+  const lastDay = Number(lastDayFiat) || 0;
+  if (!(current > 0) || !(lastDay > 0)) {
+    return undefined;
+  }
+  const deltaFiat = current - lastDay;
+  return {
+    deltaFiat,
+    percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
+    isPositive: deltaFiat >= 0,
+  };
+};
+
 jest.mock('../../../utils/portfolio/assets', () => ({
   buildLegacyLastDayRateRequestsForWallets: jest.fn(
     ({wallets}: {wallets?: any[]}) =>
@@ -468,19 +482,7 @@ jest.mock('../../../utils/portfolio/assets', () => ({
     }: {
       currentFiatBalance?: number;
       fallbackLastDayFiatBalance?: number;
-    }) => {
-      const current = Number(currentFiatBalance) || 0;
-      const lastDay = Number(fallbackLastDayFiatBalance) || 0;
-      if (!(current > 0) || !(lastDay > 0)) {
-        return undefined;
-      }
-      const deltaFiat = current - lastDay;
-      return {
-        deltaFiat,
-        percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
-        isPositive: deltaFiat >= 0,
-      };
-    },
+    }) => mockLegacyLastDayPnl(currentFiatBalance, fallbackLastDayFiatBalance),
   ),
   getLegacyLastDayPnlForWallets: jest.fn(
     ({
@@ -490,20 +492,11 @@ jest.mock('../../../utils/portfolio/assets', () => ({
       wallets?: any[];
       currentFiatBalance?: number;
     }) => {
-      const current = Number(currentFiatBalance) || 0;
       const lastDay = (wallets || []).reduce(
         (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
         0,
       );
-      if (!(current > 0) || !(lastDay > 0)) {
-        return undefined;
-      }
-      const deltaFiat = current - lastDay;
-      return {
-        deltaFiat,
-        percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
-        isPositive: deltaFiat >= 0,
-      };
+      return mockLegacyLastDayPnl(currentFiatBalance, lastDay);
     },
   ),
   getLegacyLastDayRateRequestForAsset: jest.fn((identity?: any) =>
@@ -515,36 +508,6 @@ jest.mock('../../../utils/portfolio/assets', () => ({
           intervals: ['1D'],
         }
       : undefined,
-  ),
-  getLegacyLastDayPnlFromTotals: jest.fn(
-    ({
-      currentFiatBalance,
-      lastDayFiatBalance,
-    }: {
-      currentFiatBalance?: number;
-      lastDayFiatBalance?: number;
-    }) => {
-      const current =
-        typeof currentFiatBalance === 'number' &&
-        Number.isFinite(currentFiatBalance)
-          ? currentFiatBalance
-          : 0;
-      const lastDay =
-        typeof lastDayFiatBalance === 'number' &&
-        Number.isFinite(lastDayFiatBalance)
-          ? lastDayFiatBalance
-          : 0;
-
-      if (lastDay === 0) {
-        return undefined;
-      }
-
-      const deltaFiat = current - lastDay;
-      return {
-        deltaFiat,
-        percent: (deltaFiat / lastDay) * 100,
-      };
-    },
   ),
   getQuoteCurrency: jest.fn(
     ({
@@ -562,19 +525,7 @@ jest.mock('../../../utils/portfolio/assets', () => ({
     }: {
       currentFiatBalance?: number;
       lastDayFiatBalance?: number;
-    }) => {
-      const current = Number(currentFiatBalance) || 0;
-      const lastDay = Number(lastDayFiatBalance) || 0;
-      if (!(current > 0) || !(lastDay > 0)) {
-        return undefined;
-      }
-      const deltaFiat = current - lastDay;
-      return {
-        deltaFiat,
-        percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
-        isPositive: deltaFiat >= 0,
-      };
-    },
+    }) => mockLegacyLastDayPnl(currentFiatBalance, lastDayFiatBalance),
   ),
   getVisibleKeysFromKeys: jest.fn((keys: any) => Object.values(keys || {})),
   getVisibleWalletsFromKeys: jest.fn((keys: any) =>
