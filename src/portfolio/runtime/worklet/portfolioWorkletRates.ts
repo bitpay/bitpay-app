@@ -533,6 +533,11 @@ export async function getWorkletRateSeriesCache(
 
   const cache: FiatRateSeriesCache = {};
   for (const read of cacheReads) {
+    const preferDirectTargetSeries =
+      quoteCurrency !== CANONICAL_FIAT_QUOTE &&
+      read.coin === FX_BRIDGE_COIN &&
+      !read.chain &&
+      !read.tokenAddress;
     const series = await getFiatRateSeriesWithFx({
       getSeries: query => {
         'worklet';
@@ -554,6 +559,7 @@ export async function getWorkletRateSeriesCache(
       interval: read.interval,
       chain: read.chain,
       tokenAddress: read.tokenAddress,
+      preferDirectTargetSeries,
     });
     if (!series?.points?.length) {
       continue;
