@@ -161,7 +161,7 @@ const TransakDetails: React.FC = () => {
             const _data = await selectedWallet.transakGetAccessToken({
               env: transakEnv,
             });
-            data = _data?.body?.data ?? _data;
+            data = _data?.body?.data ?? _data?.body ?? _data;
 
             if (data?.accessToken) {
               logger.debug(
