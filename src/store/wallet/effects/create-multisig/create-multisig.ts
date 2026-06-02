@@ -1318,9 +1318,9 @@ export const joinTSSWithCode =
                           status.wallet.publicKeyRing,
                         );
                       }
-                      if (status.customData.walletPrivateKey) {
+                      if (status.customData.walletPrivKey) {
                         credentials.addWalletPrivateKey(
-                          status.customData.walletPrivateKey,
+                          status.customData.walletPrivKey,
                         );
                       }
                       finalWalletClient.fromObj(credentials.toObj());
