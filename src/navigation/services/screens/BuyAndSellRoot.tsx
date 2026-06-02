@@ -3188,7 +3188,7 @@ const BuyAndSellRoot = ({
         const _data = await selectedWallet.transakGetAccessToken({
           env: transakEnv,
         });
-        data = _data?.body?.data ?? _data;
+        data = _data?.body?.data ?? _data?.body ?? _data;
 
         if (data?.accessToken) {
           logger.debug('Transak access token fetched successfully.');
@@ -4000,6 +4000,7 @@ const BuyAndSellRoot = ({
         exchange: selectedOffer?.key || 'unknown',
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
+        errorMsg: msg || 'unknown',
         paymentMethod: selectedPaymentMethod?.method || '',
         amount: Number((selectedOffer as CryptoOffer)?.fiatAmount) || '',
         coin:
