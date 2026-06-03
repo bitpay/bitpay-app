@@ -262,11 +262,17 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
             return;
           }
           logger.error(`[TSS Join - resume] Error: ${err.message}`);
+          const message =
+            err.message === 'CEREMONY_TIMEOUT'
+              ? t(
+                  'The wallet creation timed out. This session is no longer valid — please ask the creator to start a new wallet.',
+                )
+              : err.message || t('Failed to resume ceremony');
           dispatch(
             showBottomNotificationModal({
               type: 'error',
               title: t('Error'),
-              message: err.message || t('Failed to resume ceremony'),
+              message,
               enableBackdropDismiss: true,
               actions: [{text: t('OK'), action: () => {}, primary: true}],
             }),
