@@ -337,6 +337,16 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   };
 
   const init = async () => {
+    logger.debug(
+      'MoonPay embedded checkout initializing: ' +
+        wallet.currencyAbbreviation.toUpperCase() +
+        ' on ' +
+        wallet.chain +
+        ', ' +
+        offer.fiatAmount +
+        ' ' +
+        offer.fiatCurrency,
+    );
     let _paymentMethod: MoonpayPaymentType | undefined =
       getMoonpayPaymentMethodFormat(
         (paymentMethod?.method as PaymentMethodKey) ?? 'applePay',
@@ -562,7 +572,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    init();
+    init().catch(err => {
+      showError(err, 'initFailed');
+    });
 
     return () => {
       if (countDown) {
@@ -830,6 +842,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               ref={applePayFrameRef}
               clientToken={credentials.clientToken}
               signature={initialQuoteSignature}
+              onReady={() => {
+                logger.debug('MoonPay Apple Pay frame ready');
+              }}
               onComplete={async (payload: ApplePayCompletePayload) => {
                 await handleTransactionComplete(payload.transaction);
               }}
@@ -838,11 +853,30 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 logger.debug(
                   'MoonPay Apple Pay challenge required, opening challenge frame',
                 );
+                dispatch(
+                  Analytics.track('Buy Crypto Challenge Started', {
+                    exchange: 'moonpay',
+                    context: 'MoonpayBuyEmbeddedCheckout',
+                    paymentMethod: paymentMethod?.method || '',
+                    amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                    coin:
+                      cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
+                      '',
+                    chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                    fiatCurrency: offer?.fiatCurrency || '',
+                  }),
+                );
                 setChallengeUrl(url);
               }}
               onQuoteExpired={refreshQuote}
               onError={(error: ApplePayErrorPayload) => {
                 cancelQuoteRefresh();
+                logger.error(
+                  'MoonPay Apple Pay frame error: [' +
+                    error.code +
+                    '] ' +
+                    error.message,
+                );
                 showError(error, error.code, error.message);
               }}
             />
@@ -867,6 +901,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         <View style={StyleSheet.absoluteFill}>
           <MoonPayChallengeFrame
             challengeUrl={challengeUrl}
+            onReady={() => {
+              logger.debug('MoonPay challenge frame ready');
+            }}
             onComplete={async (payload: ChallengeCompletePayload) => {
               setChallengeUrl(null);
               if (payload?.transaction) {
@@ -884,11 +921,44 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   'Challenge completed without transaction data',
                 );
               }
+
+              dispatch(
+                Analytics.track('Buy Crypto Challenge Completed', {
+                  exchange: 'moonpay',
+                  context: 'MoonpayBuyEmbeddedCheckout',
+                  paymentMethod: paymentMethod?.method || '',
+                  amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                  coin:
+                    cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
+                    '',
+                  chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                  fiatCurrency: offer?.fiatCurrency || '',
+                  transactionData: `${
+                    payload?.transaction
+                      ? JSON.stringify(payload?.transaction)
+                      : ''
+                  }`,
+                }),
+              );
             }}
             onCancelled={async () => {
               setChallengeUrl(null);
               setExpiredAnalyticSent(false);
-              logger.debug('MoonPay challenge cancelled.');
+              logger.debug('MoonPay challenge cancelled by user.');
+              dispatch(
+                Analytics.track('Failed Buy Crypto', {
+                  exchange: 'moonpay',
+                  context: 'MoonpayBuyEmbeddedCheckout',
+                  reason: 'Challenge cancelled by user',
+                  paymentMethod: paymentMethod?.method || '',
+                  amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                  coin:
+                    cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
+                    '',
+                  chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                  fiatCurrency: offer?.fiatCurrency || '',
+                }),
+              );
               if (countDown) {
                 clearInterval(countDown);
               }
@@ -902,6 +972,12 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             onError={error => {
               setChallengeUrl(null);
               cancelQuoteRefresh();
+              logger.error(
+                'MoonPay Apple Pay Challenge frame error: [' +
+                  error.code +
+                  '] ' +
+                  error.message,
+              );
               showError(error, error.code, error.message);
             }}
           />
