@@ -40,6 +40,8 @@ const BWC = BwcProvider.getInstance();
 // and allow cancellation when navigating away from ceremony screens.
 const activeCeremonies = new Map<string, any>();
 
+const getCeremonyTimeoutMs = (n: number): number => n * 60_000;
+
 interface CeremonyStats {
   sessionId: string;
   startedAt: number;
@@ -356,7 +358,7 @@ export const startCreateTSSKey =
         copayers.push({
           partyId: i,
           pubKey: '',
-          name: `Co-Signer ${i}`,
+          name: `Co-Signer ${i + 1}`,
           status: 'pending',
         });
       }
@@ -489,6 +491,7 @@ export const startTSSCeremony =
   (keyId: string, onRoundReady?: () => void): Effect<Promise<Key>> =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
+      let ceremonyTimeoutId: ReturnType<typeof setTimeout> | undefined;
       try {
         const {
           APP: {
@@ -573,91 +576,102 @@ export const startTSSCeremony =
         const Bitcore = BWC.getBitcore();
         const walletPrivKey = new Bitcore.PrivateKey().toString();
 
-        await new Promise<void>((resolve, reject) => {
-          tssKeyGen
-            .on('roundready', (r: number) => {
-              const stats = ceremonyStats.get(keyId);
-              if (stats) {
-                stats.roundsReady++;
-              }
-              logManager.debug(`[TSS Ceremony roundready] round=${r}`);
-              logCeremonyStats(keyId, `roundready r=${r}`);
-              if (r === 2) {
-                onRoundReady?.();
-              }
-            })
-            .on('roundprocessed', (r: number) =>
-              logManager.debug(`[TSS Ceremony roundprocessed] round=${r}`),
-            )
-            .on('roundsubmitted', (r: number) => {
-              const stats = ceremonyStats.get(keyId);
-              if (stats) {
-                stats.roundsSubmitted++;
-              }
-              logManager.debug(`[TSS Ceremony roundsubmitted] round=${r}`);
-              logCeremonyStats(keyId, `roundsubmitted r=${r}`);
-              try {
-                const currentKey = getState().WALLET.keys[keyId];
-                dispatch(
-                  successUpdateKey({
-                    key: {
-                      ...currentKey,
-                      tssSession: {
-                        ...currentKey.tssSession!,
-                        sessionExport: tssKeyGen.exportSession(),
-                      },
-                    },
-                  }),
-                );
-              } catch (e) {}
-            })
-            .on('wallet', (w: any) => {
-              logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
-              walletFromBWS = w;
-            })
-            .on('error', (e: Error) => {
-              if (
-                e.message.includes('TSS_ROUND_MESSAGE_EXISTS') ||
-                e.message.includes('TSS_ROUND_ALREADY_DONE')
-              ) {
+        await Promise.race([
+          new Promise<void>((resolve, reject) => {
+            let roundsStarted = false;
+            tssKeyGen
+              .on('roundready', (r: number) => {
+                if (!roundsStarted && r === 2) {
+                  roundsStarted = true;
+                  ceremonyTimeoutId = setTimeout(
+                    () => reject(new Error('CEREMONY_TIMEOUT')),
+                    getCeremonyTimeoutMs(key.tssSession!.n),
+                  );
+                }
                 const stats = ceremonyStats.get(keyId);
                 if (stats) {
-                  stats.swallowedErrors++;
+                  stats.roundsReady++;
                 }
-                logManager.warn(
-                  `[TSS Ceremony] Swallowed reconnection error #${stats?.swallowedErrors}: ${e.message} | sessionId=${tssKeyGen.id}`,
+                logManager.debug(`[TSS Ceremony roundready] round=${r}`);
+                logCeremonyStats(keyId, `roundready r=${r}`);
+                if (r === 2) {
+                  onRoundReady?.();
+                }
+              })
+              .on('roundprocessed', (r: number) =>
+                logManager.debug(`[TSS Ceremony roundprocessed] round=${r}`),
+              )
+              .on('roundsubmitted', (r: number) => {
+                const stats = ceremonyStats.get(keyId);
+                if (stats) {
+                  stats.roundsSubmitted++;
+                }
+                logManager.debug(`[TSS Ceremony roundsubmitted] round=${r}`);
+                logCeremonyStats(keyId, `roundsubmitted r=${r}`);
+                try {
+                  const currentKey = getState().WALLET.keys[keyId];
+                  dispatch(
+                    successUpdateKey({
+                      key: {
+                        ...currentKey,
+                        tssSession: {
+                          ...currentKey.tssSession!,
+                          sessionExport: tssKeyGen.exportSession(),
+                        },
+                      },
+                    }),
+                  );
+                } catch (e) {}
+              })
+              .on('wallet', (w: any) => {
+                logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
+                walletFromBWS = w;
+              })
+              .on('error', (e: Error) => {
+                if (
+                  e.message.includes('TSS_ROUND_MESSAGE_EXISTS') ||
+                  e.message.includes('TSS_ROUND_ALREADY_DONE')
+                ) {
+                  const stats = ceremonyStats.get(keyId);
+                  if (stats) {
+                    stats.swallowedErrors++;
+                  }
+                  logManager.warn(
+                    `[TSS Ceremony] Swallowed reconnection error #${stats?.swallowedErrors}: ${e.message} | sessionId=${tssKeyGen.id}`,
+                  );
+                  logCeremonyStats(keyId, 'swallowed error');
+                  return;
+                }
+                logCeremonyStats(keyId, 'fatal error');
+                logManager.error(
+                  `[TSS Ceremony] Fatal error: ${e.message} | sessionId=${tssKeyGen.id}`,
                 );
-                logCeremonyStats(keyId, 'swallowed error');
-                return;
-              }
-              logCeremonyStats(keyId, 'fatal error');
-              logManager.error(
-                `[TSS Ceremony] Fatal error: ${e.message} | sessionId=${tssKeyGen.id}`,
-              );
-              activeCeremonies.delete(keyId);
-              clearCeremonyStats(keyId);
-              tssKeyGen.unsubscribe();
-              reject(e);
-            })
-            .on('complete', () => {
-              logManager.debug(`[TSS Ceremony complete]`);
-              resolve();
-            });
+                activeCeremonies.delete(keyId);
+                clearCeremonyStats(keyId);
+                tssKeyGen.unsubscribe();
+                reject(e);
+              })
+              .on('complete', () => {
+                logManager.debug(`[TSS Ceremony complete]`);
+                resolve();
+              });
 
-          logManager.info(
-            `[TSS Ceremony] Starting subscribe() poll | sessionId=${tssKeyGen.id} | active=${activeCeremonies.size}`,
-          );
-          tssKeyGen.subscribe({
-            walletName,
-            copayerName: myName,
-            createWalletOpts: {
-              network,
-              coin,
-              chain,
-              walletPrivKey,
-            },
-          });
-        });
+            logManager.info(
+              `[TSS Ceremony] Starting subscribe() poll | sessionId=${tssKeyGen.id} | active=${activeCeremonies.size}`,
+            );
+            tssKeyGen.subscribe({
+              walletName,
+              copayerName: myName,
+              createWalletOpts: {
+                network,
+                coin,
+                chain,
+                walletPrivKey,
+              },
+            });
+          }),
+        ]);
+        clearTimeout(ceremonyTimeoutId);
 
         if (!walletFromBWS) {
           throw new Error('Failed to get TSS wallet');
@@ -833,6 +847,7 @@ export const startTSSCeremony =
         );
         resolve(finalKey);
       } catch (err) {
+        clearTimeout(ceremonyTimeoutId);
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logCeremonyStats(keyId, 'caught error');
@@ -922,6 +937,7 @@ export const joinTSSWithCode =
   async (dispatch, getState): Promise<Key> => {
     let _activeKeyId: string | undefined;
     return new Promise(async (resolve, reject) => {
+      let joinTimeoutId: ReturnType<typeof setTimeout> | undefined;
       try {
         const {
           APP: {
@@ -1145,101 +1161,112 @@ export const joinTSSWithCode =
 
         let walletFromBWS: any;
 
-        await new Promise<void>((resolve, reject) => {
-          tssKeyGen
-            .on('roundready', (r: number) => {
-              const stats = ceremonyStats.get(key.id);
-              if (stats) {
-                stats.roundsReady++;
-              }
-              logManager.debug(`[TSS Join roundready] round=${r}`);
-              logCeremonyStats(key.id, `roundready r=${r}`);
-              if (r === 2) {
-                opts.onRoundReady?.();
-              }
-            })
-            .on('roundprocessed', (r: number) =>
-              logManager.debug(`[TSS Join roundprocessed] round=${r}`),
-            )
-            .on('roundsubmitted', (r: number) => {
-              const stats = ceremonyStats.get(key.id);
-              if (stats) {
-                stats.roundsSubmitted++;
-              }
-              logManager.debug(`[TSS Join roundsubmitted] round=${r}`);
-              logCeremonyStats(key.id, `roundsubmitted r=${r}`);
-              try {
-                const currentKey = getState().WALLET.keys[key.id];
-                if (currentKey?.tssSession) {
-                  dispatch(
-                    successUpdateKey({
-                      key: {
-                        ...currentKey,
-                        tssSession: {
-                          ...currentKey.tssSession,
-                          sessionExport: tssKeyGen.exportSession(),
-                        },
-                      },
-                    }),
+        await Promise.race([
+          new Promise<void>((resolve, reject) => {
+            let roundsStarted = false;
+            tssKeyGen
+              .on('roundready', (r: number) => {
+                if (!roundsStarted && r === 2) {
+                  roundsStarted = true;
+                  joinTimeoutId = setTimeout(
+                    () => reject(new Error('CEREMONY_TIMEOUT')),
+                    getCeremonyTimeoutMs(tssSession.n),
                   );
                 }
-              } catch (e) {}
-            })
-            .on('wallet', (w: any) => {
-              logManager.debug(`[TSS Join wallet] ${w?.id}`);
-              walletFromBWS = w;
-            })
-            .on('error', (e: Error) => {
-              const stats = ceremonyStats.get(key.id);
-              if (e.message.includes('Copayer ID already registered')) {
+                const stats = ceremonyStats.get(key.id);
                 if (stats) {
-                  stats.swallowedErrors++;
+                  stats.roundsReady++;
                 }
-                logManager.warn(
-                  `[TSS Join] Swallowed reconnection error #${stats?.swallowedErrors}: Copayer already registered | sessionId=${tssKeyGen.id}`,
-                );
-                logCeremonyStats(key.id, 'swallowed error');
-                return;
-              }
-              if (
-                e.message.includes('TSS_ROUND_MESSAGE_EXISTS') ||
-                e.message.includes('TSS_ROUND_ALREADY_DONE')
-              ) {
+                logManager.debug(`[TSS Join roundready] round=${r}`);
+                logCeremonyStats(key.id, `roundready r=${r}`);
+                if (r === 2) {
+                  opts.onRoundReady?.();
+                }
+              })
+              .on('roundprocessed', (r: number) =>
+                logManager.debug(`[TSS Join roundprocessed] round=${r}`),
+              )
+              .on('roundsubmitted', (r: number) => {
+                const stats = ceremonyStats.get(key.id);
                 if (stats) {
-                  stats.swallowedErrors++;
+                  stats.roundsSubmitted++;
                 }
-                logManager.warn(
-                  `[TSS Join] Swallowed reconnection error #${stats?.swallowedErrors}: ${e.message} | sessionId=${tssKeyGen.id}`,
+                logManager.debug(`[TSS Join roundsubmitted] round=${r}`);
+                logCeremonyStats(key.id, `roundsubmitted r=${r}`);
+                try {
+                  const currentKey = getState().WALLET.keys[key.id];
+                  if (currentKey?.tssSession) {
+                    dispatch(
+                      successUpdateKey({
+                        key: {
+                          ...currentKey,
+                          tssSession: {
+                            ...currentKey.tssSession,
+                            sessionExport: tssKeyGen.exportSession(),
+                          },
+                        },
+                      }),
+                    );
+                  }
+                } catch (e) {}
+              })
+              .on('wallet', (w: any) => {
+                logManager.debug(`[TSS Join wallet] ${w?.id}`);
+                walletFromBWS = w;
+              })
+              .on('error', (e: Error) => {
+                const stats = ceremonyStats.get(key.id);
+                if (e.message.includes('Copayer ID already registered')) {
+                  if (stats) {
+                    stats.swallowedErrors++;
+                  }
+                  logManager.warn(
+                    `[TSS Join] Swallowed reconnection error #${stats?.swallowedErrors}: Copayer already registered | sessionId=${tssKeyGen.id}`,
+                  );
+                  logCeremonyStats(key.id, 'swallowed error');
+                  return;
+                }
+                if (
+                  e.message.includes('TSS_ROUND_MESSAGE_EXISTS') ||
+                  e.message.includes('TSS_ROUND_ALREADY_DONE')
+                ) {
+                  if (stats) {
+                    stats.swallowedErrors++;
+                  }
+                  logManager.warn(
+                    `[TSS Join] Swallowed reconnection error #${stats?.swallowedErrors}: ${e.message} | sessionId=${tssKeyGen.id}`,
+                  );
+                  logCeremonyStats(key.id, 'swallowed error');
+                  return;
+                }
+                logCeremonyStats(key.id, 'fatal error');
+                logManager.error(
+                  `[TSS Join] Fatal error: ${e.message} | sessionId=${tssKeyGen.id}`,
                 );
-                logCeremonyStats(key.id, 'swallowed error');
-                return;
-              }
-              logCeremonyStats(key.id, 'fatal error');
-              logManager.error(
-                `[TSS Join] Fatal error: ${e.message} | sessionId=${tssKeyGen.id}`,
-              );
-              activeCeremonies.delete(key.id);
-              clearCeremonyStats(key.id);
-              tssKeyGen.unsubscribe();
-              reject(e);
-            })
-            .on('complete', () => {
-              logManager.debug(`[TSS Join complete]`);
-              resolve();
-            });
+                activeCeremonies.delete(key.id);
+                clearCeremonyStats(key.id);
+                tssKeyGen.unsubscribe();
+                reject(e);
+              })
+              .on('complete', () => {
+                logManager.debug(`[TSS Join complete]`);
+                resolve();
+              });
 
-          logManager.info(
-            `[TSS Join] Starting subscribe() poll | sessionId=${tssKeyGen.id} | active=${activeCeremonies.size}`,
-          );
-          tssKeyGen.subscribe({
-            copayerName: myName,
-            createWalletOpts: {
-              network,
-              coin,
-              chain,
-            },
-          });
-        });
+            logManager.info(
+              `[TSS Join] Starting subscribe() poll | sessionId=${tssKeyGen.id} | active=${activeCeremonies.size}`,
+            );
+            tssKeyGen.subscribe({
+              copayerName: myName,
+              createWalletOpts: {
+                network,
+                coin,
+                chain,
+              },
+            });
+          }),
+        ]);
+        clearTimeout(joinTimeoutId);
 
         if (!walletFromBWS) {
           throw new Error('Failed to get TSS wallet');
@@ -1416,6 +1443,7 @@ export const joinTSSWithCode =
         );
         resolve(finalKey);
       } catch (err) {
+        clearTimeout(joinTimeoutId);
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         const _sentinelKey = _activeKeyId ?? opts.joinCode;
