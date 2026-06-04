@@ -955,93 +955,88 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             <PoweredByPartner>MoonPay Rails</PoweredByPartner>
           </PoweredByContainer>
         </BottomSection>
-      </MoonpayEmbeddedCheckoutContainer>
-      {challengeUrl ? (
-        <View style={StyleSheet.absoluteFill}>
-          <MoonPayChallengeFrame
-            challengeUrl={challengeUrl}
-            onReady={() => {
-              logger.debug('MoonPay challenge frame ready');
-            }}
-            onComplete={async (payload: ChallengeCompletePayload) => {
-              setChallengeUrl(null);
-              if (payload?.transaction) {
-                logger.debug(
-                  'MoonPay challenge completed, transaction: ' +
-                    JSON.stringify(payload.transaction),
-                );
-                await handleTransactionComplete(payload.transaction);
-              } else {
-                logger.error(
-                  'MoonPay challenge completed but no transaction data received',
-                );
-                showError(
-                  t('Transaction completed but no transaction data received.'),
-                  'Challenge completed without transaction data',
-                );
-              }
 
-              dispatch(
-                Analytics.track('Buy Crypto Challenge Completed', {
-                  exchange: 'moonpay',
-                  context: 'MoonpayBuyEmbeddedCheckout',
-                  paymentMethod: paymentMethod?.method || '',
-                  amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                  coin:
-                    cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
-                    '',
-                  chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
-                  fiatCurrency: offer?.fiatCurrency || '',
-                  transactionData: `${
-                    payload?.transaction
-                      ? JSON.stringify(payload?.transaction)
-                      : ''
-                  }`,
-                }),
-              );
-            }}
-            onCancelled={async () => {
-              setChallengeUrl(null);
-              setExpiredAnalyticSent(false);
-              logger.debug('MoonPay challenge cancelled by user.');
-              dispatch(
-                Analytics.track('Failed Buy Crypto', {
-                  exchange: 'moonpay',
-                  context: 'MoonpayBuyEmbeddedCheckout',
-                  reason: 'Challenge cancelled by user',
-                  paymentMethod: paymentMethod?.method || '',
-                  amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                  coin:
-                    cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
-                    '',
-                  chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
-                  fiatCurrency: offer?.fiatCurrency || '',
-                }),
-              );
-              if (countDown) {
-                clearInterval(countDown);
-              }
-              setIsLoading(true);
-              try {
-                await init();
-              } catch (err) {
-                showError(err);
-              }
-            }}
-            onError={error => {
-              setChallengeUrl(null);
-              cancelQuoteRefresh();
-              logger.error(
-                'MoonPay Apple Pay Challenge frame error: [' +
-                  error.code +
-                  '] ' +
-                  error.message,
-              );
-              showError(error, error.code, error.message);
-            }}
-          />
-        </View>
-      ) : null}
+        <Modal
+          deviceHeight={HEIGHT}
+          deviceWidth={WIDTH}
+          backdropTransitionOutTiming={0}
+          backdropOpacity={0.85}
+          useNativeDriverForBackdrop={true}
+          useNativeDriver={true}
+          animationIn={'fadeInUp'}
+          animationOut={'fadeOutDown'}
+          isVisible={!!challengeUrl}
+          onBackButtonPress={handleChallengeCancel}
+          style={{
+            margin: 0,
+            padding: 0,
+          }}>
+          <WebViewModalContainer>
+            <WebViewModalHeader topInset={insets.top}>
+              <WebViewCloseButton onPress={handleChallengeCancel}>
+                <WebViewCloseText>✕</WebViewCloseText>
+              </WebViewCloseButton>
+            </WebViewModalHeader>
+            {challengeUrl ? (
+              <MoonPayChallengeFrame
+                challengeUrl={challengeUrl}
+                onReady={() => {
+                  logger.debug('MoonPay challenge frame ready');
+                }}
+                onComplete={async (payload: ChallengeCompletePayload) => {
+                  setChallengeUrl(null);
+                  if (payload?.transaction) {
+                    logger.debug(
+                      'MoonPay challenge completed, transaction: ' +
+                        JSON.stringify(payload.transaction),
+                    );
+                    dispatch(
+                      Analytics.track('Buy Crypto Challenge Completed', {
+                        exchange: 'moonpay',
+                        context: 'MoonpayBuyEmbeddedCheckout',
+                        paymentMethod: paymentMethod?.method || '',
+                        amount:
+                          Number((offer as CryptoOffer)?.fiatAmount) || '',
+                        coin:
+                          cloneDeep(
+                            wallet?.currencyAbbreviation,
+                          )?.toLowerCase() || '',
+                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        fiatCurrency: offer?.fiatCurrency || '',
+                        transactionId: payload.transaction.id,
+                        transactionStatus: payload.transaction.status,
+                      }),
+                    );
+                    await handleTransactionComplete(payload.transaction);
+                  } else {
+                    logger.error(
+                      'MoonPay challenge completed but no transaction data received',
+                    );
+                    showError(
+                      t(
+                        'Transaction completed but no transaction data received.',
+                      ),
+                      'Challenge completed without transaction data',
+                    );
+                  }
+                }}
+                onCancelled={handleChallengeCancel}
+                onError={error => {
+                  setChallengeUrl(null);
+                  cancelQuoteRefresh();
+                  logger.error(
+                    'MoonPay Apple Pay Challenge frame error: [' +
+                      error.code +
+                      '] ' +
+                      error.message,
+                  );
+                  showError(error, error.code, error.message);
+                }}
+              />
+            ) : null}
+          </WebViewModalContainer>
+        </Modal>
+      </MoonpayEmbeddedCheckoutContainer>
     </View>
   );
 };
