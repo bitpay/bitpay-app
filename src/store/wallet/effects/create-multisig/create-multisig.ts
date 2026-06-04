@@ -579,6 +579,7 @@ export const startTSSCeremony =
         await Promise.race([
           new Promise<void>((resolve, reject) => {
             let roundsStarted = false;
+            let stuckErrorCount = 0;
             tssKeyGen
               .on('roundready', (r: number) => {
                 if (!roundsStarted && r === 2) {
@@ -598,10 +599,25 @@ export const startTSSCeremony =
                   onRoundReady?.();
                 }
               })
-              .on('roundprocessed', (r: number) =>
-                logManager.debug(`[TSS Ceremony roundprocessed] round=${r}`),
-              )
+              .on('roundprocessed', (r: number) => {
+                logManager.debug(`[TSS Ceremony roundprocessed] round=${r}`);
+                try {
+                  const currentKey = getState().WALLET.keys[keyId];
+                  dispatch(
+                    successUpdateKey({
+                      key: {
+                        ...currentKey,
+                        tssSession: {
+                          ...currentKey.tssSession!,
+                          sessionExport: tssKeyGen.exportSession(),
+                        },
+                      },
+                    }),
+                  );
+                } catch (e) {}
+              })
               .on('roundsubmitted', (r: number) => {
+                stuckErrorCount = 0;
                 const stats = ceremonyStats.get(keyId);
                 if (stats) {
                   stats.roundsSubmitted++;
@@ -635,6 +651,19 @@ export const startTSSCeremony =
                   const stats = ceremonyStats.get(keyId);
                   if (stats) {
                     stats.swallowedErrors++;
+                  }
+                  if (e.message.includes('TSS_ROUND_ALREADY_DONE')) {
+                    stuckErrorCount++;
+                    if (stuckErrorCount >= 10) {
+                      logManager.error(
+                        `[TSS Ceremony] Session out of sync after ${stuckErrorCount} stuck errors | sessionId=${tssKeyGen.id}`,
+                      );
+                      activeCeremonies.delete(keyId);
+                      clearCeremonyStats(keyId);
+                      tssKeyGen.unsubscribe();
+                      reject(new Error('CEREMONY_STUCK'));
+                      return;
+                    }
                   }
                   logManager.warn(
                     `[TSS Ceremony] Swallowed reconnection error #${stats?.swallowedErrors}: ${e.message} | sessionId=${tssKeyGen.id}`,
@@ -1164,6 +1193,7 @@ export const joinTSSWithCode =
         await Promise.race([
           new Promise<void>((resolve, reject) => {
             let roundsStarted = false;
+            let stuckErrorCount = 0;
             tssKeyGen
               .on('roundready', (r: number) => {
                 if (!roundsStarted && r === 2) {
@@ -1183,10 +1213,27 @@ export const joinTSSWithCode =
                   opts.onRoundReady?.();
                 }
               })
-              .on('roundprocessed', (r: number) =>
-                logManager.debug(`[TSS Join roundprocessed] round=${r}`),
-              )
+              .on('roundprocessed', (r: number) => {
+                logManager.debug(`[TSS Join roundprocessed] round=${r}`);
+                try {
+                  const currentKey = getState().WALLET.keys[key.id];
+                  if (currentKey?.tssSession) {
+                    dispatch(
+                      successUpdateKey({
+                        key: {
+                          ...currentKey,
+                          tssSession: {
+                            ...currentKey.tssSession,
+                            sessionExport: tssKeyGen.exportSession(),
+                          },
+                        },
+                      }),
+                    );
+                  }
+                } catch (e) {}
+              })
               .on('roundsubmitted', (r: number) => {
+                stuckErrorCount = 0;
                 const stats = ceremonyStats.get(key.id);
                 if (stats) {
                   stats.roundsSubmitted++;
@@ -1232,6 +1279,19 @@ export const joinTSSWithCode =
                 ) {
                   if (stats) {
                     stats.swallowedErrors++;
+                  }
+                  if (e.message.includes('TSS_ROUND_ALREADY_DONE')) {
+                    stuckErrorCount++;
+                    if (stuckErrorCount >= 20) {
+                      logManager.error(
+                        `[TSS Join] Session out of sync after ${stuckErrorCount} stuck errors | sessionId=${tssKeyGen.id}`,
+                      );
+                      activeCeremonies.delete(key.id);
+                      clearCeremonyStats(key.id);
+                      tssKeyGen.unsubscribe();
+                      reject(new Error('CEREMONY_STUCK'));
+                      return;
+                    }
                   }
                   logManager.warn(
                     `[TSS Join] Swallowed reconnection error #${stats?.swallowedErrors}: ${e.message} | sessionId=${tssKeyGen.id}`,

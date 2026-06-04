@@ -485,6 +485,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           ? t(
               'The wallet creation timed out. This session is no longer valid — please create a new wallet.',
             )
+          : err.message === 'CEREMONY_STUCK'
+          ? t(
+              'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please create a new wallet.',
+            )
           : err.message || t('Failed to create wallet');
       dispatch(
         showBottomNotificationModal({

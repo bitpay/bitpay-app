@@ -267,6 +267,10 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
               ? t(
                   'The wallet creation timed out. This session is no longer valid — please ask the creator to start a new wallet.',
                 )
+              : err.message === 'CEREMONY_STUCK'
+              ? t(
+                  'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please ask the creator to start a new wallet.',
+                )
               : err.message || t('Failed to resume ceremony');
           dispatch(
             showBottomNotificationModal({
@@ -386,7 +390,13 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     } catch (err: any) {
       setCurrentStep(2);
       logger.error(`[TSS Join - handleJoin] Error: ${err.message}`);
-      setJoinError(t('Failed to join wallet. Please try again.'));
+      const joinErrMsg =
+        err.message === 'CEREMONY_STUCK'
+          ? t(
+              'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please ask the creator to start a new wallet.',
+            )
+          : t('Failed to join wallet. Please try again.');
+      setJoinError(joinErrMsg);
     }
   };
   const onSubmitStart = async (values: JoinFormValues) => {
