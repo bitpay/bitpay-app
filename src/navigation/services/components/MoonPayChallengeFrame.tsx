@@ -1,5 +1,4 @@
 import React, {useMemo, useState, useCallback} from 'react';
-import {StyleSheet} from 'react-native';
 import {MoonPayWebView, FrameMessage} from './MoonPayWebView';
 import {generateChannelId} from '../utils/moonpayFrameCrypto';
 
@@ -69,7 +68,7 @@ export function MoonPayChallengeFrame({
       channelId={channelId}
       onMessage={handleMessage}
       onHandshake={() => {}}
-      style={StyleSheet.absoluteFill}
+      style={{flex: 1}}
     />
   );
 }
