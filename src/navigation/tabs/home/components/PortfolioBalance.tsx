@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {BaseText, H2} from '../../../../components/styled/Text';
-import {SlateDark, White} from '../../../../styles/colors';
+import {Slate30, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
@@ -12,6 +12,7 @@ import {
   ScreenGutter,
 } from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {
   setHomeChartCollapsed,
   showBottomNotificationModal,
@@ -54,6 +55,7 @@ import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
+import Loader from '../../../../components/loader/Loader';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -151,6 +153,9 @@ const PortfolioBalanceChangeRow = ({
 
 const PortfolioBalanceContent = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
+  const importIsFirstKey = useAppSelector(({APP}) => APP.importIsFirstKey);
   const coinbaseBalance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
@@ -232,6 +237,22 @@ const PortfolioBalanceContent = () => {
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;
+
+  const awaitingFirstWalletRef = React.useRef(false);
+  if (pendingImport && importIsFirstKey) {
+    awaitingFirstWalletRef.current = true;
+  } else if (awaitingFirstWalletRef.current) {
+    if (
+      balanceChartsEnabled ||
+      (!portfolioChartsRequested && !pendingImport && !importIsFirstKey)
+    ) {
+      awaitingFirstWalletRef.current = false;
+    }
+  }
+
+  const showImportSkeleton =
+    ((pendingImport && importIsFirstKey) || awaitingFirstWalletRef.current) &&
+    !balanceChartsEnabled;
 
   useEffect(() => {
     setIsChartCollapsed(shouldApplyChartCollapse);
@@ -519,7 +540,8 @@ const PortfolioBalanceContent = () => {
           />
         </CollapseButtonContainer>
       ) : null}
-      <PortfolioTopContent $leftAligned={shouldLeftAlignTopSection}>
+      <PortfolioTopContent
+        $leftAligned={shouldLeftAlignTopSection || showImportSkeleton}>
         <PortfolioBalanceHeader
           activeOpacity={ActiveOpacity}
           testID="portfolio-balance-info-button"
@@ -530,26 +552,58 @@ const PortfolioBalanceContent = () => {
           </PortfolioBalanceTitle>
           <InfoSvg width={16} height={16} />
         </PortfolioBalanceHeader>
-        <TouchableOpacity
-          testID="portfolio-balance-toggle"
-          accessibilityLabel="Toggle balance visibility"
-          onLongPress={() => {
-            dispatch(toggleHideAllBalances());
-          }}>
-          {!hideAllBalances ? (
-            <>
-              <PortfolioBalanceText
-                $isCompact={shouldUseCompactPortfolioBalanceText}>
-                {formattedPortfolioBalance}
-              </PortfolioBalanceText>
-            </>
-          ) : (
-            <HiddenBalance>
-              {maskIfHidden(true, totalBalanceIncludingCoinbase)}
-            </HiddenBalance>
-          )}
-        </TouchableOpacity>
+        {showImportSkeleton ? (
+          <SkeletonPlaceholder
+            backgroundColor={theme.dark ? '#363636' : '#FAFAFB'}
+            highlightColor={theme.dark ? '#575757' : Slate30}>
+            <SkeletonPlaceholder.Item alignItems="flex-start">
+              <SkeletonPlaceholder.Item
+                borderRadius={100}
+                height={38}
+                width={130}
+                marginTop={6}
+                marginBottom={8}
+              />
+              <SkeletonPlaceholder.Item
+                borderRadius={100}
+                height={14}
+                width={90}
+              />
+            </SkeletonPlaceholder.Item>
+          </SkeletonPlaceholder>
+        ) : (
+          <TouchableOpacity
+            testID="portfolio-balance-toggle"
+            accessibilityLabel="Toggle balance visibility"
+            onLongPress={() => {
+              dispatch(toggleHideAllBalances());
+            }}>
+            {!hideAllBalances ? (
+              <>
+                <PortfolioBalanceText
+                  $isCompact={shouldUseCompactPortfolioBalanceText}>
+                  {formattedPortfolioBalance}
+                </PortfolioBalanceText>
+              </>
+            ) : (
+              <HiddenBalance>
+                {maskIfHidden(true, totalBalanceIncludingCoinbase)}
+              </HiddenBalance>
+            )}
+          </TouchableOpacity>
+        )}
       </PortfolioTopContent>
+
+      {!hideAllBalances && showImportSkeleton ? (
+        <View
+          style={{
+            height: HOME_BALANCE_EXPANDED_CHART_HEIGHT,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Loader size={32} spinning />
+        </View>
+      ) : null}
 
       {!hideAllBalances && (displayedChangeRowData || balanceChartsEnabled) ? (
         <PortfolioBalanceChangeRow

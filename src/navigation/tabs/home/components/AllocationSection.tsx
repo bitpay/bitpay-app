@@ -444,6 +444,8 @@ const AllocationSection: React.FC = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
+  const importIsFirstKey = useAppSelector(({APP}) => APP.importIsFirstKey);
 
   const visibleWallets = useMemo(
     () => getVisibleWalletsFromKeys(keys, homeCarouselConfig),
@@ -485,7 +487,10 @@ const AllocationSection: React.FC = () => {
         <AllocationDonutLegendCard
           legendItems={allocationData.legendItems}
           slices={allocationData.slices}
-          isLoading={hasAnyVisibleWalletBalance && !allocationData.rows?.length}
+          isLoading={
+            (pendingImport && importIsFirstKey) ||
+            (hasAnyVisibleWalletBalance && !allocationData.rows?.length)
+          }
         />
       </TouchableOpacity>
     </Container>

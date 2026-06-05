@@ -25,6 +25,28 @@ export const importLedgerModalToggled = (show: boolean): AppActionType => ({
   payload: show,
 });
 
+export const setImportBannerMessage = (
+  message: string | null,
+): AppActionType => ({
+  type: AppActionTypes.SET_IMPORT_BANNER_MESSAGE,
+  payload: message,
+});
+
+export const setPendingImport = (pending: boolean): AppActionType => ({
+  type: AppActionTypes.SET_PENDING_IMPORT,
+  payload: pending,
+});
+
+export const setImportProgress = (progress: number): AppActionType => ({
+  type: AppActionTypes.SET_IMPORT_PROGRESS,
+  payload: progress,
+});
+
+export const setImportIsFirstKey = (isFirstKey: boolean): AppActionType => ({
+  type: AppActionTypes.SET_IMPORT_IS_FIRST_KEY,
+  payload: isFirstKey,
+});
+
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
   payload: network,
