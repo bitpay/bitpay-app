@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
-import {shareNative} from '../../../utils/share';
+import {Share} from 'react-native';
 import {Alert} from 'react-native';
+import {shareNative} from '../../../utils/share';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
