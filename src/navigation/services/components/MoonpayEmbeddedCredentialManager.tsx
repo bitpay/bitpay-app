@@ -53,6 +53,7 @@ const EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 min
 export function MoonpayEmbeddedCredentialManager() {
   const network = useAppSelector(({APP}) => APP.network);
   const user: User = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const anonymousEid = useAppSelector(({APP}) => APP.brazeEid);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
@@ -75,7 +76,7 @@ export function MoonpayEmbeddedCredentialManager() {
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
-  const userEid = user?.eid;
+  const userEid = user?.eid ?? anonymousEid;
 
   // If no cached external services config exists yet, use local conditions.
   // Once the config is available, disable embedded MoonPay if embeddedBuyDisabled is true.
