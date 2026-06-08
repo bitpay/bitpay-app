@@ -37,7 +37,8 @@ import Mailer from 'react-native-mail';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {IS_DESKTOP} from '../../../../constants';
 import {Platform} from 'react-native';
-import Share, {ShareOptions} from 'react-native-share';
+import {ShareOptions} from 'react-native-share';
+import {shareFile as shareFileUtil} from '../../../../utils/share';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {logManager} from '../../../../managers/LogManager';
@@ -226,7 +227,7 @@ const ExportWallet = () => {
       };
 
       await RNFS.writeFile(filePath, txt, 'utf8');
-      await Share.open(opts);
+      await dispatch(shareFileUtil(opts));
     } catch (err: any) {
       logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {

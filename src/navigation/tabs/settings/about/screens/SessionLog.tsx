@@ -38,7 +38,8 @@ import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {isAndroidStoragePermissionGranted} from '../../../../../utils/helper-methods';
-import Share, {ShareOptions} from 'react-native-share';
+import {ShareOptions} from 'react-native-share';
+import {shareFile as shareFileUtil} from '../../../../../utils/share';
 import RNFS from 'react-native-fs';
 import {logManager} from '../../../../../managers/LogManager';
 import {useLogContext} from '../../../../../contexts/LogContext';
@@ -210,7 +211,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       };
 
       await RNFS.writeFile(filePath, data, 'utf8');
-      await Share.open(opts);
+      await dispatch(shareFileUtil(opts));
     } catch (err: any) {
       logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {

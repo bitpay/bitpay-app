@@ -11,7 +11,8 @@ import styled from 'styled-components/native';
 import {Caution, Slate30, SlateDark, White} from '../styles/colors';
 import {isAndroidStoragePermissionGranted} from '../utils/helper-methods';
 import RNFS from 'react-native-fs';
-import Share, {ShareOptions} from 'react-native-share';
+import {ShareOptions} from 'react-native-share';
+import {shareFile as shareFileUtil} from '../utils/share';
 import DeviceInfo from 'react-native-device-info';
 const IS_DESKTOP = DeviceInfo.getDeviceType();
 
@@ -99,7 +100,7 @@ const DebugScreen: React.FC<
       };
 
       await RNFS.writeFile(filePath, data, 'utf8');
-      await Share.open(opts);
+      await dispatch(shareFileUtil(opts));
     } catch (error: any) {
       Alert.alert(
         'Error',
