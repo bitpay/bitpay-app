@@ -15,7 +15,7 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
-import {AppEffects} from '../../../store/app';
+import {AppActions, AppEffects} from '../../../store/app';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
@@ -63,6 +63,7 @@ const NotificationsScreen = ({
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
+    dispatch(AppActions.setNotificationsInteractionDone());
     dispatch(
       Analytics.track('Clicked Skip Notifications', {
         context: 'onboarding',
@@ -93,6 +94,7 @@ const NotificationsScreen = ({
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
     const setAndNavigate = (accepted: boolean) => {
       haptic('impactLight');
+      dispatch(AppActions.setNotificationsInteractionDone());
       dispatch(AppEffects.setNotifications(accepted));
       if (notificationsAccepted) {
         dispatch(
