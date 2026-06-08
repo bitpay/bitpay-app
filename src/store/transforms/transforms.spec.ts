@@ -428,13 +428,38 @@ describe('transformPortfolioPopulateStatus', () => {
       populateStatus: {
         inProgress: true,
         currentWalletId: 'w1',
+        decisionReasonByWalletId: {w1: 'missing_index'},
+        decisionSource: 'app_launch_staleness',
         walletStatusById: {w1: 'in_progress'},
       },
     };
     const result = getOutbound()(state);
     expect(result.populateStatus.inProgress).toBe(false);
     expect(result.populateStatus.currentWalletId).toBeUndefined();
+    expect(result.populateStatus.decisionReasonByWalletId).toEqual({});
+    expect(result.populateStatus.decisionSource).toBeUndefined();
     expect(result.populateStatus.walletStatusById).toEqual({});
+  });
+
+  it('clears persisted populate debug decisions when inProgress is false', () => {
+    const state: any = {
+      populateStatus: {
+        inProgress: false,
+        currentWalletId: undefined,
+        decisionReasonByWalletId: {w1: 'missing_index'},
+        decisionSource: 'app_launch_staleness',
+        finishedAt: 200,
+        startedAt: 100,
+        stopReason: 'completed',
+      },
+    };
+    const result = getOutbound()(state);
+    expect(result).not.toBe(state);
+    expect(result.populateStatus).toEqual({
+      ...state.populateStatus,
+      decisionReasonByWalletId: {},
+      decisionSource: undefined,
+    });
   });
 
   it('returns state unchanged when inProgress is false', () => {

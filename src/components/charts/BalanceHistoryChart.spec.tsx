@@ -517,6 +517,126 @@ describe('BalanceHistoryChart', () => {
     expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(true);
   });
 
+  it('preserves an already visible series while chart data is not ready when requested', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+    const onSelectedBalanceChange = jest.fn();
+
+    await act(async () => {
+      renderer = TestRenderer.create(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: true,
+          onSelectedBalanceChange,
+        }),
+      );
+    });
+
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      renderer.update(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: false,
+          isBalanceChartDataReadyToQuery: false,
+          preserveVisibleSeriesWhileNotReady: true,
+          onSelectedBalanceChange,
+        }),
+      );
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+    expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+    expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(false);
+    expect(latestInteractiveLineChartProps.enablePanGesture).toBe(true);
+
+    await act(async () => {
+      latestInteractiveLineChartProps.onGestureStart();
+      latestInteractiveLineChartProps.onPointSelected(mockOneDayPoint);
+    });
+
+    expect(onSelectedBalanceChange).toHaveBeenLastCalledWith(100);
+  });
+
+  it('defers a stale-preserved timeframe switch until chart data is ready', async () => {
+    jest.useFakeTimers();
+    mockRunPortfolioBalanceChartViewModelQuery
+      .mockResolvedValueOnce({__series: mockOneDaySeries})
+      .mockResolvedValueOnce({__series: mockOneWeekSeries});
+    let renderer!: TestRenderer.ReactTestRenderer;
+
+    await act(async () => {
+      renderer = TestRenderer.create(
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
+      );
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+
+    await act(async () => {
+      renderer.update(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: false,
+          isBalanceChartDataReadyToQuery: false,
+          preserveVisibleSeriesWhileNotReady: true,
+        }),
+      );
+    });
+
+    expect(latestInteractiveLineChartProps.enablePanGesture).toBe(true);
+
+    await act(async () => {
+      latestTimeframeSelectorProps.onSelect('1W');
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+    expect(latestTimeframeSelectorProps.selected).toBe('1W');
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+    expect(latestInteractiveLineChartProps.enablePanGesture).toBe(false);
+    expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+
+    await act(async () => {
+      jest.advanceTimersByTime(119);
+    });
+
+    expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+
+    expect(latestInteractiveLineChartProps.isLoading).toBe(true);
+
+    await act(async () => {
+      renderer.update(
+        balanceHistoryChart({
+          showLoaderWhenNoSnapshots: true,
+          isBalanceChartDataReadyToQuery: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(2);
+    expect(
+      mockRunPortfolioBalanceChartViewModelQuery.mock.calls[1][0].timeframe,
+    ).toBe('1W');
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneWeekSeries.graphPoints,
+    );
+    expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+    expect(latestInteractiveLineChartProps.enablePanGesture).toBe(true);
+  });
+
   it('fades out the axis labels for a zero balance interval', async () => {
     mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
       __series: mockZeroBalanceSeries,

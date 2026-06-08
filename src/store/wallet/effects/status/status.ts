@@ -34,6 +34,7 @@ import {createWalletAddress} from '../address/address';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import uniqBy from 'lodash.uniqby';
 import {logManager} from '../../../../managers/LogManager';
+import {type BulkClient} from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/bulkclient';
 export const startUpdateWalletStatus =
   ({key, wallet, force}: {key: Key; wallet: Wallet; force?: boolean}): Effect =>
   async (dispatch, getState) => {
@@ -151,7 +152,7 @@ export const startUpdateWalletStatus =
   };
 
 export const getBulkStatus = (
-  bulkClient: any,
+  bulkClient: BulkClient,
   credentials: any,
   walletOptions: Record<
     string,
@@ -168,7 +169,7 @@ export const getBulkStatus = (
         twoStep: true,
         wallets: walletOptions,
       },
-      (err: Error, bulkStatus: BulkStatus[]) => {
+      (err: Error | null, bulkStatus: BulkStatus[]) => {
         if (err) {
           reject(err);
         } else {

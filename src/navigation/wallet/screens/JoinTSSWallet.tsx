@@ -1,6 +1,10 @@
 import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
+<<<<<<< ref/session-id-resume
 import {Share} from 'react-native';
 import {Alert} from 'react-native';
+=======
+import {shareNative} from '../../../utils/share';
+>>>>>>> develop
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -326,9 +330,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        message: sessionId,
-      });
+      await dispatch(shareNative({message: sessionId}));
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }

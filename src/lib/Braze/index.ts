@@ -1,6 +1,12 @@
 import Braze from '@braze/react-native-sdk';
 import axios from 'axios';
-import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
+import {
+  BRAZE_API_ENDPOINT,
+  BRAZE_API_KEY_ANDROID,
+  BRAZE_API_KEY_IOS,
+  BRAZE_MERGE_AND_DELETE_API_KEY,
+  BRAZE_REST_API_ENDPOINT,
+} from '@env';
 import {checkNotifications, RESULTS} from 'react-native-permissions';
 import {NativeModules, Platform} from 'react-native';
 import {logManager} from '../../managers/LogManager';
@@ -296,7 +302,9 @@ class BrazeClientWrapper {
   }
 
   private async initializeSdk(): Promise<void> {
-    return Promise.resolve();
+    const apiKey =
+      Platform.OS === 'ios' ? BRAZE_API_KEY_IOS : BRAZE_API_KEY_ANDROID;
+    Braze.initialize(apiKey, BRAZE_API_ENDPOINT);
   }
 }
 

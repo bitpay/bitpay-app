@@ -22,11 +22,14 @@ export function usePortfolioBalanceChartSurface(args: {
   fallbackCurrency?: string;
   enabled?: boolean;
   isBalanceChartDataReadyToQuery?: boolean;
+  preserveChartDrivenStateWhileNotReady?: boolean;
   resetKey?: string;
 }) {
   const enabled = args.enabled !== false;
   const canUseChartDrivenState =
-    enabled && args.isBalanceChartDataReadyToQuery !== false;
+    enabled &&
+    (args.isBalanceChartDataReadyToQuery !== false ||
+      args.preserveChartDrivenStateWhileNotReady === true);
   const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const [displayedBalance, setDisplayedBalance] = useState<
     number | undefined
@@ -46,17 +49,34 @@ export function usePortfolioBalanceChartSurface(args: {
       .join('|');
   }, [args.wallets]);
 
-  useEffect(() => {
+  const clearChartDrivenState = useCallback(() => {
     setSelectedBalance(undefined);
     setDisplayedBalance(undefined);
     setDisplayedAnalysisPoint(undefined);
     setChangeRowData(undefined);
+  }, []);
+
+  useEffect(() => {
+    clearChartDrivenState();
   }, [
-    args.isBalanceChartDataReadyToQuery,
     args.quoteCurrency,
     args.resetKey,
+    clearChartDrivenState,
     enabled,
     walletIdsSignature,
+  ]);
+
+  useEffect(() => {
+    if (
+      args.isBalanceChartDataReadyToQuery === false &&
+      args.preserveChartDrivenStateWhileNotReady !== true
+    ) {
+      clearChartDrivenState();
+    }
+  }, [
+    args.isBalanceChartDataReadyToQuery,
+    args.preserveChartDrivenStateWhileNotReady,
+    clearChartDrivenState,
   ]);
 
   const onDisplayedAnalysisPointChange = useCallback(

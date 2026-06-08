@@ -22,6 +22,8 @@ const initialState: PortfolioState = {
     txsProcessed: 0,
     errors: [],
     walletStatusById: {},
+    decisionReasonByWalletId: {},
+    decisionSource: undefined,
   },
   snapshotBalanceMismatchesByWalletId: {},
   invalidDecimalsByWalletId: {},
@@ -129,6 +131,9 @@ export const portfolioReducer = (
           txsProcessed: 0,
           errors: [],
           walletStatusById: {},
+          decisionReasonByWalletId:
+            action.payload.decisionReasonByWalletId || {},
+          decisionSource: action.payload.decisionSource,
         },
       };
     }
@@ -186,6 +191,10 @@ export const portfolioReducer = (
         state.populateStatus.walletStatusById,
         walletIds,
       );
+      const nextDecisionReasonByWalletId = clearWalletIdsFromMap(
+        state.populateStatus.decisionReasonByWalletId,
+        walletIds,
+      );
 
       const currentWalletId =
         state.populateStatus.currentWalletId &&
@@ -199,6 +208,7 @@ export const portfolioReducer = (
           ...state.populateStatus,
           currentWalletId,
           walletStatusById: nextWalletStatusById,
+          decisionReasonByWalletId: nextDecisionReasonByWalletId,
         },
         snapshotBalanceMismatchesByWalletId:
           nextSnapshotBalanceMismatchesByWalletId,

@@ -29,6 +29,8 @@ import {
   handleStartPopulateJobOnWorklet,
   resetPortfolioPopulateJobWorkletState,
 } from './portfolioPopulateJobWorklet';
+import {createNegativeBalanceInvalidHistoryError} from '../../core/pnl/invalidHistory';
+import {createPortfolioRemoteRequestError} from '../../core/remoteRequestError';
 import {
   disposePortfolioTxHistorySigningDispatchContext,
   takeNextPortfolioTransferredSignHandleOnRuntime,
@@ -327,7 +329,7 @@ describe('portfolioPopulateJobWorklet', () => {
     expectNoSerializedSecrets(activeJobState());
   });
 
-  it('skips a wallet prepare failure and continues populating the remaining wallets', async () => {
+  it('skips a wallet fiat-rate prepare failure without clearing snapshots and continues populating the remaining wallets', async () => {
     const paramsWithTwoWallets = {
       ...params,
       wallets: [
@@ -351,8 +353,17 @@ describe('portfolioPopulateJobWorklet', () => {
       ],
     } as any;
 
+    const fiatRateError = createPortfolioRemoteRequestError({
+      kind: 'fiat-rate',
+      failureKind: 'http-status',
+      status: 400,
+      url: 'https://bws.example/v4/fiatrates/USD?days=1',
+      message:
+        'Failed to fetch fiat rates (400) for https://bws.example/v4/fiatrates/USD?days=1.',
+    });
+
     mockHandlePrepareWalletOnPopulateWorklet
-      .mockRejectedValueOnce(new Error('Failed to fetch fiat rates (400).'))
+      .mockRejectedValueOnce(fiatRateError)
       .mockResolvedValueOnce({
         checkpoint: {nextSkip: 0},
       });
@@ -391,7 +402,8 @@ describe('portfolioPopulateJobWorklet', () => {
     expect(status?.errors).toEqual([
       {
         walletId: 'w1',
-        message: 'Failed to fetch fiat rates (400).',
+        message:
+          'Failed to fetch fiat rates (400) for https://bws.example/v4/fiatrates/USD?days=1.',
       },
     ]);
     expect(status?.result?.results).toHaveLength(1);
@@ -403,17 +415,7 @@ describe('portfolioPopulateJobWorklet', () => {
     expectNoSerializedSecrets(activeJobState());
     expect(mockHandlePrepareWalletOnPopulateWorklet).toHaveBeenCalledTimes(2);
     expect(mockHandleFinishWalletOnPopulateWorklet).toHaveBeenCalledTimes(1);
-    expect(mockClearWorkletWalletSnapshots).toHaveBeenCalledTimes(1);
-    expect(mockClearWorkletWalletSnapshots).toHaveBeenCalledWith(
-      {
-        storage: config.storage,
-        registryKey: config.registryKey,
-      },
-      'w1',
-      {
-        preserveInvalidHistoryMarker: false,
-      },
-    );
+    expect(mockClearWorkletWalletSnapshots).not.toHaveBeenCalled();
   });
 
   it('skips a wallet txhistory page failure and continues populating the remaining wallets', async () => {
@@ -499,6 +501,82 @@ describe('portfolioPopulateJobWorklet', () => {
     expect(mockHandlePrepareWalletOnPopulateWorklet).toHaveBeenCalledTimes(2);
     expect(mockHandleProcessNextPageOnPopulateWorklet).toHaveBeenCalledTimes(2);
     expect(mockHandleFinishWalletOnPopulateWorklet).toHaveBeenCalledTimes(1);
+    expect(mockClearWorkletWalletSnapshots).not.toHaveBeenCalled();
+  });
+
+  it('clears snapshots and preserves the invalid-history marker when invalid tx history fails a wallet', async () => {
+    const paramsWithTwoWallets = {
+      ...params,
+      wallets: [
+        params.wallets[0],
+        {
+          walletId: 'w2',
+          credentials: {
+            walletId: 'w2',
+            requestPrivKey: 'priv-key-2',
+          },
+          summary: {
+            walletId: 'w2',
+            walletName: 'Wallet 2',
+            chain: 'btc',
+            network: 'livenet',
+            currencyAbbreviation: 'btc',
+            balanceAtomic: '200000000',
+            balanceFormatted: '2',
+          },
+        },
+      ],
+    } as any;
+    const invalidHistoryError = createNegativeBalanceInvalidHistoryError({
+      txId: 'bad-tx',
+      balanceAtomic: '-1',
+      source: 'populate-job-test',
+    });
+
+    mockHandlePrepareWalletOnPopulateWorklet
+      .mockResolvedValueOnce({
+        checkpoint: {nextSkip: 0},
+      })
+      .mockResolvedValueOnce({
+        checkpoint: {nextSkip: 0},
+      });
+    mockHandleProcessNextPageOnPopulateWorklet
+      .mockRejectedValueOnce(invalidHistoryError)
+      .mockResolvedValueOnce({
+        checkpoint: {nextSkip: 0},
+        appendedSnapshots: 0,
+        fetchedTxs: 0,
+        logicalPageSize: 0,
+        done: true,
+        fetchMs: 1,
+        computeMs: 0,
+      });
+    mockHandleFinishWalletOnPopulateWorklet.mockResolvedValueOnce({
+      checkpoint: {nextSkip: 0},
+      appendedSnapshots: 1,
+    });
+
+    const started = await handleStartPopulateJobOnWorklet(
+      config,
+      paramsWithTwoWallets,
+      {
+        w1: signingContext('der-w1'),
+        w2: signingContext('der-w2'),
+      },
+    );
+    const status = await waitForTerminalStatus(started.jobId);
+
+    expect(status?.state).toBe('completed');
+    expect(status?.walletStatusById).toMatchObject({
+      w1: 'error',
+      w2: 'done',
+    });
+    expect(status?.errors).toEqual([
+      {
+        walletId: 'w1',
+        message: 'Invalid tx history: negative balance after tx bad-tx (-1).',
+      },
+    ]);
     expect(mockClearWorkletWalletSnapshots).toHaveBeenCalledTimes(1);
     expect(mockClearWorkletWalletSnapshots).toHaveBeenCalledWith(
       {
@@ -507,7 +585,7 @@ describe('portfolioPopulateJobWorklet', () => {
       },
       'w1',
       {
-        preserveInvalidHistoryMarker: false,
+        preserveInvalidHistoryMarker: true,
       },
     );
   });

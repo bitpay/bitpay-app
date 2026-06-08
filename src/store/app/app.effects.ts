@@ -6,8 +6,8 @@ import {
   EmitterSubscription,
   Linking,
   Platform,
-  Share,
 } from 'react-native';
+import {shareNative} from '../../utils/share';
 import Braze from '@braze/react-native-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppReview from 'react-native-in-app-review';
@@ -1305,7 +1305,7 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
     if (Platform.OS !== 'ios') {
       message = `${message} ${DOWNLOAD_BITPAY_URL}`;
     }
-    await Share.share({message, url: DOWNLOAD_BITPAY_URL});
+    await dispatch(shareNative({message, url: DOWNLOAD_BITPAY_URL}));
   } catch (err) {
     let errorStr;
     if (err instanceof Error) {

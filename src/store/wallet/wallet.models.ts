@@ -354,7 +354,7 @@ export interface TransactionProposal {
   action: string;
   actions: Action[];
   addressTo: string;
-  amount: number;
+  amount: number | string;
   amountStr: string;
   amountUnitStr: string;
   amountValueStr: string;

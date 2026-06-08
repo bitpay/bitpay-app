@@ -232,7 +232,9 @@ const PortfolioBalanceContent = () => {
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
     balanceChartReadiness.shouldShowChartLoader ||
-    (balanceChartsEnabled && !chartHasRenderableSeries);
+    (balanceChartsEnabled &&
+      !balanceChartReadiness.shouldPreserveStaleBalanceChart &&
+      !chartHasRenderableSeries);
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;
@@ -399,6 +401,8 @@ const PortfolioBalanceContent = () => {
     enabled: balanceChartsEnabled,
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
+    preserveChartDrivenStateWhileNotReady:
+      balanceChartReadiness.shouldPreserveStaleBalanceChart,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
@@ -412,6 +416,8 @@ const PortfolioBalanceContent = () => {
     showLoaderWhenNoSnapshots: showChartLoaderWhenNoSnapshots,
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
+    preserveVisibleSeriesWhileNotReady:
+      balanceChartReadiness.shouldPreserveStaleBalanceChart,
     // NOTE: Coinbase balance is intentionally excluded from the balance chart
     // (Option B per product requirements) because we do not have historized
     // Coinbase balance snapshots.

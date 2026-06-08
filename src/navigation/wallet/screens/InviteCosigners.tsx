@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, Modal, Share, useWindowDimensions} from 'react-native';
+import {ScrollView, Modal, useWindowDimensions} from 'react-native';
+import {shareNative} from '../../../utils/share';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -417,9 +418,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const handleShare = async () => {
     if (!pendingJoinCode) return;
     try {
-      await Share.share({
-        message: pendingJoinCode,
-      });
+      await dispatch(shareNative({message: pendingJoinCode}));
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }

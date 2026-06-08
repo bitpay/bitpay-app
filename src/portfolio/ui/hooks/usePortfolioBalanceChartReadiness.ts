@@ -20,6 +20,7 @@ export type PortfolioBalanceChartReadiness = {
   isSnapshotPresenceLoading: boolean;
   isBalanceChartDataReadyToQuery: boolean;
   shouldRenderZeroBalanceChart: boolean;
+  shouldPreserveStaleBalanceChart: boolean;
   shouldMountBalanceChart: boolean;
   shouldShowChartLoader: boolean;
 };
@@ -78,6 +79,8 @@ export default function usePortfolioBalanceChartReadiness(args: {
     canCheckSnapshotPresence &&
     !isScopePopulateLoading &&
     !isSnapshotPresenceLoading;
+  const shouldPreserveStaleBalanceChart =
+    hasHistoricalChartData && isScopePopulateLoading;
   const shouldRenderZeroBalanceChart =
     isBalanceChartDataReadyToQuery &&
     args.renderZeroBalanceChartWhenNoSnapshots === true &&
@@ -85,10 +88,13 @@ export default function usePortfolioBalanceChartReadiness(args: {
     !snapshotPresence.hasAnySnapshots &&
     !hasNonZeroLiveBalance;
   const isChartDataPending =
-    canCheckSnapshotPresence && !isBalanceChartDataReadyToQuery;
+    canCheckSnapshotPresence &&
+    !isBalanceChartDataReadyToQuery &&
+    !shouldPreserveStaleBalanceChart;
   const canRenderBalanceChart =
-    isBalanceChartDataReadyToQuery &&
-    (hasHistoricalChartData || shouldRenderZeroBalanceChart);
+    (isBalanceChartDataReadyToQuery &&
+      (hasHistoricalChartData || shouldRenderZeroBalanceChart)) ||
+    shouldPreserveStaleBalanceChart;
   const shouldShowChartLoader = !canRenderBalanceChart && isChartDataPending;
   const shouldMountBalanceChart =
     canRenderBalanceChart || shouldShowChartLoader;
@@ -104,6 +110,7 @@ export default function usePortfolioBalanceChartReadiness(args: {
     isScopePopulateLoading,
     isSnapshotPresenceLoading,
     shouldRenderZeroBalanceChart,
+    shouldPreserveStaleBalanceChart,
     shouldMountBalanceChart,
     shouldShowChartLoader,
   };

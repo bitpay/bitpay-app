@@ -436,7 +436,10 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       showBottomNotificationModal({
         type: 'error',
         title: title ?? t('Error'),
-        message: msg ?? t('Unknown Error'),
+        message:
+          t(
+            'An error occurred during payment processing. Reason for failure:',
+          ) + (msg ? ` ${msg}` : t('Unknown Error')),
         onBackdropDismiss: () => navigation.goBack(),
         enableBackdropDismiss: true,
         actions: actions ?? [

@@ -99,7 +99,7 @@ const SECP256K1_CURVE_ORDER_HEX =
   'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141';
 const SECP256K1_CURVE_HALF_ORDER_HEX =
   '7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0';
-export const DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS = 15000;
+export const DEFAULT_PORTFOLIO_NITRO_FETCH_TIMEOUT_MS = 100000;
 const QUICK_CRYPTO_ENUMS: QuickCryptoEnums = {
   KeyType: {
     PRIVATE: 2,
