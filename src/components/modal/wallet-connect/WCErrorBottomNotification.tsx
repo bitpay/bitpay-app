@@ -144,7 +144,7 @@ const WCErrorBottomNotification = ({
                   await sleep(0);
                   action(rootState);
                 }}>
-                {text.toUpperCase()}
+                {text?.toUpperCase()}
               </BottomNotificationCta>
             );
           })}

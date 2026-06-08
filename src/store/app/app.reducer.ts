@@ -42,6 +42,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'pinModalConfig',
   'showBiometricModal',
   'showBottomNotificationModal',
+  'bottomNotificationModalConfig',
   'showChainSelectorModal',
   'chainSelectorModalConfig',
   'showDecryptPasswordModal',
@@ -381,6 +382,7 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
