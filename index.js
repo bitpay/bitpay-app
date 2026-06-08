@@ -95,6 +95,7 @@ const makeErrorHandler = store => (e, isFatal) => {
     const errStr = e instanceof Error ? e.message : JSON.stringify(e);
     store.dispatch(LogActions.persistLog(LogActions.error(errStr)));
     Sentry.captureException(e, {level: 'fatal'});
+    void Sentry.flush(2000);
     Alert.alert(
       'Unexpected error occurred',
       `
@@ -179,8 +180,8 @@ const ReduxProvider = () => {
 
   return (
     <Provider store={reduxStore}>
-          <PersistGate loading={null} persistor={reduxPersistor}>
-            {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
+      <PersistGate loading={null} persistor={reduxPersistor}>
+        {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
       </PersistGate>
     </Provider>
   );
@@ -248,4 +249,13 @@ const AppWrapper = () => {
   );
 };
 
-AppRegistry.registerComponent(appName, () => Sentry.wrap(ReduxProvider));
+const App = () => (
+  <Sentry.ErrorBoundary
+    fallback={({error}) => {
+      throw error;
+    }}>
+    <ReduxProvider />
+  </Sentry.ErrorBoundary>
+);
+
+AppRegistry.registerComponent(appName, () => Sentry.wrap(App));
