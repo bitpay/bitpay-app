@@ -205,7 +205,7 @@ const AppWrapper = () => {
 
     const subscription = Appearance.addChangeListener(
       ({colorScheme: newScheme}) => {
-        if (colorScheme === null) {
+        if (!colorScheme || colorScheme === 'unspecified') {
           setIsDark(newScheme === 'dark');
         }
       },
