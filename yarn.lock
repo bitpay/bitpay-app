@@ -1490,10 +1490,10 @@
     web3 "4.16.0"
     xrpl "2.13.0"
 
-"@braze/react-native-sdk@16.1.0":
-  version "16.1.0"
-  resolved "https://registry.yarnpkg.com/@braze/react-native-sdk/-/react-native-sdk-16.1.0.tgz#d66c838a4eb38d2c5390d3dc4168767d7808a55a"
-  integrity sha512-IUoL+36KELKk4w6tlNdYjJ2fi0QBs2HT+yhYsupwfntvbbKPdSqlKrXU0e/xAyDv34qACcIxl2AYxeeD7Vhptg==
+"@braze/react-native-sdk@20.1.0":
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/@braze/react-native-sdk/-/react-native-sdk-20.1.0.tgz#3ef34c045e561affa7756ad8b88c231f8390192f"
+  integrity sha512-OM4Nwj2Eld6ICTFFpQQ/EgzG+f+DyW+sN9Y2HyavWIkreBbYXkEtuRPbAmplG4jw8RI4Gqr7S6RPhs0gKQDgfw==
 
 "@cbor-extract/cbor-extract-darwin-arm64@2.2.0":
   version "2.2.0"
