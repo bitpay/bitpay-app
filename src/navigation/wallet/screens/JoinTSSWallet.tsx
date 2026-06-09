@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
+import {Alert, Share} from 'react-native';
 import {shareNative} from '../../../utils/share';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -20,6 +21,7 @@ import {
   Action,
   Black,
   LinkBlue,
+  Slate,
 } from '../../../styles/colors';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {
@@ -68,6 +70,12 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {sleep} from '../../../utils/helper-methods';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import Settings from '../../../components/settings/Settings';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {
+  SheetContainer,
+  SheetParams,
+} from '../../../components/styled/Containers';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -136,6 +144,27 @@ const InputContainer = styled.View`
   margin-top: 20px;
 `;
 
+const OptionContainer = styled.TouchableOpacity<SheetParams>`
+  flex-direction: column;
+  padding-${({placement}) => placement}: 31px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+`;
+
+const OptionTitleText = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 600;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  margin-bottom: 6px;
+`;
+
+const OptionDescriptionText = styled(BaseText)`
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+`;
+
 type JoinFormValues = {
   myName: string;
 };
@@ -186,6 +215,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [showProcessing, setShowProcessing] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isCeremonyInRounds, setIsCeremonyInRounds] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   const resumeKeyId = route.params?.keyId;
   const activeKeyIdRef = useRef<string | null>(resumeKeyId || null);
@@ -200,6 +230,17 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
         cancelOnCreateRef.current = true;
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (resumeKeyId || !pendingJoinerSession) return;
+    setSessionId(pendingJoinerSession.sessionId);
+    setPartyKey(pendingJoinerSession.partyKey);
+    if (pendingJoinerSession.copayerName) {
+      setLocalCopayerName(pendingJoinerSession.copayerName);
+    }
+    setShowSession(true);
+    setCurrentStep(1);
   }, []);
 
   useEffect(() => {
@@ -383,18 +424,47 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     });
   };
 
+  const handleStartOver = () => {
+    setShowOptions(false);
+    Alert.alert(
+      t('Generate New Session?'),
+      t(
+        "If the leader already added your current session ID, that wallet creation will be invalid and they'll need to start a new one.",
+      ),
+      [
+        {
+          text: t('Cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('OK'),
+          style: 'destructive',
+          onPress: () => {
+            dispatch(removePendingJoinerSession());
+            setSessionId('');
+            setPartyKey(null);
+            setLocalCopayerName('');
+            setShowSession(false);
+            setCurrentStep(0);
+            setInviteCode('');
+            setJoinError(null);
+          },
+        },
+      ],
+    );
+  };
+
   useLayoutEffect(() => {
-    if (currentStep === 2) {
-      navigation.setOptions({
-        headerLeft: () => (
-          <HeaderBackButton onPress={() => setCurrentStep(1)} />
-        ),
-      });
-    } else {
-      navigation.setOptions({
-        headerLeft: undefined,
-      });
-    }
+    const showMenu = currentStep === 1 || currentStep === 2;
+    navigation.setOptions({
+      headerLeft:
+        currentStep === 2
+          ? () => <HeaderBackButton onPress={() => setCurrentStep(1)} />
+          : undefined,
+      headerRight: showMenu
+        ? () => <Settings onPress={() => setShowOptions(true)} />
+        : undefined,
+    });
   }, [navigation, currentStep]);
 
   if (isLoading) {
@@ -728,6 +798,22 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           </Button>
         </ButtonContainer>
       )}
+
+      <SheetModal
+        placement={'bottom'}
+        isVisible={showOptions}
+        onBackdropPress={() => setShowOptions(false)}>
+        <SheetContainer placement={'bottom'}>
+          <OptionContainer placement={'bottom'} onPress={handleStartOver}>
+            <OptionTitleText>{t('Generate New Session ID')}</OptionTitleText>
+            <OptionDescriptionText>
+              {t(
+                'This will restart the process. If the leader already added your current session ID, that wallet creation will be invalid.',
+              )}
+            </OptionDescriptionText>
+          </OptionContainer>
+        </SheetContainer>
+      </SheetModal>
     </Container>
   );
 };
