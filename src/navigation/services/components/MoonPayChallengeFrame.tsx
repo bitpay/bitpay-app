@@ -1,5 +1,4 @@
 import React, {useMemo, useState, useCallback} from 'react';
-import {StyleSheet} from 'react-native';
 import {MoonPayWebView, FrameMessage} from './MoonPayWebView';
 import {generateChannelId} from '../utils/moonpayFrameCrypto';
 
@@ -17,6 +16,7 @@ export interface ChallengeErrorPayload {
 
 interface MoonPayChallengeFrameProps {
   challengeUrl: string;
+  onReady?: () => void;
   onComplete: (payload: ChallengeCompletePayload) => void;
   onCancelled: () => void;
   onError: (error: ChallengeErrorPayload) => void;
@@ -24,6 +24,7 @@ interface MoonPayChallengeFrameProps {
 
 export function MoonPayChallengeFrame({
   challengeUrl,
+  onReady,
   onComplete,
   onCancelled,
   onError,
@@ -39,6 +40,9 @@ export function MoonPayChallengeFrame({
   const handleMessage = useCallback(
     (data: FrameMessage) => {
       switch (data.kind) {
+        case 'ready':
+          onReady?.();
+          break;
         case 'complete': {
           const payload = data.payload as {
             flow: string;
@@ -55,7 +59,7 @@ export function MoonPayChallengeFrame({
           break;
       }
     },
-    [onComplete, onCancelled, onError],
+    [onReady, onComplete, onCancelled, onError],
   );
 
   return (
@@ -64,7 +68,7 @@ export function MoonPayChallengeFrame({
       channelId={channelId}
       onMessage={handleMessage}
       onHandshake={() => {}}
-      style={StyleSheet.absoluteFill}
+      style={{flex: 1}}
     />
   );
 }
