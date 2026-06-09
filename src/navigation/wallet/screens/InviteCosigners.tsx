@@ -480,11 +480,21 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       }
       logger.error(`[TSS] Ceremony error: ${err.message}`);
       setIsCeremonyStarted(false);
+      const message =
+        err.message === 'CEREMONY_TIMEOUT'
+          ? t(
+              'The wallet creation timed out. This session is no longer valid — please create a new wallet.',
+            )
+          : err.message === 'CEREMONY_STUCK'
+          ? t(
+              'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please create a new wallet.',
+            )
+          : err.message || t('Failed to create wallet');
       dispatch(
         showBottomNotificationModal({
           type: 'error',
           title: t('Error'),
-          message: err.message || t('Failed to create wallet'),
+          message,
           enableBackdropDismiss: true,
           actions: [{text: t('OK'), action: () => {}, primary: true}],
         }),
