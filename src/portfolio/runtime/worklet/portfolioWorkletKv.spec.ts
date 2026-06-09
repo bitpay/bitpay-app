@@ -5,7 +5,7 @@ import {
   workletKvListKeys,
   workletKvSetString,
 } from './portfolioWorkletKv';
-import {createFakeWorkletStorage} from './__tests__/workletTestUtils';
+import {createFakeWorkletStorage} from './workletTestUtils';
 
 describe('portfolioWorkletKv', () => {
   it('lists native keys and removes them on delete', () => {

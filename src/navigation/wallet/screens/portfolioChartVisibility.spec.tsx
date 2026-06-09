@@ -4,6 +4,7 @@ import {ThemeProvider} from 'styled-components/native';
 import KeyOverview from './KeyOverview';
 import WalletDetails from './WalletDetails';
 import AccountDetails from './AccountDetails';
+import HomeRoot from '../../tabs/home/HomeRoot';
 import PortfolioBalance from '../../tabs/home/components/PortfolioBalance';
 import usePortfolioWalletSnapshotPresence from '../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
 
@@ -64,8 +65,13 @@ const mockDispatch: jest.Mock = jest.fn((action: any): any =>
   typeof action === 'function' ? action(mockDispatch, () => mockState) : action,
 );
 const mockNavigation = {
+  addListener: jest.fn((_event: string, _callback: () => void) => jest.fn()),
   dispatch: jest.fn(),
+  getParent: jest.fn(() => ({
+    navigate: jest.fn(),
+  })),
   navigate: jest.fn(),
+  setParams: jest.fn(),
   setOptions: jest.fn(),
 };
 const testTheme = {
@@ -98,6 +104,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({
     params: mockRouteParams,
   }),
+  useScrollToTop: jest.fn(),
   useTheme: () => ({
     dark: false,
     colors: {
@@ -131,6 +138,10 @@ jest.mock('../../tabs/TabsStack', () => ({
   TabsScreens: {
     HOME: 'Home',
   },
+}));
+
+jest.mock('../../tabs/TabScreenErrorFallback', () => ({
+  withErrorFallback: (Component: React.ComponentType<any>) => Component,
 }));
 
 jest.mock('../../coinbase/CoinbaseGroup', () => ({
@@ -302,6 +313,13 @@ jest.mock('../../../portfolio/ui/common', () => ({
   ),
 }));
 
+jest.mock('../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache', () =>
+  jest.fn(() => ({
+    cache: {},
+    reload: jest.fn(() => Promise.resolve()),
+  })),
+);
+
 jest.mock('../../../portfolio/ui/hooks/usePortfolioGainLossSummary', () =>
   jest.fn(() => ({
     data: undefined,
@@ -321,7 +339,42 @@ jest.mock('../../../components/button/Button', () => {
   return ({children}: {children?: React.ReactNode}) =>
     ReactLib.createElement(Text, null, children);
 });
-jest.mock('../../tabs/home/components/LinkingButtons', () => () => null);
+jest.mock('../../tabs/home/components/HomeSection', () => {
+  const ReactLib = require('react');
+  const {View} = require('react-native');
+  return ({children, style}: {children?: React.ReactNode; style?: any}) =>
+    ReactLib.createElement(View, {style, testID: 'home-section'}, children);
+});
+jest.mock('../../tabs/home/components/HeaderProfileButton', () => () => null);
+jest.mock('../../tabs/home/components/HeaderScanButton', () => () => null);
+jest.mock('../../tabs/home/components/Crypto', () => () => null);
+jest.mock('../../tabs/home/components/MarketingCarousel', () => () => null);
+jest.mock('../../tabs/home/components/DefaultMarketingCards', () =>
+  jest.fn(() => []),
+);
+jest.mock('../../tabs/home/components/offers/MockOffers', () =>
+  jest.fn(() => []),
+);
+jest.mock('../../tabs/home/components/offers/OffersCarousel', () => () => null);
+jest.mock(
+  '../../tabs/home/components/exchange-rates/ExchangeRatesList',
+  () => () => null,
+);
+jest.mock(
+  '../../tabs/home/components/SecurePasskeyBannerGate',
+  () => () => null,
+);
+jest.mock('../../tabs/home/components/AssetsSection', () => () => null);
+jest.mock(
+  '../../tabs/home/components/KeyMigrationFailureModal',
+  () => () => null,
+);
+jest.mock('../../tabs/home/homeExchangeRates', () => jest.fn(() => []));
+jest.mock('../../tabs/home/components/LinkingButtons', () => {
+  const ReactLib = require('react');
+  const {View} = require('react-native');
+  return () => ReactLib.createElement(View, {testID: 'home-linking-buttons'});
+});
 jest.mock('../../../components/list/AccountListRow', () => () => null);
 jest.mock('../../../components/list/TransactionRow', () => () => null);
 jest.mock('../../../components/list/TransactionProposalRow', () => () => null);
@@ -332,7 +385,9 @@ jest.mock(
 jest.mock('../../../components/list/AssetsByChainRow', () => () => null);
 jest.mock('../../../components/archax/archax-footer', () => () => null);
 jest.mock('../../tabs/home/components/AllocationSection', () => ({
+  __esModule: true,
   AllocationDonutLegendCard: () => null,
+  default: () => null,
 }));
 jest.mock('../../tabs/home/screens/Allocation', () => ({
   AllocationRowsList: () => null,
@@ -394,36 +449,65 @@ const mockWalletHasNonZeroLiveBalance = (wallet: any) => {
   );
 };
 
+const mockLegacyLastDayPnl = (currentFiat: unknown, lastDayFiat: unknown) => {
+  const current = Number(currentFiat) || 0;
+  const lastDay = Number(lastDayFiat) || 0;
+  if (!(current > 0) || !(lastDay > 0)) {
+    return undefined;
+  }
+  const deltaFiat = current - lastDay;
+  return {
+    deltaFiat,
+    percent: Number(((deltaFiat * 100) / lastDay).toFixed(2)),
+    isPositive: deltaFiat >= 0,
+  };
+};
+
 jest.mock('../../../utils/portfolio/assets', () => ({
-  getLegacyLastDayPnlFromTotals: jest.fn(
+  buildLegacyLastDayRateRequestsForWallets: jest.fn(
+    ({wallets}: {wallets?: any[]}) =>
+      (wallets || [])
+        .filter(wallet => Number(wallet?.balance?.fiat || 0) > 0)
+        .map(wallet => ({
+          coin: wallet.currencyAbbreviation,
+          chain: wallet.chain,
+          tokenAddress: wallet.tokenAddress,
+          intervals: ['1D'],
+        })),
+  ),
+  getLegacyLastDayPnlForRepresentativeAsset: jest.fn(
     ({
       currentFiatBalance,
-      lastDayFiatBalance,
+      fallbackLastDayFiatBalance,
     }: {
       currentFiatBalance?: number;
-      lastDayFiatBalance?: number;
+      fallbackLastDayFiatBalance?: number;
+    }) => mockLegacyLastDayPnl(currentFiatBalance, fallbackLastDayFiatBalance),
+  ),
+  getLegacyLastDayPnlForWallets: jest.fn(
+    ({
+      wallets,
+      currentFiatBalance,
+    }: {
+      wallets?: any[];
+      currentFiatBalance?: number;
     }) => {
-      const current =
-        typeof currentFiatBalance === 'number' &&
-        Number.isFinite(currentFiatBalance)
-          ? currentFiatBalance
-          : 0;
-      const lastDay =
-        typeof lastDayFiatBalance === 'number' &&
-        Number.isFinite(lastDayFiatBalance)
-          ? lastDayFiatBalance
-          : 0;
-
-      if (lastDay === 0) {
-        return undefined;
-      }
-
-      const deltaFiat = current - lastDay;
-      return {
-        deltaFiat,
-        percent: (deltaFiat / lastDay) * 100,
-      };
+      const lastDay = (wallets || []).reduce(
+        (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
+        0,
+      );
+      return mockLegacyLastDayPnl(currentFiatBalance, lastDay);
     },
+  ),
+  getLegacyLastDayRateRequestForAsset: jest.fn((identity?: any) =>
+    identity?.currencyAbbreviation
+      ? {
+          coin: identity.currencyAbbreviation,
+          chain: identity.chain,
+          tokenAddress: identity.tokenAddress,
+          intervals: ['1D'],
+        }
+      : undefined,
   ),
   getQuoteCurrency: jest.fn(
     ({
@@ -433,6 +517,15 @@ jest.mock('../../../utils/portfolio/assets', () => ({
       defaultAltCurrencyIsoCode?: string;
       portfolioQuoteCurrency?: string;
     }) => portfolioQuoteCurrency || defaultAltCurrencyIsoCode || 'USD',
+  ),
+  getLegacyLastDayPnlFromTotals: jest.fn(
+    ({
+      currentFiatBalance,
+      lastDayFiatBalance,
+    }: {
+      currentFiatBalance?: number;
+      lastDayFiatBalance?: number;
+    }) => mockLegacyLastDayPnl(currentFiatBalance, lastDayFiatBalance),
   ),
   getVisibleKeysFromKeys: jest.fn((keys: any) => Object.values(keys || {})),
   getVisibleWalletsFromKeys: jest.fn((keys: any) =>
@@ -520,6 +613,7 @@ jest.mock('../../../utils/portfolio/allocation', () => ({
     slices: [],
     totalFiat: 0,
   })),
+  getPortfolioAllocationTotalFiat: jest.fn(() => 100),
 }));
 
 jest.mock('../../../store/wallet/effects', () => ({
@@ -694,7 +788,9 @@ const resetState = (
   ];
   mockState = {
     APP: {
+      brazeContentCards: [],
       defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
+      dismissedMarketingCardIds: [],
       hideAllBalances: false,
       homeChartCollapsed: options.homeChartCollapsed === true,
       homeChartRemountNonce: 0,
@@ -726,6 +822,7 @@ const resetState = (
       quarantinesByWalletId: options.quarantinesByWalletId || {},
     },
     RATE: {
+      lastDayRates: {},
       rates: {},
     },
     SHOP: {
@@ -942,7 +1039,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('does not mount the Home portfolio balance chart or loader when Show Portfolio is disabled after initial success', async () => {
+  it('keeps the Home portfolio balance visible without mounting the chart when Show Portfolio is disabled after initial success', async () => {
     resetState(false, {completedFullPopulate: true});
 
     let view: TestRenderer.ReactTestRenderer;
@@ -950,16 +1047,48 @@ describe('portfolio chart visibility guards', () => {
       view = renderWithTheme(<PortfolioBalance />);
     });
 
-    expect(view!.toJSON()).toBeNull();
+    expect(view!.toJSON()).not.toBeNull();
     expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-info-button'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({testID: 'portfolio-balance-info-button'})
+        .length,
+    ).toBeGreaterThan(0);
     expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
+    ).toBeGreaterThan(0);
     expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'}),
-    ).toHaveLength(0);
+      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
+
+  it('keeps the HomeRoot balance section and linking buttons visible when Show Portfolio is disabled', async () => {
+    resetState(false, {completedFullPopulate: true});
+
+    let view: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(
+        <HomeRoot
+          navigation={mockNavigation as any}
+          route={{params: {}} as any}
+        />,
+      );
+    });
+
+    expect(
+      view!.root.findAllByProps({testID: 'portfolio-balance-info-button'})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
+    ).toBeGreaterThan(0);
+    expect(
+      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      view!.root.findAllByProps({testID: 'home-linking-buttons'}).length,
+    ).toBeGreaterThan(0);
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
@@ -986,7 +1115,7 @@ describe('portfolio chart visibility guards', () => {
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
         .length,
-    ).toBeGreaterThan(0);
+    ).toBe(0);
   });
 
   it('renders the Home portfolio balance chart when a full-populate timestamp exists', async () => {

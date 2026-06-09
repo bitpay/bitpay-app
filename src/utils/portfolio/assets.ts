@@ -4,7 +4,12 @@ import type {
   PortfolioPopulateStatus,
   WalletPopulateState,
 } from '../../store/portfolio/portfolio.models';
-import type {FiatRateInterval, Rates} from '../../store/rate/rate.models';
+import type {
+  FiatRateInterval,
+  FiatRateSeriesCache,
+  FiatRateSeriesReaderIdentity,
+  Rates,
+} from '../../store/rate/rate.models';
 import type {Key, Wallet} from '../../store/wallet/wallet.models';
 import type {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
 import {
@@ -22,6 +27,7 @@ import {
   formatFiatAmount,
   getCurrencyAbbreviation,
   calculatePercentageDifference,
+  getLastDayTimestampStartOfHourMs,
   unitStringToAtomicBigInt,
 } from '../helper-methods';
 import {
@@ -35,6 +41,12 @@ import {
   resolveActivePortfolioDisplayQuoteCurrency,
 } from './displayCurrency';
 import {formatBigIntDecimal} from '../../portfolio/core/format';
+import type {FiatRateCacheRequest} from '../../portfolio/core/fiatRatesShared';
+import {
+  getFiatRateAssetRef,
+  getFiatRateAssetRequestKey,
+} from '../../portfolio/core/fiatRateIdentity';
+import {getFiatRateFromSeriesCacheAtTimestamp} from './rate';
 
 export type GainLossMode = FiatRateInterval;
 
@@ -70,6 +82,293 @@ export type PortfolioGainLossSummary = {
     available: boolean;
     error?: string;
   };
+};
+
+export type LegacyLastDayPnl = {
+  deltaFiat: number;
+  percent: number;
+  isPositive: boolean;
+};
+
+export type LegacyLastDayPnlMode = 'representativeAsset' | 'walletLevel';
+
+export type LegacyLastDayAssetIdentity = {
+  currencyAbbreviation?: string;
+  chain?: string;
+  tokenAddress?: string;
+};
+
+export const UNAVAILABLE_ASSET_ROW_DELTA_FIAT = '—     ';
+export const UNAVAILABLE_ASSET_ROW_DELTA_PERCENT = '  —  %';
+
+export const formatAssetRowDeltaFiat = (
+  delta: number,
+  quoteCurrency: string,
+): string => {
+  const abs = Math.abs(delta);
+  const prefix = delta >= 0 ? '+' : '-';
+  return `${prefix}${formatFiatAmount(abs, quoteCurrency, {
+    customPrecision: 'minimal',
+  })}`;
+};
+
+export const formatAssetRowDeltaPercent = (percent: number): string => {
+  const normalized = Number.isFinite(percent) ? percent : 0;
+  const abs = Math.abs(normalized);
+  const prefix = normalized >= 0 ? '+' : '-';
+  return `${prefix}${abs.toFixed(2)}%`;
+};
+
+const isPositiveFiniteNumber = (value: number): boolean =>
+  Number.isFinite(value) && value > 0;
+
+const getLegacyLastDayPnlFromBalances = (args: {
+  currentFiatBalance: number | undefined;
+  previousFiatBalance: number | undefined;
+}): LegacyLastDayPnl | undefined => {
+  const currentFiatBalance = toNumber(args.currentFiatBalance);
+  const previousFiatBalance = toNumber(args.previousFiatBalance);
+
+  if (
+    !isPositiveFiniteNumber(currentFiatBalance) ||
+    !isPositiveFiniteNumber(previousFiatBalance)
+  ) {
+    return undefined;
+  }
+
+  const deltaFiat = currentFiatBalance - previousFiatBalance;
+  const percent = calculatePercentageDifference(
+    currentFiatBalance,
+    previousFiatBalance,
+  );
+
+  if (!Number.isFinite(deltaFiat) || !Number.isFinite(percent)) {
+    return undefined;
+  }
+
+  return {
+    deltaFiat,
+    percent,
+    isPositive: deltaFiat >= 0,
+  };
+};
+
+export const getLegacyLastDayPnlFromTotals = (args: {
+  currentFiatBalance: number | undefined;
+  lastDayFiatBalance: number | undefined;
+}): LegacyLastDayPnl | undefined =>
+  getLegacyLastDayPnlFromBalances({
+    currentFiatBalance: args.currentFiatBalance,
+    previousFiatBalance: args.lastDayFiatBalance,
+  });
+
+const normalizeLegacyLastDayAssetIdentity = (
+  identity: LegacyLastDayAssetIdentity | undefined,
+):
+  | {
+      coin: string;
+      chain?: string;
+      tokenAddress?: string;
+    }
+  | undefined => {
+  const asset = getFiatRateAssetRef({
+    currencyAbbreviation: identity?.currencyAbbreviation,
+    chain: identity?.chain,
+    tokenAddress: identity?.tokenAddress,
+  });
+
+  return asset.coin ? asset : undefined;
+};
+
+export const getLegacyLastDayRateRequestForAsset = (
+  identity: LegacyLastDayAssetIdentity | undefined,
+): FiatRateCacheRequest | undefined => {
+  const asset = normalizeLegacyLastDayAssetIdentity(identity);
+  if (!asset?.coin) {
+    return undefined;
+  }
+
+  return {
+    coin: asset.coin,
+    chain: asset.chain,
+    tokenAddress: asset.tokenAddress,
+    intervals: ['1D'],
+  };
+};
+
+const dedupeLegacyLastDayRateRequests = (
+  requests: Array<FiatRateCacheRequest | undefined>,
+): FiatRateCacheRequest[] => {
+  const out: FiatRateCacheRequest[] = [];
+  const seen = new Set<string>();
+
+  for (const request of requests) {
+    if (!request?.coin) {
+      continue;
+    }
+
+    const key = getFiatRateAssetRequestKey({
+      coin: request.coin,
+      chain: request.chain,
+      tokenAddress: request.tokenAddress,
+    });
+    if (!key || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    out.push(request);
+  }
+
+  return out;
+};
+
+const buildLegacyLastDayRateRequestsForAssetIdentities = (
+  identities: LegacyLastDayAssetIdentity[],
+): FiatRateCacheRequest[] =>
+  dedupeLegacyLastDayRateRequests(
+    identities.map(getLegacyLastDayRateRequestForAsset),
+  );
+
+const getV4PreviousFiatForAsset = (args: {
+  currentFiatBalance: number | undefined;
+  rates?: Rates;
+  fiatRateSeriesCache?: FiatRateSeriesCache;
+  quoteCurrency?: string;
+  baselineTimestampMs?: number;
+  identity: LegacyLastDayAssetIdentity;
+}): number | undefined => {
+  const currentFiatBalance = toNumber(args.currentFiatBalance);
+  if (!isPositiveFiniteNumber(currentFiatBalance)) {
+    return undefined;
+  }
+
+  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
+    quoteCurrency: args.quoteCurrency,
+  });
+  const asset = normalizeLegacyLastDayAssetIdentity(args.identity);
+  if (!asset?.coin) {
+    return undefined;
+  }
+
+  const currentRate = getAssetCurrentDisplayQuoteRate({
+    rates: args.rates,
+    currencyAbbreviation: asset.coin,
+    chain: asset.chain || asset.coin,
+    tokenAddress: asset.tokenAddress,
+    quoteCurrency,
+  });
+  if (typeof currentRate !== 'number' || !isPositiveFiniteNumber(currentRate)) {
+    return undefined;
+  }
+
+  const identity: FiatRateSeriesReaderIdentity | undefined = asset.tokenAddress
+    ? {chain: asset.chain, tokenAddress: asset.tokenAddress}
+    : undefined;
+  const previousRate = getFiatRateFromSeriesCacheAtTimestamp({
+    fiatRateSeriesCache: args.fiatRateSeriesCache,
+    fiatCode: quoteCurrency,
+    currencyAbbreviation: asset.coin,
+    interval: '1D',
+    timestampMs:
+      typeof args.baselineTimestampMs === 'number'
+        ? args.baselineTimestampMs
+        : getLastDayTimestampStartOfHourMs(),
+    method: 'linear',
+    identity,
+  });
+  if (
+    typeof previousRate !== 'number' ||
+    !isPositiveFiniteNumber(previousRate)
+  ) {
+    return undefined;
+  }
+
+  const previousFiatBalance = currentFiatBalance * (previousRate / currentRate);
+  return isPositiveFiniteNumber(previousFiatBalance)
+    ? previousFiatBalance
+    : undefined;
+};
+
+export const getLegacyLastDayPnlForRepresentativeAsset = (args: {
+  currentFiatBalance: number | undefined;
+  fallbackLastDayFiatBalance?: number | undefined;
+  rates?: Rates;
+  fiatRateSeriesCache?: FiatRateSeriesCache;
+  quoteCurrency?: string;
+  baselineTimestampMs?: number;
+  identity: LegacyLastDayAssetIdentity;
+}): LegacyLastDayPnl | undefined => {
+  const previousFiatFromV4 = getV4PreviousFiatForAsset(args);
+  const v4Pnl = getLegacyLastDayPnlFromBalances({
+    currentFiatBalance: args.currentFiatBalance,
+    previousFiatBalance: previousFiatFromV4,
+  });
+
+  return (
+    v4Pnl ??
+    getLegacyLastDayPnlFromTotals({
+      currentFiatBalance: args.currentFiatBalance,
+      lastDayFiatBalance: args.fallbackLastDayFiatBalance,
+    })
+  );
+};
+
+export const buildLegacyLastDayRateRequestsForWallets = (args: {
+  wallets: Wallet[] | undefined;
+}): FiatRateCacheRequest[] => {
+  return buildLegacyLastDayRateRequestsForAssetIdentities(
+    (args.wallets || []).filter(wallet => toNumber(wallet?.balance?.fiat) > 0),
+  );
+};
+
+export const getLegacyLastDayPnlForWallets = (args: {
+  wallets: Wallet[] | undefined;
+  currentFiatBalance: number | undefined;
+  rates?: Rates;
+  fiatRateSeriesCache?: FiatRateSeriesCache;
+  quoteCurrency?: string;
+  baselineTimestampMs?: number;
+}): LegacyLastDayPnl | undefined => {
+  const wallets = args.wallets || [];
+  const currentFiatBalance = toNumber(args.currentFiatBalance);
+  if (!isPositiveFiniteNumber(currentFiatBalance)) {
+    return undefined;
+  }
+
+  let previousFiatTotal = 0;
+  for (const wallet of wallets) {
+    const walletCurrentFiat = toNumber(wallet?.balance?.fiat);
+    if (!isPositiveFiniteNumber(walletCurrentFiat)) {
+      continue;
+    }
+
+    const previousFiatFromV4 = getV4PreviousFiatForAsset({
+      currentFiatBalance: walletCurrentFiat,
+      rates: args.rates,
+      fiatRateSeriesCache: args.fiatRateSeriesCache,
+      quoteCurrency: args.quoteCurrency,
+      baselineTimestampMs: args.baselineTimestampMs,
+      identity: {
+        currencyAbbreviation: wallet.currencyAbbreviation,
+        chain: wallet.chain,
+        tokenAddress: wallet.tokenAddress,
+      },
+    });
+    const fallbackLastDayFiat = toNumber(wallet?.balance?.fiatLastDay);
+    const previousFiat =
+      previousFiatFromV4 ??
+      (isPositiveFiniteNumber(fallbackLastDayFiat) ? fallbackLastDayFiat : 0);
+
+    if (isPositiveFiniteNumber(previousFiat)) {
+      previousFiatTotal += previousFiat;
+    }
+  }
+
+  return getLegacyLastDayPnlFromBalances({
+    currentFiatBalance,
+    previousFiatBalance: previousFiatTotal,
+  });
 };
 
 export const sortAssetRowItemsByHasRate = (
@@ -165,29 +464,24 @@ export const sortAssetRowItemsByAssetFiatPriority = (args: {
     .map(entry => entry.item);
 };
 
-export const buildAssetPreviewRowItemsFromWallets = (args: {
+type AssetPreviewGroup = {
+  key: string;
+  currencyAbbreviation: string;
+  chain: string;
+  tokenAddress?: string;
+  representativeWallet: Wallet;
+  representativeUnitDecimals: number;
+  fiatValue: number;
+  lastDayFiatValue: number;
+  totalAtomic: bigint;
+  firstIndex: number;
+};
+
+const buildAssetPreviewGroupsFromWallets = (args: {
   wallets: Wallet[] | undefined;
-  quoteCurrency?: string;
   orderedAssetKeys?: string[];
-  showScopedPnlLoading?: boolean;
-}): AssetRowItem[] => {
-  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
-    quoteCurrency: args.quoteCurrency,
-  });
-  const groupByKey = new Map<
-    string,
-    {
-      key: string;
-      currencyAbbreviation: string;
-      chain: string;
-      tokenAddress?: string;
-      representativeWallet: Wallet;
-      representativeUnitDecimals: number;
-      fiatValue: number;
-      totalAtomic: bigint;
-      firstIndex: number;
-    }
-  >();
+}): AssetPreviewGroup[] => {
+  const groupByKey = new Map<string, AssetPreviewGroup>();
 
   for (const [index, wallet] of (args.wallets || []).entries()) {
     const key = getPortfolioWalletCurrencyAbbreviationLower(wallet);
@@ -201,6 +495,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
       unitDecimals,
     });
     const fiatValue = Math.max(0, toNumber(wallet.balance?.fiat));
+    const lastDayFiatValue = Math.max(0, toNumber(wallet.balance?.fiatLastDay));
     const existing = groupByKey.get(key);
 
     if (!existing) {
@@ -212,6 +507,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
         representativeWallet: wallet,
         representativeUnitDecimals: unitDecimals,
         fiatValue,
+        lastDayFiatValue,
         totalAtomic: atomicBalance,
         firstIndex: index,
       });
@@ -219,6 +515,7 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
     }
 
     existing.fiatValue += fiatValue;
+    existing.lastDayFiatValue += lastDayFiatValue;
     existing.totalAtomic += atomicBalance;
     existing.firstIndex = Math.min(existing.firstIndex, index);
 
@@ -256,27 +553,89 @@ export const buildAssetPreviewRowItemsFromWallets = (args: {
           return left.firstIndex - right.firstIndex;
         });
 
-  return orderedGroups.map(group => ({
-    key: group.key,
-    currencyAbbreviation: group.currencyAbbreviation,
-    chain: group.chain,
-    tokenAddress: group.tokenAddress,
-    name: formatCurrencyAbbreviation(group.currencyAbbreviation),
-    cryptoAmount: formatBigIntDecimal(
-      group.totalAtomic,
-      group.representativeUnitDecimals,
-      Math.min(group.representativeUnitDecimals, 8),
-    ),
-    fiatAmount: formatFiatAmount(group.fiatValue, quoteCurrency, {
-      customPrecision: 'minimal',
-    }),
-    deltaFiat: '',
-    deltaPercent: '',
-    isPositive: true,
-    hasRate: group.fiatValue > 0,
-    hasPnl: false,
-    showScopedPnlLoading: !!args.showScopedPnlLoading,
-  }));
+  return orderedGroups;
+};
+
+export const buildLegacyLastDayRateRequestsForAssetRows = (args: {
+  wallets: Wallet[] | undefined;
+  orderedAssetKeys?: string[];
+}): FiatRateCacheRequest[] => {
+  return buildLegacyLastDayRateRequestsForAssetIdentities(
+    buildAssetPreviewGroupsFromWallets({
+      wallets: args.wallets,
+      orderedAssetKeys: args.orderedAssetKeys,
+    }).filter(group => group.fiatValue > 0),
+  );
+};
+
+export const buildAssetPreviewRowItemsFromWallets = (args: {
+  wallets: Wallet[] | undefined;
+  quoteCurrency?: string;
+  orderedAssetKeys?: string[];
+  showScopedPnlLoading?: boolean;
+  includeLegacyLastDayPnl?: boolean;
+  rates?: Rates;
+  fiatRateSeriesCache?: FiatRateSeriesCache;
+  baselineTimestampMs?: number;
+}): AssetRowItem[] => {
+  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
+    quoteCurrency: args.quoteCurrency,
+  });
+  const orderedGroups = buildAssetPreviewGroupsFromWallets({
+    wallets: args.wallets,
+    orderedAssetKeys: args.orderedAssetKeys,
+  });
+
+  return orderedGroups.map(group => {
+    const legacyPnl = args.includeLegacyLastDayPnl
+      ? getLegacyLastDayPnlForRepresentativeAsset({
+          currentFiatBalance: group.fiatValue,
+          fallbackLastDayFiatBalance: group.lastDayFiatValue,
+          rates: args.rates,
+          fiatRateSeriesCache: args.fiatRateSeriesCache,
+          quoteCurrency,
+          baselineTimestampMs: args.baselineTimestampMs,
+          identity: {
+            currencyAbbreviation: group.currencyAbbreviation,
+            chain: group.chain,
+            tokenAddress: group.tokenAddress,
+          },
+        })
+      : undefined;
+    const showPnlPlaceholder = args.includeLegacyLastDayPnl && !legacyPnl;
+
+    return {
+      key: group.key,
+      currencyAbbreviation: group.currencyAbbreviation,
+      chain: group.chain,
+      tokenAddress: group.tokenAddress,
+      name: formatCurrencyAbbreviation(group.currencyAbbreviation),
+      cryptoAmount: formatBigIntDecimal(
+        group.totalAtomic,
+        group.representativeUnitDecimals,
+        Math.min(group.representativeUnitDecimals, 8),
+      ),
+      fiatAmount: formatFiatAmount(group.fiatValue, quoteCurrency, {
+        customPrecision: 'minimal',
+      }),
+      deltaFiat: legacyPnl
+        ? formatAssetRowDeltaFiat(legacyPnl.deltaFiat, quoteCurrency)
+        : showPnlPlaceholder
+        ? UNAVAILABLE_ASSET_ROW_DELTA_FIAT
+        : '',
+      deltaPercent: legacyPnl
+        ? formatAssetRowDeltaPercent(legacyPnl.percent)
+        : showPnlPlaceholder
+        ? UNAVAILABLE_ASSET_ROW_DELTA_PERCENT
+        : '',
+      isPositive: legacyPnl?.isPositive ?? true,
+      hasRate: group.fiatValue > 0,
+      hasPnl: !!legacyPnl,
+      showPnlPlaceholder,
+      showScopedPnlLoading:
+        !legacyPnl && !showPnlPlaceholder && !!args.showScopedPnlLoading,
+    };
+  });
 };
 
 type AssetRowItemSupportInfo = {
@@ -566,13 +925,11 @@ export const getLegacyPercentageDifferenceFromTotals = (args: {
   totalBalance: number;
   totalBalanceLastDay: number | undefined;
 }): number | null => {
-  if (!args.totalBalanceLastDay) {
-    return null;
-  }
-
-  return calculatePercentageDifference(
-    args.totalBalance,
-    args.totalBalanceLastDay,
+  return (
+    getLegacyLastDayPnlFromTotals({
+      currentFiatBalance: args.totalBalance,
+      lastDayFiatBalance: args.totalBalanceLastDay,
+    })?.percent ?? null
   );
 };
 
