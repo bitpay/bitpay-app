@@ -308,8 +308,7 @@ const ExportTSSWallet = () => {
         RNFS.unlink(filePath).catch(() => {});
       }
       if (err && err.message === 'User did not share') {
-        setShareButtonState('success');
-        setBackupCompleted(true);
+        setShareButtonState(undefined);
         return;
       } else {
         setShareButtonState('failed');
