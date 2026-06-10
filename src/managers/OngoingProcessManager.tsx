@@ -110,6 +110,20 @@ const getCount = (data?: OngoingProcessData): number =>
     ? data
     : 0;
 
+export const getOngoingProcessMessage = (
+  key: OnGoingProcessMessages,
+  data?: OngoingProcessData,
+): string => translations[key]?.(data) ?? i18n.t('Loading');
+
+export const IMPORT_PROGRESS_VISIBLE_EVENTS: readonly string[] = [
+  'findingCopayers',
+  'foundCopayers',
+  'gettingStatuses',
+  'gatheringWalletsInfos',
+  'walletInfo.gatheringTokens',
+  'IMPORT_SCANNING_FUNDS',
+];
+
 const translations: Record<
   OnGoingProcessMessages,
   (data?: OngoingProcessData) => string

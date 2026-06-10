@@ -45,6 +45,7 @@ interface WalletCardComponentProps {
   hideKeyBalance: boolean;
   context?: 'keySelector';
   pendingTssSession?: boolean;
+  cardHeight?: number;
 }
 
 export const HeaderImg = styled.View`
@@ -203,6 +204,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   layout,
   context,
   pendingTssSession,
+  cardHeight,
 }) => {
   const {t} = useTranslation();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -306,6 +308,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       }}
       footer={CardFooter}
       onCTAPress={onPress}
+      cardHeight={cardHeight}
     />
   );
 };

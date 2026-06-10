@@ -27,6 +27,7 @@ const WalletsAndKeys = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const keyList = Object.values(keys);
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
 
   const onPressKey = (key: Key) => {
     key.backupComplete
@@ -61,7 +62,8 @@ const WalletsAndKeys = () => {
           ))
         : null}
       <Setting
-        style={{justifyContent: 'center'}}
+        style={{justifyContent: 'center', opacity: pendingImport ? 0.4 : 1}}
+        disabled={pendingImport}
         onPress={() => navigation.navigate('CreationOptions')}
         activeOpacity={ActiveOpacity}>
         <CreateOrImportLink>{t('Create or Import Key')}</CreateOrImportLink>

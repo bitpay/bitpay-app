@@ -92,6 +92,8 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const pendingImport = useAppSelector(({APP}) => APP.pendingImport);
+  const importIsFirstKey = useAppSelector(({APP}) => APP.importIsFirstKey);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const focusRefreshToken = useScreenFocusRefreshToken();
   const portfolioChartsEnabled = showPortfolioValue === true;
@@ -236,10 +238,11 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     visibleItems,
   ]);
   const shouldShowActivationPlaceholder =
-    portfolioChartsEnabled &&
-    hasAnyVisibleWalletBalance &&
-    !items.length &&
-    (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
+    (pendingImport && importIsFirstKey) ||
+    (portfolioChartsEnabled &&
+      hasAnyVisibleWalletBalance &&
+      !items.length &&
+      (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress));
 
   if (shouldShowActivationPlaceholder) {
     return (
