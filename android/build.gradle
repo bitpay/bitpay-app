@@ -21,6 +21,7 @@ buildscript {
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath 'com.google.android.gms:strict-version-matcher-plugin:1.2.1'
         classpath 'com.google.gms:google-services:4.3.14'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
 }
