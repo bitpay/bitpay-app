@@ -153,7 +153,7 @@ export const AppsFlyerWrapper = (() => {
       }
 
       try {
-        AppsFlyer.logEvent(eventName, eventValues ?? {});
+        await AppsFlyer.logEvent(eventName, eventValues ?? {});
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
 
