@@ -1,4 +1,5 @@
 import {Effect} from '../../..';
+import {logManager} from '../../../../managers/LogManager';
 import {GetPrecision} from '../../utils/currency';
 import {
   formatCurrencyAbbreviation,
@@ -36,10 +37,21 @@ export const ParseAmount =
     fullPrecision?: boolean,
   ): Effect<FormattedAmountObj> =>
   dispatch => {
-    // @ts-ignore
-    const {unitToSatoshi, unitDecimals} = dispatch(
+    const precision = dispatch(
       GetPrecision(currencyAbbreviation, chain, tokenAddress),
     );
+    if (!precision) {
+      logManager.warn(
+        `ParseAmount: no precision found for currency "${currencyAbbreviation}" on chain "${chain}" — returning zero fallback`,
+      );
+      return {
+        amount: '0',
+        currency: currencyAbbreviation,
+        amountSat: 0,
+        amountUnitStr: '',
+      };
+    }
+    const {unitToSatoshi, unitDecimals} = precision;
     const satToUnit = 1 / unitToSatoshi;
     let amountUnitStr;
     let amountSat;
