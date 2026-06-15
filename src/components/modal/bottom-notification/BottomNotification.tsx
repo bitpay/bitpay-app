@@ -179,7 +179,11 @@ const BottomNotification = React.memo(() => {
           haptic('impactLight');
           dispatch(AppActions.dismissBottomNotificationModal());
           await sleep(0);
-          action(rootState);
+          try {
+            await action(rootState);
+          } catch (e) {
+            console.error('[BottomNotification] action error:', e);
+          }
         };
 
         return (
