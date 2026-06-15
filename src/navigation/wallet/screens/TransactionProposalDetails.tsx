@@ -466,7 +466,15 @@ const TransactionProposalDetails = () => {
             {
               text: t('DELETE'),
               action: async () => {
-                await RemoveTxProposal(wallet, txp);
+                try {
+                  await RemoveTxProposal(wallet, txp);
+                } catch (err) {
+                  const errMsg =
+                    err instanceof Error ? err.message : String(err);
+                  logManager.warn(
+                    `[removePaymentProposal] TxP may already be removed on server: ${errMsg}`,
+                  );
+                }
                 dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
