@@ -787,6 +787,7 @@ const CoinbaseAccount = ({
       />
 
       <SheetModal
+        modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>
