@@ -21,6 +21,10 @@ jest.mock('../../../../components/charts/BalanceHistoryChart', () => {
   };
 });
 
+jest.mock('../../../../components/charts/useLegacyLastDayChangeRowData', () =>
+  jest.fn(),
+);
+
 jest.mock('../../../../components/styled/Containers', () => ({
   ScreenGutter: 16,
 }));
@@ -121,6 +125,9 @@ const {usePortfolioAnalysis} = jest.requireMock(
 ) as {
   usePortfolioAnalysis: jest.Mock;
 };
+const useLegacyLastDayChangeRowData = jest.requireMock(
+  '../../../../components/charts/useLegacyLastDayChangeRowData',
+) as jest.Mock;
 const {hasCompletedPopulateForWallets} = jest.requireMock(
   '../../../../utils/portfolio/assets',
 ) as {
@@ -175,6 +182,8 @@ describe('AssetBalanceHistoryScreen', () => {
     };
     usePortfolioAnalysis.mockClear();
     buildAssetBalanceHistoryDisplayedSummary.mockClear();
+    useLegacyLastDayChangeRowData.mockReset();
+    useLegacyLastDayChangeRowData.mockReturnValue(undefined);
     hasCompletedPopulateForWallets.mockClear();
     hasCompletedPopulateForWallets.mockReturnValue(false);
     isPopulateLoadingForWallets.mockClear();
@@ -233,6 +242,39 @@ describe('AssetBalanceHistoryScreen', () => {
       expect.objectContaining({
         enabled: false,
       }),
+    );
+    expect(useLegacyLastDayChangeRowData).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        currentFiatBalance: 100,
+        enabled: true,
+        mode: 'representativeAsset',
+        quoteCurrency: 'USD',
+        representativeAsset: shared.assetContext,
+        wallets: shared.assetWallets,
+      }),
+    );
+  });
+
+  it('shows the legacy Last Day PnL row when Show Portfolio is disabled', async () => {
+    const shared = sharedFactory();
+    shared.showPortfolioValue = false;
+    const legacyChangeRow = {
+      percent: 11.11,
+      deltaFiatFormatted: '$10.00',
+      rangeLabel: 'Last Day',
+    };
+    useLegacyLastDayChangeRowData.mockReturnValue(legacyChangeRow);
+
+    await act(async () => {
+      TestRenderer.create(<AssetBalanceHistoryScreen shared={shared} />);
+    });
+
+    expect(latestBalanceHistoryChartProps).toBeUndefined();
+    expect(latestExchangeRateScreenLayoutProps.changeRow).toEqual(
+      legacyChangeRow,
+    );
+    expect(latestExchangeRateScreenLayoutProps.reserveChangeRowSpace).toBe(
+      false,
     );
   });
 
@@ -312,7 +354,7 @@ describe('AssetBalanceHistoryScreen', () => {
     );
   });
 
-  it('keeps asset chart work in loader mode during later incremental populate after initial success', async () => {
+  it('keeps asset chart work mounted with stale preservation during later incremental populate after initial success', async () => {
     isPopulateLoadingForWallets.mockReturnValue(true);
     mockState.PORTFOLIO.populateStatus = {
       currentWalletId: 'wallet-1',
@@ -332,13 +374,18 @@ describe('AssetBalanceHistoryScreen', () => {
     });
 
     expect(latestBalanceHistoryChartProps).toBeDefined();
-    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(true);
+    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(
+      false,
+    );
     expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
       false,
     );
+    expect(
+      latestBalanceHistoryChartProps.preserveVisibleSeriesWhileNotReady,
+    ).toBe(true);
   });
 
-  it('ignores stale chart summary state while asset chart data is not ready', async () => {
+  it('preserves stale chart summary state while asset chart data is not ready during incremental populate', async () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
@@ -388,10 +435,17 @@ describe('AssetBalanceHistoryScreen', () => {
     expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
       false,
     );
+    expect(
+      latestBalanceHistoryChartProps.preserveVisibleSeriesWhileNotReady,
+    ).toBe(true);
     expect(buildAssetBalanceHistoryDisplayedSummary).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        chartDisplayedPoint: undefined,
-        chartChangeRow: undefined,
+        chartDisplayedPoint: expect.objectContaining({
+          totalFiatBalance: 200,
+        }),
+        chartChangeRow: expect.objectContaining({
+          percent: 20,
+        }),
       }),
     );
   });

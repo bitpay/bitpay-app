@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, ScrollView, View, StyleSheet} from 'react-native';
+import Modal from 'react-native-modal';
 import {
   useTheme,
   RouteProp,
@@ -19,7 +20,6 @@ import {
   Action,
   ProgressBlue,
 } from '../../../styles/colors';
-import {BwcProvider} from '../../../lib/bwc';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {Wallet} from '../../../store/wallet/wallet.models';
@@ -81,6 +81,9 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
 import MoonpayEmbeddedCheckoutSkeleton from '../components/MoonpayEmbeddedCheckoutSkeleton';
+import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
+import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms';
 
@@ -188,6 +191,34 @@ const PoweredByPartner = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : '#565656')};
 `;
 
+const WebViewModalContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  overflow: scroll;
+`;
+
+const WebViewModalHeader = styled.View<{topInset: number}>`
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  margin-top: ${({topInset}) => topInset}px;
+  height: 50px;
+  background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
+  justify-content: center;
+  align-items: flex-start;
+  padding-horizontal: 15px;
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
+`;
+
+const WebViewCloseButton = styled(TouchableOpacity)`
+  padding: 10px;
+`;
+
+const WebViewCloseText = styled(BaseText)`
+  font-size: 24px;
+  color: ${({theme: {dark}}) => (dark ? '#ccc' : '#333')};
+`;
+
 export interface MoonpayBuyEmbeddedCheckoutProps {
   wallet: Wallet;
   toAddress: string;
@@ -218,6 +249,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user: User | undefined = useAppSelector(
@@ -337,6 +369,16 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   };
 
   const init = async () => {
+    logger.debug(
+      'MoonPay embedded checkout initializing: ' +
+        wallet.currencyAbbreviation.toUpperCase() +
+        ' on ' +
+        wallet.chain +
+        ', ' +
+        offer.fiatAmount +
+        ' ' +
+        offer.fiatCurrency,
+    );
     let _paymentMethod: MoonpayPaymentType | undefined =
       getMoonpayPaymentMethodFormat(
         (paymentMethod?.method as PaymentMethodKey) ?? 'applePay',
@@ -436,7 +478,10 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       showBottomNotificationModal({
         type: 'error',
         title: title ?? t('Error'),
-        message: msg ?? t('Unknown Error'),
+        message:
+          t(
+            'An error occurred during payment processing. Reason for failure:',
+          ) + (msg ? ` ${msg}` : t('Unknown Error')),
         onBackdropDismiss: () => navigation.goBack(),
         enableBackdropDismiss: true,
         actions: actions ?? [
@@ -558,8 +603,37 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     );
   };
 
+  const handleChallengeCancel = async () => {
+    setChallengeUrl(null);
+    setExpiredAnalyticSent(false);
+    logger.debug('MoonPay challenge cancelled by user.');
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'moonpay',
+        context: 'MoonpayBuyEmbeddedCheckout',
+        reason: 'Challenge cancelled by user',
+        paymentMethod: paymentMethod?.method || '',
+        amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+        coin: cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() || '',
+        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+        fiatCurrency: offer?.fiatCurrency || '',
+      }),
+    );
+    if (countDown) {
+      clearInterval(countDown);
+    }
+    setIsLoading(true);
+    try {
+      await init();
+    } catch (err) {
+      showError(err);
+    }
+  };
+
   useEffect(() => {
-    init();
+    init().catch(err => {
+      showError(err, 'initFailed');
+    });
 
     return () => {
       if (countDown) {
@@ -827,6 +901,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               ref={applePayFrameRef}
               clientToken={credentials.clientToken}
               signature={initialQuoteSignature}
+              onReady={() => {
+                logger.debug('MoonPay Apple Pay frame ready');
+              }}
               onComplete={async (payload: ApplePayCompletePayload) => {
                 await handleTransactionComplete(payload.transaction);
               }}
@@ -835,11 +912,30 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 logger.debug(
                   'MoonPay Apple Pay challenge required, opening challenge frame',
                 );
+                dispatch(
+                  Analytics.track('Buy Crypto Challenge Started', {
+                    exchange: 'moonpay',
+                    context: 'MoonpayBuyEmbeddedCheckout',
+                    paymentMethod: paymentMethod?.method || '',
+                    amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                    coin:
+                      cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
+                      '',
+                    chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                    fiatCurrency: offer?.fiatCurrency || '',
+                  }),
+                );
                 setChallengeUrl(url);
               }}
               onQuoteExpired={refreshQuote}
               onError={(error: ApplePayErrorPayload) => {
                 cancelQuoteRefresh();
+                logger.error(
+                  'MoonPay Apple Pay frame error: [' +
+                    error.code +
+                    '] ' +
+                    error.message,
+                );
                 showError(error, error.code, error.message);
               }}
             />
@@ -859,51 +955,88 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             <PoweredByPartner>MoonPay Rails</PoweredByPartner>
           </PoweredByContainer>
         </BottomSection>
+
+        <Modal
+          deviceHeight={HEIGHT}
+          deviceWidth={WIDTH}
+          backdropTransitionOutTiming={0}
+          backdropOpacity={0.85}
+          useNativeDriverForBackdrop={true}
+          useNativeDriver={true}
+          animationIn={'fadeInUp'}
+          animationOut={'fadeOutDown'}
+          isVisible={!!challengeUrl}
+          onBackButtonPress={handleChallengeCancel}
+          style={{
+            margin: 0,
+            padding: 0,
+          }}>
+          <WebViewModalContainer>
+            <WebViewModalHeader topInset={insets.top}>
+              <WebViewCloseButton onPress={handleChallengeCancel}>
+                <WebViewCloseText>✕</WebViewCloseText>
+              </WebViewCloseButton>
+            </WebViewModalHeader>
+            {challengeUrl ? (
+              <MoonPayChallengeFrame
+                challengeUrl={challengeUrl}
+                onReady={() => {
+                  logger.debug('MoonPay challenge frame ready');
+                }}
+                onComplete={async (payload: ChallengeCompletePayload) => {
+                  setChallengeUrl(null);
+                  if (payload?.transaction) {
+                    logger.debug(
+                      'MoonPay challenge completed, transaction: ' +
+                        JSON.stringify(payload.transaction),
+                    );
+                    dispatch(
+                      Analytics.track('Buy Crypto Challenge Completed', {
+                        exchange: 'moonpay',
+                        context: 'MoonpayBuyEmbeddedCheckout',
+                        paymentMethod: paymentMethod?.method || '',
+                        amount:
+                          Number((offer as CryptoOffer)?.fiatAmount) || '',
+                        coin:
+                          cloneDeep(
+                            wallet?.currencyAbbreviation,
+                          )?.toLowerCase() || '',
+                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        fiatCurrency: offer?.fiatCurrency || '',
+                        transactionId: payload.transaction.id,
+                        transactionStatus: payload.transaction.status,
+                      }),
+                    );
+                    await handleTransactionComplete(payload.transaction);
+                  } else {
+                    logger.error(
+                      'MoonPay challenge completed but no transaction data received',
+                    );
+                    showError(
+                      t(
+                        'Transaction completed but no transaction data received.',
+                      ),
+                      'Challenge completed without transaction data',
+                    );
+                  }
+                }}
+                onCancelled={handleChallengeCancel}
+                onError={error => {
+                  setChallengeUrl(null);
+                  cancelQuoteRefresh();
+                  logger.error(
+                    'MoonPay Apple Pay Challenge frame error: [' +
+                      error.code +
+                      '] ' +
+                      error.message,
+                  );
+                  showError(error, error.code, error.message);
+                }}
+              />
+            ) : null}
+          </WebViewModalContainer>
+        </Modal>
       </MoonpayEmbeddedCheckoutContainer>
-      {challengeUrl ? (
-        <View style={StyleSheet.absoluteFill}>
-          <MoonPayChallengeFrame
-            challengeUrl={challengeUrl}
-            onComplete={async (payload: ChallengeCompletePayload) => {
-              setChallengeUrl(null);
-              if (payload?.transaction) {
-                logger.debug(
-                  'MoonPay challenge completed, transaction: ' +
-                    JSON.stringify(payload.transaction),
-                );
-                await handleTransactionComplete(payload.transaction);
-              } else {
-                logger.error(
-                  'MoonPay challenge completed but no transaction data received',
-                );
-                showError(
-                  t('Transaction completed but no transaction data received.'),
-                  'Challenge completed without transaction data',
-                );
-              }
-            }}
-            onCancelled={async () => {
-              setChallengeUrl(null);
-              setExpiredAnalyticSent(false);
-              logger.debug('MoonPay challenge cancelled.');
-              if (countDown) {
-                clearInterval(countDown);
-              }
-              setIsLoading(true);
-              try {
-                await init();
-              } catch (err) {
-                showError(err);
-              }
-            }}
-            onError={error => {
-              setChallengeUrl(null);
-              cancelQuoteRefresh();
-              showError(error, error.code, error.message);
-            }}
-          />
-        </View>
-      ) : null}
     </View>
   );
 };

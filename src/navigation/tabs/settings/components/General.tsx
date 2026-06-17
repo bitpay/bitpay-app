@@ -162,7 +162,7 @@ const General: React.FC<Props> = ({navigation}) => {
       },
       {
         id: 'showPortfolio',
-        title: t('Show Portfolio'),
+        title: t('Show Portfolio Charts'),
         type: 'toggle' as const,
         value: displayedShowPortfolioValue,
         isDisabled: typeof pendingShowPortfolioValue === 'boolean',

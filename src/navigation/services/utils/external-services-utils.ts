@@ -70,25 +70,19 @@ export const externalServicesCoinMapping = (coin: string): string => {
 };
 
 export const getErrorMessage = (err: any): string => {
-  let msg = t('Could not get crypto offer. Please try again later.');
-  if (err) {
-    if (typeof err === 'string') {
-      msg = err;
-    } else {
-      if (err.error && err.error.error) {
-        msg = err.error.error;
-      } else if (err.error && !err.message) {
-        if (typeof err.error === 'string') {
-          msg = err.error;
-        } else if (err.error.message) {
-          msg = err.error.message;
-        }
-      } else if (err?.response?.data?.message) {
-        msg = err.response.data.message;
-      } else if (err.message) {
-        msg = err.message;
-      }
-    }
+  const defaultMsg = t('Could not get crypto offer. Please try again later.');
+
+  if (!err) return defaultMsg;
+  if (typeof err === 'string') return err;
+
+  if (typeof err?.error?.error === 'string') return err.error.error;
+  if (!err.message) {
+    if (typeof err?.error === 'string') return err.error;
+    if (typeof err?.error?.message === 'string') return err.error.message;
   }
-  return msg;
+  if (typeof err?.response?.data?.message === 'string')
+    return err.response.data.message;
+  if (typeof err?.message === 'string') return err.message;
+
+  return defaultMsg;
 };

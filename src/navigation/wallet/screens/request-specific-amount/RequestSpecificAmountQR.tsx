@@ -18,7 +18,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import {LightBlack, LightBlue, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
-import {Share} from 'react-native';
+import {shareNative} from '../../../../utils/share';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -121,9 +121,7 @@ const RequestSpecificAmountQR = () => {
   useLayoutEffect(() => {
     const onPressShare = async () => {
       if (qrValue) {
-        await Share.share({
-          message: qrValue,
-        });
+        await dispatch(shareNative({message: qrValue}));
       }
     };
 

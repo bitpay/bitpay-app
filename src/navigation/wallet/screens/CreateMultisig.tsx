@@ -146,17 +146,19 @@ const RoundButton = styled.View`
   border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
 `;
 
-const RemoveButton = styled(TouchableOpacity)`
+const RemoveButton = styled(TouchableOpacity)<{isDisabled?: boolean}>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
   border-radius: 30px;
-  border: 1px solid ${Slate};
+  border: 1px solid
+    ${({theme: {dark}, isDisabled}) =>
+      isDisabled ? Slate : dark ? White : Action};
 `;
 
-export const AddButton = styled(TouchableOpacity)`
+export const AddButton = styled(TouchableOpacity)<{isDisabled?: boolean}>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,7 +166,9 @@ export const AddButton = styled(TouchableOpacity)`
   width: 20px;
   border: 1px solid black;
   border-radius: 30px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
+  border: 1px solid
+    ${({theme: {dark}, isDisabled}) =>
+      isDisabled ? Slate : dark ? White : Action};
 `;
 
 const CounterNumber = styled.Text`
@@ -504,6 +508,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                 <OptionTitle>{t('Required number of signatures')}</OptionTitle>
                 <CounterContainer>
                   <RemoveButton
+                    isDisabled={value <= 1}
                     onPress={() => {
                       const newValue = value - 1;
                       if (newValue >= 1) {
@@ -512,12 +517,15 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                         });
                       }
                     }}>
-                    <MinusIcon />
+                    <MinusIcon color={value <= 1 ? Slate : undefined} />
                   </RemoveButton>
                   <RoundButton>
                     <CounterNumber>{value}</CounterNumber>
                   </RoundButton>
                   <AddButton
+                    isDisabled={
+                      value >= 3 || value >= getValues('totalCopayers')
+                    }
                     onPress={() => {
                       const newValue = value + 1;
                       const totalCopayers = getValues('totalCopayers');
@@ -527,7 +535,13 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                         });
                       }
                     }}>
-                    <PlusIcon />
+                    <PlusIcon
+                      color={
+                        value >= 3 || value >= getValues('totalCopayers')
+                          ? Slate
+                          : undefined
+                      }
+                    />
                   </AddButton>
                 </CounterContainer>
               </OptionContainer>
@@ -550,6 +564,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
               </Column>
               <CounterContainer>
                 <RemoveButton
+                  isDisabled={value <= 2}
                   onPress={() => {
                     const newValue = value - 1;
                     if (newValue >= 2) {
@@ -565,12 +580,13 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                       }
                     }
                   }}>
-                  <MinusIcon />
+                  <MinusIcon color={value <= 2 ? Slate : undefined} />
                 </RemoveButton>
                 <RoundButton>
                   <CounterNumber>{value}</CounterNumber>
                 </RoundButton>
                 <AddButton
+                  isDisabled={value >= 6}
                   onPress={() => {
                     const newValue = value + 1;
                     if (newValue <= 6) {
@@ -579,7 +595,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                       });
                     }
                   }}>
-                  <PlusIcon />
+                  <PlusIcon color={value >= 6 ? Slate : undefined} />
                 </AddButton>
               </CounterContainer>
             </OptionContainer>

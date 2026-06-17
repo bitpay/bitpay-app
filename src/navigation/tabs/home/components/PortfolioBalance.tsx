@@ -4,10 +4,7 @@ import {BaseText, H2} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
-import {
-  calculatePercentageDifference,
-  formatFiatAmount,
-} from '../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {shouldUseCompactFiatAmountText} from '../../../../utils/fiatAmountText';
 import InfoSvg from './InfoSvg';
 import {
@@ -56,6 +53,7 @@ import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/us
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
+import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -204,19 +202,15 @@ const PortfolioBalanceContent = () => {
     (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
     0,
   );
-  const visibleLastDayBalance = walletsAcrossKeys.reduce(
-    (total, wallet) => total + (Number(wallet?.balance?.fiatLastDay) || 0),
-    0,
-  );
-
   const totalBalanceIncludingCoinbase: number =
     visibleCurrentBalance + coinbaseBalance;
 
   const dispatch = useAppDispatch();
+  const portfolioChartsRequested = showPortfolioValue === true;
 
   const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: walletsAcrossKeys,
-    enabled: showPortfolioValue === true,
+    enabled: portfolioChartsRequested,
     hideAllBalances,
   });
   const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
@@ -232,7 +226,9 @@ const PortfolioBalanceContent = () => {
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
     balanceChartReadiness.shouldShowChartLoader ||
-    (balanceChartsEnabled && !chartHasRenderableSeries);
+    (balanceChartsEnabled &&
+      !balanceChartReadiness.shouldPreserveStaleBalanceChart &&
+      !chartHasRenderableSeries);
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;
@@ -399,6 +395,8 @@ const PortfolioBalanceContent = () => {
     enabled: balanceChartsEnabled,
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
+    preserveChartDrivenStateWhileNotReady:
+      balanceChartReadiness.shouldPreserveStaleBalanceChart,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
@@ -412,6 +410,8 @@ const PortfolioBalanceContent = () => {
     showLoaderWhenNoSnapshots: showChartLoaderWhenNoSnapshots,
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
+    preserveVisibleSeriesWhileNotReady:
+      balanceChartReadiness.shouldPreserveStaleBalanceChart,
     // NOTE: Coinbase balance is intentionally excluded from the balance chart
     // (Option B per product requirements) because we do not have historized
     // Coinbase balance snapshots.
@@ -453,37 +453,16 @@ const PortfolioBalanceContent = () => {
   const shouldUseCompactPortfolioBalanceText = useMemo(() => {
     return shouldUseCompactFiatAmountText(formattedPortfolioBalance);
   }, [formattedPortfolioBalance]);
-  const lastDayChangeRowData = useMemo(() => {
-    if (!(visibleCurrentBalance > 0) || !(visibleLastDayBalance > 0)) {
-      return undefined;
-    }
-
-    return {
-      percent: calculatePercentageDifference(
-        visibleCurrentBalance,
-        visibleLastDayBalance,
-      ),
-      deltaFiatFormatted: formatFiatAmount(
-        visibleCurrentBalance - visibleLastDayBalance,
-        defaultAltCurrency.isoCode,
-        {
-          customPrecision: 'minimal',
-          currencyDisplay: 'symbol',
-        },
-      ),
-      rangeLabel: t('Last Day'),
-    };
-  }, [
-    defaultAltCurrency.isoCode,
-    t,
-    visibleCurrentBalance,
-    visibleLastDayBalance,
-  ]);
+  const lastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: walletsAcrossKeys,
+    currentFiatBalance: visibleCurrentBalance,
+    quoteCurrency: defaultAltCurrency.isoCode,
+    enabled: !portfolioChartsRequested && !hideAllBalances,
+  });
   const displayedChangeRowData =
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData
       : lastDayChangeRowData;
-  const shouldRenderPortfolioBalance = showPortfolioValue === true;
 
   const showPortfolioBalanceInfoModal = () => {
     dispatch(
@@ -504,10 +483,6 @@ const PortfolioBalanceContent = () => {
       }),
     );
   };
-
-  if (!shouldRenderPortfolioBalance) {
-    return null;
-  }
 
   return (
     <PortfolioContainer>
@@ -576,11 +551,11 @@ const PortfolioBalanceContent = () => {
         </TouchableOpacity>
       </PortfolioTopContent>
 
-      {!hideAllBalances && displayedChangeRowData ? (
+      {!hideAllBalances && (displayedChangeRowData || balanceChartsEnabled) ? (
         <PortfolioBalanceChangeRow
-          percent={displayedChangeRowData.percent}
-          deltaFiatFormatted={displayedChangeRowData.deltaFiatFormatted}
-          rangeLabel={displayedChangeRowData.rangeLabel}
+          percent={displayedChangeRowData?.percent ?? 0}
+          deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
+          rangeLabel={displayedChangeRowData?.rangeLabel}
           style={[
             {
               width: '100%',
@@ -589,6 +564,7 @@ const PortfolioBalanceContent = () => {
                 : 'center',
               paddingLeft: shouldLeftAlignTopSection ? 12 : 0,
             },
+            !displayedChangeRowData ? {opacity: 0} : null,
           ]}
         />
       ) : null}

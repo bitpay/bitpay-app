@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import com.braze.reactbridge.BrazeReactUtils
 import com.braze.ui.inappmessage.BrazeInAppMessageManager
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -40,6 +41,7 @@ class MainActivity : ReactActivity() {
             return
         }
 
+        BrazeReactUtils.populateInitialPushPayloadFromIntent(intent)
         RNBootSplash.init(this, R.style.BootTheme)
         supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
         super.onCreate(savedInstanceState)

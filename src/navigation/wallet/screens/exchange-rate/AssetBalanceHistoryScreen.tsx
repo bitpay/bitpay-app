@@ -8,6 +8,7 @@ import {
   DEFAULT_BALANCE_CHART_TIMEFRAME,
   getRangeLabelForFiatTimeframe,
 } from '../../../../components/charts/fiatTimeframes';
+import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import {usePortfolioAnalysis} from '../../../../portfolio/ui/hooks/usePortfolioAnalysis';
@@ -44,6 +45,7 @@ const AssetBalanceChartSection = React.memo(
     gradientStartColor,
     showLoaderWhenNoSnapshots,
     isBalanceChartDataReadyToQuery,
+    preserveVisibleSeriesWhileNotReady,
     onChangeRowData,
     onDisplayedAnalysisPointChange,
     onSelectionActiveChange,
@@ -58,6 +60,7 @@ const AssetBalanceChartSection = React.memo(
     gradientStartColor: string;
     showLoaderWhenNoSnapshots: boolean;
     isBalanceChartDataReadyToQuery?: boolean;
+    preserveVisibleSeriesWhileNotReady?: boolean;
     onChangeRowData: (data: AssetChartChangeRow) => void;
     onDisplayedAnalysisPointChange: (
       point: AssetDisplayedAnalysisPoint,
@@ -80,6 +83,9 @@ const AssetBalanceChartSection = React.memo(
           gradientStartColor={gradientStartColor}
           showLoaderWhenNoSnapshots={showLoaderWhenNoSnapshots}
           isBalanceChartDataReadyToQuery={isBalanceChartDataReadyToQuery}
+          preserveVisibleSeriesWhileNotReady={
+            preserveVisibleSeriesWhileNotReady
+          }
           onChangeRowData={onChangeRowData}
           onDisplayedAnalysisPointChange={onDisplayedAnalysisPointChange}
           onSelectionActiveChange={onSelectionActiveChange}
@@ -123,9 +129,10 @@ const AssetBalanceHistoryScreen = ({
   const [selectionActive, setSelectionActive] = useState(false);
   const [chartDisplayedPoint, setChartDisplayedPoint] =
     useState<AssetDisplayedAnalysisPoint>(undefined);
+  const portfolioChartsEnabled = shared.showPortfolioValue === true;
   const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: shared.assetWallets,
-    enabled: shared.showPortfolioValue === true && shared.hasWalletsForAsset,
+    enabled: portfolioChartsEnabled && shared.hasWalletsForAsset,
     hideAllBalances: shared.hideAllBalances,
   });
   const chartableAssetWallets = balanceChartReadiness.chartableWallets;
@@ -144,6 +151,10 @@ const AssetBalanceHistoryScreen = ({
     balanceChartReadiness.shouldShowChartLoader;
   const isAssetBalanceChartDataReadyToQuery =
     balanceChartReadiness.isBalanceChartDataReadyToQuery;
+  const shouldPreserveStaleAssetBalanceChart =
+    balanceChartReadiness.shouldPreserveStaleBalanceChart;
+  const canUseChartDisplayedState =
+    isAssetBalanceChartDataReadyToQuery || shouldPreserveStaleAssetBalanceChart;
   const isTimeframeTransitionPending =
     requestedTimeframe !== displayedTimeframe;
 
@@ -172,16 +183,27 @@ const AssetBalanceHistoryScreen = ({
 
   const {isRefreshing, onRefresh} = useAssetScreenRefresh(shared);
 
-  const effectiveChartDisplayedPoint = isAssetBalanceChartDataReadyToQuery
+  const effectiveChartDisplayedPoint = canUseChartDisplayedState
     ? chartDisplayedPoint
     : undefined;
-  const effectiveChartChangeRow = isAssetBalanceChartDataReadyToQuery
+  const effectiveChartChangeRow = canUseChartDisplayedState
     ? chartChangeRow
     : undefined;
   const displayedSummary = buildAssetBalanceHistoryDisplayedSummary({
     idleSummary,
     chartDisplayedPoint: effectiveChartDisplayedPoint,
     chartChangeRow: effectiveChartChangeRow,
+  });
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: shared.assetWallets,
+    currentFiatBalance: shared.assetTotalFiatBalance,
+    quoteCurrency: shared.resolvedQuoteCurrency,
+    mode: 'representativeAsset',
+    representativeAsset: shared.assetContext,
+    enabled:
+      !portfolioChartsEnabled &&
+      !shared.hideAllBalances &&
+      shared.hasWalletsForAsset,
   });
 
   const selectedAssetBalanceToDisplay = !shared.hasWalletsForAsset
@@ -192,7 +214,9 @@ const AssetBalanceHistoryScreen = ({
 
   const changeRow = shared.hideAllBalances
     ? undefined
-    : displayedSummary.changeRow;
+    : portfolioChartsEnabled
+    ? displayedSummary.changeRow
+    : legacyLastDayChangeRowData;
 
   const formattedAssetBalance =
     selectedAssetBalanceToDisplay == null
@@ -262,6 +286,9 @@ const AssetBalanceHistoryScreen = ({
             isTimeframeTransitionPending
           }
           isBalanceChartDataReadyToQuery={isAssetBalanceChartDataReadyToQuery}
+          preserveVisibleSeriesWhileNotReady={
+            shouldPreserveStaleAssetBalanceChart
+          }
           onChangeRowData={handleChartChangeRowData}
           onDisplayedAnalysisPointChange={handleDisplayedAnalysisPointChange}
           onSelectionActiveChange={setSelectionActive}

@@ -29,6 +29,7 @@ import {
 } from '../../../../utils/portfolio/rate';
 import {White} from '../../../../styles/colors';
 import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
+import {getFiatRateSeriesFromCacheWithFx} from '../../../../portfolio/core/pnl/fxRates';
 import useExchangeRateChartData, {
   type ChartDataType,
   defaultDisplayData,
@@ -38,6 +39,7 @@ import ExchangeRateScreenLayout from './ExchangeRateScreenLayout';
 import useAssetScreenRefresh from './useAssetScreenRefresh';
 import type {ExchangeRateSharedModel} from './useExchangeRateSharedModel';
 import UkExchangeRateDisclosures from './UkExchangeRateDisclosures';
+import {buildExchangeRateHistoricalRateRequestGroups} from './exchangeRateHistoricalRateRequests';
 
 type ExchangeRateScreenProps = {
   shared: ExchangeRateSharedModel;
@@ -88,37 +90,60 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
     [selectedTimeframe],
   );
 
-  const historicalRateRequests = useMemo(
+  const {
+    canonicalQuoteCurrency,
+    canonicalRequests,
+    displayQuoteCurrency,
+    displayQuoteRequests,
+  } = useMemo(
     () =>
-      shared.hasValidNormalizedCoin
-        ? [
-            {
-              coin: shared.normalizedCoin,
-              chain: shared.historicalRateIdentity.chain,
-              tokenAddress: shared.historicalRateIdentity.tokenAddress,
-              intervals: [...FIAT_RATE_SERIES_CACHED_INTERVALS],
-            },
-          ]
-        : [],
+      buildExchangeRateHistoricalRateRequestGroups({
+        quoteCurrency: shared.resolvedQuoteCurrency,
+        normalizedCoin: shared.normalizedCoin,
+        historicalRateIdentity: shared.historicalRateIdentity,
+        intervals: [...FIAT_RATE_SERIES_CACHED_INTERVALS],
+        hasValidNormalizedCoin: shared.hasValidNormalizedCoin,
+      }),
     [
       shared.hasValidNormalizedCoin,
       shared.historicalRateIdentity.chain,
       shared.historicalRateIdentity.tokenAddress,
       shared.normalizedCoin,
+      shared.resolvedQuoteCurrency,
     ],
   );
 
   const {
-    cache: fiatRateSeriesCache,
-    loading: isFiatRateSeriesCacheLoading,
-    reload: reloadFiatRateSeriesCache,
+    cache: canonicalFiatRateSeriesCache,
+    loading: isCanonicalFiatRateSeriesCacheLoading,
+    reload: reloadCanonicalFiatRateSeriesCache,
   } = useRuntimeFiatRateSeriesCache({
-    quoteCurrency: shared.resolvedQuoteCurrency,
-    requests: historicalRateRequests,
+    quoteCurrency: canonicalQuoteCurrency,
+    requests: canonicalRequests,
     maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
-    enabled: !!shared.resolvedQuoteCurrency && shared.hasValidNormalizedCoin,
+    enabled:
+      !!canonicalQuoteCurrency &&
+      shared.hasValidNormalizedCoin &&
+      canonicalRequests.length > 0,
     clearOnRequestChange: true,
   });
+  const {
+    cache: displayQuoteFiatRateSeriesCache,
+    loading: isDisplayQuoteFiatRateSeriesCacheLoading,
+    reload: reloadDisplayQuoteFiatRateSeriesCache,
+  } = useRuntimeFiatRateSeriesCache({
+    quoteCurrency: displayQuoteCurrency,
+    requests: displayQuoteRequests,
+    maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+    enabled:
+      !!displayQuoteCurrency &&
+      shared.hasValidNormalizedCoin &&
+      displayQuoteRequests.length > 0,
+    clearOnRequestChange: true,
+  });
+  const isFiatRateSeriesCacheLoading =
+    isCanonicalFiatRateSeriesCacheLoading ||
+    isDisplayQuoteFiatRateSeriesCacheLoading;
 
   const selectedSeriesKey = useMemo(() => {
     return getFiatRateSeriesCacheKey(
@@ -130,6 +155,39 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
   }, [
     seriesDataInterval,
     shared.historicalRateIdentity,
+    shared.normalizedCoin,
+    shared.resolvedQuoteCurrency,
+  ]);
+
+  const fiatRateSeriesCache = useMemo(() => {
+    const mergedCache = {
+      ...canonicalFiatRateSeriesCache,
+      ...displayQuoteFiatRateSeriesCache,
+    };
+    const selectedSeries = getFiatRateSeriesFromCacheWithFx({
+      fiatRateSeriesCache: mergedCache,
+      quoteCurrency: shared.resolvedQuoteCurrency,
+      coin: shared.normalizedCoin,
+      interval: seriesDataInterval,
+      chain: shared.historicalRateIdentity.chain,
+      tokenAddress: shared.historicalRateIdentity.tokenAddress,
+    });
+
+    if (!selectedSeries?.points?.length) {
+      return mergedCache;
+    }
+
+    return {
+      ...mergedCache,
+      [selectedSeriesKey]: selectedSeries,
+    };
+  }, [
+    canonicalFiatRateSeriesCache,
+    displayQuoteFiatRateSeriesCache,
+    selectedSeriesKey,
+    seriesDataInterval,
+    shared.historicalRateIdentity.chain,
+    shared.historicalRateIdentity.tokenAddress,
     shared.normalizedCoin,
     shared.resolvedQuoteCurrency,
   ]);
@@ -159,7 +217,15 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
     }
 
     const hasUsableData = !!displayDataRef.current.data.length;
-    setIsChartLoading(isFiatRateSeriesCacheLoading && !hasUsableData);
+    if (isFiatRateSeriesCacheLoading) {
+      setIsChartLoading(true);
+      return;
+    }
+
+    if (hasUsableData) {
+      setDisplayData(defaultDisplayData);
+    }
+    setIsChartLoading(false);
   }, [derivedDisplayData, isFiatRateSeriesCacheLoading, pointsForChartRaw]);
 
   const rangeLabel = useMemo(() => {
@@ -374,8 +440,22 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
       return;
     }
 
-    await reloadFiatRateSeriesCache({force: true}).catch(() => ({}));
-  }, [reloadFiatRateSeriesCache, shared.hasValidNormalizedCoin]);
+    await Promise.all([
+      reloadCanonicalFiatRateSeriesCache({force: true}).catch(() => ({})),
+      ...(displayQuoteRequests.length
+        ? [
+            reloadDisplayQuoteFiatRateSeriesCache({force: true}).catch(
+              () => ({}),
+            ),
+          ]
+        : []),
+    ]);
+  }, [
+    displayQuoteRequests.length,
+    reloadCanonicalFiatRateSeriesCache,
+    reloadDisplayQuoteFiatRateSeriesCache,
+    shared.hasValidNormalizedCoin,
+  ]);
 
   const {isRefreshing, onRefresh} = useAssetScreenRefresh(shared, {
     afterBaseRefresh: refreshChartSeries,

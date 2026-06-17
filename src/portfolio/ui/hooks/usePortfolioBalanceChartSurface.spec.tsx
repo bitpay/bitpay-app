@@ -15,12 +15,14 @@ const HookHarness = ({
   fallbackCurrency = 'USD',
   fallbackBalance = 100,
   isBalanceChartDataReadyToQuery = true,
+  preserveChartDrivenStateWhileNotReady = false,
   resetKey = 'a',
 }: {
   quoteCurrency?: string;
   fallbackCurrency?: string;
   fallbackBalance?: number;
   isBalanceChartDataReadyToQuery?: boolean;
+  preserveChartDrivenStateWhileNotReady?: boolean;
   resetKey?: string;
 }) => {
   latestResult = usePortfolioBalanceChartSurface({
@@ -29,6 +31,7 @@ const HookHarness = ({
     fallbackCurrency,
     fallbackBalance,
     isBalanceChartDataReadyToQuery,
+    preserveChartDrivenStateWhileNotReady,
     resetKey,
   });
   return null;
@@ -135,5 +138,41 @@ describe('usePortfolioBalanceChartSurface', () => {
     expect(latestResult?.displayedTopBalance).toBe(100);
     expect(latestResult?.displayedTopBalanceCurrency).toBe('USD');
     expect(latestResult?.changeRowData).toBeUndefined();
+  });
+
+  it('preserves chart-driven values while chart data is not ready when requested', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = TestRenderer.create(<HookHarness />);
+    });
+
+    await act(async () => {
+      latestResult?.chartCallbacks.onDisplayedAnalysisPointChange({
+        totalFiatBalance: 125,
+        totalPnlChange: 10,
+        totalPnlPercent: 5,
+        totalCryptoBalanceFormatted: '1.25',
+      });
+      latestResult?.chartCallbacks.onChangeRowData({
+        percent: 5,
+        deltaFiatFormatted: '$10.00',
+        rangeLabel: '1D',
+      });
+    });
+
+    await act(async () => {
+      renderer.update(
+        <HookHarness
+          isBalanceChartDataReadyToQuery={false}
+          preserveChartDrivenStateWhileNotReady={true}
+        />,
+      );
+    });
+
+    expect(latestResult?.displayedBalance).toBe(125);
+    expect(latestResult?.displayedAnalysisPoint?.totalFiatBalance).toBe(125);
+    expect(latestResult?.changeRowData?.percent).toBe(5);
+    expect(latestResult?.displayedTopBalance).toBe(125);
+    expect(latestResult?.displayedTopBalanceCurrency).toBe('EUR');
   });
 });

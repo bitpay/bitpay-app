@@ -11,12 +11,14 @@ import AssetsList from './AssetsList';
 import {
   AssetRowItem,
   GainLossMode,
+  buildLegacyLastDayRateRequestsForAssetRows,
   buildAssetPreviewRowItemsFromWallets,
   getVisibleWalletsFromKeys,
   walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import AssetsGainLossDropdown from './AssetsGainLossDropdown';
 import {useAppSelector} from '../../../../utils/hooks';
+import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import {
   CharcoalBlack,
   GhostWhite,
@@ -30,6 +32,9 @@ import {
   toAllocationWallet,
 } from '../../../../utils/portfolio/allocation';
 import type {Key} from '../../../../store/wallet/wallet.models';
+import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
+import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
+import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
 
 const Container = styled.View`
   margin-top: 5px;
@@ -83,10 +88,13 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [gainLossMode, setGainLossMode] = useState<GainLossMode>('1D');
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const focusRefreshToken = useScreenFocusRefreshToken();
+  const portfolioChartsEnabled = showPortfolioValue === true;
   const visibleWallets = useMemo(() => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keys]);
@@ -101,14 +109,50 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
 
     return allocationData.rows.slice(0, 4).map(row => row.key);
   }, [defaultAltCurrency.isoCode, visibleWallets]);
+  const legacyAssetRowsEnabled = !portfolioChartsEnabled;
+  const legacyAssetRateRequests = useMemo(() => {
+    if (!legacyAssetRowsEnabled) {
+      return [];
+    }
+
+    return buildLegacyLastDayRateRequestsForAssetRows({
+      wallets: visibleWallets,
+      orderedAssetKeys: topAssetKeys,
+    });
+  }, [legacyAssetRowsEnabled, topAssetKeys, visibleWallets]);
+  const legacyAssetBaselineTimestampMs = useMemo(
+    () => getLastDayTimestampStartOfHourMs(),
+    [defaultAltCurrency.isoCode, focusRefreshToken],
+  );
+  const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(
+    {
+      quoteCurrency: defaultAltCurrency.isoCode,
+      requests: legacyAssetRateRequests,
+      maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+      enabled: legacyAssetRowsEnabled && legacyAssetRateRequests.length > 0,
+      clearOnRequestChange: true,
+    },
+  );
   const previewItems = useMemo(() => {
     return buildAssetPreviewRowItemsFromWallets({
       wallets: visibleWallets,
       quoteCurrency: defaultAltCurrency.isoCode,
       orderedAssetKeys: topAssetKeys,
-      showScopedPnlLoading: topAssetKeys.length > 0,
+      showScopedPnlLoading: portfolioChartsEnabled && topAssetKeys.length > 0,
+      includeLegacyLastDayPnl: !portfolioChartsEnabled,
+      rates,
+      fiatRateSeriesCache: legacyAssetFiatRateSeriesCache,
+      baselineTimestampMs: legacyAssetBaselineTimestampMs,
     });
-  }, [defaultAltCurrency.isoCode, topAssetKeys, visibleWallets]);
+  }, [
+    defaultAltCurrency.isoCode,
+    legacyAssetBaselineTimestampMs,
+    legacyAssetFiatRateSeriesCache,
+    portfolioChartsEnabled,
+    rates,
+    topAssetKeys,
+    visibleWallets,
+  ]);
   const {
     visibleItems,
     isFiatLoading: isPnlLoading,
@@ -117,7 +161,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     presentationResetToken,
   } = usePortfolioAssetRows({
     gainLossMode,
-    enabled,
+    enabled: enabled && portfolioChartsEnabled,
     assetKeys: topAssetKeys,
     externalRefreshToken: focusRefreshToken,
   });
@@ -136,7 +180,10 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     const nextItems: AssetRowItem[] = [];
     const seenKeys = new Set<string>();
     const shouldUsePreviewFallback =
-      !enabled || !!isPnlLoading || !visibleItems.length;
+      !portfolioChartsEnabled ||
+      !enabled ||
+      !!isPnlLoading ||
+      !visibleItems.length;
     const resolveDisplayItem = (key: string): AssetRowItem | undefined => {
       const previewItem = previewItemsByKey.get(key);
       const visibleItem = visibleItemsByKey.get(key);
@@ -180,8 +227,16 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     }
 
     return nextItems.slice(0, 4);
-  }, [enabled, isPnlLoading, previewItems, topAssetKeys, visibleItems]);
+  }, [
+    enabled,
+    isPnlLoading,
+    portfolioChartsEnabled,
+    previewItems,
+    topAssetKeys,
+    visibleItems,
+  ]);
   const shouldShowActivationPlaceholder =
+    portfolioChartsEnabled &&
     hasAnyVisibleWalletBalance &&
     !items.length &&
     (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
@@ -191,10 +246,12 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       <Container>
         <Header>
           <HomeSectionTitle>{t('Assets')}</HomeSectionTitle>
-          <AssetsGainLossDropdown
-            value={gainLossMode}
-            onChange={setGainLossMode}
-          />
+          {portfolioChartsEnabled ? (
+            <AssetsGainLossDropdown
+              value={gainLossMode}
+              onChange={setGainLossMode}
+            />
+          ) : null}
         </Header>
 
         <AssetsList items={SKELETON_ASSET_ITEMS} forceSkeleton />
@@ -226,16 +283,20 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     <Container>
       <Header>
         <HomeSectionTitle>{t('Assets')}</HomeSectionTitle>
-        <AssetsGainLossDropdown
-          value={gainLossMode}
-          onChange={setGainLossMode}
-        />
+        {portfolioChartsEnabled ? (
+          <AssetsGainLossDropdown
+            value={gainLossMode}
+            onChange={setGainLossMode}
+          />
+        ) : null}
       </Header>
 
       <AssetsList
         items={items}
         isPnlLoading={isPnlLoading}
-        populateInProgress={!!portfolio.populateStatus?.inProgress}
+        populateInProgress={
+          portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress
+        }
         isPopulateLoadingByKey={isPopulateLoadingByKey}
         presentationResetToken={presentationResetToken}
       />

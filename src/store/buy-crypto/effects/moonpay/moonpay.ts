@@ -10,7 +10,6 @@ import {
 } from '../../buy-crypto.models';
 import {moonpaySellEnv} from '../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {logManager} from '../../../../managers/LogManager';
-import {moonpayEnv} from '../../../../navigation/services/buy-crypto/utils/moonpay-utils';
 
 const bwsUri = BASE_BWS_URL;
 
@@ -162,10 +161,7 @@ export const moonpayGetSellTransactionDetails = async (
 export const moonpayGetPaymentMethodsEmbedded = async (
   requestData: any,
 ): Promise<any> => {
-  const URL_BASE =
-    moonpayEnv === 'sandbox'
-      ? 'https://api.moonpay.com'
-      : 'https://api.moonpay.com';
+  const URL_BASE = 'https://api.moonpay.com';
   const URL = URL_BASE + '/platform/v1/payment-methods';
 
   const headers = {
@@ -185,10 +181,7 @@ export const moonpayGetPaymentMethodsEmbedded = async (
 export const moonpayGetQuoteEmbedded = async (
   requestData: MoonpayGetQuoteEmbeddedRequestData,
 ): Promise<MoonpayQuoteEmbeddedData> => {
-  const URL_BASE =
-    moonpayEnv === 'sandbox'
-      ? 'https://api.moonpay.com'
-      : 'https://api.moonpay.com';
+  const URL_BASE = 'https://api.moonpay.com';
   const URL = URL_BASE + '/platform/v1/quotes/buy';
 
   const body = {
@@ -228,10 +221,7 @@ export const moonpayGetQuoteEmbedded = async (
 export const moonpayGetTransactionDetailsEmbedded = async (
   requestData: MoonpayGetTransactionDetailsEmbeddedRequestData,
 ): Promise<MoonpayTransactionDetailsEmbeddedData> => {
-  const URL_BASE =
-    moonpayEnv === 'sandbox'
-      ? 'https://api.moonpay.com'
-      : 'https://api.moonpay.com';
+  const URL_BASE = 'https://api.moonpay.com';
   const URL =
     URL_BASE + '/platform/v1/transactions/' + requestData.transactionId;
 

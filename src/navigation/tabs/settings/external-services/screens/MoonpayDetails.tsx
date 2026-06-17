@@ -129,6 +129,7 @@ const MoonpayDetails: React.FC = () => {
 
           if (
             txDetails?.destination?.amount &&
+            Number(txDetails.destination.amount) > 0 &&
             Number(txDetails.destination.amount) != paymentRequest.crypto_amount
           ) {
             logger.debug(
@@ -138,6 +139,7 @@ const MoonpayDetails: React.FC = () => {
 
             if (
               txDetails?.source?.amount &&
+              Number(txDetails.source.amount) > 0 &&
               Number(txDetails.source.amount) != paymentRequest.fiat_base_amount
             ) {
               logger.debug(

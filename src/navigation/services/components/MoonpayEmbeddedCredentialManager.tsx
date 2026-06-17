@@ -18,12 +18,13 @@
  *  3c. onError "failed/unexpected" → render <MoonPayResetFrame>, then restart from 1
  *  4. Before credentials expire → clear + restart from 1
  */
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Platform} from 'react-native';
 import ApplePushProvisioningModule from '../../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {useAppSelector} from '../../../utils/hooks';
 import {
   clearMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
   registerMoonpayEmbeddedRecheckListener,
   setMoonpayEmbeddedAnonymousCredentials,
@@ -52,11 +53,19 @@ const EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 min
 export function MoonpayEmbeddedCredentialManager() {
   const network = useAppSelector(({APP}) => APP.network);
   const user: User = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const anonymousEid = useAppSelector(({APP}) => APP.brazeEid);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
   );
   const country = locationData?.countryShortCode;
+
+  const hasEligibleWallet = useMemo(() => {
+    const keysList = Object.values(allKeys).filter(k => k.backupComplete);
+    return keysList.some(key =>
+      key.wallets?.some(w => w.credentials && w.isComplete()),
+    );
+  }, [allKeys]);
 
   const [applePaySupported, setApplePaySupported] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | undefined>();
@@ -67,7 +76,7 @@ export function MoonpayEmbeddedCredentialManager() {
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
-  const userEid = user?.eid;
+  const userEid = user?.eid ?? anonymousEid;
 
   // If no cached external services config exists yet, use local conditions.
   // Once the config is available, disable embedded MoonPay if embeddedBuyDisabled is true.
@@ -173,6 +182,9 @@ export function MoonpayEmbeddedCredentialManager() {
     // Skip if currently resetting
     if (runReset) return;
 
+    const currentStatus = getMoonpayEmbeddedStatus();
+    if (currentStatus !== undefined && currentStatus !== 'checking') return;
+
     let cancelled = false;
 
     const createSession = async () => {
@@ -263,9 +275,11 @@ export function MoonpayEmbeddedCredentialManager() {
       cancelled = true;
     };
     // checkTrigger is intentionally included so a reset / expiry re-runs this.
-    // allKeys is included so the effect retries if wallets load after mount.
+    // hasEligibleWallet (not allKeys) is used so the effect only re-triggers
+    // when wallet availability changes (false→true), not on every Redux action
+    // that produces a new allKeys reference (balance updates, etc.).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moonpayEmbeddedEnabled, userEid, checkTrigger, allKeys]);
+  }, [moonpayEmbeddedEnabled, userEid, checkTrigger, hasEligibleWallet]);
 
   // -------------------------------------------------------------------------
   // Cleanup timer on unmount

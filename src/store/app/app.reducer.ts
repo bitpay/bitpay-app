@@ -42,6 +42,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'pinModalConfig',
   'showBiometricModal',
   'showBottomNotificationModal',
+  'bottomNotificationModalConfig',
   'showChainSelectorModal',
   'chainSelectorModalConfig',
   'showDecryptPasswordModal',
@@ -112,8 +113,10 @@ export interface AppState {
   showChainSelectorModal: boolean;
   chainSelectorModalConfig: ChainSelectorConfig | undefined;
   notificationsAccepted: boolean;
+  notificationsInteractionDone: boolean;
   confirmedTxAccepted: boolean;
   announcementsAccepted: boolean;
+  pinInteractionDone: boolean;
   emailNotifications: {
     accepted: boolean;
     email: string | null;
@@ -211,8 +214,10 @@ const initialState: AppState = {
   showChainSelectorModal: false,
   chainSelectorModalConfig: undefined,
   notificationsAccepted: false,
+  notificationsInteractionDone: false,
   confirmedTxAccepted: false,
   announcementsAccepted: false,
+  pinInteractionDone: false,
   emailNotifications: {
     accepted: false,
     email: null,
@@ -227,7 +232,7 @@ const initialState: AppState = {
   currentSalt: undefined,
   pinBannedUntil: undefined,
   showBlur: false,
-  colorScheme: null as unknown as ColorSchemeName,
+  colorScheme: 'unspecified',
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   hideAllBalances: false,
@@ -377,6 +382,7 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
@@ -427,6 +433,12 @@ export const appReducer = (
         notificationsAccepted: action.payload,
       };
 
+    case AppActionTypes.SET_NOTIFICATIONS_INTERACTION_DONE:
+      return {
+        ...state,
+        notificationsInteractionDone: true,
+      };
+
     case AppActionTypes.SET_CONFIRMED_TX_ACCEPTED:
       return {
         ...state,
@@ -437,6 +449,12 @@ export const appReducer = (
       return {
         ...state,
         announcementsAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_PIN_INTERACTION_DONE:
+      return {
+        ...state,
+        pinInteractionDone: true,
       };
 
     case AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED:

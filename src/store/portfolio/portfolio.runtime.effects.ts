@@ -72,6 +72,8 @@ type PopulatePortfolioWithRuntimeArgs = {
   quoteCurrency?: string;
   snapshotDebugMode?: SnapshotPersistDebugMode;
   completesInitialBaseline?: boolean;
+  decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecision['reason']>;
+  decisionSource?: string;
 } & PortfolioQuarantineRetryOptions;
 
 type MaybePopulatePortfolioForWalletsWithRuntimeArgs = {
@@ -729,6 +731,21 @@ const isSettledInitialBaselineNoopDecision = (
   decision.reason === 'invalid_decimals' ||
   decision.reason === 'excessive_balance_mismatch' ||
   decision.reason === 'zero_balance_token_missing_index';
+
+const buildPopulateDecisionReasonByWalletId = (args: {
+  decisions: PortfolioPopulateDecision[];
+  walletIdsToPopulate: string[];
+}): WalletIdMap<PortfolioPopulateDecision['reason']> => {
+  const walletIdsToPopulate = new Set(args.walletIdsToPopulate);
+  return Object.fromEntries(
+    args.decisions
+      .filter(
+        decision =>
+          decision.shouldPopulate && walletIdsToPopulate.has(decision.walletId),
+      )
+      .map(decision => [decision.walletId, decision.reason]),
+  );
+};
 
 const dispatchWalletIdMapUpdates = <T>(
   dispatch: any,
@@ -1471,6 +1488,11 @@ export const maybePopulatePortfolioForWalletsWithRuntime =
       populatePortfolioWithRuntime({
         wallets: walletsToPopulate,
         quoteCurrency: args.quoteCurrency,
+        decisionReasonByWalletId: buildPopulateDecisionReasonByWalletId({
+          decisions: decisions.decisions,
+          walletIdsToPopulate: decisions.walletIdsToPopulate,
+        }),
+        decisionSource: 'scoped_staleness',
       }),
     );
   };
@@ -1599,6 +1621,11 @@ export const maybePopulatePortfolioOnAppLaunchWithRuntime =
         ),
         wallets: walletsToPopulate,
         quoteCurrency,
+        decisionReasonByWalletId: buildPopulateDecisionReasonByWalletId({
+          decisions: decisions.decisions,
+          walletIdsToPopulate: decisions.walletIdsToPopulate,
+        }),
+        decisionSource: 'app_launch_staleness',
       }),
     );
   };
@@ -1698,7 +1725,15 @@ export const populatePortfolioWithRuntime =
       return;
     }
 
-    dispatch(startPopulatePortfolio({quoteCurrency}));
+    dispatch(
+      startPopulatePortfolio({
+        quoteCurrency,
+        ...(args?.decisionReasonByWalletId
+          ? {decisionReasonByWalletId: args.decisionReasonByWalletId}
+          : {}),
+        ...(args?.decisionSource ? {decisionSource: args.decisionSource} : {}),
+      }),
+    );
     if (invalidDecimalsErrors.length) {
       dispatch(
         updatePopulateProgress({

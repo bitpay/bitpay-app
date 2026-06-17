@@ -131,7 +131,7 @@ const TransakDetails: React.FC = () => {
           key => key.backupComplete,
         );
 
-        if (!keysList[0]) {
+        if (keysList[0]) {
           const walletIsSupported = (wallet: Wallet): boolean => {
             return wallet.credentials && wallet.isComplete();
           };
@@ -161,7 +161,7 @@ const TransakDetails: React.FC = () => {
             const _data = await selectedWallet.transakGetAccessToken({
               env: transakEnv,
             });
-            data = _data?.body?.data ?? _data;
+            data = _data?.body?.data ?? _data?.body ?? _data;
 
             if (data?.accessToken) {
               logger.debug(

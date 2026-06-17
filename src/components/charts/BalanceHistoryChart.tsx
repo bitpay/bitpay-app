@@ -47,6 +47,7 @@ export type BalanceHistoryChartProps = {
   showLoaderWhenNoSnapshots?: boolean;
   renderZeroBalanceWhenNoSnapshots?: boolean;
   isBalanceChartDataReadyToQuery?: boolean;
+  preserveVisibleSeriesWhileNotReady?: boolean;
   balanceOffset?: number;
   onSelectedBalanceChange?: (balance?: number) => void;
   preChartContent?: React.ReactNode;
@@ -89,6 +90,7 @@ const BalanceHistoryChart = ({
   showLoaderWhenNoSnapshots = false,
   renderZeroBalanceWhenNoSnapshots = false,
   isBalanceChartDataReadyToQuery = true,
+  preserveVisibleSeriesWhileNotReady = false,
   balanceOffset = 0,
   onSelectedBalanceChange,
   preChartContent,
@@ -124,6 +126,7 @@ const BalanceHistoryChart = ({
     showLoaderWhenNoSnapshots,
     renderZeroBalanceWhenNoSnapshots,
     isBalanceChartDataReadyToQuery,
+    preserveVisibleSeriesWhileNotReady,
     t,
     onSelectedBalanceChange,
     onChangeRowData,

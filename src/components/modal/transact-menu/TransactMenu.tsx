@@ -121,7 +121,7 @@ const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const availableWallets = Object.values(keys as Keys)
     .filter(key => key.backupComplete)
@@ -131,15 +131,16 @@ const TransactModal = () => {
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
         wallet.isComplete() &&
-        !wallet.pendingTssSession &&
-        wallet.balance.sat > 0,
+        !wallet.pendingTssSession,
     );
 
   const availableWalletsWithFunds = availableWallets.filter(
     wallet => wallet.balance.sat > 0,
   );
 
+  // Receive / Buy: disabled only when no wallet exists at all.
   const disabledReceivingOptions = availableWallets.length === 0;
+  // Send / Sell / Swap / Gift cards: disabled when no wallet has funds.
   const disabledSendingOptions = availableWalletsWithFunds.length === 0;
   const dispatch = useAppDispatch();
 

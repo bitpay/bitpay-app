@@ -477,6 +477,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     shouldMountBalanceChart: shouldMountAccountBalanceChart,
     shouldShowChartLoader: shouldShowAccountChartLoader,
     shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
+    shouldPreserveStaleBalanceChart: shouldPreserveStaleAccountBalanceChart,
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
@@ -529,6 +530,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: shouldMountAccountBalanceChart,
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
+    preserveChartDrivenStateWhileNotReady:
+      shouldPreserveStaleAccountBalanceChart,
     resetKey: `${keyId}:${selectedAccountAddress || ''}`,
   });
   const totalBalance =
@@ -1498,6 +1501,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     isBalanceChartDataReadyToQuery={
                       isAccountBalanceChartDataReadyToQuery
                     }
+                    preserveVisibleSeriesWhileNotReady={
+                      shouldPreserveStaleAccountBalanceChart
+                    }
                     showChangeRow={false}
                     onSelectedBalanceChange={
                       balanceChartSurface.chartCallbacks.onSelectedBalanceChange
@@ -1677,6 +1683,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     dispatch,
     groupedHistory,
     hideAllBalances,
+    isAccountBalanceChartDataReadyToQuery,
     isSmallScreen,
     isSvmAccount,
     balanceChartSurface,
@@ -1690,6 +1697,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     searchVal,
     selectedChainFilterOption,
     shouldMountAccountBalanceChart,
+    shouldPreserveStaleAccountBalanceChart,
+    shouldRenderZeroAccountBalanceChart,
     shouldShowAccountChartLoader,
     showPortfolioValue,
     t,

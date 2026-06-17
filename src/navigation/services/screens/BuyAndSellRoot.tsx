@@ -3188,7 +3188,7 @@ const BuyAndSellRoot = ({
         const _data = await selectedWallet.transakGetAccessToken({
           env: transakEnv,
         });
-        data = _data?.body?.data ?? _data;
+        data = _data?.body?.data ?? _data?.body ?? _data;
 
         if (data?.accessToken) {
           logger.debug('Transak access token fetched successfully.');
@@ -4000,6 +4000,7 @@ const BuyAndSellRoot = ({
         exchange: selectedOffer?.key || 'unknown',
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
+        errorMsg: msg || 'unknown',
         paymentMethod: selectedPaymentMethod?.method || '',
         amount: Number((selectedOffer as CryptoOffer)?.fiatAmount) || '',
         coin:
@@ -4348,24 +4349,7 @@ const BuyAndSellRoot = ({
             onShouldStartLoadWithRequest={
               webViewModal.key === 'moonpayBuy' ||
               webViewModal.key === 'moonpaySell'
-                ? event => {
-                    // On iOS, window.open() triggers a navigation with
-                    // navigationType === 'other'. Allow those navigations to load
-                    // inside the same WebView instead of being blocked, so that
-                    // MoonPay can open popups / new pages it needs (e.g. 3DS, oauth).
-                    // We only do this when the URL is different from the current one
-                    // to avoid re-loading the frame itself.
-                    if (
-                      event.navigationType === 'other' &&
-                      event.url !== webViewModal.url
-                    ) {
-                      return true;
-                    }
-                    // For all other navigations (deeplinks, redirects, etc.)
-                    // delegate to the existing handler which intercepts bitpay://
-                    // deeplinks and lets normal https navigations through.
-                    return handleMoonpayBuyNavigation(event);
-                  }
+                ? handleMoonpayBuyNavigation
                 : undefined
             }
             onMessage={
