@@ -1,29 +1,27 @@
 diff --git a/node_modules/react-native-webassembly/android/CMakeLists.txt b/node_modules/react-native-webassembly/android/CMakeLists.txt
-index 0f879e0..e5992c2 100644
+index 0f879e0..75b0cdc 100644
 --- a/node_modules/react-native-webassembly/android/CMakeLists.txt
 +++ b/node_modules/react-native-webassembly/android/CMakeLists.txt
-@@ -64,6 +64,7 @@ find_package(ReactAndroid REQUIRED CONFIG)
+@@ -64,7 +64,9 @@ find_package(ReactAndroid REQUIRED CONFIG)
  
  target_link_libraries(
          cpp
 +        "-Wl,-z,max-page-size=16384"
          ${log-lib}
++        c++_shared
          ReactAndroid::jsi
          android
-diff --git a/node_modules/react-native-webassembly/android/build.gradle b/node_modules/react-native-webassembly/android/build.gradle
-index 5643083..9185c73 100644
---- a/node_modules/react-native-webassembly/android/build.gradle
-+++ b/node_modules/react-native-webassembly/android/build.gradle
-@@ -42,9 +42,11 @@ android {
-       cmake {
-         cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
-         arguments "-DANDROID_STL=c++_shared"
--        abiFilters "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
-       }
-     }
-+    ndk {
-+        abiFilters "arm64-v8a", "x86_64"
-+    }
-   }
-   externalNativeBuild {
-     cmake {
+ )
+diff --git a/node_modules/react-native-webassembly/cpp/m3_config_platforms.h b/node_modules/react-native-webassembly/cpp/m3_config_platforms.h
+index 50b86ac..8deaf8d 100644
+--- a/node_modules/react-native-webassembly/cpp/m3_config_platforms.h
++++ b/node_modules/react-native-webassembly/cpp/m3_config_platforms.h
+@@ -82,7 +82,7 @@
+ #  endif
+ # endif
+ 
+-# if M3_COMPILER_HAS_ATTRIBUTE(musttail)
++# if M3_COMPILER_HAS_ATTRIBUTE(musttail) && !defined(__arm__)
+ #   define M3_MUSTTAIL __attribute__((musttail))
+ # else
+ #   define M3_MUSTTAIL
