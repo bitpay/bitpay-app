@@ -307,7 +307,19 @@ const ExportTSSWallet = () => {
       if (filePath) {
         RNFS.unlink(filePath).catch(() => {});
       }
-      if (err && err.message === 'User did not share') {
+      // On Android, react-native-share throws "User did not share" even when the user picks an
+      // email app — Treat it as success on Android since the file was already handed off to the target app
+      if (
+        err &&
+        err.message === 'User did not share' &&
+        Platform.OS === 'android'
+      ) {
+        setShareButtonState('success');
+        await sleep(500);
+        setShareButtonState(undefined);
+        setBackupCompleted(true);
+        dispatch(WalletActions.setBackupComplete(keyId));
+      } else if (err && err.message === 'User did not share') {
         setShareButtonState(undefined);
         return;
       } else {
