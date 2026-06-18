@@ -82,10 +82,15 @@ import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 
 const BWC = BwcProvider.getInstance();
 
-let core = new Core({
-  projectId: WALLET_CONNECT_V2_PROJECT_ID,
-});
+let core: InstanceType<typeof Core> | undefined;
 let web3wallet: IWalletKit;
+
+const getOrCreateCore = (): InstanceType<typeof Core> => {
+  if (!core) {
+    core = new Core({projectId: WALLET_CONNECT_V2_PROJECT_ID});
+  }
+  return core!;
+};
 
 const checkCredentials = () => {
   return WALLET_CONNECT_V2_PROJECT_ID && WALLETCONNECT_V2_METADATA;
@@ -154,44 +159,45 @@ export const walletConnectV2approveSessionAuthenticateProposal =
     });
   };
 
-export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
-  try {
-    logManager.info('walletConnectV2Init: starting...');
+export const walletConnectV2Init =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    try {
+      logManager.info('walletConnectV2Init: starting...');
 
-    if (!checkCredentials()) {
-      logManager.error('walletConnectV2Init: credentials not found');
-      return;
-    }
-
-    web3wallet = await WalletKit.init({
-      core,
-      metadata: WALLETCONNECT_V2_METADATA,
-    });
-    dispatch(walletConnectV2SubscribeToEvents());
-
-    // remove inactive connections if they exist
-    const activeSessions = web3wallet.getActiveSessions();
-    const sessions: WCV2SessionType[] | undefined =
-      getState().WALLET_CONNECT_V2.sessions;
-
-    Object.values(activeSessions).forEach(activeSession => {
-      if (
-        sessions?.length &&
-        !sessions.some(s => s.topic === activeSession.topic)
-      ) {
-        dispatch(walletConnectV2OnDeleteSession(activeSession.topic));
+      if (!checkCredentials()) {
+        logManager.error('walletConnectV2Init: credentials not found');
+        return;
       }
-    });
 
-    logManager.info(
-      '[WC-V2/walletConnectV2Init]: client initialized successfully',
-    );
-  } catch (e) {
-    logManager.error(
-      `[WC-V2/walletConnectV2Init]: an error occurred while initializing client: ${e}`,
-    );
-  }
-};
+      web3wallet = await WalletKit.init({
+        core: getOrCreateCore(),
+        metadata: WALLETCONNECT_V2_METADATA,
+      });
+      dispatch(walletConnectV2SubscribeToEvents());
+
+      // remove inactive connections if they exist
+      const activeSessions = web3wallet.getActiveSessions();
+      const sessions: WCV2SessionType[] | undefined =
+        getState().WALLET_CONNECT_V2.sessions;
+
+      Object.values(activeSessions).forEach(activeSession => {
+        if (
+          sessions?.length &&
+          !sessions.some(s => s.topic === activeSession.topic)
+        ) {
+          dispatch(walletConnectV2OnDeleteSession(activeSession.topic));
+        }
+      });
+
+      logManager.info(
+        '[WC-V2/walletConnectV2Init]: client initialized successfully',
+      );
+    } catch (e) {
+      logManager.error(
+        `[WC-V2/walletConnectV2Init]: an error occurred while initializing client: ${e}`,
+      );
+    }
+  };
 
 export const walletConnectV2OnSessionProposal =
   (uri: string): Effect<Promise<void>> =>
@@ -199,10 +205,7 @@ export const walletConnectV2OnSessionProposal =
     return new Promise(async (resolve, reject) => {
       try {
         if (!web3wallet) {
-          web3wallet = await WalletKit.init({
-            core,
-            metadata: WALLETCONNECT_V2_METADATA,
-          });
+          await dispatch(walletConnectV2Init());
         }
         await web3wallet.pair({uri});
         resolve();
@@ -597,10 +600,7 @@ export const walletConnectV2OnDeleteSession =
     return new Promise(async resolve => {
       try {
         if (!web3wallet) {
-          web3wallet = await WalletKit.init({
-            core,
-            metadata: WALLETCONNECT_V2_METADATA,
-          });
+          await dispatch(walletConnectV2Init());
         }
         await web3wallet.disconnectSession({
           topic,
@@ -649,10 +649,7 @@ export const walletConnectV2OnUpdateSession =
   async dispatch => {
     try {
       if (!web3wallet) {
-        web3wallet = await WalletKit.init({
-          core,
-          metadata: WALLETCONNECT_V2_METADATA,
-        });
+        await dispatch(walletConnectV2Init());
       }
 
       let namespaces: SessionTypes.Namespaces = {};
