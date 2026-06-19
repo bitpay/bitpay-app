@@ -207,13 +207,14 @@ export const addWallet =
           );
         }
         if (
+          key.methods &&
           !key?.properties?.xPrivKeyEDDSA &&
           !key?.properties?.xPrivKeyEDDSAEncrypted
         ) {
           try {
             await sleep(500);
-            key.methods!.addKeyByAlgorithm('EDDSA', {password});
-            key.properties = key.methods!.toObj();
+            key.methods.addKeyByAlgorithm('EDDSA', {password});
+            key.properties = key.methods.toObj();
           } catch (err) {
             const errstring =
               err instanceof Error ? err.message : JSON.stringify(err);

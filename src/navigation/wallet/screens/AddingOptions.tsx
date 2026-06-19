@@ -197,14 +197,15 @@ const AddingOptions: React.FC = () => {
             );
           }
           if (
+            key.methods &&
             !key?.properties?.xPrivKeyEDDSA &&
             !key?.properties?.xPrivKeyEDDSAEncrypted
           ) {
             try {
               showOngoingProcess('ADDING_WALLET');
               await sleep(500);
-              key.methods!.addKeyByAlgorithm('EDDSA', {password});
-              key.properties = key.methods!.toObj();
+              key.methods.addKeyByAlgorithm('EDDSA', {password});
+              key.properties = key.methods.toObj();
             } catch (err) {
               hideOngoingProcess();
               const errstring =
