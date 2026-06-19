@@ -1774,12 +1774,13 @@ export const checkEncryptedKeysForEddsaMigration =
   (key: Key, password: string) =>
   async (dispatch: any): Promise<void> => {
     if (
+      key.methods &&
       checkEncryptPassword(key, password) &&
       !key?.properties?.xPrivKeyEDDSAEncrypted &&
       !key?.properties?.xPrivKeyEDDSA
     ) {
-      key.methods!.addKeyByAlgorithm('EDDSA', {password});
-      key.properties = key.methods!.toObj();
+      key.methods.addKeyByAlgorithm('EDDSA', {password});
+      key.properties = key.methods.toObj();
       dispatch(successImport({key}));
     }
   };
