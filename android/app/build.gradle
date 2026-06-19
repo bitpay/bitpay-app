@@ -110,6 +110,7 @@ android {
         ndk {
             abiFilters "armeabi-v7a", "x86", "x86_64", "arm64-v8a"
         }
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     splits {
         abi {
@@ -166,6 +167,18 @@ android {
 }
 
 dependencies {
+    //Espresso libraries
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+
+    androidTestImplementation 'org.hamcrest:hamcrest:2.2'
+
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation platform('com.google.firebase:firebase-bom:29.1.0')
