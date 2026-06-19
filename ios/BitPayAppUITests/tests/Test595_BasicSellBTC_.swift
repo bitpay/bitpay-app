@@ -44,7 +44,7 @@ final class Test595_BasicSellBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(6) Enter $30 as the sell amount.") {
-      enterAmountPage.enterAmount(amount: "30")
+      enterAmountPage.enterAmount(amount: "0.007")
     }
     
     AllureXCTestSupport.step("(7) Tap Choose Crypto.") {
@@ -60,7 +60,5 @@ final class Test595_BasicSellBTC: XCTestCase {
       enterAmountPage.tapContinue()
     }
     
-    AllureXCTestSupport.step("(10) Wait for the browser / in-app webview to open. ") {
-    }
   }
 }
