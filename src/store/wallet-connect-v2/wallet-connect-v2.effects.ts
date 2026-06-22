@@ -176,7 +176,7 @@ export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
 
     Object.values(activeSessions).forEach(activeSession => {
       if (
-        sessions.length &&
+        sessions?.length &&
         !sessions.some(s => s.topic === activeSession.topic)
       ) {
         dispatch(walletConnectV2OnDeleteSession(activeSession.topic));
@@ -513,7 +513,7 @@ export const walletConnectV2SubscribeToEvents =
           );
           const requests: WCV2RequestType[] | undefined =
             getState().WALLET_CONNECT_V2.requests;
-          const request = requests.find(({id}) => id === event.id);
+          const request = requests?.find(({id}) => id === event.id);
           if (request) {
             await dispatch(walletConnectV2RejectCallRequest(request));
           }
