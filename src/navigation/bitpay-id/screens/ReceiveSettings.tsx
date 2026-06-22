@@ -383,7 +383,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
       );
       setActiveAddresses(createAddressMap(latestReceivingAddresses));
     };
-    getWallets();
+    getWallets().catch(() => {});
   }, [apiToken, dispatch]);
 
   useEffect(() => {

@@ -113,8 +113,8 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
     if (apiToken) {
-      dispatch(BitPayIdEffects.startFetchSecuritySettings());
-      dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken));
+      dispatch(BitPayIdEffects.startFetchSecuritySettings()).catch(() => {});
+      dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken)).catch(() => {});
     }
   }, [apiToken, dispatch]);
 
