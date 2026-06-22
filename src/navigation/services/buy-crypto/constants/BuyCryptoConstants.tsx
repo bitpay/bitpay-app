@@ -79,7 +79,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       ramp: false,
       sardine: true,
       simplex: false,
-      transak: false,
+      transak: true,
     },
     supportedCountries: countriesWithACH,
     enabled: true,

@@ -685,6 +685,7 @@ export type TransakPaymentType =
   | 'google_pay'
   | 'inr_bank_transfer'
   | 'inr_upi'
+  | 'pm_ach_pull'
   | 'pm_astropay'
   | 'pm_bpi'
   | 'pm_cash_app'

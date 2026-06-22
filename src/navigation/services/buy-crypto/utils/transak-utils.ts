@@ -292,6 +292,16 @@ export const getTransakSelectedPaymentMethodData = (
 
   switch (selectedPaymentMethod?.method) {
     // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "other"
+    case 'ach':
+      transakSelectedPaymentMethodData =
+        transakSelectedFiatCurrency.paymentOptions.find(
+          (transakPaymentOption: TransakPaymentOption) => {
+            if (['pm_ach_pull'].includes(transakPaymentOption.id)) {
+              return true;
+            }
+          },
+        );
+      break;
     case 'applePay':
       transakSelectedPaymentMethodData =
         transakSelectedFiatCurrency.paymentOptions.find(
@@ -375,6 +385,9 @@ export const getTransakPaymentMethodFormat = (
   let formattedPaymentMethod: TransakPaymentType | undefined;
   switch (method) {
     // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "other"
+    case 'ach':
+      formattedPaymentMethod = 'pm_ach_pull';
+      break;
     case 'applePay':
       formattedPaymentMethod = 'apple_pay';
       break;
@@ -392,11 +405,25 @@ export const getTransakPaymentMethodFormat = (
   return formattedPaymentMethod;
 };
 
-export const getTransakFiatAmountLimits = () => {
-  return {
-    min: 30,
-    max: 3000,
-  };
+export const getTransakFiatAmountLimits = (
+  paymentMethod?: PaymentMethodKey,
+) => {
+  let limits: {min: number; max: number} = {min: 30, max: 3000};
+  switch (paymentMethod) {
+    case 'ach':
+      limits = {
+        min: 30,
+        max: 5000,
+      };
+      break;
+    default:
+      limits = {
+        min: 30,
+        max: 3000,
+      };
+      break;
+  }
+  return limits;
 };
 
 export interface TransakStatus {
