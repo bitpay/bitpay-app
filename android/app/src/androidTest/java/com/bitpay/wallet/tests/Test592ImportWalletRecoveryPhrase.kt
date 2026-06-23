@@ -8,6 +8,7 @@ import com.bitpay.wallet.pages.HomePage
 import com.bitpay.wallet.pages.ImportWalletPage
 import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -20,17 +21,28 @@ class Test592ImportWalletRecoveryPhrase : BaseTest() {
     private val importWalletPage = ImportWalletPage()
     private val myKeyPage = MyKeyPage()
 
+//    companion object {
+//        @BeforeClass
+//        @JvmStatic
+//        fun setupClass() {
+//            skipOnboardingHandling = true
+//        }
+//    }
+
     @Test
     fun testImportWalletRecoveryPhrase() {
-        onboardingPage.waitForPageToLoad()
-        onboardingPage.clickContinueWithoutAccount()
-        onboardingPage.clickSkip() //Skip turn on notifications
 
-        assertTrue(
-            "Protect Your Wallet was not displayed",
-            onboardingPage.verifyProtectYourWalletIsDisplayed()
-        )
-        onboardingPage.clickSkip() //Skip Protect Your Wallet
+//        skipRelaunch = true
+
+//        onboardingPage.waitForPageToLoad()
+//        onboardingPage.clickContinueWithoutAccount()
+//        onboardingPage.clickSkip() //Skip turn on notifications
+//
+//        assertTrue(
+//            "Protect Your Wallet was not displayed",
+//            onboardingPage.verifyProtectYourWalletIsDisplayed()
+//        )
+//        onboardingPage.clickSkip() //Skip Protect Your Wallet
 
         onboardingPage.clickCreateKey()
 

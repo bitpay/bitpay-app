@@ -27,42 +27,25 @@ class Test595SellBTC : BaseTest() {
 
     @Test
     fun testBTCSell() {
+        onboardingPage.clickAlreadyHaveKey()
 
-        skipRelaunch = true
+        importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+        importWalletPage.clickImportWallet()
 
-//        onboardingPage.waitForPageToLoad()
-//        onboardingPage.clickContinueWithoutAccount()
-//        onboardingPage.clickSkip() //Skip turn on notifications
-//
-//        assertTrue(
-//            "Protect Your Wallet was not displayed",
-//            onboardingPage.verifyProtectYourWalletIsDisplayed()
-//        )
-//        onboardingPage.clickSkip() //Skip Protect Your Wallet
-//
-//        onboardingPage.clickCreateKey()
-//
-//        assertTrue(
-//            "Backup key prompt was not displayed",
-//            onboardingPage.verifyBackupKeyPromptIsDisplayed()
-//        )
-//
-//        onboardingPage.clickSkip() //Skip Would you like to backup
-//        onboardingPage.clickBottomSheetLater()
-//
-//        onboardingPage.clickIUnderstandCheckbox1()
-//        onboardingPage.clickIUnderstandCheckbox2()
-//        onboardingPage.clickIUnderstandCheckbox3()
-//
-//        onboardingPage.clickAgreeAndContinue()
-//
-//        homePage.waitForPageToLoad()
+        onboardingPage.verifyIUnderstandCheckbox1Displayed()
+
+        onboardingPage.clickIUnderstandCheckbox1()
+        onboardingPage.clickIUnderstandCheckbox2()
+        onboardingPage.clickIUnderstandCheckbox3()
+
+        onboardingPage.clickAgreeAndContinue()
+
+        homePage.waitForPageToLoad()
 
         assertTrue(
             "Home Page - Portfolio balance text not displayed",
             homePage.verifyPortfolioBalanceTextDisplayed()
         )
-
 
         //test-595
         homePage.clickSell()
@@ -72,19 +55,14 @@ class Test595SellBTC : BaseTest() {
             selectCurrencyPage.verifySellTitleDisplayed()
         )
 
-        keyboardPage.enterAmount("30")
+        keyboardPage.enterAmount("0.0007")
 
         selectCurrencyPage.clickChooseCrypto()
         selectCurrencyPage.clickBitcoin()
-
-        //Click swap currency
 
         assertTrue(
             "Buy - Continue button not enabled",
             selectCurrencyPage.verifyBuyContinueButtonEnabled()
         )
-
-
-
     }
 }

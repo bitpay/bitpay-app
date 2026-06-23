@@ -8,6 +8,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
+import androidx.test.espresso.matcher.ViewMatchers.withResourceName
 import org.hamcrest.Matchers.allOf
 
 class OnboardingPage {
@@ -62,6 +63,16 @@ class OnboardingPage {
     fun clickGetStarted() {
         WaitUtils.waitForView(getStartedButton)
         onView(getStartedButton).perform(click())
+    }
+
+    fun isContinueWithoutAccountDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(continueWithoutAccountButton, timeoutMs = 120000)
+            true
+        } catch (e: Throwable) {
+            android.util.Log.e("OnboardingPage", "isContinueWithoutAccountDisplayed failed", e)
+            false
+        }
     }
 
     fun clickContinueWithoutAccount() {
@@ -119,19 +130,32 @@ class OnboardingPage {
         onView(backupRecoveryPhraseElement).perform(click())
     }
 
+    fun verifyIUnderstandCheckbox1Displayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(iUnderstandCheckBox1, 900000)
+            onView(iUnderstandCheckBox1).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
     fun clickIUnderstandCheckbox1() {
         WaitUtils.waitForView(iUnderstandCheckBox1)
         onView(iUnderstandCheckBox1).perform(click())
+        Thread.sleep(300)
     }
 
     fun clickIUnderstandCheckbox2() {
         WaitUtils.waitForView(iUnderstandCheckBox2)
         onView(iUnderstandCheckBox2).perform(click())
+        Thread.sleep(300)
     }
 
     fun clickIUnderstandCheckbox3() {
         WaitUtils.waitForView(iUnderstandCheckBox3)
         onView(iUnderstandCheckBox3).perform(click())
+        Thread.sleep(300)
     }
 
     fun clickAgreeAndContinue() {

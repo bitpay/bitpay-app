@@ -3,29 +3,42 @@ package com.bitpay.wallet.base
 import android.content.Intent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import com.bitpay.wallet.pages.ImportWalletPage
+import com.bitpay.wallet.pages.MyKeyPage
+import com.bitpay.wallet.pages.OnboardingPage
+import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
+import com.bitpay.wallet.utils.allureScreenshot
+import org.junit.Rule
 
 open class BaseTest {
 
     companion object {
-        // Set to true to skip app relaunch and test against
-        // whatever screen/state the app is already on.
         var skipRelaunch: Boolean = false
+        var skipOnboardingHandling: Boolean = false
     }
+
+    @get:Rule
+    val screenshotOnFailureRule = object : TestWatcher() {
+        override fun failed(e: Throwable?, description: Description?) {
+            allureScreenshot("Failure - ${description?.methodName}")
+        }
+    }
+
+    private val onboardingPage = OnboardingPage()
 
     @Before
     fun setup() {
+        if (!skipRelaunch) launchApp()
+        if (!skipOnboardingHandling) handleOnboardingIfPresent()
+    }
 
-        if (skipRelaunch) {
-            return
-        }
-
+    private fun launchApp() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
 
-        // Guard against "UiAutomationService already registered" crashes
-        // caused by a stale/orphaned automation connection from a previous
-        // test run that didn't tear down cleanly.
         val device: UiDevice? = try {
             UiDevice.getInstance(instrumentation)
         } catch (e: IllegalStateException) {
@@ -50,5 +63,28 @@ open class BaseTest {
         )
 
         context.startActivity(intent)
+    }
+
+    /**
+     * If the onboarding "Continue without an account" screen is currently
+     * displayed, walk through the standard onboarding flow once so every
+     * test starts from a consistent post-onboarding state.
+     * If that screen isn't present (e.g. app is already past onboarding,
+     * or skipRelaunch left it on a different screen), this is a no-op.
+     */
+    private fun handleOnboardingIfPresent() {
+        if (!onboardingPage.isContinueWithoutAccountDisplayed()) {
+            return
+        }
+
+        onboardingPage.waitForPageToLoad()
+        onboardingPage.clickContinueWithoutAccount()
+        onboardingPage.clickSkip() // Skip turn on notifications
+
+        assertTrue(
+            "Protect Your Wallet was not displayed",
+            onboardingPage.verifyProtectYourWalletIsDisplayed()
+        )
+        onboardingPage.clickSkip()
     }
 }
