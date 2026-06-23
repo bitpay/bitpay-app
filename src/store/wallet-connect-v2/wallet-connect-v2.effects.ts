@@ -146,10 +146,20 @@ export const walletConnectV2approveSessionAuthenticateProposal =
         dispatch(sessionProposal());
         resolve();
       } catch (err) {
-        await web3wallet.rejectSession({
-          id,
-          reason: getSdkError('USER_REJECTED'),
-        });
+        try {
+          await web3wallet.rejectSession({
+            id,
+            reason: getSdkError('USER_REJECTED'),
+          });
+        } catch (rejectErr) {
+          const rejectErrMsg =
+            rejectErr instanceof Error
+              ? rejectErr.message
+              : JSON.stringify(rejectErr);
+          logManager.warn(
+            `[WC-V2/walletConnectV2approveSessionAuthenticateProposal]: could not reject session after approve failure: ${rejectErrMsg}`,
+          );
+        }
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(
           `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
@@ -253,10 +263,20 @@ export const walletConnectV2ApproveSessionProposal =
         dispatch(sessionProposal());
         resolve();
       } catch (err) {
-        await web3wallet.rejectSession({
-          id,
-          reason: getSdkError('USER_REJECTED'),
-        });
+        try {
+          await web3wallet.rejectSession({
+            id,
+            reason: getSdkError('USER_REJECTED'),
+          });
+        } catch (rejectErr) {
+          const rejectErrMsg =
+            rejectErr instanceof Error
+              ? rejectErr.message
+              : JSON.stringify(rejectErr);
+          logManager.warn(
+            `[WC-V2/walletConnectV2ApproveSessionProposal]: could not reject session after approve failure: ${rejectErrMsg}`,
+          );
+        }
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(
           `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
