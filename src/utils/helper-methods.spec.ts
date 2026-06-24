@@ -1142,7 +1142,7 @@ describe('getRateByCurrencyName', () => {
     expect(result).toBeDefined();
   });
 
-  it('falls back to rates[currencyAbbreviation] when currencyName key missing', () => {
+  it('falls back to rates[currencyAbbreviation] when currencyName key missing (non-token)', () => {
     // 'btc' is not a contract address → getCurrencyAbbreviation returns 'btc'
     const ratesWithBtc = {
       ...rates,
@@ -1150,6 +1150,35 @@ describe('getRateByCurrencyName', () => {
     } as any;
     const result = getRateByCurrencyName(ratesWithBtc, 'btc', 'btc');
     expect(result).toEqual(ratesWithBtc.btc);
+  });
+
+  it('does NOT fall back to symbol rates for a token with no address-based rate (symbol collision bug)', () => {
+    // For tokens, never fallback to symbol-based rates.
+    // ERC20 symbols are not unique and can be spoofed by spam tokens.
+    // Token rates must be resolved only by the address-based currencyName key.
+    const spamTokenAddress = '0xdead000000000000000000000000000000000001';
+    const result = getRateByCurrencyName(
+      rates,
+      'eth',
+      'matic',
+      spamTokenAddress,
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it('returns address-based rate for a legitimate ERC20 token on Polygon', () => {
+    const tokenAddress = '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
+    const ratesWithToken = {
+      ...rates,
+      [`${tokenAddress}_m`]: [{code: 'USD', name: 'US Dollar', rate: 1}],
+    } as any;
+    const result = getRateByCurrencyName(
+      ratesWithToken,
+      'usdc',
+      'matic',
+      tokenAddress,
+    );
+    expect(result).toEqual([{code: 'USD', name: 'US Dollar', rate: 1}]);
   });
 
   it('returns matic rates when currencyAbbreviation is pol and matic rates exist', () => {

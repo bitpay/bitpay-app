@@ -522,7 +522,9 @@ export const getRateByCurrencyName = (
   ) {
     return rates.matic;
   }
-  return rates[currencyName] || rates[currencyAbbreviation];
+  return tokenAddress
+    ? rates[currencyName]
+    : rates[currencyName] || rates[currencyAbbreviation];
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
