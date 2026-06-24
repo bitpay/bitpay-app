@@ -1,6 +1,5 @@
 package com.bitpay.wallet.tests
 
-import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bitpay.wallet.base.BaseTest
 import com.bitpay.wallet.pages.AddYourCryptoOptionPage
@@ -8,7 +7,9 @@ import com.bitpay.wallet.pages.HomePage
 import com.bitpay.wallet.pages.ImportWalletPage
 import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
-import org.junit.BeforeClass
+import com.bitpay.wallet.utils.allureScreenshot
+import com.bitpay.wallet.utils.allureStep
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -21,72 +22,79 @@ class Test592ImportWalletRecoveryPhrase : BaseTest() {
     private val importWalletPage = ImportWalletPage()
     private val myKeyPage = MyKeyPage()
 
-//    companion object {
-//        @BeforeClass
-//        @JvmStatic
-//        fun setupClass() {
-//            skipOnboardingHandling = true
-//        }
-//    }
-
     @Test
     fun testImportWalletRecoveryPhrase() {
 
-//        skipRelaunch = true
+        allureStep("Click Create Key on onboarding screen") {
+            onboardingPage.clickCreateKey()
+        }
 
-//        onboardingPage.waitForPageToLoad()
-//        onboardingPage.clickContinueWithoutAccount()
-//        onboardingPage.clickSkip() //Skip turn on notifications
-//
-//        assertTrue(
-//            "Protect Your Wallet was not displayed",
-//            onboardingPage.verifyProtectYourWalletIsDisplayed()
-//        )
-//        onboardingPage.clickSkip() //Skip Protect Your Wallet
+        allureStep("Verify backup key prompt is displayed") {
+            assertTrue(
+                "Backup key prompt was not displayed",
+                onboardingPage.verifyBackupKeyPromptIsDisplayed()
+            )
+            allureScreenshot("Backup key prompt displayed")
+        }
 
-        onboardingPage.clickCreateKey()
+        allureStep("Skip backup prompt") {
+            onboardingPage.clickSkip() // Skip "Would you like to backup"
+        }
 
-        assertTrue(
-            "Backup key prompt was not displayed",
-            onboardingPage.verifyBackupKeyPromptIsDisplayed()
-        )
+        allureStep("Dismiss bottom sheet (Later)") {
+            onboardingPage.clickBottomSheetLater()
+        }
 
-        onboardingPage.clickSkip() //Skip Would you like to backup
-        onboardingPage.clickBottomSheetLater()
+        allureStep("Check all three 'I understand' checkboxes") {
+            onboardingPage.clickIUnderstandCheckbox1()
+            onboardingPage.clickIUnderstandCheckbox2()
+            onboardingPage.clickIUnderstandCheckbox3()
+        }
 
-        onboardingPage.clickIUnderstandCheckbox1()
-        onboardingPage.clickIUnderstandCheckbox2()
-        onboardingPage.clickIUnderstandCheckbox3()
+        allureStep("Click Agree and Continue") {
+            onboardingPage.clickAgreeAndContinue()
+        }
 
-        onboardingPage.clickAgreeAndContinue()
+        allureStep("Wait for Home page to load") {
+            homePage.waitForPageToLoad()
+            allureScreenshot("Home page loaded")
+        }
 
-        homePage.waitForPageToLoad()
+        allureStep("Verify portfolio balance is displayed on Home page") {
+            assertTrue(
+                "Home Page - Portfolio balance text not displayed",
+                homePage.verifyPortfolioBalanceTextDisplayed()
+            )
+        }
 
-        assertTrue(
-            "Home Page - Portfolio balance text not displayed",
-            homePage.verifyPortfolioBalanceTextDisplayed()
-        )
+        allureStep("Click Add Your Crypto on Home page") {
+            homePage.clickAddYourCrypto()
+        }
 
+        allureStep("Click Import Key option") {
+            addYourCryptoOptionPage.clickImportKey()
+        }
 
-        //test-592
+        allureStep("Enter recovery phrase and import wallet") {
+            importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+            allureScreenshot("Recovery phrase entered")
+            importWalletPage.clickImportWallet()
+        }
 
-        homePage.clickAddYourCrypto()
+        allureStep("Verify wallet import succeeded - My Key page displayed") {
+            assertTrue(
+                "Wallet Import Failed - My Key not displayed",
+                myKeyPage.verifyMyKeyDisplayed()
+            )
+            allureScreenshot("My Key page displayed after import")
+        }
 
-        addYourCryptoOptionPage.clickImportKey()
-
-        importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
-        importWalletPage.clickImportWallet()
-
-        assertTrue(
-            "Wallet Import Failed - My Key not displayed",
-            myKeyPage.verifyMyKeyDisplayed()
-        )
-
-        assertTrue(
-            "Bitcoin not displayed in My Key page",
-            myKeyPage.verifyBitcoinTextDisplayed()
-        )
-
-
+        allureStep("Verify Bitcoin is displayed in My Key page") {
+            assertTrue(
+                "Bitcoin not displayed in My Key page",
+                myKeyPage.verifyBitcoinTextDisplayed()
+            )
+            allureScreenshot("Final - Bitcoin shown in My Key page")
+        }
     }
 }

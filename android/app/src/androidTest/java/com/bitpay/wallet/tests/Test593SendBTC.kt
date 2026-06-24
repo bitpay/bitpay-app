@@ -1,6 +1,5 @@
 package com.bitpay.wallet.tests
 
-import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bitpay.wallet.base.BaseTest
 import com.bitpay.wallet.pages.AddYourCryptoOptionPage
@@ -11,6 +10,9 @@ import com.bitpay.wallet.pages.KeyboardPage
 import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
 import com.bitpay.wallet.pages.SelectCurrencyPage
+import com.bitpay.wallet.utils.allureScreenshot
+import com.bitpay.wallet.utils.allureStep
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -29,58 +31,92 @@ class Test593SendBTC : BaseTest() {
 
     @Test
     fun testSendBTC() {
-        onboardingPage.clickAlreadyHaveKey()
+        allureStep("Click 'Already have a key' on onboarding screen") {
+            onboardingPage.clickAlreadyHaveKey()
+        }
 
-        importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
-        importWalletPage.clickImportWallet()
+        allureStep("Enter recovery phrase and import wallet") {
+            importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+            allureScreenshot("Recovery phrase entered")
+            importWalletPage.clickImportWallet()
+        }
 
-        onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        allureStep("Verify 'I understand' checkbox 1 is displayed") {
+            onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        }
 
-        onboardingPage.clickIUnderstandCheckbox1()
-        onboardingPage.clickIUnderstandCheckbox2()
-        onboardingPage.clickIUnderstandCheckbox3()
+        allureStep("Check all three 'I understand' checkboxes") {
+            onboardingPage.clickIUnderstandCheckbox1()
+            onboardingPage.clickIUnderstandCheckbox2()
+            onboardingPage.clickIUnderstandCheckbox3()
+        }
 
-        onboardingPage.clickAgreeAndContinue()
+        allureStep("Click Agree and Continue") {
+            onboardingPage.clickAgreeAndContinue()
+        }
 
-        homePage.waitForPageToLoad()
+        allureStep("Wait for Home page to load") {
+            homePage.waitForPageToLoad()
+            allureScreenshot("Home page loaded")
+        }
 
-        assertTrue(
-            "Home Page - Portfolio balance text not displayed",
-            homePage.verifyPortfolioBalanceTextDisplayed()
-        )
+        allureStep("Verify portfolio balance is displayed on Home page") {
+            assertTrue(
+                "Home Page - Portfolio balance text not displayed",
+                homePage.verifyPortfolioBalanceTextDisplayed()
+            )
+        }
 
-        homePage.clickSend()
-        assertTrue(
-            "Select Currency page not displayed",
-            selectCurrencyPage.verifySelectCurrencyDisplayed()
-        )
-        assertTrue(
-            "Select Currency page not displayed",
-            selectCurrencyPage.verifySelectCurrencyDisplayed()
-        )
+        allureStep("Click Send on Home page") {
+            homePage.clickSend()
+        }
 
-        selectCurrencyPage.clickBitcoin()
+        allureStep("Verify Select Currency page is displayed") {
+            assertTrue(
+                "Select Currency page not displayed",
+                selectCurrencyPage.verifySelectCurrencyDisplayed()
+            )
+            assertTrue(
+                "Select Currency page not displayed",
+                selectCurrencyPage.verifySelectCurrencyDisplayed()
+            )
+            allureScreenshot("Select Currency page displayed")
+        }
 
-        assertTrue(
-            "Send To page not displayed",
-            selectCurrencyPage.verifySendToDisplayed()
-        )
+        allureStep("Click Bitcoin currency option") {
+            selectCurrencyPage.clickBitcoin()
+        }
 
-        selectCurrencyPage.enterSendToAddress("bc1q0effzahtsn685tyjppgukpvfhv37hrlm4g67ws")
+        allureStep("Verify Send To page is displayed") {
+            assertTrue(
+                "Send To page not displayed",
+                selectCurrencyPage.verifySendToDisplayed()
+            )
+        }
 
-        keyboardPage.enterAmount("0.00005")
-        keyboardPage.clickContinue()
+        allureStep("Enter Send To address") {
+            selectCurrencyPage.enterSendToAddress("bc1q0effzahtsn685tyjppgukpvfhv37hrlm4g67ws")
+        }
 
-        assertTrue(
-            "Confirm Payment page not displayed",
-            confirmPaymentPage.verifyConfirmPaymentTitleDisplayed(),
-        )
+        allureStep("Enter amount and click Continue") {
+            keyboardPage.enterAmount("0.00005")
+            keyboardPage.clickContinue()
+        }
 
-        assertTrue(
-            "Confirm Payment - Summary page not displayed",
-            confirmPaymentPage.verifySummaryTextDisplayed()
-        )
+        allureStep("Verify Confirm Payment page is displayed") {
+            assertTrue(
+                "Confirm Payment page not displayed",
+                confirmPaymentPage.verifyConfirmPaymentTitleDisplayed(),
+            )
+            allureScreenshot("Confirm Payment page displayed")
+        }
 
-
+        allureStep("Verify Summary text is displayed on Confirm Payment page") {
+            assertTrue(
+                "Confirm Payment - Summary page not displayed",
+                confirmPaymentPage.verifySummaryTextDisplayed()
+            )
+            allureScreenshot("Final - Summary displayed before sending")
+        }
     }
 }

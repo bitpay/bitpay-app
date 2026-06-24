@@ -1,6 +1,5 @@
 package com.bitpay.wallet.tests
 
-import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bitpay.wallet.base.BaseTest
 import com.bitpay.wallet.pages.AddYourCryptoOptionPage
@@ -9,9 +8,11 @@ import com.bitpay.wallet.pages.ImportWalletPage
 import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
 import com.bitpay.wallet.pages.SelectCurrencyPage
+import com.bitpay.wallet.utils.allureScreenshot
+import com.bitpay.wallet.utils.allureStep
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class Test594SwapBTC : BaseTest() {
@@ -25,58 +26,92 @@ class Test594SwapBTC : BaseTest() {
 
     @Test
     fun testBTCSwap() {
-        onboardingPage.clickAlreadyHaveKey()
+        allureStep("Click 'Already have a key' on onboarding screen") {
+            onboardingPage.clickAlreadyHaveKey()
+        }
 
-        importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
-        importWalletPage.clickImportWallet()
+        allureStep("Enter recovery phrase and import wallet") {
+            importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+            allureScreenshot("Recovery phrase entered")
+            importWalletPage.clickImportWallet()
+        }
 
-        onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        allureStep("Verify 'I understand' checkbox 1 is displayed") {
+            onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        }
 
-        onboardingPage.clickIUnderstandCheckbox1()
-        onboardingPage.clickIUnderstandCheckbox2()
-        onboardingPage.clickIUnderstandCheckbox3()
+        allureStep("Check all three 'I understand' checkboxes") {
+            onboardingPage.clickIUnderstandCheckbox1()
+            onboardingPage.clickIUnderstandCheckbox2()
+            onboardingPage.clickIUnderstandCheckbox3()
+        }
 
-        onboardingPage.clickAgreeAndContinue()
+        allureStep("Click Agree and Continue") {
+            onboardingPage.clickAgreeAndContinue()
+        }
 
-        homePage.waitForPageToLoad()
+        allureStep("Wait for Home page to load") {
+            homePage.waitForPageToLoad()
+            allureScreenshot("Home page loaded")
+        }
 
-        assertTrue(
-            "Home Page - Portfolio balance text not displayed",
-            homePage.verifyPortfolioBalanceTextDisplayed()
-        )
+        allureStep("Verify portfolio balance is displayed on Home page") {
+            assertTrue(
+                "Home Page - Portfolio balance text not displayed",
+                homePage.verifyPortfolioBalanceTextDisplayed()
+            )
+        }
 
-        //test-594
-        homePage.clickSwap()
+        allureStep("Click Swap on Home page") {
+            homePage.clickSwap()
+        }
 
-        assertTrue(
-            "Swap page not displayed",
-            selectCurrencyPage.verifySwapTitleDisplayed()
-        )
+        allureStep("Verify Swap page is displayed") {
+            assertTrue(
+                "Swap page not displayed",
+                selectCurrencyPage.verifySwapTitleDisplayed()
+            )
+            allureScreenshot("Swap page displayed")
+        }
 
-        selectCurrencyPage.clickSwapFromOption()
-        selectCurrencyPage.clickBitcoin()
+        allureStep("Select Bitcoin as Swap From currency") {
+            selectCurrencyPage.clickSwapFromOption()
+            selectCurrencyPage.clickBitcoin()
+        }
 
-        selectCurrencyPage.clickSwapToOption()
-        selectCurrencyPage.clickEthereum()
+        allureStep("Select Ethereum as Swap To currency") {
+            selectCurrencyPage.clickSwapToOption()
+            selectCurrencyPage.clickEthereum()
+        }
 
-        assertTrue(
-            "Select Key To Deposit To option not displayed",
-            selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
-        )
+        allureStep("Verify Select Key To Deposit To option is displayed") {
+            assertTrue(
+                "Select Key To Deposit To option not displayed",
+                selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
+            )
+        }
 
-        selectCurrencyPage.clickSecondMyKeyWallet()
-        selectCurrencyPage.clickEVMAccount()
+        allureStep("Select second My Key wallet and EVM account") {
+            selectCurrencyPage.clickSecondMyKeyWallet()
+            selectCurrencyPage.clickEVMAccount()
+        }
 
-        selectCurrencyPage.clickEnterSwapAmount()
-        selectCurrencyPage.clickMinSwapAmount()
+        allureStep("Enter minimum swap amount") {
+            selectCurrencyPage.clickEnterSwapAmount()
+            selectCurrencyPage.clickMinSwapAmount()
+            allureScreenshot("Minimum swap amount entered")
+        }
 
-        selectCurrencyPage.clickChangellyTermsCheckbox()
+        allureStep("Accept Changelly terms checkbox") {
+            selectCurrencyPage.clickChangellyTermsCheckbox()
+        }
 
-        assertTrue(
-            "Slide to Swap button not enabled",
-            selectCurrencyPage.verifySlideToSwapButtonEnabled()
-        )
-
-
+        allureStep("Verify Slide to Swap button is enabled") {
+            assertTrue(
+                "Slide to Swap button not enabled",
+                selectCurrencyPage.verifySlideToSwapButtonEnabled()
+            )
+            allureScreenshot("Final - Slide to Swap button enabled")
+        }
     }
 }

@@ -1,6 +1,5 @@
 package com.bitpay.wallet.tests
 
-import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bitpay.wallet.base.BaseTest
 import com.bitpay.wallet.pages.AddYourCryptoOptionPage
@@ -10,9 +9,11 @@ import com.bitpay.wallet.pages.KeyboardPage
 import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
 import com.bitpay.wallet.pages.SelectCurrencyPage
+import com.bitpay.wallet.utils.allureScreenshot
+import com.bitpay.wallet.utils.allureStep
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class Test596BuyBTC : BaseTest() {
@@ -27,52 +28,82 @@ class Test596BuyBTC : BaseTest() {
 
     @Test
     fun testBTCBuy() {
-        onboardingPage.clickAlreadyHaveKey()
+        allureStep("Click 'Already have a key' on onboarding screen") {
+            onboardingPage.clickAlreadyHaveKey()
+        }
 
-        importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
-        importWalletPage.clickImportWallet()
+        allureStep("Enter recovery phrase and import wallet") {
+            importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+            allureScreenshot("Recovery phrase entered")
+            importWalletPage.clickImportWallet()
+        }
 
-        onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        allureStep("Verify 'I understand' checkbox 1 is displayed") {
+            onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        }
 
-        onboardingPage.clickIUnderstandCheckbox1()
-        onboardingPage.clickIUnderstandCheckbox2()
-        onboardingPage.clickIUnderstandCheckbox3()
+        allureStep("Check all three 'I understand' checkboxes") {
+            onboardingPage.clickIUnderstandCheckbox1()
+            onboardingPage.clickIUnderstandCheckbox2()
+            onboardingPage.clickIUnderstandCheckbox3()
+        }
 
-        onboardingPage.clickAgreeAndContinue()
+        allureStep("Click Agree and Continue") {
+            onboardingPage.clickAgreeAndContinue()
+        }
 
-        homePage.waitForPageToLoad()
+        allureStep("Wait for Home page to load") {
+            homePage.waitForPageToLoad()
+            allureScreenshot("Home page loaded")
+        }
 
-        assertTrue(
-            "Home Page - Portfolio balance text not displayed",
-            homePage.verifyPortfolioBalanceTextDisplayed()
-        )
+        allureStep("Verify portfolio balance is displayed on Home page") {
+            assertTrue(
+                "Home Page - Portfolio balance text not displayed",
+                homePage.verifyPortfolioBalanceTextDisplayed()
+            )
+        }
 
-        //test-594
-        homePage.clickBuy()
+        allureStep("Click Buy on Home page") {
+            homePage.clickBuy()
+        }
 
-        assertTrue(
-            "Buy page not displayed",
-            selectCurrencyPage.verifyBuyTitleDisplayed()
-        )
+        allureStep("Verify Buy page is displayed") {
+            assertTrue(
+                "Buy page not displayed",
+                selectCurrencyPage.verifyBuyTitleDisplayed()
+            )
+            allureScreenshot("Buy page displayed")
+        }
 
-        keyboardPage.clickBackspace(3)
-        keyboardPage.enterAmount("30")
+        allureStep("Clear default amount and enter buy amount") {
+            keyboardPage.clickBackspace(3)
+            keyboardPage.enterAmount("30")
+        }
 
-        selectCurrencyPage.clickBitcoin()
-        selectCurrencyPage.clickBitcoin() //Select Crypto page
+        allureStep("Select Bitcoin as the crypto to buy") {
+            selectCurrencyPage.clickBitcoin()
+            selectCurrencyPage.clickBitcoin() // Select Crypto page
+            allureScreenshot("Bitcoin selected for buy")
+        }
 
-        assertTrue(
-            "Select Key To Deposit To option not displayed",
-            selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
-        )
-        selectCurrencyPage.clickSecondMyKeyWallet()
+        allureStep("Verify Select Key To Deposit To option is displayed") {
+            assertTrue(
+                "Select Key To Deposit To option not displayed",
+                selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
+            )
+        }
 
-        assertTrue(
-            "Buy - Continue button not enabled",
-            selectCurrencyPage.verifyBuyContinueButtonEnabled()
-        )
+        allureStep("Select second My Key wallet") {
+            selectCurrencyPage.clickSecondMyKeyWallet()
+        }
 
-
-
+        allureStep("Verify Continue button is enabled") {
+            assertTrue(
+                "Buy - Continue button not enabled",
+                selectCurrencyPage.verifyBuyContinueButtonEnabled()
+            )
+            allureScreenshot("Final - Continue button enabled")
+        }
     }
 }

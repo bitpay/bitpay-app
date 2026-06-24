@@ -1,6 +1,5 @@
 package com.bitpay.wallet.tests
 
-import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bitpay.wallet.base.BaseTest
 import com.bitpay.wallet.pages.AddYourCryptoOptionPage
@@ -10,9 +9,11 @@ import com.bitpay.wallet.pages.KeyboardPage
 import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
 import com.bitpay.wallet.pages.SelectCurrencyPage
+import com.bitpay.wallet.utils.allureScreenshot
+import com.bitpay.wallet.utils.allureStep
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class Test595SellBTC : BaseTest() {
@@ -27,42 +28,70 @@ class Test595SellBTC : BaseTest() {
 
     @Test
     fun testBTCSell() {
-        onboardingPage.clickAlreadyHaveKey()
+        allureStep("Click 'Already have a key' on onboarding screen") {
+            onboardingPage.clickAlreadyHaveKey()
+        }
 
-        importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
-        importWalletPage.clickImportWallet()
+        allureStep("Enter recovery phrase and import wallet") {
+            importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+            allureScreenshot("Recovery phrase entered")
+            importWalletPage.clickImportWallet()
+        }
 
-        onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        allureStep("Verify 'I understand' checkbox 1 is displayed") {
+            onboardingPage.verifyIUnderstandCheckbox1Displayed()
+        }
 
-        onboardingPage.clickIUnderstandCheckbox1()
-        onboardingPage.clickIUnderstandCheckbox2()
-        onboardingPage.clickIUnderstandCheckbox3()
+        allureStep("Check all three 'I understand' checkboxes") {
+            onboardingPage.clickIUnderstandCheckbox1()
+            onboardingPage.clickIUnderstandCheckbox2()
+            onboardingPage.clickIUnderstandCheckbox3()
+        }
 
-        onboardingPage.clickAgreeAndContinue()
+        allureStep("Click Agree and Continue") {
+            onboardingPage.clickAgreeAndContinue()
+        }
 
-        homePage.waitForPageToLoad()
+        allureStep("Wait for Home page to load") {
+            homePage.waitForPageToLoad()
+            allureScreenshot("Home page loaded")
+        }
 
-        assertTrue(
-            "Home Page - Portfolio balance text not displayed",
-            homePage.verifyPortfolioBalanceTextDisplayed()
-        )
+        allureStep("Verify portfolio balance is displayed on Home page") {
+            assertTrue(
+                "Home Page - Portfolio balance text not displayed",
+                homePage.verifyPortfolioBalanceTextDisplayed()
+            )
+        }
 
-        //test-595
-        homePage.clickSell()
+        allureStep("Click Sell on Home page") {
+            homePage.clickSell()
+        }
 
-        assertTrue(
-            "Sell page not displayed",
-            selectCurrencyPage.verifySellTitleDisplayed()
-        )
+        allureStep("Verify Sell page is displayed") {
+            assertTrue(
+                "Sell page not displayed",
+                selectCurrencyPage.verifySellTitleDisplayed()
+            )
+            allureScreenshot("Sell page displayed")
+        }
 
-        keyboardPage.enterAmount("0.0007")
+        allureStep("Enter sell amount") {
+            keyboardPage.enterAmount("0.0007")
+        }
 
-        selectCurrencyPage.clickChooseCrypto()
-        selectCurrencyPage.clickBitcoin()
+        allureStep("Choose Bitcoin as the crypto to sell") {
+            selectCurrencyPage.clickChooseCrypto()
+            selectCurrencyPage.clickBitcoin()
+            allureScreenshot("Bitcoin selected for sell")
+        }
 
-        assertTrue(
-            "Buy - Continue button not enabled",
-            selectCurrencyPage.verifyBuyContinueButtonEnabled()
-        )
+        allureStep("Verify Continue button is enabled") {
+            assertTrue(
+                "Buy - Continue button not enabled",
+                selectCurrencyPage.verifyBuyContinueButtonEnabled()
+            )
+            allureScreenshot("Final - Continue button enabled")
+        }
     }
 }

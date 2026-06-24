@@ -3,13 +3,13 @@ name: iOS XCUITest
 on:
   workflow_dispatch:
   push:
-    branches: [master, develop, testlio/ui-tests]
+    branches: [master, develop]
   pull_request:
-    branches: [master, develop, testlio/ui-tests]
+    branches: [master, develop]
 
 jobs:
   ios-ui-tests:
-    runs-on: macos-latest
+    runs-on: macos-latest-xlarge
     timeout-minutes: 180
 
     steps:
