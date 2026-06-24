@@ -17,6 +17,9 @@ export function shopCatalogReducer(
   action: ShopCatalogActionType,
 ): ShopCatalogState {
   switch (action.type) {
+    case ShopCatalogActionTypes.CLEAR_SHOP_CATALOG_STORE:
+      return initialShopCatalogState;
+
     case ShopCatalogActionTypes.SUCCESS_FETCH_CATALOG:
       const {
         availableCardMap,

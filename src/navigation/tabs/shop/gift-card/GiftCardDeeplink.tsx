@@ -4,6 +4,7 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {selectAvailableGiftCards} from '../../../../store/shop-catalog/shop-catalog.selectors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {GiftCardGroupParamList} from './GiftCardGroup';
+import {isEuCountry} from '../../../../store/location/location.effects';
 
 export type GiftCardDeeplinkScreenParamList = {
   merchant?: string | undefined | null;
@@ -20,6 +21,9 @@ const GiftCardDeeplinkScreen = ({
   const merchantName = ((route.params || {}).merchant || '').toLowerCase();
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
   const dispatch = useAppDispatch();
+  const isEuLocation = useAppSelector(({LOCATION}) =>
+    isEuCountry(LOCATION.locationData?.countryShortCode),
+  );
   const targetedGiftCard = availableGiftCards.find(
     gc => gc.name.toLowerCase() === merchantName,
   );
@@ -32,7 +36,7 @@ const GiftCardDeeplinkScreen = ({
         context: 'GiftCardDeeplink',
       }),
     );
-    if (targetedGiftCardRef.current) {
+    if (!isEuLocation && targetedGiftCardRef.current) {
       navigation.replace('BuyGiftCard', {
         cardConfig: targetedGiftCardRef.current,
       });

@@ -189,11 +189,15 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
 
   const resumeKeyId = route.params?.keyId;
   const activeKeyIdRef = useRef<string | null>(resumeKeyId || null);
+  // new-join only
+  const cancelOnCreateRef = useRef(false);
 
   useEffect(() => {
     return () => {
       if (activeKeyIdRef.current) {
         dispatch(cancelTSSCeremony(activeKeyIdRef.current));
+      } else {
+        cancelOnCreateRef.current = true;
       }
     };
   }, []);
@@ -325,6 +329,9 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           onRoundReady: () => setIsCeremonyInRounds(true),
           onKeyCreated: (keyId: string) => {
             activeKeyIdRef.current = keyId;
+            if (cancelOnCreateRef.current) {
+              dispatch(cancelTSSCeremony(keyId));
+            }
           },
         }),
       );

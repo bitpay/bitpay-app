@@ -81,6 +81,7 @@ const PinScreen = ({
             testID="skip-button"
             accessibilityLabel="Skip"
             buttonType={'pill'}
+            touchableLibrary={'react-native'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
@@ -163,6 +164,15 @@ const PinScreen = ({
               onPress={() => onSetBiometricPress()}
               buttonStyle={'secondary'}>
               {t('Biometric')}
+            </Button>
+          </ActionContainer>
+          <ActionContainer>
+            <Button
+              testID="skip-security-button"
+              accessibilityLabel="Skip security setup"
+              onPress={onSkipPressRef.current}
+              buttonStyle={'cancel'}>
+              {t('Maybe Later')}
             </Button>
           </ActionContainer>
         </CtaContainer>

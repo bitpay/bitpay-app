@@ -17,30 +17,19 @@ import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {formatCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {
   buildAllocationDataFromWalletRows,
+  type AllocationRowItem,
   type AllocationWallet,
   toAllocationWallet,
 } from '../../../../utils/portfolio/allocation';
-import {getVisibleWalletsFromKeys} from '../../../../utils/portfolio/assets';
+import {
+  getVisibleWalletsForKey,
+  getVisibleWalletsFromKeys,
+} from '../../../../utils/portfolio/assets';
 import {LightBlack, Slate30, SlateDark} from '../../../../styles/colors';
 import {maskIfHidden} from '../../../../utils/hideBalances';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Allocation'>;
-
-export type AllocationRowItem = {
-  key: string;
-  currencyAbbreviation: string;
-  chain: string;
-  tokenAddress?: string;
-  name: string;
-  fiatAmount: string;
-  percent: string;
-  barColor: {
-    light: string;
-    dark: string;
-  };
-  progress: number;
-};
 
 const ScreenContainer = styled.SafeAreaView`
   flex: 1;
@@ -277,9 +266,7 @@ const Allocation: React.FC<Props> = ({navigation, route}) => {
         return (account?.wallets || []) as AllocationWallet[];
       }
 
-      const wallets = key.wallets.filter(
-        w => !w.hideWallet && !w.hideWalletByAccount,
-      );
+      const wallets = getVisibleWalletsForKey(key);
 
       return wallets.map((w: Wallet) => {
         return toAllocationWallet(w);

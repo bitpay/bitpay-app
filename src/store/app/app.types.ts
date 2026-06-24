@@ -71,6 +71,8 @@ export enum AppActionTypes {
   DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
   BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
   LOCK_AUTHORIZED_UNTIL = 'APP/LOCK_AUTHORIZED_UNTIL',
+  SET_HOME_CHART_COLLAPSED = 'APP/SET_HOME_CHART_COLLAPSED',
+  REMOUNT_HOME_CHART = 'APP/REMOUNT_HOME_CHART',
   SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
   SET_HOME_CAROUSEL_LAYOUT_TYPE = 'APP/SET_HOME_CAROUSEL_LAYOUT_TYPE',
   UPDATE_SETTINGS_LIST_CONFIG = 'APP/UPDATE_SETTINGS_LIST_CONFIG',
@@ -296,6 +298,15 @@ interface LockAuthorizedUntil {
   payload: number | undefined;
 }
 
+interface SetHomeChartCollapsed {
+  type: typeof AppActionTypes.SET_HOME_CHART_COLLAPSED;
+  payload: boolean;
+}
+
+interface RemountHomeChart {
+  type: typeof AppActionTypes.REMOUNT_HOME_CHART;
+}
+
 interface ShowBlur {
   type: typeof AppActionTypes.SHOW_BLUR;
   payload: boolean;
@@ -479,6 +490,8 @@ export type AppActionType =
   | DismissBiometricModal
   | BiometricLockActive
   | LockAuthorizedUntil
+  | SetHomeChartCollapsed
+  | RemountHomeChart
   | SetHomeCarouselConfig
   | SetHomeCarouselLayoutType
   | updateSettingsListConfigType

@@ -44,6 +44,7 @@ import {
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import {prepareTokenWalletTxHistoryRow} from '../../../../portfolio/core/tokenTxHistory';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -222,17 +223,21 @@ const ProcessTx =
           tx.recipientCount = outputsNr;
           tx.hasMultiplesOutputs = true;
         }
-        tx.amount = tx.outputs.reduce((total: number, o: any) => {
-          o.amountStr = dispatch(
-            FormatAmountStr(
-              tokenSymbol || coin,
-              chain,
-              tokenAddress,
-              Number(o.amount),
-            ),
-          );
-          return total + Number(o.amount);
-        }, 0);
+        tx.amount =
+          '0x' +
+          tx.outputs
+            .reduce((total: bigint, o: any) => {
+              o.amountStr = dispatch(
+                FormatAmountStr(
+                  tokenSymbol || coin,
+                  chain,
+                  tokenAddress,
+                  Number(o.amount),
+                ),
+              );
+              return total + BigInt(o.amount);
+            }, 0n)
+            .toString(16);
       }
       if (tx.outputs.length) {
         tx.toAddress = tx.outputs[0].toAddress!;
@@ -262,16 +267,22 @@ const ProcessTx =
 
     // New data structure for ERC20 token transactions
     if (tx.effects?.[0] && IsERCToken(tx.coin, tx.chain)) {
-      tx.amount = tx.effects.reduce(
-        (total, {amount}) => total + Number(amount),
-        0,
-      );
+      tx.amount =
+        '0x' +
+        tx.effects
+          .reduce((total, {amount}) => total + BigInt(amount), 0n)
+          .toString(16);
       tokenAddress = tx.effects[0].contractAddress?.toLowerCase();
     }
 
     if (tx.coin === wallet.currencyAbbreviation) {
       tx.amountStr = dispatch(
-        FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
+        FormatAmountStr(
+          tokenSymbol || coin,
+          chain,
+          tokenAddress,
+          Number(tx.amount),
+        ),
       );
     }
 
@@ -379,7 +390,21 @@ const ProcessNewTxs =
         tx.coin = wallet.currencyAbbreviation;
         tx.chain = wallet.chain;
 
-        if (shouldFilterTx(tx, wallet)) {
+        if (wallet.tokenAddress) {
+          const preparedTokenTx = prepareTokenWalletTxHistoryRow({
+            tx,
+            context: {
+              tokenAddress: wallet.tokenAddress,
+              receiveAddress: wallet.receiveAddress,
+              chain: wallet.chain,
+              currencyAbbreviation: wallet.currencyAbbreviation,
+            },
+          });
+          if (!preparedTokenTx || preparedTokenTx.effectAmountAtomic === '0') {
+            continue;
+          }
+          tx = preparedTokenTx.tx;
+        } else if (shouldFilterTx(tx, wallet)) {
           continue;
         }
 
@@ -1381,7 +1406,9 @@ export const buildTransactionDetails =
 
         if (IsUtxoChain(chain)) {
           _transaction.feeRateStr =
-            ((_fee / (amount + _fee)) * 100).toFixed(2) + '%';
+            ((Number(_fee) / (Number(amount) + Number(_fee))) * 100).toFixed(
+              2,
+            ) + '%';
           try {
             const minFee = await GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;

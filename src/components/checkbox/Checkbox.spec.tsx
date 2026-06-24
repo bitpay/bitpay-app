@@ -9,7 +9,8 @@ it('renders correctly', async () => {
     <Checkbox onPress={mockFn} checked={false} />,
   );
   const checkbox = await getByTestId('checkbox');
-  expect(getByTestId('checkboxBorder')).toHaveStyle({borderColor: SlateDark});
+  // On light theme (used by test render), unchecked border is #E5E5F2
+  expect(getByTestId('checkboxBorder')).toHaveStyle({borderColor: '#E5E5F2'});
   fireEvent(checkbox, 'press');
   expect(mockFn).toHaveBeenCalled();
 

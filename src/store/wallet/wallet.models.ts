@@ -1,6 +1,7 @@
 import API from '@bitpay-labs/bitcore-wallet-client';
+import type {Status as BwcStatus} from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/api';
 import {ReactElement} from 'react';
-import {Credentials} from '@bitpay-labs/bitcore-wallet-client';
+import {Credentials} from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/credentials';
 import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
@@ -235,6 +236,8 @@ export interface Status {
   wallet: _Credentials;
 }
 
+export type WalletStatusPayload = BwcStatus['wallet'];
+
 export enum CacheKeys {
   RATES = 'ratesCacheKey',
 }
@@ -351,7 +354,7 @@ export interface TransactionProposal {
   action: string;
   actions: Action[];
   addressTo: string;
-  amount: number;
+  amount: number | string;
   amountStr: string;
   amountUnitStr: string;
   amountValueStr: string;

@@ -25,13 +25,14 @@ import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
 import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
-import {HeaderTitle} from '../../../components/styled/Text';
+import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {HEIGHT} from '../../../components/styled/Containers';
 import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import {isEuCountry} from '../../../store/location/location.effects';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -48,6 +49,30 @@ const Tab = createMaterialTopTabNavigator();
 const ShopInnerContainer = styled.View`
   margin-top: 15px;
 `;
+
+const GeoBlockedContainer = styled.View`
+  min-height: ${HEIGHT / 2}px;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 30px;
+`;
+
+const GeoBlockedText = styled(BaseText)`
+  font-size: 16px;
+  text-align: center;
+  color: ${({theme}) => theme.colors.description};
+`;
+
+const GeoBlockedMessage = () => {
+  const {t} = useTranslation();
+  return (
+    <GeoBlockedContainer>
+      <GeoBlockedText>
+        {t('This feature is unavailable in your area.')}
+      </GeoBlockedText>
+    </GeoBlockedContainer>
+  );
+};
 
 const getGiftCardsScrollViewHeight = (
   availableGiftCards: CardConfig[],
@@ -100,6 +125,9 @@ const ShopHome: React.FC<
 > = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
+  const isEuLocation = useAppSelector(({LOCATION}) =>
+    isEuCountry(LOCATION.locationData?.countryShortCode),
+  );
   const availableCardMap = useAppSelector(
     ({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap,
   );
@@ -292,37 +320,41 @@ const ShopHome: React.FC<
           ) : undefined
         }>
         <ShopInnerContainer>
-          <Tab.Navigator
-            style={{
-              height: scrollViewHeight,
-            }}
-            screenOptions={ScreenOptions({
-              fontSize: 16,
-              marginHorizontal: 5,
-              numTabs: 2,
-              tabWidth: 120,
-              langAdjustments: true,
-            })}
-            screenListeners={{
-              tabPress: tab => {
-                if (tab.target) {
-                  setActiveTab(
-                    tab.target.includes(ShopTabs.GIFT_CARDS)
-                      ? ShopTabs.GIFT_CARDS
-                      : ShopTabs.SHOP_ONLINE,
-                  );
-                }
-              },
-            }}>
-            <Tab.Screen
-              name={t('Gift Cards')}
-              component={memoizedGiftCardCatalog}
-            />
-            <Tab.Screen
-              name={t('Shop Online')}
-              component={memoizedShopOnline}
-            />
-          </Tab.Navigator>
+          {isEuLocation ? (
+            <GeoBlockedMessage />
+          ) : (
+            <Tab.Navigator
+              style={{
+                height: scrollViewHeight,
+              }}
+              screenOptions={ScreenOptions({
+                fontSize: 16,
+                marginHorizontal: 5,
+                numTabs: 2,
+                tabWidth: 120,
+                langAdjustments: true,
+              })}
+              screenListeners={{
+                tabPress: tab => {
+                  if (tab.target) {
+                    setActiveTab(
+                      tab.target.includes(ShopTabs.GIFT_CARDS)
+                        ? ShopTabs.GIFT_CARDS
+                        : ShopTabs.SHOP_ONLINE,
+                    );
+                  }
+                },
+              }}>
+              <Tab.Screen
+                name={t('Gift Cards')}
+                component={memoizedGiftCardCatalog}
+              />
+              <Tab.Screen
+                name={t('Shop Online')}
+                component={memoizedShopOnline}
+              />
+            </Tab.Navigator>
+          )}
         </ShopInnerContainer>
       </ScrollView>
     </TabContainer>

@@ -39,11 +39,7 @@ import {
 } from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
-import {
-  GetInvoiceCurrency,
-  PayProOptions,
-  PayProPaymentOption,
-} from '../effects/paypro/paypro';
+import {PayProOptions, PayProPaymentOption} from '../effects/paypro/paypro';
 import {Effect} from '../..';
 import {
   CoinbaseAccountProps,
@@ -53,17 +49,20 @@ import {
 import {coinbaseGetFiatAmount} from '../../coinbase';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
+import {
+  KeyWalletsAccountRow,
+  KeyWalletsMergedAccountRow,
+  KeyWalletsRowProps,
+} from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
+import {toStringOrEmpty} from '../../../utils/text';
 import _, {find, isEqual} from 'lodash';
-import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Invoice} from '../../../store/shop/shop.models';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
   AssetsByChainData,
   AssetsByChainListProps,
 } from '../../../navigation/wallet/screens/AccountDetails';
-import uniqBy from 'lodash.uniqby';
 import cloneDeep from 'lodash.clonedeep';
 import {logManager} from '../../../managers/LogManager';
 
@@ -480,7 +479,7 @@ export const GetProtocolPrefixAddress =
     address: string,
     chain: string,
   ): Effect<string> =>
-  dispatch => {
+  _dispatch => {
     if (currencyAbbreviation !== 'bch') {
       return address;
     }
@@ -613,6 +612,69 @@ export const BuildCoinbaseWalletsList = ({
   ].filter(key => key.coinbaseAccounts.length);
 };
 
+const isKeyWalletsAccountRow = (
+  row: KeyWalletsMergedAccountRow,
+): row is KeyWalletsAccountRow => !('chain' in row);
+
+const getMaxFiatBalanceWallet = (
+  wallets: WalletRowProps[],
+  defaultWallet?: WalletRowProps,
+) => {
+  return wallets.reduce(
+    (max, wallet) =>
+      (wallet.fiatBalance ?? 0) > (max?.fiatBalance ?? 0) ? wallet : max,
+    defaultWallet,
+  );
+};
+
+const getBalanceRepresentativeWallet = (
+  row: KeyWalletsMergedAccountRow,
+  rows: KeyWalletsMergedAccountRow[],
+) => {
+  if (isKeyWalletsAccountRow(row)) {
+    return getMaxFiatBalanceWallet(row.wallets, row.wallets[0]);
+  }
+
+  return getMaxFiatBalanceWallet(
+    rows.filter(
+      (wallet): wallet is WalletRowProps =>
+        !isKeyWalletsAccountRow(wallet) && wallet.chain === row.chain,
+    ),
+    row,
+  );
+};
+
+export const buildKeyWalletRowsFromAccountList = (
+  accountList: AccountRowProps[],
+  defaultAltCurrencyIsoCode: string,
+): Pick<KeyWalletsRowProps, 'accounts' | 'mergedUtxoAndEvmAccounts'> => {
+  const mergedRows = accountList.flatMap<KeyWalletsMergedAccountRow>(
+    account => {
+      if (IsVMChain(account.chains[0])) {
+        const assetsByChain = buildAssetsByChain(
+          account,
+          defaultAltCurrencyIsoCode,
+        );
+        return [{...account, assetsByChain}];
+      }
+
+      return account.wallets;
+    },
+  );
+
+  const accounts = mergedRows.filter(isKeyWalletsAccountRow);
+  const mergedUtxoAndEvmAccounts = [...mergedRows].sort((a, b) => {
+    const balanceA =
+      getBalanceRepresentativeWallet(a, mergedRows)?.fiatBalance ?? 0;
+    const balanceB =
+      getBalanceRepresentativeWallet(b, mergedRows)?.fiatBalance ?? 0;
+
+    return balanceB - balanceA;
+  });
+
+  return {accounts, mergedUtxoAndEvmAccounts};
+};
+
 export const BuildKeysAndWalletsList = ({
   keys,
   network,
@@ -650,77 +712,8 @@ export const BuildKeysAndWalletsList = ({
         network,
       },
     );
-    const mergedAccounts = accountList
-      .map(account => {
-        if (IsVMChain(account.chains[0])) {
-          const assetsByChain = buildAssetsByChain(
-            account,
-            defaultAltCurrencyIsoCode,
-          );
-          return {...account, assetsByChain};
-        }
-        return account.wallets;
-      })
-      .filter(Boolean) as (
-      | WalletRowProps[]
-      | (AccountRowProps & {
-          assetsByChain?: AssetsByChainData[];
-        })
-    )[];
-
-    const getMaxFiatBalanceWallet = (
-      wallets: WalletRowProps[],
-      defaultWallet: any,
-    ) => {
-      return wallets.reduce(
-        (max, w) =>
-          w?.fiatBalance && w.fiatBalance > max.fiatBalance ? w : max,
-        defaultWallet,
-      );
-    };
-
-    const flatMergedAccounts = Object.values(mergedAccounts).flat();
-    const accounts = flatMergedAccounts.filter(a => {
-      !a.chain;
-    });
-
-    const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
-      const chainA = a.chains?.[0] ?? a.chain ?? '';
-      const chainB = b.chains?.[0] ?? b.chain ?? '';
-      const isEVMA = IsVMChain(chainA);
-      const isEVMB = IsVMChain(chainB);
-
-      const walletA = isEVMA
-        ? getMaxFiatBalanceWallet(
-            (a as AccountRowProps).wallets,
-            (a as AccountRowProps).wallets[0],
-          )
-        : getMaxFiatBalanceWallet(
-            flatMergedAccounts.filter(
-              wallet => wallet?.chain === a.chain,
-            ) as WalletRowProps[],
-            a,
-          );
-
-      const walletB = isEVMB
-        ? getMaxFiatBalanceWallet(
-            (b as AccountRowProps).wallets,
-            (b as AccountRowProps).wallets[0],
-          )
-        : getMaxFiatBalanceWallet(
-            flatMergedAccounts.filter(
-              wallet => wallet?.chain === b.chain,
-            ) as WalletRowProps[],
-            b,
-          );
-
-      const balanceA = walletA.fiatBalance || 0;
-      const balanceB = walletB.fiatBalance || 0;
-
-      return balanceB - balanceA;
-    }) as
-      | WalletRowProps[]
-      | (AccountRowProps & {assetsByChain?: AssetsByChainData[]});
+    const {accounts, mergedUtxoAndEvmAccounts} =
+      buildKeyWalletRowsFromAccountList(accountList, defaultAltCurrencyIsoCode);
 
     return {
       key: keyId,
@@ -1137,6 +1130,60 @@ export const buildUIFormattedWallet: (
   return buildUIFormattedWallet;
 };
 
+export const getWalletAccountVisibilityKey = (
+  wallet: Wallet | undefined,
+): string => {
+  let accountKey = toStringOrEmpty(wallet?.receiveAddress);
+  const isComplete =
+    typeof wallet?.credentials?.isComplete === 'function'
+      ? wallet.credentials.isComplete()
+      : true;
+
+  if (!accountKey && (!isComplete || wallet?.pendingTssSession)) {
+    // Incomplete/pending wallets do not always have a receive address yet.
+    accountKey = toStringOrEmpty(wallet?.credentials?.walletId);
+  }
+
+  return accountKey;
+};
+
+export const getWalletStableDeduplicationId = (
+  wallet: Wallet | undefined,
+): string | undefined => {
+  const walletId = toStringOrEmpty(wallet?.id);
+  if (walletId) {
+    return walletId;
+  }
+
+  const credentialsWalletId = toStringOrEmpty(wallet?.credentials?.walletId);
+  return credentialsWalletId || undefined;
+};
+
+export const isWalletVisibleForKey = (
+  key: Key | undefined,
+  wallet: Wallet | undefined,
+): boolean => {
+  if (!wallet || wallet.hideWallet || wallet.hideWalletByAccount) {
+    return false;
+  }
+
+  const isComplete =
+    typeof wallet?.credentials?.isComplete === 'function'
+      ? wallet.credentials.isComplete()
+      : true;
+
+  if (isComplete && !wallet.pendingTssSession) {
+    return true;
+  }
+
+  const accountKey = getWalletAccountVisibilityKey(wallet);
+  if (accountKey && key?.evmAccountsInfo?.[accountKey]?.hideAccount) {
+    return false;
+  }
+
+  return true;
+};
+
 export const buildAccountList = (
   key: Key,
   defaultAltCurrencyIsoCode: string,
@@ -1169,13 +1216,25 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  const wallets = uniqBy(
-    opts?.filterByCustomWallets || key?.wallets,
-    wallet => wallet.id,
+  const seenWalletIds = new Set<string>();
+  const wallets = (opts?.filterByCustomWallets || key?.wallets || []).filter(
+    wallet => {
+      const stableWalletId = getWalletStableDeduplicationId(wallet);
+      if (!stableWalletId) {
+        return true;
+      }
+
+      if (seenWalletIds.has(stableWalletId)) {
+        return false;
+      }
+
+      seenWalletIds.add(stableWalletId);
+      return true;
+    },
   );
 
   wallets.forEach(wallet => {
-    if (opts?.filterByHideWallet && wallet.hideWallet) {
+    if (opts?.filterByHideWallet && !isWalletVisibleForKey(key, wallet)) {
       return;
     }
 
@@ -1255,32 +1314,18 @@ export const buildAccountList = (
     const {
       keyId,
       chain,
-      credentials: {account, walletId, n},
+      credentials: {account},
       receiveAddress,
     } = wallet;
-
-    let accountKey = receiveAddress;
-
-    if (
-      !accountKey &&
-      (!wallet?.credentials?.isComplete() || wallet.pendingTssSession)
-    ) {
-      // Workaround for incomplete multisig wallets
-      accountKey = walletId;
-    }
+    const accountKey = getWalletAccountVisibilityKey(wallet);
 
     const isSVMChain = IsSVMChain(chain);
     const isTokensSupportedChain = IsVMChain(chain);
-    const name = key.evmAccountsInfo?.[accountKey!]?.name;
-    const existingAccount = accountMap[accountKey!];
-    const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
-
-    if (opts?.filterByHideWallet && hideAccount) {
-      return;
-    }
+    const name = key.evmAccountsInfo?.[accountKey]?.name;
+    const existingAccount = accountMap[accountKey];
 
     if (!existingAccount) {
-      accountMap[accountKey!] = {
+      accountMap[accountKey] = {
         id: _.uniqueId('account_'),
         keyId,
         chains: [chain],

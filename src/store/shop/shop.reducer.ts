@@ -71,6 +71,8 @@ export const shopReducer = (
   action: ShopActionType,
 ): ShopState => {
   switch (action.type) {
+    case ShopActionTypes.CLEAR_SHOP_STORE:
+      return initialShopState;
     case ShopActionTypes.SUCCESS_FETCH_CATALOG:
       const {availableCardMap, categoriesAndCurations, integrations} =
         action.payload;

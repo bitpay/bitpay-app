@@ -37,7 +37,7 @@ describe('Bottom Notification Modal', () => {
   });
 
   it('should display all the details', async () => {
-    const {findByText, getByText} = render(
+    const {findByText, getByText, getByTestId} = render(
       <Provider store={store}>
         <BottomNotification />
       </Provider>,
@@ -45,7 +45,7 @@ describe('Bottom Notification Modal', () => {
 
     const title = await findByText('Modal Title');
     const message = getByText('Modal Message');
-    const cta = getByText('CLOSE');
+    const cta = getByTestId('bottom-notification-secondary-action-button');
 
     expect(title).toBeTruthy();
     expect(message).toBeTruthy();
@@ -65,13 +65,12 @@ describe('Bottom Notification Modal', () => {
   });
 
   it('should close modal on cta press', async () => {
-    const {getAllByText} = render(
+    const {getByTestId} = render(
       <Provider store={store}>
         <BottomNotification />
       </Provider>,
     );
-    const buttons = getAllByText('CLOSE');
-    expect(buttons.length).toBe(1);
-    fireEvent.press(buttons[0]);
+    const button = getByTestId('bottom-notification-secondary-action-button');
+    fireEvent.press(button);
   });
 });

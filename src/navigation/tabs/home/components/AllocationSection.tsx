@@ -22,7 +22,7 @@ import {
 } from '../../../../utils/portfolio/allocation';
 import {
   getVisibleWalletsFromKeys,
-  walletHasNonZeroLiveBalance,
+  walletsHaveNonZeroLiveBalance,
 } from '../../../../utils/portfolio/assets';
 import {
   Black,
@@ -451,7 +451,7 @@ const AllocationSection: React.FC = () => {
   );
 
   const hasAnyVisibleWalletBalance = useMemo(() => {
-    return visibleWallets.some(walletHasNonZeroLiveBalance);
+    return walletsHaveNonZeroLiveBalance(visibleWallets);
   }, [visibleWallets]);
 
   const walletRows: AllocationWallet[] = useMemo(() => {

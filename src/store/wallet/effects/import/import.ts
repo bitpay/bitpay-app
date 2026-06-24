@@ -134,27 +134,6 @@ const getMissingVmAccounts = (
   });
 };
 
-const getMissingVmAccounts = (
-  wallets: Wallet[],
-  accountsArray: number[],
-  expectedChainCoins: Array<{chain: string; currencyAbbreviation: string}>,
-) => {
-  const existing = new Set(
-    wallets.map(wallet => {
-      const account = wallet.credentials.account || 0;
-      const chain = wallet.credentials.chain;
-      const coin = wallet.credentials.coin;
-      return `${account}:${chain}:${coin}`;
-    }),
-  );
-
-  return accountsArray.filter(account => {
-    return expectedChainCoins.some(({chain, currencyAbbreviation}) => {
-      return !existing.has(`${account}:${chain}:${currencyAbbreviation}`);
-    });
-  });
-};
-
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
 

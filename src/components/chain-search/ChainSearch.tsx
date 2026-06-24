@@ -31,6 +31,8 @@ import {AccountRowProps} from '../list/AccountListRow';
 import {WalletRowProps} from '../list/WalletRow';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
+type SearchableWallet = Wallet | WalletRowProps;
+
 export const SearchIconContainer = styled.View`
   margin: 14px;
 `;
@@ -87,7 +89,7 @@ export interface SearchableItem {
   accountName?: string;
   chainAssetsList?: WalletRowProps[];
   chains?: string[]; // (Global Select view)
-  wallets?: Wallet[]; // (Key Overview view)
+  wallets?: SearchableWallet[]; // (Key Overview view)
   chain?: string; // (Key Overview view)
   availableWallets?: Wallet[];
   availableWalletsByKey?: {
@@ -353,12 +355,12 @@ const SearchComponent = <T extends SearchableItem>({
             } else {
               const accounts = data.accounts as (AccountRowProps & {
                 assetsByChain?: AssetsByChainData[];
-                wallets?: Wallet[];
+                wallets?: SearchableWallet[];
               })[];
 
               const filteredAccounts = accounts
                 ?.map(account => {
-                  let filteredWallets = account.wallets as Wallet[];
+                  let filteredWallets = account.wallets || [];
                   if (selectedChainFilterOption) {
                     filteredWallets = filteredWallets?.filter(
                       ({chain}) => chain === selectedChainFilterOption,

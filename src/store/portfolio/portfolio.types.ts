@@ -1,97 +1,91 @@
 import type {
-  BalanceSnapshot,
+  InvalidDecimalsMarker,
+  PortfolioQuarantineMarker,
   SnapshotBalanceMismatch,
+  WalletIdMap,
   WalletPopulateState,
 } from './portfolio.models';
+import type {PortfolioPopulateDecisionReason} from '../../portfolio/service';
 
 export enum PortfolioActionTypes {
   CLEAR_PORTFOLIO = 'PORTFOLIO/CLEAR_PORTFOLIO',
   CANCEL_POPULATE_PORTFOLIO = 'PORTFOLIO/CANCEL_POPULATE_PORTFOLIO',
   START_POPULATE_PORTFOLIO = 'PORTFOLIO/START_POPULATE_PORTFOLIO',
   UPDATE_POPULATE_PROGRESS = 'PORTFOLIO/UPDATE_POPULATE_PROGRESS',
-  SET_WALLET_SNAPSHOTS = 'PORTFOLIO/SET_WALLET_SNAPSHOTS',
-  REMOVE_WALLET_SNAPSHOTS = 'PORTFOLIO/REMOVE_WALLET_SNAPSHOTS',
+  CLEAR_WALLET_PORTFOLIO_STATE = 'PORTFOLIO/CLEAR_WALLET_PORTFOLIO_STATE',
   FINISH_POPULATE_PORTFOLIO = 'PORTFOLIO/FINISH_POPULATE_PORTFOLIO',
   FAIL_POPULATE_PORTFOLIO = 'PORTFOLIO/FAIL_POPULATE_PORTFOLIO',
+  MARK_INITIAL_BASELINE_COMPLETE = 'PORTFOLIO/MARK_INITIAL_BASELINE_COMPLETE',
+  MARK_POPULATE_RESUME_SETTLED = 'PORTFOLIO/MARK_POPULATE_RESUME_SETTLED',
   SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES',
+  SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES',
+  SET_QUARANTINES_BY_WALLET_ID_UPDATES = 'PORTFOLIO/SET_QUARANTINES_BY_WALLET_ID_UPDATES',
 }
 
-export interface ClearPortfolioAction {
-  type: typeof PortfolioActionTypes.CLEAR_PORTFOLIO;
-  payload?: {
-    populateDisabled?: boolean;
-  };
-}
+type PortfolioAction<T extends PortfolioActionTypes> = {type: T};
 
-export interface CancelPopulatePortfolioAction {
-  type: typeof PortfolioActionTypes.CANCEL_POPULATE_PORTFOLIO;
-}
-
-export interface StartPopulatePortfolioAction {
-  type: typeof PortfolioActionTypes.START_POPULATE_PORTFOLIO;
-  payload: {
-    quoteCurrency: string;
-  };
-}
-
-export interface UpdatePopulateProgressAction {
-  type: typeof PortfolioActionTypes.UPDATE_POPULATE_PROGRESS;
-  payload: {
-    currentWalletId?: string;
-    walletsTotal?: number;
-    walletsCompleted?: number;
-    txRequestsMade?: number;
-    txsProcessed?: number;
-    errorsToAdd?: Array<{walletId: string; message: string}>;
-    walletStatusByIdUpdates?: {
-      [walletId: string]: WalletPopulateState | undefined;
-    };
-  };
-}
-
-export interface SetWalletSnapshotsAction {
-  type: typeof PortfolioActionTypes.SET_WALLET_SNAPSHOTS;
-  payload: {
-    walletId: string;
-    snapshots: BalanceSnapshot[];
-  };
-}
-
-export interface RemoveWalletSnapshotsAction {
-  type: typeof PortfolioActionTypes.REMOVE_WALLET_SNAPSHOTS;
-  payload: {
-    walletIds: string[];
-  };
-}
-
-export interface FinishPopulatePortfolioAction {
-  type: typeof PortfolioActionTypes.FINISH_POPULATE_PORTFOLIO;
-  payload: {
-    finishedAt: number;
-  };
-}
-
-export interface FailPopulatePortfolioAction {
-  type: typeof PortfolioActionTypes.FAIL_POPULATE_PORTFOLIO;
-  payload: {
-    error: string;
-  };
-}
-
-export interface SetSnapshotBalanceMismatchesByWalletIdUpdatesAction {
-  type: typeof PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES;
-  payload: {
-    [walletId: string]: SnapshotBalanceMismatch | undefined;
-  };
-}
+type PortfolioPayloadAction<
+  T extends PortfolioActionTypes,
+  P,
+> = PortfolioAction<T> & {payload: P};
 
 export type PortfolioActionType =
-  | ClearPortfolioAction
-  | CancelPopulatePortfolioAction
-  | StartPopulatePortfolioAction
-  | UpdatePopulateProgressAction
-  | SetWalletSnapshotsAction
-  | RemoveWalletSnapshotsAction
-  | FinishPopulatePortfolioAction
-  | FailPopulatePortfolioAction
-  | SetSnapshotBalanceMismatchesByWalletIdUpdatesAction;
+  | PortfolioAction<PortfolioActionTypes.CLEAR_PORTFOLIO>
+  | PortfolioAction<PortfolioActionTypes.CANCEL_POPULATE_PORTFOLIO>
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.START_POPULATE_PORTFOLIO,
+      {
+        quoteCurrency: string;
+        decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecisionReason>;
+        decisionSource?: string;
+      }
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.UPDATE_POPULATE_PROGRESS,
+      {
+        currentWalletId?: string;
+        walletsTotal?: number;
+        walletsCompleted?: number;
+        txRequestsMade?: number;
+        txsProcessed?: number;
+        errorsToAdd?: Array<{walletId: string; message: string}>;
+        walletStatusByIdUpdates?: WalletIdMap<WalletPopulateState>;
+      }
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.CLEAR_WALLET_PORTFOLIO_STATE,
+      {walletIds: string[]}
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.FINISH_POPULATE_PORTFOLIO,
+      {
+        finishedAt: number;
+        lastFullPopulateCompletedAt?: number;
+        reason: string;
+        quoteCurrency: string;
+      }
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.FAIL_POPULATE_PORTFOLIO,
+      {error: string}
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.MARK_INITIAL_BASELINE_COMPLETE,
+      {completedAt: number; quoteCurrency: string}
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.MARK_POPULATE_RESUME_SETTLED,
+      {settledAt: number}
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES,
+      WalletIdMap<SnapshotBalanceMismatch>
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES,
+      WalletIdMap<InvalidDecimalsMarker>
+    >
+  | PortfolioPayloadAction<
+      PortfolioActionTypes.SET_QUARANTINES_BY_WALLET_ID_UPDATES,
+      WalletIdMap<PortfolioQuarantineMarker>
+    >;

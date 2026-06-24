@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput, {INPUT_HEIGHT} from '../../../components/form/BoxInput';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
@@ -45,6 +45,7 @@ import {RootState} from '../../../store';
 import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView, Keyboard, TextInput, AppState} from 'react-native';
@@ -63,7 +64,6 @@ import UploadSvg from '../../../../assets/img/upload.svg';
 import UploadDarkSvg from '../../../../assets/img/upload-dark.svg';
 import CancelSvg from '../../../../assets/img/cancel.svg';
 import CancelDarkSvg from '../../../../assets/img/cancel-dark.svg';
-import {useTheme} from 'styled-components';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 const BWCProvider = BwcProvider.getInstance();
@@ -278,6 +278,7 @@ const FileOrText = () => {
         );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
+        populateImportedKeyPortfolio({dispatch, key, logger});
       } catch (error) {
         // ignore error
       }
@@ -302,7 +303,6 @@ const FileOrText = () => {
           source: 'FileOrText',
         }),
       );
-
     } catch (err: any) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);
@@ -405,6 +405,7 @@ const FileOrText = () => {
         );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
+        populateImportedKeyPortfolio({dispatch, key, logger});
       } catch (error) {}
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));

@@ -1,3 +1,6 @@
+export const toStringOrEmpty = (value: unknown): string =>
+  value === null || value === undefined ? '' : String(value);
+
 export const arrayToSentence = (arr: string[]) => {
   if (!arr || arr.length < 1) {
     return '';

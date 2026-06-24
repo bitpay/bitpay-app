@@ -51,6 +51,7 @@ const OnboardingStack = ({Onboarding, theme}: OnboardingProps) => {
       <Onboarding.Screen
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
+        options={{gestureEnabled: false, animation: 'none'}}
       />
       <Onboarding.Screen
         name={OnboardingScreens.NOTIFICATIONS}

@@ -221,6 +221,10 @@ class BrazeClientWrapper {
     }
 
     if (userId) {
+      // Flush buffered events for the current user before switching, so they
+      // land on Braze servers under the old EID and can be captured by a
+      // subsequent server-side merge call.
+      Braze.requestImmediateDataFlush();
       Braze.changeUser(userId);
       const {status} = await checkNotifications().catch(() => ({
         status: null,

@@ -3,11 +3,8 @@ import {formatCurrencyAbbreviation, formatFiatAmount} from '../helper-methods';
 import type {Key, Wallet} from '../../store/wallet/wallet.models';
 import type {HomeCarouselConfig} from '../../store/app/app.models';
 import {Slate, SlateDark} from '../../styles/colors';
-import {
-  BitpaySupportedCoins,
-  BitpaySupportedTokens,
-} from '../../constants/currencies';
 import {getVisibleWalletsFromKeys} from './assets';
+import {getAssetTheme} from './assetTheme';
 
 type AllocationAsset = {
   assetKey: string;
@@ -72,28 +69,16 @@ export type AllocationRowItem = {
   progress: number;
 };
 
-const tokenThemeByCoin: {[key in string]: string} = Object.values(
-  BitpaySupportedTokens,
-).reduce((acc, token) => {
-  const coinKey = (token.coin || '').toLowerCase();
-  const color = token.theme?.coinColor;
-  if (coinKey && color && !acc[coinKey]) {
-    acc[coinKey] = color;
-  }
-  return acc;
-}, {} as {[key in string]: string});
-
 const getAssetColor = (
   currencyAbbreviation: string,
   chain?: string,
+  tokenAddress?: string,
 ): {light: string; dark: string} => {
-  const coinKey = (currencyAbbreviation || '').toLowerCase();
-  const chainKey = (chain || '').toLowerCase();
-
-  const themeColor =
-    BitpaySupportedCoins[coinKey]?.theme?.coinColor ||
-    BitpaySupportedCoins[chainKey]?.theme?.coinColor ||
-    tokenThemeByCoin[coinKey];
+  const themeColor = getAssetTheme({
+    currencyAbbreviation,
+    chain,
+    tokenAddress,
+  })?.coinColor;
 
   return themeColor
     ? {light: themeColor, dark: themeColor}
@@ -146,7 +131,7 @@ export const buildAllocationDataFromWalletRows = (
       assetKey,
       currencyAbbreviation: (w.currencyAbbreviation || '').toLowerCase(),
       chain: (w.chain || '').toLowerCase(),
-      tokenAddress: w.tokenAddress?.toLowerCase(),
+      tokenAddress: w.tokenAddress,
       name: w.currencyName || w.currencyAbbreviation || '',
       fiatValue: fiat,
     });
@@ -163,7 +148,7 @@ export const buildAllocationDataFromWalletRows = (
     return {
       ...a,
       percent,
-      color: getAssetColor(a.currencyAbbreviation, a.chain),
+      color: getAssetColor(a.currencyAbbreviation, a.chain, a.tokenAddress),
     };
   });
 
