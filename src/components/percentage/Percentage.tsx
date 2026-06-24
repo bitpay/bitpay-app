@@ -6,6 +6,9 @@ import DecrementArrow from '../icons/trend-arrow/DecrementArrow';
 import {BaseText} from '../styled/Text';
 import {Slate30, SlateDark} from '../../styles/colors';
 
+export const getNeutralChangeColor = (isDarkMode: boolean) =>
+  isDarkMode ? Slate30 : SlateDark;
+
 const PercentageContainer = styled(BaseText)<{
   color?: string;
 }>`
@@ -22,7 +25,7 @@ const PercentageRow = styled.View`
 const RangeLabel = styled(BaseText)`
   font-size: 13px;
   line-height: 18px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
+  color: ${({theme}) => getNeutralChangeColor(theme.dark)};
   font-weight: 400;
   margin-left: 5px;
 `;
@@ -33,16 +36,24 @@ export interface PercentageProps {
   hideSign?: boolean;
   priceChange?: string | number;
   rangeLabel?: string;
+  suffix?: string;
   textStyle?: any;
   fractionDigits?: number;
 }
 
-export const getDifferenceColor = (
-  isPositive: boolean,
-  isDarkMode: boolean,
-) => {
-  return isPositive ? (isDarkMode ? '#00954F' : '#004D27') : '#DA3636';
-};
+export const getDifferenceColor = (isPositive: boolean, isDarkMode: boolean) =>
+  isPositive ? (isDarkMode ? '#00954F' : '#004D27') : '#DA3636';
+
+export const getPercentageColor = ({
+  percentageDifference,
+  isDarkMode,
+}: {
+  percentageDifference: number;
+  isDarkMode: boolean;
+}) =>
+  !Number.isFinite(percentageDifference) || percentageDifference === 0
+    ? getNeutralChangeColor(isDarkMode)
+    : getDifferenceColor(percentageDifference >= 0, isDarkMode);
 
 const Percentage = ({
   percentageDifference,
@@ -50,6 +61,7 @@ const Percentage = ({
   hideSign = false,
   priceChange,
   rangeLabel,
+  suffix,
   textStyle,
   fractionDigits,
 }: PercentageProps) => {
@@ -60,11 +72,10 @@ const Percentage = ({
 
   const isFiniteDifference = Number.isFinite(percentageDifference);
   const safeDifference = isFiniteDifference ? percentageDifference : 0;
-  const percentageColor = isFiniteDifference
-    ? getDifferenceColor(safeDifference >= 0, isDarkMode)
-    : isDarkMode
-    ? Slate30
-    : SlateDark;
+  const percentageColor = getPercentageColor({
+    percentageDifference,
+    isDarkMode,
+  });
 
   const formatter = useMemo(() => {
     const options: Intl.NumberFormatOptions | undefined =
@@ -81,44 +92,38 @@ const Percentage = ({
     }
   }, [locale, fractionDigits]);
   const formattedPriceChange =
-    priceChange === null || priceChange === undefined
-      ? undefined
-      : String(priceChange);
+    priceChange == null ? undefined : String(priceChange);
   const shouldShowPriceChange = Boolean(formattedPriceChange?.length);
   const signPrefix =
     !isFiniteDifference || hideSign ? '' : safeDifference < 0 ? '- ' : '+ ';
-  const formattedPercentageDifference = isFiniteDifference
-    ? formatter.format(Math.abs(safeDifference))
-    : '--';
   const percentageValue = isFiniteDifference
-    ? `${signPrefix}${formattedPercentageDifference}%`
+    ? `${signPrefix}${formatter.format(Math.abs(safeDifference))}%`
     : '--';
   const wrappedPercentageValue = shouldShowPriceChange
     ? `(${percentageValue})`
     : percentageValue;
 
   return (
-    <>
-      <PercentageRow>
-        {!hideArrow && isFiniteDifference && safeDifference > 0 ? (
-          <IncrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {!hideArrow && isFiniteDifference && safeDifference < 0 ? (
-          <DecrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {shouldShowPriceChange ? (
-          <PercentageContainer
-            color={percentageColor}
-            style={[textStyle, {marginRight: 3}]}>
-            {formattedPriceChange}
-          </PercentageContainer>
-        ) : null}
-        <PercentageContainer color={percentageColor} style={textStyle}>
-          {wrappedPercentageValue}
+    <PercentageRow>
+      {!hideArrow && isFiniteDifference && safeDifference > 0 ? (
+        <IncrementArrow style={{marginRight: 5}} />
+      ) : null}
+      {!hideArrow && isFiniteDifference && safeDifference < 0 ? (
+        <DecrementArrow style={{marginRight: 5}} />
+      ) : null}
+      {shouldShowPriceChange ? (
+        <PercentageContainer
+          color={percentageColor}
+          style={[textStyle, {marginRight: 3}]}>
+          {formattedPriceChange}
         </PercentageContainer>
-        {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
-      </PercentageRow>
-    </>
+      ) : null}
+      <PercentageContainer color={percentageColor} style={textStyle}>
+        {wrappedPercentageValue}
+        {suffix}
+      </PercentageContainer>
+      {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
+    </PercentageRow>
   );
 };
 

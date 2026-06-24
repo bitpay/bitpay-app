@@ -1,27 +1,4 @@
-export type BalanceSnapshotEventType = 'tx' | 'daily';
-export type BalanceSnapshotDirection = 'incoming' | 'outgoing';
-
-export interface BalanceSnapshot {
-  id: string;
-  chain: string;
-  coin: string;
-  network: string;
-  assetId: string;
-  timestamp: number;
-  dayStartMs?: number;
-  eventType: BalanceSnapshotEventType;
-  txIds?: string[];
-  direction?: BalanceSnapshotDirection;
-  // Signed atomic delta vs the previous snapshot (computed, not persisted).
-  balanceDeltaAtomic?: string;
-  cryptoBalance: string;
-  avgCostFiatPerUnit: number;
-  remainingCostBasisFiat: number;
-  unrealizedPnlFiat: number;
-  costBasisRateFiat?: number;
-  quoteCurrency: string;
-  createdAt?: number;
-}
+import type {PortfolioPopulateDecisionReason} from '../../portfolio/service';
 
 export interface PortfolioPopulateError {
   walletId: string;
@@ -30,34 +7,77 @@ export interface PortfolioPopulateError {
 
 export type WalletPopulateState = 'in_progress' | 'done' | 'error';
 
+export type WalletIdMap<T> = {[walletId: string]: T | undefined};
+
 export interface SnapshotBalanceMismatch {
   walletId: string;
+  computedAtomic: string;
+  currentAtomic: string;
+  deltaAtomic: string;
   computedUnitsHeld: string;
   currentWalletBalance: string;
   delta: string;
 }
+
+export interface InvalidDecimalsMarker {
+  walletId: string;
+  reason: 'invalid_decimals';
+  message: string;
+}
+
+interface BasePortfolioQuarantineMarker {
+  walletId: string;
+  reason: 'excessive_balance_mismatch' | 'zero_balance_token_missing_index';
+  detectedAt: number;
+  lastAttemptedAt?: number;
+  message: string;
+}
+
+export interface ExcessiveBalanceMismatchMarker
+  extends BasePortfolioQuarantineMarker {
+  reason: 'excessive_balance_mismatch';
+  computedAtomic: string;
+  liveAtomic: string;
+  deltaAtomic: string;
+  ratio: string;
+  threshold: number;
+}
+
+export interface ZeroBalanceTokenMissingIndexMarker
+  extends BasePortfolioQuarantineMarker {
+  reason: 'zero_balance_token_missing_index';
+  tokenAddress: string;
+  liveAtomic: '0';
+  chain?: string;
+}
+
+export type PortfolioQuarantineMarker =
+  | ExcessiveBalanceMismatchMarker
+  | ZeroBalanceTokenMissingIndexMarker;
 
 export interface PortfolioPopulateStatus {
   inProgress: boolean;
   startedAt?: number;
   finishedAt?: number;
   elapsedMs?: number;
+  stopReason?: string;
   currentWalletId?: string;
   walletsTotal: number;
   walletsCompleted: number;
   txRequestsMade: number;
   txsProcessed: number;
   errors: PortfolioPopulateError[];
-  walletStatusById?: {[walletId: string]: WalletPopulateState | undefined};
+  walletStatusById?: WalletIdMap<WalletPopulateState>;
+  decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecisionReason>;
+  decisionSource?: string;
 }
 
 export interface PortfolioState {
-  snapshotsByWalletId: {[walletId: string]: BalanceSnapshot[] | undefined};
   lastPopulatedAt?: number;
+  lastFullPopulateCompletedAt?: number | null;
   quoteCurrency?: string;
-  populateDisabled: boolean;
   populateStatus: PortfolioPopulateStatus;
-  snapshotBalanceMismatchesByWalletId?: {
-    [walletId: string]: SnapshotBalanceMismatch | undefined;
-  };
+  snapshotBalanceMismatchesByWalletId?: WalletIdMap<SnapshotBalanceMismatch>;
+  invalidDecimalsByWalletId?: WalletIdMap<InvalidDecimalsMarker>;
+  quarantinesByWalletId?: WalletIdMap<PortfolioQuarantineMarker>;
 }

@@ -61,8 +61,9 @@ class LogManager {
     this.listeners.forEach(listener => listener(data));
   }
 
-  private _log(
+  private _logWithSentryMessage(
     level: LogLevel,
+    sentryMessage: string | undefined,
     ...messages: (string | null | undefined)[]
   ): void {
     if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true') && !!messages) {
@@ -85,33 +86,34 @@ class LogManager {
     }
 
     const message = messages.join(' ');
+    const breadcrumbMessage = sentryMessage ?? message;
 
     switch (LogLevel[level]) {
       case 'Debug':
         Sentry.addBreadcrumb({
           category: 'log',
-          message,
+          message: breadcrumbMessage,
           level: 'debug',
         });
         break;
       case 'Info':
         Sentry.addBreadcrumb({
           category: 'log',
-          message,
+          message: breadcrumbMessage,
           level: 'info',
         });
         break;
       case 'Warn':
         Sentry.addBreadcrumb({
           category: 'log',
-          message,
+          message: breadcrumbMessage,
           level: 'warning',
         });
         break;
       case 'Error':
         Sentry.addBreadcrumb({
           category: 'log',
-          message,
+          message: breadcrumbMessage,
           level: 'error',
         });
         break;
@@ -124,6 +126,13 @@ class LogManager {
     });
   }
 
+  private _log(
+    level: LogLevel,
+    ...messages: (string | null | undefined)[]
+  ): void {
+    this._logWithSentryMessage(level, undefined, ...messages);
+  }
+
   debug(...messages: (string | null | undefined)[]) {
     this._log(LogLevel.Debug, ...messages);
   }
@@ -134,6 +143,10 @@ class LogManager {
 
   warn(...messages: (string | null | undefined)[]) {
     this._log(LogLevel.Warn, ...messages);
+  }
+
+  warnWithSentryMessage(localMessage: string, sentryMessage: string) {
+    this._logWithSentryMessage(LogLevel.Warn, sentryMessage, localMessage);
   }
 
   error(...messages: (string | null | undefined)[]) {

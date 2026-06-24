@@ -62,10 +62,8 @@ import {
 } from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {
-  startUpdateWalletStatus,
-  waitForTargetAmountAndUpdateWallet,
-} from '../../../store/wallet/effects/status/status';
+import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {waitForTargetAmountAndUpdateWallet} from '../../../store/wallet/effects/status/waitForTargetAmountAndUpdateWallet';
 import {useTranslation} from 'react-i18next';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {

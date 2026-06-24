@@ -109,7 +109,9 @@ const MultipleOutputsTx = ({
   const foundToken =
     tokenAddress &&
     tokenOptionsByAddress[
-      addTokenChainSuffix(tokenAddress.toLowerCase(), chain)
+      // `addTokenChainSuffix` already lowercases non-SVM chains and must
+      // preserve case-sensitive SVM mint addresses.
+      addTokenChainSuffix(tokenAddress.trim(), chain)
     ];
 
   const dispatch = useAppDispatch();

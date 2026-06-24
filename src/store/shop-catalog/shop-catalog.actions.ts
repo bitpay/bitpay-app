@@ -5,6 +5,10 @@ import {
 } from '../shop/shop.models';
 import {ShopCatalogActionTypes} from './shop-catalog.types';
 
+export const clearShopCatalogStore = () => ({
+  type: ShopCatalogActionTypes.CLEAR_SHOP_CATALOG_STORE as const,
+});
+
 export const successFetchCatalog = (payload: {
   availableCardMap: CardConfigMap;
   supportedCardMap?: CardConfigMap;

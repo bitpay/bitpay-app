@@ -25,6 +25,8 @@ import {sleep} from '../../../utils/helper-methods';
 import {css} from 'styled-components/native';
 import {ExternalServicesScreens} from '../../../navigation/services/ExternalServicesGroup';
 import {Keys} from '../../../store/wallet/wallet.reducer';
+import ArchaxFooter from '../../archax/archax-footer';
+import {isEuCountry} from '../../../store/location/location.effects';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -120,7 +122,11 @@ const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const isEuLocation = useAppSelector(({LOCATION}) =>
+    isEuCountry(LOCATION.locationData?.countryShortCode),
+  );
   const availableWallets = Object.values(keys as Keys)
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets)
@@ -129,100 +135,103 @@ const TransactModal = () => {
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
         wallet.isComplete() &&
-        !wallet.pendingTssSession &&
-        wallet.balance.sat > 0,
+        !wallet.pendingTssSession,
     );
 
   const availableWalletsWithFunds = availableWallets.filter(
     wallet => wallet.balance.sat > 0,
   );
 
+  // Receive / Buy: disabled only when no wallet exists at all.
   const disabledReceivingOptions = availableWallets.length === 0;
+  // Send / Sell / Swap / Gift cards: disabled when no wallet has funds.
   const disabledSendingOptions = availableWalletsWithFunds.length === 0;
   const dispatch = useAppDispatch();
 
-  const TransactMenuList: Array<TransactMenuItemProps> = [
-    {
-      id: 'buyCrypto',
-      img: ({disabled}) => <Icons.BuyCrypto disabled={disabled} />,
-      title: t('Buy Crypto'),
-      description: t('Buy crypto with cash'),
-      onPress: () => {
-        dispatch(
-          Analytics.track('Clicked Buy Crypto', {
-            context: 'TransactMenu',
-          }),
-        );
-        navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
-          context: 'buyCrypto',
-        });
+  const TransactMenuList: Array<TransactMenuItemProps> = (
+    [
+      {
+        id: 'buyCrypto',
+        img: ({disabled}) => <Icons.BuyCrypto disabled={disabled} />,
+        title: t('Buy Crypto'),
+        description: t('Buy crypto with cash'),
+        onPress: () => {
+          dispatch(
+            Analytics.track('Clicked Buy Crypto', {
+              context: 'TransactMenu',
+            }),
+          );
+          navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+            context: 'buyCrypto',
+          });
+        },
       },
-    },
-    {
-      id: 'sellCrypto',
-      img: ({disabled}) => <Icons.SellCrypto disabled={disabled} />,
-      title: t('Sell Crypto'),
-      description: t('Sell crypto and receive cash'),
-      onPress: () => {
-        dispatch(
-          Analytics.track('Clicked Sell Crypto', {
-            context: 'TransactMenu',
-          }),
-        );
-        navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
-          context: 'sellCrypto',
-        });
+      {
+        id: 'sellCrypto',
+        img: ({disabled}) => <Icons.SellCrypto disabled={disabled} />,
+        title: t('Sell Crypto'),
+        description: t('Sell crypto and receive cash'),
+        onPress: () => {
+          dispatch(
+            Analytics.track('Clicked Sell Crypto', {
+              context: 'TransactMenu',
+            }),
+          );
+          navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+            context: 'sellCrypto',
+          });
+        },
       },
-    },
-    {
-      id: 'exchange',
-      img: ({disabled}) => <Icons.Exchange disabled={disabled} />,
-      title: t('Swap'),
-      description: t('Swap crypto for another'),
-      onPress: () => {
-        dispatch(
-          Analytics.track('Clicked Swap Crypto', {
-            context: 'TransactMenu',
-          }),
-        );
-        navigation.navigate('SwapCryptoRoot');
+      {
+        id: 'exchange',
+        img: ({disabled}) => <Icons.Exchange disabled={disabled} />,
+        title: t('Swap'),
+        description: t('Swap crypto for another'),
+        onPress: () => {
+          dispatch(
+            Analytics.track('Clicked Swap Crypto', {
+              context: 'TransactMenu',
+            }),
+          );
+          navigation.navigate('SwapCryptoRoot');
+        },
       },
-    },
-    {
-      id: 'receive',
-      img: ({disabled}) => <Icons.Receive disabled={disabled} />,
-      title: t('Receive'),
-      description: t('Get crypto from another wallet'),
-      onPress: () => {
-        navigation.navigate('GlobalSelect', {context: 'receive'});
+      {
+        id: 'receive',
+        img: ({disabled}) => <Icons.Receive disabled={disabled} />,
+        title: t('Receive'),
+        description: t('Get crypto from another wallet'),
+        onPress: () => {
+          navigation.navigate('GlobalSelect', {context: 'receive'});
+        },
       },
-    },
-    {
-      id: 'send',
-      img: ({disabled}) => <Icons.Send disabled={disabled} />,
-      title: t('Send'),
-      description: t('Send crypto to another wallet'),
-      onPress: () => {
-        navigation.navigate('GlobalSelect', {context: 'send'});
+      {
+        id: 'send',
+        img: ({disabled}) => <Icons.Send disabled={disabled} />,
+        title: t('Send'),
+        description: t('Send crypto to another wallet'),
+        onPress: () => {
+          navigation.navigate('GlobalSelect', {context: 'send'});
+        },
       },
-    },
-    {
-      id: 'buyGiftCard',
-      img: ({disabled}) => <Icons.BuyGiftCard disabled={disabled} />,
-      title: t('Buy Gift Cards'),
-      description: t('Buy gift cards with crypto'),
-      onPress: () => {
-        navigation.navigate('Tabs', {
-          screen: 'Shop',
-        });
-        dispatch(
-          Analytics.track('Clicked Buy Gift Cards', {
-            context: 'TransactMenu',
-          }),
-        );
+      {
+        id: 'buyGiftCard',
+        img: ({disabled}) => <Icons.BuyGiftCard disabled={disabled} />,
+        title: t('Buy Gift Cards'),
+        description: t('Buy gift cards with crypto'),
+        onPress: () => {
+          navigation.navigate('Tabs', {
+            screen: 'Shop',
+          });
+          dispatch(
+            Analytics.track('Clicked Buy Gift Cards', {
+              context: 'TransactMenu',
+            }),
+          );
+        },
       },
-    },
-  ];
+    ] as Array<TransactMenuItemProps>
+  ).filter(item => !(isEuLocation && item.id === 'buyGiftCard'));
 
   const ScanButton: TransactMenuItemProps = {
     id: 'scan',
@@ -304,6 +313,7 @@ const TransactModal = () => {
               </View>
               <ScanButtonText>{ScanButton.title}</ScanButtonText>
             </ScanButtonContainer>
+            {showArchaxBanner && <ArchaxFooter matchParentWidth />}
             <CloseButtonContainer onPress={hideModal}>
               <View>
                 <Icons.Close />

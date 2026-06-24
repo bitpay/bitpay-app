@@ -194,7 +194,7 @@ const BottomNotification = React.memo(() => {
             <BottomNotificationCta
               suppressHighlighting={true}
               primary={primary}>
-              {text.toUpperCase()}
+              {text?.toUpperCase()}
             </BottomNotificationCta>
           </TouchableOpacity>
         );

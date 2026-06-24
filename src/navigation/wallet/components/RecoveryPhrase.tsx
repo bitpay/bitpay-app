@@ -84,6 +84,7 @@ import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {AppState, FlatList, TextInput, View} from 'react-native';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {
   GetName,
   isSingleAddressChain,
@@ -434,6 +435,7 @@ const RecoveryPhrase = () => {
       );
       logger.debug('[Scan Funds] Update portfolio balance (4/4)... Finished.');
       dispatch(updatePortfolioBalance());
+      populateImportedKeyPortfolio({dispatch, key, logger});
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);

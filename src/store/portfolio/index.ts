@@ -1,28 +1,42 @@
 export {
-  cancelPopulatePortfolio,
+  cancelPopulatePortfolio as cancelPopulatePortfolioAction,
   clearPortfolio,
+  clearWalletPortfolioState,
   failPopulatePortfolio,
   finishPopulatePortfolio,
-  removeWalletSnapshots,
+  markInitialBaselineComplete,
+  markPopulateResumeSettled,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
-  setWalletSnapshots,
   startPopulatePortfolio,
   updatePopulateProgress,
 } from './portfolio.actions';
 
 export {
-  maybePopulatePortfolioForWallets,
-  populatePortfolio,
-  preparePortfolioFiatRateCachesForQuoteCurrencySwitch,
-} from './portfolio.effects';
+  cancelPopulatePortfolioWithRuntime as cancelPopulatePortfolio,
+  maybePopulatePortfolioOnAppLaunchWithRuntime as maybePopulatePortfolioOnAppLaunch,
+  maybePopulatePortfolioForWalletsWithRuntime as maybePopulatePortfolioForWallets,
+  populateImportedKeyPortfolio,
+  populatePortfolioWithRuntime as populatePortfolio,
+  cancelPopulatePortfolioWithRuntime,
+  clearPortfolioWithRuntime,
+  clearWalletPortfolioDataWithRuntime,
+  maybePopulatePortfolioOnAppLaunchWithRuntime,
+  maybePopulatePortfolioForWalletsWithRuntime,
+  populatePortfolioWithRuntime,
+} from './portfolio.runtime.effects';
 
 export {
   portfolioReducer,
   portfolioReduxPersistBlackList,
 } from './portfolio.reducer';
 
+export {
+  hasCompletedFullPortfolioPopulate,
+  selectCanRenderPortfolioBalanceCharts,
+  selectHasCompletedFullPortfolioPopulate,
+} from './portfolio.selectors';
+
 export type {
-  BalanceSnapshot,
   PortfolioState,
   PortfolioPopulateStatus,
   SnapshotBalanceMismatch,

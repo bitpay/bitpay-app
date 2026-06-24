@@ -26,7 +26,7 @@ import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
   Wallet as WalletModel,
-  _Credentials,
+  type WalletStatusPayload,
 } from '../../store/wallet/wallet.models';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
@@ -70,7 +70,7 @@ import AllAddresses, {
 import PayProConfirm, {
   PayProConfirmParamList,
 } from './screens/send/confirm/PayProConfirm';
-import ExchangeRate from './screens/ExchangeRate';
+import AssetDetails from './screens/AssetDetails';
 import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
@@ -150,7 +150,7 @@ export type WalletGroupParamList = {
   PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigParamsList;
   JoinMultisig: JoinMultisigParamList | undefined;
-  Copayers: {wallet: WalletModel; status: _Credentials};
+  Copayers: {wallet: WalletModel; status: WalletStatusPayload};
   InviteCosigners: {keyId: string};
   ShareJoinCode: {keyId: string; partyId: number; joinCode: string};
   JoinTSSWallet: {copayerName?: string; keyId?: string};
@@ -190,8 +190,10 @@ export type WalletGroupParamList = {
     currencyName: string;
     currencyAbbreviation: string;
     chain: string;
+    keyId?: string;
     tokenAddress?: string;
     network?: string;
+    chartType?: 'assetBalanceHistory';
   };
   ClearEncryptPassword: ClearEncryptPasswordParamList;
   SendToOptions: SendToOptionsParamList;
@@ -502,7 +504,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen
         name={WalletScreens.EXCHANGE_RATE}
-        component={ExchangeRate}
+        component={AssetDetails}
       />
       <Wallet.Screen
         options={{

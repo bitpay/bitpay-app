@@ -111,6 +111,7 @@ const MoonpaySettings: React.FC = () => {
                         ))}
                       {pr.status &&
                         [
+                          'embeddedPaymentRequestSent',
                           'waitingPayment',
                           'pending',
                           'waitingAuthorization',

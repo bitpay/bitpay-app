@@ -1,0 +1,31 @@
+export {
+  PortfolioPopulateService,
+  throwIfPortfolioPopulateCancelled,
+  type PortfolioPopulateProgress,
+  type PortfolioPopulateRunResult,
+  type PortfolioPopulateServiceOptions,
+  type PortfolioPopulateWalletRunResult,
+} from './portfolioPopulateService';
+
+export {
+  PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_RETRY_INTERVAL_MS,
+  PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS,
+  PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_THRESHOLD,
+  buildPortfolioExcessiveBalanceMismatchMarker,
+  buildPortfolioZeroBalanceTokenMissingIndexMarker,
+  getPortfolioExcessiveBalanceMismatchMessage,
+  getPortfolioInvalidDecimalsMessage,
+  getPortfolioPopulateDecisionForWallet,
+  getPortfolioPopulateDecisionsForWallets,
+  isPortfolioExcessiveBalanceMismatchRetryDue,
+  isPortfolioQuarantineRetryDue,
+  markPortfolioExcessiveBalanceMismatchAttempted,
+  markPortfolioQuarantineAttempted,
+  type PortfolioExcessiveBalanceMismatchMarker,
+  type PortfolioPopulateDecision,
+  type PortfolioPopulateDecisionReason,
+  type PortfolioQuarantineMarker,
+  type PortfolioSnapshotBalanceMismatch,
+  type PortfolioUnitDecimalsResolution,
+  type PortfolioZeroBalanceTokenMissingIndexMarker,
+} from './portfolioStaleness';

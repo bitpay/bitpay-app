@@ -38,9 +38,11 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'inAppBrowserOpen',
   'inAppNotificationData',
   'lockAuthorizedUntil',
+  'homeChartRemountNonce',
   'pinModalConfig',
   'showBiometricModal',
   'showBottomNotificationModal',
+  'bottomNotificationModalConfig',
   'showChainSelectorModal',
   'chainSelectorModalConfig',
   'showDecryptPasswordModal',
@@ -138,6 +140,8 @@ export interface AppState {
   biometricModalConfig: BiometricModalConfig | undefined;
   biometricLockActive: boolean;
   lockAuthorizedUntil: number | undefined;
+  homeChartCollapsed: boolean;
+  homeChartRemountNonce: number;
   homeCarouselConfig: HomeCarouselConfig[] | [];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   settingsListConfig: SettingsListType[];
@@ -224,7 +228,7 @@ const initialState: AppState = {
   currentSalt: undefined,
   pinBannedUntil: undefined,
   showBlur: false,
-  colorScheme: null,
+  colorScheme: null as unknown as ColorSchemeName,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   hideAllBalances: false,
@@ -235,6 +239,8 @@ const initialState: AppState = {
   biometricModalConfig: undefined,
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
+  homeChartCollapsed: false,
+  homeChartRemountNonce: 0,
   homeCarouselConfig: [],
   homeCarouselLayoutType: 'listView',
   settingsListConfig: [],
@@ -372,6 +378,7 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
@@ -585,6 +592,18 @@ export const appReducer = (
       return {
         ...state,
         lockAuthorizedUntil: action.payload,
+      };
+
+    case AppActionTypes.SET_HOME_CHART_COLLAPSED:
+      return {
+        ...state,
+        homeChartCollapsed: action.payload,
+      };
+
+    case AppActionTypes.REMOUNT_HOME_CHART:
+      return {
+        ...state,
+        homeChartRemountNonce: (state.homeChartRemountNonce || 0) + 1,
       };
 
     case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:

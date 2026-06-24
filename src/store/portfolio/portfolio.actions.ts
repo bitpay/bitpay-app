@@ -1,14 +1,15 @@
 import type {
-  BalanceSnapshot,
+  InvalidDecimalsMarker,
+  PortfolioQuarantineMarker,
   SnapshotBalanceMismatch,
+  WalletIdMap,
+  WalletPopulateState,
 } from './portfolio.models';
+import type {PortfolioPopulateDecisionReason} from '../../portfolio/service';
 import {PortfolioActionType, PortfolioActionTypes} from './portfolio.types';
 
-export const clearPortfolio = (payload?: {
-  populateDisabled?: boolean;
-}): PortfolioActionType => ({
+export const clearPortfolio = (): PortfolioActionType => ({
   type: PortfolioActionTypes.CLEAR_PORTFOLIO,
-  payload,
 });
 
 export const cancelPopulatePortfolio = (): PortfolioActionType => ({
@@ -17,6 +18,8 @@ export const cancelPopulatePortfolio = (): PortfolioActionType => ({
 
 export const startPopulatePortfolio = (payload: {
   quoteCurrency: string;
+  decisionReasonByWalletId?: WalletIdMap<PortfolioPopulateDecisionReason>;
+  decisionSource?: string;
 }): PortfolioActionType => ({
   type: PortfolioActionTypes.START_POPULATE_PORTFOLIO,
   payload,
@@ -29,31 +32,24 @@ export const updatePopulateProgress = (payload: {
   txRequestsMade?: number;
   txsProcessed?: number;
   errorsToAdd?: Array<{walletId: string; message: string}>;
-  walletStatusByIdUpdates?: {
-    [walletId: string]: 'in_progress' | 'done' | 'error' | undefined;
-  };
+  walletStatusByIdUpdates?: WalletIdMap<WalletPopulateState>;
 }): PortfolioActionType => ({
   type: PortfolioActionTypes.UPDATE_POPULATE_PROGRESS,
   payload,
 });
 
-export const setWalletSnapshots = (payload: {
-  walletId: string;
-  snapshots: BalanceSnapshot[];
-}): PortfolioActionType => ({
-  type: PortfolioActionTypes.SET_WALLET_SNAPSHOTS,
-  payload,
-});
-
-export const removeWalletSnapshots = (payload: {
+export const clearWalletPortfolioState = (payload: {
   walletIds: string[];
 }): PortfolioActionType => ({
-  type: PortfolioActionTypes.REMOVE_WALLET_SNAPSHOTS,
+  type: PortfolioActionTypes.CLEAR_WALLET_PORTFOLIO_STATE,
   payload,
 });
 
 export const finishPopulatePortfolio = (payload: {
   finishedAt: number;
+  lastFullPopulateCompletedAt?: number;
+  reason: string;
+  quoteCurrency: string;
 }): PortfolioActionType => ({
   type: PortfolioActionTypes.FINISH_POPULATE_PORTFOLIO,
   payload,
@@ -66,9 +62,38 @@ export const failPopulatePortfolio = (payload: {
   payload,
 });
 
-export const setSnapshotBalanceMismatchesByWalletIdUpdates = (payload: {
-  [walletId: string]: SnapshotBalanceMismatch | undefined;
+export const markInitialBaselineComplete = (payload: {
+  completedAt: number;
+  quoteCurrency: string;
 }): PortfolioActionType => ({
+  type: PortfolioActionTypes.MARK_INITIAL_BASELINE_COMPLETE,
+  payload,
+});
+
+export const markPopulateResumeSettled = (payload: {
+  settledAt: number;
+}): PortfolioActionType => ({
+  type: PortfolioActionTypes.MARK_POPULATE_RESUME_SETTLED,
+  payload,
+});
+
+export const setSnapshotBalanceMismatchesByWalletIdUpdates = (
+  payload: WalletIdMap<SnapshotBalanceMismatch>,
+): PortfolioActionType => ({
   type: PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES,
+  payload,
+});
+
+export const setInvalidDecimalsByWalletIdUpdates = (
+  payload: WalletIdMap<InvalidDecimalsMarker>,
+): PortfolioActionType => ({
+  type: PortfolioActionTypes.SET_INVALID_DECIMALS_BY_WALLET_ID_UPDATES,
+  payload,
+});
+
+export const setQuarantinesByWalletIdUpdates = (
+  payload: WalletIdMap<PortfolioQuarantineMarker>,
+): PortfolioActionType => ({
+  type: PortfolioActionTypes.SET_QUARANTINES_BY_WALLET_ID_UPDATES,
   payload,
 });

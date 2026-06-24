@@ -12,6 +12,7 @@ import {
 } from './shop.models';
 
 export enum ShopActionTypes {
+  CLEAR_SHOP_STORE = 'SHOP/CLEAR_SHOP_STORE',
   SUCCESS_FETCH_CATALOG = 'SHOP/SUCCESS_FETCH_CATALOG',
   FAILED_FETCH_CATALOG = 'SHOP/FAILED_FETCH_CATALOG',
   SUCCESS_CREATE_GIFT_CARD_INVOICE = 'SHOP/SUCCESS_CREATE_GIFT_CARD_INVOICE',
@@ -33,6 +34,10 @@ export enum ShopActionTypes {
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
   CLEARED_SHOP_CATALOG_FIELDS = 'SHOP/CLEARED_SHOP_CATALOG_FIELDS',
   IS_JOINED_WAITLIST = 'SHOP/IS_JOINED_WAITLIST',
+}
+
+interface clearShopStore {
+  type: typeof ShopActionTypes.CLEAR_SHOP_STORE;
 }
 
 interface successFetchCatalog {
@@ -160,6 +165,7 @@ interface isJoinedWaitlist {
 }
 
 export type ShopActionType =
+  | clearShopStore
   | successFetchCatalog
   | failedFetchCatalog
   | hidGiftCardCoupon

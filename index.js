@@ -1,10 +1,15 @@
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
-import { install as installQuickCrypto } from 'react-native-quick-crypto';
+import {install as installQuickCrypto} from 'react-native-quick-crypto';
 import '@ethersproject/shims';
 // import 'fast-text-encoding';
 import './shim';
 import '@walletconnect/react-native-compat';
-import {AppRegistry, Alert, StatusBar, Appearance} from 'react-native';
+import {AppRegistry, Alert, StatusBar, Appearance, LogBox} from 'react-native';
+import {IS_MAESTRO} from '@env';
+
+if (IS_MAESTRO === 'true') {
+  LogBox.ignoreAllLogs();
+}
 import Root from './src/Root';
 import React, {useState, useEffect} from 'react';
 import './i18n';
@@ -74,9 +79,8 @@ Sentry.init({
       return breadcrumb;
     }
     return null;
-  }
+  },
 });
-
 
 installQuickCrypto();
 
@@ -91,6 +95,7 @@ const makeErrorHandler = store => (e, isFatal) => {
     const errStr = e instanceof Error ? e.message : JSON.stringify(e);
     store.dispatch(LogActions.persistLog(LogActions.error(errStr)));
     Sentry.captureException(e, {level: 'fatal'});
+    void Sentry.flush(2000);
     Alert.alert(
       'Unexpected error occurred',
       `
@@ -199,11 +204,13 @@ const AppWrapper = () => {
 
     updateTheme();
 
-    const subscription = Appearance.addChangeListener(({colorScheme: newScheme}) => {
-      if (colorScheme === null) {
-        setIsDark(newScheme === 'dark');
-      }
-    });
+    const subscription = Appearance.addChangeListener(
+      ({colorScheme: newScheme}) => {
+        if (colorScheme === null) {
+          setIsDark(newScheme === 'dark');
+        }
+      },
+    );
 
     return () => subscription.remove();
   }, [colorScheme]);
@@ -242,4 +249,13 @@ const AppWrapper = () => {
   );
 };
 
-AppRegistry.registerComponent(appName, () => Sentry.wrap(ReduxProvider));
+const App = () => (
+  <Sentry.ErrorBoundary
+    fallback={({error}) => {
+      throw error;
+    }}>
+    <ReduxProvider />
+  </Sentry.ErrorBoundary>
+);
+
+AppRegistry.registerComponent(appName, () => Sentry.wrap(App));

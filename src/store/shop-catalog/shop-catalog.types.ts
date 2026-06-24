@@ -5,9 +5,14 @@ import {
 } from '../shop/shop.models';
 
 export enum ShopCatalogActionTypes {
+  CLEAR_SHOP_CATALOG_STORE = 'SHOP_CATALOG/CLEAR_SHOP_CATALOG_STORE',
   SUCCESS_FETCH_CATALOG = 'SHOP_CATALOG/SUCCESS_FETCH_CATALOG',
   FAILED_FETCH_CATALOG = 'SHOP_CATALOG/FAILED_FETCH_CATALOG',
   SET_SHOP_MIGRATION_COMPLETE = 'SHOP_CATALOG/SET_SHOP_MIGRATION_COMPLETE',
+}
+
+export interface clearShopCatalogStore {
+  type: typeof ShopCatalogActionTypes.CLEAR_SHOP_CATALOG_STORE;
 }
 
 export interface successFetchCatalog {
@@ -29,6 +34,7 @@ export interface setShopMigrationComplete {
 }
 
 export type ShopCatalogActionType =
+  | clearShopCatalogStore
   | successFetchCatalog
   | failedFetchCatalog
   | setShopMigrationComplete;
