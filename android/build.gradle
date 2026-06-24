@@ -52,3 +52,15 @@ allprojects {
         maven { url "https://dl.appsflyer.com" }
     }
 }
+// Narrow fix for mixpanel-react-native's androidTest manifest declaring
+// minSdkVersion 21, which conflicts with react-android 0.82.0's required 24+
+// during manifest merge for the test APK build only.
+project(':mixpanel-react-native') {
+    afterEvaluate {
+        android {
+            defaultConfig {
+                minSdkVersion 24
+            }
+        }
+    }
+}
