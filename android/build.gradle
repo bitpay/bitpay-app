@@ -64,3 +64,18 @@ project(':mixpanel-react-native') {
         }
     }
 }
+// react-native-gesture-handler's own androidTest build merges native libs and
+// finds two copies of libfbjni.so (its own bundled copy + react-android's),
+// causing :react-native-gesture-handler:mergeDebugAndroidTestNativeLibs to
+// fail. This must be configured on the gesture-handler module itself, since
+// the conflict occurs during that module's own native-lib merge step, before
+// it reaches our app module's packagingOptions.
+project(':react-native-gesture-handler') {
+    afterEvaluate {
+        android {
+            packagingOptions {
+                pickFirst 'lib/*/libfbjni.so'
+            }
+        }
+    }
+}
