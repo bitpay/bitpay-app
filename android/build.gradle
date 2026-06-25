@@ -52,24 +52,31 @@ allprojects {
         maven { url "https://dl.appsflyer.com" }
     }
 }
-// Narrow fix for mixpanel-react-native's androidTest manifest declaring
-// minSdkVersion 21, which conflicts with react-android 0.82.0's required 24+
-// during manifest merge for the test APK build only.
-project(':mixpanel-react-native') {
-    afterEvaluate {
-        android {
-            defaultConfig {
-                minSdkVersion 24
+// Multiple third-party RN libraries (confirmed so far: mixpanel-react-native,
+// react-native-keyevent) ship an androidTest manifest declaring minSdkVersion
+// 21, conflicting with react-android 0.82.0's required 24+. Rather than patch
+// each affected module individually as CI discovers them, this applies the
+// same override to every subproject's androidTest manifest at once. Does not
+// change any subproject's source code or our app's own minSdkVersion (still 30).
+subprojects {
+    afterEvaluate { subproject ->
+        if (subproject.hasProperty('android')) {
+            subproject.android {
+                if (defaultConfig.minSdkVersion == null || defaultConfig.minSdkVersion.apiLevel < 24) {
+                    defaultConfig {
+                        minSdkVersion 24
+                    }
+                }
             }
         }
     }
 }
+
 // react-native-gesture-handler's own androidTest build merges native libs and
 // finds two copies of libfbjni.so (its own bundled copy + react-android's),
 // causing :react-native-gesture-handler:mergeDebugAndroidTestNativeLibs to
-// fail. This must be configured on the gesture-handler module itself, since
-// the conflict occurs during that module's own native-lib merge step, before
-// it reaches our app module's packagingOptions.
+// fail. Different conflict category than the minSdk fix above (native lib
+// duplication, not manifest merge), so it needs its own override.
 project(':react-native-gesture-handler') {
     afterEvaluate {
         android {
