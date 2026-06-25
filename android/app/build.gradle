@@ -274,3 +274,4 @@ internal object BundleHash {
     //       v.sources.java.addGeneratedSourceDirectory(generateHashTask, { it.outputs.files.singleFile })
     //   }
 }
+
