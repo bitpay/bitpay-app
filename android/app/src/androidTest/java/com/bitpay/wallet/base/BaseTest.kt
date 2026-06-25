@@ -12,6 +12,8 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import com.bitpay.wallet.utils.allureScreenshot
 import org.junit.Rule
+import androidx.test.uiautomator.Until
+import androidx.test.uiautomator.By
 
 open class BaseTest {
 
@@ -42,28 +44,52 @@ open class BaseTest {
         val device: UiDevice? = try {
             UiDevice.getInstance(instrumentation)
         } catch (e: IllegalStateException) {
-            android.util.Log.w(
-                "BaseTest",
-                "UiAutomation already registered, skipping UiDevice setup: ${e.message}"
-            )
+            android.util.Log.w("BaseTest", "UiAutomation already registered: ${e.message}")
             null
         }
 
-        device?.let {
-            if (!it.isScreenOn) {
-                it.wakeUp()
-            }
-        }
+        device?.let { if (!it.isScreenOn) it.wakeUp() }
 
-        val intent =
-            context.packageManager.getLaunchIntentForPackage("com.bitpay.wallet")
-
-        intent!!.addFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        )
-
+        val intent = context.packageManager.getLaunchIntentForPackage("com.bitpay.wallet")
+        intent!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         context.startActivity(intent)
+
+        // CI emulators are typically slower than local hardware to load and
+        // render the JS bundle. Give RN's startup a generous window before any
+        // test attempts its first onView() lookup, rather than racing ahead.
+        device?.wait(Until.hasObject(By.pkg("com.bitpay.wallet").depth(0)), 20000)
+        Thread.sleep(2000)
     }
+
+//    private fun launchApp() {
+//        val instrumentation = InstrumentationRegistry.getInstrumentation()
+//        val context = instrumentation.targetContext
+//
+//        val device: UiDevice? = try {
+//            UiDevice.getInstance(instrumentation)
+//        } catch (e: IllegalStateException) {
+//            android.util.Log.w(
+//                "BaseTest",
+//                "UiAutomation already registered, skipping UiDevice setup: ${e.message}"
+//            )
+//            null
+//        }
+//
+//        device?.let {
+//            if (!it.isScreenOn) {
+//                it.wakeUp()
+//            }
+//        }
+//
+//        val intent =
+//            context.packageManager.getLaunchIntentForPackage("com.bitpay.wallet")
+//
+//        intent!!.addFlags(
+//            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//        )
+//
+//        context.startActivity(intent)
+//    }
 
     /**
      * If the onboarding "Continue without an account" screen is currently

@@ -97,6 +97,19 @@ jobs:
           echo "=== Full contents of /sdcard/googletest/test_outputfiles on device ==="
           adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "find failed or path does not exist"
           echo "=== End device listing ==="
+
+      - name: Capture device logcat for debugging
+        if: always()
+        run: |
+          adb logcat -d > device-logcat.txt || true
+
+      - name: Upload device logcat
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: device-logcat
+          path: device-logcat.txt
+          retention-days: 7
  
       - name: Pull Allure results from device
         if: always()
