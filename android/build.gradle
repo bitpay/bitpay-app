@@ -53,27 +53,23 @@ allprojects {
     }
 }
 
-// Multiple third-party RN libraries (confirmed so far: mixpanel-react-native,
-// react-native-keyevent) ship an androidTest manifest declaring minSdkVersion
-// 21, conflicting with react-android 0.82.0's required 24+. This applies the
-// same override to every subproject's androidTest manifest at once, and also
-// resolves a libfbjni.so native-lib duplication conflict specific to
-// react-native-gesture-handler's own test build, all within a single
-// afterEvaluate hook per subproject to avoid Gradle lifecycle ordering issues.
-subprojects { subproject ->
-    afterEvaluate {
-        if (subproject.hasProperty('android')) {
-            subproject.android {
-                if (defaultConfig.minSdkVersion == null || defaultConfig.minSdkVersion.apiLevel < 24) {
-                    defaultConfig {
-                        minSdkVersion 24
-                    }
+// Multiple third-party RN libraries ship an androidTest manifest with a
+// stale minSdkVersion (21), conflicting with react-android 0.82.0's required
+// 24+. Using gradle.afterProject (rather than subprojects { afterEvaluate })
+// because the React Native Gradle Plugin's own autolinking logic evaluates
+// some subprojects internally during apply, before a subprojects{} block's
+// afterEvaluate hook would otherwise have a chance to register.
+gradle.afterProject { proj ->
+    if (proj != rootProject && proj.hasProperty('android')) {
+        proj.android {
+            if (defaultConfig.minSdkVersion == null || defaultConfig.minSdkVersion.apiLevel < 24) {
+                defaultConfig {
+                    minSdkVersion 24
                 }
-
-                if (subproject.name == 'react-native-gesture-handler') {
-                    packagingOptions {
-                        pickFirst 'lib/*/libfbjni.so'
-                    }
+            }
+            if (proj.name == 'react-native-gesture-handler') {
+                packagingOptions {
+                    pickFirst 'lib/*/libfbjni.so'
                 }
             }
         }
