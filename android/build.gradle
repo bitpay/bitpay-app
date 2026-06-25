@@ -81,6 +81,17 @@ gradle.afterProject { proj ->
             packagingOptions {
                 resources {
                     pickFirsts += 'META-INF/com.android.tools/proguard/coroutines.pro'
+                    excludes += [
+                            'META-INF/MANIFEST.MF',
+                            'META-INF/LICENSE',
+                            'META-INF/LICENSE.txt',
+                            'META-INF/LICENSE.md',
+                            'META-INF/LICENSE-notice.md',
+                            'META-INF/NOTICE',
+                            'META-INF/NOTICE.txt',
+                            'META-INF/DEPENDENCIES',
+                            'META-INF/*.kotlin_module'
+                    ]
                 }
             }
         }
