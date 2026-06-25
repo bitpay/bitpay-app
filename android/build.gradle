@@ -52,14 +52,16 @@ allprojects {
         maven { url "https://dl.appsflyer.com" }
     }
 }
+
 // Multiple third-party RN libraries (confirmed so far: mixpanel-react-native,
 // react-native-keyevent) ship an androidTest manifest declaring minSdkVersion
-// 21, conflicting with react-android 0.82.0's required 24+. Rather than patch
-// each affected module individually as CI discovers them, this applies the
-// same override to every subproject's androidTest manifest at once. Does not
-// change any subproject's source code or our app's own minSdkVersion (still 30).
-subprojects {
-    afterEvaluate { subproject ->
+// 21, conflicting with react-android 0.82.0's required 24+. This applies the
+// same override to every subproject's androidTest manifest at once, and also
+// resolves a libfbjni.so native-lib duplication conflict specific to
+// react-native-gesture-handler's own test build, all within a single
+// afterEvaluate hook per subproject to avoid Gradle lifecycle ordering issues.
+subprojects { subproject ->
+    afterEvaluate {
         if (subproject.hasProperty('android')) {
             subproject.android {
                 if (defaultConfig.minSdkVersion == null || defaultConfig.minSdkVersion.apiLevel < 24) {
@@ -67,21 +69,12 @@ subprojects {
                         minSdkVersion 24
                     }
                 }
-            }
-        }
-    }
-}
 
-// react-native-gesture-handler's own androidTest build merges native libs and
-// finds two copies of libfbjni.so (its own bundled copy + react-android's),
-// causing :react-native-gesture-handler:mergeDebugAndroidTestNativeLibs to
-// fail. Different conflict category than the minSdk fix above (native lib
-// duplication, not manifest merge), so it needs its own override.
-project(':react-native-gesture-handler') {
-    afterEvaluate {
-        android {
-            packagingOptions {
-                pickFirst 'lib/*/libfbjni.so'
+                if (subproject.name == 'react-native-gesture-handler') {
+                    packagingOptions {
+                        pickFirst 'lib/*/libfbjni.so'
+                    }
+                }
             }
         }
     }
