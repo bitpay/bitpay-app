@@ -53,12 +53,6 @@ allprojects {
     }
 }
 
-// Multiple third-party RN libraries ship an androidTest manifest with a
-// stale minSdkVersion (21), conflicting with react-android 0.82.0's required
-// 24+. Using gradle.afterProject (rather than subprojects { afterEvaluate })
-// because the React Native Gradle Plugin's own autolinking logic evaluates
-// some subprojects internally during apply, before a subprojects{} block's
-// afterEvaluate hook would otherwise have a chance to register.
 gradle.afterProject { proj ->
     if (proj != rootProject && proj.hasProperty('android')) {
         proj.android {
@@ -68,11 +62,6 @@ gradle.afterProject { proj ->
                 }
             }
 
-            // Several third-party RN libraries (confirmed: react-native-keyevent)
-            // hardcode an outdated compileSdkVersion (31), which conflicts with
-            // AndroidX libraries (appcompat, core-ktx, lifecycle-*) requiring
-            // compileSdk 33/34+. Raise compileSdk to match our app's own value
-            // (36) for any subproject compiling against something lower.
             if (compileSdkVersion == null || (compileSdkVersion as String).replace("android-", "").toInteger() < 34) {
                 compileSdkVersion 36
             }
@@ -80,6 +69,18 @@ gradle.afterProject { proj ->
             if (proj.name == 'react-native-gesture-handler') {
                 packagingOptions {
                     pickFirst 'lib/*/libfbjni.so'
+                }
+            }
+
+            // kotlinx-coroutines-core-jvm and kotlinx-coroutines-android both
+            // ship an identically-named ProGuard rules file at this META-INF
+            // path, causing a duplicate-resource conflict when merging Java
+            // resources for the androidTest variant of any module pulling in
+            // both artifacts (confirmed: react-native-nitro-fetch). Applied
+            // to every subproject since multiple modules may hit this.
+            packagingOptions {
+                resources {
+                    pickFirsts += 'META-INF/com.android.tools/proguard/coroutines.pro'
                 }
             }
         }
