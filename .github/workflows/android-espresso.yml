@@ -89,10 +89,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            cd android
-            ./gradlew connectedDebugAndroidTest \
-              -PreactNativeArchitectures=x86_64 \
-              --no-daemon
+            cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon
 
       # Allure results are written via TestStorage to /sdcard/googletest/test_outputfiles
       # rather than the app's internal /data/data/<package>/files directory, because the
