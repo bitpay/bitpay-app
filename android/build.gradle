@@ -80,7 +80,7 @@ gradle.afterProject { proj ->
             // to every subproject since multiple modules may hit this.
             packagingOptions {
                 resources {
-                    pickFirsts += 'META-INF/com.android.tools/proguard/coroutines.pro'
+                    pickFirsts += 'META-INF/**/coroutines.pro'
                     excludes += [
                             'META-INF/MANIFEST.MF',
                             'META-INF/LICENSE',
