@@ -66,19 +66,17 @@ gradle.afterProject { proj ->
                 compileSdkVersion 36
             }
 
-            if (proj.name == 'react-native-gesture-handler') {
-                packagingOptions {
-                    pickFirst 'lib/*/libfbjni.so'
-                }
-            }
-
-            // kotlinx-coroutines-core-jvm and kotlinx-coroutines-android both
-            // ship an identically-named ProGuard rules file at this META-INF
-            // path, causing a duplicate-resource conflict when merging Java
-            // resources for the androidTest variant of any module pulling in
-            // both artifacts (confirmed: react-native-nitro-fetch). Applied
-            // to every subproject since multiple modules may hit this.
             packagingOptions {
+                // Native shared libraries that multiple RN modules bundle a
+                // copy of, which also exist inside react-android itself.
+                // Confirmed needed by: react-native-gesture-handler
+                // (libfbjni.so), react-native-webassembly (libc++_shared.so).
+                pickFirst 'lib/*/libfbjni.so'
+                pickFirst 'lib/*/libc++_shared.so'
+                pickFirst 'lib/*/libjsi.so'
+                pickFirst 'lib/*/libreactnative.so'
+                pickFirst 'lib/*/libhermes.so'
+
                 resources {
                     pickFirsts += 'META-INF/**/coroutines.pro'
                     excludes += [
