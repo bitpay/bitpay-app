@@ -91,17 +91,39 @@ jobs:
           script: |
             cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon
 
-      # Allure results are written via TestStorage to /sdcard/googletest/test_outputfiles
-      # rather than the app's internal /data/data/<package>/files directory, because the
-      # app gets reinstalled/uninstalled between connectedDebugAndroidTest invocations,
-      # which wipes internal app storage before results can be pulled.
+      - name: Debug - list TestStorage contents on device
+        if: always()
+        run: |
+          echo "=== Full contents of /sdcard/googletest/test_outputfiles on device ==="
+          adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "find failed or path does not exist"
+          echo "=== End device listing ==="
+ 
       - name: Pull Allure results from device
         if: always()
         run: |
           mkdir -p allure-results
-          adb exec-out sh -c 'cd /sdcard/googletest/test_outputfiles && tar cf - allure-results' \
-            | tar xvf - -C allure-results --strip-components=1 || true
-
+          # Pull the raw tar first so we can inspect its structure directly,
+          # rather than piping straight into extraction and losing visibility
+          # into what the archive actually contained.
+          adb exec-out sh -c 'cd /sdcard/googletest/test_outputfiles && tar cf - allure-results' > allure-results.tar 2>/tmp/pull-stderr.log || true
+ 
+          echo "=== tar pull stderr (if any) ==="
+          cat /tmp/pull-stderr.log || true
+ 
+          echo "=== Raw tar archive contents (paths as stored) ==="
+          tar tvf allure-results.tar || echo "tar listing failed or archive is empty"
+ 
+          echo "=== Extracting with --strip-components=1 ==="
+          tar xvf allure-results.tar -C allure-results --strip-components=1 || true
+ 
+      - name: Debug - list locally extracted Allure results
+        if: always()
+        run: |
+          echo "=== Recursive listing of ./allure-results after extraction ==="
+          find allure-results -type f || echo "nothing extracted"
+          echo "=== Directory tree ==="
+          find allure-results -type d || true
+ 
       - name: Check Allure results were produced
         if: always()
         run: |
@@ -111,9 +133,7 @@ jobs:
             echo "Allure results found:"
             find allure-results -name '*.json'
           fi
-
-      # Espresso/instrumentation JUnit XML reports for raw pass/fail visibility,
-      # independent of whether Allure conversion succeeds.
+ 
       - name: Upload raw Espresso test results
         if: always()
         uses: actions/upload-artifact@v5
@@ -137,6 +157,8 @@ jobs:
         if: always()
         run: |
           zip -r allure-results.zip allure-results
+          echo "=== Zip file contents ==="
+          unzip -l allure-results.zip || true
 
       - name: Upload Allure Results Artifact
         if: always()
