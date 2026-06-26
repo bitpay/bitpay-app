@@ -54,7 +54,7 @@ open class BaseTest {
         intent!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         context.startActivity(intent)
 
-        // CI emulators are typically slower than local hardware to load and
+        // CI emulators are typically slower than local hardware to load and 
         // render the JS bundle. Give RN's startup a generous window before any
         // test attempts its first onView() lookup, rather than racing ahead.
         device?.wait(Until.hasObject(By.pkg("com.bitpay.wallet").depth(0)), 20000)
