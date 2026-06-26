@@ -89,30 +89,31 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
+            adb logcat -c
+            adb logcat > /home/runner/work/_temp/device-logcat.txt &
+            LOGCAT_PID=$!
             cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon
+            EXIT_CODE=$?
+            kill $LOGCAT_PID || true
+            exit $EXIT_CODE
 
       - name: Debug - list TestStorage contents on device
         if: always()
+        timeout-minutes: 2
         run: |
-          echo "=== Full contents of /sdcard/googletest/test_outputfiles on device ==="
-          adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "find failed or path does not exist"
-          echo "=== End device listing ==="
-
-      - name: Capture device logcat for debugging
-        if: always()
-        run: |
-          adb logcat -d > device-logcat.txt || true
+          adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "device unavailable or path does not exist"
 
       - name: Upload device logcat
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: device-logcat
-          path: device-logcat.txt
+          path: /home/runner/work/_temp/device-logcat.txt
           retention-days: 7
  
       - name: Pull Allure results from device
         if: always()
+        timeout-minutes: 3
         run: |
           mkdir -p allure-results
           # Pull the raw tar first so we can inspect its structure directly,
