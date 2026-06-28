@@ -65,6 +65,14 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      
+      - name: Start Metro bundler
+        run: |
+          npx react-native start &
+          echo $! > /tmp/metro.pid
+          # Wait for Metro to be ready before proceeding
+          npx wait-on http://localhost:8081/status --timeout 60000
+
       # Build only the x86_64 ABI for this run. The full default ABI list
       # (armeabi-v7a, x86, x86_64, arm64-v8a) includes a 32-bit x86 build that
       # fails to link against react-native-nitro-modules / react-native-quick-crypto
@@ -81,6 +89,7 @@ jobs:
 
       - name: Start Android emulator and run Espresso tests
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 45
         with:
           api-level: 34
           arch: x86_64
@@ -92,10 +101,15 @@ jobs:
             adb logcat -c
             adb logcat > /home/runner/work/_temp/device-logcat.txt &
             LOGCAT_PID=$!
+            adb reverse tcp:8081 tcp:8081
             cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon
             EXIT_CODE=$?
             kill $LOGCAT_PID || true
             exit $EXIT_CODE
+
+      - name: Stop Metro bundler
+        if: always()
+        run: kill $(cat /tmp/metro.pid) || true
 
       - name: Debug - list TestStorage contents on device
         if: always()
