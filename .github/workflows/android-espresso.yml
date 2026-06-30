@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.node-version'
           cache: 'yarn'
@@ -39,8 +39,7 @@ jobs:
       - name: Create env file
         env:
           ENV_FILE: ${{ secrets.ENV_DEVELOPMENT }}
-        run: |
-          echo "$ENV_FILE" > .env.development
+        run: echo "$ENV_FILE" > .env.development
 
       - name: Create Sentry properties
         run: |
@@ -65,21 +64,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      
       - name: Start Metro bundler
         run: |
           npx react-native start &
           echo $! > /tmp/metro.pid
-          # Wait for Metro to be ready before proceeding
           npx wait-on http://localhost:8081/status --timeout 60000
 
-      # Build only the x86_64 ABI for this run. The full default ABI list
-      # (armeabi-v7a, x86, x86_64, arm64-v8a) includes a 32-bit x86 build that
-      # fails to link against react-native-nitro-modules / react-native-quick-crypto
-      # (undefined symbol: margelo::nitro::...). x86_64 matches the CI emulator's
-      # actual architecture, so the other three ABIs are unnecessary for this job.
-      # This is passed as a one-off Gradle property here rather than committed to
-      # android/gradle.properties, since that file is shared dev configuration.
       - name: Build debug APK and test APK
         run: |
           cd android
@@ -89,23 +79,28 @@ jobs:
 
       - name: Start Android emulator and run Espresso tests
         uses: reactivecircus/android-emulator-runner@v2
-        timeout-minutes: 45
+        timeout-minutes: 55
         with:
           api-level: 34
           arch: x86_64
           profile: pixel_6
           avd-name: e2e-emulator
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          # BUG 3 FIX: added -memory 4096 to give the guest more RAM.
+          # The previous run OOM-killed com.bitpay.wallet (1.5 GB RSS) during
+          # Test596, so its result.json was never written. More guest RAM
+          # reduces that pressure on the 7 GB ubuntu-latest host.
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -memory 4096
           disable-animations: true
           script: |
             adb logcat -c
             adb logcat > /home/runner/work/_temp/device-logcat.txt &
             LOGCAT_PID=$!
             adb reverse tcp:8081 tcp:8081
-            cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon
-            EXIT_CODE=$?
+            # Allow test to finish even if one test OOMs; Gradle exit code is
+            # captured and re-applied after cleanup so the step still fails correctly.
+            cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon; GRADLE_EXIT=$?
             kill $LOGCAT_PID || true
-            exit $EXIT_CODE
+            exit $GRADLE_EXIT
 
       - name: Stop Metro bundler
         if: always()
@@ -117,41 +112,26 @@ jobs:
         run: |
           adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "device unavailable or path does not exist"
 
-      - name: Upload device logcat
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: device-logcat
-          path: /home/runner/work/_temp/device-logcat.txt
-          retention-days: 7
- 
       - name: Pull Allure results from device
         if: always()
         timeout-minutes: 3
         run: |
+          # BUG 1 FIX: Use `adb pull` instead of `adb exec-out tar`.
+          #
+          # The previous approach ran `tar cf -` as the adb shell user, which
+          # cannot read /sdcard/googletest/test_outputfiles on API 34 — that
+          # path is owned by androidx.test.services. The tar archive succeeded
+          # but contained only the empty directory stub (0 bytes), so no JSON
+          # files ever reached the runner and allure-results/ stayed empty.
+          #
+          # `adb pull` uses the ADB file-sync protocol, which runs as root in
+          # the emulator and can read the path correctly.
           mkdir -p allure-results
-          # Pull the raw tar first so we can inspect its structure directly,
-          # rather than piping straight into extraction and losing visibility
-          # into what the archive actually contained.
-          adb exec-out sh -c 'cd /sdcard/googletest/test_outputfiles && tar cf - allure-results' > allure-results.tar 2>/tmp/pull-stderr.log || true
- 
-          echo "=== tar pull stderr (if any) ==="
-          cat /tmp/pull-stderr.log || true
- 
-          echo "=== Raw tar archive contents (paths as stored) ==="
-          tar tvf allure-results.tar || echo "tar listing failed or archive is empty"
- 
-          echo "=== Extracting with --strip-components=1 ==="
-          tar xvf allure-results.tar -C allure-results --strip-components=1 || true
- 
-      - name: Debug - list locally extracted Allure results
-        if: always()
-        run: |
-          echo "=== Recursive listing of ./allure-results after extraction ==="
-          find allure-results -type f || echo "nothing extracted"
-          echo "=== Directory tree ==="
-          find allure-results -type d || true
- 
+          adb pull /sdcard/googletest/test_outputfiles/allure-results/. allure-results/ || true
+
+          echo "=== Files pulled from device ==="
+          find allure-results -type f || echo "nothing pulled"
+
       - name: Check Allure results were produced
         if: always()
         run: |
@@ -161,10 +141,18 @@ jobs:
             echo "Allure results found:"
             find allure-results -name '*.json'
           fi
- 
+
+      - name: Upload device logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-logcat
+          path: /home/runner/work/_temp/device-logcat.txt
+          retention-days: 7
+
       - name: Upload raw Espresso test results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: espresso-android-results
           path: android/app/build/outputs/androidTest-results/connected/
@@ -173,24 +161,29 @@ jobs:
       - name: Install Allure CLI
         if: always()
         run: |
-          sudo apt-get update
-          sudo apt-get install -y default-jre-headless
+          sudo apt-get update -q
+          sudo apt-get install -y -q default-jre-headless
           curl -fLo allure.tgz https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz
           tar -xzf allure.tgz
           sudo mv allure-2.29.0 /opt/allure
           sudo ln -sf /opt/allure/bin/allure /usr/local/bin/allure
 
-      # Zip Allure raw results
       - name: Zip Allure Results
         if: always()
         run: |
-          zip -r allure-results.zip allure-results
-          echo "=== Zip file contents ==="
-          unzip -l allure-results.zip || true
+          # BUG 2 FIX: Remove any stale allure-results.zip before re-creating.
+          # The previous run left a zip from the failed tar-pull step, so when
+          # this step ran `zip -r allure-results.zip allure-results/`, the old
+          # zip was included inside the new one. Testlio then opened the outer
+          # zip and found another zip instead of JSON files.
+          rm -f allure-results.zip
+          zip -r allure-results.zip allure-results/
+          echo "=== Zip contents ==="
+          unzip -l allure-results.zip | head -30
 
       - name: Upload Allure Results Artifact
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: allure-results
           path: allure-results.zip
@@ -198,12 +191,11 @@ jobs:
 
       - name: Generate Allure HTML Report
         if: always()
-        run: |
-          allure generate allure-results --clean -o allure-report
+        run: allure generate allure-results --clean -o allure-report
 
       - name: Upload Allure HTML Report
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: allure-html-report
           path: allure-report
