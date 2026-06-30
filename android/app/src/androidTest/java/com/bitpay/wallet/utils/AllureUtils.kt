@@ -19,3 +19,9 @@ fun allureScreenshot(name: String = "Screenshot") {
 inline fun allureStep(name: String, crossinline block: () -> Unit) {
     Allure.step(name) { block() }
 }
+
+fun allureVideo(name: String, file: File?) {
+    if (file == null || !file.exists()) return
+    Allure.attachment(name, file.inputStream(), "video/mp4")
+    file.delete()
+}

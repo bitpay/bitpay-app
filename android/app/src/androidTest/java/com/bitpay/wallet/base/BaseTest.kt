@@ -14,8 +14,15 @@ import com.bitpay.wallet.utils.allureScreenshot
 import org.junit.Rule
 import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.By
+import com.bitpay.wallet.utils.ScreenRecorder
+import com.bitpay.wallet.utils.allureVideo
+import org.junit.After
+import org.junit.rules.TestName
 
 open class BaseTest {
+
+    @get:Rule
+    val testName = TestName()
 
     companion object {
         var skipRelaunch: Boolean = false
@@ -31,10 +38,28 @@ open class BaseTest {
 
     private val onboardingPage = OnboardingPage()
 
+    private fun clearAppData() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val packageName = instrumentation.targetContext.packageName
+        instrumentation.uiAutomation.executeShellCommand(
+            "pm clear $packageName"
+        ).close()
+        Thread.sleep(2000) // wait for clear to complete before relaunch
+    }
+
     @Before
     fun setup() {
+        clearAppData()
+
         if (!skipRelaunch) launchApp()
         if (!skipOnboardingHandling) handleOnboardingIfPresent()
+        ScreenRecorder.start(testName.methodName)
+    }
+
+    @After
+    fun stopRecording() {
+        val video = ScreenRecorder.stop()
+        allureVideo("Screen Recording - ${testName.methodName}", video)
     }
 
     private fun launchApp() {
