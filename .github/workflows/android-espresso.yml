@@ -112,24 +112,19 @@ jobs:
         run: |
           adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "device unavailable or path does not exist"
 
+      # FIXED - uses adb pull which can read the test_outputfiles path
       - name: Pull Allure results from device
         if: always()
         timeout-minutes: 3
         run: |
-          # BUG 1 FIX: Use `adb pull` instead of `adb exec-out tar`.
-          #
-          # The previous approach ran `tar cf -` as the adb shell user, which
-          # cannot read /sdcard/googletest/test_outputfiles on API 34 — that
-          # path is owned by androidx.test.services. The tar archive succeeded
-          # but contained only the empty directory stub (0 bytes), so no JSON
-          # files ever reached the runner and allure-results/ stayed empty.
-          #
-          # `adb pull` uses the ADB file-sync protocol, which runs as root in
-          # the emulator and can read the path correctly.
           mkdir -p allure-results
+          # adb exec-out tar runs as the adb shell user, which cannot read
+          # /sdcard/googletest/test_outputfiles on API 34 (owned by androidx.test.services).
+          # It silently produces an archive with only the empty directory stub.
+          # adb pull uses the ADB file-sync protocol (runs as emulator root) and works correctly.
           adb pull /sdcard/googletest/test_outputfiles/allure-results/. allure-results/ || true
 
-          echo "=== Files pulled from device ==="
+          echo "=== Files pulled ==="
           find allure-results -type f || echo "nothing pulled"
 
       - name: Check Allure results were produced
@@ -171,11 +166,6 @@ jobs:
       - name: Zip Allure Results
         if: always()
         run: |
-          # BUG 2 FIX: Remove any stale allure-results.zip before re-creating.
-          # The previous run left a zip from the failed tar-pull step, so when
-          # this step ran `zip -r allure-results.zip allure-results/`, the old
-          # zip was included inside the new one. Testlio then opened the outer
-          # zip and found another zip instead of JSON files.
           rm -f allure-results.zip
           zip -r allure-results.zip allure-results/
           echo "=== Zip contents ==="
