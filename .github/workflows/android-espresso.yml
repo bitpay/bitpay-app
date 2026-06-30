@@ -96,9 +96,12 @@ jobs:
             adb logcat > /home/runner/work/_temp/device-logcat.txt &
             LOGCAT_PID=$!
             adb reverse tcp:8081 tcp:8081
-            # Allow test to finish even if one test OOMs; Gradle exit code is
-            # captured and re-applied after cleanup so the step still fails correctly.
+
             cd android && ./gradlew connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 --no-daemon; GRADLE_EXIT=$?
+
+            mkdir -p /home/runner/work/_temp/allure-results
+            adb pull /sdcard/googletest/test_outputfiles/allure-results/. /home/runner/work/_temp/allure-results/ || true
+
             kill $LOGCAT_PID || true
             exit $GRADLE_EXIT
 
@@ -106,26 +109,33 @@ jobs:
         if: always()
         run: kill $(cat /tmp/metro.pid) || true
 
-      - name: Debug - list TestStorage contents on device
-        if: always()
-        timeout-minutes: 2
-        run: |
-          adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "device unavailable or path does not exist"
+      # - name: Debug - list TestStorage contents on device
+      #   if: always()
+      #   timeout-minutes: 2
+      #   run: |
+      #     adb exec-out sh -c 'find /sdcard/googletest/test_outputfiles -type f 2>&1' || echo "device unavailable or path does not exist"
 
       # FIXED - uses adb pull which can read the test_outputfiles path
-      - name: Pull Allure results from device
+      # - name: Pull Allure results from device
+      #   if: always()
+      #   timeout-minutes: 3
+      #   run: |
+      #     mkdir -p allure-results
+      #     # adb exec-out tar runs as the adb shell user, which cannot read
+      #     # /sdcard/googletest/test_outputfiles on API 34 (owned by androidx.test.services).
+      #     # It silently produces an archive with only the empty directory stub.
+      #     # adb pull uses the ADB file-sync protocol (runs as emulator root) and works correctly.
+      #     adb pull /sdcard/googletest/test_outputfiles/allure-results/. allure-results/ || true
+
+      #     echo "=== Files pulled ==="
+      #     find allure-results -type f || echo "nothing pulled"
+
+      - name: Copy Allure results to workspace
         if: always()
-        timeout-minutes: 3
         run: |
           mkdir -p allure-results
-          # adb exec-out tar runs as the adb shell user, which cannot read
-          # /sdcard/googletest/test_outputfiles on API 34 (owned by androidx.test.services).
-          # It silently produces an archive with only the empty directory stub.
-          # adb pull uses the ADB file-sync protocol (runs as emulator root) and works correctly.
-          adb pull /sdcard/googletest/test_outputfiles/allure-results/. allure-results/ || true
-
-          echo "=== Files pulled ==="
-          find allure-results -type f || echo "nothing pulled"
+          cp -r /home/runner/work/_temp/allure-results/. allure-results/ || true
+          find allure-results -type f || echo "nothing"
 
       - name: Check Allure results were produced
         if: always()
