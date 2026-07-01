@@ -3,8 +3,6 @@ package com.bitpay.wallet.base
 import android.content.Intent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
-import com.bitpay.wallet.pages.ImportWalletPage
-import com.bitpay.wallet.pages.MyKeyPage
 import com.bitpay.wallet.pages.OnboardingPage
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -53,13 +51,13 @@ open class BaseTest {
 
         if (!skipRelaunch) launchApp()
         if (!skipOnboardingHandling) handleOnboardingIfPresent()
-        ScreenRecorder.start(testName.methodName)
+        // ScreenRecorder.start(testName.methodName)
     }
 
     @After
     fun stopRecording() {
         val video = ScreenRecorder.stop()
-        allureVideo("Screen Recording - ${testName.methodName}", video)
+        // allureVideo("Screen Recording - ${testName.methodName}", video)
     }
 
     private fun launchApp() {
