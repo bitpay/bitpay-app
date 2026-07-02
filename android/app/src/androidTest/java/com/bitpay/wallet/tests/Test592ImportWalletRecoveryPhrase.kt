@@ -23,11 +23,6 @@ class Test592ImportWalletRecoveryPhrase : BaseTest() {
     private val importWalletPage = ImportWalletPage()
     private val myKeyPage = MyKeyPage()
 
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun clearState() = resetAppState()
-    }
 
     @Test
     fun testImportWalletRecoveryPhrase() {

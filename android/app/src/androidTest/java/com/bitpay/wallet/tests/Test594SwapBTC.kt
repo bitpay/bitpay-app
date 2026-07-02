@@ -25,11 +25,6 @@ class Test594SwapBTC : BaseTest() {
     private val myKeyPage = MyKeyPage()
     private val selectCurrencyPage = SelectCurrencyPage()
 
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun clearState() = resetAppState()
-    }
     @Test
     fun testBTCSwap() {
         allureStep("Click 'Already have a key' on onboarding screen") {

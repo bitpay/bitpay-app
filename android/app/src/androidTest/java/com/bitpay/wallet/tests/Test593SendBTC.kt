@@ -29,12 +29,6 @@ class Test593SendBTC : BaseTest() {
     private val keyboardPage = KeyboardPage()
     private val confirmPaymentPage = ConfirmPaymentPage()
 
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun clearState() = resetAppState()
-    }
-
     @Test
     fun testSendBTC() {
         allureStep("Click 'Already have a key' on onboarding screen") {
