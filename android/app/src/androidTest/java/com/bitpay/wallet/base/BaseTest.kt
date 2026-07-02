@@ -13,7 +13,6 @@ import org.junit.Rule
 import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.By
 import org.junit.After
-import org.junit.BeforeClass
 import org.junit.rules.TestName
 
 open class BaseTest {
@@ -24,17 +23,6 @@ open class BaseTest {
     companion object {
         var skipRelaunch: Boolean = false
         var skipOnboardingHandling: Boolean = false
-
-        @BeforeClass
-        @JvmStatic
-        fun resetAppState() {
-            val instrumentation = InstrumentationRegistry.getInstrumentation()
-            val packageName = instrumentation.targetContext.packageName
-            instrumentation.uiAutomation.executeShellCommand(
-                "pm clear $packageName"
-            ).close()
-            Thread.sleep(3000)
-        }
     }
 
     @get:Rule

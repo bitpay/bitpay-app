@@ -26,7 +26,7 @@ class Test592ImportWalletRecoveryPhrase : BaseTest() {
     companion object {
         @BeforeClass
         @JvmStatic
-        fun setup() = resetAppState()
+        fun clearState() = resetAppState()
     }
 
     @Test

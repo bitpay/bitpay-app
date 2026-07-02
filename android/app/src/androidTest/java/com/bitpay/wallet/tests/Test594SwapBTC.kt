@@ -28,7 +28,7 @@ class Test594SwapBTC : BaseTest() {
     companion object {
         @BeforeClass
         @JvmStatic
-        fun setup() = resetAppState()
+        fun clearState() = resetAppState()
     }
     @Test
     fun testBTCSwap() {

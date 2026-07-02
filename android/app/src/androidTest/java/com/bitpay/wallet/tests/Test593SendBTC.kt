@@ -32,7 +32,7 @@ class Test593SendBTC : BaseTest() {
     companion object {
         @BeforeClass
         @JvmStatic
-        fun setup() = resetAppState()
+        fun clearState() = resetAppState()
     }
 
     @Test
