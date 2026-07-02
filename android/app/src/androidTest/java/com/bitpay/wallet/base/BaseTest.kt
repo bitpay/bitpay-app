@@ -12,8 +12,6 @@ import com.bitpay.wallet.utils.allureScreenshot
 import org.junit.Rule
 import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.By
-import com.bitpay.wallet.utils.ScreenRecorder
-import com.bitpay.wallet.utils.allureVideo
 import org.junit.After
 import org.junit.rules.TestName
 
@@ -56,7 +54,7 @@ open class BaseTest {
 
     @After
     fun stopRecording() {
-        val video = ScreenRecorder.stop()
+        // val video = ScreenRecorder.stop()
         // allureVideo("Screen Recording - ${testName.methodName}", video)
     }
 
