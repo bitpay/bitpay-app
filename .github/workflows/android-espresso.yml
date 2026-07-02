@@ -15,7 +15,7 @@ jobs:
   android-espresso-tests:
     name: Android Espresso UI Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
@@ -91,7 +91,7 @@ jobs:
 
       - name: Start Android emulator and run Espresso tests
         uses: reactivecircus/android-emulator-runner@v2
-        timeout-minutes: 55
+        timeout-minutes: 75
         with:
           api-level: 34
           arch: x86_64

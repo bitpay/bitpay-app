@@ -23,9 +23,12 @@ do
   cd ..
 
   [ $EXIT -ne 0 ] && OVERALL_EXIT=$EXIT
-done
 
-mkdir -p /home/runner/work/_temp/allure-results
-adb pull /sdcard/googletest/test_outputfiles/allure-results/. /home/runner/work/_temp/allure-results/ || true
+  # Pull allure results immediately after each test
+  # so a timeout or crash on a later test doesn't lose earlier results
+  echo "=== Pulling allure results after $TEST_CLASS ==="
+  mkdir -p /home/runner/work/_temp/allure-results
+  adb pull /sdcard/googletest/test_outputfiles/allure-results/. /home/runner/work/_temp/allure-results/ || true
+done
 
 exit $OVERALL_EXIT
