@@ -12,6 +12,7 @@ import com.bitpay.wallet.pages.SelectCurrencyPage
 import com.bitpay.wallet.utils.allureScreenshot
 import com.bitpay.wallet.utils.allureStep
 import org.junit.Assert.assertTrue
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -26,6 +27,11 @@ class Test595SellBTC : BaseTest() {
     private val selectCurrencyPage = SelectCurrencyPage()
     private val keyboardPage = KeyboardPage()
 
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        fun setup() = resetAppState()
+    }
     @Test
     fun testBTCSell() {
         allureStep("Click 'Already have a key' on onboarding screen") {

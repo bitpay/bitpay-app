@@ -11,6 +11,7 @@ import com.bitpay.wallet.pages.SelectCurrencyPage
 import com.bitpay.wallet.utils.allureScreenshot
 import com.bitpay.wallet.utils.allureStep
 import org.junit.Assert.assertTrue
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -24,6 +25,11 @@ class Test594SwapBTC : BaseTest() {
     private val myKeyPage = MyKeyPage()
     private val selectCurrencyPage = SelectCurrencyPage()
 
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        fun setup() = resetAppState()
+    }
     @Test
     fun testBTCSwap() {
         allureStep("Click 'Already have a key' on onboarding screen") {

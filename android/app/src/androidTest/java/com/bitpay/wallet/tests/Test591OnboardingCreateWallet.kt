@@ -7,6 +7,7 @@ import com.bitpay.wallet.utils.allureStep
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bitpay.wallet.utils.allureScreenshot
 import org.junit.Assert.assertTrue
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -15,6 +16,12 @@ import org.junit.runner.RunWith
 class Test591OnboardingCreateWallet : BaseTest() {
     private val onboardingPage = OnboardingPage()
     private val homePage = HomePage()
+
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        fun setup() = resetAppState()
+    }
 
     @Test
     fun testOnboardingCreateWallet() {

@@ -13,6 +13,7 @@ import com.bitpay.wallet.pages.SelectCurrencyPage
 import com.bitpay.wallet.utils.allureScreenshot
 import com.bitpay.wallet.utils.allureStep
 import org.junit.Assert.assertTrue
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -28,6 +29,11 @@ class Test593SendBTC : BaseTest() {
     private val keyboardPage = KeyboardPage()
     private val confirmPaymentPage = ConfirmPaymentPage()
 
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        fun setup() = resetAppState()
+    }
 
     @Test
     fun testSendBTC() {
