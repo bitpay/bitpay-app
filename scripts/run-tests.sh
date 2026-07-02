@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 OVERALL_EXIT=0
 
@@ -19,7 +18,9 @@ do
   cd android && ./gradlew connectedDebugAndroidTest \
     -PreactNativeArchitectures=x86_64 \
     -Pandroid.testInstrumentationRunnerArguments.class="com.bitpay.wallet.tests.$TEST_CLASS" \
-    --no-daemon; EXIT=$?; cd ..
+    --no-daemon
+  EXIT=$?
+  cd ..
 
   [ $EXIT -ne 0 ] && OVERALL_EXIT=$EXIT
 done
