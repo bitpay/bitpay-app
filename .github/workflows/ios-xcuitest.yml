@@ -3,9 +3,9 @@ name: iOS XCUITest
 on:
   workflow_dispatch:
   push:
-    branches: [master, develop]
+    branches: [master, develop, testlio/ui-tests]
   pull_request:
-    branches: [master, develop]
+    branches: [master, develop, testlio/ui-tests]
 
 jobs:
   ios-ui-tests:
