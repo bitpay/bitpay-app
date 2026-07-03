@@ -9,7 +9,7 @@ on:
 
 jobs:
   ios-ui-tests:
-    runs-on: macos-latest-xlarge
+    runs-on: macos-latest
     timeout-minutes: 180
 
     steps:
