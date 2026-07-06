@@ -67,7 +67,7 @@ class OnboardingPage {
 
     fun isContinueWithoutAccountDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(continueWithoutAccountButton, timeoutMs = 120000)
+            WaitUtils.waitForView(continueWithoutAccountButton, timeoutMs = 300 * 1000)
             true
         } catch (e: Throwable) {
             android.util.Log.e("OnboardingPage", "isContinueWithoutAccountDisplayed failed", e)

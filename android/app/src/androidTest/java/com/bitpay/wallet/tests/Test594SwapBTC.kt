@@ -85,15 +85,15 @@ class Test594SwapBTC : BaseTest() {
             selectCurrencyPage.clickEthereum()
         }
 
-        allureStep("Verify Select Key To Deposit To option is displayed") {
+        allureStep("Verify Select Account To Deposit To option is displayed") {
             assertTrue(
-                "Select Key To Deposit To option not displayed",
-                selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
+                "Select Account To Deposit To option not displayed",
+                selectCurrencyPage.verifySelectAccountToDepositToDisplayed()
             )
         }
 
         allureStep("Select second My Key wallet and EVM account") {
-            selectCurrencyPage.clickSecondMyKeyWallet()
+            // selectCurrencyPage.clickSecondMyKeyWallet()
             selectCurrencyPage.clickEVMAccount()
         }
 

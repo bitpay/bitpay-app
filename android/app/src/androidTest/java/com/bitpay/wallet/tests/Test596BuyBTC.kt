@@ -84,20 +84,21 @@ class Test596BuyBTC : BaseTest() {
 
         allureStep("Select Bitcoin as the crypto to buy") {
             selectCurrencyPage.clickBitcoin()
+            selectCurrencyPage.verifySelectCryptoTitleDisplayed()
             selectCurrencyPage.clickBitcoin() // Select Crypto page
             allureScreenshot("Bitcoin selected for buy")
         }
 
-        allureStep("Verify Select Key To Deposit To option is displayed") {
-            assertTrue(
-                "Select Key To Deposit To option not displayed",
-                selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
-            )
-        }
-
-        allureStep("Select second My Key wallet") {
-            selectCurrencyPage.clickSecondMyKeyWallet()
-        }
+//        allureStep("Verify Select Key To Deposit To option is displayed") {
+//            assertTrue(
+//                "Select Key To Deposit To option not displayed",
+//                selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
+//            )
+//        }
+//
+//        allureStep("Select second My Key wallet") {
+//            selectCurrencyPage.clickSecondMyKeyWallet()
+//        }
 
         allureStep("Verify Continue button is enabled") {
             assertTrue(

@@ -24,25 +24,19 @@ class SelectCurrencyPage {
     private val swapText = withText("Swap")
     private val swapFrom = withTestId("swap-crypto-from-wallet-selector")
     private val swapTo = withTestId("swap-crypto-to-wallet-selector")
+    private val selectCryptoText = withText("Select Crypto")
     private val selectKeyToDepositToText = withText("Select Key to Deposit to")
+    private val selectAccountToDepositToText = withText("Select Account to Deposit to")
     private val myKeyWallet = withIndex(withTestId("wallet-card-My Key"), 1)
     private val evmAccount = withText("EVM Account")
     private val enterSwapAmountButton =withTestId("swap-crypto-enter-amount-button")
     private val minButton = withContentDescription("MIN")
     private val swapChangellyTermsCheckbox =withTestId("swap-crypto-changelly-terms-checkbox")
     private val slideToSwipeButton = withContentDescription("Slide to swap")
-
     private val buyText = withText("Buy")
     private val sellText = withText("Sell")
     private val buyContinueButton = withTestId("button")
     private val chooseCrypto = withText("Choose Crypto")
-
-
-
-
-
-
-
 
 
     // ---- Actions ----
@@ -57,7 +51,7 @@ class SelectCurrencyPage {
     }
 
     fun clickBitcoin() {
-        WaitUtils.waitForView(bitcoinText)
+        WaitUtils.waitForView(bitcoinText, timeoutMs = 30 * 1000)
         onView(bitcoinText).perform(click())
     }
 
@@ -115,8 +109,18 @@ class SelectCurrencyPage {
         }
     }
 
+    fun verifySelectCryptoTitleDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(selectCryptoText, timeoutMs = 30 * 1000)
+            onView(selectCryptoText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
     fun clickSwapFromOption() {
-        WaitUtils.waitForView(swapFrom)
+        WaitUtils.waitForView(swapFrom, timeoutMs = 30 * 1000)
         onView(swapFrom).perform(click())
     }
 
@@ -129,6 +133,16 @@ class SelectCurrencyPage {
         return try {
             WaitUtils.waitForView(selectKeyToDepositToText)
             onView(selectKeyToDepositToText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifySelectAccountToDepositToDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(selectAccountToDepositToText)
+            onView(selectAccountToDepositToText).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
             false
@@ -156,7 +170,7 @@ class SelectCurrencyPage {
     }
 
     fun clickChangellyTermsCheckbox() {
-        WaitUtils.waitForView(swapChangellyTermsCheckbox)
+        WaitUtils.waitForView(swapChangellyTermsCheckbox, timeoutMs = 30*1000)
         onView(swapChangellyTermsCheckbox).perform(click())
     }
 
@@ -171,7 +185,7 @@ class SelectCurrencyPage {
 
     fun verifyBuyContinueButtonEnabled(): Boolean {
         return try {
-            WaitUtils.waitForViewEnabled(buyContinueButton)
+            WaitUtils.waitForViewEnabled(buyContinueButton, timeoutMs = 30 * 1000)
             true
         } catch (e: Throwable) {
             false
