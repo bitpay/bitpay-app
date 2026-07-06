@@ -81,6 +81,7 @@ import {
   checkPrivateKeyEncrypted,
   buildKeyObj,
   buildTssKeyObj,
+  buildWalletObj,
   buildMigrationKeyObj,
   formatCryptoAmount,
   coinbaseAccountToWalletRow,
@@ -708,6 +709,57 @@ describe('buildTssKeyObj', () => {
     const result = buildTssKeyObj({tssKey, wallets: []});
     expect(result.keyName).toContain('TSS Key');
     expect(result.keyName).toContain('2-of-3');
+  });
+});
+
+// ─── buildWalletObj (tssKeyId / tssMetadata propagation) ───────────────────
+
+describe('buildWalletObj', () => {
+  const minimalCredentials = {
+    walletId: 'w1',
+    chain: 'btc',
+    network: Network.mainnet,
+    currencyAbbreviation: 'btc',
+    currencyName: 'Bitcoin',
+    img: 'img-url',
+    pendingTxps: [],
+    singleAddress: false,
+  };
+
+  it('propagates tssKeyId and tssMetadata onto the resulting wallet object', () => {
+    const result = buildWalletObj({
+      ...minimalCredentials,
+      tssKeyId: 'the-tss-key-id',
+      tssMetadata: {id: 'session-1', n: 3, m: 2, partyId: 0},
+    } as any);
+
+    expect(result.tssKeyId).toBe('the-tss-key-id');
+    expect(result.tssMetadata).toEqual({
+      id: 'session-1',
+      n: 3,
+      m: 2,
+      partyId: 0,
+    });
+  });
+
+  it('leaves tssKeyId/tssMetadata undefined for a regular (non-TSS) wallet', () => {
+    const result = buildWalletObj({...minimalCredentials} as any);
+
+    expect(result.tssKeyId).toBeUndefined();
+    expect(result.tssMetadata).toBeUndefined();
+  });
+
+  it('defaults keyId to "readonly" when none is provided (read-only / TSS placeholder wallets)', () => {
+    const result = buildWalletObj({...minimalCredentials} as any);
+    expect(result.keyId).toBe('readonly');
+  });
+
+  it('preserves an explicit keyId when provided', () => {
+    const result = buildWalletObj({
+      ...minimalCredentials,
+      keyId: 'my-key-id',
+    } as any);
+    expect(result.keyId).toBe('my-key-id');
   });
 });
 
