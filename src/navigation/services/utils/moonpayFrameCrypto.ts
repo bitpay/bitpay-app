@@ -102,7 +102,6 @@ export function decryptClientCredentials(
     hexToBytes(privateKeyHex),
     hexToBytes(encrypted.ephemeralPublicKey),
   );
-  console.log(sharedSecret.length);
   if (sharedSecret.length !== 32)
     throw new Error('Invalid shared secret length');
 

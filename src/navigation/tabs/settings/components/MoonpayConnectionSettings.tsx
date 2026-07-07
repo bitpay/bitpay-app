@@ -28,6 +28,7 @@ import {
 } from '../../../../styles/colors';
 import {useTheme} from '@react-navigation/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
+import {SettingsScreens} from '../SettingsGroup';
 
 const Container = styled.View`
   flex: 1;
@@ -98,6 +99,7 @@ const MoonpayConnectionSettings = () => {
 
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const anonymousEid = useAppSelector(({APP}) => APP.brazeEid);
 
   const [runReset, setRunReset] = useState(false);
   const [unlinked, setUnlinked] = useState(false);
@@ -126,7 +128,23 @@ const MoonpayConnectionSettings = () => {
         setUnlinked(false);
         navigation.goBack();
       },
-      onSkipConnection: () => {},
+      onSkipConnection: () => {
+        navigation.reset({
+          index: 1,
+          routes: [
+            {
+              name: 'Tabs',
+              params: {screen: 'Settings'},
+            },
+            {
+              name: SettingsScreens.SETTINGS_DETAILS,
+              params: {
+                initialRoute: 'Connections',
+              },
+            },
+          ],
+        });
+      },
     });
   };
 
@@ -136,6 +154,12 @@ const MoonpayConnectionSettings = () => {
         {isConnected ? (
           <AccountCard>
             <AccountInfo>
+              {!displayName && !user?.email && anonymousEid ? (
+                <>
+                  <AccountName>{t('User ID')}</AccountName>
+                  <AccountEmail>{anonymousEid}</AccountEmail>
+                </>
+              ) : null}
               {!!displayName && <AccountName>{displayName}</AccountName>}
               {!!user?.email && <AccountEmail>{user.email}</AccountEmail>}
             </AccountInfo>

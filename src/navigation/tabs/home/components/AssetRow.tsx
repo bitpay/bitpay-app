@@ -182,7 +182,8 @@ const AssetRow: React.FC<Props> = ({
   const [loadingDelayElapsed, setLoadingDelayElapsed] = useState(false);
   const preservedEntry = lastSettledItemRef.current;
   const preservedItem =
-    preservedEntry?.presentationResetToken === presentationResetToken
+    preservedEntry &&
+    preservedEntry.presentationResetToken === presentationResetToken
       ? preservedEntry.item
       : undefined;
 

@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.43.0",
+  "version": "14.44.1",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -23,7 +23,7 @@
     "build:android:release": "export NODE_OPTIONS=--openssl-legacy-provider && ./scripts/android-release.sh",
     "postbuild:android:release": "yarn reset:prod",
     "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
-    "validate": "tsc --noEmit --skipLibCheck 2>&1 | grep -v node_modules | grep -E 'TS(2304|2693|2349|2351|2448|2554|2307|2454|2305|2774)' && exit 1 || exit 0",
+    "validate": "tsc --noEmit --skipLibCheck 2>&1 | grep -v node_modules | grep -E 'TS(2304|2693|2349|2351|2448|2554|2307|2454|2305|2774|2532|18048)' && exit 1 || exit 0",
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "prettier:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "./scripts/postinstall.sh",

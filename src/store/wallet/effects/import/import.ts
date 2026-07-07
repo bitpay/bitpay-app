@@ -725,9 +725,19 @@ export const startAddEDDSAKey =
       );
       return;
     }
-    for (const key of Object.values(keys)) {
+    for (const key of Object.values(keys) as Key[]) {
       try {
         if (key.methods) {
+          if (key.methods.isPrivKeyEncrypted()) {
+            dispatch(
+              LogActions.persistLog(
+                LogActions.info(
+                  `[startAddEDDSAKey] - Key ${key.id} is encrypted, skipping (lazy migration will handle it).`,
+                ),
+              ),
+            );
+            continue;
+          }
           key.methods.addKeyByAlgorithm('EDDSA');
           key.properties = key.methods!.toObj();
           dispatch(
@@ -741,11 +751,12 @@ export const startAddEDDSAKey =
             ),
           );
         }
-      } catch (err) {
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
         dispatch(
           LogActions.persistLog(
             LogActions.error(
-              `[startAddEDDSAKey] - Error migrating key ${key.id}: ${err}`,
+              `[startAddEDDSAKey] - Error migrating key ${key.id}: ${errMsg}`,
             ),
           ),
         );

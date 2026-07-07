@@ -12,6 +12,7 @@ import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/b
 import {logManager} from '../../managers/LogManager';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {MoonpayClientCredentials} from '../../navigation/services/utils/moonpayFrameCrypto';
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 // ---------------------------------------------------------------------------
 // MoonPay Embedded — module-level cache
@@ -224,6 +225,7 @@ export const getBuyCryptoFiatLimits =
   (
     exchange?: BuyCryptoExchangeKey,
     fiatCurrency?: string,
+    paymentMethod?: PaymentMethodKey,
   ): Effect<BuyCryptoLimits> =>
   (dispatch, getState) => {
     const state = getState();
@@ -232,7 +234,7 @@ export const getBuyCryptoFiatLimits =
     let baseFiatArray: string[];
 
     logManager.info(
-      `Getting buyCrypto fiat limits. Exchange: ${exchange} - fiatCurrency: ${fiatCurrency}`,
+      `Getting buyCrypto fiat limits. Exchange: ${exchange} - fiatCurrency: ${fiatCurrency} - paymentMethod: ${paymentMethod}`,
     );
 
     switch (exchange) {
@@ -258,7 +260,7 @@ export const getBuyCryptoFiatLimits =
         break;
       case 'transak':
         baseFiatArray = ['USD'];
-        limits = getTransakFiatAmountLimits();
+        limits = getTransakFiatAmountLimits(paymentMethod);
         break;
       default:
         baseFiatArray = ['USD', 'EUR'];
