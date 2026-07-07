@@ -143,19 +143,19 @@ class OnboardingPage {
     fun clickIUnderstandCheckbox1() {
         WaitUtils.waitForView(iUnderstandCheckBox1)
         onView(iUnderstandCheckBox1).perform(click())
-        Thread.sleep(300)
+        Thread.sleep(500)
     }
 
     fun clickIUnderstandCheckbox2() {
         WaitUtils.waitForView(iUnderstandCheckBox2)
         onView(iUnderstandCheckBox2).perform(click())
-        Thread.sleep(300)
+        Thread.sleep(500)
     }
 
     fun clickIUnderstandCheckbox3() {
         WaitUtils.waitForView(iUnderstandCheckBox3)
         onView(iUnderstandCheckBox3).perform(click())
-        Thread.sleep(300)
+        Thread.sleep(500)
     }
 
     fun clickAgreeAndContinue() {

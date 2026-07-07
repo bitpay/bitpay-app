@@ -72,16 +72,36 @@ class Test594SwapBTC : BaseTest() {
                 "Swap page not displayed",
                 selectCurrencyPage.verifySwapTitleDisplayed()
             )
+            assertTrue(
+                "Swap page - Swap From option not displayed",
+                selectCurrencyPage.verifySwapFromOptionDisplayed()
+            )
+            assertTrue(
+                "Swap page - Bitcoin text not displayed",
+                selectCurrencyPage.verifyBitcoinTextDisplayed()
+            )
             allureScreenshot("Swap page displayed")
         }
 
         allureStep("Select Bitcoin as Swap From currency") {
             selectCurrencyPage.clickSwapFromOption()
+            assertTrue(
+                "Swap page - Crypto To Swap text not displayed",
+                selectCurrencyPage.verifyCryptoToSwapTitleDisplayed()
+            )
             selectCurrencyPage.clickBitcoin()
+            assertTrue(
+                "Swap page - Bitcoin text not displayed",
+                selectCurrencyPage.verifyBitcoinTextDisplayed()
+            )
         }
 
         allureStep("Select Ethereum as Swap To currency") {
             selectCurrencyPage.clickSwapToOption()
+            assertTrue(
+                "Swap To - Page not displayed",
+                selectCurrencyPage.verifySwapToTitleDisplayed()
+            )
             selectCurrencyPage.clickEthereum()
         }
 

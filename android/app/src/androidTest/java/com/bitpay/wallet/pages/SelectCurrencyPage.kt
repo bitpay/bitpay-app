@@ -24,8 +24,10 @@ class SelectCurrencyPage {
     private val swapText = withText("Swap")
     private val swapFrom = withTestId("swap-crypto-from-wallet-selector")
     private val swapTo = withTestId("swap-crypto-to-wallet-selector")
+    private val swapToText = withText("Swap To")
     private val selectCryptoText = withText("Select Crypto")
     private val selectKeyToDepositToText = withText("Select Key to Deposit to")
+    private val cryptoToSwapText = withText("Crypto to Swap")
     private val selectAccountToDepositToText = withText("Select Account to Deposit to")
     private val myKeyWallet = withIndex(withTestId("wallet-card-My Key"), 1)
     private val evmAccount = withText("EVM Account")
@@ -44,6 +46,16 @@ class SelectCurrencyPage {
         return try {
             WaitUtils.waitForView(selectCurrencyText)
             onView(selectCurrencyText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifyBitcoinTextDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(bitcoinText, timeoutMs = 30 * 1000)
+            onView(bitcoinText).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
             false
@@ -119,9 +131,49 @@ class SelectCurrencyPage {
         }
     }
 
+    fun verifyCryptoToSwapTitleDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(cryptoToSwapText, timeoutMs = 30 * 1000)
+            onView(cryptoToSwapText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifyCryptoTopSwapDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(cryptoToSwapText, timeoutMs = 30 * 1000)
+            onView(cryptoToSwapText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifySwapFromOptionDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(swapFrom, timeoutMs = 30 * 1000)
+            onView(swapFrom).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
     fun clickSwapFromOption() {
         WaitUtils.waitForView(swapFrom, timeoutMs = 30 * 1000)
         onView(swapFrom).perform(click())
+    }
+
+    fun verifySwapToTitleDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(swapToText, timeoutMs = 30 * 1000)
+            onView(swapToText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
     fun clickSwapToOption() {
