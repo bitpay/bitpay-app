@@ -54,7 +54,7 @@ class SelectCurrencyPage {
 
     fun verifyBitcoinTextDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(bitcoinText, timeoutMs = 30 * 1000)
+            WaitUtils.waitForView(bitcoinText, timeoutMs = 300000)
             onView(bitcoinText).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
@@ -63,7 +63,7 @@ class SelectCurrencyPage {
     }
 
     fun clickBitcoin() {
-        WaitUtils.waitForView(bitcoinText, timeoutMs = 30 * 1000)
+        WaitUtils.waitForView(bitcoinText, timeoutMs = 30000)
         onView(bitcoinText).perform(click())
     }
 

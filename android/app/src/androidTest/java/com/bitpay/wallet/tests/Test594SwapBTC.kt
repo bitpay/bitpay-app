@@ -89,6 +89,10 @@ class Test594SwapBTC : BaseTest() {
                 "Swap page - Crypto To Swap text not displayed",
                 selectCurrencyPage.verifyCryptoToSwapTitleDisplayed()
             )
+            assertTrue(
+                "Swap page - Bitcoin text not displayed",
+                selectCurrencyPage.verifyBitcoinTextDisplayed()
+            )
             selectCurrencyPage.clickBitcoin()
             assertTrue(
                 "Swap page - Bitcoin text not displayed",
