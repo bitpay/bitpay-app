@@ -85,6 +85,8 @@ class Test594SwapBTC : BaseTest() {
 
         allureStep("Select Bitcoin as Swap From currency") {
             selectCurrencyPage.clickSwapFromOption()
+            allureScreenshot("Swap from Option")
+
             assertTrue(
                 "Swap page - Crypto To Swap text not displayed",
                 selectCurrencyPage.verifyCryptoToSwapTitleDisplayed()
@@ -93,11 +95,14 @@ class Test594SwapBTC : BaseTest() {
                 "Swap page - Bitcoin text not displayed",
                 selectCurrencyPage.verifyBitcoinTextDisplayed()
             )
+
+            allureScreenshot("Swap from Option - Before Bitcoin click")
             selectCurrencyPage.clickBitcoin()
             assertTrue(
                 "Swap page - Bitcoin text not displayed",
                 selectCurrencyPage.verifyBitcoinTextDisplayed()
             )
+            allureScreenshot("Swap from Option - After Bitcoin click")
         }
 
         allureStep("Select Ethereum as Swap To currency") {
@@ -106,6 +111,7 @@ class Test594SwapBTC : BaseTest() {
                 "Swap To - Page not displayed",
                 selectCurrencyPage.verifySwapToTitleDisplayed()
             )
+            allureScreenshot("Swap To click")
             selectCurrencyPage.clickEthereum()
         }
 
