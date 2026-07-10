@@ -98,6 +98,7 @@ import {
   BitpaySupportedSvmCoins,
 } from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
+import {submitDeviceEvent} from '../app/app.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
@@ -314,6 +315,16 @@ const goToPayPro =
         data: {data: fetchedInvoice},
       } = getInvoiceResponse as {data: {data: Invoice}};
       const _invoice: Invoice = invoice || fetchedInvoice;
+
+      // SumSub Device Intelligence: no pay currency chosen yet, so send the invoice fiat.
+      dispatch(
+        submitDeviceEvent({
+          event: 'payment-scanned',
+          invoiceId,
+          amount: _invoice?.price,
+          currencyCode: _invoice?.currency,
+        }),
+      );
 
       ongoingProcessManager.hide();
 

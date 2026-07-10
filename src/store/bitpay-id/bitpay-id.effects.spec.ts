@@ -81,6 +81,7 @@ jest.mock('../analytics/analytics.effects', () => ({
 jest.mock('../app/app.effects', () => ({
   isAnonymousBrazeEid: jest.fn(() => false),
   setEmailNotifications: jest.fn(() => ({type: 'APP/SET_EMAIL_NOTIFICATIONS'})),
+  submitDeviceEvent: jest.fn(() => () => Promise.resolve()),
 }));
 
 jest.mock('../shop', () => ({
