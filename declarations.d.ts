@@ -20,7 +20,6 @@ declare module '@env' {
   export const DOSH_WHITELIST: string;
   export const GIT_COMMIT_HASH: string;
   export const MIXPANEL_PROJECT_TOKEN: string;
-  export const MORALIS_API_KEY: string;
   export const WALLET_CONNECT_V2_PROJECT_ID: string;
   export const ZENLEDGER_CLIENT_ID: string;
   export const ZENLEDGER_CLIENT_SECRET: string;
