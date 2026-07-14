@@ -41,7 +41,7 @@ open class BaseTest {
      *
      *   override val retryCount = 1
      */
-    protected open val retryCount: Int = 3
+    protected open val retryCount: Int = 1
 
     // Outer rule (order 0): captures a screenshot only once all retries
     // are exhausted and the test has truly failed.
