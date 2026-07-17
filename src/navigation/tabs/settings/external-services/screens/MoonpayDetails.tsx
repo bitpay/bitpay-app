@@ -17,7 +17,11 @@ import {
   MoonpayPaymentData,
   MoonpayTransactionDetailsEmbeddedData,
 } from '../../../../../store/buy-crypto/buy-crypto.models';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useLogger,
+  useAppSelector,
+} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -45,10 +49,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {
-  moonpayGetTransactionDetails,
-  moonpayGetTransactionDetailsEmbedded,
-} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {moonpayGetTransactionDetailsEmbedded} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
   moonpayGetStatusColor,
   moonpayGetStatusDetails,
@@ -61,6 +62,9 @@ import {
   getMoonpayEmbeddedCredentials,
   isMoonpayEmbeddedCredentialsValid,
 } from '../../../../../store/buy-crypto/buy-crypto.effects';
+import {moonpaySellEnv} from '../../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
+import {RootState} from '../../../../../store';
+import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 export interface MoonpayDetailsProps {
   paymentRequest: MoonpayPaymentData;
 }
@@ -79,6 +83,9 @@ const MoonpayDetails: React.FC = () => {
   const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const [status, setStatus] = useState<MoonpayStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -182,12 +189,41 @@ const MoonpayDetails: React.FC = () => {
       }
     } else {
       try {
-        const data = await moonpayGetTransactionDetails(
-          paymentRequest.transaction_id,
-          paymentRequest.external_id,
-        );
+        const walletIsSupported = (wallet: Wallet): boolean =>
+          !!(wallet.credentials && wallet.isComplete());
+
+        const selectedWallet = Object.values(allKeys)
+          .filter(key => key.backupComplete)
+          .flatMap(key => key.wallets ?? [])
+          .find(walletIsSupported);
+
+        if (!selectedWallet) {
+          logger.error(
+            'No supported wallet found for Moonpay transaction details',
+          );
+          return;
+        }
+
+        let body;
+        if (paymentRequest.transaction_id) {
+          body = {
+            transactionId: paymentRequest.transaction_id,
+            env: moonpaySellEnv,
+          };
+        } else if (paymentRequest.external_id) {
+          body = {externalId: paymentRequest.external_id, env: moonpaySellEnv};
+        } else {
+          logger.debug('Moonpay getTransactionDetails: Missing parameters');
+          return;
+        }
+
+        const _data = await selectedWallet.moonpayGetTransactionDetails(body);
+        let data = _data?.body?.data ?? _data?.body ?? _data;
+        if (Array.isArray(data)) {
+          data = data[0];
+        }
         if (!data || data.type === 'NotFoundError') {
-          logger.error('Moonpay getTransactionDetails Error: ' + data.message);
+          logger.error('Moonpay getTransactionDetails Error: ' + data?.message);
           return;
         }
         if (

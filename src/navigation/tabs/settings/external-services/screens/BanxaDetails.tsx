@@ -15,9 +15,14 @@ import BanxaLogo from '../../../../../components/icons/external-services/banxa/b
 import {
   BanxaGetOrderDetailsRequestData,
   BanxaIncomingData,
+  BanxaOrderDetailsData,
   BanxaPaymentData,
 } from '../../../../../store/buy-crypto/buy-crypto.models';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -50,13 +55,14 @@ import {
   BanxaStatus,
   banxaUrl,
 } from '../../../../services/buy-crypto/utils/banxa-utils';
-import {banxaGetOrderDetails} from '../../../../../store/buy-crypto/effects/banxa/banxa';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
 import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
 import cloneDeep from 'lodash.clonedeep';
+import {RootState} from '../../../../../store';
+import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
 export interface BanxaDetailsProps {
   paymentRequest: BanxaPaymentData;
@@ -76,6 +82,9 @@ const BanxaDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: BanxaDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const [status, setStatus] = useState<BanxaStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -90,7 +99,7 @@ const BanxaDetails: React.FC = () => {
     setStatus(banxaGetStatusDetails(paymentRequest.status));
   };
 
-  const getOrderDetails = (force?: boolean) => {
+  const getOrderDetails = async (force?: boolean) => {
     if (
       (['cancelled', 'complete', 'declined', 'expired', 'refunded'].includes(
         paymentRequest.status,
@@ -101,166 +110,181 @@ const BanxaDetails: React.FC = () => {
       return;
     }
 
+    const walletIsSupported = (wallet: Wallet): boolean =>
+      !!(wallet.credentials && wallet.isComplete());
+
+    const selectedWallet = Object.values(allKeys)
+      .filter(key => key.backupComplete)
+      .flatMap(key => key.wallets ?? [])
+      .find(walletIsSupported);
+
+    if (!selectedWallet) {
+      logger.error('No supported wallet found for Banxa order details');
+      return;
+    }
+
     const requestData: BanxaGetOrderDetailsRequestData = {
       env: banxaEnv,
       order_id: paymentRequest.order_id,
     };
 
-    banxaGetOrderDetails(requestData)
-      .then(data => {
-        if (!data?.data?.order) {
-          logger.error(
-            'Banxa getOrderDetails Error: ' + data.message ?? 'No data',
-          );
-          return;
-        }
-        const orderData = data.data.order;
-        let shouldUpdate = false;
+    try {
+      let data: BanxaOrderDetailsData | undefined;
+      const _data = await selectedWallet.banxaGetOrder(requestData);
+      data = _data?.body?.data ?? _data?.body ?? _data;
 
-        if (
-          orderData.coin_amount &&
-          typeof orderData.coin_amount === 'number' &&
-          orderData.coin_amount > 0 &&
-          orderData.coin_amount != paymentRequest.crypto_amount
-        ) {
-          logger.debug(
-            `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${orderData.coin_amount}`,
-          );
-          paymentRequest.crypto_amount = orderData.coin_amount;
-          shouldUpdate = true;
-        }
-        if (
-          orderData.fiat_amount &&
-          typeof orderData.fiat_amount === 'number' &&
-          orderData.fiat_amount > 0 &&
-          orderData.fiat_amount != paymentRequest.fiat_total_amount
-        ) {
-          logger.debug(
-            `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiat_amount}`,
-          );
-          paymentRequest.fiat_total_amount = orderData.fiat_amount;
-          let fiatBaseAmount: number = cloneDeep(orderData.fiat_amount);
-          if (
-            orderData.payment_fee &&
-            typeof orderData.payment_fee === 'number' &&
-            orderData.payment_fee >= 0
-          ) {
-            fiatBaseAmount = orderData.fiat_amount - orderData.payment_fee;
-            paymentRequest.fiat_base_amount = fiatBaseAmount;
-          }
-          if (
-            orderData.network_fee &&
-            typeof orderData.network_fee === 'number' &&
-            orderData.network_fee >= 0
-          ) {
-            fiatBaseAmount = orderData.fiat_amount - orderData.network_fee;
-            paymentRequest.fiat_base_amount = fiatBaseAmount;
-          }
-          logger.debug(
-            `Updating fiat_base_amount from: ${paymentRequest.fiat_base_amount} to: ${fiatBaseAmount}`,
-          );
-          shouldUpdate = true;
-        }
-        if (
-          orderData.coin_code &&
-          paymentRequest.coin !== orderData.coin_code.toUpperCase()
-        ) {
-          logger.debug(
-            `Updating coin from: ${
-              paymentRequest.coin
-            } to: ${orderData.coin_code.toUpperCase()}`,
-          );
-          paymentRequest.coin = orderData.coin_code.toUpperCase();
-          shouldUpdate = true;
-        }
-        if (
-          orderData.blockchain?.code &&
-          paymentRequest.chain.toLowerCase() !==
-            orderData.blockchain?.code.toLowerCase()
-        ) {
-          logger.debug(
-            `Updating chain from: ${
-              paymentRequest.chain
-            } to: ${orderData.blockchain.code.toLowerCase()}`,
-          );
-          paymentRequest.chain = orderData.blockchain.code.toLowerCase();
-          shouldUpdate = true;
-        }
-        if (
-          orderData.fiat_code &&
-          paymentRequest.fiat_total_amount_currency !==
-            orderData.fiat_code.toUpperCase()
-        ) {
-          logger.debug(
-            `Updating chain fiat_total_amount_currency: ${
-              paymentRequest.fiat_total_amount_currency
-            } to: ${orderData.fiat_code.toUpperCase()}`,
-          );
-          paymentRequest.fiat_total_amount_currency =
-            orderData.fiat_code.toUpperCase();
-          shouldUpdate = true;
-        }
-        if (
-          orderData.ref &&
-          (!paymentRequest.ref || paymentRequest.ref !== orderData.ref)
-        ) {
-          logger.debug(
-            `Updating ref from: ${paymentRequest.ref} to: ${orderData.ref}`,
-          );
-          paymentRequest.ref = orderData.ref;
-          shouldUpdate = true;
-        }
-        if (
-          orderData.tx_hash &&
-          (!paymentRequest.transaction_id ||
-            paymentRequest.transaction_id !== orderData.tx_hash)
-        ) {
-          logger.debug(
-            `Updating transaction_id from: ${paymentRequest.transaction_id} to: ${orderData.tx_hash}`,
-          );
-          paymentRequest.transaction_id = orderData.tx_hash;
-          shouldUpdate = true;
-        }
-        if (
-          orderData.status &&
-          (!paymentRequest.status || paymentRequest.status !== orderData.status)
-        ) {
-          logger.debug(
-            `Updating status from: ${paymentRequest.status} to: ${orderData.status}`,
-          );
-          paymentRequest.status = orderData.status!;
-          updateStatusDescription();
-          shouldUpdate = true;
-        }
+      if (!data?.data?.order) {
+        logger.error(
+          'Banxa getOrderDetails Error: ' + (data?.message ?? 'No data'),
+        );
+        return;
+      }
+      const orderData = data.data.order;
+      let shouldUpdate = false;
 
-        if (shouldUpdate) {
-          const stateParams: BanxaIncomingData = {
-            banxaExternalId: paymentRequest.external_id,
-            banxaOrderId: paymentRequest.order_id,
-            status: paymentRequest.status,
-            cryptoAmount: paymentRequest.crypto_amount,
-            fiatTotalAmount: paymentRequest.fiat_total_amount,
-            fiatBaseAmount: paymentRequest.fiat_base_amount,
-            coin: paymentRequest.coin,
-            chain: paymentRequest.chain,
-            fiatTotalAmountCurrency: paymentRequest.fiat_total_amount_currency,
-            ref: paymentRequest.ref,
-            transactionId: paymentRequest.transaction_id,
-          };
-          dispatch(
-            BuyCryptoActions.updatePaymentRequestBanxa({
-              banxaIncomingData: stateParams,
-            }),
-          );
-
-          logger.debug(
-            'Saved payment request with: ' + JSON.stringify(paymentRequest),
-          );
+      if (
+        orderData.coin_amount &&
+        typeof orderData.coin_amount === 'number' &&
+        orderData.coin_amount > 0 &&
+        orderData.coin_amount != paymentRequest.crypto_amount
+      ) {
+        logger.debug(
+          `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${orderData.coin_amount}`,
+        );
+        paymentRequest.crypto_amount = orderData.coin_amount;
+        shouldUpdate = true;
+      }
+      if (
+        orderData.fiat_amount &&
+        typeof orderData.fiat_amount === 'number' &&
+        orderData.fiat_amount > 0 &&
+        orderData.fiat_amount != paymentRequest.fiat_total_amount
+      ) {
+        logger.debug(
+          `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiat_amount}`,
+        );
+        paymentRequest.fiat_total_amount = orderData.fiat_amount;
+        let fiatBaseAmount: number = cloneDeep(orderData.fiat_amount);
+        if (
+          orderData.payment_fee &&
+          typeof orderData.payment_fee === 'number' &&
+          orderData.payment_fee >= 0
+        ) {
+          fiatBaseAmount = orderData.fiat_amount - orderData.payment_fee;
+          paymentRequest.fiat_base_amount = fiatBaseAmount;
         }
-      })
-      .catch(err => {
-        logger.error('Banxa getOrderDetails Error: ' + JSON.stringify(err));
-      });
+        if (
+          orderData.network_fee &&
+          typeof orderData.network_fee === 'number' &&
+          orderData.network_fee >= 0
+        ) {
+          fiatBaseAmount = orderData.fiat_amount - orderData.network_fee;
+          paymentRequest.fiat_base_amount = fiatBaseAmount;
+        }
+        logger.debug(
+          `Updating fiat_base_amount from: ${paymentRequest.fiat_base_amount} to: ${fiatBaseAmount}`,
+        );
+        shouldUpdate = true;
+      }
+      if (
+        orderData.coin_code &&
+        paymentRequest.coin !== orderData.coin_code.toUpperCase()
+      ) {
+        logger.debug(
+          `Updating coin from: ${
+            paymentRequest.coin
+          } to: ${orderData.coin_code.toUpperCase()}`,
+        );
+        paymentRequest.coin = orderData.coin_code.toUpperCase();
+        shouldUpdate = true;
+      }
+      if (
+        orderData.blockchain?.code &&
+        paymentRequest.chain.toLowerCase() !==
+          orderData.blockchain?.code.toLowerCase()
+      ) {
+        logger.debug(
+          `Updating chain from: ${
+            paymentRequest.chain
+          } to: ${orderData.blockchain.code.toLowerCase()}`,
+        );
+        paymentRequest.chain = orderData.blockchain.code.toLowerCase();
+        shouldUpdate = true;
+      }
+      if (
+        orderData.fiat_code &&
+        paymentRequest.fiat_total_amount_currency !==
+          orderData.fiat_code.toUpperCase()
+      ) {
+        logger.debug(
+          `Updating chain fiat_total_amount_currency: ${
+            paymentRequest.fiat_total_amount_currency
+          } to: ${orderData.fiat_code.toUpperCase()}`,
+        );
+        paymentRequest.fiat_total_amount_currency =
+          orderData.fiat_code.toUpperCase();
+        shouldUpdate = true;
+      }
+      if (
+        orderData.ref &&
+        (!paymentRequest.ref || paymentRequest.ref !== orderData.ref)
+      ) {
+        logger.debug(
+          `Updating ref from: ${paymentRequest.ref} to: ${orderData.ref}`,
+        );
+        paymentRequest.ref = orderData.ref;
+        shouldUpdate = true;
+      }
+      if (
+        orderData.tx_hash &&
+        (!paymentRequest.transaction_id ||
+          paymentRequest.transaction_id !== orderData.tx_hash)
+      ) {
+        logger.debug(
+          `Updating transaction_id from: ${paymentRequest.transaction_id} to: ${orderData.tx_hash}`,
+        );
+        paymentRequest.transaction_id = orderData.tx_hash;
+        shouldUpdate = true;
+      }
+      if (
+        orderData.status &&
+        (!paymentRequest.status || paymentRequest.status !== orderData.status)
+      ) {
+        logger.debug(
+          `Updating status from: ${paymentRequest.status} to: ${orderData.status}`,
+        );
+        paymentRequest.status = orderData.status!;
+        updateStatusDescription();
+        shouldUpdate = true;
+      }
+
+      if (shouldUpdate) {
+        const stateParams: BanxaIncomingData = {
+          banxaExternalId: paymentRequest.external_id,
+          banxaOrderId: paymentRequest.order_id,
+          status: paymentRequest.status,
+          cryptoAmount: paymentRequest.crypto_amount,
+          fiatTotalAmount: paymentRequest.fiat_total_amount,
+          fiatBaseAmount: paymentRequest.fiat_base_amount,
+          coin: paymentRequest.coin,
+          chain: paymentRequest.chain,
+          fiatTotalAmountCurrency: paymentRequest.fiat_total_amount_currency,
+          ref: paymentRequest.ref,
+          transactionId: paymentRequest.transaction_id,
+        };
+        dispatch(
+          BuyCryptoActions.updatePaymentRequestBanxa({
+            banxaIncomingData: stateParams,
+          }),
+        );
+
+        logger.debug(
+          'Saved payment request with: ' + JSON.stringify(paymentRequest),
+        );
+      }
+    } catch (err) {
+      logger.error('Banxa getOrderDetails Error: ' + JSON.stringify(err));
+    }
   };
 
   const onRefresh = async () => {
