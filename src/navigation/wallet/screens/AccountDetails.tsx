@@ -184,6 +184,7 @@ import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/alloca
 import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
+import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -347,6 +348,13 @@ const CenteredText = styled(BaseText)`
   margin-left: 4px;
 `;
 
+const AccountMetadataRow = styled.View`
+  align-items: center;
+  align-self: center;
+  flex-direction: row;
+  gap: 8px;
+`;
+
 type AccountAddressBadgeProps = {
   address?: string;
 };
@@ -473,6 +481,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       ),
     [key, selectedAccountAddress],
   );
+  const tssMetadata = keyFullWalletObjs.find(
+    wallet => wallet.tssKeyId,
+  )?.tssMetadata;
   const {
     shouldMountBalanceChart: shouldMountAccountBalanceChart,
     shouldShowChartLoader: shouldShowAccountChartLoader,
@@ -556,8 +567,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       : legacyLastDayChangeRowData;
   const hasMultipleAccounts = memorizedAccountList.length > 1;
   const accountChartPreContent = useMemo(
-    () => <AccountAddressBadge address={accountItem?.receiveAddress} />,
-    [accountItem?.receiveAddress],
+    () => (
+      <AccountMetadataRow>
+        <AccountAddressBadge address={accountItem?.receiveAddress} />
+        {tssMetadata ? (
+          <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'list'} />
+        ) : null}
+      </AccountMetadataRow>
+    ),
+    [accountItem?.receiveAddress, tssMetadata],
   );
 
   const accounts = useAppSelector(

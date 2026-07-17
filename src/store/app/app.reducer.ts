@@ -53,6 +53,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'tokensDataLoaded',
   'isImportLedgerModalVisible',
   'showArchaxBanner',
+  'hasViewedTSSOnboarding',
 ];
 
 export type ModalId =
@@ -166,6 +167,7 @@ export interface AppState {
   checkingBiometricForSending: boolean;
   hasViewedZenLedgerWarning: boolean;
   hasViewedBillsTab: boolean;
+  hasViewedTSSOnboarding: boolean;
   isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
@@ -267,6 +269,7 @@ const initialState: AppState = {
   checkingBiometricForSending: false,
   hasViewedZenLedgerWarning: false,
   hasViewedBillsTab: false,
+  hasViewedTSSOnboarding: false,
   isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
@@ -790,6 +793,12 @@ export const appReducer = (
       return {
         ...state,
         hasViewedBillsTab: true,
+      };
+
+    case AppActionTypes.SET_HAS_VIEWED_TSS_ONBOARDING:
+      return {
+        ...state,
+        hasViewedTSSOnboarding: true,
       };
 
     case AppActionTypes.USER_FEEDBACK:
