@@ -25,11 +25,24 @@ jobs:
         run: |
           echo "=== Disk before cleanup ==="
           df -h
+
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android/sdk/ndk/2[0-6]*
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /opt/az
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/share/miniconda
+
+          # Docker preloads several GB of images on GitHub-hosted runners
+          # that this workflow never uses.
+          docker image prune -af 2>/dev/null || true
+          docker system prune -af --volumes 2>/dev/null || true
+
           echo "=== Disk after cleanup ==="
           df -h
 
@@ -47,6 +60,13 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Check disk space after dependency install
+        run: |
+          echo "=== Disk after yarn install ==="
+          df -h
+          echo "=== Largest node_modules subdirs ==="
+          du -sh node_modules/* 2>/dev/null | sort -rh | head -15
 
       - name: Create env file
         env:
@@ -88,6 +108,15 @@ jobs:
           ./gradlew assembleDebug assembleDebugAndroidTest \
             -PreactNativeArchitectures=x86_64 \
             --no-daemon
+
+      - name: Check disk space before emulator start
+        run: |
+          echo "=== Disk after APK build, before emulator ==="
+          df -h
+          echo "=== Gradle cache size ==="
+          du -sh ~/.gradle/caches 2>/dev/null || true
+          echo "=== Android build outputs size ==="
+          du -sh android/app/build 2>/dev/null || true
 
       - name: Start Android emulator and run Espresso tests
         uses: reactivecircus/android-emulator-runner@v2
