@@ -42,15 +42,6 @@ class KeyboardPage {
         }
     }
 
-//    fun enterAmount(amount: String = "0") {
-//        for (char in amount) {
-//            val key = withText(char.toString())
-//            WaitUtils.waitForView(key)
-//            onView(key).perform(click())
-//            Thread.sleep(200) // give RN's JS thread time to process the state update
-//        }
-//    }
-
     fun clickContinue() {
         WaitUtils.waitForViewEnabled(continueButton)
         onView(continueButton).perform(click())

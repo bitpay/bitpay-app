@@ -10,6 +10,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withSubstring
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
+import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import com.bitpay.wallet.utils.WaitUtils.withIndex
 import org.hamcrest.Matchers.allOf
 
@@ -18,6 +19,10 @@ class SelectCurrencyPage {
     // ---- Locators ----
     private val selectCurrencyText = withText("Select a Currency")
     private val bitcoinText = withSubstring("Bitcoin")
+    private val btcBitcoinText = allOf(
+        withSubstring("Bitcoin"),
+        hasSibling(withText("BTC"))
+    )
     private val ethereumText = withSubstring("Ethereum")
     private val sendToText = withText("Send To")
     private val sendToAddressInput = withTestId("send-to-address-input")
@@ -65,6 +70,11 @@ class SelectCurrencyPage {
     fun clickBitcoin() {
         WaitUtils.waitForView(bitcoinText, timeoutMs = 30000)
         onView(bitcoinText).perform(click())
+    }
+
+    fun clickBTCBitcoin() {
+        WaitUtils.waitForView(btcBitcoinText, timeoutMs = 30000)
+        onView(btcBitcoinText).perform(click())
     }
 
     fun clickEthereum() {

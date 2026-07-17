@@ -97,14 +97,13 @@ class Test594SwapBTC : BaseTest() {
             )
 
             allureScreenshot("Swap from Option - Before Bitcoin click")
-            selectCurrencyPage.clickBitcoin()
+            selectCurrencyPage.clickBTCBitcoin()
             assertTrue(
                 "Swap page - Bitcoin text not displayed",
                 selectCurrencyPage.verifyBitcoinTextDisplayed()
             )
             allureScreenshot("Swap from Option - After Bitcoin click")
         }
-
         allureStep("Select Ethereum as Swap To currency") {
             selectCurrencyPage.clickSwapToOption()
             assertTrue(
