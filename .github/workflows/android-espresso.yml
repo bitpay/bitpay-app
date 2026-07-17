@@ -35,7 +35,6 @@ jobs:
           sudo rm -rf /usr/share/swift
           sudo rm -rf /opt/az
           sudo rm -rf /usr/local/share/chromium
-          sudo rm -rf /usr/local/lib/node_modules
           sudo rm -rf /usr/share/miniconda
 
           # Docker preloads several GB of images on GitHub-hosted runners
@@ -45,6 +44,9 @@ jobs:
 
           echo "=== Disk after cleanup ==="
           df -h
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Setup Node
         uses: actions/setup-node@v4
