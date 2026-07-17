@@ -12,6 +12,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withSubstring
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import com.bitpay.wallet.utils.WaitUtils.withIndex
+import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Matchers.allOf
 
 class SelectCurrencyPage {
@@ -21,7 +22,7 @@ class SelectCurrencyPage {
     private val bitcoinText = withSubstring("Bitcoin")
     private val btcBitcoinText = allOf(
         withSubstring("Bitcoin"),
-        hasSibling(withText("BTC"))
+        hasSibling(withText(containsString("BTC")))
     )
     private val ethereumText = withSubstring("Ethereum")
     private val sendToText = withText("Send To")
