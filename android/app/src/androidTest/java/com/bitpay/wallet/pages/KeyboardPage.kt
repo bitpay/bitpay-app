@@ -30,25 +30,26 @@ class KeyboardPage {
 
 
     // ---- Actions ----
-//    fun enterAmount(amount: String = "0") {
-//        for (char in amount) {
-//            val key = allOf(
-//                withText(char.toString()),
-//                not(hasSibling(withText("BTC")))
-//            )
-//            WaitUtils.waitForView(key)
-//            onView(key).perform(click())
-//        }
-//    }
-
     fun enterAmount(amount: String = "0") {
         for (char in amount) {
-            val key = withText(char.toString())
+            val key = allOf(
+                withText(char.toString()),
+                not(hasSibling(withText("BTC")))
+            )
             WaitUtils.waitForView(key)
+            Thread.sleep(200)
             onView(key).perform(click())
-            Thread.sleep(200) // give RN's JS thread time to process the state update
         }
     }
+
+//    fun enterAmount(amount: String = "0") {
+//        for (char in amount) {
+//            val key = withText(char.toString())
+//            WaitUtils.waitForView(key)
+//            onView(key).perform(click())
+//            Thread.sleep(200) // give RN's JS thread time to process the state update
+//        }
+//    }
 
     fun clickContinue() {
         WaitUtils.waitForViewEnabled(continueButton)
