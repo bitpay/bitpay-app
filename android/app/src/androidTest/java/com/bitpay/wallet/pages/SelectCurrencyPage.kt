@@ -38,7 +38,7 @@ class SelectCurrencyPage {
     private val myKeyWallet = withIndex(withTestId("wallet-card-My Key"), 1)
     private val evmAccount = withText("EVM Account")
     private val enterSwapAmountButton =withTestId("swap-crypto-enter-amount-button")
-    private val minButton = withContentDescription("MIN")
+    private val minButton = withText("MIN")
     private val swapChangellyTermsCheckbox =withTestId("swap-crypto-changelly-terms-checkbox")
     private val slideToSwipeButton = withContentDescription("Slide to swap")
     private val buyText = withText("Buy")
