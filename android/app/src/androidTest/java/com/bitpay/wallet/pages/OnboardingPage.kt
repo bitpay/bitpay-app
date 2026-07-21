@@ -82,6 +82,7 @@ class OnboardingPage {
 
     fun clickSkip() {
         WaitUtils.waitForView(skipButton)
+        Thread.sleep(1000)
         onView(skipButton).perform(click())
     }
 
@@ -125,6 +126,15 @@ class OnboardingPage {
         onView(bottomSheetLaterButton).perform(click())
     }
 
+    fun verifyBackupRecoveryPhraseDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(backupRecoveryPhraseElement)
+            onView(backupRecoveryPhraseElement).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
     fun clickBackupRecoveryPhrase() {
         WaitUtils.waitForView(backupRecoveryPhraseElement)
         onView(backupRecoveryPhraseElement).perform(click())

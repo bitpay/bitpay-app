@@ -28,7 +28,12 @@ class Test591OnboardingCreateWallet : BaseTest() {
                 "Backup key prompt was not displayed",
                 onboardingPage.verifyBackupKeyPromptIsDisplayed()
             )
-            allureScreenshot("Backup key prompt displayed")
+            assertTrue(
+                "Backup your recovery phrase not displayed",
+                onboardingPage.verifyBackupRecoveryPhraseDisplayed()
+            )
+
+            allureScreenshot("Backup key page displayed")
         }
 
         allureStep("Skip backup prompt") {
