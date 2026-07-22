@@ -286,7 +286,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(fetchInitialUserData());
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    dispatch(walletConnectV2Init());
+    // Only init WalletConnect at startup if the user has active sessions — avoids starting
+    // the heartbeat loop for users who never use WC.
+    if (getState().WALLET_CONNECT_V2?.sessions?.length > 0) {
+      dispatch(walletConnectV2Init());
+    }
     dispatch(moralisInit());
 
     // Update Coinbase
