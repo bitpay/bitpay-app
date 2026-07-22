@@ -72,8 +72,8 @@ jobs:
       # Boot Simulator
       - name: Boot Simulator
         run: |
-          xcrun simctl boot "iPhone 16" || true
-          xcrun simctl bootstatus "iPhone 16" -b
+          xcrun simctl boot "iPhone 17" || true
+          xcrun simctl bootstatus "iPhone 17" -b
 
       # Apply production configuration
       - name: Apply production configuration
@@ -89,7 +89,7 @@ jobs:
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
             -configuration Release \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'platform=iOS Simulator,name=iPhone 17' \
             -derivedDataPath Build \
             -only-testing:BitPayAppUITests \
             build-for-testing
