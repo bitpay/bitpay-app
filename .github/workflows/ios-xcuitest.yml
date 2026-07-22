@@ -21,6 +21,9 @@ jobs:
       - name: Select Xcode 26.0.1
         run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
 
+      - name: List available simulators
+        run: xcrun simctl list devices available
+
       # Setup Node
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -69,8 +72,8 @@ jobs:
       # Boot Simulator
       - name: Boot Simulator
         run: |
-          xcrun simctl boot "iPhone 17" || true
-          xcrun simctl bootstatus "iPhone 17" -b
+          xcrun simctl boot "iPhone 16" || true
+          xcrun simctl bootstatus "iPhone 16" -b
 
       # Apply production configuration
       - name: Apply production configuration
@@ -86,7 +89,7 @@ jobs:
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
             -configuration Release \
-            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
             -derivedDataPath Build \
             -only-testing:BitPayAppUITests \
             build-for-testing
