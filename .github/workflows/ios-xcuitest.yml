@@ -21,9 +21,6 @@ jobs:
       - name: Select Xcode 26.0.1
         run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
 
-      - name: List available simulators
-        run: xcrun simctl list devices available
-
       # Setup Node
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -92,6 +89,8 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -derivedDataPath Build \
             -only-testing:BitPayAppUITests \
+            VALIDATE_WORKSPACE=NO \
+            VALIDATE_PRODUCT=NO \
             build-for-testing
 
       # Run XCUITest
