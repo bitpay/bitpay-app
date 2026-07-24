@@ -7,7 +7,7 @@ import '@walletconnect/react-native-compat';
 import {AppRegistry, Alert, StatusBar, Appearance, LogBox} from 'react-native';
 import {IS_MAESTRO} from '@env';
 
-if (IS_MAESTRO === 'true') {
+if (IS_MAESTRO === 'true' || __DEV__) {
   LogBox.ignoreAllLogs();
 }
 import Root from './src/Root';

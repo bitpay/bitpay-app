@@ -48,10 +48,15 @@ class MainActivity : ReactActivity() {
         (application as MainApplication).addActivityToStack(this.javaClass)
 
         window.apply {
-            setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
+            if (!BuildConfig.DEBUG) {
+                // Disable screenshots/screen recording only in production.
+                // Allow automation tools (Espresso/Appium/Layout Inspector)
+                // to capture screenshots in debug builds.
+                setFlags(
+                        WindowManager.LayoutParams.FLAG_SECURE,
+                        WindowManager.LayoutParams.FLAG_SECURE
+                )
+            }
 
             if (Build.VERSION.SDK_INT in 19..20) {
                 setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true)

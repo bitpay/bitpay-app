@@ -52,3 +52,46 @@ allprojects {
         maven { url "https://dl.appsflyer.com" }
     }
 }
+
+gradle.afterProject { proj ->
+    if (proj != rootProject && proj.hasProperty('android')) {
+        proj.android {
+            if (defaultConfig.minSdkVersion == null || defaultConfig.minSdkVersion.apiLevel < 24) {
+                defaultConfig {
+                    minSdkVersion 24
+                }
+            }
+
+            if (compileSdkVersion == null || (compileSdkVersion as String).replace("android-", "").toInteger() < 34) {
+                compileSdkVersion 36
+            }
+
+            packagingOptions {
+                // Native shared libraries that multiple RN modules bundle a
+                // copy of, which also exist inside react-android itself.
+                // Confirmed needed by: react-native-gesture-handler
+                // (libfbjni.so), react-native-webassembly (libc++_shared.so).
+                pickFirst 'lib/*/libfbjni.so'
+                pickFirst 'lib/*/libc++_shared.so'
+                pickFirst 'lib/*/libjsi.so'
+                pickFirst 'lib/*/libreactnative.so'
+                pickFirst 'lib/*/libhermes.so'
+
+                resources {
+                    pickFirsts += 'META-INF/**/coroutines.pro'
+                    excludes += [
+                            'META-INF/MANIFEST.MF',
+                            'META-INF/LICENSE',
+                            'META-INF/LICENSE.txt',
+                            'META-INF/LICENSE.md',
+                            'META-INF/LICENSE-notice.md',
+                            'META-INF/NOTICE',
+                            'META-INF/NOTICE.txt',
+                            'META-INF/DEPENDENCIES',
+                            'META-INF/*.kotlin_module'
+                    ]
+                }
+            }
+        }
+    }
+}
