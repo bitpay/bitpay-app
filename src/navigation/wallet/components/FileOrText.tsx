@@ -26,6 +26,7 @@ import {
 } from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
 import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {
   startGetRates,
@@ -246,6 +247,7 @@ const schema = yup.object().shape({
 });
 
 const FileOrText = () => {
+  const onPerformanceLayout = useScreenRenderPerformance('Import.FileOrText');
   const {t} = useTranslation();
   const logger = useLogger();
   const theme = useTheme();
@@ -557,6 +559,7 @@ const FileOrText = () => {
   return (
     <KeyboardAwareScrollView
       testID="file-or-text-view"
+      onLayout={onPerformanceLayout}
       style={styles.scrollViewContainer}
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
