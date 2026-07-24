@@ -7,56 +7,86 @@ on:
   pull_request:
     branches: [master, develop, testlio/ui-tests]
 
+concurrency:
+  group: e2e-ios-xcui-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ios-ui-tests:
     runs-on: macos-latest
     timeout-minutes: 180
 
     steps:
-      # Checkout Repo
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      # Select Xcode
-      - name: Select Xcode 26.0.1
-        run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
-
-      # Setup Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: yarn
+          node-version: '20'
 
-      # Install JS dependencies
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('yarn.lock') }}
+
       - name: Install JS dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile
 
-      # Setup Ruby
+      - name: Generate DKLS vendor files
+        run: node ./scripts/generate-dkls-vendor.js
+
+      - name: Create env file
+        env:
+          ENV_FILE: ${{ secrets.ENV_DEVELOPMENT }}
+        run: echo "$ENV_FILE" > .env.development
+
+      - name: Create Sentry properties
+        run: |
+          echo "${{ secrets.SENTRY_PROPERTIES }}" > sentry.properties
+          echo "${{ secrets.SENTRY_PROPERTIES }}" > ios/sentry.properties
+
+      - name: Set native config values
+        run: yarn set:dev
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: .ruby-version
-          bundler-cache: false
+          ruby-version: '2.7.6'
+          bundler-cache: true
 
-      # Install Gems
-      - name: Install Gems
+      - name: Select Xcode 26.0.1
+        run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
+
+      - name: Debug - Xcode and OS version
         run: |
-          bundle config set deployment false
-          bundle install
+          echo "=== Xcode version ==="
+          xcodebuild -version
+          echo "=== macOS version ==="
+          sw_vers
+          echo "=== Available Xcode installations ==="
+          ls /Applications/ | grep Xcode
 
-      # Disable Sentry upload
+      - name: List available simulators
+        run: xcrun simctl list devices available
+
+      - name: Clean Xcode caches
+        run: |
+          rm -rf ios/build
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+
       - name: Disable Sentry upload
-        run: |
-          echo "SENTRY_DISABLE_AUTO_UPLOAD=true" >> $GITHUB_ENV
+        run: echo "SENTRY_DISABLE_AUTO_UPLOAD=true" >> $GITHUB_ENV
 
-      # Install Pods
       - name: Install Pods
-        run: |
-          cd ios
-          bundle exec pod install
+        run: cd ios && bundle exec pod install
 
-      # Generate React Native Bundle
+      - name: Debug - Braze pod version
+        run: grep -A2 "Braze" ios/Podfile.lock
+
       - name: Generate React Native Bundle
         run: |
           npx react-native bundle \
@@ -66,60 +96,68 @@ jobs:
             --bundle-output ios/main.jsbundle \
             --assets-dest ios
 
-      # Boot Simulator
       - name: Boot Simulator
         run: |
-          xcrun simctl boot "iPhone 17" || true
-          xcrun simctl bootstatus "iPhone 17" -b
+          echo "=== Full simulator list ==="
+          xcrun simctl list devices available
+          UDID=$(xcrun simctl list devices available | grep "iPhone 17 (" | grep -v "Pro\|Plus\|Max\|Air\|e (" | head -1 | grep -E -o '\([0-9A-F-]+\)' | tr -d '()')
+          if [ -z "$UDID" ]; then
+            echo "ERROR: Could not find iPhone 17 UDID"
+            exit 1
+          fi
+          echo "Booting simulator UDID: $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
 
-      # Apply production configuration
       - name: Apply production configuration
         run: |
           export NODE_ENV=production
           yarn set:prod
 
-      # Build for testing
       - name: Build for testing
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          SENTRY_DISABLE_AUTO_UPLOAD: true
         run: |
+          export NODE_BINARY=$(which node)
+          export PATH="$(dirname "$NODE_BINARY"):$PATH"
           set -o pipefail
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
             -configuration Release \
-            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath Build \
             -only-testing:BitPayAppUITests \
             VALIDATE_WORKSPACE=NO \
             VALIDATE_PRODUCT=NO \
-            build-for-testing
+            NODE_BINARY="$NODE_BINARY" \
+            build-for-testing 2>&1 | tee build-output.log
+          BUILD_EXIT=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "=== BUILD ERRORS ==="
+            grep -E "error:" build-output.log | grep -v "warning\|note" | head -50
+          fi
+          exit $BUILD_EXIT
 
-      # Run XCUITest
-      # - name: Run XCUITest
-      #   run: |
-      #     set -o pipefail
-      #     xcodebuild \
-      #       -workspace ios/BitPayApp.xcworkspace \
-      #       -scheme BitPayApp \
-      #       -configuration Release \
-      #       -destination 'platform=iOS Simulator,name=iPhone 17' \
-      #       -derivedDataPath Build \
-      #       -resultBundlePath TestResults.xcresult \
-      #       -parallel-testing-enabled NO \
-      #       -only-testing:BitPayAppUITests \
-      #       test
-      
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build-output.log
+          retention-days: 7
+
       - name: Run XCUITest in order
         run: |
-          set -e
           set -o pipefail
-
           rm -rf TestResults.xcresult
-
           xcodebuild \
             -workspace ios/BitPayApp.xcworkspace \
             -scheme BitPayApp \
             -configuration Release \
-            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath Build \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
@@ -129,22 +167,34 @@ jobs:
             -only-testing:BitPayAppUITests/Test594_BasicSwapBTC \
             -only-testing:BitPayAppUITests/Test595_BasicSellBTC \
             -only-testing:BitPayAppUITests/Test596_BasicBuyBTC \
-            test
+            test-without-building 2>&1 | tee test-output.log
+          TEST_EXIT=${PIPESTATUS[0]}
+          if [ $TEST_EXIT -ne 0 ]; then
+            echo "=== TEST FAILURES ==="
+            grep -E "failed:|error:" test-output.log | head -50
+          fi
+          exit $TEST_EXIT
 
-      # Upload XCResult
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: test-output.log
+          retention-days: 7
+
       - name: Upload XCUITest Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: xcuitest-results
           path: TestResults.xcresult
+          retention-days: 7
 
-      # Install Allure CLI
       - name: Install Allure CLI
         if: always()
         run: brew install allure || true
 
-      # Install allure-xcresult
       - name: Install allure-xcresult
         if: always()
         run: |
@@ -154,7 +204,6 @@ jobs:
             sudo mv allure-xcresult /usr/local/bin/
           fi
 
-      # Convert to Allure
       - name: Convert XCResult to Allure Results
         if: always()
         run: |
@@ -162,45 +211,41 @@ jobs:
             --input TestResults.xcresult \
             --output allure-results
 
-      # Zip Allure
       - name: Zip Allure Results
         if: always()
         run: |
+          rm -f allure-results.zip
           zip -r allure-results.zip allure-results
 
-      # Upload Allure Results
       - name: Upload Allure Results Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
           path: allure-results.zip
+          retention-days: 7
 
-      # Generate HTML
       - name: Generate Allure HTML Report
         if: always()
-        run: |
-          allure generate allure-results --clean -o allure-report
+        run: allure generate allure-results --clean -o allure-report
 
-      # Upload HTML
       - name: Upload Allure HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-html-report
           path: allure-report
+          retention-days: 7
 
-      # Install Testlio CLI
       - name: Install Testlio CLI
         if: always()
         run: npm install -g @testlio/cli
 
-      # Upload to Testlio
       - name: Upload Results to Testlio
         if: always()
+        env:
+          RUN_API_TOKEN: ${{ secrets.TESTLIO_RUN_TOKEN }}
         run: |
-          export RUN_API_TOKEN="${{ secrets.TESTLIO_RUN_TOKEN }}"
-
           testlio create-run \
             --testConfig testlio-cli/test-config.json \
             --projectConfig testlio-cli/project-config.json \
