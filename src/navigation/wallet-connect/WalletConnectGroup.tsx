@@ -19,7 +19,8 @@ import {WalletConnectIconContainer} from './styled/WalletConnectContainers';
 import WalletConnectConfirm, {
   WalletConnectConfirmParamList,
 } from './screens/WalletConnectConfirm';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root} from '../../Root';
 import {useStackScreenOptions} from '../utils/headerHelpers';
 
@@ -82,7 +83,6 @@ export enum WalletConnectScreens {
 
 const WalletConnectGroup = ({WalletConnect, theme}: WalletConnectProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <WalletConnect.Group screenOptions={commonOptions}>
       <WalletConnect.Screen

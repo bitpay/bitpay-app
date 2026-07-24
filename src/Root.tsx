@@ -24,6 +24,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import CloudflareChallengeModal from './components/modal/cloudflare-challenge/CloudflareChallenge';
+import FocusGatedReduxScreen from './components/focus-gated-redux-screen/FocusGatedReduxScreen';
 import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
@@ -39,6 +40,7 @@ import {
   useUrlEventHandler,
 } from './utils/hooks';
 import i18n from 'i18next';
+import {useTranslation} from 'react-i18next';
 
 import BitpayIdGroup, {
   BitpayIdGroupParamList,
@@ -286,6 +288,12 @@ export const getNavigationTabName = () => {
 
 export const Root = createNativeStackNavigator<RootStackParamList>();
 
+const focusGatedScreenLayout = ({
+  children,
+}: {
+  children: React.ReactElement;
+}) => <FocusGatedReduxScreen>{children}</FocusGatedReduxScreen>;
+
 const StartupGate = () => {
   const navigation = useNavigation<any>();
   const onboardingCompleted = useAppSelector(
@@ -324,6 +332,7 @@ const StartupGate = () => {
 };
 
 export default () => {
+  useTranslation();
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
   const linking = useDeeplinks();
@@ -1023,6 +1032,7 @@ export default () => {
             }
           }}>
           <Root.Navigator
+            screenLayout={focusGatedScreenLayout}
             screenOptions={{
               ...baseNavigatorOptions,
               headerShown: false,

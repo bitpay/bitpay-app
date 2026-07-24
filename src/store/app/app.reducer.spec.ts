@@ -969,6 +969,16 @@ describe('misc flags', () => {
     });
     expect(state.showArchaxBanner).toBe(true);
   });
+
+  it('SHOW_ARCHAX_BANNER preserves the state reference when unchanged', () => {
+    const base = {...freshState(), showArchaxBanner: true};
+    const state = appReducer(base, {
+      type: AppActionTypes.SHOW_ARCHAX_BANNER,
+      payload: true,
+    });
+
+    expect(state).toBe(base);
+  });
 });
 
 // ---------------------------------------------------------------------------

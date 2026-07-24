@@ -191,18 +191,15 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
     }
     const persistedState = {...inboundState} as WalletState;
     if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys)) {
-        key.wallets.forEach(wallet => delete wallet.transactionHistory);
-
-        inboundState.keys[id] = {
-          ...key,
-        };
-      }
       persistedState.keys = Object.entries(inboundState.keys).reduce(
         (persisted, [id, key]) => {
           const trimmed = {
             ...key,
-            wallets: (key.wallets || []).map(omitBwcClientFields),
+            wallets: (key.wallets || []).map(wallet => {
+              const persistedWallet = omitBwcClientFields(wallet);
+              delete persistedWallet.transactionHistory;
+              return persistedWallet;
+            }),
           };
           persisted[id] = inboundState.secretsMigrated
             ? withoutSecrets(trimmed)

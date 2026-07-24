@@ -1,17 +1,8 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  ReactNode,
-} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {logManager, LogData} from '../managers/LogManager';
 import {LogLevel} from '../store/log/log.models';
 
-const LogContext = createContext<LogData | null>(null);
-
-export const LogProvider: React.FC<{children: ReactNode}> = ({children}) => {
+export const useLogContext = (): LogData => {
   const [logData, setLogData] = useState<LogData>(logManager.getLogData());
   const frameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(
     null,
@@ -35,15 +26,7 @@ export const LogProvider: React.FC<{children: ReactNode}> = ({children}) => {
     };
   }, []);
 
-  return <LogContext.Provider value={logData}>{children}</LogContext.Provider>;
-};
-
-export const useLogContext = (): LogData => {
-  const context = useContext(LogContext);
-  if (!context) {
-    throw new Error('useLogContext must be used within LogProvider');
-  }
-  return context;
+  return logData;
 };
 
 export const useLogCount = (): number => {

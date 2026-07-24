@@ -329,6 +329,81 @@ describe('startGetRates – force fetch path', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
+  it('shares a concurrent forced request and allows a later refresh', async () => {
+    const freshRates = {
+      btc: [
+        {code: 'USD', rate: 60000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW},
+      ],
+    };
+    let resolveFirstRequest: ((value: any) => void) | undefined;
+    mockedAxios.get
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveFirstRequest = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({data: freshRates})
+      .mockResolvedValueOnce({data: freshRates})
+      .mockResolvedValueOnce({data: freshRates});
+
+    const state = {
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
+      APP: {altCurrencyList: [{isoCode: 'USD', name: 'US Dollar'}]},
+      WALLET: {keys: {}, customTokenOptionsByAddress: {}},
+    };
+    const dispatchedActions: Array<{type?: string}> = [];
+    const getState = () => state as any;
+    const dispatch = jest.fn((action: any): any => {
+      if (typeof action === 'function') {
+        return action(dispatch, getState, undefined);
+      }
+      dispatchedActions.push(action);
+      return action;
+    });
+
+    const firstRequest = startGetRates({force: true})(
+      dispatch as any,
+      getState,
+      undefined,
+    );
+    const concurrentRequest = startGetRates({force: true})(
+      dispatch as any,
+      getState,
+      undefined,
+    );
+
+    await Promise.resolve();
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    resolveFirstRequest?.({data: freshRates});
+
+    await Promise.all([firstRequest, concurrentRequest]);
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(
+      dispatchedActions.filter(
+        action => action.type === 'RATE/SUCCESS_GET_RATES',
+      ),
+    ).toHaveLength(1);
+
+    await startGetRates({force: true})(dispatch as any, getState, undefined);
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(4);
+    expect(
+      dispatchedActions.filter(
+        action => action.type === 'RATE/SUCCESS_GET_RATES',
+      ),
+    ).toHaveLength(2);
+    expect(
+      dispatchedActions.some(action => action.type === 'RATE/UPDATE_CACHE_KEY'),
+    ).toBe(false);
+  });
+
   it('fetches rates from network when force=true', async () => {
     const freshRates = {
       btc: [

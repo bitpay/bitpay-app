@@ -14,6 +14,8 @@ import Profile from './screens/ProfileSettings';
 import VerifyIdentityScreen from './screens/VerifyIdentity';
 import ReceiveSettings from './screens/ReceiveSettings';
 import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import ReceivingEnabled from './screens/ReceivingEnabled';
 import EnableTwoFactor, {
   EnableTwoFactorScreenParamList,
@@ -50,13 +52,45 @@ export enum BitpayIdScreens {
   VERIFY_IDENTITY = 'VerifyIdentity',
 }
 
-const BitpayIdGroup = ({BitpayId, theme}: BitpayIdProps) => {
-  const commonOptions = useStackScreenOptions(theme);
+const ProfileHeaderRight = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+
+  return (
+    <HeaderRightContainer>
+      {user ? (
+        <Button
+          buttonType={'pill'}
+          onPress={async () => {
+            haptic('impactLight');
+            await dispatch(BitPayIdEffects.startDisconnectBitPayId());
+            dispatch(ShopEffects.startFetchCatalog());
+
+            navigationRef.navigate('Tabs', {
+              screen: 'Home',
+            });
+          }}>
+          {t('Log Out')}
+        </Button>
+      ) : (
+        <Button
+          buttonType={'pill'}
+          onPress={() => {
+            haptic('impactLight');
+            navigationRef.navigate('Login');
+          }}>
+          {t('Log In')}
+        </Button>
+      )}
+    </HeaderRightContainer>
+  );
+};
+
+const BitpayIdGroup = ({BitpayId, theme}: BitpayIdProps) => {
+  const commonOptions = useStackScreenOptions(theme);
 
   return (
     <BitpayId.Group screenOptions={commonOptions}>
@@ -71,36 +105,7 @@ const BitpayIdGroup = ({BitpayId, theme}: BitpayIdProps) => {
         name={BitpayIdScreens.PROFILE}
         component={Profile}
         options={{
-          headerRight: () => {
-            return (
-              <HeaderRightContainer>
-                {user ? (
-                  <Button
-                    buttonType={'pill'}
-                    onPress={async () => {
-                      haptic('impactLight');
-                      await dispatch(BitPayIdEffects.startDisconnectBitPayId());
-                      dispatch(ShopEffects.startFetchCatalog());
-
-                      navigationRef.navigate('Tabs', {
-                        screen: 'Home',
-                      });
-                    }}>
-                    {t('Log Out')}
-                  </Button>
-                ) : (
-                  <Button
-                    buttonType={'pill'}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigationRef.navigate('Login');
-                    }}>
-                    {t('Log In')}
-                  </Button>
-                )}
-              </HeaderRightContainer>
-            );
-          },
+          headerRight: () => <ProfileHeaderRight />,
         }}
       />
       <BitpayId.Screen

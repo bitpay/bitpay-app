@@ -475,7 +475,7 @@ const getStore = async () => {
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
-    middlewares.push(logger);
+    // middlewares.push(logger);
   }
   if (__DEV__) {
     // uncomment this line to enable redux-immutable-state-invariant middleware
@@ -489,6 +489,7 @@ const getStore = async () => {
   const rootPersistConfig = {
     ...basePersistConfig,
     key: 'root',
+    blacklist: ['LOG'],
     transforms: [
       bindWalletKeys,
       transformContacts,
@@ -600,9 +601,7 @@ const getStore = async () => {
   middlewares.push(persistLifecycleLogger());
 
   const middlewareEnhancers = __DEV__
-    ? composeWithDevTools({trace: true, traceLimit: 25})(
-        applyMiddleware(...middlewares),
-      )
+    ? composeWithDevTools({trace: false})(applyMiddleware(...middlewares))
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);

@@ -815,6 +815,9 @@ export const appReducer = (
       };
 
     case AppActionTypes.SHOW_ARCHAX_BANNER:
+      if (state.showArchaxBanner === action.payload) {
+        return state;
+      }
       return {
         ...state,
         showArchaxBanner: action.payload,
