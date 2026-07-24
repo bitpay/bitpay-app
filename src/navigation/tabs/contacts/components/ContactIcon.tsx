@@ -47,13 +47,14 @@ const styles = StyleSheet.create({
 const getCoinBadgeRight = (size: number) =>
   size <= 20 ? -1 : size === 45 || size === 30 ? -13 : -1;
 
-const CoinBadgeContainer: React.FC<{size: number; children?: React.ReactNode}> =
-  ({size, children}) => (
-    <View
-      style={[styles.coinBadgeContainer, {right: getCoinBadgeRight(size)}]}>
-      {children}
-    </View>
-  );
+const CoinBadgeContainer: React.FC<{
+  size: number;
+  children?: React.ReactNode;
+}> = ({size, children}) => (
+  <View style={[styles.coinBadgeContainer, {right: getCoinBadgeRight(size)}]}>
+    {children}
+  </View>
+);
 
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,

@@ -387,7 +387,6 @@ const PayProConfirm = () => {
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet!.id,
-                  key,
                 },
               },
             ],
@@ -406,7 +405,6 @@ const PayProConfirm = () => {
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet!.id,
-                  key,
                 },
               },
             ],

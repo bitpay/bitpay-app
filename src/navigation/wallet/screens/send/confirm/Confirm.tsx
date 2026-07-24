@@ -161,10 +161,11 @@ export interface ConfirmParamList {
   solanaPayOpts?: SolanaPayOpts;
 }
 
-export const Setting: React.FC<React.ComponentProps<typeof TouchableOpacity>> =
-  ({style, ...rest}) => (
-    <TouchableOpacity style={[styles.setting, style]} {...rest} />
-  );
+export const Setting: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.setting, style]} {...rest} />
+);
 
 export const SettingTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
   style,
@@ -527,7 +528,6 @@ const Confirm = () => {
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet!.id,
-                  key,
                 },
               },
             ],
@@ -546,7 +546,6 @@ const Confirm = () => {
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet!.id,
-                  key,
                 },
               },
             ],

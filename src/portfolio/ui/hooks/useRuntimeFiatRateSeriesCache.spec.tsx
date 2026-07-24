@@ -1,10 +1,14 @@
 import React from 'react';
 import TestRenderer, {act} from 'react-test-renderer';
-import {useRuntimeFiatRateSeriesCache} from './useRuntimeFiatRateSeriesCache';
+import {
+  RuntimeFiatRateSeriesCacheState,
+  useRuntimeFiatRateSeriesCache,
+} from './useRuntimeFiatRateSeriesCache';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mockLoadRuntimeFiatRateSeriesCache = jest.fn();
+let latestHookState: RuntimeFiatRateSeriesCacheState | undefined;
 
 jest.mock('../fiatRateSeries', () => {
   return {
@@ -64,8 +68,14 @@ jest.mock('../fiatRateSeries', () => {
   };
 });
 
-const HookHarness = ({refreshToken}: {refreshToken?: string | number}) => {
-  useRuntimeFiatRateSeriesCache({
+const HookHarness = ({
+  forceOnInitialLoad,
+  refreshToken,
+}: {
+  forceOnInitialLoad?: boolean;
+  refreshToken?: string | number;
+}) => {
+  latestHookState = useRuntimeFiatRateSeriesCache({
     quoteCurrency: 'USD',
     requests: [
       {
@@ -73,6 +83,7 @@ const HookHarness = ({refreshToken}: {refreshToken?: string | number}) => {
         intervals: ['1D'],
       },
     ],
+    forceOnInitialLoad,
     refreshToken,
   });
 
@@ -83,6 +94,7 @@ describe('useRuntimeFiatRateSeriesCache', () => {
   beforeEach(() => {
     mockLoadRuntimeFiatRateSeriesCache.mockReset();
     mockLoadRuntimeFiatRateSeriesCache.mockResolvedValue({});
+    latestHookState = undefined;
   });
 
   it('does not reload for semantically identical request arrays across rerenders', async () => {
@@ -115,5 +127,58 @@ describe('useRuntimeFiatRateSeriesCache', () => {
     });
 
     expect(mockLoadRuntimeFiatRateSeriesCache).toHaveBeenCalledTimes(2);
+  });
+
+  it('forces only the initial load when requested', async () => {
+    let view: TestRenderer.ReactTestRenderer;
+
+    await act(async () => {
+      view = TestRenderer.create(<HookHarness forceOnInitialLoad />);
+    });
+
+    expect(mockLoadRuntimeFiatRateSeriesCache).toHaveBeenCalledTimes(1);
+    expect(mockLoadRuntimeFiatRateSeriesCache).toHaveBeenCalledWith({
+      force: true,
+      maxAgeMs: undefined,
+      quoteCurrency: 'USD',
+      requests: [{coin: 'btc', intervals: ['1D']}],
+    });
+
+    await act(async () => {
+      view!.update(<HookHarness forceOnInitialLoad={false} />);
+    });
+
+    expect(mockLoadRuntimeFiatRateSeriesCache).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves the cache reference after a silent reload with equal data', async () => {
+    const firstCache = {
+      'USD|btc|1D': {
+        fetchedOn: 123,
+        points: [{ts: 100, rate: 50_000}],
+      },
+    };
+    mockLoadRuntimeFiatRateSeriesCache.mockResolvedValueOnce(firstCache);
+
+    await act(async () => {
+      TestRenderer.create(<HookHarness />);
+    });
+
+    const initialCacheReference = latestHookState!.cache;
+    expect(initialCacheReference).toEqual(firstCache);
+
+    mockLoadRuntimeFiatRateSeriesCache.mockResolvedValueOnce({
+      'USD|btc|1D': {
+        fetchedOn: 123,
+        points: [{ts: 100, rate: 50_000}],
+      },
+    });
+
+    await act(async () => {
+      await latestHookState!.reload({silent: true});
+    });
+
+    expect(latestHookState!.cache).toBe(initialCacheReference);
+    expect(latestHookState!.loading).toBe(false);
   });
 });
