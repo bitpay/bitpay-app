@@ -29,17 +29,20 @@ export type PortfolioBalanceChartScope = {
 };
 
 export function usePortfolioBalanceChartScope(args: {
+  enabled?: boolean;
   wallets: Wallet[];
   balanceOffset?: number;
   scopeIdentityKey?: string;
   quoteCurrency?: string;
   rates?: Rates;
 }): PortfolioBalanceChartScope {
+  const enabled = args.enabled !== false;
   const balanceOffset = Number.isFinite(args.balanceOffset)
     ? args.balanceOffset
     : 0;
   const chartableWallets = usePortfolioChartableWallets({
     wallets: args.wallets,
+    enabled,
   });
   const {
     asOfMs,
@@ -52,6 +55,7 @@ export function usePortfolioBalanceChartScope(args: {
     storedWalletRequestSig,
     storedWallets,
   } = usePortfolioStoredWalletAnalysisScope({
+    enabled,
     quoteCurrencyOverride: args.quoteCurrency,
     ratesOverride: args.rates,
     wallets: chartableWallets,

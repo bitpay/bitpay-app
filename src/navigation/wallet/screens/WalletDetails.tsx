@@ -165,7 +165,6 @@ import {openExternalUrl} from '../../../store/app/app.effects';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
-  key?: Key;
   skipInitializeHistory?: boolean;
   copayerId?: string;
   txid?: string;
@@ -308,21 +307,19 @@ const HeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <View style={[styles.headerContainer, style]} {...rest} />;
 
-const Row: React.FC<React.ComponentProps<typeof View>> = ({
-  style,
-  ...rest
-}) => <View style={[styles.row, style]} {...rest} />;
+const Row: React.FC<React.ComponentProps<typeof View>> = ({style, ...rest}) => (
+  <View style={[styles.row, style]} {...rest} />
+);
 
 const CryptoBalanceRow: React.FC<React.ComponentProps<typeof View>> = ({
   style,
   ...rest
 }) => <Row style={[styles.cryptoBalanceRow, style]} {...rest} />;
 
-const TouchableRow: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => (
-  <TouchableOpacity style={[styles.touchableRow, style]} {...rest} />
-);
+const TouchableRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.touchableRow, style]} {...rest} />;
 
 const BalanceContainer: React.FC<React.ComponentProps<typeof View>> = ({
   style,
@@ -427,11 +424,10 @@ const HeaderKeyName: React.FC<React.ComponentProps<typeof BaseText>> = ({
   );
 };
 
-const HeaderSubTitleContainer: React.FC<
-  React.ComponentProps<typeof View>
-> = ({style, ...rest}) => (
-  <View style={[styles.headerSubTitleContainer, style]} {...rest} />
-);
+const HeaderSubTitleContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.headerSubTitleContainer, style]} {...rest} />;
 
 const TypeContainer: React.FC<React.ComponentProps<typeof View>> = ({
   style,
@@ -456,9 +452,10 @@ const NetworkBadgeRow: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <Row style={[styles.networkBadgeRow, style]} {...rest} />;
 
-const NetworkBadgeContainer: React.FC<
-  React.ComponentProps<typeof View>
-> = ({style, ...rest}) => (
+const NetworkBadgeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => (
   <TypeContainer
     style={[styles.networkBadgeContainerMargin, style]}
     {...rest}
@@ -548,8 +545,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, skipInitializeHistory, copayerId, txid} = route.params;
 
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const supportedCardMap = useAppSelector(
     ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
   );
@@ -566,8 +563,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const wallets = (Object.values(keys) as Key[]).flatMap(k => k.wallets);
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
-    useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const fullWalletObj = findWalletById(wallets, walletId, copayerId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(

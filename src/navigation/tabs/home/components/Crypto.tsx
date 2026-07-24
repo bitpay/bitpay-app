@@ -1,5 +1,5 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {ReactElement, useEffect, useMemo, useState} from 'react';
+import React, {ReactElement, useMemo, useRef} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import {useTheme} from '../../../../contexts';
 import {
@@ -36,6 +36,7 @@ import {
   HomeCarouselLayoutType,
 } from '../../../../store/app/app.models';
 import type {PortfolioPopulateStatus} from '../../../../store/portfolio/portfolio.models';
+import type {Rates} from '../../../../store/rate/rate.models';
 import {
   CarouselItemContainer,
   HomeSectionTitle,
@@ -121,6 +122,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 });
+
+const EMPTY_BACKGROUND_RATES: Rates = {};
+const EMPTY_BACKGROUND_KEYS: Record<string, Key> = {};
 
 const CryptoContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
@@ -406,7 +410,6 @@ export const createHomeCardList = ({
                           });
                         } else {
                           navigation.navigate(WalletScreens.WALLET_DETAILS, {
-                            key,
                             walletId: fullWalletObj.credentials.walletId,
                             copayerId: fullWalletObj.credentials.copayerId,
                           });
@@ -463,33 +466,67 @@ export const createHomeCardList = ({
   };
 };
 
-const Crypto = () => {
+type CryptoProps = {
+  active?: boolean;
+};
+
+const Crypto = ({active = true}: CryptoProps) => {
   const {t: translate} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const subscribedKeys = useAppSelector(({WALLET}) =>
+    active ? WALLET.keys : EMPTY_BACKGROUND_KEYS,
+  ) as Record<string, Key>;
+  const lastActiveKeysRef = useRef(subscribedKeys);
+  if (active) {
+    lastActiveKeysRef.current = subscribedKeys;
+  }
+  const keys = lastActiveKeysRef.current;
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const subscribedPopulateStatus = useAppSelector(({PORTFOLIO}) =>
+    active ? PORTFOLIO.populateStatus : undefined,
+  );
+  const lastActivePopulateStatusRef = useRef(subscribedPopulateStatus);
+  if (active) {
+    lastActivePopulateStatusRef.current = subscribedPopulateStatus;
+  }
+  const populateStatus = lastActivePopulateStatusRef.current;
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const rates = useAppSelector(({RATE}) => RATE.rates);
-  const hasCompletedFullPortfolioPopulate = useAppSelector(
-    selectHasCompletedFullPortfolioPopulate,
+  const subscribedRates = useAppSelector(({RATE}) =>
+    active ? RATE.rates : EMPTY_BACKGROUND_RATES,
   );
+  const lastActiveRatesRef = useRef<Rates>(subscribedRates);
+  if (active) {
+    lastActiveRatesRef.current = subscribedRates;
+  }
+  const rates = lastActiveRatesRef.current;
+  const subscribedHasCompletedFullPortfolioPopulate = useAppSelector(state =>
+    active ? selectHasCompletedFullPortfolioPopulate(state) : false,
+  );
+  const lastActiveHasCompletedFullPortfolioPopulateRef = useRef(
+    subscribedHasCompletedFullPortfolioPopulate,
+  );
+  if (active) {
+    lastActiveHasCompletedFullPortfolioPopulateRef.current =
+      subscribedHasCompletedFullPortfolioPopulate;
+  }
+  const hasCompletedFullPortfolioPopulate =
+    lastActiveHasCompletedFullPortfolioPopulateRef.current;
   const portfolioChartsRequested = showPortfolioValue === true;
   const portfolioChartsEnabled =
-    portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
+    active && portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
   const keyList = useMemo(() => Object.values(keys), [keys]);
   const hasKeys = keyList.length;
   const legacyKeyPercentagesEnabled =
-    !portfolioChartsRequested && !hideAllBalances;
+    active && !portfolioChartsRequested && !hideAllBalances;
   const legacyKeyRateRequests = useMemo(() => {
     if (!legacyKeyPercentagesEnabled) {
       return [];
@@ -499,10 +536,21 @@ const Crypto = () => {
       wallets: keyList.flatMap(key => getVisibleWalletsForKey(key)),
     });
   }, [keyList, legacyKeyPercentagesEnabled]);
-  const legacyKeyBaselineTimestampMs = useMemo(
-    () => getLastDayTimestampStartOfHourMs(),
-    [defaultAltCurrency.isoCode],
-  );
+  const legacyKeyBaselineTimestampRef = useRef({
+    quoteCurrency: '',
+    timestampMs: 0,
+  });
+  if (
+    legacyKeyBaselineTimestampRef.current.quoteCurrency !==
+    defaultAltCurrency.isoCode
+  ) {
+    legacyKeyBaselineTimestampRef.current = {
+      quoteCurrency: defaultAltCurrency.isoCode,
+      timestampMs: getLastDayTimestampStartOfHourMs(),
+    };
+  }
+  const legacyKeyBaselineTimestampMs =
+    legacyKeyBaselineTimestampRef.current.timestampMs;
   const {cache: legacyKeyFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
     quoteCurrency: defaultAltCurrency.isoCode,
     requests: legacyKeyRateRequests,
@@ -545,30 +593,32 @@ const Crypto = () => {
     keys: keyList,
     enabled: portfolioChartsEnabled,
   });
-  const visiblePortfolioPercentageDifferenceByKey = portfolioChartsEnabled
-    ? portfolioPercentageDifferenceByKey
-    : undefined;
-  const portfolioPopulateStatus = portfolioChartsEnabled
-    ? portfolio?.populateStatus
-    : undefined;
-  const [cardsList, setCardsList] = useState(
-    createHomeCardList({
-      navigation,
-      keys: keyList,
-      dispatch,
-      linkedCoinbase: false,
-      homeCarouselConfig: homeCarouselConfig || [],
-      homeCarouselLayoutType,
-      hideKeyBalance: hideAllBalances,
-      legacyPercentageDifferenceByKey,
-      portfolioPercentageDifferenceByKey:
-        visiblePortfolioPercentageDifferenceByKey,
-      populateStatus: portfolioPopulateStatus,
-    }),
+  const lastLegacyPercentageDifferenceByKeyRef = useRef(
+    legacyPercentageDifferenceByKey,
   );
-
-  useEffect(() => {
-    setCardsList(
+  const lastPortfolioPercentageDifferenceByKeyRef = useRef(
+    portfolioPercentageDifferenceByKey,
+  );
+  if (active) {
+    lastLegacyPercentageDifferenceByKeyRef.current =
+      legacyPercentageDifferenceByKey;
+    lastPortfolioPercentageDifferenceByKeyRef.current =
+      portfolioPercentageDifferenceByKey;
+  }
+  const visibleLegacyPercentageDifferenceByKey = active
+    ? legacyPercentageDifferenceByKey
+    : lastLegacyPercentageDifferenceByKeyRef.current;
+  const visiblePortfolioPercentageDifferenceByKey = portfolioChartsRequested
+    ? active
+      ? portfolioPercentageDifferenceByKey
+      : lastPortfolioPercentageDifferenceByKeyRef.current
+    : undefined;
+  const portfolioPopulateStatus =
+    portfolioChartsRequested && hasCompletedFullPortfolioPopulate
+      ? populateStatus
+      : undefined;
+  const cardsList = useMemo(
+    () =>
       createHomeCardList({
         navigation,
         keys: keyList,
@@ -577,24 +627,24 @@ const Crypto = () => {
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
-        legacyPercentageDifferenceByKey,
+        legacyPercentageDifferenceByKey: visibleLegacyPercentageDifferenceByKey,
         portfolioPercentageDifferenceByKey:
           visiblePortfolioPercentageDifferenceByKey,
         populateStatus: portfolioPopulateStatus,
       }),
-    );
-  }, [
-    navigation,
-    keyList,
-    dispatch,
-    linkedCoinbase,
-    homeCarouselConfig,
-    homeCarouselLayoutType,
-    hideAllBalances,
-    legacyPercentageDifferenceByKey,
-    portfolioPopulateStatus,
-    visiblePortfolioPercentageDifferenceByKey,
-  ]);
+    [
+      navigation,
+      dispatch,
+      linkedCoinbase,
+      homeCarouselConfig,
+      homeCarouselLayoutType,
+      hideAllBalances,
+      keyList,
+      visibleLegacyPercentageDifferenceByKey,
+      portfolioPopulateStatus,
+      visiblePortfolioPercentageDifferenceByKey,
+    ],
+  );
 
   if (!hasKeys && !linkedCoinbase) {
     return (
@@ -706,4 +756,4 @@ const Crypto = () => {
   );
 };
 
-export default Crypto;
+export default React.memo(Crypto);

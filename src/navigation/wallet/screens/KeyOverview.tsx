@@ -9,7 +9,7 @@ import React, {
 import {
   CommonActions,
   RouteProp,
-  useIsFocused,
+  useFocusEffect,
   useNavigation,
   useRoute,
   useTheme,
@@ -48,7 +48,6 @@ import {
   EmptyListContainer,
   ChevronContainer,
 } from '../../../components/styled/Containers';
-import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
@@ -89,10 +88,11 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
+  getActiveWalletStoreInitPromise,
   getDecryptPassword,
-  refreshRatesForPortfolioPnl,
   normalizeMnemonic,
   serverAssistedImport,
+  startGetRates,
 } from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
@@ -345,9 +345,11 @@ const AddWalletLinkContainer: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <View style={[styles.addWalletLinkContainer, style]} {...rest} />;
 
-const AddWalletLink: React.FC<
-  React.ComponentProps<typeof Link>
-> = ({style, suppressHighlighting = true, ...rest}) => (
+const AddWalletLink: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  suppressHighlighting = true,
+  ...rest
+}) => (
   <Link
     suppressHighlighting={suppressHighlighting}
     style={[styles.addWalletLink, style]}
@@ -652,20 +654,24 @@ const KeyOverview = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const theme = useTheme();
-  const isFocused = useIsFocused();
   const {width: windowWidth} = useWindowDimensions();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
-    ({WALLET}) => WALLET,
-  );
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const [contentReady, setContentReady] = useState(false);
+  const keys: {[key: string]: Key} = useAppSelector(({WALLET}) => WALLET.keys);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
+  const portfolioPopulateStatus = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
+  );
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
@@ -687,25 +693,46 @@ const KeyOverview = () => {
     setShouldLoadAllocationGainLoss(false);
     allocationFooterVisibilityCheckInFlightRef.current = false;
   }, [id]);
+
+  useEffect(() => {
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data: {closing: boolean}}) => {
+        if (event.data.closing) {
+          return;
+        }
+
+        setContentReady(true);
+      },
+    );
+
+    return unsubscribe;
+  }, [navigation]);
+
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [searchVal, setSearchVal] = useState('');
-  const [isViewUpdating, setIsViewUpdating] = useState(false);
+  const activeViewUpdateRef = useRef<{
+    keyId: string;
+    promise: Promise<void>;
+  } | null>(null);
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
   const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    portfolioQuoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   });
 
   const memoizedAccountList = useMemo(() => {
+    if (!contentReady) {
+      return [];
+    }
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
       filterByHideWallet: true,
     });
-  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
+  }, [contentReady, dispatch, key, defaultAltCurrency.isoCode, rates]);
 
   const pendingTxpCount =
     key?.wallets.reduce(
@@ -786,8 +813,7 @@ const KeyOverview = () => {
               ) : null}
               {checkPrivateKeyEncrypted(key) && !hasMissingEvmNetworks ? (
                 <CogIconContainer
-                  onPress={async () => {
-                    await sleep(500);
+                  onPress={() => {
                     navigation.navigate('KeySettings', {
                       key,
                     });
@@ -908,7 +934,7 @@ const KeyOverview = () => {
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
 
   const isKeyPopulateLoading = isPopulateLoadingForWallets({
-    populateStatus: portfolio.populateStatus,
+    populateStatus: portfolioPopulateStatus,
     wallets: visibleKeyWallets,
   });
 
@@ -975,15 +1001,17 @@ const KeyOverview = () => {
     [maybeActivateAllocationGainLoss],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
 
   const startSyncWallets = async (mnemonic: string) => {
+    const tokenOptionsForSync = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
     if (key.isPrivKeyEncrypted) {
       // To close decrypt modal
       await sleep(500);
@@ -1025,7 +1053,7 @@ const KeyOverview = () => {
                   currencyAbbreviation,
                   currencyName,
                 } as any,
-                _tokenOptionsByAddress,
+                tokenOptionsForSync,
               ),
             );
           });
@@ -1136,9 +1164,8 @@ const KeyOverview = () => {
       description: t(
         'Choose another currency you would like to add to your key.',
       ),
-      onPress: async () => {
+      onPress: () => {
         haptic('impactLight');
-        await sleep(500);
         navigation.navigate('AddingOptions', {
           key,
         });
@@ -1164,9 +1191,8 @@ const KeyOverview = () => {
       description: t(
         'Prevent an unauthorized user from sending funds out of your wallet.',
       ),
-      onPress: async () => {
+      onPress: () => {
         haptic('impactLight');
-        await sleep(500);
         navigation.navigate('CreateEncryptPassword', {
           key,
         });
@@ -1178,9 +1204,8 @@ const KeyOverview = () => {
     img: <Icons.Settings />,
     title: t('Key Settings'),
     description: t('View all the ways to manage and configure your key.'),
-    onPress: async () => {
+    onPress: () => {
       haptic('impactLight');
-      await sleep(500);
       navigation.navigate('KeySettings', {
         key,
       });
@@ -1192,18 +1217,31 @@ const KeyOverview = () => {
       if (!key) {
         return;
       }
-      if (isViewUpdating) {
+
+      while (activeViewUpdateRef.current) {
+        const activeUpdate = activeViewUpdateRef.current;
         logger.debug(
-          'KeyOverview is updating. Do not start forced updateAll...',
+          'KeyOverview is updating. Waiting for the active update...',
         );
-        return;
+        try {
+          await activeUpdate.promise;
+        } catch {}
+
+        if (!forceUpdate && activeUpdate.keyId === key.id) {
+          return;
+        }
       }
 
-      try {
-        setIsViewUpdating(true);
-        await dispatch(
-          refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
-        );
+      const updatePromise = (async () => {
+        const activeStartupInit = getActiveWalletStoreInitPromise();
+        if (!forceUpdate && activeStartupInit) {
+          const {walletInitSuccess} = await activeStartupInit;
+          if (walletInitSuccess) {
+            return;
+          }
+        }
+
+        await dispatch(startGetRates({force: forceUpdate}) as any);
         await Promise.all([
           dispatch(
             startUpdateAllWalletStatusForKey({
@@ -1214,14 +1252,27 @@ const KeyOverview = () => {
           ),
           sleep(1000),
         ]);
-        dispatch(updatePortfolioBalance());
-        setIsViewUpdating(false);
+        if (key.isReadOnly) {
+          dispatch(updatePortfolioBalance());
+        }
+      })();
+
+      activeViewUpdateRef.current = {
+        keyId: key.id,
+        promise: updatePromise,
+      };
+
+      try {
+        await updatePromise;
       } catch {
-        setIsViewUpdating(false);
         dispatch(showBottomNotificationModal(BalanceUpdateError()));
+      } finally {
+        if (activeViewUpdateRef.current?.promise === updatePromise) {
+          activeViewUpdateRef.current = null;
+        }
       }
     },
-    [dispatch, isViewUpdating, key, logger],
+    [dispatch, key, logger],
   );
 
   const updateStatusForKeyRef = useRef(updateStatusForKey);
@@ -1230,14 +1281,16 @@ const KeyOverview = () => {
     updateStatusForKeyRef.current = updateStatusForKey;
   }, [updateStatusForKey]);
 
-  useEffect(() => {
-    if (!isFocused || !viewedKeyId) {
-      return;
-    }
+  useFocusEffect(
+    useCallback(() => {
+      if (!viewedKeyId) {
+        return;
+      }
 
-    dispatch(Analytics.track('View Key'));
-    updateStatusForKeyRef.current(false);
-  }, [dispatch, isFocused, viewedKeyId]);
+      dispatch(Analytics.track('View Key'));
+      updateStatusForKeyRef.current(false);
+    }, [dispatch, viewedKeyId]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -1300,7 +1353,6 @@ const KeyOverview = () => {
               fullWalletObj.openWallet({}, () => {
                 navigation.navigate('WalletDetails', {
                   walletId: fullWalletObj.credentials.walletId,
-                  key,
                   copayerId: item.copayerId,
                 });
               });
@@ -1317,7 +1369,6 @@ const KeyOverview = () => {
         });
       } else {
         navigation.navigate('WalletDetails', {
-          key,
           walletId: fullWalletObj.credentials.walletId,
           copayerId: fullWalletObj.credentials.copayerId,
         });
@@ -1413,10 +1464,7 @@ const KeyOverview = () => {
               searchVal={searchVal}
               setSearchVal={setSearchVal}
               searchResults={searchResults}
-              setSearchResults={nextSearchResults => {
-                setSearchResults(nextSearchResults);
-                setIsLoadingInitial(false);
-              }}
+              setSearchResults={setSearchResults}
               searchFullList={memoizedAccountList}
               context={'keyoverview'}
             />
@@ -1426,7 +1474,6 @@ const KeyOverview = () => {
     );
   }, [
     chartableVisibleKeyWallets,
-    defaultAltCurrency.isoCode,
     dispatch,
     balanceChartSurface,
     keyHeaderChangeRowData,
@@ -1444,7 +1491,6 @@ const KeyOverview = () => {
     t,
     timeframeSelectorWidth,
     totalBalance,
-    visibleKeyWallets,
   ]);
 
   const renderListFooterComponent = useCallback(() => {
@@ -1556,13 +1602,13 @@ const KeyOverview = () => {
 
   const listEmptyComponent = useMemo(
     () =>
-      !isLoadingInitial ? (
+      contentReady ? (
         <EmptyListContainer>
           <H5>{t("It's a ghost town in here")}</H5>
           <GhostSvg style={{marginTop: 20}} />
         </EmptyListContainer>
       ) : null,
-    [t, isLoadingInitial],
+    [contentReady, t],
   );
 
   const renderDataComponent = useMemo(() => {
@@ -1576,13 +1622,22 @@ const KeyOverview = () => {
     selectedChainFilterOption,
   ]);
 
+  const accountKeyExtractor = useCallback(
+    (item: AccountRowProps) => item.id,
+    [],
+  );
+
   const listFooterComponent = useMemo(() => {
+    if (!contentReady) {
+      return null;
+    }
+
     return (
       <View ref={allocationFooterViewRef} onLayout={onAllocationFooterLayout}>
         {renderListFooterComponent()}
       </View>
     );
-  }, [onAllocationFooterLayout, renderListFooterComponent]);
+  }, [contentReady, onAllocationFooterLayout, renderListFooterComponent]);
 
   return (
     <OverviewContainer ref={overviewContainerRef} onLayout={onOverviewLayout}>
@@ -1599,6 +1654,7 @@ const KeyOverview = () => {
         ListHeaderComponent={listHeaderComponent}
         ListFooterComponent={listFooterComponent}
         data={renderDataComponent}
+        keyExtractor={accountKeyExtractor}
         renderItem={memoizedRenderItem}
         ListEmptyComponent={listEmptyComponent}
       />

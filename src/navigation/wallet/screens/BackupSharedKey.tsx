@@ -53,11 +53,10 @@ const styles = StyleSheet.create({
   },
 });
 
-const BackupContainer: React.FC<
-  React.ComponentProps<typeof SafeAreaView>
-> = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.backupContainer, style]} {...rest} />
-);
+const BackupContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.backupContainer, style]} {...rest} />;
 
 const ScrollViewContainer: React.FC<
   React.ComponentProps<typeof ScrollView>
@@ -102,7 +101,6 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
       name: WalletScreens.WALLET_DETAILS,
       params: {
         walletId: key.wallets[0].id,
-        key,
       },
     };
 
