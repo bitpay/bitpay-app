@@ -1,3 +1,4 @@
+import isEqual from 'lodash.isequal';
 import {
   Key,
   PendingJoinerSession,
@@ -96,6 +97,13 @@ const cloneWalletWithStatus = (
 
   return nextWallet;
 };
+
+const walletHasStatus = (wallet: Wallet, status: WalletStatus): boolean =>
+  wallet.singleAddress === status.singleAddress &&
+  (wallet.balance === status.balance ||
+    isEqual(wallet.balance, status.balance)) &&
+  (wallet.pendingTxps === status.pendingTxps ||
+    isEqual(wallet.pendingTxps, status.pendingTxps));
 
 export const walletReducer = (
   state: WalletState = initialState,
@@ -207,6 +215,14 @@ export const walletReducer = (
       Object.values(state.keys).forEach(
         key => (lastDay += key.totalBalanceLastDay),
       );
+
+      if (
+        state.portfolioBalance.current === current &&
+        state.portfolioBalance.lastDay === lastDay
+      ) {
+        return state;
+      }
+
       return {
         ...state,
         portfolioBalance: {
@@ -588,53 +604,147 @@ export const walletReducer = (
 
     case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS: {
       const {keyBalances, walletBalances} = action.payload;
-      const updatedKeys = {...state.keys};
+      const keyBalanceUpdates = new Map<
+        string,
+        {
+          cacheKey?: string;
+          totalBalance: number;
+          totalBalanceLastDay: number;
+        }
+      >();
+      const walletUpdatesByKey = new Map<string, Map<string, WalletStatus>>();
+      const affectedKeyIds = new Set<string>();
 
-      // Update key balances
-      keyBalances.forEach(({keyId, totalBalance, totalBalanceLastDay}) => {
-        if (updatedKeys[keyId]) {
-          updatedKeys[keyId] = {
-            ...updatedKeys[keyId],
+      keyBalances.forEach(
+        ({keyId, cacheKey, totalBalance, totalBalanceLastDay}) => {
+          keyBalanceUpdates.set(keyId, {
+            cacheKey,
             totalBalance,
             totalBalanceLastDay,
-          };
-        }
-      });
+          });
+          affectedKeyIds.add(keyId);
+        },
+      );
 
-      // Update wallet statuses
       walletBalances.forEach(({keyId, walletId, status}) => {
-        const keyToUpdate = updatedKeys[keyId];
-        if (keyToUpdate?.wallets?.length > 0) {
-          updatedKeys[keyId] = {
-            ...keyToUpdate,
-            wallets: keyToUpdate.wallets.map(wallet =>
-              wallet.id === walletId
-                ? cloneWalletWithStatus(wallet, status)
-                : wallet,
-            ),
-          };
+        let walletUpdates = walletUpdatesByKey.get(keyId);
+        if (!walletUpdates) {
+          walletUpdates = new Map<string, WalletStatus>();
+          walletUpdatesByKey.set(keyId, walletUpdates);
+        }
+        walletUpdates.set(walletId, status);
+        affectedKeyIds.add(keyId);
+      });
+
+      let updatedKeys = state.keys;
+      let keyTotalsChanged = false;
+      const balanceCacheUpdates: Record<string, number> = {};
+      const refreshedAt = Date.now();
+
+      affectedKeyIds.forEach(keyId => {
+        const currentKey = state.keys[keyId];
+        if (!currentKey) {
+          return;
+        }
+
+        let updatedKey = currentKey;
+        const keyBalanceUpdate = keyBalanceUpdates.get(keyId);
+
+        if (keyBalanceUpdate) {
+          const {cacheKey, totalBalance, totalBalanceLastDay} =
+            keyBalanceUpdate;
+          balanceCacheUpdates[cacheKey ?? keyId] = refreshedAt;
+
+          if (
+            currentKey.totalBalance !== totalBalance ||
+            currentKey.totalBalanceLastDay !== totalBalanceLastDay
+          ) {
+            updatedKey = {
+              ...updatedKey,
+              totalBalance,
+              totalBalanceLastDay,
+            };
+            keyTotalsChanged = true;
+          }
+        }
+
+        const walletUpdates = walletUpdatesByKey.get(keyId);
+        if (walletUpdates && currentKey.wallets?.length > 0) {
+          let updatedWallets: Wallet[] | undefined;
+
+          currentKey.wallets.forEach((wallet, index) => {
+            const status = walletUpdates.get(wallet.id);
+            if (!status) {
+              return;
+            }
+
+            if (!walletHasStatus(wallet, status)) {
+              updatedWallets ??= [...currentKey.wallets];
+              updatedWallets[index] = cloneWalletWithStatus(wallet, status);
+            }
+          });
+
+          if (updatedWallets) {
+            updatedKey = {
+              ...updatedKey,
+              wallets: updatedWallets,
+            };
+          }
+        }
+
+        if (updatedKey !== currentKey) {
+          if (updatedKeys === state.keys) {
+            updatedKeys = {...state.keys};
+          }
+          updatedKeys[keyId] = updatedKey;
         }
       });
 
-      // Calculate and update portfolio balance
-      const currentPortfolioBalance = Object.values(updatedKeys).reduce(
-        (total, key) => total + (key.totalBalance || 0),
-        0,
-      );
+      let portfolioBalance = state.portfolioBalance;
+      if (keyTotalsChanged) {
+        let current = 0;
+        let lastDay = 0;
 
-      const lastDayPortfolioBalance = Object.values(updatedKeys).reduce(
-        (total, key) => total + (key.totalBalanceLastDay || 0),
-        0,
-      );
+        Object.values(updatedKeys).forEach(key => {
+          current += key.totalBalance || 0;
+          lastDay += key.totalBalanceLastDay || 0;
+        });
+
+        const previous = state.portfolioBalance.current;
+        if (
+          state.portfolioBalance.current !== current ||
+          state.portfolioBalance.lastDay !== lastDay ||
+          state.portfolioBalance.previous !== previous
+        ) {
+          portfolioBalance = {
+            current,
+            lastDay,
+            previous,
+          };
+        }
+      }
+
+      const balanceCacheKey =
+        Object.keys(balanceCacheUpdates).length > 0
+          ? {
+              ...state.balanceCacheKey,
+              ...balanceCacheUpdates,
+            }
+          : state.balanceCacheKey;
+
+      if (
+        updatedKeys === state.keys &&
+        portfolioBalance === state.portfolioBalance &&
+        balanceCacheKey === state.balanceCacheKey
+      ) {
+        return state;
+      }
 
       return {
         ...state,
         keys: updatedKeys,
-        portfolioBalance: {
-          current: currentPortfolioBalance,
-          lastDay: lastDayPortfolioBalance,
-          previous: state.portfolioBalance.current,
-        },
+        portfolioBalance,
+        balanceCacheKey,
       };
     }
 
