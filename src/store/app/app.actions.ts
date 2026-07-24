@@ -143,6 +143,10 @@ export const setNotificationsAccepted = (
   payload: notificationsAccepted,
 });
 
+export const setNotificationsInteractionDone = (): AppActionType => ({
+  type: AppActionTypes.SET_NOTIFICATIONS_INTERACTION_DONE,
+});
+
 export const setConfirmedTxAccepted = (
   confirmedTxAccepted: boolean,
 ): AppActionType => ({
@@ -155,6 +159,10 @@ export const setAnnouncementsAccepted = (
 ): AppActionType => ({
   type: AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED,
   payload: announcementsAccepted,
+});
+
+export const setPinInteractionDone = (): AppActionType => ({
+  type: AppActionTypes.SET_PIN_INTERACTION_DONE,
 });
 
 export const setEmailNotificationsAccepted = (

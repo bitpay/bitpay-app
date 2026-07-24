@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, Modal, Share, useWindowDimensions} from 'react-native';
+import {ScrollView, Modal, useWindowDimensions} from 'react-native';
+import {shareNative} from '../../../utils/share';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -417,9 +418,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const handleShare = async () => {
     if (!pendingJoinCode) return;
     try {
-      await Share.share({
-        message: pendingJoinCode,
-      });
+      await dispatch(shareNative({message: pendingJoinCode}));
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }
@@ -481,11 +480,21 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       }
       logger.error(`[TSS] Ceremony error: ${err.message}`);
       setIsCeremonyStarted(false);
+      const message =
+        err.message === 'CEREMONY_TIMEOUT'
+          ? t(
+              'The wallet creation timed out. This session is no longer valid — please create a new wallet.',
+            )
+          : err.message === 'CEREMONY_STUCK'
+          ? t(
+              'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please create a new wallet.',
+            )
+          : err.message || t('Failed to create wallet');
       dispatch(
         showBottomNotificationModal({
           type: 'error',
           title: t('Error'),
-          message: err.message || t('Failed to create wallet'),
+          message,
           enableBackdropDismiss: true,
           actions: [{text: t('OK'), action: () => {}, primary: true}],
         }),

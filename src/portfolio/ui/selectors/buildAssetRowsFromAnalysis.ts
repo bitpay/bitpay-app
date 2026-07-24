@@ -2,7 +2,14 @@ import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
 } from '../../../utils/helper-methods';
-import type {AssetRowItem, GainLossMode} from '../../../utils/portfolio/assets';
+import {
+  UNAVAILABLE_ASSET_ROW_DELTA_FIAT,
+  UNAVAILABLE_ASSET_ROW_DELTA_PERCENT,
+  formatAssetRowDeltaFiat,
+  formatAssetRowDeltaPercent,
+  type AssetRowItem,
+  type GainLossMode,
+} from '../../../utils/portfolio/assets';
 import {
   formatBigIntDecimal,
   parseAtomicToBigint,
@@ -16,9 +23,6 @@ import type {
 import type {StoredWallet} from '../../core/types';
 import {isPortfolioRuntimeMainnetLikeNetwork} from '../../adapters/rn/walletEligibility';
 import {atomicToUnitNumber} from '../../../utils/portfolio/core/pnl/atomic';
-
-const UNAVAILABLE_DELTA_FIAT = '—     ';
-const UNAVAILABLE_DELTA_PERCENT = '  —  %';
 
 type AggregatedAssetSummary = {
   fiatValue: number;
@@ -43,21 +47,6 @@ export type AssetRowMetrics = {
   hasPnl: boolean;
   showPnlPlaceholder: boolean;
 };
-
-function formatDeltaFiat(delta: number, quoteCurrency: string): string {
-  const abs = Math.abs(delta);
-  const prefix = delta >= 0 ? '+' : '-';
-  return `${prefix}${formatFiatAmount(abs, quoteCurrency, {
-    customPrecision: 'minimal',
-  })}`;
-}
-
-function formatDeltaPercent(percent: number): string {
-  const normalized = Number.isFinite(percent) ? percent : 0;
-  const abs = Math.abs(normalized);
-  const prefix = normalized >= 0 ? '+' : '-';
-  return `${prefix}${abs.toFixed(2)}%`;
-}
 
 function aggregateAssetSummaries(
   summaries: AssetPnlSummary[],
@@ -252,11 +241,11 @@ export function buildAssetRowItemFromMetrics(args: {
       customPrecision: 'minimal',
     })}${row.showPnlPlaceholder ? '\u00A0' : ''}`,
     deltaFiat: row.showPnlPlaceholder
-      ? UNAVAILABLE_DELTA_FIAT
-      : formatDeltaFiat(row.pnlFiat, quoteCurrency),
+      ? UNAVAILABLE_ASSET_ROW_DELTA_FIAT
+      : formatAssetRowDeltaFiat(row.pnlFiat, quoteCurrency),
     deltaPercent: row.showPnlPlaceholder
-      ? UNAVAILABLE_DELTA_PERCENT
-      : formatDeltaPercent(row.pnlPercent),
+      ? UNAVAILABLE_ASSET_ROW_DELTA_PERCENT
+      : formatAssetRowDeltaPercent(row.pnlPercent),
     isPositive: row.pnlFiat >= 0,
     hasRate: row.hasRate,
     hasPnl: row.hasPnl,

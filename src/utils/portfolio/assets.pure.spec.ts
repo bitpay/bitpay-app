@@ -389,8 +389,8 @@ describe('buildWalletIdsByAssetGroupKey', () => {
       makeWallet('w3', 'livenet', 'eth'),
     ];
     const result = buildWalletIdsByAssetGroupKey(wallets);
-    expect(result['btc']).toEqual(['w1', 'w2']);
-    expect(result['eth']).toEqual(['w3']);
+    expect(result.btc).toEqual(['w1', 'w2']);
+    expect(result.eth).toEqual(['w3']);
   });
 
   it('skips wallets that are not on mainnet (livenet)', () => {
@@ -399,7 +399,7 @@ describe('buildWalletIdsByAssetGroupKey', () => {
       makeWallet('w2', 'livenet', 'btc'),
     ];
     const result = buildWalletIdsByAssetGroupKey(wallets);
-    expect(result['btc']).toEqual(['w2']);
+    expect(result.btc).toEqual(['w2']);
   });
 
   it('skips wallets with no id', () => {
@@ -408,7 +408,7 @@ describe('buildWalletIdsByAssetGroupKey', () => {
       makeWallet('w2', 'livenet', 'btc'),
     ];
     const result = buildWalletIdsByAssetGroupKey(wallets);
-    expect(result['btc']).toEqual(['w2']);
+    expect(result.btc).toEqual(['w2']);
   });
 
   it('skips wallets with no currencyAbbreviation', () => {
@@ -417,7 +417,7 @@ describe('buildWalletIdsByAssetGroupKey', () => {
       makeWallet('w2', 'livenet', 'eth'),
     ];
     const result = buildWalletIdsByAssetGroupKey(wallets);
-    expect(result['eth']).toEqual(['w2']);
+    expect(result.eth).toEqual(['w2']);
     expect(result['']).toBeUndefined();
   });
 });
@@ -975,7 +975,7 @@ describe('getPopulateLoadingByAssetKey', () => {
       } as any,
     });
     expect(result).not.toBeUndefined();
-    expect(result!['btc']).toBe(false);
+    expect(result!.btc).toBe(false);
   });
 
   it('returns map with true for assets with in_progress wallets', () => {
@@ -989,7 +989,7 @@ describe('getPopulateLoadingByAssetKey', () => {
         currentWalletId: undefined,
       } as any,
     });
-    expect(result!['btc']).toBe(true);
+    expect(result!.btc).toBe(true);
   });
 
   it('uses prev value when no wallets are in scope for an asset key', () => {
@@ -1005,7 +1005,7 @@ describe('getPopulateLoadingByAssetKey', () => {
       prev: {eth: true},
     });
     // w2 is not in scope (not in statusById, not currentWalletId) → use prev
-    expect(result!['eth']).toBe(true);
+    expect(result!.eth).toBe(true);
   });
 
   it('preserves prev keys that are not in items', () => {
@@ -1021,8 +1021,8 @@ describe('getPopulateLoadingByAssetKey', () => {
       prev: {eth: true, btc: false},
     });
     // eth was in prev but not in items → it should be copied over
-    expect(result!['eth']).toBe(true);
-    expect(result!['btc']).toBe(false);
+    expect(result!.eth).toBe(true);
+    expect(result!.btc).toBe(false);
   });
 
   it('returns false for asset with error status (counts as finished)', () => {
@@ -1036,7 +1036,7 @@ describe('getPopulateLoadingByAssetKey', () => {
         currentWalletId: undefined,
       } as any,
     });
-    expect(result!['btc']).toBe(false);
+    expect(result!.btc).toBe(false);
   });
 
   it('returns true for asset in fullPopulate mode (wallets total matches)', () => {
@@ -1052,7 +1052,7 @@ describe('getPopulateLoadingByAssetKey', () => {
         currentWalletId: undefined,
       } as any,
     });
-    expect(result!['btc']).toBe(true);
+    expect(result!.btc).toBe(true);
   });
 
   it('returns prev reference when next is identical to prev (same keys and values)', () => {
@@ -1087,7 +1087,7 @@ describe('getPopulateLoadingByAssetKey', () => {
     });
     // w1 is currentWalletId but not in statusById → statusById[w1] = undefined
     // undefined !== 'done' && undefined !== 'error' → allFinished=false → loading=true
-    expect(result!['btc']).toBe(true);
+    expect(result!.btc).toBe(true);
   });
 });
 

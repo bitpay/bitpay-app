@@ -17,7 +17,7 @@ import {
   installNitroFetchMock,
   type FakeNitroRequest,
   type FakeNitroResponse,
-} from './__tests__/workletTestUtils';
+} from './workletTestUtils';
 import {
   appendWorkletSnapshotChunk,
   buildWorkletWalletMetaForStore,

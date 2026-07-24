@@ -1,5 +1,4 @@
 import {
-  BannerNewsFeedCard,
   CaptionedContentCard,
   ClassicContentCard,
   ContentCard,
@@ -25,12 +24,6 @@ export const DEFAULT_CLASSIC_CONTENT_CARD: ClassicContentCard = {
   type: 'Classic',
   title: 'Lorem Ipsum',
   cardDescription: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-};
-
-export const isBannerContentCard = (
-  contentCard: BannerNewsFeedCard,
-): contentCard is BannerNewsFeedCard => {
-  return contentCard.type === 'Banner';
 };
 
 export const isCaptionedContentCard = (

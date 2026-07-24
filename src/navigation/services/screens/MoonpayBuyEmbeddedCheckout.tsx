@@ -752,7 +752,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               // copyText(toAddress);
             }}
           />
-        </RowDataContainer> 
+        </RowDataContainer>
         <ItemDivisor />*/}
           {isLoading ? (
             <MoonpayEmbeddedCheckoutSkeleton context="data" />

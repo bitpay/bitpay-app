@@ -192,6 +192,7 @@ const Pin = gestureHandlerRootHOC(
             dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
 
             if (context === 'onboarding') {
+              dispatch(AppActions.setPinInteractionDone());
               gotoCreateKeyRef.current();
             } else {
               dispatch(AppActions.dismissPinModal());

@@ -7,7 +7,7 @@ import {
   createFakeWorkletStorage,
   installNitroFetchMock,
   type FakeNitroRequest,
-} from './__tests__/workletTestUtils';
+} from './workletTestUtils';
 import {
   ensureWorkletRates,
   ensureWorkletSnapshotRateSeriesCache,
@@ -138,6 +138,32 @@ describe('portfolioWorkletRates', () => {
       'USD:eth:1D': {
         fetchedOn: 10_000,
         points: [{ts: 1, rate: 202}],
+      },
+    });
+  });
+
+  it('returns direct non-canonical bridge series even before the canonical bridge is cached', async () => {
+    const storage = createFakeWorkletStorage();
+    storage.set(
+      'rate:v1:EUR:btc:1D',
+      '{"v":3,"f":111,"p":[[1,36000],[2,36900]]}',
+    );
+
+    const cache = await getWorkletRateSeriesCache({
+      storage,
+      registryKey: '__registry__',
+      cfg: {baseUrl: 'https://bws.bitpay.com/bws/api'},
+      quoteCurrency: 'EUR',
+      requests: [{coin: 'btc', intervals: ['1D']}],
+    });
+
+    expect(cache).toEqual({
+      'EUR:btc:1D': {
+        fetchedOn: 111,
+        points: [
+          {ts: 1, rate: 36000},
+          {ts: 2, rate: 36900},
+        ],
       },
     });
   });

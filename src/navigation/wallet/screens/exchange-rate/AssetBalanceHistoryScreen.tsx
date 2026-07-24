@@ -8,6 +8,7 @@ import {
   DEFAULT_BALANCE_CHART_TIMEFRAME,
   getRangeLabelForFiatTimeframe,
 } from '../../../../components/charts/fiatTimeframes';
+import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import {usePortfolioAnalysis} from '../../../../portfolio/ui/hooks/usePortfolioAnalysis';
@@ -128,9 +129,10 @@ const AssetBalanceHistoryScreen = ({
   const [selectionActive, setSelectionActive] = useState(false);
   const [chartDisplayedPoint, setChartDisplayedPoint] =
     useState<AssetDisplayedAnalysisPoint>(undefined);
+  const portfolioChartsEnabled = shared.showPortfolioValue === true;
   const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: shared.assetWallets,
-    enabled: shared.showPortfolioValue === true && shared.hasWalletsForAsset,
+    enabled: portfolioChartsEnabled && shared.hasWalletsForAsset,
     hideAllBalances: shared.hideAllBalances,
   });
   const chartableAssetWallets = balanceChartReadiness.chartableWallets;
@@ -192,6 +194,17 @@ const AssetBalanceHistoryScreen = ({
     chartDisplayedPoint: effectiveChartDisplayedPoint,
     chartChangeRow: effectiveChartChangeRow,
   });
+  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+    wallets: shared.assetWallets,
+    currentFiatBalance: shared.assetTotalFiatBalance,
+    quoteCurrency: shared.resolvedQuoteCurrency,
+    mode: 'representativeAsset',
+    representativeAsset: shared.assetContext,
+    enabled:
+      !portfolioChartsEnabled &&
+      !shared.hideAllBalances &&
+      shared.hasWalletsForAsset,
+  });
 
   const selectedAssetBalanceToDisplay = !shared.hasWalletsForAsset
     ? undefined
@@ -201,7 +214,9 @@ const AssetBalanceHistoryScreen = ({
 
   const changeRow = shared.hideAllBalances
     ? undefined
-    : displayedSummary.changeRow;
+    : portfolioChartsEnabled
+    ? displayedSummary.changeRow
+    : legacyLastDayChangeRowData;
 
   const formattedAssetBalance =
     selectedAssetBalanceToDisplay == null

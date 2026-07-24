@@ -1,4 +1,5 @@
 import Pbkdf2 from 'pbkdf2';
+import crypto from 'crypto';
 
 const WEAK_BASE_WORDS = [
   'password',
@@ -118,14 +119,7 @@ export const isLowEntropy = (value: string) => {
 };
 
 export const generateSalt = () => {
-  const salt = Pbkdf2.pbkdf2Sync(
-    Math.random().toString(),
-    Math.random().toString(),
-    Math.floor(Math.random() * 30),
-    47,
-  ).toString('hex');
-
-  return salt;
+  return crypto.randomBytes(47).toString('hex');
 };
 
 export const hashPassword = (password: string) => {

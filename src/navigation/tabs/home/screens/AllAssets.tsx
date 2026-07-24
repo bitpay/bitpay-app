@@ -19,10 +19,15 @@ import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import SearchSvg from '../../../../../assets/img/search.svg';
 
 import {useAppSelector} from '../../../../utils/hooks';
+import {selectShowPortfolioValue} from '../../../../store/app/app.selectors';
 import usePortfolioAssetRows from '../../../../portfolio/ui/hooks/usePortfolioAssetRows';
-import type {
-  AssetRowItem,
-  GainLossMode,
+import {
+  buildLegacyLastDayRateRequestsForAssetRows,
+  buildAssetPreviewRowItemsFromWallets,
+  getQuoteCurrency,
+  getVisibleWalletsFromKeys,
+  type AssetRowItem,
+  type GainLossMode,
 } from '../../../../utils/portfolio/assets';
 import AssetRow from '../components/AssetRow';
 import AssetsGainLossDropdown from '../components/AssetsGainLossDropdown';
@@ -34,7 +39,6 @@ import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 import {FIAT_RATE_SERIES_CACHED_INTERVALS} from '../../../../store/rate/rate.models';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
-import {getQuoteCurrency} from '../../../../utils/portfolio/assets';
 import {
   getHistoricalRateAssetRequestFromItem,
   type HistoricalRateAssetRequest,
@@ -45,6 +49,8 @@ import {
   getAssetRowPopulateLoading,
 } from '../components/assetRowLoading';
 import useScreenFocusRefreshToken from '../hooks/useScreenFocusRefreshToken';
+import type {Key} from '../../../../store/wallet/wallet.models';
+import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AllAssets'>;
 const LIST_HORIZONTAL_GUTTER = Number.parseInt(ScreenGutter, 10);
@@ -101,8 +107,14 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const theme = useTheme();
   const commonOptions = useStackScreenOptions(theme);
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const populateInProgress = !!portfolio.populateStatus?.inProgress;
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+  const portfolioChartsEnabled = showPortfolioValue === true;
+  const populateInProgress =
+    portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress;
   const {getAssetIconData, getSupportedOption} = useAssetIconResolver();
   const focusRefreshToken = useScreenFocusRefreshToken();
   const keyId = route.params?.keyId;
@@ -111,8 +123,63 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
 
+  const visibleWallets = useMemo(() => {
+    if (keyId && keys[keyId]) {
+      return getVisibleWalletsFromKeys({[keyId]: keys[keyId]});
+    }
+
+    return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+  }, [homeCarouselConfig, keyId, keys]);
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  }).toUpperCase();
+  const legacyAssetRowsEnabled = !portfolioChartsEnabled;
+  const legacyAssetRateRequests = useMemo(() => {
+    if (!legacyAssetRowsEnabled) {
+      return [];
+    }
+
+    return buildLegacyLastDayRateRequestsForAssetRows({
+      wallets: visibleWallets,
+    });
+  }, [legacyAssetRowsEnabled, visibleWallets]);
+  const legacyAssetBaselineTimestampMs = useMemo(
+    () => getLastDayTimestampStartOfHourMs(),
+    [quoteCurrency],
+  );
+  const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(
+    {
+      quoteCurrency,
+      requests: legacyAssetRateRequests,
+      maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+      enabled: legacyAssetRowsEnabled && legacyAssetRateRequests.length > 0,
+      clearOnRequestChange: true,
+    },
+  );
+  const legacyVisibleItems = useMemo(() => {
+    if (portfolioChartsEnabled) {
+      return [];
+    }
+
+    return buildAssetPreviewRowItemsFromWallets({
+      wallets: visibleWallets,
+      quoteCurrency: defaultAltCurrency.isoCode,
+      includeLegacyLastDayPnl: true,
+      rates,
+      fiatRateSeriesCache: legacyAssetFiatRateSeriesCache,
+      baselineTimestampMs: legacyAssetBaselineTimestampMs,
+    });
+  }, [
+    defaultAltCurrency.isoCode,
+    legacyAssetBaselineTimestampMs,
+    legacyAssetFiatRateSeriesCache,
+    portfolioChartsEnabled,
+    rates,
+    visibleWallets,
+  ]);
   const {
-    visibleItems,
+    visibleItems: portfolioVisibleItems,
     isFiatLoading: isPnlLoading,
     isPopulateLoadingByKey,
     presentationResetToken,
@@ -120,12 +187,11 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     gainLossMode,
     keyId,
     externalRefreshToken: focusRefreshToken,
+    enabled: portfolioChartsEnabled,
   });
-  const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
-    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-  }).toUpperCase();
-
+  const visibleItems = portfolioChartsEnabled
+    ? portfolioVisibleItems
+    : legacyVisibleItems;
   useLayoutEffect(() => {
     navigation.setOptions({
       ...commonOptions,
@@ -232,13 +298,15 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
           />
         </SearchInputContainer>
 
-        <AssetsGainLossDropdown
-          value={gainLossMode}
-          onChange={setGainLossMode}
-        />
+        {portfolioChartsEnabled ? (
+          <AssetsGainLossDropdown
+            value={gainLossMode}
+            onChange={setGainLossMode}
+          />
+        ) : null}
       </FiltersRow>
     );
-  }, [gainLossMode, query, t, theme.dark]);
+  }, [gainLossMode, portfolioChartsEnabled, query, t, theme.dark]);
 
   const renderItem = useCallback(
     ({item, index}: ListRenderItemInfo<AssetRowItem>) => {

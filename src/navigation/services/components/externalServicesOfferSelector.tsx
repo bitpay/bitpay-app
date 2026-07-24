@@ -1918,7 +1918,11 @@ const ExternalServicesOfferSelector: React.FC<
       };
     } catch (err) {
       offers.transak.amountLimits = dispatch(
-        getBuyCryptoFiatLimits('transak', offers.transak.fiatCurrency),
+        getBuyCryptoFiatLimits(
+          'transak',
+          offers.transak.fiatCurrency,
+          paymentMethod?.method,
+        ),
       );
     }
 

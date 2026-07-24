@@ -166,7 +166,8 @@ const ReduxProvider = () => {
       setStore({store, persistor});
       setStoreReady(true);
       setJSExceptionHandler(makeErrorHandler(store), true);
-      setNativeExceptionHandler(makeNativeExceptionHandler(store));
+      // executeDefaultHandler=true chains to Sentry's UncaughtExceptionHandler so native crashes are captured
+      setNativeExceptionHandler(makeNativeExceptionHandler(store), true, true);
     });
 
     return () => {
@@ -206,7 +207,7 @@ const AppWrapper = () => {
 
     const subscription = Appearance.addChangeListener(
       ({colorScheme: newScheme}) => {
-        if (colorScheme === null) {
+        if (!colorScheme || colorScheme === 'unspecified') {
           setIsDark(newScheme === 'dark');
         }
       },

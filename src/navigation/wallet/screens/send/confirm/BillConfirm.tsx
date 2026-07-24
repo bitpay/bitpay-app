@@ -454,7 +454,9 @@ const BillConfirm: React.FC<
     showPaymentSent({
       onCloseModal,
       title:
-        wallet?.credentials?.n > 1 ? t('Payment Sent') : t('Payment Accepted'),
+        (wallet?.credentials?.n ?? 0) > 1
+          ? t('Payment Sent')
+          : t('Payment Accepted'),
     });
     dispatch(ShopEffects.startFindBillPayments()).catch(_ => {});
     dispatch(

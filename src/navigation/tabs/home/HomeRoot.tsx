@@ -110,6 +110,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const portfolioChartsRequested = showPortfolioValue === true;
   const hasKeys = Object.values(keys).length;
 
   const portfolioAllocationTotalFiat = useMemo(() => {
@@ -402,14 +403,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                 />
               }>
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
-              {showPortfolioValue ? (
-                <HomeSection style={{marginTop: 20, marginBottom: 20}}>
-                  <PortfolioBalance />
-                </HomeSection>
-              ) : null}
+              <HomeSection style={{marginTop: 20, marginBottom: 20}}>
+                <PortfolioBalance />
+              </HomeSection>
 
               {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-              {hasKeys && showPortfolioValue ? (
+              {hasKeys ? (
                 <HomeSection style={{marginBottom: 25}}>
                   <LinkingButtons
                     receive={{
@@ -451,12 +450,17 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               {/* ////////////////////////////// SECURE WITH PASSKEY */}
               <SecurePasskeyBannerGate />
 
-              {showPortfolioValue ? (
+              {hasKeys ? (
                 <HomeSection>
                   <View
                     ref={homeAssetsSectionRef}
                     onLayout={onHomeAssetsSectionLayout}>
-                    <AssetsSection enabled={shouldActivateHomeAssetsSection} />
+                    <AssetsSection
+                      enabled={
+                        portfolioChartsRequested &&
+                        shouldActivateHomeAssetsSection
+                      }
+                    />
                   </View>
                 </HomeSection>
               ) : null}

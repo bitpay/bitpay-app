@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.43.3",
+  "version": "14.44.2",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -23,7 +23,7 @@
     "build:android:release": "export NODE_OPTIONS=--openssl-legacy-provider && ./scripts/android-release.sh",
     "postbuild:android:release": "yarn reset:prod",
     "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
-    "validate": "tsc --noEmit --skipLibCheck 2>&1 | grep -v node_modules | grep -E 'TS(2304|2693|2349|2351|2448|2554|2307|2454|2305|2774)' && exit 1 || exit 0",
+    "validate": "tsc --noEmit --skipLibCheck 2>&1 | grep -v node_modules | grep -E 'TS(2304|2693|2349|2351|2448|2554|2307|2454|2305|2774|2532|18048)' && exit 1 || exit 0",
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "prettier:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "./scripts/postinstall.sh",
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@bitpay-labs/bitcore-wallet-client": "11.10.0",
-    "@braze/react-native-sdk": "16.1.0",
+    "@braze/react-native-sdk": "20.1.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
     "@gorhom/bottom-sheet": "5.2.6",
