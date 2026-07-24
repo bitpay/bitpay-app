@@ -1,6 +1,6 @@
 import React, {useCallback} from 'react';
-import styled from 'styled-components/native';
-import {FlatList, LayoutAnimation, View} from 'react-native';
+import {useTheme} from '../../../contexts';
+import {FlatList, LayoutAnimation, View, StyleSheet} from 'react-native';
 import KeySvg from '../../../../assets/img/key.svg';
 import {SlateDark, White} from '../../../styles/colors';
 import {BaseText} from '../../../components/styled/Text';
@@ -23,35 +23,63 @@ import {useLogger} from '../../../utils/hooks';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
+  children: React.ReactNode;
 }
 
-const KeyWalletsRowContainer = styled.View<KeyWalletsRowContainerProps>`
-  justify-content: flex-start;
-  display: flex;
-`;
+const styles = StyleSheet.create({
+  keyWalletsRowContainer: {
+    justifyContent: 'flex-start',
+    display: 'flex',
+  },
+  keyNameContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  keyName: {
+    marginLeft: 7,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  noGutter: {
+    marginHorizontal: -10,
+    paddingRight: 5,
+  },
+  checkBoxContainer: {
+    flexDirection: 'row',
+    marginRight: 12,
+  },
+  keyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingLeft: 4,
+  },
+});
 
-interface KeyNameContainerProps {
-  noBorder?: boolean;
-}
+const KeyWalletsRowContainer = ({children}: KeyWalletsRowContainerProps) => (
+  <View style={styles.keyWalletsRowContainer}>{children}</View>
+);
 
-const KeyNameContainer = styled.View<KeyNameContainerProps>`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
+const KeyNameContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.keyNameContainer}>{children}</View>
+);
 
-const KeyName = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 7px;
-  font-size: 14px;
-  font-weight: 700;
-`;
+const KeyName = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.keyName, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const NoGutter = styled(View)`
-  margin: 0 -10px;
-  padding-right: 5px;
-`;
+const NoGutter = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.noGutter}>{children}</View>
+);
 
 interface Props {
   onPress: (KeyId: string) => void;
@@ -59,20 +87,23 @@ interface Props {
   checked: boolean;
 }
 
-const CheckBoxContainer = styled.View`
-  flex-direction: row;
-  margin-right: 12px;
-`;
+const CheckBoxContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.checkBoxContainer}>{children}</View>
+);
 
-const KeyContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  padding: 16px 0 16px 4px;
-`;
+const KeyContainer = ({
+  onPress,
+  children,
+}: {
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => (
+  <TouchableOpacity onPress={onPress} style={styles.keyContainer}>
+    {children}
+  </TouchableOpacity>
+);
 
-const DropdownButton = styled(TouchableOpacity)``;
+const DropdownButton = TouchableOpacity;
 
 const KeyBox = ({keyId, onPress, checked}: Props) => {
   const acknowledge = (): void => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import BluetoothIconSvg from '../../../../../assets/img/icon-bluetooth.svg';
 import UsbIconSvg from '../../../../../assets/img/icon-usb.svg';
@@ -13,9 +13,11 @@ import {
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import Button from '../../../../components/button/Button';
 
-const IconWrapper = styled.View`
-  padding: 28px;
-`;
+const styles = StyleSheet.create({
+  iconWrapper: {
+    padding: 28,
+  },
+});
 
 export const OpenApp: React.FC<{
   connectionMethod: 'ble' | 'hid' | null;
@@ -46,7 +48,7 @@ export const OpenApp: React.FC<{
         </DescriptionRow>
 
         <IconRow>
-          <IconWrapper>
+          <View style={styles.iconWrapper}>
             {props.connectionMethod === 'ble' ? (
               <BluetoothIconSvg height={60} width={60} />
             ) : props.connectionMethod === 'hid' ? (
@@ -54,7 +56,7 @@ export const OpenApp: React.FC<{
             ) : (
               <LedgerLogoIconSvg height={60} width={60} />
             )}
-          </IconWrapper>
+          </View>
         </IconRow>
 
         <ActionsRow>

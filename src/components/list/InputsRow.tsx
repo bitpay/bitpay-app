@@ -1,5 +1,5 @@
 import React, {memo, useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {ActiveOpacity, Column} from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
@@ -14,14 +14,15 @@ interface Props {
   index: number;
 }
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
-
-const InputColumn = styled(Column)`
-  margin-left: 16px;
-`;
+const styles = StyleSheet.create({
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  inputColumn: {
+    marginLeft: 16,
+  },
+});
 
 const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
   const {amount, address, checked: initialCheckValue, fiatAmount} = item;
@@ -44,10 +45,10 @@ const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
       activeOpacity={ActiveOpacity}
       onPress={toggle}
       style={{paddingLeft: 0, paddingRight: 0}}>
-      <CheckBoxContainer>
+      <View style={styles.checkBoxContainer}>
         <Checkbox checked={checked} onPress={toggle} />
-      </CheckBoxContainer>
-      <InputColumn>
+      </View>
+      <Column style={styles.inputColumn}>
         <H5>
           {amount} {unitCode?.toUpperCase()}{' '}
         </H5>
@@ -57,7 +58,7 @@ const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
         <ListItemSubText numberOfLines={1} ellipsizeMode={'middle'}>
           {address}
         </ListItemSubText>
-      </InputColumn>
+      </Column>
     </RowContainer>
   );
 };

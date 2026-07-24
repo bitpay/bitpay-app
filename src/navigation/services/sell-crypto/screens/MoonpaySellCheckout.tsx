@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, SafeAreaView, StyleSheet, ViewProps} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   useTheme,
@@ -10,7 +10,6 @@ import {
   CommonActions,
 } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import styled from 'styled-components/native';
 import cloneDeep from 'lodash.clonedeep';
 import {
   useAppDispatch,
@@ -128,10 +127,17 @@ import {Network} from '../../../../constants';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
-export const SellCheckoutContainer = styled.SafeAreaView`
-  flex: 1;
-  margin: 14px;
-`;
+const styles = StyleSheet.create({
+  sellCheckoutContainer: {
+    flex: 1,
+    margin: 14,
+  },
+});
+
+export const SellCheckoutContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.sellCheckoutContainer, style]} {...rest} />;
 
 export interface MoonpaySellCheckoutProps {
   sellCryptoExternalId: string;

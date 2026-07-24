@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
 import {
   BaseText,
@@ -91,103 +92,225 @@ const schema = yup.object().shape({
   totalCopayers: yup.number().required().positive().integer().min(2).max(6),
 });
 
-export const MultisigContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
-const ScrollViewContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
-`;
+const styles = StyleSheet.create({
+  multisigContainer: {
+    flex: 1,
+  },
+  scrollViewContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  optionTitle: {
+    fontSize: 16,
+  },
+  verticalPadding: {
+    paddingVertical: SCREEN_GUTTER,
+    paddingHorizontal: 0,
+  },
+  optionContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  counterContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  roundButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 42,
+    height: 42,
+    margin: 10,
+    borderRadius: 30,
+    borderWidth: 1,
+  },
+  removeAddButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 20,
+    height: 20,
+    borderRadius: 30,
+    borderWidth: 1,
+  },
+  counterNumber: {
+    fontSize: 16,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  inputContainer: {
+    marginTop: 20,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+});
 
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 0;
-`;
+export const MultisigContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.multisigContainer, style]} {...rest} />
+);
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const ScrollViewContainer: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView style={[styles.scrollViewContainer, style]} {...rest} />
+);
 
-const OptionTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const ErrorText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.errorText, style]} {...rest} />;
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const CheckBoxContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.checkBoxContainer, style]} {...rest} />;
 
-const OptionContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const OptionTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.optionTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CounterContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const RoundButton = styled.View`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  margin: 10px;
-  border-radius: 30px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
-`;
+const OptionContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.optionContainer, style]} {...rest} />;
 
-const RemoveButton = styled(TouchableOpacity)<{isDisabled?: boolean}>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 30px;
-  border: 1px solid
-    ${({theme: {dark}, isDisabled}) =>
-      isDisabled ? Slate : dark ? White : Action};
-`;
+const CounterContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.counterContainer, style]} {...rest} />;
 
-export const AddButton = styled(TouchableOpacity)<{isDisabled?: boolean}>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 20px;
-  width: 20px;
-  border: 1px solid black;
-  border-radius: 30px;
-  border: 1px solid
-    ${({theme: {dark}, isDisabled}) =>
-      isDisabled ? Slate : dark ? White : Action};
-`;
+const RoundButton: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.roundButton,
+        {borderColor: theme.dark ? White : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CounterNumber = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  font-size: 16px;
-`;
+interface DisableableProps {
+  isDisabled?: boolean;
+}
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const RemoveButton: React.FC<
+  DisableableProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({isDisabled, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.removeAddButton,
+        {
+          borderColor: isDisabled ? Slate : theme.dark ? White : Action,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InputContainer = styled.View`
-  margin-top: 20px;
-`;
+export const AddButton: React.FC<
+  DisableableProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({isDisabled, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.removeAddButton,
+        {
+          borderColor: isDisabled ? Slate : theme.dark ? White : Action,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
-`;
+const CounterNumber: React.FC<React.ComponentProps<typeof Text>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        styles.counterNumber,
+        {color: theme.dark ? White : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
+
+const InputContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.inputContainer, style]} {...rest} />;
+
+const CtaContainer: React.FC<React.ComponentProps<typeof _CtaContainer>> = ({
+  style,
+  ...rest
+}) => <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />;
 
 type CreateMultisigProps = NativeStackScreenProps<
   WalletGroupParamList,

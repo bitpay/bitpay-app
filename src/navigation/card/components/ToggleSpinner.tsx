@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import styled from 'styled-components/native';
+import {View, ViewProps, StyleSheet} from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -21,16 +21,28 @@ interface ToggleSpinnerProps {
   state?: ToggleSpinnerState;
 }
 
-const ToggleSpinnerContainer = styled.View`
-  height: 20px;
-  width: 20px;
-`;
+const styles = StyleSheet.create({
+  toggleSpinnerContainer: {
+    height: 20,
+    width: 20,
+  },
+  iconWrapper: {
+    height: '100%',
+    justifyContent: 'center',
+    width: '100%',
+  },
+});
 
-const IconWrapper = styled(Animated.View)`
-  height: 100%;
-  justify-content: center;
-  width: 100%;
-`;
+const ToggleSpinnerContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.toggleSpinnerContainer, style]} {...rest} />
+);
+
+const IconWrapper = React.forwardRef<
+  Animated.View,
+  React.ComponentProps<typeof Animated.View>
+>(({style, ...rest}, ref) => (
+  <Animated.View ref={ref} style={[styles.iconWrapper, style]} {...rest} />
+));
 
 const PULSE = withDelay(
   50,

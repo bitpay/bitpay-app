@@ -1,7 +1,7 @@
 import React, {useLayoutEffect} from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList} from '../WalletGroup';
 import BoxInput from '../../../components/form/BoxInput';
@@ -24,22 +24,43 @@ type UpdateKeyOrWalletNameScreenProps = NativeStackScreenProps<
   'UpdateKeyOrWalletName'
 >;
 
-const UpdateContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  updateContainer: {
+    flex: 1,
+  },
+  scrollContainer: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  formContainer: {
+    marginTop: 20,
+  },
+  buttonContainer: {
+    marginTop: 40,
+  },
+});
 
-const FormContainer = styled.View`
-  margin-top: 20px;
-`;
+const UpdateContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.updateContainer, style]} {...rest} />;
 
-const ButtonContainer = styled.View`
-  margin-top: 40px;
-`;
+const ScrollContainer: React.FC<React.ComponentProps<typeof ScrollView>> = ({
+  style,
+  ...rest
+}) => <ScrollView style={[styles.scrollContainer, style]} {...rest} />;
+
+const FormContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.formContainer, style]} {...rest} />;
+
+const ButtonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.buttonContainer, style]} {...rest} />;
 
 const schema = yup.object().shape({
   name: yup.string().max(40).trim().required(),

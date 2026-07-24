@@ -1,8 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
@@ -17,10 +16,20 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {keyBackupRequired} from '../../home/components/Crypto';
 import {SettingsComponent} from '../SettingsRoot';
 
-const CreateOrImportLink = styled(Link)`
-  font-weight: 500;
-  font-size: 18px;
-`;
+const styles = StyleSheet.create({
+  createOrImportLink: {
+    fontWeight: '500',
+    fontSize: 18,
+  },
+});
+
+const CreateOrImportLink = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Link>) => (
+  <Link style={[styles.createOrImportLink, style]} {...rest} />
+);
+
 const WalletsAndKeys = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();

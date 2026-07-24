@@ -1,6 +1,7 @@
 import React from 'react';
+import {StyleSheet, Text, TextProps} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import styled from 'styled-components/native';
 import {Feather} from '../../../styles/colors';
 import {
   ActiveOpacity,
@@ -22,7 +23,10 @@ import {formatFiatAmountObj} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {getRemainingWalletCount} from '../../../store/wallet/utils/wallet';
 import {WalletRowProps} from '../../../components/list/WalletRow';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 
 interface Props {
   optionId: string;
@@ -34,35 +38,75 @@ interface Props {
   hideKeyBalance: boolean;
 }
 
-export const OptionContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? '#343434' : Feather)};
-  border-radius: 12px;
-  margin-bottom: ${ScreenGutter};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  padding: 20px;
-`;
+const styles = StyleSheet.create({
+  optionContainer: {
+    borderRadius: 12,
+    marginBottom: parseInt(ScreenGutter, 10),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    padding: 20,
+  },
+  balanceHiddenText: {
+    fontSize: 20,
+    lineHeight: 24,
+    flexShrink: 1,
+    marginBottom: -9,
+  },
+  balanceShownText: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  balanceBase: {
+    fontWeight: '400',
+  },
+});
 
-const BaseText = styled(H5)`
-  color: ${({theme}) => theme.colors.text};
-`;
+export const OptionContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.optionContainer,
+        {backgroundColor: theme.dark ? '#343434' : Feather},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const OptionName = styled(BaseText)``;
+export const OptionName = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    return <H5 ref={ref} style={style} {...rest} />;
+  },
+);
+OptionName.displayName = 'OptionName';
 
-export const Balance = styled(BaseText)<{hidden?: boolean}>`
-  font-size: ${({hidden}) => (hidden ? '20px' : '16px')};
-  font-weight: 400;
-  line-height: ${({hidden}) => (hidden ? '24px' : '20px')};
-  ${({hidden}) =>
-    hidden
-      ? `
-    flex-shrink: 1;
-    margin-bottom: -9px;
-  `
-      : ''}
-`;
+interface BalanceProps {
+  hidden?: boolean;
+}
+
+export const Balance = React.forwardRef<Text, BalanceProps & TextProps>(
+  ({hidden, style, ...rest}, ref) => {
+    return (
+      <H5
+        ref={ref}
+        style={[
+          styles.balanceBase,
+          hidden ? styles.balanceHiddenText : styles.balanceShownText,
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Balance.displayName = 'Balance';
 
 const DropdownOption = ({
   optionId,

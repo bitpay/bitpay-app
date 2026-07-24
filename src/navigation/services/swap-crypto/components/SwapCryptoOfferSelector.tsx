@@ -1,9 +1,9 @@
 import React, {memo, useEffect, useMemo, useRef, useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Caution, Slate, SlateDark, White} from '../../../../styles/colors';
 import {HEIGHT} from '../../../../components/styled/Containers';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {StyleSheet, Text, View, ViewProps} from 'react-native';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {
   useNavigation,
@@ -70,75 +70,144 @@ import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
 
-export const SwapCryptoOfferSelectorContainer = styled.View``;
+const styles = StyleSheet.create({
+  offerSelectorClickableRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 48,
+  },
+  offerSelectorContainerLeft: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+  },
+  offerSelectorContainerRight: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+  },
+  offerSelectorText: {
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 24,
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+  },
+  offerSelectedLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  warnMsgText: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 24,
+    color: Caution,
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+  },
+  activityIndicatorContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  arrowContainer: {
+    marginLeft: 10,
+  },
+});
+
+export const SwapCryptoOfferSelectorContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <View style={style} {...rest} />;
 
 let unmountView = false;
 
-const OfferSelectorClickableRow = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 48px;
-`;
+const OfferSelectorClickableRow: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[styles.offerSelectorClickableRow, style]}
+    {...rest}
+  />
+);
 
-export const OfferSelectorContainerLeft = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-`;
+export const OfferSelectorContainerLeft: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <View style={[styles.offerSelectorContainerLeft, style]} {...rest} />;
 
-export const OfferSelectorContainerRight = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-`;
+export const OfferSelectorContainerRight: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <View style={[styles.offerSelectorContainerRight, style]} {...rest} />;
 
-export const OfferSelectorText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  flex: 1;
-  min-width: 0;
-  flex-shrink: 1;
-  flex-wrap: wrap;
-`;
+export const OfferSelectorText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.offerSelectorText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+OfferSelectorText.displayName = 'OfferSelectorText';
 
-const OfferSelectedLabel = styled(BaseText)`
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const OfferSelectedLabel = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.offerSelectedLabel,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+OfferSelectedLabel.displayName = 'OfferSelectedLabel';
 
-const WarnMsgText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 24px;
-  color: ${Caution};
-  flex: 1;
-  min-width: 0;
-  flex-shrink: 1;
-  flex-wrap: wrap;
-`;
+const WarnMsgText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.warnMsgText, style]} {...rest} />
+));
+WarnMsgText.displayName = 'WarnMsgText';
 
-const ActivityIndicatorContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin-right: 15px;
-`;
+const ActivityIndicatorContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.activityIndicatorContainer, style]} {...rest} />
+);
 
-const ArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+const ArrowContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.arrowContainer, style]} {...rest} />
+);
 
 export type SwapCryptoOffer = {
   key: SwapCryptoExchangeKey;

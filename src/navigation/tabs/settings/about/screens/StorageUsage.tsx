@@ -1,10 +1,10 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Platform} from 'react-native';
+import {Platform, ScrollView, StyleSheet} from 'react-native';
 import RNFS from 'react-native-fs';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {forEach} from 'lodash';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import {
@@ -29,7 +29,13 @@ import {logManager} from '../../../../../managers/LogManager';
 import {getPortfolioRuntimeClient} from '../../../../../portfolio/runtime/portfolioRuntime';
 import {AboutScreens} from '../AboutGroup';
 
-const ScrollContainer = styled.ScrollView``;
+const styles = StyleSheet.create({
+  headerTitle: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+    borderBottomWidth: 1,
+  },
+});
 
 const ValueSkeleton = ({width = 90}: {width?: number}) => {
   const theme = useTheme();
@@ -44,13 +50,25 @@ const ValueSkeleton = ({width = 90}: {width?: number}) => {
   );
 };
 
-const HeaderTitle = styled(Setting)`
-  margin-top: 20px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
-  padding: 0 ${ScreenGutter};
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const HeaderTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Setting>) => {
+  const theme = useTheme();
+  return (
+    <Setting
+      style={[
+        styles.headerTitle,
+        {
+          backgroundColor: theme.dark ? LightBlack : Feather,
+          borderBottomColor: theme.dark ? Black : White,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const storagePath =
   Platform.OS === 'ios' ? RNFS.MainBundlePath : RNFS.DocumentDirectoryPath;
@@ -454,7 +472,7 @@ const StorageUsage: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <ScrollContainer>
+      <ScrollView>
         <HeaderTitle>
           <SettingTitle>{t('Total Size')}</SettingTitle>
         </HeaderTitle>
@@ -549,7 +567,7 @@ const StorageUsage: React.FC = () => {
             {renderValue(metrics.backupStorage)}
           </Setting>
         </SettingsComponent>
-      </ScrollContainer>
+      </ScrollView>
     </SettingsContainer>
   );
 };

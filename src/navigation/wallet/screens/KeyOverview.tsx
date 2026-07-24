@@ -21,12 +21,14 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   View,
   useWindowDimensions,
 } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   Balance,
@@ -158,148 +160,304 @@ LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
 
-export const KeyToggle = styled(TouchableOpacity)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-  gap: 5px;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-export const KeyDropdown = styled.SafeAreaView`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  max-height: 75%;
-`;
+const styles = StyleSheet.create({
+  keyToggle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  keyDropdown: {
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    maxHeight: '75%',
+  },
+  keyDropdownOptionsContainer: {
+    paddingHorizontal: gutter,
+  },
+  cogIconContainer: {
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    width: 40,
+  },
+  overviewContainer: {
+    flex: 1,
+  },
+  balanceContainer: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    alignItems: 'center',
+  },
+  walletListHeader: {
+    padding: 10,
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  walletListFooterContainer: {
+    paddingTop: 10,
+    paddingRight: 10,
+    paddingBottom: 100,
+    paddingLeft: 10,
+    marginTop: 15,
+    gap: 12,
+  },
+  addWalletLinkContainer: {
+    paddingVertical: 13,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  addWalletLink: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  addWalletLinkButton: {
+    paddingHorizontal: 20,
+  },
+  addWalletSpacer: {
+    height: 10,
+  },
+  allocationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  allocationHeaderAction: {
+    padding: 6,
+  },
+  allocationFooter: {
+    marginTop: 20,
+    paddingBottom: 5,
+  },
+  allocationDivider: {
+    height: 1,
+    opacity: 1,
+    marginVertical: 12,
+  },
+  allocationLabel: {
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 14,
+  },
+  allocationValue: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 24,
+    marginTop: 4,
+  },
+  allocationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  allocationColumn: {
+    flex: 1,
+  },
+  allocationMetricValue: {
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 4,
+  },
+});
 
-export const KeyDropdownOptionsContainer = styled.ScrollView`
-  padding: 0 ${ScreenGutter};
-`;
+export const KeyToggle: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.keyToggle, style]} {...rest} />
+);
 
-export const CogIconContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 50px;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  width: 40px;
-`;
+export const KeyDropdown: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SafeAreaView
+      style={[
+        styles.keyDropdown,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OverviewContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+export const KeyDropdownOptionsContainer: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView style={[styles.keyDropdownOptionsContainer, style]} {...rest} />
+);
 
-const BalanceContainer = styled.View`
-  margin-top: 8px;
-  padding: 10px 15px;
-  align-items: center;
-`;
+export const CogIconContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.cogIconContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WalletListHeader = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const OverviewContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof SafeAreaView>
+>(({style, ...rest}, ref) => (
+  <SafeAreaView ref={ref} style={[styles.overviewContainer, style]} {...rest} />
+));
 
-const WalletListFooterContainer = styled.View`
-  padding: 10px 10px 100px 10px;
-  margin-top: 15px;
-  gap: 12px;
-`;
+const BalanceContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.balanceContainer, style]} {...rest} />;
 
-const AddWalletLinkContainer = styled.View`
-  padding: 13px 0;
-  align-items: center;
-  margin-bottom: 15px;
-`;
+const WalletListHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletListHeader, style]} {...rest} />;
 
-const AddWalletLink = styled(Link).attrs(() => ({
-  suppressHighlighting: true,
-}))`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-`;
+const WalletListFooterContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.walletListFooterContainer, style]} {...rest} />
+);
 
-const AddWalletLinkButton = styled(TouchableOpacity)`
-  padding: 0 20px;
-`;
+const AddWalletLinkContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.addWalletLinkContainer, style]} {...rest} />;
 
-const AddWalletSpacer = styled.View`
-  height: 10px;
-`;
+const AddWalletLink: React.FC<
+  React.ComponentProps<typeof Link>
+> = ({style, suppressHighlighting = true, ...rest}) => (
+  <Link
+    suppressHighlighting={suppressHighlighting}
+    style={[styles.addWalletLink, style]}
+    {...rest}
+  />
+);
 
-const AllocationHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 0 10px;
-`;
+const AddWalletLinkButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.addWalletLinkButton, style]} {...rest} />
+);
 
-const AllocationHeaderAction = styled(TouchableOpacity)`
-  padding: 6px;
-`;
+const AddWalletSpacer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.addWalletSpacer, style]} {...rest} />;
 
-const AllocationFooter = styled.View`
-  margin-top: 20px;
-  padding-bottom: 5px;
-`;
+const AllocationHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationHeader, style]} {...rest} />;
 
-const AllocationDivider = styled.View`
-  height: 1px;
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  opacity: 1;
-  margin: 12px 0;
-`;
+const AllocationHeaderAction: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.allocationHeaderAction, style]} {...rest} />
+);
 
-const AllocationLabel = styled(BaseText)`
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 14px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const AllocationFooter: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationFooter, style]} {...rest} />;
 
-const AllocationValue = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${({theme}) => theme.colors.text};
-  margin-top: 4px;
-`;
+const AllocationDivider: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.allocationDivider,
+        {backgroundColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AllocationRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-`;
+const AllocationLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.allocationLabel,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AllocationColumn = styled.View`
-  flex: 1;
-`;
+const AllocationValue: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.allocationValue, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const AllocationMetricValue = styled(BaseText)<{positive?: boolean}>`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  margin-top: 4px;
-  color: ${({positive, theme: {dark}}) => {
-    if (positive === true) {
-      return getDifferenceColor(true, dark);
-    }
-    if (positive === false) {
-      return getDifferenceColor(false, dark);
-    }
-    return dark ? White : SlateDark;
-  }};
-`;
+const AllocationRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationRow, style]} {...rest} />;
+
+const AllocationColumn: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationColumn, style]} {...rest} />;
+
+const AllocationMetricValue: React.FC<
+  React.ComponentProps<typeof BaseText> & {positive?: boolean}
+> = ({positive, style, ...rest}) => {
+  const theme = useTheme();
+  const color =
+    positive === true
+      ? getDifferenceColor(true, theme.dark)
+      : positive === false
+      ? getDifferenceColor(false, theme.dark)
+      : theme.dark
+      ? White
+      : SlateDark;
+  return (
+    <BaseText
+      style={[styles.allocationMetricValue, {color}, style]}
+      {...rest}
+    />
+  );
+};
 
 const AllocationMetricSkeleton: React.FC<{
   align?: 'left' | 'right' | 'center';
@@ -326,15 +484,23 @@ const AllocationMetricSkeleton: React.FC<{
   );
 };
 
-const HeaderTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const headerRowStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
 
-const HeaderRightContainer = styled(_HeaderRightContainer)`
-  flex-direction: row;
-  align-items: center;
-`;
+const HeaderTitleContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[headerRowStyles.row, style]} {...rest} />;
+
+const HeaderRightContainer: React.FC<
+  React.ComponentProps<typeof _HeaderRightContainer>
+> = ({style, ...rest}) => (
+  <_HeaderRightContainer style={[headerRowStyles.row, style]} {...rest} />
+);
 
 const KeyOverviewAllocationGainLossFooter = React.memo(
   ({

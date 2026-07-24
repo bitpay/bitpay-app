@@ -1,7 +1,6 @@
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import styled from 'styled-components/native';
 import {
   BaseText,
   H4,
@@ -22,7 +21,7 @@ import {
   ItemNoteContainer,
   ItemTitleContainer,
 } from '../styled/WalletConnectContainers';
-import {ScrollView, View} from 'react-native';
+import {ScrollView, View, SafeAreaView, StyleSheet} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import FastImage from 'react-native-fast-image';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -64,36 +63,59 @@ import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg
 import InfoSvg from '../../../../assets/img/info.svg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const WalletConnectConnectionsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-const AddConnectionContainer = styled(TouchableOpacity)``;
+const styles = StyleSheet.create({
+  walletConnectConnectionsContainer: {
+    flex: 1,
+  },
+  emptyListContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  accountSettingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    gap: 8,
+    borderRadius: 50,
+  },
+  badge: {
+    position: 'absolute',
+    borderRadius: 8,
+    width: 10,
+    height: 10,
+    right: 0,
+    top: 1,
+    backgroundColor: '#ff647c',
+  },
+});
 
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
+const AccountSettingsContainer = ({
+  children,
+  activeOpacity,
+  onPress,
+}: {
+  children: React.ReactNode;
+  activeOpacity?: number;
+  onPress?: () => void;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      activeOpacity={activeOpacity}
+      onPress={onPress}
+      style={[
+        styles.accountSettingsContainer,
+        {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const AccountSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  padding: 8px 10px;
-  gap: 8px;
-  border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? SlateDark : NeutralSlate)};
-`;
-
-const Badge = styled.View`
-  position: absolute;
-  border-radius: 8px;
-  width: 10px;
-  height: 10px;
-  right: 0px;
-  top: 1px;
-  background: #ff647c;
-`;
+const Badge = () => <View style={styles.badge} />;
 
 export type WalletConnectConnectionsParamList = {
   showSuccessPopup?: boolean;
@@ -203,13 +225,13 @@ const WalletConnectConnections = () => {
     navigation.setOptions({
       headerRight: () => {
         return (
-          <AddConnectionContainer
+          <TouchableOpacity
             touchableLibrary={'react-native-gesture-handler'}
             onPress={() => {
               navigation.navigate('WalletConnectRoot', {});
             }}>
             <AddConnection opacity={1} />
-          </AddConnectionContainer>
+          </TouchableOpacity>
         );
       },
     });
@@ -420,7 +442,7 @@ const WalletConnectConnections = () => {
   };
 
   return (
-    <WalletConnectConnectionsContainer>
+    <SafeAreaView style={styles.walletConnectConnectionsContainer}>
       <ScrollView>
         <View style={{marginTop: 20, padding: 16, marginBottom: 100}}>
           <HeaderTitle>{t('Connections')}</HeaderTitle>
@@ -466,10 +488,10 @@ const WalletConnectConnections = () => {
             />
           ) : null}
           {!sessions.length ? (
-            <EmptyListContainer>
+            <View style={styles.emptyListContainer}>
               <H5>{t("It's a ghost town in here")}</H5>
               <GhostSvg style={{marginTop: 20}} />
-            </EmptyListContainer>
+            </View>
           ) : null}
         </View>
       </ScrollView>
@@ -516,7 +538,7 @@ const WalletConnectConnections = () => {
           </SheetContainer>
         </SheetModal>
       ) : null}
-    </WalletConnectConnectionsContainer>
+    </SafeAreaView>
   );
 };
 

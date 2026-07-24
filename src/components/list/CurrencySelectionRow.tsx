@@ -1,15 +1,13 @@
 import React, {memo, useCallback} from 'react';
-import {ImageRequireSource} from 'react-native';
-import styled from 'styled-components/native';
+import {ImageRequireSource, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {IS_ANDROID} from '../../constants';
 import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
 import {CurrencySelectionMode} from '../../navigation/wallet/screens/CurrencySelection';
 import {LightBlack, LuckySevens, Slate30, SlateDark} from '../../styles/colors';
 import {formatCurrencyAbbreviation} from '../../utils/helper-methods';
-import Checkbox from '../checkbox/Checkbox';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import haptic from '../haptic-feedback/haptic';
-import {ScreenGutter} from '../styled/Containers';
 import {BaseText, H7} from '../styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import ChevronRightSvg from '../../../assets/img/angle-right.svg';
@@ -39,45 +37,44 @@ export type CurrencySelectionRowProps = {
   onToggle?: (currencyAbbreviation: string, chain: string) => void;
 };
 
-const RowContainer = styled(TouchableOpacity)`
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 12px;
-  flex-direction: row;
-  align-items: center;
-  margin: 0 ${ScreenGutter} ${ScreenGutter};
-  padding: 16px;
-`;
-
-const CurrencyColumn = styled.View`
-  justify-content: center;
-  margin-right: 8px;
-`;
-
-const CurrencyTitleColumn = styled(CurrencyColumn)`
-  flex: 1 1 auto;
-`;
-
-const CurrencyTitle = styled(H7).attrs(() => ({
-  medium: true,
-}))`
-  margin: 0;
-  padding: 0;
-`;
-
-const CurrencySubTitle = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-  font-size: 12px;
-`;
-
-const ChevronContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  rowContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 0,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 16,
+  },
+  currencyColumn: {
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  currencyTitleColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+  },
+  currencyTitle: {
+    margin: 0,
+    padding: 0,
+  },
+  currencySubTitle: {
+    fontSize: 12,
+  },
+  chevronContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
   currency,
   onToggle,
 }) => {
+  const theme = useTheme();
   const {
     currencyAbbreviation,
     currencyName,
@@ -97,26 +94,36 @@ const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
   }, [currencyAbbreviation, chain, disabled, onToggle]);
 
   return (
-    <RowContainer
-      style={{borderWidth: 0, marginBottom: 0}}
+    <TouchableOpacity
+      style={[
+        styles.rowContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        {borderWidth: 0, marginBottom: 0},
+      ]}
       testID={`currency-selection-row-${currencyAbbreviation}-${chain}`}
       accessibilityLabel={`${currencyName} currency selection`}
       onPress={onPress}>
-      <CurrencyColumn>
+      <View style={styles.currencyColumn}>
         <CurrencyImage img={img} imgSrc={imgSrc} badgeUri={badgeUri} />
-      </CurrencyColumn>
+      </View>
 
-      <CurrencyTitleColumn>
-        <CurrencyTitle>{currencyName}</CurrencyTitle>
-        <CurrencySubTitle>
+      <View style={styles.currencyTitleColumn}>
+        <H7 medium style={styles.currencyTitle}>
+          {currencyName}
+        </H7>
+        <BaseText
+          style={[
+            styles.currencySubTitle,
+            {color: theme.dark ? LuckySevens : SlateDark},
+          ]}>
           {formatCurrencyAbbreviation(currencyAbbreviation)}
-        </CurrencySubTitle>
-      </CurrencyTitleColumn>
+        </BaseText>
+      </View>
 
-      <ChevronContainer>
+      <View style={styles.chevronContainer}>
         <ChevronRightSvg height={16} width={16} />
-      </ChevronContainer>
-    </RowContainer>
+      </View>
+    </TouchableOpacity>
   );
 };
 

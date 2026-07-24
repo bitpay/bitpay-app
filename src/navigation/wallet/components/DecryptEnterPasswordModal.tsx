@@ -1,7 +1,7 @@
 import React, {useEffect, useCallback, useMemo} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {AppActions} from '../../../store/app';
 import {
   ActionContainer,
@@ -15,36 +15,33 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {HeaderTitle, Paragraph} from '../../../components/styled/Text';
-import {Keyboard, Platform} from 'react-native';
+import {Keyboard, Platform, StyleSheet, View} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import BaseModal from '../../../components/modal/base/BaseModal';
 
-const DecryptFormContainer = styled.View`
-  justify-content: center;
-  align-self: center;
-  width: ${WIDTH - 16}px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 10px;
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  decryptFormContainer: {
+    justifyContent: 'center',
+    alignSelf: 'center',
+    width: WIDTH - 16,
+    borderRadius: 10,
+    padding: parseInt(ScreenGutter, 10),
+  },
+  passwordFormContainer: {
+    marginVertical: 15,
+  },
+  passwordInputContainer: {
+    marginVertical: 15,
+  },
+  passwordFormDescription: {
+    marginVertical: 10,
+  },
+});
 
 const schema = yup.object().shape({
   password: yup.string().required(),
 });
-
-const PasswordFormContainer = styled.View`
-  margin: 15px 0;
-`;
-
-const PasswordInputContainer = styled.View`
-  margin: 15px 0;
-`;
-
-const PasswordFormDescription = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-  margin: 10px 0;
-`;
 
 interface DecryptPasswordFieldValues {
   password: string;
@@ -58,6 +55,7 @@ export interface DecryptPasswordConfig {
 
 const DecryptEnterPasswordModal = React.memo(() => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useDispatch();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showDecryptPasswordModal,
@@ -137,21 +135,31 @@ const DecryptEnterPasswordModal = React.memo(() => {
       onBackdropPress={dismissModal}
       useNativeDriverForBackdrop={true}
       useNativeDriver={useNativeDriverValue}>
-      <DecryptFormContainer>
-        <PasswordFormContainer>
+      <View
+        style={[
+          styles.decryptFormContainer,
+          {backgroundColor: theme.dark ? LightBlack : White},
+        ]}>
+        <View style={styles.passwordFormContainer}>
           <HeaderTitle>{t('Enter encryption password')}</HeaderTitle>
 
           {description ? (
-            <PasswordFormDescription>{description}</PasswordFormDescription>
+            <Paragraph
+              style={[
+                styles.passwordFormDescription,
+                {color: theme.colors.text},
+              ]}>
+              {description}
+            </Paragraph>
           ) : null}
-          <PasswordInputContainer>
+          <View style={styles.passwordInputContainer}>
             <Controller
               control={control}
               render={renderPasswordInput}
               name="password"
               defaultValue=""
             />
-          </PasswordInputContainer>
+          </View>
 
           <ActionContainer>
             <Button
@@ -168,8 +176,8 @@ const DecryptEnterPasswordModal = React.memo(() => {
               {t('Cancel')}
             </Button>
           </ActionContainer>
-        </PasswordFormContainer>
-      </DecryptFormContainer>
+        </View>
+      </View>
     </BaseModal>
   );
 });

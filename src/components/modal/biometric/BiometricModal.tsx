@@ -11,60 +11,60 @@ import {
   NeutralSlate,
   White,
 } from '../../../styles/colors';
-import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
-import styled from 'styled-components/native';
+import ReactNativeBiometrics from 'react-native-biometrics';
+import {useTheme} from '../../../contexts';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
-import {Animated, NativeModules, DeviceEventEmitter, View} from 'react-native';
+import {
+  Animated,
+  NativeModules,
+  DeviceEventEmitter,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {useTranslation} from 'react-i18next';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {useLogger} from '../../../utils/hooks';
 
-const BiometricContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
-
-const BiometricModalTitleContainer = styled.View`
-  height: 50%;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? DisabledDark : Grey)};
-`;
-
-const BiometricModalTitle = styled(BaseText)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 22px;
-`;
-
-const BiometricModalBottomContainer = styled.View`
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50%;
-`;
-
-const BiometricModalImgContainer = styled(TouchableOpacity)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  top: -40px;
-`;
-
-const ImgContainer = styled(Animated.View)`
-  height: 80px;
-  border-radius: 50px;
-  width: 80px;
-`;
+const styles = StyleSheet.create({
+  biometricContainer: {
+    flex: 1,
+  },
+  biometricModalTitleContainer: {
+    height: '50%',
+    flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+  },
+  biometricModalTitle: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 22,
+  },
+  biometricModalBottomContainer: {
+    flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '50%',
+  },
+  biometricModalImgContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: -40,
+  },
+  imgContainer: {
+    height: 80,
+    borderRadius: 50,
+    width: 80,
+  },
+});
 
 export interface BiometricModalConfig {
   onClose?: (checked?: boolean) => void;
@@ -76,6 +76,7 @@ const BiometricModal: React.FC = React.memo(() => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const logger = useLogger();
+  const theme = useTheme();
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
   const {onClose} =
     useSelector(({APP}: RootState) => APP.biometricModalConfig) || {};
@@ -176,17 +177,32 @@ const BiometricModal: React.FC = React.memo(() => {
         useNativeDriverForBackdrop={true}
         useNativeDriver={true}
         style={modalStyle}>
-        <BiometricContainer>
-          <BiometricModalTitleContainer>
-            <BiometricModalTitle>{unlockAppText}</BiometricModalTitle>
-          </BiometricModalTitleContainer>
-          <BiometricModalImgContainer onPress={authenticate}>
-            <ImgContainer style={transformStyle}>
+        <View
+          style={[
+            styles.biometricContainer,
+            {backgroundColor: theme.dark ? Black : White},
+          ]}>
+          <View
+            style={[
+              styles.biometricModalTitleContainer,
+              {
+                backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+                borderBottomColor: theme.dark ? DisabledDark : Grey,
+              },
+            ]}>
+            <BaseText style={styles.biometricModalTitle}>
+              {unlockAppText}
+            </BaseText>
+          </View>
+          <TouchableOpacity
+            style={styles.biometricModalImgContainer}
+            onPress={authenticate}>
+            <Animated.View style={[styles.imgContainer, transformStyle]}>
               <BitpaySvg width={80} height={80} />
-            </ImgContainer>
-          </BiometricModalImgContainer>
-          <BiometricModalBottomContainer />
-        </BiometricContainer>
+            </Animated.View>
+          </TouchableOpacity>
+          <View style={styles.biometricModalBottomContainer} />
+        </View>
       </Modal>
     </View>
   );

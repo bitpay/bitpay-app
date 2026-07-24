@@ -1,6 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {BaseText} from '../../../../components/styled/Text';
 import {Slate30, SlateDark} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -12,35 +12,35 @@ const UK_EXCHANGE_RATE_DISCLOSURES = [
   'Tap the graph to see period information.',
 ];
 
-const DisclosureContainer = styled.View`
-  margin: 10px ${ScreenGutter} 18px;
-`;
-
-const DisclosureRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-  margin-bottom: 4px;
-`;
-
-const DisclosureBullet = styled(BaseText)`
-  width: 16px;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 15px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const DisclosureText = styled(BaseText)`
-  flex: 1;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 15px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const styles = StyleSheet.create({
+  disclosureContainer: {
+    marginTop: 10,
+    marginHorizontal: 12,
+    marginBottom: 18,
+  },
+  disclosureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  disclosureBullet: {
+    width: 16,
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 15,
+  },
+  disclosureText: {
+    flex: 1,
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 15,
+  },
+});
 
 const UkExchangeRateDisclosures = () => {
+  const theme = useTheme();
   const isUkLocation = useAppSelector(({LOCATION}) => {
     return isUnitedKingdomCountry(LOCATION.locationData?.countryShortCode);
   });
@@ -49,15 +49,21 @@ const UkExchangeRateDisclosures = () => {
     return null;
   }
 
+  const textColor = theme.dark ? Slate30 : SlateDark;
+
   return (
-    <DisclosureContainer>
+    <View style={styles.disclosureContainer}>
       {UK_EXCHANGE_RATE_DISCLOSURES.map(disclosure => (
-        <DisclosureRow key={disclosure}>
-          <DisclosureBullet>{'\u2022'}</DisclosureBullet>
-          <DisclosureText>{disclosure}</DisclosureText>
-        </DisclosureRow>
+        <View style={styles.disclosureRow} key={disclosure}>
+          <BaseText style={[styles.disclosureBullet, {color: textColor}]}>
+            {'\u2022'}
+          </BaseText>
+          <BaseText style={[styles.disclosureText, {color: textColor}]}>
+            {disclosure}
+          </BaseText>
+        </View>
       ))}
-    </DisclosureContainer>
+    </View>
   );
 };
 

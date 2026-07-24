@@ -1,9 +1,9 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import Button, {ButtonState} from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
-import {isNarrowHeight, ScreenGutter} from '../../components/styled/Containers';
+import {isNarrowHeight} from '../../components/styled/Containers';
 import {BaseText} from '../../components/styled/Text';
 import SwapButton from '../../components/swap-button/SwapButton';
 import VirtualKeyboard from '../../components/virtual-keyboard/VirtualKeyboard';
@@ -19,85 +19,152 @@ import useAppSelector from '../../utils/hooks/useAppSelector';
 import {useLogger} from '../../utils/hooks/useLogger';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../archax/archax-footer';
-import {View} from 'react-native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {AltCurrenciesRowProps} from '../list/AltCurrenciesRow';
 
-const AmountContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  amountContainer: {
+    flex: 1,
+  },
+  ctaContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionContainer: {
+    marginBottom: 15,
+    width: '100%',
+  },
+  buttonContainer: {
+    paddingVertical: 0,
+    paddingHorizontal: 12,
+  },
+  viewContainer: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  virtualKeyboardContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  amountText: {
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  amountEquivText: {
+    fontSize: 12,
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 15,
+  },
+  warnMsgText: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: '700',
+    color: Caution,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  currencySuperScript: {
+    position: 'absolute',
+    top: 10,
+    right: -20,
+  },
+  currencyText: {
+    position: 'absolute',
+  },
+});
 
-const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
-  width: 100%;
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
-  flex-direction: row;
-  justify-content: space-between;
-`;
+const CtaContainer: React.FC<
+  {isSmallScreen?: boolean} & React.ComponentProps<typeof View>
+> = ({isSmallScreen, style, ...rest}) => (
+  <View
+    style={[
+      styles.ctaContainer,
+      {marginTop: isSmallScreen ? 0 : 20},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
-  flex-direction: column;
-  align-items: center;
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
-  padding: 0 ${ScreenGutter};
-`;
+export const AmountHeroContainer: React.FC<
+  {isSmallScreen: boolean} & React.ComponentProps<typeof View>
+> = ({isSmallScreen, style, ...rest}) => (
+  <View
+    style={[
+      {
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginTop: isSmallScreen ? 0 : 20,
+        paddingVertical: 0,
+        paddingHorizontal: 12,
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const ActionContainer = styled.View<{isModal?: boolean}>`
-  margin-bottom: 15px;
-  width: 100%;
-`;
+const AmountText: React.FC<
+  {bigAmount?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({bigAmount, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.amountText,
+        {fontSize: bigAmount ? 35 : 50, color: theme.colors.text},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ButtonContainer = styled.View`
-  padding: 0 ${ScreenGutter};
-`;
+const AmountEquivText: React.FC<
+  {bigAmount?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({bigAmount, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <AmountText
+      bigAmount={bigAmount}
+      style={[
+        styles.amountEquivText,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ViewContainer = styled.View`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
+const WarnMsgText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.warnMsgText, style]} {...rest} />;
 
-const VirtualKeyboardContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-`;
-
-const Row = styled.View`
-  flex-direction: row;
-`;
-
-const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
-  font-size: ${({bigAmount}) => (bigAmount ? '35px' : '50px')};
-  font-weight: 500;
-  text-align: center;
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const AmountEquivText = styled(AmountText)`
-  font-size: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  padding: 4px 8px;
-  border-radius: 15px;
-`;
-
-const WarnMsgText = styled(BaseText)`
-  margin-top: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: ${Caution};
-  padding: 4px 8px;
-`;
-
-const CurrencySuperScript = styled.View`
-  position: absolute;
-  top: 10px;
-  right: -20px;
-`;
-const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
-  font-size: ${({bigAmount}) => (bigAmount ? '12px' : '20px')};
-  color: ${({theme}) => theme.colors.text};
-  position: absolute;
-`;
+const CurrencyText: React.FC<
+  {bigAmount?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({bigAmount, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.currencyText,
+        {fontSize: bigAmount ? 12 : 20, color: theme.colors.text},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export interface Limits {
   min?: number;
@@ -399,43 +466,46 @@ const Amount: React.FC<AmountProps> = ({
   }, [continueEnabled]);
 
   return (
-    <AmountContainer>
-      <ViewContainer
-        style={{
-          marginTop: _isSmallScreen
-            ? reduceTopGap && isModal
-              ? -40
-              : 0
-            : reduceTopGap && isModal
-            ? -10
-            : 0,
-        }}>
+    <SafeAreaView style={styles.amountContainer}>
+      <View
+        style={[
+          styles.viewContainer,
+          {
+            marginTop: _isSmallScreen
+              ? reduceTopGap && isModal
+                ? -40
+                : 0
+              : reduceTopGap && isModal
+              ? -10
+              : 0,
+          },
+        ]}>
         <AmountHeroContainer isSmallScreen={_isSmallScreen}>
-          <Row>
+          <View style={styles.row}>
             <AmountText
               numberOfLines={1}
               ellipsizeMode={'tail'}
               bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
               {displayAmount || 0}
             </AmountText>
-            <CurrencySuperScript>
+            <View style={styles.currencySuperScript}>
               <CurrencyText
                 bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
                 {formatCurrencyAbbreviation(currency) || 'USD'}
               </CurrencyText>
-            </CurrencySuperScript>
-          </Row>
+            </View>
+          </View>
           {customAmountSublabel ? (
             <>{customAmountSublabel(+amount)}</>
           ) : cryptoCurrencyAbbreviation ? (
-            <Row>
+            <View style={styles.row}>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}
                 {primaryIsFiat
                   ? formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)
                   : null}
               </AmountEquivText>
-            </Row>
+            </View>
           ) : null}
           <View
             style={{
@@ -445,7 +515,7 @@ const Amount: React.FC<AmountProps> = ({
             {getWarnMsg}
           </View>
           <CtaContainer isSmallScreen={_isSmallScreen}>
-            <Row />
+            <View style={styles.row} />
             {swapList.length > 1 ? (
               <SwapButton
                 swapList={swapList}
@@ -470,14 +540,14 @@ const Amount: React.FC<AmountProps> = ({
           </CtaContainer>
         </AmountHeroContainer>
 
-        <ActionContainer>
-          <VirtualKeyboardContainer>
+        <View style={styles.actionContainer}>
+          <View style={styles.virtualKeyboardContainer}>
             <VirtualKeyboard
               onCellPress={onCellPress}
               showDot={currency !== 'JPY'}
             />
-          </VirtualKeyboardContainer>
-          <ButtonContainer>
+          </View>
+          <View style={styles.buttonContainer}>
             <Button
               state={buttonState}
               disabled={!continueEnabled}
@@ -488,11 +558,11 @@ const Amount: React.FC<AmountProps> = ({
               }>
               {t('Continue')}
             </Button>
-          </ButtonContainer>
+          </View>
           {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
-        </ActionContainer>
-      </ViewContainer>
-    </AmountContainer>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 

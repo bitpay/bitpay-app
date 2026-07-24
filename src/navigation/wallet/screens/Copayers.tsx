@@ -3,8 +3,15 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
-import styled, {useTheme} from 'styled-components/native';
-import {Image, ScrollView, RefreshControl} from 'react-native';
+import {useTheme} from '../../../contexts';
+import {
+  Image,
+  ScrollView,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   Paragraph,
@@ -33,40 +40,79 @@ const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
   navigation: NativeStackNavigationProp<WalletGroupParamList, 'Copayers'>;
 }
-const ViewContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutterPx = 10;
 
-const Gutter = '10px';
-const JoinCopayersContainer = styled.View`
-  padding: ${Gutter};
-  margin-bottom: 20px;
-`;
+const styles = StyleSheet.create({
+  viewContainer: {
+    flex: 1,
+  },
+  joinCopayersContainer: {
+    padding: gutterPx,
+    marginBottom: 20,
+  },
+  authorizedContainer: {
+    marginVertical: 0,
+    marginHorizontal: 20,
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    margin: 15,
+  },
+  qrCodeBackground: {
+    backgroundColor: White,
+    width: 225,
+    height: 225,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  copayersContainer: {
+    padding: 18,
+    borderStyle: 'solid',
+    borderBottomWidth: 1,
+  },
+});
 
-const AuthorizedContainer = styled(BaseText)`
-  margin: 0 20px;
-`;
+const ViewContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.viewContainer, style]} {...rest} />;
 
-const QRCodeContainer = styled.View`
-  align-items: center;
-  margin: 15px;
-`;
+const JoinCopayersContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.joinCopayersContainer, style]} {...rest} />;
 
-const QRCodeBackground = styled.View`
-  background-color: ${White};
-  width: 225px;
-  height: 225px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 12px;
-`;
+const AuthorizedContainer: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.authorizedContainer, style]} {...rest} />;
 
-const CopayersContainer = styled(RowContainer)`
-  padding: 18px;
-  border-style: solid;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? SlateDark : Slate30)};
-`;
+const QRCodeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.qrCodeContainer, style]} {...rest} />;
+
+const QRCodeBackground: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.qrCodeBackground, style]} {...rest} />;
+
+const CopayersContainer: React.FC<
+  React.ComponentProps<typeof RowContainer>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <RowContainer
+      style={[
+        styles.copayersContainer,
+        {borderBottomColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const Copayers: React.FC<CopayersProps> = props => {
   const {t} = useTranslation();

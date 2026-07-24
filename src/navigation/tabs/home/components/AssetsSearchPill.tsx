@@ -1,30 +1,65 @@
 import React from 'react';
-import styled from 'styled-components/native';
-import {TextInput} from 'react-native';
+import {StyleSheet, TextInput, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import SearchSvg from '../../../../../assets/img/search.svg';
 import {Slate30, SlateDark, White} from '../../../../styles/colors';
 
-const Container = styled.View<{height?: number}>`
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-  border-radius: 50px;
-  padding: 10px 14px;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  background-color: ${({theme: {dark}}) => (dark ? 'transparent' : White)};
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 50,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  iconContainer: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
+  },
+});
 
-const IconContainer = styled.View`
-  margin-right: 10px;
-`;
+const Container: React.FC<{
+  height?: number;
+  children?: React.ReactNode;
+}> = ({height, children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.container,
+        height ? {height} : null,
+        {
+          borderColor: theme.dark ? SlateDark : Slate30,
+          backgroundColor: theme.dark ? 'transparent' : White,
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const Input = styled(TextInput)`
-  flex: 1;
-  font-size: 14px;
-  color: ${({theme}) => theme.colors.text};
-  padding: 0;
-`;
+const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconContainer}>{children}</View>
+);
+
+const Input: React.FC<React.ComponentProps<typeof TextInput>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      style={[styles.input, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
 interface Props {
   value: string;

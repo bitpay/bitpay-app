@@ -1,13 +1,15 @@
 import React from 'react';
 import type {StyleProp, ViewStyle} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import Percentage from '../percentage/Percentage';
 
-const PercentRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  percentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export type ChartChangeRowProps = {
   percent: number;
@@ -23,7 +25,7 @@ const ChartChangeRow = ({
   style,
 }: ChartChangeRowProps): React.ReactElement => {
   return (
-    <PercentRow style={style}>
+    <View style={[styles.percentRow, style]}>
       <Percentage
         percentageDifference={percent}
         hideArrow
@@ -32,7 +34,7 @@ const ChartChangeRow = ({
         rangeLabel={rangeLabel}
         fractionDigits={2}
       />
-    </PercentRow>
+    </View>
   );
 };
 

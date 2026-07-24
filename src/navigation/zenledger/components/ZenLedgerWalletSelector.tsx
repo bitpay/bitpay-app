@@ -3,8 +3,7 @@ import {H5, TextAlign} from '../../../components/styled/Text';
 import {WalletSelectMenuHeaderContainer} from '../../wallet/screens/GlobalSelect';
 import ZenLedgerKeyWalletsRow from './ZenLedgerKeyWalletsRow';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {View, StyleSheet} from 'react-native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   ZenLedgerKey,
@@ -12,9 +11,21 @@ import {
 } from '../../../store/zenledger/zenledger.models';
 import {useAppSelector} from '../../../utils/hooks';
 
-export const ZenLedgerKeyRowContainer = styled.View`
-  padding: 0 ${ScreenGutter} 2px;
-`;
+const screenGutter = parseInt(ScreenGutter, 10);
+
+const styles = StyleSheet.create({
+  zenLedgerKeyRowContainer: {
+    paddingHorizontal: screenGutter,
+    paddingTop: 0,
+    paddingBottom: 2,
+  },
+});
+
+export const ZenLedgerKeyRowContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => <View style={styles.zenLedgerKeyRowContainer}>{children}</View>;
 
 export default ({
   keys,

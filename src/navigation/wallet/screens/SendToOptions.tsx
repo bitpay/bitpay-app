@@ -1,6 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {Keyboard} from 'react-native';
-import styled from 'styled-components/native';
+import {Keyboard, SafeAreaView, StyleSheet, View} from 'react-native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
@@ -42,24 +41,46 @@ export type SendToOptionsParamList = {
   };
 };
 
-export const RecipientRowContainer = styled.View`
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-  height: 55px;
-`;
+const styles = StyleSheet.create({
+  recipientRowContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    height: 55,
+  },
+  recipientContainer: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  recipientOptionsContainer: {
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  importContainer: {
+    flex: 1,
+    marginTop: 10,
+  },
+});
 
-export const RecipientContainer = styled.View`
-  flex-direction: row;
-  flex: 1;
-`;
+export const RecipientRowContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.recipientRowContainer, style]} {...rest} />
+);
 
-const RecipientOptionsContainer = styled.View`
-  justify-content: flex-end;
-  flex-direction: row;
-  align-items: center;
-  flex: 1;
-`;
+export const RecipientContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.recipientContainer, style]} {...rest} />
+);
+
+const RecipientOptionsContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.recipientOptionsContainer, style]} {...rest} />
+);
 
 interface RecipientListProps {
   recipient: Recipient;
@@ -132,10 +153,11 @@ export const RecipientList: React.FC<RecipientListProps> = ({
   );
 };
 
-const ImportContainer = styled.SafeAreaView`
-  flex: 1;
-  margin-top: 10px;
-`;
+const ImportContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.importContainer, style]} {...rest} />
+);
 
 interface SendToOptionsContextProps {
   recipientList: Recipient[];

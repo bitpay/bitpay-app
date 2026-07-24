@@ -11,24 +11,41 @@ import {
   ScreenGutter,
   Setting,
 } from '../../../../components/styled/Containers';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import ContactRow from '../../../../components/list/ContactRow';
 import {SettingsDetailsParamList} from '../SettingsDetails';
 
-const SeeAllLink = styled(Link)`
-  font-weight: 500;
-  font-size: 18px;
-`;
+const styles = StyleSheet.create({
+  seeAllLink: {
+    fontWeight: '500',
+    fontSize: 18,
+  },
+  plusIconContainer: {
+    marginRight: 15,
+  },
+  contactsContainer: {
+    margin: parseInt(ScreenGutter, 10),
+  },
+});
 
-const PlusIconContainer = styled.View`
-  margin-right: 15px;
-`;
+const SeeAllLink = ({style, ...rest}: React.ComponentProps<typeof Link>) => (
+  <Link style={[styles.seeAllLink, style]} {...rest} />
+);
 
-const ContactsContainer = styled.SafeAreaView`
-  margin: ${ScreenGutter};
-`;
+const PlusIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.plusIconContainer, style]} {...rest} />
+);
+
+const ContactsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.contactsContainer, style]} {...rest} />
+);
 
 type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Contacts'>;
 

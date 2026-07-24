@@ -1,10 +1,14 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, View} from 'react-native';
+import {
+  ScrollView,
+  View,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -109,27 +113,38 @@ const OnboardingImages = {
   },
 };
 
-const OnboardingContainer = styled.SafeAreaView`
-  flex: 1;
-  position: relative;
-`;
+const styles = StyleSheet.create({
+  onboardingContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  column: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    marginHorizontal: 5,
+    flex: 1,
+  },
+  linkText: {
+    fontWeight: '500',
+    fontSize: 18,
+  },
+});
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-`;
+const Row = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.row}>{children}</View>
+);
 
-const Column = styled.View`
-  flex-direction: column;
-  justify-content: center;
-  margin: 0 5px;
-  flex: 1;
-`;
+const Column = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.column}>{children}</View>
+);
 
-const LinkText = styled(Link)`
-  font-weight: 500;
-  font-size: 18px;
-`;
+const LinkText = ({children}: {children: React.ReactNode}) => (
+  <Link style={styles.linkText}>{children}</Link>
+);
 
 const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const {t} = useTranslation();
@@ -236,7 +251,9 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   };
 
   return (
-    <OnboardingContainer testID="onboarding-start-view">
+    <SafeAreaView
+      style={styles.onboardingContainer}
+      testID="onboarding-start-view">
       <ScrollView scrollEnabled={isNarrowHeight}>
         <Carousel
           loop={false}
@@ -347,7 +364,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           </Row>
         ) : null}
       </CtaContainerAbsolute>
-    </OnboardingContainer>
+    </SafeAreaView>
   );
 };
 

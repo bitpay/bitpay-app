@@ -1,7 +1,7 @@
 import React, {useState, useLayoutEffect, useEffect, useCallback} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
@@ -29,30 +29,38 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const InputContainer = styled.View<{hideInput?: boolean}>`
-  display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
-  margin: 10px 0;
-`;
+const styles = StyleSheet.create({
+  inputContainer: {
+    marginVertical: 10,
+  },
+  actionContainer: {
+    marginTop: 30,
+    marginBottom: 60,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  addressBadge: {
+    paddingHorizontal: 10,
+  },
+});
 
-const ActionContainer = styled.View`
-  margin-top: 30px;
-  margin-bottom: 60px;
-`;
-
-const Container = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const ScrollContainer = styled.ScrollView`
-  padding: 0 20px;
-  margin-top: 20px;
-`;
-
-const AddressBadge = styled.View`
-  padding: 0 10px;
-`;
-
-const ScanButtonContainer = styled(TouchableOpacity)``;
+const InputContainer: React.FC<{
+  hideInput?: boolean;
+  children?: React.ReactNode;
+}> = ({hideInput, children}) => (
+  <View
+    style={[
+      styles.inputContainer,
+      hideInput ? {display: 'none'} : {display: 'flex'},
+    ]}>
+    {children}
+  </View>
+);
 
 const schema = yup.object().shape({
   name: yup.string().required().trim(),
@@ -240,8 +248,10 @@ const ContactsAdd = ({
   }, [contact, processAddress, setValue]);
 
   return (
-    <Container>
-      <ScrollContainer keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled">
         <InputContainer>
           <Controller
             control={control}
@@ -295,16 +305,16 @@ const ContactsAdd = ({
                   value={value}
                   suffix={() =>
                     validAddress ? (
-                      <AddressBadge>
+                      <View style={styles.addressBadge}>
                         <SuccessIcon />
-                      </AddressBadge>
+                      </View>
                     ) : (
-                      <ScanButtonContainer
+                      <TouchableOpacity
                         testID="contacts-add-scan-address-button"
                         accessibilityLabel="Scan address QR code"
                         onPress={goToScan}>
                         <ScanSvg />
-                      </ScanButtonContainer>
+                      </TouchableOpacity>
                     )
                   }
                 />
@@ -346,16 +356,16 @@ const ContactsAdd = ({
           />
         </InputContainer>
 
-        <ActionContainer>
+        <View style={styles.actionContainer}>
           <Button
             testID="contacts-add-submit-button"
             accessibilityLabel={contact ? 'Save contact' : 'Add contact'}
             onPress={onSubmit}>
             {contact ? t('Save Contact') : t('Add Contact')}
           </Button>
-        </ActionContainer>
-      </ScrollContainer>
-    </Container>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

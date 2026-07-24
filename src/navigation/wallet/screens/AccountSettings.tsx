@@ -3,8 +3,8 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   ActiveOpacity,
   Hr,
@@ -37,52 +37,92 @@ import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 
-const AccountSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  accountSettingsContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginVertical: 5,
+  },
+  walletNameContainer: {
+    paddingTop: 10,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  infoDescription: {
+    fontSize: 16,
+  },
+  searchComponentContainer: {
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  assetsHeaderContainer: {
+    paddingTop: parseInt(ScreenGutter, 10),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const Title: React.FC<React.ComponentProps<typeof BaseText>> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[styles.title, {color: theme.colors.text}, props.style]}
+    />
+  );
+};
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
-`;
+const WalletNameContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => (
+  <TouchableOpacity style={[styles.walletNameContainer, style]} {...props} />
+);
 
-const WalletNameContainer = styled(TouchableOpacity)`
-  padding: 10px 0 20px 0;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const InfoDescription: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[
+        styles.infoDescription,
+        {color: theme.dark ? White : SlateDark},
+        props.style,
+      ]}
+    />
+  );
+};
 
-const InfoDescription = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const AccountSettingsTitle = styled(SettingTitle)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const SearchComponentContainer = styled.View`
-  margin: 5px 0px 20px 0px;
-`;
-
-const AssetsHeaderContainer = styled.View`
-  padding-top: ${ScreenGutter};
-  flex-direction: row;
-  align-items: center;
-`;
+const AccountSettingsTitle: React.FC<
+  React.ComponentProps<typeof SettingTitle>
+> = props => {
+  const theme = useTheme();
+  return (
+    <SettingTitle
+      {...props}
+      style={[{color: theme.dark ? White : SlateDark}, props.style]}
+    />
+  );
+};
 
 const AccountSettings = () => {
   const {t} = useTranslation();
@@ -218,8 +258,8 @@ const AccountSettings = () => {
     });
   });
   return (
-    <AccountSettingsContainer>
-      <ScrollView>
+    <SafeAreaView style={styles.accountSettingsContainer}>
+      <ScrollView style={styles.scrollView}>
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -289,7 +329,7 @@ const AccountSettings = () => {
 
         <Hr />
 
-        <AssetsHeaderContainer>
+        <View style={styles.assetsHeaderContainer}>
           <Title>{t('Wallets')}</Title>
           {tssMetadata ? (
             <ThresholdBadge
@@ -299,9 +339,9 @@ const AccountSettings = () => {
               style={{marginLeft: 4}}
             />
           ) : null}
-        </AssetsHeaderContainer>
+        </View>
 
-        <SearchComponentContainer>
+        <View style={styles.searchComponentContainer}>
           <SearchComponent<WalletRowProps>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
@@ -311,7 +351,7 @@ const AccountSettings = () => {
             context={'accountsettings'}
             hideFilter={isSvmAccount}
           />
-        </SearchComponentContainer>
+        </View>
 
         <WalletList
           wallets={
@@ -321,7 +361,7 @@ const AccountSettings = () => {
           }
         />
       </ScrollView>
-    </AccountSettingsContainer>
+    </SafeAreaView>
   );
 };
 

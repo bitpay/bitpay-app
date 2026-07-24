@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {FeedbackRateType} from '../../settings/about/screens/SendFeedback';
@@ -16,72 +17,149 @@ import {saveUserFeedback} from '../../../../store/app/app.effects';
 import {APP_VERSION} from '../../../../constants/config';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const FeedbackContainer = styled.View`
-  margin: 20px 16px 0 16px;
-  display: flex;
-  flex-direction: column;
-  padding: 25px 16px 16px 16px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  box-shadow: 0px 1px 9px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-`;
+const styles = StyleSheet.create({
+  feedbackContainer: {
+    marginTop: 20,
+    marginRight: 16,
+    marginBottom: 0,
+    marginLeft: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    paddingTop: 25,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingLeft: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 9,
+    elevation: 2,
+    borderRadius: 12,
+  },
+  feedbackParagraph: {
+    marginBottom: 30,
+  },
+  feedbackHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    marginBottom: 20,
+    justifyContent: 'space-between',
+  },
+  feedbackTitleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  feedbackCloseContainer: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    textAlign: 'right',
+    width: 44,
+  },
+  feedbackTitle: {
+    marginLeft: 8,
+    fontWeight: '500',
+    fontSize: 20,
+    lineHeight: 30,
+  },
+  emojisContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  emojiActionContainer: {
+    width: '100%',
+    marginBottom: 20,
+    paddingVertical: 0,
+    paddingHorizontal: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  emojiAction: {
+    width: 44,
+    height: 44,
+  },
+});
 
-const FeedbackParagraph = styled(Paragraph)`
-  margin-bottom: 30px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const FeedbackContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.feedbackContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const FeedbackHeader = styled.View`
-  display: flex;
-  flex-direction: row;
-  margin-bottom: 20px;
-  justify-content: space-between;
-`;
+const FeedbackParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.feedbackParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const FeedbackTitleContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
+const FeedbackHeader: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.feedbackHeader}>{children}</View>
+);
 
-const FeedbackCloseContainer = styled(TouchableOpacity)`
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  text-align: right;
-  width: 44px;
-  height; 44px;
-`;
+const FeedbackTitleContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.feedbackTitleContainer}>{children}</View>;
 
-const FeedbackTitle = styled(H4)`
-  margin-left: 8px;
-  font-weight: 500;
-  font-size: 20px;
-  line-height: 30px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const FeedbackCloseContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.feedbackCloseContainer, style]} {...rest} />
+);
 
-const EmojisContainer = styled.View`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
+const FeedbackTitle: React.FC<React.ComponentProps<typeof H4>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H4
+      style={[
+        styles.feedbackTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const EmojiActionContainer = styled.View`
-  width: 100%;
-  margin-bottom: 20px;
-  padding: 0 20px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-`;
+const EmojisContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.emojisContainer}>{children}</View>;
 
-const EmojiAction = styled(TouchableOpacity)`
-  width: 44px;
-  height: 44px;
-`;
+const EmojiActionContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.emojiActionContainer}>{children}</View>;
+
+const EmojiAction: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.emojiAction, style]} {...rest} />;
 
 const FeedbackCard: React.FC = () => {
   const {t} = useTranslation();

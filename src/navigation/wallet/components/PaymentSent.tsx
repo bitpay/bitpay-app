@@ -1,5 +1,5 @@
 import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet} from 'react-native';
 import {Success, White} from '../../../styles/colors';
 import {
   CloseButtonContainer,
@@ -13,37 +13,35 @@ import {View, ViewStyle} from 'react-native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {usePaymentSent} from '../../../contexts';
 
-const Container = styled.View`
-  flex: 1;
-  width: ${WIDTH}px;
-  background-color: ${Success};
-`;
-
-const PaymentSentHero = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-`;
-
-const PaymentSentFooter = styled.View`
-  border-top-width: 1px;
-  border-top-color: ${White};
-  align-items: center;
-`;
-
-const Title = styled(BaseText)`
-  font-size: 28px;
-  font-weight: 500;
-  color: ${White};
-  margin-top: 15px;
-`;
-
-const CloseText = styled(BaseText)`
-  font-weight: 500;
-  font-size: 18px;
-  color: ${White};
-  padding-bottom: 10px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: WIDTH,
+    backgroundColor: Success,
+  },
+  paymentSentHero: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paymentSentFooter: {
+    borderTopWidth: 1,
+    borderTopColor: White,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '500',
+    color: White,
+    marginTop: 15,
+  },
+  closeText: {
+    fontWeight: '500',
+    fontSize: 18,
+    color: White,
+    paddingBottom: 10,
+  },
+});
 
 const centerViewStyle: ViewStyle = {
   flex: 1,
@@ -77,19 +75,19 @@ const PaymentSent = React.memo(() => {
       isVisible={isVisible}
       fullscreen={true}
       onBackdropPress={handleClose}>
-      <Container>
+      <View style={styles.container}>
         <View style={centerViewStyle}>
-          <PaymentSentHero>
+          <View style={styles.paymentSentHero}>
             <PaymentCompleteSvg />
-            <Title>{displayTitle}</Title>
-          </PaymentSentHero>
+            <BaseText style={styles.title}>{displayTitle}</BaseText>
+          </View>
         </View>
-        <PaymentSentFooter>
+        <View style={styles.paymentSentFooter}>
           <CloseButtonContainer style={closeButtonStyle} onPress={handleClose}>
-            <CloseText>{closeButtonText}</CloseText>
+            <BaseText style={styles.closeText}>{closeButtonText}</BaseText>
           </CloseButtonContainer>
-        </PaymentSentFooter>
-      </Container>
+        </View>
+      </View>
     </SheetModal>
   );
 });

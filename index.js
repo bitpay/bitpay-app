@@ -34,13 +34,13 @@ import {
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {ThemeProvider} from 'styled-components/native';
 import {
   PaymentSentProvider,
   OngoingProcessProvider,
   BottomSheetProvider,
   TokenProvider,
   LogProvider,
+  ThemeProvider,
 } from './src/contexts';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';

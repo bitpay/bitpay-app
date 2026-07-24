@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import {TouchableOpacity, View, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
@@ -10,24 +11,58 @@ interface Props {
   term: TermsOfUseModel;
 }
 
-const TermsBoxContainer = styled.TouchableOpacity`
-  padding: 20px;
-  flex-direction: row;
-  justify-content: flex-start;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 11px;
-  margin: 10px 0;
-`;
+const styles = StyleSheet.create({
+  termsBoxContainer: {
+    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderRadius: 11,
+    marginVertical: 10,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    marginTop: 10,
+    marginRight: 20,
+  },
+  termTextContainer: {
+    flexDirection: 'column',
+    flexShrink: 1,
+  },
+});
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  margin: 10px 20px 0 0;
-`;
+const TermsBoxContainer = ({
+  activeOpacity,
+  onPressIn,
+  testID,
+  children,
+}: {
+  activeOpacity?: number;
+  onPressIn?: () => void;
+  testID?: string;
+  children: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      activeOpacity={activeOpacity}
+      onPressIn={onPressIn}
+      testID={testID}
+      style={[
+        styles.termsBoxContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const TermTextContainer = styled.View`
-  flex-direction: column;
-  flex-shrink: 1;
-`;
+const CheckBoxContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.checkBoxContainer}>{children}</View>
+);
+
+const TermTextContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.termTextContainer}>{children}</View>
+);
 
 const TermsBox = ({term, emit}: Props) => {
   const {statement} = term;

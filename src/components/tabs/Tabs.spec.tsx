@@ -2,7 +2,7 @@ import React from 'react';
 import {Text} from 'react-native';
 import {Provider} from 'react-redux';
 import {render, fireEvent} from '@test/render';
-import {ThemeProvider} from 'styled-components/native';
+import {ThemeProvider} from '../../contexts';
 import {BitPayLightTheme} from '../../themes/bitpay';
 import Tabs from './Tabs';
 import configureTestStore from '@test/store';

@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer as _CtaContainer,
@@ -38,21 +38,42 @@ export type BackupSharedKeyParamList = {
   key: Key;
 };
 
-const BackupContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  backupContainer: {
+    flex: 1,
+  },
+  scrollViewContainer: {
+    paddingHorizontal: 15,
+  },
+  contentContainer: {
+    alignItems: 'center',
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+  },
+});
 
-const ScrollViewContainer = styled.ScrollView`
-  padding: 0 15px;
-`;
+const BackupContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.backupContainer, style]} {...rest} />
+);
 
-const ContentContainer = styled.View`
-  align-items: center;
-`;
+const ScrollViewContainer: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView style={[styles.scrollViewContainer, style]} {...rest} />
+);
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
-`;
+const ContentContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.contentContainer, style]} {...rest} />;
+
+const CtaContainer: React.FC<React.ComponentProps<typeof _CtaContainer>> = ({
+  style,
+  ...rest
+}) => <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />;
 
 const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
   const {t} = useTranslation();

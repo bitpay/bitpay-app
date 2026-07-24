@@ -1,7 +1,7 @@
 import {BlurView} from '@react-native-community/blur';
 import React, {useMemo} from 'react';
 import {ViewStyle} from 'react-native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {useAppSelector} from '../../utils/hooks';
 
 const blurViewStyle: ViewStyle = {

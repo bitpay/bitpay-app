@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
-import {Modal, FlatList} from 'react-native';
+import {Modal, FlatList, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {BaseText} from '../../../../components/styled/Text';
 import {PhoneCountryCode} from '../../../../lib/gift-cards/gift-card';
 import {
@@ -16,51 +16,111 @@ import RemoteImage from './RemoteImage';
 import {useTranslation} from 'react-i18next';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 
-const ModalHeader = styled.View`
-  flex-direction: row;
-  padding: 20px;
-  height: 55px;
-  align-items: center;
-  padding-bottom: 0;
-  padding-top: 10px;
-  background-color: ${({theme}) => theme.colors.background};
-`;
+const styles = StyleSheet.create({
+  modalHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 0,
+    height: 55,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 25,
+    letterSpacing: 0,
+    textAlign: 'center',
+    flexGrow: 1,
+  },
+  countryItem: {
+    flexDirection: 'row',
+    paddingVertical: 15,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+  },
+  countryName: {
+    flexGrow: 1,
+    fontWeight: '500',
+    paddingLeft: 15,
+  },
+  countryCode: {
+    fontWeight: '500',
+    color: Action,
+  },
+  searchContainer: {
+    paddingBottom: 5,
+    paddingTop: 30,
+    zIndex: 1,
+  },
+});
 
-const ModalTitle = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 25px;
-  letter-spacing: 0px;
-  text-align: center;
-  text-align: center;
-  flex-grow: 1;
-`;
+const ModalHeader = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalHeader,
+        {backgroundColor: theme.colors.background},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CountryItem = styled.View`
-  flex-direction: row;
-  padding: 15px 5px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
-`;
+const ModalTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.modalTitle, style]} {...rest} />
+);
 
-const CountryName = styled(BaseText)`
-  flex-grow: 1;
-  font-weight: 500;
-  padding-left: 15px;
-`;
+const CountryItem = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.countryItem,
+        {borderBottomColor: theme.dark ? LightBlack : Cloud},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CountryCode = styled(BaseText)`
-  font-weight: 500;
-  color: ${Action};
-`;
+const CountryName = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.countryName, style]} {...rest} />
+);
 
-const SearchContainer = styled(SectionContainer)`
-  background-color: ${({theme}) => theme.colors.background};
-  padding-bottom: 5px;
-  padding-top: 30px;
-  z-index: 1;
-`;
+const CountryCode = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.countryCode, style]} {...rest} />
+);
+
+const SearchContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionContainer>) => {
+  const theme = useTheme();
+  return (
+    <SectionContainer
+      style={[
+        styles.searchContainer,
+        {backgroundColor: theme.colors.background},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const PhoneCountryModal = ({
   onClose,

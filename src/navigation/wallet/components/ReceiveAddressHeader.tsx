@@ -1,68 +1,146 @@
 import React from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const Header = styled.View`
-  margin-bottom: 30px;
-  flex-direction: row;
-  justify-content: center;
-  position: relative;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  header: {
+    marginBottom: 30,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    position: 'relative',
+    alignItems: 'center',
+  },
+  refreshContainer: {
+    position: 'absolute',
+    marginLeft: 5,
+    right: 0,
+    marginTop: 0,
+  },
+  refreshContainerBch: {
+    position: 'relative',
+    marginLeft: 5,
+    right: 0,
+    marginTop: 10,
+  },
+  refresh: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bchHeaderAction: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 0,
+    marginHorizontal: 10,
+    marginBottom: -1,
+    borderBottomWidth: 1,
+    height: 60,
+  },
+  bchHeaderActionText: {
+    fontSize: 16,
+  },
+  bchHeaderActions: {
+    flexDirection: 'row',
+  },
+  bchHeader: {
+    marginBottom: 30,
+    borderBottomWidth: 1,
+    borderBottomColor: '#979797',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+});
 
-const Title = styled(H4)`
-  color: ${({theme}) => theme.colors.text};
-`;
+interface RefreshContainerProps {
+  isBch?: boolean;
+}
 
-const RefreshContainer = styled(View)<{isBch?: boolean}>`
-  position: ${({isBch}) => (isBch ? 'relative' : 'absolute')};
-  margin-left: 5px;
-  right: 0;
-  margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
-`;
+const RefreshContainer: React.FC<
+  React.PropsWithChildren<
+    RefreshContainerProps & React.ComponentProps<typeof View>
+  >
+> = ({isBch, style, ...rest}) => (
+  <View
+    style={[
+      isBch ? styles.refreshContainerBch : styles.refreshContainer,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const Refresh = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? '#616161' : '#F5F7F8')};
-  width: 40px;
-  height: 40px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-`;
+const Refresh: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.refresh,
+        {backgroundColor: theme.dark ? '#616161' : '#F5F7F8'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const BchHeaderAction = styled(TouchableOpacity)<{isActive: boolean}>`
-  align-items: center;
-  justify-content: center;
-  margin: 0 10px -1px;
-  border-bottom-color: ${({isActive}) => (isActive ? Action : 'transparent')};
-  border-bottom-width: 1px;
-  height: 60px;
-`;
+interface BchHeaderActionProps {
+  isActive: boolean;
+}
 
-const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
-  font-size: 16px;
-  color: ${({theme, isActive}) =>
-    isActive ? theme.colors.text : theme.dark ? NeutralSlate : SlateDark};
-`;
+const BchHeaderAction: React.FC<
+  React.PropsWithChildren<
+    BchHeaderActionProps & React.ComponentProps<typeof TouchableOpacity>
+  >
+> = ({isActive, style, ...rest}) => (
+  <TouchableOpacity
+    style={[
+      styles.bchHeaderAction,
+      {borderBottomColor: isActive ? Action : 'transparent'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const BchHeaderActions = styled.View`
-  flex-direction: row;
-`;
+interface BchHeaderActionTextProps {
+  isActive: boolean;
+}
 
-const BchHeader = styled.View`
-  margin-bottom: 30px;
-  border-bottom-width: 1px;
-  border-bottom-color: #979797;
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-`;
+const BchHeaderActionText: React.FC<
+  React.PropsWithChildren<
+    BchHeaderActionTextProps & React.ComponentProps<typeof BaseText>
+  >
+> = ({isActive, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.bchHeaderActionText,
+        {
+          color: isActive
+            ? theme.colors.text
+            : theme.dark
+            ? NeutralSlate
+            : SlateDark,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export interface HeaderContextHandler {
   currency: string;
@@ -84,16 +162,17 @@ const ReceiveAddressHeader = ({
   showRefresh,
 }: Props) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const {currency} = contextHandlers || {};
   switch (currency) {
     case 'bch':
       const {disabled, activeItem, onPressChange, items} =
         contextHandlers || {};
       return (
-        <BchHeader>
-          <Title>{t('Address')}</Title>
+        <View style={styles.bchHeader}>
+          <H4 style={{color: theme.colors.text}}>{t('Address')}</H4>
 
-          <BchHeaderActions>
+          <View style={styles.bchHeaderActions}>
             {items &&
               items.map((type, index) => (
                 <BchHeaderAction
@@ -115,13 +194,13 @@ const ReceiveAddressHeader = ({
                 <RefreshIcon />
               </Refresh>
             </RefreshContainer>
-          </BchHeaderActions>
-        </BchHeader>
+          </View>
+        </View>
       );
     default:
       return (
-        <Header>
-          <Title>{t('Address')}</Title>
+        <View style={styles.header}>
+          <H4 style={{color: theme.colors.text}}>{t('Address')}</H4>
           <RefreshContainer>
             {showRefresh ? (
               <Refresh
@@ -133,7 +212,7 @@ const ReceiveAddressHeader = ({
               </Refresh>
             ) : null}
           </RefreshContainer>
-        </Header>
+        </View>
       );
   }
 };

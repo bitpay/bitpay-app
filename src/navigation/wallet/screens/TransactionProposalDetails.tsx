@@ -7,6 +7,14 @@ import {
   H4,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -22,8 +30,8 @@ import {
   RejectTxProposal,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import styled from 'styled-components/native';
-import {Hr, ScreenGutter} from '../../../components/styled/Containers';
+import {useTheme} from '../../../contexts';
+import {Hr} from '../../../components/styled/Containers';
 import {IsCustomERCToken} from '../../../store/wallet/utils/currency';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
@@ -94,70 +102,160 @@ import {
 import TSSProgressTracker from '../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
-const TxpDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  txpDetailsContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  subTitle: {
+    fontSize: 14,
+    fontWeight: '300',
+  },
+  timelineContainer: {
+    paddingVertical: 15,
+  },
+  timelineItem: {
+    paddingVertical: 10,
+  },
+  timelineDescription: {
+    marginHorizontal: 10,
+  },
+  timelineBorderLeft: {
+    position: 'absolute',
+    left: 18,
+    width: 1,
+    zIndex: -1,
+  },
+  iconBackground: {
+    height: 35,
+    width: 35,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  txDescriptionMsgContainer: {
+    marginVertical: 20,
+    justifyContent: 'flex-start',
+  },
+  txDescriptionMsgText: {
+    fontSize: 16,
+    color: '#9b9bab',
+    marginTop: 10,
+    justifyContent: 'flex-start',
+  },
+});
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const TxpDetailsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.txpDetailsContainer, style]} {...rest} />
+);
 
-const SubTitle = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 300;
-`;
+const ScrollView = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof KeyboardAwareScrollView>) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const TimelineContainer = styled.View`
-  padding: 15px 0;
-`;
+const SubTitle = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.subTitle, style]} {...rest} />
+));
 
-const TimelineItem = styled.View`
-  padding: 10px 0;
-`;
+const TimelineContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineContainer, style]} {...rest} />
+);
 
-const TimelineDescription = styled.View`
-  margin: 0 10px;
-`;
+const TimelineItem = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineItem, style]} {...rest} />
+);
 
-const TimelineBorderLeft = styled.View<{isFirst: boolean; isLast: boolean}>`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  position: absolute;
-  top: ${({isFirst}) => (isFirst ? '45px' : 0)};
-  bottom: ${({isLast}) => (isLast ? '15px' : 0)};
-  left: 18px;
-  width: 1px;
-  z-index: -1;
-`;
+const TimelineDescription = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineDescription, style]} {...rest} />
+);
 
-const TimelineTime = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const TimelineBorderLeft = ({
+  isFirst,
+  isLast,
+}: {
+  isFirst: boolean;
+  isLast: boolean;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.timelineBorderLeft,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          top: isFirst ? 45 : 0,
+          bottom: isLast ? 15 : 0,
+        },
+      ]}
+    />
+  );
+};
 
-const IconBackground = styled.View`
-  height: 35px;
-  width: 35px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const TimelineTime = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <H7
+        ref={ref}
+        style={[{color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const NumberIcon = styled(IconBackground)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+const IconBackground = ({
+  style,
+  children,
+}: {
+  style?: React.ComponentProps<typeof View>['style'];
+  children?: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.iconBackground,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const TxDescriptionMsgContainer = styled.View`
-  margin: 20px 0;
-  justify-content: flex-start;
-`;
+const NumberIcon = ({children}: {children?: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <IconBackground
+      style={{backgroundColor: theme.dark ? LightBlack : NeutralSlate}}>
+      {children}
+    </IconBackground>
+  );
+};
 
-const TxDescriptionMsgText = styled(BaseText)`
-  font-size: 16px;
-  color: #9b9bab;
-  margin-top: 10px;
-  justify-content: flex-start;
-`;
+const TxDescriptionMsgContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.txDescriptionMsgContainer, style]} {...rest} />
+);
+
+const TxDescriptionMsgText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[styles.txDescriptionMsgText, style]}
+      {...rest}
+    />
+  ),
+);
 
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
   return (

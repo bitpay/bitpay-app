@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../contexts';
 import Svg, {Path} from 'react-native-svg';
 import {SlateDark} from '../../../styles/colors';
 

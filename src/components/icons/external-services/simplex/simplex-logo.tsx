@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg, G, Circle, Polygon, Rect} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {White} from '../../../../styles/colors';
 
 const SimplexIconSvg: React.FC<{

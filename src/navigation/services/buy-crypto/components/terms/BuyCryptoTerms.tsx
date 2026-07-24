@@ -1,5 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {StyleSheet, Text, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {BaseText, Link, Small} from '../../../../../components/styled/Text';
@@ -13,29 +15,92 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import styled from 'styled-components/native';
 import {BuyCryptoExchangeKey} from '../../utils/buy-crypto-utils';
 
-export const ExchangeTermsContainer = styled.View`
-  padding: 0 0 10px 0;
-`;
+const styles = StyleSheet.create({
+  exchangeTermsContainer: {
+    paddingTop: 0,
+    paddingRight: 0,
+    paddingBottom: 10,
+    paddingLeft: 0,
+  },
+  termsText: {
+    lineHeight: 20,
+  },
+  exchangeTermsTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  exchangeTermsText: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+});
 
-export const TermsText = styled(Small)`
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-`;
+export const ExchangeTermsContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.exchangeTermsContainer, style]} {...rest} />
+));
+ExchangeTermsContainer.displayName = 'ExchangeTermsContainer';
 
-export const ExchangeTermsTitle = styled(BaseText)`
-  font-size: 16px;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
+export const TermsText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof Small>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Small
+      ref={ref}
+      style={[
+        styles.termsText,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TermsText.displayName = 'TermsText';
 
-export const ExchangeTermsText = styled(BaseText)`
-  font-size: 13px;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
+export const ExchangeTermsTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.exchangeTermsTitle,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ExchangeTermsTitle.displayName = 'ExchangeTermsTitle';
+
+export const ExchangeTermsText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.exchangeTermsText,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ExchangeTermsText.displayName = 'ExchangeTermsText';
 
 const BuyCryptoTerms: React.FC<{
   exchangeKey: BuyCryptoExchangeKey;

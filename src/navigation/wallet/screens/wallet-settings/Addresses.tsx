@@ -7,7 +7,7 @@ import {
   Paragraph,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   Hr,
@@ -33,7 +33,7 @@ import {
   FormatAmountStr,
   GetLowUtxos,
 } from '../../../../store/wallet/effects/amount/amount';
-import {View} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
 import Clipboard from '@react-native-clipboard/clipboard';
 import AddressesSkeleton from './AddressesSkeleton';
@@ -46,50 +46,118 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ADDRESS_LIMIT = 5;
 
-const AddressesContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  addressesContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  addressesParagraph: {
+    marginBottom: 15,
+  },
+  allAddressesLink: {
+    marginTop: 25,
+    marginHorizontal: 0,
+    marginBottom: 10,
+  },
+  linkText: {
+    fontSize: 16,
+  },
+  verticalPadding: {
+    paddingVertical: gutter,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginVertical: 5,
+  },
+  copyRow: {
+    flexDirection: 'row',
+  },
+  copyImgContainerRight: {
+    justifyContent: 'center',
+  },
+});
 
-const AddressesParagraph = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const AddressesContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.addressesContainer, style]} {...rest} />
+);
 
-const AllAddressesLink = styled(TouchableOpacity)`
-  margin: 25px 0 10px;
-`;
+const StyledScrollView: React.FC<React.ComponentProps<typeof ScrollView>> = ({
+  style,
+  ...rest
+}) => <ScrollView style={[styles.scrollView, style]} {...rest} />;
 
-const LinkText = styled(Link)`
-  font-size: 16px;
-`;
+const AddressesParagraph: React.FC<
+  React.ComponentProps<typeof Paragraph>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.addressesParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const AllAddressesLink: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.allAddressesLink, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
-`;
+const LinkText: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  ...rest
+}) => <Link style={[styles.linkText, style]} {...rest} />;
 
-const SubText = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const CopyRow = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
+const Title: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.title, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const CopyImgContainerRight = styled.View`
-  justify-content: center;
-`;
+const SubText: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H7 style={[{color: theme.dark ? White : SlateDark}, style]} {...rest} />
+  );
+};
+
+const CopyRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.copyRow, style]} {...rest} />;
+
+const CopyImgContainerRight: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.copyImgContainerRight, style]} {...rest} />;
 
 const Addresses = () => {
   const {t} = useTranslation();
@@ -346,7 +414,7 @@ const Addresses = () => {
 
   return (
     <AddressesContainer>
-      <ScrollView>
+      <StyledScrollView>
         {!isSingleAddressChain(wallet.credentials.chain) ? (
           <>
             <AddressesParagraph>
@@ -524,7 +592,7 @@ const Addresses = () => {
             ) : null}
           </>
         )}
-      </ScrollView>
+      </StyledScrollView>
     </AddressesContainer>
   );
 };

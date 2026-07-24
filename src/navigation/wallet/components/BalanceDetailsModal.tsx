@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {BaseText} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SheetContainer} from '../../../components/styled/Containers';
@@ -15,91 +16,129 @@ import {useTranslation} from 'react-i18next';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';
 
-const BalanceDetailsContainer = styled(SheetContainer)`
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  min-height: 500px;
-`;
+const styles = StyleSheet.create({
+  balanceDetailsContainer: {
+    minHeight: 500,
+  },
+  modalHeader: {
+    marginTop: 10,
+    marginBottom: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  modalHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalHeaderRight: {
+    position: 'absolute',
+    right: 0,
+  },
+  labelTip: {
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  rowLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowLabel: {
+    fontSize: 14,
+  },
+  balanceContainer: {
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+  },
+  cryptoBalance: {
+    fontSize: 16,
+  },
+  fiatBalance: {
+    fontSize: 12.5,
+  },
+});
 
-const ModalHeader = styled.View`
-  margin: 10px 0 20px 0;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-`;
+const LabelTipBgColor = (type: string | undefined, dark: boolean) => {
+  switch (type) {
+    case 'warn':
+      return dark ? 'rgba(56, 56, 56, 0.8)' : '#fff7f2';
+    case 'info':
+      return dark ? 'rgba(56, 56, 56, 0.8)' : '#eff1f8';
+  }
+};
 
-const ModalHeaderText = styled(BaseText)`
-  font-size: 18px;
-  font-weight: bold;
-`;
+const LabelTip: React.FC<{type?: string; children?: React.ReactNode}> = ({
+  type,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.labelTip,
+        {backgroundColor: LabelTipBgColor(type, theme.dark)},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const ModalHeaderRight = styled(BaseText)`
-  position: absolute;
-  right: 0;
-`;
+const LabelTipText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={{color: theme.dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'}}>
+      {children}
+    </BaseText>
+  );
+};
 
-const LabelTip = styled.View<{type?: string}>`
-  background-color: ${({type, theme: {dark}}) => {
-    switch (type) {
-      case 'warn':
-        return dark ? 'rgba(56, 56, 56, 0.8)' : '#fff7f2';
-      case 'info':
-        return dark ? 'rgba(56, 56, 56, 0.8)' : '#eff1f8';
-    }
-  }};
-  border-radius: 8px;
-  padding: 16px;
-  margin: 10px 0 20px 0;
-`;
+const CryptoBalance: React.FC<{type?: string; children?: React.ReactNode}> = ({
+  type,
+  children,
+}) => {
+  const theme = useTheme();
+  let color;
+  switch (type) {
+    case 'success':
+      color = Success;
+      break;
+    case 'warn':
+      color = Warning;
+      break;
+    case 'caution':
+      color = Caution;
+      break;
+    default:
+      color = theme.dark ? White : Black;
+  }
+  return (
+    <BaseText style={[styles.cryptoBalance, {color}]}>{children}</BaseText>
+  );
+};
 
-const LabelTipText = styled(BaseText)`
-  color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'};
-`;
-
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const RowLabelContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const RowLabel = styled(BaseText)`
-  font-size: 14px;
-`;
-
-const BalanceContainer = styled.View`
-  flex-direction: column;
-  justify-content: space-around;
-  align-items: flex-end;
-`;
-
-const CryptoBalance = styled(BaseText)<{type?: string}>`
-  color: ${({type, theme: {dark}}) => {
-    switch (type) {
-      case 'success':
-        return Success;
-      case 'warn':
-        return Warning;
-      case 'caution':
-        return Caution;
-      default:
-        return dark ? White : Black;
-    }
-  }};
-  font-size: 16px;
-`;
-
-const FiatBalance = styled(BaseText)`
-  font-size: 12.5px;
-  color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'};
-`;
+const FiatBalance: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.fiatBalance,
+        {color: theme.dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
 interface Props {
   isVisible: boolean;
@@ -109,15 +148,22 @@ interface Props {
 
 const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const isTestnet = wallet.network === 'testnet';
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
-      <BalanceDetailsContainer>
+      <SheetContainer
+        style={[
+          styles.balanceDetailsContainer,
+          {backgroundColor: theme.dark ? Black : White},
+        ]}>
         <SafeAreaView style={{height: '100%'}}>
-          <ModalHeader>
-            <ModalHeaderText>{t('Spendable balance')}</ModalHeaderText>
-            <ModalHeaderRight>
+          <View style={styles.modalHeader}>
+            <BaseText style={styles.modalHeaderText}>
+              {t('Spendable balance')}
+            </BaseText>
+            <View style={styles.modalHeaderRight}>
               <Button
                 touchableLibrary={'react-native'}
                 buttonType={'pill'}
@@ -125,8 +171,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 onPress={closeModal}>
                 {t('Close')}
               </Button>
-            </ModalHeaderRight>
-          </ModalHeader>
+            </View>
+          </View>
           <ScrollView showsVerticalScrollIndicator={false}>
             <LabelTip type="warn">
               <LabelTipText>
@@ -141,12 +187,14 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
 
             {wallet.currencyAbbreviation.toLowerCase() === 'xrp' ? (
               <>
-                <Row>
-                  <RowLabelContainer>
+                <View style={styles.row}>
+                  <View style={styles.rowLabelContainer}>
                     <LockSvg width={30} height={20} />
-                    <RowLabel>{t('XRP Locked Balance')}</RowLabel>
-                  </RowLabelContainer>
-                  <BalanceContainer>
+                    <BaseText style={styles.rowLabel}>
+                      {t('XRP Locked Balance')}
+                    </BaseText>
+                  </View>
+                  <View style={styles.balanceContainer}>
                     <CryptoBalance type="caution">
                       {wallet.cryptoConfirmedLockedBalance} XRP
                     </CryptoBalance>
@@ -160,8 +208,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                             )}
                       </FiatBalance>
                     ) : null}
-                  </BalanceContainer>
-                </Row>
+                  </View>
+                </View>
                 <LabelTip type="info">
                   <LabelTipText>
                     {t(
@@ -177,12 +225,14 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
 
             {wallet.currencyAbbreviation.toLowerCase() === 'sol' ? (
               <>
-                <Row>
-                  <RowLabelContainer>
+                <View style={styles.row}>
+                  <View style={styles.rowLabelContainer}>
                     <LockSvg width={30} height={20} />
-                    <RowLabel>{t('SOL Locked Balance')}</RowLabel>
-                  </RowLabelContainer>
-                  <BalanceContainer>
+                    <BaseText style={styles.rowLabel}>
+                      {t('SOL Locked Balance')}
+                    </BaseText>
+                  </View>
+                  <View style={styles.balanceContainer}>
                     <CryptoBalance type="caution">
                       {wallet.cryptoConfirmedLockedBalance} SOL
                     </CryptoBalance>
@@ -196,8 +246,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                             )}
                       </FiatBalance>
                     ) : null}
-                  </BalanceContainer>
-                </Row>
+                  </View>
+                </View>
                 <LabelTip type="info">
                   <LabelTipText>
                     {t(
@@ -211,12 +261,12 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               </>
             ) : null}
 
-            <Row>
-              <RowLabelContainer>
+            <View style={styles.row}>
+              <View style={styles.rowLabelContainer}>
                 <SigmaSvg width={30} height={20} />
-                <RowLabel>{t('Total')}</RowLabel>
-              </RowLabelContainer>
-              <BalanceContainer>
+                <BaseText style={styles.rowLabel}>{t('Total')}</BaseText>
+              </View>
+              <View style={styles.balanceContainer}>
                 <CryptoBalance>
                   {wallet.cryptoBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
@@ -230,8 +280,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                         )}
                   </FiatBalance>
                 ) : null}
-              </BalanceContainer>
-            </Row>
+              </View>
+            </View>
             <LabelTip type="info">
               <LabelTipText>
                 <Text>
@@ -249,12 +299,12 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               </LabelTipText>
             </LabelTip>
 
-            <Row>
-              <RowLabelContainer>
+            <View style={styles.row}>
+              <View style={styles.rowLabelContainer}>
                 <CheckmarkSvg width={30} height={30} />
-                <RowLabel>{t('Available')}</RowLabel>
-              </RowLabelContainer>
-              <BalanceContainer>
+                <BaseText style={styles.rowLabel}>{t('Available')}</BaseText>
+              </View>
+              <View style={styles.balanceContainer}>
                 <CryptoBalance type="success">
                   {wallet.cryptoSpendableBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
@@ -268,8 +318,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                         )}
                   </FiatBalance>
                 ) : null}
-              </BalanceContainer>
-            </Row>
+              </View>
+            </View>
             <LabelTip type="info">
               <LabelTipText>
                 {t('The amount of immediately spendable from this wallet.', {
@@ -278,12 +328,12 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               </LabelTipText>
             </LabelTip>
 
-            <Row>
-              <RowLabelContainer>
+            <View style={styles.row}>
+              <View style={styles.rowLabelContainer}>
                 <ConfirmingSvg width={30} height={18} />
-                <RowLabel>{t('Confirming')}</RowLabel>
-              </RowLabelContainer>
-              <BalanceContainer>
+                <BaseText style={styles.rowLabel}>{t('Confirming')}</BaseText>
+              </View>
+              <View style={styles.balanceContainer}>
                 <CryptoBalance type="warn">
                   {wallet.cryptoPendingBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
@@ -297,8 +347,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                         )}
                   </FiatBalance>
                 ) : null}
-              </BalanceContainer>
-            </Row>
+              </View>
+            </View>
             <LabelTip type="info">
               <LabelTipText>
                 {t(
@@ -308,12 +358,12 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               </LabelTipText>
             </LabelTip>
 
-            <Row>
-              <RowLabelContainer>
+            <View style={styles.row}>
+              <View style={styles.rowLabelContainer}>
                 <LockSvg width={30} height={20} />
-                <RowLabel>{t('Locked')}</RowLabel>
-              </RowLabelContainer>
-              <BalanceContainer>
+                <BaseText style={styles.rowLabel}>{t('Locked')}</BaseText>
+              </View>
+              <View style={styles.balanceContainer}>
                 <CryptoBalance type="caution">
                   {wallet.cryptoLockedBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
@@ -327,8 +377,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                         )}
                   </FiatBalance>
                 ) : null}
-              </BalanceContainer>
-            </Row>
+              </View>
+            </View>
             <LabelTip type="info">
               <LabelTipText>
                 {t(
@@ -339,7 +389,7 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             </LabelTip>
           </ScrollView>
         </SafeAreaView>
-      </BalanceDetailsContainer>
+      </SheetContainer>
     </SheetModal>
   );
 };

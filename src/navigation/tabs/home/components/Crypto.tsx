@@ -1,7 +1,7 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useEffect, useMemo, useState} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   Column,
@@ -41,7 +41,7 @@ import {
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -75,54 +75,115 @@ import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
-const CryptoContainer = styled.View`
-  background: ${({theme}) => theme.colors.background};
-  padding: 5px 0 0px;
-`;
+const styles = StyleSheet.create({
+  cryptoContainer: {
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+  },
+  carouselContainer: {
+    marginTop: 28,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  listViewContainer: {
+    paddingTop: 20,
+    paddingRight: 0,
+    paddingBottom: 12,
+    paddingLeft: 0,
+  },
+  buttonContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 0,
+  },
+  noKeysSectionHeaderContainer: {
+    marginBottom: 0,
+  },
+  noKeysButtonWrapper: {
+    marginBottom: 15,
+  },
+  cryptoSectionHeaderContainer: {
+    marginBottom: -15,
+    marginTop: 0,
+  },
+  cryptoHeaderRow: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 0,
+  },
+  cryptoHeaderTitle: {
+    flexGrow: 1,
+  },
+  cryptoHeaderActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+});
 
-const CarouselContainer = styled.View`
-  margin-top: 28px;
-`;
+const CryptoContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.cryptoContainer,
+        {backgroundColor: theme.colors.background},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const Row = styled.View`
-  flex-direction: row;
-`;
+const CarouselContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.carouselContainer}>{children}</View>;
 
-const ListViewContainer = styled.View`
-  padding: 20px 0 12px 0;
-`;
+const ListViewContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.listViewContainer}>{children}</View>;
 
-const ButtonContainer = styled.View`
-  padding: 20px 0;
-`;
+const ButtonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.buttonContainer}>{children}</View>;
 
-const NoKeysSectionHeaderContainer = styled(SectionHeaderContainer)`
-  margin-bottom: 0px;
-`;
+const NoKeysSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof SectionHeaderContainer>
+> = ({style, ...rest}) => (
+  <SectionHeaderContainer
+    style={[styles.noKeysSectionHeaderContainer, style]}
+    {...rest}
+  />
+);
 
-const NoKeysButtonWrapper = styled.View`
-  margin-bottom: 15px;
-`;
+const NoKeysButtonWrapper: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.noKeysButtonWrapper}>{children}</View>;
 
-const CryptoSectionHeaderContainer = styled(SectionHeaderContainer)`
-  margin-bottom: -15px;
-  margin-top: 0px;
-`;
+const CryptoSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof SectionHeaderContainer>
+> = ({style, ...rest}) => (
+  <SectionHeaderContainer
+    style={[styles.cryptoSectionHeaderContainer, style]}
+    {...rest}
+  />
+);
 
-const CryptoHeaderRow = styled(Row)`
-  align-items: center;
-  width: 100%;
-  margin-bottom: 0px;
-`;
+const CryptoHeaderRow: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={[styles.row, styles.cryptoHeaderRow]}>{children}</View>;
 
-const CryptoHeaderTitle = styled(HomeSectionTitle)`
-  flex-grow: 1;
-`;
+const CryptoHeaderTitle: React.FC<
+  React.ComponentProps<typeof HomeSectionTitle>
+> = ({style, ...rest}) => (
+  <HomeSectionTitle style={[styles.cryptoHeaderTitle, style]} {...rest} />
+);
 
-const CryptoHeaderActions = styled.View`
-  flex-direction: row;
-  gap: 8px;
-`;
+const CryptoHeaderActions: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.cryptoHeaderActions}>{children}</View>;
 
 const _renderItem = ({item}: {item: {id: string; component: ReactElement}}) => {
   return <CarouselItemContainer>{item.component}</CarouselItemContainer>;

@@ -1,105 +1,233 @@
-import styled from 'styled-components/native';
-import FastImage from 'react-native-fast-image';
+import React from 'react';
+import {StyleSheet, View, ViewProps} from 'react-native';
+import FastImage, {FastImageProps} from 'react-native-fast-image';
+import {useTheme} from '../../../../../contexts';
 import {BaseText} from '../../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-export const RowDataContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-`;
+const styles = StyleSheet.create({
+  rowDataContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  cryptoAmountContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  cryptoTitle: {
+    color: '#667',
+  },
+  cryptoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  cryptoAmount: {
+    fontSize: 35,
+  },
+  cryptoUnit: {
+    fontSize: 15,
+    paddingTop: 7,
+    paddingLeft: 5,
+  },
+  iconContainer: {
+    height: 40,
+    width: 40,
+  },
+  rowLabel: {
+    fontSize: 14,
+  },
+  rowData: {
+    fontSize: 16,
+    color: '#9b9bab',
+  },
+  labelTip: {
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  columnDataContainer: {
+    marginTop: 20,
+  },
+  columnData: {
+    fontSize: 16,
+    color: '#9b9bab',
+    paddingTop: 10,
+  },
+  copyImgContainerRight: {
+    marginLeft: 5,
+    paddingTop: 8,
+  },
+  copiedContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  removeCta: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 60,
+    marginTop: 30,
+  },
+  externalServiceContainer: {
+    paddingHorizontal: 15,
+  },
+});
 
-export const CryptoAmountContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
+export const RowDataContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.rowDataContainer, style]} {...rest} />
+  ),
+);
+RowDataContainer.displayName = 'RowDataContainer';
 
-export const CryptoTitle = styled(BaseText)`
-  color: #667;
-`;
+export const CryptoAmountContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.cryptoAmountContainer, style]} {...rest} />
+  ),
+);
+CryptoAmountContainer.displayName = 'CryptoAmountContainer';
 
-export const CryptoContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-`;
+export const CryptoTitle = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.cryptoTitle, style]} {...rest} />
+));
+CryptoTitle.displayName = 'CryptoTitle';
 
-export const CryptoAmount = styled(BaseText)`
-  font-size: 35px;
-`;
+export const CryptoContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.cryptoContainer, style]} {...rest} />
+  ),
+);
+CryptoContainer.displayName = 'CryptoContainer';
 
-export const CryptoUnit = styled(BaseText)`
-  font-size: 15px;
-  padding-top: 7px;
-  padding-left: 5px;
-`;
+export const CryptoAmount = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.cryptoAmount, style]} {...rest} />
+));
+CryptoAmount.displayName = 'CryptoAmount';
 
-export const IconContainer = styled(FastImage)`
-  height: 40px;
-  width: 40px;
-`;
+export const CryptoUnit = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.cryptoUnit, style]} {...rest} />
+));
+CryptoUnit.displayName = 'CryptoUnit';
 
-export const RowLabel = styled(BaseText)`
-  font-size: 14px;
-`;
+export const IconContainer: React.FC<FastImageProps> = ({style, ...rest}) => (
+  <FastImage style={[styles.iconContainer, style]} {...rest} />
+);
 
-export const RowData = styled(BaseText)`
-  font-size: 16px;
-  color: #9b9bab;
-`;
+export const RowLabel = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.rowLabel, style]} {...rest} />
+));
+RowLabel.displayName = 'RowLabel';
 
-export const LabelTip = styled.View<{type?: string}>`
-  background-color: ${({type, theme: {dark}}) => {
+export const RowData = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.rowData, style]} {...rest} />
+));
+RowData.displayName = 'RowData';
+
+export const LabelTip = React.forwardRef<View, ViewProps & {type?: string}>(
+  ({type, style, ...rest}, ref) => {
+    const {dark: isDark} = useTheme();
+    let backgroundColor: string | undefined;
     switch (type) {
       case 'warn':
-        return dark ? 'rgba(56, 56, 56, 0.8)' : '#fff7f2';
+        backgroundColor = isDark ? 'rgba(56, 56, 56, 0.8)' : '#fff7f2';
+        break;
       case 'info':
-        return dark ? 'rgba(56, 56, 56, 0.8)' : '#eff1f8';
+        backgroundColor = isDark ? 'rgba(56, 56, 56, 0.8)' : '#eff1f8';
+        break;
     }
-  }};
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-`;
+    return (
+      <View
+        ref={ref}
+        style={[styles.labelTip, {backgroundColor}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+LabelTip.displayName = 'LabelTip';
 
-export const LabelTipText = styled(BaseText)`
-  color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'};
-`;
+export const LabelTipText = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        {color: theme.dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+LabelTipText.displayName = 'LabelTipText';
 
-export const ColumnDataContainer = styled.View`
-  margin-top: 20px;
-`;
+export const ColumnDataContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.columnDataContainer, style]} {...rest} />
+  ),
+);
+ColumnDataContainer.displayName = 'ColumnDataContainer';
 
-export const ColumnData = styled(BaseText)`
-  font-size: 16px;
-  color: #9b9bab;
-  padding-top: 10px;
-`;
+export const ColumnData = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.columnData, style]} {...rest} />
+));
+ColumnData.displayName = 'ColumnData';
 
-export const CopyImgContainerRight = styled.View`
-  margin-left: 5px;
-  padding-top: 8px;
-`;
+export const CopyImgContainerRight = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.copyImgContainerRight, style]} {...rest} />
+  ),
+);
+CopyImgContainerRight.displayName = 'CopyImgContainerRight';
 
-export const CopiedContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
+export const CopiedContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.copiedContainer, style]} {...rest} />
+  ),
+);
+CopiedContainer.displayName = 'CopiedContainer';
 
-export const RemoveCta = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  height: 60px;
-  margin-top: 30px;
-`;
+export const RemoveCta: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.removeCta, style]} {...rest} />
+);
 
-export const ExternalServiceContainer = styled.View`
-  padding: 0 15px;
-`;
+export const ExternalServiceContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View
+      ref={ref}
+      style={[styles.externalServiceContainer, style]}
+      {...rest}
+    />
+  ),
+);
+ExternalServiceContainer.displayName = 'ExternalServiceContainer';

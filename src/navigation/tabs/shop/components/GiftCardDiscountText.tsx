@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {CardConfig, GiftCardCoupon} from '../../../../store/shop/shop.models';
 import {Action, ProgressBlue, Success} from '../../../../styles/colors';
 import {isDark} from '../../../../utils/color';
