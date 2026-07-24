@@ -89,6 +89,7 @@ import buildHomeExchangeRateItems from './homeExchangeRates';
 import {logManager} from '../../../managers/LogManager';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import type {RootState} from '../../../store';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -684,25 +685,37 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
               <HomeSection style={{marginTop: 20, marginBottom: 20}}>
-                <PortfolioBalance active={isHomeFocused} />
+                <React.Profiler
+                  id="Home:portfolio-balance"
+                  onRender={logReactProfiler}>
+                  <PortfolioBalance active={isHomeFocused} />
+                </React.Profiler>
               </HomeSection>
 
               {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
               {hasKeys ? (
                 <HomeSection style={{marginBottom: 25}}>
-                  <LinkingButtons
-                    receive={receiveLinkingButton}
-                    send={sendLinkingButton}
-                  />
+                  <React.Profiler
+                    id="Home:linking-buttons"
+                    onRender={logReactProfiler}>
+                    <LinkingButtons
+                      receive={receiveLinkingButton}
+                      send={sendLinkingButton}
+                    />
+                  </React.Profiler>
                 </HomeSection>
               ) : null}
 
               {/* ////////////////////////////// MARKETING */}
-              <HomeMarketingSection />
+              <React.Profiler id="Home:marketing" onRender={logReactProfiler}>
+                <HomeMarketingSection />
+              </React.Profiler>
 
               {/* ////////////////////////////// CRYPTO */}
               <HomeSection>
-                <Crypto active={isHomeFocused} />
+                <React.Profiler id="Home:crypto" onRender={logReactProfiler}>
+                  <Crypto active={isHomeFocused} />
+                </React.Profiler>
               </HomeSection>
 
               {/* ////////////////////////////// SECURE WITH PASSKEY */}
@@ -719,9 +732,17 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                   {shouldActivateHomeAssetsSection ? (
                     <>
                       <HomeSection>
-                        <HomeAssetsSection />
+                        <React.Profiler
+                          id="Home:assets"
+                          onRender={logReactProfiler}>
+                          <HomeAssetsSection />
+                        </React.Profiler>
                       </HomeSection>
-                      <HomeAllocationSection />
+                      <React.Profiler
+                        id="Home:allocation"
+                        onRender={logReactProfiler}>
+                        <HomeAllocationSection />
+                      </React.Profiler>
                     </>
                   ) : null}
                 </View>
@@ -735,17 +756,23 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                     : styles.discoverPlaceholder
                 }>
                 {shouldActivateHomeDiscoverSection ? (
-                  <HomeOffersSection />
+                  <React.Profiler id="Home:offers" onRender={logReactProfiler}>
+                    <HomeOffersSection />
+                  </React.Profiler>
                 ) : null}
                 {shouldActivateHomeDiscoverSection || !!currencyAbbreviation ? (
-                  <HomeExchangeRatesSection
-                    currencyAbbreviation={currencyAbbreviation}
-                    navigation={navigation}
-                    forceReloadOnMountRef={forceExchangeRatesReloadOnMountRef}
-                    reloadRef={exchangeRatesReloadRef}
-                    active={isHomeFocused || !!currencyAbbreviation}
-                    visible={shouldActivateHomeDiscoverSection}
-                  />
+                  <React.Profiler
+                    id="Home:exchange-rates"
+                    onRender={logReactProfiler}>
+                    <HomeExchangeRatesSection
+                      currencyAbbreviation={currencyAbbreviation}
+                      navigation={navigation}
+                      forceReloadOnMountRef={forceExchangeRatesReloadOnMountRef}
+                      reloadRef={exchangeRatesReloadRef}
+                      active={isHomeFocused || !!currencyAbbreviation}
+                      visible={shouldActivateHomeDiscoverSection}
+                    />
+                  </React.Profiler>
                 ) : null}
                 {shouldActivateHomeDiscoverSection ? (
                   <HomeArchaxFooter />

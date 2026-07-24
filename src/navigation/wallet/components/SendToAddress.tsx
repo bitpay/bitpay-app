@@ -60,6 +60,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 
 const MemoizedKeyWalletsRow = React.memo(KeyWalletsRow);
 
@@ -395,13 +396,15 @@ const SendToAddress = () => {
         </View>
       </View>
       <ScrollView style={styles.scrollViewContainer}>
-        <View style={{marginTop: 10}}>
-          <MemoizedKeyWalletsRow
-            keyAccounts={keyAccounts}
-            hideBalance={hideAllBalances}
-            onPress={onWalletPress}
-          />
-        </View>
+        <React.Profiler id="SendToAddress:wallets" onRender={logReactProfiler}>
+          <View style={{marginTop: 10}}>
+            <MemoizedKeyWalletsRow
+              keyAccounts={keyAccounts}
+              hideBalance={hideAllBalances}
+              onPress={onWalletPress}
+            />
+          </View>
+        </React.Profiler>
       </ScrollView>
 
       {context !== 'selectInputs' ? (

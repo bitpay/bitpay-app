@@ -27,6 +27,8 @@ import {sleep} from '../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
+
 const styles = StyleSheet.create({
   createKeyContainer: {
     flex: 1,
@@ -128,6 +130,7 @@ const CreateOrImportKey = ({
   OnboardingScreens.CREATE_KEY
 >) => {
   const {t} = useTranslation();
+  const onPerformanceLayout = useScreenRenderPerformance('CreateKey');
   const themeType = useThemeType();
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -211,7 +214,10 @@ const CreateOrImportKey = ({
   const secondaryTextColor = theme.dark ? theme.colors.text : Action;
 
   return (
-    <SafeAreaView style={styles.createKeyContainer} testID="create-key-view">
+    <SafeAreaView
+      style={styles.createKeyContainer}
+      testID="create-key-view"
+      onLayout={onPerformanceLayout}>
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
