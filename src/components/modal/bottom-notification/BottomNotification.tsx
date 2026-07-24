@@ -3,7 +3,7 @@ import {Platform, StyleSheet, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch, useSelector, useStore} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {
@@ -147,11 +147,11 @@ export const ScrollableBottomNotificationMessageContainer: React.FC<
   />
 );
 
-const BottomNotification = React.memo(() => {
+const BottomNotificationContent = React.memo(() => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const store = useStore<RootState>();
   const navigation = useNavigation();
-  const rootState = useSelector((state: RootState) => state);
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
   );
@@ -160,10 +160,14 @@ const BottomNotification = React.memo(() => {
   );
 
   useEffect(() => {
+    if (!config) {
+      return;
+    }
+
     return navigation.addListener('blur', () =>
       dispatch(resetBottomNotificationModalConfig()),
     );
-  }, [navigation, dispatch]);
+  }, [navigation, dispatch, config]);
 
   const {
     type,
@@ -208,7 +212,7 @@ const BottomNotification = React.memo(() => {
           dispatch(AppActions.dismissBottomNotificationModal());
           await sleep(0);
           try {
-            await action(rootState);
+            await action(store.getState());
           } catch (e) {
             console.error('[BottomNotification] action error:', e);
           }
@@ -231,7 +235,7 @@ const BottomNotification = React.memo(() => {
           </TouchableOpacity>
         );
       }),
-    [actions, dispatch, rootState],
+    [actions, dispatch, store],
   );
 
   return (
@@ -266,6 +270,17 @@ const BottomNotification = React.memo(() => {
       </View>
     </SheetModal>
   );
+});
+
+const BottomNotification = React.memo(() => {
+  const isVisible = useSelector(
+    ({APP}: RootState) => APP.showBottomNotificationModal,
+  );
+  const config = useSelector(
+    ({APP}: RootState) => APP.bottomNotificationModalConfig,
+  );
+
+  return isVisible || config ? <BottomNotificationContent /> : null;
 });
 
 export default BottomNotification;

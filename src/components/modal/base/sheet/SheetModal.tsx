@@ -60,7 +60,9 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   const theme = useTheme();
 
-  const [isModalVisible, setModalVisible] = useState(isVisible);
+  const [isModalVisible, setModalVisible] = useState(
+    modalLibrary === 'bottom-sheet' ? false : isVisible,
+  );
   // Track transitional states to allow immediate re-open after dismiss
   const isDismissingRef = useRef(false);
   const pendingOpenRef = useRef(false);

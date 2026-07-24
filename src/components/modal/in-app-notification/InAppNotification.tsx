@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {Action, Black, LightBlack, White} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const InAppNotification: React.FC = React.memo(() => {
+const InAppNotificationContent: React.FC = React.memo(() => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -161,6 +161,17 @@ const InAppNotification: React.FC = React.memo(() => {
       </TouchableOpacity>
     </BaseModal>
   );
+});
+
+const InAppNotification: React.FC = React.memo(() => {
+  const isVisible = useAppSelector(({APP}) => APP.showInAppNotification);
+  const hasMountedRef = useRef(false);
+
+  if (isVisible) {
+    hasMountedRef.current = true;
+  }
+
+  return hasMountedRef.current ? <InAppNotificationContent /> : null;
 });
 
 export default InAppNotification;
