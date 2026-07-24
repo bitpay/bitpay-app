@@ -35,6 +35,7 @@ import type {ChangeRowData} from './balanceHistoryChartSelection';
 const ZERO_BALANCE_AXIS_LABEL_FADE_MS = 180;
 
 export type BalanceHistoryChartProps = {
+  enabled?: boolean;
   wallets: Wallet[];
   quoteCurrency: string;
   initialSelectedTimeframe?: FiatRateInterval;
@@ -78,6 +79,7 @@ const isZeroBalanceSeries = (series?: HydratedBalanceChartSeries): boolean => {
 };
 
 const BalanceHistoryChart = ({
+  enabled = true,
   wallets,
   quoteCurrency,
   initialSelectedTimeframe = DEFAULT_BALANCE_CHART_TIMEFRAME,
@@ -112,13 +114,19 @@ const BalanceHistoryChart = ({
 }: BalanceHistoryChartProps): React.ReactElement | null => {
   const {t} = useTranslation();
   const theme = useTheme();
-  const scope = usePortfolioBalanceChartScope({
+  const activeScope = usePortfolioBalanceChartScope({
+    enabled,
     wallets,
     balanceOffset,
     scopeIdentityKey: BALANCE_HISTORY_CHART_SCOPE_IDENTITY_KEY,
     quoteCurrency,
     rates: _rates,
   });
+  const lastEnabledScopeRef = React.useRef(activeScope);
+  if (enabled) {
+    lastEnabledScopeRef.current = activeScope;
+  }
+  const scope = enabled ? activeScope : lastEnabledScopeRef.current;
   const displayModel = useBalanceChartDisplayModel({
     scope,
     initialSelectedTimeframe,
@@ -249,7 +257,9 @@ const BalanceHistoryChart = ({
           theme.dark ? 'transparent' : White,
         ]}
         showFirstPointGuideLine={displayModel.hasRenderableSeries}
-        firstPointGuideLineOpacity={zeroBalanceAxisLabelOpacity}
+        firstPointGuideLineOpacity={
+          zeroBalanceAxisLabelOpacity as NumberSharedValue
+        }
         isLoading={displayModel.shouldShowLoader}
         hideLineWhileLoading={!displayModel.hasRenderableSeries}
         enablePanGesture={

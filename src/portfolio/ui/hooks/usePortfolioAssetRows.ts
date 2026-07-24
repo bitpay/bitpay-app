@@ -275,7 +275,15 @@ export function usePortfolioAssetRows({
 }: Args): Result {
   const analysisEnabled = enabled !== false;
   const assetPnlSummaryClearEpoch = useAssetPnlSummaryClearEpoch();
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const lastPopulatedAt = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.lastPopulatedAt,
+  );
+  const lastFullPopulateCompletedAt = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.lastFullPopulateCompletedAt,
+  );
+  const populateStatus = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
+  );
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const assetKeyFilter = useMemo(() => {
@@ -308,7 +316,7 @@ export function usePortfolioAssetRows({
   const committedPortfolioRevisionToken =
     committedRevisionToken ||
     buildCommittedPortfolioRevisionToken({
-      lastPopulatedAt: portfolio.lastPopulatedAt,
+      lastPopulatedAt,
     });
 
   const assetGroupSpecs = useMemo<AssetGroupSpec[]>(() => {
@@ -391,8 +399,8 @@ export function usePortfolioAssetRows({
       const unavailableSummaryReadiness = getUnavailableSummaryReadiness({
         eligibleWalletIds,
         storedWalletIds,
-        lastFullPopulateCompletedAt: portfolio.lastFullPopulateCompletedAt,
-        populateStatus: portfolio.populateStatus,
+        lastFullPopulateCompletedAt,
+        populateStatus,
       });
 
       nextSpecs.push({
@@ -430,7 +438,7 @@ export function usePortfolioAssetRows({
         unavailableSummaryRevisionSig:
           unavailableSummaryReadiness.unavailableSummaryRevisionSig,
         enabled:
-          !portfolio.populateStatus?.inProgress ||
+          !populateStatus?.inProgress ||
           hasCompletedAssetGroupPopulate({
             spec: {
               key: groupKey,
@@ -449,7 +457,7 @@ export function usePortfolioAssetRows({
               ),
               chartDataRevisionSig: '',
             },
-            populateStatus: portfolio.populateStatus,
+            populateStatus,
           }),
       });
     }
@@ -484,8 +492,8 @@ export function usePortfolioAssetRows({
     currentRatesByAssetId,
     eligibleWallets,
     gainLossMode,
-    portfolio.lastFullPopulateCompletedAt,
-    portfolio.populateStatus,
+    lastFullPopulateCompletedAt,
+    populateStatus,
     quoteCurrency,
     rates,
     storedWallets,
@@ -572,7 +580,7 @@ export function usePortfolioAssetRows({
         ? lastNonEmptyVisibleItemsRef.current.items
         : [];
 
-    return (portfolio.populateStatus?.inProgress || hasSummaryLoading) &&
+    return (populateStatus?.inProgress || hasSummaryLoading) &&
       lastNonEmptyVisibleItems.length
       ? lastNonEmptyVisibleItems
       : items;
@@ -580,16 +588,16 @@ export function usePortfolioAssetRows({
     assetPnlSummaryClearEpoch,
     hasSummaryLoading,
     items,
-    portfolio.populateStatus?.inProgress,
+    populateStatus?.inProgress,
   ]);
 
   const walletIdsByAssetKey = useMemo(() => {
-    if (!portfolio.populateStatus?.inProgress) {
+    if (!populateStatus?.inProgress) {
       return undefined;
     }
 
     return buildWalletIdsByAssetGroupKey(wallets);
-  }, [portfolio.populateStatus?.inProgress, wallets]);
+  }, [populateStatus?.inProgress, wallets]);
 
   const populateLoadingByKeyPrevRef = useRef<{
     clearEpoch: number;
@@ -599,14 +607,14 @@ export function usePortfolioAssetRows({
     value: undefined,
   });
   const isPopulateLoadingByKeyRaw = useMemo(() => {
-    if (!portfolio.populateStatus?.inProgress || !walletIdsByAssetKey) {
+    if (!populateStatus?.inProgress || !walletIdsByAssetKey) {
       return undefined;
     }
 
     return getPopulateLoadingByAssetKey({
       items: visibleItems,
       walletIdsByAssetKey,
-      populateStatus: portfolio.populateStatus,
+      populateStatus,
       prev:
         populateLoadingByKeyPrevRef.current.clearEpoch ===
         assetPnlSummaryClearEpoch
@@ -615,12 +623,12 @@ export function usePortfolioAssetRows({
     });
   }, [
     assetPnlSummaryClearEpoch,
-    portfolio.populateStatus,
+    populateStatus,
     visibleItems,
     walletIdsByAssetKey,
   ]);
   const hasSettledFreshPopulateByKey = useMemo(() => {
-    if (!portfolio.populateStatus?.inProgress || !isPopulateLoadingByKeyRaw) {
+    if (!populateStatus?.inProgress || !isPopulateLoadingByKeyRaw) {
       return undefined;
     }
 
@@ -639,7 +647,7 @@ export function usePortfolioAssetRows({
         !spec ||
         hasCompletedAssetGroupPopulate({
           spec,
-          populateStatus: portfolio.populateStatus,
+          populateStatus,
         });
 
       next[item.key] =
@@ -651,14 +659,14 @@ export function usePortfolioAssetRows({
   }, [
     assetGroupSpecByKey,
     isPopulateLoadingByKeyRaw,
-    portfolio.populateStatus,
+    populateStatus,
     summaryStatesByKey,
     visibleItems,
   ]);
   const resolvedPopulateItemsSessionToken = useMemo(() => {
     return [
-      typeof portfolio.populateStatus?.startedAt === 'number'
-        ? String(portfolio.populateStatus.startedAt)
+      typeof populateStatus?.startedAt === 'number'
+        ? String(populateStatus.startedAt)
         : '',
       String(assetPnlSummaryClearEpoch),
       gainLossMode,
@@ -669,7 +677,7 @@ export function usePortfolioAssetRows({
     assetKeys,
     assetPnlSummaryClearEpoch,
     gainLossMode,
-    portfolio.populateStatus?.startedAt,
+    populateStatus?.startedAt,
     quoteCurrency,
   ]);
   const resolvedPopulateItemsRef = useRef<{
@@ -681,20 +689,20 @@ export function usePortfolioAssetRows({
   });
   useEffect(() => {
     if (
-      !portfolio.populateStatus?.inProgress ||
+      !populateStatus?.inProgress ||
       resolvedPopulateItemsRef.current.sessionToken !==
         resolvedPopulateItemsSessionToken
     ) {
       resolvedPopulateItemsRef.current = {
-        sessionToken: portfolio.populateStatus?.inProgress
+        sessionToken: populateStatus?.inProgress
           ? resolvedPopulateItemsSessionToken
           : '',
         itemsByKey: {},
       };
     }
-  }, [portfolio.populateStatus?.inProgress, resolvedPopulateItemsSessionToken]);
+  }, [populateStatus?.inProgress, resolvedPopulateItemsSessionToken]);
   const stablePopulatePresentation = useMemo(() => {
-    if (!portfolio.populateStatus?.inProgress || !isPopulateLoadingByKeyRaw) {
+    if (!populateStatus?.inProgress || !isPopulateLoadingByKeyRaw) {
       return {
         visibleItems,
         isPopulateLoadingByKey: isPopulateLoadingByKeyRaw,
@@ -755,7 +763,7 @@ export function usePortfolioAssetRows({
   }, [
     hasSettledFreshPopulateByKey,
     isPopulateLoadingByKeyRaw,
-    portfolio.populateStatus?.inProgress,
+    populateStatus?.inProgress,
     resolvedPopulateItemsSessionToken,
     visibleItems,
   ]);
@@ -770,7 +778,7 @@ export function usePortfolioAssetRows({
     stablePopulatePresentation.isPopulateLoadingByKey,
   ]);
   const hasPendingVisibleOrderStabilization =
-    !!portfolio.populateStatus?.inProgress || hasSummaryLoading;
+    !!populateStatus?.inProgress || hasSummaryLoading;
   const lastStableVisibleItemOrderRef = useRef<{
     clearEpoch: number;
     keys: string[];
@@ -836,7 +844,7 @@ export function usePortfolioAssetRows({
       visibleItemsForDisplay.length > 0 ||
       storedWalletRequestSig.length > 0 ||
       hasAnySummaryData ||
-      !!portfolio.populateStatus?.inProgress,
+      !!populateStatus?.inProgress,
   };
 }
 

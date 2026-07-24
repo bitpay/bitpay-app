@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import FastImage from 'react-native-fast-image';
 const pnglib = require('./pnglib');
 const hsl2rgb = require('./hsl2rgb');
@@ -11,6 +11,8 @@ interface BlockieProps {
   scale?: number;
 }
 const randseed = new Array(4); // Xorshift: [x, y, z, w] 32 bit values
+const BLOCKIE_CACHE_LIMIT = 128;
+const blockieCache = new Map<string, string>();
 
 const seedrand = (seed: string) => {
   for (let i = 0; i < randseed.length; i++) {
@@ -131,13 +133,36 @@ const makeBlockie = (address: string) => {
   return `data:image/png;base64,${p.getBase64()}`;
 };
 
-class Blockie extends Component<BlockieProps> {
+const getCachedBlockie = (address: string) => {
+  const cacheKey = address.toLowerCase();
+  const cachedBlockie = blockieCache.get(cacheKey);
+
+  if (cachedBlockie) {
+    blockieCache.delete(cacheKey);
+    blockieCache.set(cacheKey, cachedBlockie);
+    return cachedBlockie;
+  }
+
+  const blockie = makeBlockie(cacheKey);
+
+  if (blockieCache.size >= BLOCKIE_CACHE_LIMIT) {
+    const oldestCacheKey = blockieCache.keys().next().value;
+    if (oldestCacheKey !== undefined) {
+      blockieCache.delete(oldestCacheKey);
+    }
+  }
+
+  blockieCache.set(cacheKey, blockie);
+  return blockie;
+};
+
+class Blockie extends PureComponent<BlockieProps> {
   render() {
     const {
       seed = Math.floor(Math.random() * Math.pow(10, 16)).toString(16),
       size = 40,
     } = this.props;
-    const blockie = makeBlockie(seed);
+    const blockie = getCachedBlockie(seed);
 
     return (
       <FastImage

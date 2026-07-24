@@ -58,16 +58,14 @@ const ScrollView: React.FC<
   <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
 );
 
-const Title: React.FC<React.ComponentProps<typeof H5>> = ({
+const Title: React.FC<React.ComponentProps<typeof H5>> = ({style, ...rest}) => (
+  <H5 style={[styles.title, style]} {...rest} />
+);
+
+const DeleteKeyParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
   style,
   ...rest
-}) => <H5 style={[styles.title, style]} {...rest} />;
-
-const DeleteKeyParagraph: React.FC<
-  React.ComponentProps<typeof Paragraph>
-> = ({style, ...rest}) => (
-  <Paragraph style={[styles.deleteKeyParagraph, style]} {...rest} />
-);
+}) => <Paragraph style={[styles.deleteKeyParagraph, style]} {...rest} />;
 
 const DeleteKey = () => {
   const {t} = useTranslation();
@@ -81,7 +79,7 @@ const DeleteKey = () => {
   );
   const emailNotifications = useAppSelector(({APP}) => APP.emailNotifications);
   const brazeEid = useAppSelector(({APP}) => APP.brazeEid);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const {
     params: {keyId},

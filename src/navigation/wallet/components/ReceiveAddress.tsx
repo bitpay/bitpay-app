@@ -172,7 +172,11 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
     }
   };
 
-  const setIsSingleAddress = () => {
+  useEffect(() => {
+    if (!isVisible || wasInit) {
+      return;
+    }
+
     wallet?.getStatus({network: wallet.network}, (err: any, status: Status) => {
       if (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
@@ -181,11 +185,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
         setSingleAddress(status?.wallet?.singleAddress);
       }
     });
-  };
-
-  useEffect(() => {
-    setIsSingleAddress();
-  }, []);
+  }, [isVisible, logger, wallet, wasInit]);
 
   useEffect(() => {
     if (!copied) {
@@ -407,10 +407,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
                     : null,
                 ]}>
                 <BaseText
-                  style={[
-                    styles.warningTitle,
-                    {color: theme.colors.text},
-                  ]}>
+                  style={[styles.warningTitle, {color: theme.colors.text}]}>
                   {t('Warning!')}
                 </BaseText>
                 {'\n'}
@@ -458,10 +455,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
                     : null,
                 ]}>
                 <BaseText
-                  style={[
-                    styles.warningTitle,
-                    {color: theme.colors.text},
-                  ]}>
+                  style={[styles.warningTitle, {color: theme.colors.text}]}>
                   {t('Warning!')}
                 </BaseText>
                 {'\n'}

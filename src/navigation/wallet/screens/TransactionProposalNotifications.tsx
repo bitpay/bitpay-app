@@ -185,7 +185,7 @@ const TransactionProposalNotifications = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const wallets = keyId
     ? keys[keyId].wallets

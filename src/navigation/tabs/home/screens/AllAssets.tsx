@@ -154,7 +154,12 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const commonOptions = useStackScreenOptions(theme);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
+  const portfolioPopulateInProgress = useAppSelector(
+    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
+  );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
@@ -162,7 +167,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const portfolioChartsEnabled = showPortfolioValue === true;
   const populateInProgress =
-    portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress;
+    portfolioChartsEnabled && portfolioPopulateInProgress;
   const {getAssetIconData, getSupportedOption} = useAssetIconResolver();
   const focusRefreshToken = useScreenFocusRefreshToken();
   const keyId = route.params?.keyId;
@@ -179,7 +184,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keyId, keys]);
   const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    portfolioQuoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   }).toUpperCase();
   const legacyAssetRowsEnabled = !portfolioChartsEnabled;

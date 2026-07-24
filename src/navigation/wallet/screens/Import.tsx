@@ -20,6 +20,8 @@ export interface ImportParamList {
   importQrCodeData?: string;
 }
 
+const Tab = createMaterialTopTabNavigator();
+
 const styles = StyleSheet.create({
   importContainer: {
     flex: 1,
@@ -29,7 +31,6 @@ const styles = StyleSheet.create({
 
 const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
-  const Tab = createMaterialTopTabNavigator();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -39,8 +40,12 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   }, [navigation, t]);
 
   return (
-    <SafeAreaView style={styles.importContainer} testID="import-view">
-      <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
+    <SafeAreaView
+      style={styles.importContainer}
+      testID="import-view">
+      <Tab.Navigator
+        screenOptions={{lazy: true, lazyPreloadDistance: 0}}
+        tabBar={props => <CustomTabBar {...props} />}>
         <Tab.Screen
           name={t('Phrase')}
           component={RecoveryPhrase}

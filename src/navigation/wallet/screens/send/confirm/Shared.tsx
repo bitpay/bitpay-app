@@ -16,7 +16,13 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactNode, useCallback, useEffect, useState} from 'react';
 import {useTheme} from '../../../../../contexts';
-import {Pressable, SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
@@ -194,10 +200,7 @@ export const ConfirmSubText: React.FC<React.ComponentProps<typeof H7>> = ({
   const theme = useTheme();
   return (
     <H7
-      style={[
-        {color: theme.dark ? LuckySevens : theme.colors.text},
-        style,
-      ]}
+      style={[{color: theme.dark ? LuckySevens : theme.colors.text}, style]}
       {...rest}
     />
   );
@@ -627,8 +630,8 @@ export const WalletSelector = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {hideAllBalances} = useAppSelector(({APP}) => APP);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
@@ -652,6 +655,11 @@ export const WalletSelector = ({
   const showSelector = useCallback(
     async (autoSelect: boolean) => {
       const {keyWallets, coinbaseWallets} = walletsAndAccounts;
+      const soleCoinbaseAccount =
+        coinbaseWallets.length === 1 &&
+        coinbaseWallets[0].coinbaseAccounts?.length === 1
+          ? coinbaseWallets[0].coinbaseAccounts[0]
+          : undefined;
       if (keyWallets.length || coinbaseWallets.length) {
         if (autoSelect) {
           if (
@@ -666,13 +674,9 @@ export const WalletSelector = ({
               wallet.id,
             ) as Wallet;
             return selectOption(() => onWalletSelect(fullWalletObj));
-          } else if (
-            coinbaseWallets.length === 1 &&
-            coinbaseWallets[0]?.coinbaseAccounts?.length === 1 &&
-            keyWallets.length === 0
-          ) {
+          } else if (soleCoinbaseAccount && keyWallets.length === 0) {
             return selectOption(() =>
-              onCoinbaseAccountSelect(coinbaseWallets[0].coinbaseAccounts[0]),
+              onCoinbaseAccountSelect(soleCoinbaseAccount),
             );
           }
         }

@@ -4,10 +4,15 @@ import {useTranslation} from 'react-i18next';
 import {
   AppState,
   AppStateStatus,
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   View,
 } from 'react-native';
+import {createSelector} from 'reselect';
 import {
   EXCHANGE_RATES_CURRENCIES,
   STATIC_CONTENT_CARDS_ENABLED,
@@ -26,15 +31,13 @@ import {
 import {maybePopulatePortfolioOnAppLaunch} from '../../../store/portfolio';
 import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
 import {refreshRatesForPortfolioPnl} from '../../../store/wallet/effects';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import useRuntimeFiatRateSeriesCache from '../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
+import type {FiatRateCacheRequest} from '../../../portfolio/core/fiatRatesShared';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import Crypto from './components/Crypto';
-import ExchangeRatesList, {
-  ExchangeRateItemProps,
-} from './components/exchange-rates/ExchangeRatesList';
+import ExchangeRatesList from './components/exchange-rates/ExchangeRatesList';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
 import HomeSection from './components/HomeSection';
@@ -85,67 +88,81 @@ import {sortNewestFirst} from '../../../utils/braze';
 import buildHomeExchangeRateItems from './homeExchangeRates';
 import {logManager} from '../../../managers/LogManager';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
+import type {RootState} from '../../../store';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
   TabsScreens.HOME
 >;
 
-const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
-  const {t} = useTranslation();
-  const dispatch = useAppDispatch();
-  const {currencyAbbreviation} = route.params || {};
-  const theme = useTheme();
-  const [refreshing, setRefreshing] = useState(false);
+const HOME_DEFERRED_PRELOAD_DISTANCE = 160;
+const HOME_PORTFOLIO_PLACEHOLDER_HEIGHT = 560;
+const HOME_DISCOVER_PLACEHOLDER_HEIGHT = 640;
+const EMPTY_HOME_KEYS: Record<string, Key> = {};
+const EMPTY_HOME_CAROUSEL_CONFIG: [] = [];
+const EMPTY_HOME_RATES: Rates = {};
+
+const styles = StyleSheet.create({
+  viewport: {
+    flex: 1,
+  },
+  portfolioPlaceholder: {
+    minHeight: HOME_PORTFOLIO_PLACEHOLDER_HEIGHT,
+  },
+  discoverPlaceholder: {
+    minHeight: HOME_DISCOVER_PLACEHOLDER_HEIGHT,
+  },
+});
+
+const selectHomeKeys = ({WALLET}: RootState) =>
+  WALLET.keys as Record<string, Key>;
+
+const selectHasHomeKeys = createSelector(
+  [selectHomeKeys],
+  keys => Object.keys(keys).length > 0,
+);
+
+const selectPendingTransactionProposalCount = createSelector(
+  [selectHomeKeys],
+  keys =>
+    Object.values(keys).reduce(
+      (count, key) =>
+        count +
+        key.wallets.reduce(
+          (walletCount, wallet) =>
+            walletCount + (wallet.pendingTxps?.length || 0),
+          0,
+        ),
+      0,
+    ),
+);
+
+type ExchangeRatesReload = (options: {
+  force?: boolean;
+  silent?: boolean;
+}) => Promise<unknown>;
+
+const HomePendingTransactionProposalBadge = React.memo(
+  ({onPress}: {onPress: () => void}) => {
+    const pendingTxpCount = useAppSelector(
+      selectPendingTransactionProposalCount,
+    );
+
+    if (!pendingTxpCount) {
+      return null;
+    }
+
+    return (
+      <ProposalBadgeContainer onPress={onPress} style={{marginRight: 8}}>
+        <ProposalBadge>{pendingTxpCount}</ProposalBadge>
+      </ProposalBadgeContainer>
+    );
+  },
+);
+
+const HomeMarketingSection = React.memo(() => {
   const brazeMarketingCarousel = useAppSelector(selectBrazeMarketingCarousel);
-  const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
-  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
-  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const wallets = (Object.values(keys) as Key[]).flatMap((k: Key) => k.wallets);
-  const pendingTxps = wallets.flatMap(w => w.pendingTxps);
-  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
-  const rates = useAppSelector(({RATE}) => RATE.rates) as Rates;
-  const keyMigrationFailure = useAppSelector(
-    ({APP}) => APP.keyMigrationFailure,
-  );
-  const keyMigrationFailureModalHasBeenShown = useAppSelector(
-    ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
-  );
-  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const portfolioChartsRequested = showPortfolioValue === true;
-  const hasKeys = Object.values(keys).length;
-
-  const canStartKyc = useAppSelector(SumSubSelectors.selectCanStartKyc);
-  const isFocused = useIsFocused();
-  const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
-  const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
-  const appLocked = showPinModal || showBiometricModal;
-  const kycModalShown = useAppSelector(({APP}) => APP.kycGetVerifiedModalShown);
-
-  const portfolioAllocationTotalFiat = useMemo(() => {
-    return getPortfolioAllocationTotalFiat({
-      keys,
-      homeCarouselConfig,
-    });
-  }, [homeCarouselConfig, keys]);
-
-  const visibleWallets = useMemo(
-    () => getVisibleWalletsFromKeys(keys, homeCarouselConfig),
-    [homeCarouselConfig, keys],
-  );
-
-  const hasAnyVisibleWalletBalance = useMemo(() => {
-    return walletsHaveNonZeroLiveBalance(visibleWallets);
-  }, [visibleWallets]);
-
-  const showPortfolioAllocationSection =
-    portfolioAllocationTotalFiat > 0 || hasAnyVisibleWalletBalance;
-
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-
-  const memoizedMarketingCards = useMemo(() => {
+  const marketingCards = useMemo(() => {
     const cards =
       STATIC_CONTENT_CARDS_ENABLED && !brazeMarketingCarousel.length
         ? DefaultMarketingCards()
@@ -154,8 +171,21 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     return [...cards].sort(sortNewestFirst);
   }, [brazeMarketingCarousel]);
 
-  // Do More
-  const memoizedShopWithCryptoCards = useMemo(() => {
+  if (!marketingCards.length) {
+    return null;
+  }
+
+  return (
+    <HomeSection>
+      <MarketingCarousel contentCards={marketingCards} />
+    </HomeSection>
+  );
+});
+
+const HomeOffersSection = React.memo(() => {
+  const {t} = useTranslation();
+  const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
+  const shopWithCryptoCards = useMemo(() => {
     const cardsWithCoverImage = brazeShopWithCrypto.filter(
       card => card.extras?.cover_image,
     );
@@ -168,65 +198,282 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     return [...cards].sort(sortNewestFirst);
   }, [brazeShopWithCrypto]);
 
-  // Exchange Rates
-  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates) as Rates;
-  const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
-    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-  }).toUpperCase();
-  const exchangeRateHistoricalRequests = useMemo(
-    () =>
-      EXCHANGE_RATES_CURRENCIES.map(coin => ({
-        coin,
-        intervals: ['1D'],
-      })),
-    [],
+  if (!shopWithCryptoCards.length) {
+    return null;
+  }
+
+  return (
+    <HomeSection style={{marginBottom: -8}} title={t('Do More')}>
+      <OffersCarousel contentCards={shopWithCryptoCards} />
+    </HomeSection>
   );
-  const {cache: fiatRateSeriesCache, reload: reloadFiatRateSeriesCache} =
-    useRuntimeFiatRateSeriesCache({
-      quoteCurrency,
-      requests: exchangeRateHistoricalRequests,
-      maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
-      enabled: true,
-    });
-  const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(() => {
-    return buildHomeExchangeRateItems({
-      fiatRateSeriesCache,
-      lastDayRates,
-      rates,
-      quoteCurrency,
-      exchangeRateCurrencies: EXCHANGE_RATES_CURRENCIES,
-      supportedCurrencyOptions: SupportedCurrencyOptions,
-      isStableCoinCurrencyName: currencyName =>
-        !!(
-          BitpaySupportedCoins[currencyName]?.properties?.isStableCoin ||
-          BitpaySupportedTokens[currencyName]?.properties?.isStableCoin
-        ),
-    });
-  }, [fiatRateSeriesCache, lastDayRates, quoteCurrency, rates]);
+});
 
-  useEffect(() => {
-    return navigation.addListener('focus', () => {
-      if (!appIsLoading) {
-        dispatch(updatePortfolioBalance());
-      } // portfolio balance is updated in app init
+const HomeAllocationSection = React.memo(() => {
+  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
+  const keys = useAppSelector(({WALLET}) =>
+    showPortfolioValue ? WALLET.keys : EMPTY_HOME_KEYS,
+  ) as Record<string, Key>;
+  const homeCarouselConfig = useAppSelector(({APP}) =>
+    showPortfolioValue ? APP.homeCarouselConfig : EMPTY_HOME_CAROUSEL_CONFIG,
+  );
 
-      // Detail screens can refresh the shared runtime fiat-series storage while
-      // Home stays mounted in the background. Reload on focus so the exchange
-      // rate list picks up the latest shared series without requiring a manual
-      // pull-to-refresh on Home.
-      reloadFiatRateSeriesCache().catch(() => undefined);
-    });
-  }, [appIsLoading, dispatch, navigation, reloadFiatRateSeriesCache]);
+  const portfolioAllocationTotalFiat = useMemo(
+    () =>
+      getPortfolioAllocationTotalFiat({
+        keys,
+        homeCarouselConfig,
+      }),
+    [homeCarouselConfig, keys],
+  );
+  const visibleWallets = useMemo(
+    () => getVisibleWalletsFromKeys(keys, homeCarouselConfig),
+    [homeCarouselConfig, keys],
+  );
+  const hasAnyVisibleWalletBalance = useMemo(
+    () => walletsHaveNonZeroLiveBalance(visibleWallets),
+    [visibleWallets],
+  );
 
-  const onRefresh = async () => {
+  if (
+    !showPortfolioValue ||
+    (portfolioAllocationTotalFiat <= 0 && !hasAnyVisibleWalletBalance)
+  ) {
+    return null;
+  }
+
+  return (
+    <HomeSection>
+      <AllocationSection />
+    </HomeSection>
+  );
+});
+
+const HomeAssetsSection = React.memo(() => {
+  const portfolioChartsRequested = useAppSelector(selectShowPortfolioValue);
+  return <AssetsSection enabled={portfolioChartsRequested} />;
+});
+
+const HomeArchaxFooter = React.memo(() => {
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  return showArchaxBanner ? <ArchaxFooter /> : null;
+});
+
+type HomeExchangeRatesSectionProps = {
+  currencyAbbreviation?: string;
+  navigation: HomeScreenProps['navigation'];
+  forceReloadOnMountRef: React.MutableRefObject<boolean>;
+  reloadRef: React.MutableRefObject<ExchangeRatesReload | undefined>;
+  active: boolean;
+  visible: boolean;
+};
+
+const HomeExchangeRatesSection = React.memo(
+  ({
+    currencyAbbreviation,
+    navigation,
+    forceReloadOnMountRef,
+    reloadRef,
+    active,
+    visible,
+  }: HomeExchangeRatesSectionProps) => {
+    const {t} = useTranslation();
+    const defaultAltCurrency = useAppSelector(
+      ({APP}) => APP.defaultAltCurrency,
+    );
+    const portfolioQuoteCurrency = useAppSelector(
+      ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+    );
+    const subscribedRates = useAppSelector(({RATE}) =>
+      active ? RATE.rates : EMPTY_HOME_RATES,
+    ) as Rates;
+    const subscribedLastDayRates = useAppSelector(({RATE}) =>
+      active ? RATE.lastDayRates : EMPTY_HOME_RATES,
+    ) as Rates;
+    const lastActiveRatesRef = useRef(subscribedRates);
+    const lastActiveLastDayRatesRef = useRef(subscribedLastDayRates);
+    if (active) {
+      lastActiveRatesRef.current = subscribedRates;
+      lastActiveLastDayRatesRef.current = subscribedLastDayRates;
+    }
+    const rates = lastActiveRatesRef.current;
+    const lastDayRates = lastActiveLastDayRatesRef.current;
+    const quoteCurrency = getQuoteCurrency({
+      portfolioQuoteCurrency,
+      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+    }).toUpperCase();
+    const exchangeRateHistoricalRequests = useMemo<FiatRateCacheRequest[]>(
+      () =>
+        EXCHANGE_RATES_CURRENCIES.map(coin => ({
+          coin,
+          intervals: ['1D'],
+        })),
+      [],
+    );
+    const forceInitialRateSeriesReload = forceReloadOnMountRef.current;
+    const {cache: fiatRateSeriesCache, reload: reloadFiatRateSeriesCache} =
+      useRuntimeFiatRateSeriesCache({
+        quoteCurrency,
+        requests: exchangeRateHistoricalRequests,
+        maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
+        enabled: true,
+        forceOnInitialLoad: forceInitialRateSeriesReload,
+      });
+    const exchangeRates = useMemo(
+      () =>
+        buildHomeExchangeRateItems({
+          fiatRateSeriesCache,
+          lastDayRates,
+          rates,
+          quoteCurrency,
+          exchangeRateCurrencies: EXCHANGE_RATES_CURRENCIES,
+          supportedCurrencyOptions: SupportedCurrencyOptions,
+          isStableCoinCurrencyName: currencyName =>
+            !!(
+              BitpaySupportedCoins[currencyName]?.properties?.isStableCoin ||
+              BitpaySupportedTokens[currencyName]?.properties?.isStableCoin
+            ),
+        }),
+      [fiatRateSeriesCache, lastDayRates, quoteCurrency, rates],
+    );
+    const exchangeRatesRef = useRef(exchangeRates);
+
+    useEffect(() => {
+      exchangeRatesRef.current = exchangeRates;
+    }, [exchangeRates]);
+
+    useEffect(() => {
+      reloadRef.current = reloadFiatRateSeriesCache;
+      if (forceInitialRateSeriesReload) {
+        forceReloadOnMountRef.current = false;
+      }
+      return () => {
+        if (reloadRef.current === reloadFiatRateSeriesCache) {
+          reloadRef.current = undefined;
+        }
+      };
+    }, [
+      forceInitialRateSeriesReload,
+      forceReloadOnMountRef,
+      reloadFiatRateSeriesCache,
+      reloadRef,
+    ]);
+
+    useEffect(() => {
+      if (!active) {
+        return;
+      }
+
+      return navigation.addListener('focus', () => {
+        reloadFiatRateSeriesCache({silent: true}).catch(() => undefined);
+      });
+    }, [active, navigation, reloadFiatRateSeriesCache]);
+
+    const handleAppStateChange = useCallback(
+      (status: AppStateStatus) => {
+        if (status !== 'active' || !currencyAbbreviation) {
+          return;
+        }
+
+        navigation.setParams({
+          currencyAbbreviation: undefined,
+        });
+
+        const {coin: targetAbbreviation} =
+          getCoinAndChainFromCurrencyCode(currencyAbbreviation);
+        const exchangeRatesSection = exchangeRatesRef.current.find(
+          ({currencyAbbreviation: abbr}) =>
+            abbr.toLowerCase() === targetAbbreviation,
+        );
+
+        if (!exchangeRatesSection) {
+          return;
+        }
+
+        navigation
+          .getParent<NativeStackNavigationProp<RootStackParamList>>()
+          ?.navigate('ExchangeRate', {
+            currencyName: exchangeRatesSection.currencyName,
+            currencyAbbreviation: exchangeRatesSection.currencyAbbreviation,
+            chain: exchangeRatesSection.chain,
+            tokenAddress: exchangeRatesSection.tokenAddress,
+          });
+      },
+      [currencyAbbreviation, navigation],
+    );
+
+    useEffect(() => {
+      const subscriptionAppStateChange = AppState.addEventListener(
+        'change',
+        handleAppStateChange,
+      );
+
+      return () => subscriptionAppStateChange.remove();
+    }, [handleAppStateChange]);
+
+    if (!visible || !exchangeRates.length) {
+      return null;
+    }
+
+    return (
+      <HomeSection title={t('Exchange Rates')} label="24H">
+        <ExchangeRatesList
+          items={exchangeRates}
+          defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+        />
+      </HomeSection>
+    );
+  },
+);
+
+const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
+  const dispatch = useAppDispatch();
+  const {currencyAbbreviation} = route.params || {};
+  const theme = useTheme();
+  const isHomeFocused = useIsFocused();
+  const [refreshing, setRefreshing] = useState(false);
+  const hasKeys = useAppSelector(selectHasHomeKeys);
+  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
+  const defaultAltCurrencyIsoCode = useAppSelector(
+    ({APP}) => APP.defaultAltCurrency?.isoCode,
+  );
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
+  const keyMigrationFailure = useAppSelector(
+    ({APP}) => APP.keyMigrationFailure,
+  );
+  const keyMigrationFailureModalHasBeenShown = useAppSelector(
+    ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
+  );
+  const canStartKyc = useAppSelector(SumSubSelectors.selectCanStartKyc);
+  const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
+  const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
+  const appLocked = showPinModal || showBiometricModal;
+  const kycModalShown = useAppSelector(({APP}) => APP.kycGetVerifiedModalShown);
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode,
+  }).toUpperCase();
+  const exchangeRatesReloadRef = useRef<ExchangeRatesReload | undefined>(
+    undefined,
+  );
+  const forceExchangeRatesReloadOnMountRef = useRef(false);
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
+      const reloadExchangeRates = exchangeRatesReloadRef.current;
+      if (!reloadExchangeRates) {
+        forceExchangeRatesReloadOnMountRef.current = true;
+      }
+
       await Promise.all([
         dispatch(
           refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
         ),
-        reloadFiatRateSeriesCache({force: true}).catch(() => ({})),
+        reloadExchangeRates?.({force: true}).catch(() => ({})) ??
+          Promise.resolve({}),
         dispatch(
           getAndDispatchUpdatedWalletBalances({
             context: 'homeRootOnRefresh',
@@ -236,7 +483,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         ),
         dispatch(requestBrazeContentRefresh()),
       ]);
-      void Promise.resolve()
+      Promise.resolve()
         .then(() =>
           dispatch(
             maybePopulatePortfolioOnAppLaunch({
@@ -257,7 +504,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [dispatch, quoteCurrency]);
 
   const onPressTxpBadge = useCallback(() => {
     navigation
@@ -273,121 +520,138 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
   // Get Verified modal
   useEffect(() => {
-    if (canStartKyc && isFocused && !appLocked && !kycModalShown) {
+    if (canStartKyc && isHomeFocused && !appLocked && !kycModalShown) {
       const timer = setTimeout(
         () => dispatch(setShowKycGetVerifiedModal(true)),
         1000,
       );
       return () => clearTimeout(timer);
     }
-  }, [dispatch, canStartKyc, isFocused, appLocked, kycModalShown]);
+  }, [dispatch, canStartKyc, isHomeFocused, appLocked, kycModalShown]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
-  const homeViewportRef = useRef<View>(null);
-  const homeAssetsSectionRef = useRef<View>(null);
-  const homeAssetsSectionVisibilityCheckInFlightRef = useRef(false);
+  const homeViewportHeightRef = useRef(0);
+  const homeScrollOffsetYRef = useRef(0);
+  const homeAssetsSectionLayoutRef = useRef<
+    {height: number; y: number} | undefined
+  >(undefined);
+  const homeDiscoverSectionLayoutRef = useRef<
+    {height: number; y: number} | undefined
+  >(undefined);
   const [shouldActivateHomeAssetsSection, setShouldActivateHomeAssetsSection] =
     useState(false);
-
-  const exchangeRatesRef = useRef(memoizedExchangeRates);
-  useEffect(() => {
-    exchangeRatesRef.current = memoizedExchangeRates;
-  }, [memoizedExchangeRates]);
+  const [
+    shouldActivateHomeDiscoverSection,
+    setShouldActivateHomeDiscoverSection,
+  ] = useState(false);
 
   const maybeActivateHomeAssetsSection = useCallback(() => {
     if (shouldActivateHomeAssetsSection) {
       return;
     }
 
-    const homeViewport = homeViewportRef.current;
-    const homeAssetsSection = homeAssetsSectionRef.current;
-    if (
-      homeAssetsSectionVisibilityCheckInFlightRef.current ||
-      !homeViewport?.measureInWindow ||
-      !homeAssetsSection?.measureInWindow
-    ) {
+    const viewportHeight = homeViewportHeightRef.current;
+    const sectionLayout = homeAssetsSectionLayoutRef.current;
+    if (!sectionLayout || viewportHeight <= 0 || sectionLayout.height <= 0) {
       return;
     }
 
-    homeAssetsSectionVisibilityCheckInFlightRef.current = true;
-
-    homeViewport.measureInWindow(
-      (_viewportX, viewportY, _viewportWidth, viewportHeight) => {
-        homeAssetsSection.measureInWindow(
-          (_sectionX, sectionY, _sectionWidth, sectionHeight) => {
-            homeAssetsSectionVisibilityCheckInFlightRef.current = false;
-
-            const viewportBottom = viewportY + viewportHeight;
-            const sectionBottom = sectionY + sectionHeight;
-            const isVisible =
-              viewportHeight > 0 &&
-              sectionHeight > 0 &&
-              sectionBottom >= viewportY &&
-              sectionY <= viewportBottom;
-
-            if (isVisible) {
-              setShouldActivateHomeAssetsSection(true);
-            }
-          },
-        );
-      },
-    );
+    const preloadBottom =
+      homeScrollOffsetYRef.current +
+      viewportHeight +
+      HOME_DEFERRED_PRELOAD_DISTANCE;
+    if (sectionLayout.y <= preloadBottom) {
+      setShouldActivateHomeAssetsSection(true);
+    }
   }, [shouldActivateHomeAssetsSection]);
 
-  const onHomeViewportLayout = useCallback(() => {
-    maybeActivateHomeAssetsSection();
-  }, [maybeActivateHomeAssetsSection]);
+  const maybeActivateHomeDiscoverSection = useCallback(() => {
+    if (shouldActivateHomeDiscoverSection) {
+      return;
+    }
 
-  const onHomeScroll = useCallback(() => {
-    maybeActivateHomeAssetsSection();
-  }, [maybeActivateHomeAssetsSection]);
+    const viewportHeight = homeViewportHeightRef.current;
+    const sectionLayout = homeDiscoverSectionLayoutRef.current;
+    if (!sectionLayout || viewportHeight <= 0 || sectionLayout.height <= 0) {
+      return;
+    }
 
-  const onHomeAssetsSectionLayout = useCallback(() => {
-    maybeActivateHomeAssetsSection();
-  }, [maybeActivateHomeAssetsSection]);
+    const preloadBottom =
+      homeScrollOffsetYRef.current +
+      viewportHeight +
+      HOME_DEFERRED_PRELOAD_DISTANCE;
+    if (sectionLayout.y <= preloadBottom) {
+      setShouldActivateHomeDiscoverSection(true);
+    }
+  }, [shouldActivateHomeDiscoverSection]);
 
-  const handleAppStateChange = useCallback(
-    (status: AppStateStatus) => {
-      if (status !== 'active' || !currencyAbbreviation) {
-        return;
-      }
-
-      navigation.setParams({
-        currencyAbbreviation: undefined,
-      });
-
-      const {coin: targetAbbreviation} =
-        getCoinAndChainFromCurrencyCode(currencyAbbreviation);
-      const exchangeRatesSection = exchangeRatesRef.current.find(
-        ({currencyAbbreviation: abbr}) =>
-          abbr.toLowerCase() === targetAbbreviation,
-      );
-
-      if (!exchangeRatesSection) {
-        return;
-      }
-
-      navigation
-        .getParent<NativeStackNavigationProp<RootStackParamList>>()
-        ?.navigate('ExchangeRate', {
-          currencyName: exchangeRatesSection.currencyName,
-          currencyAbbreviation: exchangeRatesSection.currencyAbbreviation,
-          chain: exchangeRatesSection.chain,
-          tokenAddress: exchangeRatesSection.tokenAddress,
-        });
+  const onHomeViewportLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      homeViewportHeightRef.current = event.nativeEvent.layout.height;
+      maybeActivateHomeAssetsSection();
+      maybeActivateHomeDiscoverSection();
     },
-    [currencyAbbreviation, navigation],
+    [maybeActivateHomeAssetsSection, maybeActivateHomeDiscoverSection],
   );
 
-  useEffect(() => {
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
+  const onHomeScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      homeScrollOffsetYRef.current = event.nativeEvent.contentOffset.y;
+      if (event.nativeEvent.layoutMeasurement.height > 0) {
+        homeViewportHeightRef.current =
+          event.nativeEvent.layoutMeasurement.height;
+      }
+      maybeActivateHomeAssetsSection();
+      maybeActivateHomeDiscoverSection();
+    },
+    [maybeActivateHomeAssetsSection, maybeActivateHomeDiscoverSection],
+  );
 
-    return () => subscriptionAppStateChange.remove();
-  }, [handleAppStateChange]);
+  const onHomeAssetsSectionLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const {height, y} = event.nativeEvent.layout;
+      homeAssetsSectionLayoutRef.current = {height, y};
+      maybeActivateHomeAssetsSection();
+    },
+    [maybeActivateHomeAssetsSection],
+  );
+
+  const onHomeDiscoverSectionLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const {height, y} = event.nativeEvent.layout;
+      homeDiscoverSectionLayoutRef.current = {height, y};
+      maybeActivateHomeDiscoverSection();
+    },
+    [maybeActivateHomeDiscoverSection],
+  );
+
+  const receiveLinkingButton = useMemo(
+    () => ({
+      cta: () => {
+        dispatch(
+          Analytics.track('Clicked Receive Crypto', {
+            context: 'HomeRoot',
+          }),
+        );
+        dispatch(receiveCrypto(navigation, 'HomeRoot'));
+      },
+    }),
+    [dispatch, navigation],
+  );
+  const sendLinkingButton = useMemo(
+    () => ({
+      cta: () => {
+        dispatch(
+          Analytics.track('Clicked Send Crypto', {
+            context: 'HomeRoot',
+          }),
+        );
+        dispatch(sendCrypto('HomeRoot'));
+      },
+    }),
+    [dispatch],
+  );
 
   return (
     <TabContainer>
@@ -397,19 +661,10 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             <HeaderLeftContainer>
               <ScanButton />
             </HeaderLeftContainer>
-            {pendingTxps.length ? (
-              <ProposalBadgeContainer
-                onPress={onPressTxpBadge}
-                style={{marginRight: 8}}>
-                <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-              </ProposalBadgeContainer>
-            ) : null}
+            <HomePendingTransactionProposalBadge onPress={onPressTxpBadge} />
             <ProfileButton />
           </HeaderContainer>
-          <View
-            ref={homeViewportRef}
-            onLayout={onHomeViewportLayout}
-            style={{flex: 1}}>
+          <View onLayout={onHomeViewportLayout} style={styles.viewport}>
             <ScrollView
               ref={scrollViewRef}
               onScroll={onHomeScroll}
@@ -429,103 +684,73 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
               <HomeSection style={{marginTop: 20, marginBottom: 20}}>
-                <PortfolioBalance />
+                <PortfolioBalance active={isHomeFocused} />
               </HomeSection>
 
               {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
               {hasKeys ? (
                 <HomeSection style={{marginBottom: 25}}>
                   <LinkingButtons
-                    receive={{
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Receive Crypto', {
-                            context: 'HomeRoot',
-                          }),
-                        );
-                        dispatch(receiveCrypto(navigation, 'HomeRoot'));
-                      },
-                    }}
-                    send={{
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Send Crypto', {
-                            context: 'HomeRoot',
-                          }),
-                        );
-                        dispatch(sendCrypto('HomeRoot'));
-                      },
-                    }}
+                    receive={receiveLinkingButton}
+                    send={sendLinkingButton}
                   />
                 </HomeSection>
               ) : null}
 
               {/* ////////////////////////////// MARKETING */}
-              {memoizedMarketingCards.length ? (
-                <HomeSection>
-                  <MarketingCarousel contentCards={memoizedMarketingCards} />
-                </HomeSection>
-              ) : null}
+              <HomeMarketingSection />
 
               {/* ////////////////////////////// CRYPTO */}
               <HomeSection>
-                <Crypto />
+                <Crypto active={isHomeFocused} />
               </HomeSection>
 
               {/* ////////////////////////////// SECURE WITH PASSKEY */}
               <SecurePasskeyBannerGate />
 
               {hasKeys ? (
-                <HomeSection>
-                  <View
-                    ref={homeAssetsSectionRef}
-                    onLayout={onHomeAssetsSectionLayout}>
-                    <AssetsSection
-                      enabled={
-                        portfolioChartsRequested &&
-                        shouldActivateHomeAssetsSection
-                      }
-                    />
-                  </View>
-                </HomeSection>
+                <View
+                  onLayout={onHomeAssetsSectionLayout}
+                  style={
+                    shouldActivateHomeAssetsSection
+                      ? undefined
+                      : styles.portfolioPlaceholder
+                  }>
+                  {shouldActivateHomeAssetsSection ? (
+                    <>
+                      <HomeSection>
+                        <HomeAssetsSection />
+                      </HomeSection>
+                      <HomeAllocationSection />
+                    </>
+                  ) : null}
+                </View>
               ) : null}
 
-              {showPortfolioValue && showPortfolioAllocationSection ? (
-                <HomeSection>
-                  <AllocationSection />
-                </HomeSection>
-              ) : null}
-
-              {/* ////////////////////////////// DO MORE */}
-              {memoizedShopWithCryptoCards.length ? (
-                <HomeSection
-                  style={{marginBottom: -8}}
-                  title={t('Do More')}
-                  // action={t('Shop all')}
-                  // onActionPress={() => {
-                  //   (navigation as any).navigate('Tabs', {screen: 'Shop'});
-                  //   dispatch(
-                  //     Analytics.track('Clicked Shop with Crypto', {
-                  //       context: 'HomeRoot',
-                  //     }),
-                  //   );
-                  // }}
-                >
-                  <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
-                </HomeSection>
-              ) : null}
-
-              {/* ////////////////////////////// EXCHANGE RATES */}
-              {memoizedExchangeRates.length ? (
-                <HomeSection title={t('Exchange Rates')} label="24H">
-                  <ExchangeRatesList
-                    items={memoizedExchangeRates}
-                    defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+              <View
+                onLayout={onHomeDiscoverSectionLayout}
+                style={
+                  shouldActivateHomeDiscoverSection
+                    ? undefined
+                    : styles.discoverPlaceholder
+                }>
+                {shouldActivateHomeDiscoverSection ? (
+                  <HomeOffersSection />
+                ) : null}
+                {shouldActivateHomeDiscoverSection || !!currencyAbbreviation ? (
+                  <HomeExchangeRatesSection
+                    currencyAbbreviation={currencyAbbreviation}
+                    navigation={navigation}
+                    forceReloadOnMountRef={forceExchangeRatesReloadOnMountRef}
+                    reloadRef={exchangeRatesReloadRef}
+                    active={isHomeFocused || !!currencyAbbreviation}
+                    visible={shouldActivateHomeDiscoverSection}
                   />
-                </HomeSection>
-              ) : null}
-
-              {showArchaxBanner && <ArchaxFooter />}
+                ) : null}
+                {shouldActivateHomeDiscoverSection ? (
+                  <HomeArchaxFooter />
+                ) : null}
+              </View>
             </ScrollView>
           </View>
         </>

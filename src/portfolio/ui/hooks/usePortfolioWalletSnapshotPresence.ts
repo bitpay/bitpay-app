@@ -67,10 +67,13 @@ export default function usePortfolioWalletSnapshotPresence(args: {
   wallets: Wallet[];
   enabled?: boolean;
 }): PortfolioWalletSnapshotPresenceState {
+  const enabled = args.enabled !== false;
   const committedPortfolioRevisionToken = useAppSelector(({PORTFOLIO}) => {
-    return buildCommittedPortfolioRevisionToken({
-      lastPopulatedAt: PORTFOLIO.lastPopulatedAt,
-    });
+    return enabled
+      ? buildCommittedPortfolioRevisionToken({
+          lastPopulatedAt: PORTFOLIO.lastPopulatedAt,
+        })
+      : '';
   });
 
   const walletIds = getSortedUniqueWalletIds(args.wallets);
@@ -84,7 +87,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
   );
 
   useEffect(() => {
-    if (args.enabled === false) {
+    if (!enabled) {
       setState(getEmptySnapshotPresenceState());
       return;
     }
@@ -148,7 +151,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
     return () => {
       cancelled = true;
     };
-  }, [args.enabled, committedPortfolioRevisionToken, walletIdsKey]);
+  }, [committedPortfolioRevisionToken, enabled, walletIdsKey]);
 
   return state;
 }

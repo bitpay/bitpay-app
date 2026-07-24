@@ -40,7 +40,6 @@ import {
   DetailRow,
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
-import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {View} from 'react-native';
 import {useTokenContext} from '../../../contexts';
@@ -92,13 +91,17 @@ const MultipleOutputsTx = ({
 
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
+  const tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+      ...customTokenOptionsByAddress,
+    }),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
   const foundToken =
     tokenAddress &&
     tokenOptionsByAddress[

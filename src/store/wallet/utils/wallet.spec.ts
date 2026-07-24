@@ -1427,6 +1427,30 @@ describe('buildUIFormattedWallet', () => {
     expect(typeof result.fiatBalance).toBe('number');
   });
 
+  it('resolves the fiat conversion factor once per wallet', () => {
+    let effectDispatchCount = 0;
+    const dispatch = ((effect: any): any => {
+      if (typeof effect === 'function') {
+        effectDispatchCount += 1;
+        return effect(dispatch, () => ({
+          WALLET: {customTokenDataByAddress: {}},
+        }));
+      }
+      return effect;
+    }) as any;
+
+    buildUIFormattedWallet(
+      makeFullWallet(),
+      'USD',
+      makeRates(),
+      dispatch,
+      undefined,
+      false,
+    );
+
+    expect(effectDispatchCount).toBe(2);
+  });
+
   it('skips fiat calculations when skipFiatCalculations is true', () => {
     const dispatch = makeDispatch() as any;
     const wallet = makeFullWallet();
@@ -1667,6 +1691,64 @@ describe('buildAccountList', () => {
     });
     expect(result.length).toBe(1);
   });
+
+  it('keeps account row ids stable across rebuilds', () => {
+    const dispatch = makeDispatch() as any;
+    const wallets = [
+      makeBtcWallet({
+        id: 'w1',
+        receiveAddress: 'first-address',
+      }),
+      makeBtcWallet({
+        id: 'w2',
+        receiveAddress: 'second-address',
+        credentials: makeCredentials({walletId: 'wallet-2'}),
+      }),
+    ];
+    const key = makeKey2(wallets);
+
+    const firstBuild = buildAccountList(key, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    });
+    const secondBuild = buildAccountList(key, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    });
+
+    expect(firstBuild.map(account => account.id).sort()).toEqual(
+      secondBuild.map(account => account.id).sort(),
+    );
+    expect(new Set(firstBuild.map(account => account.id)).size).toBe(2);
+  });
+
+  it('uses different account row ids for the same address on different keys', () => {
+    const dispatch = makeDispatch() as any;
+    const firstKey = makeKey2([
+      makeBtcWallet({id: 'w1', receiveAddress: 'shared-address'}),
+    ]);
+    const secondKey = {
+      ...makeKey2([
+        makeBtcWallet({
+          id: 'w2',
+          keyId: 'key-2',
+          receiveAddress: 'shared-address',
+          credentials: makeCredentials({
+            keyId: 'key-2',
+            walletId: 'wallet-2',
+          }),
+        }),
+      ]),
+      id: 'key-2',
+    };
+
+    const firstId = buildAccountList(firstKey, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    })[0].id;
+    const secondId = buildAccountList(secondKey, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    })[0].id;
+
+    expect(firstId).not.toBe(secondId);
+  });
 });
 
 // ─── buildAssetsByChain ───────────────────────────────────────────────────────
@@ -1739,6 +1821,21 @@ describe('buildAssetsByChain', () => {
     const result = buildAssetsByChain(account, 'USD');
     const chains = result.map(r => r.chain).sort();
     expect(chains).toEqual(['btc', 'eth']);
+  });
+
+  it('keeps chain row ids stable across rebuilds', () => {
+    const account = makeAccountRow([
+      makeWalletRow('btc', 10),
+      makeWalletRow('eth', 200),
+    ]);
+
+    const firstBuild = buildAssetsByChain(account, 'USD');
+    const secondBuild = buildAssetsByChain(account, 'USD');
+
+    expect(firstBuild.map(row => row.id).sort()).toEqual(
+      secondBuild.map(row => row.id).sort(),
+    );
+    expect(new Set(firstBuild.map(row => row.id)).size).toBe(2);
   });
 });
 
@@ -1905,5 +2002,22 @@ describe('buildAssetsByChainList', () => {
     expect(result[0].data![0].fiatBalance).toBeGreaterThan(
       result[1].data![0].fiatBalance,
     );
+  });
+
+  it('keeps section row ids stable across rebuilds', () => {
+    const account = makeAccountRow([
+      makeWalletRow('btc', 10),
+      makeWalletRow('eth', 200),
+    ]);
+
+    const firstBuild = buildAssetsByChainList(account, 'USD');
+    const secondBuild = buildAssetsByChainList(account, 'USD');
+    const getIds = (sections: ReturnType<typeof buildAssetsByChainList>) =>
+      sections
+        .flatMap(section => section.data?.map(row => row.id) ?? [])
+        .sort();
+
+    expect(getIds(firstBuild)).toEqual(getIds(secondBuild));
+    expect(new Set(getIds(firstBuild)).size).toBe(2);
   });
 });

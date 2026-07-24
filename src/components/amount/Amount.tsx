@@ -16,11 +16,11 @@ import {
 } from '../../utils/helper-methods';
 import {useAppDispatch} from '../../utils/hooks';
 import useAppSelector from '../../utils/hooks/useAppSelector';
-import {useLogger} from '../../utils/hooks/useLogger';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../archax/archax-footer';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
-import {AltCurrenciesRowProps} from '../list/AltCurrenciesRow';
+import {createSelector} from 'reselect';
+import {RootState} from '../../store';
 
 const styles = StyleSheet.create({
   amountContainer: {
@@ -85,11 +85,7 @@ const CtaContainer: React.FC<
   {isSmallScreen?: boolean} & React.ComponentProps<typeof View>
 > = ({isSmallScreen, style, ...rest}) => (
   <View
-    style={[
-      styles.ctaContainer,
-      {marginTop: isSmallScreen ? 0 : 20},
-      style,
-    ]}
+    style={[styles.ctaContainer, {marginTop: isSmallScreen ? 0 : 20}, style]}
     {...rest}
   />
 );
@@ -166,6 +162,46 @@ const CurrencyText: React.FC<
   );
 };
 
+const AmountKeyboard = React.memo(
+  ({
+    isSmallScreen,
+    onCellPress,
+    showDot,
+  }: {
+    isSmallScreen: boolean;
+    onCellPress: (value: string) => void;
+    showDot: boolean;
+  }) => (
+    <View style={styles.virtualKeyboardContainer}>
+      <VirtualKeyboard
+        onCellPress={onCellPress}
+        showDot={showDot}
+        isSmallScreen={isSmallScreen}
+      />
+    </View>
+  ),
+);
+
+const AmountSubmit = React.memo(
+  ({
+    buttonState,
+    disabled,
+    label,
+    onPress,
+  }: {
+    buttonState?: ButtonState;
+    disabled: boolean;
+    label: string;
+    onPress: () => void;
+  }) => (
+    <View style={styles.buttonContainer}>
+      <Button state={buttonState} disabled={disabled} onPress={onPress}>
+        {label}
+      </Button>
+    </View>
+  ),
+);
+
 export interface Limits {
   min?: number;
   max?: number;
@@ -190,7 +226,6 @@ export interface AmountProps {
   limitsOpts?: LimitsOpts;
   isModal?: boolean;
   customAmountSublabel?: (amount: number) => void;
-  onSendMaxPressed?: () => any;
 
   /**
    * @param amount crypto amount
@@ -209,16 +244,13 @@ const Amount: React.FC<AmountProps> = ({
   limitsOpts,
   isModal,
   customAmountSublabel,
-  onSendMaxPressed,
   onSubmit,
 }) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
-  const logger = useLogger();
-  const defaultAltCurrency: AltCurrenciesRowProps = useAppSelector(
-    ({APP}) => APP.defaultAltCurrency,
+  const defaultAltCurrencyIsoCode = useAppSelector(
+    ({APP}) => APP.defaultAltCurrency.isoCode,
   );
-  const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
@@ -227,13 +259,10 @@ const Amount: React.FC<AmountProps> = ({
     if (fiatCurrencyAbbreviation) {
       return fiatCurrencyAbbreviation;
     }
-    return defaultAltCurrency.isoCode;
-  }, [context, defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
-
-  const [continueEnabled, setContinueEnabled] = useState(false);
+    return defaultAltCurrencyIsoCode;
+  }, [defaultAltCurrencyIsoCode, fiatCurrencyAbbreviation]);
 
   // flag for primary selector type
-  const [rate, setRate] = useState(0);
   const [currency, setCurrency] = useState(
     cryptoCurrencyAbbreviation ? cryptoCurrencyAbbreviation : fiatCurrency,
   );
@@ -249,11 +278,34 @@ const Amount: React.FC<AmountProps> = ({
       : '0',
   );
   const [amount, setAmount] = useState('0');
-  const [useSendMax, setUseSendMax] = useState(false);
-  const [limits, setLimits] = useState<Limits>({
-    min: undefined,
-    max: undefined,
-  });
+  const limits = useMemo<Limits>(
+    () => ({
+      min: limitsOpts?.limits?.minAmount,
+      max: limitsOpts?.limits?.maxAmount,
+    }),
+    [limitsOpts?.limits?.maxAmount, limitsOpts?.limits?.minAmount],
+  );
+  const selectAmountRate = useMemo(
+    () =>
+      createSelector([({RATE}: RootState) => RATE.rates], rates => {
+        if (!cryptoCurrencyAbbreviation || !chain) {
+          return 0;
+        }
+
+        const ratesForCurrency = getRateByCurrencyName(
+          rates,
+          cryptoCurrencyAbbreviation.toLowerCase(),
+          chain,
+          tokenAddress,
+        );
+
+        return (
+          ratesForCurrency?.find(({code}) => code === fiatCurrency)?.rate ?? 0
+        );
+      }),
+    [chain, cryptoCurrencyAbbreviation, fiatCurrency, tokenAddress],
+  );
+  const rate = useAppSelector(selectAmountRate);
 
   const swapList = useMemo(() => {
     return cryptoCurrencyAbbreviation
@@ -309,7 +361,6 @@ const Amount: React.FC<AmountProps> = ({
 
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
-    setUseSendMax(false);
     let newValue;
     switch (val) {
       case 'reset':
@@ -333,22 +384,24 @@ const Amount: React.FC<AmountProps> = ({
     updateAmountRef.current(newValue);
   }, []);
 
-  useEffect(() => {
+  const continueEnabled = useMemo(() => {
     if (limits.min && +amount > 0 && +amount < limits.min) {
-      setContinueEnabled(false);
-    } else if (
+      return false;
+    }
+    if (
       limitsOpts?.maxWalletAmount &&
       +amount > 0 &&
       +amount > Number(limitsOpts.maxWalletAmount)
     ) {
-      setContinueEnabled(false);
-    } else if (limits.max && +amount > 0 && +amount > limits.max) {
-      setContinueEnabled(false);
-    } else if (!+amount && buttonState !== 'loading') {
-      setContinueEnabled(false); // Default case
-    } else {
-      setContinueEnabled(true);
+      return false;
     }
+    if (limits.max && +amount > 0 && +amount > limits.max) {
+      return false;
+    }
+    if (!+amount && buttonState !== 'loading') {
+      return false;
+    }
+    return true;
   }, [
     amount,
     limits.max,
@@ -384,66 +437,20 @@ const Amount: React.FC<AmountProps> = ({
     }
 
     return msg ? <WarnMsgText>{msg}</WarnMsgText> : <></>;
-  }, [amount, limits, context]);
+  }, [
+    amount,
+    cryptoCurrencyAbbreviation,
+    limits,
+    limitsOpts?.maxWalletAmount,
+    t,
+  ]);
 
-  const init = () => {
-    if (!currency) {
-      return;
-    }
-    updateAmount('0');
-    // if added for dev (hot reload)
-    if (
-      !primaryIsFiat &&
-      cryptoCurrencyAbbreviation &&
-      getRateByCurrencyName(
-        allRates,
-        cryptoCurrencyAbbreviation.toLowerCase(),
-        chain!,
-        tokenAddress,
-      )
-    ) {
-      const rateByCurrencyName = getRateByCurrencyName(
-        allRates,
-        cryptoCurrencyAbbreviation.toLowerCase(),
-        chain!,
-        tokenAddress,
-      );
-      const fiatRateData = rateByCurrencyName.find(
-        r => r.code === fiatCurrency,
-      );
-
-      if (!fiatRateData) {
-        logger.warn(
-          `There is no fiatRateData for: ${cryptoCurrencyAbbreviation.toLowerCase()} (${chain}) and ${fiatCurrency}. Setting rate to 0.`,
-        );
-        setRate(0);
-        return;
-      }
-
-      const fiatRate = fiatRateData.rate;
-      setRate(fiatRate);
-    }
-  };
-  const initRef = useRef(init);
-  initRef.current = init;
-
-  const initLimits = (): void => {
-    if (limitsOpts?.limits) {
-      setLimits({
-        min: limitsOpts.limits.minAmount,
-        max: limitsOpts.limits.maxAmount,
-      });
-    }
-  };
-
-  useEffect(() => {
-    try {
-      initRef.current();
-    } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error(`[Amount] could not initialize view: ${errStr}`);
-    }
-    initLimits();
+  const amountRef = useRef(amount);
+  amountRef.current = amount;
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
+  const handleContinuePress = useCallback(() => {
+    onSubmitRef.current(+amountRef.current);
   }, []);
 
   useEffect(() => {
@@ -451,7 +458,7 @@ const Amount: React.FC<AmountProps> = ({
       if (keyEvent.pressedKey === '\b') {
         onCellPress('backspace');
       } else if (keyEvent.pressedKey === '\r' && continueEnabled) {
-        onSubmit?.(+curValRef.current);
+        handleContinuePress();
       } else if (keyEvent.pressedKey === 'UIKeyInputEscape') {
         onCellPress('reset');
       } else if (keyEvent.pressedKey === '0') {
@@ -463,7 +470,27 @@ const Amount: React.FC<AmountProps> = ({
       }
     });
     return () => KeyEvent.removeKeyUpListener();
-  }, [continueEnabled]);
+  }, [continueEnabled, handleContinuePress, onCellPress]);
+
+  const handleSwapCurrencyChange = useCallback(
+    (toCurrency: string) => {
+      curValRef.current = '';
+      updateAmountRef.current('0');
+
+      const nextPrimaryIsFiat = !primaryIsFiat;
+      setCurrency(toCurrency);
+      setPrimaryIsFiat(nextPrimaryIsFiat);
+      setDisplayAmount('0');
+      setDisplayEquivalentAmount(
+        !nextPrimaryIsFiat
+          ? formatFiatAmount(0, fiatCurrency, {
+              currencyDisplay: 'symbol',
+            })
+          : '0',
+      );
+    },
+    [fiatCurrency, primaryIsFiat],
+  );
 
   return (
     <SafeAreaView style={styles.amountContainer}>
@@ -519,46 +546,24 @@ const Amount: React.FC<AmountProps> = ({
             {swapList.length > 1 ? (
               <SwapButton
                 swapList={swapList}
-                onChange={(toCurrency: string) => {
-                  curValRef.current = '';
-                  updateAmountRef.current('0');
-
-                  const _primaryIsFiat = !primaryIsFiat;
-                  setCurrency(toCurrency);
-                  setPrimaryIsFiat(_primaryIsFiat);
-                  setDisplayAmount('0');
-                  setDisplayEquivalentAmount(
-                    !_primaryIsFiat
-                      ? formatFiatAmount(0, fiatCurrency, {
-                          currencyDisplay: 'symbol',
-                        })
-                      : '0',
-                  );
-                }}
+                onChange={handleSwapCurrencyChange}
               />
             ) : null}
           </CtaContainer>
         </AmountHeroContainer>
 
         <View style={styles.actionContainer}>
-          <View style={styles.virtualKeyboardContainer}>
-            <VirtualKeyboard
-              onCellPress={onCellPress}
-              showDot={currency !== 'JPY'}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              state={buttonState}
-              disabled={!continueEnabled}
-              onPress={() =>
-                useSendMax && onSendMaxPressed
-                  ? onSendMaxPressed()
-                  : onSubmit?.(+amount)
-              }>
-              {t('Continue')}
-            </Button>
-          </View>
+          <AmountKeyboard
+            isSmallScreen={_isSmallScreen}
+            onCellPress={onCellPress}
+            showDot={currency !== 'JPY'}
+          />
+          <AmountSubmit
+            buttonState={buttonState}
+            disabled={!continueEnabled}
+            label={t('Continue')}
+            onPress={handleContinuePress}
+          />
           {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
         </View>
       </View>

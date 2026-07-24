@@ -137,8 +137,7 @@ const WalletConnectConnections = () => {
   const [selectedSession, setSelectedSession] = useState<
     WCV2SessionType | undefined
   >();
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const [searchVal, setSearchVal] = useState('');
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
@@ -150,7 +149,7 @@ const WalletConnectConnections = () => {
   );
 
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
 
   useEffect(() => {
@@ -329,7 +328,7 @@ const WalletConnectConnections = () => {
         const accountList = buildAccountList(
           key,
           defaultAltCurrency.isoCode,
-          rates,
+          {},
           dispatch,
           {
             filterByCustomWallets: key.wallets.filter(({receiveAddress}) => {
