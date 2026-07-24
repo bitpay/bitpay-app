@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {selectSettingsNotificationState} from '../../../../../store/app/app.selectors';
-import {View, DeviceEventEmitter} from 'react-native';
+import {View, DeviceEventEmitter, ScrollView, StyleSheet} from 'react-native';
 import {
   Hr,
   ScreenGutter,
@@ -11,27 +11,44 @@ import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-event
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {SettingsContainer} from '../../SettingsRoot';
 import {useAppSelector} from '../../../../../utils/hooks';
-import styled from 'styled-components/native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const SettingsComponent = styled.ScrollView`
-  flex: 1;
-  margin-top: 15px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  settingsComponent: {
+    flex: 1,
+    marginTop: 15,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  settingRow: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    flexDirection: 'column',
+    paddingVertical: 8,
+  },
+  settingRowContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 58,
+  },
+});
 
-const SettingRow = styled(View)`
-  flex-grow: 1;
-  justify-content: center;
-  flex-direction: column;
-  padding: 8px 0;
-`;
+const SettingsComponent = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof ScrollView>) => (
+  <ScrollView style={[styles.settingsComponent, style]} {...rest} />
+);
 
-const SettingRowContainer = styled(TouchableOpacity)`
-  align-items: center;
-  flex-direction: row;
-  min-height: 58px;
-`;
+const SettingRow = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.settingRow, style]} {...rest} />
+);
+
+const SettingRowContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity style={[styles.settingRowContainer, style]} {...rest} />
+);
 
 const PushNotifications = () => {
   const {t} = useTranslation();

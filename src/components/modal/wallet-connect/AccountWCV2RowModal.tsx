@@ -6,7 +6,7 @@ import {
 } from '../../styled/Containers';
 import {BaseText, H4, H5} from '../../styled/Text';
 import Blockie from '../../blockie/Blockie';
-import styled from 'styled-components/native';
+import {StyleSheet} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from '../../list/AccountListRow';
 import SheetModal from '../base/sheet/SheetModal';
@@ -15,7 +15,7 @@ import {
   WalletSelectMenuHeaderContainer as _WalletSelectMenuHeaderContainer,
 } from '../../../navigation/wallet/screens/GlobalSelect';
 import Checkbox from '../../checkbox/Checkbox';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import Back from '../../back/Back';
 import {ScrollView} from 'react-native-gesture-handler';
 import {View} from 'react-native';
@@ -34,64 +34,57 @@ interface Props {
   closeModal: () => void;
 }
 
-const KeyNameContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 20px;
-  margin-left: 10px;
-  margin-bottom: 10px;
-`;
-
-const KeyName = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 10px;
-`;
-
-const AccountSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  padding: 8px 16px;
-  gap: 8px;
-`;
-
-const CheckBoxColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const CloseModalButton = styled(TouchableOpacity)`
-  height: 40px;
-  width: 40px;
-  border-radius: 50px;
-  background-color: #9ba3ae33;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 8px;
-`;
-
-const WalletSelectMenuHeaderContainer = styled(
-  _WalletSelectMenuHeaderContainer,
-)`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-`;
-
-const CenteredTitleContainer = styled.View`
-  align-items: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 20px;
-`;
-
-const InvisiblePlaceholder = styled.View`
-  width: 41px;
-`;
+const styles = StyleSheet.create({
+  keyNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginLeft: 10,
+    marginBottom: 10,
+  },
+  keyName: {
+    marginLeft: 10,
+  },
+  accountSettingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  checkBoxColumn: {
+    alignItems: 'flex-end',
+  },
+  closeModalButton: {
+    height: 40,
+    width: 40,
+    borderRadius: 50,
+    backgroundColor: '#9ba3ae33',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  walletSelectMenuHeaderContainer: {
+    marginBottom: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  centeredTitleContainer: {
+    alignItems: 'center',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 20,
+  },
+  invisiblePlaceholder: {
+    width: 41,
+  },
+});
 
 const AccountWCV2RowModal = ({
   isVisible,
@@ -104,27 +97,36 @@ const AccountWCV2RowModal = ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <WalletSelectMenuContainer style={{minHeight: 300}}>
-        <WalletSelectMenuHeaderContainer>
-          <CloseModalButton onPress={closeModal}>
+        <_WalletSelectMenuHeaderContainer
+          style={styles.walletSelectMenuHeaderContainer}>
+          <TouchableOpacity
+            style={styles.closeModalButton}
+            onPress={closeModal}>
             <Back
               color={theme.dark ? 'white' : 'black'}
               background={'rgba(255, 255, 255, 0.2)'}
               opacity={1}
             />
-          </CloseModalButton>
-          <CenteredTitleContainer>
+          </TouchableOpacity>
+          <View style={styles.centeredTitleContainer}>
             <H4>{t('Select Account')}</H4>
-          </CenteredTitleContainer>
-          <InvisiblePlaceholder style={{width: 41}} />
-        </WalletSelectMenuHeaderContainer>
+          </View>
+          <View style={[styles.invisiblePlaceholder, {width: 41}]} />
+        </_WalletSelectMenuHeaderContainer>
         <ScrollView>
           <View style={{paddingBottom: 50, paddingHorizontal: 10}}>
             {allKeys.map(k => (
               <React.Fragment key={k.key}>
-                <KeyNameContainer>
+                <View style={styles.keyNameContainer}>
                   {KeySvg({})}
-                  <KeyName>{k.keyName || 'My Key'}</KeyName>
-                </KeyNameContainer>
+                  <BaseText
+                    style={[
+                      styles.keyName,
+                      {color: theme.dark ? White : SlateDark},
+                    ]}>
+                    {k.keyName || 'My Key'}
+                  </BaseText>
+                </View>
                 {k.accounts.map(account => {
                   const handlePress = () => {
                     if (!account.checked) {
@@ -132,7 +134,8 @@ const AccountWCV2RowModal = ({
                     }
                   };
                   return (
-                    <AccountSettingsContainer
+                    <TouchableOpacity
+                      style={styles.accountSettingsContainer}
                       key={account.receiveAddress}
                       activeOpacity={ActiveOpacity}
                       onPress={handlePress}>
@@ -144,14 +147,14 @@ const AccountWCV2RowModal = ({
                           {account.accountName}
                         </H5>
                       </Column>
-                      <CheckBoxColumn>
+                      <Column style={styles.checkBoxColumn}>
                         <Checkbox
                           radio
                           checked={account.checked}
                           onPress={handlePress}
                         />
-                      </CheckBoxColumn>
-                    </AccountSettingsContainer>
+                      </Column>
+                    </TouchableOpacity>
                   );
                 })}
               </React.Fragment>

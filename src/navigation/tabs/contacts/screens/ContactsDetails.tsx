@@ -1,6 +1,7 @@
 import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useAppSelector} from '../../../../utils/hooks';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {useNavigation} from '@react-navigation/core';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -39,104 +40,154 @@ import {
 } from '../../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const ContactsDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  contactsDetailsContainer: {
+    flex: 1,
+  },
+  detailsScrollContainer: {
+    paddingHorizontal: 15,
+  },
+  details: {
+    marginTop: 20,
+  },
+  detail: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 60,
+  },
+  notes: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    letterSpacing: 0,
+  },
+  detailInfo: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    maxWidth: '75%',
+    paddingLeft: 10,
+  },
+  contactImageHeader: {
+    marginVertical: 10,
+    height: 150,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addressText: {
+    fontSize: 16,
+    maxWidth: 250,
+  },
+  addressContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  optionContainer: {
+    flexDirection: 'row',
+    paddingVertical: 25,
+    paddingHorizontal: 25,
+    alignItems: 'stretch',
+    borderTopWidth: 1,
+  },
+  optionIconContainer: {
+    justifyContent: 'center',
+  },
+  optionTextContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'space-around',
+    flexDirection: 'column',
+    paddingLeft: 19,
+  },
+  optionTitleText: {
+    fontStyle: 'normal',
+    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  modalContainer: {
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingTop: 70,
+  },
+  copyImgContainer: {
+    justifyContent: 'center',
+    marginRight: 5,
+  },
+});
 
-const DetailsScrollContainer = styled.ScrollView`
-  padding: 0 15px;
-`;
+const Title: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <BaseText style={styles.title}>{children}</BaseText>
+);
 
-const Details = styled.View`
-  margin-top: 20px;
-`;
+const DetailInfo: React.FC<React.ComponentProps<typeof TextAlign>> = ({
+  style,
+  ...rest
+}) => <TextAlign style={[styles.detailInfo, style]} {...rest} />;
 
-const Detail = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-`;
+const AddressText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.addressText,
+        {color: theme.dark ? NeutralSlate : '#6F7782'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const Notes = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 20px;
-`;
+const AddressContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.addressContainer, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-`;
+const OptionContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.optionContainer,
+        {borderTopColor: theme.dark ? SlateDark : '#ebecee'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const DetailInfo = styled(TextAlign)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  max-width: 75%;
-  padding-left: 10px;
-`;
+const OptionTitleText: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <BaseText style={styles.optionTitleText}>{children}</BaseText>;
 
-const ContactImageHeader = styled.View`
-  margin: 10px 0;
-  height: 150px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const AddressText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
-  max-width: 250px;
-`;
-
-const AddressContainer = styled(TouchableOpacity)`
-  align-items: center;
-  flex-direction: row;
-  justify-content: flex-end;
-`;
-
-const OptionContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding: 25px 25px;
-  align-items: stretch;
-  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
-  border-top-width: 1px;
-`;
-
-const OptionIconContainer = styled.View`
-  justify-content: center;
-`;
-
-const OptionTextContainer = styled.View`
-  align-items: flex-start;
-  justify-content: space-around;
-  flex-direction: column;
-  padding-left: 19px;
-`;
-
-const OptionTitleText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 19px;
-`;
-
-const ModalContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  padding: 70px 0 0 0;
-`;
-
-const CopyImgContainer = styled.View`
-  justify-content: center;
-  margin-right: 5px;
-`;
+const ModalContainer: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
 interface ModalOpt {
   img?: ReactElement;
@@ -306,9 +357,9 @@ const ContactsDetails = ({
   };
 
   return (
-    <ContactsDetailsContainer>
-      <DetailsScrollContainer>
-        <ContactImageHeader>
+    <SafeAreaView style={styles.contactsDetailsContainer}>
+      <ScrollView style={styles.detailsScrollContainer}>
+        <View style={styles.contactImageHeader}>
           <ContactIcon
             coin={getCurrencyAbbreviation(contact.coin, contact.chain)}
             size={100}
@@ -317,84 +368,84 @@ const ContactsDetails = ({
             address={contact.address}
             tokenAddress={contact.tokenAddress}
           />
-        </ContactImageHeader>
-        <Details>
+        </View>
+        <View style={styles.details}>
           {contact.email ? (
             <>
-              <Detail>
+              <View style={styles.detail}>
                 <Title>{t('Email')}</Title>
                 <DetailInfo align="right">{contact.email}</DetailInfo>
-              </Detail>
+              </View>
               <Hr />
             </>
           ) : null}
-          <Detail>
+          <View style={styles.detail}>
             <Title>{t('Name')}</Title>
             <DetailInfo align="right" numberOfLines={2} ellipsizeMode={'tail'}>
               {contact.name}
             </DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-          <Detail>
+          <View style={styles.detail}>
             <Title>{t('Address')}</Title>
             <AddressContainer
               onPress={copyToClipboard}
               activeOpacity={0.7}
               testID="contacts-details-copy-address-button"
               accessibilityLabel="Copy address">
-              <CopyImgContainer>
+              <View style={styles.copyImgContainer}>
                 {copied ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainer>
+              </View>
               <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
                 {contact.address}
               </AddressText>
             </AddressContainer>
-          </Detail>
+          </View>
 
           {contact.network !== 'livenet' ? (
             <>
               <Hr />
-              <Detail>
+              <View style={styles.detail}>
                 <Title>{t('Network')}</Title>
                 <DetailInfo align="right">{contact.network}</DetailInfo>
-              </Detail>
+              </View>
             </>
           ) : null}
           {contact.coin && contact.chain && !IsVMChain(contact.chain) ? (
             <>
               <Hr />
-              <Detail>
+              <View style={styles.detail}>
                 <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">
                   {contact.coin.toUpperCase()}
                 </DetailInfo>
-              </Detail>
+              </View>
             </>
           ) : null}
           {contact.tag || contact.destinationTag ? (
             <>
               <Hr />
-              <Detail>
+              <View style={styles.detail}>
                 <Title>{t('Tag')}</Title>
                 <DetailInfo align="right">
                   {contact.tag || contact.destinationTag}
                 </DetailInfo>
-              </Detail>
+              </View>
             </>
           ) : null}
           {contact.notes && IsVMChain(contact.chain) ? (
             <>
               <Hr />
-              <Notes>
+              <View style={styles.notes}>
                 <Title>{t('Notes')}</Title>
                 <DetailInfo align="left" style={{marginHorizontal: 20}}>
                   {contact.notes}
                 </DetailInfo>
-              </Notes>
+              </View>
             </>
           ) : null}
-        </Details>
-      </DetailsScrollContainer>
+        </View>
+      </ScrollView>
 
       <SheetModal
         placement={'top'}
@@ -409,15 +460,15 @@ const ContactsDetails = ({
                 .replace(/\s+/g, '-')}-button`}
               accessibilityLabel={optionTitle}
               onPress={onPress}>
-              <OptionIconContainer>{img}</OptionIconContainer>
-              <OptionTextContainer>
+              <View style={styles.optionIconContainer}>{img}</View>
+              <View style={styles.optionTextContainer}>
                 <OptionTitleText>{optionTitle}</OptionTitleText>
-              </OptionTextContainer>
+              </View>
             </OptionContainer>
           ))}
         </ModalContainer>
       </SheetModal>
-    </ContactsDetailsContainer>
+    </SafeAreaView>
   );
 };
 

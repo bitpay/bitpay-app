@@ -1,5 +1,6 @@
 import React, {memo} from 'react';
-import styled, {css, useTheme} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
@@ -12,21 +13,24 @@ interface SymbolContainerProps {
   showLetters?: boolean;
 }
 
-const KeyboardContainer = styled.View<{isSmallScreen?: boolean}>`
-  margin: ${({isSmallScreen}) => (isSmallScreen ? 5 : 10)}px 0;
-`;
-
-const RowContainer = styled.View<{isSmallScreen?: boolean}>`
-  flex-direction: row;
-  align-items: center;
-  margin: 0;
-`;
-
-const CellContainer = styled.View`
-  width: 33.333333%;
-  justify-content: center;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 0,
+  },
+  cellContainer: {
+    width: '33.333333%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cellLetter: {
+    fontSize: 10,
+    letterSpacing: 3,
+    color: SlateDark,
+    top: -10,
+  },
+});
 
 export type KeyboardSizesContext = 'buyCrypto' | 'sellCrypto' | 'swapCrypto';
 
@@ -86,34 +90,46 @@ export const getKeyboardSizes = (
   return sizes;
 };
 
-const CellValue = styled(BaseText)<{
+interface CellValueProps {
   darkModeOnly?: boolean;
   isSmallScreen?: boolean;
   context?: KeyboardSizesContext;
-}>`
-  font-size: ${({isSmallScreen, context}) =>
-    getKeyboardSizes(isSmallScreen, context).cellValueFontSize}px;
-  font-weight: 500;
-  color: ${({theme, darkModeOnly}) =>
-    darkModeOnly ? White : theme.colors.text};
-  line-height: ${({isSmallScreen, context}) =>
-    getKeyboardSizes(isSmallScreen, context).cellValuelineHeight}px;
-`;
+}
 
-const CellLetter = styled(BaseText)`
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: ${SlateDark};
-  top: -10px;
-`;
+const CellValue: React.FC<
+  CellValueProps & React.ComponentProps<typeof BaseText>
+> = ({darkModeOnly, isSmallScreen, context, style, ...rest}) => {
+  const theme = useTheme();
+  const sizes = getKeyboardSizes(isSmallScreen, context);
+  return (
+    <BaseText
+      style={[
+        {
+          fontSize: sizes.cellValueFontSize,
+          fontWeight: '500',
+          color: darkModeOnly ? White : theme.colors.text,
+          lineHeight: sizes.cellValuelineHeight,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SymbolContainer = styled.View<SymbolContainerProps>`
-  ${({showLetters}) =>
-    showLetters &&
-    css`
-      margin-top: -13px;
-    `};
-`;
+const CellLetter: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.cellLetter, style]} {...rest} />;
+
+const SymbolContainer: React.FC<
+  SymbolContainerProps & React.ComponentProps<typeof View>
+> = ({showLetters, style, ...rest}) => (
+  <View
+    style={[showLetters ? {marginTop: -13} : null, style]}
+    {...rest}
+  />
+);
 
 export interface NumArray {
   val: string;
@@ -148,7 +164,7 @@ const Cell: React.FC<CellProps> = ({
   const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
   const accessibilityLabel = `${value}-button`;
   return (
-    <CellContainer accessibilityLabel={accessibilityLabel}>
+    <View style={styles.cellContainer} accessibilityLabel={accessibilityLabel}>
       <VirtualKeyboardButtonAnimation
         isSmallScreen={_isSmallScreen}
         onPress={() => onCellPress?.(value)}
@@ -164,7 +180,7 @@ const Cell: React.FC<CellProps> = ({
           {letters ? <CellLetter>{letters}</CellLetter> : null}
         </>
       </VirtualKeyboardButtonAnimation>
-    </CellContainer>
+    </View>
   );
 };
 
@@ -185,7 +201,7 @@ const Row: React.FC<RowProps> = ({
   context,
 }) => {
   return (
-    <RowContainer>
+    <View style={styles.rowContainer}>
       {numArray
         ? numArray.map(cell => (
             <Cell
@@ -199,7 +215,7 @@ const Row: React.FC<RowProps> = ({
             />
           ))
         : null}
-    </RowContainer>
+    </View>
   );
 };
 
@@ -219,7 +235,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
   return (
-    <KeyboardContainer isSmallScreen={_isSmallScreen}>
+    <View style={{marginVertical: _isSmallScreen ? 5 : 10, marginHorizontal: 0}}>
       <Row
         numArray={[
           {
@@ -284,12 +300,15 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         context={context}
       />
 
-      <RowContainer isSmallScreen={_isSmallScreen}>
-        <CellContainer
-          style={{
-            height: getKeyboardSizes(_isSmallScreen, context)
-              .cellContainerHeight,
-          }}>
+      <View style={styles.rowContainer}>
+        <View
+          style={[
+            styles.cellContainer,
+            {
+              height: getKeyboardSizes(_isSmallScreen, context)
+                .cellContainerHeight,
+            },
+          ]}>
           {showDot ? (
             <VirtualKeyboardButtonAnimation
               onPress={() => onCellPress?.('.')}
@@ -304,7 +323,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
               </CellValue>
             </VirtualKeyboardButtonAnimation>
           ) : null}
-        </CellContainer>
+        </View>
         <Cell
           onCellPress={() => onCellPress?.('0')}
           value={'0'}
@@ -314,11 +333,14 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
           context={context}
         />
 
-        <CellContainer
-          style={{
-            height: getKeyboardSizes(_isSmallScreen, context)
-              .cellContainerHeight,
-          }}>
+        <View
+          style={[
+            styles.cellContainer,
+            {
+              height: getKeyboardSizes(_isSmallScreen, context)
+                .cellContainerHeight,
+            },
+          ]}>
           <VirtualKeyboardButtonAnimation
             backgroundColor={backgroundColor}
             isSmallScreen={_isSmallScreen}
@@ -329,9 +351,9 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
               <DeleteIcon bgColor={bgColor} />
             </SymbolContainer>
           </VirtualKeyboardButtonAnimation>
-        </CellContainer>
-      </RowContainer>
-    </KeyboardContainer>
+        </View>
+      </View>
+    </View>
   );
 };
 

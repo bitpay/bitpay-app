@@ -2,11 +2,13 @@ import React, {useEffect, useState} from 'react';
 import {
   AppState,
   KeyboardTypeOptions,
+  StyleSheet,
   TextInput,
   TextInputProps,
+  View,
 } from 'react-native';
 import TextInputMask, {TextInputMaskProps} from 'react-native-text-input-mask';
-import styled, {css} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
@@ -38,105 +40,166 @@ interface InputProps {
   paddingRight?: number;
 }
 
-const InputContainer = styled.View<InputProps>`
-  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  padding: 1px;
-  flex-direction: row;
-  justify-content: center;
-  position: relative;
-  ${({paddingRight}) =>
-    paddingRight &&
-    css`
-      padding-right: ${paddingRight}px;
-    `}
+const styles = StyleSheet.create({
+  inputContainer: {
+    borderWidth: 0.75,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+    padding: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  affix: {
+    alignItems: 'center',
+    borderWidth: 0,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
+    flexDirection: 'row',
+  },
+  separator: {
+    borderRightWidth: 1,
+    borderStyle: 'solid',
+    height: SEPARATOR_HEIGHT,
+  },
+  input: {
+    height: INPUT_HEIGHT,
+    padding: 10,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    fontWeight: '500',
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
+    opacity: 0.75,
+    marginBottom: 6,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    height: INPUT_HEIGHT,
+    minWidth: INPUT_HEIGHT,
+    justifyContent: 'center',
+  },
+});
 
-  ${({isFocused}) =>
-    isFocused &&
-    css`
-      background: ${({theme}) => (theme.dark ? 'transparent' : '#fafbff')};
-      border-color: ${({theme}) => (theme.dark ? LuckySevens : Slate)};
-      border-bottom-color: ${ProgressBlue};
-    `}
+const InputContainer: React.FC<
+  InputProps & React.ComponentProps<typeof View>
+> = ({isFocused, isError, disabled, paddingRight, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.inputContainer,
+        {borderColor: theme.dark ? LuckySevens : Slate},
+        paddingRight ? {paddingRight} : null,
+        isFocused
+          ? {
+              backgroundColor: theme.dark ? 'transparent' : '#fafbff',
+              borderColor: theme.dark ? LuckySevens : Slate,
+              borderBottomColor: ProgressBlue,
+            }
+          : null,
+        isError
+          ? {
+              backgroundColor: theme.dark ? '#090304' : '#EF476F0A',
+              borderColor: '#fbc7d1',
+              borderBottomColor: Caution,
+            }
+          : null,
+        disabled ? {borderColor: theme.dark ? LightBlack : NeutralSlate} : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-  ${({isError}) =>
-    isError &&
-    css`
-      background: ${({theme}) => (theme.dark ? '#090304' : '#EF476F0A')};
-      border-color: #fbc7d1;
-      border-bottom-color: ${Caution};
-      color: ${Caution};
-    `}
+const Affix: React.FC<React.PropsWithChildren<{}>> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View style={[styles.affix, {backgroundColor: theme.dark ? Black : White}]}>
+      {children}
+    </View>
+  );
+};
 
-    ${({disabled}) =>
-    disabled &&
-    css`
-      border-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-    `}
-`;
+const Separator: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.separator,
+        {borderRightColor: theme.dark ? '#45484E' : LightBlue},
+      ]}
+    />
+  );
+};
 
-const Affix = styled.View`
-  align-items: center;
-  border: 1px solid gold;
-  border-width: 0;
-  flex: 0 0 auto;
-  flex-direction: row;
-  background-color: ${({theme}) => (theme.dark ? Black : White)};
-`;
+const Input = React.forwardRef<TextInput, InputProps & TextInputMaskProps>(
+  (
+    {isFocused: _isFocused, isError, disabled, type: _type, style, ...rest},
+    ref,
+  ) => {
+    const theme = useTheme();
+    return (
+      <TextInputMask
+        ref={ref}
+        style={[
+          styles.input,
+          {
+            backgroundColor: disabled
+              ? theme.dark
+                ? LightBlack
+                : NeutralSlate
+              : theme.dark
+              ? Black
+              : White,
+            color: isError ? Caution : theme.colors.text,
+          },
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const Separator = styled.View`
-  border-right-color: ${({theme}) => (theme.dark ? '#45484E' : LightBlue)};
-  border-right-width: 1px;
-  border-style: solid;
-  height: ${SEPARATOR_HEIGHT}px;
-`;
+const Label: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.label, {color: theme.dark ? White : LightBlack}, style]}
+      {...rest}
+    />
+  );
+};
 
-const Input = styled(TextInputMask)<InputProps>`
-  background-color: transparent;
-  color: ${({theme}) => theme.colors.text};
-  height: ${INPUT_HEIGHT}px;
-  padding: 10px;
-  flex: 1 1 auto;
-  font-weight: 500;
-  background-color: ${({theme}) => (theme.dark ? Black : White)};
+const ErrorText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.errorText, style]} {...rest} />;
 
-  ${({isError}) =>
-    isError &&
-    css`
-      color: ${Caution};
-    `}
-
-  ${({disabled}) =>
-    disabled &&
-    css`
-      background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-    `}
-`;
-
-const Label = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : LightBlack)};
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.75;
-  margin-bottom: 6px;
-`;
-
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  margin-top: 4px;
-`;
-
-export const IconContainer = styled(TouchableOpacity).attrs(() => ({
-  activeOpacity: ActiveOpacity,
-}))`
-  align-items: center;
-  height: ${INPUT_HEIGHT}px;
-  min-width: ${INPUT_HEIGHT}px;
-  justify-content: center;
-`;
+export const IconContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({activeOpacity, style, ...rest}) => (
+  <TouchableOpacity
+    activeOpacity={activeOpacity ?? ActiveOpacity}
+    style={[styles.iconContainer, style]}
+    {...rest}
+  />
+);
 
 const Prefix: React.FC = ({children}) => {
   return (

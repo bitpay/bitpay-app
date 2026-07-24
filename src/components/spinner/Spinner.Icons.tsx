@@ -1,6 +1,6 @@
 import React from 'react';
 import Svg, {G, NumberProp, Path} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {Action, BitPay} from '../../styles/colors';
 
 type BitPayBProps = {

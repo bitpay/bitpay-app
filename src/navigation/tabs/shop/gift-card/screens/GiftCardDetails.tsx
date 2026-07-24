@@ -13,8 +13,8 @@ import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import Button from '../../../../../components/button/Button';
 import {
   ActiveOpacity,
@@ -81,78 +81,148 @@ import GiftCardImage from '../../components/GiftCardImage';
 
 const maxWidth = 320;
 
-const GiftCardDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  giftCardDetailsContainer: {
+    flex: 1,
+  },
+  amount: {
+    fontSize: 38,
+    fontWeight: '500',
+    marginTop: 25,
+    marginHorizontal: 0,
+    marginBottom: 20,
+  },
+  claimCodeBox: {
+    borderRadius: 12,
+    marginTop: -80,
+    paddingTop: 110,
+    zIndex: -1,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth,
+    paddingLeft: 20,
+    paddingRight: 20,
+    overflow: 'hidden',
+  },
+  claimCode: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginVertical: 18,
+  },
+  actionContainer: {
+    alignSelf: 'center',
+    marginTop: 15,
+    marginHorizontal: -horizontalPadding,
+    marginBottom: 0,
+    maxWidth,
+    paddingLeft: 0,
+    paddingRight: 0,
+    width: '100%',
+  },
+  divider: {
+    height: 1,
+    width: '80%',
+    marginBottom: 20,
+  },
+  scannableCodeContainer: {
+    backgroundColor: White,
+    borderColor: Grey,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    alignItems: 'center',
+    flexDirection: 'row',
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  archiveButtonContainer: {
+    marginTop: 15,
+  },
+});
 
-const Amount = styled(BaseText)`
-  font-size: 38px;
-  font-weight: 500;
-  margin: 25px 0 20px;
-`;
+const GiftCardDetailsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.giftCardDetailsContainer, style]} {...rest} />
+);
 
-const ClaimCodeBox = styled.View`
-  background-color: ${({theme}) => (theme.dark ? '#121212' : NeutralSlate)};
-  border: 1px solid ${Slate30};
-  ${({theme}) => (theme.dark ? 'border: none;' : '')}
-  border-radius: 12px;
-  margin-top: -80px;
-  padding-top: 110px;
-  z-index: -1;
-  align-items: center;
-  width: 100%;
-  max-width: ${maxWidth}px;
-  padding-left: 20px;
-  padding-right: 20px;
-  overflow: hidden;
-`;
+const Amount = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.amount, style]} {...rest} />
+);
 
-const ClaimCode = styled(BaseText)`
-  font-size: 18px;
-  font-weight: 700;
-  margin: 18px 0;
-`;
+const ClaimCodeBox = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.claimCodeBox,
+        {backgroundColor: theme.dark ? '#121212' : NeutralSlate},
+        theme.dark ? {borderWidth: 0} : {borderWidth: 1, borderColor: Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ActionContainer = styled(CtaContainer)`
-  align-self: center;
-  margin: 15px -${horizontalPadding}px 0;
-  max-width: ${maxWidth}px;
-  padding-left: 0;
-  padding-right: 0;
-  width: 100%;
-`;
+const ClaimCode = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.claimCode, style]} {...rest} />
+);
 
-const Divider = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Grey)};
-  height: 1px;
-  width: 80%;
-  margin-bottom: 20px;
-`;
+const ActionContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof CtaContainer>) => (
+  <CtaContainer style={[styles.actionContainer, style]} {...rest} />
+);
+
+const Divider = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.divider,
+        {backgroundColor: theme.dark ? LightBlack : Grey},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
 interface ScannableCodeParams {
   height: number;
   width: number;
 }
-const ScannableCode = styled.Image<ScannableCodeParams>`
-  height: ${({height}) => height}px;
-  width: ${({width}) => width}px;
-`;
-const ScannableCodeContainer = styled.View<ScannableCodeParams>`
-  background-color: ${White};
-  border-color: ${Grey};
-  border-radius: 10px;
-  border-width: 1px;
-  height: ${({height}) => height}px;
-  width: ${({width}) => width}px;
-  margin-top: 10px;
-  align-items: center;
-  flex-direction: row;
-  overflow: hidden;
-  justify-content: center;
-`;
 
-const ArchiveButtonContainer = styled.View`
-  margin-top: 15px;
-`;
+const ScannableCode = ({
+  height,
+  width,
+  style,
+  ...rest
+}: ScannableCodeParams & React.ComponentProps<typeof Image>) => (
+  <Image style={[{height, width}, style]} {...rest} />
+);
+
+const ScannableCodeContainer = ({
+  height,
+  width,
+  style,
+  ...rest
+}: ScannableCodeParams & React.ComponentProps<typeof View>) => (
+  <View
+    style={[styles.scannableCodeContainer, {height, width}, style]}
+    {...rest}
+  />
+);
+
+const ArchiveButtonContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.archiveButtonContainer, style]} {...rest} />
+);
 
 const GiftCardDetails = ({
   route,

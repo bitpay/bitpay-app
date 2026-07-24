@@ -1,4 +1,5 @@
 import React, {useCallback, useContext, useEffect, useState} from 'react';
+import {FlatList, ScrollView, StyleSheet, View} from 'react-native';
 import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
@@ -8,7 +9,7 @@ import {
   SearchInput,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {BaseText, H5, SubText} from '../../../components/styled/Text';
 import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -23,7 +24,6 @@ import {
   ValidateCoinAddress,
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
-import {FlatList, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
@@ -56,25 +56,38 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 
-const SendToAddressContainer = styled.View`
-  margin-top: 20px;
-  padding: 0 15px;
-`;
+const styles = StyleSheet.create({
+  sendToAddressContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  scrollViewContainer: {
+    marginTop: 20,
+    marginRight: 15,
+    marginBottom: 0,
+    marginLeft: 15,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+});
 
-const ScrollViewContainer = styled.ScrollView`
-  margin: 20px 15px 0 15px;
-`;
-
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 0;
-`;
-
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 16px;
-`;
+const CtaContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof _CtaContainer>) => (
+  <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />
+);
 
 const SendToAddress = () => {
   const dispatch = useAppDispatch();
@@ -252,7 +265,7 @@ const SendToAddress = () => {
 
   return (
     <>
-      <SendToAddressContainer>
+      <View style={styles.sendToAddressContainer}>
         <SearchContainer style={{marginBottom: 0}}>
           <SearchInput
             placeholder={t('Enter address or select wallet')}
@@ -289,7 +302,9 @@ const SendToAddress = () => {
             <ScanSvg />
           </TouchableOpacity>
         </SearchContainer>
-        {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+        {errorMessage ? (
+          <BaseText style={styles.errorText}>{errorMessage}</BaseText>
+        ) : null}
 
         <View style={{marginTop: 30}}>
           <H5>
@@ -321,8 +336,8 @@ const SendToAddress = () => {
             </>
           )}
         </View>
-      </SendToAddressContainer>
-      <ScrollViewContainer>
+      </View>
+      <ScrollView style={styles.scrollViewContainer}>
         <View style={{marginTop: 10}}>
           <KeyWalletsRow
             keyAccounts={keyAccounts}
@@ -332,7 +347,7 @@ const SendToAddress = () => {
             }}
           />
         </View>
-      </ScrollViewContainer>
+      </ScrollView>
 
       {context !== 'selectInputs' ? (
         <CtaContainer>

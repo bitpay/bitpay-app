@@ -1,7 +1,6 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect} from 'react';
-import {Image} from 'react-native';
-import styled from 'styled-components/native';
+import {Image, StyleSheet, View} from 'react-native';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
@@ -31,16 +30,31 @@ import {MoonpayClientCredentials} from '../../../services/utils/moonpayFrameCryp
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
 
-const ConnectionItemContainer = styled.View`
-  justify-content: flex-start;
-  align-items: center;
-  flex-direction: row;
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  connectionItemContainer: {
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+  },
+  connectionIconContainer: {
+    marginRight: 5,
+  },
+});
 
-const ConnectionIconContainer = styled.View`
-  margin-right: 5px;
-`;
+const ConnectionItemContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.connectionItemContainer, style]} {...rest} />
+);
+
+const ConnectionIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.connectionIconContainer, style]} {...rest} />
+);
 
 const Connections = () => {
   const route = useRoute<RouteProp<SettingsDetailsParamList, 'Connections'>>();

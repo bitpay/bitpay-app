@@ -1,8 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {FlashList} from '@shopify/flash-list';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -37,47 +37,101 @@ export type SettingsHomeProps = NativeStackScreenProps<
   SettingsScreens.SETTINGS_HOME
 >;
 
-export const SettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  settingsContainer: {
+    flex: 1,
+  },
+  settingsComponent: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  settingsHomeContainer: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  bitPayIdSettingsLink: {
+    height: 'auto',
+    marginBottom: 32,
+  },
+  bitPayIdAvatarContainer: {
+    marginRight: parseInt(ScreenGutter, 10),
+  },
+  bitPayIdUserContainer: {
+    display: 'flex',
+    flexGrow: 1,
+    flexDirection: 'column',
+  },
+  bitPayIdSettingTitle: {
+    flexGrow: 1,
+  },
+  bitPayIdUserText: {
+    display: 'flex',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+});
 
-export const SettingsComponent = styled.ScrollView`
-  flex: 1;
-  padding: 10px 0;
-`;
+export const SettingsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.settingsContainer, style]} {...rest} />
+);
 
-export const SettingsHomeContainer = styled.View`
-  flex: 1;
-  padding: 10px 0;
-`;
+export const SettingsComponent: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView style={[styles.settingsComponent, style]} {...rest} />
+);
 
-const BitPayIdSettingsLink = styled(Setting)`
-  height: auto;
-  margin-bottom: 32px;
-`;
+export const SettingsHomeContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.settingsHomeContainer, style]} {...rest} />
+);
 
-const BitPayIdAvatarContainer = styled.View`
-  margin-right: ${ScreenGutter};
-`;
+const BitPayIdSettingsLink: React.FC<React.ComponentProps<typeof Setting>> = ({
+  style,
+  ...rest
+}) => <Setting style={[styles.bitPayIdSettingsLink, style]} {...rest} />;
 
-const BitPayIdUserContainer = styled.View`
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-`;
+const BitPayIdAvatarContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.bitPayIdAvatarContainer}>{children}</View>;
 
-const BitPayIdSettingTitle = styled(SettingTitle)`
-  color: ${({theme}) => theme.colors.text};
-  flex-grow: 1;
-`;
+const BitPayIdUserContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.bitPayIdUserContainer}>{children}</View>;
 
-const BitPayIdUserText = styled.Text<{bold?: boolean}>`
-  display: flex;
-  font-size: 14px;
-  line-height: 19px;
-  font-weight: ${({bold}) => (bold ? 700 : 400)};
-  color: ${({theme}) => theme.colors.text};
-`;
+const BitPayIdSettingTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <SettingTitle
+      style={[styles.bitPayIdSettingTitle, {color: theme.colors.text}]}>
+      {children}
+    </SettingTitle>
+  );
+};
+
+const BitPayIdUserText: React.FC<{
+  bold?: boolean;
+  children?: React.ReactNode;
+}> = ({bold, children}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        styles.bitPayIdUserText,
+        {
+          fontWeight: bold ? '700' : '400',
+          color: theme.colors.text,
+        },
+      ]}>
+      {children}
+    </Text>
+  );
+};
 
 const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   const {redirectTo} = route.params || {};

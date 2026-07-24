@@ -1,7 +1,7 @@
 import React from 'react';
-import {Platform} from 'react-native';
+import {View} from 'react-native';
 import {Circle, Color, G, Svg, Rect} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 
 interface AddSvgProps {
@@ -75,21 +75,19 @@ const AddSvg: React.FC<AddSvgProps> = ({color, background, opacity}) => {
   );
 };
 
-const AddContainer = styled.View<{platform: string}>``;
-
 const Add = ({color, background, opacity}: Props) => {
   const theme = useTheme();
   const themedColor = theme.dark ? White : null;
   const themedBackground = theme.dark ? LightBlack : NeutralSlate;
 
   return (
-    <AddContainer platform={Platform.OS}>
+    <View>
       <AddSvg
         color={color || themedColor}
         background={background || themedBackground}
         opacity={opacity}
       />
-    </AddContainer>
+    </View>
   );
 };
 

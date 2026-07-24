@@ -2,7 +2,7 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 import BillsHome from './screens/BillsHome';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 
 export type BillStackParamList = {
   BillsHome: {};

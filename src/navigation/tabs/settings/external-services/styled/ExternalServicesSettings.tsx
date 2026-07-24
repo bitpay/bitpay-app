@@ -1,64 +1,139 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, View, ViewProps} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-export const NoPrMsg = styled(BaseText)`
-  font-size: 15px;
-  text-align: center;
-`;
+const styles = StyleSheet.create({
+  noPrMsg: {
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  prTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  prRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 60,
+  },
+  prRowLeft: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  prRowRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+  },
+  prTxtCryptoAmount: {
+    fontWeight: '700',
+  },
+  prTxtDate: {
+    fontSize: 12.5,
+    color: '#667',
+  },
+  prTxtFiatAmount: {
+    fontSize: 14,
+  },
+  prTxtStatus: {
+    fontSize: 12.5,
+  },
+  footerSupport: {
+    paddingTop: 20,
+    paddingBottom: 30,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  supportTxt: {
+    fontSize: 12.5,
+    color: '#667',
+  },
+});
 
-export const PrTitle = styled(BaseText)`
-  font-size: 18px;
-  font-weight: 500;
-`;
+export const NoPrMsg = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.noPrMsg, style]} {...rest} />
+));
+NoPrMsg.displayName = 'NoPrMsg';
 
-export const PrRow = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-`;
+export const PrTitle = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.prTitle, style]} {...rest} />
+));
+PrTitle.displayName = 'PrTitle';
 
-export const PrRowLeft = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
+export const PrRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.prRow, style]} {...rest} />;
 
-export const PrRowRight = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-`;
+export const PrRowLeft = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.prRowLeft, style]} {...rest} />
+  ),
+);
+PrRowLeft.displayName = 'PrRowLeft';
 
-export const PrTxtCryptoAmount = styled(BaseText)`
-  font-weight: 700;
-`;
+export const PrRowRight = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.prRowRight, style]} {...rest} />
+  ),
+);
+PrRowRight.displayName = 'PrRowRight';
 
-export const PrTxtDate = styled(BaseText)`
-  font-size: 12.5px;
-  color: #667;
-`;
+export const PrTxtCryptoAmount = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.prTxtCryptoAmount, style]} {...rest} />
+));
+PrTxtCryptoAmount.displayName = 'PrTxtCryptoAmount';
 
-export const PrTxtFiatAmount = styled(BaseText)`
-  font-size: 14px;
-`;
+export const PrTxtDate = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.prTxtDate, style]} {...rest} />
+));
+PrTxtDate.displayName = 'PrTxtDate';
 
-export const PrTxtStatus = styled(BaseText)`
-  font-size: 12.5px;
-`;
+export const PrTxtFiatAmount = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.prTxtFiatAmount, style]} {...rest} />
+));
+PrTxtFiatAmount.displayName = 'PrTxtFiatAmount';
 
-export const FooterSupport = styled.View`
-  padding-top: 20px;
-  padding-bottom: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
+export const PrTxtStatus = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.prTxtStatus, style]} {...rest} />
+));
+PrTxtStatus.displayName = 'PrTxtStatus';
 
-export const SupportTxt = styled(BaseText)`
-  font-size: 12.5px;
-  color: #667;
-`;
+export const FooterSupport = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.footerSupport, style]} {...rest} />
+  ),
+);
+FooterSupport.displayName = 'FooterSupport';
+
+export const SupportTxt = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.supportTxt, style]} {...rest} />
+));
+SupportTxt.displayName = 'SupportTxt';

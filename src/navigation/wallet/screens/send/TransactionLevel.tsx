@@ -20,7 +20,7 @@ import {
 } from '../../components/ErrorMessages';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {GetFeeUnits, GetTheme} from '../../../../store/wallet/utils/currency';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActionContainer,
   ActiveOpacity,
@@ -31,7 +31,7 @@ import {
 } from '../../../../components/styled/Containers';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
-import {View} from 'react-native';
+import {Pressable, StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
@@ -67,120 +67,245 @@ export enum evmAvgTime {
   urgent = 'ASAP',
 }
 
-const TxSpeedContainer = styled(SheetContainer)`
-  flex: 1;
-  justify-content: flex-start;
-  padding: 0;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const TxSpeedScroll = styled(KeyboardAwareScrollView)`
-  margin-top: 0;
-`;
+const styles = StyleSheet.create({
+  txSpeedContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    padding: 0,
+  },
+  txSpeedScroll: {
+    marginTop: 0,
+  },
+  sheetHeaderContainer: {
+    marginBottom: 15,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  titleContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: WIDTH - 110,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    margin: gutter,
+    paddingHorizontal: 3,
+  },
+  feeLevelStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+  },
+  feeLevelStepCircleBase: {
+    borderColor: White,
+    borderRadius: 50,
+    zIndex: 1,
+  },
+  feeLevelStepLine: {
+    flexGrow: 1,
+    height: 2,
+    alignSelf: 'center',
+  },
+  topLabelContainer: {
+    minHeight: 30,
+  },
+  bottomLabelContainer: {
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    marginVertical: 0,
+    marginHorizontal: gutter,
+  },
+  feeLevelStepTopLabel: {
+    textAlign: 'center',
+    left: '-50%' as any,
+  },
+  txSpeedParagraph: {
+    marginVertical: 0,
+    marginHorizontal: gutter,
+  },
+  feeLevelStepsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepsHeaderContainer: {
+    marginTop: gutter,
+    marginHorizontal: gutter,
+    marginBottom: 0,
+  },
+  currencyImageContainer: {
+    marginRight: 10,
+  },
+  feeLevelStepsHeaderSubTitle: {
+    paddingTop: 5,
+    minHeight: 30,
+  },
+});
 
-const SheetHeaderContainer = styled.View`
-  margin-bottom: 15px;
-  align-items: center;
-  flex-direction: row;
-`;
+const TxSpeedContainer: React.FC<
+  React.ComponentProps<typeof SheetContainer>
+> = ({style, ...rest}) => (
+  <SheetContainer style={[styles.txSpeedContainer, style]} {...rest} />
+);
 
-const TitleContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-  width: ${WIDTH - 110}px;
-`;
+const TxSpeedScroll: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView style={[styles.txSpeedScroll, style]} {...rest} />
+);
 
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  margin-top: 4px;
-`;
+const SheetHeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.sheetHeaderContainer, style]} {...rest} />;
 
-const StepsContainer = styled.View`
-  flex-direction: row;
-  margin: ${ScreenGutter};
-  padding: 0 3px;
-`;
+const TitleContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.titleContainer, style]} {...rest} />;
 
-export const FeeLevelStepContainer = styled.View<{length: number}>`
-  /* Circle size + horizontal gutter */
-  width: ${({length}) => (WIDTH - (CIRCLE_SIZE + 36)) / length}px;
-`;
+const ErrorText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.errorText, style]} {...rest} />;
 
-export const FeeLevelStep = styled.View<{isLast?: boolean}>`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  height: 40px;
-`;
+const StepsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.stepsContainer, style]} {...rest} />;
 
-export const FeeLevelStepCircle = styled.Pressable<{
-  isActive: boolean;
-  backgroundColor: string;
-  isDisabled?: boolean;
-}>`
-  background-color: ${({backgroundColor}) => backgroundColor};
-  width: ${({isActive}) =>
-    isActive ? `${CIRCLE_ACTIVE_SIZE}px` : `${CIRCLE_SIZE}px`};
-  height: ${({isActive}) =>
-    isActive ? `${CIRCLE_ACTIVE_SIZE}px` : `${CIRCLE_SIZE}px`};
-  border-width: ${({isActive}) => (isActive ? '3px' : 0)};
-  border-color: ${White};
-  border-radius: 50px;
-  z-index: 1;
-  opacity: ${({isDisabled}) => (isDisabled ? 0.7 : 1)};
-`;
+export const FeeLevelStepContainer: React.FC<
+  React.ComponentProps<typeof View> & {length: number}
+> = ({length, style, ...rest}) => (
+  <View
+    style={[{width: (WIDTH - (CIRCLE_SIZE + 36)) / length}, style]}
+    {...rest}
+  />
+);
 
-export const FeeLevelStepLine = styled.View<{backgroundColor: string}>`
-  background-color: ${({backgroundColor}) => backgroundColor};
-  flex-grow: 1;
-  height: 2px;
-  align-self: center;
-`;
+export const FeeLevelStep: React.FC<
+  React.ComponentProps<typeof View> & {isLast?: boolean}
+> = ({isLast: _isLast, style, ...rest}) => (
+  <View style={[styles.feeLevelStep, style]} {...rest} />
+);
 
-const TopLabelContainer = styled.View`
-  min-height: 30px;
-`;
+export const FeeLevelStepCircle: React.FC<
+  Omit<React.ComponentProps<typeof Pressable>, 'style'> & {
+    style?: StyleProp<ViewStyle>;
+    isActive: boolean;
+    backgroundColor: string;
+    isDisabled?: boolean;
+  }
+> = ({isActive, backgroundColor, isDisabled, style, ...rest}) => (
+  <Pressable
+    style={[
+      styles.feeLevelStepCircleBase,
+      {
+        backgroundColor,
+        width: isActive ? CIRCLE_ACTIVE_SIZE : CIRCLE_SIZE,
+        height: isActive ? CIRCLE_ACTIVE_SIZE : CIRCLE_SIZE,
+        borderWidth: isActive ? 3 : 0,
+        opacity: isDisabled ? 0.7 : 1,
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const BottomLabelContainer = styled.View`
-  justify-content: space-between;
-  flex-direction: row;
-  margin: 0 ${ScreenGutter};
-`;
+export const FeeLevelStepLine: React.FC<
+  React.ComponentProps<typeof View> & {backgroundColor: string}
+> = ({backgroundColor, style, ...rest}) => (
+  <View style={[styles.feeLevelStepLine, {backgroundColor}, style]} {...rest} />
+);
 
-export const FeeLevelStepBottomLabel = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const TopLabelContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.topLabelContainer, style]} {...rest} />;
 
-export const FeeLevelStepTopLabel = styled(H7)<{length: number}>`
-  text-align: center;
-  left: -50%;
-  width: ${({length}) => (WIDTH + (length - 1 + CIRCLE_SIZE)) / length}px;
-`;
+const BottomLabelContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.bottomLabelContainer, style]} {...rest} />;
 
-const TxSpeedParagraph = styled(Paragraph)`
-  margin: 0 ${ScreenGutter};
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+export const FeeLevelStepBottomLabel: React.FC<
+  React.ComponentProps<typeof H7>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <H7 style={[{color: theme.dark ? White : SlateDark}, style]} {...rest} />
+  );
+};
 
-export const FeeLevelStepsHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+export const FeeLevelStepTopLabel: React.FC<
+  React.ComponentProps<typeof H7> & {length: number}
+> = ({length, style, ...rest}) => (
+  <H7
+    style={[
+      styles.feeLevelStepTopLabel,
+      {width: (WIDTH + (length - 1 + CIRCLE_SIZE)) / length},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const StepsHeaderContainer = styled.View`
-  margin: ${ScreenGutter} ${ScreenGutter} 0;
-`;
+const TxSpeedParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.txSpeedParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CurrencyImageContainer = styled.View`
-  margin-right: 10px;
-`;
+export const FeeLevelStepsHeader: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.feeLevelStepsHeader, style]} {...rest} />
+);
 
-export const FeeLevelStepsHeaderSubTitle = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  padding-top: 5px;
-  min-height: 30px;
-`;
+const StepsHeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.stepsHeaderContainer, style]} {...rest} />;
+
+const CurrencyImageContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.currencyImageContainer, style]} {...rest} />;
+
+export const FeeLevelStepsHeaderSubTitle: React.FC<
+  React.ComponentProps<typeof Paragraph>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.feeLevelStepsHeaderSubTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const FEE_MIN = 0;
 const FEE_MULTIPLIER = 10;

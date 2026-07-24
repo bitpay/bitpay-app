@@ -1,14 +1,21 @@
 import React, {ReactElement} from 'react';
-import {useTheme} from '@react-navigation/native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {BaseText, H4, TextAlign} from '../../../components/styled/Text';
-import styled, {css} from 'styled-components/native';
+import {
+  Image,
+  ImageSourcePropType,
+  Platform,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   ActiveOpacity,
   SheetContainer,
   SheetParams,
 } from '../../../components/styled/Containers';
-import {Platform, Image, ImageSourcePropType} from 'react-native';
 import {
   Black,
   Slate,
@@ -22,134 +29,158 @@ import {
   Warning25,
 } from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import ClockOutlineIcon from '../../../../assets/img/icon-clock-outline.svg';
 import AlertTriangleIcon from '../../../../assets/img/icon-alert-triangle.svg';
 import InfoIcon from '../../../components/icons/info/Info';
 
-const OptionsHeaderContainer = styled.View<{cardStyle?: boolean}>`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  margin-bottom: ${({cardStyle}) => (cardStyle ? 12 : 25)}px;
-`;
+const styles = StyleSheet.create({
+  optionsHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  optionsHeaderContainerCard: {
+    marginBottom: 12,
+  },
+  optionsHeaderContainerDefault: {
+    marginBottom: 25,
+  },
+  optionsHeaderTitleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  optionsHeaderPlaceholder: {
+    width: 41,
+  },
+  optionContainer: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  optionContainerTop: {
+    paddingTop: 31,
+  },
+  optionContainerBottom: {
+    paddingBottom: 31,
+  },
+  optionContainerCard: {
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  optionIconContainer: {
+    justifyContent: 'center',
+    width: 20,
+  },
+  optionTextContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    flex: 1,
+  },
+  optionTextContainerDefault: {
+    marginHorizontal: 20,
+  },
+  optionTextContainerCard: {
+    marginRight: 8,
+  },
+  optionTitleText: {
+    fontStyle: 'normal',
+    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  optionTitleTextCard: {
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  optionDescriptionText: {
+    fontStyle: 'normal',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 3,
+  },
+  optionDescriptionTextCard: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  subDescriptionContainer: {
+    width: '100%',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  subDescriptionRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  subDescriptionRowSpacer: {
+    height: 4,
+  },
+  subDescriptionIconContainer: {
+    marginRight: 4,
+  },
+  optionSubDescriptionText: {
+    fontStyle: 'normal',
+    fontWeight: '400',
+    fontSize: 13,
+    lineHeight: 20,
+    flex: 1,
+  },
+  optionBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: Warning25,
+    borderRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginBottom: 8,
+  },
+  optionBadgeText: {
+    fontStyle: 'normal',
+    fontWeight: '400',
+    fontSize: 13,
+    lineHeight: 20,
+    color: Warning,
+  },
+});
 
-const OptionsHeaderTitleContainer = styled.View`
-  position: absolute;
-  left: 0;
-  right: 0;
-  align-items: center;
-`;
-
-const OptionsHeaderPlaceholder = styled.View`
-  width: 41px;
-`;
-
-const OptionContainer = styled(TouchableOpacity)<
-  SheetParams & {cardStyle?: boolean}
->`
-  flex-direction: row;
-  align-items: stretch;
-  ${({cardStyle, placement}) =>
-    cardStyle
-      ? css`
-          padding: 16px;
-          margin-bottom: 12px;
-        `
-      : css`
-          padding-${placement}: 31px;
-        `}
-  ${({cardStyle, theme: {dark}}) =>
-    cardStyle &&
-    css`
-      background-color: ${dark ? LightBlack : Feather};
-      border-radius: 12px;
-    `}
-`;
-
-const OptionIconContainer = styled.View`
-  justify-content: center;
-  width: 20px;
-`;
-
-const OptionTextContainer = styled.View<{cardStyle?: boolean}>`
-  align-items: flex-start;
-  justify-content: center;
-  flex-direction: column;
-  margin: ${({cardStyle}) => (cardStyle ? '0 8px 0 0' : '0 20px')};
-  flex: 1;
-`;
-
-const OptionTitleText = styled(BaseText)<{cardStyle?: boolean}>`
-  font-style: normal;
-  font-weight: ${({cardStyle}) => (cardStyle ? 500 : 600)};
-  font-size: 16px;
-  line-height: ${({cardStyle}) => (cardStyle ? 24 : 22)}px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 6px;
-`;
-
-const OptionDescriptionText = styled(BaseText)<{cardStyle?: boolean}>`
-  font-style: normal;
-  font-weight: 400;
-  font-size: ${({cardStyle}) => (cardStyle ? 16 : 14)}px;
-  line-height: ${({cardStyle}) => (cardStyle ? 24 : 20)}px;
-  color: ${({cardStyle, theme: {dark}}) =>
-    cardStyle ? (dark ? Slate30 : SlateDark) : dark ? Slate : Black};
-  margin-top: 3px;
-`;
-
-const SubDescriptionContainer = styled.View`
-  width: 100%;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 8px;
-`;
-
-const SubDescriptionRow = styled.View`
-  width: 100%;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const SubDescriptionRowSpacer = styled.View`
-  height: 4px;
-`;
-
-const SubDescriptionIconContainer = styled.View`
-  margin-right: 4px;
-`;
-
-const OptionSubDescriptionText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  flex: 1;
-`;
-
-const OptionBadgeContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  align-self: flex-start;
-  background-color: ${Warning25};
-  border-radius: 4px;
-  padding: 4px 8px;
-  margin-bottom: 8px;
-`;
-
-const OptionBadgeText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 20px;
-  color: ${Warning};
-`;
+const OptionContainer: React.FC<
+  TouchableOpacityProps &
+    SheetParams & {
+      cardStyle?: boolean;
+      dark: boolean;
+      style?: StyleProp<ViewStyle>;
+    }
+> = ({placement, cardStyle, dark, style, ...rest}) => (
+  <TouchableOpacity
+    style={[
+      styles.optionContainer,
+      cardStyle
+        ? [
+            styles.optionContainerCard,
+            {backgroundColor: dark ? LightBlack : Feather},
+          ]
+        : placement === 'top'
+        ? styles.optionContainerTop
+        : styles.optionContainerBottom,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 export interface SubDescriptionItem {
   icon: 'clock' | 'warning' | 'info';
@@ -211,21 +242,29 @@ const OptionsSheet = ({
         placement={sheetPlacement}
         paddingHorizontal={paddingHorizontal}>
         {title ? (
-          <OptionsHeaderContainer cardStyle={hasCardStyle}>
+          <View
+            style={[
+              styles.optionsHeaderContainer,
+              hasCardStyle
+                ? styles.optionsHeaderContainerCard
+                : styles.optionsHeaderContainerDefault,
+            ]}>
             {onBack ? (
               <TouchableOpacity onPress={onBack}>
                 <Back opacity={1} />
               </TouchableOpacity>
             ) : (
-              <OptionsHeaderPlaceholder />
+              <View style={styles.optionsHeaderPlaceholder} />
             )}
-            <OptionsHeaderTitleContainer pointerEvents="none">
+            <View
+              style={styles.optionsHeaderTitleContainer}
+              pointerEvents="none">
               <TextAlign align={'center'}>
                 <H4>{title}</H4>
               </TextAlign>
-            </OptionsHeaderTitleContainer>
-            <OptionsHeaderPlaceholder />
-          </OptionsHeaderContainer>
+            </View>
+            <View style={styles.optionsHeaderPlaceholder} />
+          </View>
         ) : null}
         {options.map(
           (
@@ -248,6 +287,7 @@ const OptionsSheet = ({
                 style={index === 0 && sheetPlacement === 'top' && topStyles}
                 placement={sheetPlacement}
                 cardStyle={cardStyle}
+                dark={theme.dark}
                 key={index}
                 activeOpacity={ActiveOpacity}
                 onPress={async () => {
@@ -259,36 +299,77 @@ const OptionsSheet = ({
                   <>{optionElement()}</>
                 ) : (
                   <>
-                    {img && <OptionIconContainer>{img}</OptionIconContainer>}
-                    {imgSrc && (
-                      <OptionIconContainer>
-                        <Image source={imgSrc} />
-                      </OptionIconContainer>
+                    {img && (
+                      <View style={styles.optionIconContainer}>{img}</View>
                     )}
-                    <OptionTextContainer cardStyle={cardStyle}>
+                    {imgSrc && (
+                      <View style={styles.optionIconContainer}>
+                        <Image source={imgSrc} />
+                      </View>
+                    )}
+                    <View
+                      style={[
+                        styles.optionTextContainer,
+                        cardStyle
+                          ? styles.optionTextContainerCard
+                          : styles.optionTextContainerDefault,
+                      ]}>
                       {badge ? (
-                        <OptionBadgeContainer>
-                          <OptionBadgeText>{badge}</OptionBadgeText>
-                        </OptionBadgeContainer>
+                        <View style={styles.optionBadgeContainer}>
+                          <BaseText style={styles.optionBadgeText}>
+                            {badge}
+                          </BaseText>
+                        </View>
                       ) : null}
                       {optionTitle ? (
-                        <OptionTitleText cardStyle={cardStyle}>
+                        <BaseText
+                          style={[
+                            styles.optionTitleText,
+                            cardStyle && styles.optionTitleTextCard,
+                            {color: theme.dark ? White : Black},
+                          ]}>
                           {optionTitle}
-                        </OptionTitleText>
+                        </BaseText>
                       ) : null}
-                      <OptionDescriptionText cardStyle={cardStyle}>
+                      <BaseText
+                        style={[
+                          styles.optionDescriptionText,
+                          cardStyle && styles.optionDescriptionTextCard,
+                          {
+                            color: cardStyle
+                              ? theme.dark
+                                ? Slate30
+                                : SlateDark
+                              : theme.dark
+                              ? Slate
+                              : Black,
+                          },
+                        ]}>
                         {description}
-                      </OptionDescriptionText>
+                      </BaseText>
                       {subDescriptionItems &&
                         subDescriptionItems.length > 0 && (
-                          <SubDescriptionContainer>
+                          <View
+                            style={[
+                              styles.subDescriptionContainer,
+                              {
+                                backgroundColor: theme.dark ? Black : White,
+                              },
+                            ]}>
                             {subDescriptionItems.map((item, itemIndex) => {
                               const ItemIcon = subDescriptionIcons[item.icon];
                               return (
                                 <React.Fragment key={itemIndex}>
-                                  {itemIndex > 0 && <SubDescriptionRowSpacer />}
-                                  <SubDescriptionRow>
-                                    <SubDescriptionIconContainer>
+                                  {itemIndex > 0 && (
+                                    <View
+                                      style={styles.subDescriptionRowSpacer}
+                                    />
+                                  )}
+                                  <View style={styles.subDescriptionRow}>
+                                    <View
+                                      style={
+                                        styles.subDescriptionIconContainer
+                                      }>
                                       <ItemIcon
                                         width={16}
                                         height={16}
@@ -302,21 +383,27 @@ const OptionsSheet = ({
                                             : SlateDark
                                         }
                                       />
-                                    </SubDescriptionIconContainer>
-                                    <OptionSubDescriptionText>
+                                    </View>
+                                    <BaseText
+                                      style={[
+                                        styles.optionSubDescriptionText,
+                                        {
+                                          color: theme.dark ? White : SlateDark,
+                                        },
+                                      ]}>
                                       {item.text}
-                                    </OptionSubDescriptionText>
-                                  </SubDescriptionRow>
+                                    </BaseText>
+                                  </View>
                                 </React.Fragment>
                               );
                             })}
-                          </SubDescriptionContainer>
+                          </View>
                         )}
-                    </OptionTextContainer>
+                    </View>
                     {showChevron && (
-                      <OptionIconContainer>
+                      <View style={styles.optionIconContainer}>
                         <AngleRight />
-                      </OptionIconContainer>
+                      </View>
                     )}
                   </>
                 )}

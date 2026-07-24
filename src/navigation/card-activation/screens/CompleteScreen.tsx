@@ -2,7 +2,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import styled from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {H4, Paragraph} from '../../../components/styled/Text';
@@ -15,29 +15,50 @@ import {
 
 export type CompleteScreenParamList = undefined;
 
-const ContentContainer = styled.View`
-  margin-left: ${ScreenGutter};
-  margin-right: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  contentContainer: {
+    marginLeft: parseInt(ScreenGutter, 10),
+    marginRight: parseInt(ScreenGutter, 10),
+  },
+  heroImageContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  heroImageWrapper: {
+    height: 420,
+    width: 648,
+  },
+  heading: {
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  description: {
+    marginBottom: 20,
+  },
+});
 
-const HeroImageContainer = styled.View`
-  align-items: center;
-  margin-bottom: 16px;
-`;
+const ContentContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.contentContainer, style]} {...rest} />
+);
 
-const HeroImageWrapper = styled.View`
-  height: 420px;
-  width: 648px;
-`;
+const HeroImageContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.heroImageContainer, style]} {...rest} />
+);
 
-const Heading = styled(H4)`
-  margin-bottom: 16px;
-  text-align: center;
-`;
+const HeroImageWrapper = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.heroImageWrapper, style]} {...rest} />
+);
 
-const Description = styled(Paragraph)`
-  margin-bottom: 20px;
-`;
+const Heading = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <H4 ref={ref} style={[styles.heading, style]} {...rest} />
+));
+
+const Description = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => (
+  <Paragraph ref={ref} style={[styles.description, style]} {...rest} />
+));
 
 const CompleteScreen: React.FC<
   NativeStackScreenProps<

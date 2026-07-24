@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
@@ -8,7 +8,17 @@ import {Action, LightBlue, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
-import {View, Keyboard} from 'react-native';
+import {
+  View,
+  ViewProps,
+  ScrollView,
+  ScrollViewProps,
+  SafeAreaView,
+  Text,
+  TextProps,
+  Keyboard,
+  StyleSheet,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import yup from '../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -26,76 +36,163 @@ import {useTranslation} from 'react-i18next';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {useOngoingProcess} from '../../../contexts';
 
-const EnableTwoFactorContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  enableTwoFactorContainer: {
+    flex: 1,
+  },
+  viewContainer: {
+    padding: 16,
+    flexDirection: 'column',
+  },
+  viewBody: {
+    flexGrow: 1,
+    paddingBottom: 150,
+  },
+  instructionBox: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 30,
+  },
+  instructionBoxHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    alignItems: 'center',
+  },
+  instructionBoxHeaderNumberContainer: {
+    paddingHorizontal: 16,
+    marginVertical: 12,
+    marginRight: 16,
+    borderRightWidth: 1,
+  },
+  instructionBoxHeaderNumber: {
+    fontSize: 25,
+  },
+  instructionBoxBody: {
+    flexDirection: 'row',
+    padding: 16,
+  },
+  instructionBodyText: {
+    fontSize: 14,
+    lineHeight: 18,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+  },
+  copyButton: {
+    margin: 16,
+    marginTop: 0,
+  },
+  qrContainerDark: {
+    backgroundColor: White,
+    padding: 15,
+    marginLeft: 15,
+    borderRadius: 6,
+  },
+});
 
-const ViewContainer = styled.ScrollView`
-  padding: 16px;
-  flex-direction: column;
-`;
+const EnableTwoFactorContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.enableTwoFactorContainer, style]} {...rest} />
+);
 
-const ViewBody = styled.View`
-  flex-grow: 1;
-  padding-bottom: 150px;
-`;
+const ViewContainer = ({style, ...rest}: ScrollViewProps) => (
+  <ScrollView style={[styles.viewContainer, style]} {...rest} />
+);
 
-const InstructionBox = styled.View`
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
-  border-radius: 8px;
-  border-width: 1px;
-  margin-top: 30px;
-`;
+const ViewBody = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.viewBody, style]} {...rest} />
+);
 
-const InstructionBoxHeader = styled.View`
-  flex-direction: row;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
-  align-items: center;
-`;
+const InstructionBox = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.instructionBox,
+        {borderColor: theme.dark ? SlateDark : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InstructionBoxHeaderNumberContainer = styled.View`
-  padding: 0 16px;
-  margin: 12px 0;
-  margin-right: 16px;
-  border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
-`;
+const InstructionBoxHeader = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.instructionBoxHeader,
+        {borderBottomColor: theme.dark ? SlateDark : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InstructionBoxHeaderNumber = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? '#1aa3ff' : Action)};
-  font-size: 25px;
-`;
+const InstructionBoxHeaderNumberContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.instructionBoxHeaderNumberContainer,
+        {borderRightColor: theme.dark ? SlateDark : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InstructionBoxHeaderTitle = styled(BaseText)``;
+const InstructionBoxHeaderNumber = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.instructionBoxHeaderNumber,
+          {color: theme.dark ? '#1aa3ff' : Action},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const InstructionBoxBody = styled.View`
-  flex-direction: row;
-  padding: 16px;
-`;
+const InstructionBoxHeaderTitle = React.forwardRef<Text, TextProps>(
+  (props, ref) => <BaseText ref={ref} {...props} />,
+);
 
-const InstructionBodyText = styled(Paragraph)`
-  font-size: 14px;
-  line-height: 18px;
-  flex: 1 1 auto;
-`;
+const InstructionBoxBody = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.instructionBoxBody, style]} {...rest} />
+);
 
-const CopyButton = styled(Button)`
-  margin: 16px;
-  margin-top: 0;
-`;
+const InstructionBodyText = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => (
+  <Paragraph ref={ref} style={[styles.instructionBodyText, style]} {...rest} />
+));
 
-const QRContainer = styled.View`
-  ${({theme: {dark}}) =>
-    dark
-      ? `
-  background-color: ${White};
-  padding: 15px;
-  margin-left: 15px;
-  border-radius: 6px;
-  `
-      : ''};
-`;
+const CopyButton: React.FC<React.ComponentProps<typeof Button>> = ({
+  style,
+  ...rest
+}) => <Button style={[styles.copyButton, style]} {...rest} />;
+
+const QRContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[theme.dark ? styles.qrContainerDark : null, style]}
+      {...rest}
+    />
+  );
+};
 
 type EnableTwoFactorProps = NativeStackScreenProps<
   BitpayIdGroupParamList,

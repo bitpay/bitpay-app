@@ -3,7 +3,7 @@ import {
   createNativeStackNavigator,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../contexts';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../../components/styled/Text';
 import General from './components/General';

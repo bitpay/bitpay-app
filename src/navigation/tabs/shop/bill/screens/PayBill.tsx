@@ -3,9 +3,9 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {H5, Paragraph} from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView, View} from 'react-native';
+import {Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   LightBlack,
@@ -40,42 +40,118 @@ import {getBillAccountEventParams} from '../utils';
 import {ShopEffects} from '../../../../../store/shop';
 import {useOngoingProcess} from '../../../../../contexts';
 
-const BillPayOption = styled.View<{hasBorderTop?: boolean}>`
-  flex-direction: row;
-  padding: 20px 0;
-  ${({hasBorderTop}) => (hasBorderTop ? 'border-top-width: 1px;' : '')};
-  border-bottom-width: 1px;
-  border-color: ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  billPayOption: {
+    flexDirection: 'row',
+    paddingVertical: 20,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    alignItems: 'center',
+  },
+  billPayOptionAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  checkboxContainer: {
+    marginRight: 20,
+  },
+  lineItemLabelContainer: {
+    flexGrow: 1,
+  },
+  lineItemSublabel: {
+    fontSize: 14,
+  },
+  amountSublabel: {
+    paddingVertical: 7,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderRadius: 35,
+  },
+  amountSublabelText: {
+    fontSize: 14,
+  },
+});
 
-const BillPayOptionAmount = styled(Paragraph)`
-  font-size: 16px;
-  font-weight: 600;
-`;
+const BillPayOption = ({
+  hasBorderTop,
+  style,
+  ...rest
+}: {hasBorderTop?: boolean} & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.billPayOption,
+        hasBorderTop ? {borderTopWidth: 1} : null,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CheckboxContainer = styled.View`
-  margin-right: 20px;
-`;
+const BillPayOptionAmount = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.billPayOptionAmount, style]} {...rest} />
+);
 
-const LineItemLabelContainer = styled.View`
-  flex-grow: 1;
-`;
+const CheckboxContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.checkboxContainer, style]} {...rest} />
+);
 
-const LineItemSublabel = styled(Paragraph)`
-  font-size: 14px;
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-`;
+const LineItemLabelContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.lineItemLabelContainer, style]} {...rest} />
+);
 
-const AmountSublabel = styled.View`
-  padding: 7px 18px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 35px;
-`;
+const LineItemSublabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.lineItemSublabel,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AmountSublabelText = styled(Paragraph)`
-  font-size: 14px;
-`;
+const AmountSublabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.amountSublabel,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const AmountSublabelText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.amountSublabelText, style]} {...rest} />
+);
 
 const getCustomAmountSublabel = (account: BillPayAccount) => {
   return () => (

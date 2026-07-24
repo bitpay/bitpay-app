@@ -1,7 +1,6 @@
 import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {View, StyleSheet} from 'react-native';
 import KeyIcon from '../../../../assets/img/key-icon.svg';
 import {H4} from '../../../components/styled/Text';
 import {
@@ -36,17 +35,18 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {ZenledgerPortfolioProps} from '../../../api/zenledger/zenledger.types';
 import {useOngoingProcess} from '../../../contexts';
 
-const ZenLedgerImportContainer = styled.View`
-  flex: 1;
-  margin-bottom: ${ScreenGutter};
-`;
-
-const ZenLedgerTitleContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 8px;
-`;
+const styles = StyleSheet.create({
+  zenLedgerImportContainer: {
+    flex: 1,
+    marginBottom: parseInt(ScreenGutter, 10),
+  },
+  zenLedgerTitleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+});
 
 const ZenLedgerImport: React.FC = () => {
   const {t} = useTranslation();
@@ -199,14 +199,14 @@ const ZenLedgerImport: React.FC = () => {
   };
 
   return (
-    <ZenLedgerImportContainer>
+    <View style={styles.zenLedgerImportContainer}>
       <View style={{marginLeft: 20, marginTop: 32}}>
-        <ZenLedgerTitleContainer>
+        <View style={styles.zenLedgerTitleContainer}>
           <View style={{marginRight: 8}}>
             <KeyIcon />
           </View>
           <H4>{t('Select a Key or Wallet')}</H4>
-        </ZenLedgerTitleContainer>
+        </View>
       </View>
       <ZenLedgerWalletSelector
         keys={allKeys}
@@ -331,7 +331,7 @@ const ZenLedgerImport: React.FC = () => {
           {t('Continue')}
         </Button>
       </CtaContainerAbsolute>
-    </ZenLedgerImportContainer>
+    </View>
   );
 };
 

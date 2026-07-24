@@ -1,17 +1,35 @@
 import React from 'react';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Black, White} from '../../../../styles/colors';
 import BottomAmount, {BottomAmountProps, LimitsOpts} from './BottomAmount';
-import {Platform} from 'react-native';
+import {Platform, SafeAreaView, StyleSheet, ViewProps} from 'react-native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {BottomAmountPillsProps} from './BottomAmountPills';
 
-const StyledAmountModalContainer = styled.SafeAreaView<{platform: string}>`
-  background-color: ${({theme}) => (theme.dark ? Black : White)};
-  flex: 1;
-  margin-bottom: ${({platform}) => (platform === 'ios' ? 25 : 10)}px;
-`;
+const styles = StyleSheet.create({
+  amountModalContainer: {
+    flex: 1,
+    marginBottom: Platform.OS === 'ios' ? 25 : 10,
+  },
+});
+
+const StyledAmountModalContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <SafeAreaView
+      style={[
+        styles.amountModalContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 type BottomAmountModalProps = BottomAmountProps & {
   isVisible: boolean;
@@ -33,7 +51,7 @@ type BottomAmountModalProps = BottomAmountProps & {
 const AmountModalContainerHOC = gestureHandlerRootHOC(
   (props: React.PropsWithChildren) => {
     return (
-      <StyledAmountModalContainer platform={Platform.OS}>
+      <StyledAmountModalContainer>
         {props.children}
       </StyledAmountModalContainer>
     );

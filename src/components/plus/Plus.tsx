@@ -1,6 +1,6 @@
 import React from 'react';
 import {Color, Path, Svg} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {White, Action, SlateDark} from '../../styles/colors';
 
 interface PlusProps {

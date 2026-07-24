@@ -1,5 +1,6 @@
 import React, {memo} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {
   Action,
   NeutralSlate,
@@ -11,56 +12,111 @@ import {BaseText} from '../../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
 
-const AmountPillsContainer = styled.View`
-  width: 100%;
-  margin: 0px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  amountPillsContainer: {
+    width: '100%',
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  amountPill: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 50,
+    paddingVertical: 0,
+    paddingHorizontal: 8,
+  },
+  amountPillText: {
+    fontWeight: '400',
+  },
+});
 
-const AmountPill = styled(TouchableOpacity)<{
+const AmountPillsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.amountPillsContainer, style]} {...rest} />;
+
+interface AmountPillProps {
   isSmallScreen?: boolean;
   isSelected?: boolean;
   showMinPill?: boolean;
   showMaxPill?: boolean;
   hideFiatPills?: boolean;
-}>`
-  background-color: ${({theme: {dark}, isSelected, disabled}) =>
-    disabled
-      ? NeutralSlate
-      : isSelected
-      ? Action
-      : dark
-      ? '#111518'
-      : '#FAF9FE'};
-  min-width: ${({showMaxPill, hideFiatPills}) =>
-    showMaxPill && !hideFiatPills ? '23%' : '23%'};
-  max-width: ${({showMaxPill, hideFiatPills}) =>
-    showMaxPill && !hideFiatPills ? '187px' : '250px'};
-  height: ${({isSmallScreen}) => (isSmallScreen ? 30 : 30.65)}px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid
-    ${({theme: {dark}, isSelected}) =>
-      isSelected ? Action : dark ? '#79787F' : '#8A8991'};
-  border-radius: 50px;
-  padding: 0 8px;
-`;
+}
 
-const AmountPillText = styled(BaseText)<{
+const AmountPill: React.FC<
+  AmountPillProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({
+  isSmallScreen,
+  isSelected,
+  showMinPill: _showMinPill,
+  showMaxPill,
+  hideFiatPills,
+  disabled,
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      style={[
+        styles.amountPill,
+        {
+          backgroundColor: disabled
+            ? NeutralSlate
+            : isSelected
+            ? Action
+            : theme.dark
+            ? '#111518'
+            : '#FAF9FE',
+          minWidth: showMaxPill && !hideFiatPills ? '23%' : '23%',
+          maxWidth: showMaxPill && !hideFiatPills ? 187 : 250,
+          height: isSmallScreen ? 30 : 30.65,
+          borderColor: isSelected ? Action : theme.dark ? '#79787F' : '#8A8991',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+interface AmountPillTextProps {
   isSelected?: boolean;
   isSmallScreen?: boolean;
   disabled?: boolean;
-}>`
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? 14 : 14)}px;
-  font-weight: 400;
-  color: ${({theme: {dark}, isSelected, disabled}) =>
-    disabled ? SlateDark : isSelected ? White : dark ? '#C2C5CC' : '#494C53'};
-`;
+}
+
+const AmountPillText: React.FC<
+  AmountPillTextProps & React.ComponentProps<typeof BaseText>
+> = ({isSelected, isSmallScreen, disabled, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.amountPillText,
+        {
+          fontSize: isSmallScreen ? 14 : 14,
+          color: disabled
+            ? SlateDark
+            : isSelected
+            ? White
+            : theme.dark
+            ? '#C2C5CC'
+            : '#494C53',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 interface BottomAmountPill {
   label: string;

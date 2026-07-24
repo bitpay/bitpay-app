@@ -3,8 +3,8 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   ActiveOpacity,
   Hr,
@@ -54,41 +54,78 @@ import {logManager} from '../../../managers/LogManager';
 
 const Constants = BwcProvider.getInstance().getConstants();
 
-const WalletSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginVertical: 5,
+  },
+  walletNameContainer: {
+    paddingTop: 10,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  infoDescription: {
+    fontSize: 16,
+  },
+  verticalPadding: {
+    paddingVertical: gutter,
+  },
+});
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
-`;
+const Title: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.title, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const WalletNameContainer = styled(TouchableOpacity)`
-  padding: 10px 0 20px 0;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const WalletNameContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.walletNameContainer, style]} {...rest} />
+);
 
-const InfoDescription = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const InfoDescription: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.infoDescription, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const VerticalPadding: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.verticalPadding}>{children}</View>;
 
-const WalletSettingsTitle = styled(SettingTitle)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const WalletSettingsTitle: React.FC<
+  React.ComponentProps<typeof SettingTitle>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SettingTitle
+      style={[{color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
 
 const WalletSettings = () => {
   const {t} = useTranslation();
@@ -193,8 +230,8 @@ const WalletSettings = () => {
     });
   });
   return (
-    <WalletSettingsContainer>
-      <ScrollView>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -362,7 +399,7 @@ const WalletSettings = () => {
           <Hr />
         </VerticalPadding>
       </ScrollView>
-    </WalletSettingsContainer>
+    </SafeAreaView>
   );
 };
 

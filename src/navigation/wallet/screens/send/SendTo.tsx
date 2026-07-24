@@ -5,7 +5,6 @@ import {
   Paragraph,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
-import styled from 'styled-components/native';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -35,7 +34,13 @@ import {
   ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {Linking, View} from 'react-native';
+import {
+  Linking,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
@@ -95,60 +100,65 @@ import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Cry
 import {useOngoingProcess} from '../../../../contexts';
 import {logManager} from '../../../../managers/LogManager';
 
-const SafeAreaView = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  safeArea: {flex: 1},
+  scrollContent: {paddingHorizontal: parseInt(ScreenGutter, 10)},
+  scrollView: {flex: 1, marginTop: 20},
+  contactContainer: {marginTop: 20},
+  contactTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  contactTitle: {marginLeft: 10},
+  emailContainer: {flexDirection: 'row', marginTop: 10},
+  emailIconContainer: {
+    alignItems: 'center',
+    borderRadius: 50,
+    justifyContent: 'center',
+    marginRight: 13,
+    height: 50,
+    width: 50,
+  },
+  emailTextContainer: {justifyContent: 'center'},
+  emailText: {fontWeight: '600'},
+  infoSheetMessage: {paddingVertical: 20},
+});
 
-const ScrollView = styled.ScrollView`
-  flex: 1;
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+export const ContactTitleContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...props}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.contactTitleContainer,
+        {borderBottomColor: theme.dark ? LightBlack : LightBlue},
+        style,
+      ]}
+      {...props}
+    />
+  );
+};
 
-const ContactContainer = styled.View`
-  margin-top: 20px;
-`;
-
-export const ContactTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-bottom-width: 1px;
-  margin-bottom: 10px;
-`;
-
-export const ContactTitle = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 10px;
-`;
-
-const EmailContainer = styled.View`
-  flex-direction: row;
-  margin-top: 10px;
-`;
-
-const EmailIconContainer = styled.View`
-  align-items: center;
-  background-color: ${({theme}) => (theme.dark ? Midnight : '#EDF0FE')};
-  border-radius: 50px;
-  justify-content: center;
-  margin-right: 13px;
-  height: 50px;
-  width: 50px;
-`;
-
-const EmailTextContainer = styled.View`
-  justify-content: center;
-`;
-
-const EmailText = styled(Paragraph)`
-  font-weight: 600;
-`;
-
-const InfoSheetMessage = styled.View`
-  padding: 20px 0;
-`;
+export const ContactTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...props
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.contactTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...props}
+    />
+  );
+};
 
 const isEmailAddress = (text: string) => {
   if (!text.includes('@')) {
@@ -615,8 +625,11 @@ const SendTo = () => {
   }, [navigation]);
 
   return (
-    <SafeAreaView>
-      <ScrollView keyboardShouldPersistTaps={'handled'}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps={'handled'}>
         <SearchContainer>
           <SearchInput
             testID="send-to-address-input"
@@ -682,12 +695,14 @@ const SendTo = () => {
                       title: 'Unable to Send to Contact',
                       message: '',
                       message2: (
-                        <InfoSheetMessage>
+                        <View style={styles.infoSheetMessage}>
                           <Paragraph>
-                            <EmailText>{email}</EmailText> is not yet able to
-                            receive crypto to their email.
+                            <Paragraph style={styles.emailText}>
+                              {email}
+                            </Paragraph>{' '}
+                            is not yet able to receive crypto to their email.
                           </Paragraph>
-                        </InfoSheetMessage>
+                        </View>
                       ),
                       enableBackdropDismiss: true,
                       actions: [
@@ -702,21 +717,28 @@ const SendTo = () => {
                     }),
                   );
             }}>
-            <EmailContainer>
-              <EmailIconContainer>
+            <View style={styles.emailContainer}>
+              <View
+                style={[
+                  styles.emailIconContainer,
+                  {backgroundColor: theme.dark ? Midnight : '#EDF0FE'},
+                ]}>
                 <SendLightSvg />
-              </EmailIconContainer>
-              <EmailTextContainer>
+              </View>
+              <View style={styles.emailTextContainer}>
                 <Paragraph>
-                  Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
+                  Send to{' '}
+                  <Paragraph style={styles.emailText}>
+                    {searchInput.toLowerCase()}
+                  </Paragraph>
                 </Paragraph>
-              </EmailTextContainer>
-            </EmailContainer>
+              </View>
+            </View>
           </TouchableOpacity>
         ) : null}
 
         {contacts.length > 0 && !searchIsEmailAddress ? (
-          <ContactContainer>
+          <View style={styles.contactContainer}>
             <ContactTitleContainer>
               {ContactsSvg({})}
               <ContactTitle>{t('Contacts')}</ContactTitle>
@@ -745,7 +767,7 @@ const SendTo = () => {
                 />
               );
             })}
-          </ContactContainer>
+          </View>
         ) : null}
 
         <OptionsSheet

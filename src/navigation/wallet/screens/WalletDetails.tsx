@@ -17,14 +17,16 @@ import {
   DeviceEventEmitter,
   Linking,
   RefreshControl,
+  SafeAreaView,
+  StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 import {shareNative} from '../../../utils/share';
 import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
@@ -173,141 +175,326 @@ type WalletDetailsScreenProps = NativeStackScreenProps<
   'WalletDetails'
 >;
 
-const WalletDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const HeaderContainer = styled.View`
-  margin: 18px 0 24px;
-`;
+const styles = StyleSheet.create({
+  walletDetailsContainer: {
+    flex: 1,
+  },
+  headerContainer: {
+    marginTop: 18,
+    marginHorizontal: 0,
+    marginBottom: 24,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  cryptoBalanceRow: {
+    marginTop: -5,
+  },
+  touchableRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  balanceContainer: {
+    paddingTop: 0,
+    paddingHorizontal: 15,
+    paddingBottom: 22,
+    flexDirection: 'column',
+  },
+  transactionSectionHeaderContainer: {
+    padding: gutter,
+    height: 55,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  skeletonContainer: {
+    marginBottom: 20,
+  },
+  emptyListContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  lockedBalanceContainer: {
+    flexDirection: 'row',
+    padding: gutter,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 75,
+  },
+  description: {
+    overflow: 'hidden',
+    fontSize: 16,
+  },
+  tailContainer: {
+    marginLeft: 'auto' as any,
+  },
+  value: {
+    textAlign: 'right',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  fiat: {
+    fontSize: 14,
+    textAlign: 'right',
+  },
+  headerKeyName: {
+    textAlign: 'center',
+    marginLeft: 5,
+    fontSize: 12,
+    lineHeight: 20,
+  },
+  headerSubTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeContainerBase: {
+    borderWidth: 1,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    borderRadius: 3,
+  },
+  typeContainerMargin: {
+    marginTop: 10,
+    marginHorizontal: 4,
+    marginBottom: 0,
+  },
+  networkBadgeRow: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  networkBadgeContainerMargin: {
+    marginTop: 0,
+    marginHorizontal: 0,
+    marginBottom: 0,
+    marginRight: 4,
+  },
+  iconContainer: {
+    marginRight: 5,
+  },
+  typeText: {
+    fontSize: 12,
+  },
+  cryptoBalanceText: {
+    fontSize: 13,
+  },
+  linkText: {
+    fontWeight: '500',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+});
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-`;
+const WalletDetailsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.walletDetailsContainer, style]} {...rest} />
+);
 
-const CryptoBalanceRow = styled(Row)`
-  margin-top: -5px;
-`;
+const HeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.headerContainer, style]} {...rest} />;
 
-const TouchableRow = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-`;
+const Row: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.row, style]} {...rest} />;
 
-const BalanceContainer = styled.View`
-  padding: 0 15px 22px;
-  flex-direction: column;
-`;
+const CryptoBalanceRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <Row style={[styles.cryptoBalanceRow, style]} {...rest} />;
 
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const TouchableRow: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.touchableRow, style]} {...rest} />
+);
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+const BalanceContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.balanceContainer, style]} {...rest} />;
 
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const TransactionSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
+const BorderBottom: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const LockedBalanceContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding: ${ScreenGutter};
-  justify-content: center;
-  align-items: center;
-  height: 75px;
-`;
+const SkeletonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.skeletonContainer, style]} {...rest} />;
 
-const Description = styled(BaseText)`
-  overflow: hidden;
-  font-size: 16px;
-`;
+const EmptyListContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.emptyListContainer, style]} {...rest} />;
 
-const TailContainer = styled.View`
-  margin-left: auto;
-`;
+const LockedBalanceContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.lockedBalanceContainer, style]} {...rest} />
+);
 
-const HeadContainer = styled.View``;
+const Description: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.description, style]} {...rest} />;
 
-const Value = styled(BaseText)`
-  text-align: right;
-  font-weight: 700;
-  font-size: 16px;
-`;
+const TailContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.tailContainer, style]} {...rest} />;
 
-const Fiat = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: right;
-`;
+const HeadContainer: React.FC<React.ComponentProps<typeof View>> = props => (
+  <View {...props} />
+);
 
-const HeaderKeyName = styled(BaseText)`
-  text-align: center;
-  margin-left: 5px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  font-size: 12px;
-  line-height: 20px;
-`;
+const Value: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.value, style]} {...rest} />;
 
-const HeaderSubTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const Fiat: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      style={[styles.fiat, {color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
 
-const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  padding: 2px 5px;
-  border-radius: 3px;
-  margin: 10px 4px 0;
-`;
+const HeaderKeyName: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      style={[
+        styles.headerKeyName,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const NetworkBadgeRow = styled(Row)`
-  align-items: center;
-  margin-top: 10px;
-`;
+const HeaderSubTitleContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.headerSubTitleContainer, style]} {...rest} />
+);
 
-const NetworkBadgeContainer = styled(TypeContainer)`
-  margin: 0 4px 0 0;
-`;
+const TypeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <HeaderSubTitleContainer
+      style={[
+        styles.typeContainerBase,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        styles.typeContainerMargin,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const IconContainer = styled.View`
-  margin-right: 5px;
-`;
+const NetworkBadgeRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <Row style={[styles.networkBadgeRow, style]} {...rest} />;
 
-const TypeText = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-`;
+const NetworkBadgeContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <TypeContainer
+    style={[styles.networkBadgeContainerMargin, style]}
+    {...rest}
+  />
+);
 
-const CryptoBalanceText = styled(Paragraph)`
-  font-size: 13px;
-`;
+const IconContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.iconContainer, style]} {...rest} />;
 
-const LinkText = styled(Link)`
-  font-weight: 500;
-  font-size: 18px;
-  text-align: center;
-`;
+const TypeText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      style={[
+        styles.typeText,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const CryptoBalanceText: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => <Paragraph style={[styles.cryptoBalanceText, style]} {...rest} />;
+
+const LinkText: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  ...rest
+}) => <Link style={[styles.linkText, style]} {...rest} />;
 
 const getWalletType = (
   key: Key,

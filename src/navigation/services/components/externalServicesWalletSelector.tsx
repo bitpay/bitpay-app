@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {StyleSheet, Text, View, ViewProps} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {orderBy} from 'lodash';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -52,56 +52,121 @@ import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {HomeCarouselConfig} from '../../../store/app/app.models';
 import ExternalServicesLoadingWalletSkeleton from './ExternalServicesLoadingWalletSkeleton';
 
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const styles = StyleSheet.create({
+  globalSelectContainer: {
+    flex: 1,
+  },
+  arrowContainer: {
+    marginLeft: 10,
+  },
+  externalServicesWalletSelectorContainer: {
+    marginVertical: 8,
+    marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletSelector: {
+    height: 36,
+    borderRadius: 27.5,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    minWidth: 146,
+  },
+  walletSelectorLeft: {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorRight: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorName: {
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: 0,
+    marginLeft: 8,
+  },
+});
 
-const ArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+const GlobalSelectContainer: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.globalSelectContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const ExternalServicesWalletSelectorContainer = styled.View`
-  margin: 8px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const ArrowContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.arrowContainer, style]} {...rest} />
+);
 
-export const WalletSelector = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: 36px;
-  border-radius: 27.5px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  min-width: 146px;
-`;
+export const ExternalServicesWalletSelectorContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => (
+  <View
+    style={[styles.externalServicesWalletSelectorContainer, style]}
+    {...rest}
+  />
+);
 
-export const WalletSelectorLeft = styled.View`
-  display: flex;
-  justify-content: left;
-  flex-direction: row;
-  align-items: center;
-`;
+export const WalletSelector: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.walletSelector,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const WalletSelectorRight = styled.View`
-  display: flex;
-  justify-content: right;
-  flex-direction: row;
-  align-items: center;
-`;
+export const WalletSelectorLeft: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorLeft, style]} {...rest} />
+);
 
-export const WalletSelectorName = styled.Text`
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 8px;
-`;
+export const WalletSelectorRight: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorRight, style]} {...rest} />
+);
+
+export const WalletSelectorName = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof Text>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[
+        styles.walletSelectorName,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WalletSelectorName.displayName = 'WalletSelectorName';
 
 interface ExternalServicesWalletSelectorScreenProps {
   navigation: any;

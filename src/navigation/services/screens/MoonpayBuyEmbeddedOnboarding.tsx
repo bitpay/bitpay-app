@@ -1,5 +1,14 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ViewProps,
+  TextProps,
+  Linking,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {BaseText} from '../../../components/styled/Text';
@@ -22,7 +31,7 @@ import WebView, {
 import Modal from 'react-native-modal';
 import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
 import {IS_ANDROID} from '../../../constants';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
@@ -34,7 +43,6 @@ import {
 } from '../utils/moonpayFrameCrypto';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
-import {Linking, ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   ExternalServicesGroupParamList,
@@ -49,109 +57,254 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms_of_use_usa';
 const MOONPAY_PRIVACY_URL = 'https://www.moonpay.com/legal/privacy_policy';
 
-const Container = styled.SafeAreaView`
-  flex: 1;
-  margin: 14px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    margin: 14,
+  },
+  headerContainer: {
+    marginBottom: 32,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 31,
+    fontWeight: '700',
+    textAlign: 'left',
+    lineHeight: 38,
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    textAlign: 'left',
+    lineHeight: 24,
+  },
+  featuresCard: {
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  featureIcon: {
+    marginRight: 6,
+    width: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureText: {
+    fontSize: 13,
+    flex: 1,
+  },
+  bottomSection: {
+    padding: 16,
+  },
+  legalText: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  webViewModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    overflow: 'scroll',
+  },
+  webViewModalHeader: {
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+  },
+  webViewCloseButton: {
+    padding: 10,
+  },
+  webViewCloseText: {
+    fontSize: 24,
+  },
+});
 
-const HeaderContainer = styled.View`
-  align-items: left;
-  margin-bottom: 32px;
-`;
+const Container: React.FC<ViewProps> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.container, style]} {...rest} />
+);
 
-const IconRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 24px;
-`;
+const HeaderContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.headerContainer, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  font-size: 31px;
-  font-weight: 700;
-  text-align: left;
-  line-height: 38px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 12px;
-`;
+const IconRow: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.iconRow, style]} {...rest} />
+);
 
-const Subtitle = styled(BaseText)`
-  font-size: 16px;
-  line-height: 22px;
-  font-weight: 400;
-  text-align: left;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const Title = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[styles.title, {color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+Title.displayName = 'Title';
 
-const FeaturesCard = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
-  padding: 8px 16px;
-  margin-bottom: 24px;
-`;
+const Subtitle = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.subtitle,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Subtitle.displayName = 'Subtitle';
 
-const FeatureRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 0;
-`;
+const FeaturesCard: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.featuresCard,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const FeatureIcon = styled.View`
-  margin-right: 6px;
-  width: 28px;
-  align-items: center;
-  justify-content: center;
-`;
+const FeatureRow: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.featureRow, style]} {...rest} />
+);
 
-const FeatureText = styled(BaseText)`
-  font-size: 13px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  flex: 1;
-`;
+const FeatureIcon: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.featureIcon, style]} {...rest} />
+);
 
-const BottomSection = styled.View`
-  padding: 16px;
-`;
+const FeatureText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.featureText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+FeatureText.displayName = 'FeatureText';
 
-const LegalText = styled(BaseText)`
-  font-size: 13px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-bottom: 16px;
-  line-height: 20px;
-`;
+const BottomSection: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.bottomSection, style]} {...rest} />
+);
 
-const LegalLink = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-`;
+const LegalText = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.legalText,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+LegalText.displayName = 'LegalText';
 
-const WebViewModalContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  overflow: scroll;
-`;
+const LegalLink = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[{color: theme.dark ? LinkBlue : Action}, style]}
+      {...rest}
+    />
+  );
+});
+LegalLink.displayName = 'LegalLink';
 
-const WebViewModalHeader = styled.View<{topInset: number}>`
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
-  justify-content: center;
-  align-items: flex-start;
-  padding-horizontal: 15px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
-`;
+const WebViewModalContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.webViewModalContainer, style]} {...rest} />
+);
 
-const WebViewCloseButton = styled(TouchableOpacity)`
-  padding: 10px;
-`;
+const WebViewModalHeader: React.FC<ViewProps & {topInset: number}> = ({
+  style,
+  topInset,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.webViewModalHeader,
+        {
+          marginTop: topInset,
+          backgroundColor: theme.dark ? '#1a1a1a' : '#f8f8f8',
+          borderBottomColor: theme.dark ? '#333' : '#ddd',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WebViewCloseText = styled(BaseText)`
-  font-size: 24px;
-  color: ${({theme: {dark}}) => (dark ? '#ccc' : '#333')};
-`;
+const WebViewCloseButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.webViewCloseButton, style]} {...rest} />
+);
+
+const WebViewCloseText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.webViewCloseText,
+        {color: theme.dark ? '#ccc' : '#333'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WebViewCloseText.displayName = 'WebViewCloseText';
 
 export interface MoonpayBuyEmbeddedOnboardingProps {
   route?: any;

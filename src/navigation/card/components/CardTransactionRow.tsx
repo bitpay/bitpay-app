@@ -1,6 +1,7 @@
 import moment from 'moment';
 import React, {memo} from 'react';
-import styled, {css} from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
@@ -21,47 +22,85 @@ interface TransactionRowProps {
   card: Card;
 }
 
-const TxRowContainer = styled.View`
-  border-color: ${({theme}) => (theme.dark ? LightBlack : Air)};
-  border-bottom-width: 1px;
-  flex-direction: row;
-  min-height: 72px;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const TxColumn = styled.View`
-  padding: ${ScreenGutter} 8px ${ScreenGutter} ${ScreenGutter};
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  txRowContainer: {
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    minHeight: 72,
+  },
+  txColumn: {
+    paddingTop: gutter,
+    paddingRight: 8,
+    paddingBottom: gutter,
+    paddingLeft: gutter,
+    justifyContent: 'center',
+  },
+  descriptionColumn: {
+    justifyContent: 'center',
+    paddingVertical: gutter,
+    paddingHorizontal: 0,
+    flex: 1,
+  },
+  priceColumn: {
+    padding: gutter,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  txTextBold: {
+    fontWeight: '700',
+  },
+  txTextLight: {
+    fontSize: 12,
+  },
+});
 
-const DescriptionColumn = styled.View`
-  justify-content: center;
-  padding: ${ScreenGutter} 0;
-  flex: 1;
-`;
+const TxRowContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.txRowContainer,
+        {borderColor: theme.dark ? LightBlack : Air},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PriceColumn = styled.View`
-  padding: ${ScreenGutter};
-  align-items: flex-end;
-  justify-content: center;
-`;
+const TxColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.txColumn, style]} {...rest} />
+);
 
-const TxText = styled(BaseText)<{
-  bold?: boolean;
-  stretch?: boolean;
-  light?: boolean;
-}>`
-  ${({bold}) =>
-    bold &&
-    css`
-      font-weight: 700;
-    `}
-  ${({light}) =>
-    light &&
-    css`
-      color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-      font-size: 12px;
-    `}
-`;
+const DescriptionColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.descriptionColumn, style]} {...rest} />
+);
+
+const PriceColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.priceColumn, style]} {...rest} />
+);
+
+const TxText = React.forwardRef<
+  Text,
+  TextProps & {bold?: boolean; stretch?: boolean; light?: boolean}
+>(({bold, stretch: _stretch, light, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        bold ? styles.txTextBold : null,
+        light
+          ? [styles.txTextLight, {color: theme.dark ? LuckySevens : SlateDark}]
+          : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
 const isTopUp = (tx: UiTransaction) => tx.displayMerchant === 'BitPay Load';
 

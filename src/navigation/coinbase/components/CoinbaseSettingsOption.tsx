@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   LightBlack,
   NeutralSlate,
@@ -11,16 +12,35 @@ import {Theme} from '@react-navigation/native';
 import Svg, {Path} from 'react-native-svg';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
-const SettingsSvgContainer = styled(TouchableOpacity)`
-  margin: 0;
-  padding: 8px;
-  height: 40px;
-  width: 40px;
-  border-radius: 30px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+const styles = StyleSheet.create({
+  settingsSvgContainer: {
+    margin: 0,
+    padding: 8,
+    height: 40,
+    width: 40,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+const SettingsSvgContainer = React.forwardRef<
+  React.ComponentRef<typeof TouchableOpacity>,
+  React.ComponentProps<typeof TouchableOpacity>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      ref={ref}
+      style={[
+        styles.settingsSvgContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
 const CogSvg = ({theme}: {theme: Theme}) => {
   const cogColor = theme.dark ? Slate : SlateDark;

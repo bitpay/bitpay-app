@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
-import {Animated, Vibration} from 'react-native';
-import styled, {css} from 'styled-components/native';
+import {Animated, StyleSheet, Vibration, View} from 'react-native';
 import {White} from '../../../styles/colors';
 
 interface PinDotsProps {
@@ -10,31 +9,29 @@ interface PinDotsProps {
   setShakeDots: (value: boolean) => void;
 }
 
-interface ContainerProps {
-  isFilled: boolean;
-}
-
-const DotsContainer = styled.View`
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-  margin: 16px auto auto auto;
-  max-width: 145px;
-  width: 50%;
-`;
-
-const Dot = styled(Animated.View)<ContainerProps>`
-  height: 18px;
-  width: 18px;
-  border-radius: 50px;
-  border-width: 1.5px;
-  border-color: ${White};
-  ${({isFilled}) =>
-    isFilled &&
-    css`
-      background-color: ${White};
-    `};
-`;
+const styles = StyleSheet.create({
+  dotsContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    marginTop: 16,
+    marginRight: 'auto' as any,
+    marginBottom: 'auto' as any,
+    marginLeft: 'auto' as any,
+    maxWidth: 145,
+    width: '50%',
+  },
+  dot: {
+    height: 18,
+    width: 18,
+    borderRadius: 50,
+    borderWidth: 1.5,
+    borderColor: White,
+  },
+  dotFilled: {
+    backgroundColor: White,
+  },
+});
 
 const PinDots: React.FC<PinDotsProps> = ({
   pin,
@@ -79,17 +76,21 @@ const PinDots: React.FC<PinDotsProps> = ({
   }
 
   return (
-    <DotsContainer>
+    <View style={styles.dotsContainer}>
       {Array.from({length: pinLength}).map((_, index) => {
+        const isFilled = index < pin.length;
         return (
-          <Dot
-            style={{transform: [{translateX: animation}]}}
+          <Animated.View
+            style={[
+              styles.dot,
+              isFilled ? styles.dotFilled : null,
+              {transform: [{translateX: animation}]},
+            ]}
             key={index}
-            isFilled={index < pin.length}
           />
         );
       })}
-    </DotsContainer>
+    </View>
   );
 };
 

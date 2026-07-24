@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
@@ -8,7 +9,6 @@ import {
   CharcoalBlack,
   LightBlack,
   NeutralSlate,
-  Slate,
   Slate30,
   SlateDark,
   White,
@@ -51,147 +51,304 @@ interface WalletCardComponentProps {
   isMultisig?: boolean;
 }
 
-export const HeaderImg = styled.View`
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: row;
-`;
+const walletStyles = StyleSheet.create({
+  headerImg: {
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
+  },
+  listCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    height: 75,
+  },
+  img: {
+    minHeight: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  remainingAssetsLabel: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+    letterSpacing: 0,
+    marginLeft: 5,
+  },
+  needBackupText: {
+    fontSize: 12,
+    textAlign: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderRadius: 3,
+  },
+  balanceContainer: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+  },
+  balanceCode: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  balanceCodeContainer: {
+    paddingLeft: 2,
+  },
+  supportedNetworkIconContainer: {
+    borderWidth: 1,
+    borderRadius: 20,
+    height: 30,
+    alignItems: 'center',
+    paddingLeft: 4,
+    paddingRight: 7,
+    justifyContent: 'center',
+  },
+  remainingAssetsContainer: {
+    paddingBottom: 0,
+  },
+  listRow: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  needBackupRow: {
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  footerSupportedNetworkIconContainer: {
+    marginRight: 12,
+  },
+  footerContainer: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  keyName: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  listWalletCard: {
+    borderRadius: 12,
+    padding: 16,
+    height: 78,
+  },
+  listIconRow: {
+    marginBottom: 4,
+  },
+  listLeftColumn: {
+    flex: 1,
+  },
+  listRightColumn: {
+    alignItems: 'flex-end',
+    justifyContent: 'flex-start',
+    marginLeft: 12,
+  },
+  listBalance: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    textAlign: 'right',
+  },
+  listPercentageRow: {
+    marginTop: 3,
+  },
+});
 
-export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
-  border: ${({theme, outlineStyle}) =>
-    `1px solid ${
-      theme.dark ? (!outlineStyle ? LightBlack : SlateDark) : Slate30
-    }`};
-  background-color: ${({theme: {dark}, outlineStyle}) =>
-    dark ? (!outlineStyle ? CharcoalBlack : 'none') : White};
-  border-radius: 12px;
-  margin: ${({outlineStyle}) =>
-    outlineStyle ? `0px 0px ${ScreenGutter} 0px` : `8px ${ScreenGutter}`};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px;
-  height: 75px;
-`;
+export const HeaderImg: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[walletStyles.headerImg, style]} {...rest} />;
 
-export const Img = styled.View<{isFirst: boolean}>`
-  min-height: 22px;
-  margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
-  justify-content: center;
-  align-items: center;
-`;
+export const ListCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {outlineStyle?: boolean}
+> = ({outlineStyle, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        walletStyles.listCard,
+        {
+          borderColor: theme.dark
+            ? !outlineStyle
+              ? LightBlack
+              : SlateDark
+            : Slate30,
+          backgroundColor: theme.dark
+            ? !outlineStyle
+              ? CharcoalBlack
+              : 'none'
+            : White,
+        },
+        outlineStyle
+          ? {
+              marginTop: 0,
+              marginRight: 0,
+              marginBottom: parseInt(ScreenGutter, 10),
+              marginLeft: 0,
+            }
+          : {
+              marginTop: 8,
+              marginBottom: 8,
+              marginHorizontal: parseInt(ScreenGutter, 10),
+            },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const RemainingAssetsLabel = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 18px;
-  letter-spacing: 0;
-  color: ${Slate};
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-left: 5px;
-`;
+export const Img: React.FC<
+  React.ComponentProps<typeof View> & {isFirst: boolean}
+> = ({isFirst, style, ...rest}) => (
+  <View
+    style={[walletStyles.img, {marginLeft: isFirst ? 0 : -5}, style]}
+    {...rest}
+  />
+);
 
-const NeedBackupText = styled(BaseText)`
-  font-size: 12px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  padding: 2px 4px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  border-radius: 3px;
-`;
+export const RemainingAssetsLabel: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        walletStyles.remainingAssetsLabel,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const BalanceContainer = styled.View`
-  flex-direction: row;
-  gap: 6px;
-  margin-top: 4px;
-`;
+const NeedBackupText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        walletStyles.needBackupText,
+        {
+          color: theme.dark ? White : SlateDark,
+          borderColor: theme.dark ? SlateDark : Slate30,
+        },
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-export const BalanceCode = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-  font-weight: 500;
-`;
+export const BalanceContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={walletStyles.balanceContainer}>{children}</View>;
 
-export const BalanceCodeContainer = styled.View`
-  padding-left: 2px;
-`;
+export const BalanceCode: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        walletStyles.balanceCode,
+        {color: theme.dark ? NeutralSlate : SlateDark},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-export const SupportedNetworkIconContainer = styled.View`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 20px;
-  height: 30px;
-  align-items: center;
-  padding-left: 4px;
-  padding-right: 7px;
-  justify-content: center;
-`;
+export const BalanceCodeContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={walletStyles.balanceCodeContainer}>{children}</View>;
 
-const RemainingAssetsContainer = styled.View`
-  padding-bottom: 0px;
-`;
+export const SupportedNetworkIconContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        walletStyles.supportedNetworkIconContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ListRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-`;
+const RemainingAssetsContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={walletStyles.remainingAssetsContainer}>{children}</View>;
 
-const NeedBackupRow = styled.View`
-  align-items: flex-start;
-  margin-bottom: 4px;
-`;
+const ListRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <Row style={walletStyles.listRow}>{children}</Row>
+);
 
-const FooterSupportedNetworkIconContainer = styled(
-  SupportedNetworkIconContainer,
-)`
-  margin-right: 12px;
-`;
+const NeedBackupRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={walletStyles.needBackupRow}>{children}</View>
+);
 
-const FooterContainer = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-`;
+const FooterSupportedNetworkIconContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => (
+  <SupportedNetworkIconContainer
+    style={walletStyles.footerSupportedNetworkIconContainer}>
+    {children}
+  </SupportedNetworkIconContainer>
+);
 
-const KeyName = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-`;
+const FooterContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <Row style={walletStyles.footerContainer}>{children}</Row>;
 
-const ListWalletCard = styled(ListCard)`
-  border-radius: 12px;
-  padding: 16px;
-  height: 78px;
-`;
+const KeyName: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[walletStyles.keyName, {color: theme.dark ? White : Black}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const ListIconRow = styled(HeaderImg)`
-  margin-bottom: 4px;
-`;
+const ListWalletCard: React.FC<React.ComponentProps<typeof ListCard>> = ({
+  style,
+  ...rest
+}) => <ListCard style={[walletStyles.listWalletCard, style]} {...rest} />;
 
-const ListLeftColumn = styled(Column)`
-  flex: 1;
-`;
+const ListIconRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <HeaderImg style={walletStyles.listIconRow}>{children}</HeaderImg>
+);
 
-const ListRightColumn = styled(Column)`
-  align-items: flex-end;
-  justify-content: flex-start;
-  margin-left: 12px;
-`;
+const ListLeftColumn: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <Column style={walletStyles.listLeftColumn}>{children}</Column>
+);
 
-const ListBalance = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  text-align: right;
-`;
+const ListRightColumn: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <Column style={walletStyles.listRightColumn}>{children}</Column>;
 
-const ListPercentageRow = styled.View`
-  margin-top: 3px;
-`;
+const ListBalance: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[walletStyles.listBalance, {color: theme.dark ? White : Black}]}>
+      {children}
+    </BaseText>
+  );
+};
+
+const ListPercentageRow: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={walletStyles.listPercentageRow}>{children}</View>;
 
 export const WALLET_DISPLAY_LIMIT = 3;
 export const ICON_SIZE = 20;

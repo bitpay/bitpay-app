@@ -7,7 +7,6 @@ import {
   InfoTitle,
   Link,
 } from '../../../components/styled/Text';
-import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   AdvancedOptionsButton,
@@ -34,8 +33,11 @@ import {Controller, useForm, useWatch} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
-import {View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {getProtocolName, sleep} from '../../../utils/helper-methods';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
@@ -73,57 +75,107 @@ export type AddWalletParamList = {
   currencyName: string;
 };
 
-const CreateWalletContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  createWalletContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  buttonContainer: {
+    marginTop: 40,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  optionTitle: {
+    fontSize: 16,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  walletAdvancedOptionsContainer: {
+    marginTop: 20,
+  },
+  verticalPadding: {
+    paddingVertical: parseInt(ScreenGutter, 10),
+  },
+  addPillContainer: {
+    flexDirection: 'row',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    height: '100%',
+    maxWidth: 200,
+  },
+});
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
-const ButtonContainer = styled.View`
-  margin-top: 40px;
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...props}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...props} />
+);
 
 const schema = yup.object().shape({
   walletName: yup.string().required('Wallet name is required').trim(),
 });
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const CheckBoxContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.checkBoxContainer}>{children}</View>;
 
-const OptionTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const OptionTitle: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[
+        styles.optionTitle,
+        {color: theme.dark ? White : SlateDark},
+        props.style,
+      ]}
+    />
+  );
+};
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const RowContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...props} />;
 
-const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
-  margin-top: 20px;
-`;
+const WalletAdvancedOptionsContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => (
+  <AdvancedOptionsContainer style={styles.walletAdvancedOptionsContainer}>
+    {children}
+  </AdvancedOptionsContainer>
+);
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const VerticalPadding: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.verticalPadding}>{children}</View>;
 
-export const AddPillContainer = styled(View)`
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
-  flex-direction: row;
-  border-radius: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 11px;
-  height: 100%;
-  max-width: 200px;
-`;
+export const AddPillContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addPillContainer,
+        {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
 const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
@@ -357,7 +409,7 @@ const AddWallet = ({
   };
 
   return (
-    <CreateWalletContainer>
+    <SafeAreaView style={styles.createWalletContainer}>
       <ScrollView>
         {currencyAbbreviation && currencyName ? (
           <Controller
@@ -533,7 +585,7 @@ const AddWallet = ({
           )}
         </WalletAdvancedOptionsContainer>
 
-        <ButtonContainer>
+        <View style={styles.buttonContainer}>
           <Button
             testID="add-wallet-submit-button"
             accessibilityLabel="Add wallet submit button"
@@ -542,9 +594,9 @@ const AddWallet = ({
             buttonStyle={'primary'}>
             {t('Add Wallet')}
           </Button>
-        </ButtonContainer>
+        </View>
       </ScrollView>
-    </CreateWalletContainer>
+    </SafeAreaView>
   );
 };
 

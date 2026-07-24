@@ -8,13 +8,12 @@ import {
   BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
-import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {ActivityIndicator, Platform, View} from 'react-native';
+import {ActivityIndicator, Platform, StyleSheet, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {WalletRowProps} from './WalletRow';
 import {SearchableItem} from '../chain-search/ChainSearch';
@@ -22,19 +21,18 @@ import Animated, {FadeIn} from 'react-native-reanimated';
 import {IsSVMChain} from '../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 
-const SpinnerContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding-right: 10px;
-`;
-
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const ListContainer = styled(Animated.View)``;
+const styles = StyleSheet.create({
+  spinnerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  balanceColumn: {
+    alignItems: 'flex-end',
+  },
+});
 
 export interface AccountRowListBase extends SearchableItem {}
 
@@ -146,7 +144,7 @@ const AccountListRow = ({
   }, []);
 
   return (
-    <ListContainer entering={FadeIn.duration(800)}>
+    <Animated.View entering={FadeIn.duration(800)}>
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={onPress}
@@ -214,7 +212,7 @@ const AccountListRow = ({
         )}
         {isMultiNetworkSupported ? (
           fiatBalanceFormat && (
-            <BalanceColumn>
+            <Column style={styles.balanceColumn}>
               {!hideBalance ? (
                 <H5 numberOfLines={1} ellipsizeMode="tail">
                   {fiatBalanceFormat}
@@ -222,11 +220,11 @@ const AccountListRow = ({
               ) : (
                 <H5 style={{marginTop: 8}}>****</H5>
               )}
-            </BalanceColumn>
+            </Column>
           )
         ) : !isScanning ? (
           cryptoBalance && (
-            <BalanceColumn>
+            <Column style={styles.balanceColumn}>
               {!hideBalance ? (
                 <>
                   <H5 numberOfLines={1} ellipsizeMode="tail">
@@ -243,15 +241,15 @@ const AccountListRow = ({
               ) : (
                 <H5 style={{marginTop: 8}}>****</H5>
               )}
-            </BalanceColumn>
+            </Column>
           )
         ) : (
-          <SpinnerContainer>
+          <View style={styles.spinnerContainer}>
             <ActivityIndicator color={ProgressBlue} />
-          </SpinnerContainer>
+          </View>
         )}
       </RowContainer>
-    </ListContainer>
+    </Animated.View>
   );
 };
 

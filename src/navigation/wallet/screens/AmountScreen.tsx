@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import Amount from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
@@ -17,14 +17,38 @@ import WalletIcons from '../../../navigation/wallet/components/WalletIcons';
 import Settings from '../../../components/settings/Settings';
 import {sleep} from '../../../utils/helper-methods';
 
-const HeaderContainer = styled(HeaderRightContainer)`
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  headerContainer: {
+    justifyContent: 'center',
+  },
+  walletScreenContainer: {
+    flex: 1,
+  },
+  walletScreenContainerWithHeaderTitle: {
+    flex: 1,
+    marginTop: 30,
+  },
+});
 
-const WalletScreenContainer = styled.SafeAreaView<{hasHeaderTitle: boolean}>`
-  flex: 1;
-  ${hasHeaderTitle => (hasHeaderTitle ? 'margin-top: 30px' : '')}
-`;
+const HeaderContainer: React.FC<
+  React.ComponentProps<typeof HeaderRightContainer>
+> = ({style, ...rest}) => (
+  <HeaderRightContainer style={[styles.headerContainer, style]} {...rest} />
+);
+
+const WalletScreenContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView> & {hasHeaderTitle: boolean}
+> = ({hasHeaderTitle, style, ...rest}) => (
+  <SafeAreaView
+    style={[
+      hasHeaderTitle
+        ? styles.walletScreenContainerWithHeaderTitle
+        : styles.walletScreenContainer,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 export interface AmountScreenParamList {
   /**

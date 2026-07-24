@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import Button from '../../../components/button/Button';
 import {Br, HEIGHT} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';
@@ -20,42 +21,72 @@ type ReceivingEnabledProps = NativeStackScreenProps<
   BitpayIdScreens.RECEIVING_ENABLED
 >;
 
-const ViewContainer = styled.View`
-  padding: 16px;
-  flex-direction: column;
-  height: ${HEIGHT - 110}px;
-`;
+const styles = StyleSheet.create({
+  viewContainer: {
+    padding: 16,
+    flexDirection: 'column',
+    height: HEIGHT - 110,
+  },
+  viewBody: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    paddingBottom: 100,
+  },
+  emailContainer: {
+    alignItems: 'center',
+    height: 48,
+    paddingTop: 0,
+    paddingRight: 14,
+    paddingBottom: 0,
+    paddingLeft: 17,
+    borderRadius: 48,
+    width: '100%',
+    maxWidth: 300,
+    marginTop: 32,
+    flexDirection: 'row',
+  },
+  emailText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+});
 
-const ViewBody = styled.View`
-  flex-grow: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  padding-bottom: 100px;
-`;
+const ViewContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.viewContainer, style]} {...rest} />
+);
 
-const EmailContainer = styled.View`
-  background-color: rgba(
-    34,
-    64,
-    196,
-    ${({theme}) => (theme.dark ? 0.35 : 0.05)}
+const ViewBody = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.viewBody, style]} {...rest} />
+);
+
+const EmailContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.emailContainer,
+        {
+          backgroundColor: `rgba(34, 64, 196, ${theme.dark ? 0.35 : 0.05})`,
+        },
+        style,
+      ]}
+      {...rest}
+    />
   );
-  align-items: center;
-  height: 48px;
-  padding: 0 14px 0 17px;
-  border-radius: 48px;
-  width: 100%;
-  max-width: 300px;
-  margin-top: 32px;
-  flex-direction: row;
-`;
+};
 
-const EmailText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Action)};
-  font-size: 16px;
-  font-weight: 500;
-`;
+const EmailText = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.emailText, {color: theme.dark ? White : Action}, style]}
+      {...rest}
+    />
+  );
+});
 
 const ReceivingEnabled = ({navigation}: ReceivingEnabledProps) => {
   const {t} = useTranslation();

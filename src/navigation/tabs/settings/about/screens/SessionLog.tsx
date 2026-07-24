@@ -4,9 +4,16 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import {useTranslation} from 'react-i18next';
-import {Alert, Platform} from 'react-native';
+import {
+  Alert,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Mailer from 'react-native-mail';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {
   WIDTH,
   SheetContainer,
@@ -49,67 +56,154 @@ type SessionLogsScreenProps = NativeStackScreenProps<
   AboutScreens.SESSION_LOGS
 >;
 
-const LogsContainer = styled.SafeAreaView`
-  flex: 1;
-  padding-bottom: ${IS_ANDROID ? '55px' : 0};
-`;
+const styles = StyleSheet.create({
+  logsContainer: {
+    flex: 1,
+    paddingBottom: IS_ANDROID ? 55 : 0,
+  },
+  logs: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '600',
+    paddingLeft: 16,
+  },
+  logsMessage: {
+    fontWeight: '400',
+  },
+  filterLabelsContainer: {
+    flexDirection: 'row',
+    marginTop: 16,
+  },
+  filterLabel: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  optionContainer: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  optionTextContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'space-around',
+    flexDirection: 'column',
+    marginHorizontal: 20,
+  },
+  optionTitleText: {
+    fontStyle: 'normal',
+    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  optionDescriptionText: {
+    fontStyle: 'normal',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  optionIconContainer: {
+    justifyContent: 'center',
+    width: 20,
+  },
+});
 
-const Logs = styled(BaseText)<{color?: string | null}>`
-  font-size: 14px;
-  line-height: 22px;
-  font-weight: 600;
-  color: ${({theme: {dark}, color}) =>
-    color ? color : dark ? White : SlateDark};
-  padding-left: 16px;
-`;
+const Logs = ({
+  color,
+  style,
+  ...rest
+}: {color?: string | null} & React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.logs,
+        {color: color ? color : theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const LogsMessage = styled.Text`
-  font-weight: 400;
-`;
+const LogsMessage = ({style, ...rest}: React.ComponentProps<typeof Text>) => (
+  <Text style={[styles.logsMessage, style]} {...rest} />
+);
 
-const FilterLabelsContainer = styled.View`
-  flex-direction: row;
-  margin-top: 16px;
-`;
+const FilterLabelsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.filterLabelsContainer, style]} {...rest} />
+);
 
-const FilterLabel = styled(BaseText)`
-  flex: 1 1 100%;
-  text-align: center;
-`;
+const FilterLabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.filterLabel, style]} {...rest} />
+);
 
-const OptionContainer = styled(TouchableOpacity)<SheetParams>`
-  flex-direction: row;
-  align-items: stretch;
-  padding-${({placement}) => placement}: 31px;
-`;
+const OptionContainer = ({
+  placement,
+  style,
+  ...rest
+}: SheetParams & React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity
+    style={[
+      styles.optionContainer,
+      placement === 'top' ? {paddingTop: 31} : {paddingBottom: 31},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const OptionTextContainer = styled.View`
-  align-items: flex-start;
-  justify-content: space-around;
-  flex-direction: column;
-  margin: 0 20px;
-`;
+const OptionTextContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.optionTextContainer, style]} {...rest} />
+);
 
-const OptionTitleText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-`;
+const OptionTitleText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.optionTitleText,
+        {color: theme.dark ? White : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OptionDescriptionText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? Slate : Black)};
-`;
+const OptionDescriptionText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.optionDescriptionText,
+        {color: theme.dark ? Slate : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OptionIconContainer = styled.View`
-  justify-content: center;
-  width: 20px;
-`;
+const OptionIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.optionIconContainer, style]} {...rest} />
+);
 
 const MIN_LOG_LEVEL = LogLevel.Error;
 const MAX_LOG_LEVEL = LogLevel.Debug;
@@ -294,7 +388,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   }, []);
 
   return (
-    <LogsContainer>
+    <SafeAreaView style={styles.logsContainer}>
       <FlashList
         contentContainerStyle={{
           paddingBottom: 150,
@@ -365,7 +459,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
           )}
         </SheetContainer>
       </SheetModal>
-    </LogsContainer>
+    </SafeAreaView>
   );
 };
 

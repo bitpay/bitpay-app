@@ -8,8 +8,8 @@ import {
   H7,
   Paragraph,
 } from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
-import {Linking, ScrollView} from 'react-native';
+import {useTheme} from '../../../../../contexts';
+import {Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {
   BillOption,
   SectionContainer,
@@ -27,55 +27,117 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
 
-const HeroSection = styled.View`
-  width: 100%;
-  padding: 16px;
-`;
+const styles = StyleSheet.create({
+  heroSection: {
+    width: '100%',
+    padding: 16,
+  },
+  amountDue: {
+    fontSize: 50,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 20,
+    lineHeight: 60,
+    marginBottom: 10,
+  },
+  paymentDateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  paymentDate: {
+    marginBottom: 20,
+    textAlign: 'center',
+    borderWidth: 1,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 18,
+  },
+  alertContainer: {
+    marginTop: 20,
+  },
+  servicePausedAlertContainer: {
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  lineItem: {
+    flexDirection: 'row',
+    paddingVertical: 18,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    alignItems: 'center',
+  },
+  lineItemLabel: {
+    flexGrow: 1,
+  },
+});
 
-const AmountDue = styled(BaseText)`
-  font-size: 50px;
-  font-weight: 500;
-  text-align: center;
-  margin-top: 20px;
-  line-height: 60px;
-  margin-bottom: 10px;
-`;
+const HeroSection = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.heroSection, style]} {...rest} />
+);
 
-const PaymentDateContainer = styled.View`
-  flex-direction: row;
-  align-item: center;
-  justify-content: center;
-`;
+const AmountDue = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.amountDue, style]} {...rest} />
+);
 
-const PaymentDate = styled(Paragraph)<{strong?: boolean}>`
-  margin-bottom: 20px;
-  text-align: center;
-  font-weight: ${({strong}) => (strong ? 500 : 400)};
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  padding: 5px 15px;
-  border-radius: 18px;
-`;
+const PaymentDateContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.paymentDateContainer, style]} {...rest} />
+);
 
-const AlertContainer = styled.View`
-  margin-top: 20px;
-`;
+const PaymentDate = ({
+  strong,
+  style,
+  ...rest
+}: {strong?: boolean} & React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.paymentDate,
+        {
+          fontWeight: strong ? '500' : '400',
+          borderColor: theme.dark ? LightBlack : Slate30,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ServicePausedAlertContainer = styled.View`
-  margin: 0 16px;
-  margin-top: 16px;
-`;
+const AlertContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.alertContainer, style]} {...rest} />
+);
 
-const LineItem = styled.View`
-  flex-direction: row;
-  padding: 18px 0;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  align-items: center;
-`;
+const ServicePausedAlertContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.servicePausedAlertContainer, style]} {...rest} />
+);
 
-const LineItemLabel = styled(H7)`
-  flex-grow: 1;
-`;
+const LineItem = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.lineItem,
+        {borderBottomColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const LineItemLabel = ({style, ...rest}: React.ComponentProps<typeof H7>) => (
+  <H7 style={[styles.lineItemLabel, style]} {...rest} />
+);
 
 const Payment = ({
   navigation,

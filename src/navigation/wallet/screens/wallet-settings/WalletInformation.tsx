@@ -3,12 +3,8 @@ import {H5, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
-import styled from 'styled-components/native';
-import {
-  Hr,
-  ScreenGutter,
-  SettingTitle,
-} from '../../../../components/styled/Containers';
+import {useTheme} from '../../../../contexts';
+import {Hr, SettingTitle} from '../../../../components/styled/Containers';
 import {LightBlack, NeutralSlate} from '../../../../styles/colors';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
@@ -17,7 +13,12 @@ import {
   GetPrecision,
   IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
-import {View} from 'react-native';
+import {
+  ScrollView as RNScrollView,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {
   formatCurrencyAbbreviation,
@@ -27,48 +28,98 @@ import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 
-const InfoContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  infoContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  infoLabel: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 3,
+  },
+  infoSettingsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    height: 58,
+  },
+  settingsHeader: {
+    marginTop: 15,
+    marginRight: 0,
+    marginBottom: 5,
+    marginLeft: 0,
+  },
+  copyImgContainer: {
+    justifyContent: 'center',
+    marginRight: 5,
+  },
+  copyImgContainerRight: {
+    justifyContent: 'center',
+    marginLeft: 5,
+  },
+  copyRow: {
+    flexDirection: 'row',
+  },
+});
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const InfoLabel = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.infoLabel,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InfoLabel = styled.View`
-  padding: 5px 10px;
-  border-radius: 3px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+const InfoSettingsRow = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.infoSettingsRow, style]} {...rest} />
+);
 
-const InfoSettingsRow = styled.View`
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  height: 58px;
-`;
+const SettingsHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View
+    style={[styles.infoSettingsRow, styles.settingsHeader, style]}
+    {...rest}
+  />
+);
 
-const SettingsHeader = styled(InfoSettingsRow)`
-  margin: 15px 0 5px 0;
-`;
+const CopyImgContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.copyImgContainer, style]} {...rest} />
+);
 
-const CopyImgContainer = styled.View`
-  justify-content: center;
-  margin-right: 5px;
-`;
+const CopyImgContainerRight = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.copyImgContainerRight, style]} {...rest} />
+);
 
-const CopyImgContainerRight = styled.View`
-  justify-content: center;
-  margin-left: 5px;
-`;
-
-const CopyRow = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
+const CopyRow = ({style, ...rest}: TouchableOpacityProps) => (
+  <TouchableOpacity style={[styles.copyRow, style]} {...rest} />
+);
 
 export const getLinkedWallet = (key: Key, wallet: Wallet) => {
   const {
@@ -199,8 +250,8 @@ const WalletInformation = () => {
   }, [wallet]);
 
   return (
-    <InfoContainer>
-      <ScrollView>
+    <SafeAreaView style={styles.infoContainer}>
+      <RNScrollView style={styles.scrollView}>
         {isLoading ? (
           <WalletInformationSkeleton />
         ) : (
@@ -436,8 +487,8 @@ const WalletInformation = () => {
             ) : null}
           </>
         )}
-      </ScrollView>
-    </InfoContainer>
+      </RNScrollView>
+    </SafeAreaView>
   );
 };
 

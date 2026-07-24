@@ -1,7 +1,11 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
-import {Linking} from 'react-native';
+import {
+  Linking,
+  StyleSheet,
+  TouchableOpacity as RNTouchableOpacity,
+  View,
+} from 'react-native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {
@@ -39,10 +43,16 @@ const cardWidth = WIDTH - horizontalPadding;
 const cardHeight = 72;
 const carouselScrollDuration = 500;
 
-const CarouselItemContainer = styled.View`
-  padding-left: ${horizontalPadding}px;
-  padding-right: 0;
-`;
+const styles = StyleSheet.create({
+  carouselItemContainer: {
+    paddingLeft: horizontalPadding,
+    paddingRight: 0,
+  },
+});
+
+const CarouselItemContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.carouselItemContainer}>{children}</View>;
 
 type Slide = {
   card: ContentCard;
@@ -357,91 +367,180 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
   );
 };
 
-const Container = styled.View`
-  padding-top: 10px;
-  padding-bottom: 10px;
-`;
+const marketingStyles = StyleSheet.create({
+  container: {
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  cardContainer: {
+    borderRadius: 12,
+    height: cardHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 16,
+  },
+  cardTouchable: {
+    flex: 1,
+    padding: 16,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heroContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 40,
+    marginRight: 8,
+    overflow: 'hidden',
+  },
+  heroImage: {
+    width: 40,
+    height: 40,
+  },
+  copyContainer: {
+    flex: 1,
+    marginRight: 12,
+    marginLeft: 2,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 0,
+  },
+  closeButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 14,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+});
 
-const CardContainer = styled.View<{backgroundColor: string}>`
-  background-color: ${({backgroundColor}) => backgroundColor};
-  border-radius: 12px;
-  height: ${cardHeight}px;
-  flex-direction: row;
-  align-items: center;
-  padding-right: 16px;
-`;
+const Container: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={marketingStyles.container}>{children}</View>
+);
 
-const CardTouchable = styled(TouchableOpacity)`
-  flex: 1;
-  padding: 16px;
-`;
+const CardContainer: React.FC<{
+  backgroundColor: string;
+  children?: React.ReactNode;
+}> = ({backgroundColor, children}) => (
+  <View style={[marketingStyles.cardContainer, {backgroundColor}]}>
+    {children}
+  </View>
+);
 
-const CardRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const CardTouchable: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[marketingStyles.cardTouchable, style]} {...rest} />
+);
 
-const HeroContainer = styled.View`
-  width: 40px;
-  height: 40px;
-  border-radius: 40px;
-  margin-right: 8px;
-  overflow: hidden;
-`;
+const CardRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={marketingStyles.cardRow}>{children}</View>
+);
 
-const HeroImage = styled(FastImage)`
-  width: 40px;
-  height: 40px;
-`;
+const HeroContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={marketingStyles.heroContainer}>{children}</View>
+);
 
-const CopyContainer = styled.View`
-  flex: 1;
-  margin-right: 12px;
-  margin-left: 2px;
-`;
+const HeroImage: React.FC<React.ComponentProps<typeof FastImage>> = ({
+  style,
+  ...rest
+}) => <FastImage style={[marketingStyles.heroImage, style]} {...rest} />;
 
-const CardTitle = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Black)};
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 24px;
-`;
+const CopyContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={marketingStyles.copyContainer}>{children}</View>
+);
 
-const CardSubtitle = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  margin-top: 0px;
-`;
+const CardTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        marketingStyles.cardTitle,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CloseButton = styled.TouchableOpacity.attrs({
-  hitSlop: {top: 12, bottom: 12, left: 12, right: 12},
-})`
-  width: 24px;
-  height: 24px;
-  align-items: center;
-  justify-content: center;
-`;
+const CardSubtitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        marketingStyles.cardSubtitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const DotsContainer = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  margin-top: 14px;
-`;
+const CloseButton: React.FC<
+  React.ComponentProps<typeof RNTouchableOpacity>
+> = ({style, hitSlop, ...rest}) => (
+  <RNTouchableOpacity
+    style={[marketingStyles.closeButton, style]}
+    hitSlop={hitSlop ?? {top: 12, bottom: 12, left: 12, right: 12}}
+    {...rest}
+  />
+);
 
-const Dot = styled.TouchableOpacity.attrs({
-  activeOpacity: ActiveOpacity,
-  hitSlop: {top: 8, bottom: 8, left: 8, right: 8},
-})<{active: boolean}>`
-  height: 8px;
-  border-radius: 4px;
-  margin: 0 4px;
-  width: ${({active}) => (active ? 20 : 8)}px;
-  background-color: ${({active, theme}) =>
-    active ? Action : theme.dark ? LightBlack : NeutralSlate};
-`;
+const DotsContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={marketingStyles.dotsContainer}>{children}</View>
+);
+
+const Dot: React.FC<
+  React.ComponentProps<typeof RNTouchableOpacity> & {active: boolean}
+> = ({active, style, activeOpacity, hitSlop, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <RNTouchableOpacity
+      style={[
+        marketingStyles.dot,
+        {
+          width: active ? 20 : 8,
+          backgroundColor: active
+            ? Action
+            : theme.dark
+            ? LightBlack
+            : NeutralSlate,
+        },
+        style,
+      ]}
+      activeOpacity={activeOpacity ?? ActiveOpacity}
+      hitSlop={hitSlop ?? {top: 8, bottom: 8, left: 8, right: 8}}
+      {...rest}
+    />
+  );
+};
 
 export default MarketingCarousel;

@@ -1,6 +1,6 @@
 import React from 'react';
-import {Linking} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {Linking, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {Link, Paragraph} from '../../../../../components/styled/Text';
 import {
   LightBlack,
@@ -11,36 +11,78 @@ import {
 import ClockSvg from '../../../../../../assets/img/bills/clock.svg';
 import InfoSvg from '../../../home/components/InfoSvg';
 
-const AlertContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  flex-direction: row;
-  padding: 16px 16px 17px 14px;
-  border-radius: 8px;
-`;
+const styles = StyleSheet.create({
+  alertContainer: {
+    flexDirection: 'row',
+    paddingTop: 16,
+    paddingRight: 16,
+    paddingBottom: 17,
+    paddingLeft: 14,
+    borderRadius: 8,
+  },
+  alertBody: {
+    marginLeft: 14,
+  },
+  alertText: {
+    fontSize: 14,
+    paddingRight: 25,
+    lineHeight: 19,
+  },
+  alertLink: {
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  alertHeader: {
+    fontWeight: '500',
+    marginBottom: 3,
+  },
+  iconContainer: {
+    alignSelf: 'center',
+  },
+});
 
-const AlertBody = styled.View`
-  margin-left: 14px;
-`;
+const AlertContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.alertContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AlertText = styled(Paragraph)`
-  font-size: 14px;
-  padding-right: 25px;
-  line-height: 19px;
-`;
+const AlertBody = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.alertBody, style]} {...rest} />
+);
 
-const AlertLink = styled(Link)`
-  font-size: 14px;
-  line-height: 19px;
-`;
+const AlertText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.alertText, style]} {...rest} />
+);
 
-const AlertHeader = styled(Paragraph)`
-  font-weight: 500;
-  margin-bottom: 3px;
-`;
+const AlertLink = ({style, ...rest}: React.ComponentProps<typeof Link>) => (
+  <Link style={[styles.alertLink, style]} {...rest} />
+);
 
-const IconContainer = styled.View`
-  align-self: center;
-`;
+const AlertHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.alertHeader, style]} {...rest} />
+);
+
+const IconContainer = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.iconContainer, style]} {...rest} />
+);
 
 export default ({
   variant = 'noLateFees',

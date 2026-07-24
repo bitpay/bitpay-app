@@ -1,7 +1,7 @@
 import React from 'react';
-import {LayoutChangeEvent} from 'react-native';
+import {LayoutChangeEvent, StyleSheet, View} from 'react-native';
 import {useIsFocused} from '@react-navigation/native';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {LineGraph, type GraphPoint} from 'react-native-graph';
 import type {SelectionDotProps} from 'react-native-graph';
 import Svg, {Line} from 'react-native-svg';
@@ -18,26 +18,26 @@ import {Slate, SlateDark} from '../../styles/colors';
 import {isNumberSharedValue, type NumberSharedValue} from './sharedValueGuards';
 import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
 
-const ChartContainer = styled.View`
-  width: 100%;
-`;
-
-const ChartInner = styled.View`
-  position: relative;
-  align-items: stretch;
-  justify-content: center;
-  height: 220px;
-`;
-
-const ChartLoaderOverlay = styled.View`
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  justify-content: center;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  chartContainer: {
+    width: '100%',
+  },
+  chartInner: {
+    position: 'relative',
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    height: 220,
+  },
+  chartLoaderOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 const AnimatedSvgLine = Reanimated.createAnimatedComponent(Line);
 
@@ -538,7 +538,10 @@ const InteractiveLineChart = ({
     graphOpacity > 0;
 
   const chartInner = (
-    <ChartInner testID="interactive-line-chart-inner" onLayout={onChartLayout}>
+    <View
+      style={styles.chartInner}
+      testID="interactive-line-chart-inner"
+      onLayout={onChartLayout}>
       {hasDrawablePoints ? (
         <LineGraph
           testID="interactive-line-chart-graph"
@@ -619,17 +622,19 @@ const InteractiveLineChart = ({
         </Reanimated.View>
       ) : null}
       {isLoading ? (
-        <ChartLoaderOverlay pointerEvents="none">
+        <View style={styles.chartLoaderOverlay} pointerEvents="none">
           <Loader size={32} spinning />
-        </ChartLoaderOverlay>
+        </View>
       ) : null}
-    </ChartInner>
+    </View>
   );
 
   return (
-    <ChartContainer pointerEvents={isLoading ? 'none' : 'auto'}>
+    <View
+      style={styles.chartContainer}
+      pointerEvents={isLoading ? 'none' : 'auto'}>
       {chartInner}
-    </ChartContainer>
+    </View>
   );
 };
 

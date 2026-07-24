@@ -1,7 +1,17 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
+import {
+  SafeAreaView,
+  ScrollView as RNScrollView,
+  ScrollViewProps,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
@@ -34,51 +44,154 @@ type ProfileProps = NativeStackScreenProps<
   BitpayIdScreens.PROFILE
 >;
 
-const ProfileSettingsScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  profileSettingsScreenContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    paddingBottom: 100,
+  },
+  profileInfoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    marginTop: 50,
+    marginHorizontal: 0,
+    marginBottom: 36,
+    borderRadius: 12,
+    padding: 20,
+    paddingBottom: 25,
+  },
+  avatarContainer: {
+    marginTop: -58,
+    paddingBottom: 18,
+  },
+  statusPill: {
+    borderRadius: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  statusPillText: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '400',
+  },
+  settingsSection: {
+    flexDirection: 'row',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  settingsItem: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 0,
+  },
+  settingsSectionBody: {
+    flexShrink: 1,
+    paddingRight: 40,
+    flexGrow: 1,
+  },
+  settingsSectionHeader: {
+    fontWeight: '500',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  settingsSectionDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+});
 
-const ScrollView = styled.ScrollView`
-  margin: 0 ${ScreenGutter};
-  padding-bottom: 100px;
-`;
+const ProfileSettingsScreenContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView
+    style={[styles.profileSettingsScreenContainer, style]}
+    {...rest}
+  />
+);
 
-const ProfileInfoContainer = styled.View`
-  display: flex;
-  align-items: center;
-  margin: 50px 0 36px;
-  border-radius: 12px;
-  padding: 20px;
-  padding-bottom: 25px;
-`;
+const ScrollView = ({style, ...rest}: ScrollViewProps) => (
+  <RNScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const AvatarContainer = styled.View`
-  margin-top: -58px;
-  padding-bottom: 18px;
-`;
+const ProfileInfoContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.profileInfoContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const EmailAddress = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-`;
+const AvatarContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.avatarContainer, style]} {...rest} />
+);
 
-const StatusPill = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-radius: 50px;
-  padding: 8px 16px;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: 'center';
-  gap: 8px;
-`;
+const EmailAddress = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[{color: theme.dark ? Slate : SlateDark}, style]}
+      {...rest}
+    />
+  );
+});
 
-const StatusPillText = styled(BaseText)`
-  font-size: 13px;
-  line-height: 20px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? SlateDark : Action)};
-`;
+const StatusPill = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.statusPill,
+        {backgroundColor: theme.dark ? LightBlack : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const StatusPillText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.statusPillText,
+          {color: theme.dark ? SlateDark : Action},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
 type StatusPillConfig = {
   label: string;
@@ -133,39 +246,60 @@ function getStatusPillConfig(
   return null;
 }
 
-const SettingsSection = styled.View`
-  flex-direction: row;
-  padding: 20px 16px;
-  border: ${({theme: {dark}}) => (dark ? SlateDark : '#E5E5E5')};
-  border-radius: 12px;
-  margin-top: 16px;
-  margin-bottom: 8px;
-`;
+const SettingsSection = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.settingsSection,
+          {borderColor: theme.dark ? SlateDark : '#E5E5E5'},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const SettingsItem = styled(SettingsSection)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border: none;
-`;
+const SettingsItem = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <SettingsSection
+      style={[
+        styles.settingsItem,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SettingsSectionBody = styled.View`
-  flex-shrink: 1;
-  padding-right: 40px;
-  flex-grow: 1;
-`;
+const SettingsSectionBody = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.settingsSectionBody, style]} {...rest} />
+);
 
-const SettingsSectionHeader = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  margin-bottom: 10px;
-`;
+const SettingsSectionHeader = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[styles.settingsSectionHeader, style]}
+      {...rest}
+    />
+  ),
+);
 
-const SettingsSectionDescription = styled(BaseText)`
-  font-size: 12px;
-  line-height: 18px;
-`;
+const SettingsSectionDescription = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[styles.settingsSectionDescription, style]}
+      {...rest}
+    />
+  ),
+);
 
 export const ProfileSettingsScreen = ({}: ProfileProps) => {
   const {t} = useTranslation();

@@ -55,7 +55,6 @@ jest.mock('../../../managers/LogManager', () => ({
   logManager: {info: jest.fn(), error: jest.fn(), debug: jest.fn()},
 }));
 
-// Mock navigation component that pulls in styled-components/SafeAreaView at module load
 jest.mock('../../../navigation/tabs/home/components/Wallet', () => ({
   WALLET_DISPLAY_LIMIT: 5,
 }));

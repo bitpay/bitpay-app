@@ -1,9 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
 import {
   Action,
@@ -22,90 +22,68 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {css} from 'styled-components/native';
 import {ExternalServicesScreens} from '../../../navigation/services/ExternalServicesGroup';
 import {Keys} from '../../../store/wallet/wallet.reducer';
 import ArchaxFooter from '../../archax/archax-footer';
 import {isEuCountry} from '../../../store/location/location.effects';
 
-const TransactButton = styled.View`
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-`;
-
-const ModalContainer = styled(SheetContainer)`
-  background: ${({theme}) => (theme.dark ? Midnight : LightBlue)};
-  flex: 1;
-`;
-
-const TransactItemContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding-bottom: 31px;
-  align-items: stretch;
-`;
-
-const ItemIconContainer = styled.View<{disabled: boolean}>`
-  width: 40px;
-  height: 40px;
-  background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
-  ${({disabled}) =>
-    disabled &&
-    css`
-      background: ${({theme}) => (theme.dark ? DisabledDark : Disabled)};
-    `};
-  border-radius: 23px;
-  overflow: hidden;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ItemTextContainer = styled.View<{disabled: boolean}>`
-  align-items: flex-start;
-  justify-content: space-around;
-  flex-direction: column;
-  padding-left: 19px;
-  ${({disabled}) =>
-    disabled &&
-    css`
-      opacity: 0.3;
-    `};
-`;
-
-const ItemDescriptionText = styled(BaseText)`
-  color: ${({theme}) => theme.colors.description};
-  font-style: normal;
-  font-weight: 300;
-  font-size: 14px;
-  line-height: 19px;
-`;
-
-const ScanButtonContainer = styled(TouchableOpacity)`
-  border: 2px solid ${({theme}) => (theme.dark ? LinkBlue : Action)};
-  flex-direction: row;
-  align-self: center;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  height: 60px;
-  padding-left: 11px;
-  padding-right: 26px;
-  margin-bottom: 30px;
-  width: 100%;
-`;
-
-const ScanButtonText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Action)};
-  font-size: 16px;
-`;
-
-const CloseButtonContainer = styled(TouchableOpacity)`
-  align-self: center;
-`;
-
-const FooterContainer = styled.View`
-  padding-top: 20px;
-`;
+const styles = StyleSheet.create({
+  transactButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  transactItemContainer: {
+    flexDirection: 'row',
+    paddingBottom: 31,
+    alignItems: 'stretch',
+  },
+  itemIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 23,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemTextContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'space-around',
+    flexDirection: 'column',
+    paddingLeft: 19,
+  },
+  itemDescriptionText: {
+    fontStyle: 'normal',
+    fontWeight: '300',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  scanButtonContainer: {
+    borderWidth: 2,
+    flexDirection: 'row',
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    height: 60,
+    paddingLeft: 11,
+    paddingRight: 26,
+    marginBottom: 30,
+    width: '100%',
+  },
+  scanButtonText: {
+    fontSize: 16,
+  },
+  closeButtonContainer: {
+    alignSelf: 'center',
+  },
+  footerContainer: {
+    paddingTop: 20,
+  },
+});
 
 interface TransactMenuItemProps {
   id: string;
@@ -263,17 +241,40 @@ const TransactModal = () => {
     };
 
     return (
-      <TransactItemContainer
+      <TouchableOpacity
+        style={styles.transactItemContainer}
         activeOpacity={ActiveOpacity}
         onPress={handlePress}>
-        <ItemIconContainer disabled={disabled}>
+        <View
+          style={[
+            styles.itemIconContainer,
+            {
+              backgroundColor: disabled
+                ? theme.dark
+                  ? DisabledDark
+                  : Disabled
+                : theme.dark
+                ? Midnight
+                : Action,
+            },
+          ]}>
           {item.img({disabled})}
-        </ItemIconContainer>
-        <ItemTextContainer disabled={disabled}>
+        </View>
+        <View
+          style={[
+            styles.itemTextContainer,
+            disabled ? {opacity: 0.3} : null,
+          ]}>
           <H6>{item.title}</H6>
-          <ItemDescriptionText>{item.description}</ItemDescriptionText>
-        </ItemTextContainer>
-      </TransactItemContainer>
+          <BaseText
+            style={[
+              styles.itemDescriptionText,
+              {color: theme.colors.description},
+            ]}>
+            {item.description}
+          </BaseText>
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -283,11 +284,11 @@ const TransactModal = () => {
 
   return (
     <>
-      <TransactButton>
+      <View style={styles.transactButton}>
         <TouchableOpacity onPress={showModal}>
           <TransactButtonIcon />
         </TouchableOpacity>
-      </TransactButton>
+      </View>
       <SheetModal
         backgroundColor={theme.dark ? Midnight : LightBlue}
         modalLibrary={'bottom-sheet'}
@@ -296,13 +297,21 @@ const TransactModal = () => {
         stackBehavior="push"
         isVisible={modalVisible}
         onBackdropPress={hideModal}>
-        <ModalContainer>
+        <SheetContainer
+          style={[
+            styles.modalContainer,
+            {backgroundColor: theme.dark ? Midnight : LightBlue},
+          ]}>
           <BottomSheetFlashList
             data={TransactMenuList}
             renderItem={renderItem}
           />
-          <FooterContainer>
-            <ScanButtonContainer
+          <View style={styles.footerContainer}>
+            <TouchableOpacity
+              style={[
+                styles.scanButtonContainer,
+                {borderColor: theme.dark ? LinkBlue : Action},
+              ]}
               onPress={async () => {
                 hideModal();
                 await sleep(500);
@@ -311,16 +320,24 @@ const TransactModal = () => {
               <View>
                 <Icons.Scan />
               </View>
-              <ScanButtonText>{ScanButton.title}</ScanButtonText>
-            </ScanButtonContainer>
+              <BaseText
+                style={[
+                  styles.scanButtonText,
+                  {color: theme.dark ? White : Action},
+                ]}>
+                {ScanButton.title}
+              </BaseText>
+            </TouchableOpacity>
             {showArchaxBanner && <ArchaxFooter matchParentWidth />}
-            <CloseButtonContainer onPress={hideModal}>
+            <TouchableOpacity
+              style={styles.closeButtonContainer}
+              onPress={hideModal}>
               <View>
                 <Icons.Close />
               </View>
-            </CloseButtonContainer>
-          </FooterContainer>
-        </ModalContainer>
+            </TouchableOpacity>
+          </View>
+        </SheetContainer>
       </SheetModal>
     </>
   );

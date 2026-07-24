@@ -7,9 +7,9 @@ import {
   HeaderTitle,
   Paragraph,
 } from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView} from 'react-native';
+import {Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   LightBlack,
@@ -44,77 +44,226 @@ import AmountModal from '../../../../../components/amount/AmountModal';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
 
-const AccountHeader = styled.View`
-  padding: 0 16px 5px;
-`;
+const styles = StyleSheet.create({
+  accountHeader: {
+    paddingTop: 0,
+    paddingHorizontal: 16,
+    paddingBottom: 5,
+  },
+  accountContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingTop: 14,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  billPayOptions: {
+    borderTopWidth: 1,
+    paddingTop: 0,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  billPayOption: {
+    flexDirection: 'row',
+    paddingHorizontal: 0,
+    alignItems: 'center',
+  },
+  billPayOptionAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  checkboxContainer: {
+    marginRight: 15,
+  },
+  lineItemLabelContainer: {
+    flexGrow: 1,
+  },
+  lineItemSublabel: {
+    fontSize: 14,
+  },
+  amountSublabel: {
+    paddingVertical: 7,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderRadius: 35,
+  },
+  amountSublabelText: {
+    fontSize: 14,
+  },
+  accountFooter: {
+    flexDirection: 'row',
+    paddingVertical: 2,
+    paddingHorizontal: 15,
+    borderBottomRightRadius: 6,
+    borderBottomLeftRadius: 6,
+  },
+  accountFooterText: {
+    fontSize: 12,
+    flexGrow: 1,
+    textAlign: 'center',
+  },
+});
 
-const AccountContainer = styled.View`
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 12px;
-  padding: 14px 0px 0px;
-  margin-bottom: 16px;
-  overflow: hidden;
-`;
+const AccountHeader = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.accountHeader, style]} {...rest} />
+);
 
-const BillPayOptions = styled.View`
-  border-top-width: 1px;
-  border-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  padding: 0 16px 8px;
-`;
+const AccountContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.accountContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const BillPayOption = styled.View<{hasBorderTop?: boolean; noBorder?: boolean}>`
-  flex-direction: row;
-  padding: ${({noBorder}) => (noBorder ? 15 : 20)}px 0;
-  ${({hasBorderTop, noBorder}) =>
-    hasBorderTop && !noBorder ? 'border-top-width: 1px;' : ''};
-  ${({noBorder}) => (!noBorder ? 'border-bottom-width: 1px;' : '')};
-  border-color: ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  align-items: center;
-`;
+const BillPayOptions = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.billPayOptions,
+        {borderColor: theme.dark ? LightBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const BillPayOptionAmount = styled(Paragraph)`
-  font-size: 16px;
-  font-weight: 600;
-`;
+const BillPayOption = ({
+  hasBorderTop,
+  noBorder,
+  style,
+  ...rest
+}: {
+  hasBorderTop?: boolean;
+  noBorder?: boolean;
+} & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.billPayOption,
+        {paddingVertical: noBorder ? 15 : 20},
+        hasBorderTop && !noBorder ? {borderTopWidth: 1} : null,
+        !noBorder ? {borderBottomWidth: 1} : null,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CheckboxContainer = styled.View`
-  margin-right: 15px;
-`;
+const BillPayOptionAmount = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.billPayOptionAmount, style]} {...rest} />
+);
 
-const LineItemLabelContainer = styled.View`
-  flex-grow: 1;
-`;
+const CheckboxContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.checkboxContainer, style]} {...rest} />
+);
 
-const LineItemSublabel = styled(Paragraph)`
-  font-size: 14px;
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-`;
+const LineItemLabelContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.lineItemLabelContainer, style]} {...rest} />
+);
 
-const AmountSublabel = styled.View`
-  padding: 7px 18px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 35px;
-`;
+const LineItemSublabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.lineItemSublabel,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AmountSublabelText = styled(Paragraph)`
-  font-size: 14px;
-`;
+const AmountSublabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.amountSublabel,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountFooter = styled.View<Partial<BillItemProps>>`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  flex-direction: row;
-  padding: 2px 15px;
-  border-bottom-right-radius: 6px;
-  border-bottom-left-radius: 6px;
-`;
+const AmountSublabelText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.amountSublabelText, style]} {...rest} />
+);
 
-const AccountFooterText = styled(Paragraph)`
-  color: ${SlateDark};
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  font-size: 12px;
-  flex-grow: 1;
-  text-align: center;
-`;
+const AccountFooter = ({
+  style,
+  ...rest
+}: Partial<BillItemProps> & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.accountFooter,
+        {backgroundColor: theme.dark ? LightBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const AccountFooterText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.accountFooterText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const getCustomAmountSublabel = (account: BillPayAccount) => {
   return () => (

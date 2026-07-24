@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {BaseText, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   CtaContainerAbsolute,
@@ -9,7 +9,7 @@ import {
   ScreenGutter,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {View} from 'react-native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {shareNative} from '../../../../utils/share';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
@@ -37,32 +37,74 @@ export type AllAddressesParamList = {
   tokenAddress: string | undefined;
 };
 
-const AddressesContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  addressesContainer: {
+    flex: 1,
+  },
+  verticalPadding: {
+    padding: gutter,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    paddingTop: 20,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 15,
+  },
+  copyRow: {
+    flexDirection: 'row',
+  },
+  copyImgContainerRight: {
+    justifyContent: 'center',
+  },
+});
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  padding: 20px 0px 0px 15px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const AddressesContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.addressesContainer, style]} {...rest} />
+);
 
-const SubText = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const CopyRow = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
+const Title: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.title, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const CopyImgContainerRight = styled.View`
-  justify-content: center;
-`;
+const SubText: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H7 style={[{color: theme.dark ? White : SlateDark}, style]} {...rest} />
+  );
+};
+
+const CopyRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.copyRow, style]} {...rest} />;
+
+const CopyImgContainerRight: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.copyImgContainerRight, style]} {...rest} />;
 
 const AllAddresses = () => {
   const {t} = useTranslation();

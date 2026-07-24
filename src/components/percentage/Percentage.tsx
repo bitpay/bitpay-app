@@ -1,5 +1,6 @@
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import React, {useMemo} from 'react';
+import {StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import IncrementArrow from '../icons/trend-arrow/IncrementArrow';
 import DecrementArrow from '../icons/trend-arrow/DecrementArrow';
@@ -9,26 +10,22 @@ import {Slate30, SlateDark} from '../../styles/colors';
 export const getNeutralChangeColor = (isDarkMode: boolean) =>
   isDarkMode ? Slate30 : SlateDark;
 
-const PercentageContainer = styled(BaseText)<{
-  color?: string;
-}>`
-  font-size: 13px;
-  line-height: 18px;
-  color: ${({color}) => color};
-`;
-
-const PercentageRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const RangeLabel = styled(BaseText)`
-  font-size: 13px;
-  line-height: 18px;
-  color: ${({theme}) => getNeutralChangeColor(theme.dark)};
-  font-weight: 400;
-  margin-left: 5px;
-`;
+const styles = StyleSheet.create({
+  percentageContainer: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  percentageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rangeLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400',
+    marginLeft: 5,
+  },
+});
 
 export interface PercentageProps {
   percentageDifference: number;
@@ -104,7 +101,7 @@ const Percentage = ({
     : percentageValue;
 
   return (
-    <PercentageRow>
+    <View style={styles.percentageRow}>
       {!hideArrow && isFiniteDifference && safeDifference > 0 ? (
         <IncrementArrow style={{marginRight: 5}} />
       ) : null}
@@ -112,18 +109,35 @@ const Percentage = ({
         <DecrementArrow style={{marginRight: 5}} />
       ) : null}
       {shouldShowPriceChange ? (
-        <PercentageContainer
-          color={percentageColor}
-          style={[textStyle, {marginRight: 3}]}>
+        <BaseText
+          style={[
+            styles.percentageContainer,
+            {color: percentageColor},
+            textStyle,
+            {marginRight: 3},
+          ]}>
           {formattedPriceChange}
-        </PercentageContainer>
+        </BaseText>
       ) : null}
-      <PercentageContainer color={percentageColor} style={textStyle}>
+      <BaseText
+        style={[
+          styles.percentageContainer,
+          {color: percentageColor},
+          textStyle,
+        ]}>
         {wrappedPercentageValue}
         {suffix}
-      </PercentageContainer>
-      {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
-    </PercentageRow>
+      </BaseText>
+      {rangeLabel ? (
+        <BaseText
+          style={[
+            styles.rangeLabel,
+            {color: getNeutralChangeColor(theme.dark)},
+          ]}>
+          {rangeLabel}
+        </BaseText>
+      ) : null}
+    </View>
   );
 };
 

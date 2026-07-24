@@ -1,17 +1,28 @@
 import React from 'react';
+import {StyleSheet, View} from 'react-native';
 import Svg, {Defs, LinearGradient, Rect, Stop} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 
 interface ScrollHintProps {
   height: number;
   offset?: number;
 }
 
-export const ScrollHintContainer = styled.View`
-  bottom: 0;
-  position: absolute;
-  width: 100%;
-`;
+const styles = StyleSheet.create({
+  scrollHintContainer: {
+    bottom: 0,
+    position: 'absolute',
+    width: '100%',
+  },
+});
+
+export const ScrollHintContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.scrollHintContainer, style]} {...rest} />
+));
+ScrollHintContainer.displayName = 'ScrollHintContainer';
 
 const ScrollHint: React.FC<ScrollHintProps> = props => {
   const {height, offset = 0.25} = props;

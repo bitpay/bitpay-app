@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
-import styled from 'styled-components/native';
+import {SafeAreaView, View, ViewProps, StyleSheet} from 'react-native';
 import Spinner from '../../../components/spinner/Spinner';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
@@ -17,14 +17,26 @@ type BasePairingParamList = {
   onComplete?: (...args: any[]) => any;
 };
 
-const PairingContainer = styled.SafeAreaView`
-  padding: ${ScreenGutter};
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  pairingContainer: {
+    padding: parseInt(ScreenGutter, 10),
+    alignItems: 'center',
+  },
+  spinnerWrapper: {
+    marginTop: 20,
+  },
+});
 
-const SpinnerWrapper = styled.View`
-  margin-top: 20px;
-`;
+const PairingContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.pairingContainer, style]} {...rest} />
+);
+
+const SpinnerWrapper = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.spinnerWrapper, style]} {...rest} />
+);
 
 const BasePairing = (props: BasePairingParamList) => {
   const {t} = useTranslation();

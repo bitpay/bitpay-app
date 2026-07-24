@@ -1,5 +1,5 @@
 import React, {memo, ReactElement} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet} from 'react-native';
 import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {
@@ -22,17 +22,19 @@ export interface WalletSettingsRowProps {
   onPress: () => void;
 }
 
-const HiddenColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const WalletSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  padding: 8px 0px;
-  gap: 8px;
-`;
+const styles = StyleSheet.create({
+  hiddenColumn: {
+    alignItems: 'flex-end',
+  },
+  walletSettingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    gap: 8,
+  },
+});
 
 const WalletSettingsRow = ({
   img,
@@ -46,7 +48,8 @@ const WalletSettingsRow = ({
 }: WalletSettingsRowProps) => {
   const {t} = useTranslation();
   return (
-    <WalletSettingsContainer
+    <TouchableOpacity
+      style={styles.walletSettingsContainer}
       onPress={() => onPress()}
       activeOpacity={ActiveOpacity}>
       <CurrencyImageContainer style={{height: 40, width: 40}}>
@@ -57,13 +60,13 @@ const WalletSettingsRow = ({
       </H5>
 
       {hideWallet || hideWalletByAccount ? (
-        <HiddenColumn>
+        <Column style={styles.hiddenColumn}>
           <HiddenContainer>
             <H7>{t('Hidden')}</H7>
           </HiddenContainer>
-        </HiddenColumn>
+        </Column>
       ) : null}
-    </WalletSettingsContainer>
+    </TouchableOpacity>
   );
 };
 

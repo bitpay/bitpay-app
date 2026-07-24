@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleProp, View, ViewStyle} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,

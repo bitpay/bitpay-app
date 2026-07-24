@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {
   Caution,
   LightBlack,
@@ -82,7 +82,16 @@ import {
 } from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {AppState, FlatList, TextInput, View} from 'react-native';
+import {
+  AppState,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {
@@ -102,119 +111,289 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 import haptic from '../../../components/haptic-feedback/haptic';
 
-const ScrollViewContainer = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  scrollViewContainer: {
+    marginTop: 20,
+  },
+  contentView: {
+    paddingTop: 0,
+    paddingRight: 12,
+    paddingBottom: 20,
+    paddingLeft: 12,
+  },
+  passwordParagraph: {
+    marginTop: 0,
+    marginRight: 20,
+    marginBottom: 20,
+    marginLeft: 20,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 10,
+  },
+  cuationText: {
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  optionTitle: {
+    fontSize: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+    top: 0,
+    left: 20,
+  },
+  currencySelectorContainer: {
+    marginVertical: 20,
+    position: 'relative',
+  },
+  currencyContainer: {
+    paddingHorizontal: 20,
+    height: 55,
+    borderWidth: 1,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  currencyName: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    marginLeft: 10,
+    color: '#9ba3ae',
+  },
+  currencySelectionModalContainer: {
+    padding: 15,
+    minHeight: 200,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  inputContainer: {
+    padding: 18,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+  },
+  currencyColumn: {
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  currencyTitleColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+  },
+  currencyTitle: {
+    margin: 0,
+    padding: 0,
+  },
+  currencySubTitle: {
+    fontSize: 12,
+  },
+});
 
-const ContentView = styled.View`
-  padding: 0 ${ScreenGutter} 20px ${ScreenGutter};
-`;
+const ScrollViewContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof KeyboardAwareScrollView>) => (
+  <KeyboardAwareScrollView style={[styles.scrollViewContainer, style]} {...rest} />
+);
 
-const PasswordParagraph = styled(BaseText)`
-  margin: 0px 20px 20px 20px;
-  color: ${({theme}) => theme.colors.description};
-`;
+const ContentView = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.contentView, style]} {...rest} />
+);
 
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 10px;
-`;
+const PasswordParagraph = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.passwordParagraph,
+          {color: theme.colors.description},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const CuationText = styled(Small)`
-  padding: 5px 0 0 0px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const ErrorText = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.errorText, style]} {...rest} />
+));
+
+const CuationText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <Small
+        ref={ref}
+        style={[
+          styles.cuationText,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
 const schema = yup.object().shape({
   text: yup.string().required(),
 });
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const CheckBoxContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.checkBoxContainer, style]} {...rest} />
+);
 
-const OptionTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const OptionTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.optionTitle,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const Label = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
-  top: 0;
-  left: 20px;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : SlateDark)};
-`;
+const Label = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.label,
+        {color: theme && theme.dark ? theme.colors.text : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
-const CurrencySelectorContainer = styled.View`
-  margin: 20px 0;
-  position: relative;
-`;
+const CurrencySelectorContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.currencySelectorContainer, style]} {...rest} />
+);
 
-const CurrencyContainer = styled(TouchableOpacity)`
-  background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  padding: 0 20px;
-  height: 55px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-`;
+const CurrencyContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.currencyContainer,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          borderColor: theme.dark ? LightBlack : NeutralSlate,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CurrencyName = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  margin-left: 10px;
-  color: #9ba3ae;
-`;
+const CurrencyName = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.currencyName, style]} {...rest} />
+  ),
+);
 
-const CurrencySelectionModalContainer = styled(SheetContainer)`
-  padding: 15px;
-  min-height: 200px;
-`;
+const CurrencySelectionModalContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SheetContainer>) => (
+  <SheetContainer
+    style={[styles.currencySelectionModalContainer, style]}
+    {...rest}
+  />
+);
 
 const CurrencyOptions = SupportedCurrencyOptions.filter(
   currency => !currency.isToken,
 );
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
 
-const InputContainer = styled.View`
-  padding: 18px;
-`;
+const InputContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.inputContainer, style]} {...rest} />
+);
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
-`;
+const CtaContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof _CtaContainer>) => (
+  <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />
+);
 
-const CurrencyColumn = styled.View`
-  justify-content: center;
-  margin-right: 8px;
-`;
+const CurrencyColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.currencyColumn, style]} {...rest} />
+);
 
-const CurrencyTitleColumn = styled(CurrencyColumn)`
-  flex: 1 1 auto;
-`;
+const CurrencyTitleColumn = ({style, ...rest}: ViewProps) => (
+  <View
+    style={[styles.currencyColumn, styles.currencyTitleColumn, style]}
+    {...rest}
+  />
+);
 
-const CurrencyTitle = styled(H7).attrs(() => ({
-  medium: true,
-}))`
-  margin: 0;
-  padding: 0;
-`;
+const CurrencyTitle = React.forwardRef<
+  Text,
+  TextProps & {medium?: boolean}
+>(({style, medium = true, ...rest}, ref) => (
+  <H7
+    ref={ref}
+    medium={medium}
+    style={[styles.currencyTitle, style]}
+    {...rest}
+  />
+));
 
-const CurrencySubTitle = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-  font-size: 12px;
-`;
+const CurrencySubTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.currencySubTitle,
+          {color: theme.dark ? LuckySevens : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
 const RecoveryPhrase = () => {
   const {t} = useTranslation();
@@ -632,7 +811,7 @@ const RecoveryPhrase = () => {
       accessibilityLabel="Recovery phrase view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
-      <ContentView keyboardShouldPersistTaps={'handled'}>
+      <ContentView>
         <Paragraph>
           {t(
             'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
