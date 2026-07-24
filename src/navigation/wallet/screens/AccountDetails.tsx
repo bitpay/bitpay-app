@@ -1530,6 +1530,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 );
                 navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
                   context: 'buyCrypto',
+                  fromAccount: {
+                    keyId,
+                    accountAddress: selectedAccountAddress,
+                  },
                 });
               },
             }}

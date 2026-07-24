@@ -465,6 +465,7 @@ export interface BuyAndSellRootProps {
 
   context: ExternalServicesContext;
   fromWallet?: Wallet;
+  fromAccount?: {keyId: string; accountAddress: string}; // used when entering from an EVM/SVM account (AccountDetails)
   amount?: number; // deeplink params are strings, ensure this is number so offers will work
   currencyAbbreviation?: string; // used from charts and deeplinks.
   chain?: string; // used from charts and deeplinks.
@@ -531,6 +532,7 @@ const BuyAndSellRoot = ({
   // Real route params
   const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
+  const fromAccount = route.params?.fromAccount;
 
   const fromAmount = useMemo(() => {
     const DEFAULT_USD_VALUE = 200;
@@ -4154,6 +4156,7 @@ const BuyAndSellRoot = ({
               sellCryptoSupportedCoinsFullObj ?? []
             }
             fromWallet={fromWallet}
+            fromAccount={fromAccount}
             currencyAbbreviation={fromCurrencyAbbreviation}
             chain={fromChain}
             partner={preSetPartner}
