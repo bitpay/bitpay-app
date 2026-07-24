@@ -1,5 +1,14 @@
 import {Theme} from '@react-navigation/native';
-import styled, {css} from 'styled-components/native';
+import React from 'react';
+import {
+  SafeAreaView,
+  StyleSheet,
+  TouchableHighlight,
+  TouchableHighlightProps,
+  View,
+  ViewProps,
+} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';
 import {
@@ -30,141 +39,348 @@ export const getMastheadGradient = (theme: Theme) => {
     : ['rgba(245, 247, 248, 0)', NeutralSlate];
 };
 
-export const ListItemTouchableHighlight = styled.TouchableHighlight`
-  padding-right: ${horizontalPadding}px;
-`;
+const styles = StyleSheet.create({
+  listItemTouchableHighlight: {
+    paddingRight: horizontalPadding,
+  },
+  categoryItemTouchableHighlight: {
+    paddingLeft: horizontalPadding,
+  },
+  screenContainer: {
+    flex: 1,
+  },
+  sectionContainer: {
+    width: '100%',
+    paddingHorizontal: horizontalPadding,
+  },
+  sectionHeaderContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionHeaderButton: {
+    marginTop: 38,
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  sectionHeader: {
+    fontSize: 18,
+    textAlign: 'left',
+    marginBottom: 16,
+    marginTop: 40,
+    flexGrow: 1,
+    fontWeight: '500',
+  },
+  sectionDivider: {
+    alignSelf: 'center',
+    borderBottomWidth: 1,
+    marginHorizontal: horizontalPadding,
+    marginVertical: 20,
+    marginTop: 40,
+    width: WIDTH - horizontalPadding * 2,
+  },
+  searchBox: {
+    width: WIDTH - horizontalPadding * 2,
+    fontSize: 16,
+    position: 'relative',
+  },
+  searchResults: {
+    minHeight: HEIGHT - 300,
+  },
+  noResultsImgContainer: {
+    margin: 40,
+  },
+  noResultsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    minHeight: HEIGHT - 300,
+    paddingTop: 20,
+  },
+  noResultsHeader: {
+    fontSize: 17,
+  },
+  navIconButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 50,
+    height: 40,
+    width: 40,
+    overflow: 'hidden',
+  },
+  billOption: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 24,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    marginTop: -30,
+  },
+  billOptionLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    marginBottom: -10,
+  },
+  field: {
+    borderRadius: 4,
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginTop: 5,
+    minHeight: 43,
+  },
+  fieldGroup: {
+    marginBottom: 10,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.75,
+  },
+});
 
-export const CategoryItemTouchableHighlight = styled(
-  ListItemTouchableHighlight,
-)`
-  padding-left: ${horizontalPadding}px;
-`;
+export const ListItemTouchableHighlight = React.forwardRef<
+  React.ComponentRef<typeof TouchableHighlight>,
+  TouchableHighlightProps
+>(({style, ...rest}, ref) => (
+  <TouchableHighlight
+    ref={ref}
+    style={[styles.listItemTouchableHighlight, style]}
+    {...rest}
+  />
+));
+ListItemTouchableHighlight.displayName = 'ListItemTouchableHighlight';
 
-export const ScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+export const CategoryItemTouchableHighlight = React.forwardRef<
+  React.ComponentRef<typeof TouchableHighlight>,
+  TouchableHighlightProps
+>(({style, ...rest}, ref) => (
+  <ListItemTouchableHighlight
+    ref={ref}
+    style={[styles.categoryItemTouchableHighlight, style]}
+    {...rest}
+  />
+));
+CategoryItemTouchableHighlight.displayName = 'CategoryItemTouchableHighlight';
 
-export const SectionContainer = styled.View`
-  width: 100%;
-  padding: 0 ${horizontalPadding}px;
-`;
+export const ScreenContainer = React.forwardRef<
+  React.ComponentRef<typeof SafeAreaView>,
+  React.ComponentProps<typeof SafeAreaView>
+>(({style, ...rest}, ref) => (
+  <SafeAreaView ref={ref} style={[styles.screenContainer, style]} {...rest} />
+));
+ScreenContainer.displayName = 'ScreenContainer';
 
-export const SectionSpacer = styled.View<{height?: number}>`
-  height: ${({height}) => height || 30}px;
-`;
+export const SectionContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.sectionContainer, style]} {...rest} />
+  ),
+);
+SectionContainer.displayName = 'SectionContainer';
 
-export const SectionHeaderContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+export const SectionSpacer = React.forwardRef<
+  View,
+  ViewProps & {height?: number}
+>(({height, style, ...rest}, ref) => (
+  <View ref={ref} style={[{height: height || 30}, style]} {...rest} />
+));
+SectionSpacer.displayName = 'SectionSpacer';
 
-export const SectionHeaderButton = styled(Link)`
-  margin-top: 38px;
-  margin-bottom: 12px;
-  font-weight: 500;
-`;
+export const SectionHeaderContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.sectionHeaderContainer, style]} {...rest} />
+  ),
+);
+SectionHeaderContainer.displayName = 'SectionHeaderContainer';
 
-export const SectionHeader = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Black)};
-  font-size: 18px;
-  text-align: left;
-  margin-bottom: 16px;
-  margin-top: 40px;
-  flex-grow: 1;
-  font-weight: 500;
-`;
+export const SectionHeaderButton = React.forwardRef<
+  React.ComponentRef<typeof Link>,
+  React.ComponentProps<typeof Link>
+>(({style, ...rest}, ref) => (
+  <Link ref={ref} style={[styles.sectionHeaderButton, style]} {...rest} />
+));
+SectionHeaderButton.displayName = 'SectionHeaderButton';
 
-export const SectionDivider = styled.View`
-  align-self: center;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
-  border-bottom-width: 1px;
-  margin: 20px ${horizontalPadding}px;
-  margin-top: 40px;
-  width: ${WIDTH - horizontalPadding * 2}px;
-`;
+export const SectionHeader = React.forwardRef<
+  React.ComponentRef<typeof BaseText>,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[{color: theme.dark ? White : Black}, styles.sectionHeader, style]}
+      {...rest}
+    />
+  );
+});
+SectionHeader.displayName = 'SectionHeader';
 
-export const SearchBox = styled(BoxInput)`
-  width: ${WIDTH - horizontalPadding * 2}px;
-  font-size: 16px;
-  position: relative;
-`;
+export const SectionDivider = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.sectionDivider,
+          {borderBottomColor: theme.dark ? LightBlack : Cloud},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+SectionDivider.displayName = 'SectionDivider';
 
-export const SearchResults = styled.View`
-  min-height: ${HEIGHT - 300}px;
-`;
+export const SearchBox = React.forwardRef<
+  React.ComponentRef<typeof BoxInput>,
+  React.ComponentProps<typeof BoxInput>
+>(({style, ...rest}, ref) => (
+  <BoxInput ref={ref} style={[styles.searchBox, style]} {...rest} />
+));
+SearchBox.displayName = 'SearchBox';
 
-export const NoResultsImgContainer = styled.View`
-  margin: 40px;
-`;
+export const SearchResults = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.searchResults, style]} {...rest} />
+  ),
+);
+SearchResults.displayName = 'SearchResults';
 
-export const NoResultsContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: ${HEIGHT - 300}px;
-  padding-top: 20px;
-`;
+export const NoResultsImgContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.noResultsImgContainer, style]} {...rest} />
+  ),
+);
+NoResultsImgContainer.displayName = 'NoResultsImgContainer';
 
-export const NoResultsHeader = styled(H4)`
-  font-size: 17px;
-`;
+export const NoResultsContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.noResultsContainer, style]} {...rest} />
+  ),
+);
+NoResultsContainer.displayName = 'NoResultsContainer';
 
-export const NavIconButtonContainer = styled(TouchableOpacity)`
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-radius: 50px;
-  height: 40px;
-  width: 40px;
-  overflow: hidden;
-`;
+export const NoResultsHeader = React.forwardRef<
+  React.ComponentRef<typeof H4>,
+  React.ComponentProps<typeof H4>
+>(({style, ...rest}, ref) => (
+  <H4 ref={ref} style={[styles.noResultsHeader, style]} {...rest} />
+));
+NoResultsHeader.displayName = 'NoResultsHeader';
 
-export const BillOption = styled.View<{isLast?: boolean}>`
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 24px 0;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? SlateDark : Slate30)};
-  margin-top: -30px;
-  ${({isLast}) =>
-    isLast
-      ? 'border-bottom-width: 0; padding-bottom: 0; margin-bottom: -10px;'
-      : ''}
-`;
+export const NavIconButtonContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.navIconButtonContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+export const BillOption = React.forwardRef<
+  View,
+  ViewProps & {isLast?: boolean}
+>(({isLast, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.billOption,
+        {borderBottomColor: theme.dark ? SlateDark : Slate30},
+        isLast ? styles.billOptionLast : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+BillOption.displayName = 'BillOption';
 
 export interface HideableViewProps {
   show: boolean;
 }
-export const HideableView = styled.View<HideableViewProps>`
-  ${({show}) =>
-    css`
-      display: ${show ? 'flex' : 'none'};
-    `}
-`;
+export const HideableView = React.forwardRef<
+  View,
+  ViewProps & HideableViewProps
+>(({show, style, ...rest}, ref) => (
+  <View
+    ref={ref}
+    style={[{display: show ? 'flex' : 'none'}, style]}
+    {...rest}
+  />
+));
+HideableView.displayName = 'HideableView';
 
-export const Field = styled.View<{disabled?: boolean}>`
-  background-color: ${({theme, disabled}) =>
-    !disabled || theme.dark ? 'transparent' : Slate10};
-  border-radius: 4px;
-  border: 1px solid ${({theme}) => (theme.dark ? SlateDark : Slate30)};
-  padding: 8px 14px;
-  margin-top: 5px;
-  min-height: 43px;
-`;
+export const Field = React.forwardRef<View, ViewProps & {disabled?: boolean}>(
+  ({disabled, style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.field,
+          {
+            backgroundColor: !disabled || theme.dark ? 'transparent' : Slate10,
+            borderColor: theme.dark ? SlateDark : Slate30,
+          },
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Field.displayName = 'Field';
 
-export const FieldGroup = styled.View`
-  margin-bottom: 10px;
-`;
+export const FieldGroup = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.fieldGroup, style]} {...rest} />
+  ),
+);
+FieldGroup.displayName = 'FieldGroup';
 
-export const FieldLabel = styled(Paragraph)`
-  color: ${({theme}) => (theme.dark ? Feather : LightBlack)};
-  font-size: 14px;
-  font-weight: 500;
-  opacity: 0.75;
-`;
+export const FieldLabel = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[
+        {color: theme.dark ? Feather : LightBlack},
+        styles.fieldLabel,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+FieldLabel.displayName = 'FieldLabel';
 
-export const FieldValue = styled(Paragraph)`
-  color: ${({theme}) => (theme.dark ? Slate : SlateDark)};
-`;
+export const FieldValue = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[{color: theme.dark ? Slate : SlateDark}, style]}
+      {...rest}
+    />
+  );
+});
+FieldValue.displayName = 'FieldValue';

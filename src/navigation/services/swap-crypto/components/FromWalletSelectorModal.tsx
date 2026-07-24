@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
 import {WalletGroupParamList} from '../../../../navigation/wallet/WalletGroup';
-import styled from 'styled-components/native';
 import GlobalSelect, {
   GlobalSelectModalContext,
 } from '../../../wallet/screens/GlobalSelect';
@@ -20,29 +20,73 @@ import {getBadgeImg} from '../../../../utils/helper-methods';
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 import {SellCryptoCoin} from '../../screens/BuyAndSellRoot';
 
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const styles = StyleSheet.create({
+  globalSelectContainer: {
+    flex: 1,
+  },
+  swapCryptoHelpContainer: {
+    paddingTop: 20,
+    paddingRight: 15,
+    paddingBottom: 0,
+    paddingLeft: 15,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    height: '75%',
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  currencyColumn: {
+    marginLeft: 8,
+  },
+});
 
-const SwapCryptoHelpContainer = styled.View`
-  padding: 20px 15px 0px 15px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  height: 75%;
-`;
+const GlobalSelectContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.globalSelectContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const RowContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
-`;
+const SwapCryptoHelpContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.swapCryptoHelpContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const CurrencyColumn = styled(Column)`
-  margin-left: 8px;
-`;
+const RowContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.rowContainer, style]} {...rest} />;
+
+export const CurrencyColumn: React.FC<React.ComponentProps<typeof Column>> = ({
+  style,
+  ...rest
+}) => <Column style={[styles.currencyColumn, style]} {...rest} />;
 interface FromWalletSelectorModalProps {
   isVisible: boolean;
   customSupportedCurrencies?: SwapCryptoCoin[] | SellCryptoCoin[];

@@ -1,6 +1,7 @@
 import React, {useMemo, useState} from 'react';
+import {StyleSheet, View} from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import type {RootStackParamList} from '../../../../Root';
@@ -36,30 +37,50 @@ import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRun
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
 
-const Container = styled.View`
-  margin-top: 5px;
-  margin-bottom: 25px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 5,
+    marginBottom: 25,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 0,
+    marginRight: parseInt(ScreenGutter, 10),
+    marginBottom: 0,
+    marginLeft: 16,
+  },
+  buttonContainer: {
+    marginTop: 0,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    marginBottom: 0,
+  },
+  placeholderButtonShell: {
+    height: 50,
+    borderRadius: 999,
+  },
+});
 
-const Header = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 ${ScreenGutter} 0 16px;
-`;
+const Container: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.container}>{children}</View>
+);
 
-const ButtonContainer = styled.View`
-  margin: 0px ${ScreenGutter} 0;
-`;
+const Header: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.header}>{children}</View>
+);
 
-const PlaceholderButtonContainer = styled.View`
-  margin: 0px ${ScreenGutter} 0;
-`;
+const ButtonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.buttonContainer}>{children}</View>;
 
-const PlaceholderButtonShell = styled.View`
-  height: 50px;
-  border-radius: 999px;
-`;
+const PlaceholderButtonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.buttonContainer}>{children}</View>;
+
+const PlaceholderButtonShell: React.FC = () => (
+  <View style={styles.placeholderButtonShell} />
+);
 
 const SKELETON_ASSET_ITEMS: AssetRowItem[] = Array.from(
   {length: 4},

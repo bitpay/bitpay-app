@@ -1,8 +1,7 @@
 import React from 'react';
-import {Image, View} from 'react-native';
+import {Image, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
 import {BaseText, H6, Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
@@ -29,7 +28,7 @@ import {ShopEffects} from '../../../../../store/shop';
 import {getBillAccountEventParams} from '../utils';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {InfoSvg} from '../../components/svg/ShopTabSvgs';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {useOngoingProcess} from '../../../../../contexts';
 
 export interface BillItemProps {
@@ -40,109 +39,260 @@ export interface BillItemProps {
   selectedAmount?: number;
 }
 
-const ItemContainer = styled.View<Partial<BillItemProps>>`
-  border-radius: 8px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  ${({variation}) =>
-    variation === 'header'
-      ? 'border: 0; margin-left: 0px;'
-      : `
-          padding-left: ${variation === 'large' ? 16 : 12}px;
-          padding-bottom: ${variation === 'large' ? 16 : 12}px;
-          padding-top: ${variation === 'large' ? 16 : 12}px;
-          padding-right: ${variation === 'large' ? 16 : 12}px;`}
-  margin-bottom: 10px;
-`;
+const styles = StyleSheet.create({
+  itemContainer: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  accountType: {
+    fontSize: 14,
+    marginTop: -5,
+  },
+  accountDetailsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  accountBody: {
+    flexDirection: 'row',
+  },
+  accountActions: {
+    marginTop: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  payButton: {
+    height: 32,
+    backgroundColor: Action,
+    borderRadius: 50,
+    maxWidth: 90,
+    minWidth: 50,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payButtonText: {
+    fontSize: 14,
+    color: White,
+  },
+  selectedAmountContainer: {
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 9,
+  },
+  accountFooter: {
+    flexDirection: 'row',
+    marginTop: 13,
+    paddingVertical: 2,
+    paddingHorizontal: 15,
+    borderBottomRightRadius: 6,
+    borderBottomLeftRadius: 6,
+  },
+  accountFooterText: {
+    fontSize: 12,
+    flexGrow: 1,
+  },
+  accountFooterActionText: {
+    textAlign: 'right',
+  },
+  connectingStatusContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+});
 
-const AccountType = styled(Paragraph)`
-  font-size: 14px;
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-  margin-top: -5px;
-`;
+const ItemContainer = ({
+  variation,
+  style,
+  ...rest
+}: Partial<BillItemProps> & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  const isHeader = variation === 'header';
+  const pad = variation === 'large' ? 16 : 12;
+  return (
+    <View
+      style={[
+        styles.itemContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        isHeader
+          ? {borderWidth: 0, marginLeft: 0}
+          : {
+              paddingLeft: pad,
+              paddingBottom: pad,
+              paddingTop: pad,
+              paddingRight: pad,
+            },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountDetailsLeft = styled.View`
-  flex-direction: row;
-  align-items: center;
-  flex-grow: 1;
-  flex-shrink: 1;
-`;
+const AccountType = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.accountType,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountDetailsRight = styled.View<Partial<BillItemProps>>`
-  ${({variation}) =>
-    variation === 'header' || variation === 'pay'
-      ? 'align-items: center; flex-direction:row;'
-      : 'align-items: flex-end;'}
-`;
+const AccountDetailsLeft = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.accountDetailsLeft, style]} {...rest} />
+);
 
-const AccountBody = styled.View`
-  flex-direction: row;
-`;
+const AccountDetailsRight = ({
+  variation,
+  style,
+  ...rest
+}: Partial<BillItemProps> & React.ComponentProps<typeof View>) => (
+  <View
+    style={[
+      variation === 'header' || variation === 'pay'
+        ? {alignItems: 'center' as const, flexDirection: 'row' as const}
+        : {alignItems: 'flex-end' as const},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const AccountActions = styled.View`
-  margin-top: 9px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const AccountBody = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.accountBody, style]} {...rest} />
+);
 
-const PayButton = styled.View`
-  height: 32px;
-  background-color: ${Action};
-  border-radius: 50px;
-  max-width: 90px;
-  min-width: 50px;
-  padding: 0 20px;
-  align-items: center;
-  justify-content: center;
-`;
+const AccountActions = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.accountActions, style]} {...rest} />
+);
 
-const PayButtonText = styled(Paragraph)`
-  font-size: 14px;
-  color: ${White};
-`;
+const PayButton = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.payButton, style]} {...rest} />
+);
 
-const SelectedAmountContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  border-radius: 20px;
-  padding: 6px 12px;
-  margin-right: 9px;
-`;
+const PayButtonText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.payButtonText, style]} {...rest} />
+);
 
-const AccountBalance = styled(BaseText)<Partial<BillItemProps>>`
-  font-size: ${({variation}) => (variation === 'large' ? 16 : 16)}px;
-  margin-bottom: ${({variation}) => (variation === 'large' ? -1 : 3)}px;
-`;
+const SelectedAmountContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.selectedAmountContainer,
+        {backgroundColor: theme.dark ? LightBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountFooter = styled.View<Partial<BillItemProps>>`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  flex-direction: row;
-  margin-top: 13px;
-  margin-left: ${({variation}) => (variation === 'large' ? -16 : -12)}px;
-  margin-right: ${({variation}) => (variation === 'large' ? -16 : -12)}px;
-  margin-bottom: ${({variation}) => (variation === 'large' ? -16 : -12)}px;
-  padding: 2px 15px;
-  border-bottom-right-radius: 6px;
-  border-bottom-left-radius: 6px;
-`;
+const AccountBalance = ({
+  variation,
+  style,
+  ...rest
+}: Partial<BillItemProps> & React.ComponentProps<typeof BaseText>) => (
+  <BaseText
+    style={[
+      {
+        fontSize: 16,
+        marginBottom: variation === 'large' ? -1 : 3,
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const AccountFooterText = styled(Paragraph)`
-  color: ${SlateDark};
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  font-size: 12px;
-  flex-grow: 1;
-`;
+const AccountFooter = ({
+  variation,
+  style,
+  ...rest
+}: Partial<BillItemProps> & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  const margin = variation === 'large' ? -16 : -12;
+  return (
+    <View
+      style={[
+        styles.accountFooter,
+        {backgroundColor: theme.dark ? LightBlack : Slate10},
+        {marginLeft: margin, marginRight: margin, marginBottom: margin},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountFooterActionText = styled(AccountFooterText)`
-  color: ${({theme}) => (theme.dark ? White : Action)};
-  text-align: right;
-  font-weight: ${({theme}) => (theme.dark ? 500 : 400)};
-`;
+const AccountFooterText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.accountFooterText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ConnectingStatusContainer = styled.View`
-  align-items: center;
-  flex-direction: row;
-  gap: 6px;
-`;
+const AccountFooterActionText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <AccountFooterText
+      style={[
+        styles.accountFooterActionText,
+        {
+          color: theme.dark ? White : Action,
+          fontWeight: theme.dark ? '500' : '400',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const ConnectingStatusContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.connectingStatusContainer, style]} {...rest} />
+);
 
 export default ({
   account,

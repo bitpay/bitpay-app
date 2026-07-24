@@ -1,6 +1,7 @@
 import React from 'react';
 import {ContentCard} from '@braze/react-native-sdk';
-import styled, {useTheme} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
@@ -12,14 +13,35 @@ interface AdvertisementListProps {
   contentCards: ContentCard[];
 }
 
-const AdvertisementListContainer = styled.View`
-  margin-top: 10px;
-  margin-bottom: 20px;
-`;
+const styles = StyleSheet.create({
+  advertisementListContainer: {
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  advertisementCardContainer: {
+    marginTop: 0,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+  },
+});
 
-const AdvertisementCardContainer = styled.View<{isLast: boolean}>`
-  margin: 0 ${ScreenGutter} ${({isLast}) => (isLast ? 0 : 12)}px;
-`;
+const AdvertisementListContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.advertisementListContainer}>{children}</View>;
+
+const AdvertisementCardContainer: React.FC<{
+  isLast: boolean;
+  style?: any;
+  children?: React.ReactNode;
+}> = ({isLast, style, children}) => (
+  <View
+    style={[
+      styles.advertisementCardContainer,
+      {marginBottom: isLast ? 0 : 12},
+      style,
+    ]}>
+    {children}
+  </View>
+);
 
 const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const {contentCards} = props;

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {SettingsComponent} from '../SettingsRoot';
@@ -22,16 +22,31 @@ import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
 import {WyrePaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 
-const ExternalServicesItemContainer = styled.View`
-  justify-content: flex-start;
-  align-items: center;
-  flex-direction: row;
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  externalServicesItemContainer: {
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+  },
+  externalServicesIconContainer: {
+    marginRight: 5,
+  },
+});
 
-const ExternalServicesIconContainer = styled.View`
-  margin-right: 5px;
-`;
+const ExternalServicesItemContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.externalServicesItemContainer, style]} {...rest} />
+);
+
+const ExternalServicesIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.externalServicesIconContainer, style]} {...rest} />
+);
 
 const ExternalServices = () => {
   const navigation = useNavigation();

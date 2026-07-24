@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -14,29 +14,56 @@ import {
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 
-const EmailNotificationsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  emailNotificationsContainer: {
+    flex: 1,
+  },
+  settingRow: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    flexDirection: 'column',
+    paddingVertical: 8,
+  },
+  settingRowContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 58,
+  },
+  settingsComponent: {
+    flex: 1,
+    marginTop: 15,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+});
 
-const SettingRow = styled.View`
-  flex-grow: 1;
-  justify-content: center;
-  flex-direction: column;
-  padding: 8px 0;
-`;
+const EmailNotificationsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.emailNotificationsContainer, style]} {...rest} />
+);
 
-const SettingRowContainer = styled(TouchableOpacity)<{isDisabled?: boolean}>`
-  align-items: center;
-  flex-direction: row;
-  min-height: 58px;
-  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
-`;
+const SettingRow = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.settingRow, style]} {...rest} />
+);
 
-const SettingsComponent = styled.ScrollView`
-  flex: 1;
-  margin-top: 15px;
-  padding: 0 ${ScreenGutter};
-`;
+const SettingRowContainer = ({
+  isDisabled,
+  style,
+  ...rest
+}: {isDisabled?: boolean} & React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity
+    style={[styles.settingRowContainer, {opacity: isDisabled ? 0.5 : 1}, style]}
+    {...rest}
+  />
+);
+
+const SettingsComponent = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof ScrollView>) => (
+  <ScrollView style={[styles.settingsComponent, style]} {...rest} />
+);
 
 const EmailNotifications = () => {
   const {t} = useTranslation();

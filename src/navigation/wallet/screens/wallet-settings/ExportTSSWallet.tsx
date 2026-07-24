@@ -6,7 +6,7 @@ import {
   H3,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   AdvancedOptions,
@@ -32,7 +32,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import {Platform, Modal} from 'react-native';
+import {Platform, Modal, SafeAreaView, StyleSheet, View} from 'react-native';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
@@ -54,107 +54,242 @@ import {WalletActions} from '../../../../store/wallet';
 const BWC = BwcProvider.getInstance();
 const TssKey = BWC.getTssKey();
 
-const ExportContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  exportContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  passwordFormContainer: {
+    marginVertical: 15,
+  },
+  exportParagraph: {
+    marginBottom: 15,
+  },
+  passwordActionContainer: {
+    marginTop: 20,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  ctaContainer: {
+    alignSelf: 'stretch',
+    flexDirection: 'column',
+    marginTop: 20,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  passwordInputContainer: {
+    marginVertical: 15,
+  },
+  bottomButtonContainer: {
+    paddingTop: 16,
+    paddingHorizontal: gutter,
+    paddingBottom: 32,
+  },
+  modalWrapper: {
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: gutter,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  modalContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: gutter,
+  },
+  successImageContainer: {
+    marginBottom: 32,
+  },
+  successTitle: {
+    marginBottom: 16,
+    textAlign: 'center',
+    lineHeight: 47,
+  },
+  successDescription: {
+    textAlign: 'center',
+  },
+  modalButtonContainer: {
+    width: '100%',
+    paddingTop: 16,
+    paddingHorizontal: gutter,
+    paddingBottom: 32,
+  },
+});
 
-const PasswordFormContainer = styled.View`
-  margin: 15px 0;
-`;
+const ExportContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.exportContainer, style]} {...rest} />
+);
 
-const ExportParagraph = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const PasswordActionContainer = styled.View`
-  margin-top: 20px;
-`;
+const PasswordFormContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.passwordFormContainer, style]} {...rest} />;
 
-const AdvancedOptionsText = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-`;
+const ExportParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.exportParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const PasswordActionContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.passwordActionContainer, style]} {...rest} />;
 
-const CtaContainer = styled.View`
-  align-self: stretch;
-  flex-direction: column;
-  margin-top: 20px;
-`;
+const AdvancedOptionsText: React.FC<
+  React.ComponentProps<typeof Paragraph>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return <Paragraph style={[{color: theme.colors.text}, style]} {...rest} />;
+};
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const RowContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />
+);
 
-const PasswordInputContainer = styled.View`
-  margin: 15px 0;
-`;
+const CtaContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.ctaContainer, style]} {...rest} />;
 
-const BottomButtonContainer = styled.View`
-  padding: 16px ${ScreenGutter};
-  padding-bottom: 32px;
-`;
+const CheckBoxContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.checkBoxContainer, style]} {...rest} />;
 
-const ModalWrapper = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const PasswordInputContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.passwordInputContainer, style]} {...rest} />;
 
-const ModalContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const BottomButtonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.bottomButtonContainer, style]} {...rest} />;
 
-const ModalHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 16px ${ScreenGutter};
-`;
+const ModalWrapper: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalWrapper,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ModalTitle = styled(BaseText)`
-  font-size: 20px;
-  font-weight: 700;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  text-align: center;
-`;
+const ModalContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.modalContainer, style]} {...rest} />
+);
 
-const ModalContent = styled.View`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 0 ${ScreenGutter};
-`;
+const ModalHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.modalHeader, style]} {...rest} />;
 
-const SuccessImageContainer = styled.View`
-  margin-bottom: 32px;
-`;
+const ModalTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.modalTitle,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SuccessTitle = styled(H3)`
-  margin-bottom: 16px;
-  text-align: center;
-  line-height: 47px;
-`;
+const ModalContent: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.modalContent, style]} {...rest} />;
 
-const SuccessDescription = styled(Paragraph)`
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const SuccessImageContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.successImageContainer, style]} {...rest} />;
 
-const ModalButtonContainer = styled.View`
-  width: 100%;
-  padding: 16px ${ScreenGutter} 32px;
-`;
+const SuccessTitle: React.FC<React.ComponentProps<typeof H3>> = ({
+  style,
+  ...rest
+}) => <H3 style={[styles.successTitle, style]} {...rest} />;
+
+const SuccessDescription: React.FC<
+  React.ComponentProps<typeof Paragraph>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.successDescription,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const ModalButtonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.modalButtonContainer, style]} {...rest} />;
 
 interface ExportPasswordFieldValues {
   password: string;

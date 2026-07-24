@@ -4,7 +4,7 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 import {
   CurrencyColumn,
   CurrencyImageContainer,
@@ -36,7 +36,13 @@ import {
   TSSSigningStatus,
   TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
-import {RefreshControl, SectionList, View} from 'react-native';
+import {
+  RefreshControl,
+  SafeAreaView,
+  SectionList,
+  StyleSheet,
+  View,
+} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
@@ -72,44 +78,93 @@ import {
 import TSSProgressTracker from '../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
-const NotificationsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ListHeaderPadding = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-`;
+const styles = StyleSheet.create({
+  notificationsContainer: {
+    flex: 1,
+  },
+  listHeaderPadding: {
+    padding: 10,
+    marginTop: 10,
+  },
+  transactionSectionHeaderContainer: {
+    padding: gutter,
+    height: 55,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  proposalsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkBoxContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    paddingRight: 10,
+  },
+});
 
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const NotificationsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.notificationsContainer, style]} {...rest} />
+);
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+const ListHeaderPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.listHeaderPadding, style]} {...rest} />;
 
-const ProposalsContainer = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const TransactionSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CheckBoxContainer = styled.View`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 80px;
-  padding-right: 10px;
-`;
+const BorderBottom: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const ProposalsContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.proposalsContainer, style]} {...rest} />
+);
+
+const CheckBoxContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.checkBoxContainer, style]} {...rest} />;
 
 type GroupedTxpsByWallet = {
   id: number;

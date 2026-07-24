@@ -1,6 +1,6 @@
 import React from 'react';
 import {Rect, Svg, Path} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {LightBlack, NeutralSlate, Slate, SlateDark} from '../../styles/colors';
 import {ActiveOpacity, HeaderRightContainer} from '../styled/Containers';
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -23,8 +23,6 @@ const SettingsSvg: React.FC<SettingsSvgProps> = ({color, background}) => {
   );
 };
 
-const SettingsSvgContainer = styled(TouchableOpacity)``;
-
 const Settings = ({onPress}: {onPress: () => void}) => {
   const theme = useTheme();
   const color = theme.dark ? Slate : SlateDark;
@@ -32,9 +30,9 @@ const Settings = ({onPress}: {onPress: () => void}) => {
 
   return (
     <HeaderRightContainer>
-      <SettingsSvgContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+      <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onPress}>
         <SettingsSvg color={color} background={background} />
-      </SettingsSvgContainer>
+      </TouchableOpacity>
     </HeaderRightContainer>
   );
 };

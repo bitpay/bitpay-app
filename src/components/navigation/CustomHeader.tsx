@@ -1,7 +1,6 @@
 import React from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {css} from 'styled-components/native';
 import HeaderBackButton from '../back/HeaderBackButton';
 import {HeaderTitle as StyledHeaderTitle} from '../styled/Text';
 import {useAppSelector} from '../../utils/hooks';
@@ -19,31 +18,28 @@ interface HeaderProps {
 
 export const headerHeight = 56;
 
-const Wrapper = styled.View<{bg: string}>`
-  margin-top: -5px;
-  ${({bg}) =>
-    css`
-      background-color: ${bg};
-    `}
-`;
-
-const Container = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  height: ${headerHeight}px;
-  padding: 0 16px;
-`;
-
-const TitleContainer = styled.View`
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  wrapper: {
+    marginTop: -5,
+  },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: headerHeight,
+    paddingVertical: 0,
+    paddingHorizontal: 16,
+  },
+  titleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const CustomHeader: React.FC<HeaderProps> = ({navigation, back, options}) => {
   const insets = useSafeAreaInsets();
@@ -84,19 +80,19 @@ const CustomHeader: React.FC<HeaderProps> = ({navigation, back, options}) => {
   const renderRight = resolvedRight ?? <View style={{width: 24}} />;
 
   return (
-    <Wrapper style={{paddingTop}} bg={bgColor}>
-      <Container>
+    <View style={[styles.wrapper, {paddingTop, backgroundColor: bgColor}]}>
+      <View style={styles.container}>
         {renderLeft}
-        <TitleContainer>
+        <View style={styles.titleContainer}>
           {typeof title === 'function' ? (
             title({tintColor: options.headerTintColor})
           ) : (
             <StyledHeaderTitle>{title}</StyledHeaderTitle>
           )}
-        </TitleContainer>
+        </View>
         {renderRight}
-      </Container>
-    </Wrapper>
+      </View>
+    </View>
   );
 };
 

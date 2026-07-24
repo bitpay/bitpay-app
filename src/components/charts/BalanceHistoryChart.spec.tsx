@@ -217,7 +217,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('styled-components/native', () => ({
+jest.mock('../../contexts', () => ({
   useTheme: () => ({
     dark: false,
     colors: {
