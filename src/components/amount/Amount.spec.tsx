@@ -30,6 +30,10 @@ jest.mock('../../utils/hooks/useAppSelector', () => ({
     selector(mockState),
 }));
 
+jest.mock('../../utils/reactPerformanceProfiler', () => ({
+  logReactProfiler: jest.fn(),
+}));
+
 jest.mock('../haptic-feedback/haptic', () => jest.fn());
 
 jest.mock('react-native-keyevent', () => ({

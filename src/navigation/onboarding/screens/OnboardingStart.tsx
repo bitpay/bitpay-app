@@ -37,6 +37,7 @@ import PaginationDots from '../../../components/pagination-dots/PaginationDots';
 import {useSharedValue} from 'react-native-reanimated';
 import type {SharedValue} from 'react-native-reanimated';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 
 type OnboardingStartScreenProps = NativeStackScreenProps<
   OnboardingGroupParamList,
@@ -350,20 +351,27 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
       edges={Platform.OS === 'ios' ? undefined : []}
       style={styles.onboardingContainer}
       testID="onboarding-start-view">
-      <ScrollView scrollEnabled={isNarrowHeight}>
-        <OnboardingCarousel
-          onboardingSlides={onboardingSlides}
-          progressValue={progressValue}
-          onSnapToItem={onSnapToItem}
-        />
-        <View style={{height: scrollHintHeight}} />
-      </ScrollView>
+      <React.Profiler id="OnboardingStart:carousel" onRender={logReactProfiler}>
+        <ScrollView scrollEnabled={isNarrowHeight}>
+          <OnboardingCarousel
+            onboardingSlides={onboardingSlides}
+            progressValue={progressValue}
+            onSnapToItem={onSnapToItem}
+          />
+          <View style={{height: scrollHintHeight}} />
+        </ScrollView>
+      </React.Profiler>
 
-      <ScrollHintContainer>
-        <ScrollHint height={scrollHintHeight} />
-      </ScrollHintContainer>
+      <React.Profiler
+        id="OnboardingStart:scroll-hint"
+        onRender={logReactProfiler}>
+        <ScrollHintContainer>
+          <ScrollHint height={scrollHintHeight} />
+        </ScrollHintContainer>
+      </React.Profiler>
 
-      <CtaContainerAbsolute testID="cta-container" onLayout={onCtaLayout}>
+      <React.Profiler id="OnboardingStart:cta" onRender={logReactProfiler}>
+        <CtaContainerAbsolute testID="cta-container" onLayout={onCtaLayout}>
           <Row>
             <Column>
               <Row>
@@ -413,7 +421,8 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
               </ActionContainer>
             </Row>
           ) : null}
-      </CtaContainerAbsolute>
+        </CtaContainerAbsolute>
+      </React.Profiler>
     </SafeAreaView>
   );
 };
