@@ -47,11 +47,12 @@ const ExternalServicesIconContainer = ({
 
 const SwapHistorySelector = () => {
   const navigation = useNavigation();
-  const {changelly: changellyHistory, thorswap: thorswapHistory} =
-    useAppSelector(({SWAP_CRYPTO: {changelly, thorswap}}) => ({
-      changelly,
-      thorswap,
-    }));
+  const changellyHistory = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
+  );
+  const thorswapHistory = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
+  );
 
   type ExchangeData = {
     key: SwapCryptoExchangeKey;

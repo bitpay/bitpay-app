@@ -6,7 +6,7 @@ import {
   Row,
   RowContainer,
 } from '../styled/Containers';
-import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
+import type {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {StyleSheet, View} from 'react-native';
 import {H5} from '../styled/Text';
 import WalletRow, {WalletRowProps} from './WalletRow';
@@ -53,17 +53,79 @@ interface Props {
   showNetworkHeader?: boolean;
 }
 
+interface AssetsByChainHeaderProps {
+  accountItem: AssetsByChainData;
+  expanded: boolean;
+  hideBalance: boolean;
+  onToggle: (chain: string, expanded: boolean) => void;
+  showNetworkHeader?: boolean;
+}
+
+export const AssetsByChainHeader = memo(
+  ({
+    accountItem,
+    expanded,
+    hideBalance,
+    onToggle,
+    showNetworkHeader = true,
+  }: AssetsByChainHeaderProps) => {
+    const {chain, chainName, fiatBalanceFormat, chainImg} = accountItem;
+    const theme = useTheme();
+
+    if (!showNetworkHeader) {
+      return null;
+    }
+
+    return (
+      <RowContainer
+        activeOpacity={ActiveOpacity}
+        onPress={() => onToggle(chain, !expanded)}
+        style={{borderBottomWidth: 0, paddingBottom: 0}}>
+        <View style={styles.currencyImageContainer}>
+          <CurrencyImage img={chainImg} size={20} />
+        </View>
+        <Column>
+          <H5 ellipsizeMode="tail" numberOfLines={1}>
+            {chainName}
+          </H5>
+        </Column>
+        <Column style={{alignItems: 'flex-end'}}>
+          <Row style={styles.chainAssetsContainer}>
+            {!hideBalance ? (
+              <H5 numberOfLines={1} ellipsizeMode="tail">
+                {fiatBalanceFormat}
+              </H5>
+            ) : (
+              <H5 style={{marginTop: 8}}>****</H5>
+            )}
+            <ChevronContainer>
+              {expanded ? (
+                theme.dark ? (
+                  <ChevronUpSvgDark width={10} height={6} />
+                ) : (
+                  <ChevronUpSvgLight width={10} height={6} />
+                )
+              ) : theme.dark ? (
+                <ChevronDownSvgDark width={10} height={6} />
+              ) : (
+                <ChevronDownSvgLight width={10} height={6} />
+              )}
+            </ChevronContainer>
+          </Row>
+        </Column>
+      </RowContainer>
+    );
+  },
+);
+
 const AssetsByChainRow = ({
   accountItem,
-  hideIcon,
   onPress,
-  isLast,
   hideBalance,
   showChainAssetsByDefault = false,
   showNetworkHeader = true,
 }: Props) => {
-  const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
-    accountItem;
+  const {chain, chainAssetsList} = accountItem;
   const dispatch = useAppDispatch();
   const selectedLocalAssetsDropdown = useAppSelector(
     ({APP}) => APP.selectedLocalAssetsDropdown,
@@ -74,16 +136,15 @@ const AssetsByChainRow = ({
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
   }>(initialSelected);
-  const theme = useTheme();
 
-  const onHide = () => {
-    setShowChainAssets({[chain]: !showChainAssets[chain]});
+  const onHide = (_chain: string, expanded: boolean) => {
+    setShowChainAssets({[chain]: expanded});
     dispatch(
       setLocalAssetsDropdown({
         ...selectedLocalAssetsDropdown,
         [accountItem.accountAddress]: {
           ...selectedLocalAssetsDropdown?.[accountItem.accountAddress],
-          [chain]: !showChainAssets[chain],
+          [chain]: expanded,
         },
       }),
     );
@@ -91,45 +152,13 @@ const AssetsByChainRow = ({
 
   return (
     <View>
-      {showNetworkHeader ? (
-        <RowContainer
-          activeOpacity={ActiveOpacity}
-          onPress={onHide}
-          style={{borderBottomWidth: 0, paddingBottom: 0}}>
-          <View style={styles.currencyImageContainer}>
-            <CurrencyImage img={chainImg} size={20} />
-          </View>
-          <Column>
-            <H5 ellipsizeMode="tail" numberOfLines={1}>
-              {chainName}
-            </H5>
-          </Column>
-          <Column style={{alignItems: 'flex-end'}}>
-            <Row style={styles.chainAssetsContainer}>
-              {!hideBalance ? (
-                <H5 numberOfLines={1} ellipsizeMode="tail">
-                  {fiatBalanceFormat}
-                </H5>
-              ) : (
-                <H5 style={{marginTop: 8}}>****</H5>
-              )}
-              <ChevronContainer>
-                {showChainAssets[chain] ? (
-                  theme.dark ? (
-                    <ChevronUpSvgDark width={10} height={6} />
-                  ) : (
-                    <ChevronUpSvgLight width={10} height={6} />
-                  )
-                ) : theme.dark ? (
-                  <ChevronDownSvgDark width={10} height={6} />
-                ) : (
-                  <ChevronDownSvgLight width={10} height={6} />
-                )}
-              </ChevronContainer>
-            </Row>
-          </Column>
-        </RowContainer>
-      ) : null}
+      <AssetsByChainHeader
+        accountItem={accountItem}
+        expanded={!!showChainAssets[chain]}
+        hideBalance={hideBalance}
+        onToggle={onHide}
+        showNetworkHeader={showNetworkHeader}
+      />
       {Object.values(chainAssetsList).map((item: WalletRowProps) => {
         return showChainAssets[chain] ? (
           <WalletRow

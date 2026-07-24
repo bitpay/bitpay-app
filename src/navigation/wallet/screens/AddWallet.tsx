@@ -129,9 +129,7 @@ const CheckBoxContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
 }) => <View style={styles.checkBoxContainer}>{children}</View>;
 
-const OptionTitle: React.FC<
-  React.ComponentProps<typeof BaseText>
-> = props => {
+const OptionTitle: React.FC<React.ComponentProps<typeof BaseText>> = props => {
   const theme = useTheme();
   return (
     <BaseText
@@ -145,10 +143,9 @@ const OptionTitle: React.FC<
   );
 };
 
-const RowContainer: React.FC<TouchableOpacityProps> = ({
-  style,
-  ...props
-}) => <TouchableOpacity style={[styles.rowContainer, style]} {...props} />;
+const RowContainer: React.FC<TouchableOpacityProps> = ({style, ...props}) => (
+  <TouchableOpacity style={[styles.rowContainer, style]} {...props} />
+);
 
 const WalletAdvancedOptionsContainer: React.FC<{
   children?: React.ReactNode;
@@ -193,7 +190,7 @@ const AddWallet = ({
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {currencyAbbreviation, currencyName, key: _key} = route.params;
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = keys[_key.id];
   const filteredWallets = key.wallets.filter(
     ({currencyAbbreviation: c}) => currencyAbbreviation === c && IsUtxoChain(c),
@@ -363,7 +360,6 @@ const AddWallet = ({
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet.id,
-                  key,
                   skipInitializeHistory: false, // new wallet might have transactions
                 },
               },

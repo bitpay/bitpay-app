@@ -30,7 +30,6 @@ import {getFeeRatePerKb} from '../../../store/wallet/effects/fee/fee';
 import prompt from 'react-native-prompt-android';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import SelectorArrowDown from '../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../assets/img/selector-arrow-right.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -149,11 +148,7 @@ const DataText: React.FC<React.ComponentProps<typeof BaseText>> = ({
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.dataText,
-        {color: theme.dark ? White : SlateDark},
-        style,
-      ]}
+      style={[styles.dataText, {color: theme.dark ? White : SlateDark}, style]}
       {...rest}
     />
   );
@@ -191,9 +186,10 @@ const ActionsContainer: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <View style={[styles.actionsContainer, style]} {...rest} />;
 
-const SelectedOptionContainer: React.FC<
-  React.ComponentProps<typeof View>
-> = ({style, ...rest}) => {
+const SelectedOptionContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
   const theme = useTheme();
   return (
     <View
@@ -409,12 +405,10 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       const data = await _sweepWallet();
       setButtonState('success');
       logger.debug(`Sweep paper wallet: SUCCESS. ${JSON.stringify(data)} `);
-      const key = await findKeyByKeyId(selectedWallet!.keyId, keys);
       navigation.dispatch(StackActions.popToTop());
       navigation.dispatch(
         StackActions.push('WalletDetails', {
           walletId: selectedWallet!.id,
-          key,
         }),
       );
     } catch (err) {

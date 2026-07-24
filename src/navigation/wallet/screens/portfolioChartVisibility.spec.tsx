@@ -61,11 +61,20 @@ jest.mock('react-native-reanimated', () => {
 
 let mockState: any;
 let mockRouteParams: any;
+let mockIsFocused = false;
 const mockDispatch: jest.Mock = jest.fn((action: any): any =>
   typeof action === 'function' ? action(mockDispatch, () => mockState) : action,
 );
+let mockTransitionEndListener:
+  | ((event: {data: {closing: boolean}}) => void)
+  | undefined;
 const mockNavigation = {
-  addListener: jest.fn((_event: string, _callback: () => void) => jest.fn()),
+  addListener: jest.fn((event: string, callback: () => void) => {
+    if (event === 'transitionEnd') {
+      mockTransitionEndListener = callback as typeof mockTransitionEndListener;
+    }
+    return jest.fn();
+  }),
   dispatch: jest.fn(),
   getParent: jest.fn(() => ({
     navigate: jest.fn(),
@@ -99,7 +108,8 @@ jest.mock('@react-navigation/native', () => ({
     reset: jest.fn(payload => payload),
   },
   createNavigatorFactory: jest.fn((navigator: unknown) => navigator),
-  useIsFocused: () => false,
+  useFocusEffect: jest.fn(),
+  useIsFocused: () => mockIsFocused,
   useNavigation: () => mockNavigation,
   useRoute: () => ({
     params: mockRouteParams,
@@ -438,6 +448,10 @@ jest.mock('../../../store/wallet/utils/wallet', () => ({
   })),
   buildWalletObj: jest.fn(() => mockWallet),
   checkPrivateKeyEncrypted: jest.fn(() => false),
+  getWalletAccountVisibilityKey: jest.fn(
+    (wallet: any) => wallet?.receiveAddress || '',
+  ),
+  isWalletVisibleForKey: jest.fn(() => true),
   findWalletById: jest.fn(() => mockWallet),
   getRemainingWalletCount: jest.fn(() => 0),
   isSegwit: jest.fn(() => false),
@@ -625,6 +639,7 @@ jest.mock('../../../utils/portfolio/allocation', () => ({
 }));
 
 jest.mock('../../../store/wallet/effects', () => ({
+  getActiveWalletStoreInitPromise: jest.fn(() => undefined),
   getDecryptPassword: jest.fn(() => Promise.resolve('password')),
   normalizeMnemonic: jest.fn((value: string) => value),
   refreshRatesForPortfolioPnl: jest.fn(() => ({type: 'REFRESH_RATES'})),
@@ -705,6 +720,9 @@ const mockBalanceHistoryChart = jest.requireMock(
 const mockGetTransactionHistory = jest.requireMock(
   '../../../store/wallet/effects/transactions/transactions',
 ).GetTransactionHistory as jest.Mock;
+const mockBuildAccountList = jest.requireMock(
+  '../../../store/wallet/utils/wallet',
+).buildAccountList as jest.Mock;
 const mockBuildUIFormattedWallet = jest.requireMock(
   '../../../store/wallet/utils/wallet',
 ).buildUIFormattedWallet as jest.Mock;
@@ -954,6 +972,8 @@ const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
 describe('portfolio chart visibility guards', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockTransitionEndListener = undefined;
+    mockIsFocused = false;
     mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
       hasAllSnapshots: true,
@@ -971,6 +991,22 @@ describe('portfolio chart visibility guards', () => {
     });
 
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
+
+  it('builds the Key Overview account list only after the opening transition', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+
+    expect(mockBuildAccountList).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mockTransitionEndListener?.({data: {closing: false}});
+    });
+
+    expect(mockBuildAccountList).toHaveBeenCalledTimes(1);
   });
 
   it('does not mount the WalletDetails balance chart or loader when Show Portfolio is disabled', async () => {
@@ -1047,6 +1083,63 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
+  it('keeps the account switcher enabled without eagerly formatting every account', async () => {
+    const secondWallet = {
+      ...makeWallet(),
+      credentials: {
+        ...makeWallet().credentials,
+        account: 1,
+        walletId: 'wallet-2',
+      },
+      id: 'wallet-2',
+      receiveAddress: 'address-2',
+    };
+    mockKey.wallets = [mockWallet, secondWallet];
+
+    await act(async () => {
+      renderWithTheme(
+        <AccountDetails
+          navigation={mockNavigation as any}
+          route={
+            {
+              params: {
+                isSvmAccount: false,
+                keyId: 'key-1',
+                selectedAccountAddress: 'address-1',
+              },
+            } as any
+          }
+        />,
+      );
+    });
+
+    const headerOptions = mockNavigation.setOptions.mock.calls
+      .map(([options]) => options)
+      .find(options => options.headerTitle);
+    const headerTitle = headerOptions.headerTitle();
+
+    expect(headerTitle.props.disabled).toBe(false);
+    expect(mockBuildAccountList).not.toHaveBeenCalledWith(
+      mockKey,
+      'USD',
+      {},
+      mockDispatch,
+      {filterByHideWallet: true},
+    );
+
+    await act(async () => {
+      headerTitle.props.onPress();
+    });
+
+    expect(mockBuildAccountList).toHaveBeenCalledWith(
+      mockKey,
+      'USD',
+      {},
+      mockDispatch,
+      {filterByHideWallet: true},
+    );
+  });
+
   it('keeps the Home portfolio balance visible without mounting the chart when Show Portfolio is disabled after initial success', async () => {
     resetState(false, {completedFullPopulate: true});
 
@@ -1072,6 +1165,7 @@ describe('portfolio chart visibility guards', () => {
 
   it('keeps the HomeRoot balance section and linking buttons visible when Show Portfolio is disabled', async () => {
     resetState(false, {completedFullPopulate: true});
+    mockIsFocused = true;
 
     let view: TestRenderer.ReactTestRenderer;
     await act(async () => {
@@ -1314,7 +1408,7 @@ describe('portfolio chart visibility guards', () => {
     'does not render the %s zero chart when a non-zero live-balance scope has no snapshots',
     async (_screen, makeScreen) => {
       resetState(true);
-      mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+      mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
         checked: true,
         hasAllSnapshots: false,
         hasAnySnapshots: false,

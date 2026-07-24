@@ -202,11 +202,9 @@ const PRContainer = ({children}: {children: React.ReactNode}) => (
   <View style={styles.prContainer}>{children}</View>
 );
 
-export const ClipboardContainer = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => <View style={styles.clipboardContainer}>{children}</View>;
+export const ClipboardContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.clipboardContainer}>{children}</View>
+);
 
 const BalanceColumn = ({children}: {children: React.ReactNode}) => (
   <Column style={styles.balanceColumn}>{children}</Column>
@@ -266,7 +264,7 @@ const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const [imageError, setImageError] = useState(false);

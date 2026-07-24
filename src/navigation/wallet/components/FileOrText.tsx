@@ -213,10 +213,7 @@ const FileInputContainer: React.FC<
   );
 };
 
-const PasteContainer: React.FC<TouchableOpacityProps> = ({
-  style,
-  ...props
-}) => {
+const PasteContainer: React.FC<TouchableOpacityProps> = ({style, ...props}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
@@ -453,7 +450,6 @@ const FileOrText = () => {
         name: WalletScreens.WALLET_DETAILS,
         params: {
           walletId: firstWallet?.id,
-          key,
         },
       };
       const routes = IsVMChain(firstWallet?.chain)

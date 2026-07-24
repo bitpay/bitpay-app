@@ -193,17 +193,15 @@ const styles = StyleSheet.create({
   },
 });
 
-const ScreenContainer: React.FC<
-  React.ComponentProps<typeof SafeAreaView>
-> = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.screenContainer, style]} {...rest} />
-);
+const ScreenContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.screenContainer, style]} {...rest} />;
 
-const TopSection: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => (
-  <TouchableOpacity style={[styles.topSection, style]} {...rest} />
-);
+const TopSection: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.topSection, style]} {...rest} />;
 
 const AbbreviationLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
   style,
@@ -244,9 +242,10 @@ const SectionTitle: React.FC<React.ComponentProps<typeof H5>> = ({
   ...rest
 }) => <H5 style={[styles.sectionTitle, style]} {...rest} />;
 
-const WalletCard: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => {
+const WalletCard: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
@@ -638,7 +637,6 @@ const ExchangeRateScreenLayout = ({
                 onPress={() => {
                   navigation.navigate('WalletDetails', {
                     walletId: wallet.credentials?.walletId || wallet.id,
-                    key: shared.keys[wallet.keyId],
                     copayerId: wallet.credentials?.copayerId,
                   });
                 }}>

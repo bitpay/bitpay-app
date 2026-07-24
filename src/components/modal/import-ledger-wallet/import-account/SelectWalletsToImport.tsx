@@ -44,7 +44,7 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const dispatch = useAppDispatch();
 
   const _onComplete = () => {

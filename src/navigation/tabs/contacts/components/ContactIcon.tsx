@@ -1,4 +1,4 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, useMemo} from 'react';
 import {StyleSheet, View} from 'react-native';
 
 import Avatar from '../../../../components/avatar/Avatar';
@@ -47,13 +47,14 @@ const styles = StyleSheet.create({
 const getCoinBadgeRight = (size: number) =>
   size <= 20 ? -1 : size === 45 || size === 30 ? -13 : -1;
 
-const CoinBadgeContainer: React.FC<{size: number; children?: React.ReactNode}> =
-  ({size, children}) => (
-    <View
-      style={[styles.coinBadgeContainer, {right: getCoinBadgeRight(size)}]}>
-      {children}
-    </View>
-  );
+const CoinBadgeContainer: React.FC<{
+  size: number;
+  children?: React.ReactNode;
+}> = ({size, children}) => (
+  <View style={[styles.coinBadgeContainer, {right: getCoinBadgeRight(size)}]}>
+    {children}
+  </View>
+);
 
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,
@@ -66,13 +67,18 @@ const ContactIcon: React.FC<ContactIconProps> = ({
 }) => {
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
+  );
+  const tokenOptionsByAddress = useMemo(
+    () =>
+      ({
+        ...BitpaySupportedTokenOptsByAddress,
+        ..._tokenOptionsByAddress,
+        ...customTokenOptionsByAddress,
+      } as {[key in string]: Token}),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
   const foundToken =
     tokenAddress &&
     chain &&

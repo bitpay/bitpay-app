@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   BaseText,
   H4,
@@ -78,7 +84,6 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
-import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {
   TouchableOpacity,
@@ -225,9 +230,7 @@ const AddressRow: React.FC<React.ComponentProps<typeof Row>> = ({
   ...props
 }) => <Row style={[styles.addressRow, style]} {...props} />;
 
-const AccountLabel: React.FC<
-  React.ComponentProps<typeof BaseText>
-> = props => (
+const AccountLabel: React.FC<React.ComponentProps<typeof BaseText>> = props => (
   <BaseText {...props} style={[styles.accountLabel, props.style]} />
 );
 
@@ -258,9 +261,9 @@ export const AddPillContainer: React.FC<{children?: React.ReactNode}> = ({
   );
 };
 
-const BadgeContainer: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => <View style={styles.badgeContainer}>{children}</View>;
+const BadgeContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.badgeContainer}>{children}</View>
+);
 
 const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
@@ -283,14 +286,18 @@ const AddCustomToken = ({
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
   const {key: _key, selectedAccountAddress, selectedChain} = route.params;
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
+  const tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+      ...customTokenOptionsByAddress,
+    }),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  ) as {[key in string]: Token};
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = keys[_key.id];
   const [isTestnet, setIsTestnet] = useState(false);
   const [isRegtest, setIsRegtest] = useState(false);
@@ -504,7 +511,6 @@ const AddCustomToken = ({
           name: WalletScreens.WALLET_DETAILS,
           params: {
             walletId: wallet.id,
-            key,
             skipInitializeHistory: false,
           },
         };

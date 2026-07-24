@@ -132,8 +132,7 @@ const AccountSettings = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const _key: Key = keys[key.id];
+  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const tssMetadata = _key.wallets.find(wallet => wallet.tssKeyId)?.tssMetadata;
 
   const [searchVal, setSearchVal] = useState('');
@@ -141,11 +140,10 @@ const AccountSettings = () => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const accountItem = useMemo(() => {
     const updatedKey = {
-      ...key,
+      ..._key,
       wallets: _key.wallets.filter(
         wallet => wallet.receiveAddress === selectedAccountAddress,
       ),
@@ -153,13 +151,13 @@ const AccountSettings = () => {
     return buildAccountList(
       updatedKey,
       defaultAltCurrency.isoCode,
-      rates,
+      {},
       dispatch,
       {
         skipFiatCalculations: true,
       },
     )[0];
-  }, [_key, defaultAltCurrency.isoCode, rates]);
+  }, [_key, defaultAltCurrency.isoCode, dispatch, selectedAccountAddress]);
   const {accountName} = accountItem;
   const [hideAccount, setHideAccount] = useState(
     () =>

@@ -126,11 +126,10 @@ const Header: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.header}>{children}</View>
 );
 
-const HeaderAction: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => (
-  <TouchableOpacity style={[styles.headerAction, style]} {...rest} />
-);
+const HeaderAction: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.headerAction, style]} {...rest} />;
 
 const Card: React.FC<{style?: any; children?: React.ReactNode}> = ({
   style,
@@ -156,9 +155,9 @@ const ContentRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.contentRow}>{children}</View>
 );
 
-const DonutContainer: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => <View style={styles.donutContainer}>{children}</View>;
+const DonutContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.donutContainer}>{children}</View>
+);
 
 const LegendGrid: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.legendGrid}>{children}</View>
@@ -168,9 +167,9 @@ const LegendColumn: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.legendColumn}>{children}</View>
 );
 
-const LegendItemRow: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => <View style={styles.legendItemRow}>{children}</View>;
+const LegendItemRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.legendItemRow}>{children}</View>
+);
 
 const LegendDot: React.FC<{color: string}> = ({color}) => {
   const theme = useTheme();
@@ -521,7 +520,7 @@ const AllocationSection: React.FC = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   const visibleWallets = useMemo(

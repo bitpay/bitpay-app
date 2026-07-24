@@ -119,7 +119,6 @@ const AmountModal: React.FC<AmountModalProps> = props => {
           limitsOpts={limitsOpts}
           isModal={true}
           reduceTopGap={showArchaxBanner}
-          onSendMaxPressed={onSendMaxPressed}
         />
       </AmountModalContainerHOC>
     </SheetModal>

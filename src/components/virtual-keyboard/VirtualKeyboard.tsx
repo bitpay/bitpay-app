@@ -125,10 +125,7 @@ const CellLetter: React.FC<React.ComponentProps<typeof BaseText>> = ({
 const SymbolContainer: React.FC<
   SymbolContainerProps & React.ComponentProps<typeof View>
 > = ({showLetters, style, ...rest}) => (
-  <View
-    style={[showLetters ? {marginTop: -13} : null, style]}
-    {...rest}
-  />
+  <View style={[showLetters ? {marginTop: -13} : null, style]} {...rest} />
 );
 
 export interface NumArray {
@@ -142,9 +139,11 @@ export interface VirtualKeyboardProps {
   showDot?: boolean;
   darkModeOnly?: boolean;
   context?: KeyboardSizesContext;
+  isSmallScreen?: boolean;
 }
 
-interface CellProps extends Pick<VirtualKeyboardProps, 'onCellPress'> {
+interface CellProps
+  extends Pick<VirtualKeyboardProps, 'onCellPress' | 'isSmallScreen'> {
   value: string;
   letters?: string;
   backgroundColor: string;
@@ -159,21 +158,20 @@ const Cell: React.FC<CellProps> = ({
   backgroundColor,
   darkModeOnly,
   context,
+  isSmallScreen,
 }) => {
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
   const accessibilityLabel = `${value}-button`;
   return (
     <View style={styles.cellContainer} accessibilityLabel={accessibilityLabel}>
       <VirtualKeyboardButtonAnimation
-        isSmallScreen={_isSmallScreen}
+        isSmallScreen={isSmallScreen}
         onPress={() => onCellPress?.(value)}
         backgroundColor={backgroundColor}
         context={context}>
         <>
           <CellValue
             darkModeOnly={darkModeOnly}
-            isSmallScreen={_isSmallScreen}
+            isSmallScreen={isSmallScreen}
             context={context}>
             {value}
           </CellValue>
@@ -185,7 +183,10 @@ const Cell: React.FC<CellProps> = ({
 };
 
 interface RowProps
-  extends Pick<VirtualKeyboardProps, 'onCellPress' | 'showLetters'> {
+  extends Pick<
+    VirtualKeyboardProps,
+    'onCellPress' | 'showLetters' | 'isSmallScreen'
+  > {
   numArray: NumArray[];
   backgroundColor: string;
   darkModeOnly?: boolean;
@@ -199,6 +200,7 @@ const Row: React.FC<RowProps> = ({
   backgroundColor,
   darkModeOnly,
   context,
+  isSmallScreen,
 }) => {
   return (
     <View style={styles.rowContainer}>
@@ -212,6 +214,7 @@ const Row: React.FC<RowProps> = ({
               backgroundColor={backgroundColor}
               darkModeOnly={darkModeOnly}
               context={context}
+              isSmallScreen={isSmallScreen}
             />
           ))
         : null}
@@ -219,12 +222,20 @@ const Row: React.FC<RowProps> = ({
   );
 };
 
-const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
+type ResolvedVirtualKeyboardProps = Omit<
+  VirtualKeyboardProps,
+  'isSmallScreen'
+> & {
+  isSmallScreen: boolean;
+};
+
+const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
   onCellPress,
   showLetters = false,
   showDot = true,
   darkModeOnly = false,
   context,
+  isSmallScreen,
 }) => {
   const theme = useTheme();
   const backgroundColor =
@@ -232,10 +243,10 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       ? 'rgba(255, 255, 255, 0.2)'
       : 'rgba(0, 0, 0, 0.1)';
   const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
+  const _isSmallScreen = isSmallScreen;
   return (
-    <View style={{marginVertical: _isSmallScreen ? 5 : 10, marginHorizontal: 0}}>
+    <View
+      style={{marginVertical: _isSmallScreen ? 5 : 10, marginHorizontal: 0}}>
       <Row
         numArray={[
           {
@@ -256,6 +267,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         backgroundColor={backgroundColor}
         darkModeOnly={darkModeOnly}
         context={context}
+        isSmallScreen={_isSmallScreen}
       />
       <Row
         numArray={[
@@ -277,6 +289,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         backgroundColor={backgroundColor}
         darkModeOnly={darkModeOnly}
         context={context}
+        isSmallScreen={_isSmallScreen}
       />
       <Row
         numArray={[
@@ -298,6 +311,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         backgroundColor={backgroundColor}
         darkModeOnly={darkModeOnly}
         context={context}
+        isSmallScreen={_isSmallScreen}
       />
 
       <View style={styles.rowContainer}>
@@ -325,12 +339,13 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
           ) : null}
         </View>
         <Cell
-          onCellPress={() => onCellPress?.('0')}
+          onCellPress={onCellPress}
           value={'0'}
           letters={undefined}
           backgroundColor={backgroundColor}
           darkModeOnly={darkModeOnly}
           context={context}
+          isSmallScreen={_isSmallScreen}
         />
 
         <View
@@ -356,5 +371,28 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
     </View>
   );
 };
+
+const StoreSizedVirtualKeyboard = memo(
+  (props: Omit<VirtualKeyboardProps, 'isSmallScreen'>) => {
+    const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+
+    return (
+      <VirtualKeyboardContent
+        {...props}
+        isSmallScreen={showArchaxBanner ? true : isNarrowHeight}
+      />
+    );
+  },
+);
+
+const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
+  isSmallScreen,
+  ...rest
+}) =>
+  isSmallScreen === undefined ? (
+    <StoreSizedVirtualKeyboard {...rest} />
+  ) : (
+    <VirtualKeyboardContent {...rest} isSmallScreen={isSmallScreen} />
+  );
 
 export default memo(VirtualKeyboard);

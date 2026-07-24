@@ -105,7 +105,6 @@ const ClearTransactionHistoryCache: React.FC<
           name: WalletScreens.WALLET_DETAILS,
           params: {
             walletId: wallet.id,
-            key,
             skipInitializeHistory: false,
           },
         };

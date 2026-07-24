@@ -80,17 +80,17 @@ const AltCurrencySettingsContainer = ({
   style,
   ...rest
 }: React.ComponentProps<typeof SafeAreaView>) => (
-  <SafeAreaView style={[styles.altCurrencySettingsContainer, style]} {...rest} />
+  <SafeAreaView
+    style={[styles.altCurrencySettingsContainer, style]}
+    {...rest}
+  />
 );
 
 const Header = ({style, ...rest}: React.ComponentProps<typeof View>) => (
   <View style={[styles.header, style]} {...rest} />
 );
 
-const SearchResults = ({
-  style,
-  ...rest
-}: React.ComponentProps<typeof View>) => (
+const SearchResults = ({style, ...rest}: React.ComponentProps<typeof View>) => (
   <View style={[styles.searchResults, style]} {...rest} />
 );
 
@@ -134,11 +134,7 @@ const ListHeader = ({
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.listHeader,
-        {color: theme.dark ? White : Black},
-        style,
-      ]}
+      style={[styles.listHeader, {color: theme.dark ? White : Black}, style]}
       {...rest}
     />
   );
@@ -155,7 +151,9 @@ const AltCurrencySettings = () => {
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
-  const portfolio = useAppSelector(({PORTFOLIO}: RootState) => PORTFOLIO);
+  const portfolioPopulateInProgress = useAppSelector(
+    ({PORTFOLIO}: RootState) => !!PORTFOLIO.populateStatus?.inProgress,
+  );
   const recentDefaultAltCurrency = useAppSelector(
     ({APP}) => APP.recentDefaultAltCurrency,
   );
@@ -248,10 +246,7 @@ const AltCurrencySettings = () => {
               const isDisplayCurrencyChange =
                 !!nextQuoteCurrency &&
                 currentDisplayQuoteCurrency !== nextQuoteCurrency;
-              const isPopulateInProgress =
-                !!portfolio.populateStatus?.inProgress;
-
-              if (isDisplayCurrencyChange && isPopulateInProgress) {
+              if (isDisplayCurrencyChange && portfolioPopulateInProgress) {
                 dispatch(cancelPopulatePortfolio());
               }
 
@@ -278,7 +273,7 @@ const AltCurrencySettings = () => {
       dispatch,
       hideOngoingProcess,
       navigation,
-      portfolio,
+      portfolioPopulateInProgress,
       selectedAltCurrency,
       showOngoingProcess,
     ],

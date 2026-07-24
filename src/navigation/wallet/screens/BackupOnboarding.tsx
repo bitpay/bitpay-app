@@ -79,7 +79,9 @@ const BackupOnboarding: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const logger = useLogger();
-  const {biometricLockActive} = useAppSelector(({APP}) => APP);
+  const biometricLockActive = useAppSelector(
+    ({APP}) => APP.biometricLockActive,
+  );
 
   const route = useRoute<RouteProp<WalletGroupParamList, 'BackupOnboarding'>>();
   const {key, buildEncryptModalConfig} = route.params;

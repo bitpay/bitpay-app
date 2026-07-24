@@ -37,7 +37,7 @@ export default ({
   onDropdownPress: (keyId: string) => void;
 }) => {
   const {t} = useTranslation();
-  const {hideAllBalances} = useAppSelector(({APP}) => APP);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   return (
     <View style={{marginTop: 12, marginBottom: 100}}>
       {keys && keys.length ? (
