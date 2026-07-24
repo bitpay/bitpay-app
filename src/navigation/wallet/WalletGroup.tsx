@@ -21,7 +21,7 @@ import WalletSettings from './screens/WalletSettings';
 import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
-import {H7, HeaderTitle} from '../../components/styled/Text';
+import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
@@ -77,7 +77,8 @@ import ClearEncryptPassword, {
 import PayProConfirmTwoFactor, {
   PayProConfirmTwoFactorParamList,
 } from './screens/send/confirm/PayProConfirmTwoFactor';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {useStackScreenOptions} from '../utils/headerHelpers';
 import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
@@ -91,8 +92,6 @@ import BackupOnboarding, {
 import {Root} from '../../Root';
 import {AccountRowProps} from '../../components/list/AccountListRow';
 import KeyInformation from './screens/KeyInformation';
-import {useAppSelector} from '../../utils/hooks';
-import {RootState} from '../../store';
 import BackupSharedKeyScreen, {
   BackupSharedKeyParamList,
 } from './screens/BackupSharedKey';
@@ -264,10 +263,6 @@ export enum WalletScreens {
 }
 
 const WalletGroup = ({Wallet, theme}: WalletProps) => {
-  const {t} = useTranslation();
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Wallet.Group screenOptions={commonOptions}>

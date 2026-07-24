@@ -6,7 +6,8 @@ import AltCurrencySettings from './screens/AltCurrencySettings';
 import LanguageSettings from './screens/LanguageSettings';
 import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root} from '../../../../Root';
 
 interface GeneralSettingsProps {
@@ -28,7 +29,6 @@ export enum GeneralSettingsScreens {
 }
 
 const GeneralSettingsGroup = ({GeneralSettings}: GeneralSettingsProps) => {
-  const {t} = useTranslation();
   return (
     <GeneralSettings.Group
       screenOptions={() => ({

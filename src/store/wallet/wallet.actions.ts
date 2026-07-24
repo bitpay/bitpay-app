@@ -265,6 +265,7 @@ export const setSvmAddressCreationFixComplete = (): WalletActionType => ({
 export const successUpdateWalletBalancesAndStatus = (payload: {
   keyBalances: {
     keyId: string;
+    cacheKey?: string;
     totalBalance: number;
     totalBalanceLastDay: number;
   }[];

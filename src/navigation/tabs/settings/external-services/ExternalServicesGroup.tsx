@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import BanxaDetails from './screens/BanxaDetails';
@@ -162,7 +163,6 @@ const ExternalServicesSettingsGroup = ({
   theme,
 }: ExternalServicesSettingsProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <ExternalServicesSettings.Group screenOptions={commonOptions}>
       <ExternalServicesSettings.Screen

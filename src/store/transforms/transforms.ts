@@ -142,16 +142,39 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
     const keys = inboundState.keys || {};
-    if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys)) {
-        key.wallets.forEach(wallet => delete wallet.transactionHistory);
+    let persistedKeys: WalletState['keys'] | undefined;
 
-        inboundState.keys[id] = {
+    for (const [id, key] of Object.entries(keys)) {
+      let persistedWallets: Wallet[] | undefined;
+
+      key.wallets.forEach((wallet, walletIndex) => {
+        if (
+          !Object.prototype.hasOwnProperty.call(wallet, 'transactionHistory')
+        ) {
+          return;
+        }
+
+        const persistedWallet = {...wallet};
+        delete persistedWallet.transactionHistory;
+        persistedWallets ??= [...key.wallets];
+        persistedWallets[walletIndex] = persistedWallet;
+      });
+
+      if (persistedWallets) {
+        persistedKeys ??= {...keys};
+        persistedKeys[id] = {
           ...key,
+          wallets: persistedWallets,
         };
       }
     }
-    return inboundState;
+
+    return persistedKeys
+      ? {
+          ...inboundState,
+          keys: persistedKeys,
+        }
+      : inboundState;
   },
   // transform state being rehydrated
   outboundState => {
