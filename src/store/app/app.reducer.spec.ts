@@ -289,6 +289,15 @@ describe('RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG', () => {
     });
     expect(state.bottomNotificationModalConfig).toBeUndefined();
   });
+
+  it('preserves the state reference when the config is already empty', () => {
+    const base = freshState();
+    const state = appReducer(base, {
+      type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
+    });
+
+    expect(state).toBe(base);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -981,6 +990,16 @@ describe('misc flags', () => {
       payload: true,
     });
     expect(state.showArchaxBanner).toBe(true);
+  });
+
+  it('SHOW_ARCHAX_BANNER preserves the state reference when unchanged', () => {
+    const base = {...freshState(), showArchaxBanner: true};
+    const state = appReducer(base, {
+      type: AppActionTypes.SHOW_ARCHAX_BANNER,
+      payload: true,
+    });
+
+    expect(state).toBe(base);
   });
 });
 

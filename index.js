@@ -39,7 +39,6 @@ import {
   OngoingProcessProvider,
   BottomSheetProvider,
   TokenProvider,
-  LogProvider,
   ThemeProvider,
 } from './src/contexts';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
@@ -229,20 +228,18 @@ const AppWrapper = () => {
         />
         <GestureHandlerRootView style={{flex: 1}}>
           <TokenProvider>
-            <LogProvider>
-              <OngoingProcessProvider>
-                <BottomSheetModalProvider>
-                  <BottomSheetProvider>
-                    <PaymentSentProvider>
-                      <DklsWorkerHost />
-                      <AppInitialization>
-                        <Root />
-                      </AppInitialization>
-                    </PaymentSentProvider>
-                  </BottomSheetProvider>
-                </BottomSheetModalProvider>
-              </OngoingProcessProvider>
-            </LogProvider>
+            <OngoingProcessProvider>
+              <BottomSheetModalProvider>
+                <BottomSheetProvider>
+                  <PaymentSentProvider>
+                    <DklsWorkerHost />
+                    <AppInitialization>
+                      <Root />
+                    </AppInitialization>
+                  </PaymentSentProvider>
+                </BottomSheetProvider>
+              </BottomSheetModalProvider>
+            </OngoingProcessProvider>
           </TokenProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>

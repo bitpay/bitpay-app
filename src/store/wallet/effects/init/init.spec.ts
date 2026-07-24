@@ -33,6 +33,7 @@ jest.mock('../../../../managers/LogManager', () => ({
 
 import {
   clearWalletStoreInitPromiseForTests,
+  getActiveWalletStoreInitPromise,
   startWalletStoreInit,
   waitForStartupWalletStoreInitForPortfolio,
 } from './init';
@@ -95,6 +96,28 @@ describe('wallet store init portfolio wait', () => {
       status: 'completed',
       walletInitSuccess: true,
     });
+  });
+
+  it('exposes only the currently active wallet init promise', async () => {
+    let finishInit: (() => void) | undefined;
+    mockGetAndDispatchUpdatedWalletBalances.mockReturnValueOnce(
+      () =>
+        new Promise<void>(resolve => {
+          finishInit = resolve;
+        }),
+    );
+    const {dispatch} = makeStore();
+
+    const initPromise = dispatch(startWalletStoreInit());
+
+    expect(getActiveWalletStoreInitPromise()).toBeDefined();
+
+    await Promise.resolve();
+    expect(finishInit).toBeDefined();
+    finishInit?.();
+    await initPromise;
+
+    expect(getActiveWalletStoreInitPromise()).toBeUndefined();
   });
 
   it('returns the recorded failed result after wallet init already failed', async () => {

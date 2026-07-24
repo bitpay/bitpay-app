@@ -1,7 +1,8 @@
 import React from 'react';
 import {Theme} from '@react-navigation/native';
 import {H7, HeaderTitle} from '../../components/styled/Text';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root} from '../../Root';
 import {useStackScreenOptions} from '../utils/headerHelpers';
 import BuyAndSellRoot, {BuyAndSellRootProps} from './screens/BuyAndSellRoot';
@@ -53,13 +54,40 @@ export enum ExternalServicesScreens {
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
 }
 
+const AccountHeader = ({
+  wallet,
+}: {
+  wallet: BuyAndSellRootProps['fromWallet'];
+}) => {
+  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  if (!wallet || !IsVMChain(wallet.chain)) {
+    return null;
+  }
+
+  const accountName = getEVMAccountName(wallet, allKeys);
+  return (
+    <AccountChainsContainer padding="8px" maxWidth={`${WIDTH / 2 - 50}px`}>
+      <Blockie size={19} seed={wallet.receiveAddress} />
+      <H7
+        ellipsizeMode="tail"
+        numberOfLines={1}
+        style={{flexShrink: 1, fontSize: 13, letterSpacing: 0}}>
+        {accountName ||
+          `${IsSVMChain(wallet.chain) ? 'Solana Account' : 'EVM Account'}${
+            Number(wallet.credentials?.account) === 0
+              ? ''
+              : ` (${wallet.credentials?.account})`
+          }`}
+      </H7>
+    </AccountChainsContainer>
+  );
+};
+
 const ExternalServicesGroup = ({
   ExternalServices,
   theme,
 }: ExternalServicesProps): React.ReactElement => {
   const commonOptions = useStackScreenOptions(theme);
-  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const {t} = useTranslation();
   return (
     <ExternalServices.Group screenOptions={commonOptions}>
       <ExternalServices.Screen
@@ -76,37 +104,9 @@ const ExternalServicesGroup = ({
                 return undefined;
             }
           },
-          headerRight: () =>
-            route.params?.fromWallet ? (
-              IsVMChain(route.params.fromWallet.chain) ? (
-                <AccountChainsContainer
-                  padding="8px"
-                  maxWidth={`${WIDTH / 2 - 50}px`}>
-                  <Blockie
-                    size={19}
-                    seed={route.params.fromWallet.receiveAddress}
-                  />
-                  <H7
-                    ellipsizeMode="tail"
-                    numberOfLines={1}
-                    style={{flexShrink: 1, fontSize: 13, letterSpacing: 0}}>
-                    {getEVMAccountName(route.params.fromWallet, allKeys)
-                      ? getEVMAccountName(route.params.fromWallet, allKeys)
-                      : `${
-                          IsSVMChain(route.params.fromWallet.chain)
-                            ? 'Solana Account'
-                            : 'EVM Account'
-                        }${
-                          Number(
-                            route.params.fromWallet.credentials?.account,
-                          ) === 0
-                            ? ''
-                            : ` (${route.params.fromWallet.credentials?.account})`
-                        }`}
-                  </H7>
-                </AccountChainsContainer>
-              ) : null
-            ) : null,
+          headerRight: () => (
+            <AccountHeader wallet={route.params?.fromWallet} />
+          ),
         })}
       />
       <ExternalServices.Screen
