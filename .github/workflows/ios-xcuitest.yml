@@ -61,8 +61,8 @@ jobs:
           ruby-version: '2.7.6'
           bundler-cache: true
 
-      - name: Select Xcode 26.0.1
-        run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
+      - name: Select Xcode 26.2
+        run: sudo xcode-select -switch /Applications/Xcode_26.2.app
 
       - name: Debug - installed runtimes
         run: xcrun simctl list runtimes
