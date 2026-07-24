@@ -1,5 +1,5 @@
 import debounce from 'lodash.debounce';
-import React, {memo, useMemo, useRef} from 'react';
+import React, {memo, useLayoutEffect, useMemo, useRef} from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -290,7 +290,15 @@ const ButtonText: React.FC<ButtonOptionProps> = ({
     <ButtonBaseText
       style={[
         styles.buttonText,
-        {color: getButtonTextColor({danger, disabled, secondary, outline, theme})},
+        {
+          color: getButtonTextColor({
+            danger,
+            disabled,
+            secondary,
+            outline,
+            theme,
+          }),
+        },
       ]}>
       {children}
     </ButtonBaseText>
@@ -318,6 +326,31 @@ const ButtonContainerFlex: React.FC<
 const ButtonTextContainer: React.FC<React.PropsWithChildren<{}>> = ({
   children,
 }) => <View style={styles.buttonTextContainer}>{children}</View>;
+
+const StatefulButtonContent: React.FC<
+  React.PropsWithChildren<{hidden: boolean}>
+> = ({hidden, children}) => {
+  const childOpacity = useSharedValue(hidden ? 0 : 1);
+  const previousHiddenRef = useRef(hidden);
+
+  useLayoutEffect(() => {
+    if (previousHiddenRef.current === hidden) {
+      return;
+    }
+
+    previousHiddenRef.current = hidden;
+    childOpacity.value = withDelay(
+      hidden ? 0 : DURATION,
+      withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+    );
+  }, [childOpacity, hidden]);
+
+  const childrenStyle = useAnimatedStyle(() => ({
+    opacity: childOpacity.value,
+  }));
+
+  return <Animated.View style={childrenStyle}>{children}</Animated.View>;
+};
 
 const getPillBackground = ({
   secondary,
@@ -479,11 +512,18 @@ const getLinkTextColor = ({
   return Action;
 };
 
-const LinkText: React.FC<ButtonOptionProps> = ({disabled, danger, children}) => {
+const LinkText: React.FC<ButtonOptionProps> = ({
+  disabled,
+  danger,
+  children,
+}) => {
   const theme = useTheme();
   return (
     <ButtonBaseText
-      style={[styles.linkText, {color: getLinkTextColor({disabled, danger, theme})}]}>
+      style={[
+        styles.linkText,
+        {color: getLinkTextColor({disabled, danger, theme})},
+      ]}>
       {children}
     </ButtonBaseText>
   );
@@ -519,16 +559,10 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const isSuccess = state === 'success';
   const isFailure = state === 'failed';
   const hideContent = !!state;
-
-  const childOpacity = useSharedValue(1);
-  childOpacity.value = withDelay(
-    hideContent ? 0 : DURATION,
-    withTiming(hideContent ? 0 : 1, {duration: 0, easing: Easing.linear}),
+  const supportsAnimatedState = Object.prototype.hasOwnProperty.call(
+    props,
+    'state',
   );
-
-  const childrenStyle = useAnimatedStyle(() => ({
-    opacity: childOpacity.value,
-  }));
 
   let ButtonTypeContainer: React.FC<ButtonOptionProps>;
   let ButtonTypeText: React.FC<ButtonOptionProps>;
@@ -598,48 +632,73 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         action={action}
         backgroundColor={backgroundColor}
         borderRadius={borderRadius}>
-        <Animated.View style={childrenStyle}>
-          <ButtonContainerFlex hasIcon={!!icon}>
-            <ButtonTextContainer>
-              <ButtonTypeText
-                secondary={secondary}
-                cancel={cancel}
-                danger={danger}
-                disabled={disabled}
-                outline={outline}
-                action={action}>
-                {children}
-              </ButtonTypeText>
-            </ButtonTextContainer>
-            {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
-          </ButtonContainerFlex>
-        </Animated.View>
+        {supportsAnimatedState ? (
+          <StatefulButtonContent hidden={hideContent}>
+            <ButtonContainerFlex hasIcon={!!icon}>
+              <ButtonTextContainer>
+                <ButtonTypeText
+                  secondary={secondary}
+                  cancel={cancel}
+                  danger={danger}
+                  disabled={disabled}
+                  outline={outline}
+                  action={action}>
+                  {children}
+                </ButtonTypeText>
+              </ButtonTextContainer>
+              {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
+            </ButtonContainerFlex>
+          </StatefulButtonContent>
+        ) : (
+          <View>
+            <ButtonContainerFlex hasIcon={!!icon}>
+              <ButtonTextContainer>
+                <ButtonTypeText
+                  secondary={secondary}
+                  cancel={cancel}
+                  danger={danger}
+                  disabled={disabled}
+                  outline={outline}
+                  action={action}>
+                  {children}
+                </ButtonTypeText>
+              </ButtonTextContainer>
+              {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
+            </ButtonContainerFlex>
+          </View>
+        )}
       </ButtonTypeContainer>
 
-      <ButtonOverlay
-        isVisible={isLoading}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}>
-        <ButtonSpinner buttonStyle={buttonStyle} />
-      </ButtonOverlay>
+      {isLoading ? (
+        <ButtonOverlay
+          isVisible
+          buttonStyle={buttonStyle}
+          buttonType={buttonType}>
+          <ButtonSpinner buttonStyle={buttonStyle} />
+        </ButtonOverlay>
+      ) : null}
 
-      <ButtonOverlay
-        isVisible={isSuccess}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Success}
-        animate>
-        <Icons.Check buttonStyle={buttonStyle} />
-      </ButtonOverlay>
+      {isSuccess ? (
+        <ButtonOverlay
+          isVisible
+          buttonStyle={buttonStyle}
+          buttonType={buttonType}
+          backgroundColor={Success}
+          animate>
+          <Icons.Check buttonStyle={buttonStyle} />
+        </ButtonOverlay>
+      ) : null}
 
-      <ButtonOverlay
-        isVisible={isFailure}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Caution}
-        animate>
-        <Icons.Close buttonStyle={buttonStyle} />
-      </ButtonOverlay>
+      {isFailure ? (
+        <ButtonOverlay
+          isVisible
+          buttonStyle={buttonStyle}
+          buttonType={buttonType}
+          backgroundColor={Caution}
+          animate>
+          <Icons.Close buttonStyle={buttonStyle} />
+        </ButtonOverlay>
+      ) : null}
     </ButtonContainer>
   );
 };

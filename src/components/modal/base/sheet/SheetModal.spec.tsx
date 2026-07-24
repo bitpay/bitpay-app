@@ -1,24 +1,19 @@
 import React from 'react';
 import {AppState} from 'react-native';
-import {act, render} from '@testing-library/react-native';
-import {ThemeProvider} from 'styled-components/native';
-import {BitPayDarkTheme} from '../../../../themes/bitpay';
+import {BottomSheetModal} from '@gorhom/bottom-sheet';
+import {act, render, waitFor} from '@test/render';
 import SheetModal from './SheetModal';
-
-const {BottomSheetModal} = require('@gorhom/bottom-sheet');
 
 describe('SheetModal', () => {
   const renderSheet = (onBackdropPress = () => {}) => {
     const tree = (isVisible: boolean) => (
-      <ThemeProvider theme={BitPayDarkTheme}>
-        <SheetModal
-          modalLibrary={'bottom-sheet'}
-          isVisible={isVisible}
-          enableBackdropDismiss={true}
-          onBackdropPress={onBackdropPress}>
-          <></>
-        </SheetModal>
-      </ThemeProvider>
+      <SheetModal
+        modalLibrary={'bottom-sheet'}
+        isVisible={isVisible}
+        enableBackdropDismiss={true}
+        onBackdropPress={onBackdropPress}>
+        <></>
+      </SheetModal>
     );
 
     const utils = render(tree(false));
@@ -39,6 +34,21 @@ describe('SheetModal', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('presents a lazily mounted bottom sheet that is initially visible', async () => {
+    const presentSpy = jest.spyOn(BottomSheetModal.prototype, 'present');
+
+    render(
+      <SheetModal
+        isVisible={true}
+        modalLibrary="bottom-sheet"
+        onBackdropPress={jest.fn()}>
+        <></>
+      </SheetModal>,
+    );
+
+    await waitFor(() => expect(presentSpy).toHaveBeenCalledTimes(1));
   });
 
   it('dismisses the sheet when isVisible flips to false', () => {
