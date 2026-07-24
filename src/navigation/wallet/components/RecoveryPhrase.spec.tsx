@@ -2,6 +2,7 @@ import React from 'react';
 import {AppState} from 'react-native';
 import {act, fireEvent, render, waitFor} from '@testing-library/react-native';
 import RecoveryPhrase from './RecoveryPhrase';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import {
   startCreateKeyWithOpts,
   startImportMnemonic,
@@ -60,6 +61,14 @@ jest.mock('../../../utils/hooks/useLogger', () => ({
     debug: jest.fn(),
     error: jest.fn(),
   }),
+}));
+
+jest.mock('../../../utils/hooks/useScreenRenderPerformance', () => ({
+  useScreenRenderPerformance: () => jest.fn(),
+}));
+
+jest.mock('../../../utils/reactPerformanceProfiler', () => ({
+  logReactProfiler: jest.fn(),
 }));
 
 jest.mock('../../../components/styled/Containers', () => {
@@ -146,8 +155,14 @@ jest.mock('../../../store/analytics/analytics.effects', () => ({
   Analytics: {track: jest.fn(() => ({type: 'TEST/ANALYTICS'}))},
 }));
 
+const mockLogReactProfiler = logReactProfiler as jest.Mock;
 const mockStartCreateKeyWithOpts = startCreateKeyWithOpts as jest.Mock;
 const mockStartImportMnemonic = startImportMnemonic as jest.Mock;
+
+const getControllerCommitCount = () =>
+  mockLogReactProfiler.mock.calls.filter(
+    ([id]) => id === 'RecoveryPhrase:controller',
+  ).length;
 
 describe('RecoveryPhrase uncontrolled input', () => {
   beforeEach(() => {
@@ -170,6 +185,18 @@ describe('RecoveryPhrase uncontrolled input', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('stores changes without committing the React input subtree per character', () => {
+    const {getByTestId} = render(<RecoveryPhrase />);
+    const input = getByTestId('import-text-input');
+    const initialCommitCount = getControllerCommitCount();
+
+    fireEvent.changeText(input, 'one');
+    fireEvent.changeText(input, 'one two');
+    fireEvent.changeText(input, 'one two three');
+
+    expect(getControllerCommitCount()).toBe(initialCommitCount);
   });
 
   it('preserves the latest typed value for validated submit', async () => {
