@@ -3,7 +3,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {HeaderTitle} from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {PaymentList} from '../components/PaymentList';
@@ -11,10 +11,21 @@ import {SendToPillContainer} from '../../../../wallet/screens/send/confirm/Share
 import {BillAccountPill} from '../components/BillAccountPill';
 import {ScreenContainer} from '../../components/styled/ShopTabComponents';
 
-const BillListContainer = styled.View`
-  padding: 15px 16px 0;
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  billListContainer: {
+    paddingTop: 15,
+    paddingHorizontal: 16,
+    paddingBottom: 0,
+    flex: 1,
+  },
+});
+
+const BillListContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.billListContainer, style]} {...rest} />
+);
 
 const Payments = ({
   navigation,

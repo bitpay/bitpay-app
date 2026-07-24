@@ -3,10 +3,9 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, View} from 'react-native';
+import {Keyboard, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useDispatch} from 'react-redux';
-import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import BoxInput from '../../../../../components/form/BoxInput';
 import AuthFormContainer, {
@@ -36,23 +35,41 @@ function getPlaceholder(phoneCountryCode: string) {
   return phoneCountryCode === '1' ? '(610) 245-1933' : '6102451933';
 }
 
-const AreaCodeContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding-left: 15px;
-  padding-right: 10px;
-  height: 37px;
-`;
+const styles = StyleSheet.create({
+  areaCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 15,
+    paddingRight: 10,
+    height: 37,
+  },
+  areaCode: {
+    paddingLeft: 8,
+    fontWeight: '600',
+  },
+  primaryActionContainer: {
+    marginBottom: 20,
+  },
+});
 
-const AreaCode = styled(BaseText)`
-  padding-left: 8px;
-  font-weight: 600;
-`;
+const AreaCodeContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.areaCodeContainer, style]} {...rest} />
+);
 
-const PrimaryActionContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const AreaCode = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.areaCode, style]} {...rest} />
+);
+
+const PrimaryActionContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.primaryActionContainer, style]} {...rest} />
+);
 
 export const showCountryCodeRequiredSheet = (
   phoneCountryCode: PhoneCountryCode,

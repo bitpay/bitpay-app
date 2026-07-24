@@ -1,6 +1,6 @@
 import {H4, Paragraph} from '../../../../../components/styled/Text';
 import React, {useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import {SlateDark, White} from '../../../../../styles/colors';
 import {
@@ -24,7 +24,12 @@ import {
   FeeLevelStepsHeader,
   FeeLevelStepsHeaderSubTitle,
 } from '../../../../wallet/screens/send/TransactionLevel';
-import {View} from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView as RNScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import {sleep} from '../../../../../utils/helper-methods';
@@ -34,46 +39,90 @@ import {updateCacheFeeLevel} from '../../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {SUPPORTED_VM_TOKENS} from '../../../../../constants/currencies';
 
-const NetworkFeePolicyContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  networkFeePolicyContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  networkFeePolicyParagraph: {
+    marginBottom: 15,
+  },
+  stepsHeaderContainer: {
+    marginVertical: parseInt(ScreenGutter, 10),
+  },
+  currencyImageContainer: {
+    marginRight: 10,
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    marginBottom: parseInt(ScreenGutter, 10),
+    paddingHorizontal: 3,
+  },
+  bottomLabelContainer: {
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+  },
+  feeOptionsContainer: {
+    marginBottom: 35,
+  },
+  topLabelContainer: {
+    minHeight: 30,
+  },
+});
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const NetworkFeePolicyContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => (
+  <SafeAreaView style={styles.networkFeePolicyContainer}>
+    {children}
+  </SafeAreaView>
+);
 
-const NetworkFeePolicyParagraph = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 15px;
-`;
+const ScrollView: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <RNScrollView style={styles.scrollView}>{children}</RNScrollView>
+);
 
-const StepsHeaderContainer = styled.View`
-  margin: ${ScreenGutter} 0;
-`;
+const NetworkFeePolicyParagraph: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.networkFeePolicyParagraph,
+        {color: theme.dark ? White : SlateDark},
+      ]}>
+      {children}
+    </Paragraph>
+  );
+};
 
-const CurrencyImageContainer = styled.View`
-  margin-right: 10px;
-`;
+const StepsHeaderContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.stepsHeaderContainer}>{children}</View>;
 
-const StepsContainer = styled.View`
-  flex-direction: row;
-  margin: 0 0 ${ScreenGutter} 0;
-  padding: 0 3px;
-`;
+const CurrencyImageContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.currencyImageContainer}>{children}</View>;
 
-const BottomLabelContainer = styled.View`
-  justify-content: space-between;
-  flex-direction: row;
-`;
+const StepsContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.stepsContainer}>{children}</View>
+);
 
-const FeeOptionsContainer = styled.View`
-  margin-bottom: 35px;
-`;
+const BottomLabelContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.bottomLabelContainer}>{children}</View>;
 
-const TopLabelContainer = styled.View`
-  min-height: 30px;
-`;
+const FeeOptionsContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.feeOptionsContainer}>{children}</View>;
+
+const TopLabelContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.topLabelContainer}>{children}</View>;
 
 const FeeOptions = ({
   feeOptions,

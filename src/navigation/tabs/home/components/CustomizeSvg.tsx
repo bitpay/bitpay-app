@@ -1,6 +1,6 @@
 import React from 'react';
 import {Circle, Path, Svg} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Action, LightBlue, LinkBlue, Midnight} from '../../../../styles/colors';
 
 const CustomizeSvg: React.FC<{

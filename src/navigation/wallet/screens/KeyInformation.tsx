@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {useTranslation} from 'react-i18next';
@@ -10,35 +10,63 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import ErrorIcon from '../../../../assets/img/error.svg';
-import {View} from 'react-native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import Banner from '../../../components/banner/Banner';
 
-const KeyInfoContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  keyInfoContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  titleInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  keyParagraph: {
+    fontSize: 18,
+    marginTop: 5,
+    marginHorizontal: 0,
+    marginBottom: 20,
+  },
+});
 
-const TitleInfoContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  margin-top: 10px;
-  margin-bottom: 10px;
-`;
+const KeyInfoContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.keyInfoContainer, style]} {...rest} />;
 
-const Title = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : LightBlack)};
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const KeyParagraph = styled(Paragraph)`
-  font-size: 18px;
-  margin: 5px 0 20px;
-`;
+const TitleInfoContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.titleInfoContainer, style]} {...rest} />
+);
+
+const Title: React.FC<React.ComponentProps<typeof H5>> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <H5 style={[{color: theme.dark ? Slate30 : LightBlack}, style]} {...rest} />
+  );
+};
+
+const KeyParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => <Paragraph style={[styles.keyParagraph, style]} {...rest} />;
 
 const KeyInformation = () => {
   const {t} = useTranslation();

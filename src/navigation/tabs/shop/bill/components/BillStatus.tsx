@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
@@ -154,22 +155,64 @@ const getStatusStyle = (status: string, style: string, isDark: boolean) => {
     : statusObj[style];
 };
 
-const StatusContainer = styled.View<BillStatusStyleProps>`
-  background-color: ${({status, theme}) =>
-      getStatusStyle(status, 'backgroundColor', theme.dark)}
-    ${({status, theme}) =>
-      status === 'dueLater'
-        ? `border: 1px solid ${theme.dark ? LightBlack : Slate30}`
-        : ''};
-  border-radius: 6px;
-  padding: 0 10px;
-`;
+const styles = StyleSheet.create({
+  statusContainer: {
+    borderRadius: 6,
+    paddingHorizontal: 10,
+  },
+  statusText: {
+    fontSize: 14,
+    textTransform: 'capitalize',
+  },
+});
 
-const StatusText = styled(Paragraph)<BillStatusStyleProps>`
-  color: ${({status, theme}) => getStatusStyle(status, 'color', theme.dark)};
-  font-size: 14px;
-  text-transform: capitalize;
-`;
+const StatusContainer = ({
+  status,
+  style,
+  ...rest
+}: BillStatusStyleProps & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.statusContainer,
+        {
+          backgroundColor: getStatusStyle(
+            status,
+            'backgroundColor',
+            theme.dark,
+          ),
+        },
+        status === 'dueLater'
+          ? {
+              borderWidth: 1,
+              borderColor: theme.dark ? LightBlack : Slate30,
+            }
+          : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const StatusText = ({
+  status,
+  style,
+  ...rest
+}: BillStatusStyleProps & React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.statusText,
+        {color: getStatusStyle(status, 'color', theme.dark)},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const getBillStatus = (account: BillPayAccount) => {
   if (account.paymentStatus === 'activating') {

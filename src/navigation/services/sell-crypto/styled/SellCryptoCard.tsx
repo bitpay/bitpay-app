@@ -1,52 +1,165 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, Text, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {LightBlack, SlateDark, White, Slate30} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-export const SellCryptoExpandibleCard = styled(TouchableOpacity)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 9px;
-  margin: 20px 15px 0px 15px;
-  padding: 18px 14px;
-`;
+const styles = StyleSheet.create({
+  sellCryptoExpandibleCard: {
+    borderWidth: 1,
+    borderRadius: 9,
+    marginTop: 20,
+    marginRight: 15,
+    marginBottom: 0,
+    marginLeft: 15,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+  },
+  sellCryptoOfferLine: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sellCryptoOfferText: {
+    lineHeight: 18,
+  },
+  sellCryptoOfferDataText: {
+    fontSize: 16,
+    maxWidth: 160,
+    marginRight: 24,
+  },
+  sellTermsContainer: {
+    marginTop: 20,
+  },
+  sellBalanceContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  sellBottomDataText: {
+    fontSize: 14,
+  },
+  itemDivisor: {
+    borderBottomWidth: 1,
+  },
+});
 
-export const SellCryptoOfferLine = styled.View`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-  align-items: center;
-`;
+export const SellCryptoExpandibleCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.sellCryptoExpandibleCard,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const SellCryptoOfferText = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  line-height: 18px;
-`;
+export const SellCryptoOfferLine = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.sellCryptoOfferLine, style]} {...rest} />
+));
+SellCryptoOfferLine.displayName = 'SellCryptoOfferLine';
 
-export const SellCryptoOfferDataText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  max-width: 160px;
-  margin-right: 24px;
-`;
+export const SellCryptoOfferText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof Text>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[
+        styles.sellCryptoOfferText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SellCryptoOfferText.displayName = 'SellCryptoOfferText';
 
-export const SellTermsContainer = styled.View`
-  margin-top: 20px;
-`;
+export const SellCryptoOfferDataText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.sellCryptoOfferDataText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SellCryptoOfferDataText.displayName = 'SellCryptoOfferDataText';
 
-export const SellBalanceContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-`;
+export const SellTermsContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.sellTermsContainer, style]} {...rest} />
+));
+SellTermsContainer.displayName = 'SellTermsContainer';
 
-export const SellBottomDataText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 14px;
-`;
+export const SellBalanceContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.sellBalanceContainer, style]} {...rest} />
+));
+SellBalanceContainer.displayName = 'SellBalanceContainer';
 
-export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-bottom-width: 1px;
-`;
+export const SellBottomDataText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.sellBottomDataText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SellBottomDataText.displayName = 'SellBottomDataText';
+
+export const ItemDivisor = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.itemDivisor,
+        {borderBottomColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ItemDivisor.displayName = 'ItemDivisor';

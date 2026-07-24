@@ -1,5 +1,5 @@
 import React, {ReactElement} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 
 import Avatar from '../../../../components/avatar/Avatar';
 
@@ -34,16 +34,26 @@ interface BadgeProps {
   size?: number;
 }
 
-const ContactIconContainer = styled.View`
-  position: relative;
-`;
+const styles = StyleSheet.create({
+  contactIconContainer: {
+    position: 'relative',
+  },
+  coinBadgeContainer: {
+    position: 'absolute',
+    bottom: -1,
+  },
+});
 
-const CoinBadgeContainer = styled.View<{size: number}>`
-  position: absolute;
-  right: ${({size}) =>
-    size <= 20 ? '-1' : size === 45 || size === 30 ? '-13' : '-1'}px;
-  bottom: -1px;
-`;
+const getCoinBadgeRight = (size: number) =>
+  size <= 20 ? -1 : size === 45 || size === 30 ? -13 : -1;
+
+const CoinBadgeContainer: React.FC<{size: number; children?: React.ReactNode}> =
+  ({size, children}) => (
+    <View
+      style={[styles.coinBadgeContainer, {right: getCoinBadgeRight(size)}]}>
+      {children}
+    </View>
+  );
 
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,
@@ -106,13 +116,13 @@ const ContactIcon: React.FC<ContactIconProps> = ({
     : '';
 
   return (
-    <ContactIconContainer>
+    <View style={styles.contactIconContainer}>
       <Avatar
         size={size}
         initials={initials}
         badge={() => badge || coinBadge}
       />
-    </ContactIconContainer>
+    </View>
   );
 };
 

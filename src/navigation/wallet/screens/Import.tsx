@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';
@@ -20,10 +20,12 @@ export interface ImportParamList {
   importQrCodeData?: string;
 }
 
-const ImportContainer = styled.SafeAreaView`
-  flex: 1;
-  margin-top: 10px;
-`;
+const styles = StyleSheet.create({
+  importContainer: {
+    flex: 1,
+    marginTop: 10,
+  },
+});
 
 const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
@@ -37,7 +39,7 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   }, [navigation, t]);
 
   return (
-    <ImportContainer testID="import-view">
+    <SafeAreaView style={styles.importContainer} testID="import-view">
       <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
         <Tab.Screen
           name={t('Phrase')}
@@ -50,7 +52,7 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
           initialParams={route.params}
         />
       </Tab.Navigator>
-    </ImportContainer>
+    </SafeAreaView>
   );
 };
 

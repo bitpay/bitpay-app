@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import type {GraphPoint} from 'react-native-graph';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import ChartSelectionDot from '../../../../components/charts/ChartSelectionDot';
 import InteractiveLineChart from '../../../../components/charts/InteractiveLineChart';
 import TimeframeSelector from '../../../../components/charts/TimeframeSelector';

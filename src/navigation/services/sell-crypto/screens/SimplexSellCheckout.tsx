@@ -1,6 +1,12 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView} from 'react-native';
+import {
+  ScrollView,
+  SafeAreaView,
+  StyleSheet,
+  View,
+  ViewProps,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {
@@ -11,7 +17,6 @@ import {
   CommonActions,
 } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import styled from 'styled-components/native';
 import cloneDeep from 'lodash.clonedeep';
 import {
   useAppDispatch,
@@ -126,27 +131,56 @@ import {Network} from '../../../../constants';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
-export const SellCheckoutContainer = styled.SafeAreaView`
-  flex: 1;
-  margin: 14px;
-`;
+const styles = StyleSheet.create({
+  sellCheckoutContainer: {
+    flex: 1,
+    margin: 14,
+  },
+  inputContainer: {
+    marginVertical: 10,
+    marginHorizontal: 0,
+  },
+  addressBadge: {
+    position: 'absolute',
+    right: 13,
+    top: '50%',
+  },
+  scanButtonContainer: {
+    position: 'absolute',
+    right: 5,
+    top: 32,
+  },
+});
 
-const InputContainer = styled.View<{hideInput?: boolean}>`
-  display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
-  margin: 10px 0;
-`;
+export const SellCheckoutContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.sellCheckoutContainer, style]} {...rest} />;
 
-const AddressBadge = styled.View`
-  position: absolute;
-  right: 13px;
-  top: 50%;
-`;
+const InputContainer: React.FC<ViewProps & {hideInput?: boolean}> = ({
+  style,
+  hideInput,
+  ...rest
+}) => (
+  <View
+    style={[
+      styles.inputContainer,
+      {display: !hideInput ? 'flex' : 'none'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const ScanButtonContainer = styled(TouchableOpacity)`
-  position: absolute;
-  right: 5px;
-  top: 32px;
-`;
+const AddressBadge: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.addressBadge, style]} {...rest} />
+);
+
+const ScanButtonContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.scanButtonContainer, style]} {...rest} />
+);
 
 export interface SimplexSellCheckoutProps {
   simplexQuoteOffer: SellCryptoOffer;

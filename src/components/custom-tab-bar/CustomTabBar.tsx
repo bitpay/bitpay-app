@@ -1,8 +1,8 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {MaterialTopTabBarProps} from '@react-navigation/material-top-tabs';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {
   Action,
   LightBlack,
@@ -15,45 +15,35 @@ import {BaseText} from '../styled/Text';
 const gutter = 5;
 const tabWidth = 150;
 
-const TabBarContainer = styled.View<{darkMode: boolean; totalWidth: number}>`
-  flex-direction: row;
-  align-self: center;
-  border-radius: 50px;
-  width: ${({totalWidth}) => totalWidth}px;
-  height: 56px;
-  background-color: ${({darkMode}) => (darkMode ? LightBlack : NeutralSlate)};
-`;
-
-const TabButton = styled(TouchableOpacity)<{
-  isFocused: boolean;
-  tabWidth: number;
-}>`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  width: ${({tabWidth}) => tabWidth}px;
-  height: 44px;
-  padding-vertical: 10px;
-  border-radius: 50px;
-  margin: ${gutter}px;
-  position: relative;
-  background-color: ${({isFocused}) => (isFocused ? Action : 'transparent')};
-`;
-
-const TabLabel = styled(BaseText)<{isFocused: boolean}>`
-  color: ${({theme: {dark}, isFocused}) =>
-    dark ? NeutralSlate : isFocused ? NeutralSlate : SlateDark};
-  font-size: 16px;
-  text-transform: none;
-  font-weight: 500;
-`;
-
-const IconContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  tabBarContainer: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    borderRadius: 50,
+    height: 56,
+  },
+  tabButton: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    height: 44,
+    paddingVertical: 10,
+    borderRadius: 50,
+    margin: gutter,
+    position: 'relative',
+  },
+  tabLabel: {
+    fontSize: 16,
+    textTransform: 'none',
+    fontWeight: '500',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({
   state,
@@ -65,7 +55,14 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({
   const totalWidth = tabWidth * numTabs + gutter * 4;
 
   return (
-    <TabBarContainer darkMode={dark} totalWidth={totalWidth}>
+    <View
+      style={[
+        styles.tabBarContainer,
+        {
+          width: totalWidth,
+          backgroundColor: dark ? LightBlack : NeutralSlate,
+        },
+      ]}>
       {state.routes.map((route, index) => {
         const {options} = descriptors[route.key];
         const isFocused = state.index === index;
@@ -77,11 +74,16 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({
           ? options.tabBarIcon({focused: isFocused, color: White, size: 20})
           : null;
         return (
-          <TabButton
+          <TouchableOpacity
             key={route.key}
-            isFocused={isFocused}
-            tabWidth={tabWidth}
-            onPressOut={event => {
+            style={[
+              styles.tabButton,
+              {
+                width: tabWidth,
+                backgroundColor: isFocused ? Action : 'transparent',
+              },
+            ]}
+            onPressOut={_event => {
               navigation.emit({
                 type: 'tabPress',
                 target: route.key,
@@ -90,12 +92,26 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({
 
               navigation.navigate(route.name);
             }}>
-            {tabBarIcon && <IconContainer>{tabBarIcon}</IconContainer>}
-            <TabLabel isFocused={isFocused}>{tabBarLabel}</TabLabel>
-          </TabButton>
+            {tabBarIcon && (
+              <View style={styles.iconContainer}>{tabBarIcon}</View>
+            )}
+            <BaseText
+              style={[
+                styles.tabLabel,
+                {
+                  color: dark
+                    ? NeutralSlate
+                    : isFocused
+                    ? NeutralSlate
+                    : SlateDark,
+                },
+              ]}>
+              {tabBarLabel}
+            </BaseText>
+          </TouchableOpacity>
         );
       })}
-    </TabBarContainer>
+    </View>
   );
 };
 

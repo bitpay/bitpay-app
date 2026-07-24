@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {HeaderTitle, Paragraph} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   AdvancedOptions,
@@ -36,9 +36,9 @@ import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {IS_DESKTOP} from '../../../../constants';
-import {Platform} from 'react-native';
 import {ShareOptions} from 'react-native-share';
 import {shareFile as shareFileUtil} from '../../../../utils/share';
+import {Platform, SafeAreaView, StyleSheet, View} from 'react-native';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {logManager} from '../../../../managers/LogManager';
@@ -46,57 +46,114 @@ import {logManager} from '../../../../managers/LogManager';
 const BWCProvider = BwcProvider.getInstance();
 const Encryption = BWCProvider.getEncryption();
 
-const ExportWalletContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  exportWalletContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  passwordFormContainer: {
+    marginVertical: 15,
+  },
+  exportWalletParagraph: {
+    marginBottom: 15,
+  },
+  passwordActionContainer: {
+    marginTop: 20,
+  },
+  passwordInputContainer: {
+    marginVertical: 15,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  ctaContainer: {
+    alignSelf: 'stretch',
+    flexDirection: 'column',
+    marginTop: 20,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+});
 
-const PasswordFormContainer = styled.View`
-  margin: 15px 0;
-`;
+const ExportWalletContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.exportWalletContainer, style]} {...rest} />
+);
 
-const ExportWalletParagraph = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const AdvancedOptionsText = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-`;
+const PasswordFormContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.passwordFormContainer, style]} {...rest} />;
 
-const PasswordActionContainer = styled.View`
-  margin-top: 20px;
-`;
+const ExportWalletParagraph: React.FC<
+  React.ComponentProps<typeof Paragraph>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.exportWalletParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PasswordInputContainer = styled.View`
-  margin: 15px 0;
-`;
+const AdvancedOptionsText: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return <Paragraph style={[{color: theme.colors.text}, style]} {...rest} />;
+};
+
+const PasswordActionContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.passwordActionContainer, style]} {...rest} />;
+
+const PasswordInputContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.passwordInputContainer, style]} {...rest} />;
 
 interface ExportWalletPasswordFieldValues {
   password: string;
   confirmPassword: string;
 }
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
 
-const CtaContainer = styled.View`
-  align-self: stretch;
-  flex-direction: column;
-  margin-top: 20px;
-`;
+const CtaContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.ctaContainer, style]} {...rest} />;
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const CheckBoxContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.checkBoxContainer, style]} {...rest} />;
 
 const ExportWallet = () => {
   const {t} = useTranslation();

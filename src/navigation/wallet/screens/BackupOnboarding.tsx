@@ -1,7 +1,6 @@
 import React, {useCallback} from 'react';
 import RNFS from 'react-native-fs';
-import {Platform, ScrollView} from 'react-native';
-import styled from 'styled-components/native';
+import {Platform, SafeAreaView, ScrollView, StyleSheet} from 'react-native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -36,10 +35,22 @@ export type BackupOnboardingParamList = {
   buildEncryptModalConfig: Function;
 };
 
-const BackupOnboardingContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: stretch;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+  scrollViewContent: {
+    alignItems: 'center',
+  },
+  ctaContainer: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+});
 
 const KeyImage = {
   light: (
@@ -158,11 +169,8 @@ const BackupOnboarding: React.FC = () => {
   );
 
   return (
-    <BackupOnboardingContainer testID="backup-onbloarding-view">
-      <ScrollView
-        contentContainerStyle={{
-          alignItems: 'center',
-        }}>
+    <SafeAreaView style={styles.container} testID="backup-onbloarding-view">
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <ImageContainer>{KeyImage[themeType]}</ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>
@@ -180,15 +188,7 @@ const BackupOnboarding: React.FC = () => {
         </TextContainer>
       </ScrollView>
 
-      <CtaContainerAbsolute
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
+      <CtaContainerAbsolute background={true} style={styles.ctaContainer}>
         <ActionContainer>
           <Button
             testID="write-down-backup-button"
@@ -240,7 +240,7 @@ const BackupOnboarding: React.FC = () => {
           </Button>
         </ActionContainer>
       </CtaContainerAbsolute>
-    </BackupOnboardingContainer>
+    </SafeAreaView>
   );
 };
 

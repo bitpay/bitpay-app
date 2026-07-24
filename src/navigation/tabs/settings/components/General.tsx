@@ -15,7 +15,7 @@ import {
   resetAllSettings,
   setShowPortfolioValueWithRuntimeReset,
 } from '../../../../store/app/app.effects';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
@@ -28,18 +28,26 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import styled from 'styled-components/native';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import {SettingsDetailsParamList} from '../SettingsDetails';
 import {FlashList} from '@shopify/flash-list';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {useOngoingProcess} from '../../../../contexts';
 import {logManager} from '../../../../managers/LogManager';
 
-const SettingsComponent = styled.View`
-  flex: 1;
-  padding: 10px 0;
-`;
+const styles = StyleSheet.create({
+  settingsComponent: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+});
+
+const SettingsComponent = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.settingsComponent, style]} {...rest} />
+);
 
 type Props = NativeStackScreenProps<SettingsDetailsParamList, 'General'>;
 

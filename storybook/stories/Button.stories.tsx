@@ -1,10 +1,9 @@
 import {storiesOf} from '@storybook/react-native';
 import {action} from '@storybook/addon-actions';
 import Button from '../../src/components/button/Button';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import * as React from 'react';
 import {boolean, select, withKnobs, text} from '@storybook/addon-knobs';
-import styled from 'styled-components/native';
 const ButtonStyle = {
   Primary: undefined,
   Secondary: 'secondary',
@@ -15,17 +14,20 @@ const ButtonType = {
   Link: 'link',
 };
 
-const ButtonContainer = styled.View`
-  flex-direction: column;
-  align-items: center;
-  margin: 20% 5%;
-`;
+const styles = StyleSheet.create({
+  buttonContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginVertical: '20%',
+    marginHorizontal: '5%',
+  },
+});
 
 storiesOf('Button', module)
   .addDecorator(story => <View>{story()}</View>)
   .addDecorator(withKnobs)
   .add('Default', () => (
-    <ButtonContainer>
+    <View style={styles.buttonContainer}>
       <Button
         onPress={action('on button press')}
         buttonStyle={select('Style', ButtonStyle, undefined)}
@@ -33,5 +35,5 @@ storiesOf('Button', module)
         disabled={boolean('Disabled', false)}>
         {text('Button Name', 'Button')}
       </Button>
-    </ButtonContainer>
+    </View>
   ));

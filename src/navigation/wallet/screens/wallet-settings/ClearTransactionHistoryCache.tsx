@@ -1,9 +1,9 @@
 import {CommonActions} from '@react-navigation/native';
 import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import Button, {ButtonState} from '../../../../components/button/Button';
-import {ScreenGutter} from '../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {WalletGroupParamList, WalletScreens} from '../../WalletGroup';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
@@ -21,23 +21,21 @@ import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 
-const ClearTransactionHistoryCacheContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
-const ClearTransactionHistoryCacheDescription = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const ButtonContainer = styled.View`
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  clearTransactionHistoryCacheContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  clearTransactionHistoryCacheDescription: {
+    marginBottom: 15,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+});
 
 type ClearTransactionHistoryCacheProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -49,6 +47,7 @@ const ClearTransactionHistoryCache: React.FC<
   ClearTransactionHistoryCacheProps
 > = ({navigation, route}) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
@@ -136,21 +135,25 @@ const ClearTransactionHistoryCache: React.FC<
   );
 
   return (
-    <ClearTransactionHistoryCacheContainer>
-      <ScrollView>
-        <ClearTransactionHistoryCacheDescription>
+    <SafeAreaView style={styles.clearTransactionHistoryCacheContainer}>
+      <ScrollView style={styles.scrollView}>
+        <Paragraph
+          style={[
+            styles.clearTransactionHistoryCacheDescription,
+            {color: theme.dark ? White : SlateDark},
+          ]}>
           {t(
             'The transaction history and every new incoming transaction are cached in the app. Clearing the cache cleans up the transaction history and synchronizes again from the server.',
           )}
-        </ClearTransactionHistoryCacheDescription>
+        </Paragraph>
 
-        <ButtonContainer>
+        <View style={styles.buttonContainer}>
           <Button onPress={() => clearCache()} state={buttonState}>
             {t('Clear cache')}
           </Button>
-        </ButtonContainer>
+        </View>
       </ScrollView>
-    </ClearTransactionHistoryCacheContainer>
+    </SafeAreaView>
   );
 };
 

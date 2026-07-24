@@ -3,7 +3,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard} from 'react-native';
+import {Keyboard, SafeAreaView, StyleSheet} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -18,8 +18,6 @@ import AuthFormContainer, {
   AuthFormParagraph,
   AuthRowContainer,
 } from '../components/AuthFormContainer';
-import styled from 'styled-components/native';
-
 export type TwoFactorAuthenticationParamList =
   | {
       onLoginSuccess?: ((...args: any[]) => any) | undefined;
@@ -35,9 +33,18 @@ interface TwoFactorAuthFieldValues {
   code: string;
 }
 
-const TwoFactorAuthContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  twoFactorAuthContainer: {
+    flex: 1,
+  },
+});
+
+const TwoFactorAuthContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.twoFactorAuthContainer, style]} {...rest} />
+);
 
 const schema = yup.object().shape({
   code: yup.string().required(),

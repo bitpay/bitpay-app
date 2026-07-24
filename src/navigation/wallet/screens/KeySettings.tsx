@@ -17,9 +17,14 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {View, ScrollView, FlatList} from 'react-native';
+import {
+  View,
+  ScrollView,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
 import {
   ActiveOpacity,
   Hr,
@@ -70,57 +75,119 @@ import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 
-const WalletSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
-const WalletSettingsListContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  walletSettingsContainer: {
+    flex: 1,
+  },
+  walletSettingsListContainer: {
+    padding: SCREEN_GUTTER,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  walletHeaderContainer: {
+    paddingTop: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletNameContainer: {
+    paddingTop: 10,
+    paddingRight: 0,
+    paddingBottom: 20,
+    paddingLeft: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  verticalPadding: {
+    paddingVertical: SCREEN_GUTTER,
+    paddingHorizontal: 0,
+  },
+  addWalletText: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  searchComponentContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+});
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
-`;
+const WalletSettingsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.walletSettingsContainer, style]} {...rest} />
+);
 
-const WalletHeaderContainer = styled.View`
-  padding-top: 15px;
-  flex-direction: row;
-  align-items: center;
-`;
+const WalletSettingsListContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.walletSettingsListContainer, style]} {...rest} />
+);
 
-const WalletNameContainer = styled(TouchableOpacity)`
-  padding: 10px 0 20px 0;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const Title: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.title, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const WalletHeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletHeaderContainer, style]} {...rest} />;
 
-const WalletSettingsTitle = styled(SettingTitle)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const WalletNameContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.walletNameContainer, style]} {...rest} />
+);
 
-const AddWalletText = styled(Link)`
-  font-size: 18px;
-  font-weight: 500;
-  margin: 10px 0;
-`;
+const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const SearchComponentContainer = styled.View`
-  margin: 20px 0;
-`;
+const WalletSettingsTitle: React.FC<
+  React.ComponentProps<typeof SettingTitle>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SettingTitle
+      style={[{color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
+
+const AddWalletText: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  ...rest
+}) => <Link style={[styles.addWalletText, style]} {...rest} />;
+
+const SearchComponentContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.searchComponentContainer, style]} {...rest} />;
 
 const KeySettings = () => {
   const {t} = useTranslation();

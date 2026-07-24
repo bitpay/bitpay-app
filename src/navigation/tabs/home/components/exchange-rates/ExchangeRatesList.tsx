@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
@@ -23,9 +23,17 @@ export interface ExchangeRateItemProps {
   currentPrice?: number;
 }
 
-const ExchangeRateListContainer = styled.View`
-  margin: 10px ${ScreenGutter} 10px;
-`;
+const styles = StyleSheet.create({
+  exchangeRateListContainer: {
+    marginTop: 10,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    marginBottom: 10,
+  },
+});
+
+const ExchangeRateListContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.exchangeRateListContainer}>{children}</View>;
 interface ExchangeRateProps {
   items: Array<ExchangeRateItemProps>;
   defaultAltCurrencyIsoCode: string;

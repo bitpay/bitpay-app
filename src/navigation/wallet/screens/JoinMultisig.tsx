@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
 import {ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {
@@ -51,18 +51,35 @@ type JoinScreenProps = NativeStackScreenProps<
   WalletScreens.JOIN_MULTISIG
 >;
 
-export const JoinContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  joinContainer: {
+    flex: 1,
+  },
+  scrollViewContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+  },
+});
 
-const ScrollViewContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
-`;
+export const JoinContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.joinContainer, style]} {...rest} />
+);
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
-`;
+const ScrollViewContainer: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView style={[styles.scrollViewContainer, style]} {...rest} />
+);
+
+const CtaContainer: React.FC<React.ComponentProps<typeof _CtaContainer>> = ({
+  style,
+  ...rest
+}) => <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />;
 
 const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
   const dispatch = useAppDispatch();

@@ -10,9 +10,12 @@ import {
   InteractionManager,
   Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
+  View,
 } from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useTranslation} from 'react-i18next';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -81,74 +84,182 @@ function useLatestRef<T>(value: T) {
   return ref;
 }
 
-const WalletRow = styled(Pressable)`
-  padding: 14px 12px;
-  border-top-width: 1px;
-  border-top-color: ${({theme}) => theme.colors.border};
-`;
+const debugStyles = StyleSheet.create({
+  walletRow: {
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+  },
+  walletRowTitle: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  walletRowSubTitle: {
+    fontSize: 12,
+    lineHeight: 16,
+    opacity: 0.7,
+  },
+  sectionText: {
+    paddingTop: 0,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  controlLabel: {
+    paddingHorizontal: 12,
+    fontSize: 12,
+    lineHeight: 16,
+    opacity: 0.7,
+  },
+  searchInputContainer: {
+    marginTop: 0,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  searchIconContainer: {
+    marginRight: 8,
+  },
+  searchField: {
+    flex: 1,
+    fontSize: 13,
+    padding: 0,
+    margin: 0,
+  },
+});
 
-const WalletRowTitle = styled.Text`
-  color: ${({theme}) => theme.colors.text};
-  font-size: 14px;
-  line-height: 18px;
-`;
+const WalletRow: React.FC<React.ComponentProps<typeof Pressable>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Pressable
+      style={[
+        debugStyles.walletRow,
+        {borderTopColor: theme.colors.border},
+        style as any,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WalletRowSubTitle = styled.Text`
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  line-height: 16px;
-  opacity: 0.7;
-`;
+const WalletRowTitle: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[debugStyles.walletRowTitle, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const WalletRowMismatchText = styled(WalletRowSubTitle)`
-  color: ${({theme}) => theme.colors.notification};
-  opacity: 1;
-`;
+const WalletRowSubTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[debugStyles.walletRowSubTitle, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const SectionText = styled.Text`
-  padding: 0 12px 12px;
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  line-height: 18px;
-`;
+const WalletRowMismatchText: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        debugStyles.walletRowSubTitle,
+        {color: theme.colors.notification, opacity: 1},
+      ]}>
+      {children}
+    </Text>
+  );
+};
 
-const ErrorText = styled(SectionText)`
-  color: ${({theme}) => theme.colors.notification};
-`;
+const SectionText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[debugStyles.sectionText, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const EmptyStateText = styled(SectionText)`
-  opacity: 0.7;
-`;
+const ErrorText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[debugStyles.sectionText, {color: theme.colors.notification}]}>
+      {children}
+    </Text>
+  );
+};
 
-const ControlLabel = styled.Text`
-  padding: 0 12px;
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  line-height: 16px;
-  opacity: 0.7;
-`;
+const EmptyStateText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        debugStyles.sectionText,
+        {color: theme.colors.text, opacity: 0.7},
+      ]}>
+      {children}
+    </Text>
+  );
+};
 
-const SearchInputContainer = styled.View`
-  margin: 0 12px 12px;
-  border-radius: 999px;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 14px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? '#2C2F34' : '#E4E9EF')};
-  background-color: ${({theme: {dark}}) => (dark ? 'transparent' : '#FFFFFF')};
-`;
+const ControlLabel: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[debugStyles.controlLabel, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const SearchIconContainer = styled.View`
-  margin-right: 8px;
-`;
+const SearchInputContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        debugStyles.searchInputContainer,
+        {
+          borderColor: theme.dark ? '#2C2F34' : '#E4E9EF',
+          backgroundColor: theme.dark ? 'transparent' : '#FFFFFF',
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const SearchField = styled(TextInput)`
-  flex: 1;
-  font-size: 13px;
-  color: ${({theme}) => theme.colors.text};
-  padding: 0;
-  margin: 0;
-`;
+const SearchIconContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={debugStyles.searchIconContainer}>{children}</View>;
+
+const SearchField: React.FC<React.ComponentProps<typeof TextInput>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      style={[debugStyles.searchField, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
 const formatBytes = (bytes?: number): string => {
   const safeBytes = Number(bytes);

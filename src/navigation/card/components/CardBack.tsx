@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import styled from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
 import {CardBrand} from '../../../constants/card';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
@@ -9,20 +9,31 @@ interface CardBackProps {
   card: Card;
 }
 
-const CardBackContainer = styled.View`
-  position: relative;
-`;
+const styles = StyleSheet.create({
+  cardBackContainer: {
+    position: 'relative',
+  },
+  truncatedNickname: {
+    color: '#ffffff',
+    fontSize: 16.8,
+    fontWeight: '700',
+    left: 19.6450617,
+    maxWidth: 180,
+    position: 'absolute',
+    top: 173.65,
+  },
+});
+
+const CardBackContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardBackContainer, style]} {...rest} />
+);
 
 // SVG can't truncate dynamic text, so we overlay a Text element on top of the SVG
-const TruncatedNickname = styled.Text`
-  color: #ffffff;
-  font-size: 16.8px;
-  font-weight: 700;
-  left: 19.6450617px;
-  max-width: 180px;
-  position: absolute;
-  top: 173.65px;
-`;
+const TruncatedNickname = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <Text ref={ref} style={[styles.truncatedNickname, style]} {...rest} />
+  ),
+);
 
 const BRAND_LOGOS: {[k: string]: JSX.Element} = {
   Mastercard: (

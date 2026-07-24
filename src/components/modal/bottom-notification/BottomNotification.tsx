@@ -1,9 +1,8 @@
 import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
-import {Platform} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
-import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
@@ -24,7 +23,7 @@ import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import WaitSvg from '../../../../assets/img/wait.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {Theme, useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
 import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
 import {HEIGHT} from '../../styled/Containers';
@@ -60,64 +59,93 @@ const notificationType = {
   wait: <WaitSvg {...svgProps} />,
 };
 
-const BottomNotificationContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  padding: 25px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  max-height: ${HEIGHT - 100}px;
-`;
+const styles = StyleSheet.create({
+  bottomNotificationContainer: {
+    padding: 25,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    maxHeight: HEIGHT - 100,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 25,
+  },
+  imageContainer: {
+    marginRight: 10,
+  },
+  messageContainer: {
+    marginTop: 15,
+    marginRight: 0,
+    marginBottom: 20,
+    marginLeft: 0,
+  },
+  bottomNotificationHr: {
+    borderBottomWidth: 1,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  ctaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  bottomNotificationCta: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 24,
+    letterSpacing: 0.5,
+    textAlign: 'left',
+  },
+  scrollableBottomNotificationMessageContainer: {
+    paddingTop: 15,
+  },
+});
 
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-right: 25px;
-`;
+export const BottomNotificationHr: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.bottomNotificationHr,
+        {borderBottomColor: theme.dark ? SlateDark : '#ebebeb'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ImageContainer = styled.View`
-  margin-right: 10px;
-`;
+export const BottomNotificationCta: React.FC<
+  {primary?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({primary, style, ...rest}) => {
+  const theme = useTheme();
+  const dark = theme.dark;
+  const color = dark
+    ? primary
+      ? LinkBlue
+      : Slate
+    : primary
+    ? NotificationPrimary
+    : Black;
+  return (
+    <BaseText
+      style={[styles.bottomNotificationCta, {color}, style]}
+      {...rest}
+    />
+  );
+};
 
-const MessageContainer = styled.View`
-  margin: 15px 0 20px 0;
-`;
-
-export const BottomNotificationHr = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebebeb')};
-  border-bottom-width: 1px;
-  margin: 20px 0;
-`;
-
-const CtaContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  ${({platform}: {platform: string}) =>
-    platform === 'ios' &&
-    css`
-      margin-bottom: 10px;
-    `}
-`;
-
-export const BottomNotificationCta = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: 0.5px;
-  text-align: left;
-  color: ${({primary, theme: {dark}}: {primary?: boolean; theme: Theme}) =>
-    dark
-      ? primary
-        ? LinkBlue
-        : Slate
-      : primary
-      ? NotificationPrimary
-      : Black};
-`;
-
-export const ScrollableBottomNotificationMessageContainer = styled(ScrollView)`
-  padding-top: 15px;
-`;
+export const ScrollableBottomNotificationMessageContainer: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView
+    style={[styles.scrollableBottomNotificationMessageContainer, style]}
+    {...rest}
+  />
+);
 
 const BottomNotification = React.memo(() => {
   const theme = useTheme();
@@ -212,20 +240,30 @@ const BottomNotification = React.memo(() => {
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
       onBackdropPress={handleBackdropPress}>
-      <BottomNotificationContainer>
-        <Row>
-          <ImageContainer>{iconElement}</ImageContainer>
+      <View
+        style={[
+          styles.bottomNotificationContainer,
+          {backgroundColor: theme.dark ? LightBlack : White},
+        ]}>
+        <View style={styles.row}>
+          <View style={styles.imageContainer}>{iconElement}</View>
           <H4>{title}</H4>
-        </Row>
+        </View>
         {message ? (
-          <MessageContainer>
+          <View style={styles.messageContainer}>
             <Markdown style={markdownStyle}>{message}</Markdown>
-          </MessageContainer>
+          </View>
         ) : null}
         {message2 ? message2 : null}
         <BottomNotificationHr />
-        <CtaContainer platform={Platform.OS}>{actionButtons}</CtaContainer>
-      </BottomNotificationContainer>
+        <View
+          style={[
+            styles.ctaContainer,
+            Platform.OS === 'ios' ? {marginBottom: 10} : null,
+          ]}>
+          {actionButtons}
+        </View>
+      </View>
     </SheetModal>
   );
 });

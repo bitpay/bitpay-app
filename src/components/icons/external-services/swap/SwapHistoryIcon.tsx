@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg, G, Rect} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Slate, SlateDark} from '../../../../styles/colors';
 
 const SwapHistorySvg: React.FC<{
