@@ -140,12 +140,14 @@ export const useUrlEventHandler = () => {
 export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
   const logger = useLogger();
-  const {
-    biometricLockActive,
-    pinLockActive,
-    lockAuthorizedUntil,
-    inAppBrowserOpen,
-  } = useAppSelector(({APP}) => APP);
+  const biometricLockActive = useAppSelector(
+    ({APP}) => APP.biometricLockActive,
+  );
+  const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
+  const lockAuthorizedUntil = useAppSelector(
+    ({APP}) => APP.lockAuthorizedUntil,
+  );
+  const inAppBrowserOpen = useAppSelector(({APP}) => APP.inAppBrowserOpen);
 
   const memoizedSubscribe = useMemo<
     LinkingOptions<RootStackParamList>['subscribe']
@@ -245,13 +247,14 @@ export const useDeeplinks = () => {
     ],
   );
 
-  const linkingOptions: LinkingOptions<RootStackParamList> = {
-    prefixes: [APP_DEEPLINK_PREFIX],
-    subscribe: memoizedSubscribe,
-    config: getLinkingConfig(),
-  };
-
-  return linkingOptions;
+  return useMemo<LinkingOptions<RootStackParamList>>(
+    () => ({
+      prefixes: [APP_DEEPLINK_PREFIX],
+      subscribe: memoizedSubscribe,
+      config: getLinkingConfig(),
+    }),
+    [memoizedSubscribe],
+  );
 };
 
 export default useDeeplinks;

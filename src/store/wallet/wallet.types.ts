@@ -326,6 +326,7 @@ interface successUpdateWalletBalancesAndStatus {
   payload: {
     keyBalances: {
       keyId: string;
+      cacheKey?: string;
       totalBalance: number;
       totalBalanceLastDay: number;
     }[];

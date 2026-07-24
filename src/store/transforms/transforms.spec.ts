@@ -328,8 +328,26 @@ describe('bindWalletKeys', () => {
         'key-1': {wallets: [wallet]},
       },
     };
-    getInbound()(state);
-    expect(wallet.transactionHistory).toBeUndefined();
+    const transactionHistory = wallet.transactionHistory;
+    const result = getInbound()(state);
+
+    expect(result.keys['key-1'].wallets[0].transactionHistory).toBeUndefined();
+    expect(wallet.transactionHistory).toBe(transactionHistory);
+    expect(state.keys['key-1'].wallets[0]).toBe(wallet);
+    expect(result).not.toBe(state);
+  });
+
+  it('inbound: accepts frozen input without mutating Redux state', () => {
+    const wallet = makeWallet();
+    const key = {wallets: Object.freeze([Object.freeze(wallet)])};
+    const keys = Object.freeze({'key-1': Object.freeze(key)});
+    const state: any = Object.freeze({keys});
+
+    expect(() => getInbound()(state)).not.toThrow();
+    expect(wallet.transactionHistory).toBeDefined();
+    expect(
+      getInbound()(state).keys['key-1'].wallets[0].transactionHistory,
+    ).toBeUndefined();
   });
 
   it('outbound: returns state unchanged when no keys', () => {

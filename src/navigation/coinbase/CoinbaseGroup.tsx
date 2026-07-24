@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../components/styled/Text';
 import CoinbaseAccount, {
@@ -42,7 +43,6 @@ export enum CoinbaseScreens {
 
 const CoinbaseGroup = ({Coinbase, theme}: CoinbaseProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <Coinbase.Group screenOptions={commonOptions}>
       <Coinbase.Screen name={CoinbaseScreens.ROOT} component={CoinbaseRoot} />

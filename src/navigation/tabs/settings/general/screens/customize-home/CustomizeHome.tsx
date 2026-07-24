@@ -42,6 +42,7 @@ import {useOngoingProcess} from '../../../../../../contexts';
 
 // Layout selector
 const Noop = () => null;
+const Tab = createMaterialTopTabNavigator();
 
 const CustomizeHomeSettings = () => {
   const {t} = useTranslation();
@@ -68,7 +69,6 @@ const CustomizeHomeSettings = () => {
   const [visibleList, setVisibleList] = useState(_visible);
   const [dirty, setDirty] = useState(false);
   const [hiddenList, setHiddenList] = useState(_hidden);
-  const Tab = createMaterialTopTabNavigator();
 
   const toggle = useCallback((item: CustomizeItem) => {
     const newItem = {...item};

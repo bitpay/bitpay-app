@@ -43,6 +43,8 @@ export interface RampSettingsProps {
   };
 }
 
+const Tab = createMaterialTopTabNavigator();
+
 const RampSettings: React.FC = () => {
   const {t} = useTranslation();
   const rampHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.ramp);
@@ -56,7 +58,6 @@ const RampSettings: React.FC = () => {
   const [paymentRequests, setTransactions] = useState([] as RampPaymentData[]);
   const [sellOrders, setSellOrders] = useState([] as RampSellOrderData[]);
 
-  const Tab = createMaterialTopTabNavigator();
   const TabTitle = {
     buy: t('Buy History'),
     sell: t('Sell History'),

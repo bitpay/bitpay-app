@@ -56,6 +56,16 @@ const styles = StyleSheet.create({
   },
 });
 
+const TransactionButton = () => null;
+
+const DefaultTabBarButton = (props: any) => (
+  <TouchableOpacity {...props} activeOpacity={1} />
+);
+
+const TransactTabBarIcon = () => <TransactModal />;
+
+const TransactTabBarButton = (props: any) => <View {...props} />;
+
 export enum TabsScreens {
   HOME = 'Home',
   SHOP = 'Shop',
@@ -88,21 +98,20 @@ const TabsStack = () => {
   const insets = useSafeAreaInsets();
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
-  const TransactionButton = () => null;
+
   return (
     <Tab.Navigator
       initialRouteName={TabsScreens.HOME}
       screenOptions={({route}) => ({
         headerShown: false,
+        freezeOnBlur: true,
         tabBarStyle: {
           backgroundColor: theme.colors.background,
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 8,
         },
-        tabBarButton: props => (
-          <TouchableOpacity {...(props as any)} activeOpacity={1} />
-        ),
+        tabBarButton: DefaultTabBarButton,
         tabBarShowLabel: false,
         tabBarIcon: ({focused}) => {
           let {name: icon} = route;
@@ -139,8 +148,8 @@ const TabsStack = () => {
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
         options={{
-          tabBarIcon: () => <TransactModal />,
-          tabBarButton: props => <View {...props} />,
+          tabBarIcon: TransactTabBarIcon,
+          tabBarButton: TransactTabBarButton,
         }}
       />
       <Tab.Screen
