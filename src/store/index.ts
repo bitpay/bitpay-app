@@ -101,6 +101,13 @@ import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {logManager} from '../managers/LogManager';
 import * as Sentry from '@sentry/react-native';
+import {
+  beginReduxAction,
+  completeReduxAction,
+  logPersistPhase,
+  logPersistWrite,
+  logReducerDuration,
+} from './performanceDiagnostics';
 
 export const storage = new MMKV();
 
@@ -198,13 +205,21 @@ const removePortfolioChartsPersistRoot = (
 
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
+    const setItemStartedAt = __DEV__ ? performance.now() : 0;
     const valueToStore =
       key === 'persist:root' && typeof value === 'string'
         ? removePortfolioChartsPersistRoot(value).value
         : value;
 
     try {
+      const mmkvStartedAt = __DEV__ ? performance.now() : 0;
       storage.set(key, valueToStore);
+      if (__DEV__) {
+        logPersistWrite(
+          performance.now() - mmkvStartedAt,
+          typeof valueToStore === 'string' ? valueToStore.length : 0,
+        );
+      }
     } catch (err) {
       addLog(
         LogActions.persistLog(
@@ -235,6 +250,13 @@ export const reduxStorage: Storage = {
         }
       }
     } catch (_) {}
+    if (__DEV__) {
+      logPersistPhase(
+        'setItem.total',
+        performance.now() - setItemStartedAt,
+        key,
+      );
+    }
   },
   getItem: key => {
     try {
@@ -355,8 +377,16 @@ const combinedReducer = combineReducers(reducers);
 
 // Guarded root reducer that logs reducer crashes and returns previous state
 const rootReducer = (state: any, action: AnyAction) => {
+  const reducerStartedAt = __DEV__ ? performance.now() : 0;
   try {
-    return combinedReducer(state, action);
+    const nextState = combinedReducer(state, action);
+    if (__DEV__) {
+      logReducerDuration(
+        action?.type ?? 'UNKNOWN',
+        performance.now() - reducerStartedAt,
+      );
+    }
+    return nextState;
   } catch (err: any) {
     const crashLog = LogActions.persistLog(
       LogActions.error(
@@ -418,6 +448,29 @@ const logger = createLogger({
 const getStore = async () => {
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
 
+  const reduxPerformanceMiddleware: Middleware =
+    store => next => (action: AnyAction) => {
+      if (!__DEV__ || typeof action?.type !== 'string') {
+        return next(action);
+      }
+
+      const actionType = action.type;
+      const previousState = store.getState();
+      const startedAt = performance.now();
+      beginReduxAction(actionType);
+      const result = next(action);
+      const nextState = store.getState();
+      const changedSlices = Object.keys(nextState).filter(
+        key => previousState?.[key] !== nextState?.[key],
+      );
+      completeReduxAction(
+        actionType,
+        performance.now() - startedAt,
+        changedSlices,
+      );
+      return result;
+    };
+
   const cleanupPortfolioOnDeleteKeyMiddleware: Middleware = store => next => {
     return (action: AnyAction) => {
       if (action?.type !== WalletActionTypes.DELETE_KEY) {
@@ -458,6 +511,7 @@ const getStore = async () => {
       return next(action);
     };
 
+  middlewares.unshift(reduxPerformanceMiddleware);
   middlewares.push(lastActionMiddleware());
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 
@@ -474,55 +528,91 @@ const getStore = async () => {
 
   const secretKey = await getEncryptionKey().catch(() => getUniqueId());
 
+  const instrumentPersistTransform = (name: string, transform: any) => {
+    if (!__DEV__) {
+      return transform;
+    }
+
+    return {
+      ...transform,
+      in: (state: unknown, key: string, fullState: unknown) => {
+        const startedAt = performance.now();
+        const result = transform.in(state, key, fullState);
+        logPersistPhase(`${name}.in`, performance.now() - startedAt, key);
+        return result;
+      },
+      out: (state: unknown, key: string, fullState: unknown) => {
+        const startedAt = performance.now();
+        const result = transform.out(state, key, fullState);
+        logPersistPhase(`${name}.out`, performance.now() - startedAt, key);
+        return result;
+      },
+    };
+  };
+
   const rootPersistConfig = {
     ...basePersistConfig,
     key: 'root',
     blacklist: ['LOG'],
     transforms: [
-      bindWalletKeys,
-      transformContacts,
-      transformPortfolioPopulateStatus,
-      createTransform<RootState, RootState, RootState>((inboundState, key) => {
-        // Clear out nested blacklisted fields before encrypting and persisting
-        if (typeof key === 'string') {
-          const reducerPersistBlackList =
-            reducerPersistBlackLists[key as keyof typeof reducers];
-          if (reducerPersistBlackList?.length) {
-            const fieldOverrides = reducerPersistBlackList.reduce(
-              (all, field) => ({...all, [field]: undefined}),
-              {},
-            );
-            return {...inboundState, ...fieldOverrides};
-          }
-        }
-        return inboundState;
-      }),
-      encryptSpecificFields(secretKey),
-      encryptTransform({
-        secretKey,
-        onError: err => {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
+      instrumentPersistTransform('bindWalletKeys', bindWalletKeys),
+      instrumentPersistTransform('transformContacts', transformContacts),
+      instrumentPersistTransform(
+        'transformPortfolioPopulateStatus',
+        transformPortfolioPopulateStatus,
+      ),
+      instrumentPersistTransform(
+        'persistBlacklist',
+        createTransform<RootState, RootState, RootState>(
+          (inboundState, key) => {
+            // Clear out nested blacklisted fields before encrypting and persisting
+            if (typeof key === 'string') {
+              const reducerPersistBlackList =
+                reducerPersistBlackLists[key as keyof typeof reducers];
+              if (reducerPersistBlackList?.length) {
+                const fieldOverrides = reducerPersistBlackList.reduce(
+                  (all, field) => ({...all, [field]: undefined}),
+                  {},
+                );
+                return {...inboundState, ...fieldOverrides};
+              }
+            }
+            return inboundState;
+          },
+        ),
+      ),
+      instrumentPersistTransform(
+        'encryptSpecificFields',
+        encryptSpecificFields(secretKey),
+      ),
+      instrumentPersistTransform(
+        'encryptTransform',
+        encryptTransform({
+          secretKey,
+          onError: err => {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
 
-          store.dispatch(
-            LogActions.persistLog(
-              LogActions.error(`Encrypt transform failed - ${errStr}`),
-            ),
-          );
-          Sentry.captureException(err, {
-            level: 'error',
-          });
-        },
-        unencryptedStores: [
-          'APP',
-          'MARKET_STATS',
-          'PORTFOLIO',
-          'RATE',
-          'SHOP',
-          'SHOP_CATALOG',
-          'WALLET',
-        ],
-      }),
+            store.dispatch(
+              LogActions.persistLog(
+                LogActions.error(`Encrypt transform failed - ${errStr}`),
+              ),
+            );
+            Sentry.captureException(err, {
+              level: 'error',
+            });
+          },
+          unencryptedStores: [
+            'APP',
+            'MARKET_STATS',
+            'PORTFOLIO',
+            'RATE',
+            'SHOP',
+            'SHOP_CATALOG',
+            'WALLET',
+          ],
+        }),
+      ),
     ],
   };
 

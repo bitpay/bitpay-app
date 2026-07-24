@@ -42,6 +42,8 @@ import {
 } from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
   startCreateKeyWithOpts,
@@ -396,6 +398,9 @@ const CurrencySubTitle = React.forwardRef<Text, TextProps>(
 
 const RecoveryPhrase = () => {
   const {t} = useTranslation();
+  const onPerformanceLayout = useScreenRenderPerformance(
+    'Import.RecoveryPhrase',
+  );
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
@@ -839,16 +844,20 @@ const RecoveryPhrase = () => {
     <ScrollViewContainer
       testID="recovery-phrase-view"
       accessibilityLabel="Recovery phrase view"
+      onLayout={onPerformanceLayout}
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView>
-        <Paragraph>
-          {t(
-            'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
-          )}
-        </Paragraph>
+        <React.Profiler id="RecoveryPhrase:intro" onRender={logReactProfiler}>
+          <Paragraph>
+            {t(
+              'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
+            )}
+          </Paragraph>
+        </React.Profiler>
 
-        <HeaderContainer>
+        <React.Profiler id="RecoveryPhrase:header" onRender={logReactProfiler}>
+          <HeaderContainer>
             <ImportTitle>{t('Recovery phrase')}</ImportTitle>
 
             <ScanContainer
@@ -869,30 +878,38 @@ const RecoveryPhrase = () => {
               }}>
               <ScanSvg />
             </ScanContainer>
-        </HeaderContainer>
+          </HeaderContainer>
+        </React.Profiler>
 
-        <ImportTextInput
-          ref={wordsRef}
-          testID="import-text-input"
-          accessibilityLabel="Enter recovery phrase"
-          multiline
-          autoCapitalize={'none'}
-          numberOfLines={3}
-          onChangeText={updateRecoveryPhraseValue}
-          defaultValue=""
-          autoCorrect={false}
-          spellCheck={false}
-          autoComplete="off"
-          textContentType={IS_IOS ? 'password' : undefined}
-          keyboardType={IS_ANDROID ? 'visible-password' : undefined}
-        />
+        <React.Profiler
+          id="RecoveryPhrase:controller"
+          onRender={logReactProfiler}>
+          <ImportTextInput
+            ref={wordsRef}
+            testID="import-text-input"
+            accessibilityLabel="Enter recovery phrase"
+            multiline
+            autoCapitalize={'none'}
+            numberOfLines={3}
+            onChangeText={updateRecoveryPhraseValue}
+            defaultValue=""
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+            textContentType={IS_IOS ? 'password' : undefined}
+            keyboardType={IS_ANDROID ? 'visible-password' : undefined}
+          />
+        </React.Profiler>
 
         {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
         <CuationText>
           {t('This process may take a few minutes to complete.')}
         </CuationText>
-        <CtaContainer>
+        <React.Profiler
+          id="RecoveryPhrase:advanced-options"
+          onRender={logReactProfiler}>
+          <CtaContainer>
             <AdvancedOptionsContainer
               testID="advanced-options-container"
               accessibilityLabel="Advanced options container">
@@ -1116,16 +1133,19 @@ const RecoveryPhrase = () => {
                 </AdvancedOptions>
               )}
             </AdvancedOptionsContainer>
-        </CtaContainer>
+          </CtaContainer>
+        </React.Profiler>
 
-        <Button
-          testID="import-wallet-button"
-          accessibilityLabel="Import wallet"
-          buttonStyle={'primary'}
-          state={importButtonState}
-          onPress={handleSubmit(onSubmit)}>
-          {t('Import Wallet')}
-        </Button>
+        <React.Profiler id="RecoveryPhrase:submit" onRender={logReactProfiler}>
+          <Button
+            testID="import-wallet-button"
+            accessibilityLabel="Import wallet"
+            buttonStyle={'primary'}
+            state={importButtonState}
+            onPress={handleSubmit(onSubmit)}>
+            {t('Import Wallet')}
+          </Button>
+        </React.Profiler>
       </ContentView>
     </ScrollViewContainer>
   );

@@ -149,6 +149,8 @@ import {
   successGetReceiveAddress,
 } from './store/wallet/wallet.actions';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
+import {getReduxPerformanceSnapshot} from './store/performanceDiagnostics';
+import {logReactProfiler} from './utils/reactPerformanceProfiler';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
 import AllAssets from './navigation/tabs/home/screens/AllAssets';
@@ -295,9 +297,17 @@ export const Root = createNativeStackNavigator<RootStackParamList>();
 
 const focusGatedScreenLayout = ({
   children,
+  route,
 }: {
   children: React.ReactElement;
-}) => <FocusGatedReduxScreen>{children}</FocusGatedReduxScreen>;
+  route: {name: string};
+}) => (
+  <FocusGatedReduxScreen>
+    <React.Profiler id={`screen:${route.name}`} onRender={logReactProfiler}>
+      {children}
+    </React.Profiler>
+  </FocusGatedReduxScreen>
+);
 
 const StartupGate = () => {
   const navigation = useNavigation<any>();
@@ -346,6 +356,8 @@ export default () => {
   const lastSystemEnabledRef = useRef<boolean | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const splashHiddenRef = useRef(false);
+  const lastNavStartTsRef = useRef<number | null>(null);
+  const lastTransitionStartTsRef = useRef<number | null>(null);
   const launchPopulateStartedRef = useRef(false);
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
@@ -379,6 +391,21 @@ export default () => {
   const pushNotificationsRef = useRef(notificationsState.pushNotifications);
   const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+
+  useEffect(() => {
+    if (!__DEV__) {
+      return;
+    }
+    const snapshot = getReduxPerformanceSnapshot();
+    // eslint-disable-next-line no-console
+    console.log(
+      `[PERF-ROOT] render action:${
+        snapshot?.actionType ?? 'unknown'
+      } dispatchMs:${snapshot?.dispatchDurationMs ?? -1} changedSlices:${
+        snapshot?.changedSlices.join(',') || 'none'
+      }`,
+    );
+  });
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -1014,6 +1041,10 @@ export default () => {
           onStateChange={state => {
             debouncedOnStateChange(state);
 
+            if (__DEV__) {
+              lastNavStartTsRef.current = Date.now();
+            }
+
             if (splashHiddenRef.current) {
               return;
             }
@@ -1038,6 +1069,38 @@ export default () => {
           }}>
           <Root.Navigator
             screenLayout={focusGatedScreenLayout}
+            screenListeners={{
+              transitionStart: e => {
+                if (!__DEV__ || e.data.closing) {
+                  return;
+                }
+                lastTransitionStartTsRef.current = performance.now();
+                const routeName = navigationRef.getCurrentRoute()?.name;
+                // eslint-disable-next-line no-console
+                console.log(`[PERF-NAV] ${routeName} transitionStart`);
+              },
+              transitionEnd: e => {
+                if (!__DEV__ || e.data.closing) {
+                  return;
+                }
+                const startTs = lastNavStartTsRef.current;
+                if (startTs === null) {
+                  return;
+                }
+                const deltaMs = Date.now() - startTs;
+                const transitionStartTs = lastTransitionStartTsRef.current;
+                const transitionDeltaMs =
+                  transitionStartTs === null
+                    ? -1
+                    : Math.round((performance.now() - transitionStartTs) * 10) /
+                      10;
+                const routeName = navigationRef.getCurrentRoute()?.name;
+                // eslint-disable-next-line no-console
+                console.log(
+                  `[PERF-NAV] ${routeName} transitionEnd stateDeltaMs:${deltaMs} transitionDeltaMs:${transitionDeltaMs}`,
+                );
+              },
+            }}
             screenOptions={{
               ...baseNavigatorOptions,
               headerShown: false,
@@ -1116,19 +1179,59 @@ export default () => {
             {ZenLedgerGroup({ZenLedger: Root, theme})}
             {SecurityGroup({Security: Root, theme})}
           </Root.Navigator>
-          <OnGoingProcessModal />
-          <InAppNotification />
-          <BottomNotificationModal />
-          <CloudflareChallengeModal />
-          <DecryptEnterPasswordModal />
-          <BlurContainer />
-          <PinModal />
-          <BiometricModal />
+          <React.Profiler
+            id="overlay:ongoing-process"
+            onRender={logReactProfiler}>
+            <OnGoingProcessModal />
+          </React.Profiler>
+          <React.Profiler
+            id="overlay:in-app-notification"
+            onRender={logReactProfiler}>
+            <InAppNotification />
+          </React.Profiler>
+          <React.Profiler
+            id="overlay:bottom-notification"
+            onRender={logReactProfiler}>
+            <BottomNotificationModal />
+          </React.Profiler>
+          <React.Profiler
+            id="overlay:cloudflare-challenge"
+            onRender={logReactProfiler}>
+            <CloudflareChallengeModal />
+          </React.Profiler>
+          <React.Profiler
+            id="overlay:decrypt-password"
+            onRender={logReactProfiler}>
+            <DecryptEnterPasswordModal />
+          </React.Profiler>
+          <React.Profiler id="overlay:blur" onRender={logReactProfiler}>
+            <BlurContainer />
+          </React.Profiler>
+          <React.Profiler id="overlay:pin" onRender={logReactProfiler}>
+            <PinModal />
+          </React.Profiler>
+          <React.Profiler id="overlay:biometric" onRender={logReactProfiler}>
+            <BiometricModal />
+          </React.Profiler>
           {/* <ImportLedgerWalletModal /> */}
-          <WalletConnectStartModal />
-          <ChainSelectorModal />
-          <PaymentSent />
-          <MoonpayEmbeddedCredentialManager />
+          <React.Profiler
+            id="overlay:wallet-connect"
+            onRender={logReactProfiler}>
+            <WalletConnectStartModal />
+          </React.Profiler>
+          <React.Profiler
+            id="overlay:chain-selector"
+            onRender={logReactProfiler}>
+            <ChainSelectorModal />
+          </React.Profiler>
+          <React.Profiler id="overlay:payment-sent" onRender={logReactProfiler}>
+            <PaymentSent />
+          </React.Profiler>
+          <React.Profiler
+            id="overlay:moonpay-credentials"
+            onRender={logReactProfiler}>
+            <MoonpayEmbeddedCredentialManager />
+          </React.Profiler>
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

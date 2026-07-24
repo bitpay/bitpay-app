@@ -1,10 +1,3 @@
-# Claude Code
-.claude
-
-# Maestro
-android/samples/
-.maestro/screenshots/
-
 # OSX
 #
 .DS_Store
@@ -38,12 +31,14 @@ local.properties
 *.iml
 *.hprof
 android/app/src/main/res/raw/*
-!android/app/src/main/res/raw/archivo_bold.ttf
-!android/app/src/main/res/raw/archivo_medium.ttf
-!android/app/src/main/res/raw/archivo_regular.ttf
 .cxx/
 *.keystore
-!debug.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
 .kotlin/
 
 # Emacs
@@ -80,6 +75,9 @@ yarn-error.log
 
 .env
 .env.*
+**/braze.xml
+**/google-services.json
+**/GoogleService-Info.plist
 
 # Jest
 #
@@ -92,14 +90,6 @@ crowdin-credentials.yml
 # Ruby
 vendor/
 
-# Generated DKLS vendor files (base64-encoded JS+WASM artifacts).
-# Regenerated automatically by scripts/generate-dkls-vendor.js via postinstall.sh.
-src/dkls/vendor/
-
 #yalc
 .yalc/
 yalc.lock
-
-# Sentry
-ios/sentry.properties
-android/sentry.properties

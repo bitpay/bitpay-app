@@ -104,6 +104,7 @@ import {
   useDebouncedSendToValidation,
   useSendToKeyAccounts,
 } from './sendTo.utils';
+import {logReactProfiler} from '../../../../utils/reactPerformanceProfiler';
 
 export {BuildKeyAccountRow};
 
@@ -805,8 +806,9 @@ const SendTo = () => {
           </TouchableOpacity>
         ) : null}
 
-        {contacts.length > 0 && !searchIsEmailAddress ? (
-          <View style={styles.contactContainer}>
+        <React.Profiler id="SendTo:contacts" onRender={logReactProfiler}>
+          {contacts.length > 0 && !searchIsEmailAddress ? (
+            <View style={styles.contactContainer}>
               <ContactTitleContainer>
                 {ContactsSvg({})}
                 <ContactTitle>{t('Contacts')}</ContactTitle>
@@ -821,8 +823,9 @@ const SendTo = () => {
                   onSelect={onContactSelect}
                 />
               ))}
-          </View>
-        ) : null}
+            </View>
+          ) : null}
+        </React.Profiler>
 
         <MemoizedOptionsSheet
           isVisible={showWalletOptions}
@@ -830,13 +833,15 @@ const SendTo = () => {
           options={assetOptions}
         />
 
-        <View style={{marginTop: 10}}>
-          <MemoizedKeyWalletsRow
-            keyAccounts={keyAccounts}
-            hideBalance={hideAllBalances}
-            onPress={onKeyWalletPress}
-          />
-        </View>
+        <React.Profiler id="SendTo:wallets" onRender={logReactProfiler}>
+          <View style={{marginTop: 10}}>
+            <MemoizedKeyWalletsRow
+              keyAccounts={keyAccounts}
+              hideBalance={hideAllBalances}
+              onPress={onKeyWalletPress}
+            />
+          </View>
+        </React.Profiler>
       </ScrollView>
     </SafeAreaView>
   );

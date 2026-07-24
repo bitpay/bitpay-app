@@ -21,6 +21,7 @@ import ArchaxFooter from '../archax/archax-footer';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {createSelector} from 'reselect';
 import {RootState} from '../../store';
+import {logReactProfiler} from '../../utils/reactPerformanceProfiler';
 
 const styles = StyleSheet.create({
   amountContainer: {
@@ -172,13 +173,15 @@ const AmountKeyboard = React.memo(
     onCellPress: (value: string) => void;
     showDot: boolean;
   }) => (
-    <View style={styles.virtualKeyboardContainer}>
-      <VirtualKeyboard
-        onCellPress={onCellPress}
-        showDot={showDot}
-        isSmallScreen={isSmallScreen}
-      />
-    </View>
+    <React.Profiler id="Amount:keyboard" onRender={logReactProfiler}>
+      <View style={styles.virtualKeyboardContainer}>
+        <VirtualKeyboard
+          onCellPress={onCellPress}
+          showDot={showDot}
+          isSmallScreen={isSmallScreen}
+        />
+      </View>
+    </React.Profiler>
   ),
 );
 
@@ -194,11 +197,13 @@ const AmountSubmit = React.memo(
     label: string;
     onPress: () => void;
   }) => (
-    <View style={styles.buttonContainer}>
-      <Button state={buttonState} disabled={disabled} onPress={onPress}>
-        {label}
-      </Button>
-    </View>
+    <React.Profiler id="Amount:submit" onRender={logReactProfiler}>
+      <View style={styles.buttonContainer}>
+        <Button state={buttonState} disabled={disabled} onPress={onPress}>
+          {label}
+        </Button>
+      </View>
+    </React.Profiler>
   ),
 );
 

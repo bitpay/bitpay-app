@@ -8,6 +8,7 @@ import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
 
 type ImportScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -31,6 +32,7 @@ const styles = StyleSheet.create({
 
 const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
+  const onPerformanceLayout = useScreenRenderPerformance('Import');
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -42,7 +44,8 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   return (
     <SafeAreaView
       style={styles.importContainer}
-      testID="import-view">
+      testID="import-view"
+      onLayout={onPerformanceLayout}>
       <Tab.Navigator
         screenOptions={{lazy: true, lazyPreloadDistance: 0}}
         tabBar={props => <CustomTabBar {...props} />}>
