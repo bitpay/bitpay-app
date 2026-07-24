@@ -5,7 +5,7 @@ import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch, useSelector, useStore} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {
@@ -151,12 +151,12 @@ export const BottomNotificationMessageContainer: React.FC<
   <View style={[styles.bottomNotificationMessageContainer, style]} {...rest} />
 );
 
-const BottomNotification = React.memo(() => {
+const BottomNotificationContent = React.memo(() => {
   const theme = useTheme();
   const {height} = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
-  const rootState = useSelector((state: RootState) => state);
+  const store = useStore<RootState>();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
   );
@@ -210,7 +210,7 @@ const BottomNotification = React.memo(() => {
           dispatch(AppActions.dismissBottomNotificationModal());
           await sleep(0);
           try {
-            await action(rootState);
+            await action(store.getState());
           } catch (e) {
             console.error('[BottomNotification] action error:', e);
           }
@@ -233,7 +233,7 @@ const BottomNotification = React.memo(() => {
           </TouchableOpacity>
         );
       }),
-    [actions, dispatch, rootState],
+    [actions, dispatch, store],
   );
 
   return (
@@ -272,6 +272,17 @@ const BottomNotification = React.memo(() => {
       </NotificationScrollView>
     </SheetModal>
   );
+});
+
+const BottomNotification = React.memo(() => {
+  const isVisible = useSelector(
+    ({APP}: RootState) => APP.showBottomNotificationModal,
+  );
+  const config = useSelector(
+    ({APP}: RootState) => APP.bottomNotificationModalConfig,
+  );
+
+  return isVisible || config ? <BottomNotificationContent /> : null;
 });
 
 export default BottomNotification;
