@@ -65,54 +65,6 @@ export const moonpayGetCurrencyLimits = async (
   }
 };
 
-export const moonpayGetTransactionDetails = async (
-  transactionId?: string,
-  externalId?: string,
-): Promise<any> => {
-  try {
-    if (!transactionId && !externalId) {
-      const msg = 'Missing parameters';
-      logManager.debug('[moonpayGetTransactionDetails]' + msg);
-      return Promise.reject(msg);
-    }
-
-    let body;
-    if (transactionId) {
-      body = {
-        transactionId,
-        env: moonpaySellEnv,
-      };
-    } else if (externalId) {
-      body = {
-        externalId,
-        env: moonpaySellEnv,
-      };
-    }
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/moonpay/transactionDetails',
-      body,
-      config,
-    );
-
-    if (data instanceof Array) {
-      return Promise.resolve(data[0]);
-    } else {
-      return Promise.resolve(data);
-    }
-  } catch (err) {
-    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error('Error fetching Moonpay transaction details: ' + errStr);
-    return Promise.reject(err);
-  }
-};
-
 export const moonpayGetSellTransactionDetails = async (
   transactionId?: string,
   externalId?: string,

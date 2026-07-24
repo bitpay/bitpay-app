@@ -64,6 +64,7 @@ import {
   getChainFromChangellyBlockchain,
   changellyCreateFixTransaction,
   changellyGetFixRateForAmount,
+  generateMessageId,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
@@ -96,10 +97,7 @@ import {
   TSSSigningStatus,
   TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
-import {
-  changellyGetCurrencies,
-  changellyGetTransactions,
-} from '../../../../store/swap-crypto/effects/changelly/changelly';
+import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
 import {
   dismissBottomNotificationModal,
   showBottomNotificationModal,
@@ -2043,9 +2041,12 @@ const SwapCryptoRoot: React.FC = () => {
         apiExtraFee = Number(data.result.apiExtraFee);
       } else {
         try {
-          const transactionData = await changellyGetTransactions(
-            data.result.id,
-          );
+          const _txRaw = await fromWalletSelected.changellyGetTransactions({
+            id: generateMessageId(fromWalletSelected.id),
+            exchangeTxId: data.result.id,
+            useV2: true,
+          });
+          const transactionData = _txRaw?.body ?? _txRaw;
           if (transactionData.result[0]) {
             if (Number(transactionData.result[0].changellyFee) > 0) {
               changellyFee = Number(transactionData.result[0].changellyFee);
