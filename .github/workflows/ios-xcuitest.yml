@@ -104,8 +104,6 @@ jobs:
 
       - name: Boot Simulator
         run: |
-          echo "=== Full simulator list ==="
-          xcrun simctl list devices available
           UDID=$(xcrun simctl list devices available | grep "iPhone 17 (" | grep -v "Pro\|Plus\|Max\|Air\|e (" | head -1 | grep -E -o '\([0-9A-F-]+\)' | tr -d '()')
           if [ -z "$UDID" ]; then
             echo "ERROR: Could not find iPhone 17 UDID"
@@ -115,6 +113,15 @@ jobs:
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b
           echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+
+          # Dynamically get the iOS version of the booted simulator
+          IOS_VERSION=$(xcrun simctl list devices available | grep "$UDID" | grep -E -o 'OS:[0-9]+\.[0-9]+' | cut -d: -f2)
+          if [ -z "$IOS_VERSION" ]; then
+            # fallback: get version from runtime list
+            IOS_VERSION=$(xcrun simctl list runtimes | grep "iOS" | head -1 | grep -E -o '[0-9]+\.[0-9]+' | head -1)
+          fi
+          echo "iOS version: $IOS_VERSION"
+          echo "IOS_VERSION=$IOS_VERSION" >> $GITHUB_ENV
 
       - name: Apply production configuration
         run: |
@@ -138,6 +145,7 @@ jobs:
             -only-testing:BitPayAppUITests \
             VALIDATE_WORKSPACE=NO \
             VALIDATE_PRODUCT=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=${{ env.IOS_VERSION }} \
             NODE_BINARY="$NODE_BINARY" \
             build-for-testing 2>&1 | tee build-output.log
           BUILD_EXIT=${PIPESTATUS[0]}
