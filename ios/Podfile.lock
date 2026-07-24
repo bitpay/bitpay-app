@@ -3,11 +3,11 @@ PODS:
     - AppsFlyerFramework/Main (= 6.17.9)
   - AppsFlyerFramework/Main (6.17.9)
   - boost (1.84.0)
-  - braze-react-native-sdk (20.1.0):
+  - braze-react-native-sdk (22.0.0):
     - boost
-    - BrazeKit (~> 14.0.4)
-    - BrazeLocation (~> 14.0.4)
-    - BrazeUI (~> 14.0.4)
+    - BrazeKit (~> 16.0.0)
+    - BrazeLocation (~> 16.0.0)
+    - BrazeUI (~> 16.0.0)
     - DoubleConversion
     - fast_float
     - fmt
@@ -34,11 +34,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - BrazeKit (14.0.4)
-  - BrazeLocation (14.0.4):
-    - BrazeKit (= 14.0.4)
-  - BrazeUI (14.0.4):
-    - BrazeKit (= 14.0.4)
+  - BrazeKit (16.0.0)
+  - BrazeLocation (16.0.0):
+    - BrazeKit (= 16.0.0)
+  - BrazeUI (16.0.0):
+    - BrazeKit (= 16.0.0)
   - BVLinearGradient (2.6.2):
     - React-Core
   - CookieManager (6.3.0):
@@ -3955,10 +3955,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppsFlyerFramework: 4f9a8237d40e9093941aef760cd77d606238aedd
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  braze-react-native-sdk: 12e813e4a989839c912c87acc4a2ab72c5652df5
-  BrazeKit: ba951d2299c1d16b541cf35cdd7250d03e28a0fb
-  BrazeLocation: d6938a737f123bb9e6632246d1abea40eeb12768
-  BrazeUI: 1d733e1dea4d81f95f261b52cc6e4b91a0eccca8
+  braze-react-native-sdk: 94ac1ea2d8c97ff2202d0640b637260e769b0a89
+  BrazeKit: df43704bad6ec810a5b8959a1594f6f3b9a7073c
+  BrazeLocation: dffce52158a99b0ba143e72787605752043a5ec9
+  BrazeUI: 0df18f06502e9b73009a462248c4858c19decb5d
   BVLinearGradient: 34a999fda29036898a09c6a6b728b0b4189e1a44
   CookieManager: ae06e97a79ea66832add0c8aa501a7986bdbb72d
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
