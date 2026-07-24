@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {useTranslation} from 'react-i18next';
 import {BillGroupParamList, BillScreens} from '../BillGroup';
 import {Bills} from '../../components/Bills';

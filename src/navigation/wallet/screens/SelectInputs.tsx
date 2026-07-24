@@ -8,7 +8,7 @@ import React, {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {FlashList} from '@shopify/flash-list';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {
   Recipient,
   TransactionOptionsContext,
@@ -66,67 +66,126 @@ import {WalletRowProps} from '../../../components/list/WalletRow';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import {useOngoingProcess} from '../../../contexts';
 
-export const CurrencyColumn = styled(Column)`
-  margin-left: 8px;
-`;
+const styles = StyleSheet.create({
+  currencyColumn: {
+    marginLeft: 8,
+  },
+  sectionContainer: {
+    marginBottom: 10,
+  },
+  itemRowContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    height: 55,
+  },
+  selectInputsContainer: {
+    flex: 1,
+  },
+  availableInputsTitle: {
+    marginBottom: 10,
+  },
+  selectInputsDetailsContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  inputSelectionRowContainer: {
+    paddingHorizontal: 15,
+  },
+  ctaContainer: {
+    paddingTop: 0,
+    paddingRight: 16,
+    paddingBottom: 10,
+    paddingLeft: 16,
+  },
+  dropdownRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'nowrap',
+    height: 48,
+  },
+  dropdownTitle: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  inputTouchableContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 71,
+  },
+  availableInputsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+});
 
-const SectionContainer = styled.View`
-  margin-bottom: 10px;
-`;
+export const CurrencyColumn: React.FC<React.ComponentProps<typeof Column>> = ({
+  style,
+  ...rest
+}) => <Column style={[styles.currencyColumn, style]} {...rest} />;
 
-const ItemRowContainer = styled.View`
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-  height: 55px;
-`;
+const SectionContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.sectionContainer, style]} {...rest} />;
 
-const SelectInputsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const ItemRowContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.itemRowContainer, style]} {...rest} />;
 
-const AvailableInputsTitle = styled(H5)`
-  margin-bottom: 10px;
-`;
+const SelectInputsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.selectInputsContainer, style]} {...rest} />
+);
 
-const SelectInputsDetailsContainer = styled.View`
-  margin-top: 20px;
-  padding: 0 15px;
-`;
+const AvailableInputsTitle: React.FC<React.ComponentProps<typeof H5>> = ({
+  style,
+  ...rest
+}) => <H5 style={[styles.availableInputsTitle, style]} {...rest} />;
 
-const InputSelectionRowContainer = styled.View`
-  padding: 0 15px;
-`;
+const SelectInputsDetailsContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.selectInputsDetailsContainer, style]} {...rest} />
+);
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 0px 16px 10px 16px;
-`;
+const InputSelectionRowContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.inputSelectionRowContainer, style]} {...rest} />
+);
 
-const DropdownRow = styled(TouchableOpacity)`
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  height: 48px;
-`;
+const CtaContainer: React.FC<React.ComponentProps<typeof _CtaContainer>> = ({
+  style,
+  ...rest
+}) => <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />;
 
-const DropdownTitle = styled.View`
-  flex-direction: row;
-  justify-content: flex-start;
-`;
+const DropdownRow: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.dropdownRow, style]} {...rest} />
+);
 
-export const InputTouchableContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 71px;
-`;
+const DropdownTitle: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.dropdownTitle, style]} {...rest} />;
 
-const AvailableInputsContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-`;
+export const InputTouchableContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.inputTouchableContainer, style]} {...rest} />
+);
+
+const AvailableInputsContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.availableInputsContainer, style]} {...rest} />
+);
 
 export interface SelectInputsParamList {
   wallet: Wallet;

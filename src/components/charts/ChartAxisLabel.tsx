@@ -5,7 +5,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {BaseText} from '../styled/Text';
 import {formatFiatAmount} from '../../utils/helper-methods';
 import {Slate30, SlateDark} from '../../styles/colors';

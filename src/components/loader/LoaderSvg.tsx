@@ -6,7 +6,7 @@ import {
   SweepGradient,
   vec,
 } from '@shopify/react-native-skia';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 
 type LoaderSvgProps = {
   size?: number;

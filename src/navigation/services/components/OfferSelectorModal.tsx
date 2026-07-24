@@ -1,5 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {
+  ActivityIndicator,
+  SafeAreaView as RNSafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  ViewProps,
+  TextProps,
+} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
@@ -27,7 +37,6 @@ import {
   PaymentMethodKey,
   getPaymentMethodIconByKey,
 } from '../buy-crypto/constants/BuyCryptoConstants';
-import {ActivityIndicator, ScrollView} from 'react-native';
 import {ItemDivisor} from '../buy-crypto/styled/BuyCryptoCard';
 import {
   BaseText,
@@ -55,291 +64,625 @@ import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import ArchaxBanner from '../../../components/archax/archax-banner';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-const SafeAreaView = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  safeAreaView: {
+    flex: 1,
+  },
+  modalHeader: {
+    height: 50,
+    marginRight: 10,
+    marginLeft: 10,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  closeModalButtonContainer: {
+    position: 'absolute',
+    left: 0,
+  },
+  closeModalButton: {
+    height: 41,
+    width: 41,
+    borderRadius: 50,
+    backgroundColor: '#9ba3ae33',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionContainer: {
+    marginTop: 10,
+    marginRight: 16,
+    marginBottom: 10,
+    marginLeft: 16,
+  },
+  sectionTitleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500',
+    marginRight: 10,
+  },
+  paymentMethodSelectorContainer: {
+    borderWidth: 1,
+    height: 48,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  paymentMethodSelectorContainerLeft: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  paymentMethodImgContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    height: 48,
+    marginRight: 10,
+  },
+  paymentMethodImg: {
+    width: 40,
+    height: 40,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paymentMethodSelectorText: {
+    fontSize: 13,
+  },
+  selectorArrowContainer: {
+    marginLeft: 10,
+  },
+  partnersText: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  spinnerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buyCryptoExpandibleCard: {
+    borderWidth: 1,
+    borderRadius: 8,
+    marginTop: 20,
+    marginRight: 15,
+    marginBottom: 0,
+    marginLeft: 15,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+  },
+  offerDataContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  offerFeeDataContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+  },
+  offerRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  offerRowLeft: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flex: 1,
+    flexWrap: 'wrap',
+    minWidth: 0,
+  },
+  bestOfferTagContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  bestOfferTag: {
+    borderRadius: 50,
+    height: 25,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  feesInfoTextContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  offerDataInfoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+    width: 25,
+    height: 25,
+  },
+  offerDataInfoLabel: {
+    marginRight: 10,
+  },
+  offerDataWarningContainer: {
+    maxWidth: '85%',
+    marginTop: 20,
+  },
+  offerDataWarningMsg: {
+    color: '#df5264',
+    marginRight: 10,
+    fontSize: 12,
+  },
+  offerDataInfoText: {
+    fontSize: 16,
+  },
+  offerDataInfoTextSec: {
+    marginTop: 10,
+  },
+  offerDataInfoTotal: {
+    fontWeight: 'bold',
+  },
+  offerExpandibleItem: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  offerDataRightContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+  },
+  offerSelectorModalContainer: {
+    marginVertical: 8,
+    marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletSelector: {
+    height: 36,
+    borderRadius: 27.5,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    minWidth: 146,
+  },
+  walletSelectorLeft: {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorRight: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorName: {
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: 0,
+    marginLeft: 8,
+  },
+});
 
-const ModalHeader = styled.View`
-  height: 50px;
-  margin-right: 10px;
-  margin-left: 10px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-`;
+const SafeAreaView: React.FC<ViewProps> = ({style, ...rest}) => (
+  <RNSafeAreaView style={[styles.safeAreaView, style]} {...rest} />
+);
 
-const CloseModalButtonContainer = styled.View`
-  position: absolute;
-  left: 0;
-`;
+const ModalHeader: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.modalHeader, style]} {...rest} />
+);
 
-const CloseModalButton = styled(TouchableOpacity)`
-  height: 41px;
-  width: 41px;
-  border-radius: 50px;
-  background-color: #9ba3ae33;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+const CloseModalButtonContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.closeModalButtonContainer, style]} {...rest} />
+);
 
-const ModalTitleContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-`;
+const CloseModalButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.closeModalButton, style]} {...rest} />
+);
 
-const SectionContainer = styled.View`
-  margin: 10px 16px 10px 16px;
-`;
+const ModalTitleContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.modalTitleContainer, style]} {...rest} />
+);
 
-const SectionTitleContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 10px;
-`;
+const SectionContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.sectionContainer, style]} {...rest} />
+);
 
-const SectionTitle = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
-  margin-right: 10px;
-`;
+const SectionTitleContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.sectionTitleContainer, style]} {...rest} />
+);
 
-const PaymentMethodSelectorContainer = styled(TouchableOpacity)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  height: 48px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const SectionTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.sectionTitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SectionTitle.displayName = 'SectionTitle';
 
-const PaymentMethodSelectorContainerLeft = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
+const PaymentMethodSelectorContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.paymentMethodSelectorContainer,
+        {borderColor: theme.dark ? Slate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaymentMethodImgContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 48px;
-  margin-right: 10px;
-`;
+const PaymentMethodSelectorContainerLeft: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[styles.paymentMethodSelectorContainerLeft, style]}
+    {...rest}
+  />
+);
 
-const PaymentMethodImg = styled.View`
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+const PaymentMethodImgContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.paymentMethodImgContainer, style]} {...rest} />
+);
 
-const PaymentMethodSelectorText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 13px;
-`;
+const PaymentMethodImg: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.paymentMethodImg, style]} {...rest} />
+);
 
-const SelectorArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+const PaymentMethodSelectorText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.paymentMethodSelectorText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PaymentMethodSelectorText.displayName = 'PaymentMethodSelectorText';
 
-const PartnersText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 13px;
-  line-height: 20px;
-`;
+const SelectorArrowContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.selectorArrowContainer, style]} {...rest} />
+);
 
-const SpinnerContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
+const PartnersText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.partnersText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PartnersText.displayName = 'PartnersText';
 
-const BuyCryptoExpandibleCard = styled(TouchableOpacity)<{selected?: boolean}>`
-  border: 1px solid
-    ${({theme: {dark}, selected}) =>
-      dark ? (selected ? Action : SlateDark) : selected ? Action : '#e6e8ec'};
-  background-color: ${({theme: {dark}, selected}) =>
-    dark
-      ? selected
-        ? '#2240C440'
-        : 'transparent'
-      : selected
-      ? LightBlue
-      : 'transparent'};
-  border-radius: 8px;
-  margin: 20px 15px 0px 15px;
-  padding: 18px 14px;
-`;
+const SpinnerContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.spinnerContainer, style]} {...rest} />
+);
 
-const OfferDataContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-`;
+const BuyCryptoExpandibleCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {selected?: boolean}
+> = ({style, selected, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.buyCryptoExpandibleCard,
+        {
+          borderColor: theme.dark
+            ? selected
+              ? Action
+              : SlateDark
+            : selected
+            ? Action
+            : '#e6e8ec',
+          backgroundColor: theme.dark
+            ? selected
+              ? '#2240C440'
+              : 'transparent'
+            : selected
+            ? LightBlue
+            : 'transparent',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OfferFeeDataContainer = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-`;
+const OfferDataContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerDataContainer, style]} {...rest} />
+);
 
-const OfferRow = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const OfferFeeDataContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.offerFeeDataContainer, style]} {...rest} />
+);
 
-const OfferRowLeft = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  flex: 1;
-  flex-wrap: wrap;
-  min-width: 0;
-`;
+const OfferRow: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerRow, style]} {...rest} />
+);
 
-const BestOfferTagContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 5px;
-`;
-const BestOfferTag = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? '#2FCFA4' : '#cbf3e8')};
-  border-radius: 50px;
-  height: 25px;
-  padding: 5px 10px;
-`;
+const OfferRowLeft: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerRowLeft, style]} {...rest} />
+);
 
-const BestOfferTagText = styled(Small)`
-  color: ${({theme: {dark}}) => (dark ? Success25 : '#004D27')};
-`;
+const BestOfferTagContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.bestOfferTagContainer, style]} {...rest} />
+);
 
-const FeesInfoTextContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const BestOfferTag: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.bestOfferTag,
+        {backgroundColor: theme.dark ? '#2FCFA4' : '#cbf3e8'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const FeesInfoText = styled(Small)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const BestOfferTagText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof Small>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Small
+      ref={ref}
+      style={[{color: theme.dark ? Success25 : '#004D27'}, style]}
+      {...rest}
+    />
+  );
+});
+BestOfferTagText.displayName = 'BestOfferTagText';
 
-const OfferDataCryptoAmount = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
+const FeesInfoTextContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.feesInfoTextContainer, style]} {...rest} />
+);
 
-const OfferDataInfoContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin-right: 10px;
-  width: 25px;
-  height: 25px;
-`;
+const FeesInfoText = React.forwardRef<Text, React.ComponentProps<typeof Small>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <Small
+        ref={ref}
+        style={[{color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+FeesInfoText.displayName = 'FeesInfoText';
 
-const OfferDataInfoLabel = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-right: 10px;
-`;
+const OfferDataCryptoAmount = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H5>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <H5
+      ref={ref}
+      style={[{color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+});
+OfferDataCryptoAmount.displayName = 'OfferDataCryptoAmount';
 
-const OfferDataWarningContainer = styled.View`
-  max-width: 85%;
-  margin-top: 20px;
-`;
+const OfferDataInfoContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerDataInfoContainer, style]} {...rest} />
+);
 
-const OfferDataWarningMsg = styled(BaseText)`
-  color: #df5264;
-  margin-right: 10px;
-  font-size: 12;
-`;
+const OfferDataInfoLabel = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H7>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <H7
+      ref={ref}
+      style={[
+        styles.offerDataInfoLabel,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+OfferDataInfoLabel.displayName = 'OfferDataInfoLabel';
 
-const OfferDataInfoText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const OfferDataWarningContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerDataWarningContainer, style]} {...rest} />
+);
 
-const OfferDataInfoTextSec = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-top: 10px;
-`;
+const OfferDataWarningMsg = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.offerDataWarningMsg, style]} {...rest} />
+));
+OfferDataWarningMsg.displayName = 'OfferDataWarningMsg';
 
-const OfferDataInfoTotal = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: bold;
-`;
+const OfferDataInfoText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.offerDataInfoText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+OfferDataInfoText.displayName = 'OfferDataInfoText';
 
-const OfferExpandibleItem = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  margin-top: 12px;
-  margin-bottom: 12px;
-`;
+const OfferDataInfoTextSec = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H7>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <H7
+      ref={ref}
+      style={[
+        styles.offerDataInfoTextSec,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+OfferDataInfoTextSec.displayName = 'OfferDataInfoTextSec';
 
-const OfferDataRightContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-`;
+const OfferDataInfoTotal = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H5>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <H5
+      ref={ref}
+      style={[
+        styles.offerDataInfoTotal,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+OfferDataInfoTotal.displayName = 'OfferDataInfoTotal';
 
-export const OfferSelectorModalContainer = styled.View`
-  margin: 8px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const OfferExpandibleItem: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerExpandibleItem, style]} {...rest} />
+);
 
-export const WalletSelector = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: 36px;
-  border-radius: 27.5px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  min-width: 146px;
-`;
+const OfferDataRightContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerDataRightContainer, style]} {...rest} />
+);
 
-export const WalletSelectorLeft = styled.View`
-  display: flex;
-  justify-content: left;
-  flex-direction: row;
-  align-items: center;
-`;
+export const OfferSelectorModalContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <View style={[styles.offerSelectorModalContainer, style]} {...rest} />;
 
-export const WalletSelectorRight = styled.View`
-  display: flex;
-  justify-content: right;
-  flex-direction: row;
-  align-items: center;
-`;
+export const WalletSelector: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.walletSelector,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const WalletSelectorName = styled.Text`
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 8px;
-`;
+export const WalletSelectorLeft: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorLeft, style]} {...rest} />
+);
+
+export const WalletSelectorRight: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorRight, style]} {...rest} />
+);
+
+export const WalletSelectorName = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <Text
+        ref={ref}
+        style={[
+          styles.walletSelectorName,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+WalletSelectorName.displayName = 'WalletSelectorName';
 
 interface OfferSelectorModalScreenProps {
   modalContext: 'buyCrypto' | 'sellCrypto';

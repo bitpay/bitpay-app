@@ -1,5 +1,5 @@
 import React, {useCallback, useMemo, useRef, useState, useEffect} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
@@ -19,7 +19,13 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../utils/helper-methods';
-import {Platform, View} from 'react-native';
+import {
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -114,55 +120,122 @@ import {AppActions} from '../../../store/app';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 
-const ModalHeader = styled.View`
-  height: 50px;
-  margin-right: 10px;
-  margin-left: 10px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-`;
+const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
-const CloseModalButtonContainer = styled.View`
-  position: absolute;
-  left: 0;
-`;
+const styles = StyleSheet.create({
+  safeAreaView: {
+    flex: 1,
+  },
+  modalHeader: {
+    height: 50,
+    marginRight: 10,
+    marginLeft: 10,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  closeModalButtonContainer: {
+    position: 'absolute',
+    left: 0,
+  },
+  closeModalButton: {
+    padding: 5,
+    height: 41,
+    width: 41,
+    borderRadius: 50,
+    backgroundColor: '#9ba3ae33',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  globalSelectContainer: {
+    padding: SCREEN_GUTTER,
+  },
+  walletSelectMenuContainer: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    maxHeight: '75%',
+    paddingBottom: 20,
+  },
+  walletSelectMenuHeaderContainerBase: {
+    flexDirection: 'row',
+    paddingTop: 16,
+    paddingRight: 16,
+    paddingLeft: 5,
+  },
+  walletSelectBottomContainer: {
+    padding: 16,
+  },
+  walletSelectMenuHeaderIconContainer: {
+    paddingRight: 0,
+  },
+  walletSelectMenuBodyContainer: {
+    paddingTop: 0,
+    paddingHorizontal: SCREEN_GUTTER,
+    paddingBottom: 2,
+  },
+  noWalletsMsg: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  searchComponentContainer: {
+    marginBottom: 16,
+  },
+  titleNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    marginTop: 20,
+    paddingBottom: 10,
+  },
+  titleName: {
+    marginLeft: 10,
+  },
+  closeButton: {
+    marginRight: 10,
+  },
+  networkChainContainer: {
+    marginLeft: 12,
+  },
+  networkRowContainer: {
+    flexDirection: 'row',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: 5,
+  },
+  flashListContainer: {
+    height: HEIGHT - 100,
+  },
+  addAccountBtnContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 9,
+  },
+  addAccountBtnText: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    letterSpacing: 0,
+    marginLeft: 10,
+  },
+});
 
-const CloseModalButton = styled(TouchableOpacity)`
-  padding: 5px;
-  height: 41px;
-  width: 41px;
-  border-radius: 50px;
-  background-color: #9ba3ae33;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalTitleContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-`;
-
-const SafeAreaView = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const GlobalSelectContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
-
-export const WalletSelectMenuContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  max-height: 75%;
-  padding-bottom: 20px;
-`;
+const CloseModalButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.closeModalButton, style]} {...rest} />
+);
 
 export interface ToWalletSelectorCustomCurrency {
   currencyAbbreviation: string;
@@ -178,90 +251,178 @@ export interface WalletSelectMenuHeaderContainerParams {
   currency?: string;
 }
 
-export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeaderContainerParams>`
-  flex-direction: row;
-  padding: 16px;
-  padding-bottom: ${({currency}) => (currency ? 14 : 0)}px;
-  padding-left: 5px;
-  justify-content: ${({currency}) => (currency ? 'flex-start' : 'center')};
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
-`;
+export const WalletSelectMenuContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.walletSelectMenuContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WalletSelectMenuContainer.displayName = 'WalletSelectMenuContainer';
 
-export const WalletSelectBottomContainer = styled(TouchableOpacity)`
-  padding: 16px;
-`;
+export const WalletSelectMenuHeaderContainer = React.forwardRef<
+  View,
+  WalletSelectMenuHeaderContainerParams & React.ComponentProps<typeof View>
+>(({currency, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.walletSelectMenuHeaderContainerBase,
+        {
+          paddingBottom: currency ? 14 : 0,
+          justifyContent: currency ? 'flex-start' : 'center',
+          borderBottomColor: theme.dark ? LightBlack : LightBlue,
+          borderBottomWidth: currency ? 1 : 0,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WalletSelectMenuHeaderContainer.displayName = 'WalletSelectMenuHeaderContainer';
 
-export const WalletSelectMenuHeaderIconContainer = styled.View`
-  padding-right: 0px;
-`;
+export const WalletSelectBottomContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[styles.walletSelectBottomContainer, style]}
+    {...rest}
+  />
+);
 
-export const WalletSelectMenuBodyContainer = styled.ScrollView`
-  padding: 0 ${ScreenGutter} 2px;
-`;
+export const WalletSelectMenuHeaderIconContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View
+    ref={ref}
+    style={[styles.walletSelectMenuHeaderIconContainer, style]}
+    {...rest}
+  />
+));
+WalletSelectMenuHeaderIconContainer.displayName =
+  'WalletSelectMenuHeaderIconContainer';
 
-const NoWalletsMsg = styled(BaseText)`
-  font-size: 15px;
-  text-align: center;
-  margin-top: 20px;
-`;
+export const WalletSelectMenuBodyContainer = React.forwardRef<
+  ScrollView,
+  React.ComponentProps<typeof ScrollView>
+>(({style, ...rest}, ref) => (
+  <ScrollView
+    ref={ref}
+    style={[styles.walletSelectMenuBodyContainer, style]}
+    {...rest}
+  />
+));
+WalletSelectMenuBodyContainer.displayName = 'WalletSelectMenuBodyContainer';
 
-const SearchComponentContainer = styled.View`
-  margin-bottom: 16px;
-`;
+const NoWalletsMsg: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.noWalletsMsg, style]} {...rest} />;
 
-const TitleNameContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
-  border-bottom-width: 1px;
-  margin-top: 20px;
-  padding-bottom: 10px;
-`;
+const TitleNameContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.titleNameContainer,
+        {borderBottomColor: theme.dark ? SlateDark : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const TitleName = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 10px;
-`;
+const TitleName: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.titleName,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CloseButton = styled(TouchableOpacity)`
-  margin-right: 10px;
-`;
+const CloseButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.closeButton, style]} {...rest} />
+);
 
-const CloseButtonText = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-`;
+const CloseButtonText: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[{color: theme.dark ? LinkBlue : Action}, style]}
+      {...rest}
+    />
+  );
+};
 
-const NetworkChainContainer = styled(TouchableOpacity)`
-  margin-left: 12px;
-`;
+const NetworkChainContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.networkChainContainer, style]} {...rest} />
+);
 
-const NetworkRowContainer = styled.View`
-  flex-direction: row;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px;
-`;
+const NetworkRowContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.networkRowContainer, style]} {...rest} />;
 
-const FlashListCointainer = styled(Animated.View)`
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  height: ${HEIGHT - 100}px;
-`;
+const FlashListCointainer: React.FC<
+  React.ComponentProps<typeof Animated.View>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <Animated.View
+      style={[
+        styles.flashListContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AddAccountBtnContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 9px;
-`;
+const AddAccountBtnContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.addAccountBtnContainer, style]} {...rest} />
+);
 
-const AddAccountBtnText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  margin-left: 10px;
-`;
+const AddAccountBtnText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.addAccountBtnText, style]} {...rest} />;
 
 export type GlobalSelectModalContext =
   | 'send'
@@ -1630,10 +1791,14 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }, [receiveWallet]);
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.safeAreaView}>
       {useAsModal && (
-        <ModalHeader style={{marginTop: Platform.OS === 'android' ? 20 : 0}}>
-          <CloseModalButtonContainer>
+        <View
+          style={[
+            styles.modalHeader,
+            {marginTop: Platform.OS === 'android' ? 20 : 0},
+          ]}>
+          <View style={styles.closeModalButtonContainer}>
             <CloseModalButton
               onPress={() => {
                 if (globalSelectOnDismiss) {
@@ -1642,9 +1807,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               }}>
               <CloseIcon />
             </CloseModalButton>
-          </CloseModalButtonContainer>
+          </View>
           {!!modalTitle && (
-            <ModalTitleContainer>
+            <View style={styles.modalTitleContainer}>
               <TextAlign align={'center'}>
                 <H4>{modalTitle}</H4>
               </TextAlign>
@@ -1657,12 +1822,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   <InfoSvg width={20} height={20} />
                 </TouchableOpacity>
               ) : null}
-            </ModalTitleContainer>
+            </View>
           )}
-        </ModalHeader>
+        </View>
       )}
-      <GlobalSelectContainer>
-        <SearchComponentContainer>
+      <View style={styles.globalSelectContainer}>
+        <View style={styles.searchComponentContainer}>
           <SearchComponent<
             GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData
           >
@@ -1679,7 +1844,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             }
             context={context}
           />
-        </SearchComponentContainer>
+        </View>
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
           selectedAssetsFromAccount.length === 0 && (
@@ -1922,7 +2087,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             context={'globalselect'}
           />
         )}
-      </GlobalSelectContainer>
+      </View>
     </SafeAreaView>
   );
 };

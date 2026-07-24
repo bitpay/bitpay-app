@@ -6,7 +6,7 @@ import {
   SearchInput,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {H5, SubText} from '../../../components/styled/Text';
 import {NeutralSlate} from '../../../styles/colors';
 import {useRoute} from '@react-navigation/native';
@@ -18,7 +18,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {ContactTitle, ContactTitleContainer} from '../screens/send/SendTo';
 import ContactsSvg from '../../../../assets/img/tab-icons/contacts.svg';
 import {useAppSelector} from '../../../utils/hooks';
-import {FlatList, View} from 'react-native';
+import {FlatList, ScrollView, StyleSheet, View} from 'react-native';
 import {
   RecipientList,
   RecipientRowContainer,
@@ -27,19 +27,20 @@ import {
 import {Recipient} from '../../../store/wallet/wallet.models';
 import ContactRow from '../../../components/list/ContactRow';
 
-const ScrollViewContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
-`;
-
-const SendToContactContainer = styled.View`
-  margin-top: 20px;
-  padding: 0 15px;
-`;
-
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 16px;
-`;
+const styles = StyleSheet.create({
+  scrollViewContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  sendToContactContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+});
 
 const SendToContact = () => {
   const {t} = useTranslation();
@@ -85,7 +86,7 @@ const SendToContact = () => {
 
   return (
     <>
-      <SendToContactContainer>
+      <View style={styles.sendToContactContainer}>
         <SearchContainer style={{height: 54}}>
           <SearchInput
             placeholder={t('Search contact')}
@@ -122,8 +123,8 @@ const SendToContact = () => {
             </>
           )}
         </View>
-      </SendToContactContainer>
-      <ScrollViewContainer>
+      </View>
+      <ScrollView style={styles.scrollViewContainer}>
         {contacts.length > 0 ? (
           <>
             <ContactTitleContainer>
@@ -150,9 +151,9 @@ const SendToContact = () => {
             })}
           </>
         ) : null}
-      </ScrollViewContainer>
+      </ScrollView>
       {context !== 'selectInputs' ? (
-        <CtaContainer>
+        <_CtaContainer style={styles.ctaContainer}>
           <Button
             buttonStyle={'primary'}
             onPress={() => {
@@ -162,7 +163,7 @@ const SendToContact = () => {
             disabled={!recipientList[0]}>
             {t('Continue')}
           </Button>
-        </CtaContainer>
+        </_CtaContainer>
       ) : null}
     </>
   );

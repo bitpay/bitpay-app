@@ -1,8 +1,19 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, View} from 'react-native';
 
-const FullWidthBalanceChartContainer = styled.View`
-  align-self: stretch;
-  margin: 0 -15px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    alignSelf: 'stretch',
+    marginVertical: 0,
+    marginHorizontal: -15,
+  },
+});
+
+const FullWidthBalanceChartContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.container, style]} {...rest} />
+));
 
 export default FullWidthBalanceChartContainer;

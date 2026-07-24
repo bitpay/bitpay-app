@@ -1,5 +1,12 @@
 import React, {useLayoutEffect, useMemo, useRef} from 'react';
-import styled from 'styled-components/native';
+import {
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   BaseText,
   HeaderTitle,
@@ -21,7 +28,6 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
-import {Platform} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
@@ -48,84 +54,67 @@ export interface RecoveryPhraseParamList {
   walletTermsAccepted: boolean;
 }
 
-const RecoveryPhraseContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const RecoveryContainer = styled.ScrollView`
-  padding: 20px 15px;
-`;
-
-const WordPairContainer = styled.View`
-  margin: 30px 15px 15px 20px;
-`;
-
-const WordPairLine = styled.View`
-  flex-direction: row;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom-color: ${({theme}) => (theme.dark ? SlateDark : Grey)};
-  border-bottom-width: 1px;
-`;
-
-const WordPairColumn = styled.View`
-  flex: 1;
-  flex-direction: row;
-  line-height: 24px;
-  letter-spacing: 0.5px;
-`;
-
-const WordText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-`;
-
-const WordTextIndex = styled(BaseText)`
-  font-size: 16px;
-  width: 30px;
-  color: ${({theme: {dark}}) => (dark ? SlateDark : Slate)};
-`;
-
-const WarningMessageContainer = styled.View`
-  flex-direction: column;
-  align-items: center;
-  background-color: ${({theme: {dark}}) => (dark ? Caution25 : Caution25)};
-  border-radius: 8px;
-  padding: 10px;
-  width: 100%;
-`;
-
-const WarningMessageTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const WarningMessageDescContainer = styled.View`
-  flex: 1;
-  margin-top: 5px;
-`;
-
-const WarningMessageTextContainer = styled.View`
-  flex: 1;
-  margin-top: 5px;
-`;
-
-const WarningMessageTitle = styled(HeaderSubtitle)`
-  color: ${({theme: {dark}}) => (dark ? Caution : Caution60)};
-`;
-
-const WarningMessageText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? Caution60 : Caution)};
-`;
-
-const ParagraphRecovery = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlack)};
-`;
+const styles = StyleSheet.create({
+  recoveryPhraseContainer: {
+    flex: 1,
+  },
+  recoveryContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+  },
+  wordPairContainer: {
+    marginTop: 30,
+    marginRight: 15,
+    marginBottom: 15,
+    marginLeft: 20,
+  },
+  wordPairLine: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+  },
+  wordPairColumn: {
+    flex: 1,
+    flexDirection: 'row',
+    lineHeight: 24,
+    letterSpacing: 0.5,
+  },
+  wordText: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+  },
+  wordTextIndex: {
+    fontSize: 16,
+    width: 30,
+  },
+  warningMessageContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: Caution25,
+    borderRadius: 8,
+    padding: 10,
+    width: '100%',
+  },
+  warningMessageTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  warningMessageDescContainer: {
+    flex: 1,
+    marginTop: 5,
+  },
+  warningMessageTextContainer: {
+    flex: 1,
+    marginTop: 5,
+  },
+});
 
 const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
+  const theme = useTheme();
   const {params} = route;
   const walletTermsAccepted = useAppSelector(
     ({WALLET}) => WALLET.walletTermsAccepted,
@@ -142,18 +131,35 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
       const index2 = i + 2;
 
       wordPairs.push(
-        <WordPairLine key={i}>
-          <WordPairColumn>
-            <WordTextIndex>{index1}.</WordTextIndex>
-            <WordText>{word1}</WordText>
-          </WordPairColumn>
+        <View
+          key={i}
+          style={[
+            styles.wordPairLine,
+            {borderBottomColor: theme.dark ? SlateDark : Grey},
+          ]}>
+          <View style={styles.wordPairColumn}>
+            <BaseText
+              style={[
+                styles.wordTextIndex,
+                {color: theme.dark ? SlateDark : Slate},
+              ]}>
+              {index1}.
+            </BaseText>
+            <BaseText style={styles.wordText}>{word1}</BaseText>
+          </View>
           {word2 && (
-            <WordPairColumn>
-              <WordTextIndex>{index2}.</WordTextIndex>
-              <WordText>{word2}</WordText>
-            </WordPairColumn>
+            <View style={styles.wordPairColumn}>
+              <BaseText
+                style={[
+                  styles.wordTextIndex,
+                  {color: theme.dark ? SlateDark : Slate},
+                ]}>
+                {index2}.
+              </BaseText>
+              <BaseText style={styles.wordText}>{word2}</BaseText>
+            </View>
           )}
-        </WordPairLine>,
+        </View>,
       );
     }
 
@@ -226,29 +232,34 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   };
 
   return (
-    <RecoveryPhraseContainer testID="recovery-phrase-view">
-      <RecoveryContainer
+    <SafeAreaView
+      style={styles.recoveryPhraseContainer}
+      testID="recovery-phrase-view">
+      <ScrollView
+        style={styles.recoveryContainer}
         contentContainerStyle={{
           paddingBottom: CTA_RESERVED,
         }}>
-        <WarningMessageContainer>
-          <WarningMessageTitleContainer>
-            <WarningMessageTitle>{t('CONFIDENTIAL')}</WarningMessageTitle>
-          </WarningMessageTitleContainer>
-          <WarningMessageDescContainer>
-            <ParagraphRecovery>
+        <View style={styles.warningMessageContainer}>
+          <View style={styles.warningMessageTitleContainer}>
+            <HeaderSubtitle style={{color: theme.dark ? Caution : Caution60}}>
+              {t('CONFIDENTIAL')}
+            </HeaderSubtitle>
+          </View>
+          <View style={styles.warningMessageDescContainer}>
+            <Paragraph style={{color: theme.dark ? SlateDark : LightBlack}}>
               {t('Your 12-word recovery phrase')}
-            </ParagraphRecovery>
-          </WarningMessageDescContainer>
-          <WarningMessageTextContainer>
-            <WarningMessageText>
+            </Paragraph>
+          </View>
+          <View style={styles.warningMessageTextContainer}>
+            <BaseText style={{color: theme.dark ? Caution60 : Caution}}>
               {t('Store Securely - Never share')}
-            </WarningMessageText>
-          </WarningMessageTextContainer>
-        </WarningMessageContainer>
+            </BaseText>
+          </View>
+        </View>
 
-        <WordPairContainer>{renderWordPairs()}</WordPairContainer>
-      </RecoveryContainer>
+        <View style={styles.wordPairContainer}>{renderWordPairs()}</View>
+      </ScrollView>
       <CtaContainerAbsolute testID="cta-container">
         <Button
           testID="next-button"
@@ -260,7 +271,7 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
           {key.backupComplete ? t('Verified') : t('Verify')}
         </Button>
       </CtaContainerAbsolute>
-    </RecoveryPhraseContainer>
+    </SafeAreaView>
   );
 };
 

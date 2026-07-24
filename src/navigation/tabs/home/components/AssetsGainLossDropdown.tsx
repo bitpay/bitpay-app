@@ -3,11 +3,12 @@ import {
   AppState,
   Modal,
   Pressable,
+  StyleSheet,
   View,
   useWindowDimensions,
 } from 'react-native';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {BaseText} from '../../../../components/styled/Text';
@@ -21,50 +22,107 @@ import {
 import ChevronDown from './ChevronDown';
 import type {GainLossMode} from '../../../../utils/portfolio/assets';
 
-const Container = styled(TouchableOpacity)<{height?: number}>`
-  flex-direction: row;
-  align-items: center;
-  border-radius: 50px;
-  padding: 10px 14px;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  background-color: ${({theme: {dark}}) => (dark ? 'transparent' : White)};
-`;
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 50,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  label: {
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 15,
+    marginRight: 10,
+  },
+  menu: {
+    width: 190,
+    borderRadius: 10,
+    shadowColor: Black,
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.15,
+    shadowRadius: 32,
+    elevation: 16,
+  },
+  menuItem: {
+    padding: 16,
+  },
+  menuItemText: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  divider: {
+    height: 1,
+  },
+});
 
-const Label = styled(BaseText)`
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 15px;
-  margin-right: 10px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const Container: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {height?: number}
+> = ({height, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.container,
+        height ? {height} : null,
+        {
+          borderColor: theme.dark ? SlateDark : Slate30,
+          backgroundColor: theme.dark ? 'transparent' : White,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const Menu = styled.View`
-  width: 190px;
-  border-radius: 10px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  shadow-color: ${Black};
-  shadow-offset: 0px 0px;
-  shadow-opacity: 0.15;
-  shadow-radius: 32px;
-  elevation: 16;
-`;
+const Label: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.label, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const MenuItem = styled(TouchableOpacity)`
-  padding: 16px;
-`;
+const Menu: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[styles.menu, {backgroundColor: theme.dark ? LightBlack : White}]}>
+      {children}
+    </View>
+  );
+};
 
-const MenuItemText = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 400;
-  color: ${({theme}) => theme.colors.text};
-`;
+const MenuItem: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.menuItem, style]} {...rest} />;
 
-const Divider = styled.View`
-  height: 1px;
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
+const MenuItemText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.menuItemText, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
+
+const Divider: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.divider,
+        {backgroundColor: theme.dark ? SlateDark : Slate30},
+      ]}
+    />
+  );
+};
 
 interface Props {
   value: GainLossMode;

@@ -1,8 +1,8 @@
 import React, {useMemo} from 'react';
-import {View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Svg, {Circle, G} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -55,85 +55,164 @@ export type AllocationSlice = {
   };
 };
 
-const Container = styled.View`
-  margin-bottom: 18px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 18,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 0,
+    marginRight: parseInt(ScreenGutter, 10),
+    marginBottom: 0,
+    marginLeft: 16,
+  },
+  headerAction: {
+    padding: 6,
+  },
+  card: {
+    marginTop: 12,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  donutContainer: {
+    width: 88,
+    height: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  legendGrid: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  legendColumn: {
+    flex: 1,
+    gap: 10,
+  },
+  legendItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 8,
+    marginRight: 8,
+    borderWidth: 1,
+  },
+  legendText: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+});
 
-const Header = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 ${ScreenGutter} 0 16px;
-`;
+const Container: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.container}>{children}</View>
+);
 
-const HeaderAction = styled(TouchableOpacity)`
-  padding: 6px;
-`;
+const Header: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.header}>{children}</View>
+);
 
-const Card = styled.View`
-  margin: 12px ${ScreenGutter} 10px;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  background-color: ${({theme: {dark}}) => (dark ? 'transparent' : White)};
-  padding: 14px 14px;
-`;
+const HeaderAction: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.headerAction, style]} {...rest} />
+);
 
-const ContentRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const Card: React.FC<{style?: any; children?: React.ReactNode}> = ({
+  style,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          borderColor: theme.dark ? SlateDark : Slate30,
+          backgroundColor: theme.dark ? 'transparent' : White,
+        },
+        style,
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const DonutContainer = styled.View`
-  width: 88px;
-  height: 88px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 14px;
-`;
+const ContentRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.contentRow}>{children}</View>
+);
 
-const LegendGrid = styled.View`
-  flex: 1;
-  flex-direction: row;
-  justify-content: space-between;
-`;
+const DonutContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.donutContainer}>{children}</View>;
 
-const LegendColumn = styled.View`
-  flex: 1;
-  gap: 10px;
-`;
+const LegendGrid: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.legendGrid}>{children}</View>
+);
 
-const LegendItemRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const LegendColumn: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.legendColumn}>{children}</View>
+);
 
-const LegendDot = styled.View<{
-  color: string;
-}>`
-  width: 9px;
-  height: 9px;
-  border-radius: 8px;
-  margin-right: 8px;
-  background-color: ${({color}) => color};
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
+const LegendItemRow: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.legendItemRow}>{children}</View>;
 
-const LegendText = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-`;
+const LegendDot: React.FC<{color: string}> = ({color}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.legendDot,
+        {
+          backgroundColor: color,
+          borderColor: theme.dark ? SlateDark : Slate30,
+        },
+      ]}
+    />
+  );
+};
 
-const LegendCurrencyAbbreviationText = styled(LegendText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
+const LegendText: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <BaseText style={styles.legendText}>{children}</BaseText>
+);
 
-const LegendPercentageText = styled(LegendText)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const LegendCurrencyAbbreviationText: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[styles.legendText, {color: theme.dark ? White : Black}]}>
+      {children}
+    </Text>
+  );
+};
+
+const LegendPercentageText: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[styles.legendText, {color: theme.dark ? Slate30 : SlateDark}]}>
+      {children}
+    </Text>
+  );
+};
 
 const DonutChart = ({
   size,

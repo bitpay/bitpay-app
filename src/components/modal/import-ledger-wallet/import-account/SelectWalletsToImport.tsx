@@ -19,10 +19,9 @@ import Checkbox from '../../../../components/checkbox/Checkbox';
 import WalletRow, {WalletRowProps} from '../../../../components/list/WalletRow';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {successCreateKey} from '../../../../store/wallet/wallet.actions';
-import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Slate30, SlateDark} from '../../../../styles/colors';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {buildUIFormattedWallet} from '../../../../store/wallet/utils/wallet';
 
 interface Props {
@@ -31,10 +30,12 @@ interface Props {
   scannedWalletsIds?: string[];
 }
 
-const WalletsFoundContainer = styled.View`
-  padding-top: 24px;
-  padding-bottom: 5px;
-`;
+const styles = StyleSheet.create({
+  walletsFoundContainer: {
+    paddingTop: 24,
+    paddingBottom: 5,
+  },
+});
 
 export const SelectWalletsToImport: React.FC<Props> = props => {
   const {t} = useTranslation();
@@ -138,7 +139,7 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
 
       {uiFormattedWallets[0] ? (
         <>
-          <WalletsFoundContainer>
+          <View style={styles.walletsFoundContainer}>
             <H7
               style={{
                 fontWeight: '700',
@@ -146,7 +147,7 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
               }}>
               {t('{{count}} wallet found', {count: uiFormattedWallets.length})}
             </H7>
-          </WalletsFoundContainer>
+          </View>
           <Hr />
         </>
       ) : null}

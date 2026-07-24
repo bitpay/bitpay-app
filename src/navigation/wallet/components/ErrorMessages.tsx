@@ -1,7 +1,7 @@
 import React from 'react';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
+import {StyleSheet} from 'react-native';
 import {t} from 'i18next';
 import {RootStacks, navigationRef} from '../../../Root';
 
@@ -10,10 +10,12 @@ interface BottomNotificationListType {
   description: string;
 }
 
-const List = styled(BaseText)`
-  line-height: 24px;
-  margin-bottom: 10px;
-`;
+const styles = StyleSheet.create({
+  list: {
+    lineHeight: 24,
+    marginBottom: 10,
+  },
+});
 
 export const DecryptError = (): BottomNotificationConfig => {
   return {
@@ -102,9 +104,9 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
       },
     ],
     message2: wrongPasswordList.map(item => (
-      <List key={item.key}>
-        {'\u2022'} {item.description}
-      </List>
+      <BaseText key={item.key} style={styles.list}>
+        {'•'} {item.description}
+      </BaseText>
     )),
   };
 };

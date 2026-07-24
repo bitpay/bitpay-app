@@ -1,6 +1,5 @@
 import React from 'react';
-import styled, {css} from 'styled-components/native';
-import {TouchableHighlight} from 'react-native';
+import {TouchableHighlight, View} from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import {
   CardConfig,
@@ -15,28 +14,41 @@ interface SlideContainerParams {
   nextColumnVisiblePixels: number;
 }
 
-const SlideContainer = styled.View<SlideContainerParams>`
-  ${({inLastSlide, isSingleSlide, marginLeft, nextColumnVisiblePixels}) => css`
-    ${marginLeft && `margin-left: ${marginLeft}px;`};
-    padding-right: ${isSingleSlide ? 0 : nextColumnVisiblePixels / 2}px;
-    margin-right: ${inLastSlide
-      ? -nextColumnVisiblePixels * 2
-      : -nextColumnVisiblePixels / 2}px;
-  `}
-`;
+const SlideContainer = ({
+  inLastSlide,
+  isSingleSlide,
+  marginLeft,
+  nextColumnVisiblePixels,
+  style,
+  ...rest
+}: SlideContainerParams & React.ComponentProps<typeof View>) => (
+  <View
+    style={[
+      {
+        paddingRight: isSingleSlide ? 0 : nextColumnVisiblePixels / 2,
+        marginRight: inLastSlide
+          ? -nextColumnVisiblePixels * 2
+          : -nextColumnVisiblePixels / 2,
+      },
+      marginLeft ? {marginLeft} : null,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 interface TouchableHighlightParams {
   width: number;
 }
 
-const ItemTouchableHighlight = styled(
-  TouchableHighlight,
-)<TouchableHighlightParams>`
-  ${({width}) =>
-    css`
-      width: ${width}px;
-    `}
-`;
+const ItemTouchableHighlight = ({
+  width,
+  style,
+  ...rest
+}: TouchableHighlightParams &
+  React.ComponentProps<typeof TouchableHighlight>) => (
+  <TouchableHighlight style={[{width}, style]} {...rest} />
+);
 
 export type ShopCarouselItem = CardConfig | DirectIntegrationApiObject;
 

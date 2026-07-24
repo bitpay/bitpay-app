@@ -1,51 +1,43 @@
 import React, {ReactElement, memo} from 'react';
 import {BaseText, ListItemSubText} from '../styled/Text';
-import styled from 'styled-components/native';
-import {ScreenGutter} from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
 import {GetContactName} from '../../store/wallet/effects/transactions/transactions';
 import {ContactRowProps} from './ContactRow';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {Dimensions} from 'react-native';
+import {Dimensions, StyleSheet, View} from 'react-native';
 
 const {width} = Dimensions.get('window');
 
-const TransactionContainer = styled(TouchableOpacity)<{withCheckBox?: boolean}>`
-  flex-direction: row;
-  padding: 10px ${ScreenGutter};
-  justify-content: space-between;
-  width: ${width - 50}px;
-  width: ${({withCheckBox}) => (withCheckBox ? `${width - 80}px` : '100%')};
-`;
-
-const IconContainer = styled.View`
-  margin-right: 8px;
-`;
-
-const Description = styled(BaseText)`
-  overflow: hidden;
-  font-size: 16px;
-  max-width: 150px;
-`;
-
-const Creator = styled(ListItemSubText)`
-  overflow: hidden;
-  max-width: 150px;
-`;
-
-const TailContainer = styled.View`
-  margin-left: auto;
-  display: flex;
-  justify-content: center;
-`;
-
-const HeadContainer = styled.View``;
-
-const Value = styled(BaseText)`
-  text-align: right;
-  font-weight: 700;
-  font-size: 16px;
-`;
+const styles = StyleSheet.create({
+  transactionContainer: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+  },
+  iconContainer: {
+    marginRight: 8,
+  },
+  description: {
+    overflow: 'hidden',
+    fontSize: 16,
+    maxWidth: 150,
+  },
+  creator: {
+    overflow: 'hidden',
+    maxWidth: 150,
+  },
+  tailContainer: {
+    marginLeft: 'auto' as any,
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  value: {
+    textAlign: 'right',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+});
 
 interface Props {
   icon?: ReactElement;
@@ -96,29 +88,36 @@ const TransactionProposalRow = ({
   }
 
   return (
-    <TransactionContainer
-      withCheckBox={withCheckBox}
+    <TouchableOpacity
+      style={[
+        styles.transactionContainer,
+        {width: withCheckBox ? width - 80 : '100%'},
+      ]}
       onPress={onPressTransaction}>
-      {icon && !hideIcon && <IconContainer>{icon}</IconContainer>}
+      {icon && !hideIcon && <View style={styles.iconContainer}>{icon}</View>}
 
-      <HeadContainer>
-        <Description
+      <View>
+        <BaseText
+          style={styles.description}
           numberOfLines={message ? 2 : labelLines}
           ellipsizeMode={'tail'}>
           {message ? message : label}
-        </Description>
+        </BaseText>
         {creator && (
-          <Creator numberOfLines={1} ellipsizeMode={'tail'}>
+          <ListItemSubText
+            style={styles.creator}
+            numberOfLines={1}
+            ellipsizeMode={'tail'}>
             {t('Created by ', {creator})}
-          </Creator>
+          </ListItemSubText>
         )}
-      </HeadContainer>
+      </View>
 
-      <TailContainer>
-        {value && <Value>{value}</Value>}
+      <View style={styles.tailContainer}>
+        {value && <BaseText style={styles.value}>{value}</BaseText>}
         {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}
-      </TailContainer>
-    </TransactionContainer>
+      </View>
+    </TouchableOpacity>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, {memo, useCallback, useState} from 'react';
+import React, {memo, useState} from 'react';
 import {
   ActiveOpacity,
   ChevronContainer,
@@ -7,35 +7,35 @@ import {
   RowContainer,
 } from '../styled/Containers';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {H5} from '../styled/Text';
 import WalletRow, {WalletRowProps} from './WalletRow';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import styled from 'styled-components/native';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
 import ChevronUpSvgLight from '../../../assets/img/chevron-up-lightmode.svg';
 import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import ChevronUpSvgDark from '../../../assets/img/chevron-up-darkmode.svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {setLocalAssetsDropdown} from '../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 
-const CurrencyImageContainer = styled.View`
-  height: 30px;
-  width: 30px;
-  display: flex;
-  justify-content: center;
-  align-self: center;
-  border-radius: 8px;
-`;
-
-const ChainAssetsContainer = styled(Row)`
-  align-items: center;
-  justify-content: center;
-  display: flex;
-  flex-direction: row;
-  gap: 3px;
-`;
+const styles = StyleSheet.create({
+  currencyImageContainer: {
+    height: 30,
+    width: 30,
+    display: 'flex',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius: 8,
+  },
+  chainAssetsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 3,
+  },
+});
 
 export interface LocalAssetsDropdown {
   [account: string]: {
@@ -96,16 +96,16 @@ const AssetsByChainRow = ({
           activeOpacity={ActiveOpacity}
           onPress={onHide}
           style={{borderBottomWidth: 0, paddingBottom: 0}}>
-          <CurrencyImageContainer>
+          <View style={styles.currencyImageContainer}>
             <CurrencyImage img={chainImg} size={20} />
-          </CurrencyImageContainer>
+          </View>
           <Column>
             <H5 ellipsizeMode="tail" numberOfLines={1}>
               {chainName}
             </H5>
           </Column>
           <Column style={{alignItems: 'flex-end'}}>
-            <ChainAssetsContainer>
+            <Row style={styles.chainAssetsContainer}>
               {!hideBalance ? (
                 <H5 numberOfLines={1} ellipsizeMode="tail">
                   {fiatBalanceFormat}
@@ -126,7 +126,7 @@ const AssetsByChainRow = ({
                   <ChevronDownSvgLight width={10} height={6} />
                 )}
               </ChevronContainer>
-            </ChainAssetsContainer>
+            </Row>
           </Column>
         </RowContainer>
       ) : null}

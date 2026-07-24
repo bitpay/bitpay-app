@@ -6,7 +6,8 @@ import {
 } from '../../../utils/helper-methods';
 import {useNavigation} from '@react-navigation/native';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
-import styled from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
@@ -30,25 +31,72 @@ interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
 }
 
-const HeaderImg = styled.View`
-  width: 22px;
-  height: 22px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 0px;
-`;
+const styles = StyleSheet.create({
+  headerImg: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 0,
+  },
+  footerContainer: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  coinbaseLabel: {
+    fontSize: 12,
+    fontWeight: '400',
+  },
+  listRow: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  shrinkColumn: {
+    flexShrink: 1,
+  },
+  listHeaderRow: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  headerColumn: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginRight: 12,
+  },
+  footerHeaderImg: {
+    marginRight: 12,
+  },
+});
 
-const FooterContainer = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-`;
+const HeaderImg = React.forwardRef<View, ViewProps>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.headerImg, style]} {...rest} />
+));
 
-const CoinbaseLabel = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 12px;
-  font-weight: 400;
-`;
+const FooterContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof Row>
+>(({style, ...rest}, ref) => (
+  <Row ref={ref} style={[styles.footerContainer, style]} {...rest} />
+));
+
+const CoinbaseLabel = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.coinbaseLabel,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
 const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   layout,
@@ -72,30 +120,40 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
     hideKeyBalance: hideAllBalances,
   };
 
-  const ListRow = styled(Row)`
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  `;
+  const ListRow = ({
+    style,
+    ...rest
+  }: React.ComponentProps<typeof Row>) => (
+    <Row style={[styles.listRow, style]} {...rest} />
+  );
 
-  const ShrinkColumn = styled(Column)`
-    flex-shrink: 1;
-  `;
+  const ShrinkColumn = ({
+    style,
+    ...rest
+  }: React.ComponentProps<typeof Column>) => (
+    <Column style={[styles.shrinkColumn, style]} {...rest} />
+  );
 
-  const ListHeaderRow = styled(Row)`
-    align-items: center;
-    justify-content: flex-end;
-  `;
+  const ListHeaderRow = ({
+    style,
+    ...rest
+  }: React.ComponentProps<typeof Row>) => (
+    <Row style={[styles.listHeaderRow, style]} {...rest} />
+  );
 
-  const HeaderColumn = styled(Column)`
-    justify-content: center;
-    align-items: flex-end;
-    margin-right: 12px;
-  `;
+  const HeaderColumn = ({
+    style,
+    ...rest
+  }: React.ComponentProps<typeof Column>) => (
+    <Column style={[styles.headerColumn, style]} {...rest} />
+  );
 
-  const FooterHeaderImg = styled(HeaderImg)`
-    margin-right: 12px;
-  `;
+  const FooterHeaderImg = ({
+    style,
+    ...rest
+  }: React.ComponentProps<typeof HeaderImg>) => (
+    <HeaderImg style={[styles.footerHeaderImg, style]} {...rest} />
+  );
 
   if (layout === 'listView') {
     return (

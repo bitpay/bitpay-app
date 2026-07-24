@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {BaseText, H2} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
@@ -27,6 +27,7 @@ import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
+  StyleSheet,
   View,
   type LayoutRectangle,
   type StyleProp,
@@ -55,30 +56,59 @@ import type {Wallet} from '../../../../store/wallet/wallet.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 
-const PortfolioContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
+const portfolioStyles = StyleSheet.create({
+  portfolioContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  portfolioTopContent: {
+    width: '100%',
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  chartStage: {
+    width: '100%',
+    position: 'relative',
+    overflow: 'visible',
+  },
+  collapseButtonContainer: {
+    position: 'absolute',
+    right: 12,
+    top: 27,
+    zIndex: 30,
+  },
+});
 
-const PortfolioTopContent = styled.View<{$leftAligned?: boolean}>`
-  width: 100%;
-  padding: 0 ${ScreenGutter};
-  align-items: ${({$leftAligned}) => ($leftAligned ? 'flex-start' : 'center')};
-`;
+const PortfolioContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={portfolioStyles.portfolioContainer}>{children}</View>;
 
-const ChartStage = styled.View`
-  width: 100%;
-  position: relative;
-  overflow: visible;
-`;
+const PortfolioTopContent: React.FC<{
+  $leftAligned?: boolean;
+  children?: React.ReactNode;
+}> = ({$leftAligned, children}) => (
+  <View
+    style={[
+      portfolioStyles.portfolioTopContent,
+      {alignItems: $leftAligned ? 'flex-start' : 'center'},
+    ]}>
+    {children}
+  </View>
+);
 
-const CollapseButtonContainer = styled(Animated.View)`
-  position: absolute;
-  right: 12px;
-  top: 27px;
-  z-index: 30;
-`;
+const ChartStage: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[portfolioStyles.chartStage, style]} {...rest} />;
+
+const CollapseButtonContainer: React.FC<
+  React.ComponentProps<typeof Animated.View>
+> = ({style, ...rest}) => (
+  <Animated.View
+    style={[portfolioStyles.collapseButtonContainer, style]}
+    {...rest}
+  />
+);
 
 const HOME_BALANCE_LINE_CHART_HEIGHT = 220;
 const HOME_BALANCE_TIMEFRAME_SELECTOR_TOP_MARGIN = 5;
@@ -88,37 +118,88 @@ const HOME_BALANCE_EXPANDED_CHART_HEIGHT =
   HOME_BALANCE_TIMEFRAME_SELECTOR_TOP_MARGIN +
   HOME_BALANCE_TIMEFRAME_SELECTOR_HEIGHT;
 
-const PortfolioBalanceHeader = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const headerStyles = StyleSheet.create({
+  portfolioBalanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  portfolioBalanceTitle: {
+    marginRight: 3,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  portfolioBalanceText: {
+    fontWeight: '700',
+    marginVertical: 2,
+  },
+  hiddenBalance: {
+    lineHeight: 50,
+    marginVertical: 6,
+  },
+  portfolioBalanceChangeRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
-const PortfolioBalanceTitle = styled(BaseText)`
-  margin-right: 3px;
-  font-size: 13px;
-  line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const PortfolioBalanceHeader: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[headerStyles.portfolioBalanceHeader, style]}
+    {...rest}
+  />
+);
 
-const PortfolioBalanceText = styled(BaseText)<{$isCompact?: boolean}>`
-  font-size: ${({$isCompact}) => ($isCompact ? '26px' : '39px')};
-  font-weight: 700;
-  line-height: ${({$isCompact}) => ($isCompact ? '38px' : '59px')};
-  color: ${({theme}) => theme.colors.text};
-  margin: 2px 0;
-`;
+const PortfolioBalanceTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        headerStyles.portfolioBalanceTitle,
+        {color: theme.dark ? White : SlateDark},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const HiddenBalance = styled(H2)`
-  line-height: 50px;
-  margin: 6px 0;
-`;
+const PortfolioBalanceText: React.FC<{
+  $isCompact?: boolean;
+  children?: React.ReactNode;
+}> = ({$isCompact, children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        headerStyles.portfolioBalanceText,
+        {
+          fontSize: $isCompact ? 26 : 39,
+          lineHeight: $isCompact ? 38 : 59,
+          color: theme.colors.text,
+        },
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const PortfolioBalanceChangeRowContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <H2 style={headerStyles.hiddenBalance}>{children}</H2>;
+
+const PortfolioBalanceChangeRowContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View
+    style={[headerStyles.portfolioBalanceChangeRowContainer, style]}
+    {...rest}
+  />
+);
 
 type PortfolioBalanceChangeRowProps = {
   percent: number;

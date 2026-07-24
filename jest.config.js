@@ -23,10 +23,6 @@ module.exports = {
     '\\.(css|less)$': '<rootDir>/test/mock.js',
     '@/(.*)': '<rootDir>/src/$1',
     '@test/(.*)': '<rootDir>/test/$1',
-    // Redirect bare styled-components to the native version (some files import
-    // 'styled-components' instead of 'styled-components/native', which breaks in tests)
-    '^styled-components$':
-      '<rootDir>/node_modules/styled-components/native/dist/styled-components.native.cjs.js',
     // Force ESM-only crypto packages to CJS builds
     '^uuid$': require.resolve('uuid'),
     '^paillier-bigint$':

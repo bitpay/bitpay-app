@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {RootState} from '../../../../../store';
 import debounce from 'lodash.debounce';
 import AltCurrenciesRow, {
@@ -14,7 +14,14 @@ import {
   NoResultsImgContainer,
   NoResultsDescription,
 } from '../../../../../components/styled/Containers';
-import {FlatList, Keyboard, SectionList, View} from 'react-native';
+import {
+  FlatList,
+  Keyboard,
+  SafeAreaView,
+  SectionList,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -32,55 +39,110 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../../../contexts';
 
-const AltCurrencySettingsContainer = styled.SafeAreaView`
-  margin-top: 20px;
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  altCurrencySettingsContainer: {
+    marginTop: 20,
+    flex: 1,
+  },
+  header: {
+    paddingVertical: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  searchResults: {
+    marginBottom: 50,
+  },
+  label: {
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 18,
+    textTransform: 'uppercase',
+    opacity: 0.75,
+    marginBottom: 6,
+  },
+  hr: {
+    marginHorizontal: 15,
+  },
+  searchIconContainer: {
+    padding: 10,
+  },
+  listHeader: {
+    fontSize: 18,
+    textAlign: 'left',
+    marginBottom: 16,
+    marginTop: 0,
+    flexGrow: 1,
+    fontWeight: '500',
+    paddingHorizontal: 15,
+  },
+});
 
-const Header = styled.View`
-  padding: 20px ${ScreenGutter};
-`;
+const AltCurrencySettingsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.altCurrencySettingsContainer, style]} {...rest} />
+);
 
-const SearchResults = styled.View`
-  margin: 0 0 50px 0;
-`;
+const Header = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.header, style]} {...rest} />
+);
 
-const Label = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : LightBlack)};
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 18px;
-  text-transform: uppercase;
-  opacity: 0.75;
-  margin-bottom: 6px;
-`;
+const SearchResults = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.searchResults, style]} {...rest} />
+);
 
-const Hr = styled(_Hr)`
-  margin: 0 15px;
-`;
+const Label = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.label, {color: theme.dark ? White : LightBlack}, style]}
+      {...rest}
+    />
+  );
+};
 
-const SearchIconContainer = styled.View`
-  padding: 10px;
-`;
+const Hr = ({style, ...rest}: React.ComponentProps<typeof _Hr>) => (
+  <_Hr style={[styles.hr, style]} {...rest} />
+);
+
+const SearchIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.searchIconContainer, style]} {...rest} />
+);
 
 interface HideableViewProps {
   show: boolean;
 }
 
-const HideableView = styled.View<HideableViewProps>`
-  display: ${({show}) => (show ? 'flex' : 'none')};
-`;
+const HideableView = ({
+  show,
+  style,
+  ...rest
+}: HideableViewProps & React.ComponentProps<typeof View>) => (
+  <View style={[show ? undefined : {display: 'none'}, style]} {...rest} />
+);
 
-const ListHeader = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Black)};
-  font-size: 18px;
-  text-align: left;
-  margin-bottom: 16px;
-  margin-top: 0px;
-  flex-grow: 1;
-  font-weight: 500;
-  padding: 0 15px;
-`;
+const ListHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.listHeader,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const AltCurrencySettings = () => {
   const {t} = useTranslation();

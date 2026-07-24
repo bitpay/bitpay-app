@@ -1,7 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {RefreshControl} from 'react-native';
+import {
+  RefreshControl,
+  View,
+  ScrollView,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 import moment from 'moment';
-import styled from 'styled-components/native';
 import {
   RouteProp,
   useNavigation,
@@ -31,64 +36,79 @@ import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {useOngoingProcess} from '../../../contexts';
 
-const SettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const screenGutter = parseInt(ScreenGutter, 10);
 
-const SettingsScrollContainer = styled.ScrollView`
-  margin-top: 10px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  settingsContainer: {
+    flex: 1,
+  },
+  settingsScrollContainer: {
+    marginTop: 10,
+    paddingHorizontal: screenGutter,
+  },
+  details: {
+    marginTop: 10,
+  },
+  detail: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 60,
+  },
+  detailInfo: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+  },
+  item: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    letterSpacing: 0,
+  },
+  buttonContainer: {
+    marginHorizontal: screenGutter,
+  },
+  coinbaseHeader: {
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+    marginTop: 25,
+    marginBottom: 20,
+  },
+  iconCoinbase: {
+    width: 23,
+    height: 23,
+  },
+  titleCoinbase: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: 'bold',
+    letterSpacing: 0,
+  },
+});
 
-const Details = styled.View`
-  margin-top: 10px;
-`;
+const DetailInfo = ({
+  align,
+  children,
+}: {
+  align: 'center' | 'left' | 'right' | 'justify';
+  children: React.ReactNode;
+}) => (
+  <TextAlign align={align} style={styles.detailInfo}>
+    {children}
+  </TextAlign>
+);
 
-const Detail = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-`;
+const Item = ({children}: {children: React.ReactNode}) => (
+  <BaseText style={styles.item}>{children}</BaseText>
+);
 
-const DetailInfo = styled(TextAlign)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-`;
-
-const Item = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-`;
-
-const ButtonContainer = styled.View`
-  margin: 0 ${ScreenGutter};
-`;
-
-const CoinbaseHeader = styled.View`
-  justify-content: flex-start;
-  align-items: center;
-  flex-direction: row;
-  flex: 1;
-  margin-top: 25px;
-  margin-bottom: 20px;
-`;
-
-const IconCoinbase = styled.View`
-  width: 23px;
-  height: 23px;
-`;
-
-const TitleCoinbase = styled(BaseText)`
-  margin-left: 8px;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: bold;
-  letter-spacing: 0;
-`;
+const TitleCoinbase = ({children}: {children: React.ReactNode}) => (
+  <BaseText style={styles.titleCoinbase}>{children}</BaseText>
+);
 
 export type CoinbaseSettingsScreenParamList = {
   fromScreen: string;
@@ -220,66 +240,66 @@ const CoinbaseSettings = () => {
   };
 
   return (
-    <SettingsContainer>
-      <SettingsScrollContainer>
+    <SafeAreaView style={styles.settingsContainer}>
+      <ScrollView style={styles.settingsScrollContainer}>
         <RefreshControl
           tintColor={theme.dark ? White : SlateDark}
           refreshing={refreshing}
           onRefresh={onRefresh}
         />
-        <CoinbaseHeader>
-          <IconCoinbase>
+        <View style={styles.coinbaseHeader}>
+          <View style={styles.iconCoinbase}>
             <CoinbaseSvg width="23" height="23" />
-          </IconCoinbase>
+          </View>
           <TitleCoinbase>Coinbase</TitleCoinbase>
-        </CoinbaseHeader>
+        </View>
         <Hr />
-        <Details>
-          <Detail>
+        <View style={styles.details}>
+          <View style={styles.detail}>
             <Item>{t('Name')}</Item>
             <DetailInfo align="right">{userData?.data.name}</DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-          <Detail>
+          <View style={styles.detail}>
             <Item>{t('Email')}</Item>
             <DetailInfo align="right">{userData?.data.email}</DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-          <Detail>
+          <View style={styles.detail}>
             <Item>{t('Country')}</Item>
             <DetailInfo align="right">{userData?.data.country.name}</DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-          <Detail>
+          <View style={styles.detail}>
             <Item>{t('Native Currency')}</Item>
             <DetailInfo align="right">
               {userData?.data.native_currency}
             </DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-          <Detail>
+          <View style={styles.detail}>
             <Item>{t('Created at')}</Item>
             <DetailInfo align="right">
               {parseTime(userData?.data.created_at)}
             </DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-          <Detail>
+          <View style={styles.detail}>
             <Item>{t('Time Zone')}</Item>
             <DetailInfo align="right">{userData?.data.time_zone}</DetailInfo>
-          </Detail>
+          </View>
           <Hr />
-        </Details>
-      </SettingsScrollContainer>
-      <ButtonContainer>
+        </View>
+      </ScrollView>
+      <View style={styles.buttonContainer}>
         <Button
           onPress={() => confirmDelete()}
           buttonStyle={'danger'}
           buttonOutline={true}>
           {t('Sign out')}
         </Button>
-      </ButtonContainer>
-    </SettingsContainer>
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -1,10 +1,9 @@
 import React, {useCallback, useMemo, memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {DeviceEventEmitter, Platform} from 'react-native';
+import {DeviceEventEmitter, Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../contexts';
 import {BottomSheetFlashList as FlashList} from '@gorhom/bottom-sheet';
-import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
@@ -68,61 +67,108 @@ export interface ChainSelectorConfig {
   customChains?: SupportedChains[];
 }
 
-const Header = styled.View`
-  padding: 10px 16px;
-`;
+const styles = StyleSheet.create({
+  header: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  listHeader: {
+    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 20,
+    padding: 16,
+  },
+  networkChainContainer: {
+    marginLeft: 16,
+    marginRight: 16,
+  },
+  networkChainContainerSelected: {
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  networkName: {
+    fontWeight: '500',
+    fontSize: 16,
+  },
+  networkRowContainer: {
+    flexDirection: 'row',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: 16,
+  },
+  imageContainer: {
+    marginRight: 3,
+  },
+  chainSelectorContainer: {
+    flex: 1,
+  },
+});
 
 interface HideableViewProps {
   show: boolean;
 }
 
-const HideableView = styled.View<HideableViewProps>`
-  display: ${({show}) => (show ? 'flex' : 'none')};
-  flex: 1;
-`;
+const HideableView: React.FC<
+  HideableViewProps & React.PropsWithChildren<{}>
+> = ({show, children}) => (
+  <View style={{display: show ? 'flex' : 'none', flex: 1}}>{children}</View>
+);
 
-const ListHeader = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  padding: 16px;
-`;
+const ListHeader: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.listHeader,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const NetworkChainContainer = styled(TouchableOpacity)<{selected?: boolean}>`
-  margin-left: 16px;
-  margin-right: 16px;
-  ${({selected}) =>
-    selected &&
-    css`
-      background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
-      border-color: ${({theme: {dark}}) => (dark ? Action : Action)};
-      border-width: 1px;
-      border-radius: 12px;
-    `};
-`;
+const NetworkChainContainer: React.FC<
+  {selected?: boolean} & React.ComponentProps<typeof TouchableOpacity>
+> = ({selected, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.networkChainContainer,
+        selected
+          ? [
+              {backgroundColor: theme.dark ? '#2240C440' : LightBlue},
+              styles.networkChainContainerSelected,
+              {borderColor: Action},
+            ]
+          : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const NetworkName = styled(BaseText)<{selected?: boolean}>`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-weight: 500;
-  font-size: 16px;
-`;
-
-const NetworkRowContainer = styled.View`
-  flex-direction: row;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 16px;
-`;
-
-const ImageContainer = styled.View`
-  margin-right: 3px;
-`;
-
-const ChainSelectorContainer = styled.View`
-  flex: 1;
-`;
+export const NetworkName: React.FC<
+  {selected?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({selected: _selected, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.networkName,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const contentContainerStyle = {paddingBottom: 80};
 const searchIconSize = {height: 16, width: 16};
@@ -264,16 +310,16 @@ const ChainSelectorModal = () => {
             activeOpacity={ActiveOpacity}
             selected={selected}
             onPress={() => handleChainSelect(supportedChain)}>
-            <NetworkRowContainer>
-              <ImageContainer>
+            <View style={styles.networkRowContainer}>
+              <View style={styles.imageContainer}>
                 {supportedChain?.img ? (
                   <CurrencyImage img={supportedChain?.img} size={32} />
                 ) : (
                   <AllNetworkSvg style={allNetworkSvgStyle} />
                 )}
-              </ImageContainer>
+              </View>
               <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-            </NetworkRowContainer>
+            </View>
           </NetworkChainContainer>
           {!selected && !isLastItem ? <Hr /> : null}
         </>
@@ -358,13 +404,13 @@ const ChainSelectorModal = () => {
       borderRadius={borderRadius}
       backdropOpacity={0.4}
       onBackdropPress={handleBackdropPress}>
-      <ChainSelectorContainer>
+      <View style={styles.chainSelectorContainer}>
         <WalletSelectMenuHeaderContainer>
           <TextAlign align={'left'}>
             <H4>{t('Select Network')}</H4>
           </TextAlign>
         </WalletSelectMenuHeaderContainer>
-        <Header>
+        <View style={styles.header}>
           <SearchRoundContainer>
             <SearchIconContainer>
               <SearchSvg {...searchIconSize} />
@@ -375,7 +421,7 @@ const ChainSelectorModal = () => {
               onChangeText={updateSearchResults}
             />
           </SearchRoundContainer>
-        </Header>
+        </View>
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
             <FlashList
@@ -409,7 +455,7 @@ const ChainSelectorModal = () => {
             getItemType={getItemType}
           />
         </HideableView>
-      </ChainSelectorContainer>
+      </View>
     </SheetModal>
   );
 };

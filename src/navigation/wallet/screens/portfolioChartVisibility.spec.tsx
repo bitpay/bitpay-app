@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, {act} from 'react-test-renderer';
-import {ThemeProvider} from 'styled-components/native';
+import {ThemeProvider} from '../../../contexts';
 import KeyOverview from './KeyOverview';
 import WalletDetails from './WalletDetails';
 import AccountDetails from './AccountDetails';
@@ -276,6 +276,14 @@ jest.mock('../../../contexts', () => ({
   }),
   useTokenContext: () => ({
     tokenOptionsByAddress: {},
+  }),
+  ThemeProvider: ({children}: {children: React.ReactNode}) => children,
+  useTheme: () => ({
+    dark: false,
+    colors: {
+      background: '#ffffff',
+      text: '#000000',
+    },
   }),
 }));
 

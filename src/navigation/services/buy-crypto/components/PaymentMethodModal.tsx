@@ -1,7 +1,7 @@
 import React from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {orderBy} from 'lodash';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ModalHeader,
   ModalHeaderText,
@@ -58,83 +58,187 @@ interface PaymentMethodsModalProps {
   preSetPartner?: BuyCryptoExchangeKey | SellCryptoExchangeKey | undefined;
 }
 
-const MenuContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  max-height: 75%;
-  padding: 0 16px 16px 20px;
-`;
+const styles = StyleSheet.create({
+  menuContainer: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    maxHeight: '75%',
+    paddingTop: 0,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingLeft: 20,
+  },
+  paymentMethodCard: {
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 16,
+    padding: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  paymentMethodCardContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentMethodImgContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  paymentMethodImgCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paymentMethodCheckboxTexts: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginLeft: 15,
+  },
+  paymentMethodLabel: {
+    fontWeight: '500',
+    marginBottom: 5,
+    letterSpacing: 0,
+    lineHeight: 20,
+    fontSize: 16,
+  },
+  paymentMethodProvider: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentMethodProviderText: {
+    fontSize: 16,
+    lineHeight: 20,
+    marginRight: 6,
+    letterSpacing: 0,
+  },
+  paymentMethodProviderLink: {
+    color: Action,
+  },
+});
 
-const PaymentMethodCard = styled(TouchableOpacity)<{selected?: boolean}>`
-  border: 1px solid
-    ${({theme: {dark}, selected}) =>
-      selected ? Action : dark ? SlateDark : '#e6e8ec'};
-  border-radius: 8px;
-  margin-bottom: 16px;
-  padding: 16px;
-  background-color: ${({theme: {dark}, selected}) =>
-    selected ? '#2240C440' : 'transparent'};
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-`;
+const MenuContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.menuContainer,
+        {backgroundColor: theme.dark ? CharcoalBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaymentMethodCardContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const PaymentMethodCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {selected?: boolean}
+> = ({selected, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.paymentMethodCard,
+        {
+          borderColor: selected ? Action : theme.dark ? SlateDark : '#e6e8ec',
+          backgroundColor: selected ? '#2240C440' : 'transparent',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaymentMethodImgContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-`;
+const PaymentMethodCardContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.paymentMethodCardContainer, style]} {...rest} />
+);
 
-const PaymentMethodImgCircle = styled.View`
-  width: 40px;
-  height: 40px;
-  border-radius: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#f0f0f0')};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+const PaymentMethodImgContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.paymentMethodImgContainer, style]} {...rest} />
+);
 
-const PaymentMethodCheckboxTexts = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  margin-left: 15px;
-`;
+const PaymentMethodImgCircle: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.paymentMethodImgCircle,
+        {backgroundColor: theme.dark ? LightBlack : '#f0f0f0'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaymentMethodLabel = styled(BaseText)`
-  font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 5px;
-  letter-spacing: 0px;
-  line-height: 20px;
-  font-size: 16px;
-`;
+const PaymentMethodCheckboxTexts: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.paymentMethodCheckboxTexts, style]} {...rest} />
+);
 
-const PaymentMethodProvider = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const PaymentMethodLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.paymentMethodLabel,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaymentMethodProviderText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  line-height: 20px;
-  margin-right: 6px;
-  letter-spacing: 0px;
-`;
+const PaymentMethodProvider: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.paymentMethodProvider, style]} {...rest} />;
 
-const PaymentMethodProviderLink = styled(BaseText)`
-  color: ${Action};
-`;
+const PaymentMethodProviderText: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.paymentMethodProviderText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const PaymentMethodProviderLink: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = ({style, ...rest}) => (
+  <BaseText style={[styles.paymentMethodProviderLink, style]} {...rest} />
+);
 
 const PaymentMethodsModal = ({
   isVisible,

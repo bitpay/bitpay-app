@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
@@ -34,7 +34,7 @@ import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import SelectorArrowDown from '../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../assets/img/selector-arrow-right.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import GlobalSelect from './GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
@@ -44,84 +44,206 @@ import {useOngoingProcess} from '../../../contexts';
 
 const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch', 'doge', 'ltc'];
 
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const PaperWalletItemCard = styled(TouchableOpacity)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
-  border-radius: 9px;
-  margin: 20px 15px;
-  padding: 14px;
-`;
+const styles = StyleSheet.create({
+  globalSelectContainer: {
+    flex: 1,
+  },
+  paperWalletItemCard: {
+    borderWidth: 1,
+    borderRadius: 9,
+    marginVertical: 20,
+    marginHorizontal: 15,
+    padding: 14,
+  },
+  dataText: {
+    fontSize: 18,
+    maxWidth: 160,
+  },
+  coinIconContainer: {
+    width: 30,
+    height: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedOptionCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paperWalletItemTitle: {
+    marginTop: 0,
+    marginHorizontal: 0,
+    marginBottom: 18,
+    lineHeight: 18,
+  },
+  actionsContainer: {
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedOptionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+  },
+  selectedOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  arrowContainer: {
+    marginLeft: 10,
+  },
+  paperWalletContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+});
 
-const DataText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 18px;
-  max-width: 160px;
-`;
+const GlobalSelectContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.globalSelectContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CoinIconContainer = styled.View`
-  width: 30px;
-  height: 25px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const PaperWalletItemCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.paperWalletItemCard,
+        {borderColor: theme.dark ? LightBlack : '#eaeaea'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SelectedOptionCol = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const DataText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.dataText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaperWalletItemTitle = styled.Text`
-  margin: 0 0 18px 0;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  line-height: 18px;
-`;
+const CoinIconContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.coinIconContainer, style]} {...rest} />;
 
-const ActionsContainer = styled.View`
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-  align-items: center;
-`;
+const SelectedOptionCol: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.selectedOptionCol, style]} {...rest} />;
 
-const SelectedOptionContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 40px;
-  padding: 0px 14px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
-`;
+const PaperWalletItemTitle: React.FC<React.ComponentProps<typeof Text>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        styles.paperWalletItemTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SelectedOptionText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  font-weight: 500;
-`;
+const ActionsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.actionsContainer, style]} {...rest} />;
 
-const ArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+const SelectedOptionContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.selectedOptionContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PaperWalletContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const SelectedOptionText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.selectedOptionText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const ArrowContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.arrowContainer, style]} {...rest} />;
 
-const ButtonContainer = styled.View`
-  margin-top: 20px;
-`;
+const PaperWalletContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.paperWalletContainer, style]} {...rest} />
+);
+
+const StyledScrollView: React.FC<React.ComponentProps<typeof ScrollView>> = ({
+  style,
+  ...rest
+}) => <ScrollView style={[styles.scrollView, style]} {...rest} />;
+
+const ButtonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.buttonContainer, style]} {...rest} />;
 
 type PaperWalletProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -532,7 +654,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
 
   return (
     <PaperWalletContainer>
-      <ScrollView>
+      <StyledScrollView>
         {balances.map((b, index) => (
           <PaperWalletItemCard key={index}>
             <PaperWalletItemTitle>{t('Funds found')}</PaperWalletItemTitle>
@@ -649,7 +771,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
             </Button>
           </ButtonContainer>
         ) : null}
-      </ScrollView>
+      </StyledScrollView>
     </PaperWalletContainer>
   );
 };

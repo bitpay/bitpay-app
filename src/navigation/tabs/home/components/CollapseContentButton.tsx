@@ -1,7 +1,7 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {type AccessibilityState} from 'react-native';
+import {StyleSheet, type AccessibilityState} from 'react-native';
 import * as Svg from 'react-native-svg';
 import {
   CharcoalBlack,
@@ -11,21 +11,36 @@ import {
   White,
 } from '../../../../styles/colors';
 
-const CircleButton = styled(TouchableOpacity)<{
-  $borderColor: string;
-  $isActive: boolean;
-  $activeBackgroundColor: string;
-}>`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  border-width: 1px;
-  border-color: ${({$borderColor}) => $borderColor};
-  background-color: ${({$isActive, $activeBackgroundColor}) =>
-    $isActive ? $activeBackgroundColor : 'transparent'};
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  circleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+const CircleButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {
+    $borderColor: string;
+    $isActive: boolean;
+    $activeBackgroundColor: string;
+  }
+> = ({$borderColor, $isActive, $activeBackgroundColor, style, ...rest}) => (
+  <TouchableOpacity
+    style={[
+      styles.circleButton,
+      {
+        borderColor: $borderColor,
+        backgroundColor: $isActive ? $activeBackgroundColor : 'transparent',
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 const CollapseContentButtonIcon = ({fill}: {fill: string}) => {
   return (

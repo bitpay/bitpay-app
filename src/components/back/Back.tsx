@@ -1,7 +1,7 @@
 import React from 'react';
-import {Platform} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {Circle, Color, G, Path, Svg} from 'react-native-svg';
-import styled, {css, useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 
 interface BackSvgProps {
@@ -62,21 +62,11 @@ const BackSvg: React.FC<BackSvgProps> = ({color, background, opacity}) => {
   );
 };
 
-const BackContainer = styled.View<{
-  platform: string;
-  stackNavigation?: boolean;
-}>`
-  padding-top: 2px;
-  ${({platform, stackNavigation}) =>
-    stackNavigation
-      ? css`
-          padding-left: 15px;
-        `
-      : platform === 'android' &&
-        css`
-          padding-top: 6px;
-        `}
-`;
+const styles = StyleSheet.create({
+  backContainer: {
+    paddingTop: 2,
+  },
+});
 
 const Back = ({
   color,
@@ -89,13 +79,21 @@ const Back = ({
   const themedBackground = theme.dark ? LightBlack : NeutralSlate;
 
   return (
-    <BackContainer platform={Platform.OS} stackNavigation={stackNavigation}>
+    <View
+      style={[
+        styles.backContainer,
+        stackNavigation
+          ? {paddingLeft: 15}
+          : Platform.OS === 'android'
+          ? {paddingTop: 6}
+          : null,
+      ]}>
       <BackSvg
         color={color || themedColor}
         background={background || themedBackground}
         opacity={opacity}
       />
-    </BackContainer>
+    </View>
   );
 };
 

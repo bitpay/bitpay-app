@@ -1,6 +1,7 @@
-import styled, {useTheme} from 'styled-components/native';
+import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacityProps} from 'react-native';
+import {StyleSheet, TouchableOpacityProps, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
@@ -9,9 +10,26 @@ import {BUTTON_HEIGHT, BUTTON_RADIUS} from '../../../button/Button';
 import {BaseText} from '../../../styled/Text';
 import {BluetoothLogo, UsbLogo} from './Logos';
 
-const ButtonIcon = styled.View`
-  margin-bottom: 2px;
-`;
+const styles = StyleSheet.create({
+  buttonIcon: {
+    marginBottom: 2,
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  connectButton: {
+    borderRadius: BUTTON_RADIUS,
+    borderWidth: 2,
+    minHeight: BUTTON_HEIGHT,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginTop: 16,
+  },
+});
 
 type ButtonTypeProps = {
   secondary?: boolean;
@@ -19,27 +37,44 @@ type ButtonTypeProps = {
 
 type CombinedButtonProps = BaseButtonProps & ButtonTypeProps;
 
-const ButtonText = styled(BaseText)<ButtonTypeProps>`
-  color: ${({secondary, theme}) => (theme.dark || !secondary ? White : Action)}
-  font-size: 18px;
-  font-weight: 500;
-  margin-left: 8px;
-`;
-
-const ConnectButton = styled(TouchableOpacity)<CombinedButtonProps>`
-  background-color: ${({secondary}) => (secondary ? 'transparent' : Action)};
-  border-radius: ${BUTTON_RADIUS}px;
-  border: 2px solid
-    ${({secondary, theme}) => (theme.dark && secondary ? White : Action)};
-  min-height: ${BUTTON_HEIGHT}px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-  margin-top: 16px;
-`;
+const ButtonText: React.FC<
+  ButtonTypeProps & React.ComponentProps<typeof BaseText>
+> = ({secondary, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.buttonText,
+        {color: theme.dark || !secondary ? White : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 type ViaTransportButtonProps = TouchableOpacityProps & CombinedButtonProps;
+
+const ConnectButton: React.FC<
+  ViaTransportButtonProps & {
+    style?: React.ComponentProps<typeof TouchableOpacity>['style'];
+  }
+> = ({secondary, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.connectButton,
+        {
+          backgroundColor: secondary ? 'transparent' : Action,
+          borderColor: theme.dark && secondary ? White : Action,
+        },
+        style,
+      ]}
+      {...(rest as any)}
+    />
+  );
+};
 
 export const ViaBluetoothButton: React.FC<ViaTransportButtonProps> = props => {
   const {t} = useTranslation();
@@ -53,9 +88,9 @@ export const ViaBluetoothButton: React.FC<ViaTransportButtonProps> = props => {
       accessibilityLabel={t('Connect via Bluetooth')}
       secondary={secondary}
       {...rest}>
-      <ButtonIcon>
+      <View style={styles.buttonIcon}>
         <BluetoothLogo fill={logoFill} />
-      </ButtonIcon>
+      </View>
 
       <ButtonText secondary={secondary}>{children}</ButtonText>
     </ConnectButton>
@@ -75,9 +110,9 @@ export const ViaUsbButton: React.FC<ViaTransportButtonProps> = props => {
       accessibilityLabel={t('Connect via USB')}
       secondary={secondary}
       {...rest}>
-      <ButtonIcon>
+      <View style={styles.buttonIcon}>
         <UsbLogo fill={logoFill} />
-      </ButtonIcon>
+      </View>
 
       <ButtonText secondary={secondary}>{children}</ButtonText>
     </ConnectButton>
