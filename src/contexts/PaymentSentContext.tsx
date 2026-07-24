@@ -1,55 +1,101 @@
-import React, {createContext, useContext, useState, ReactNode} from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  ReactNode,
+} from 'react';
 
-interface PaymentSentContextType {
+interface PaymentSentState {
   isVisible: boolean;
   title: string;
   onCloseModal: () => void;
-  showPaymentSent: (config: {title: string; onCloseModal: () => void}) => void;
+}
+
+interface PaymentSentConfig {
+  title: string;
+  onCloseModal: () => void;
+}
+
+interface PaymentSentActions {
+  showPaymentSent: (config: PaymentSentConfig) => void;
   hidePaymentSent: () => void;
 }
 
-const PaymentSentContext = createContext<PaymentSentContextType | undefined>(
+const PaymentSentStateContext = createContext<PaymentSentState | undefined>(
   undefined,
 );
+
+const PaymentSentActionsContext = createContext<PaymentSentActions | undefined>(
+  undefined,
+);
+
+const initialPaymentSentState: PaymentSentState = {
+  isVisible: false,
+  title: '',
+  onCloseModal: () => {},
+};
 
 export const PaymentSentProvider: React.FC<{children: ReactNode}> = ({
   children,
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [title, setTitle] = useState('');
-  const [onCloseModal, setOnCloseModal] = useState<() => void>(() => () => {});
+  const [state, setState] = useState<PaymentSentState>(initialPaymentSentState);
 
-  const showPaymentSent = (config: {
-    title: string;
-    onCloseModal: () => void;
-  }) => {
-    setTitle(config.title);
-    setOnCloseModal(() => config.onCloseModal);
-    setIsVisible(true);
-  };
+  const showPaymentSent = useCallback((config: PaymentSentConfig) => {
+    setState({
+      isVisible: true,
+      title: config.title,
+      onCloseModal: config.onCloseModal,
+    });
+  }, []);
 
-  const hidePaymentSent = () => {
-    setIsVisible(false);
-  };
+  const hidePaymentSent = useCallback(() => {
+    setState(currentState =>
+      currentState.isVisible
+        ? {
+            ...currentState,
+            isVisible: false,
+          }
+        : currentState,
+    );
+  }, []);
+
+  const actions = useMemo(
+    () => ({
+      showPaymentSent,
+      hidePaymentSent,
+    }),
+    [showPaymentSent, hidePaymentSent],
+  );
 
   return (
-    <PaymentSentContext.Provider
-      value={{
-        isVisible,
-        title,
-        onCloseModal,
-        showPaymentSent,
-        hidePaymentSent,
-      }}>
-      {children}
-    </PaymentSentContext.Provider>
+    <PaymentSentActionsContext.Provider value={actions}>
+      <PaymentSentStateContext.Provider value={state}>
+        {children}
+      </PaymentSentStateContext.Provider>
+    </PaymentSentActionsContext.Provider>
   );
 };
 
-export const usePaymentSent = () => {
-  const context = useContext(PaymentSentContext);
+export const usePaymentSentState = (): PaymentSentState => {
+  const context = useContext(PaymentSentStateContext);
   if (!context) {
-    throw new Error('usePaymentSent must be used within PaymentSentProvider');
+    throw new Error(
+      'usePaymentSentState must be used within PaymentSentProvider',
+    );
   }
   return context;
 };
+
+export const usePaymentSentActions = (): PaymentSentActions => {
+  const context = useContext(PaymentSentActionsContext);
+  if (!context) {
+    throw new Error(
+      'usePaymentSentActions must be used within PaymentSentProvider',
+    );
+  }
+  return context;
+};
+
+export const usePaymentSent = usePaymentSentActions;

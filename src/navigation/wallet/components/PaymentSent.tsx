@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useRef} from 'react';
 import {StyleSheet} from 'react-native';
 import {Success, White} from '../../../styles/colors';
 import {
@@ -11,7 +11,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 import {View, ViewStyle} from 'react-native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {usePaymentSent} from '../../../contexts';
+import {usePaymentSentActions, usePaymentSentState} from '../../../contexts';
 
 const styles = StyleSheet.create({
   container: {
@@ -54,9 +54,10 @@ const closeButtonStyle: ViewStyle = {
   marginTop: 25,
 };
 
-const PaymentSent = React.memo(() => {
+const PaymentSentContent = React.memo(() => {
   const {t} = useTranslation();
-  const {isVisible, title, onCloseModal, hidePaymentSent} = usePaymentSent();
+  const {isVisible, title, onCloseModal} = usePaymentSentState();
+  const {hidePaymentSent} = usePaymentSentActions();
 
   const handleClose = useCallback(() => {
     haptic('impactLight');
@@ -90,6 +91,17 @@ const PaymentSent = React.memo(() => {
       </View>
     </SheetModal>
   );
+});
+
+const PaymentSent = React.memo(() => {
+  const {isVisible} = usePaymentSentState();
+  const hasMountedRef = useRef(false);
+
+  if (isVisible) {
+    hasMountedRef.current = true;
+  }
+
+  return hasMountedRef.current ? <PaymentSentContent /> : null;
 });
 
 export default PaymentSent;

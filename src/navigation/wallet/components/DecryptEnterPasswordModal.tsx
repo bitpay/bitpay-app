@@ -53,7 +53,7 @@ export interface DecryptPasswordConfig {
   description?: string;
 }
 
-const DecryptEnterPasswordModal = React.memo(() => {
+const DecryptEnterPasswordModalContent = React.memo(() => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -180,6 +180,15 @@ const DecryptEnterPasswordModal = React.memo(() => {
       </View>
     </BaseModal>
   );
+});
+
+const DecryptEnterPasswordModal = React.memo(() => {
+  const isVisible = useSelector(
+    ({APP}: RootState) => APP.showDecryptPasswordModal,
+  );
+  const config = useSelector(({APP}: RootState) => APP.decryptPasswordConfig);
+
+  return isVisible || config ? <DecryptEnterPasswordModalContent /> : null;
 });
 
 export default DecryptEnterPasswordModal;

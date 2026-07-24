@@ -72,7 +72,7 @@ export interface BiometricModalConfig {
 
 const modalStyle = {margin: 0};
 
-const BiometricModal: React.FC = React.memo(() => {
+const BiometricModalContent: React.FC = React.memo(() => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -206,6 +206,12 @@ const BiometricModal: React.FC = React.memo(() => {
       </Modal>
     </View>
   );
+});
+
+const BiometricModal: React.FC = React.memo(() => {
+  const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
+
+  return isVisible ? <BiometricModalContent /> : null;
 });
 
 export default BiometricModal;
