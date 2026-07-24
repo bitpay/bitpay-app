@@ -405,6 +405,10 @@ export const setHasViewedBillsTab = (): AppActionType => ({
   type: AppActionTypes.SET_HAS_VIEWED_BILLS_TAB,
 });
 
+export const setHasViewedTSSOnboarding = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_TSS_ONBOARDING,
+});
+
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
   type: AppActionTypes.USER_FEEDBACK,
   payload: feedBack,

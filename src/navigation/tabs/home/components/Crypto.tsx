@@ -69,6 +69,7 @@ import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import AddSvg from './AddSvg';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {IsShared} from '../../../../store/wallet/effects/transactions/transactions';
 import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
@@ -297,6 +298,8 @@ export const createHomeCardList = ({
 
       const fullWalletObj = key?.wallets?.[0];
       const hasPendingTssSession = fullWalletObj?.pendingTssSession;
+      const tssMetadata = key.wallets?.find(w => w.tssKeyId)?.tssMetadata;
+      const isMultisig = !!key.wallets?.some(w => IsShared(w));
 
       return {
         id: key.id,
@@ -311,6 +314,8 @@ export const createHomeCardList = ({
             needsBackup={!backupComplete}
             context={context}
             pendingTssSession={hasPendingTssSession}
+            tssMetadata={tssMetadata}
+            isMultisig={isMultisig}
             onPress={
               onPress
                 ? () => {

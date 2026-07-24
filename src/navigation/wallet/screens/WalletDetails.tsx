@@ -68,6 +68,7 @@ import {
   Wallet,
 } from '../../../store/wallet/wallet.models';
 import {
+  Action,
   Air,
   Black,
   LightBlack,
@@ -97,6 +98,7 @@ import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
+import MultisigIcon from '../../../../assets/img/icon-multisig-group.svg';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
@@ -157,6 +159,7 @@ import {logManager} from '../../../managers/LogManager';
 import type {RootState} from '../../../store';
 import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
+import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -1238,6 +1241,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             </NetworkBadgeContainer>
             {IsShared(fullWalletObj) ? (
               <NetworkBadgeContainer>
+                <IconContainer>
+                  <MultisigIcon
+                    width={15}
+                    height={15}
+                    color={theme.dark ? White : Action}
+                  />
+                </IconContainer>
                 <TypeText>
                   Multisig {fullWalletObj.m}/{fullWalletObj.n}
                 </TypeText>
@@ -1278,12 +1288,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </TypeContainer>
             )}
             {showThresholdBadge ? (
-              <TypeContainer>
-                <TypeText>
-                  Threshold {fullWalletObj.tssMetadata?.m}/
-                  {fullWalletObj.tssMetadata?.n}
-                </TypeText>
-              </TypeContainer>
+              <ThresholdBadge
+                m={fullWalletObj.tssMetadata!.m}
+                n={fullWalletObj.tssMetadata!.n}
+                size={'list'}
+                style={{marginTop: 8}}
+              />
             ) : null}
             {showActivatedBadge ? (
               <TypeContainer>
