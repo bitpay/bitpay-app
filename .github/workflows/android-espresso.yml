@@ -3,9 +3,9 @@ name: Android Espresso E2E
 on:
   workflow_dispatch:
   push:
-    branches: [master, develop]
+    branches: [master, develop, testlio/ui-tests]
   pull_request:
-    branches: [master, develop]
+    branches: [master, develop, testlio/ui-tests]
 
 concurrency:
   group: e2e-android-espresso-${{ github.ref }}
