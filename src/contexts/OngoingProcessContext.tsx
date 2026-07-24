@@ -14,8 +14,6 @@ import {
 import {logManager} from '../managers/LogManager';
 
 interface OngoingProcessContextType {
-  isVisible: boolean;
-  message: string | undefined;
   showOngoingProcess: (
     key: OnGoingProcessMessages,
     data?: OngoingProcessData,
@@ -23,26 +21,42 @@ interface OngoingProcessContextType {
   hideOngoingProcess: () => void;
 }
 
-const OngoingProcessContext = createContext<
+const OngoingProcessStateContext = createContext<
+  OngoingProcessState | undefined
+>(undefined);
+
+const OngoingProcessActionsContext = createContext<
   OngoingProcessContextType | undefined
 >(undefined);
 
-const DEFAULT_ONGOING_PROCESS_STATE: OngoingProcessContextType = {
+const DEFAULT_ONGOING_PROCESS_STATE: OngoingProcessState = {
   isVisible: false,
   message: undefined,
+};
+
+const DEFAULT_ONGOING_PROCESS_ACTIONS: OngoingProcessContextType = {
   showOngoingProcess: () => {},
   hideOngoingProcess: () => {},
+};
+
+const ongoingProcessActions: OngoingProcessContextType = {
+  showOngoingProcess: (
+    key: OnGoingProcessMessages,
+    data?: OngoingProcessData,
+  ) => {
+    ongoingProcessManager.show(key, data);
+  },
+  hideOngoingProcess: () => {
+    ongoingProcessManager.hide();
+  },
 };
 
 export const OngoingProcessProvider: React.FC<{children: ReactNode}> = ({
   children,
 }) => {
-  const initialState = ongoingProcessManager?.getState?.() ?? {
-    isVisible: false,
-    message: undefined,
-  };
-
-  const [state, setState] = useState<OngoingProcessState>(initialState);
+  const [state, setState] = useState<OngoingProcessState>(
+    () => ongoingProcessManager?.getState?.() ?? DEFAULT_ONGOING_PROCESS_STATE,
+  );
 
   useEffect(() => {
     if (!ongoingProcessManager?.subscribe) {
@@ -54,7 +68,12 @@ export const OngoingProcessProvider: React.FC<{children: ReactNode}> = ({
 
     try {
       const unsubscribe = ongoingProcessManager.subscribe(newState => {
-        setState(newState);
+        setState(currentState =>
+          currentState.isVisible === newState.isVisible &&
+          currentState.message === newState.message
+            ? currentState
+            : newState,
+        );
       });
       return unsubscribe;
     } catch (err) {
@@ -66,36 +85,39 @@ export const OngoingProcessProvider: React.FC<{children: ReactNode}> = ({
     }
   }, []);
 
-  const contextValue: OngoingProcessContextType = {
-    isVisible: state.isVisible,
-    message: state.message,
-    showOngoingProcess: (
-      key: OnGoingProcessMessages,
-      data?: OngoingProcessData,
-    ) => {
-      ongoingProcessManager.show(key, data);
-    },
-    hideOngoingProcess: () => {
-      ongoingProcessManager.hide();
-    },
-  };
-
   return (
-    <OngoingProcessContext.Provider value={contextValue}>
-      {children}
-    </OngoingProcessContext.Provider>
+    <OngoingProcessActionsContext.Provider value={ongoingProcessActions}>
+      <OngoingProcessStateContext.Provider value={state}>
+        {children}
+      </OngoingProcessStateContext.Provider>
+    </OngoingProcessActionsContext.Provider>
   );
 };
 
-export const useOngoingProcess = () => {
-  const context = useContext(OngoingProcessContext);
+export const useOngoingProcessState = (): OngoingProcessState => {
+  const context = useContext(OngoingProcessStateContext);
 
   if (!context) {
     logManager.warn(
-      '[useOngoingProcess] Context is not available, returning default data',
+      '[useOngoingProcessState] Context is not available, returning default state',
     );
     return DEFAULT_ONGOING_PROCESS_STATE;
   }
 
   return context;
 };
+
+export const useOngoingProcessActions = (): OngoingProcessContextType => {
+  const context = useContext(OngoingProcessActionsContext);
+
+  if (!context) {
+    logManager.warn(
+      '[useOngoingProcessActions] Context is not available, returning default actions',
+    );
+    return DEFAULT_ONGOING_PROCESS_ACTIONS;
+  }
+
+  return context;
+};
+
+export const useOngoingProcess = useOngoingProcessActions;

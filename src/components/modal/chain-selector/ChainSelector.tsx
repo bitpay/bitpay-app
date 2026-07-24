@@ -160,11 +160,7 @@ export const NetworkName: React.FC<
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.networkName,
-        {color: theme.dark ? White : Black},
-        style,
-      ]}
+      style={[styles.networkName, {color: theme.dark ? White : Black}, style]}
       {...rest}
     />
   );
@@ -175,7 +171,7 @@ const searchIconSize = {height: 16, width: 16};
 const ghostSvgStyle = {marginTop: 20};
 const allNetworkSvgStyle = {width: 20, height: 20};
 
-const ChainSelectorModal = () => {
+const ChainSelectorModalContent = () => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
@@ -460,4 +456,12 @@ const ChainSelectorModal = () => {
   );
 };
 
-export default memo(ChainSelectorModal);
+const ChainSelectorModal = memo(() => {
+  const isVisible = useSelector(
+    ({APP}: RootState) => APP.showChainSelectorModal,
+  );
+
+  return isVisible ? <ChainSelectorModalContent /> : null;
+});
+
+export default ChainSelectorModal;
