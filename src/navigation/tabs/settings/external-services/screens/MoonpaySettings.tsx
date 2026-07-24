@@ -43,6 +43,8 @@ export interface MoonpaySettingsProps {
   };
 }
 
+const Tab = createMaterialTopTabNavigator();
+
 const MoonpaySettings: React.FC = () => {
   const {t} = useTranslation();
   const moonpayHistory = useSelector(
@@ -59,7 +61,6 @@ const MoonpaySettings: React.FC = () => {
     [] as MoonpayPaymentData[],
   );
   const [sellOrders, setSellOrders] = useState([] as MoonpaySellOrderData[]);
-  const Tab = createMaterialTopTabNavigator();
   const TabTitle = {
     buy: t('Buy History'),
     sell: t('Sell History'),

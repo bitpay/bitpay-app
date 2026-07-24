@@ -6,12 +6,7 @@ import {HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
-import {
-  failedGetRates,
-  successGetRates,
-  updateCacheKey,
-} from '../../../rate/rate.actions';
-import {CacheKeys} from '../../../rate/rate.models';
+import {failedGetRates, successGetRates} from '../../../rate/rate.actions';
 import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
@@ -32,6 +27,8 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import type {Key, Wallet} from '../../wallet.models';
 
+const ratesRequestsInFlight = new WeakMap<object, Promise<Rates>>();
+
 export const startGetRates =
   ({
     context,
@@ -41,26 +38,32 @@ export const startGetRates =
     force?: boolean;
   }): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
-    return new Promise(async resolve => {
-      logManager.info('startGetRates: starting...');
-      const {
-        RATE: {ratesCacheKey, rates: cachedRates},
-        APP: {altCurrencyList},
-      } = getState();
-      if (
-        !isCacheKeyStale(
-          ratesCacheKey[DEFAULT_DATE_RANGE],
-          RATES_CACHE_DURATION,
-        ) &&
-        !force &&
-        altCurrencyList.length > 0
-      ) {
-        logManager.info('startGetRates: success (using cached rates)');
-        return resolve(cachedRates);
-      }
+    logManager.info('startGetRates: starting...');
 
-      dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
+    const requestKey = dispatch as object;
+    const activeRequest = ratesRequestsInFlight.get(requestKey);
+    if (activeRequest) {
+      logManager.info('startGetRates: joining active request');
+      return activeRequest;
+    }
 
+    const {
+      RATE: {ratesCacheKey, rates: cachedRates},
+      APP: {altCurrencyList},
+    } = getState();
+    if (
+      !isCacheKeyStale(
+        ratesCacheKey[DEFAULT_DATE_RANGE],
+        RATES_CACHE_DURATION,
+      ) &&
+      !force &&
+      altCurrencyList.length > 0
+    ) {
+      logManager.info('startGetRates: success (using cached rates)');
+      return cachedRates;
+    }
+
+    const request = Promise.resolve().then(async (): Promise<Rates> => {
       try {
         logManager.info('startGetRates: fetching new rates...');
         const yesterday = getLastDayTimestampStartOfHourMs();
@@ -110,14 +113,24 @@ export const startGetRates =
           }),
         );
         logManager.info('startGetRates: success');
-        resolve(allRates);
+        return allRates;
       } catch (err) {
         const errorStr = getErrorString(err);
         dispatch(failedGetRates());
         logManager.error(`startGetRates: failed ${errorStr}`);
-        resolve(getState().RATE.rates); // Return cached rates
+        return getState().RATE.rates; // Return cached rates
       }
     });
+
+    ratesRequestsInFlight.set(requestKey, request);
+
+    try {
+      return await request;
+    } finally {
+      if (ratesRequestsInFlight.get(requestKey) === request) {
+        ratesRequestsInFlight.delete(requestKey);
+      }
+    }
   };
 
 export const refreshRatesForPortfolioPnl =
