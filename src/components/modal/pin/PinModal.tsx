@@ -397,7 +397,9 @@ const Pin = gestureHandlerRootHOC(
             </Animated.View>
           </View>
         </View>
-        <View style={styles.virtualKeyboardContainer} testID="virtual-key-container">
+        <View
+          style={styles.virtualKeyboardContainer}
+          testID="virtual-key-container">
           <VirtualKeyboard
             showDot={false}
             onCellPress={handleCellPress}
@@ -416,6 +418,10 @@ const PinModal: React.FC = React.memo(() => {
   const handleBackdropPress = useCallback(() => {
     dispatch(AppActions.dismissPinModal());
   }, [dispatch]);
+
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <SheetModal

@@ -17,7 +17,8 @@ import Markdown from 'react-native-markdown-display';
 import haptic from '../../haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
+import {useStore} from 'react-redux';
 import {
   BottomNotificationCta,
   BottomNotificationHr,
@@ -89,7 +90,7 @@ const WCErrorBottomNotification = ({
 }: Props) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const rootState = useAppSelector((state: RootState) => state);
+  const store = useStore<RootState>();
 
   return (
     <SheetModal
@@ -146,7 +147,7 @@ const WCErrorBottomNotification = ({
                   haptic('impactLight');
                   dispatch(AppActions.dismissBottomNotificationModal());
                   await sleep(0);
-                  action(rootState);
+                  action(store.getState());
                 }}>
                 {text?.toUpperCase()}
               </BottomNotificationCta>

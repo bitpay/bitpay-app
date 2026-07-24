@@ -181,10 +181,7 @@ const styles = StyleSheet.create({
 export const UriContainerTouchable: React.FC<
   React.ComponentProps<typeof TouchableOpacity>
 > = ({style, ...rest}) => (
-  <TouchableOpacity
-    style={[styles.uriContainerTouchable, style]}
-    {...rest}
-  />
+  <TouchableOpacity style={[styles.uriContainerTouchable, style]} {...rest} />
 );
 
 export const UriContainer: React.FC<React.ComponentProps<typeof View>> = ({
@@ -244,11 +241,10 @@ const DescriptionContainer: React.FC<React.ComponentProps<typeof View>> = ({
   );
 };
 
-const DescriptionItemContainer: React.FC<
-  React.ComponentProps<typeof View>
-> = ({style, ...rest}) => (
-  <View style={[styles.descriptionItemContainer, style]} {...rest} />
-);
+const DescriptionItemContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.descriptionItemContainer, style]} {...rest} />;
 
 const DescriptionItem: React.FC<React.ComponentProps<typeof Paragraph>> = ({
   style,
@@ -324,7 +320,7 @@ const transformErrorMessage = (error: string) => {
   }
 };
 
-export const WalletConnectStartModal = memo(() => {
+const WalletConnectStartModalContent = memo(() => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -334,9 +330,10 @@ export const WalletConnectStartModal = memo(() => {
     ({APP}) => APP.showWalletConnectStartModal,
   );
   const [buttonState, setButtonState] = useState<ButtonState>();
-  const w = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const pendingProposal = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.proposal,
+  );
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [
     showAccountWCV2SelectionBottomModal,
     setShowAccountWCV2SelectionBottomModal,
@@ -352,7 +349,7 @@ export const WalletConnectStartModal = memo(() => {
   const [chainsSelected, setChainsSelected] =
     useState<{chain: string; network: string}[]>();
   const [chainNames, setChainNames] = useState<string[]>([]);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
   const [imageError, setImageError] = useState(false);
   const [checkedAccount, setCheckedAccount] = useState<
@@ -365,7 +362,7 @@ export const WalletConnectStartModal = memo(() => {
   >();
 
   const proposalData = useMemo(() => {
-    const p = w?.proposal as AuthOrProp | undefined;
+    const p = pendingProposal as AuthOrProp | undefined;
     if (!p) return {};
 
     let id: number;
@@ -424,7 +421,7 @@ export const WalletConnectStartModal = memo(() => {
       peerUrl,
       peerImg,
     };
-  }, [w?.proposal]);
+  }, [pendingProposal]);
 
   const approveSessionProposal = useCallback(async () => {
     try {
@@ -661,7 +658,7 @@ export const WalletConnectStartModal = memo(() => {
           const accountList = buildAccountList(
             key,
             defaultAltCurrency.isoCode,
-            rates,
+            {},
             dispatch,
             {
               filterByCustomWallets: filteredWallets,
@@ -694,7 +691,7 @@ export const WalletConnectStartModal = memo(() => {
       setCheckedAccount(formattedKeys[0]?.accounts[0]);
       _setSelectedWallets(formattedKeys);
     },
-    [keys, defaultAltCurrency.isoCode, rates, dispatch, _setSelectedWallets],
+    [keys, defaultAltCurrency.isoCode, dispatch, _setSelectedWallets],
   );
 
   useEffect(() => {
@@ -1095,4 +1092,10 @@ export const WalletConnectStartModal = memo(() => {
       </SheetContainer>
     </SheetModal>
   );
+});
+
+export const WalletConnectStartModal = memo(() => {
+  const isVisible = useAppSelector(({APP}) => APP.showWalletConnectStartModal);
+
+  return isVisible ? <WalletConnectStartModalContent /> : null;
 });
