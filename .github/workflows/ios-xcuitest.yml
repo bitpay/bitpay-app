@@ -61,6 +61,9 @@ jobs:
       - name: Select Xcode 26.0.1
         run: sudo xcode-select -switch /Applications/Xcode_26.0.1.app
 
+      - name: Debug - installed runtimes
+        run: xcrun simctl list runtimes
+
       - name: Debug - Xcode and OS version
         run: |
           echo "=== Xcode version ==="
