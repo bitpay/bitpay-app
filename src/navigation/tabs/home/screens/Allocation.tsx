@@ -1,10 +1,5 @@
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
-import {
-  ImageRequireSource,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {ImageRequireSource, SafeAreaView, StyleSheet, View} from 'react-native';
 import {FlashList, ListRenderItemInfo} from '@shopify/flash-list';
 import {useTheme} from '../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -124,9 +119,9 @@ const RowLeft: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.rowLeft}>{children}</View>
 );
 
-const IconContainer: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => <View style={styles.iconContainer}>{children}</View>;
+const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconContainer}>{children}</View>
+);
 
 const RowLabels: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.rowLabels}>{children}</View>
@@ -145,10 +140,7 @@ const AssetSymbol: React.FC<{children?: React.ReactNode}> = ({children}) => {
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.assetSymbol,
-        {color: theme.dark ? Slate30 : SlateDark},
-      ]}>
+      style={[styles.assetSymbol, {color: theme.dark ? Slate30 : SlateDark}]}>
       {children}
     </BaseText>
   );
@@ -176,9 +168,7 @@ const Percent: React.FC<{children?: React.ReactNode}> = ({children}) => {
   );
 };
 
-const ProgressTrack: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => {
+const ProgressTrack: React.FC<{children?: React.ReactNode}> = ({children}) => {
   const theme = useTheme();
   return (
     <View
@@ -316,8 +306,8 @@ const Allocation: React.FC<Props> = ({navigation, route}) => {
   const commonOptions = useStackScreenOptions(theme);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   useLayoutEffect(() => {

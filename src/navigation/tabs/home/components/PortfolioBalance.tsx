@@ -52,7 +52,8 @@ import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
-import type {Wallet} from '../../../../store/wallet/wallet.models';
+import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
+import type {Rates} from '../../../../store/rate/rate.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 
@@ -117,6 +118,8 @@ const HOME_BALANCE_EXPANDED_CHART_HEIGHT =
   HOME_BALANCE_LINE_CHART_HEIGHT +
   HOME_BALANCE_TIMEFRAME_SELECTOR_TOP_MARGIN +
   HOME_BALANCE_TIMEFRAME_SELECTOR_HEIGHT;
+const EMPTY_BACKGROUND_KEYS: Record<string, Key> = {};
+const EMPTY_BACKGROUND_RATES: Rates = {};
 
 const headerStyles = StyleSheet.create({
   portfolioBalanceHeader: {
@@ -188,9 +191,9 @@ const PortfolioBalanceText: React.FC<{
   );
 };
 
-const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => <H2 style={headerStyles.hiddenBalance}>{children}</H2>;
+const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <H2 style={headerStyles.hiddenBalance}>{children}</H2>
+);
 
 const PortfolioBalanceChangeRowContainer: React.FC<
   React.ComponentProps<typeof View>
@@ -230,22 +233,40 @@ const PortfolioBalanceChangeRow = ({
   );
 };
 
-const PortfolioBalanceContent = () => {
+type PortfolioBalanceProps = {
+  active?: boolean;
+};
+
+const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const {t} = useTranslation();
   const coinbaseBalance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  const {rates} = useSelector(({RATE}: RootState) => RATE);
+  const subscribedKeys = useSelector(({WALLET}: RootState) =>
+    active ? WALLET.keys : EMPTY_BACKGROUND_KEYS,
+  ) as Record<string, Key>;
+  const subscribedRates = useSelector(({RATE}: RootState) =>
+    active ? RATE.rates : EMPTY_BACKGROUND_RATES,
+  ) as Rates;
+  const lastActiveKeysRef = React.useRef(subscribedKeys);
+  const lastActiveRatesRef = React.useRef(subscribedRates);
+  if (active) {
+    lastActiveKeysRef.current = subscribedKeys;
+    lastActiveRatesRef.current = subscribedRates;
+  }
+  const keys = lastActiveKeysRef.current;
+  const rates = lastActiveRatesRef.current;
 
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const {
-    homeChartCollapsed: persistedHomeChartCollapsed,
-    homeChartRemountNonce,
-  } = useAppSelector(({APP}) => APP);
+  const persistedHomeChartCollapsed = useAppSelector(
+    ({APP}) => APP.homeChartCollapsed,
+  );
+  const homeChartRemountNonce = useAppSelector(
+    ({APP}) => APP.homeChartRemountNonce,
+  );
 
   const [isChartCollapsed, setIsChartCollapsed] = useState(
     persistedHomeChartCollapsed,
@@ -289,11 +310,20 @@ const PortfolioBalanceContent = () => {
   const dispatch = useAppDispatch();
   const portfolioChartsRequested = showPortfolioValue === true;
 
-  const balanceChartReadiness = usePortfolioBalanceChartReadiness({
+  const activeBalanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: walletsAcrossKeys,
-    enabled: portfolioChartsRequested,
+    enabled: active && portfolioChartsRequested,
     hideAllBalances,
   });
+  const lastActiveBalanceChartReadinessRef = React.useRef(
+    activeBalanceChartReadiness,
+  );
+  if (active) {
+    lastActiveBalanceChartReadinessRef.current = activeBalanceChartReadiness;
+  }
+  const balanceChartReadiness = active
+    ? activeBalanceChartReadiness
+    : lastActiveBalanceChartReadinessRef.current;
   const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
   const chartWalletIdsSig = chartWalletsAcrossKeys
     .map(wallet => String(wallet?.id || ''))
@@ -481,6 +511,7 @@ const PortfolioBalanceContent = () => {
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
+    enabled: active,
     wallets: chartWalletsAcrossKeys,
     quoteCurrency,
     initialSelectedTimeframe: selectedChartTimeframeRef.current,
@@ -534,12 +565,19 @@ const PortfolioBalanceContent = () => {
   const shouldUseCompactPortfolioBalanceText = useMemo(() => {
     return shouldUseCompactFiatAmountText(formattedPortfolioBalance);
   }, [formattedPortfolioBalance]);
-  const lastDayChangeRowData = useLegacyLastDayChangeRowData({
+  const activeLastDayChangeRowData = useLegacyLastDayChangeRowData({
     wallets: walletsAcrossKeys,
     currentFiatBalance: visibleCurrentBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: !portfolioChartsRequested && !hideAllBalances,
+    enabled: active && !portfolioChartsRequested && !hideAllBalances,
   });
+  const lastDayChangeRowDataRef = React.useRef(activeLastDayChangeRowData);
+  if (active) {
+    lastDayChangeRowDataRef.current = activeLastDayChangeRowData;
+  }
+  const lastDayChangeRowData = active
+    ? activeLastDayChangeRowData
+    : lastDayChangeRowDataRef.current;
   const displayedChangeRowData =
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData

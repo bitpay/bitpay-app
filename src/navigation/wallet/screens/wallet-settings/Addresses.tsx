@@ -20,7 +20,6 @@ import Button, {ButtonState} from '../../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {sleep} from '../../../../utils/helper-methods';
-import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
@@ -28,7 +27,7 @@ import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {GetWalletBalance} from '../../../../store/wallet/effects/status/status';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
-import {Status, Wallet} from '../../../../store/wallet/wallet.models';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   FormatAmountStr,
   GetLowUtxos,
@@ -94,9 +93,10 @@ const StyledScrollView: React.FC<React.ComponentProps<typeof ScrollView>> = ({
   ...rest
 }) => <ScrollView style={[styles.scrollView, style]} {...rest} />;
 
-const AddressesParagraph: React.FC<
-  React.ComponentProps<typeof Paragraph>
-> = ({style, ...rest}) => {
+const AddressesParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
   const theme = useTheme();
   return (
     <Paragraph
@@ -207,7 +207,6 @@ const Addresses = () => {
     });
   }, [navigation, t]);
   const [buttonState, setButtonState] = useState<ButtonState>();
-  const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [viewAll, setViewAll] = useState<boolean>();
   const [usedAddress, setUsedAddress] = useState<any[]>();
   const [latestUsedAddress, setLatestUsedAddress] = useState<any[]>();
@@ -392,19 +391,19 @@ const Addresses = () => {
           // set scanning (for UI scanning label on wallet details )
           dispatch(
             setWalletScanning({
-              keyId: key.id,
+              keyId: wallet.keyId,
               walletId: wallet.id,
               isScanning: true,
             }),
           );
 
           setButtonState('success');
-          navigation.navigate('WalletDetails', {walletId, key});
+          navigation.navigate('WalletDetails', {walletId});
 
           return;
         },
       );
-    } catch (e) {}
+    } catch {}
   };
 
   const copyText = (text: string) => {

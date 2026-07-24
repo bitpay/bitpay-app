@@ -69,7 +69,6 @@ import {
 import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
@@ -198,8 +197,7 @@ const KeySettings = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const [searchVal, setSearchVal] = useState('');
@@ -209,10 +207,10 @@ const KeySettings = () => {
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const memorizedAccountList = useMemo(() => {
-    return buildAccountList(_key, defaultAltCurrency.isoCode, rates, dispatch, {
+    return buildAccountList(_key, defaultAltCurrency.isoCode, {}, dispatch, {
       skipFiatCalculations: true,
     });
-  }, [dispatch, _key, defaultAltCurrency.isoCode, rates]);
+  }, [dispatch, _key, defaultAltCurrency.isoCode]);
 
   const accountInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[key.id]?.evmAccountsInfo,
@@ -261,19 +259,16 @@ const KeySettings = () => {
   };
 
   const customTokenOptionsByAddress = useAppSelector(
-    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
-  );
-
-  const _tokenOptionsByAddress = useMemo(
-    () => ({
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...customTokenOptionsByAddress,
-    }),
-    [tokenOptionsByAddress, customTokenOptionsByAddress],
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
   );
 
   const startSyncWallets = async (mnemonic: string) => {
+    const tokenOptionsForSync = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
     if (_key.isPrivKeyEncrypted) {
       // To close decrypt modal
       await sleep(500);
@@ -315,7 +310,7 @@ const KeySettings = () => {
                   currencyAbbreviation,
                   currencyName,
                 } as any,
-                _tokenOptionsByAddress,
+                tokenOptionsForSync,
               ),
             );
           });

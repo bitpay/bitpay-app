@@ -1,4 +1,11 @@
-import React, {useCallback, useMemo, useRef, useState, useEffect} from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  useLayoutEffect,
+} from 'react';
 import {useTheme} from '../../../contexts';
 import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
@@ -37,7 +44,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {groupBy, unionBy, uniqueId, isEmpty} from 'lodash';
+import {groupBy, unionBy, isEmpty} from 'lodash';
 import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {
   Action,
@@ -80,7 +87,6 @@ import {
   IsSegwitCoin,
   IsSVMChain,
 } from '../../../store/wallet/utils/currency';
-import {LogActions} from '../../../store/log';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
@@ -119,8 +125,11 @@ import Icons from '../components/WalletIcons';
 import {AppActions} from '../../../store/app';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import type {Rates} from '../../../store/rate/rate.models';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
+const EMPTY_GLOBAL_SELECT_RATES: Rates = {};
+const EMPTY_GLOBAL_SELECT_TOKEN_OPTIONS_BY_ADDRESS = {};
 
 const styles = StyleSheet.create({
   safeAreaView: {
@@ -357,21 +366,16 @@ const TitleName: React.FC<React.ComponentProps<typeof BaseText>> = ({
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.titleName,
-        {color: theme.dark ? White : SlateDark},
-        style,
-      ]}
+      style={[styles.titleName, {color: theme.dark ? White : SlateDark}, style]}
       {...rest}
     />
   );
 };
 
-const CloseButton: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => (
-  <TouchableOpacity style={[styles.closeButton, style]} {...rest} />
-);
+const CloseButton: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.closeButton, style]} {...rest} />;
 
 const CloseButtonText: React.FC<React.ComponentProps<typeof Paragraph>> = ({
   style,
@@ -497,6 +501,55 @@ export interface GlobalSelectObjByKey {
   [key: string]: GlobalSelectObj;
 }
 
+type GlobalSelectAccount = AccountRowProps & {
+  assetsByChain?: AssetsByChainData[];
+};
+
+type GlobalSelectFlatRow =
+  | {__row: 'keyHeader'; id: string; keyName: string}
+  | {
+      __row: 'account';
+      id: string;
+      account: GlobalSelectAccount;
+      keyId: string;
+    }
+  | {__row: 'currency'; id: string; item: GlobalSelectObj};
+
+export const flattenGlobalSelectData = (
+  source: (GlobalSelectObj | KeyWalletsRowProps)[],
+): GlobalSelectFlatRow[] => {
+  const rows: GlobalSelectFlatRow[] = [];
+  source.forEach(entry => {
+    if (entry && Array.isArray((entry as KeyWalletsRowProps).accounts)) {
+      const keyEntry = entry as KeyWalletsRowProps;
+      rows.push({
+        __row: 'keyHeader',
+        id: `header-${keyEntry.key}`,
+        keyName: keyEntry.keyName || 'My Key',
+      });
+      (keyEntry.accounts as GlobalSelectAccount[]).forEach(account => {
+        rows.push({
+          __row: 'account',
+          id: `account-${keyEntry.key}-${account.id}`,
+          account,
+          keyId: keyEntry.key,
+        });
+      });
+    } else if (
+      entry &&
+      typeof (entry as GlobalSelectObj).currencyAbbreviation === 'string'
+    ) {
+      const selectableObj = entry as GlobalSelectObj;
+      rows.push({
+        __row: 'currency',
+        id: `currency-${selectableObj.id}`,
+        item: selectableObj,
+      });
+    }
+  });
+  return rows;
+};
+
 export interface AddWalletData {
   key: Key;
   currency: {
@@ -528,7 +581,7 @@ const buildSelectableCurrenciesList = (
       );
 
       const coinEntry = coins[currencyAbbreviation] || {
-        id: uniqueId('coin_'),
+        id: `coin-${currencyAbbreviation}`,
         currencyName: name,
         currencyAbbreviation,
         chainsImg: {},
@@ -578,7 +631,27 @@ const buildSelectableWalletList = (
 ): GlobalSelectObjByKey => {
   const coins: GlobalSelectObjByKey = {};
 
-  categories.forEach(category => {
+  const candidateCategories = new Set<string>();
+  wallets.forEach(wallet => {
+    candidateCategories.add(
+      getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain),
+    );
+    if (wallet.currencyAbbreviation === 'eth') {
+      candidateCategories.add('eth');
+      candidateCategories.add('eth_arb');
+      candidateCategories.add('eth_base');
+      candidateCategories.add('eth_op');
+    }
+    if (wallet.currencyAbbreviation === 'pol') {
+      candidateCategories.add('matic');
+      candidateCategories.add('matic_e');
+    }
+  });
+  const relevantCategories = categories.filter(category =>
+    candidateCategories.has(category),
+  );
+
+  relevantCategories.forEach(category => {
     const filteredWallets = wallets.filter(wallet => {
       if (
         context &&
@@ -630,7 +703,7 @@ const buildSelectableWalletList = (
           ? 'matic'
           : currencyAbbreviation;
       const coinEntry = coins[key] || {
-        id: uniqueId('coin_'),
+        id: `coin-${key}`,
         currencyName,
         currencyAbbreviation,
         chainsImg: {},
@@ -723,6 +796,31 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
 > &
   GlobalSelectProps;
 
+const accountListContexts = [
+  'send',
+  'sell',
+  'swapFrom',
+  'coinbase',
+  'coinbaseDeposit',
+  'contact',
+  'scanner',
+];
+
+const accountListContextsRequiringCurrencyCatalog = [
+  'sell',
+  'swapFrom',
+  'coinbaseDeposit',
+];
+
+const filterCompleteWallets = (keys: Keys): Keys =>
+  Object.fromEntries(
+    Object.entries(keys).filter(([_, key]) =>
+      key.wallets.some(
+        wallet => wallet.isComplete() && !wallet.pendingTssSession,
+      ),
+    ),
+  );
+
 const FlashListComponent: FlashList<any> | typeof BottomSheetFlashList = (
   props: any,
 ) => {
@@ -751,32 +849,54 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   if (useAsModal && modalContext) {
     context = modalContext;
   }
+  const requiresCurrencyCatalog =
+    !customToSelectCurrencies &&
+    (!accountListContexts.includes(context) ||
+      accountListContextsRequiringCurrencyCatalog.includes(context));
+  const requiresAccountRates = accountListContexts.includes(context);
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
-  const {keys: _keys, customTokenOptionsByAddress} = useAppSelector(
-    ({WALLET}) => WALLET,
+  const _keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const customTokenOptionsByAddress = useAppSelector(({WALLET}) =>
+    requiresCurrencyCatalog
+      ? WALLET.customTokenOptionsByAddress
+      : EMPTY_GLOBAL_SELECT_TOKEN_OPTIONS_BY_ADDRESS,
   );
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const allTokensByAddress = {
-    ...BitpaySupportedTokenOptsByAddress,
-    ...tokenOptionsByAddress,
-    ...customTokenOptionsByAddress,
-  };
-  const [dataToDisplay, setDataToDisplay] = useState<
-    GlobalSelectObj[] | KeyWalletsRowProps[]
-  >([]);
+  const rates = useAppSelector(({RATE}) =>
+    requiresAccountRates ? RATE.rates : EMPTY_GLOBAL_SELECT_RATES,
+  );
+  const allTokensByAddress = useMemo(
+    () =>
+      requiresCurrencyCatalog && !customSupportedCurrencies
+        ? {
+            ...BitpaySupportedTokenOptsByAddress,
+            ...tokenOptionsByAddress,
+            ...customTokenOptionsByAddress,
+          }
+        : undefined,
+    [
+      customSupportedCurrencies,
+      customTokenOptionsByAddress,
+      requiresCurrencyCatalog,
+      tokenOptionsByAddress,
+    ],
+  );
   const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
   const [mountSheetModals, setMountSheetModals] = useState(false);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrencyIsoCode = useAppSelector(
+    ({APP}) => APP.defaultAltCurrency.isoCode,
+  );
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
   const [cryptoSelectModalVisible, setCryptoSelectModalVisible] =
     useState(false);
   const autoAdvanceReceiveRef = useRef(false);
+  const initialAccountSelectionHandledRef = useRef(false);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState<
     (GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData)[]
@@ -804,143 +924,150 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   useEffect(() => {
-    const mountComponents = async () => {
+    let cancelled = false;
+    const showList = async () => {
       await sleep(400);
-      setShowInitiallyHiddenComponents(true);
-      await sleep(1000);
-      setMountSheetModals(true);
+      if (!cancelled) {
+        setShowInitiallyHiddenComponents(true);
+      }
     };
-    mountComponents();
+    showList();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
-    new Set(
-      Object.entries(allTokensByAddress)
-        .flatMap(([address, tokenData]) => {
-          const symbol = tokenData?.symbol?.toLowerCase();
-          const chain = getChainFromTokenByAddressKey(address);
-          const currency = getCurrencyAbbreviation(symbol, chain);
-          return !BitpaySupportedTokens[address] &&
-            !BitpaySupportedCoins[currency]
-            ? currency
-            : undefined;
-        })
-        .filter((currency): currency is string => currency !== undefined),
-    ),
-  );
+  const NON_BITPAY_SUPPORTED_TOKENS = useMemo(() => {
+    if (!allTokensByAddress) {
+      return [];
+    }
 
-  const filterCompleteWallets = (keys: Keys) => {
-    return Object.fromEntries(
-      Object.entries(keys).filter(([_, keys]) =>
-        keys.wallets.some(
-          wallet => wallet.isComplete() && !wallet.pendingTssSession,
-        ),
+    return Array.from(
+      new Set(
+        Object.entries(allTokensByAddress)
+          .flatMap(([address, tokenData]) => {
+            const symbol = tokenData?.symbol?.toLowerCase();
+            const chain = getChainFromTokenByAddressKey(address);
+            const currency = getCurrencyAbbreviation(symbol, chain);
+            return !BitpaySupportedTokens[address] &&
+              !BitpaySupportedCoins[currency]
+              ? currency
+              : undefined;
+          })
+          .filter((currency): currency is string => currency !== undefined),
       ),
     );
-  };
+  }, [allTokensByAddress]);
 
   // Filter keys with only incomplete wallets
-  const keys = filterCompleteWallets(_keys);
+  const keys = useMemo(() => filterCompleteWallets(_keys), [_keys]);
 
-  // all wallets
-  let wallets = Object.values(keys).flatMap(key => key.wallets);
-  // Filter hidden wallets
-  wallets = wallets.filter(
-    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
-  );
+  const wallets = useMemo(() => {
+    let filteredWallets = Object.values(keys)
+      .flatMap(key => key.wallets)
+      .filter(wallet => !wallet.hideWallet && !wallet.hideWalletByAccount);
 
-  // only show wallets with funds
-  // only show selected account address wallets if selectedAccountAddress is provided
-  if (
-    [
-      'send',
-      'sell',
-      'swapFrom',
-      'coinbaseDeposit',
-      'contact',
-      'scanner',
-    ].includes(context)
-  ) {
-    wallets = wallets.filter(
-      wallet =>
-        wallet.balance.sat > 0 &&
-        (!selectedAccountAddress ||
-          wallet.receiveAddress === selectedAccountAddress),
-    );
-  }
-
-  // only show selected account address wallets if selectedAccountAddress is provided
-  if (['receive'].includes(context) && selectedAccountAddress) {
-    wallets = wallets.filter(wallet =>
-      selectedAccountAddress
-        ? wallet.receiveAddress === selectedAccountAddress
-        : false,
-    );
-  }
-
-  if (
-    recipient &&
-    ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
-  ) {
-    if (recipient.currency && recipient.chain) {
-      wallets = wallets.filter(
+    if (
+      [
+        'send',
+        'sell',
+        'swapFrom',
+        'coinbaseDeposit',
+        'contact',
+        'scanner',
+      ].includes(context)
+    ) {
+      filteredWallets = filteredWallets.filter(
         wallet =>
-          (wallet.currencyAbbreviation === recipient?.currency &&
-            wallet.chain === recipient?.chain) ||
-          (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.chain]) ||
-          (recipient?.opts?.showSVMWalletsAndTokens &&
-            BitpaySupportedSvmCoins[wallet.chain]),
+          wallet.balance.sat > 0 &&
+          (!selectedAccountAddress ||
+            wallet.receiveAddress === selectedAccountAddress),
       );
     }
-    if (recipient?.network) {
-      wallets = wallets.filter(wallet => wallet.network === recipient?.network);
+
+    if (context === 'receive' && selectedAccountAddress) {
+      filteredWallets = filteredWallets.filter(
+        wallet => wallet.receiveAddress === selectedAccountAddress,
+      );
     }
-  }
 
-  if (livenetOnly) {
-    wallets = wallets.filter(wallet => wallet.network === 'livenet');
-  }
-
-  if (assetContext?.currencyAbbreviation && assetContext?.chain) {
-    const filterCurrencyAbbreviation =
-      assetContext.currencyAbbreviation.toLowerCase();
-    const filterChain = assetContext.chain.toLowerCase();
-    const filterNetwork = assetContext.network?.toLowerCase();
-    const filterTokenAddress = assetContext.tokenAddress?.toLowerCase();
-
-    wallets = wallets.filter(wallet => {
-      if (wallet.currencyAbbreviation !== filterCurrencyAbbreviation) {
-        return false;
+    if (
+      recipient &&
+      ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
+    ) {
+      if (recipient.currency && recipient.chain) {
+        filteredWallets = filteredWallets.filter(
+          wallet =>
+            (wallet.currencyAbbreviation === recipient.currency &&
+              wallet.chain === recipient.chain) ||
+            (recipient.opts?.showEVMWalletsAndTokens &&
+              BitpaySupportedEvmCoins[wallet.chain]) ||
+            (recipient.opts?.showSVMWalletsAndTokens &&
+              BitpaySupportedSvmCoins[wallet.chain]),
+        );
       }
-      if (wallet.chain !== filterChain) {
-        return false;
+      if (recipient.network) {
+        filteredWallets = filteredWallets.filter(
+          wallet => wallet.network === recipient.network,
+        );
       }
-      if (filterNetwork && wallet.network !== filterNetwork) {
-        return false;
-      }
+    }
 
-      if (filterTokenAddress) {
-        const walletTokenAddress = wallet.tokenAddress?.toLowerCase();
-        return walletTokenAddress === filterTokenAddress;
-      }
+    if (livenetOnly) {
+      filteredWallets = filteredWallets.filter(
+        wallet => wallet.network === 'livenet',
+      );
+    }
 
-      return true;
-    });
-  }
+    if (assetContext?.currencyAbbreviation && assetContext.chain) {
+      const filterCurrencyAbbreviation =
+        assetContext.currencyAbbreviation.toLowerCase();
+      const filterChain = assetContext.chain.toLowerCase();
+      const filterNetwork = assetContext.network?.toLowerCase();
+      const filterTokenAddress = assetContext.tokenAddress?.toLowerCase();
 
-  if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
-    const supportedCurrencies = [
-      ...new Set(
+      filteredWallets = filteredWallets.filter(wallet => {
+        if (wallet.currencyAbbreviation !== filterCurrencyAbbreviation) {
+          return false;
+        }
+        if (wallet.chain !== filterChain) {
+          return false;
+        }
+        if (filterNetwork && wallet.network !== filterNetwork) {
+          return false;
+        }
+
+        if (filterTokenAddress) {
+          return wallet.tokenAddress?.toLowerCase() === filterTokenAddress;
+        }
+
+        return true;
+      });
+    }
+
+    if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
+      const supportedCurrencies = new Set(
         customSupportedCurrencies.map(item =>
           item.currencyAbbreviation.toLowerCase(),
         ),
-      ),
-    ];
-    wallets = wallets.filter(wallet =>
-      supportedCurrencies.includes(wallet.currencyAbbreviation),
-    );
-  }
+      );
+      filteredWallets = filteredWallets.filter(wallet =>
+        supportedCurrencies.has(wallet.currencyAbbreviation),
+      );
+    }
+
+    return filteredWallets;
+  }, [
+    assetContext,
+    context,
+    customSupportedCurrencies,
+    keys,
+    livenetOnly,
+    recipient,
+    selectedAccountAddress,
+    useAsModal,
+  ]);
 
   const currenciesSupportedList = useMemo(() => {
     const coins = customSupportedCurrencies
@@ -950,22 +1077,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     const nonBitpayTokens = customSupportedCurrencies
       ? []
       : NON_BITPAY_SUPPORTED_TOKENS;
-    const allCurrencies = uniqBy(
-      [...coins, ...tokens, ...nonBitpayTokens],
-      c => c,
-    );
+    const allCurrencies = requiresCurrencyCatalog
+      ? uniqBy([...coins, ...tokens, ...nonBitpayTokens], c => c)
+      : [];
     let allCurrencyData = {} as KeyWalletsRowProps[] | GlobalSelectObjByKey;
-    if (
-      [
-        'send',
-        'sell',
-        'swapFrom',
-        'coinbase',
-        'coinbaseDeposit',
-        'contact',
-        'scanner',
-      ].includes(context)
-    ) {
+    if (accountListContexts.includes(context)) {
       const getFilterByCustomWallets = (key: Key): Wallet[] => {
         let _filterByCustomWallets: Wallet[] = [];
         if (['sell', 'swapFrom'].includes(context)) {
@@ -994,7 +1110,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         .map(key => {
           const accountList = buildAccountList(
             key,
-            defaultAltCurrency.isoCode,
+            defaultAltCurrencyIsoCode,
             rates,
             dispatch,
             {
@@ -1007,7 +1123,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             if (IsVMChain(account.chains[0])) {
               const assetsByChain = buildAssetsByChain(
                 account,
-                defaultAltCurrency.isoCode,
+                defaultAltCurrencyIsoCode,
               );
               return {...account, assetsByChain};
             }
@@ -1026,27 +1142,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           };
         })
         .filter(item => item !== null) as KeyWalletsRowProps[];
-      setDataToDisplay(allCurrencyData);
-      const keyWalletsArray = allCurrencyData as KeyWalletsRowProps[];
-      if (
-        keyWalletsArray.length === 1 &&
-        keyWalletsArray[0]?.accounts?.length === 1 &&
-        IsVMChain(keyWalletsArray[0].accounts[0].chains[0])
-      ) {
-        // if only one account and is evm show assets directly
-        const selectedAccount = keyWalletsArray[0].accounts[0];
-        setSelectedEVMAccount({
-          keyId: selectedAccount.keyId,
-          chains: selectedAccount.chains,
-          accountName: selectedAccount.accountName,
-          accountNumber: selectedAccount.accountNumber,
-          receiveAddress: selectedAccount.receiveAddress,
-        });
-        setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
-        setSearchVal('');
-        setSearchResults([]);
-        setHideCloseButton(true);
-      }
       return allCurrencyData;
     } else if (!customToSelectCurrencies) {
       allCurrencyData = buildSelectableWalletList(
@@ -1054,12 +1149,22 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         wallets,
         context,
       );
-      setDataToDisplay(Object.values(allCurrencyData));
       return Object.values(allCurrencyData);
     } else {
       return [];
     }
-  }, []);
+  }, [
+    NON_BITPAY_SUPPORTED_TOKENS,
+    context,
+    customSupportedCurrencies,
+    customToSelectCurrencies,
+    defaultAltCurrencyIsoCode,
+    dispatch,
+    keys,
+    rates,
+    requiresCurrencyCatalog,
+    wallets,
+  ]);
 
   const customCurrenciesSupportedList = useMemo(() => {
     if (customToSelectCurrencies) {
@@ -1068,12 +1173,44 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         selectedChainFilterOption,
         wallets,
       );
-      setDataToDisplay(Object.values(allCurrencyData));
       return Object.values(allCurrencyData);
     } else {
       return [];
     }
-  }, [selectedChainFilterOption]);
+  }, [customToSelectCurrencies, selectedChainFilterOption, wallets]);
+
+  const dataToDisplay = customToSelectCurrencies
+    ? customCurrenciesSupportedList
+    : currenciesSupportedList;
+
+  useEffect(() => {
+    if (initialAccountSelectionHandledRef.current) {
+      return;
+    }
+
+    const keyWalletsArray = currenciesSupportedList as KeyWalletsRowProps[];
+    if (
+      keyWalletsArray.length !== 1 ||
+      keyWalletsArray[0]?.accounts?.length !== 1 ||
+      !IsVMChain(keyWalletsArray[0].accounts[0].chains[0])
+    ) {
+      return;
+    }
+
+    initialAccountSelectionHandledRef.current = true;
+    const selectedAccount = keyWalletsArray[0].accounts[0];
+    setSelectedEVMAccount({
+      keyId: selectedAccount.keyId,
+      chains: selectedAccount.chains,
+      accountName: selectedAccount.accountName,
+      accountNumber: selectedAccount.accountNumber,
+      receiveAddress: selectedAccount.receiveAddress,
+    });
+    setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+    setSearchVal('');
+    setSearchResults([]);
+    setHideCloseButton(true);
+  }, [currenciesSupportedList]);
 
   const goToBuyCrypto = async () => {
     if (globalSelectOnDismiss) {
@@ -1104,22 +1241,31 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   };
 
-  const openCryptoSelector = useCallback(async (selectObj: GlobalSelectObj) => {
-    setCryptoSelectModalVisible(true);
-    const availableKeys = Object.values(keys);
-    if (availableKeys.length > 1) {
-      // has more than 1 key created -> choose key
-      openKeySelector(selectObj);
-    } else {
-      // only 1 key created -> choose account if evm / select wallet if utxo
-      const selectedKey = availableKeys[0];
-      if (IsVMChain(selectObj.chains[0])) {
-        openAccountSelector(selectObj, selectedKey);
+  const openCryptoSelectorRef = useRef<
+    (selectObj: GlobalSelectObj) => Promise<void>
+  >(async () => undefined);
+  const openCryptoSelector = useCallback(
+    (selectObj: GlobalSelectObj) => openCryptoSelectorRef.current(selectObj),
+    [],
+  );
+
+  useLayoutEffect(() => {
+    openCryptoSelectorRef.current = async (selectObj: GlobalSelectObj) => {
+      setMountSheetModals(true);
+      setCryptoSelectModalVisible(true);
+      const availableKeys = Object.values(keys);
+      if (availableKeys.length > 1) {
+        openKeySelector(selectObj);
       } else {
-        openAccountUtxoSelector(selectObj, selectedKey);
+        const selectedKey = availableKeys[0];
+        if (IsVMChain(selectObj.chains[0])) {
+          openAccountSelector(selectObj, selectedKey);
+        } else {
+          openAccountUtxoSelector(selectObj, selectedKey);
+        }
       }
-    }
-  }, []);
+    };
+  });
 
   useEffect(() => {
     if (autoAdvanceReceiveRef.current) {
@@ -1154,6 +1300,79 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     searchVal,
     openCryptoSelector,
   ]);
+
+  const createProposalAndNavigate = useCallback(
+    ({
+        wallet,
+        amount: proposalAmount,
+        sendTo,
+        setButtonState,
+        opts,
+      }: {
+        wallet: Wallet;
+        amount: number;
+        sendTo: {
+          name: string | undefined;
+          type: string;
+          address: string;
+          destinationTag?: number;
+        };
+        setButtonState?: (state: ButtonState) => void;
+        opts: any;
+      }): Effect<Promise<void>> =>
+      async dispatchEffect => {
+        try {
+          if (setButtonState) {
+            setButtonState('loading');
+          } else {
+            showOngoingProcess('CREATING_TXP');
+          }
+          const {txDetails, txp} = await dispatchEffect(
+            createProposalAndBuildTxDetails({
+              wallet,
+              recipient: sendTo,
+              amount: proposalAmount,
+              ...opts,
+            }),
+          );
+          if (setButtonState) {
+            setButtonState('success');
+          } else {
+            hideOngoingProcess();
+          }
+          await sleep(300);
+          navigation.navigate('Confirm', {
+            wallet,
+            recipient: sendTo,
+            txp,
+            txDetails,
+            amount: proposalAmount,
+            message: opts?.message,
+            solanaPayOpts: opts?.solanaPayOpts,
+          });
+        } catch (err: any) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logManager.error('[GlobalSelect] ' + errStr);
+          if (setButtonState) {
+            setButtonState('failed');
+            sleep(1000).then(() => setButtonState?.(null));
+          } else {
+            hideOngoingProcess();
+          }
+          const errorMessageConfig = await dispatchEffect(
+            handleCreateTxProposalError(err),
+          );
+          dispatchEffect(
+            showBottomNotificationModal({
+              ...errorMessageConfig,
+              enableBackdropDismiss: true,
+            }),
+          );
+        }
+      },
+    [hideOngoingProcess, navigation, showOngoingProcess],
+  );
 
   const onWalletSelect = useCallback(
     async (wallet: Wallet | undefined, addWalletData?: AddWalletData) => {
@@ -1191,7 +1410,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               tokenAddress: wallet.tokenAddress,
               onAmountSelected: async (amount, setButtonState, opts) => {
                 dispatch(
-                  _createProposalAndBuildTxDetails({
+                  createProposalAndNavigate({
                     wallet,
                     amount: Number(amount),
                     sendTo,
@@ -1203,7 +1422,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             });
           } else {
             dispatch(
-              _createProposalAndBuildTxDetails({
+              createProposalAndNavigate({
                 wallet,
                 amount: Number(amount),
                 sendTo,
@@ -1224,81 +1443,20 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         setReceiveWallet(wallet);
       }
     },
-    [context, navigation, globalSelectOnDismiss, recipient, useAsModal],
+    [
+      amount,
+      context,
+      createProposalAndNavigate,
+      dispatch,
+      globalSelectOnDismiss,
+      navigation,
+      recipient,
+      useAsModal,
+    ],
   );
 
-  const _createProposalAndBuildTxDetails =
-    ({
-      wallet,
-      amount,
-      sendTo,
-      setButtonState,
-      opts,
-    }: {
-      wallet: Wallet;
-      amount: number;
-      sendTo: {
-        name: string | undefined;
-        type: string;
-        address: string;
-        destinationTag?: number;
-      };
-      setButtonState?: (state: ButtonState) => void;
-      opts: any;
-    }): Effect<Promise<void>> =>
-    async (dispatch, getState) => {
-      try {
-        if (setButtonState) {
-          setButtonState('loading');
-        } else {
-          showOngoingProcess('CREATING_TXP');
-        }
-        const {txDetails, txp} = await dispatch(
-          createProposalAndBuildTxDetails({
-            wallet,
-            recipient: sendTo,
-            amount,
-            ...opts,
-          }),
-        );
-        if (setButtonState) {
-          setButtonState('success');
-        } else {
-          hideOngoingProcess();
-        }
-        await sleep(300);
-        navigation.navigate('Confirm', {
-          wallet,
-          recipient: sendTo,
-          txp,
-          txDetails,
-          amount,
-          message: opts?.message,
-          solanaPayOpts: opts?.solanaPayOpts,
-        });
-      } catch (err: any) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.error('[GlobalSelect] ' + errStr);
-        if (setButtonState) {
-          setButtonState('failed');
-          sleep(1000).then(() => setButtonState?.(null));
-        } else {
-          hideOngoingProcess();
-        }
-        const errorMessageConfig = await dispatch(
-          handleCreateTxProposalError(err),
-        );
-        dispatch(
-          showBottomNotificationModal({
-            ...errorMessageConfig,
-            enableBackdropDismiss: true,
-          }),
-        );
-      }
-    };
-
   const memoizedRenderAssetsItem = useCallback(
-    ({item, index}: {item: AssetsByChainData; index: number}) => {
+    ({item}: {item: AssetsByChainData; index: number}) => {
       return (
         <View style={{marginLeft: -10}}>
           <AssetsByChainRow
@@ -1319,86 +1477,80 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         </View>
       );
     },
-    [selectedChainFilterOption, selectedEVMAccount, selectedAssetsFromAccount],
+    [hideAllBalances, keys, onWalletSelect, selectedEVMAccount],
   );
 
   const renderItem = useCallback(
-    ({item}: {item: GlobalSelectObj | KeyWalletsRowProps}) => {
-      if (
-        [
-          'sell',
-          'swapFrom',
-          'send',
-          'coinbase',
-          'coinbaseDeposit',
-          'contact',
-          'scanner',
-        ].includes(context)
-      ) {
-        const keyWallets = item as KeyWalletsRowProps;
+    ({item}: {item: GlobalSelectFlatRow}) => {
+      if (item.__row === 'keyHeader') {
         return (
-          <View>
-            <TitleNameContainer>
-              <KeySvg />
-              <TitleName>{keyWallets.keyName || 'My Key'}</TitleName>
-            </TitleNameContainer>
-            {keyWallets.accounts.map(
-              (
-                account: AccountRowProps & {
-                  assetsByChain?: AssetsByChainData[];
-                },
-                index,
-              ) => (
-                <View key={index.toString()} style={{marginLeft: -10}}>
-                  <AccountListRow
-                    key={account.id}
-                    id={account.id}
-                    accountItem={account}
-                    hideBalance={hideAllBalances}
-                    onPress={() => {
-                      if (IsVMChain(account.chains[0])) {
-                        setSearchVal('');
-                        setSearchResults([]);
-                        setSelectedEVMAccount({
-                          keyId: account.keyId,
-                          chains: account.chains,
-                          accountName: account.accountName,
-                          accountNumber: account.accountNumber,
-                          receiveAddress: account.receiveAddress,
-                        });
-                        setSelectedAssetsFromAccount(account.assetsByChain!);
-                      } else {
-                        const keyFullWalletObjs = keys[account.keyId].wallets;
-                        const fullWalletObj = findWalletById(
-                          keyFullWalletObjs,
-                          account.wallets[0].id,
-                          account.wallets[0].copayerId,
-                        ) as Wallet;
-                        onWalletSelect(fullWalletObj);
-                      }
-                    }}
-                  />
-                </View>
-              ),
-            )}
+          <TitleNameContainer>
+            <KeySvg />
+            <TitleName>{item.keyName}</TitleName>
+          </TitleNameContainer>
+        );
+      }
+
+      if (item.__row === 'account') {
+        const {account} = item;
+        return (
+          <View style={{marginLeft: -10}}>
+            <AccountListRow
+              id={account.id}
+              accountItem={account}
+              hideBalance={hideAllBalances}
+              onPress={() => {
+                if (IsVMChain(account.chains[0])) {
+                  setSearchVal('');
+                  setSearchResults([]);
+                  setSelectedEVMAccount({
+                    keyId: account.keyId,
+                    chains: account.chains,
+                    accountName: account.accountName,
+                    accountNumber: account.accountNumber,
+                    receiveAddress: account.receiveAddress,
+                  });
+                  setSelectedAssetsFromAccount(account.assetsByChain!);
+                } else {
+                  const keyFullWalletObjs = keys[account.keyId].wallets;
+                  const fullWalletObj = findWalletById(
+                    keyFullWalletObjs,
+                    account.wallets[0].id,
+                    account.wallets[0].copayerId,
+                  ) as Wallet;
+                  onWalletSelect(fullWalletObj);
+                }
+              }}
+            />
           </View>
         );
       }
 
-      const selectableObj = item as GlobalSelectObj;
       return (
         <GlobalSelectRow
-          item={selectableObj}
+          item={item.item}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
             openCryptoSelector(selectObj);
           }}
-          key={selectableObj.id}
         />
       );
     },
-    [selectedChainFilterOption],
+    [
+      hideAllBalances,
+      keys,
+      onWalletSelect,
+      openCryptoSelector,
+      selectedChainFilterOption,
+    ],
   );
+
+  const flatListData = useMemo(() => {
+    const source = (
+      !searchVal && !selectedChainFilterOption ? dataToDisplay : searchResults
+    ) as (GlobalSelectObj | KeyWalletsRowProps)[];
+    return flattenGlobalSelectData(source);
+  }, [searchVal, selectedChainFilterOption, dataToDisplay, searchResults]);
 
   const closeModal = () => {
     setShowReceiveAddressBottomModal(false);
@@ -1564,7 +1716,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   ) => {
     const accountList = buildAccountList(
       selectedKey,
-      defaultAltCurrency.isoCode,
+      defaultAltCurrencyIsoCode,
       rates,
       dispatch,
       {
@@ -1599,7 +1751,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   ) => {
     const accountList = buildAccountList(
       selectedKey,
-      defaultAltCurrency.isoCode,
+      defaultAltCurrencyIsoCode,
       rates,
       dispatch,
       {
@@ -1752,34 +1904,65 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }, [navigation, wallets, useAsModal]);
 
   useEffect(() => {
-    if (!isEmpty(selectedEVMAccount)) {
-      const data =
-        !searchVal && !selectedChainFilterOption
-          ? dataToDisplay
-          : searchResults;
-      const selectedAccount = data
-        // @ts-ignore
-        .flatMap(({accounts}) => accounts || [])
-        .find(
-          account =>
-            // @ts-ignore
-            account.receiveAddress === selectedEVMAccount.receiveAddress,
-        ) as AccountRowProps & {assetsByChain?: AssetsByChainData[]};
-
-      if (selectedAccount) {
-        setSearchVal('');
-        setSearchResults([]);
-        setSelectedEVMAccount({
-          keyId: selectedAccount.keyId,
-          chains: selectedAccount.chains,
-          accountName: selectedAccount.accountName,
-          accountNumber: selectedAccount.accountNumber,
-          receiveAddress: selectedAccount.receiveAddress,
-        });
-        setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
-      }
+    if (isEmpty(selectedEVMAccount)) {
+      return;
     }
-  }, [selectedChainFilterOption]);
+
+    const accountGroups = (
+      currenciesSupportedList as (GlobalSelectObj | KeyWalletsRowProps)[]
+    ).filter(item =>
+      Array.isArray((item as KeyWalletsRowProps).accounts),
+    ) as KeyWalletsRowProps[];
+    const selectedAccount = accountGroups
+      .flatMap(item => item.accounts as GlobalSelectAccount[])
+      .find(
+        account =>
+          account.keyId === selectedEVMAccount.keyId &&
+          account.receiveAddress === selectedEVMAccount.receiveAddress,
+      );
+
+    if (!selectedAccount) {
+      setSearchVal('');
+      setSearchResults([]);
+      setSelectedEVMAccount({} as Partial<AccountRowProps>);
+      setSelectedAssetsFromAccount(currentAssets =>
+        currentAssets.length ? [] : currentAssets,
+      );
+      setHideCloseButton(false);
+      return;
+    }
+
+    const remainsTheOnlyVmAccount =
+      accountGroups.length === 1 &&
+      accountGroups[0].accounts.length === 1 &&
+      IsVMChain(accountGroups[0].accounts[0].chains[0]);
+    setHideCloseButton(remainsTheOnlyVmAccount);
+
+    setSelectedEVMAccount(currentAccount => {
+      if (
+        currentAccount.keyId === selectedAccount.keyId &&
+        currentAccount.receiveAddress === selectedAccount.receiveAddress &&
+        currentAccount.accountName === selectedAccount.accountName &&
+        currentAccount.accountNumber === selectedAccount.accountNumber &&
+        currentAccount.chains === selectedAccount.chains
+      ) {
+        return currentAccount;
+      }
+
+      return {
+        keyId: selectedAccount.keyId,
+        chains: selectedAccount.chains,
+        accountName: selectedAccount.accountName,
+        accountNumber: selectedAccount.accountNumber,
+        receiveAddress: selectedAccount.receiveAddress,
+      };
+    });
+    setSelectedAssetsFromAccount(currentAssets =>
+      currentAssets === selectedAccount.assetsByChain
+        ? currentAssets
+        : selectedAccount.assetsByChain ?? [],
+    );
+  }, [currenciesSupportedList, selectedEVMAccount]);
 
   useEffect(() => {
     if (receiveWallet) {
@@ -1854,15 +2037,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   <FlashListComponent
                     inModal={useAsModal}
                     contentContainerStyle={{paddingBottom: 150}}
-                    data={
-                      !searchVal && !selectedChainFilterOption
-                        ? dataToDisplay
-                        : (searchResults as (
-                            | GlobalSelectObj
-                            | KeyWalletsRowProps
-                          )[])
-                    }
-                    keyExtractor={(_, index: number) => index.toString()}
+                    data={flatListData}
+                    keyExtractor={(item: GlobalSelectFlatRow) => item.id}
+                    getItemType={(item: GlobalSelectFlatRow) => item.__row}
                     renderItem={renderItem}
                     estimatedItemSize={90}
                     onEndReachedThreshold={0.3}

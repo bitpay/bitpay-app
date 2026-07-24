@@ -164,11 +164,10 @@ const CtaContainer: React.FC<React.ComponentProps<typeof _CtaContainer>> = ({
   ...rest
 }) => <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />;
 
-const DropdownRow: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => (
-  <TouchableOpacity style={[styles.dropdownRow, style]} {...rest} />
-);
+const DropdownRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.dropdownRow, style]} {...rest} />;
 
 const DropdownTitle: React.FC<React.ComponentProps<typeof View>> = ({
   style,
@@ -181,11 +180,10 @@ export const InputTouchableContainer: React.FC<
   <TouchableOpacity style={[styles.inputTouchableContainer, style]} {...rest} />
 );
 
-const AvailableInputsContainer: React.FC<
-  React.ComponentProps<typeof View>
-> = ({style, ...rest}) => (
-  <View style={[styles.availableInputsContainer, style]} {...rest} />
-);
+const AvailableInputsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.availableInputsContainer, style]} {...rest} />;
 
 export interface SelectInputsParamList {
   wallet: Wallet;
@@ -208,7 +206,7 @@ const SelectInputs = () => {
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const feeLevel = useAppSelector(({WALLET}) => WALLET.feeLevel);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [inputs, setInputs] = useState<UtxoWithFiatAmount[]>([]);
   const [lockedUtxos, setLockedUtxos] = useState<UtxoWithFiatAmount[]>([]);
   const [hideLockedUtxos, setHideLockedUtxos] = useState<boolean>(true);

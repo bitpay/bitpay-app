@@ -231,7 +231,12 @@ const SearchComponent = <T extends SearchableItem>({
     debounce((text: string) => {
       setSearchVal(text?.toLowerCase());
       const normalizedText = normalizeText(text);
-      let results = cloneDeep(searchFullList);
+      const hasActiveSearch = Boolean(
+        normalizedText || selectedChainFilterOption,
+      );
+      let results = hasActiveSearch
+        ? cloneDeep(searchFullList)
+        : searchFullList;
       // Ignore error when there is no results
       if (['addUtxoWallet', 'addEVMWallet'].includes(context)) {
         const chains = searchFullList.flatMap(
@@ -491,9 +496,11 @@ const SearchComponent = <T extends SearchableItem>({
 
         setChainsOptions(chains);
       }
-      setSearchResults(results);
+      if (hasActiveSearch) {
+        setSearchResults(results);
+      }
     }, 300),
-    [selectedChainFilterOption, searchFullList],
+    [context, selectedChainFilterOption, searchFullList],
   );
 
   const updateSelectedChainInfo = () => {
@@ -508,7 +515,12 @@ const SearchComponent = <T extends SearchableItem>({
 
   useEffect(() => {
     updateSearchResults(searchVal);
+    updateSearchResults.flush();
     updateSelectedChainInfo();
+
+    return () => {
+      updateSearchResults.cancel();
+    };
   }, [selectedChainFilterOption, searchFullList]);
 
   const _SearchFilterContainer = () => {

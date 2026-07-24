@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {memo, useState} from 'react';
 import {useTheme} from '../../contexts';
 import {BaseText} from '../styled/Text';
 import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
@@ -82,4 +82,4 @@ const SwapButton = ({swapList, onChange}: SwapButtonProps) => {
   );
 };
 
-export default SwapButton;
+export default memo(SwapButton);

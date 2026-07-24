@@ -138,11 +138,7 @@ const KeyName: React.FC<React.ComponentProps<typeof BaseText>> = ({
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.keyName,
-        {color: theme.dark ? White : SlateDark},
-        style,
-      ]}
+      style={[styles.keyName, {color: theme.dark ? White : SlateDark}, style]}
       {...rest}
     />
   );
@@ -228,8 +224,6 @@ const UtxoAccountContainer: React.FC<
   );
 };
 
-type WalletRowType = KeyWallet | WalletRowProps;
-
 export interface KeyWallet extends Wallet {
   img: string | ((props: any) => ReactElement);
 }
@@ -249,7 +243,7 @@ export interface KeyWalletsRowProps extends SearchableItem {
   keyName: string;
   accounts: KeyWalletsAccountRow[];
   mergedUtxoAndEvmAccounts: KeyWalletsMergedAccountRow[];
-  coinbaseAccounts: WalletRowProps[];
+  coinbaseAccounts?: WalletRowProps[];
 }
 
 interface KeyWalletProps {
@@ -270,7 +264,7 @@ const KeyWalletsRow = ({
   supportedTransactionCurrencies,
 }: KeyWalletProps) => {
   const {t} = useTranslation();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
   }>();
@@ -292,7 +286,7 @@ const KeyWalletsRow = ({
       {keyAccounts.map(key => (
         <View style={styles.keyWalletsRowContainer} key={key.key}>
           {(key.accounts?.length > 0 ||
-            key.coinbaseAccounts?.length > 0 ||
+            (key.coinbaseAccounts?.length ?? 0) > 0 ||
             Object.values(key?.mergedUtxoAndEvmAccounts ?? {})?.length > 0) && (
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}

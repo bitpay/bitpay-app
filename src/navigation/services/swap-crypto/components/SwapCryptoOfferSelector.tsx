@@ -337,7 +337,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   SwapCryptoSupportedExchanges.forEach((exchange: SwapCryptoExchangeKey) => {
