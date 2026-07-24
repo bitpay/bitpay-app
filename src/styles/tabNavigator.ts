@@ -8,7 +8,7 @@ import {
 } from './colors';
 import {Platform} from 'react-native';
 import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../contexts';
 import {useAppSelector} from '../utils/hooks';
 
 const gutter = 5;

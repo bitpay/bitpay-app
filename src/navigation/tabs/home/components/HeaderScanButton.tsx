@@ -4,7 +4,7 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import * as Svg from 'react-native-svg';
 import {HeaderButtonContainer} from './Styled';
 import {Action, LightBlue, LinkBlue, Midnight} from '../../../../styles/colors';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 

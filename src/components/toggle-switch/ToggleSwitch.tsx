@@ -1,6 +1,5 @@
 import React from 'react';
-import {Switch} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleSheet, Switch, View} from 'react-native';
 import {Action, NeutralSlate, White} from '../../styles/colors';
 
 interface Props {
@@ -9,14 +8,16 @@ interface Props {
   isDisabled?: boolean;
 }
 
-const SwitchContainer = styled.View`
-  align-self: stretch;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  switchContainer: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  },
+});
 
 const ToggleSwitch = ({onChange, isEnabled, isDisabled}: Props) => {
   return (
-    <SwitchContainer>
+    <View style={styles.switchContainer}>
       <Switch
         onValueChange={onChange}
         value={isEnabled}
@@ -25,7 +26,7 @@ const ToggleSwitch = ({onChange, isEnabled, isDisabled}: Props) => {
         thumbTintColor={White}
         disabled={isDisabled}
       />
-    </SwitchContainer>
+    </View>
   );
 };
 

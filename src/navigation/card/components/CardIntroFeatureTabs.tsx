@@ -1,6 +1,7 @@
 import {t} from 'i18next';
 import React from 'react';
-import styled from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import A from '../../../components/anchor/Anchor';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
@@ -12,31 +13,49 @@ interface TableRowProps {
   index?: number;
 }
 
-const TableRow = styled.View<TableRowProps>`
-  align-items: center;
-  background-color: ${({index, theme}) => {
-    const stripeColor = theme.dark ? LightBlack : NeutralSlate;
+const styles = StyleSheet.create({
+  tableRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    minHeight: 80,
+    padding: parseInt(ScreenGutter, 10),
+  },
+  tableCellTitle: {
+    flex: 1,
+    fontWeight: '500',
+    paddingRight: 8,
+    textAlign: 'left',
+  },
+  tableCellDescription: {
+    flex: 1,
+    paddingLeft: 8,
+    textAlign: 'right',
+  },
+});
 
-    return (index || 0) % 2 ? 'transparent' : stripeColor;
-  }};
-  flex-direction: row;
-  flex-wrap: nowrap;
-  min-height: 80px;
-  padding: ${ScreenGutter};
-`;
+const TableRow = ({index, style, ...rest}: ViewProps & TableRowProps) => {
+  const theme = useTheme();
+  const stripeColor = theme.dark ? LightBlack : NeutralSlate;
+  const backgroundColor = (index || 0) % 2 ? 'transparent' : stripeColor;
+  return <View style={[styles.tableRow, {backgroundColor}, style]} {...rest} />;
+};
 
-const TableCellTitle = styled(BaseText)`
-  flex: 1;
-  font-weight: 500;
-  padding-right: 8px;
-  text-align: left;
-`;
+const TableCellTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.tableCellTitle, style]} {...rest} />
+  ),
+);
 
-const TableCellDescription = styled(BaseText)`
-  flex: 1;
-  padding-left: 8px;
-  text-align: right;
-`;
+const TableCellDescription = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[styles.tableCellDescription, style]}
+      {...rest}
+    />
+  ),
+);
 
 interface CardTableData {
   title: React.ReactNode;

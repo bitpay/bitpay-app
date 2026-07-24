@@ -1,6 +1,6 @@
 import Modal from 'react-native-modal';
 import React from 'react';
-import styled from 'styled-components/native';
+import {View, StyleSheet} from 'react-native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   ActionContainer,
@@ -31,22 +31,35 @@ interface ButtonProps {
   accessibilityLabel?: string;
 }
 
-const BackgroundGradient = styled(LinearGradient).attrs({
-  colors: ['#AD4FF7', '#1A3B8B'],
-  start: {x: 0, y: 0},
-  end: {x: 0, y: 0},
-  useAngle: true,
-  angle: 225,
-})`
-  border-radius: 10px;
-`;
+const styles = StyleSheet.create({
+  backgroundGradient: {
+    borderRadius: 10,
+  },
+  onboardingFinishModalContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: WIDTH - 16,
+    padding: 20,
+  },
+});
 
-const OnboardingFinishModalContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-  width: ${WIDTH - 16}px;
-  padding: 20px;
-`;
+const BackgroundGradient = ({children}: {children: React.ReactNode}) => (
+  <LinearGradient
+    colors={['#AD4FF7', '#1A3B8B']}
+    start={{x: 0, y: 0}}
+    end={{x: 0, y: 0}}
+    useAngle={true}
+    angle={225}
+    style={styles.backgroundGradient}>
+    {children}
+  </LinearGradient>
+);
+
+const OnboardingFinishModalContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => <View style={styles.onboardingFinishModalContainer}>{children}</View>;
 
 const OnboardingFinishModal: React.FC = () => {
   const {t} = useTranslation();

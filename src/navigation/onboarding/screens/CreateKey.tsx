@@ -1,8 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useLayoutEffect, useRef, useCallback} from 'react';
-import {ScrollView} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
 import {OnboardingImage} from '../components/Containers';
 import Button from '../../../components/button/Button';
 import {
@@ -29,10 +28,12 @@ import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-const CreateKeyContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: stretch;
-`;
+const styles = StyleSheet.create({
+  createKeyContainer: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+});
 const KeyImage = {
   light: (
     <OnboardingImage
@@ -138,7 +139,7 @@ const CreateOrImportKey = ({
     }
   }, [isImportLedgerModalVisible]);
   return (
-    <CreateKeyContainer testID="create-key-view">
+    <SafeAreaView style={styles.createKeyContainer} testID="create-key-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -202,7 +203,7 @@ const CreateOrImportKey = ({
           </ActionContainer> */}
         </CtaContainer>
       </ScrollView>
-    </CreateKeyContainer>
+    </SafeAreaView>
   );
 };
 

@@ -20,7 +20,6 @@ import {
   TransactionProposal,
   KeyMethods,
 } from '../../../store/wallet/wallet.models';
-import styled from 'styled-components/native';
 import {
   KeyToggle as AccountToogle,
   KeyDropdown as AccountDropdown,
@@ -29,11 +28,18 @@ import {
 import {
   DeviceEventEmitter,
   RefreshControl,
+  SafeAreaView,
   SectionList,
+  StyleProp,
+  StyleSheet,
   View,
+  ViewStyle,
   useWindowDimensions,
 } from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
@@ -241,112 +247,205 @@ const transactionItemLayout = (_data: any, index: number) => ({
   index,
 });
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+const styles = StyleSheet.create({
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  accountDetailsContainer: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  walletListHeader: {
+    padding: 10,
+  },
+  copyToClipboardContainer: {
+    justifyContent: 'center',
+    height: 20,
+  },
+  headerContainer: {
+    marginTop: 18,
+    marginBottom: 24,
+  },
+  transactionSectionHeaderContainer: {
+    padding: parseInt(ScreenGutter, 10),
+    height: 55,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  skeletonContainer: {
+    marginBottom: 20,
+  },
+  lockedBalanceContainer: {
+    flexDirection: 'row',
+    padding: parseInt(ScreenGutter, 10),
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 75,
+  },
+  description: {
+    overflow: 'hidden',
+    marginRight: 175,
+    fontSize: 16,
+  },
+  tailContainer: {
+    marginLeft: 'auto',
+  },
+  value: {
+    textAlign: 'right',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  balanceContainer: {
+    paddingTop: 0,
+    paddingHorizontal: 15,
+    paddingBottom: 22,
+    flexDirection: 'column',
+  },
+  assetsDataContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerListContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addCustomTokenContainer: {
+    margin: 40,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centeredText: {
+    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '400',
+    marginLeft: 4,
+  },
+});
 
-const AccountDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const BorderBottom = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+      ]}
+    />
+  );
+};
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-`;
+const Row: React.FC<{
+  style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode;
+}> = ({style, children}) => (
+  <View style={[styles.row, style]}>{children}</View>
+);
 
-const WalletListHeader = styled(TouchableOpacity)`
-  padding: 10px;
-`;
+const WalletListHeader: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => <TouchableOpacity style={[styles.walletListHeader, style]} {...props} />;
 
-const WalletListHeaderLabel = styled.View<{
+const WalletListHeaderLabel: React.FC<{
   isActive: boolean;
-}>`
-  opacity: ${({isActive}) => (isActive ? 1 : 0.4)};
-`;
+  children?: React.ReactNode;
+}> = ({isActive, children}) => (
+  <View style={{opacity: isActive ? 1 : 0.4}}>{children}</View>
+);
 
-const CopyToClipboardContainer = styled.View`
-  justify-content: center;
-  height: 20px;
-`;
+const CopyToClipboardContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.copyToClipboardContainer}>{children}</View>;
 
-const HeaderContainer = styled.View`
-  margin: 18px 0 24px;
-`;
+const HeaderContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.headerContainer}>{children}</View>;
 
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const TransactionSectionHeaderContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const SkeletonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.skeletonContainer}>{children}</View>;
 
-const LockedBalanceContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding: ${ScreenGutter};
-  justify-content: center;
-  align-items: center;
-  height: 75px;
-`;
+const LockedBalanceContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => (
+  <TouchableOpacity style={[styles.lockedBalanceContainer, style]} {...props} />
+);
 
-const Description = styled(BaseText)`
-  overflow: hidden;
-  margin-right: 175px;
-  font-size: 16px;
-`;
+const Description: React.FC<React.ComponentProps<typeof BaseText>> = props => (
+  <BaseText {...props} style={[styles.description, props.style]} />
+);
 
-const TailContainer = styled.View`
-  margin-left: auto;
-`;
+const TailContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.tailContainer}>{children}</View>
+);
 
-const Value = styled(BaseText)`
-  text-align: right;
-  font-weight: 700;
-  font-size: 16px;
-`;
+const Value: React.FC<React.ComponentProps<typeof BaseText>> = props => (
+  <BaseText {...props} style={[styles.value, props.style]} />
+);
 
-const BalanceContainer = styled.View`
-  padding: 0 15px 22px;
-  flex-direction: column;
-`;
+const BalanceContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.balanceContainer}>{children}</View>;
 
-const AssetsDataContainer = styled(Row)`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const AssetsDataContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.assetsDataContainer}>{children}</View>;
 
-const HeaderListContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const HeaderListContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.headerListContainer}>{children}</View>;
 
-const AddCustomTokenContainer = styled(TouchableOpacity)`
-  margin: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+const AddCustomTokenContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => (
+  <TouchableOpacity
+    style={[styles.addCustomTokenContainer, style]}
+    {...props}
+  />
+);
 
-const CenteredText = styled(BaseText)`
-  text-align: center;
-  font-size: 12px;
-  line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: 400;
-  margin-left: 4px;
-`;
+const CenteredText: React.FC<React.ComponentProps<typeof BaseText>> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[
+        styles.centeredText,
+        {color: theme.dark ? White : SlateDark},
+        props.style,
+      ]}
+    />
+  );
+};
 
 const AccountMetadataRow = styled.View`
   align-items: center;
@@ -1800,7 +1899,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
 
   return (
-    <AccountDetailsContainer>
+    <SafeAreaView style={styles.accountDetailsContainer}>
       <SectionList
         extraData={activeTab}
         refreshControl={
@@ -1918,7 +2017,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           context={'accountdetails'}
         />
       ) : null}
-    </AccountDetailsContainer>
+    </SafeAreaView>
   );
 };
 

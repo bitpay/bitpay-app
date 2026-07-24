@@ -2,7 +2,7 @@ import Transport from '@ledgerhq/hw-transport';
 import TransportHID from '@ledgerhq/react-native-hid';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useAppDispatch, useMount} from '../../../../utils/hooks';
@@ -27,13 +27,11 @@ interface PairHardwareWalletModalProps {
   currencyLabel: string;
 }
 
-const Bold = styled.Text`
-  font-weight: 600;
-`;
-
-const IconWrapper = styled.View`
-  padding: 28px;
-`;
+const styles = StyleSheet.create({
+  iconWrapper: {
+    padding: 28,
+  },
+});
 
 export const ConfirmLedgerStart: React.FC<
   PairHardwareWalletModalProps
@@ -182,9 +180,9 @@ export const ConfirmLedgerStart: React.FC<
       ) : (
         <Wrapper>
           <Header>
-            <IconWrapper>
+            <View style={styles.iconWrapper}>
               <LedgerLogoIconSvg height={60} width={60} />
-            </IconWrapper>
+            </View>
 
             <H3>Approve on your Ledger</H3>
           </Header>

@@ -3,7 +3,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import ShopHome, {ShopHomeParamList} from './ShopHome';
 import {NavigatorScreenParams} from '@react-navigation/native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 
 export type ShopStackParamList = {
   Home: NavigatorScreenParams<ShopHomeParamList>;

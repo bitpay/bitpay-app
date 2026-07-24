@@ -1,5 +1,4 @@
 import React, {useEffect, useMemo, useState, useCallback, memo} from 'react';
-import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../button/Button';
 import {H6, H3, BaseText, Paragraph, Link, H7} from '../../styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
@@ -18,7 +17,7 @@ import {
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
-import {StyleSheet, View} from 'react-native';
+import {ScrollView as RNScrollView, StyleSheet, View} from 'react-native';
 import {dismissWalletConnectStartModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../../navigation/wallet/components/ErrorMessages';
@@ -106,94 +105,183 @@ export type WalletConnectStartParamList = {
   }[];
 };
 
-const ScrollView = styled.ScrollView``;
-
-export const UriContainerTouchable = styled(TouchableOpacity)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-export const UriContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? 'transparent' : '#E9ECF9')};
-  border-radius: 50px;
-  padding: 8px 13px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  margin-right: 6px;
-`;
-
-const ValidationContainer = styled.View<{bgColor: string}>`
-  background-color: ${({bgColor}) => bgColor};
-  padding: 8px 13px;
-  border-radius: 50px;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-`;
-
-const ValidationText = styled(BaseText)<{textColor: string}>`
-  color: ${({textColor}) => textColor};
-  font-size: 12px;
-`;
-
-const TitleContainer = styled.View`
-  padding-bottom: 20px;
-`;
-
-const DescriptionContainer = styled.View`
-  margin-bottom: 16px;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  padding: 16px;
-  border-radius: 12px;
-  gap: 10px;
-`;
-
-const DescriptionItemContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const DescriptionItem = styled(Paragraph)`
-  padding-left: 9px;
-  padding-right: 9px;
-  padding-top: 2px;
-  color: ${props => props.theme.colors.text};
-`;
-
-const IconContainer = styled.View`
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-`;
-
-const AccountSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  display: flex;
-  padding: 0px;
-  gap: 8px;
-  width: 100%;
-`;
-
-const AccountSettingsArrowContainer = styled.View`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-  gap: 8px;
-`;
-
 const styles = StyleSheet.create({
   icon: {
     height: 80,
     width: 80,
     borderRadius: 10,
   },
+  uriContainerTouchable: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uriContainer: {
+    borderRadius: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 13,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginRight: 6,
+  },
+  validationContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 13,
+    borderRadius: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  validationText: {
+    fontSize: 12,
+  },
+  titleContainer: {
+    paddingBottom: 20,
+  },
+  descriptionContainer: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  descriptionItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  descriptionItem: {
+    paddingLeft: 9,
+    paddingRight: 9,
+    paddingTop: 2,
+  },
+  iconContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  accountSettingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    display: 'flex',
+    padding: 0,
+    gap: 8,
+    width: '100%',
+  },
+  accountSettingsArrowContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
 });
+
+export const UriContainerTouchable: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[styles.uriContainerTouchable, style]}
+    {...rest}
+  />
+);
+
+export const UriContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.uriContainer,
+        {backgroundColor: theme.dark ? 'transparent' : '#E9ECF9'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const ValidationContainer: React.FC<
+  {bgColor: string} & React.ComponentProps<typeof View>
+> = ({bgColor, style, ...rest}) => (
+  <View
+    style={[styles.validationContainer, {backgroundColor: bgColor}, style]}
+    {...rest}
+  />
+);
+
+const ValidationText: React.FC<
+  {textColor: string} & React.ComponentProps<typeof BaseText>
+> = ({textColor, style, ...rest}) => (
+  <BaseText
+    style={[styles.validationText, {color: textColor}, style]}
+    {...rest}
+  />
+);
+
+const TitleContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.titleContainer, style]} {...rest} />;
+
+const DescriptionContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.descriptionContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const DescriptionItemContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.descriptionItemContainer, style]} {...rest} />
+);
+
+const DescriptionItem: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[styles.descriptionItem, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
+
+const IconContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.iconContainer, style]} {...rest} />;
+
+const AccountSettingsContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[styles.accountSettingsContainer, style]}
+    {...rest}
+  />
+);
+
+const AccountSettingsArrowContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.accountSettingsArrowContainer, style]} {...rest} />
+);
 
 const staticStyles = {
   iconContainer: {marginTop: 36},
@@ -808,7 +896,7 @@ export const WalletConnectStartModal = memo(() => {
       isVisible={showWalletConnectStartModal}
       onBackdropPress={onBackdropPress}>
       <SheetContainer paddingHorizontal={0} style={staticStyles.sheetContainer}>
-        <ScrollView>
+        <RNScrollView>
           <IconContainer style={staticStyles.iconContainer}>
             {proposalData.peerImg && !imageError ? (
               <FastImage
@@ -1003,7 +1091,7 @@ export const WalletConnectStartModal = memo(() => {
               isVisible={!!customErrorMessageData}
             />
           ) : null}
-        </ScrollView>
+        </RNScrollView>
       </SheetContainer>
     </SheetModal>
   );

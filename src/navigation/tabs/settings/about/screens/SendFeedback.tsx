@@ -1,5 +1,6 @@
 import React, {useMemo, useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {
   ScreenGutter,
   Setting,
@@ -37,66 +38,113 @@ export interface SendFeedbackParamList {
   rate: FeedbackRateType;
 }
 
-const SendFeedbackContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  sendFeedbackEmoji: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    marginBottom: -25,
+  },
+  sendFeedbackTitle: {
+    marginBottom: 10,
+  },
+  sendFeedbackParagraph: {
+    marginBottom: 30,
+  },
+  emojisContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 25,
+    paddingHorizontal: 16,
+    gap: 32,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 9,
+    elevation: 2,
+    borderRadius: 12,
+  },
+  emojiActionContainer: {
+    width: '100%',
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  emojiAction: {
+    width: 44,
+    height: 44,
+  },
+  listItem: {
+    marginBottom: 20,
+    borderRadius: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 20,
+  },
+  leftIconContainer: {
+    marginRight: 10,
+  },
+});
 
-const ScrollContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const SendFeedbackTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof H4>) => {
+  const theme = useTheme();
+  return (
+    <H4
+      style={[
+        styles.sendFeedbackTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SendFeedbackEmoji = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-self: flex-end;
-  margin-bottom: -25px;
-`;
+const SendFeedbackParagraph = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.sendFeedbackParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SendFeedbackTitle = styled(H4)`
-  margin-bottom: 10px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const EmojiAction = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity style={[styles.emojiAction, style]} {...rest} />
+);
 
-const SendFeedbackParagraph = styled(Paragraph)`
-  margin-bottom: 30px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const EmojisContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 25px 16px 25px 16px;
-  gap: 32px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  box-shadow: 0px 1px 9px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-`;
-
-const EmojiActionContainer = styled.View`
-  width: 100%;
-  padding: 0 20px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-`;
-
-const EmojiAction = styled(TouchableOpacity)`
-  width: 44px;
-  height: 44px;
-`;
-
-const ListItem = styled(Setting)`
-  margin-bottom: 20px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 12px;
-  padding: 5px 20px;
-`;
-
-const LeftIconContainer = styled.View`
-  margin-right: 10px;
-`;
+const ListItem = ({style, ...rest}: React.ComponentProps<typeof Setting>) => {
+  const theme = useTheme();
+  return (
+    <Setting
+      style={[
+        styles.listItem,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const SendFeedback = ({
   route,
@@ -194,15 +242,15 @@ const SendFeedback = ({
   };
 
   return (
-    <SendFeedbackContainer>
-      <ScrollContainer>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollContainer}>
         {showEmojis ? (
           <SendFeedbackParagraph>
             {t('How satisfied are you with using BitPay?')}
           </SendFeedbackParagraph>
         ) : (
           <>
-            <SendFeedbackEmoji>
+            <View style={styles.sendFeedbackEmoji}>
               {rateApp && rateApp === 'love' ? (
                 <HearFace width={36} height={36} />
               ) : null}
@@ -212,7 +260,7 @@ const SendFeedback = ({
               {rateApp && rateApp === 'disappointed' ? (
                 <Speechless width={36} height={36} />
               ) : null}
-            </SendFeedbackEmoji>
+            </View>
             <SendFeedbackTitle>
               {rateApp && rateApp === 'love' ? t('Thanks!') : null}
               {rateApp && rateApp === 'ok' ? t('How can we improve?') : null}
@@ -251,7 +299,7 @@ const SendFeedback = ({
                   key={item.key}
                   onPress={item.onPress}
                   style={theme.dark ? null : BoxShadow}>
-                  <LeftIconContainer>{item.leftIcon}</LeftIconContainer>
+                  <View style={styles.leftIconContainer}>{item.leftIcon}</View>
 
                   <SettingTitle>{item.description}</SettingTitle>
                   {item.rightIcon}
@@ -259,8 +307,12 @@ const SendFeedback = ({
               ))
           : null}
         {showEmojis ? (
-          <EmojisContainer>
-            <EmojiActionContainer>
+          <View
+            style={[
+              styles.emojisContainer,
+              {backgroundColor: theme.dark ? LightBlack : White},
+            ]}>
+            <View style={styles.emojiActionContainer}>
               <EmojiAction onPress={() => chooseRateApp('disappointed')}>
                 <Speechless width={44} height={44} />
               </EmojiAction>
@@ -271,11 +323,11 @@ const SendFeedback = ({
               <EmojiAction onPress={() => chooseRateApp('love')}>
                 <HearFace width={44} height={44} />
               </EmojiAction>
-            </EmojiActionContainer>
-          </EmojisContainer>
+            </View>
+          </View>
         ) : null}
-      </ScrollContainer>
-    </SendFeedbackContainer>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

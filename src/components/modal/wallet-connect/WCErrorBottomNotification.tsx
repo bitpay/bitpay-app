@@ -1,12 +1,11 @@
 import React, {memo} from 'react';
 import {HEIGHT} from '../../styled/Containers';
 import {H4, fontFamily} from '../../styled/Text';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import SheetModal from '../base/sheet/SheetModal';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {Platform} from 'react-native';
 import {LightBlack, White} from '../../../styles/colors';
-import {css} from 'styled-components/native';
 import {RootState} from '../../../store';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
@@ -52,37 +51,32 @@ interface Props {
   onBackdropDismiss?: () => void;
 }
 
-const BottomNotificationContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  padding: 25px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  max-height: ${HEIGHT - 100}px;
-`;
-
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-right: 25px;
-`;
-
-const ImageContainer = styled.View`
-  margin-right: 10px;
-`;
-
-const MessageContainer = styled.View`
-  margin: 15px 0 20px 0;
-`;
-
-const CtaContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  ${({platform}: {platform: string}) =>
-    platform === 'ios' &&
-    css`
-      margin-bottom: 10px;
-    `}
-`;
+const styles = StyleSheet.create({
+  bottomNotificationContainer: {
+    padding: 25,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    maxHeight: HEIGHT - 100,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 25,
+  },
+  imageContainer: {
+    marginRight: 10,
+  },
+  messageContainer: {
+    marginTop: 15,
+    marginRight: 0,
+    marginBottom: 20,
+    marginLeft: 0,
+  },
+  ctaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+});
 
 const WCErrorBottomNotification = ({
   isVisible,
@@ -110,13 +104,19 @@ const WCErrorBottomNotification = ({
           }
         }
       }}>
-      <BottomNotificationContainer>
-        <Row>
-          <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
+      <View
+        style={[
+          styles.bottomNotificationContainer,
+          {backgroundColor: theme.dark ? LightBlack : White},
+        ]}>
+        <View style={styles.row}>
+          <View style={styles.imageContainer}>
+            {notificationType[type || 'info']}
+          </View>
           <H4>{title}</H4>
-        </Row>
+        </View>
         {message ? (
-          <MessageContainer>
+          <View style={styles.messageContainer}>
             <Markdown
               style={{
                 body: {
@@ -128,10 +128,14 @@ const WCErrorBottomNotification = ({
               }}>
               {message}
             </Markdown>
-          </MessageContainer>
+          </View>
         ) : null}
         <BottomNotificationHr />
-        <CtaContainer platform={Platform.OS}>
+        <View
+          style={[
+            styles.ctaContainer,
+            Platform.OS === 'ios' ? {marginBottom: 10} : null,
+          ]}>
           {actions?.map(({primary, action, text}, index) => {
             return (
               <BottomNotificationCta
@@ -148,8 +152,8 @@ const WCErrorBottomNotification = ({
               </BottomNotificationCta>
             );
           })}
-        </CtaContainer>
-      </BottomNotificationContainer>
+        </View>
+      </View>
     </SheetModal>
   );
 };

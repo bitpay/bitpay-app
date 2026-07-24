@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {View, ViewProps, StyleSheet} from 'react-native';
 import Spinner from '../../../components/spinner/Spinner';
 import {
   TWO_FACTOR_EMAIL_POLL_INTERVAL,
@@ -27,10 +27,16 @@ type EmailAuthenticationScreenProps = NativeStackScreenProps<
   'EmailAuthentication'
 >;
 
-const SpinnerWrapper = styled.View`
-  align-items: center;
-  margin-bottom: 32px;
-`;
+const styles = StyleSheet.create({
+  spinnerWrapper: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+});
+
+const SpinnerWrapper = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.spinnerWrapper, style]} {...rest} />
+);
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,

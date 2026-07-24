@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import styled from 'styled-components/native';
 import {ethers} from 'ethers';
 import {
   useAppDispatch,
@@ -15,7 +14,16 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
-import {Image, ScrollView} from 'react-native';
+import {
+  Image,
+  ScrollView,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+  ViewProps,
+} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
@@ -69,24 +77,50 @@ import {useOngoingProcess} from '../../../../contexts';
 
 const CircleCheckIcon = require('../../../../../assets/img/circle-check.png');
 
-const SwapCryptoApproveErc20Container = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  viewContainer: {
+    padding: 16,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dataLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});
 
-const ViewContainer = styled.View`
-  padding: 16px;
-`;
+const SwapCryptoApproveErc20Container: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.container, style]} {...rest} />;
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-`;
+const ViewContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.viewContainer, style]} {...rest} />
+);
 
-const DataLabel = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 14px;
-  font-weight: 500;
-`;
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
+
+const DataLabel = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[styles.dataLabel, {color: theme.dark ? White : Black}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+DataLabel.displayName = 'DataLabel';
 
 interface SpenderDataWhitelist {
   address: string;
