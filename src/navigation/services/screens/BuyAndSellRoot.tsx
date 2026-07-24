@@ -1098,8 +1098,7 @@ const BuyAndSellRoot = ({
     }
 
     // TODO: add the ability to remove coins or chains from buyCryptoConfig
-    const coinsToRemove =
-      !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
+    const coinsToRemove: string[] = [];
 
     if (coinsToRemove.length > 0) {
       coinsToRemove.forEach((coin: string) => {
@@ -1719,11 +1718,7 @@ const BuyAndSellRoot = ({
         });
 
         if (allSupportedCoins.length > 0) {
-          const coinsToRemove =
-            !locationData || locationData.countryShortCode === 'US'
-              ? ['xrp']
-              : [];
-          coinsToRemove.push('busd');
+          const coinsToRemove: string[] = ['busd'];
 
           if (coinsToRemove.length > 0) {
             logger.debug(

@@ -1698,11 +1698,7 @@ const SwapCryptoRoot: React.FC = () => {
           }
         });
         if (allSupportedCoins.length > 0) {
-          const coinsToRemove =
-            !locationData || locationData.countryShortCode === 'US'
-              ? ['xrp']
-              : [];
-          coinsToRemove.push('busd');
+          const coinsToRemove: string[] = ['busd'];
 
           if (coinsToRemove.length > 0) {
             logger.debug(
