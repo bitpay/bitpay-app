@@ -149,8 +149,7 @@ const ThorswapDetails: React.FC = () => {
 
     try {
       const _raw = await selectedWallet.thorswapGetSwapTx(reqData);
-      const swapTxData: ThorswapGetSwapTxData =
-        _raw?.body?.data ?? _raw?.body ?? _raw;
+      const swapTxData: ThorswapGetSwapTxData = _raw?.body ?? _raw;
       let shouldUpdate = false;
       if (swapTxData?.result) {
         if (

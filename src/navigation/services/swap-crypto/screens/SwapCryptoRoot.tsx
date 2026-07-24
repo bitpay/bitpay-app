@@ -2046,7 +2046,7 @@ const SwapCryptoRoot: React.FC = () => {
             exchangeTxId: data.result.id,
             useV2: true,
           });
-          const transactionData = _txRaw?.body?.data ?? _txRaw?.body ?? _txRaw;
+          const transactionData = _txRaw?.body ?? _txRaw;
           if (transactionData.result[0]) {
             if (Number(transactionData.result[0].changellyFee) > 0) {
               changellyFee = Number(transactionData.result[0].changellyFee);

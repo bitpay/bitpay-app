@@ -112,12 +112,16 @@ const ChangellyDetails: React.FC = () => {
     }
 
     try {
-      const _raw = await selectedWallet.changellyGetStatus({
+      const reqData = {
         id: generateMessageId(),
         exchangeTxId: swapTx.exchangeTxId,
         useV2: true,
-      });
-      const data = _raw?.body?.data ?? _raw?.body ?? _raw;
+      };
+      logger.debug(
+        'Making a Changelly request with body: ' + JSON.stringify(reqData),
+      );
+      const _raw = await selectedWallet.changellyGetStatus(reqData);
+      const data = _raw?.body ?? _raw;
 
       if (data.error) {
         logger.error('Changelly getStatus Error: ' + data.error.message);

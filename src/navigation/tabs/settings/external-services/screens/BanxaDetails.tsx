@@ -131,7 +131,7 @@ const BanxaDetails: React.FC = () => {
     try {
       let data: BanxaOrderDetailsData | undefined;
       const _data = await selectedWallet.banxaGetOrder(requestData);
-      data = _data?.body?.data ?? _data?.body ?? _data;
+      data = _data?.body ?? _data;
 
       if (!data?.data?.order) {
         logger.error(

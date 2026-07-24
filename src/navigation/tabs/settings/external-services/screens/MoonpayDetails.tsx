@@ -218,7 +218,7 @@ const MoonpayDetails: React.FC = () => {
         }
 
         const _data = await selectedWallet.moonpayGetTransactionDetails(body);
-        let data = _data?.body?.data ?? _data?.body ?? _data;
+        let data = _data?.body ?? _data;
         if (Array.isArray(data)) {
           data = data[0];
         }

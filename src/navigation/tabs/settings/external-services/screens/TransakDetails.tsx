@@ -187,7 +187,7 @@ const TransakDetails: React.FC = () => {
       const _orderData = await selectedWallet.transakGetOrderDetails(
         requestData,
       );
-      const data = _orderData?.body?.data ?? _orderData?.body ?? _orderData;
+      const data = _orderData?.body ?? _orderData;
 
       if (!data?.data) {
         logger.error('Transak getOrderDetails Error: No data');

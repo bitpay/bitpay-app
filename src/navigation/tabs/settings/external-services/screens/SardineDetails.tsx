@@ -128,7 +128,7 @@ const SardineDetails: React.FC = () => {
       const _rawData = await selectedWallet.sardineGetOrdersDetails(
         requestData,
       );
-      let rawData = _rawData?.body?.data ?? _rawData?.body ?? _rawData;
+      let rawData = _rawData?.body ?? _rawData;
       const data = Array.isArray(rawData) ? rawData[0] : rawData;
 
       if (!data) {
