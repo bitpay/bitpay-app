@@ -1,3 +1,4 @@
+import isEqual from 'lodash.isequal';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {FiatRateCacheRequest} from '../../core/fiatRatesShared';
 import type {FiatRateSeriesCache} from '../../../store/rate/rate.models';
@@ -11,7 +12,10 @@ export type RuntimeFiatRateSeriesCacheState = {
   cache: FiatRateSeriesCache;
   loading: boolean;
   error?: Error;
-  reload: (opts?: {force?: boolean}) => Promise<FiatRateSeriesCache>;
+  reload: (opts?: {
+    force?: boolean;
+    silent?: boolean;
+  }) => Promise<FiatRateSeriesCache>;
 };
 
 export function useRuntimeFiatRateSeriesCache(args: {
@@ -21,6 +25,7 @@ export function useRuntimeFiatRateSeriesCache(args: {
   enabled?: boolean;
   refreshToken?: string | number;
   clearOnRequestChange?: boolean;
+  forceOnInitialLoad?: boolean;
 }): RuntimeFiatRateSeriesCacheState {
   const enabled = args.enabled !== false;
   const rawRequestsRef = useRef(args.requests);
@@ -61,6 +66,7 @@ export function useRuntimeFiatRateSeriesCache(args: {
     [args.maxAgeMs, args.quoteCurrency, normalizedRequestsKey],
   );
   const emptyCacheRef = useRef<FiatRateSeriesCache>({});
+  const forceOnNextLoadRef = useRef(args.forceOnInitialLoad === true);
   const [cache, setCache] = useState<FiatRateSeriesCache>(
     emptyCacheRef.current,
   );
@@ -69,7 +75,10 @@ export function useRuntimeFiatRateSeriesCache(args: {
   const activeRequestIdRef = useRef(0);
 
   const runLoad = useCallback(
-    async (opts?: {force?: boolean}): Promise<FiatRateSeriesCache> => {
+    async (opts?: {
+      force?: boolean;
+      silent?: boolean;
+    }): Promise<FiatRateSeriesCache> => {
       if (!enabled || !requests.length || !args.quoteCurrency) {
         setCache(prev =>
           prev === emptyCacheRef.current ? prev : emptyCacheRef.current,
@@ -81,7 +90,9 @@ export function useRuntimeFiatRateSeriesCache(args: {
 
       const requestId = activeRequestIdRef.current + 1;
       activeRequestIdRef.current = requestId;
-      setLoading(true);
+      if (!opts?.silent) {
+        setLoading(true);
+      }
       setError(undefined);
 
       try {
@@ -93,7 +104,9 @@ export function useRuntimeFiatRateSeriesCache(args: {
         });
 
         if (activeRequestIdRef.current === requestId) {
-          setCache(nextCache);
+          setCache(previousCache =>
+            isEqual(previousCache, nextCache) ? previousCache : nextCache,
+          );
           setLoading(false);
         }
 
@@ -128,7 +141,9 @@ export function useRuntimeFiatRateSeriesCache(args: {
       );
     }
 
-    runLoad().catch(() => undefined);
+    const force = forceOnNextLoadRef.current;
+    forceOnNextLoadRef.current = false;
+    runLoad(force ? {force: true} : undefined).catch(() => undefined);
   }, [
     args.clearOnRequestChange,
     args.quoteCurrency,

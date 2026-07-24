@@ -145,9 +145,10 @@ const CoinbaseDashboard = () => {
   );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
 
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);

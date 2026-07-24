@@ -138,11 +138,10 @@ const styles = StyleSheet.create({
   },
 });
 
-const ExportContainer: React.FC<
-  React.ComponentProps<typeof SafeAreaView>
-> = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.exportContainer, style]} {...rest} />
-);
+const ExportContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.exportContainer, style]} {...rest} />;
 
 const ScrollView: React.FC<
   React.ComponentProps<typeof KeyboardAwareScrollView>
@@ -177,18 +176,18 @@ const PasswordActionContainer: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <View style={[styles.passwordActionContainer, style]} {...rest} />;
 
-const AdvancedOptionsText: React.FC<
-  React.ComponentProps<typeof Paragraph>
-> = ({style, ...rest}) => {
+const AdvancedOptionsText: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
   const theme = useTheme();
   return <Paragraph style={[{color: theme.colors.text}, style]} {...rest} />;
 };
 
-const RowContainer: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => (
-  <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />
-);
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
 
 const CtaContainer: React.FC<React.ComponentProps<typeof View>> = ({
   style,
@@ -227,11 +226,10 @@ const ModalWrapper: React.FC<React.ComponentProps<typeof View>> = ({
   );
 };
 
-const ModalContainer: React.FC<
-  React.ComponentProps<typeof SafeAreaView>
-> = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.modalContainer, style]} {...rest} />
-);
+const ModalContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.modalContainer, style]} {...rest} />;
 
 const ModalHeader: React.FC<React.ComponentProps<typeof View>> = ({
   style,
@@ -245,11 +243,7 @@ const ModalTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
   const theme = useTheme();
   return (
     <BaseText
-      style={[
-        styles.modalTitle,
-        {color: theme.dark ? White : Black},
-        style,
-      ]}
+      style={[styles.modalTitle, {color: theme.dark ? White : Black}, style]}
       {...rest}
     />
   );
@@ -270,9 +264,10 @@ const SuccessTitle: React.FC<React.ComponentProps<typeof H3>> = ({
   ...rest
 }) => <H3 style={[styles.successTitle, style]} {...rest} />;
 
-const SuccessDescription: React.FC<
-  React.ComponentProps<typeof Paragraph>
-> = ({style, ...rest}) => {
+const SuccessDescription: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => {
   const theme = useTheme();
   return (
     <Paragraph
@@ -491,7 +486,6 @@ const ExportTSSWallet = () => {
       name: WalletScreens.WALLET_DETAILS,
       params: {
         walletId: key.wallets[0].id,
-        key,
       },
     };
 

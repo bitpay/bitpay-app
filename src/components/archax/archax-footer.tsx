@@ -40,4 +40,4 @@ const ArchaxFooter: React.FC<ArchaxFooterProps> = ({
   );
 };
 
-export default ArchaxFooter;
+export default React.memo(ArchaxFooter);

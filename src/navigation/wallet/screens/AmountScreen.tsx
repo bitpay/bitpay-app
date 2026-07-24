@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {SafeAreaView, StyleSheet} from 'react-native';
 import Amount from '../../../components/amount/Amount';
@@ -15,7 +15,6 @@ import OptionsSheet, {
 } from '../../../navigation/wallet/components/OptionsSheet';
 import WalletIcons from '../../../navigation/wallet/components/WalletIcons';
 import Settings from '../../../components/settings/Settings';
-import {sleep} from '../../../utils/helper-methods';
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -114,23 +113,26 @@ const AmountScreen: React.FC<
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
-  const getHeaderRight = () => (
-    <HeaderContainer style={{flexDirection: 'row'}}>
-      <Button
-        buttonType="pill"
-        buttonStyle="cancel"
-        onPress={() => onSendMaxPressedRef.current()}
-        style={{marginRight: chain && IsUtxoChain(chain) && wallet ? 10 : 0}}>
-        {t('Send Max')}
-      </Button>
-      {chain && IsUtxoChain(chain) && wallet && sendTo?.address && (
-        <Settings
-          onPress={() => {
-            setShowWalletOptions(true);
-          }}
-        />
-      )}
-    </HeaderContainer>
+  const getHeaderRight = useCallback(
+    () => (
+      <HeaderContainer style={{flexDirection: 'row'}}>
+        <Button
+          buttonType="pill"
+          buttonStyle="cancel"
+          onPress={() => onSendMaxPressedRef.current()}
+          style={{marginRight: chain && IsUtxoChain(chain) && wallet ? 10 : 0}}>
+          {t('Send Max')}
+        </Button>
+        {chain && IsUtxoChain(chain) && wallet && sendTo?.address && (
+          <Settings
+            onPress={() => {
+              setShowWalletOptions(true);
+            }}
+          />
+        )}
+      </HeaderContainer>
+    ),
+    [chain, sendTo?.address, t, wallet],
   );
 
   const assetOptions: Array<Option> =
@@ -142,8 +144,7 @@ const AmountScreen: React.FC<
             description: t(
               "Choose which inputs you'd like to use to send crypto.",
             ),
-            onPress: async () => {
-              await sleep(500);
+            onPress: () => {
               navigation.navigate('SendToOptions', {
                 title: t('Select Inputs'),
                 wallet,
@@ -160,7 +161,7 @@ const AmountScreen: React.FC<
       ...(headerTitle && {headerTitle}),
       headerRight: sendMaxEnabled ? getHeaderRight : undefined,
     });
-  }, [navigation, t, sendMaxEnabled, headerTitle]);
+  }, [getHeaderRight, headerTitle, navigation, sendMaxEnabled]);
 
   return (
     <AmountModalContainerHOC>

@@ -1,4 +1,5 @@
-import React, {ReactElement} from 'react';
+import React, {memo} from 'react';
+import type {ReactElement} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../../contexts';
 import {
@@ -14,7 +15,7 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 
-interface OnboardingSlide {
+export interface OnboardingSlideItem {
   title: string;
   text: string;
   subText?: string;
@@ -22,7 +23,7 @@ interface OnboardingSlide {
 }
 
 interface OnboardingSlideProps {
-  item: OnboardingSlide;
+  item: OnboardingSlideItem;
 }
 
 const styles = StyleSheet.create({
@@ -63,4 +64,4 @@ export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
   );
 };
 
-export default OnboardingSlide;
+export default memo(OnboardingSlide);

@@ -53,9 +53,9 @@ const ZenLedgerImport: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
 
   const _allKeys = Object.values(keys).filter(key => key.backupComplete);
 
