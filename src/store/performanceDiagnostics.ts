@@ -35,7 +35,6 @@ export const completeReduxAction = (
     completedAt: performance.now(),
   };
 
-  // eslint-disable-next-line no-console
   console.log(
     `[PERF-REDUX] action:${actionType} dispatchMs:${round(
       dispatchDurationMs,
@@ -48,7 +47,6 @@ export const logReducerDuration = (actionType: string, durationMs: number) => {
     return;
   }
 
-  // eslint-disable-next-line no-console
   console.log(
     `[PERF-REDUX] reducer action:${actionType} durationMs:${round(durationMs)}`,
   );
@@ -63,7 +61,6 @@ export const logPersistPhase = (
     return;
   }
 
-  // eslint-disable-next-line no-console
   console.log(
     `[PERF-PERSIST] phase:${phase} key:${String(
       key ?? 'root',
@@ -80,7 +77,6 @@ export const logPersistWrite = (durationMs: number, bytes: number) => {
     ? performance.now() - activeActionStartedAt
     : -1;
 
-  // eslint-disable-next-line no-console
   console.log(
     `[PERF-PERSIST] phase:mmkv.set bytes:${bytes} durationMs:${round(
       durationMs,

@@ -14,10 +14,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const StyledAmountModalContainer: React.FC<ViewProps> = ({
-  style,
-  ...rest
-}) => {
+const StyledAmountModalContainer: React.FC<ViewProps> = ({style, ...rest}) => {
   const theme = useTheme();
   return (
     <SafeAreaView
@@ -51,9 +48,7 @@ type BottomAmountModalProps = BottomAmountProps & {
 const AmountModalContainerHOC = gestureHandlerRootHOC(
   (props: React.PropsWithChildren) => {
     return (
-      <StyledAmountModalContainer>
-        {props.children}
-      </StyledAmountModalContainer>
+      <StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>
     );
   },
 );
