@@ -14,7 +14,6 @@ export const logReactProfiler: React.ProfilerOnRenderCallback = (
     return;
   }
 
-  // eslint-disable-next-line no-console
   console.log(
     `[PERF-REACT] id:${id} phase:${phase} actualMs:${roundPerformanceDuration(
       actualDuration,
