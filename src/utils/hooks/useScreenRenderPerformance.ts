@@ -10,7 +10,7 @@ export const useScreenRenderPerformance = (screenName: string) => {
 
   if (__DEV__ && mountStartedAtRef.current === 0) {
     mountStartedAtRef.current = performance.now();
-    // eslint-disable-next-line no-console
+
     console.log(`[PERF-SCREEN] ${screenName} renderStart`);
   }
 
@@ -19,7 +19,6 @@ export const useScreenRenderPerformance = (screenName: string) => {
       return;
     }
 
-    // eslint-disable-next-line no-console
     console.log(
       `[PERF-SCREEN] ${screenName} commit deltaMs:${elapsed(
         mountStartedAtRef.current,
@@ -34,7 +33,7 @@ export const useScreenRenderPerformance = (screenName: string) => {
       }
 
       layoutLoggedRef.current = true;
-      // eslint-disable-next-line no-console
+
       console.log(
         `[PERF-SCREEN] ${screenName} layout deltaMs:${elapsed(
           mountStartedAtRef.current,
@@ -42,7 +41,6 @@ export const useScreenRenderPerformance = (screenName: string) => {
       );
 
       requestAnimationFrame(() => {
-        // eslint-disable-next-line no-console
         console.log(
           `[PERF-SCREEN] ${screenName} firstFrame deltaMs:${elapsed(
             mountStartedAtRef.current,
@@ -50,7 +48,6 @@ export const useScreenRenderPerformance = (screenName: string) => {
         );
 
         requestAnimationFrame(() => {
-          // eslint-disable-next-line no-console
           console.log(
             `[PERF-SCREEN] ${screenName} secondFrame deltaMs:${elapsed(
               mountStartedAtRef.current,

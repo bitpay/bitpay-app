@@ -392,7 +392,7 @@ export default () => {
       return;
     }
     const snapshot = getReduxPerformanceSnapshot();
-    // eslint-disable-next-line no-console
+
     console.log(
       `[PERF-ROOT] render action:${
         snapshot?.actionType ?? 'unknown'
@@ -1071,7 +1071,7 @@ export default () => {
                 }
                 lastTransitionStartTsRef.current = performance.now();
                 const routeName = navigationRef.getCurrentRoute()?.name;
-                // eslint-disable-next-line no-console
+
                 console.log(`[PERF-NAV] ${routeName} transitionStart`);
               },
               transitionEnd: e => {
@@ -1090,7 +1090,7 @@ export default () => {
                     : Math.round((performance.now() - transitionStartTs) * 10) /
                       10;
                 const routeName = navigationRef.getCurrentRoute()?.name;
-                // eslint-disable-next-line no-console
+
                 console.log(
                   `[PERF-NAV] ${routeName} transitionEnd stateDeltaMs:${deltaMs} transitionDeltaMs:${transitionDeltaMs}`,
                 );
