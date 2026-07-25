@@ -340,6 +340,12 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginLeft: 4,
   },
+  accountMetadataRow: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
 });
 
 const BorderBottom = () => {
@@ -452,13 +458,6 @@ const CenteredText: React.FC<React.ComponentProps<typeof BaseText>> = props => {
     />
   );
 };
-
-const AccountMetadataRow = styled.View`
-  align-items: center;
-  align-self: center;
-  flex-direction: row;
-  gap: 8px;
-`;
 
 type AccountAddressBadgeProps = {
   address?: string;
@@ -713,12 +712,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       : legacyLastDayChangeRowData;
   const accountChartPreContent = useMemo(
     () => (
-      <AccountMetadataRow>
+      <View style={styles.accountMetadataRow}>
         <AccountAddressBadge address={accountItem?.receiveAddress} />
         {tssMetadata ? (
           <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'list'} />
         ) : null}
-      </AccountMetadataRow>
+      </View>
     ),
     [accountItem?.receiveAddress, tssMetadata],
   );
