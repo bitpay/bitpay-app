@@ -127,13 +127,13 @@ const AccountSettingsTitle: React.FC<
 const AccountSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {key, selectedAccountAddress, context, isSvmAccount},
+    params: {keyId, selectedAccountAddress, context, isSvmAccount},
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const tssMetadata = _key.wallets.find(wallet => wallet.tssKeyId)?.tssMetadata;
+  const key: Key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
+  const tssMetadata = key.wallets.find(wallet => wallet.tssKeyId)?.tssMetadata;
 
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
@@ -143,8 +143,8 @@ const AccountSettings = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const accountItem = useMemo(() => {
     const updatedKey = {
-      ..._key,
-      wallets: _key.wallets.filter(
+      ...key,
+      wallets: key.wallets.filter(
         wallet => wallet.receiveAddress === selectedAccountAddress,
       ),
     };
@@ -157,21 +157,21 @@ const AccountSettings = () => {
         skipFiatCalculations: true,
       },
     )[0];
-  }, [_key, defaultAltCurrency.isoCode, dispatch, selectedAccountAddress]);
+  }, [key, defaultAltCurrency.isoCode, dispatch, selectedAccountAddress]);
   const {accountName} = accountItem;
   const [hideAccount, setHideAccount] = useState(
     () =>
-      _key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false,
+      key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false,
   );
   const hasVisibleWallet = useMemo(
-    () => _key.wallets.some(w => !w.hideWallet && IsVMChain(w.chain)),
-    [_key],
+    () => key.wallets.some(w => !w.hideWallet && IsVMChain(w.chain)),
+    [key],
   );
   useEffect(() => {
     const newHideAccount =
-      _key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false;
+      key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false;
     setHideAccount(newHideAccount);
-  }, [_key]);
+  }, [accountItem.receiveAddress, key]);
 
   const onPressItem = (isComplete: boolean | undefined, walletId: string) => {
     // Ignore if wallet is not complete
@@ -180,7 +180,7 @@ const AccountSettings = () => {
     }
     haptic('impactLight');
     navigation.navigate('WalletSettings', {
-      key,
+      keyId,
       walletId,
     });
   };
@@ -254,7 +254,7 @@ const AccountSettings = () => {
         />
       ),
     });
-  });
+  }, [context, hideAccount, key, navigation, t]);
   return (
     <SafeAreaView style={styles.accountSettingsContainer}>
       <ScrollView style={styles.scrollView}>
@@ -263,8 +263,11 @@ const AccountSettings = () => {
           onPress={() => {
             haptic('impactLight');
             navigation.navigate('UpdateKeyOrWalletName', {
-              key,
-              accountItem,
+              keyId,
+              account: {
+                accountAddress: accountItem.receiveAddress,
+                accountName: accountItem.accountName,
+              },
               context: 'account',
             });
           }}>

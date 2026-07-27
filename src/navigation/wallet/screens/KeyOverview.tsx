@@ -133,12 +133,16 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceChartLoadingPlaceholder from '../../../components/charts/BalanceChartLoadingPlaceholder';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../components/charts/fiatTimeframes';
+import {useHasCachedBalanceHistoryChartSeries} from '../../../components/charts/balanceHistoryChartSeriesCache';
 import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
+import usePortfolioBalanceChartEligibleWallets from '../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -257,6 +261,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 24,
     marginTop: 4,
+  },
+  hiddenChart: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
   },
   allocationRow: {
     flexDirection: 'row',
@@ -697,6 +705,8 @@ const KeyOverview = () => {
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [contentReady, setContentReady] = useState(false);
+  const [renderedKeyChartIdentity, setRenderedKeyChartIdentity] =
+    useState<string>();
   const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[id]) as Key;
   const hasMultipleKeys = useAppSelector(({WALLET}) => {
     let completedKeyCount = 0;
@@ -861,7 +871,7 @@ const KeyOverview = () => {
                 <CogIconContainer
                   onPress={() => {
                     navigation.navigate('KeySettings', {
-                      key,
+                      keyId: key.id,
                     });
                   }}
                   activeOpacity={ActiveOpacity}>
@@ -922,9 +932,33 @@ const KeyOverview = () => {
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
+  const cacheEligibleKeyWallets = usePortfolioBalanceChartEligibleWallets({
+    wallets: visibleKeyWallets,
+    enabled: showPortfolioValue === true && !hideAllBalances,
+  });
+  const keyChartWalletIds = useMemo(
+    () =>
+      cacheEligibleKeyWallets
+        .map(wallet => wallet.id)
+        .filter(Boolean)
+        .sort(),
+    [cacheEligibleKeyWallets],
+  );
+  const keyChartScopeIdentity = `${keyChartWalletIds.join(
+    ',',
+  )}|${quoteCurrency}|${DEFAULT_BALANCE_CHART_TIMEFRAME}`;
+  const hasCachedKeyChart = useHasCachedBalanceHistoryChartSeries({
+    walletIds: keyChartWalletIds,
+    quoteCurrency,
+    timeframe: DEFAULT_BALANCE_CHART_TIMEFRAME,
+  });
   const renderableKeyWallets = useMemo(
     () => (contentReady ? visibleKeyWallets : []),
     [contentReady, visibleKeyWallets],
+  );
+  const keyBalanceChartWallets = useMemo(
+    () => (contentReady || hasCachedKeyChart ? cacheEligibleKeyWallets : []),
+    [cacheEligibleKeyWallets, contentReady, hasCachedKeyChart],
   );
   const {
     canRenderBalanceChart: canRenderKeyBalanceChart,
@@ -935,11 +969,13 @@ const KeyOverview = () => {
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
-    wallets: renderableKeyWallets,
-    enabled: contentReady && showPortfolioValue === true,
+    wallets: keyBalanceChartWallets,
+    enabled: (contentReady || hasCachedKeyChart) && showPortfolioValue === true,
     hideAllBalances,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
+  const shouldRenderKeyBalanceChart =
+    shouldMountKeyBalanceChart || hasCachedKeyChart;
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
     [visibleKeyWallets],
@@ -949,9 +985,10 @@ const KeyOverview = () => {
     quoteCurrency,
     fallbackBalance: totalBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: shouldMountKeyBalanceChart,
+    enabled: shouldRenderKeyBalanceChart,
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
-    preserveChartDrivenStateWhileNotReady: shouldPreserveStaleKeyBalanceChart,
+    preserveChartDrivenStateWhileNotReady:
+      shouldPreserveStaleKeyBalanceChart || hasCachedKeyChart,
     resetKey: id,
   });
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
@@ -964,6 +1001,22 @@ const KeyOverview = () => {
     showPortfolioValue === true
       ? balanceChartSurface.changeRowData
       : legacyLastDayChangeRowData;
+  const hasRenderedKeyChart =
+    renderedKeyChartIdentity === keyChartScopeIdentity || hasCachedKeyChart;
+  const shouldShowKeyChartPlaceholder =
+    showPortfolioValue === true &&
+    !hideAllBalances &&
+    !hasRenderedKeyChart &&
+    !hasCachedKeyChart &&
+    cacheEligibleKeyWallets.length > 0;
+  const onKeyChartRenderableSeriesChange = useCallback(
+    (hasRenderableSeries: boolean) => {
+      if (hasRenderableSeries) {
+        setRenderedKeyChartIdentity(keyChartScopeIdentity);
+      }
+    },
+    [keyChartScopeIdentity],
+  );
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
     return renderableKeyWallets.map((w: Wallet) => ({
@@ -1243,7 +1296,7 @@ const KeyOverview = () => {
       onPress: () => {
         haptic('impactLight');
         navigation.navigate('CreateEncryptPassword', {
-          key,
+          keyId: key.id,
         });
       },
     });
@@ -1256,7 +1309,7 @@ const KeyOverview = () => {
     onPress: () => {
       haptic('impactLight');
       navigation.navigate('KeySettings', {
-        key,
+        keyId: key.id,
       });
     },
   });
@@ -1466,36 +1519,51 @@ const KeyOverview = () => {
           </TouchableOpacity>
 
           {!hideAllBalances &&
-          (keyHeaderChangeRowData || shouldMountKeyBalanceChart) ? (
+          (keyHeaderChangeRowData ||
+            shouldRenderKeyBalanceChart ||
+            shouldShowKeyChartPlaceholder) ? (
             <FullWidthBalanceChartContainer>
               <BalanceHeaderSupplement
                 changeRowData={keyHeaderChangeRowData}
-                reserveChangeRowSpace={shouldMountKeyBalanceChart}
+                reserveChangeRowSpace={
+                  shouldRenderKeyBalanceChart || shouldShowKeyChartPlaceholder
+                }
               />
-              {shouldMountKeyBalanceChart ? (
-                <BalanceHistoryChart
-                  wallets={chartableVisibleKeyWallets}
-                  quoteCurrency={quoteCurrency}
-                  rates={rates}
-                  timeframeSelectorWidth={timeframeSelectorWidth}
-                  showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
-                  renderZeroBalanceWhenNoSnapshots={
-                    shouldRenderZeroKeyBalanceChart
-                  }
-                  isBalanceChartDataReadyToQuery={
-                    isKeyBalanceChartDataReadyToQuery
-                  }
-                  preserveVisibleSeriesWhileNotReady={
-                    shouldPreserveStaleKeyBalanceChart
-                  }
-                  showChangeRow={false}
-                  onSelectedBalanceChange={
-                    balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                  }
-                  onChangeRowData={
-                    balanceChartSurface.chartCallbacks.onChangeRowData
-                  }
-                />
+              {shouldShowKeyChartPlaceholder ? (
+                <BalanceChartLoadingPlaceholder />
+              ) : null}
+              {shouldRenderKeyBalanceChart ? (
+                <View
+                  style={
+                    shouldShowKeyChartPlaceholder
+                      ? styles.hiddenChart
+                      : undefined
+                  }>
+                  <BalanceHistoryChart
+                    wallets={chartableVisibleKeyWallets}
+                    quoteCurrency={quoteCurrency}
+                    rates={rates}
+                    timeframeSelectorWidth={timeframeSelectorWidth}
+                    showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
+                    renderZeroBalanceWhenNoSnapshots={
+                      shouldRenderZeroKeyBalanceChart
+                    }
+                    isBalanceChartDataReadyToQuery={
+                      isKeyBalanceChartDataReadyToQuery
+                    }
+                    preserveVisibleSeriesWhileNotReady={
+                      shouldPreserveStaleKeyBalanceChart || hasCachedKeyChart
+                    }
+                    showChangeRow={false}
+                    onSelectedBalanceChange={
+                      balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                    }
+                    onChangeRowData={
+                      balanceChartSurface.chartCallbacks.onChangeRowData
+                    }
+                    onRenderableSeriesChange={onKeyChartRenderableSeriesChange}
+                  />
+                </View>
               ) : null}
             </FullWidthBalanceChartContainer>
           ) : null}
@@ -1526,14 +1594,17 @@ const KeyOverview = () => {
     dispatch,
     balanceChartSurface,
     keyHeaderChangeRowData,
+    hasCachedKeyChart,
     hideAllBalances,
     memoizedAccountList,
+    onKeyChartRenderableSeriesChange,
     quoteCurrency,
     rates,
     searchResults,
     searchVal,
     isKeyBalanceChartDataReadyToQuery,
-    shouldMountKeyBalanceChart,
+    shouldRenderKeyBalanceChart,
+    shouldShowKeyChartPlaceholder,
     shouldPreserveStaleKeyBalanceChart,
     shouldRenderZeroKeyBalanceChart,
     shouldShowKeyChartLoader,

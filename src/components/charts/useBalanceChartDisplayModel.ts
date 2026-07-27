@@ -22,15 +22,13 @@ import haptic from '../haptic-feedback/haptic';
 import {buildHydratedSeriesFromBalanceChartViewModel} from '../../utils/portfolio/balanceChartData';
 import type {PnlAnalysisPoint} from '../../portfolio/core/pnl/analysisStreaming';
 import {scheduleAfterInteractionsAndFrames} from '../../utils/scheduleAfterInteractionsAndFrames';
+import {
+  cacheBalanceHistoryChartSeries,
+  useCachedBalanceHistoryChartSeries,
+  type CachedBalanceChartSeriesState,
+} from './balanceHistoryChartSeriesCache';
 
-type VisibleSeriesState = {
-  series: HydratedBalanceChartSeries;
-  timeframe: FiatRateInterval;
-  queryRevisionKey: string;
-  quoteCurrency: string;
-  scopeId: string;
-  seriesSignature: string;
-};
+type VisibleSeriesState = CachedBalanceChartSeriesState;
 
 type VisibleSeriesCandidate = Omit<VisibleSeriesState, 'seriesSignature'>;
 
@@ -165,6 +163,7 @@ const preserveGraphPointsWhenEquivalent = (
 const buildZeroBalanceSeries = (args: {
   asOfMs?: number;
   timeframe: FiatRateInterval;
+  walletIds?: string[];
 }): HydratedBalanceChartSeries => {
   const endMs =
     typeof args.asOfMs === 'number' && Number.isFinite(args.asOfMs)
@@ -193,6 +192,25 @@ const buildZeroBalanceSeries = (args: {
   const pointByTimestamp = new Map<number, PnlAnalysisPoint>(
     analysisPoints.map(point => [point.timestamp, point]),
   );
+  const walletIds = Array.from(new Set(args.walletIds || []));
+  const walletFiatBalanceByWalletId =
+    walletIds.length > 1
+      ? Object.fromEntries(
+          walletIds.map(walletId => [
+            walletId,
+            new Array<number>(pointCount).fill(0),
+          ]),
+        )
+      : undefined;
+  const walletRemainingCostBasisFiatByWalletId =
+    walletIds.length > 1
+      ? Object.fromEntries(
+          walletIds.map(walletId => [
+            walletId,
+            new Array<number>(pointCount).fill(0),
+          ]),
+        )
+      : undefined;
 
   return {
     graphPoints,
@@ -202,6 +220,8 @@ const buildZeroBalanceSeries = (args: {
     maxIndex: 0,
     minPoint: graphPoints[0],
     maxPoint: graphPoints[0],
+    walletFiatBalanceByWalletId,
+    walletRemainingCostBasisFiatByWalletId,
   };
 };
 
@@ -243,12 +263,18 @@ export function useBalanceChartDisplayModel({
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
     initialSelectedTimeframe,
   );
+  const cachedVisibleState = useCachedBalanceHistoryChartSeries({
+    walletIds: sortedWalletIds,
+    quoteCurrency: committedQueryQuoteCurrency,
+    balanceOffset,
+    timeframe: selectedTimeframe,
+  });
   const [visibleState, setVisibleState] = useState<
     VisibleSeriesState | undefined
-  >();
+  >(cachedVisibleState);
   const [selectedPoint, setSelectedPoint] = useState<GraphPoint | undefined>();
   const [loading, setLoading] = useState(
-    hasAnyWallets && !renderZeroBalanceWhenNoSnapshots,
+    hasAnyWallets && !renderZeroBalanceWhenNoSnapshots && !cachedVisibleState,
   );
   const [pendingOverlayVisible, setPendingOverlayVisible] = useState(false);
   const [error, setError] = useState<Error | undefined>();
@@ -259,10 +285,17 @@ export function useBalanceChartDisplayModel({
   const pendingSelectedTimestampRef = useRef<number | undefined>(undefined);
   const shouldPreserveSelectionOnQueryRef = useRef(true);
   const selectedPointRef = useRef<GraphPoint | undefined>(undefined);
-  const visibleStateRef = useRef<VisibleSeriesState | undefined>(undefined);
+  const visibleStateRef = useRef<VisibleSeriesState | undefined>(
+    cachedVisibleState,
+  );
+  const cachedVisibleStateRef = useRef(cachedVisibleState);
+  cachedVisibleStateRef.current = cachedVisibleState;
   const onSelectedBalanceChangeRef = useRef(onSelectedBalanceChange);
   const onSelectionActiveChangeRef = useRef(onSelectionActiveChange);
   const animateNextSeriesCommitRef = useRef(false);
+  const activeScopeIdentityRef = useRef(
+    `${scopeId}|${committedQueryQuoteCurrency}|${selectedTimeframe}`,
+  );
 
   useEffect(() => {
     onSelectedBalanceChangeRef.current = onSelectedBalanceChange;
@@ -281,27 +314,57 @@ export function useBalanceChartDisplayModel({
   }, [visibleState]);
 
   useEffect(() => {
+    if (visibleState) {
+      cacheBalanceHistoryChartSeries({state: visibleState});
+    }
+  }, [visibleState]);
+
+  useEffect(() => {
     setSelectedTimeframe(initialSelectedTimeframe);
   }, [initialSelectedTimeframe]);
 
   useEffect(() => {
-    setVisibleState(prev => {
-      if (
-        !prev ||
-        (prev.scopeId === scopeId &&
-          prev.quoteCurrency === committedQueryQuoteCurrency)
+    const nextScopeIdentity = `${scopeId}|${committedQueryQuoteCurrency}|${selectedTimeframe}`;
+    const scopeIdentityChanged =
+      activeScopeIdentityRef.current !== nextScopeIdentity;
+    activeScopeIdentityRef.current = nextScopeIdentity;
+    let shouldResetSelection = scopeIdentityChanged;
+    if (scopeIdentityChanged) {
+      if (cachedVisibleState) {
+        visibleStateRef.current = cachedVisibleState;
+        setVisibleState(cachedVisibleState);
+      } else if (
+        visibleStateRef.current?.scopeId !== scopeId ||
+        visibleStateRef.current?.quoteCurrency !== committedQueryQuoteCurrency
       ) {
-        return prev;
+        visibleStateRef.current = undefined;
+        setVisibleState(undefined);
       }
-
-      return undefined;
-    });
+    } else if (
+      cachedVisibleState &&
+      (visibleStateRef.current?.scopeId !== scopeId ||
+        visibleStateRef.current?.quoteCurrency !==
+          committedQueryQuoteCurrency ||
+        visibleStateRef.current?.timeframe !== selectedTimeframe)
+    ) {
+      visibleStateRef.current = cachedVisibleState;
+      setVisibleState(cachedVisibleState);
+      shouldResetSelection = true;
+    }
+    if (!shouldResetSelection) {
+      return;
+    }
     pendingSelectedTimestampRef.current = undefined;
     gestureStartedRef.current = false;
     lastHapticPointTsRef.current = undefined;
     setSelectedPoint(undefined);
     onSelectedBalanceChangeRef.current?.(undefined);
-  }, [committedQueryQuoteCurrency, scopeId]);
+  }, [
+    cachedVisibleState,
+    committedQueryQuoteCurrency,
+    scopeId,
+    selectedTimeframe,
+  ]);
 
   const commitVisibleSeries = useCallback(
     (candidate: VisibleSeriesCandidate) => {
@@ -321,7 +384,23 @@ export function useBalanceChartDisplayModel({
           prev.seriesSignature === candidateSignature
         ) {
           animateNextSeriesCommitRef.current = false;
-          return prev;
+          const nextCachedAt =
+            typeof candidate.cachedAt === 'number' &&
+            Number.isFinite(candidate.cachedAt)
+              ? candidate.cachedAt
+              : prev.cachedAt;
+          const nextPersistable =
+            typeof candidate.persistable === 'boolean'
+              ? candidate.persistable
+              : prev.persistable;
+          return nextCachedAt === prev.cachedAt &&
+            nextPersistable === prev.persistable
+            ? prev
+            : {
+                ...prev,
+                cachedAt: nextCachedAt,
+                persistable: nextPersistable,
+              };
         }
 
         const animated =
@@ -332,7 +411,7 @@ export function useBalanceChartDisplayModel({
           ? candidate.series
           : preserveGraphPointsWhenEquivalent(prev?.series, candidate.series);
 
-        return {
+        const nextState = {
           ...candidate,
           series,
           seriesSignature: getBalanceChartSeriesSignature({
@@ -340,6 +419,7 @@ export function useBalanceChartDisplayModel({
             series,
           }),
         };
+        return nextState;
       });
     },
     [],
@@ -394,22 +474,27 @@ export function useBalanceChartDisplayModel({
     }
 
     if (!isBalanceChartDataReadyToQuery) {
-      const visibleOwner = visibleStateRef.current;
-      const canPreserveVisibleSeries =
-        preserveVisibleSeriesWhileNotReady &&
+      const currentCachedVisibleState = cachedVisibleStateRef.current;
+      const visibleOwner = currentCachedVisibleState ?? visibleStateRef.current;
+      const visibleOwnerMatchesScope =
         visibleOwner?.scopeId === scopeId &&
         visibleOwner?.quoteCurrency === committedQueryQuoteCurrency;
       const selectedTimeframeIsVisible =
-        canPreserveVisibleSeries &&
+        visibleOwnerMatchesScope &&
         visibleOwner?.timeframe === selectedTimeframe;
+      const canPreserveVisibleSeries =
+        selectedTimeframeIsVisible ||
+        (preserveVisibleSeriesWhileNotReady && visibleOwnerMatchesScope);
 
       activeRequestIdRef.current += 1;
       pendingSelectedTimestampRef.current = undefined;
       gestureStartedRef.current = false;
       lastHapticPointTsRef.current = undefined;
       setSelectedPoint(undefined);
-      if (!canPreserveVisibleSeries) {
+      if (!canPreserveVisibleSeries && !preserveVisibleSeriesWhileNotReady) {
         setVisibleState(undefined);
+      } else if (currentCachedVisibleState) {
+        setVisibleState(currentCachedVisibleState);
       }
       setLoading(!selectedTimeframeIsVisible);
       setError(undefined);
@@ -422,11 +507,15 @@ export function useBalanceChartDisplayModel({
         series: buildZeroBalanceSeries({
           asOfMs,
           timeframe: selectedTimeframe,
+          walletIds: sortedWalletIds,
         }),
         timeframe: selectedTimeframe,
         queryRevisionKey,
         quoteCurrency: committedQueryQuoteCurrency,
         scopeId,
+        walletIds: sortedWalletIds,
+        balanceOffset,
+        persistable: false,
       });
       setLoading(false);
       setError(undefined);
@@ -454,7 +543,8 @@ export function useBalanceChartDisplayModel({
     setLoading(true);
     setError(undefined);
 
-    const visibleOwner = visibleStateRef.current;
+    const visibleOwner =
+      cachedVisibleStateRef.current ?? visibleStateRef.current;
     const shouldDeferQueryStart =
       !visibleOwner ||
       visibleOwner.scopeId !== scopeId ||
@@ -485,6 +575,10 @@ export function useBalanceChartDisplayModel({
             queryRevisionKey,
             quoteCurrency: chartQueryArgs.quoteCurrency,
             scopeId,
+            walletIds: chartQueryArgs.walletIds,
+            balanceOffset: chartQueryArgs.balanceOffset,
+            cachedAt: Date.now(),
+            persistable: true,
           });
           setLoading(false);
         })
@@ -521,6 +615,7 @@ export function useBalanceChartDisplayModel({
       scheduledQuery?.cancel();
     };
   }, [
+    balanceOffset,
     commitVisibleSeries,
     chartDataRevisionSig,
     committedQueryQuoteCurrency,
@@ -565,14 +660,24 @@ export function useBalanceChartDisplayModel({
     onSelectedBalanceChangeRef.current?.(undefined);
   }, [committedQueryQuoteCurrency, queryRevisionKey, scopeId]);
 
-  const canDisplayVisibleState =
-    isBalanceChartDataReadyToQuery || preserveVisibleSeriesWhileNotReady;
-  const activeVisibleState =
-    canDisplayVisibleState &&
+  const ownedVisibleState =
     visibleState?.scopeId === scopeId &&
     visibleState?.quoteCurrency === committedQueryQuoteCurrency
       ? visibleState
       : undefined;
+  const selectedVisibleState =
+    ownedVisibleState?.timeframe === selectedTimeframe
+      ? ownedVisibleState
+      : cachedVisibleState;
+  const selectedTimeframeIsVisible =
+    selectedVisibleState?.timeframe === selectedTimeframe;
+  const canDisplayVisibleState =
+    isBalanceChartDataReadyToQuery ||
+    preserveVisibleSeriesWhileNotReady ||
+    selectedTimeframeIsVisible;
+  const activeVisibleState = canDisplayVisibleState
+    ? selectedVisibleState ?? ownedVisibleState
+    : undefined;
   const visibleSeries = activeVisibleState?.series;
   const visibleTimeframe = activeVisibleState?.timeframe ?? selectedTimeframe;
   const visibleQuoteCurrency =
@@ -580,7 +685,7 @@ export function useBalanceChartDisplayModel({
   const canInteractWithVisibleSeries =
     isBalanceChartDataReadyToQuery ||
     (!!activeVisibleState &&
-      preserveVisibleSeriesWhileNotReady &&
+      (preserveVisibleSeriesWhileNotReady || selectedTimeframeIsVisible) &&
       activeVisibleState.timeframe === selectedTimeframe);
   const displayedSelectedPoint = canInteractWithVisibleSeries
     ? selectedPoint
@@ -691,7 +796,10 @@ export function useBalanceChartDisplayModel({
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
   const hasRenderableSeries = (visibleSeries?.graphPoints?.length || 0) >= 2;
-  const shouldDelayPendingOverlay = enabled && loading && hasRenderableSeries;
+  const isDisplayingRequestedSeries =
+    hasRenderableSeries && activeVisibleState?.timeframe === selectedTimeframe;
+  const shouldDelayPendingOverlay =
+    enabled && loading && hasRenderableSeries && !isDisplayingRequestedSeries;
 
   useEffect(() => {
     if (!shouldDelayPendingOverlay) {
@@ -788,8 +896,10 @@ export function useBalanceChartDisplayModel({
     visibleTimeframe,
     visibleQuoteCurrency,
     isLoading:
-      loading ||
-      (!isBalanceChartDataReadyToQuery && !canInteractWithVisibleSeries),
+      (loading && !isDisplayingRequestedSeries) ||
+      (!hasRenderableSeries &&
+        !isBalanceChartDataReadyToQuery &&
+        !canInteractWithVisibleSeries),
     pendingOverlayVisible,
     shouldShowLoader,
     error: isBalanceChartDataReadyToQuery ? error : undefined,

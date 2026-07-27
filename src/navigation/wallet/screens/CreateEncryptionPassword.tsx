@@ -13,7 +13,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {WalletActions} from '../../../store/wallet/index';
-import {useLogger, useAppDispatch} from '../../../utils/hooks';
+import {useLogger, useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   dismissBottomNotificationModal,
@@ -100,8 +100,9 @@ const CreateEncryptionPassword = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const {
-    params: {key},
+    params: {keyId},
   } = useRoute<RouteProp<WalletGroupParamList, 'CreateEncryptPassword'>>();
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
 
   const schema = yup.object().shape({
     password: yup.string().required(),
@@ -180,7 +181,7 @@ const CreateEncryptionPassword = () => {
         <HeaderTitle>{t('Create Encryption Password')}</HeaderTitle>
       ),
     });
-  });
+  }, [navigation, t]);
 
   return (
     <SafeAreaView style={styles.encryptPasswordContainer}>

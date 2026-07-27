@@ -1,5 +1,4 @@
 import React, {
-  useEffect,
   useState,
   useLayoutEffect,
   useMemo,
@@ -30,7 +29,6 @@ import {
 } from '../../../../components/styled/Containers';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import {SettingsDetailsParamList} from '../SettingsDetails';
-import {FlashList} from '@shopify/flash-list';
 import {StyleSheet, View} from 'react-native';
 import {useOngoingProcess} from '../../../../contexts';
 import {logManager} from '../../../../managers/LogManager';
@@ -100,7 +98,12 @@ const General: React.FC<Props> = ({navigation}) => {
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
-  const [appLanguageName, setAppLanguageName] = useState('');
+  const appLanguageName = useMemo(
+    () =>
+      LanguageList.find(language => language.isoCode === appLanguage)?.name ??
+      '',
+    [appLanguage],
+  );
   const [pendingShowPortfolioValue, setPendingShowPortfolioValue] = useState<
     boolean | undefined
   >();
@@ -133,14 +136,6 @@ const General: React.FC<Props> = ({navigation}) => {
     },
     [dispatch],
   );
-
-  useEffect(() => {
-    LanguageList.forEach(lng => {
-      if (lng.isoCode === appLanguage) {
-        setAppLanguageName(lng.name);
-      }
-    });
-  }, [appLanguage]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -265,9 +260,9 @@ const General: React.FC<Props> = ({navigation}) => {
     showOngoingProcess,
   ]);
 
-  const renderItem = ({item}: {item: SettingItem}) => {
+  const renderItem = (item: SettingItem) => {
     return (
-      <View>
+      <View key={item.id}>
         <Setting
           activeOpacity={item.type === 'toggle' ? 1 : ActiveOpacity}
           onPress={() => {
@@ -299,16 +294,7 @@ const General: React.FC<Props> = ({navigation}) => {
     );
   };
 
-  return (
-    <SettingsComponent>
-      <FlashList<SettingItem>
-        data={settingsData}
-        renderItem={renderItem}
-        estimatedItemSize={56}
-        keyExtractor={item => item.id}
-      />
-    </SettingsComponent>
-  );
+  return <SettingsComponent>{settingsData.map(renderItem)}</SettingsComponent>;
 };
 
 export default General;

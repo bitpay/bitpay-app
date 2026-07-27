@@ -507,24 +507,60 @@ describe('portfolioWorkletAnalysis', () => {
     expect(requestSyncMock).not.toHaveBeenCalled();
   });
 
+  it('keeps child wallet series when a requested aggregate has one analyzable wallet', async () => {
+    const config = createWorkletConfig();
+    const btcWallet = createStoredWallet();
+    const unresolvedTokenWallet = createStoredTokenWallet();
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
+    const t1 = Date.parse('2024-01-02T00:00:00Z');
+
+    await appendTwoBtcSnapshots(config, btcWallet, t0, t1);
+    installBtcRateMock(t0, t1);
+
+    const chart = await computeWorkletAnalysisChart(config, {
+      cfg: {baseUrl: 'https://bws.bitpay.com/bws/api'},
+      wallets: [btcWallet, unresolvedTokenWallet],
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      nowMs: t1,
+      maxPoints: 2,
+    });
+
+    expect(chart.totalFiatBalance).toEqual([10000, 22000]);
+    expect(chart.walletFiatBalanceByWalletId).toEqual({
+      w1: [10000, 22000],
+    });
+    expect(chart.walletRemainingCostBasisFiatByWalletId).toEqual({
+      w1: [10000, 21000],
+    });
+    expect(chart.walletFiatBalanceByWalletId).not.toHaveProperty('w2');
+    expect(JSON.parse(JSON.stringify(chart))).toEqual(chart);
+  });
+
   it('computes a serializable balance chart view model from chart output', async () => {
     const config = createWorkletConfig();
     const wallet = createStoredWallet();
+    const secondWallet = createStoredWallet();
+    secondWallet.walletId = 'w2';
+    secondWallet.summary.walletId = 'w2';
+    secondWallet.summary.walletName = 'Second BTC Wallet';
+    secondWallet.credentials.walletId = 'w2';
     const t0 = Date.parse('2024-01-01T00:00:00Z');
     const t1 = Date.parse('2024-01-02T00:00:00Z');
 
     await appendTwoBtcSnapshots(config, wallet, t0, t1);
+    await appendTwoBtcSnapshots(config, secondWallet, t0, t1);
 
     installBtcRateMock(t0, t1);
 
     const viewModel = await computeWorkletBalanceChartViewModel(config, {
       cfg: {baseUrl: 'https://bws.bitpay.com/bws/api'},
-      wallets: [wallet],
+      wallets: [wallet, secondWallet],
       quoteCurrency: 'USD',
       timeframe: '1D',
       nowMs: t1,
       maxPoints: 5,
-      walletIds: ['w1'],
+      walletIds: ['w1', 'w2'],
       dataRevisionSig: 'rev-1',
       balanceOffset: 7,
     });
@@ -532,7 +568,7 @@ describe('portfolioWorkletAnalysis', () => {
     expect(viewModel).toMatchObject({
       timeframe: '1D',
       quoteCurrency: 'USD',
-      walletIds: ['w1'],
+      walletIds: ['w1', 'w2'],
       dataRevisionSig: 'rev-1',
       balanceOffset: 7,
       latestTotalFiatBalance: expect.any(Number),
@@ -548,6 +584,16 @@ describe('portfolioWorkletAnalysis', () => {
       ts: expect.any(Number),
       value: expect.any(Number),
     });
+    expect(Object.keys(viewModel.walletFiatBalanceByWalletId || {})).toEqual([
+      'w1',
+      'w2',
+    ]);
+    expect(viewModel.walletFiatBalanceByWalletId?.w1.length).toBe(
+      viewModel.graphPoints.length,
+    );
+    expect(viewModel.walletRemainingCostBasisFiatByWalletId?.w2.length).toBe(
+      viewModel.graphPoints.length,
+    );
     expect(viewModel.analysisPoints[0]).toEqual(
       expect.objectContaining({
         timestamp: expect.any(Number),

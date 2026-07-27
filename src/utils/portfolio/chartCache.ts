@@ -6,7 +6,7 @@ const DEFAULT_BALANCE_CHART_SCOPE_IDENTITY_KEY = 'balance_chart';
 
 export const BALANCE_HISTORY_CHART_SCOPE_IDENTITY_KEY = [
   'balance_history_chart',
-  '2',
+  '3',
   String(FIAT_RATE_SERIES_TARGET_POINTS),
 ].join(':');
 
@@ -21,6 +21,8 @@ export type HydratedBalanceChartSeries = {
   maxIndex: number;
   minPoint: GraphPoint;
   maxPoint: GraphPoint;
+  walletFiatBalanceByWalletId?: Record<string, number[]>;
+  walletRemainingCostBasisFiatByWalletId?: Record<string, number[]>;
 };
 
 const toFiniteNumber = (value: unknown, fallback = 0): number => {
