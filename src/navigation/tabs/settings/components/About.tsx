@@ -11,7 +11,7 @@ import {useNavigation} from '@react-navigation/native';
 import {URL} from '../../../../constants';
 import {APP_VERSION} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {
   openUrlWithInAppBrowser,
   shareApp,
@@ -21,12 +21,49 @@ import {GIT_COMMIT_HASH} from '@env';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {triggerJsCrash, triggerNativeCrash} from '../../../../lib/crash-test';
+import {useTheme} from '../../../../contexts';
+import {BaseText} from '../../../../components/styled/Text';
+import {Action, Air, Midnight, White} from '../../../../styles/colors';
 
 interface LinkSetting {
   key: string;
   title: string;
   link: string;
 }
+
+const styles = StyleSheet.create({
+  infoPill: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderRadius: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  infoPillText: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22.03,
+    textAlign: 'center',
+  },
+});
+
+const InfoPill = ({children}: React.PropsWithChildren) => {
+  const theme = useTheme();
+  const backgroundColor = theme.dark ? Midnight : Air;
+
+  return (
+    <View
+      style={[
+        styles.infoPill,
+        {backgroundColor, borderColor: backgroundColor},
+      ]}>
+      <BaseText
+        style={[styles.infoPillText, {color: theme.dark ? White : Action}]}>
+        {children}
+      </BaseText>
+    </View>
+  );
+};
 
 const About = () => {
   const navigation = useNavigation();
@@ -60,7 +97,7 @@ const About = () => {
       <Setting>
         <SettingTitle>{t('Version')}</SettingTitle>
 
-        <Button buttonType="pill">{APP_VERSION}</Button>
+        <InfoPill>{APP_VERSION}</InfoPill>
       </Setting>
 
       <Hr />
@@ -70,7 +107,7 @@ const About = () => {
           <Setting>
             <SettingTitle>{t('Commit Hash')}</SettingTitle>
 
-            <Button buttonType="pill">{GIT_COMMIT_HASH}</Button>
+            <InfoPill>{GIT_COMMIT_HASH}</InfoPill>
           </Setting>
           <Hr />
         </>
