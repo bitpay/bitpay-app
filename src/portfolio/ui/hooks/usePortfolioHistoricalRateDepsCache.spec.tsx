@@ -117,9 +117,11 @@ jest.mock('../../../utils/portfolio/balanceChartData', () => ({
 jest.mock('./useRuntimeFiatRateSeriesCache', () => jest.fn());
 
 const HookHarness = ({
+  enabled = true,
   refreshToken,
   timeframe,
 }: {
+  enabled?: boolean;
   refreshToken?: string | number;
   timeframe: string;
 }) => {
@@ -133,7 +135,7 @@ const HookHarness = ({
     ],
     quoteCurrency: 'USD',
     timeframes: [timeframe as any],
-    enabled: true,
+    enabled,
     refreshToken,
   });
 
@@ -303,6 +305,33 @@ describe('usePortfolioHistoricalRateDepsCache', () => {
     expect(mockUseRuntimeFiatRateSeriesCache).toHaveBeenLastCalledWith(
       expect.objectContaining({
         refreshToken: 2,
+      }),
+    );
+  });
+
+  it('pauses runtime loads without discarding their retained cache', async () => {
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = TestRenderer.create(<HookHarness timeframe="1D" />);
+    });
+
+    expect(mockUseRuntimeFiatRateSeriesCache).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        quoteCurrency: 'USD',
+        retainCacheWhenDisabled: true,
+      }),
+    );
+
+    await act(async () => {
+      view.update(<HookHarness enabled={false} timeframe="1D" />);
+    });
+
+    expect(mockUseRuntimeFiatRateSeriesCache).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        quoteCurrency: 'USD',
+        retainCacheWhenDisabled: true,
       }),
     );
   });

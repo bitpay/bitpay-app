@@ -4,14 +4,17 @@ import React, {
   useCallback,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {useTranslation} from 'react-i18next';
-import type {LayoutChangeEvent} from 'react-native';
+import type {
+  LayoutChangeEvent,
+  ListRenderItemInfo,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from 'react-native';
 import {Platform, ScrollView, StyleSheet, View} from 'react-native';
-import type {PanGesture} from 'react-native-gesture-handler';
-import Carousel from 'react-native-reanimated-carousel';
-import type {CarouselRenderItem} from 'react-native-reanimated-carousel';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import Button from '../../../components/button/Button';
@@ -33,11 +36,18 @@ import OnboardingSlide, {
 } from '../components/OnboardingSlide';
 import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
-import PaginationDots from '../../../components/pagination-dots/PaginationDots';
-import {useSharedValue} from 'react-native-reanimated';
+import Animated, {
+  Extrapolate,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import type {SharedValue} from 'react-native-reanimated';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
+import {Action, LuckySevens} from '../../../styles/colors';
 
 type OnboardingStartScreenProps = NativeStackScreenProps<
   OnboardingGroupParamList,
@@ -141,6 +151,33 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 18,
   },
+  carousel: {
+    width: WIDTH,
+    height: WIDTH * 1.2,
+  },
+  carouselPage: {
+    width: WIDTH,
+  },
+  pagination: {
+    flexDirection: 'row',
+    height: 30,
+  },
+  paginationDot: {
+    backgroundColor: LuckySevens,
+    borderRadius: 5,
+    height: 10,
+    margin: 10,
+    width: 10,
+  },
+  paginationActiveDot: {
+    backgroundColor: Action,
+    borderRadius: 5,
+    height: 10,
+    left: 10,
+    position: 'absolute',
+    top: 10,
+    width: 10,
+  },
 });
 
 const Row = ({children}: {children: React.ReactNode}) => (
@@ -155,6 +192,65 @@ const LinkText = ({children}: {children: React.ReactNode}) => (
   <Link style={styles.linkText}>{children}</Link>
 );
 
+const PAGINATION_DOT_STEP = 30;
+
+const OnboardingPagination = memo(
+  ({
+    progressValue,
+    length,
+  }: {
+    progressValue: SharedValue<number>;
+    length: number;
+  }) => {
+    const activeDotStyle = useAnimatedStyle(
+      () => ({
+        transform: [
+          {
+            translateX: interpolate(
+              progressValue.value,
+              [0, length - 1],
+              [0, PAGINATION_DOT_STEP * (length - 1)],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+      }),
+      [length, progressValue],
+    );
+
+    return (
+      <View style={styles.pagination}>
+        {Array.from({length}, (_, index) => (
+          <View
+            key={index}
+            testID={`pagination-button-${index}`}
+            accessibilityLabel="Pagination button"
+            style={styles.paginationDot}
+          />
+        ))}
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.paginationActiveDot, activeDotStyle]}
+        />
+      </View>
+    );
+  },
+);
+
+const onboardingSlideKeyExtractor = (
+  _item: OnboardingSlideItem,
+  index: number,
+) => index.toString();
+
+const getOnboardingSlideLayout = (
+  _data: ArrayLike<OnboardingSlideItem> | null | undefined,
+  index: number,
+) => ({
+  length: WIDTH,
+  offset: WIDTH * index,
+  index,
+});
+
 interface OnboardingCarouselProps {
   onboardingSlides: OnboardingSlideItem[];
   progressValue: SharedValue<number>;
@@ -166,29 +262,55 @@ const OnboardingCarousel = memo(function OnboardingCarousel({
   progressValue,
   onSnapToItem,
 }: OnboardingCarouselProps) {
-  const configurePanGesture = useCallback((gesture: PanGesture) => {
-    gesture.activeOffsetX([-10, 10]);
-  }, []);
-  const renderItem = useCallback<CarouselRenderItem<OnboardingSlideItem>>(
-    ({item}) => <OnboardingSlide item={item} />,
+  const currentIndexRef = useRef(0);
+  const renderItem = useCallback(
+    ({item}: ListRenderItemInfo<OnboardingSlideItem>) => (
+      <View style={styles.carouselPage}>
+        <OnboardingSlide item={item} />
+      </View>
+    ),
     [],
+  );
+  const onScroll = useAnimatedScrollHandler(
+    {
+      onScroll: event => {
+        progressValue.value = event.contentOffset.x / WIDTH;
+      },
+    },
+    [progressValue],
+  );
+  const onMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const nextIndex = Math.max(
+        0,
+        Math.min(
+          onboardingSlides.length - 1,
+          Math.round(event.nativeEvent.contentOffset.x / WIDTH),
+        ),
+      );
+      if (nextIndex !== currentIndexRef.current) {
+        currentIndexRef.current = nextIndex;
+        onSnapToItem(nextIndex);
+      }
+    },
+    [onSnapToItem, onboardingSlides.length],
   );
 
   return (
-    <Carousel
-      loop={false}
-      vertical={false}
-      width={WIDTH}
-      height={WIDTH * 1.2}
-      autoPlay={false}
+    <Animated.FlatList
+      style={styles.carousel}
       data={onboardingSlides}
+      horizontal={true}
       pagingEnabled={true}
-      snapEnabled={true}
-      windowSize={2}
-      scrollAnimationDuration={1000}
-      onProgressChange={progressValue}
-      onSnapToItem={onSnapToItem}
-      onConfigurePanGesture={configurePanGesture}
+      showsHorizontalScrollIndicator={false}
+      initialNumToRender={1}
+      maxToRenderPerBatch={1}
+      windowSize={3}
+      scrollEventThrottle={16}
+      onScroll={onScroll}
+      onMomentumScrollEnd={onMomentumScrollEnd}
+      keyExtractor={onboardingSlideKeyExtractor}
+      getItemLayout={getOnboardingSlideLayout}
       renderItem={renderItem}
     />
   );
@@ -351,7 +473,9 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
       edges={Platform.OS === 'ios' ? undefined : []}
       style={styles.onboardingContainer}
       testID="onboarding-start-view">
-      <React.Profiler id="OnboardingStart:carousel" onRender={logReactProfiler}>
+      <PerformanceProfiler
+        id="OnboardingStart:carousel"
+        onRender={logReactProfiler}>
         <ScrollView scrollEnabled={isNarrowHeight}>
           <OnboardingCarousel
             onboardingSlides={onboardingSlides}
@@ -360,32 +484,25 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           />
           <View style={{height: scrollHintHeight}} />
         </ScrollView>
-      </React.Profiler>
+      </PerformanceProfiler>
 
-      <React.Profiler
+      <PerformanceProfiler
         id="OnboardingStart:scroll-hint"
         onRender={logReactProfiler}>
-        <ScrollHintContainer>
+        <ScrollHintContainer pointerEvents="none">
           <ScrollHint height={scrollHintHeight} />
         </ScrollHintContainer>
-      </React.Profiler>
+      </PerformanceProfiler>
 
-      <React.Profiler id="OnboardingStart:cta" onRender={logReactProfiler}>
+      <PerformanceProfiler id="OnboardingStart:cta" onRender={logReactProfiler}>
         <CtaContainerAbsolute testID="cta-container" onLayout={onCtaLayout}>
           <Row>
             <Column>
               <Row>
-                {[...Array(onboardingSlides.length)].map((_, index) => {
-                  return (
-                    <PaginationDots
-                      animValue={progressValue}
-                      index={index}
-                      key={index}
-                      isRotate={false}
-                      length={onboardingSlides.length}
-                    />
-                  );
-                })}
+                <OnboardingPagination
+                  progressValue={progressValue}
+                  length={onboardingSlides.length}
+                />
               </Row>
             </Column>
             <Column>
@@ -422,7 +539,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
             </Row>
           ) : null}
         </CtaContainerAbsolute>
-      </React.Profiler>
+      </PerformanceProfiler>
     </SafeAreaView>
   );
 };

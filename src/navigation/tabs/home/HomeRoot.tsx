@@ -90,6 +90,7 @@ import {logManager} from '../../../managers/LogManager';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import type {RootState} from '../../../store';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -250,10 +251,9 @@ const HomeAllocationSection = React.memo(() => {
   );
 });
 
-const HomeAssetsSection = React.memo(() => {
-  const portfolioChartsRequested = useAppSelector(selectShowPortfolioValue);
-  return <AssetsSection enabled={portfolioChartsRequested} />;
-});
+const HomeAssetsSection = React.memo(({active}: {active: boolean}) => (
+  <AssetsSection active={active} />
+));
 
 const HomeArchaxFooter = React.memo(() => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
@@ -317,8 +317,9 @@ const HomeExchangeRatesSection = React.memo(
         quoteCurrency,
         requests: exchangeRateHistoricalRequests,
         maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
-        enabled: true,
+        enabled: active,
         forceOnInitialLoad: forceInitialRateSeriesReload,
+        retainCacheWhenDisabled: true,
       });
     const exchangeRates = useMemo(
       () =>
@@ -685,37 +686,41 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
               <HomeSection style={{marginTop: 20, marginBottom: 20}}>
-                <React.Profiler
+                <PerformanceProfiler
                   id="Home:portfolio-balance"
                   onRender={logReactProfiler}>
                   <PortfolioBalance active={isHomeFocused} />
-                </React.Profiler>
+                </PerformanceProfiler>
               </HomeSection>
 
               {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
               {hasKeys ? (
                 <HomeSection style={{marginBottom: 25}}>
-                  <React.Profiler
+                  <PerformanceProfiler
                     id="Home:linking-buttons"
                     onRender={logReactProfiler}>
                     <LinkingButtons
                       receive={receiveLinkingButton}
                       send={sendLinkingButton}
                     />
-                  </React.Profiler>
+                  </PerformanceProfiler>
                 </HomeSection>
               ) : null}
 
               {/* ////////////////////////////// MARKETING */}
-              <React.Profiler id="Home:marketing" onRender={logReactProfiler}>
+              <PerformanceProfiler
+                id="Home:marketing"
+                onRender={logReactProfiler}>
                 <HomeMarketingSection />
-              </React.Profiler>
+              </PerformanceProfiler>
 
               {/* ////////////////////////////// CRYPTO */}
               <HomeSection>
-                <React.Profiler id="Home:crypto" onRender={logReactProfiler}>
+                <PerformanceProfiler
+                  id="Home:crypto"
+                  onRender={logReactProfiler}>
                   <Crypto active={isHomeFocused} />
-                </React.Profiler>
+                </PerformanceProfiler>
               </HomeSection>
 
               {/* ////////////////////////////// SECURE WITH PASSKEY */}
@@ -732,17 +737,17 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                   {shouldActivateHomeAssetsSection ? (
                     <>
                       <HomeSection>
-                        <React.Profiler
+                        <PerformanceProfiler
                           id="Home:assets"
                           onRender={logReactProfiler}>
-                          <HomeAssetsSection />
-                        </React.Profiler>
+                          <HomeAssetsSection active={isHomeFocused} />
+                        </PerformanceProfiler>
                       </HomeSection>
-                      <React.Profiler
+                      <PerformanceProfiler
                         id="Home:allocation"
                         onRender={logReactProfiler}>
                         <HomeAllocationSection />
-                      </React.Profiler>
+                      </PerformanceProfiler>
                     </>
                   ) : null}
                 </View>
@@ -756,12 +761,14 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                     : styles.discoverPlaceholder
                 }>
                 {shouldActivateHomeDiscoverSection ? (
-                  <React.Profiler id="Home:offers" onRender={logReactProfiler}>
+                  <PerformanceProfiler
+                    id="Home:offers"
+                    onRender={logReactProfiler}>
                     <HomeOffersSection />
-                  </React.Profiler>
+                  </PerformanceProfiler>
                 ) : null}
                 {shouldActivateHomeDiscoverSection || !!currencyAbbreviation ? (
-                  <React.Profiler
+                  <PerformanceProfiler
                     id="Home:exchange-rates"
                     onRender={logReactProfiler}>
                     <HomeExchangeRatesSection
@@ -772,7 +779,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                       active={isHomeFocused || !!currencyAbbreviation}
                       visible={shouldActivateHomeDiscoverSection}
                     />
-                  </React.Profiler>
+                  </PerformanceProfiler>
                 ) : null}
                 {shouldActivateHomeDiscoverSection ? (
                   <HomeArchaxFooter />

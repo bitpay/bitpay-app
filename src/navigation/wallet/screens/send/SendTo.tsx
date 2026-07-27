@@ -105,6 +105,8 @@ import {
   useSendToKeyAccounts,
 } from './sendTo.utils';
 import {logReactProfiler} from '../../../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../../../../components/performance/PerformanceProfiler';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
 
 export {BuildKeyAccountRow};
 
@@ -190,13 +192,12 @@ const SendToContactResult = React.memo(
   },
 );
 
-const SendTo = () => {
+const SendToContent = ({wallet}: {wallet: Wallet}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const route = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
 
   const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const rates = useAppSelector(({RATE}) => RATE.rates);
@@ -218,7 +219,6 @@ const SendTo = () => {
     Promise.resolve([]),
   );
 
-  const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
 
   const isUtxo = IsUtxoChain(chain);
@@ -806,7 +806,7 @@ const SendTo = () => {
           </TouchableOpacity>
         ) : null}
 
-        <React.Profiler id="SendTo:contacts" onRender={logReactProfiler}>
+        <PerformanceProfiler id="SendTo:contacts" onRender={logReactProfiler}>
           {contacts.length > 0 && !searchIsEmailAddress ? (
             <View style={styles.contactContainer}>
               <ContactTitleContainer>
@@ -825,7 +825,7 @@ const SendTo = () => {
               ))}
             </View>
           ) : null}
-        </React.Profiler>
+        </PerformanceProfiler>
 
         <MemoizedOptionsSheet
           isVisible={showWalletOptions}
@@ -833,7 +833,7 @@ const SendTo = () => {
           options={assetOptions}
         />
 
-        <React.Profiler id="SendTo:wallets" onRender={logReactProfiler}>
+        <PerformanceProfiler id="SendTo:wallets" onRender={logReactProfiler}>
           <View style={{marginTop: 10}}>
             <MemoizedKeyWalletsRow
               keyAccounts={keyAccounts}
@@ -841,10 +841,29 @@ const SendTo = () => {
               onPress={onKeyWalletPress}
             />
           </View>
-        </React.Profiler>
+        </PerformanceProfiler>
       </ScrollView>
     </SafeAreaView>
   );
+};
+
+const SendTo = () => {
+  const {
+    params: {keyId, walletId, copayerId},
+  } = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
+  const navigation = useNavigation();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId]?.wallets || [], walletId, copayerId),
+  ) as Wallet | undefined;
+
+  useEffect(() => {
+    if (!wallet) {
+      logManager.error(`[SendTo] Wallet ${walletId} is not available`);
+      navigation.goBack();
+    }
+  }, [navigation, wallet, walletId]);
+
+  return wallet ? <SendToContent wallet={wallet} /> : null;
 };
 
 export default SendTo;

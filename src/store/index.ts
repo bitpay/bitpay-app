@@ -111,6 +111,7 @@ import {
   logPersistWrite,
   logReducerDuration,
 } from './performanceDiagnostics';
+import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
 
 export const storage = new MMKV();
 
@@ -201,7 +202,7 @@ const removePortfolioChartsPersistRoot = (
 
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
-    const setItemStartedAt = __DEV__ ? performance.now() : 0;
+    const setItemStartedAt = PERF_DEBUG ? performance.now() : 0;
     const valueToStore =
       key === 'persist:root' && typeof value === 'string'
         ? removePortfolioChartsPersistRoot(value).value
@@ -209,9 +210,9 @@ export const reduxStorage: Storage = {
 
     let writeError: unknown;
     try {
-      const mmkvStartedAt = __DEV__ ? performance.now() : 0;
+      const mmkvStartedAt = PERF_DEBUG ? performance.now() : 0;
       storage.set(key, valueToStore);
-      if (__DEV__) {
+      if (PERF_DEBUG) {
         logPersistWrite(
           performance.now() - mmkvStartedAt,
           typeof valueToStore === 'string' ? valueToStore.length : 0,
@@ -248,7 +249,7 @@ export const reduxStorage: Storage = {
         }
       }
     } catch (_) {}
-    if (__DEV__) {
+    if (PERF_DEBUG) {
       logPersistPhase(
         'setItem.total',
         performance.now() - setItemStartedAt,
@@ -389,10 +390,10 @@ const rootReducer = (
   state: CombinedState | undefined,
   action: AnyAction,
 ): CombinedState => {
-  const reducerStartedAt = __DEV__ ? performance.now() : 0;
+  const reducerStartedAt = PERF_DEBUG ? performance.now() : 0;
   try {
     const nextState = combinedReducer(state, action);
-    if (__DEV__) {
+    if (PERF_DEBUG) {
       logReducerDuration(
         action?.type ?? 'UNKNOWN',
         performance.now() - reducerStartedAt,
@@ -462,7 +463,7 @@ const getStore = async () => {
 
   const reduxPerformanceMiddleware: Middleware =
     store => next => (action: AnyAction) => {
-      if (!__DEV__ || typeof action?.type !== 'string') {
+      if (!PERF_DEBUG || typeof action?.type !== 'string') {
         return next(action);
       }
 
@@ -523,7 +524,9 @@ const getStore = async () => {
       return next(action);
     };
 
-  middlewares.unshift(reduxPerformanceMiddleware);
+  if (PERF_DEBUG) {
+    middlewares.unshift(reduxPerformanceMiddleware);
+  }
   middlewares.push(lastActionMiddleware());
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 
@@ -541,7 +544,7 @@ const getStore = async () => {
   const secretKey = await getEncryptionKey().catch(() => getUniqueId());
 
   const instrumentPersistTransform = (name: string, transform: any) => {
-    if (!__DEV__) {
+    if (!PERF_DEBUG) {
       return transform;
     }
 
@@ -646,12 +649,14 @@ const getStore = async () => {
           pausePersistor(new Error('Persisted wallet secrets are missing'));
         }
       }
-      if (action && typeof action.type === 'string') {
+      if (PERF_DEBUG && action && typeof action.type === 'string') {
         if (action.type === 'persist/PERSIST') {
           persistStartTs = Date.now();
           try {
             const keysCount = storage.getAllKeys().length;
-            logManager.info(`persist/PERSIST start - storageKeys:${keysCount}`);
+            performanceLog(
+              `[PERF-PERSIST] phase:rehydrate.start storageKeys:${keysCount}`,
+            );
           } catch (_) {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
@@ -676,8 +681,8 @@ const getStore = async () => {
                 } catch (_) {}
               });
             } catch (_) {}
-            logManager.info(
-              `persist/REHYDRATE complete - durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
+            performanceLog(
+              `[PERF-PERSIST] phase:rehydrate.complete durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
                 sizeByReduxKey,
               )}`,
             );

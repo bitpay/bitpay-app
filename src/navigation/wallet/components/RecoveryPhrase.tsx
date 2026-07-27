@@ -44,6 +44,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
   startCreateKeyWithOpts,
@@ -847,15 +848,19 @@ const RecoveryPhrase = () => {
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView>
-        <React.Profiler id="RecoveryPhrase:intro" onRender={logReactProfiler}>
+        <PerformanceProfiler
+          id="RecoveryPhrase:intro"
+          onRender={logReactProfiler}>
           <Paragraph>
             {t(
               'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
             )}
           </Paragraph>
-        </React.Profiler>
+        </PerformanceProfiler>
 
-        <React.Profiler id="RecoveryPhrase:header" onRender={logReactProfiler}>
+        <PerformanceProfiler
+          id="RecoveryPhrase:header"
+          onRender={logReactProfiler}>
           <HeaderContainer>
             <ImportTitle>{t('Recovery phrase')}</ImportTitle>
 
@@ -878,9 +883,9 @@ const RecoveryPhrase = () => {
               <ScanSvg />
             </ScanContainer>
           </HeaderContainer>
-        </React.Profiler>
+        </PerformanceProfiler>
 
-        <React.Profiler
+        <PerformanceProfiler
           id="RecoveryPhrase:controller"
           onRender={logReactProfiler}>
           <ImportTextInput
@@ -898,14 +903,14 @@ const RecoveryPhrase = () => {
             textContentType={IS_IOS ? 'password' : undefined}
             keyboardType={IS_ANDROID ? 'visible-password' : undefined}
           />
-        </React.Profiler>
+        </PerformanceProfiler>
 
         {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
         <CuationText>
           {t('This process may take a few minutes to complete.')}
         </CuationText>
-        <React.Profiler
+        <PerformanceProfiler
           id="RecoveryPhrase:advanced-options"
           onRender={logReactProfiler}>
           <CtaContainer>
@@ -1042,6 +1047,7 @@ const RecoveryPhrase = () => {
               )}
               <SheetModal
                 isVisible={currencyModalVisible}
+                unmountContentWhenHidden
                 onBackdropPress={() => setCurrencyModalVisible(false)}>
                 <CurrencySelectionModalContainer>
                   <TextAlign align={'center'}>
@@ -1131,9 +1137,11 @@ const RecoveryPhrase = () => {
               )}
             </AdvancedOptionsContainer>
           </CtaContainer>
-        </React.Profiler>
+        </PerformanceProfiler>
 
-        <React.Profiler id="RecoveryPhrase:submit" onRender={logReactProfiler}>
+        <PerformanceProfiler
+          id="RecoveryPhrase:submit"
+          onRender={logReactProfiler}>
           <Button
             testID="import-wallet-button"
             accessibilityLabel={t('Import Wallet')}
@@ -1142,7 +1150,7 @@ const RecoveryPhrase = () => {
             onPress={handleSubmit(onSubmit)}>
             {t('Import Wallet')}
           </Button>
-        </React.Profiler>
+        </PerformanceProfiler>
       </ContentView>
     </ScrollViewContainer>
   );

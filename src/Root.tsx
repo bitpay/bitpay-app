@@ -148,6 +148,8 @@ import {
 import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {getReduxPerformanceSnapshot} from './store/performanceDiagnostics';
 import {logReactProfiler} from './utils/reactPerformanceProfiler';
+import {PERF_DEBUG, performanceLog} from './utils/performanceDebug';
+import PerformanceProfiler from './components/performance/PerformanceProfiler';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
 import AllAssets from './navigation/tabs/home/screens/AllAssets';
@@ -298,9 +300,11 @@ const focusGatedScreenLayout = ({
   route: {name: string};
 }) => (
   <FocusGatedReduxScreen>
-    <React.Profiler id={`screen:${route.name}`} onRender={logReactProfiler}>
+    <PerformanceProfiler
+      id={`screen:${route.name}`}
+      onRender={logReactProfiler}>
       {children}
-    </React.Profiler>
+    </PerformanceProfiler>
   </FocusGatedReduxScreen>
 );
 
@@ -388,12 +392,12 @@ export default () => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   useEffect(() => {
-    if (!__DEV__) {
+    if (!PERF_DEBUG) {
       return;
     }
     const snapshot = getReduxPerformanceSnapshot();
 
-    console.log(
+    performanceLog(
       `[PERF-ROOT] render action:${
         snapshot?.actionType ?? 'unknown'
       } dispatchMs:${snapshot?.dispatchDurationMs ?? -1} changedSlices:${
@@ -1036,7 +1040,7 @@ export default () => {
           onStateChange={state => {
             debouncedOnStateChange(state);
 
-            if (__DEV__) {
+            if (PERF_DEBUG) {
               lastNavStartTsRef.current = Date.now();
             }
 
@@ -1066,16 +1070,16 @@ export default () => {
             screenLayout={focusGatedScreenLayout}
             screenListeners={{
               transitionStart: e => {
-                if (!__DEV__ || e.data.closing) {
+                if (!PERF_DEBUG || e.data.closing) {
                   return;
                 }
                 lastTransitionStartTsRef.current = performance.now();
                 const routeName = navigationRef.getCurrentRoute()?.name;
 
-                console.log(`[PERF-NAV] ${routeName} transitionStart`);
+                performanceLog(`[PERF-NAV] ${routeName} transitionStart`);
               },
               transitionEnd: e => {
-                if (!__DEV__ || e.data.closing) {
+                if (!PERF_DEBUG || e.data.closing) {
                   return;
                 }
                 const startTs = lastNavStartTsRef.current;
@@ -1091,7 +1095,7 @@ export default () => {
                       10;
                 const routeName = navigationRef.getCurrentRoute()?.name;
 
-                console.log(
+                performanceLog(
                   `[PERF-NAV] ${routeName} transitionEnd stateDeltaMs:${deltaMs} transitionDeltaMs:${transitionDeltaMs}`,
                 );
               },
@@ -1173,59 +1177,63 @@ export default () => {
             {ZenLedgerGroup({ZenLedger: Root, theme})}
             {SecurityGroup({Security: Root, theme})}
           </Root.Navigator>
-          <React.Profiler
+          <PerformanceProfiler
             id="overlay:ongoing-process"
             onRender={logReactProfiler}>
             <OnGoingProcessModal />
-          </React.Profiler>
-          <React.Profiler
+          </PerformanceProfiler>
+          <PerformanceProfiler
             id="overlay:in-app-notification"
             onRender={logReactProfiler}>
             <InAppNotification />
-          </React.Profiler>
-          <React.Profiler
+          </PerformanceProfiler>
+          <PerformanceProfiler
             id="overlay:bottom-notification"
             onRender={logReactProfiler}>
             <BottomNotificationModal />
-          </React.Profiler>
-          <React.Profiler
+          </PerformanceProfiler>
+          <PerformanceProfiler
             id="overlay:cloudflare-challenge"
             onRender={logReactProfiler}>
             <CloudflareChallengeModal />
-          </React.Profiler>
-          <React.Profiler
+          </PerformanceProfiler>
+          <PerformanceProfiler
             id="overlay:decrypt-password"
             onRender={logReactProfiler}>
             <DecryptEnterPasswordModal />
-          </React.Profiler>
-          <React.Profiler id="overlay:blur" onRender={logReactProfiler}>
+          </PerformanceProfiler>
+          <PerformanceProfiler id="overlay:blur" onRender={logReactProfiler}>
             <BlurContainer />
-          </React.Profiler>
-          <React.Profiler id="overlay:pin" onRender={logReactProfiler}>
+          </PerformanceProfiler>
+          <PerformanceProfiler id="overlay:pin" onRender={logReactProfiler}>
             <PinModal />
-          </React.Profiler>
-          <React.Profiler id="overlay:biometric" onRender={logReactProfiler}>
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:biometric"
+            onRender={logReactProfiler}>
             <BiometricModal />
-          </React.Profiler>
+          </PerformanceProfiler>
           {/* <ImportLedgerWalletModal /> */}
-          <React.Profiler
+          <PerformanceProfiler
             id="overlay:wallet-connect"
             onRender={logReactProfiler}>
             <WalletConnectStartModal />
-          </React.Profiler>
-          <React.Profiler
+          </PerformanceProfiler>
+          <PerformanceProfiler
             id="overlay:chain-selector"
             onRender={logReactProfiler}>
             <ChainSelectorModal />
-          </React.Profiler>
-          <React.Profiler id="overlay:payment-sent" onRender={logReactProfiler}>
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:payment-sent"
+            onRender={logReactProfiler}>
             <PaymentSent />
-          </React.Profiler>
-          <React.Profiler
+          </PerformanceProfiler>
+          <PerformanceProfiler
             id="overlay:moonpay-credentials"
             onRender={logReactProfiler}>
             <MoonpayEmbeddedCredentialManager />
-          </React.Profiler>
+          </PerformanceProfiler>
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

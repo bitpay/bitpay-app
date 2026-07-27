@@ -1,5 +1,5 @@
 import React from 'react';
-import {AppState, AppStateStatus} from 'react-native';
+import {AppState, AppStateStatus, View} from 'react-native';
 import {act, fireEvent, render} from '@test/render';
 import SheetModal from './SheetModal';
 
@@ -10,6 +10,7 @@ const mockOnModalHide = jest.fn();
 const mockCancelAnimationFrame = jest.fn();
 let mockBottomSheetModalProps: any;
 let mockBottomSheetBackdropProps: any;
+let mockBaseModalProps: any;
 let mockGestureEnabled = true;
 let mockGestureOnEnd: ((event: unknown, success: boolean) => void) | undefined;
 let mockAnimationFrames = new Map<number, (timestamp: number) => void>();
@@ -104,12 +105,37 @@ jest.mock('react-native-safe-area-context', () => {
 jest.mock('../BaseModal', () => {
   const MockReact = require('react');
   const {View} = require('react-native');
-  return ({isVisible}: any) =>
-    MockReact.createElement(View, {
-      testID: 'legacy-modal',
-      accessibilityState: {expanded: isVisible},
-    });
+  return (props: any) => {
+    mockBaseModalProps = props;
+    return MockReact.createElement(
+      View,
+      {
+        testID: 'legacy-modal',
+        accessibilityState: {expanded: props.isVisible},
+      },
+      props.children,
+    );
+  };
 });
+
+jest.mock('../../../blur/Blur', () => ({
+  BlurContainer: () => null,
+}));
+
+const SheetContent = ({
+  onMount,
+  onUnmount,
+}: {
+  onMount?: () => void;
+  onUnmount?: () => void;
+}) => {
+  React.useEffect(() => {
+    onMount?.();
+    return () => onUnmount?.();
+  }, [onMount, onUnmount]);
+
+  return <View testID="sheet-content" />;
+};
 
 const bottomSheetProps = (isVisible: boolean, extraProps: object = {}) => ({
   isVisible,
@@ -438,5 +464,106 @@ describe('SheetModal bottom-sheet lifecycle', () => {
     expect(
       modal.getByTestId('legacy-modal').props.accessibilityState.expanded,
     ).toBe(false);
+  });
+
+  it('does not mount bottom-sheet children while hidden', () => {
+    const onMount = jest.fn();
+    const sheet = render(
+      <SheetModal {...bottomSheetProps(false)}>
+        <SheetContent onMount={onMount} />
+      </SheetModal>,
+    );
+
+    expect(sheet.queryByTestId('sheet-content')).toBeNull();
+    expect(onMount).not.toHaveBeenCalled();
+    expect(mockPresent).not.toHaveBeenCalled();
+  });
+
+  it('mounts bottom-sheet children when presenting it', () => {
+    const onMount = jest.fn();
+    const content = <SheetContent onMount={onMount} />;
+    const sheet = render(
+      <SheetModal {...bottomSheetProps(false)}>{content}</SheetModal>,
+    );
+
+    sheet.rerender(
+      <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
+    );
+
+    expect(sheet.getByTestId('sheet-content')).toBeTruthy();
+    expect(onMount).toHaveBeenCalledTimes(1);
+    expect(mockPresent).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps children mounted while closing and unmounts them on dismiss', () => {
+    const onUnmount = jest.fn();
+    const content = <SheetContent onUnmount={onUnmount} />;
+    const sheet = render(
+      <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
+    );
+    confirmPresentation();
+
+    sheet.rerender(
+      <SheetModal {...bottomSheetProps(false)}>{content}</SheetModal>,
+    );
+    expect(mockDismiss).toHaveBeenCalledTimes(1);
+    expect(sheet.getByTestId('sheet-content')).toBeTruthy();
+    expect(onUnmount).not.toHaveBeenCalled();
+
+    confirmDismissal();
+    expect(sheet.queryByTestId('sheet-content')).toBeNull();
+    expect(onUnmount).toHaveBeenCalledTimes(1);
+  });
+
+  it('reopens after an in-progress dismiss without remounting children', () => {
+    const onMount = jest.fn();
+    const onUnmount = jest.fn();
+    const content = <SheetContent onMount={onMount} onUnmount={onUnmount} />;
+    const sheet = render(
+      <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
+    );
+    confirmPresentation();
+
+    sheet.rerender(
+      <SheetModal {...bottomSheetProps(false)}>{content}</SheetModal>,
+    );
+    sheet.rerender(
+      <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
+    );
+    confirmDismissal();
+    act(flushAnimationFrames);
+
+    expect(mockPresent).toHaveBeenCalledTimes(2);
+    expect(sheet.getByTestId('sheet-content')).toBeTruthy();
+    expect(onMount).toHaveBeenCalledTimes(1);
+    expect(onUnmount).not.toHaveBeenCalled();
+  });
+
+  it('lazily mounts opted-in modal children and removes them after hiding', () => {
+    const onMount = jest.fn();
+    const onUnmount = jest.fn();
+    const renderModal = (isVisible: boolean) => (
+      <SheetModal
+        isVisible={isVisible}
+        unmountContentWhenHidden
+        onBackdropPress={mockOnBackdropPress}>
+        <SheetContent onMount={onMount} onUnmount={onUnmount} />
+      </SheetModal>
+    );
+    const modal = render(renderModal(false));
+
+    expect(modal.queryByTestId('sheet-content')).toBeNull();
+    expect(onMount).not.toHaveBeenCalled();
+
+    modal.rerender(renderModal(true));
+    expect(modal.getByTestId('sheet-content')).toBeTruthy();
+    expect(onMount).toHaveBeenCalledTimes(1);
+
+    modal.rerender(renderModal(false));
+    expect(modal.getByTestId('sheet-content')).toBeTruthy();
+
+    act(() => mockBaseModalProps.onModalHide());
+    expect(modal.queryByTestId('sheet-content')).toBeNull();
+    expect(onUnmount).toHaveBeenCalledTimes(1);
   });
 });

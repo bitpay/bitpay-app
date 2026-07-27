@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AppState, AppStateStatus, Platform, View} from 'react-native';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import {runOnJS} from 'react-native-reanimated';
@@ -32,6 +32,7 @@ interface Props extends SheetParams {
   paddingTop?: number;
   snapPoints?: string[];
   stackBehavior?: 'push' | 'replace';
+  unmountContentWhenHidden?: boolean;
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
@@ -98,6 +99,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   paddingTop,
   snapPoints,
   stackBehavior,
+  unmountContentWhenHidden = false,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -112,6 +114,11 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const reopenAnimationFrameRef = useRef<number | null>(null);
   desiredVisibleRef.current = isVisible;
   usesBottomSheetRef.current = modalLibrary === 'bottom-sheet';
+  const [shouldRenderBottomSheetContent, setShouldRenderBottomSheetContent] =
+    useState(modalLibrary === 'bottom-sheet' ? isVisible : true);
+  const [shouldRenderModalContent, setShouldRenderModalContent] = useState(
+    modalLibrary !== 'modal' || !unmountContentWhenHidden || isVisible,
+  );
 
   const reconcileBottomSheet = useCallback(() => {
     if (!mountedRef.current || !usesBottomSheetRef.current) {
@@ -173,12 +180,20 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
   useEffect(() => {
     if (modalLibrary === 'bottom-sheet') {
+      if (isVisible) {
+        setShouldRenderBottomSheetContent(true);
+      } else if (phaseRef.current === 'idle') {
+        setShouldRenderBottomSheetContent(false);
+      }
       reconcileBottomSheet();
     } else {
       phaseRef.current = 'idle';
       nativeReadyRef.current = false;
+      if (!unmountContentWhenHidden || isVisible) {
+        setShouldRenderModalContent(true);
+      }
     }
-  }, [isVisible, modalLibrary, reconcileBottomSheet]);
+  }, [isVisible, modalLibrary, reconcileBottomSheet, unmountContentWhenHidden]);
 
   useEffect(() => {
     const subscriptionAppStateChange = AppState.addEventListener(
@@ -281,7 +296,18 @@ const SheetModal: React.FC<SheetModalProps> = ({
         }
       });
     }
+
+    if (!desiredVisibleRef.current) {
+      setShouldRenderBottomSheetContent(false);
+    }
   }, [onBackdropPress, onModalHide, reconcileBottomSheet]);
+
+  const handleModalHide = useCallback(() => {
+    if (unmountContentWhenHidden && !desiredVisibleRef.current) {
+      setShouldRenderModalContent(false);
+    }
+    onModalHide?.();
+  }, [onModalHide, unmountContentWhenHidden]);
 
   const fullscreenStyles = useMemo(
     () =>
@@ -316,9 +342,13 @@ const SheetModal: React.FC<SheetModalProps> = ({
         onChange={handleBottomSheetChange}
         onDismiss={handleDismiss}
         ref={bottomSheetModalRef}>
-        <NavigationThemeContext.Provider value={themeValue}>
-          <BottomSheetView style={fullscreenStyles}>{children}</BottomSheetView>
-        </NavigationThemeContext.Provider>
+        {shouldRenderBottomSheetContent ? (
+          <NavigationThemeContext.Provider value={themeValue}>
+            <BottomSheetView style={fullscreenStyles}>
+              {children}
+            </BottomSheetView>
+          </NavigationThemeContext.Provider>
+        ) : null}
       </BottomSheetModal>
     </View>
   ) : (
@@ -334,7 +364,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
       onBackdropPress={onBackdropPress}
       animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
       animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
-      onModalHide={onModalHide}
+      onModalHide={handleModalHide}
       // swipeDirection={'down'}
       // onSwipeComplete={hideModal}
       style={{
@@ -342,10 +372,12 @@ const SheetModal: React.FC<SheetModalProps> = ({
         justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
         margin: 0,
       }}>
-      <>
-        {children}
-        <BlurContainer />
-      </>
+      {shouldRenderModalContent ? (
+        <>
+          {children}
+          <BlurContainer />
+        </>
+      ) : null}
     </BaseModal>
   );
 };
