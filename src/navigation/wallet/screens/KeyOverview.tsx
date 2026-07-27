@@ -15,6 +15,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
+import {useStore} from 'react-redux';
 import {
   LayoutChangeEvent,
   LogBox,
@@ -155,6 +156,7 @@ import {
 } from '../../../utils/portfolio/assets';
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
+import {RootState} from '../../../store';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -300,6 +302,39 @@ export const KeyDropdownOptionsContainer: React.FC<
 > = ({style, ...rest}) => (
   <ScrollView style={[styles.keyDropdownOptionsContainer, style]} {...rest} />
 );
+
+const OtherKeyDropdownOptions: React.FC<{
+  currentKeyId: string;
+  defaultAltCurrencyIsoCode: string;
+  hideKeyBalance: boolean;
+  onSelectKey: (keyId: string) => void;
+}> = ({
+  currentKeyId,
+  defaultAltCurrencyIsoCode,
+  hideKeyBalance,
+  onSelectKey,
+}) => {
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+
+  return (
+    <>
+      {Object.values(keys)
+        .filter(key => key.backupComplete && key.id !== currentKeyId)
+        .map(key => (
+          <DropdownOption
+            key={key.id}
+            optionId={key.id}
+            optionName={key.keyName}
+            wallets={key.wallets}
+            totalBalance={key.totalBalance}
+            onPress={onSelectKey}
+            defaultAltCurrencyIsoCode={defaultAltCurrencyIsoCode}
+            hideKeyBalance={hideKeyBalance}
+          />
+        ))}
+    </>
+  );
+};
 
 export const CogIconContainer: React.FC<
   React.ComponentProps<typeof TouchableOpacity>
@@ -652,6 +687,7 @@ const KeyOverview = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const reduxStore = useStore();
   const logger = useLogger();
   const theme = useTheme();
   const {width: windowWidth} = useWindowDimensions();
@@ -661,16 +697,29 @@ const KeyOverview = () => {
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [contentReady, setContentReady] = useState(false);
-  const keys: {[key: string]: Key} = useAppSelector(({WALLET}) => WALLET.keys);
+  const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[id]) as Key;
+  const hasMultipleKeys = useAppSelector(({WALLET}) => {
+    let completedKeyCount = 0;
+
+    for (const candidateKey of Object.values(
+      WALLET.keys as Record<string, Key>,
+    )) {
+      if (candidateKey.backupComplete) {
+        completedKeyCount += 1;
+        if (completedKeyCount > 1) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  });
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const portfolioQuoteCurrency = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
-  );
-  const portfolioPopulateStatus = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
   );
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
@@ -681,7 +730,6 @@ const KeyOverview = () => {
   );
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
-  const key = keys[id];
   const viewedKeyId = key?.id;
   const [shouldLoadAllocationGainLoss, setShouldLoadAllocationGainLoss] =
     useState(false);
@@ -709,8 +757,6 @@ const KeyOverview = () => {
     return unsubscribe;
   }, [navigation]);
 
-  const hasMultipleKeys =
-    Object.values(keys).filter(k => k.backupComplete).length > 1;
   const [searchVal, setSearchVal] = useState('');
   const activeViewUpdateRef = useRef<{
     keyId: string;
@@ -871,12 +917,15 @@ const KeyOverview = () => {
     });
   }, [context, firstWallet, logger, navigation]);
 
-  const {totalBalance = 0} =
-    useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+  const totalBalance = key?.totalBalance ?? 0;
 
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
+  const renderableKeyWallets = useMemo(
+    () => (contentReady ? visibleKeyWallets : []),
+    [contentReady, visibleKeyWallets],
+  );
   const {
     canRenderBalanceChart: canRenderKeyBalanceChart,
     shouldMountBalanceChart: shouldMountKeyBalanceChart,
@@ -886,8 +935,8 @@ const KeyOverview = () => {
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
-    wallets: visibleKeyWallets,
-    enabled: showPortfolioValue === true,
+    wallets: renderableKeyWallets,
+    enabled: contentReady && showPortfolioValue === true,
     hideAllBalances,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
@@ -906,10 +955,10 @@ const KeyOverview = () => {
     resetKey: id,
   });
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
-    wallets: visibleKeyWallets,
+    wallets: renderableKeyWallets,
     currentFiatBalance: totalBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances,
+    enabled: contentReady && showPortfolioValue !== true && !hideAllBalances,
   });
   const keyHeaderChangeRowData =
     showPortfolioValue === true
@@ -917,14 +966,14 @@ const KeyOverview = () => {
       : legacyLastDayChangeRowData;
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
-    return visibleKeyWallets.map((w: Wallet) => ({
+    return renderableKeyWallets.map((w: Wallet) => ({
       currencyAbbreviation: w.currencyAbbreviation,
       chain: w.chain,
       tokenAddress: w.tokenAddress,
       currencyName: w.currencyName,
       fiatBalance: (w.balance as any)?.fiat,
     }));
-  }, [visibleKeyWallets]);
+  }, [renderableKeyWallets]);
 
   const allocationData = useMemo(() => {
     return buildAllocationDataFromWalletRows(
@@ -933,10 +982,12 @@ const KeyOverview = () => {
     );
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
 
-  const isKeyPopulateLoading = isPopulateLoadingForWallets({
-    populateStatus: portfolioPopulateStatus,
-    wallets: visibleKeyWallets,
-  });
+  const isKeyPopulateLoading = useAppSelector(({PORTFOLIO}) =>
+    isPopulateLoadingForWallets({
+      populateStatus: PORTFOLIO.populateStatus,
+      wallets: renderableKeyWallets,
+    }),
+  );
 
   const showAllocationGainLossFooter = canRenderKeyBalanceChart;
 
@@ -1001,11 +1052,9 @@ const KeyOverview = () => {
     [maybeActivateAllocationGainLoss],
   );
 
-  const customTokenOptionsByAddress = useAppSelector(
-    ({WALLET}) => WALLET.customTokenOptionsByAddress,
-  );
-
   const startSyncWallets = async (mnemonic: string) => {
+    const {customTokenOptionsByAddress} = (reduxStore.getState() as RootState)
+      .WALLET;
     const tokenOptionsForSync = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
@@ -1675,25 +1724,19 @@ const KeyOverview = () => {
         <KeyDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Keys')}</HeaderTitle>
           <KeyDropdownOptionsContainer>
-            {Object.values(keys)
-              .filter(_key => _key.backupComplete && _key.id !== id)
-              .map(_key => (
-                <DropdownOption
-                  key={_key.id}
-                  optionId={_key.id}
-                  optionName={_key.keyName}
-                  wallets={_key.wallets}
-                  totalBalance={_key.totalBalance}
-                  onPress={keyId => {
-                    setShowKeyDropdown(false);
-                    navigation.setParams({
-                      id: keyId,
-                    } as any);
-                  }}
-                  defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-                  hideKeyBalance={hideAllBalances}
-                />
-              ))}
+            {showKeyDropdown ? (
+              <OtherKeyDropdownOptions
+                currentKeyId={id}
+                defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+                hideKeyBalance={hideAllBalances}
+                onSelectKey={keyId => {
+                  setShowKeyDropdown(false);
+                  navigation.setParams({
+                    id: keyId,
+                  } as any);
+                }}
+              />
+            ) : null}
             {linkedCoinbase ? (
               <CoinbaseDropdownOption
                 onPress={() => {

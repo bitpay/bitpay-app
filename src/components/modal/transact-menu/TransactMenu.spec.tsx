@@ -6,11 +6,19 @@ const mockNavigate = jest.fn();
 const mockDispatch = jest.fn();
 const mockUseAppSelector = jest.fn();
 const mockSheetModal = jest.fn(({children}) => children);
-const mockBottomSheetFlashList = jest.fn((_props: unknown) => null);
+const mockFlashList = jest.fn((_props: unknown) => null);
+const mockBottomSheetScrollable = jest.fn((_props: unknown) => null);
+const mockUseBottomSheetScrollableCreator = jest.fn(
+  () => mockBottomSheetScrollable,
+);
 
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => ({navigate: mockNavigate}),
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({t: (value: string) => value}),
 }));
 
 jest.mock('../../../utils/hooks', () => ({
@@ -25,7 +33,11 @@ jest.mock('../base/sheet/SheetModal', () => ({
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetFlashList: (props: unknown) => mockBottomSheetFlashList(props),
+  useBottomSheetScrollableCreator: () => mockUseBottomSheetScrollableCreator(),
+}));
+
+jest.mock('@shopify/flash-list', () => ({
+  FlashList: (props: unknown) => mockFlashList(props),
 }));
 
 const state = {
@@ -45,7 +57,8 @@ describe('TransactMenu lazy content', () => {
 
     expect(mockUseAppSelector).not.toHaveBeenCalled();
     expect(mockSheetModal).not.toHaveBeenCalled();
-    expect(mockBottomSheetFlashList).not.toHaveBeenCalled();
+    expect(mockUseBottomSheetScrollableCreator).not.toHaveBeenCalled();
+    expect(mockFlashList).not.toHaveBeenCalled();
 
     fireEvent.press(getByTestId('transact-menu-button'));
 
@@ -54,7 +67,12 @@ describe('TransactMenu lazy content', () => {
     expect(mockSheetModal.mock.lastCall?.[0]).toEqual(
       expect.objectContaining({isVisible: true}),
     );
-    expect(mockBottomSheetFlashList).toHaveBeenCalled();
+    expect(mockUseBottomSheetScrollableCreator).toHaveBeenCalled();
+    expect(mockFlashList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderScrollComponent: mockBottomSheetScrollable,
+      }),
+    );
   });
 
   it('keeps the sheet mounted with isVisible false while it closes', () => {
