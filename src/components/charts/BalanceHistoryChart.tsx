@@ -286,4 +286,4 @@ const BalanceHistoryChart = ({
   );
 };
 
-export default BalanceHistoryChart;
+export default React.memo(BalanceHistoryChart);

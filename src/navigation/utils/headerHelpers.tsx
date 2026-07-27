@@ -43,6 +43,10 @@ export const createStackScreenOptions = (
 
 export const useStackScreenOptions = (theme: HeaderTheme) => {
   const paddingBottom = useContentPaddingBottom();
+  const {background, text} = theme.colors;
 
-  return createStackScreenOptions(theme, paddingBottom);
+  return React.useMemo(
+    () => createStackScreenOptions({colors: {background, text}}, paddingBottom),
+    [background, paddingBottom, text],
+  );
 };

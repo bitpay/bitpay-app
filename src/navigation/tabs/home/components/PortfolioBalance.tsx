@@ -22,6 +22,7 @@ import BalanceHistoryChart, {
   type BalanceHistoryChartProps,
 } from '../../../../components/charts/BalanceHistoryChart';
 import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../../components/charts/fiatTimeframes';
+import {useHasCachedBalanceHistoryChartSeries} from '../../../../components/charts/balanceHistoryChartSeriesCache';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -50,6 +51,7 @@ import {
 import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/ui/common';
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
+import usePortfolioBalanceChartEligibleWallets from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
 import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import type {Rates} from '../../../../store/rate/rate.models';
@@ -304,9 +306,29 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
 
   const dispatch = useAppDispatch();
   const portfolioChartsRequested = showPortfolioValue === true;
+  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  });
+  const cacheEligibleHomeWallets = usePortfolioBalanceChartEligibleWallets({
+    wallets: walletsAcrossKeys,
+    enabled: portfolioChartsRequested && !hideAllBalances,
+  });
+  const homeChartWalletIds = useMemo(
+    () =>
+      cacheEligibleHomeWallets
+        .map(wallet => wallet.id)
+        .filter(Boolean)
+        .sort(),
+    [cacheEligibleHomeWallets],
+  );
+  const hasCachedHomeChart = useHasCachedBalanceHistoryChartSeries({
+    walletIds: homeChartWalletIds,
+    quoteCurrency,
+    timeframe: DEFAULT_BALANCE_CHART_TIMEFRAME,
+  });
 
   const activeBalanceChartReadiness = usePortfolioBalanceChartReadiness({
-    wallets: walletsAcrossKeys,
+    wallets: cacheEligibleHomeWallets,
     enabled: active && portfolioChartsRequested,
     hideAllBalances,
   });
@@ -325,16 +347,18 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b))
     .join(',');
-  const balanceChartsEnabled = balanceChartReadiness.shouldMountBalanceChart;
+  const balanceChartsEnabled =
+    balanceChartReadiness.shouldMountBalanceChart || hasCachedHomeChart;
   const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
   const canCollapseChart = shouldLeftAlignTopSection;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
-    balanceChartReadiness.shouldShowChartLoader ||
-    (balanceChartsEnabled &&
-      !balanceChartReadiness.shouldPreserveStaleBalanceChart &&
-      !chartHasRenderableSeries);
+    !hasCachedHomeChart &&
+    (balanceChartReadiness.shouldShowChartLoader ||
+      (balanceChartsEnabled &&
+        !balanceChartReadiness.shouldPreserveStaleBalanceChart &&
+        !chartHasRenderableSeries));
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;
@@ -487,9 +511,6 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     [],
   );
 
-  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
-    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-  });
   const collapseChartAccessibilityLabel = t('Collapse portfolio chart');
   const expandChartAccessibilityLabel = t('Expand portfolio chart');
   const chartLifecycleKey = `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}:${chartWalletIdsSig}`;
@@ -502,7 +523,8 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
     preserveChartDrivenStateWhileNotReady:
-      balanceChartReadiness.shouldPreserveStaleBalanceChart,
+      balanceChartReadiness.shouldPreserveStaleBalanceChart ||
+      hasCachedHomeChart,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
@@ -518,7 +540,8 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
     preserveVisibleSeriesWhileNotReady:
-      balanceChartReadiness.shouldPreserveStaleBalanceChart,
+      balanceChartReadiness.shouldPreserveStaleBalanceChart ||
+      hasCachedHomeChart,
     onSelectedBalanceChange:
       balanceChartSurface.chartCallbacks.onSelectedBalanceChange,
     onDisplayedAnalysisPointChange:

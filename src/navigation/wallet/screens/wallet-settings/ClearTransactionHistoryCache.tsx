@@ -4,7 +4,7 @@ import {useTranslation} from 'react-i18next';
 import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useTheme} from '../../../../contexts';
 import Button, {ButtonState} from '../../../../components/button/Button';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {WalletGroupParamList, WalletScreens} from '../../WalletGroup';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {sleep} from '../../../../utils/helper-methods';
@@ -20,6 +20,8 @@ import {RootStacks} from '../../../../Root';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 
 const styles = StyleSheet.create({
   clearTransactionHistoryCacheContainer: {
@@ -51,14 +53,16 @@ const ClearTransactionHistoryCache: React.FC<
   const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
-  const {wallet, key} = route.params;
+  const {keyId, walletId, copayerId} = route.params;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
+  const wallet = findWalletById(key.wallets, walletId, copayerId) as Wallet;
 
   const clearCache = async () => {
     setButtonState('loading');
 
     const walletClient = BWC.getClient(JSON.stringify(wallet.credentials));
 
-    walletClient.clearCache(async (err: any) => {
+    walletClient.clearCache({tokenAddress: wallet.tokenAddress}, async err => {
       if (err) {
         setButtonState('failed');
         showErrorMessage(
@@ -105,6 +109,7 @@ const ClearTransactionHistoryCache: React.FC<
           name: WalletScreens.WALLET_DETAILS,
           params: {
             walletId: wallet.id,
+            copayerId,
             skipInitializeHistory: false,
           },
         };

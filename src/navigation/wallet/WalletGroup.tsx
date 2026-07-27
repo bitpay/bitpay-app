@@ -24,7 +24,6 @@ import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
-  Key,
   Wallet as WalletModel,
   type WalletStatusPayload,
 } from '../../store/wallet/wallet.models';
@@ -90,7 +89,6 @@ import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
 import {Root} from '../../Root';
-import {AccountRowProps} from '../../components/list/AccountListRow';
 import KeyInformation from './screens/KeyInformation';
 import BackupSharedKeyScreen, {
   BackupSharedKeyParamList,
@@ -116,25 +114,28 @@ export type WalletGroupParamList = {
   TermsOfUse: TermsOfUseParamList | undefined;
   KeyOverview: {id: string; context?: 'createNewMultisigKey'};
   KeyExplanation: undefined;
-  KeySettings: {key: Key; context?: 'createEncryptPassword'};
+  KeySettings: {keyId: string; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
-    key: Key;
+    keyId: string;
     wallet?: {walletId: string; walletName: string | undefined};
-    accountItem?: AccountRowProps;
+    account?: {
+      accountAddress: string;
+      accountName: string | undefined;
+    };
     context: 'key' | 'wallet' | 'account';
   };
   AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
-  WalletSettings: {walletId: string; key: Key; copayerId?: string};
+  WalletSettings: {walletId: string; keyId: string; copayerId?: string};
   AccountSettings: {
-    key: Key;
+    keyId: string;
     selectedAccountAddress: string;
     context: 'keySettings' | 'accountDetails';
     isSvmAccount?: boolean;
   };
   CreationOptions: undefined;
   Import: ImportParamList;
-  CreateEncryptPassword: {key: Key};
+  CreateEncryptPassword: {keyId: string};
   ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
   KeyInformation: undefined;
@@ -177,9 +178,15 @@ export type WalletGroupParamList = {
   };
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
-  WalletInformation: {wallet: WalletModel; accountItem?: AccountRowProps};
+  WalletInformation: {
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+  };
   ExportWallet: {
-    wallet: WalletModel;
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
     keyObj: {
       mnemonic: string;
       mnemonicHasPassphrase: boolean;
@@ -187,7 +194,7 @@ export type WalletGroupParamList = {
     };
   };
   ExportTSSWallet: ExportTSSWalletParamList;
-  Addresses: {wallet: WalletModel};
+  Addresses: {keyId: string; walletId: string; copayerId?: string};
   AllAddresses: AllAddressesParamList;
   ExchangeRate: {
     currencyName: string;
@@ -202,8 +209,16 @@ export type WalletGroupParamList = {
   SendToOptions: SendToOptionsParamList;
   SelectInputs: SelectInputsParamList;
   EnterBuyerProvidedEmail: {data: string};
-  ExportTransactionHistory: {wallet: WalletModel};
-  ClearTransactionHistoryCache: {wallet: WalletModel; key: Key};
+  ExportTransactionHistory: {
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+  };
+  ClearTransactionHistoryCache: {
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+  };
   PaperWallet: {scannedPrivateKey: string};
 };
 

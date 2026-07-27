@@ -38,19 +38,13 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {usePasskeySupport} from '../../../../../utils/usePasskeySupport';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import {User} from '../../../../../store/bitpay-id/bitpay-id.models';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {
-  SecurityGroupParamList,
-  SecurityScreens,
-} from '../../../settings/security/SecurityGroup';
 import {BitpayIdScreens} from '../../../../bitpay-id/BitpayIdGroup';
-import {useNavigation} from '@react-navigation/native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import EnableLockWarningModal from '../components/EnableLockWarningModal';
 
-export type SecurityHomeProps = NativeStackScreenProps<
-  SecurityGroupParamList,
-  SecurityScreens.HOME
->;
+export type SecurityHomeProps = {
+  navigation: NavigationProp<any>;
+};
 
 const FingerprintSvg = {
   light: <FingerprintImg />,

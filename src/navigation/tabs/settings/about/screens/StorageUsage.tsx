@@ -1,21 +1,19 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {memo, useCallback, useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Platform, ScrollView, StyleSheet} from 'react-native';
+import {Platform, ScrollView, StyleSheet, Text, View} from 'react-native';
 import RNFS from 'react-native-fs';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useTheme} from '../../../../../contexts';
-import {forEach} from 'lodash';
-import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer} from '../../SettingsRoot';
 import {
   Hr,
   ScreenGutter,
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
-import Button from '../../../../../components/button/Button';
 import {
   Action,
+  Air,
   Black,
   Feather,
   LightBlack,
@@ -23,11 +21,15 @@ import {
   Midnight,
   White,
 } from '../../../../../styles/colors';
+import {fontFamily} from '../../../../../components/styled/Text';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {storage} from '../../../../../store';
 import {logManager} from '../../../../../managers/LogManager';
 import {getPortfolioRuntimeClient} from '../../../../../portfolio/runtime/portfolioRuntime';
 import {AboutScreens} from '../AboutGroup';
+import {Buffer as NodeBuffer} from 'buffer';
+
+const DEFERRED_LOAD_FALLBACK_MS = 2000;
 
 const styles = StyleSheet.create({
   headerTitle: {
@@ -35,20 +37,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: parseInt(ScreenGutter, 10),
     borderBottomWidth: 1,
   },
+  metricPill: {
+    borderRadius: 50,
+    borderWidth: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  metricText: {
+    fontFamily,
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22.03,
+    textAlign: 'center',
+  },
+  valueSkeleton: {
+    borderRadius: 999,
+    height: 36,
+  },
+  section: {
+    paddingVertical: 10,
+  },
+  lastSection: {
+    marginBottom: 10,
+  },
 });
 
-const ValueSkeleton = ({width = 90}: {width?: number}) => {
-  const theme = useTheme();
-  const backgroundColor = theme.dark ? Midnight : LightBlue;
-  const highlightColor = theme.dark ? Action : '#E5E9FF';
-  return (
-    <SkeletonPlaceholder
-      backgroundColor={backgroundColor}
-      highlightColor={highlightColor}>
-      <SkeletonPlaceholder.Item width={width} height={36} borderRadius={999} />
-    </SkeletonPlaceholder>
-  );
+type MetricValueProps = {
+  backgroundColor: string;
+  textColor: string;
+  value: string;
+  width?: number;
 };
+
+const MetricValue = memo(
+  ({backgroundColor, textColor, value, width = 90}: MetricValueProps) => {
+    if (!value) {
+      return <View style={[styles.valueSkeleton, {backgroundColor, width}]} />;
+    }
+
+    return (
+      <View
+        style={[
+          styles.metricPill,
+          {backgroundColor, borderColor: backgroundColor},
+        ]}>
+        <Text style={[styles.metricText, {color: textColor}]}>{value}</Text>
+      </View>
+    );
+  },
+);
+MetricValue.displayName = 'MetricValue';
 
 const HeaderTitle = ({
   style,
@@ -73,6 +111,24 @@ const HeaderTitle = ({
 const storagePath =
   Platform.OS === 'ios' ? RNFS.MainBundlePath : RNFS.DocumentDirectoryPath;
 const EMPTY_LIST: Array<unknown> = [];
+
+const formatBytes = (bytes: number, decimals = 2): string => {
+  if (!+bytes) {
+    return '0 Bytes';
+  }
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+};
+
+const getSerializedSize = (value: unknown): number => {
+  const serialized = JSON.stringify(value);
+  return serialized ? NodeBuffer.byteLength(serialized, 'utf8') : 0;
+};
 
 type StorageUsageMetrics = {
   walletsCount: number;
@@ -116,12 +172,23 @@ const StorageUsage: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const {t} = useTranslation();
-  const renderValue = useCallback((value: string, width?: number) => {
-    if (value) {
-      return <Button buttonType="pill">{value}</Button>;
-    }
-    return <ValueSkeleton width={width} />;
-  }, []);
+  const theme = useTheme();
+  const metricBackgroundColor = theme.dark ? Midnight : Air;
+  const metricTextColor = theme.dark ? White : Action;
+  const skeletonBackgroundColor = theme.dark ? Midnight : LightBlue;
+  const renderValue = useCallback(
+    (value: string, width?: number) => (
+      <MetricValue
+        backgroundColor={
+          value ? metricBackgroundColor : skeletonBackgroundColor
+        }
+        textColor={metricTextColor}
+        value={value}
+        width={width}
+      />
+    ),
+    [metricBackgroundColor, metricTextColor, skeletonBackgroundColor],
+  );
   const tripleTapRef = useRef<{
     count: number;
     lastTapMs: number;
@@ -187,31 +254,6 @@ const StorageUsage: React.FC = () => {
       }:${PORTFOLIO.populateStatus?.errors?.length || 0}`,
   );
 
-  const formatBytes = (bytes: number, decimals = 2): string => {
-    if (!+bytes) {
-      return '0 Bytes';
-    }
-
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-  };
-
-  const getSize = async (filePath: string, data: string): Promise<number> => {
-    try {
-      await RNFS.writeFile(filePath, data);
-      const file = await RNFS.stat(filePath);
-      await RNFS.unlink(filePath); // Delete
-      return Promise.resolve(file.size);
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  };
-
   useEffect(() => {
     if (!isFocused) {
       return;
@@ -228,10 +270,10 @@ const StorageUsage: React.FC = () => {
 
       try {
         const resultStorage = await RNFS.readDir(storagePath);
-        let totalBytes = 0;
-        forEach(resultStorage, data => {
-          totalBytes += data.size;
-        });
+        const totalBytes = resultStorage.reduce(
+          (total, data) => total + data.size,
+          0,
+        );
         nextMetrics.appSize = formatBytes(totalBytes);
       } catch (err) {
         nextMetrics.appSize = '0 Bytes';
@@ -280,11 +322,7 @@ const StorageUsage: React.FC = () => {
       }
 
       try {
-        const size = await getSize(
-          RNFS.TemporaryDirectoryPath + '/wallets.txt',
-          JSON.stringify(keys),
-        );
-        nextMetrics.walletStorage = formatBytes(size);
+        nextMetrics.walletStorage = formatBytes(getSerializedSize(keys));
       } catch (err) {
         nextMetrics.walletStorage = '0 Bytes';
         logManager.error(
@@ -294,11 +332,7 @@ const StorageUsage: React.FC = () => {
       }
 
       try {
-        const size = await getSize(
-          RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
-          JSON.stringify(giftCards),
-        );
-        nextMetrics.giftCardStorage = formatBytes(size);
+        nextMetrics.giftCardStorage = formatBytes(getSerializedSize(giftCards));
       } catch (err) {
         nextMetrics.giftCardStorage = '0 Bytes';
         logManager.error(
@@ -308,11 +342,9 @@ const StorageUsage: React.FC = () => {
       }
 
       try {
-        const size = await getSize(
-          RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
-          JSON.stringify(customTokens),
+        nextMetrics.customTokenStorage = formatBytes(
+          getSerializedSize(customTokens),
         );
-        nextMetrics.customTokenStorage = formatBytes(size);
       } catch (err) {
         nextMetrics.customTokenStorage = '0 Bytes';
         logManager.error(
@@ -322,11 +354,7 @@ const StorageUsage: React.FC = () => {
       }
 
       try {
-        const size = await getSize(
-          RNFS.TemporaryDirectoryPath + '/contacts.txt',
-          JSON.stringify(contacts),
-        );
-        nextMetrics.contactStorage = formatBytes(size);
+        nextMetrics.contactStorage = formatBytes(getSerializedSize(contacts));
       } catch (err) {
         nextMetrics.contactStorage = '0 Bytes';
         logManager.error(
@@ -359,7 +387,7 @@ const StorageUsage: React.FC = () => {
             }),
           ),
         ]);
-        const spotRatesBytes = JSON.stringify(rates || {}).length;
+        const spotRatesBytes = getSerializedSize(rates || {});
 
         nextMetrics.portfolioSnapshotsCount = indexes.reduce((total, index) => {
           if (!index?.chunks?.length) {
@@ -422,7 +450,7 @@ const StorageUsage: React.FC = () => {
           try {
             const parsed = JSON.parse(root);
             const data = parsed?.SHOP_CATALOG;
-            const bytes = data ? JSON.stringify(data).length : 0;
+            const bytes = data ? getSerializedSize(data) : 0;
             nextMetrics.shopCatalogStorage = formatBytes(bytes);
           } catch {
             nextMetrics.shopCatalogStorage = '0 Bytes';
@@ -445,10 +473,29 @@ const StorageUsage: React.FC = () => {
       setMetrics(nextMetrics);
     };
 
-    load();
+    let started = false;
+    const startLoading = () => {
+      if (started || cancelled) {
+        return;
+      }
+
+      started = true;
+      load();
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          startLoading();
+        }
+      },
+    );
+    const fallbackTimer = setTimeout(startLoading, DEFERRED_LOAD_FALLBACK_MS);
 
     return () => {
       cancelled = true;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
     };
   }, [
     isFocused,
@@ -456,6 +503,7 @@ const StorageUsage: React.FC = () => {
     customTokens,
     giftCards,
     keys,
+    navigation,
     portfolioRefreshToken,
     rates,
   ]);
@@ -476,7 +524,7 @@ const StorageUsage: React.FC = () => {
         <HeaderTitle>
           <SettingTitle>{t('Total Size')}</SettingTitle>
         </HeaderTitle>
-        <SettingsComponent>
+        <View style={styles.section}>
           <Setting>
             <SettingTitle>BitPay</SettingTitle>
 
@@ -497,11 +545,11 @@ const StorageUsage: React.FC = () => {
 
             {renderValue(metrics.deviceTotalStorage, 110)}
           </Setting>
-        </SettingsComponent>
+        </View>
         <HeaderTitle>
           <SettingTitle>{t('Details')}</SettingTitle>
         </HeaderTitle>
-        <SettingsComponent style={{marginBottom: 10}}>
+        <View style={[styles.section, styles.lastSection]}>
           <Setting>
             <SettingTitle>
               {t('Wallets')} ({metrics.walletsCount || '0'})
@@ -566,7 +614,7 @@ const StorageUsage: React.FC = () => {
 
             {renderValue(metrics.backupStorage)}
           </Setting>
-        </SettingsComponent>
+        </View>
       </ScrollView>
     </SettingsContainer>
   );
