@@ -71,6 +71,15 @@ jest.mock('../../../utils/reactPerformanceProfiler', () => ({
   logReactProfiler: jest.fn(),
 }));
 
+jest.mock('../../../components/performance/PerformanceProfiler', () => {
+  const ReactLib = require('react');
+  return {
+    __esModule: true,
+    default: ({children, ...props}: React.ProfilerProps) =>
+      ReactLib.createElement(ReactLib.Profiler, props, children),
+  };
+});
+
 jest.mock('../../../components/styled/Containers', () => {
   const actual = jest.requireActual('../../../components/styled/Containers');
   const ReactLib = require('react');

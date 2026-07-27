@@ -128,6 +128,7 @@ const BalanceHistoryChart = ({
   }
   const scope = enabled ? activeScope : lastEnabledScopeRef.current;
   const displayModel = useBalanceChartDisplayModel({
+    enabled,
     scope,
     initialSelectedTimeframe,
     balanceOffset,

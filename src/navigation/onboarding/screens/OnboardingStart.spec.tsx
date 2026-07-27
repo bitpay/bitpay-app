@@ -25,6 +25,15 @@ const mockState = {
 };
 
 let mockLatestCarouselProps: Record<string, any> | undefined;
+let mockAnimatedScrollHandlers:
+  | {
+      onScroll?: (
+        event: {contentOffset: {x: number}},
+        context: Record<string, unknown>,
+      ) => void;
+    }
+  | undefined;
+let mockProgressValue: {value: number} | undefined;
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({t: mockTranslate}),
@@ -66,40 +75,33 @@ jest.mock('../../../components/button/Button', () => {
   };
 });
 
-jest.mock('../../../components/pagination-dots/PaginationDots', () => {
-  const ReactLib = require('react');
-  const {View} = require('react-native');
-
-  return {
-    __esModule: true,
-    default: ({index}: {index: number}) =>
-      ReactLib.createElement(View, {
-        testID: `pagination-button-${index}`,
-      }),
-  };
-});
-
 jest.mock('react-native-reanimated', () => {
   const ReactLib = require('react');
-
-  return {
-    __esModule: true,
-    useSharedValue: (initialValue: unknown) =>
-      ReactLib.useRef({value: initialValue}).current,
-  };
-});
-
-jest.mock('react-native-reanimated-carousel', () => {
-  const ReactLib = require('react');
   const {View} = require('react-native');
 
   return {
     __esModule: true,
-    default: (props: Record<string, any>) => {
-      mockLatestCarouselProps = props;
-      mockCarouselRender(props);
-      return ReactLib.createElement(View, {testID: 'onboarding-carousel'});
+    default: {
+      createAnimatedComponent: (component: React.ComponentType) => component,
+      View,
+      FlatList: (props: Record<string, any>) => {
+        mockLatestCarouselProps = props;
+        mockCarouselRender(props);
+        return ReactLib.createElement(View, {testID: 'onboarding-carousel'});
+      },
     },
+    useSharedValue: (initialValue: number) => {
+      const progressValue = ReactLib.useRef({value: initialValue}).current;
+      mockProgressValue = progressValue;
+      return progressValue;
+    },
+    useAnimatedScrollHandler: (handlers: typeof mockAnimatedScrollHandlers) => {
+      mockAnimatedScrollHandlers = handlers;
+      return jest.fn();
+    },
+    useAnimatedStyle: (factory: () => Record<string, unknown>) => factory(),
+    interpolate: () => 0,
+    Extrapolate: {CLAMP: 'clamp'},
   };
 });
 
@@ -124,29 +126,41 @@ describe('OnboardingStart performance boundaries', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLatestCarouselProps = undefined;
+    mockAnimatedScrollHandlers = undefined;
+    mockProgressValue = undefined;
   });
 
   it('keeps progress on the UI thread and tracks once when an item snaps', () => {
     renderScreen();
 
-    expect(mockLatestCarouselProps?.windowSize).toBe(2);
-    expect(mockLatestCarouselProps?.onProgressChange).toEqual(
-      expect.objectContaining({value: 0}),
-    );
-    expect(mockLatestCarouselProps?.onProgressChange).not.toEqual(
-      expect.any(Function),
-    );
+    expect(mockLatestCarouselProps?.initialNumToRender).toBe(1);
+    expect(mockLatestCarouselProps?.maxToRenderPerBatch).toBe(1);
+    expect(mockLatestCarouselProps?.windowSize).toBe(3);
 
     act(() => {
-      if (mockLatestCarouselProps) {
-        mockLatestCarouselProps.onProgressChange.value = 0.25;
-        mockLatestCarouselProps.onProgressChange.value = 0.75;
-      }
+      const pageWidth = mockLatestCarouselProps?.getItemLayout(
+        undefined,
+        1,
+      ).length;
+      mockAnimatedScrollHandlers?.onScroll?.(
+        {contentOffset: {x: pageWidth * 0.75}},
+        {},
+      );
     });
+    expect(mockProgressValue?.value).toBe(0.75);
     expect(mockAnalyticsTrack).not.toHaveBeenCalled();
 
     act(() => {
-      mockLatestCarouselProps?.onSnapToItem(1);
+      const pageWidth = mockLatestCarouselProps?.getItemLayout(
+        undefined,
+        1,
+      ).length;
+      mockLatestCarouselProps?.onMomentumScrollEnd({
+        nativeEvent: {contentOffset: {x: pageWidth}},
+      });
+      mockLatestCarouselProps?.onMomentumScrollEnd({
+        nativeEvent: {contentOffset: {x: pageWidth}},
+      });
     });
 
     expect(mockAnalyticsTrack).toHaveBeenCalledTimes(1);

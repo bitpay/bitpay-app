@@ -69,11 +69,15 @@ jest.mock('../fiatRateSeries', () => {
 });
 
 const HookHarness = ({
+  enabled,
   forceOnInitialLoad,
   refreshToken,
+  retainCacheWhenDisabled,
 }: {
+  enabled?: boolean;
   forceOnInitialLoad?: boolean;
   refreshToken?: string | number;
+  retainCacheWhenDisabled?: boolean;
 }) => {
   latestHookState = useRuntimeFiatRateSeriesCache({
     quoteCurrency: 'USD',
@@ -83,8 +87,10 @@ const HookHarness = ({
         intervals: ['1D'],
       },
     ],
+    enabled,
     forceOnInitialLoad,
     refreshToken,
+    retainCacheWhenDisabled,
   });
 
   return null;
@@ -180,5 +186,61 @@ describe('useRuntimeFiatRateSeriesCache', () => {
 
     expect(latestHookState!.cache).toBe(initialCacheReference);
     expect(latestHookState!.loading).toBe(false);
+  });
+
+  it('retains visible cache and ignores an in-flight reload while disabled', async () => {
+    const initialCache = {
+      'USD|btc|1D': {
+        fetchedOn: 123,
+        points: [{ts: 100, rate: 50_000}],
+      },
+    };
+    mockLoadRuntimeFiatRateSeriesCache.mockResolvedValueOnce(initialCache);
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = TestRenderer.create(
+        <HookHarness enabled retainCacheWhenDisabled />,
+      );
+    });
+
+    const initialCacheReference = latestHookState!.cache;
+    let resolveReload!: (cache: typeof initialCache) => void;
+    const reloadPromise = new Promise<typeof initialCache>(resolve => {
+      resolveReload = resolve;
+    });
+    mockLoadRuntimeFiatRateSeriesCache.mockReturnValueOnce(reloadPromise);
+
+    let pendingReload!: Promise<unknown>;
+    act(() => {
+      pendingReload = latestHookState!.reload({silent: true});
+    });
+
+    await act(async () => {
+      view.update(<HookHarness enabled={false} retainCacheWhenDisabled />);
+    });
+
+    const refreshedCache = {
+      'USD|btc|1D': {
+        fetchedOn: 456,
+        points: [{ts: 200, rate: 60_000}],
+      },
+    };
+    await act(async () => {
+      resolveReload(refreshedCache);
+      await pendingReload;
+    });
+
+    expect(mockLoadRuntimeFiatRateSeriesCache).toHaveBeenCalledTimes(2);
+    expect(latestHookState!.cache).toBe(initialCacheReference);
+    expect(latestHookState!.cache).toEqual(initialCache);
+    expect(latestHookState!.loading).toBe(false);
+
+    await act(async () => {
+      await latestHookState!.reload({silent: true});
+    });
+
+    expect(mockLoadRuntimeFiatRateSeriesCache).toHaveBeenCalledTimes(2);
+    expect(latestHookState!.cache).toBe(initialCacheReference);
   });
 });

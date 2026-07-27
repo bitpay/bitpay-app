@@ -3,7 +3,12 @@ import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '../../../contexts';
-import {BottomSheetFlashList as FlashList} from '@gorhom/bottom-sheet';
+import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
+import {
+  FlashList,
+  type FlashListProps,
+  type ListRenderItemInfo,
+} from '@shopify/flash-list';
 import {useDispatch, useSelector} from 'react-redux';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
@@ -171,6 +176,24 @@ const searchIconSize = {height: 16, width: 16};
 const ghostSvgStyle = {marginTop: 20};
 const allNetworkSvgStyle = {width: 20, height: 20};
 
+type ChainSelectorFlashListProps<T> = FlashListProps<T> & {
+  estimatedItemSize?: number;
+};
+
+type ChainSelectorListItem = string | {title: string};
+
+const isSectionHeader = (
+  item: ChainSelectorListItem,
+): item is {title: string} => typeof item !== 'string';
+
+export const ChainSelectorFlashList = <T,>(
+  props: ChainSelectorFlashListProps<T>,
+) => {
+  const BottomSheetScrollable = useBottomSheetScrollableCreator();
+
+  return <FlashList {...props} renderScrollComponent={BottomSheetScrollable} />;
+};
+
 const ChainSelectorModalContent = () => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
@@ -213,7 +236,7 @@ const ChainSelectorModalContent = () => {
         : SUPPORTED_CURRENCIES_CHAINS;
     let _recentSelectedChainFilterOption =
       chainsOptions && chainsOptions.length > 0
-        ? recentSelectedChainFilterOption.filter(chain =>
+        ? recentSelectedChainFilterOption.filter((chain: string) =>
             chainsOptions.includes(chain),
           )
         : recentSelectedChainFilterOption;
@@ -256,14 +279,13 @@ const ChainSelectorModalContent = () => {
       ],
       [] as any[],
     );
-    return flattenedList;
+    return flattenedList as ChainSelectorListItem[];
   }, [
     customChains,
     sectionHeaders.all,
     sectionHeaders.recentlySelected,
     recentSelectedChainFilterOption,
     selectedChainFilterOption,
-    context,
     chainsOptions,
   ]);
 
@@ -370,16 +392,20 @@ const ChainSelectorModalContent = () => {
     [modalHeightPercentage],
   );
 
-  const keyExtractor = useCallback((item, index) => index.toString(), []);
+  const keyExtractor = useCallback(
+    (_item: ChainSelectorListItem, index: number) => index.toString(),
+    [],
+  );
 
   const getItemType = useCallback(
-    item => (item.title ? 'sectionHeader' : 'row'),
+    (item: ChainSelectorListItem) =>
+      isSectionHeader(item) ? 'sectionHeader' : 'row',
     [],
   );
 
   const renderItem = useCallback(
-    ({item, index}) => {
-      if (item.title) {
+    ({item, index}: ListRenderItemInfo<ChainSelectorListItem>) => {
+      if (isSectionHeader(item)) {
         return <ListHeader>{item.title}</ListHeader>;
       } else {
         return renderChainItem({item, index});
@@ -420,11 +446,10 @@ const ChainSelectorModalContent = () => {
         </View>
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
-            <FlashList
+            <ChainSelectorFlashList
               contentContainerStyle={contentContainerStyle}
               data={searchResults}
               estimatedItemSize={65}
-              // @ts-ignore
               renderItem={renderChainItem}
               keyExtractor={keyExtractor}
             />
@@ -442,7 +467,7 @@ const ChainSelectorModalContent = () => {
         </HideableView>
 
         <HideableView show={!searchVal}>
-          <FlashList
+          <ChainSelectorFlashList
             contentContainerStyle={contentContainerStyle}
             data={chainList}
             renderItem={renderItem}

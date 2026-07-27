@@ -1,4 +1,5 @@
 import React from 'react';
+import {PERF_DEBUG, performanceLog} from './performanceDebug';
 
 const roundPerformanceDuration = (value: number) => Math.round(value * 10) / 10;
 
@@ -10,11 +11,11 @@ export const logReactProfiler: React.ProfilerOnRenderCallback = (
   startTime,
   commitTime,
 ) => {
-  if (!__DEV__) {
+  if (!PERF_DEBUG) {
     return;
   }
 
-  console.log(
+  performanceLog(
     `[PERF-REACT] id:${id} phase:${phase} actualMs:${roundPerformanceDuration(
       actualDuration,
     )} baseMs:${roundPerformanceDuration(

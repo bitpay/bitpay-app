@@ -22,6 +22,7 @@ import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {createSelector} from 'reselect';
 import {RootState} from '../../store';
 import {logReactProfiler} from '../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../performance/PerformanceProfiler';
 
 const styles = StyleSheet.create({
   amountContainer: {
@@ -173,7 +174,7 @@ const AmountKeyboard = React.memo(
     onCellPress: (value: string) => void;
     showDot: boolean;
   }) => (
-    <React.Profiler id="Amount:keyboard" onRender={logReactProfiler}>
+    <PerformanceProfiler id="Amount:keyboard" onRender={logReactProfiler}>
       <View style={styles.virtualKeyboardContainer}>
         <VirtualKeyboard
           onCellPress={onCellPress}
@@ -181,7 +182,7 @@ const AmountKeyboard = React.memo(
           isSmallScreen={isSmallScreen}
         />
       </View>
-    </React.Profiler>
+    </PerformanceProfiler>
   ),
 );
 
@@ -197,13 +198,13 @@ const AmountSubmit = React.memo(
     label: string;
     onPress: () => void;
   }) => (
-    <React.Profiler id="Amount:submit" onRender={logReactProfiler}>
+    <PerformanceProfiler id="Amount:submit" onRender={logReactProfiler}>
       <View style={styles.buttonContainer}>
         <Button state={buttonState} disabled={disabled} onPress={onPress}>
           {label}
         </Button>
       </View>
-    </React.Profiler>
+    </PerformanceProfiler>
   ),
 );
 

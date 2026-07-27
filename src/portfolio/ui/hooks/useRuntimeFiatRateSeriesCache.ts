@@ -26,8 +26,10 @@ export function useRuntimeFiatRateSeriesCache(args: {
   refreshToken?: string | number;
   clearOnRequestChange?: boolean;
   forceOnInitialLoad?: boolean;
+  retainCacheWhenDisabled?: boolean;
 }): RuntimeFiatRateSeriesCacheState {
   const enabled = args.enabled !== false;
+  const retainCacheWhenDisabled = args.retainCacheWhenDisabled === true;
   const rawRequestsRef = useRef(args.requests);
   rawRequestsRef.current = args.requests;
   const normalizedRequestsKey = useMemo(
@@ -73,13 +75,28 @@ export function useRuntimeFiatRateSeriesCache(args: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | undefined>(undefined);
   const activeRequestIdRef = useRef(0);
+  const cacheRef = useRef(cache);
+  cacheRef.current = cache;
 
   const runLoad = useCallback(
     async (opts?: {
       force?: boolean;
       silent?: boolean;
     }): Promise<FiatRateSeriesCache> => {
-      if (!enabled || !requests.length || !args.quoteCurrency) {
+      if (!enabled) {
+        activeRequestIdRef.current += 1;
+        setLoading(false);
+        setError(undefined);
+        if (retainCacheWhenDisabled) {
+          return cacheRef.current;
+        }
+        setCache(prev =>
+          prev === emptyCacheRef.current ? prev : emptyCacheRef.current,
+        );
+        return emptyCacheRef.current;
+      }
+
+      if (!requests.length || !args.quoteCurrency) {
         setCache(prev =>
           prev === emptyCacheRef.current ? prev : emptyCacheRef.current,
         );
@@ -121,11 +138,29 @@ export function useRuntimeFiatRateSeriesCache(args: {
         throw runtimeError;
       }
     },
-    [args.maxAgeMs, args.quoteCurrency, enabled, requests],
+    [
+      args.maxAgeMs,
+      args.quoteCurrency,
+      enabled,
+      requests,
+      retainCacheWhenDisabled,
+    ],
   );
 
   useEffect(() => {
-    if (!enabled || !requests.length || !args.quoteCurrency) {
+    if (!enabled) {
+      activeRequestIdRef.current += 1;
+      setLoading(false);
+      setError(undefined);
+      if (!retainCacheWhenDisabled) {
+        setCache(prev =>
+          prev === emptyCacheRef.current ? prev : emptyCacheRef.current,
+        );
+      }
+      return;
+    }
+
+    if (!requests.length || !args.quoteCurrency) {
       activeRequestIdRef.current += 1;
       setCache(prev =>
         prev === emptyCacheRef.current ? prev : emptyCacheRef.current,
@@ -151,6 +186,7 @@ export function useRuntimeFiatRateSeriesCache(args: {
     enabled,
     requestKey,
     requests.length,
+    retainCacheWhenDisabled,
     runLoad,
   ]);
 
