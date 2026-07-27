@@ -88,6 +88,7 @@ describe('SheetModal', () => {
 
   it('keeps children mounted while closing and unmounts them on dismiss', async () => {
     const onUnmount = jest.fn();
+    const presentSpy = jest.spyOn(BottomSheetModal.prototype, 'present');
     const dismissSpy = jest.spyOn(BottomSheetModal.prototype, 'dismiss');
     const onBackdropPress = jest.fn();
 
@@ -101,6 +102,11 @@ describe('SheetModal', () => {
     );
 
     await waitFor(() => expect(queryByTestId('sheet-content')).toBeTruthy());
+    await waitFor(() => expect(presentSpy).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      UNSAFE_getByType(BottomSheetModal).props.onAnimate(-1, 0, 0, 100);
+    });
 
     rerender(
       <SheetModal
@@ -148,6 +154,9 @@ describe('SheetModal', () => {
     );
 
     await waitFor(() => expect(presentSpy).toHaveBeenCalledTimes(1));
+    act(() => {
+      UNSAFE_getByType(BottomSheetModal).props.onAnimate(-1, 0, 0, 100);
+    });
     rerender(renderModal(false));
     await waitFor(() => expect(dismissSpy).toHaveBeenCalledTimes(1));
     rerender(renderModal(true));
@@ -163,6 +172,82 @@ describe('SheetModal', () => {
     expect(queryByTestId('sheet-content')).toBeTruthy();
     expect(onMount).toHaveBeenCalledTimes(1);
     expect(onUnmount).not.toHaveBeenCalled();
+  });
+
+  it('waits for a pending presentation before dismissing', async () => {
+    const presentSpy = jest.spyOn(BottomSheetModal.prototype, 'present');
+    const dismissSpy = jest.spyOn(BottomSheetModal.prototype, 'dismiss');
+    const onBackdropPress = jest.fn();
+    const renderModal = (isVisible: boolean) => (
+      <SheetModal
+        isVisible={isVisible}
+        modalLibrary="bottom-sheet"
+        onBackdropPress={onBackdropPress}>
+        <SheetContent />
+      </SheetModal>
+    );
+    const {rerender, UNSAFE_getByType} = render(renderModal(true));
+
+    await waitFor(() => expect(presentSpy).toHaveBeenCalledTimes(1));
+    rerender(renderModal(false));
+
+    expect(dismissSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      UNSAFE_getByType(BottomSheetModal).props.onAnimate(-1, 0, 0, 100);
+    });
+
+    expect(dismissSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels a pending dismiss when the sheet reopens before presentation', async () => {
+    const presentSpy = jest.spyOn(BottomSheetModal.prototype, 'present');
+    const dismissSpy = jest.spyOn(BottomSheetModal.prototype, 'dismiss');
+    const onBackdropPress = jest.fn();
+    const renderModal = (isVisible: boolean) => (
+      <SheetModal
+        isVisible={isVisible}
+        modalLibrary="bottom-sheet"
+        onBackdropPress={onBackdropPress}>
+        <SheetContent />
+      </SheetModal>
+    );
+    const {rerender, UNSAFE_getByType} = render(renderModal(true));
+
+    await waitFor(() => expect(presentSpy).toHaveBeenCalledTimes(1));
+    rerender(renderModal(false));
+    rerender(renderModal(true));
+
+    act(() => {
+      UNSAFE_getByType(BottomSheetModal).props.onAnimate(-1, 0, 0, 100);
+    });
+
+    expect(presentSpy).toHaveBeenCalledTimes(1);
+    expect(dismissSpy).not.toHaveBeenCalled();
+  });
+
+  it('uses the bottom-sheet change event as a presentation fallback', async () => {
+    const presentSpy = jest.spyOn(BottomSheetModal.prototype, 'present');
+    const dismissSpy = jest.spyOn(BottomSheetModal.prototype, 'dismiss');
+    const onBackdropPress = jest.fn();
+    const renderModal = (isVisible: boolean) => (
+      <SheetModal
+        isVisible={isVisible}
+        modalLibrary="bottom-sheet"
+        onBackdropPress={onBackdropPress}>
+        <SheetContent />
+      </SheetModal>
+    );
+    const {rerender, UNSAFE_getByType} = render(renderModal(true));
+
+    await waitFor(() => expect(presentSpy).toHaveBeenCalledTimes(1));
+    rerender(renderModal(false));
+
+    act(() => {
+      UNSAFE_getByType(BottomSheetModal).props.onChange(0, 100, 0);
+    });
+
+    expect(dismissSpy).toHaveBeenCalledTimes(1);
   });
 
   it('lazily mounts opted-in modal children and removes them after hiding', async () => {
