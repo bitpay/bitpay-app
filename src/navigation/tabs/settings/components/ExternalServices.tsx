@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {StyleSheet, View} from 'react-native';
+import React, {useEffect, useMemo, useState} from 'react';
+import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {SettingsComponent} from '../SettingsRoot';
@@ -21,6 +21,8 @@ import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-l
 import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
 import {WyrePaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
+
+const CONTENT_READY_FALLBACK_MS = 2000;
 
 const styles = StyleSheet.create({
   externalServicesItemContainer: {
@@ -50,161 +52,203 @@ const ExternalServicesIconContainer = ({
 
 const ExternalServices = () => {
   const navigation = useNavigation();
+  const [contentReady, setContentReady] = useState(false);
   const thorswapHistory = useAppSelector(
     ({SWAP_CRYPTO}: RootState) => SWAP_CRYPTO.thorswap,
   );
   const wyreHistory = useAppSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre,
   );
-  const [thorswapTxData, setThorswapTxData] = useState(
-    Object.values(thorswapHistory),
+  const hasThorswapHistory = useMemo(
+    () => Object.keys(thorswapHistory).length > 0,
+    [thorswapHistory],
   );
-  const [wyrePaymentRequests, setWyrePaymentRequests] = useState(
-    [] as WyrePaymentData[],
+  const hasWyrePaymentRequests = useMemo(
+    () =>
+      (Object.values(wyreHistory) as WyrePaymentData[]).some(
+        payment => payment.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [wyreHistory],
   );
 
   useEffect(() => {
-    const _wyrePaymentRequests = Object.values(wyreHistory).filter(
-      pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+    let completed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    const complete = () => {
+      if (completed) {
+        return;
+      }
+
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      setContentReady(true);
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          complete();
+        }
+      },
     );
-    setWyrePaymentRequests(_wyrePaymentRequests);
-  }, []);
+    fallbackTimer = setTimeout(complete, CONTENT_READY_FALLBACK_MS);
+
+    return () => {
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      unsubscribe();
+    };
+  }, [navigation]);
 
   return (
     <SettingsComponent>
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('BanxaSettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <BanxaLogo iconOnly={true} width={30} height={25} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Banxa</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('ChangellySettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <ChangellyLogo iconOnly={true} width={30} height={30} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Changelly</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('MoonpaySettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <MoonpayLogo iconOnly={true} widthIcon={30} heightIcon={25} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Moonpay</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('RampSettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <RampLogo iconOnly={true} width={30} height={30} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Ramp Network</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('SardineSettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <SardineLogo iconOnly={true} width={30} height={25} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Sardine</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('SimplexSettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <SimplexLogo iconOnly={true} widthIcon={30} heightIcon={25} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Simplex</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      {thorswapTxData?.length > 0 ? (
+      {!contentReady ? (
+        <ActivityIndicator size="small" />
+      ) : (
         <>
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('BanxaSettings');
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <BanxaLogo iconOnly={true} width={30} height={25} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>Banxa</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
           <Hr />
           <Setting
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('ThorswapSettings');
+              navigation.navigate('ChangellySettings');
             }}>
             <ExternalServicesItemContainer>
               <ExternalServicesIconContainer>
-                <ThorswapLogo iconOnly={true} widthIcon={30} heightIcon={22} />
+                <ChangellyLogo iconOnly={true} width={30} height={30} />
               </ExternalServicesIconContainer>
-              <SettingTitle>THORSwap</SettingTitle>
+              <SettingTitle>Changelly</SettingTitle>
             </ExternalServicesItemContainer>
             <AngleRight />
           </Setting>
-        </>
-      ) : null}
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('TransakSettings');
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <TransakLogo iconOnly={true} width={30} height={25} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Transak</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
-      {wyrePaymentRequests?.length > 0 ? (
-        <>
           <Hr />
           <Setting
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('WyreSettings');
+              navigation.navigate('MoonpaySettings');
             }}>
             <ExternalServicesItemContainer>
               <ExternalServicesIconContainer>
-                <WyreLogo iconOnly={true} width={30} height={25} />
+                <MoonpayLogo iconOnly={true} widthIcon={30} heightIcon={25} />
               </ExternalServicesIconContainer>
-              <SettingTitle>Wyre</SettingTitle>
+              <SettingTitle>Moonpay</SettingTitle>
             </ExternalServicesItemContainer>
             <AngleRight />
           </Setting>
+          <Hr />
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('RampSettings');
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <RampLogo iconOnly={true} width={30} height={30} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>Ramp Network</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
+          <Hr />
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('SardineSettings');
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <SardineLogo iconOnly={true} width={30} height={25} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>Sardine</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
+          <Hr />
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('SimplexSettings');
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <SimplexLogo iconOnly={true} widthIcon={30} heightIcon={25} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>Simplex</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
+          {hasThorswapHistory ? (
+            <>
+              <Hr />
+              <Setting
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('ThorswapSettings');
+                }}>
+                <ExternalServicesItemContainer>
+                  <ExternalServicesIconContainer>
+                    <ThorswapLogo
+                      iconOnly={true}
+                      widthIcon={30}
+                      heightIcon={22}
+                    />
+                  </ExternalServicesIconContainer>
+                  <SettingTitle>THORSwap</SettingTitle>
+                </ExternalServicesItemContainer>
+                <AngleRight />
+              </Setting>
+            </>
+          ) : null}
+          <Hr />
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('TransakSettings');
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <TransakLogo iconOnly={true} width={30} height={25} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>Transak</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
+          {hasWyrePaymentRequests ? (
+            <>
+              <Hr />
+              <Setting
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('WyreSettings');
+                }}>
+                <ExternalServicesItemContainer>
+                  <ExternalServicesIconContainer>
+                    <WyreLogo iconOnly={true} width={30} height={25} />
+                  </ExternalServicesIconContainer>
+                  <SettingTitle>Wyre</SettingTitle>
+                </ExternalServicesItemContainer>
+                <AngleRight />
+              </Setting>
+            </>
+          ) : null}
         </>
-      ) : null}
+      )}
     </SettingsComponent>
   );
 };

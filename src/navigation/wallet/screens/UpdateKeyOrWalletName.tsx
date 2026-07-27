@@ -9,7 +9,7 @@ import Button from '../../../components/button/Button';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {titleCasing} from '../../../utils/helper-methods';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {
@@ -72,7 +72,8 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {key, wallet, accountItem, context} = route.params;
+  const {keyId, wallet, account, context} = route.params;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
   const {walletName, walletId} = wallet || {};
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -97,7 +98,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
       case 'wallet':
         return walletName;
       case 'account':
-        return accountItem?.accountName;
+        return account?.accountName;
       default:
         return '';
     }
@@ -110,12 +111,12 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
       dispatch(updateKeyName({keyId: key.id, name}));
     } else if (context === 'wallet') {
       walletId && dispatch(updateWalletName({keyId: key.id, walletId, name}));
-    } else if (context === 'account' && accountItem?.receiveAddress) {
+    } else if (context === 'account' && account?.accountAddress) {
       dispatch(
         updateAccountName({
           keyId: key.id,
           name,
-          accountAddress: accountItem.receiveAddress,
+          accountAddress: account.accountAddress,
         }),
       );
     }

@@ -35,7 +35,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     return navigation.addListener('focus', () => {
       setPasswordToggle(!!checkPrivateKeyEncrypted(key));
     });
-  }, [navigation, key.methods]);
+  }, [key, navigation]);
 
   const onSubmitPassword = async (password: string) => {
     if (key) {
@@ -103,7 +103,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     <ToggleSwitch
       onChange={() => {
         if (!passwordToggle) {
-          navigation.navigate('CreateEncryptPassword', {key});
+          navigation.navigate('CreateEncryptPassword', {keyId: key.id});
         } else {
           dispatch(
             AppActions.showDecryptPasswordModal({
