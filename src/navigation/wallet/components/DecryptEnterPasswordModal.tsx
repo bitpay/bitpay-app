@@ -1,5 +1,5 @@
 import React, {useEffect, useCallback, useMemo} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch, useSelector, useStore} from 'react-redux';
 import {RootState} from '../../../store';
 import {useTheme} from '../../../contexts';
 import {AppActions} from '../../../store/app';
@@ -57,6 +57,7 @@ const DecryptEnterPasswordModalContent = React.memo(() => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useDispatch();
+  const store = useStore<RootState>();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showDecryptPasswordModal,
   );
@@ -87,11 +88,14 @@ const DecryptEnterPasswordModalContent = React.memo(() => {
 
   const dismissModal = useCallback(() => {
     dispatch(AppActions.dismissDecryptPasswordModal());
-    setTimeout(() => {
-      dispatch(AppActions.resetDecryptPasswordConfig());
-    }, 500); // Wait for modal to close
     onCancelHandler && onCancelHandler();
   }, [dispatch, onCancelHandler]);
+
+  const handleModalHide = useCallback(() => {
+    if (!store.getState().APP.showDecryptPasswordModal) {
+      dispatch(AppActions.resetDecryptPasswordConfig());
+    }
+  }, [dispatch, store]);
 
   const onSubmit = useCallback(
     async ({password}: {password: string}) => {
@@ -132,6 +136,7 @@ const DecryptEnterPasswordModalContent = React.memo(() => {
       backdropOpacity={0.4}
       animationIn={'fadeInUp'}
       animationOut={'fadeOutDown'}
+      onModalHide={handleModalHide}
       onBackdropPress={dismissModal}
       useNativeDriverForBackdrop={true}
       useNativeDriver={useNativeDriverValue}>

@@ -22,9 +22,10 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity, ScreenGutter} from '../../styled/Containers';
+import {ActiveOpacity} from '../../styled/Containers';
 import {H5, H7} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
+import useModalContentLifecycle from '../base/useModalContentLifecycle';
 import PinDots from './PinDots';
 import {verifyAndMigratePin, createPin, PIN_CONFIG} from '../../../utils/pin';
 
@@ -157,22 +158,15 @@ const Pin = gestureHandlerRootHOC(
           logger.error(`checkPin error: ${errStr}`);
         }
       },
-      [
-        dispatch,
-        setShakeDots,
-        setMessage,
-        setPinStatus,
-        setAttempts,
-        currentPin,
-        currentSalt,
-        t,
-      ],
+      [currentPin, currentSalt, dispatch, logger, onClose, reset, t],
     );
+    const checkPinRef = useRef(checkPin);
+    checkPinRef.current = checkPin;
 
     const gotoCreateKey = useCallback(async () => {
-      navigationRef.navigate('CreateKey' as any);
-      await sleep(10);
       dispatch(AppActions.dismissPinModal());
+      await sleep(10);
+      navigationRef.navigate('CreateKey' as any);
     }, [dispatch]);
 
     const gotoCreateKeyRef = useRef(gotoCreateKey);
@@ -211,8 +205,14 @@ const Pin = gestureHandlerRootHOC(
           setShakeDots(true);
         }
       },
-      [dispatch, setShakeDots, reset, context],
+      [context, dispatch, logger, reset],
     );
+    const setCurrentPinRef = useRef(setCurrentPin);
+    setCurrentPinRef.current = setCurrentPin;
+    const typeRef = useRef(type);
+    typeRef.current = type;
+    const translateRef = useRef(t);
+    translateRef.current = t;
 
     const handleCellPress = useCallback(
       (value: string) => {
@@ -251,7 +251,7 @@ const Pin = gestureHandlerRootHOC(
             break;
         }
       },
-      [setPinStatus, reset, pinStatus],
+      [pinBannedUntil, reset],
     );
 
     useEffect(() => {
@@ -262,17 +262,17 @@ const Pin = gestureHandlerRootHOC(
         }
         // Give some time for dot to fill
         await sleep(0);
-        if (type === 'set') {
+        if (typeRef.current === 'set') {
           if (pinStatus.firstPinEntered.length) {
-            setCurrentPin(
+            setCurrentPinRef.current(
               pinStatus as {firstPinEntered: Array<string>; pin: Array<string>},
             );
           } else {
-            setMessage(t('Confirm your PIN'));
+            setMessage(translateRef.current('Confirm your PIN'));
             setPinStatus({pin: [], firstPinEntered: pinStatus.pin});
           }
         } else {
-          checkPin(pinStatus.pin as Array<string>);
+          checkPinRef.current(pinStatus.pin as Array<string>);
         }
       };
       onCellPress();
@@ -325,7 +325,7 @@ const Pin = gestureHandlerRootHOC(
         }
       };
       checkAttempts();
-    }, [dispatch, attempts]);
+    }, [attempts, dispatch, logger, setCountDown]);
 
     useEffect(() => {
       const checkIfBanned = async () => {
@@ -411,30 +411,39 @@ const Pin = gestureHandlerRootHOC(
   }),
 );
 
+const PinModalContent: React.FC<{onModalHide: () => void}> = React.memo(
+  ({onModalHide}) => {
+    const isVisible = useAppSelector(({APP}) => APP.showPinModal);
+    const dispatch = useAppDispatch();
+
+    const handleBackdropPress = useCallback(() => {
+      dispatch(AppActions.dismissPinModal());
+    }, [dispatch]);
+
+    return (
+      <SheetModal
+        modalLibrary="bottom-sheet"
+        isVisible={isVisible}
+        onBackdropPress={handleBackdropPress}
+        onModalHide={onModalHide}
+        fullscreen
+        enableBackdropDismiss={false}
+        backgroundColor={BitPay}
+        disableAnimations>
+        <Pin />
+      </SheetModal>
+    );
+  },
+);
+
 const PinModal: React.FC = React.memo(() => {
   const isVisible = useAppSelector(({APP}) => APP.showPinModal);
-  const dispatch = useAppDispatch();
+  const {shouldRenderModal, handleModalHide} =
+    useModalContentLifecycle(isVisible);
 
-  const handleBackdropPress = useCallback(() => {
-    dispatch(AppActions.dismissPinModal());
-  }, [dispatch]);
-
-  if (!isVisible) {
-    return null;
-  }
-
-  return (
-    <SheetModal
-      modalLibrary="bottom-sheet"
-      isVisible={isVisible}
-      onBackdropPress={handleBackdropPress}
-      fullscreen
-      enableBackdropDismiss={false}
-      backgroundColor={BitPay}
-      disableAnimations>
-      <Pin />
-    </SheetModal>
-  );
+  return shouldRenderModal ? (
+    <PinModalContent onModalHide={handleModalHide} />
+  ) : null;
 });
 
 export default PinModal;
