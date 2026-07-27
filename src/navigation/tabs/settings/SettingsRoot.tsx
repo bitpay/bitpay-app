@@ -3,7 +3,6 @@ import React, {useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useTheme} from '../../../contexts';
-import {FlashList} from '@shopify/flash-list';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
@@ -48,6 +47,9 @@ const styles = StyleSheet.create({
   settingsHomeContainer: {
     flex: 1,
     paddingVertical: 10,
+  },
+  settingsHomeContent: {
+    paddingBottom: 100,
   },
   bitPayIdSettingsLink: {
     height: 'auto',
@@ -139,10 +141,12 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const listRef = useRef<FlashList<any>>(null);
+  const listRef = useRef<ScrollView>(null);
   useScrollToTop(listRef);
 
-  const memoizedSettingsConfigs = useMemo(
+  const memoizedSettingsConfigs = useMemo<
+    Array<{id: SettingsListType; title: string}>
+  >(
     () => [
       {
         id: 'General',
@@ -184,13 +188,9 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
     [t],
   );
 
-  const renderSettingItem = ({
-    item,
-  }: {
-    item: {id: SettingsListType; title: string};
-  }) => {
+  const renderSettingItem = (item: {id: SettingsListType; title: string}) => {
     return (
-      <View>
+      <View key={item.id}>
         <Setting
           activeOpacity={ActiveOpacity}
           testID={`settings-${item.id
@@ -213,7 +213,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
     );
   };
 
-  const ListHeaderComponent = () => (
+  const listHeader = (
     <BitPayIdSettingsLink
       style={{paddingHorizontal: 15}}
       testID="settings-bitpay-id-profile-row"
@@ -252,14 +252,12 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
         <HeaderTitle>{t('Settings')}</HeaderTitle>
       </HeaderContainer>
       <SettingsHomeContainer>
-        <FlashList
+        <ScrollView
           ref={listRef}
-          data={memoizedSettingsConfigs}
-          renderItem={renderSettingItem}
-          estimatedItemSize={56}
-          ListHeaderComponent={ListHeaderComponent}
-          contentContainerStyle={{paddingBottom: 100}}
-        />
+          contentContainerStyle={styles.settingsHomeContent}>
+          {listHeader}
+          {memoizedSettingsConfigs.map(renderSettingItem)}
+        </ScrollView>
       </SettingsHomeContainer>
     </TabContainer>
   );

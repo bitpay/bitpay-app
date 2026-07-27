@@ -50,7 +50,7 @@ export interface RecoveryPhraseParamList {
   keyId: string;
   words: string[];
   context: string;
-  key: Key;
+  key?: Key;
   walletTermsAccepted: boolean;
 }
 
@@ -119,7 +119,9 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const walletTermsAccepted = useAppSelector(
     ({WALLET}) => WALLET.walletTermsAccepted,
   );
-  const {words, context, key} = params;
+  const storedKey = useAppSelector(({WALLET}) => WALLET.keys[params.keyId]);
+  const {words, context} = params;
+  const key = params.key ?? storedKey;
 
   const renderWordPairs = () => {
     const wordPairs = [];
@@ -169,7 +171,7 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const onPressHeaderCancel = () => {
     haptic('impactLight');
 
-    if (context === 'settings' || key.backupComplete) {
+    if (context === 'settings' || key?.backupComplete) {
       navigation.goBack();
       return;
     }

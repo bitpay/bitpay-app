@@ -84,7 +84,6 @@ const Checkbox: React.FC<Props> = ({
 
   return (
     <RoundedCheckbox
-      key={Math.floor(Math.random() * 500)}
       onPress={() => !disabled && onPress()}
       active={checked}
       uncheckedColor={

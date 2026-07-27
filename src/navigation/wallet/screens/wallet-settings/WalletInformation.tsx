@@ -8,7 +8,7 @@ import {Hr, SettingTitle} from '../../../../components/styled/Containers';
 import {LightBlack, NeutralSlate} from '../../../../styles/colors';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
-import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   GetPrecision,
   IsUtxoChain,
@@ -20,10 +20,7 @@ import {
   View,
 } from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
-import {
-  formatCurrencyAbbreviation,
-  sleep,
-} from '../../../../utils/helper-methods';
+import {formatCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -33,6 +30,9 @@ import {
   TouchableOpacityProps,
 } from '@components/base/TouchableOpacity';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
+
+const DEFERRED_LOAD_FALLBACK_MS = 2000;
 
 const styles = StyleSheet.create({
   infoContainer: {
@@ -141,8 +141,18 @@ const WalletInformation = () => {
   const {t} = useTranslation();
   const logger = useLogger();
   const {
-    params: {wallet},
+    params: {
+      keyId: routeKeyId,
+      walletId: routeWalletId,
+      copayerId: routeCopayerId,
+    },
   } = useRoute<RouteProp<WalletGroupParamList, 'WalletInformation'>>();
+  const key = useAppSelector(({WALLET}) => WALLET.keys[routeKeyId]);
+  const wallet = findWalletById(
+    key.wallets,
+    routeWalletId,
+    routeCopayerId,
+  ) as Wallet;
 
   const {
     chain,
@@ -166,7 +176,6 @@ const WalletInformation = () => {
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedWalletId, setCopiedWalletId] = useState(false);
   const [copiedAddressType, setCopiedAddressType] = useState(false);
@@ -228,26 +237,51 @@ const WalletInformation = () => {
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
 
   useEffect(() => {
-    wallet?.getStatus(
-      {
-        tokenAddress: token ? token.address : null,
-        network: wallet.network,
-      },
-      async (err: any, status: Status) => {
-        if (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logger.error(`error [WalletInformation] [getStatus]: ${errStr}`);
-          setIsLoading(false);
-        } else if (status) {
-          setCopayers(status.wallet.copayers);
-          setBalanceByAddress(status.balance.byAddress);
-          await sleep(500);
-          setIsLoading(false);
+    let active = true;
+    let started = false;
+    const load = () => {
+      if (started || !active) {
+        return;
+      }
+
+      started = true;
+      wallet?.getStatus(
+        {
+          tokenAddress: token?.address,
+        },
+        (err, status) => {
+          if (!active) {
+            return;
+          }
+          if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [WalletInformation] [getStatus]: ${errStr}`);
+            setIsLoading(false);
+          } else if (status) {
+            setCopayers(status.wallet.copayers);
+            setBalanceByAddress(status.balance.byAddress);
+            setIsLoading(false);
+          }
+        },
+      );
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          load();
         }
       },
     );
-  }, [wallet]);
+    const fallbackTimer = setTimeout(load, DEFERRED_LOAD_FALLBACK_MS);
+
+    return () => {
+      active = false;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
+  }, [logger, navigation, token, wallet]);
 
   return (
     <SafeAreaView style={styles.infoContainer}>

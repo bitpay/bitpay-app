@@ -8,14 +8,13 @@ import {
   BWS_TX_HISTORY_LIMIT,
   GetTransactionHistory,
 } from '../../../../store/wallet/effects/transactions/transactions';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {WalletGroupParamList} from '../../WalletGroup';
 import _ from 'lodash';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import RNFS from 'react-native-fs';
 import {
-  PermissionsAndroid,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -34,12 +33,13 @@ import {
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {LogActions} from '../../../../store/log';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import Mailer from 'react-native-mail';
 import {IS_DESKTOP} from '../../../../constants';
 import {logManager} from '../../../../managers/LogManager';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 
 const styles = StyleSheet.create({
   container: {
@@ -65,8 +65,11 @@ const ExportTransactionHistory = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const {
-    params: {wallet},
+    params: {keyId, walletId, copayerId},
   } = useRoute<RouteProp<WalletGroupParamList, 'ExportTransactionHistory'>>();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId].wallets, walletId, copayerId),
+  ) as Wallet;
 
   const [buttonStateCsv, setButtonStateCsv] = useState<BtnState>();
   const [buttonStateEmail, setButtonStateEmail] = useState<BtnState>();

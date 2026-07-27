@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {BaseText, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme} from '../../../../contexts';
@@ -23,7 +29,6 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {LogActions} from '../../../../store/log';
 import {FlashList} from '@shopify/flash-list';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {logManager} from '../../../../managers/LogManager';
@@ -122,20 +127,23 @@ const AllAddresses = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const combinedAddresses = [
-    ...(usedAddresses?.length
-      ? [
-          {type: 'sectionHeader', title: t('Addresses with balance')},
-          ...usedAddresses,
-        ]
-      : []),
-    ...(unusedAddresses?.length
-      ? [
-          {type: 'sectionHeader', title: t('Unused addresses')},
-          ...unusedAddresses,
-        ]
-      : []),
-  ];
+  const combinedAddresses = useMemo(
+    () => [
+      ...(usedAddresses?.length
+        ? [
+            {type: 'sectionHeader', title: t('Addresses with balance')},
+            ...usedAddresses,
+          ]
+        : []),
+      ...(unusedAddresses?.length
+        ? [
+            {type: 'sectionHeader', title: t('Unused addresses')},
+            ...unusedAddresses,
+          ]
+        : []),
+    ],
+    [t, unusedAddresses, usedAddresses],
+  );
 
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [copiedAddress, setCopiedAddress] = useState('');
@@ -149,13 +157,13 @@ const AllAddresses = () => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('All Addresses')}</HeaderTitle>,
     });
-  });
+  }, [navigation, t]);
 
-  const copyText = (text: string) => {
+  const copyText = useCallback((text: string) => {
     haptic('impactLight');
     Clipboard.setString(text);
     setCopiedAddress(text);
-  };
+  }, []);
 
   const sendAddresses = async () => {
     try {
@@ -263,7 +271,14 @@ const AllAddresses = () => {
         );
       }
     },
-    [copiedAddress],
+    [
+      chain,
+      copiedAddress,
+      copyText,
+      currencyAbbreviation,
+      dispatch,
+      tokenAddress,
+    ],
   );
 
   return (
@@ -273,7 +288,6 @@ const AllAddresses = () => {
           data={combinedAddresses}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderItem}
-          estimatedItemSize={90}
           onEndReachedThreshold={0.3}
           contentContainerStyle={{paddingBottom: 150}}
         />

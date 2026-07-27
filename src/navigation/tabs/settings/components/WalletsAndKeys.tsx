@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {StyleSheet, View} from 'react-native';
@@ -32,14 +32,14 @@ const CreateOrImportLink = ({
 
 const WalletsAndKeys = () => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<any>>();
   const dispatch = useAppDispatch();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const keyList = Object.values(keys);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+  const keyList: Key[] = Object.values(keys);
 
   const onPressKey = (key: Key) => {
     key.backupComplete
-      ? navigation.navigate('KeySettings', {key})
+      ? navigation.navigate('KeySettings', {keyId: key.id})
       : dispatch(
           showBottomNotificationModal(
             keyBackupRequired(key, navigation, dispatch, 'settings'),
