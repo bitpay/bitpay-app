@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {useTheme} from '../../../../contexts';
@@ -33,6 +33,7 @@ import {
   toAllocationWallet,
 } from '../../../../utils/portfolio/allocation';
 import type {Key} from '../../../../store/wallet/wallet.models';
+import type {Rates} from '../../../../store/rate/rate.models';
 import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
@@ -98,24 +99,68 @@ const SKELETON_ASSET_ITEMS: AssetRowItem[] = Array.from(
     hasPnl: true,
   }),
 );
+const EMPTY_ASSET_SECTION_RATES: Rates = {};
+const EMPTY_ASSET_SECTION_KEYS: Record<string, Key> = {};
+const EMPTY_ASSET_SECTION_CAROUSEL_CONFIG: [] = [];
 
 type AssetsSectionProps = {
+  active?: boolean;
   enabled?: boolean;
 };
 
-const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
+const AssetsSection: React.FC<AssetsSectionProps> = ({
+  active = true,
+  enabled = true,
+}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [gainLossMode, setGainLossMode] = useState<GainLossMode>('1D');
-  const portfolioPopulateInProgress = useAppSelector(
-    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
+  const subscribedPortfolioPopulateInProgress = useAppSelector(({PORTFOLIO}) =>
+    active ? !!PORTFOLIO.populateStatus?.inProgress : false,
   );
-  const rates = useAppSelector(({RATE}) => RATE.rates);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+  const subscribedRates = useAppSelector(({RATE}) =>
+    active ? RATE.rates : EMPTY_ASSET_SECTION_RATES,
+  );
+  const subscribedDefaultAltCurrency = useAppSelector(({APP}) =>
+    active ? APP.defaultAltCurrency : undefined,
+  );
+  const subscribedShowPortfolioValue = useAppSelector(state =>
+    active ? selectShowPortfolioValue(state) : false,
+  );
+  const subscribedHomeCarouselConfig = useAppSelector(({APP}) =>
+    active ? APP.homeCarouselConfig : EMPTY_ASSET_SECTION_CAROUSEL_CONFIG,
+  );
+  const subscribedKeys = useAppSelector(({WALLET}) =>
+    active ? WALLET.keys : EMPTY_ASSET_SECTION_KEYS,
+  ) as Record<string, Key>;
+  const lastActiveInputsRef = useRef({
+    portfolioPopulateInProgress: subscribedPortfolioPopulateInProgress,
+    rates: subscribedRates,
+    defaultAltCurrency: subscribedDefaultAltCurrency,
+    showPortfolioValue: subscribedShowPortfolioValue,
+    homeCarouselConfig: subscribedHomeCarouselConfig,
+    keys: subscribedKeys,
+  });
+  if (active) {
+    lastActiveInputsRef.current = {
+      portfolioPopulateInProgress: subscribedPortfolioPopulateInProgress,
+      rates: subscribedRates,
+      defaultAltCurrency: subscribedDefaultAltCurrency,
+      showPortfolioValue: subscribedShowPortfolioValue,
+      homeCarouselConfig: subscribedHomeCarouselConfig,
+      keys: subscribedKeys,
+    };
+  }
+  const {
+    portfolioPopulateInProgress,
+    rates,
+    defaultAltCurrency,
+    showPortfolioValue,
+    homeCarouselConfig,
+    keys,
+  } = lastActiveInputsRef.current;
+  const quoteCurrency = defaultAltCurrency?.isoCode || 'USD';
   const focusRefreshToken = useScreenFocusRefreshToken();
   const portfolioChartsEnabled = showPortfolioValue === true;
   const visibleWallets = useMemo(() => {
@@ -127,11 +172,11 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const topAssetKeys = useMemo(() => {
     const allocationData = buildAllocationDataFromWalletRows(
       visibleWallets.map(toAllocationWallet),
-      defaultAltCurrency.isoCode,
+      quoteCurrency,
     );
 
     return allocationData.rows.slice(0, 4).map(row => row.key);
-  }, [defaultAltCurrency.isoCode, visibleWallets]);
+  }, [quoteCurrency, visibleWallets]);
   const legacyAssetRowsEnabled = !portfolioChartsEnabled;
   const legacyAssetRateRequests = useMemo(() => {
     if (!legacyAssetRowsEnabled) {
@@ -143,23 +188,38 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       orderedAssetKeys: topAssetKeys,
     });
   }, [legacyAssetRowsEnabled, topAssetKeys, visibleWallets]);
-  const legacyAssetBaselineTimestampMs = useMemo(
-    () => getLastDayTimestampStartOfHourMs(),
-    [defaultAltCurrency.isoCode, focusRefreshToken],
-  );
+  const legacyAssetBaselineRef = useRef({
+    focusRefreshToken,
+    quoteCurrency,
+    value: getLastDayTimestampStartOfHourMs(),
+  });
+  if (
+    active &&
+    (legacyAssetBaselineRef.current.focusRefreshToken !== focusRefreshToken ||
+      legacyAssetBaselineRef.current.quoteCurrency !== quoteCurrency)
+  ) {
+    legacyAssetBaselineRef.current = {
+      focusRefreshToken,
+      quoteCurrency,
+      value: getLastDayTimestampStartOfHourMs(),
+    };
+  }
+  const legacyAssetBaselineTimestampMs = legacyAssetBaselineRef.current.value;
   const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(
     {
-      quoteCurrency: defaultAltCurrency.isoCode,
+      quoteCurrency,
       requests: legacyAssetRateRequests,
       maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
-      enabled: legacyAssetRowsEnabled && legacyAssetRateRequests.length > 0,
+      enabled:
+        active && legacyAssetRowsEnabled && legacyAssetRateRequests.length > 0,
       clearOnRequestChange: true,
+      retainCacheWhenDisabled: true,
     },
   );
   const previewItems = useMemo(() => {
     return buildAssetPreviewRowItemsFromWallets({
       wallets: visibleWallets,
-      quoteCurrency: defaultAltCurrency.isoCode,
+      quoteCurrency,
       orderedAssetKeys: topAssetKeys,
       showScopedPnlLoading: portfolioChartsEnabled && topAssetKeys.length > 0,
       includeLegacyLastDayPnl: !portfolioChartsEnabled,
@@ -168,10 +228,10 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       baselineTimestampMs: legacyAssetBaselineTimestampMs,
     });
   }, [
-    defaultAltCurrency.isoCode,
     legacyAssetBaselineTimestampMs,
     legacyAssetFiatRateSeriesCache,
     portfolioChartsEnabled,
+    quoteCurrency,
     rates,
     topAssetKeys,
     visibleWallets,
@@ -184,7 +244,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     presentationResetToken,
   } = usePortfolioAssetRows({
     gainLossMode,
-    enabled: enabled && portfolioChartsEnabled,
+    enabled: active && enabled && portfolioChartsEnabled,
     assetKeys: topAssetKeys,
     externalRefreshToken: focusRefreshToken,
   });

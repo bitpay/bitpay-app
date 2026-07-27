@@ -126,7 +126,10 @@ import TransactionProposalRow from '../../../components/list/TransactionProposal
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
-import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {
+  DeviceEmitterEvents,
+  WalletLoadHistoryTarget,
+} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
 import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/swap-crypto-utils';
@@ -890,38 +893,50 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
-  const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
-    const txpsPending: TransactionProposal[] = [];
-    const txpsUnsent: TransactionProposal[] = [];
-    const formattedPendingTxps = BuildUiFriendlyList(
-      pendingTxps,
-      currencyAbbreviation,
+  const setNeedActionTxps = useCallback(
+    (pendingTxps: TransactionProposal[]) => {
+      const txpsPending: TransactionProposal[] = [];
+      const txpsUnsent: TransactionProposal[] = [];
+      const formattedPendingTxps = BuildUiFriendlyList(
+        pendingTxps,
+        currencyAbbreviation,
+        chain,
+        [],
+        tokenAddress,
+        walletId,
+      );
+      formattedPendingTxps.forEach((txp: any) => {
+        const action: any = _.find(txp.actions, {
+          copayerId: fullWalletObj.credentials.copayerId,
+        });
+
+        if (
+          ((!action || action.type === 'failed') && txp.status === 'pending') ||
+          (action && txp.status === 'accepted')
+        ) {
+          const target =
+            fullWalletObj.credentials.n > 1 ? txpsPending : txpsUnsent;
+          target.push(txp);
+        }
+      });
+      setNeedActionPendingTxps(current =>
+        current.length === 0 && txpsPending.length === 0
+          ? current
+          : txpsPending,
+      );
+      setNeedActionUnsentTxps(current =>
+        current.length === 0 && txpsUnsent.length === 0 ? current : txpsUnsent,
+      );
+    },
+    [
       chain,
-      [],
+      currencyAbbreviation,
+      fullWalletObj.credentials.copayerId,
+      fullWalletObj.credentials.n,
       tokenAddress,
       walletId,
-    );
-    formattedPendingTxps.forEach((txp: any) => {
-      const action: any = _.find(txp.actions, {
-        copayerId: fullWalletObj.credentials.copayerId,
-      });
-
-      const setPendingTx = (_txp: TransactionProposal) => {
-        fullWalletObj.credentials.n > 1
-          ? txpsPending.push(_txp)
-          : txpsUnsent.push(_txp);
-        setNeedActionPendingTxps(txpsPending);
-        setNeedActionUnsentTxps(txpsUnsent);
-      };
-      if ((!action || action.type === 'failed') && txp.status === 'pending') {
-        setPendingTx(txp);
-      }
-      // unsent transactions
-      if (action && txp.status === 'accepted') {
-        setPendingTx(txp);
-      }
-    });
-  };
+    ],
+  );
 
   const loadHistory = useCallback(
     async (refresh?: boolean) => {
@@ -990,6 +1005,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const loadHistoryRef = useRef(debouncedLoadHistory);
 
+  useEffect(() => {
+    loadHistoryRef.current = debouncedLoadHistory;
+
+    return () => {
+      debouncedLoadHistory.cancel();
+    };
+  }, [debouncedLoadHistory]);
+
   const updateWalletStatusAndProfileBalance = async () => {
     await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
     dispatch(updatePortfolioBalance());
@@ -1011,13 +1034,29 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-      () => {
+      (payload?: string | WalletLoadHistoryTarget) => {
+        if (
+          typeof payload === 'object' &&
+          (payload.historyContext !== 'wallet' ||
+            payload.keyId !== key.id ||
+            payload.walletId !== fullWalletObj.id ||
+            (payload.copayerId &&
+              payload.copayerId !== fullWalletObj.credentials?.copayerId))
+        ) {
+          return;
+        }
         loadHistoryRef.current(true);
         setNeedActionTxps(fullWalletObj.pendingTxps);
       },
     );
     return () => subscription.remove();
-  }, [keys]);
+  }, [
+    fullWalletObj.credentials?.copayerId,
+    fullWalletObj.id,
+    fullWalletObj.pendingTxps,
+    key.id,
+    setNeedActionTxps,
+  ]);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -1065,11 +1104,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   );
 
   const goToTransactionDetails = (transaction: any) => {
-    const onTxDescriptionChange = () => debouncedLoadHistory(true);
     navigation.navigate('TransactionDetails', {
-      wallet: fullWalletObj,
+      keyId: key.id,
+      walletId: fullWalletObj.id,
+      copayerId: fullWalletObj.credentials?.copayerId,
+      historyContext: 'wallet',
       transaction,
-      onTxDescriptionChange,
     });
   };
 
@@ -1714,7 +1754,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           chain: fullWalletObj.chain || '',
                         }),
                       );
-                      navigation.navigate('SendTo', {wallet: fullWalletObj});
+                      navigation.navigate('SendTo', {
+                        keyId: key.id,
+                        walletId: fullWalletObj.id,
+                        copayerId: fullWalletObj.credentials?.copayerId,
+                      });
                     },
                   }}
                 />

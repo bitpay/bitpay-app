@@ -141,7 +141,9 @@ export type WalletGroupParamList = {
   ExportKey: {code: string; keyName: string | undefined};
   WalletAmountScreen: AmountScreenParamList;
   SendTo: {
-    wallet: WalletModel;
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
   };
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
@@ -156,9 +158,11 @@ export type WalletGroupParamList = {
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {
-    wallet: WalletModel;
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+    historyContext: 'account' | 'wallet';
     transaction: any;
-    onTxDescriptionChange: () => void;
   };
   TransactionProposalDetails: {
     walletId: string;

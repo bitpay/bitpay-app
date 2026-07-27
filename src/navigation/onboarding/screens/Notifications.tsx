@@ -1,6 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
-import {ScrollView, SafeAreaView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';

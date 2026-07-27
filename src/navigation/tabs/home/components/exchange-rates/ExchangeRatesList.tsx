@@ -80,4 +80,4 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
   );
 };
 
-export default ExchangeRatesList;
+export default React.memo(ExchangeRatesList);
