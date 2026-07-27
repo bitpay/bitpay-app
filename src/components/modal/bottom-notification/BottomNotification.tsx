@@ -27,6 +27,7 @@ import WaitSvg from '../../../../assets/img/wait.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
+import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
 import {TouchableOpacity} from '../../base/TouchableOpacity';
 
 export interface BottomNotificationConfig {
@@ -188,6 +189,12 @@ const BottomNotificationContent = React.memo(() => {
     }
   }, [enableBackdropDismiss, dispatch, onBackdropDismiss]);
 
+  const handleModalHide = useCallback(() => {
+    if (!store.getState().APP.showBottomNotificationModal) {
+      dispatch(resetBottomNotificationModalConfig());
+    }
+  }, [dispatch, store]);
+
   const markdownStyle = useMemo(
     () => ({
       body: {
@@ -241,6 +248,7 @@ const BottomNotificationContent = React.memo(() => {
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
+      onModalHide={handleModalHide}
       onBackdropPress={handleBackdropPress}
       backgroundColor={theme.dark ? LightBlack : White}>
       <NotificationScrollView
