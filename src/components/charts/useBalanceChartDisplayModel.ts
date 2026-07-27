@@ -45,6 +45,7 @@ export type BalanceChartCallbackAnalysisPoint = {
 type BalanceChartCallbackChangeRowData = ChangeRowData;
 
 export type UseBalanceChartDisplayModelArgs = {
+  enabled?: boolean;
   scope: PortfolioBalanceChartScope;
   initialSelectedTimeframe: FiatRateInterval;
   balanceOffset: number;
@@ -205,6 +206,7 @@ const buildZeroBalanceSeries = (args: {
 };
 
 export function useBalanceChartDisplayModel({
+  enabled = true,
   scope,
   initialSelectedTimeframe,
   balanceOffset,
@@ -351,7 +353,10 @@ export function useBalanceChartDisplayModel({
     quoteCurrency: committedQueryQuoteCurrency,
     timeframes: [selectedTimeframe],
     maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
-    enabled: !!committedQueryQuoteCurrency && !renderZeroBalanceWhenNoSnapshots,
+    enabled:
+      enabled &&
+      !!committedQueryQuoteCurrency &&
+      !renderZeroBalanceWhenNoSnapshots,
   });
 
   const queryRevisionKey = [
@@ -383,6 +388,11 @@ export function useBalanceChartDisplayModel({
   chartQueryArgsRef.current = chartQueryArgs;
 
   useEffect(() => {
+    if (!enabled) {
+      activeRequestIdRef.current += 1;
+      return;
+    }
+
     if (!isBalanceChartDataReadyToQuery) {
       const visibleOwner = visibleStateRef.current;
       const canPreserveVisibleSeries =
@@ -514,6 +524,7 @@ export function useBalanceChartDisplayModel({
     commitVisibleSeries,
     chartDataRevisionSig,
     committedQueryQuoteCurrency,
+    enabled,
     isBalanceChartDataReadyToQuery,
     preserveVisibleSeriesWhileNotReady,
     queryRevisionKey,
@@ -680,7 +691,7 @@ export function useBalanceChartDisplayModel({
   }, [displayedAnalysisPoint, onDisplayedAnalysisPointChange]);
 
   const hasRenderableSeries = (visibleSeries?.graphPoints?.length || 0) >= 2;
-  const shouldDelayPendingOverlay = loading && hasRenderableSeries;
+  const shouldDelayPendingOverlay = enabled && loading && hasRenderableSeries;
 
   useEffect(() => {
     if (!shouldDelayPendingOverlay) {

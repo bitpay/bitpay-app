@@ -9,6 +9,7 @@ import {
 } from '../../../components/styled/Text';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
+  DeviceEventEmitter,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -71,13 +72,13 @@ import {
   Recipient,
   TransactionDetailsBuilt,
   TransactionOptionsContext,
+  Wallet,
 } from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {TxDescription} from './send/confirm/TxDescription';
 import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
-import {LogActions} from '../../../store/log';
 import {RootState} from '../../../store';
 import {getDecodedTransactionsByHash} from '../../../store/moralis/moralis.effects';
 import {
@@ -85,6 +86,11 @@ import {
   LabelTipText,
 } from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
 import {logManager} from '../../../managers/LogManager';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {
+  DeviceEmitterEvents,
+  WalletLoadHistoryTarget,
+} from '../../../constants/device-emitter-events';
 
 const styles = StyleSheet.create({
   txsDetailsContainer: {
@@ -312,11 +318,18 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
   );
 };
 
-const TransactionDetails = () => {
+type TransactionDetailsContentProps = {
+  transaction: any;
+  wallet: Wallet;
+  historyTarget: WalletLoadHistoryTarget;
+};
+
+const TransactionDetailsContent = ({
+  transaction,
+  wallet,
+  historyTarget,
+}: TransactionDetailsContentProps) => {
   const logger = useLogger();
-  const {
-    params: {transaction, wallet, onTxDescriptionChange},
-  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {t} = useTranslation();
@@ -573,7 +586,10 @@ const TransactionDetails = () => {
       };
       transaction.uiDescription = newTxDescription;
       setTxDescription(newTxDescription);
-      onTxDescriptionChange();
+      DeviceEventEmitter.emit(
+        DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+        historyTarget,
+      );
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error('[EditTxNote] ', e);
@@ -841,6 +857,41 @@ const TransactionDetails = () => {
         </ScrollView>
       ) : null}
     </TxsDetailsContainer>
+  );
+};
+
+const TransactionDetails = () => {
+  const {
+    params: {transaction, keyId, walletId, copayerId, historyContext},
+  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
+  const navigation = useNavigation();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId]?.wallets || [], walletId, copayerId),
+  ) as Wallet | undefined;
+
+  useEffect(() => {
+    if (!wallet) {
+      logManager.error(
+        `[TransactionDetails] Wallet ${walletId} is not available`,
+      );
+      navigation.goBack();
+    }
+  }, [navigation, wallet, walletId]);
+
+  if (!wallet) {
+    return (
+      <TxsDetailsContainer>
+        <TransactionDetailSkeleton />
+      </TxsDetailsContainer>
+    );
+  }
+
+  return (
+    <TransactionDetailsContent
+      transaction={transaction}
+      wallet={wallet}
+      historyTarget={{keyId, walletId, copayerId, historyContext}}
+    />
   );
 };
 

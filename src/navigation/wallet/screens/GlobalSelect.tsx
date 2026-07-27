@@ -7,9 +7,9 @@ import React, {
   useLayoutEffect,
 } from 'react';
 import {useTheme} from '../../../contexts';
-import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
+import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
-import {FlashList} from '@shopify/flash-list';
+import {FlashList, type FlashListProps} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
@@ -821,15 +821,28 @@ const filterCompleteWallets = (keys: Keys): Keys =>
     ),
   );
 
-const FlashListComponent: FlashList<any> | typeof BottomSheetFlashList = (
-  props: any,
-) => {
-  const Container = useMemo(
-    () => (props.inModal ? BottomSheetFlashList : FlashList),
-    [props.inModal],
-  );
-  return <Container {...props}>{props.children}</Container>;
+type FlashListComponentProps<T> = FlashListProps<T> & {
+  estimatedItemSize?: number;
+  inModal?: boolean;
 };
+
+const BottomSheetIntegratedFlashList = <T,>(
+  props: FlashListComponentProps<T>,
+) => {
+  const BottomSheetScrollable = useBottomSheetScrollableCreator();
+
+  return <FlashList {...props} renderScrollComponent={BottomSheetScrollable} />;
+};
+
+export const FlashListComponent = <T,>({
+  inModal,
+  ...props
+}: FlashListComponentProps<T>) =>
+  inModal ? (
+    <BottomSheetIntegratedFlashList {...props} />
+  ) : (
+    <FlashList {...props} />
+  );
 
 const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
@@ -1436,7 +1449,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           logManager.error('[GlobalSelect] ' + errStr);
         }
       } else if (context === 'send') {
-        navigation.navigate('SendTo', {wallet});
+        navigation.navigate('SendTo', {
+          keyId: wallet.keyId,
+          walletId: wallet.id,
+          copayerId: wallet.credentials?.copayerId,
+        });
       } else if (context === 'swapFrom') {
         navigation.navigate('SwapCryptoRoot', {selectedWallet: wallet});
       } else {

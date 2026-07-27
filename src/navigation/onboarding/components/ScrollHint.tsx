@@ -1,6 +1,6 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
-import Svg, {Defs, LinearGradient, Rect, Stop} from 'react-native-svg';
+import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../../../contexts';
 
 interface ScrollHintProps {
@@ -12,6 +12,9 @@ const styles = StyleSheet.create({
   scrollHintContainer: {
     bottom: 0,
     position: 'absolute',
+    width: '100%',
+  },
+  gradient: {
     width: '100%',
   },
 });
@@ -27,33 +30,18 @@ ScrollHintContainer.displayName = 'ScrollHintContainer';
 const ScrollHint: React.FC<ScrollHintProps> = props => {
   const {height, offset = 0.25} = props;
   const theme = useTheme();
+  const backgroundColor = theme.colors.background;
 
   return (
-    <Svg height={height} width={'100%'}>
-      <Defs>
-        <LinearGradient
-          id="overlay-bg"
-          x1={0}
-          x2={0}
-          y1={'0%'}
-          y2={'100%'}
-          gradientUnits="userSpaceOnUse">
-          <Stop
-            offset={0}
-            stopColor={theme.colors.background}
-            stopOpacity={0}
-          />
-          <Stop
-            offset={offset}
-            stopColor={theme.colors.background}
-            stopOpacity={1}
-          />
-        </LinearGradient>
-      </Defs>
-
-      <Rect fill={'url(#overlay-bg)'} height={'100%'} width={'100%'} />
-    </Svg>
+    <LinearGradient
+      pointerEvents="none"
+      colors={[`${backgroundColor}00`, backgroundColor]}
+      locations={[0, offset]}
+      start={{x: 0.5, y: 0}}
+      end={{x: 0.5, y: 1}}
+      style={[styles.gradient, {height}]}
+    />
   );
 };
 
-export default ScrollHint;
+export default React.memo(ScrollHint);

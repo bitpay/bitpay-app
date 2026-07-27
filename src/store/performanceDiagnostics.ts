@@ -1,3 +1,5 @@
+import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
+
 type ReduxPerformanceSnapshot = {
   actionType: string;
   dispatchDurationMs: number;
@@ -12,7 +14,7 @@ let lastSnapshot: ReduxPerformanceSnapshot | undefined;
 const round = (value: number) => Math.round(value * 10) / 10;
 
 export const beginReduxAction = (actionType: string) => {
-  if (!__DEV__) {
+  if (!PERF_DEBUG) {
     return;
   }
   activeActionType = actionType;
@@ -24,7 +26,7 @@ export const completeReduxAction = (
   dispatchDurationMs: number,
   changedSlices: string[],
 ) => {
-  if (!__DEV__) {
+  if (!PERF_DEBUG) {
     return;
   }
 
@@ -35,7 +37,7 @@ export const completeReduxAction = (
     completedAt: performance.now(),
   };
 
-  console.log(
+  performanceLog(
     `[PERF-REDUX] action:${actionType} dispatchMs:${round(
       dispatchDurationMs,
     )} changedSlices:${changedSlices.join(',') || 'none'}`,
@@ -43,11 +45,11 @@ export const completeReduxAction = (
 };
 
 export const logReducerDuration = (actionType: string, durationMs: number) => {
-  if (!__DEV__ || durationMs < 0.5) {
+  if (!PERF_DEBUG || durationMs < 0.5) {
     return;
   }
 
-  console.log(
+  performanceLog(
     `[PERF-REDUX] reducer action:${actionType} durationMs:${round(durationMs)}`,
   );
 };
@@ -57,11 +59,11 @@ export const logPersistPhase = (
   durationMs: number,
   key?: string | number,
 ) => {
-  if (!__DEV__ || durationMs < 0.5) {
+  if (!PERF_DEBUG || durationMs < 0.5) {
     return;
   }
 
-  console.log(
+  performanceLog(
     `[PERF-PERSIST] phase:${phase} key:${String(
       key ?? 'root',
     )} durationMs:${round(durationMs)} action:${activeActionType}`,
@@ -69,7 +71,7 @@ export const logPersistPhase = (
 };
 
 export const logPersistWrite = (durationMs: number, bytes: number) => {
-  if (!__DEV__) {
+  if (!PERF_DEBUG) {
     return;
   }
 
@@ -77,7 +79,7 @@ export const logPersistWrite = (durationMs: number, bytes: number) => {
     ? performance.now() - activeActionStartedAt
     : -1;
 
-  console.log(
+  performanceLog(
     `[PERF-PERSIST] phase:mmkv.set bytes:${bytes} durationMs:${round(
       durationMs,
     )} action:${activeActionType} actionElapsedMs:${round(actionElapsedMs)}`,

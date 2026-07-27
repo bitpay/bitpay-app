@@ -957,6 +957,16 @@ const portfolioChartSurfaceCases: Array<
   ...chartSurfaceCases,
 ];
 
+const finishOpeningTransition = async (screen: string) => {
+  if (screen !== 'Key Overview') {
+    return;
+  }
+
+  await act(async () => {
+    mockTransitionEndListener?.({data: {closing: false}});
+  });
+};
+
 const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
   computedAtomic: '110000000',
   deltaAtomic: '10000000',
@@ -1007,6 +1017,21 @@ describe('portfolio chart visibility guards', () => {
     });
 
     expect(mockBuildAccountList).toHaveBeenCalledTimes(1);
+  });
+
+  it('mounts the Key Overview balance chart only after the opening transition', async () => {
+    resetState(true);
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+
+    await finishOpeningTransition('Key Overview');
+
+    expect(mockBalanceHistoryChart).toHaveBeenCalled();
   });
 
   it('does not mount the WalletDetails balance chart or loader when Show Portfolio is disabled', async () => {
@@ -1281,6 +1306,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     },
@@ -1321,6 +1347,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1353,6 +1380,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
@@ -1376,6 +1404,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
@@ -1418,6 +1447,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
     },
@@ -1428,7 +1458,7 @@ describe('portfolio chart visibility guards', () => {
     async (_screen, makeScreen) => {
       resetState(true);
       setMockWalletZeroBalance();
-      mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+      mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
         checked: true,
         hasAllSnapshots: false,
         hasAnySnapshots: false,
@@ -1438,6 +1468,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1484,6 +1515,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
@@ -1529,6 +1561,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         view = renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1557,6 +1590,7 @@ describe('portfolio chart visibility guards', () => {
       await act(async () => {
         view = renderWithTheme(makeScreen());
       });
+      await finishOpeningTransition(_screen);
 
       expect(mockBalanceHistoryChart).toHaveBeenLastCalledWith(
         expect.objectContaining({
