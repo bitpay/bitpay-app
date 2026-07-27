@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, memo, useState} from 'react';
+import React, {useCallback, useMemo, memo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -51,9 +51,9 @@ import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
-import {sleep} from '../../../utils/helper-methods';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import SheetModal from '../base/sheet/SheetModal';
+import useModalContentLifecycle from '../base/useModalContentLifecycle';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -194,13 +194,20 @@ export const ChainSelectorFlashList = <T,>(
   return <FlashList {...props} renderScrollComponent={BottomSheetScrollable} />;
 };
 
-const ChainSelectorModalContent = () => {
+const ChainSelectorModalContent = ({
+  onModalHide,
+}: {
+  onModalHide: () => void;
+}) => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showChainSelectorModal,
   );
+  const isVisibleRef = useRef(isVisible);
+  const pendingModalHideActionRef = useRef<(() => void) | null>(null);
+  isVisibleRef.current = isVisible;
   const config = useSelector(
     ({APP}: RootState) => APP.chainSelectorModalConfig,
   );
@@ -290,25 +297,23 @@ const ChainSelectorModalContent = () => {
   ]);
 
   const handleChainSelect = useCallback(
-    async (supportedChain: any) => {
-      dispatch(AppActions.dismissChainSelectorModal());
-      await sleep(1000);
-      dispatch(AppActions.clearChainSelectorModalOptions());
-      const option = supportedChain?.chain as SupportedChains | undefined;
+    (supportedChain: any) => {
+      pendingModalHideActionRef.current = () => {
+        const option = supportedChain?.chain as SupportedChains | undefined;
 
-      // Check if the context is one of 'sell', 'swapFrom', 'swapTo', 'buy', 'walletconnect'
-      if (ignoreGlobalListContextList.includes(context as string)) {
-        dispatch(setLocalDefaultChainFilterOption(option));
-      } else {
-        dispatch(setDefaultChainFilterOption(option));
-      }
-      if (context === 'accounthistoryview') {
-        DeviceEventEmitter.emit(
-          DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-          option || '',
-        );
-      }
-      setSearchVal('');
+        if (ignoreGlobalListContextList.includes(context as string)) {
+          dispatch(setLocalDefaultChainFilterOption(option));
+        } else {
+          dispatch(setDefaultChainFilterOption(option));
+        }
+        if (context === 'accounthistoryview') {
+          DeviceEventEmitter.emit(
+            DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+            option || '',
+          );
+        }
+      };
+      dispatch(AppActions.dismissChainSelectorModal());
     },
     [dispatch, context],
   );
@@ -370,16 +375,23 @@ const ChainSelectorModalContent = () => {
     [],
   );
 
-  const handleBackdropPress = useCallback(async () => {
-    dispatch(AppActions.dismissChainSelectorModal());
-    await sleep(1000);
-    dispatch(AppActions.clearChainSelectorModalOptions());
-    setSearchVal('');
+  const handleBackdropPress = useCallback(() => {
     haptic('impactLight');
-    if (onBackdropDismiss) {
-      onBackdropDismiss();
-    }
+    pendingModalHideActionRef.current = onBackdropDismiss || null;
+    dispatch(AppActions.dismissChainSelectorModal());
   }, [dispatch, onBackdropDismiss]);
+
+  const handleContentModalHide = useCallback(() => {
+    const pendingAction = pendingModalHideActionRef.current;
+    pendingModalHideActionRef.current = null;
+    setSearchVal('');
+    pendingAction?.();
+
+    if (!isVisibleRef.current) {
+      dispatch(AppActions.clearChainSelectorModalOptions());
+    }
+    onModalHide();
+  }, [dispatch, onModalHide]);
 
   const modalHeight = useMemo(() => Math.min(600, HEIGHT - 150), []);
   const modalHeightPercentage = useMemo(
@@ -425,6 +437,7 @@ const ChainSelectorModalContent = () => {
       isVisible={isVisible}
       borderRadius={borderRadius}
       backdropOpacity={0.4}
+      onModalHide={handleContentModalHide}
       onBackdropPress={handleBackdropPress}>
       <View style={styles.chainSelectorContainer}>
         <WalletSelectMenuHeaderContainer>
@@ -485,8 +498,12 @@ const ChainSelectorModal = memo(() => {
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showChainSelectorModal,
   );
+  const {shouldRenderModal, handleModalHide} =
+    useModalContentLifecycle(isVisible);
 
-  return isVisible ? <ChainSelectorModalContent /> : null;
+  return shouldRenderModal ? (
+    <ChainSelectorModalContent onModalHide={handleModalHide} />
+  ) : null;
 });
 
 export default ChainSelectorModal;

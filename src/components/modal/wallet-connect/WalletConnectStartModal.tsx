@@ -59,6 +59,7 @@ import {WalletKitTypes} from '@reown/walletkit';
 import FastImage from 'react-native-fast-image';
 import {WalletConnectScreens} from '../../../navigation/wallet-connect/WalletConnectGroup';
 import SheetModal from '../base/sheet/SheetModal';
+import useModalContentLifecycle from '../base/useModalContentLifecycle';
 import {KeyWalletsRowProps} from '../../list/KeyWalletsRow';
 import {
   buildAccountList,
@@ -320,7 +321,11 @@ const transformErrorMessage = (error: string) => {
   }
 };
 
-const WalletConnectStartModalContent = memo(() => {
+const WalletConnectStartModalContentComponent = ({
+  onModalHide,
+}: {
+  onModalHide: () => void;
+}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -584,18 +589,18 @@ const WalletConnectStartModalContent = memo(() => {
         }),
       );
     }
-  }, [proposalData, selectedWallets, dispatch, navigation, t, keys]);
+  }, [proposalData, selectedWallets, dispatch, navigation, t, keys, logger]);
 
   const _setSelectedWallets = useCallback((_allKeys: KeyWalletsRowProps[]) => {
-    const selectedWallets: {
+    const nextSelectedWallets: {
       chain: string;
       address: string;
       network: string;
       supportedChain: string[];
     }[] = [];
     _allKeys &&
-      _allKeys.forEach((key: KeyWalletsRowProps) => {
-        key.accounts.forEach(
+      _allKeys.forEach((walletKey: KeyWalletsRowProps) => {
+        walletKey.accounts.forEach(
           (account: AccountRowProps & {checked?: boolean}) => {
             account.wallets.forEach((wallet: WalletRowProps) => {
               const {checked} = account;
@@ -610,7 +615,7 @@ const WalletConnectStartModalContent = memo(() => {
                   )
                   .map(([key]) => key);
                 if (_supportedChains.length > 0) {
-                  selectedWallets.push({
+                  nextSelectedWallets.push({
                     address: receiveAddress,
                     chain,
                     network,
@@ -622,13 +627,13 @@ const WalletConnectStartModalContent = memo(() => {
           },
         );
       });
-    setSelectedWallets(selectedWallets);
+    setSelectedWallets(nextSelectedWallets);
     setButtonState(undefined);
   }, []);
 
   const _setAllKeysAndSelectedWallets = useCallback(
     (
-      chainsSelected?: {chain: string; network: string}[],
+      selectedChains?: {chain: string; network: string}[],
       authPayload?: {chains: string[]},
     ) => {
       let accountChecked = false;
@@ -636,8 +641,8 @@ const WalletConnectStartModalContent = memo(() => {
         .map(key => {
           const filteredWallets = key.wallets.filter(
             ({chain, currencyAbbreviation, network}) => {
-              if (chainsSelected) {
-                return chainsSelected.some(
+              if (selectedChains) {
+                return selectedChains.some(
                   selected =>
                     chain === selected.chain &&
                     network === selected.network &&
@@ -737,9 +742,9 @@ const WalletConnectStartModalContent = memo(() => {
         seen.add(key);
         return true;
       });
-      const chainNames = [...new Set(uniqueChains.map(({chain}) => chain))];
+      const nextChainNames = [...new Set(uniqueChains.map(({chain}) => chain))];
       setChainsSelected(uniqueChains);
-      setChainNames(chainNames);
+      setChainNames(nextChainNames);
     },
     [],
   );
@@ -891,6 +896,7 @@ const WalletConnectStartModalContent = memo(() => {
   return (
     <SheetModal
       isVisible={showWalletConnectStartModal}
+      onModalHide={onModalHide}
       onBackdropPress={onBackdropPress}>
       <SheetContainer paddingHorizontal={0} style={staticStyles.sheetContainer}>
         <RNScrollView>
@@ -1092,10 +1098,18 @@ const WalletConnectStartModalContent = memo(() => {
       </SheetContainer>
     </SheetModal>
   );
-});
+};
+
+const WalletConnectStartModalContent = memo(
+  WalletConnectStartModalContentComponent,
+);
 
 export const WalletConnectStartModal = memo(() => {
   const isVisible = useAppSelector(({APP}) => APP.showWalletConnectStartModal);
+  const {shouldRenderModal, handleModalHide} =
+    useModalContentLifecycle(isVisible);
 
-  return isVisible ? <WalletConnectStartModalContent /> : null;
+  return shouldRenderModal ? (
+    <WalletConnectStartModalContent onModalHide={handleModalHide} />
+  ) : null;
 });

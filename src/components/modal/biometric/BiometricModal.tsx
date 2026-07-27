@@ -13,6 +13,7 @@ import {
 } from '../../../styles/colors';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import {useTheme} from '../../../contexts';
+import useModalContentLifecycle from '../base/useModalContentLifecycle';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
 import {
@@ -72,7 +73,9 @@ export interface BiometricModalConfig {
 
 const modalStyle = {margin: 0};
 
-const BiometricModalContent: React.FC = React.memo(() => {
+const BiometricModalContentComponent: React.FC<{
+  onModalHide: () => void;
+}> = ({onModalHide}) => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -168,6 +171,7 @@ const BiometricModalContent: React.FC = React.memo(() => {
     <View>
       <Modal
         isVisible={isVisible}
+        onModalHide={onModalHide}
         coverScreen={true}
         backdropTransitionOutTiming={0}
         hideModalContentWhileAnimating
@@ -206,12 +210,18 @@ const BiometricModalContent: React.FC = React.memo(() => {
       </Modal>
     </View>
   );
-});
+};
+
+const BiometricModalContent = React.memo(BiometricModalContentComponent);
 
 const BiometricModal: React.FC = React.memo(() => {
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
+  const {shouldRenderModal, handleModalHide} =
+    useModalContentLifecycle(isVisible);
 
-  return isVisible ? <BiometricModalContent /> : null;
+  return shouldRenderModal ? (
+    <BiometricModalContent onModalHide={handleModalHide} />
+  ) : null;
 });
 
 export default BiometricModal;

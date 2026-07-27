@@ -72,8 +72,10 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
   const isVisibleRef = useRef(isVisible);
   const isBottomSheetPresentedRef = useRef(false);
+  const isBottomSheetReadyRef = useRef(false);
   const isDismissingRef = useRef(false);
   const pendingOpenRef = useRef(false);
+  const pendingDismissRef = useRef(false);
   isVisibleRef.current = isVisible;
 
   const onAppStateChange = useCallback(
@@ -102,14 +104,20 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
     if (isVisible) {
       setShouldRenderBottomSheetContent(true);
+      pendingDismissRef.current = false;
 
       if (isDismissingRef.current) {
         pendingOpenRef.current = true;
       }
     } else if (isBottomSheetPresentedRef.current && !isDismissingRef.current) {
       pendingOpenRef.current = false;
-      isDismissingRef.current = true;
-      bottomSheetModalRef.current?.dismiss();
+
+      if (isBottomSheetReadyRef.current) {
+        isDismissingRef.current = true;
+        bottomSheetModalRef.current?.dismiss();
+      } else {
+        pendingDismissRef.current = true;
+      }
     } else if (!isDismissingRef.current) {
       pendingOpenRef.current = false;
       setShouldRenderBottomSheetContent(false);
@@ -127,8 +135,15 @@ const SheetModal: React.FC<SheetModalProps> = ({
       return;
     }
 
+    const bottomSheetModal = bottomSheetModalRef.current;
+    if (!bottomSheetModal) {
+      return;
+    }
+
     isBottomSheetPresentedRef.current = true;
-    bottomSheetModalRef.current?.present();
+    isBottomSheetReadyRef.current = false;
+    pendingDismissRef.current = false;
+    bottomSheetModal.present();
   }, [isVisible, modalLibrary, shouldRenderBottomSheetContent]);
 
   useEffect(() => {
@@ -181,7 +196,9 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
   const handleDismiss = useCallback(() => {
     isBottomSheetPresentedRef.current = false;
+    isBottomSheetReadyRef.current = false;
     isDismissingRef.current = false;
+    pendingDismissRef.current = false;
 
     const shouldReopen =
       pendingOpenRef.current && isVisibleRef.current === true;
@@ -191,6 +208,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
       requestAnimationFrame(() => {
         if (isVisibleRef.current) {
           isBottomSheetPresentedRef.current = true;
+          isBottomSheetReadyRef.current = false;
           bottomSheetModalRef.current?.present();
         } else {
           setShouldRenderBottomSheetContent(false);
@@ -202,6 +220,38 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
     onModalHide?.();
   }, [onModalHide]);
+
+  const handleBottomSheetReady = useCallback(() => {
+    isBottomSheetReadyRef.current = true;
+
+    if (
+      pendingDismissRef.current &&
+      !isVisibleRef.current &&
+      !isDismissingRef.current
+    ) {
+      pendingDismissRef.current = false;
+      isDismissingRef.current = true;
+      bottomSheetModalRef.current?.dismiss();
+    }
+  }, []);
+
+  const handleBottomSheetAnimate = useCallback(
+    (_fromIndex: number, toIndex: number) => {
+      if (toIndex >= 0) {
+        handleBottomSheetReady();
+      }
+    },
+    [handleBottomSheetReady],
+  );
+
+  const handleBottomSheetChange = useCallback(
+    (index: number) => {
+      if (index >= 0) {
+        handleBottomSheetReady();
+      }
+    },
+    [handleBottomSheetReady],
+  );
 
   const handleModalHide = useCallback(() => {
     if (unmountContentWhenHidden && !isVisibleRef.current) {
@@ -239,6 +289,8 @@ const SheetModal: React.FC<SheetModalProps> = ({
         handleComponent={null}
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
+        onAnimate={handleBottomSheetAnimate}
+        onChange={handleBottomSheetChange}
         onDismiss={handleDismiss}
         ref={bottomSheetModalRef}>
         {shouldRenderBottomSheetContent ? (
