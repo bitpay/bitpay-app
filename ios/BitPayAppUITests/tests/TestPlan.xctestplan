@@ -9,10 +9,11 @@
     }
   ],
   "defaultOptions" : {
+    "areLocalizationScreenshotsEnabled" : true,
+    "systemAttachmentLifetime" : "keepAlways",
     "testTimeoutsEnabled" : true,
     "uiTestingScreenshotsLifetime" : "keepAlways",
-    "userAttachmentLifetime" : "keepAlways",
-    "systemAttachmentLifetime" : "keepAlways"
+    "userAttachmentLifetime" : "keepAlways"
   },
   "testTargets" : [
     {
