@@ -1,4 +1,12 @@
-import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -30,8 +38,6 @@ import {
   SlateDark,
   Warning,
   White,
-  Slate,
-  Black,
 } from '../../../../../styles/colors';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {AboutGroupParamList, AboutScreens} from '../AboutGroup';
@@ -56,10 +62,22 @@ type SessionLogsScreenProps = NativeStackScreenProps<
   AboutScreens.SESSION_LOGS
 >;
 
+const MIN_LOG_LEVEL = LogLevel.Error;
+const MAX_LOG_LEVEL = LogLevel.Debug;
+const TOTAL_LOG_LEVELS = MAX_LOG_LEVEL - MIN_LOG_LEVEL + 1;
+
+const THUMB_WIDTH = IS_IOS || IS_ANDROID ? 30 : 0;
+const SLIDER_WIDTH =
+  ((TOTAL_LOG_LEVELS - 1) / TOTAL_LOG_LEVELS) * WIDTH + THUMB_WIDTH;
+const CONTENT_READY_FALLBACK_MS = 2000;
+
 const styles = StyleSheet.create({
   logsContainer: {
     flex: 1,
     paddingBottom: IS_ANDROID ? 55 : 0,
+  },
+  listContent: {
+    paddingBottom: 150,
   },
   logs: {
     fontSize: 14,
@@ -94,15 +112,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
   },
-  optionDescriptionText: {
-    fontStyle: 'normal',
-    fontWeight: '400',
-    fontSize: 14,
-    lineHeight: 19,
-  },
   optionIconContainer: {
     justifyContent: 'center',
     width: 20,
+  },
+  slider: {
+    alignSelf: 'center',
+    width: SLIDER_WIDTH,
+    height: 40,
   },
 });
 
@@ -181,23 +198,6 @@ const OptionTitleText = ({
   );
 };
 
-const OptionDescriptionText = ({
-  style,
-  ...rest
-}: React.ComponentProps<typeof BaseText>) => {
-  const theme = useTheme();
-  return (
-    <BaseText
-      style={[
-        styles.optionDescriptionText,
-        {color: theme.dark ? Slate : Black},
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
 const OptionIconContainer = ({
   style,
   ...rest
@@ -205,19 +205,13 @@ const OptionIconContainer = ({
   <View style={[styles.optionIconContainer, style]} {...rest} />
 );
 
-const MIN_LOG_LEVEL = LogLevel.Error;
-const MAX_LOG_LEVEL = LogLevel.Debug;
-const TOTAL_LOG_LEVELS = MAX_LOG_LEVEL - MIN_LOG_LEVEL + 1;
-
-const THUMB_WIDTH = IS_IOS || IS_ANDROID ? 30 : 0;
-const SLIDER_WIDTH =
-  ((TOTAL_LOG_LEVELS - 1) / TOTAL_LOG_LEVELS) * WIDTH + THUMB_WIDTH;
-
 const LogColorMap: Partial<{[key in LogLevel]: string | null}> = {
   [LogLevel.Error]: Caution,
   [LogLevel.Warn]: Warning,
   [LogLevel.Debug]: LinkBlue,
 };
+
+type SessionLogListItem = string | LogEntry;
 
 const FilterLabels: React.FC<{onPress?: (level: LogLevel) => any}> = memo(
   props => {
@@ -239,13 +233,34 @@ const FilterLabels: React.FC<{onPress?: (level: LogLevel) => any}> = memo(
   },
 );
 
-const renderItem = ({item}: {item: LogEntry}) => (
+const renderLogEntry = ({item}: {item: LogEntry}) => (
   <Logs color={LogColorMap[item.level]}>
     [{LogLevel[item.level]}] <LogsMessage>{item.message}</LogsMessage>
   </Logs>
 );
 
-const keyExtractor = (item: LogEntry, index: number) => index.toString();
+const renderListItem = ({item}: {item: SessionLogListItem}) => {
+  if (typeof item === 'string') {
+    return <ListHeader>{item}</ListHeader>;
+  }
+
+  return renderLogEntry({item});
+};
+
+const keyExtractor = (_item: SessionLogListItem, index: number) =>
+  index.toString();
+
+const getItemType = (item: SessionLogListItem) =>
+  typeof item === 'string' ? 'sectionHeader' : 'row';
+
+const printLogs = (logsToPrint: LogEntry[]) =>
+  logsToPrint
+    .map(log => {
+      const formattedLevel = LogLevel[log.level].toLowerCase();
+
+      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+    })
+    .join('');
 
 const SessionLogs = ({}: SessionLogsScreenProps) => {
   const {t} = useTranslation();
@@ -253,70 +268,96 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
+  const [contentReady, setContentReady] = useState(false);
+  const sessionFallbackStartTime = useRef(Date.now());
 
-  const {logs} = useLogContext();
+  const logData = useLogContext(contentReady);
+  const {logs} = logData;
 
   const [filterLevel, setFilterLevel] = useState(LogLevel.Debug);
+  const [persistedLogs, setPersistedLogs] = useState<LogEntry[]>([]);
+  const hasLoadedPersistedLogs = useRef(false);
 
-  const filteredLogs = logs.filter(log => log.level <= filterLevel);
-  const currentSessionStartTime = logs.length
-    ? new Date(logs[0].timestamp)
-    : new Date();
-  const [filteredPersistedLogs, setFilteredPersistedLogs] = useState(
-    [] as LogEntry[],
+  const currentSessionStartTime = useMemo(
+    () =>
+      logData.logs.length
+        ? new Date(logData.logs[0].timestamp).getTime()
+        : sessionFallbackStartTime.current,
+    [logData],
   );
-  const [persistedLogs, setPersistedLogs] = useState([] as LogEntry[]);
 
-  const printLogs = (logsToPrint: LogEntry[]) =>
-    logsToPrint
-      .map(log => {
-        const formattedLevel = LogLevel[log.level].toLowerCase();
+  const filteredLogs = useMemo(
+    () => logData.logs.filter(log => log.level <= filterLevel),
+    [filterLevel, logData],
+  );
 
-        return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
-      })
-      .join('');
+  const filteredPersistedLogs = useMemo(
+    () =>
+      persistedLogs.filter(
+        log =>
+          log.level <= filterLevel &&
+          new Date(log.timestamp).getTime() < currentSessionStartTime,
+      ),
+    [currentSessionStartTime, filterLevel, persistedLogs],
+  );
 
-  const onFilterLevelChange = (level: LogLevel) => {
-    if (level !== filterLevel) {
-      setFilterLevel(level);
-    }
-  };
+  const combinedLogs = useMemo<SessionLogListItem[]>(
+    () => [
+      t('Previous Sessions'),
+      ...filteredPersistedLogs,
+      t('Current Session'),
+      ...filteredLogs,
+    ],
+    [filteredLogs, filteredPersistedLogs, t],
+  );
 
-  const shareFile = async (data: string) => {
-    try {
-      if (Platform.OS === 'android' && Platform.Version < 30) {
-        await isAndroidStoragePermissionGranted(dispatch);
+  const onFilterLevelChange = useCallback((level: LogLevel) => {
+    setFilterLevel(currentLevel =>
+      level === currentLevel ? currentLevel : level,
+    );
+  }, []);
+
+  const openOptions = useCallback(() => setShowOptions(true), []);
+  const closeOptions = useCallback(() => setShowOptions(false), []);
+
+  const shareFile = useCallback(
+    async (data: string) => {
+      try {
+        if (Platform.OS === 'android' && Platform.Version < 30) {
+          await isAndroidStoragePermissionGranted(dispatch);
+        }
+
+        const rootPath =
+          Platform.OS === 'ios'
+            ? RNFS.LibraryDirectoryPath
+            : RNFS.TemporaryDirectoryPath;
+        const txtFilename = `${APP_NAME_UPPERCASE}-logs`;
+        let filePath = `${rootPath}/${txtFilename}`;
+
+        await RNFS.mkdir(filePath);
+
+        filePath += '.txt';
+        const opts: ShareOptions = {
+          title: txtFilename,
+          url: `file://${filePath}`,
+          subject: `${APP_NAME_UPPERCASE} Logs`,
+        };
+
+        await RNFS.writeFile(filePath, data, 'utf8');
+        await dispatch(shareFileUtil(opts));
+      } catch (err: any) {
+        logManager.debug(`[shareFile]: ${err.message}`);
+        if (err && err.message === 'User did not share') {
+          return;
+        } else {
+          throw err;
+        }
       }
+    },
+    [dispatch],
+  );
 
-      const rootPath =
-        Platform.OS === 'ios'
-          ? RNFS.LibraryDirectoryPath
-          : RNFS.TemporaryDirectoryPath;
-      const txtFilename = `${APP_NAME_UPPERCASE}-logs`;
-      let filePath = `${rootPath}/${txtFilename}`;
-
-      await RNFS.mkdir(filePath);
-
-      filePath += '.txt';
-      const opts: ShareOptions = {
-        title: txtFilename,
-        url: `file://${filePath}`,
-        subject: `${APP_NAME_UPPERCASE} Logs`,
-      };
-
-      await RNFS.writeFile(filePath, data, 'utf8');
-      await dispatch(shareFileUtil(opts));
-    } catch (err: any) {
-      logManager.debug(`[shareFile]: ${err.message}`);
-      if (err && err.message === 'User did not share') {
-        return;
-      } else {
-        throw err;
-      }
-    }
-  };
-
-  const handleEmail = (data: string) => {
+  const handleEmail = useCallback((data: string) => {
     Mailer.mail(
       {
         subject: `BitPay v${APP_VERSION} Logs`,
@@ -332,112 +373,160 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
         }
       },
     );
-  };
+  }, []);
 
-  const showDisclaimer = (option: 'email' | 'share') => {
-    setShowOptions(false);
-    let logStr =
-      'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
-    const persistedLogString = persistedLogs.length
-      ? 'Previous Sessions\n\n' +
-        printLogs(persistedLogs) +
-        '\n\nCurrent Session\n\n'
-      : '';
-    logStr += persistedLogString + printLogs(logs); // Add current session logs and persisted logs including all levels
+  const showDisclaimer = useCallback(
+    (option: 'email' | 'share') => {
+      closeOptions();
+      let logStr =
+        'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
+      const persistedLogString = persistedLogs.length
+        ? 'Previous Sessions\n\n' +
+          printLogs(persistedLogs) +
+          '\n\nCurrent Session\n\n'
+        : '';
+      logStr += persistedLogString + printLogs(logs);
 
-    Alert.alert(
-      t('Warning'),
-      t('Be careful, this could contain sensitive private data'),
-      [
-        {
-          text: t('Continue'),
-          onPress: () => {
-            switch (option) {
-              case 'email':
-                handleEmail(logStr);
-                break;
-              case 'share':
-                shareFile(logStr);
-                break;
-            }
+      Alert.alert(
+        t('Warning'),
+        t('Be careful, this could contain sensitive private data'),
+        [
+          {
+            text: t('Continue'),
+            onPress: () => {
+              switch (option) {
+                case 'email':
+                  handleEmail(logStr);
+                  break;
+                case 'share':
+                  shareFile(logStr);
+                  break;
+              }
+            },
           },
-        },
-        {text: t('Cancel')},
-      ],
-      {cancelable: true},
-    );
-  };
+          {text: t('Cancel')},
+        ],
+        {cancelable: true},
+      );
+    },
+    [closeOptions, handleEmail, logs, persistedLogs, shareFile, t],
+  );
+
+  const showShareDisclaimer = useCallback(
+    () => showDisclaimer('share'),
+    [showDisclaimer],
+  );
+  const showEmailDisclaimer = useCallback(
+    () => showDisclaimer('email'),
+    [showDisclaimer],
+  );
+  const renderHeaderRight = useCallback(
+    () => (contentReady ? <Settings onPress={openOptions} /> : null),
+    [contentReady, openOptions],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => <Settings onPress={() => setShowOptions(true)} />,
+      headerRight: renderHeaderRight,
     });
+  }, [navigation, renderHeaderRight]);
+
+  useEffect(() => {
+    let didFinish = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finishOpeningTransition = () => {
+      if (didFinish) {
+        return;
+      }
+
+      didFinish = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      setContentReady(true);
+    };
+
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          finishOpeningTransition();
+        }
+      },
+    );
+
+    fallbackTimer = setTimeout(
+      finishOpeningTransition,
+      CONTENT_READY_FALLBACK_MS,
+    );
+
+    return () => {
+      didFinish = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      unsubscribe();
+    };
   }, [navigation]);
 
   useEffect(() => {
-    const value = storage.getString('persist:logs');
-    if (value) {
-      const _filteredPersistedLogs = JSON.parse(value).filter(
-        (log: LogEntry) =>
-          log.level <= filterLevel &&
-          new Date(log.timestamp) < currentSessionStartTime,
-      );
-      setPersistedLogs(JSON.parse(value));
-      setFilteredPersistedLogs(_filteredPersistedLogs);
+    if (!contentReady || hasLoadedPersistedLogs.current) {
+      return;
     }
-  }, []);
+
+    hasLoadedPersistedLogs.current = true;
+    const value = storage.getString('persist:logs');
+    if (!value) {
+      return;
+    }
+
+    try {
+      const parsedLogs = JSON.parse(value);
+      if (Array.isArray(parsedLogs)) {
+        setPersistedLogs(parsedLogs);
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.warn(
+        `[SessionLogs] Unable to parse persisted logs: ${errorMessage}`,
+      );
+    }
+  }, [contentReady]);
 
   return (
     <SafeAreaView style={styles.logsContainer}>
-      <FlashList
-        contentContainerStyle={{
-          paddingBottom: 150,
-        }}
-        data={[
-          t('Previous Sessions'),
-          ...filteredPersistedLogs,
-          t('Current Session'),
-          ...filteredLogs,
-        ]}
-        renderItem={({item}) => {
-          if (typeof item === 'string') {
-            return <ListHeader>{item}</ListHeader>;
-          } else {
-            return renderItem({item});
-          }
-        }}
-        estimatedItemSize={23}
-        getItemType={item =>
-          typeof item === 'string' ? 'sectionHeader' : 'row'
-        }
-        keyExtractor={keyExtractor}
-      />
+      {contentReady && (
+        <>
+          <FlashList<SessionLogListItem>
+            contentContainerStyle={styles.listContent}
+            data={combinedLogs}
+            renderItem={renderListItem}
+            getItemType={getItemType}
+            keyExtractor={keyExtractor}
+          />
 
-      <FilterLabels onPress={onFilterLevelChange} />
+          <FilterLabels onPress={onFilterLevelChange} />
 
-      <Slider
-        step={1}
-        value={filterLevel}
-        minimumValue={MIN_LOG_LEVEL}
-        maximumValue={MAX_LOG_LEVEL}
-        onSlidingComplete={onFilterLevelChange}
-        style={{
-          alignSelf: 'center',
-          width: SLIDER_WIDTH,
-          height: 40,
-        }}
-        // iOS
-        tapToSeek={true}
-      />
+          <Slider
+            step={1}
+            value={filterLevel}
+            minimumValue={MIN_LOG_LEVEL}
+            maximumValue={MAX_LOG_LEVEL}
+            onSlidingComplete={onFilterLevelChange}
+            style={styles.slider}
+            tapToSeek={true}
+          />
+        </>
+      )}
 
       <SheetModal
         placement={'bottom'}
         isVisible={showOptions}
-        onBackdropPress={() => setShowOptions(false)}>
+        onBackdropPress={closeOptions}>
         <SheetContainer placement={'bottom'}>
-          <OptionContainer
-            placement={'bottom'}
-            onPress={() => showDisclaimer('share')}>
+          <OptionContainer placement={'bottom'} onPress={showShareDisclaimer}>
             <OptionIconContainer>
               {theme.dark ? <ShareIconWhite /> : <ShareIcon />}
             </OptionIconContainer>
@@ -446,9 +535,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
             </OptionTextContainer>
           </OptionContainer>
           {!IS_DESKTOP && (
-            <OptionContainer
-              placement={'bottom'}
-              onPress={() => showDisclaimer('email')}>
+            <OptionContainer placement={'bottom'} onPress={showEmailDisclaimer}>
               <OptionIconContainer>
                 {theme.dark ? <SendIconWhite /> : <SendIcon />}
               </OptionIconContainer>

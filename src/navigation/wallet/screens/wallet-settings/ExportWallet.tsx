@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {HeaderTitle, Paragraph} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme} from '../../../../contexts';
@@ -32,7 +32,6 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {IS_DESKTOP} from '../../../../constants';
@@ -42,6 +41,10 @@ import {Platform, SafeAreaView, StyleSheet, View} from 'react-native';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {logManager} from '../../../../managers/LogManager';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../../store/wallet/wallet.models';
+import {RootState} from '../../../../store';
+import {ContactRowProps} from '../../../../components/list/ContactRow';
 
 const BWCProvider = BwcProvider.getInstance();
 const Encryption = BWCProvider.getEncryption();
@@ -158,8 +161,11 @@ const CheckBoxContainer: React.FC<React.ComponentProps<typeof View>> = ({
 const ExportWallet = () => {
   const {t} = useTranslation();
   const {
-    params: {wallet, keyObj},
+    params: {keyId, walletId, copayerId, keyObj},
   } = useRoute<RouteProp<WalletGroupParamList, 'ExportWallet'>>();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId].wallets, walletId, copayerId),
+  ) as Wallet;
 
   const {network} = wallet;
 
@@ -167,8 +173,12 @@ const ExportWallet = () => {
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
   const [dontIncludePrivateKey, setDontIncludePrivateKey] = useState(false);
-  const contacts = useAppSelector(({CONTACT}) =>
-    CONTACT.list.filter(c => c.network === network),
+  const contactList = useAppSelector(
+    ({CONTACT}: RootState) => CONTACT.list,
+  ) as ContactRowProps[];
+  const contacts = useMemo(
+    () => contactList.filter(contact => contact.network === network),
+    [contactList, network],
   );
   const [copyButtonState, setCopyButtonState] = useState<ButtonState>();
   const [sendButtonState, setSendButtonState] = useState<ButtonState>();
@@ -179,24 +189,29 @@ const ExportWallet = () => {
     });
   }, [navigation, t]);
 
-  const schema = yup.object().shape({
-    password: yup.string().required(),
-    confirmPassword: yup
-      .string()
-      .required()
-      .oneOf([yup.ref('password')], t('Passwords must match')),
-  });
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        password: yup.string().required(),
+        confirmPassword: yup
+          .string()
+          .required()
+          .oneOf([yup.ref('password')], t('Passwords must match')),
+      }),
+    [t],
+  );
+  const resolver = useMemo(() => yupResolver(schema), [schema]);
   const {
     control,
     handleSubmit,
     formState: {errors},
   } = useForm<ExportWalletPasswordFieldValues>({
-    resolver: yupResolver(schema),
+    resolver,
   });
 
-  const walletExport = (password: any) => {
+  const walletExport = (password: string): string => {
     if (!password) {
-      return null;
+      throw new Error('Password is required');
     }
 
     const opts = {
@@ -225,9 +240,13 @@ const ExportWallet = () => {
 
     backup = JSON.stringify(backup);
 
-    return JSON.stringify(
+    const encryptedBackup = JSON.stringify(
       Encryption.encryptWithPassword(backup, password, {iter: 1000}),
     );
+    if (!encryptedBackup) {
+      throw new Error('Unable to encrypt wallet backup');
+    }
+    return encryptedBackup;
   };
 
   const onCopyToClipboard = async ({password}: {password: string}) => {
@@ -238,7 +257,7 @@ const ExportWallet = () => {
       setCopyButtonState('success');
       await sleep(500);
       setCopyButtonState(undefined);
-    } catch (e) {
+    } catch {
       setCopyButtonState('failed');
       await sleep(500);
       setCopyButtonState(undefined);

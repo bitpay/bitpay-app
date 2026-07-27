@@ -16,6 +16,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {
   FlatList,
+  ActivityIndicator,
   Keyboard,
   SafeAreaView,
   SectionList,
@@ -38,6 +39,8 @@ import {coinbaseInitialize} from '../../../../../store/coinbase';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../../../contexts';
+
+const LIST_READY_FALLBACK_MS = 2000;
 
 const styles = StyleSheet.create({
   altCurrencySettingsContainer: {
@@ -115,18 +118,6 @@ const SearchIconContainer = ({
   <View style={[styles.searchIconContainer, style]} {...rest} />
 );
 
-interface HideableViewProps {
-  show: boolean;
-}
-
-const HideableView = ({
-  show,
-  style,
-  ...rest
-}: HideableViewProps & React.ComponentProps<typeof View>) => (
-  <View style={[show ? undefined : {display: 'none'}, style]} {...rest} />
-);
-
 const ListHeader = ({
   style,
   ...rest
@@ -192,6 +183,7 @@ const AltCurrencySettings = () => {
   }, [alternativeCurrencies, recentDefaultAltCurrency, selectedAltCurrency]);
 
   const [searchVal, setSearchVal] = useState('');
+  const [listReady, setListReady] = useState(false);
   const [searchResults, setSearchResults] = useState(
     [] as AltCurrenciesRowProps[],
   );
@@ -221,6 +213,39 @@ const AltCurrencySettings = () => {
       updateSearchResults.cancel();
     };
   }, [updateSearchResults]);
+
+  useEffect(() => {
+    let completed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    const complete = () => {
+      if (completed) {
+        return;
+      }
+
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      setListReady(true);
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          complete();
+        }
+      },
+    );
+    fallbackTimer = setTimeout(complete, LIST_READY_FALLBACK_MS);
+
+    return () => {
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      unsubscribe();
+    };
+  }, [navigation]);
 
   const keyExtractor = (item: AltCurrenciesRowProps) => {
     return item.isoCode;
@@ -297,8 +322,8 @@ const AltCurrencySettings = () => {
           </SearchIconContainer>
         </SearchContainer>
       </Header>
-      <HideableView show={!!searchVal}>
-        {searchResults.length ? (
+      {searchVal ? (
+        searchResults.length ? (
           <SearchResults>
             <FlatList
               data={searchResults}
@@ -316,24 +341,26 @@ const AltCurrencySettings = () => {
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </NoResultsDescription>
           </NoResultsContainer>
-        )}
-      </HideableView>
-
-      <HideableView show={!searchVal}>
+        )
+      ) : (
         <SearchResults>
-          <SectionList
-            contentContainerStyle={{paddingBottom: 150, marginTop: 5}}
-            sections={altCurrencyList}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            stickySectionHeadersEnabled={false}
-            renderSectionHeader={({section: {title}}) => (
-              <ListHeader>{title}</ListHeader>
-            )}
-            renderSectionFooter={() => <View style={{marginBottom: 30}} />}
-          />
+          {listReady ? (
+            <SectionList
+              contentContainerStyle={{paddingBottom: 150, marginTop: 5}}
+              sections={altCurrencyList}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+              stickySectionHeadersEnabled={false}
+              renderSectionHeader={({section: {title}}) => (
+                <ListHeader>{title}</ListHeader>
+              )}
+              renderSectionFooter={() => <View style={{marginBottom: 30}} />}
+            />
+          ) : (
+            <ActivityIndicator size="small" />
+          )}
         </SearchResults>
-      </HideableView>
+      )}
     </AltCurrencySettingsContainer>
   );
 };

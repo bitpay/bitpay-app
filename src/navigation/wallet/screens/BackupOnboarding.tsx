@@ -17,8 +17,11 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
 import {OnboardingImage} from '../../../navigation/onboarding/components/Containers';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {Key} from '../../../store/wallet/wallet.models';
-import {getMnemonic, sleep} from '../../../utils/helper-methods';
+import {
+  checkEncryptedKeysForEddsaMigration,
+  getMnemonic,
+  sleep,
+} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -26,13 +29,15 @@ import {ShareOptions} from 'react-native-share';
 import {shareFile} from '../../../utils/share';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {CustomErrorMessage} from '../components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../components/ErrorMessages';
 import {checkBiometricForSending} from '../../../store/wallet/effects/send/send';
 import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 
 export type BackupOnboardingParamList = {
-  key: Key;
-  buildEncryptModalConfig: Function;
+  keyId: string;
 };
 
 const styles = StyleSheet.create({
@@ -84,7 +89,35 @@ const BackupOnboarding: React.FC = () => {
   );
 
   const route = useRoute<RouteProp<WalletGroupParamList, 'BackupOnboarding'>>();
-  const {key, buildEncryptModalConfig} = route.params;
+  const {keyId} = route.params;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
+
+  const buildEncryptModalConfig = (
+    onDecrypted: (decryptedKey: {
+      mnemonic: string;
+      mnemonicHasPassphrase: boolean;
+      xPrivKey: string;
+    }) => void,
+  ) => ({
+    onSubmitHandler: async (encryptPassword: string) => {
+      try {
+        dispatch(checkEncryptedKeysForEddsaMigration(key, encryptPassword));
+        const decryptedKey = key.methods!.get(encryptPassword);
+        dispatch(AppActions.dismissDecryptPasswordModal());
+        await sleep(300);
+        onDecrypted(decryptedKey);
+      } catch (err) {
+        const errMessage =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`[BackupOnboarding] Decrypt Error: ${errMessage}`);
+        await dispatch(AppActions.dismissDecryptPasswordModal());
+        await sleep(500);
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      }
+    },
+    description: t('To continue please enter your encryption password.'),
+    onCancelHandler: () => null,
+  });
 
   const printBackupTemplate = async () => {
     logger.debug('Print backup template clicked.');
@@ -207,7 +240,6 @@ const BackupOnboarding: React.FC = () => {
                   words: getMnemonic(key),
                   walletTermsAccepted: true,
                   context: 'keySettings',
-                  key,
                 });
               } else {
                 dispatch(
@@ -219,7 +251,6 @@ const BackupOnboarding: React.FC = () => {
                           words: mnemonic.trim().split(' '),
                           walletTermsAccepted: true,
                           context: 'keySettings',
-                          key,
                         });
                       },
                     ),

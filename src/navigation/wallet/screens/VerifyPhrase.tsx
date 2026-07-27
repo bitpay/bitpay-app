@@ -3,14 +3,13 @@ import {useTheme} from '../../../contexts';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {
-  CTA_RESERVED,
   CtaContainerAbsolute,
   HeaderRightContainer,
   isNarrowHeight,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -32,8 +31,6 @@ import {
   View,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useHeaderHeight} from '@react-navigation/elements';
 
 type VerifyPhraseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -44,13 +41,8 @@ export interface VerifyPhraseParamList {
   keyId: string;
   words: string[];
   context: string;
-  key: Key;
+  key?: Key;
   walletTermsAccepted: boolean;
-}
-
-interface WordItem {
-  word: string;
-  isActive: boolean;
 }
 
 const styles = StyleSheet.create({
@@ -135,7 +127,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const {errors} = formState;
 
   const {params} = route;
-  const {words, keyId, context, key, walletTermsAccepted} = params;
+  const storedKey = useAppSelector(({WALLET}) => WALLET.keys[params.keyId]);
+  const {words, keyId, context, walletTermsAccepted} = params;
+  const key = params.key ?? storedKey;
 
   const [word1Validation, setWord1Validation] = useState(false);
   const [word2Validation, setWord2Validation] = useState(false);
@@ -219,7 +213,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                   context,
                   navigation,
                   walletTermsAccepted,
-                  key: {...key, backupComplete: true},
+                  key: key ? {...key, backupComplete: true} : undefined,
                 }),
               primary: true,
             },

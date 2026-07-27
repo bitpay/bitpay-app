@@ -2,14 +2,32 @@ import {useEffect, useState} from 'react';
 import {logManager, LogData} from '../managers/LogManager';
 import {LogLevel} from '../store/log/log.models';
 
-export const useLogContext = (): LogData => {
-  const [logData, setLogData] = useState<LogData>(logManager.getLogData());
+const EMPTY_LOG_DATA: LogData = {
+  logs: [],
+  count: 0,
+};
+
+export const useLogContext = (enabled = true): LogData => {
+  const [logData, setLogData] = useState<LogData>(() =>
+    enabled ? logManager.getLogData() : EMPTY_LOG_DATA,
+  );
 
   useEffect(() => {
-    return logManager.subscribe(setLogData);
-  }, []);
+    if (!enabled) {
+      return;
+    }
 
-  return logData;
+    return logManager.subscribe(nextLogData => {
+      setLogData(currentLogData =>
+        currentLogData.logs === nextLogData.logs &&
+        currentLogData.count === nextLogData.count
+          ? currentLogData
+          : nextLogData,
+      );
+    });
+  }, [enabled]);
+
+  return enabled ? logData : EMPTY_LOG_DATA;
 };
 
 export const useLogCount = (): number => {

@@ -7,6 +7,10 @@ import AccountDetails from './AccountDetails';
 import HomeRoot from '../../tabs/home/HomeRoot';
 import PortfolioBalance from '../../tabs/home/components/PortfolioBalance';
 import usePortfolioWalletSnapshotPresence from '../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence';
+import {
+  cacheBalanceHistoryChartSeries,
+  clearBalanceHistoryChartSeriesCache,
+} from '../../../components/charts/balanceHistoryChartSeriesCache';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -79,6 +83,7 @@ const mockNavigation = {
   getParent: jest.fn(() => ({
     navigate: jest.fn(),
   })),
+  isFocused: jest.fn(() => mockIsFocused),
   navigate: jest.fn(),
   setParams: jest.fn(),
   setOptions: jest.fn(),
@@ -313,6 +318,15 @@ jest.mock('../../../components/charts/BalanceHistoryChart', () => {
   );
 });
 
+jest.mock('../../../components/charts/BalanceChartLoadingPlaceholder', () => {
+  const ReactLib = require('react');
+  const {View} = require('react-native');
+  return () =>
+    ReactLib.createElement(View, {
+      testID: 'balance-chart-loading-placeholder',
+    });
+});
+
 jest.mock(
   '../../../portfolio/ui/hooks/usePortfolioWalletSnapshotPresence',
   () =>
@@ -322,6 +336,14 @@ jest.mock(
       hasAnySnapshots: true,
       loading: false,
     })),
+);
+
+jest.mock(
+  '../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets',
+  () =>
+    jest.fn(({enabled = true, wallets}: {enabled?: boolean; wallets?: any[]}) =>
+      enabled ? wallets || [] : [],
+    ),
 );
 
 jest.mock('../../../portfolio/ui/common', () => ({
@@ -958,13 +980,21 @@ const portfolioChartSurfaceCases: Array<
 ];
 
 const finishOpeningTransition = async (screen: string) => {
-  if (screen !== 'Key Overview') {
+  if (screen === 'Home') {
     return;
   }
 
   await act(async () => {
     mockTransitionEndListener?.({data: {closing: false}});
+    await Promise.resolve();
   });
+
+  if (screen === 'WalletDetails') {
+    await act(async () => {
+      jest.advanceTimersByTime(1100);
+      await Promise.resolve();
+    });
+  }
 };
 
 const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
@@ -979,8 +1009,65 @@ const makeExcessiveBalanceMismatchMarker = (walletId = 'wallet-1') => ({
   walletId,
 });
 
+const seedWalletChartCache = () => {
+  const analysisPoints = [
+    {
+      timestamp: 1_000,
+      totalFiatBalance: 90,
+      totalRemainingCostBasisFiat: 80,
+      totalUnrealizedPnlFiat: 10,
+      totalPnlChange: 0,
+      totalPnlPercent: 12.5,
+      byWalletId: {},
+    },
+    {
+      timestamp: 2_000,
+      totalFiatBalance: 100,
+      totalRemainingCostBasisFiat: 80,
+      totalUnrealizedPnlFiat: 20,
+      totalPnlChange: 10,
+      totalPnlPercent: 25,
+      byWalletId: {},
+    },
+  ];
+  const graphPoints = analysisPoints.map(point => ({
+    date: new Date(point.timestamp),
+    value: point.totalFiatBalance,
+  }));
+
+  cacheBalanceHistoryChartSeries({
+    state: {
+      walletIds: ['wallet-1'],
+      balanceOffset: 0,
+      timeframe: '1D',
+      queryRevisionKey: 'cached-revision',
+      quoteCurrency: 'USD',
+      scopeId: 'normalized-on-write',
+      seriesSignature: 'cached-series',
+      series: {
+        graphPoints,
+        analysisPoints,
+        pointByTimestamp: new Map(
+          analysisPoints.map((point, index) => [
+            graphPoints[index].date.getTime(),
+            point,
+          ]),
+        ),
+        minIndex: 0,
+        maxIndex: 1,
+        minPoint: graphPoints[0],
+        maxPoint: graphPoints[1],
+      },
+    },
+  });
+};
+
 describe('portfolio chart visibility guards', () => {
   beforeEach(() => {
+    jest.useFakeTimers();
+    act(() => {
+      clearBalanceHistoryChartSeriesCache();
+    });
     jest.clearAllMocks();
     mockTransitionEndListener = undefined;
     mockIsFocused = false;
@@ -991,6 +1078,10 @@ describe('portfolio chart visibility guards', () => {
       loading: false,
     });
     resetState(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('does not mount the Key Overview balance chart or loader when Show Portfolio is disabled', async () => {
@@ -1032,6 +1123,64 @@ describe('portfolio chart visibility guards', () => {
     await finishOpeningTransition('Key Overview');
 
     expect(mockBalanceHistoryChart).toHaveBeenCalled();
+  });
+
+  it.each(chartSurfaceCases)(
+    'mounts a cached %s chart immediately without the opening placeholder',
+    async (_screen, makeScreen) => {
+      resetState(true);
+      act(() => {
+        seedWalletChartCache();
+      });
+
+      let view!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        view = renderWithTheme(makeScreen());
+      });
+
+      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          preserveVisibleSeriesWhileNotReady: true,
+        }),
+        undefined,
+      );
+      expect(
+        view.root.findAllByProps({
+          testID: 'balance-chart-loading-placeholder',
+        }),
+      ).toHaveLength(0);
+    },
+  );
+
+  it('removes the WalletDetails opening placeholder as soon as its cache entry arrives', async () => {
+    resetState(true);
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    expect(
+      view.root.findAllByProps({
+        testID: 'balance-chart-loading-placeholder',
+      }).length,
+    ).toBeGreaterThan(0);
+    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+
+    await act(async () => {
+      seedWalletChartCache();
+    });
+
+    expect(
+      view.root.findAllByProps({
+        testID: 'balance-chart-loading-placeholder',
+      }),
+    ).toHaveLength(0);
+    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        preserveVisibleSeriesWhileNotReady: true,
+      }),
+      undefined,
+    );
   });
 
   it('does not mount the WalletDetails balance chart or loader when Show Portfolio is disabled', async () => {
@@ -1247,6 +1396,100 @@ describe('portfolio chart visibility guards', () => {
     );
   });
 
+  it('mounts the cached Home chart without a loader while its scope is not ready', async () => {
+    resetState(true, {
+      completedFullPopulate: false,
+    });
+    act(() => {
+      seedWalletChartCache();
+    });
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(<PortfolioBalance />);
+    });
+
+    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        wallets: [mockWallet],
+        showLoaderWhenNoSnapshots: false,
+        isBalanceChartDataReadyToQuery: false,
+        preserveVisibleSeriesWhileNotReady: true,
+      }),
+      undefined,
+    );
+    expect(
+      view.root.findAllByProps({
+        testID: 'balance-history-chart-loader',
+      }),
+    ).toHaveLength(0);
+    expect(
+      view.root.findAllByProps({
+        testID: 'balance-chart-loading-placeholder',
+      }),
+    ).toHaveLength(0);
+  });
+
+  it('keeps the cached Home chart active for revalidation once its scope is ready', async () => {
+    resetState(true, {
+      completedFullPopulate: false,
+    });
+    act(() => {
+      seedWalletChartCache();
+    });
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(<PortfolioBalance />);
+    });
+
+    expect(mockBalanceHistoryChart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        wallets: [mockWallet],
+        isBalanceChartDataReadyToQuery: false,
+        preserveVisibleSeriesWhileNotReady: true,
+      }),
+      undefined,
+    );
+
+    mockBalanceHistoryChart.mockClear();
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 1234;
+    mockState.PORTFOLIO.lastPopulatedAt = 1234;
+    mockState.PORTFOLIO.populateStatus = undefined;
+
+    await act(async () => {
+      view.update(withTheme(<PortfolioBalance active={false} />));
+    });
+
+    expect(mockBalanceHistoryChart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        wallets: [mockWallet],
+        isBalanceChartDataReadyToQuery: false,
+        preserveVisibleSeriesWhileNotReady: true,
+      }),
+      undefined,
+    );
+
+    mockBalanceHistoryChart.mockClear();
+
+    await act(async () => {
+      view.update(withTheme(<PortfolioBalance active />));
+    });
+
+    expect(mockBalanceHistoryChart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        wallets: [mockWallet],
+        isBalanceChartDataReadyToQuery: true,
+        preserveVisibleSeriesWhileNotReady: true,
+      }),
+      undefined,
+    );
+  });
+
   it('renders the Home portfolio balance chart when a full-populate timestamp exists', async () => {
     resetState(true, {completedFullPopulate: true});
 
@@ -1279,7 +1522,7 @@ describe('portfolio chart visibility guards', () => {
 
   it('does not mount the Home portfolio balance chart when snapshot presence settles with no rows', async () => {
     resetState(true, {completedFullPopulate: true});
-    mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
       hasAllSnapshots: false,
       hasAnySnapshots: false,
@@ -1413,7 +1656,7 @@ describe('portfolio chart visibility guards', () => {
   it('renders the WalletDetails zero chart when snapshot presence settles with no rows', async () => {
     resetState(true);
     setMockWalletZeroBalance();
-    mockUsePortfolioWalletSnapshotPresence.mockReturnValueOnce({
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
       hasAllSnapshots: false,
       hasAnySnapshots: false,
@@ -1423,6 +1666,7 @@ describe('portfolio chart visibility guards', () => {
     await act(async () => {
       renderWithTheme(makeWalletDetailsScreen());
     });
+    await finishOpeningTransition('WalletDetails');
 
     expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1482,6 +1726,7 @@ describe('portfolio chart visibility guards', () => {
 
   it('renders the WalletDetails zero chart while transaction history loading alone', async () => {
     resetState(true);
+    mockIsFocused = true;
     setMockWalletZeroBalance();
     mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
@@ -1495,6 +1740,7 @@ describe('portfolio chart visibility guards', () => {
       renderWithTheme(makeWalletDetailsScreen({skipInitializeHistory: false}));
       await Promise.resolve();
     });
+    await finishOpeningTransition('WalletDetails');
 
     expect(mockGetTransactionHistory).toHaveBeenCalled();
     expect(mockBalanceHistoryChart).toHaveBeenCalledWith(

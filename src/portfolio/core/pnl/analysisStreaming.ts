@@ -180,10 +180,29 @@ export type PnlAnalysisChartResult = {
   totalUnrealizedPnlFiat: number[];
   totalPnlChange: number[];
   totalPnlPercent: number[];
+  walletFiatBalanceByWalletId?: Record<string, number[]>;
+  walletRemainingCostBasisFiatByWalletId?: Record<string, number[]>;
   totalCryptoBalanceFormatted?: Array<string | null>;
   driverMarkRate?: Array<number | null>;
   driverRatePercentChange?: Array<number | null>;
 };
+
+function buildWalletNumberSeriesMap(
+  walletIds: string[],
+  pointCount: number,
+): Record<string, number[]> | undefined {
+  'worklet';
+
+  if (!walletIds.length) {
+    return undefined;
+  }
+
+  const seriesByWalletId: Record<string, number[]> = {};
+  for (const walletId of walletIds) {
+    seriesByWalletId[walletId] = new Array<number>(pointCount);
+  }
+  return seriesByWalletId;
+}
 
 export type PnlAnalysisDebugHooks = {
   onPnlAnalysisPointConstruction?: () => void;
@@ -346,6 +365,15 @@ export function compactPnlAnalysisResultForChart(
   const driverRatePercentChange = singleAsset
     ? new Array<number | null>(pointCount)
     : undefined;
+  const walletIds = result.wallets.map(wallet => wallet.walletId);
+  const walletFiatBalanceByWalletId = buildWalletNumberSeriesMap(
+    walletIds,
+    pointCount,
+  );
+  const walletRemainingCostBasisFiatByWalletId = buildWalletNumberSeriesMap(
+    walletIds,
+    pointCount,
+  );
 
   for (let i = 0; i < pointCount; i++) {
     const point = result.points[i];
@@ -355,6 +383,15 @@ export function compactPnlAnalysisResultForChart(
     totalUnrealizedPnlFiat[i] = point.totalUnrealizedPnlFiat;
     totalPnlChange[i] = point.totalPnlChange;
     totalPnlPercent[i] = point.totalPnlPercent;
+    if (walletFiatBalanceByWalletId) {
+      for (const walletId of walletIds) {
+        const walletPoint = point.byWalletId[walletId];
+        walletFiatBalanceByWalletId[walletId][i] =
+          walletPoint?.fiatBalance ?? 0;
+        walletRemainingCostBasisFiatByWalletId![walletId][i] =
+          walletPoint?.remainingCostBasisFiat ?? 0;
+      }
+    }
     if (totalCryptoBalanceFormatted) {
       totalCryptoBalanceFormatted[i] =
         typeof point.totalCryptoBalanceFormatted === 'string'
@@ -392,6 +429,8 @@ export function compactPnlAnalysisResultForChart(
     totalUnrealizedPnlFiat,
     totalPnlChange,
     totalPnlPercent,
+    walletFiatBalanceByWalletId,
+    walletRemainingCostBasisFiatByWalletId,
     totalCryptoBalanceFormatted,
     driverMarkRate,
     driverRatePercentChange,
@@ -918,6 +957,8 @@ function buildEmptyAnalysisChartResult(
     totalUnrealizedPnlFiat: [],
     totalPnlChange: [],
     totalPnlPercent: [],
+    walletFiatBalanceByWalletId: undefined,
+    walletRemainingCostBasisFiatByWalletId: undefined,
     totalCryptoBalanceFormatted: undefined,
     driverMarkRate: undefined,
     driverRatePercentChange: undefined,
@@ -1804,6 +1845,15 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
   const driverRatePercentChange = singleAsset
     ? new Array<number | null>(pointCount)
     : undefined;
+  const walletIds = walletMetas.map(wallet => wallet.walletId);
+  const walletFiatBalanceByWalletId = buildWalletNumberSeriesMap(
+    walletIds,
+    pointCount,
+  );
+  const walletRemainingCostBasisFiatByWalletId = buildWalletNumberSeriesMap(
+    walletIds,
+    pointCount,
+  );
 
   let firstTotalUnrealized: number | undefined;
 
@@ -1853,8 +1903,14 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
         currentRatesByAssetId: context.currentRatesByAssetId,
       });
       const units = state.atomicToUnitNumber(state.unitsAtomic);
-      totalFiatBalanceForPoint += units * rate;
+      const walletFiatBalance = units * rate;
+      totalFiatBalanceForPoint += walletFiatBalance;
       totalBasis += state.basisFiat;
+      if (walletFiatBalanceByWalletId) {
+        walletFiatBalanceByWalletId[wallet.walletId][i] = walletFiatBalance;
+        walletRemainingCostBasisFiatByWalletId![wallet.walletId][i] =
+          state.basisFiat;
+      }
 
       if (singleAsset) {
         totalCryptoAtomicForPoint += state.unitsAtomic;
@@ -1916,6 +1972,8 @@ export async function buildPnlAnalysisChartSeriesFromStreamed(
     totalUnrealizedPnlFiat,
     totalPnlChange,
     totalPnlPercent,
+    walletFiatBalanceByWalletId,
+    walletRemainingCostBasisFiatByWalletId,
     totalCryptoBalanceFormatted,
     driverMarkRate,
     driverRatePercentChange,

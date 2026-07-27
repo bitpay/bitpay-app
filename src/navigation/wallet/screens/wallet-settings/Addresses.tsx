@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   BaseText,
   H7,
@@ -21,7 +21,11 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {sleep} from '../../../../utils/helper-methods';
 import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
-import {useAppDispatch, useLogger} from '../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -42,8 +46,10 @@ import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {setWalletScanning} from '../../../../store/wallet/wallet.actions';
 import {isSingleAddressChain} from '../../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
 
 const ADDRESS_LIMIT = 5;
+const DEFERRED_LOAD_FALLBACK_MS = 2000;
 
 const gutter = parseInt(ScreenGutter, 10);
 
@@ -162,8 +168,11 @@ const CopyImgContainerRight: React.FC<React.ComponentProps<typeof View>> = ({
 const Addresses = () => {
   const {t} = useTranslation();
   const {
-    params: {wallet},
+    params: {keyId, walletId: routeWalletId, copayerId},
   } = useRoute<RouteProp<WalletGroupParamList, 'Addresses'>>();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId].wallets, routeWalletId, copayerId),
+  ) as Wallet;
 
   const {
     credentials: {token, multisigEthInfo},
@@ -220,144 +229,209 @@ const Addresses = () => {
   const [minFee, setMinFee] = useState<string>();
   const [minFeePer, setMinFeePer] = useState<string>();
 
-  const setAddresses = async () => {
-    try {
-      const allAddresses = await GetMainAddresses(wallet, {
-        doNotVerify: true,
+  const buildUiFormatList = useCallback(
+    (list: any[], targetWallet: Wallet, sortByAmount: boolean): any[] => {
+      const {
+        currencyAbbreviation: targetCurrency,
+        network,
+        chain: targetChain,
+      } = targetWallet;
+
+      const formattedList = list.map(item => {
+        const {path, address, createdOn} = item;
+        item.path = path ? path.replace(/^m/g, 'xpub') : null;
+        item.address = dispatch(
+          GetProtocolPrefixAddress(
+            targetCurrency,
+            network,
+            address,
+            targetChain,
+          ),
+        );
+
+        if (createdOn) {
+          item.uiTime = GetAmFormatDate(createdOn * 1000);
+        }
+        return item;
       });
 
-      const resp = await GetWalletBalance(wallet, {
-        tokenAddress: token?.address ? token.address : '',
-        multisigContractAddress: multisigEthInfo?.multisigContractAddress
-          ? multisigEthInfo.multisigContractAddress
-          : '',
+      return formattedList.sort((a, b) => {
+        if (sortByAmount && a.amount && b.amount) {
+          return b.amount - a.amount;
+        } else if (a.createdOn && b.createdOn) {
+          return b.createdOn - a.createdOn;
+        }
+        return 0;
       });
+    },
+    [dispatch],
+  );
 
-      const idx = resp.byAddress.map(
-        (a: {address: string; amount: string; path: string}) => {
-          return {[a.address]: a};
-        },
-      );
-
-      let _withBalance = resp.byAddress;
-      _withBalance = buildUiFormatList(_withBalance, wallet, true);
-      setUsedAddress(_withBalance);
-
-      let _noBalance = allAddresses.filter((a: any) => !idx[a.address]);
-      _noBalance = buildUiFormatList(_noBalance, wallet, false);
-      setUnusedAddress(_noBalance);
-
-      setViewAll(
-        _noBalance?.length > ADDRESS_LIMIT ||
-          _withBalance?.length > ADDRESS_LIMIT,
-      );
-      setLatestUsedAddress(_withBalance.slice(0, ADDRESS_LIMIT));
-      setLatestUnusedAddress(_noBalance.slice(0, ADDRESS_LIMIT));
-      setLoadingAddresses(false);
-    } catch (e) {
-      setLoadingAddresses(false);
-      dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            errMsg: BWCErrorMessage(e, t('Could not update wallet')),
+  const setAddresses = useCallback(
+    async (isCancelled: () => boolean) => {
+      try {
+        const [allAddresses, resp] = await Promise.all([
+          GetMainAddresses(wallet, {
+            doNotVerify: true,
           }),
-        ),
-      );
-    }
-  };
+          GetWalletBalance(wallet, {
+            tokenAddress: token?.address ? token.address : '',
+            multisigContractAddress:
+              multisigEthInfo?.multisigContractAddress || '',
+          }),
+        ]);
+        if (isCancelled()) {
+          return;
+        }
 
-  const setUtxos = async () => {
-    try {
-      const response = await GetLowUtxos(wallet);
-
-      if (response?.allUtxos?.length) {
-        const _allUtxos = response.allUtxos || 0;
-        const allSum = _allUtxos.reduce(
-          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-          0,
-        );
-        const per = (response.minFee / allSum) * 100;
-        const _lowUtxos = response.lowUtxos || 0;
-        const _lowUtoxosSum = _lowUtxos.reduce(
-          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-          0,
+        const usedAddressSet = new Set(
+          resp.byAddress.map(
+            (addressData: {address: string}) => addressData.address,
+          ),
         );
 
-        setLowUtxosNb(response.lowUtxos.length);
-        setAllUtxosNb(response.allUtxos.length);
+        let withBalance = buildUiFormatList(resp.byAddress, wallet, true);
+        setUsedAddress(withBalance);
 
-        setLowUtxosSum(
-          dispatch(
-            FormatAmountStr(
-              currencyAbbreviation,
-              chain,
-              tokenAddress,
-              _lowUtoxosSum,
+        let withoutBalance = allAddresses.filter(
+          (addressData: any) => !usedAddressSet.has(addressData.address),
+        );
+        withoutBalance = buildUiFormatList(withoutBalance, wallet, false);
+        setUnusedAddress(withoutBalance);
+
+        setViewAll(
+          withoutBalance.length > ADDRESS_LIMIT ||
+            withBalance.length > ADDRESS_LIMIT,
+        );
+        setLatestUsedAddress(withBalance.slice(0, ADDRESS_LIMIT));
+        setLatestUnusedAddress(withoutBalance.slice(0, ADDRESS_LIMIT));
+        setLoadingAddresses(false);
+      } catch (err) {
+        if (isCancelled()) {
+          return;
+        }
+        setLoadingAddresses(false);
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err, t('Could not update wallet')),
+            }),
+          ),
+        );
+      }
+    },
+    [
+      buildUiFormatList,
+      dispatch,
+      multisigEthInfo?.multisigContractAddress,
+      t,
+      token?.address,
+      wallet,
+    ],
+  );
+
+  const setUtxos = useCallback(
+    async (isCancelled: () => boolean) => {
+      try {
+        const response = await GetLowUtxos(wallet);
+        if (isCancelled()) {
+          return;
+        }
+
+        if (response?.allUtxos?.length) {
+          const allUtxos = response.allUtxos || 0;
+          const allSum = allUtxos.reduce(
+            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+            0,
+          );
+          const per = (response.minFee / allSum) * 100;
+          const lowUtxos = response.lowUtxos || 0;
+          const lowUtoxosSum = lowUtxos.reduce(
+            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+            0,
+          );
+
+          setLowUtxosNb(response.lowUtxos.length);
+          setAllUtxosNb(response.allUtxos.length);
+
+          setLowUtxosSum(
+            dispatch(
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                lowUtoxosSum,
+              ),
             ),
-          ),
-        );
-        setAllUtxosSum(
-          dispatch(
-            FormatAmountStr(currencyAbbreviation, chain, tokenAddress, allSum),
-          ),
-        );
-        setMinFee(
-          dispatch(
-            FormatAmountStr(
-              currencyAbbreviation,
-              chain,
-              tokenAddress,
-              response.minFee || 0,
+          );
+          setAllUtxosSum(
+            dispatch(
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                allSum,
+              ),
             ),
-          ),
+          );
+          setMinFee(
+            dispatch(
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                response.minFee || 0,
+              ),
+            ),
+          );
+          setMinFeePer(per.toFixed(2) + '%');
+        }
+        setLoadingUtxos(false);
+      } catch (err: any) {
+        if (isCancelled()) {
+          return;
+        }
+        setLoadingUtxos(false);
+        const errorMessage =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        if (errorMessage.includes('No UTXOs')) {
+          return;
+        }
+        logger.error(
+          `error [Addresses - setUtxos] [getStatus]: ${errorMessage}`,
         );
-        setMinFeePer(per.toFixed(2) + '%');
       }
-      setLoadingUtxos(false);
-    } catch (err: any) {
-      setLoadingUtxos(false);
-      if (err.includes('No UTXOs')) {
-        return;
-      }
-      const e = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error(`error [Addresses - setUtxos] [getStatus]: ${e}`);
-    }
-  };
-
-  const buildUiFormatList = (
-    list: any[],
-    wallet: Wallet,
-    sortByAmount: boolean,
-  ): any[] => {
-    const {currencyAbbreviation, network, chain} = wallet;
-
-    const formattedList = list.map(item => {
-      const {path, address, createdOn} = item;
-      item.path = path ? path.replace(/^m/g, 'xpub') : null;
-      item.address = dispatch(
-        GetProtocolPrefixAddress(currencyAbbreviation, network, address, chain),
-      );
-
-      if (createdOn) {
-        item.uiTime = GetAmFormatDate(createdOn * 1000);
-      }
-      return item;
-    });
-
-    return formattedList.sort((a, b) => {
-      if (sortByAmount && a.amount && b.amount) {
-        return b.amount - a.amount;
-      } else if (a.createdOn && b.createdOn) {
-        return b.createdOn - a.createdOn;
-      }
-      return 0;
-    });
-  };
+    },
+    [chain, currencyAbbreviation, dispatch, logger, tokenAddress, wallet],
+  );
 
   useEffect(() => {
-    setAddresses();
-    setUtxos();
-  }, [wallet]);
+    let cancelled = false;
+    let started = false;
+    const startLoading = () => {
+      if (started || cancelled) {
+        return;
+      }
+      started = true;
+      const isCancelled = () => cancelled;
+      void Promise.all([setAddresses(isCancelled), setUtxos(isCancelled)]);
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          startLoading();
+        }
+      },
+    );
+    const fallbackTimer = setTimeout(startLoading, DEFERRED_LOAD_FALLBACK_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
+  }, [navigation, setAddresses, setUtxos]);
 
   const {
     credentials: {walletId},
@@ -398,7 +472,7 @@ const Addresses = () => {
           );
 
           setButtonState('success');
-          navigation.navigate('WalletDetails', {walletId});
+          navigation.navigate('WalletDetails', {walletId, copayerId});
 
           return;
         },

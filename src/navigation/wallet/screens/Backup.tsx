@@ -82,9 +82,9 @@ export const backupRedirect = ({
   if (context === 'onboarding') {
     navigation.navigate('TermsOfUse');
   } else if (context === 'keySettings') {
-    navigation.navigate('KeySettings', {key});
+    navigation.navigate('KeySettings', {keyId: key?.id});
   } else if (context === 'settings') {
-    navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
+    navigation.navigate('Tabs', {screen: 'Settings'});
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
   } else if (!walletTermsAccepted) {
