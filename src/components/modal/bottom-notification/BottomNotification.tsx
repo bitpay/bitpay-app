@@ -165,7 +165,7 @@ const BottomNotificationContent = React.memo(() => {
     }
 
     return navigation.addListener('blur', () =>
-      dispatch(resetBottomNotificationModalConfig()),
+      dispatch(AppActions.dismissBottomNotificationModal()),
     );
   }, [navigation, dispatch, config]);
 
@@ -189,6 +189,12 @@ const BottomNotificationContent = React.memo(() => {
       }
     }
   }, [enableBackdropDismiss, dispatch, onBackdropDismiss]);
+
+  const handleModalHide = useCallback(() => {
+    if (!store.getState().APP.showBottomNotificationModal) {
+      dispatch(resetBottomNotificationModalConfig());
+    }
+  }, [dispatch, store]);
 
   const markdownStyle = useMemo(
     () => ({
@@ -243,6 +249,7 @@ const BottomNotificationContent = React.memo(() => {
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
+      onModalHide={handleModalHide}
       onBackdropPress={handleBackdropPress}>
       <View
         style={[

@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useRef} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {StyleSheet} from 'react-native';
 import {Success, White} from '../../../styles/colors';
 import {
@@ -11,6 +11,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 import {View, ViewStyle} from 'react-native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import useModalContentLifecycle from '../../../components/modal/base/useModalContentLifecycle';
 import {usePaymentSentActions, usePaymentSentState} from '../../../contexts';
 
 const styles = StyleSheet.create({
@@ -54,15 +55,19 @@ const closeButtonStyle: ViewStyle = {
   marginTop: 25,
 };
 
-const PaymentSentContent = React.memo(() => {
+const PaymentSentContentComponent = ({
+  onModalHide,
+}: {
+  onModalHide: () => void;
+}) => {
   const {t} = useTranslation();
   const {isVisible, title, onCloseModal} = usePaymentSentState();
   const {hidePaymentSent} = usePaymentSentActions();
 
   const handleClose = useCallback(() => {
     haptic('impactLight');
-    onCloseModal?.();
     hidePaymentSent();
+    onCloseModal?.();
   }, [onCloseModal, hidePaymentSent]);
 
   const displayTitle = useMemo(() => title || t('Payment Sent'), [title, t]);
@@ -71,10 +76,10 @@ const PaymentSentContent = React.memo(() => {
 
   return (
     <SheetModal
-      backgroundColor={Success}
-      modalLibrary={'bottom-sheet'}
+      modalLibrary={'modal'}
       isVisible={isVisible}
-      fullscreen={true}
+      onModalHide={onModalHide}
+      unmountContentWhenHidden
       onBackdropPress={handleClose}>
       <View style={styles.container}>
         <View style={centerViewStyle}>
@@ -84,24 +89,29 @@ const PaymentSentContent = React.memo(() => {
           </View>
         </View>
         <View style={styles.paymentSentFooter}>
-          <CloseButtonContainer style={closeButtonStyle} onPress={handleClose}>
+          <CloseButtonContainer
+            testID="payment-sent-close"
+            accessibilityRole="button"
+            style={closeButtonStyle}
+            onPress={handleClose}>
             <BaseText style={styles.closeText}>{closeButtonText}</BaseText>
           </CloseButtonContainer>
         </View>
       </View>
     </SheetModal>
   );
-});
+};
+
+const PaymentSentContent = React.memo(PaymentSentContentComponent);
 
 const PaymentSent = React.memo(() => {
   const {isVisible} = usePaymentSentState();
-  const hasMountedRef = useRef(false);
+  const {shouldRenderModal, handleModalHide} =
+    useModalContentLifecycle(isVisible);
 
-  if (isVisible) {
-    hasMountedRef.current = true;
-  }
-
-  return hasMountedRef.current ? <PaymentSentContent /> : null;
+  return shouldRenderModal ? (
+    <PaymentSentContent onModalHide={handleModalHide} />
+  ) : null;
 });
 
 export default PaymentSent;
