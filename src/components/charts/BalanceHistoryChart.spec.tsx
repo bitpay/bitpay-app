@@ -714,6 +714,63 @@ describe('BalanceHistoryChart', () => {
     );
   });
 
+  it('pauses chart work while disabled and preserves the visible series', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+
+    await act(async () => {
+      renderer = TestRenderer.create(
+        balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
+      );
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(1);
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+
+    const pendingQuery = createDeferred<{
+      __series: typeof mockUpdatedOneDaySeries;
+    }>();
+    mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
+      pendingQuery.promise,
+    );
+    mockUsePortfolioBalanceChartScope.mockReturnValue(
+      mockChartScope({chartDataRevisionSig: 'chart-rev-2'}),
+    );
+
+    await act(async () => {
+      renderer.update(balanceHistoryChart({showLoaderWhenNoSnapshots: true}));
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      renderer.update(
+        balanceHistoryChart({
+          enabled: false,
+          showLoaderWhenNoSnapshots: true,
+        }),
+      );
+    });
+
+    expect(mockUsePortfolioBalanceChartScope).toHaveBeenLastCalledWith(
+      expect.objectContaining({enabled: false}),
+    );
+    expect(mockUsePortfolioHistoricalRateDepsCache).toHaveBeenLastCalledWith(
+      expect.objectContaining({enabled: false}),
+    );
+
+    await act(async () => {
+      pendingQuery.resolve({__series: mockUpdatedOneDaySeries});
+      await pendingQuery.promise;
+    });
+
+    expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(2);
+    expect(latestInteractiveLineChartProps.points).toBe(
+      mockOneDaySeries.graphPoints,
+    );
+  });
+
   it('commits a runtime series without dispatching chart state updates', async () => {
     await act(async () => {
       TestRenderer.create(

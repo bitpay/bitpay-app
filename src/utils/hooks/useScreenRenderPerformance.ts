@@ -1,5 +1,6 @@
 import {useCallback, useLayoutEffect, useRef} from 'react';
 import {LayoutChangeEvent} from 'react-native';
+import {PERF_DEBUG, performanceLog} from '../performanceDebug';
 
 const elapsed = (startedAt: number) =>
   Math.round((performance.now() - startedAt) * 10) / 10;
@@ -8,18 +9,18 @@ export const useScreenRenderPerformance = (screenName: string) => {
   const mountStartedAtRef = useRef(0);
   const layoutLoggedRef = useRef(false);
 
-  if (__DEV__ && mountStartedAtRef.current === 0) {
+  if (PERF_DEBUG && mountStartedAtRef.current === 0) {
     mountStartedAtRef.current = performance.now();
 
-    console.log(`[PERF-SCREEN] ${screenName} renderStart`);
+    performanceLog(`[PERF-SCREEN] ${screenName} renderStart`);
   }
 
   useLayoutEffect(() => {
-    if (!__DEV__) {
+    if (!PERF_DEBUG) {
       return;
     }
 
-    console.log(
+    performanceLog(
       `[PERF-SCREEN] ${screenName} commit deltaMs:${elapsed(
         mountStartedAtRef.current,
       )}`,
@@ -28,27 +29,27 @@ export const useScreenRenderPerformance = (screenName: string) => {
 
   return useCallback(
     (_event: LayoutChangeEvent) => {
-      if (!__DEV__ || layoutLoggedRef.current) {
+      if (!PERF_DEBUG || layoutLoggedRef.current) {
         return;
       }
 
       layoutLoggedRef.current = true;
 
-      console.log(
+      performanceLog(
         `[PERF-SCREEN] ${screenName} layout deltaMs:${elapsed(
           mountStartedAtRef.current,
         )}`,
       );
 
       requestAnimationFrame(() => {
-        console.log(
+        performanceLog(
           `[PERF-SCREEN] ${screenName} firstFrame deltaMs:${elapsed(
             mountStartedAtRef.current,
           )}`,
         );
 
         requestAnimationFrame(() => {
-          console.log(
+          performanceLog(
             `[PERF-SCREEN] ${screenName} secondFrame deltaMs:${elapsed(
               mountStartedAtRef.current,
             )}`,
