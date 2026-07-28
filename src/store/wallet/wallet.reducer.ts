@@ -42,6 +42,7 @@ export interface WalletState {
   accountSvmCreationMigrationComplete: boolean;
   svmAddressFixComplete: boolean;
   pendingJoinerSession: PendingJoinerSession | null;
+  tssEnabled: boolean;
 }
 
 export const initialState: WalletState = {
@@ -77,6 +78,7 @@ export const initialState: WalletState = {
   accountSvmCreationMigrationComplete: false,
   svmAddressFixComplete: false,
   pendingJoinerSession: null,
+  tssEnabled: false,
 };
 
 const cloneWalletWithStatus = (
@@ -646,6 +648,12 @@ export const walletReducer = (
       return {
         ...state,
         pendingJoinerSession: null,
+      };
+
+    case WalletActionTypes.SET_TSS_ENABLED:
+      return {
+        ...state,
+        tssEnabled: action.payload,
       };
 
     default:
