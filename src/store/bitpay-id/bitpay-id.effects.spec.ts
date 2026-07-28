@@ -62,6 +62,7 @@ jest.mock('../../lib/Mixpanel', () => ({
 
 jest.mock('../../lib/Braze', () => ({
   BrazeWrapper: {
+    merge: jest.fn(() => Promise.resolve()),
     identify: jest.fn(() => Promise.resolve()),
     setEmail: jest.fn(),
     setEmailNotificationSubscriptionType: jest.fn(),
@@ -149,19 +150,17 @@ jest.mock('../../api/bitpay', () => ({
 
 import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
-import BitPayIdApi from '../../api/bitpay';
 import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
 import * as helperMethods from '../../utils/helper-methods';
 import {isAnonymousBrazeEid} from '../app/app.effects';
-import {Analytics} from '../analytics/analytics.effects';
+import {BrazeWrapper} from '../../lib/Braze';
 
 const MockAuthApi = AuthApi as jest.Mocked<typeof AuthApi>;
 const MockUserApi = UserApi as jest.Mocked<typeof UserApi>;
 const MockGetPasskeyStatus = getPasskeyStatus as jest.Mock;
 const MockSignInWithPasskey = signInWithPasskey as jest.Mock;
 const MockIsAnonymousBrazeEid = isAnonymousBrazeEid as jest.Mock;
-const MockBitPayIdApiCall = BitPayIdApi.apiCall as jest.Mock;
-const MockAnalyticsEndMergingUser = Analytics.endMergingUser as jest.Mock;
+const MockBrazeWrapperMerge = BrazeWrapper.merge as jest.Mock;
 const MockSleep = jest
   .spyOn(helperMethods, 'sleep')
   .mockResolvedValue(undefined);
@@ -289,16 +288,16 @@ describe('startBitPayIdAnalyticsInit', () => {
   it('does nothing when user is falsy', async () => {
     const store = baseStore();
     await store.dispatch(startBitPayIdAnalyticsInit(null as any));
-    expect(MockBitPayIdApiCall).not.toHaveBeenCalled();
+    expect(MockBrazeWrapperMerge).not.toHaveBeenCalled();
   });
 
-  it('calls the mergeBrazeUser API when brazeEid is anonymous and differs from user eid', async () => {
+  it('calls BrazeWrapper.merge when brazeEid is anonymous and differs from user eid', async () => {
     MockIsAnonymousBrazeEid.mockReturnValueOnce(true);
 
     const store = configureTestStore({
       BITPAY_ID: {
         session: makeSession(),
-        apiToken: {[Network.mainnet]: 'token1'},
+        apiToken: {[Network.mainnet]: ''},
       },
       APP: {
         network: Network.mainnet,
@@ -311,17 +310,14 @@ describe('startBitPayIdAnalyticsInit', () => {
     const user = makeUser({eid: 'new-eid-xyz'});
     await store.dispatch(startBitPayIdAnalyticsInit(user));
 
-    expect(MockBitPayIdApiCall).toHaveBeenCalledWith(
-      'token1',
-      'mergeBrazeUser',
-      {
-        userToMerge: 'old-anon-eid',
-      },
+    expect(MockBrazeWrapperMerge).toHaveBeenCalledWith(
+      'old-anon-eid',
+      'new-eid-xyz',
     );
     expect(MockSleep).toHaveBeenCalledWith(5000);
   });
 
-  it('does NOT call the mergeBrazeUser API when brazeEid is not anonymous', async () => {
+  it('does NOT call BrazeWrapper.merge when brazeEid is not anonymous', async () => {
     MockIsAnonymousBrazeEid.mockReturnValueOnce(false);
 
     const store = configureTestStore({
@@ -338,33 +334,7 @@ describe('startBitPayIdAnalyticsInit', () => {
     });
 
     await store.dispatch(startBitPayIdAnalyticsInit(makeUser()));
-    expect(MockBitPayIdApiCall).not.toHaveBeenCalled();
-  });
-
-  it('still completes the merging lifecycle (sleep + endMergingUser) when mergeBrazeUser fails', async () => {
-    MockIsAnonymousBrazeEid.mockReturnValueOnce(true);
-    MockBitPayIdApiCall.mockRejectedValueOnce(new Error('merge failed'));
-
-    const store = configureTestStore({
-      BITPAY_ID: {
-        session: makeSession(),
-        apiToken: {[Network.mainnet]: 'token1'},
-      },
-      APP: {
-        network: Network.mainnet,
-        brazeEid: 'old-anon-eid',
-        emailNotifications: {accepted: false},
-        notificationsAccepted: false,
-      },
-    });
-
-    const user = makeUser({eid: 'new-eid-xyz'});
-    await expect(
-      store.dispatch(startBitPayIdAnalyticsInit(user)),
-    ).resolves.toBeUndefined();
-
-    expect(MockSleep).toHaveBeenCalledWith(5000);
-    expect(MockAnalyticsEndMergingUser).toHaveBeenCalled();
+    expect(MockBrazeWrapperMerge).not.toHaveBeenCalled();
   });
 
   it('derives givenName/familyName from name when they are missing', async () => {
