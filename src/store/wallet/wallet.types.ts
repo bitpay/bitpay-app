@@ -60,6 +60,7 @@ export enum WalletActionTypes {
   REMOVE_PENDING_TSS_SESSION = 'WALLET/REMOVE_PENDING_TSS_SESSION',
   SET_PENDING_JOINER_SESSION = 'WALLET/SET_PENDING_JOINER_SESSION',
   REMOVE_PENDING_JOINER_SESSION = 'WALLET/REMOVE_PENDING_JOINER_SESSION',
+  SET_TSS_ENABLED = 'WALLET/SET_TSS_ENABLED',
 }
 
 interface successWalletStoreInit {
@@ -350,6 +351,11 @@ interface setPendingJoinerSession {
   payload: PendingJoinerSession | null;
 }
 
+interface setTssEnabled {
+  type: typeof WalletActionTypes.SET_TSS_ENABLED;
+  payload: boolean;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -394,4 +400,5 @@ export type WalletActionType =
   | setSvmAddressCreationFixComplete
   | successUpdateWalletBalancesAndStatus
   | setPendingJoinerSession
-  | removePendingJoinerSession;
+  | removePendingJoinerSession
+  | setTssEnabled;

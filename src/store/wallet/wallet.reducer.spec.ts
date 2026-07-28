@@ -119,6 +119,7 @@ describe('walletReducer — default state', () => {
     expect(state.accountSvmCreationMigrationComplete).toBe(false);
     expect(state.svmAddressFixComplete).toBe(false);
     expect(state.pendingJoinerSession).toBeNull();
+    expect(state.tssEnabled).toBe(false);
   });
 
   it('has the correct initial feeLevel defaults', () => {
@@ -1049,5 +1050,24 @@ describe('REMOVE_PENDING_JOINER_SESSION', () => {
       type: WalletActionTypes.REMOVE_PENDING_JOINER_SESSION,
     } as any);
     expect(state.pendingJoinerSession).toBeNull();
+  });
+});
+
+describe('SET_TSS_ENABLED', () => {
+  it('sets tssEnabled to true', () => {
+    const state = walletReducer(freshState(), {
+      type: WalletActionTypes.SET_TSS_ENABLED,
+      payload: true,
+    });
+    expect(state.tssEnabled).toBe(true);
+  });
+
+  it('sets tssEnabled back to false', () => {
+    const base: WalletState = {...freshState(), tssEnabled: true};
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SET_TSS_ENABLED,
+      payload: false,
+    });
+    expect(state.tssEnabled).toBe(false);
   });
 });

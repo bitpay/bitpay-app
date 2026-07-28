@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {Key} from '../../../store/wallet/wallet.models';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
@@ -31,6 +31,7 @@ const MultisigOptions = ({
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const isNonTSSKeyFlow = walletKey && !isTSSKey(walletKey) && !modalType;
+  const tssEnabled = useAppSelector(({WALLET}) => WALLET.tssEnabled);
   const hasViewedTSSOnboarding = useAppSelector(
     ({APP}) => APP.hasViewedTSSOnboarding,
   );
@@ -38,6 +39,41 @@ const MultisigOptions = ({
   const [tssOnboardingFlow, setTssOnboardingFlow] =
     useState<TSSOnboardingFlow>('create');
   const tssPageContext = walletKey ? 'AddingOptions' : 'CreationOptions';
+
+  useEffect(() => {
+    if (isVisible && !tssEnabled && !isNonTSSKeyFlow && modalType) {
+      if (modalType === 'create') {
+        dispatch(
+          Analytics.track('Clicked Create Multisig Wallet', {
+            context: tssPageContext,
+          }),
+        );
+        closeModal();
+        navigation.navigate('CurrencySelection', {
+          context: 'addWalletMultisig',
+          key: walletKey!,
+        });
+      } else {
+        dispatch(
+          Analytics.track('Clicked Join Multisig Wallet', {
+            context: tssPageContext,
+          }),
+        );
+        closeModal();
+        navigation.navigate('JoinMultisig', {key: walletKey});
+      }
+    }
+  }, [
+    isVisible,
+    tssEnabled,
+    isNonTSSKeyFlow,
+    modalType,
+    dispatch,
+    navigation,
+    walletKey,
+    closeModal,
+    tssPageContext,
+  ]);
 
   const nonTSSOptions: Option[] = useMemo(
     () => [
@@ -102,40 +138,47 @@ const MultisigOptions = ({
           });
         },
       },
-      {
-        title: t('Threshold signature wallet'),
-        description: t(
-          'A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
-        ),
-        badge: t('Beta'),
-        subDescriptionItems: [
-          {icon: 'clock', text: t('Requires all signers online to sign.')},
-          {icon: 'warning', text: t('Not portable to other platforms.')},
-          {
-            icon: 'info',
-            text: t('This wallet cannot be modified after creation.'),
-          },
-        ],
-        cardStyle: true,
-        showChevron: true,
-        onPress: () => {
-          dispatch(
-            Analytics.track('Clicked Create TSS Wallet', {
-              context: tssPageContext,
-            }),
-          );
-          if (hasViewedTSSOnboarding) {
-            closeModal();
-            navigation.navigate('CurrencySelection', {
-              context: 'addTSSWalletMultisig',
-              key: walletKey!,
-            });
-          } else {
-            setTssOnboardingFlow('create');
-            setShowTSSOnboarding(true);
-          }
-        },
-      },
+      ...(tssEnabled
+        ? [
+            {
+              title: t('Threshold signature wallet'),
+              description: t(
+                'A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
+              ),
+              badge: t('Beta'),
+              subDescriptionItems: [
+                {
+                  icon: 'clock',
+                  text: t('Requires all signers online to sign.'),
+                },
+                {icon: 'warning', text: t('Not portable to other platforms.')},
+                {
+                  icon: 'info',
+                  text: t('This wallet cannot be modified after creation.'),
+                },
+              ],
+              cardStyle: true,
+              showChevron: true,
+              onPress: () => {
+                dispatch(
+                  Analytics.track('Clicked Create TSS Wallet', {
+                    context: tssPageContext,
+                  }),
+                );
+                if (hasViewedTSSOnboarding) {
+                  closeModal();
+                  navigation.navigate('CurrencySelection', {
+                    context: 'addTSSWalletMultisig',
+                    key: walletKey!,
+                  });
+                } else {
+                  setTssOnboardingFlow('create');
+                  setShowTSSOnboarding(true);
+                }
+              },
+            } as Option,
+          ]
+        : []),
     ],
     [
       t,
@@ -145,6 +188,7 @@ const MultisigOptions = ({
       closeModal,
       hasViewedTSSOnboarding,
       tssPageContext,
+      tssEnabled,
     ],
   );
 
@@ -167,37 +211,44 @@ const MultisigOptions = ({
           navigation.navigate('JoinMultisig', {key: walletKey});
         },
       },
-      {
-        title: t('Threshold signature wallet'),
-        description: t(
-          'A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
-        ),
-        badge: t('Beta'),
-        subDescriptionItems: [
-          {icon: 'clock', text: t('Requires all signers online to sign.')},
-          {icon: 'warning', text: t('Not portable to other platforms.')},
-          {
-            icon: 'info',
-            text: t('This wallet cannot be modified after creation.'),
-          },
-        ],
-        cardStyle: true,
-        showChevron: true,
-        onPress: () => {
-          dispatch(
-            Analytics.track('Clicked Join TSS Wallet', {
-              context: tssPageContext,
-            }),
-          );
-          if (hasViewedTSSOnboarding) {
-            closeModal();
-            navigation.navigate(WalletScreens.JOIN_TSS_WALLET, {});
-          } else {
-            setTssOnboardingFlow('join');
-            setShowTSSOnboarding(true);
-          }
-        },
-      },
+      ...(tssEnabled
+        ? [
+            {
+              title: t('Threshold signature wallet'),
+              description: t(
+                'A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
+              ),
+              badge: t('Beta'),
+              subDescriptionItems: [
+                {
+                  icon: 'clock',
+                  text: t('Requires all signers online to sign.'),
+                },
+                {icon: 'warning', text: t('Not portable to other platforms.')},
+                {
+                  icon: 'info',
+                  text: t('This wallet cannot be modified after creation.'),
+                },
+              ],
+              cardStyle: true,
+              showChevron: true,
+              onPress: () => {
+                dispatch(
+                  Analytics.track('Clicked Join TSS Wallet', {
+                    context: tssPageContext,
+                  }),
+                );
+                if (hasViewedTSSOnboarding) {
+                  closeModal();
+                  navigation.navigate(WalletScreens.JOIN_TSS_WALLET, {});
+                } else {
+                  setTssOnboardingFlow('join');
+                  setShowTSSOnboarding(true);
+                }
+              },
+            } as Option,
+          ]
+        : []),
     ],
     [
       t,
@@ -207,6 +258,7 @@ const MultisigOptions = ({
       closeModal,
       hasViewedTSSOnboarding,
       tssPageContext,
+      tssEnabled,
     ],
   );
 
@@ -223,6 +275,10 @@ const MultisigOptions = ({
     }
     return t('What type of shared wallet?');
   };
+
+  if (!tssEnabled && !isNonTSSKeyFlow && modalType) {
+    return null;
+  }
 
   return (
     <>
