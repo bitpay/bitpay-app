@@ -884,7 +884,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const showFiatBalance = network !== Network.testnet;
   const cacheEligibleWallets = usePortfolioBalanceChartEligibleWallets({
     wallets: chartWallets,
-    enabled: showPortfolioValue === true && showFiatBalance && !hideAllBalances,
+    enabled: showPortfolioValue === true && showFiatBalance,
   });
   const walletChartWalletIds = useMemo(
     () =>
@@ -915,7 +915,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       (secondaryContentReady || hasCachedWalletChart) &&
       showPortfolioValue === true &&
       showFiatBalance,
-    hideAllBalances,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
   const shouldRenderWalletBalanceChart =
@@ -946,7 +945,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     wallets: chartWallets,
     currentFiatBalance: fullWalletObj?.balance?.fiat,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances && showFiatBalance,
+    enabled: showPortfolioValue !== true && showFiatBalance,
   });
   const walletHeaderChangeRowData =
     showPortfolioValue === true
@@ -1677,8 +1676,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     theme.dark,
     walletType,
   ]);
-  const canShowWalletHeaderExtras =
-    !hideAllBalances && !fullWalletObj.isScanning;
+  const canShowWalletHeaderExtras = !fullWalletObj.isScanning;
   const shouldRenderWalletChart =
     canShowWalletHeaderExtras && shouldRenderWalletBalanceChart;
   const hasRenderedWalletChart =

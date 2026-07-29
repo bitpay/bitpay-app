@@ -133,7 +133,6 @@ const AssetBalanceHistoryScreen = ({
   const balanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: shared.assetWallets,
     enabled: portfolioChartsEnabled && shared.hasWalletsForAsset,
-    hideAllBalances: shared.hideAllBalances,
   });
   const chartableAssetWallets = balanceChartReadiness.chartableWallets;
   const balanceHistoryEnabled =
@@ -200,10 +199,7 @@ const AssetBalanceHistoryScreen = ({
     quoteCurrency: shared.resolvedQuoteCurrency,
     mode: 'representativeAsset',
     representativeAsset: shared.assetContext,
-    enabled:
-      !portfolioChartsEnabled &&
-      !shared.hideAllBalances &&
-      shared.hasWalletsForAsset,
+    enabled: !portfolioChartsEnabled && shared.hasWalletsForAsset,
   });
 
   const selectedAssetBalanceToDisplay = !shared.hasWalletsForAsset
@@ -212,9 +208,7 @@ const AssetBalanceHistoryScreen = ({
     ? displayedSummary.assetBalance ?? shared.assetTotalFiatBalance
     : shared.assetTotalFiatBalance;
 
-  const changeRow = shared.hideAllBalances
-    ? undefined
-    : portfolioChartsEnabled
+  const changeRow = portfolioChartsEnabled
     ? displayedSummary.changeRow
     : legacyLastDayChangeRowData;
 
@@ -271,6 +265,7 @@ const AssetBalanceHistoryScreen = ({
   return (
     <ExchangeRateScreenLayout
       changeRow={changeRow}
+      maskChangeRowDeltaWhenBalancesHidden
       chartSection={
         <AssetBalanceChartSection
           shouldRender={shouldRenderBalanceChart}

@@ -475,6 +475,7 @@ const AboutText: React.FC<React.ComponentProps<typeof BaseText>> = ({
 type ExchangeRateScreenLayoutProps = {
   chartSection: React.ReactNode;
   changeRow?: ExchangeRateChangeRow;
+  maskChangeRowDeltaWhenBalancesHidden?: boolean;
   isRefreshing: boolean;
   marketPriceDisplay: string;
   onRefresh: () => void;
@@ -487,6 +488,7 @@ type ExchangeRateScreenLayoutProps = {
 const ExchangeRateScreenLayout = ({
   chartSection,
   changeRow,
+  maskChangeRowDeltaWhenBalancesHidden = false,
   isRefreshing,
   marketPriceDisplay,
   onRefresh,
@@ -534,6 +536,9 @@ const ExchangeRateScreenLayout = ({
               percent={resolvedTopChangeRow.percent}
               deltaFiatFormatted={resolvedTopChangeRow.deltaFiatFormatted}
               rangeLabel={resolvedTopChangeRow.rangeLabel}
+              maskDeltaWhenBalancesHidden={
+                maskChangeRowDeltaWhenBalancesHidden
+              }
               style={resolvedTopChangeRow.hidden ? {opacity: 0} : undefined}
             />
           ) : null}
