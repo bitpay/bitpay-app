@@ -81,6 +81,7 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
 import MoonpayEmbeddedCheckoutSkeleton from '../components/MoonpayEmbeddedCheckoutSkeleton';
+import {getMoonpayDisclosureCopy} from '../buy-crypto/constants/MoonpayDisclosures';
 import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -169,6 +170,14 @@ const LegalText = styled(BaseText)`
 
 const LegalLink = styled.Text`
   color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
+`;
+
+const DisclosureText = styled(BaseText)`
+  font-size: 12px;
+  text-align: center;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  margin-bottom: 12px;
+  line-height: 18px;
 `;
 
 const PoweredByContainer = styled.View`
@@ -646,6 +655,21 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const disclosures = embeddedQuoteData?.paymentDisclosures;
+    if (!disclosures?.length) {
+      return;
+    }
+    disclosures.forEach((d: {id: string; version: string}) => {
+      const {isFallback} = getMoonpayDisclosureCopy(d as any);
+      if (isFallback) {
+        logger.warn(
+          `[MoonpayEmbeddedCheckout] Unknown MoonPay payment disclosure (id: ${d.id}, version: ${d.version}). Rendering conservative fallback — update MoonpayDisclosures.ts.`,
+        );
+      }
+    });
+  }, [embeddedQuoteData?.paymentDisclosures]);
+
+  useEffect(() => {
     if (
       remainingTimeStr === 'expired' &&
       !expiredAnalyticSent &&
@@ -752,7 +776,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               // copyText(toAddress);
             }}
           />
-        </RowDataContainer> 
+        </RowDataContainer>
         <ItemDivisor />*/}
           {isLoading ? (
             <MoonpayEmbeddedCheckoutSkeleton context="data" />
@@ -877,6 +901,27 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         </ScrollView>
 
         <BottomSection>
+          {embeddedQuoteData?.paymentDisclosures?.length
+            ? embeddedQuoteData.paymentDisclosures.map(
+                (disclosure: {id: string; version: string}) => {
+                  const {text, url} = getMoonpayDisclosureCopy(
+                    disclosure as any,
+                  );
+                  return (
+                    <DisclosureText
+                      key={`${disclosure.id}-${disclosure.version}`}>
+                      {url ? (
+                        <LegalLink onPress={() => openUrl(url)}>
+                          {text}
+                        </LegalLink>
+                      ) : (
+                        text
+                      )}
+                    </DisclosureText>
+                  );
+                },
+              )
+            : null}
           {isNYorWA ? (
             <LegalText>
               {t("I agree to MoonPay's")}{' '}

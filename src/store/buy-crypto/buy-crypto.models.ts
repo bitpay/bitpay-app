@@ -332,6 +332,17 @@ export interface MoonpayGetQuoteEmbeddedRequestData {
   env: string;
 }
 
+export type MoonpayPaymentDisclosureId =
+  | 'us-transaction-finality'
+  | 'eea-crypto-asset-risk'
+  | 'eea-unregulated-stablecoin-risk'
+  | 'gateway-token';
+
+export interface MoonpayPaymentDisclosure {
+  id: MoonpayPaymentDisclosureId;
+  version: string;
+}
+
 export interface MoonpayQuoteEmbeddedData {
   source: MoonpayEmbeddedAmount;
   destination: MoonpayEmbeddedAmount;
@@ -345,6 +356,7 @@ export interface MoonpayQuoteEmbeddedData {
   exchangeRate: string; // numeric string
   signature: string; // long JWT
   executable: boolean;
+  paymentDisclosures?: MoonpayPaymentDisclosure[];
 }
 
 interface MoonpayEmbeddedAmount {
