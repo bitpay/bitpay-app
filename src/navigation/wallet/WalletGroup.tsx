@@ -112,7 +112,11 @@ export type WalletGroupParamList = {
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList | undefined;
-  KeyOverview: {id: string; context?: 'createNewMultisigKey'};
+  KeyOverview: {
+    id: string;
+    context?: 'createNewMultisigKey';
+    _preloadContent?: boolean;
+  };
   KeyExplanation: undefined;
   KeySettings: {keyId: string; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
@@ -145,6 +149,7 @@ export type WalletGroupParamList = {
     keyId: string;
     walletId: string;
     copayerId?: string;
+    _preloadContent?: boolean;
   };
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
@@ -496,6 +501,11 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         }}
         name={WalletScreens.GLOBAL_SELECT}
         component={GlobalSelect}
+        getId={({params}) =>
+          ['receive', 'send'].includes(params.context)
+            ? `home-${params.context}`
+            : undefined
+        }
       />
       <Wallet.Screen
         options={{

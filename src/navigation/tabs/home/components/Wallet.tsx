@@ -41,6 +41,7 @@ interface WalletCardComponentProps {
   totalBalance: number;
   percentageDifference: number | null;
   onPress: () => void;
+  onPressIn?: () => void;
   needsBackup: boolean;
   keyName: string | undefined;
   layout: HomeCarouselLayoutType;
@@ -358,6 +359,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   totalBalance,
   percentageDifference,
   onPress,
+  onPressIn,
   needsBackup,
   keyName = 'My Key',
   hideKeyBalance,
@@ -407,6 +409,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         activeOpacity={ActiveOpacity}
         testID={`wallet-card-${keyName}`}
         accessibilityLabel={`${keyName} wallet`}
+        onPressIn={onPressIn}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
         <ListRow>
@@ -483,6 +486,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         isMultisig,
       }}
       footer={CardFooter}
+      onCTAPressIn={onPressIn}
       onCTAPress={onPress}
     />
   );

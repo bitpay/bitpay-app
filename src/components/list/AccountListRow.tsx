@@ -9,11 +9,12 @@ import {
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {hasCachedBlockie} from '../blockie/Blockie';
 import {
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {ActivityIndicator, Platform, StyleSheet, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {WalletRowProps} from './WalletRow';
 import {SearchableItem} from '../chain-search/ChainSearch';
@@ -65,7 +66,9 @@ interface Props {
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: () => void;
+  onPressIn?: () => void;
   hideBalance: boolean;
+  animateEntrance?: boolean;
 }
 
 export const buildTestBadge = (
@@ -106,8 +109,10 @@ const AccountListRow = ({
   accountItem,
   hideIcon,
   onPress,
+  onPressIn,
   isLast,
   hideBalance,
+  animateEntrance = true,
 }: Props) => {
   const {
     accountName,
@@ -133,21 +138,29 @@ const AccountListRow = ({
 
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
 
-  const [isBlockieReady, setIsBlockieReady] = useState(false);
+  const [isBlockieReady, setIsBlockieReady] = useState(
+    () => !isMultiNetworkSupported || hasCachedBlockie(receiveAddress),
+  );
 
   useEffect(() => {
+    if (isBlockieReady) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       setIsBlockieReady(true);
     }, 0);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isBlockieReady]);
 
   return (
-    <Animated.View entering={FadeIn.duration(800)}>
+    <Animated.View
+      entering={animateEntrance ? FadeIn.duration(800) : undefined}>
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={onPress}
+        onPressIn={onPressIn}
         style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
         {!hideIcon ? (
           <CurrencyImageContainer>
