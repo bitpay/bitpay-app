@@ -337,7 +337,6 @@ const CoinbaseDashboard = () => {
           }}
           data={accounts}
           renderItem={renderItem}
-          estimatedItemSize={70}
           ListFooterComponent={listFooterComponent}
         />
       ) : null}
