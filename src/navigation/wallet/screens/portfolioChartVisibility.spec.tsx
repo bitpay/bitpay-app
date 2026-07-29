@@ -940,6 +940,21 @@ const makeWalletDetailsScreen = (
   />
 );
 
+const makeAccountDetailsScreen = () => (
+  <AccountDetails
+    navigation={mockNavigation as any}
+    route={
+      {
+        params: {
+          isSvmAccount: false,
+          keyId: 'key-1',
+          selectedAccountAddress: 'address-1',
+        },
+      } as any
+    }
+  />
+);
+
 const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
   [
     'Key Overview',
@@ -950,24 +965,7 @@ const chartSurfaceCases: Array<[string, () => React.ReactElement, string]> = [
     'key_overview_balance_chart',
   ],
   ['WalletDetails', makeWalletDetailsScreen, 'wallet_details_balance_chart'],
-  [
-    'AccountDetails',
-    () => (
-      <AccountDetails
-        navigation={mockNavigation as any}
-        route={
-          {
-            params: {
-              isSvmAccount: false,
-              keyId: 'key-1',
-              selectedAccountAddress: 'address-1',
-            },
-          } as any
-        }
-      />
-    ),
-    'account_details_balance_chart',
-  ],
+  ['AccountDetails', makeAccountDetailsScreen, 'account_details_balance_chart'],
 ];
 const memoizedHeaderChartSurfaceCases = chartSurfaceCases.filter(([screen]) =>
   ['Key Overview', 'AccountDetails'].includes(screen),
@@ -1875,4 +1873,20 @@ describe('portfolio chart visibility guards', () => {
 
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
+
+  it.each(portfolioChartSurfaceCases)(
+    'keeps the %s balance chart mounted while balances are hidden',
+    async (screen, makeScreen) => {
+      resetState(true);
+      mockState.APP.hideAllBalances = true;
+
+      await act(async () => {
+        renderWithTheme(makeScreen());
+      });
+
+      await finishOpeningTransition(screen);
+
+      expect(mockBalanceHistoryChart).toHaveBeenCalled();
+    },
+  );
 });
