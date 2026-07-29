@@ -11,6 +11,28 @@ import {
   cacheBalanceHistoryChartSeries,
   clearBalanceHistoryChartSeriesCache,
 } from '../../../components/charts/balanceHistoryChartSeriesCache';
+import {
+  clearAccountListMemoryCacheForTests,
+  clearAccountListSnapshots,
+  setAccountListSnapshotStorage,
+  setAccountListSnapshotWriteScheduler,
+  type AccountListSnapshotStorage,
+} from '../../../store/wallet/utils/accountListCache';
+
+const makeSnapshotStorage = (): AccountListSnapshotStorage => {
+  const entries = new Map<string, string>();
+
+  return {
+    getString: (key: string) => entries.get(key),
+    set: (key: string, value: string) => {
+      entries.set(key, value);
+    },
+    delete: (key: string) => {
+      entries.delete(key);
+    },
+    getAllKeys: () => [...entries.keys()],
+  };
+};
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -72,6 +94,10 @@ const mockDispatch: jest.Mock = jest.fn((action: any): any =>
 let mockTransitionEndListener:
   | ((event: {data: {closing: boolean}}) => void)
   | undefined;
+const mockParentNavigation = {
+  navigate: jest.fn(),
+  preload: jest.fn(),
+};
 const mockNavigation = {
   addListener: jest.fn((event: string, callback: () => void) => {
     if (event === 'transitionEnd') {
@@ -80,11 +106,10 @@ const mockNavigation = {
     return jest.fn();
   }),
   dispatch: jest.fn(),
-  getParent: jest.fn(() => ({
-    navigate: jest.fn(),
-  })),
+  getParent: jest.fn(() => mockParentNavigation),
   isFocused: jest.fn(() => mockIsFocused),
   navigate: jest.fn(),
+  preload: jest.fn(),
   setParams: jest.fn(),
   setOptions: jest.fn(),
 };
@@ -98,6 +123,9 @@ const testTheme = {
 let mockWallet: any;
 let mockKey: any;
 let mockAccountList: any[];
+let mockFlashListProps: any;
+let mockSectionListProps: any;
+let mockLinkingButtonsProps: any;
 
 const renderComponent = (component: any) => {
   if (!component) {
@@ -212,13 +240,16 @@ jest.mock('react-native', () => {
     },
     RefreshControl: () => null,
     SafeAreaView: RN.View,
-    SectionList: ({ListHeaderComponent, ListFooterComponent}: any) =>
-      ReactLib.createElement(
+    SectionList: (props: any) => {
+      mockSectionListProps = props;
+      const {ListHeaderComponent, ListFooterComponent} = props;
+      return ReactLib.createElement(
         RN.View,
         null,
         renderComponent(ListHeaderComponent),
         renderComponent(ListFooterComponent),
-      ),
+      );
+    },
     useWindowDimensions: () => ({height: 844, width: 390}),
   };
 
@@ -244,13 +275,16 @@ jest.mock('@shopify/flash-list', () => {
   const ReactLib = require('react');
   const {View} = require('react-native');
   return {
-    FlashList: ({ListHeaderComponent, ListFooterComponent}: any) =>
-      ReactLib.createElement(
+    FlashList: (props: any) => {
+      mockFlashListProps = props;
+      const {ListHeaderComponent, ListFooterComponent} = props;
+      return ReactLib.createElement(
         View,
         null,
         renderComponent(ListHeaderComponent),
         renderComponent(ListFooterComponent),
-      ),
+      );
+    },
   };
 });
 
@@ -413,7 +447,10 @@ jest.mock('../../tabs/home/homeExchangeRates', () => jest.fn(() => []));
 jest.mock('../../tabs/home/components/LinkingButtons', () => {
   const ReactLib = require('react');
   const {View} = require('react-native');
-  return () => ReactLib.createElement(View, {testID: 'home-linking-buttons'});
+  return (props: any) => {
+    mockLinkingButtonsProps = props;
+    return ReactLib.createElement(View, {testID: 'home-linking-buttons'});
+  };
 });
 jest.mock('../../../components/list/AccountListRow', () => () => null);
 jest.mock('../../../components/list/TransactionRow', () => () => null);
@@ -742,6 +779,12 @@ const mockBalanceHistoryChart = jest.requireMock(
 const mockGetTransactionHistory = jest.requireMock(
   '../../../store/wallet/effects/transactions/transactions',
 ).GetTransactionHistory as jest.Mock;
+const mockBuildUiFriendlyList = jest.requireMock(
+  '../../../store/wallet/effects/transactions/transactions',
+).BuildUiFriendlyList as jest.Mock;
+const mockGroupTransactionHistory = jest.requireMock(
+  '../../../store/wallet/effects/transactions/transactions',
+).GroupTransactionHistory as jest.Mock;
 const mockBuildAccountList = jest.requireMock(
   '../../../store/wallet/utils/wallet',
 ).buildAccountList as jest.Mock;
@@ -924,7 +967,7 @@ const makePopulateStatus = (overrides: Record<string, any> = {}) => ({
 });
 
 const makeWalletDetailsScreen = (
-  args: {skipInitializeHistory?: boolean} = {},
+  args: {preloadContent?: boolean; skipInitializeHistory?: boolean} = {},
 ) => (
   <WalletDetails
     navigation={mockNavigation as any}
@@ -932,6 +975,7 @@ const makeWalletDetailsScreen = (
       {
         params: {
           copayerId: 'copayer-1',
+          _preloadContent: args.preloadContent,
           skipInitializeHistory: args.skipInitializeHistory ?? true,
           walletId: 'wallet-1',
         },
@@ -940,12 +984,13 @@ const makeWalletDetailsScreen = (
   />
 );
 
-const makeAccountDetailsScreen = () => (
+const makeAccountDetailsScreen = (args: {preloadContent?: boolean} = {}) => (
   <AccountDetails
     navigation={mockNavigation as any}
     route={
       {
         params: {
+          _preloadContent: args.preloadContent,
           isSvmAccount: false,
           keyId: 'key-1',
           selectedAccountAddress: 'address-1',
@@ -1066,9 +1111,11 @@ describe('portfolio chart visibility guards', () => {
     act(() => {
       clearBalanceHistoryChartSeriesCache();
     });
+    clearAccountListSnapshots();
     jest.clearAllMocks();
     mockTransitionEndListener = undefined;
     mockIsFocused = false;
+    mockLinkingButtonsProps = undefined;
     mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
       checked: true,
       hasAllSnapshots: true,
@@ -1121,6 +1168,46 @@ describe('portfolio chart visibility guards', () => {
     await finishOpeningTransition('Key Overview');
 
     expect(mockBalanceHistoryChart).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['AccountDetails', () => makeAccountDetailsScreen({preloadContent: true})],
+    ['WalletDetails', () => makeWalletDetailsScreen({preloadContent: true})],
+  ])(
+    'fully paints a preloaded %s chart before focus or transitionEnd',
+    async (_screen, makeScreen) => {
+      resetState(true);
+
+      await act(async () => {
+        renderWithTheme(makeScreen());
+      });
+
+      expect(mockBalanceHistoryChart).toHaveBeenCalled();
+      expect(mockTransitionEndListener).toBeUndefined();
+      expect(mockNavigation.setOptions).not.toHaveBeenCalled();
+    },
+  );
+
+  it('does not refresh a preloaded detail screen before it receives focus', async () => {
+    await act(async () => {
+      renderWithTheme(
+        makeWalletDetailsScreen({
+          preloadContent: true,
+          skipInitializeHistory: false,
+        }),
+      );
+      renderWithTheme(makeAccountDetailsScreen({preloadContent: true}));
+      jest.advanceTimersByTime(3000);
+      await Promise.resolve();
+    });
+
+    expect(mockGetTransactionHistory).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({type: 'START_UPDATE_WALLET_STATUS'}),
+    );
+    expect(mockDispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({type: 'START_UPDATE_ALL_WALLET_STATUS_FOR_KEY'}),
+    );
   });
 
   it.each(chartSurfaceCases)(
@@ -1256,6 +1343,7 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it('keeps the account switcher enabled without eagerly formatting every account', async () => {
+    mockIsFocused = true;
     const secondWallet = {
       ...makeWallet(),
       credentials: {
@@ -1364,6 +1452,36 @@ describe('portfolio chart visibility guards', () => {
       view!.root.findAllByProps({testID: 'home-linking-buttons'}).length,
     ).toBeGreaterThan(0);
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+  });
+
+  it('preloads the Receive and Send selectors from their Home press-in events', async () => {
+    resetState(false, {completedFullPopulate: true});
+    mockWallet.isComplete = jest.fn(() => true);
+    mockState.APP.appIsLoading = false;
+    mockIsFocused = false;
+
+    await act(async () => {
+      renderWithTheme(
+        <HomeRoot
+          navigation={mockNavigation as any}
+          route={{params: {}} as any}
+        />,
+      );
+    });
+
+    await act(async () => {
+      mockLinkingButtonsProps.receive.onPressIn();
+      mockLinkingButtonsProps.send.onPressIn();
+    });
+
+    expect(mockNavigation.preload).toHaveBeenCalledWith('GlobalSelect', {
+      context: 'receive',
+      _preloadContent: true,
+    });
+    expect(mockNavigation.preload).toHaveBeenCalledWith('GlobalSelect', {
+      context: 'send',
+      _preloadContent: true,
+    });
   });
 
   it('mounts the Home portfolio balance chart with a loader while its initial populate scope is still running', async () => {
@@ -1889,4 +2007,333 @@ describe('portfolio chart visibility guards', () => {
       expect(mockBalanceHistoryChart).toHaveBeenCalled();
     },
   );
+});
+
+describe('cached content hydration', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    act(() => {
+      clearBalanceHistoryChartSeriesCache();
+    });
+    setAccountListSnapshotWriteScheduler(write => write());
+    setAccountListSnapshotStorage(null);
+    clearAccountListSnapshots();
+    jest.clearAllMocks();
+    mockTransitionEndListener = undefined;
+    mockIsFocused = false;
+    mockFlashListProps = undefined;
+    mockSectionListProps = undefined;
+    mockLinkingButtonsProps = undefined;
+    mockBuildUiFriendlyList.mockImplementation(
+      (transactions: any[] = []) => transactions,
+    );
+    mockGroupTransactionHistory.mockImplementation((history: any[] = []) =>
+      history.length ? [{title: 'Recent', data: history, time: 1}] : [],
+    );
+    mockUsePortfolioWalletSnapshotPresence.mockReturnValue({
+      checked: true,
+      hasAllSnapshots: true,
+      hasAnySnapshots: true,
+      loading: false,
+    });
+    resetState(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    setAccountListSnapshotWriteScheduler(null);
+  });
+
+  const makeCachedTx = (overrides: Record<string, any> = {}) => ({
+    action: 'received',
+    amount: 100000,
+    amountStr: '0.001 BTC',
+    chain: 'btc',
+    coin: 'btc',
+    confirmations: 6,
+    createdOn: 1_700_000_000,
+    fees: 100,
+    outputs: [],
+    time: 1_700_000_000,
+    txid: 'cached-tx-1',
+    walletId: 'wallet-1',
+    ...overrides,
+  });
+
+  const seedWalletTxHistoryCache = (transactions: any[]) => {
+    mockWallet.transactionHistory = {
+      transactions,
+      loadMore: false,
+      hasConfirmingTxs: false,
+    };
+  };
+
+  it('renders WalletDetails cached transactions before the opening transition ends', async () => {
+    seedWalletTxHistoryCache([
+      makeCachedTx(),
+      makeCachedTx({txid: 'cached-tx-2', time: 1_600_000_000}),
+    ]);
+
+    await act(async () => {
+      renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    const rows = (mockFlashListProps?.data || []).filter(
+      (item: any) => typeof item !== 'string',
+    );
+    expect(rows.map((tx: any) => tx.txid)).toEqual([
+      'cached-tx-1',
+      'cached-tx-2',
+    ]);
+  });
+
+  it('keeps the WalletDetails list empty without cached transactions', async () => {
+    await act(async () => {
+      renderWithTheme(makeWalletDetailsScreen());
+    });
+
+    expect(mockFlashListProps?.data ?? []).toHaveLength(0);
+  });
+
+  it('renders AccountDetails cached transactions on the activity tab', async () => {
+    seedWalletTxHistoryCache([makeCachedTx()]);
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(makeAccountDetailsScreen());
+    });
+    await finishOpeningTransition('AccountDetails');
+
+    const activityTabButton = view.root
+      .findAllByProps({testID: 'account-details-activity-tab'})
+      .find((node: any) => typeof node.props?.onPress === 'function');
+
+    expect(activityTabButton).toBeDefined();
+
+    await act(async () => {
+      activityTabButton!.props.onPress();
+      jest.advanceTimersByTime(300);
+      await Promise.resolve();
+    });
+
+    const sections = mockSectionListProps?.sections || [];
+    const sectionRows = sections.flatMap((section: any) => section.data || []);
+    expect(sectionRows.map((tx: any) => tx.txid)).toEqual(['cached-tx-1']);
+  });
+
+  it('keeps the KeyOverview list empty until the opening transition ends', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+
+    expect(mockFlashListProps?.data ?? []).toHaveLength(0);
+    expect(mockBuildAccountList).not.toHaveBeenCalled();
+
+    await finishOpeningTransition('Key Overview');
+
+    expect(mockFlashListProps?.data).toHaveLength(mockAccountList.length);
+  });
+
+  it('fully renders a preloaded KeyOverview before it becomes focused', async () => {
+    mockRouteParams = {
+      context: undefined,
+      id: 'key-1',
+      _preloadContent: true,
+    };
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+
+    expect(mockBuildAccountList).toHaveBeenCalledTimes(1);
+    expect(mockFlashListProps?.data).toHaveLength(mockAccountList.length);
+    expect(
+      mockFlashListProps.renderItem({item: mockAccountList[0]}).props
+        .animateEntrance,
+    ).toBe(false);
+  });
+
+  it('paints the cached KeyOverview list before the opening transition ends', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let firstView!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      firstView = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+    await act(async () => {
+      firstView.unmount();
+    });
+    mockFlashListProps = undefined;
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+
+    // No transitionEnd yet: the snapshot is already on screen.
+    expect(mockFlashListProps?.data).toHaveLength(mockAccountList.length);
+  });
+
+  it('reuses the cached KeyOverview list instead of rebuilding it', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let firstView!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      firstView = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    expect(mockBuildAccountList).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      firstView.unmount();
+    });
+    mockFlashListProps = undefined;
+    mockBuildAccountList.mockClear();
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    expect(mockFlashListProps?.data).toHaveLength(mockAccountList.length);
+    expect(mockBuildAccountList).not.toHaveBeenCalled();
+  });
+
+  it('restores KeyOverview row icons from a snapshot that survived a restart', async () => {
+    const storage = makeSnapshotStorage();
+    setAccountListSnapshotStorage(storage);
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let firstView!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      firstView = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+    await act(async () => {
+      firstView.unmount();
+    });
+
+    clearAccountListMemoryCacheForTests();
+    mockFlashListProps = undefined;
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    const restoredRows = mockFlashListProps?.data || [];
+    expect(restoredRows).toHaveLength(mockAccountList.length);
+    restoredRows.forEach((row: any) => {
+      row.wallets.forEach((wallet: any) => {
+        expect(wallet.img).toBeDefined();
+      });
+    });
+  });
+
+  it('re-renders KeyOverview rows when balances are toggled', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    const listDataBeforeToggle = mockFlashListProps.data;
+    const extraDataBeforeToggle = mockFlashListProps.extraData;
+    expect(
+      mockFlashListProps.renderItem({item: mockAccountList[0]}).props
+        .hideBalance,
+    ).toBe(false);
+
+    mockState.APP.hideAllBalances = true;
+    await act(async () => {
+      view.update(withTheme(<KeyOverview />));
+    });
+
+    // The cached list keeps the same identity, so the list needs extraData to
+    // know the rows must be rendered again.
+    expect(mockFlashListProps.data).toBe(listDataBeforeToggle);
+    expect(mockFlashListProps.extraData).not.toBe(extraDataBeforeToggle);
+    expect(
+      mockFlashListProps.renderItem({item: mockAccountList[0]}).props
+        .hideBalance,
+    ).toBe(true);
+  });
+
+  it('fades KeyOverview rows in only when there is no snapshot to restore', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let firstView!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      firstView = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    const firstRow = mockFlashListProps.renderItem({
+      item: mockAccountList[0],
+    });
+    expect(firstRow.props.animateEntrance).toBe(true);
+
+    await act(async () => {
+      firstView.unmount();
+    });
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    const restoredRow = mockFlashListProps.renderItem({
+      item: mockAccountList[0],
+    });
+    expect(restoredRow.props.animateEntrance).toBe(false);
+  });
+
+  it('rebuilds the KeyOverview account list when a balance changed', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let firstView!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      firstView = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+    await act(async () => {
+      firstView.unmount();
+    });
+    mockBuildAccountList.mockClear();
+
+    mockWallet.balance = {...mockWallet.balance, fiat: 250, sat: 250000000};
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    expect(mockBuildAccountList).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses the KeyOverview snapshot when nothing changed', async () => {
+    mockRouteParams = {context: undefined, id: 'key-1'};
+
+    let firstView!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      firstView = renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+    await act(async () => {
+      firstView.unmount();
+    });
+    mockBuildAccountList.mockClear();
+
+    await act(async () => {
+      renderWithTheme(<KeyOverview />);
+    });
+    await finishOpeningTransition('Key Overview');
+
+    expect(mockBuildAccountList).not.toHaveBeenCalled();
+  });
 });

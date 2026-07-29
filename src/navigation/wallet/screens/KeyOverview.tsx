@@ -10,6 +10,7 @@ import {
   CommonActions,
   RouteProp,
   useFocusEffect,
+  useIsFocused,
   useNavigation,
   useRoute,
   useTheme,
@@ -104,6 +105,12 @@ import {
   buildWalletObj,
   checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
+import {
+  buildAccountListSignature,
+  getRatesRevision,
+  readAccountListSnapshot,
+  resolveAccountListSnapshot,
+} from '../../../store/wallet/utils/accountListCache';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -119,6 +126,8 @@ import {
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
+import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import _ from 'lodash';
 import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
@@ -161,6 +170,44 @@ import {
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import {RootState} from '../../../store';
+import {PERF_DEBUG, performanceLog} from '../../../utils/performanceDebug';
+import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
+
+const EMPTY_ACCOUNT_LIST: AccountRowProps[] = [];
+
+const AccountListItem = React.memo(
+  ({
+    item,
+    hideBalance,
+    animateEntrance,
+    onPressItem,
+    onPressInItem,
+  }: {
+    item: AccountRowProps;
+    hideBalance: boolean;
+    animateEntrance: boolean;
+    onPressItem: (item: AccountRowProps) => void;
+    onPressInItem: (item: AccountRowProps) => void;
+  }) => {
+    const onPress = useCallback(() => onPressItem(item), [item, onPressItem]);
+    const onPressIn = useCallback(
+      () => onPressInItem(item),
+      [item, onPressInItem],
+    );
+
+    return (
+      <AccountListRow
+        id={item.id}
+        accountItem={item}
+        hideBalance={hideBalance}
+        animateEntrance={animateEntrance}
+        onPress={onPress}
+        onPressIn={onPressIn}
+      />
+    );
+  },
+);
+AccountListItem.displayName = 'AccountListItem';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -690,10 +737,11 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
 
 const KeyOverview = () => {
   const {t} = useTranslation();
-  const {
-    params: {id, context},
-  } = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
+  const {id, context, _preloadContent = false} = route.params;
+  const wasPreloadedRef = useRef(_preloadContent);
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
   const logger = useLogger();
@@ -704,7 +752,7 @@ const KeyOverview = () => {
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [contentReady, setContentReady] = useState(false);
+  const [contentReady, setContentReady] = useState(_preloadContent);
   const [renderedKeyChartIdentity, setRenderedKeyChartIdentity] =
     useState<string>();
   const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[id]) as Key;
@@ -781,14 +829,67 @@ const KeyOverview = () => {
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   });
 
+  const accountListCacheKey = `keyOverviewAccountList:${id}`;
+  const hydratedFromSnapshotRef = useRef<boolean | undefined>(undefined);
+
   const memoizedAccountList = useMemo(() => {
-    if (!contentReady) {
-      return [];
+    if (hydratedFromSnapshotRef.current === undefined) {
+      hydratedFromSnapshotRef.current =
+        readAccountListSnapshot<AccountRowProps[]>(accountListCacheKey) !==
+        undefined;
     }
-    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
-      filterByHideWallet: true,
+
+    // Same rule as the balance chart: a cached list paints right away instead
+    // of waiting for the opening transition to finish.
+    if (!contentReady) {
+      return (
+        readAccountListSnapshot<AccountRowProps[]>(accountListCacheKey) ??
+        EMPTY_ACCOUNT_LIST
+      );
+    }
+
+    const startedAt = PERF_DEBUG ? performance.now() : 0;
+    let didBuild = false;
+    const accountList = resolveAccountListSnapshot({
+      cacheKey: accountListCacheKey,
+      signature: buildAccountListSignature({
+        wallets: key?.wallets,
+        quoteCurrency: defaultAltCurrency.isoCode,
+        ratesRevision: getRatesRevision(rates),
+      }),
+      build: () => {
+        didBuild = true;
+        return buildAccountList(
+          key,
+          defaultAltCurrency.isoCode,
+          rates,
+          dispatch,
+          {
+            filterByHideWallet: true,
+          },
+        );
+      },
     });
-  }, [contentReady, dispatch, key, defaultAltCurrency.isoCode, rates]);
+
+    if (PERF_DEBUG) {
+      performanceLog(
+        `[PERF-KEY-OVERVIEW] accountList source:${
+          didBuild ? 'build' : 'cache'
+        } rows:${accountList.length} durationMs:${
+          Math.round((performance.now() - startedAt) * 10) / 10
+        } preloaded:${wasPreloadedRef.current}`,
+      );
+    }
+
+    return accountList;
+  }, [
+    accountListCacheKey,
+    contentReady,
+    dispatch,
+    key,
+    defaultAltCurrency.isoCode,
+    rates,
+  ]);
 
   const pendingTxpCount =
     key?.wallets.reduce(
@@ -820,7 +921,9 @@ const KeyOverview = () => {
   }, [key?.id, navigation]);
 
   useLayoutEffect(() => {
-    if (!key) {
+    // React Navigation gives preloaded routes a placeholder navigation object.
+    // Its setOptions intentionally throws until the route becomes focused.
+    if (!key || !isFocused) {
       return;
     }
 
@@ -897,6 +1000,7 @@ const KeyOverview = () => {
     hasMultipleKeys,
     linkedCoinbase,
     hasMissingEvmNetworks,
+    isFocused,
     onPressTxpBadge,
     pendingTxpCount,
     theme.dark,
@@ -1477,25 +1581,146 @@ const KeyOverview = () => {
     [key, logger, navigation],
   );
 
-  const memoizedRenderItem = useCallback(
-    ({item}: {item: AccountRowProps}) => {
-      return (
-        <AccountListRow
-          id={item.id}
-          accountItem={item}
-          hideBalance={hideAllBalances}
-          onPress={() => {
-            onPressItem(item);
-          }}
-        />
+  const preloadedDetailsRef = useRef<string | undefined>(undefined);
+  const preloadDetails = useCallback(
+    (item: AccountRowProps) => {
+      if (typeof (navigation as any).preload !== 'function') {
+        return;
+      }
+
+      if (IsVMChain(item.chains[0])) {
+        const preloadIdentity = `account:${item.keyId}:${item.receiveAddress}`;
+        if (preloadedDetailsRef.current === preloadIdentity) {
+          return;
+        }
+
+        preloadedDetailsRef.current = preloadIdentity;
+        performanceLog(
+          `[PERF-PRELOAD] AccountDetails start key:${item.keyId} account:${item.receiveAddress} source:KeyOverview`,
+        );
+        (navigation as any).preload('AccountDetails', {
+          keyId: item.keyId,
+          selectedAccountAddress: item.receiveAddress,
+          isSvmAccount: IsSVMChain(item.chains[0]),
+          _preloadContent: true,
+        });
+        return;
+      }
+
+      const fullWalletObj = key.wallets.find(
+        wallet =>
+          wallet.id === item.wallets[0].id &&
+          (!item.copayerId || wallet.credentials?.copayerId === item.copayerId),
       );
+      if (!fullWalletObj?.isComplete()) {
+        return;
+      }
+
+      const walletId = fullWalletObj.credentials.walletId;
+      const copayerId = fullWalletObj.credentials.copayerId;
+      const preloadIdentity = `wallet:${walletId}:${copayerId || ''}`;
+      if (preloadedDetailsRef.current === preloadIdentity) {
+        return;
+      }
+
+      preloadedDetailsRef.current = preloadIdentity;
+      performanceLog(
+        `[PERF-PRELOAD] WalletDetails start wallet:${walletId} source:KeyOverview`,
+      );
+      (navigation as any).preload('WalletDetails', {
+        walletId,
+        copayerId,
+        _preloadContent: true,
+      });
     },
-    [hideAllBalances, onPressItem],
+    [key.wallets, navigation],
+  );
+
+  const onPressItemRef = useRef(onPressItem);
+  onPressItemRef.current = onPressItem;
+  const stableOnPressItem = useCallback(
+    (item: AccountRowProps) => onPressItemRef.current(item),
+    [],
+  );
+  const preloadDetailsRef = useRef(preloadDetails);
+  preloadDetailsRef.current = preloadDetails;
+  const stablePreloadDetails = useCallback(
+    (item: AccountRowProps) => preloadDetailsRef.current(item),
+    [],
+  );
+  const firstPreloadableDetailsItem = useMemo(
+    () =>
+      memoizedAccountList.find(item => {
+        if (IsVMChain(item.chains[0])) {
+          return true;
+        }
+
+        return key.wallets.some(
+          wallet =>
+            wallet.id === item.wallets[0].id &&
+            (!item.copayerId ||
+              wallet.credentials?.copayerId === item.copayerId) &&
+            wallet.isComplete(),
+        );
+      }),
+    [key.wallets, memoizedAccountList],
+  );
+  const firstPreloadableDetailsItemRef = useRef(firstPreloadableDetailsItem);
+  firstPreloadableDetailsItemRef.current = firstPreloadableDetailsItem;
+  const firstPreloadableDetailsIdentity = firstPreloadableDetailsItem
+    ? `${firstPreloadableDetailsItem.keyId}:${
+        firstPreloadableDetailsItem.receiveAddress
+      }:${firstPreloadableDetailsItem.wallets[0]?.id || ''}`
+    : undefined;
+
+  useFocusEffect(
+    useCallback(() => {
+      preloadedDetailsRef.current = undefined;
+      if (!contentReady || !firstPreloadableDetailsIdentity) {
+        return;
+      }
+
+      const preloadTask = scheduleAfterTransitionAndIdle({
+        navigation: navigation as any,
+        transitionFallbackMs: 800,
+        idleTimeoutMs: 1200,
+        callback: signal => {
+          const itemToPreload = firstPreloadableDetailsItemRef.current;
+          if (!signal.aborted && itemToPreload) {
+            stablePreloadDetails(itemToPreload);
+          }
+        },
+      });
+
+      return preloadTask.cancel;
+    }, [
+      contentReady,
+      firstPreloadableDetailsIdentity,
+      navigation,
+      stablePreloadDetails,
+    ]),
+  );
+
+  const memoizedRenderItem = useCallback(
+    ({item}: {item: AccountRowProps}) => (
+      <AccountListItem
+        item={item}
+        hideBalance={hideAllBalances}
+        animateEntrance={
+          !wasPreloadedRef.current && !hydratedFromSnapshotRef.current
+        }
+        onPressItem={stableOnPressItem}
+        onPressInItem={stablePreloadDetails}
+      />
+    ),
+    [hideAllBalances, stableOnPressItem, stablePreloadDetails],
   );
 
   const listHeaderComponent = useMemo(() => {
     return (
-      <>
+      <PerformanceProfiler
+        id="KeyOverview:list-header"
+        onRender={logReactProfiler}>
         <BalanceContainer>
           <TouchableOpacity
             onLongPress={() => {
@@ -1584,7 +1809,7 @@ const KeyOverview = () => {
             />
           </View>
         </WalletListHeader>
-      </>
+      </PerformanceProfiler>
     );
   }, [
     chartableVisibleKeyWallets,
@@ -1744,17 +1969,33 @@ const KeyOverview = () => {
     [],
   );
 
+  const [footerReady, setFooterReady] = useState(false);
+
+  useEffect(() => {
+    if (!contentReady || footerReady) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => setFooterReady(true));
+
+    return () => cancelAnimationFrame(frame);
+  }, [contentReady, footerReady]);
+
   const listFooterComponent = useMemo(() => {
-    if (!contentReady) {
+    if (!footerReady) {
       return null;
     }
 
     return (
-      <View ref={allocationFooterViewRef} onLayout={onAllocationFooterLayout}>
-        {renderListFooterComponent()}
-      </View>
+      <PerformanceProfiler
+        id="KeyOverview:list-footer"
+        onRender={logReactProfiler}>
+        <View ref={allocationFooterViewRef} onLayout={onAllocationFooterLayout}>
+          {renderListFooterComponent()}
+        </View>
+      </PerformanceProfiler>
     );
-  }, [contentReady, onAllocationFooterLayout, renderListFooterComponent]);
+  }, [footerReady, onAllocationFooterLayout, renderListFooterComponent]);
 
   return (
     <OverviewContainer ref={overviewContainerRef} onLayout={onOverviewLayout}>
