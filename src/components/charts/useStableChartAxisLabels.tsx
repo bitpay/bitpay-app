@@ -26,6 +26,7 @@ export const useStableChartAxisLabels = (args: {
   quoteCurrencyRef: LatestRef<string>;
   currencyAbbreviationRef?: LatestRef<string | undefined>;
   contentOpacityRef?: LatestRef<number | NumberSharedValue | undefined>;
+  maskWhenBalancesHidden?: boolean;
 }) => {
   const getMinPayloadRef = useRef(args.getMinPayload);
   getMinPayloadRef.current = args.getMinPayload;
@@ -41,6 +42,9 @@ export const useStableChartAxisLabels = (args: {
 
   const contentOpacityRef = useRef(args.contentOpacityRef);
   contentOpacityRef.current = args.contentOpacityRef;
+
+  const maskWhenBalancesHiddenRef = useRef(args.maskWhenBalancesHidden);
+  maskWhenBalancesHiddenRef.current = args.maskWhenBalancesHidden;
 
   const renderAxisLabel = useCallback(
     (type: ChartAxisLabelType, width?: number) => {
@@ -63,6 +67,7 @@ export const useStableChartAxisLabels = (args: {
           currencyAbbreviation={currencyAbbreviationRef.current?.current}
           type={type}
           contentOpacity={contentOpacityRef.current?.current}
+          maskWhenBalancesHidden={maskWhenBalancesHiddenRef.current}
         />
       );
     },

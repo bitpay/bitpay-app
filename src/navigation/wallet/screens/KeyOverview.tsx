@@ -925,7 +925,7 @@ const KeyOverview = () => {
   }, [key]);
   const cacheEligibleKeyWallets = usePortfolioBalanceChartEligibleWallets({
     wallets: visibleKeyWallets,
-    enabled: showPortfolioValue === true && !hideAllBalances,
+    enabled: showPortfolioValue === true,
   });
   const keyChartWalletIds = useMemo(
     () =>
@@ -962,7 +962,6 @@ const KeyOverview = () => {
   } = usePortfolioBalanceChartReadiness({
     wallets: keyBalanceChartWallets,
     enabled: (contentReady || hasCachedKeyChart) && showPortfolioValue === true,
-    hideAllBalances,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
   const shouldRenderKeyBalanceChart =
@@ -986,7 +985,7 @@ const KeyOverview = () => {
     wallets: renderableKeyWallets,
     currentFiatBalance: totalBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: contentReady && showPortfolioValue !== true && !hideAllBalances,
+    enabled: contentReady && showPortfolioValue !== true,
   });
   const keyHeaderChangeRowData =
     showPortfolioValue === true
@@ -996,7 +995,6 @@ const KeyOverview = () => {
     renderedKeyChartIdentity === keyChartScopeIdentity || hasCachedKeyChart;
   const shouldShowKeyChartPlaceholder =
     showPortfolioValue === true &&
-    !hideAllBalances &&
     !hasRenderedKeyChart &&
     !hasCachedKeyChart &&
     cacheEligibleKeyWallets.length > 0;
@@ -1509,10 +1507,9 @@ const KeyOverview = () => {
             )}
           </TouchableOpacity>
 
-          {!hideAllBalances &&
-          (keyHeaderChangeRowData ||
-            shouldRenderKeyBalanceChart ||
-            shouldShowKeyChartPlaceholder) ? (
+          {keyHeaderChangeRowData ||
+          shouldRenderKeyBalanceChart ||
+          shouldShowKeyChartPlaceholder ? (
             <FullWidthBalanceChartContainer>
               <BalanceHeaderSupplement
                 changeRowData={keyHeaderChangeRowData}
@@ -1766,6 +1763,7 @@ const KeyOverview = () => {
         ListHeaderComponent={listHeaderComponent}
         ListFooterComponent={listFooterComponent}
         data={renderDataComponent}
+        extraData={hideAllBalances}
         keyExtractor={accountKeyExtractor}
         renderItem={memoizedRenderItem}
         ListEmptyComponent={listEmptyComponent}

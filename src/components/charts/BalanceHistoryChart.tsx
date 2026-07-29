@@ -226,6 +226,7 @@ const BalanceHistoryChart = ({
             displayModel.displayedChangeRowData?.deltaFiatFormatted
           }
           rangeLabel={displayModel.displayedChangeRowData?.rangeLabel}
+          maskDeltaWhenBalancesHidden
           style={[
             changeRowStyle,
             !displayModel.displayedChangeRowData ? {opacity: 0} : null,
