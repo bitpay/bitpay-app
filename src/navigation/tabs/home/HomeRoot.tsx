@@ -91,6 +91,8 @@ import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import type {RootState} from '../../../store';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
+import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
+import {performanceLog} from '../../../utils/performanceDebug';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -122,6 +124,27 @@ const selectHomeKeys = ({WALLET}: RootState) =>
 const selectHasHomeKeys = createSelector(
   [selectHomeKeys],
   keys => Object.keys(keys).length > 0,
+);
+
+const selectHomeFlowPreloadEligibility = createSelector(
+  [selectHomeKeys],
+  keys => {
+    const completedKeys = Object.values(keys).filter(key => key.backupComplete);
+    return {
+      canPreloadReceive: completedKeys.length > 0,
+      canPreloadSend: completedKeys.some(key =>
+        key.wallets.some(
+          wallet =>
+            !wallet.hideWallet &&
+            !wallet.hideWalletByAccount &&
+            typeof wallet.isComplete === 'function' &&
+            wallet.isComplete() &&
+            !wallet.pendingTssSession &&
+            wallet.balance.sat > 0,
+        ),
+      ),
+    };
+  },
 );
 
 const selectPendingTransactionProposalCount = createSelector(
@@ -435,6 +458,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const isHomeFocused = useIsFocused();
   const [refreshing, setRefreshing] = useState(false);
   const hasKeys = useAppSelector(selectHasHomeKeys);
+  const {canPreloadReceive, canPreloadSend} = useAppSelector(
+    selectHomeFlowPreloadEligibility,
+  );
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrencyIsoCode = useAppSelector(
     ({APP}) => APP.defaultAltCurrency?.isoCode,
@@ -628,8 +654,88 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     [maybeActivateHomeDiscoverSection],
   );
 
+  const preloadedHomeFlowsRef = useRef(new Set<'receive' | 'send'>());
+  const preloadHomeFlow = useCallback(
+    (context: 'receive' | 'send') => {
+      if (
+        preloadedHomeFlowsRef.current.has(context) ||
+        (context === 'receive' && !canPreloadReceive) ||
+        (context === 'send' && !canPreloadSend)
+      ) {
+        return;
+      }
+
+      if (typeof (navigation as any).preload !== 'function') {
+        return;
+      }
+
+      preloadedHomeFlowsRef.current.add(context);
+      performanceLog(`[PERF-PRELOAD] GlobalSelect start context:${context}`);
+      (navigation as any).preload('GlobalSelect', {
+        context,
+        _preloadContent: true,
+      });
+    },
+    [canPreloadReceive, canPreloadSend, navigation],
+  );
+  const wasHomeFocusedRef = useRef(false);
+
+  useEffect(() => {
+    if (isHomeFocused && !wasHomeFocusedRef.current) {
+      preloadedHomeFlowsRef.current.clear();
+    }
+    wasHomeFocusedRef.current = isHomeFocused;
+  }, [isHomeFocused]);
+
+  useEffect(() => {
+    if (!isHomeFocused || appIsLoading) {
+      return;
+    }
+
+    let secondPreloadTimer: ReturnType<typeof setTimeout> | undefined;
+    const preloadTask = scheduleAfterTransitionAndIdle({
+      navigation: navigation as any,
+      transitionFallbackMs: 800,
+      idleTimeoutMs: 1200,
+      callback: signal => {
+        if (signal.aborted) {
+          return;
+        }
+
+        if (canPreloadReceive) {
+          preloadHomeFlow('receive');
+        }
+        if (canPreloadSend) {
+          secondPreloadTimer = setTimeout(
+            () => {
+              if (!signal.aborted) {
+                preloadHomeFlow('send');
+              }
+            },
+            canPreloadReceive ? 250 : 0,
+          );
+        }
+      },
+    });
+
+    return () => {
+      preloadTask.cancel();
+      if (secondPreloadTimer) {
+        clearTimeout(secondPreloadTimer);
+      }
+    };
+  }, [
+    appIsLoading,
+    canPreloadReceive,
+    canPreloadSend,
+    isHomeFocused,
+    navigation,
+    preloadHomeFlow,
+  ]);
+
   const receiveLinkingButton = useMemo(
     () => ({
+      onPressIn: () => preloadHomeFlow('receive'),
       cta: () => {
         dispatch(
           Analytics.track('Clicked Receive Crypto', {
@@ -639,10 +745,11 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(receiveCrypto(navigation, 'HomeRoot'));
       },
     }),
-    [dispatch, navigation],
+    [dispatch, navigation, preloadHomeFlow],
   );
   const sendLinkingButton = useMemo(
     () => ({
+      onPressIn: () => preloadHomeFlow('send'),
       cta: () => {
         dispatch(
           Analytics.track('Clicked Send Crypto', {
@@ -652,7 +759,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(sendCrypto('HomeRoot'));
       },
     }),
-    [dispatch],
+    [dispatch, preloadHomeFlow],
   );
 
   return (

@@ -1,4 +1,9 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+  useTheme,
+} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
@@ -123,13 +128,16 @@ import {
   ProposalBadgeContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import TransactionRow, {
-  TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/TransactionRow';
+import TransactionRow from '../../../components/list/TransactionRow';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {
+  INITIAL_CACHED_TX_HYDRATION_LIMIT,
+  flattenTransactionGroups,
+  getCachedWalletTransactions,
+} from '../../../store/wallet/utils/cachedTxHistory';
 import {
   DeviceEmitterEvents,
   WalletLoadHistoryTarget,
@@ -174,6 +182,7 @@ export type WalletDetailsScreenParamList = {
   walletId: string;
   skipInitializeHistory?: boolean;
   copayerId?: string;
+  _preloadContent?: boolean;
 };
 
 type WalletDetailsScreenProps = NativeStackScreenProps<
@@ -546,6 +555,7 @@ const transactionKeyExtractor = (_item: any, index: number) => index.toString();
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
   const theme = useTheme();
@@ -553,12 +563,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [contentReady, setContentReady] = useState(false);
-  const [secondaryContentReady, setSecondaryContentReady] = useState(false);
+  const {
+    walletId,
+    skipInitializeHistory,
+    copayerId,
+    _preloadContent = false,
+  } = route.params;
+  const wasPreloadedRef = useRef(_preloadContent);
+  const [contentReady, setContentReady] = useState(_preloadContent);
+  const [secondaryContentReady, setSecondaryContentReady] =
+    useState(_preloadContent);
   const [renderedWalletChartIdentity, setRenderedWalletChartIdentity] =
     useState<string>();
-  const {walletId, skipInitializeHistory, copayerId} = route.params;
-
   const fullWalletObj = useAppSelector(({WALLET}) => {
     for (const walletKey of Object.values(WALLET.keys) as Key[]) {
       const wallet = findWalletById(walletKey.wallets, walletId, copayerId) as
@@ -609,6 +625,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   useEffect(() => {
+    if (wasPreloadedRef.current) {
+      return;
+    }
+
     let completed = false;
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -672,6 +692,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, [copayerId, reduxStore, walletId]);
 
   useLayoutEffect(() => {
+    // Preloaded routes receive a placeholder navigation object until focused.
+    if (!isFocused) {
+      return;
+    }
+
     navigation.setOptions({
       headerTitle: () => (
         <View style={{height: 'auto'}}>
@@ -692,7 +717,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet.walletName, key.keyName]);
+  }, [navigation, uiFormattedWallet.walletName, key.keyName, isFocused]);
 
   const ShareAddress = async () => {
     try {
@@ -977,10 +1002,42 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     : coinColor;
   const chartGradientBackgroundColor = assetTheme?.gradientBackgroundColor;
 
-  const [history, setHistory] = useState<any[]>([]);
-  const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
-  const [loadMore, setLoadMore] = useState(true);
-  const [isLoading, setIsLoading] = useState<boolean>();
+  // Same rule as the balance chart: cached rows paint on the first render
+  // instead of waiting for the opening transition to finish.
+  const hydratedHistory = useMemo(
+    () =>
+      getCachedWalletTransactions({
+        wallet: fullWalletObj,
+        limit: INITIAL_CACHED_TX_HYDRATION_LIMIT,
+        formatTransactions: ({transactions, wallet}) =>
+          BuildUiFriendlyList(
+            transactions,
+            wallet.currencyAbbreviation,
+            wallet.chain,
+            contactList,
+            wallet.tokenAddress,
+            wallet.credentials?.walletId || wallet.id,
+          ),
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  const hasHydratedHistoryRef = useRef(hydratedHistory.length > 0);
+
+  const [history, setHistory] = useState<any[]>(hydratedHistory);
+  const [groupedHistory, setGroupedHistory] = useState<any[]>(() =>
+    hydratedHistory.length
+      ? flattenTransactionGroups(GroupTransactionHistory(hydratedHistory))
+      : [],
+  );
+  const [loadMore, setLoadMore] = useState(
+    hydratedHistory.length
+      ? (fullWalletObj as any)?.transactionHistory?.loadMore !== false
+      : true,
+  );
+  const [isLoading, setIsLoading] = useState<boolean | undefined>(
+    hydratedHistory.length ? false : undefined,
+  );
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
@@ -1033,12 +1090,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   );
 
   const loadHistory = useCallback(
-    async (refresh?: boolean) => {
+    async (refresh?: boolean, options?: {showLoader?: boolean}) => {
       if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
         return;
       }
       try {
-        setIsLoading(!refresh);
+        setIsLoading(options?.showLoader ?? !refresh);
         setErrorLoadingTxs(false);
         if (!refresh) {
           // Allow one frame for chart/list loaders to render before heavy history work.
@@ -1063,16 +1120,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
           if (_history?.length) {
             setHistory(_history);
-            const transactionGroups = GroupTransactionHistory(_history);
-            const flattenedGroups = transactionGroups.reduce(
-              (allTransactions, section) => [
-                ...allTransactions,
-                section.title,
-                ...section.data,
-              ],
-              [] as any[],
+            setGroupedHistory(
+              flattenTransactionGroups(GroupTransactionHistory(_history)),
             );
-            setGroupedHistory(flattenedGroups);
           }
 
           setLoadMore(_loadMore);
@@ -1117,37 +1167,43 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   updateWalletStatusAndProfileBalanceRef.current =
     updateWalletStatusAndProfileBalance;
 
-  useEffect(() => {
-    dispatch(
-      Analytics.track('View Wallet', {
-        coin: fullWalletObj?.currencyAbbreviation,
-      }),
-    );
-  }, [dispatch, fullWalletObj?.currencyAbbreviation]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(
+        Analytics.track('View Wallet', {
+          coin: fullWalletObj?.currencyAbbreviation,
+        }),
+      );
+    }, [dispatch, fullWalletObj?.currencyAbbreviation]),
+  );
 
   useEffect(() => {
-    if (!contentReady) {
+    if (!contentReady || !isFocused) {
       return;
     }
 
     const historyTimer = setTimeout(() => {
-      if (navigation.isFocused() && !skipInitializeHistory) {
-        loadHistoryRef.current();
+      if (!skipInitializeHistory) {
+        hasHydratedHistoryRef.current
+          ? loadHistoryRef.current(true, {showLoader: true})
+          : loadHistoryRef.current();
       }
     }, 700);
     const statusTimer = setTimeout(() => {
-      if (navigation.isFocused()) {
-        updateWalletStatusAndProfileBalanceRef.current();
-      }
+      updateWalletStatusAndProfileBalanceRef.current();
     }, 1400);
 
     return () => {
       clearTimeout(historyTimer);
       clearTimeout(statusTimer);
     };
-  }, [contentReady, navigation, skipInitializeHistory]);
+  }, [contentReady, isFocused, skipInitializeHistory]);
 
   useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
     setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
@@ -1171,6 +1227,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fullWalletObj.credentials?.copayerId,
     fullWalletObj.id,
     fullWalletObj.pendingTxps,
+    isFocused,
     key.id,
     setNeedActionTxps,
   ]);
@@ -2000,7 +2057,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }
         onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
-        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
       />
 
       <OptionsSheet
