@@ -28,6 +28,7 @@ import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
+import {mergeAccountTransactions} from '../../utils/cachedTxHistory';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {
@@ -745,39 +746,10 @@ export const GetAccountTransactionHistory =
       });
       const results = await Promise.all(transactionPromises);
 
-      // filter transactions by txid, but prioritize the one that isERC20 when is not Received
-      let transactionsWithoutRepeated = results
-        .flat()
-        .reduce((acc: any[], transaction: any) => {
-          const existingTransaction = acc.find(
-            (t: any) => t.txid === transaction.txid,
-          );
-
-          if (!existingTransaction || IsReceived(transaction.action)) {
-            acc.push(transaction);
-          } else if (IsERCToken(transaction.coin, transaction.chain)) {
-            const index = acc.findIndex(
-              (t: any) => t.txid === transaction.txid,
-            );
-            acc[index] = transaction;
-          }
-
-          return acc;
-        }, [] as any[]);
-
-      if (selectedChainFilterOption) {
-        transactionsWithoutRepeated = transactionsWithoutRepeated.filter(
-          (tx: any) => {
-            return tx.chain === selectedChainFilterOption;
-          },
-        );
-      }
-
-      allTransactions = transactionsWithoutRepeated.sort(
-        (a: any, b: any) =>
-          new Date(b.time || b.createdOn).getTime() -
-          new Date(a.time || a.createdOn).getTime(),
-      );
+      allTransactions = mergeAccountTransactions({
+        transactionLists: results,
+        selectedChainFilterOption,
+      });
 
       const sortedCompleteHistory = allTransactions.slice(0, limit);
 

@@ -302,9 +302,10 @@ const focusGatedScreenLayout = ({
   route,
 }: {
   children: React.ReactElement;
-  route: {name: string};
+  route: {name: string; params?: {_preloadContent?: boolean}};
 }) => (
-  <FocusGatedReduxScreen>
+  <FocusGatedReduxScreen
+    renderWhenUnfocused={route.params?._preloadContent === true}>
     <PerformanceProfiler
       id={`screen:${route.name}`}
       onRender={logReactProfiler}>

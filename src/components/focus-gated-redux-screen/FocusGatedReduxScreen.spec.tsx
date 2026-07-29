@@ -120,6 +120,45 @@ describe('FocusGatedReduxScreen', () => {
     expect(onUnmount).not.toHaveBeenCalled();
   });
 
+  it('pre-renders an explicitly preloaded child while keeping Redux updates gated', async () => {
+    mockIsFocused = false;
+    const store = createStore((state: State = {revision: 0}, action: Action) =>
+      action.type === 'increment' ? {revision: state.revision + 1} : state,
+    );
+    const onRender = jest.fn();
+    const makeScreen = (renderWhenUnfocused = true) => (
+      <Provider store={store}>
+        <FocusGatedReduxScreen renderWhenUnfocused={renderWhenUnfocused}>
+          <Revision onRender={onRender} />
+        </FocusGatedReduxScreen>
+      </Provider>
+    );
+
+    let view!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = TestRenderer.create(makeScreen());
+    });
+
+    expect(view.toJSON()).toBe('0');
+    expect(onRender).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      store.dispatch({type: 'increment'});
+      store.dispatch({type: 'increment'});
+    });
+
+    expect(view.toJSON()).toBe('0');
+    expect(onRender).toHaveBeenCalledTimes(1);
+
+    mockIsFocused = true;
+    await act(async () => {
+      view.update(makeScreen(false));
+    });
+
+    expect(view.toJSON()).toBe('2');
+    expect(onRender).toHaveBeenLastCalledWith(2);
+  });
+
   it('renders the latest state on refocus without processing blurred updates', async () => {
     const store = createStore((state: State = {revision: 0}, action: Action) =>
       action.type === 'increment' ? {revision: state.revision + 1} : state,
