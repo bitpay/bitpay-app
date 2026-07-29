@@ -156,6 +156,9 @@ const getCachedBlockie = (address: string) => {
   return blockie;
 };
 
+export const hasCachedBlockie = (address?: string): boolean =>
+  !!address && blockieCache.has(address.toLowerCase());
+
 class Blockie extends PureComponent<BlockieProps> {
   render() {
     const {

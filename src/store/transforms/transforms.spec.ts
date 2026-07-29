@@ -101,6 +101,7 @@ import {
   bootstrapKey,
   bootstrapWallets,
   bindWalletKeys,
+  PERSISTED_TX_HISTORY_LIMIT,
   transformContacts,
   transformPortfolioPopulateStatus,
   encryptSpecificFields,
@@ -282,7 +283,7 @@ describe('bootstrapWallets', () => {
     expect(result).toHaveLength(0);
   });
 
-  it('resets transactionHistory for each wallet', () => {
+  it('keeps the persisted transactionHistory for each wallet', () => {
     const wallet = makeWallet({
       transactionHistory: {
         transactions: [{id: 'tx1'}],
@@ -290,6 +291,16 @@ describe('bootstrapWallets', () => {
         hasConfirmingTxs: true,
       },
     });
+    bootstrapWallets([wallet]);
+    expect(wallet.transactionHistory).toEqual({
+      transactions: [{id: 'tx1'}],
+      loadMore: false,
+      hasConfirmingTxs: true,
+    });
+  });
+
+  it('starts an empty transactionHistory when nothing was persisted', () => {
+    const wallet = makeWallet({transactionHistory: undefined});
     bootstrapWallets([wallet]);
     expect(wallet.transactionHistory).toEqual({
       transactions: [],
@@ -316,7 +327,7 @@ describe('bindWalletKeys', () => {
     expect(result).toBe(state);
   });
 
-  it('inbound: strips transactionHistory from wallets', () => {
+  it('inbound: keeps a short transactionHistory untouched', () => {
     const wallet = makeWallet();
     wallet.transactionHistory = {
       transactions: [{id: 'tx'}],
@@ -328,26 +339,65 @@ describe('bindWalletKeys', () => {
         'key-1': {wallets: [wallet]},
       },
     };
-    const transactionHistory = wallet.transactionHistory;
+
     const result = getInbound()(state);
 
-    expect(result.keys['key-1'].wallets[0].transactionHistory).toBeUndefined();
+    expect(result).toBe(state);
+    expect(
+      result.keys['key-1'].wallets[0].transactionHistory.transactions,
+    ).toHaveLength(1);
+  });
+
+  it('inbound: trims the persisted transactionHistory to the newest rows', () => {
+    const transactions = Array.from({length: 25}, (_, index) => ({
+      txid: `tx-${index}`,
+    }));
+    const wallet = makeWallet();
+    wallet.transactionHistory = {
+      transactions,
+      loadMore: true,
+      hasConfirmingTxs: true,
+    };
+    const state: any = {
+      keys: {
+        'key-1': {wallets: [wallet]},
+      },
+    };
+    const transactionHistory = wallet.transactionHistory;
+
+    const result = getInbound()(state);
+    const persisted = result.keys['key-1'].wallets[0].transactionHistory;
+
+    expect(persisted.transactions).toHaveLength(PERSISTED_TX_HISTORY_LIMIT);
+    expect(persisted.transactions[0].txid).toBe('tx-0');
+    expect(persisted.loadMore).toBe(true);
+    expect(persisted.hasConfirmingTxs).toBe(true);
+    // Redux state stays untouched.
     expect(wallet.transactionHistory).toBe(transactionHistory);
+    expect(wallet.transactionHistory.transactions).toHaveLength(25);
     expect(state.keys['key-1'].wallets[0]).toBe(wallet);
     expect(result).not.toBe(state);
   });
 
   it('inbound: accepts frozen input without mutating Redux state', () => {
     const wallet = makeWallet();
+    wallet.transactionHistory = {
+      transactions: Array.from({length: 25}, (_, index) => ({
+        txid: `tx-${index}`,
+      })),
+      loadMore: true,
+      hasConfirmingTxs: false,
+    };
     const key = {wallets: Object.freeze([Object.freeze(wallet)])};
     const keys = Object.freeze({'key-1': Object.freeze(key)});
     const state: any = Object.freeze({keys});
 
     expect(() => getInbound()(state)).not.toThrow();
-    expect(wallet.transactionHistory).toBeDefined();
+    expect(wallet.transactionHistory.transactions).toHaveLength(25);
     expect(
-      getInbound()(state).keys['key-1'].wallets[0].transactionHistory,
-    ).toBeUndefined();
+      getInbound()(state).keys['key-1'].wallets[0].transactionHistory
+        .transactions,
+    ).toHaveLength(PERSISTED_TX_HISTORY_LIMIT);
   });
 
   it('outbound: returns state unchanged when no keys', () => {
