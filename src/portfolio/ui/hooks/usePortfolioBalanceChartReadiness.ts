@@ -28,7 +28,6 @@ export type PortfolioBalanceChartReadiness = {
 
 export default function usePortfolioBalanceChartReadiness(args: {
   enabled?: boolean;
-  hideAllBalances?: boolean;
   renderZeroBalanceChartWhenNoSnapshots?: boolean;
   wallets: Wallet[];
 }): PortfolioBalanceChartReadiness {
@@ -41,7 +40,7 @@ export default function usePortfolioBalanceChartReadiness(args: {
     enabled,
   });
   const hasChartableWallets = chartableWallets.length > 0;
-  const baseEnabled = enabled && !args.hideAllBalances && hasChartableWallets;
+  const baseEnabled = enabled && hasChartableWallets;
 
   const {hasCompletedScopePopulate, isScopePopulateLoading} = useAppSelector(
     ({PORTFOLIO}) => {

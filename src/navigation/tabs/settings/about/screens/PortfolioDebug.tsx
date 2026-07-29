@@ -401,7 +401,6 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const walletKeys = useAppSelector(({WALLET}) => WALLET?.keys || {});
   const homeCarouselConfig = useAppSelector(({APP}) => APP?.homeCarouselConfig);
-  const hideAllBalances = useAppSelector(({APP}) => APP?.hideAllBalances);
   const showPortfolioValue = useAppSelector(({APP}) => APP?.showPortfolioValue);
 
   const [walletRows, setWalletRows] = useState<RuntimeWalletRow[]>([]);
@@ -427,7 +426,6 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
   const homeChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: homeChartWallets,
     enabled: showPortfolioValue === true,
-    hideAllBalances,
   });
   const deferredQuery = useDeferredValue(query);
   const loadRequestIdRef = useRef(0);
