@@ -9,17 +9,20 @@ import {
 
 type FocusGatedReduxScreenProps = {
   children: React.ReactNode;
+  renderWhenUnfocused?: boolean;
 };
 
 const FocusGatedReduxScreen: React.FC<FocusGatedReduxScreenProps> = ({
   children,
+  renderWhenUnfocused = false,
 }) => {
   const isFocused = useIsFocused();
   const sourceStore = useStore<RootState>();
-  const hasBeenFocusedRef = useRef(isFocused);
+  const hasBeenFocusedRef = useRef(isFocused || renderWhenUnfocused);
   const focusGatedStoreRef =
     useRef<FocusGatedStoreController<RootState> | null>(null);
-  const shouldRenderChildren = isFocused || hasBeenFocusedRef.current;
+  const shouldRenderChildren =
+    isFocused || renderWhenUnfocused || hasBeenFocusedRef.current;
 
   if (!focusGatedStoreRef.current) {
     focusGatedStoreRef.current = createFocusGatedStore(sourceStore, isFocused);

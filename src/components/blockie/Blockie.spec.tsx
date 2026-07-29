@@ -1,7 +1,7 @@
 import React from 'react';
 import {View} from 'react-native';
 import {render} from '@testing-library/react-native';
-import Blockie from './Blockie';
+import Blockie, {hasCachedBlockie} from './Blockie';
 
 jest.mock('react-native-fast-image', () => {
   const MockReact = require('react');
@@ -51,5 +51,23 @@ describe('Blockie', () => {
     );
 
     expect(pnglibMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('hasCachedBlockie', () => {
+  it('is false for an address that was never rendered', () => {
+    expect(hasCachedBlockie('0xnever-rendered')).toBe(false);
+  });
+
+  it('is true once that address was rendered, ignoring casing', () => {
+    render(<Blockie seed="0xCachedAddress" size={40} />);
+
+    expect(hasCachedBlockie('0xCachedAddress')).toBe(true);
+    expect(hasCachedBlockie('0xcachedaddress')).toBe(true);
+  });
+
+  it('is false for missing input', () => {
+    expect(hasCachedBlockie()).toBe(false);
+    expect(hasCachedBlockie('')).toBe(false);
   });
 });
