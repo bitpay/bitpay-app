@@ -641,7 +641,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   });
   const cacheEligibleAccountWallets = usePortfolioBalanceChartEligibleWallets({
     wallets: keyFullWalletObjs,
-    enabled: showPortfolioValue === true && !hideAllBalances,
+    enabled: showPortfolioValue === true,
   });
   const accountChartWalletIds = useMemo(
     () =>
@@ -670,7 +670,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     wallets: cacheEligibleAccountWallets,
     enabled:
       (contentReady || hasCachedAccountChart) && showPortfolioValue === true,
-    hideAllBalances,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
   const shouldRenderAccountBalanceChart =
@@ -773,7 +772,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     wallets: keyFullWalletObjs,
     currentFiatBalance: accountItem?.fiatBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances,
+    enabled: showPortfolioValue !== true,
   });
   const accountHeaderChangeRowData =
     showPortfolioValue === true
@@ -784,7 +783,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     hasCachedAccountChart;
   const shouldShowAccountChartPlaceholder =
     showPortfolioValue === true &&
-    !hideAllBalances &&
     !hasRenderedAccountChart &&
     !hasCachedAccountChart &&
     cacheEligibleAccountWallets.length > 0;
@@ -1756,10 +1754,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               </Row>
             </TouchableOpacity>
 
-            {!hideAllBalances &&
-            (showPortfolioValue !== true ||
-              shouldRenderAccountBalanceChart ||
-              shouldShowAccountChartPlaceholder) ? (
+            {showPortfolioValue !== true ||
+            shouldRenderAccountBalanceChart ||
+            shouldShowAccountChartPlaceholder ? (
               <FullWidthBalanceChartContainer>
                 <BalanceHeaderSupplement
                   changeRowData={accountHeaderChangeRowData}
@@ -2103,10 +2100,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [activeTab],
   );
 
+  const sectionListExtraData = useMemo(
+    () => `${activeTab}:${hideAllBalances}`,
+    [activeTab, hideAllBalances],
+  );
+
   return (
     <SafeAreaView style={styles.accountDetailsContainer}>
       <SectionList
-        extraData={activeTab}
+        extraData={sectionListExtraData}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
