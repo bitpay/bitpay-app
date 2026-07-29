@@ -217,7 +217,6 @@ export const PaymentList = ({
           data={displayablePayments}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          estimatedItemSize={88}
           onEndReachedThreshold={0.3}
           onEndReached={() => fetchMore()}
         />

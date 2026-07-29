@@ -8,7 +8,7 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|@sentry|uuid|victory|(victory(-.*))|lodash-es))',
+    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|\@react-navigation|(react-navigation(-.*))|\@sentry|\@shopify/flash-list|uuid|victory|(victory(-.*))|lodash-es))',
   ],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest',

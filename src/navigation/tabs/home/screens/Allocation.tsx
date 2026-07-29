@@ -200,8 +200,6 @@ const ProgressFill: React.FC<{progress: number; color: string}> = ({
   );
 };
 
-const ALLOCATION_ROW_ESTIMATED_ITEM_SIZE = 94;
-
 const AllocationRow: React.FC<{
   item: AllocationRowItem;
   hideAllBalances: boolean;
@@ -293,7 +291,6 @@ export const AllocationRowsList: React.FC<{
       keyExtractor={keyExtractor}
       ListHeaderComponent={ListHeaderComponent}
       contentContainerStyle={[{paddingBottom: 24}, style]}
-      estimatedItemSize={ALLOCATION_ROW_ESTIMATED_ITEM_SIZE}
       maintainVisibleContentPosition={{disabled: true}}
       scrollEnabled={scrollEnabled}
     />

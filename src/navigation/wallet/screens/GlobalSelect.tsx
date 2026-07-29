@@ -8,12 +8,7 @@ import React, {
 } from 'react';
 import {useTheme} from '../../../contexts';
 import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
-import {
-  NavigationProp,
-  RouteProp,
-  useFocusEffect,
-  useIsFocused,
-} from '@react-navigation/native';
+import {NavigationProp, RouteProp} from '@react-navigation/native';
 import {FlashList, type FlashListProps} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
@@ -886,7 +881,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     _preloadContent = false,
   } = route.params || {};
   const wasPreloadedRef = useRef(_preloadContent);
-  const isFocused = useIsFocused();
+  const [isFocused, setIsFocused] = useState(
+    () => useAsModal || navigation.isFocused(),
+  );
   if (useAsModal && modalContext) {
     context = modalContext;
   }
@@ -973,6 +970,26 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     title: 'Select Key to Deposit to',
   });
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+
+  useEffect(() => {
+    if (useAsModal) {
+      setIsFocused(true);
+      return;
+    }
+
+    setIsFocused(navigation.isFocused());
+    const unsubscribeFocus = navigation.addListener('focus', () =>
+      setIsFocused(true),
+    );
+    const unsubscribeBlur = navigation.addListener('blur', () =>
+      setIsFocused(false),
+    );
+
+    return () => {
+      unsubscribeFocus();
+      unsubscribeBlur();
+    };
+  }, [navigation, useAsModal]);
 
   useEffect(() => {
     if (wasPreloadedRef.current) {
@@ -1603,27 +1620,35 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const firstSendWalletRef = useRef(firstSendWallet);
   firstSendWalletRef.current = firstSendWallet;
 
-  useFocusEffect(
-    useCallback(() => {
-      preloadedSendToRef.current = undefined;
-      if (!firstSendWalletIdentity) {
-        return;
-      }
+  useEffect(() => {
+    if (!isFocused || useAsModal) {
+      return;
+    }
 
-      const preloadTask = scheduleAfterTransitionAndIdle({
-        navigation: navigation as any,
-        transitionFallbackMs: 800,
-        idleTimeoutMs: 900,
-        callback: signal => {
-          if (!signal.aborted) {
-            stablePreloadSendTo(firstSendWalletRef.current);
-          }
-        },
-      });
+    preloadedSendToRef.current = undefined;
+    if (!firstSendWalletIdentity) {
+      return;
+    }
 
-      return preloadTask.cancel;
-    }, [firstSendWalletIdentity, navigation, stablePreloadSendTo]),
-  );
+    const preloadTask = scheduleAfterTransitionAndIdle({
+      navigation: navigation as any,
+      transitionFallbackMs: 800,
+      idleTimeoutMs: 900,
+      callback: signal => {
+        if (!signal.aborted) {
+          stablePreloadSendTo(firstSendWalletRef.current);
+        }
+      },
+    });
+
+    return preloadTask.cancel;
+  }, [
+    firstSendWalletIdentity,
+    isFocused,
+    navigation,
+    stablePreloadSendTo,
+    useAsModal,
+  ]);
 
   const memoizedRenderAssetsItem = useCallback(
     ({item}: {item: AssetsByChainData; index: number}) => {

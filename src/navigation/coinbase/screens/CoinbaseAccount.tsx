@@ -45,9 +45,7 @@ import {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import TransactionRow, {
-  TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/TransactionRow';
+import TransactionRow from '../../../components/list/TransactionRow';
 
 import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {
@@ -848,7 +846,6 @@ const CoinbaseAccount = ({
           );
         }}
         data={groupedTransactions}
-        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
         stickyHeaderIndices={
           groupedTransactions
             .map((item, index) => {
