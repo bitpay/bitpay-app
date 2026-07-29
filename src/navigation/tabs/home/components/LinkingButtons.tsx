@@ -162,6 +162,7 @@ interface ButtonListProps {
   label: string;
   img: ReactNode;
   cta: () => void;
+  onPressIn?: () => void;
   hide: boolean;
 }
 
@@ -170,11 +171,13 @@ interface Props {
     label?: string;
     hide?: boolean;
     cta: () => void;
+    onPressIn?: () => void;
   };
   receive: {
     label?: string;
     hide?: boolean;
     cta: () => void;
+    onPressIn?: () => void;
   };
   buy?: {
     hide?: boolean;
@@ -265,6 +268,7 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
       label: receive.label || t('receive'),
       img: <ReceiveSvg />,
       cta: receive.cta,
+      onPressIn: receive.onPressIn,
       hide: !!receive?.hide,
     },
     {
@@ -272,6 +276,7 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
       label: send.label || t('send'),
       img: <SendSvg />,
       cta: send.cta,
+      onPressIn: send.onPressIn,
       hide: !!send?.hide,
     },
   ];
@@ -280,30 +285,33 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
 
   return (
     <ButtonsRow $maxWidth={maxWidth} $compactSpacing={compactSpacing}>
-      {visibleButtons.map(({key, label, cta, img}: ButtonListProps) => {
-        const isDisabled =
-          ['buy', 'sell', 'swap'].includes(key) &&
-          (!appWasInit || !tokensDataLoaded);
+      {visibleButtons.map(
+        ({key, label, cta, onPressIn, img}: ButtonListProps) => {
+          const isDisabled =
+            ['buy', 'sell', 'swap'].includes(key) &&
+            (!appWasInit || !tokensDataLoaded);
 
-        return (
-          <ButtonContainer key={key} $compactSpacing={compactSpacing}>
-            <LinkButton
-              activeOpacity={ActiveOpacity}
-              testID={`${key}-button`}
-              accessibilityLabel={titleCasing(label)}
-              touchableLibrary="react-native"
-              disabled={isDisabled}
-              accessibilityState={{disabled: isDisabled}}
-              onPress={() => {
-                Haptic('impactLight');
-                cta();
-              }}>
-              {img}
-            </LinkButton>
-            <ButtonText>{titleCasing(label)}</ButtonText>
-          </ButtonContainer>
-        );
-      })}
+          return (
+            <ButtonContainer key={key} $compactSpacing={compactSpacing}>
+              <LinkButton
+                activeOpacity={ActiveOpacity}
+                testID={`${key}-button`}
+                accessibilityLabel={titleCasing(label)}
+                touchableLibrary="react-native"
+                disabled={isDisabled}
+                accessibilityState={{disabled: isDisabled}}
+                onPressIn={onPressIn}
+                onPress={() => {
+                  Haptic('impactLight');
+                  cta();
+                }}>
+                {img}
+              </LinkButton>
+              <ButtonText>{titleCasing(label)}</ButtonText>
+            </ButtonContainer>
+          );
+        },
+      )}
     </ButtonsRow>
   );
 };
