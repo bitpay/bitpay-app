@@ -94,6 +94,7 @@ interface Props {
   isLast?: boolean;
   noBorder?: boolean;
   onPress: () => void;
+  onPressIn?: () => void;
   hideBalance: boolean;
   supportedTransactionCurrencies?: SupportedTransactionCurrencies;
 }
@@ -171,6 +172,7 @@ const WalletRow = ({
   wallet,
   hideIcon,
   onPress,
+  onPressIn,
   isLast,
   hideBalance,
   noBorder,
@@ -215,6 +217,7 @@ const WalletRow = ({
         wallet: walletName || currencyName,
       })}
       onPress={onPress}
+      onPressIn={onPressIn}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
       noBorder={noBorder}
       isDisabled={
