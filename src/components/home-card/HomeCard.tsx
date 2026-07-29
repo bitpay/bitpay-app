@@ -39,6 +39,7 @@ interface HomeCardProps {
   body: BodyProps;
   footer?: ReactNode;
   onCTAPress?: () => void;
+  onCTAPressIn?: () => void;
   backgroundImg?: () => ReactElement;
 }
 
@@ -111,7 +112,12 @@ export const NeedBackupText: React.FC<
 export const HOME_CARD_HEIGHT = 143;
 export const HOME_CARD_WIDTH = 170;
 
-const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
+const HomeCard: React.FC<HomeCardProps> = ({
+  body,
+  footer,
+  onCTAPress,
+  onCTAPressIn,
+}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const {
@@ -204,6 +210,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
     <TouchableOpacity
       style={styles.cardContainer}
       activeOpacity={ActiveOpacity}
+      onPressIn={onCTAPressIn}
       onPress={_onPress}>
       <Card
         body={BodyComp}

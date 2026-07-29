@@ -1,4 +1,8 @@
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {
+  NavigationProp,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import React, {
   ReactElement,
   useCallback,
@@ -79,7 +83,9 @@ import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {IsShared} from '../../../../store/wallet/effects/transactions/transactions';
 import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
-import {IsVMChain} from '../../../../store/wallet/utils/currency';
+import {IsSVMChain, IsVMChain} from '../../../../store/wallet/utils/currency';
+import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInteractionsAndFrames';
+import {performanceLog} from '../../../../utils/performanceDebug';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
 const styles = StyleSheet.create({
@@ -131,6 +137,11 @@ const styles = StyleSheet.create({
 
 const EMPTY_BACKGROUND_RATES: Rates = {};
 const EMPTY_BACKGROUND_KEYS: Record<string, Key> = {};
+
+const canPreloadWalletDestination = (key: Key): boolean =>
+  !!key.backupComplete &&
+  !!key.wallets?.[0] &&
+  !key.wallets[0].pendingTssSession;
 
 const CryptoContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
@@ -307,6 +318,7 @@ export const createHomeCardList = ({
   populateStatus,
   context,
   onPress,
+  onDestinationPressIn,
   currency,
 }: {
   navigation: any;
@@ -324,6 +336,7 @@ export const createHomeCardList = ({
   populateStatus?: PortfolioPopulateStatus;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
+  onDestinationPressIn?: (key: Key) => void;
   currency?: any;
 }) => {
   let list: {id: string; component: ReactElement}[] = [];
@@ -383,6 +396,11 @@ export const createHomeCardList = ({
             pendingTssSession={hasPendingTssSession}
             tssMetadata={tssMetadata}
             isMultisig={isMultisig}
+            onPressIn={
+              !onPress && canPreloadWalletDestination(key)
+                ? () => onDestinationPressIn?.(key)
+                : undefined
+            }
             onPress={
               onPress
                 ? () => {
@@ -409,6 +427,9 @@ export const createHomeCardList = ({
                             keyId: key.id,
                             selectedAccountAddress:
                               fullWalletObj.receiveAddress,
+                            isSvmAccount: IsSVMChain(
+                              fullWalletObj.credentials.chain,
+                            ),
                           });
                         } else {
                           navigation.navigate(WalletScreens.WALLET_DETAILS, {
@@ -620,6 +641,114 @@ const Crypto = ({active = true}: CryptoProps) => {
     portfolioChartsRequested && hasCompletedFullPortfolioPopulate
       ? populateStatus
       : undefined;
+  const preloadedDestinationRef = useRef<string | undefined>(undefined);
+  const preloadWalletDestination = useCallback(
+    (key: Key) => {
+      if (typeof (navigation as any).preload !== 'function') {
+        return;
+      }
+
+      const fullWalletObj = key.wallets?.[0];
+      if (!canPreloadWalletDestination(key) || !fullWalletObj) {
+        return;
+      }
+
+      if (isTSSKey(key)) {
+        if (IsVMChain(fullWalletObj.credentials.chain)) {
+          if (!fullWalletObj.receiveAddress) {
+            return;
+          }
+
+          const preloadIdentity = `account:${key.id}:${fullWalletObj.receiveAddress}`;
+          if (preloadedDestinationRef.current === preloadIdentity) {
+            return;
+          }
+
+          preloadedDestinationRef.current = preloadIdentity;
+          performanceLog(
+            `[PERF-PRELOAD] AccountDetails start key:${key.id} account:${fullWalletObj.receiveAddress} source:Home`,
+          );
+          (navigation as NavigationProp<any>).preload(
+            WalletScreens.ACCOUNT_DETAILS,
+            {
+              keyId: key.id,
+              selectedAccountAddress: fullWalletObj.receiveAddress,
+              isSvmAccount: IsSVMChain(fullWalletObj.credentials.chain),
+              _preloadContent: true,
+            },
+          );
+          return;
+        }
+
+        const walletId = fullWalletObj.credentials.walletId;
+        const copayerId = fullWalletObj.credentials.copayerId;
+        const preloadIdentity = `wallet:${walletId}:${copayerId || ''}`;
+        if (preloadedDestinationRef.current === preloadIdentity) {
+          return;
+        }
+
+        preloadedDestinationRef.current = preloadIdentity;
+        performanceLog(
+          `[PERF-PRELOAD] WalletDetails start wallet:${walletId} source:Home`,
+        );
+        (navigation as NavigationProp<any>).preload(
+          WalletScreens.WALLET_DETAILS,
+          {
+            walletId,
+            copayerId,
+            _preloadContent: true,
+          },
+        );
+        return;
+      }
+
+      const preloadIdentity = `key:${key.id}`;
+      if (preloadedDestinationRef.current === preloadIdentity) {
+        return;
+      }
+
+      preloadedDestinationRef.current = preloadIdentity;
+      performanceLog(`[PERF-PRELOAD] KeyOverview start key:${key.id}`);
+      (navigation as NavigationProp<any>).preload(WalletScreens.KEY_OVERVIEW, {
+        id: key.id,
+        _preloadContent: true,
+      });
+    },
+    [navigation],
+  );
+  const keyListRef = useRef(keyList);
+  keyListRef.current = keyList;
+  const firstPreloadableKeyId = useMemo(
+    () => keyList.find(canPreloadWalletDestination)?.id,
+    [keyList],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      preloadedDestinationRef.current = undefined;
+
+      if (!active || !firstPreloadableKeyId) {
+        return;
+      }
+
+      const preloadTask = scheduleAfterTransitionAndIdle({
+        navigation: navigation as any,
+        transitionFallbackMs: 800,
+        idleTimeoutMs: 1200,
+        callback: signal => {
+          const keyToPreload = keyListRef.current.find(
+            key => key.id === firstPreloadableKeyId,
+          );
+          if (!signal.aborted && keyToPreload) {
+            preloadWalletDestination(keyToPreload);
+          }
+        },
+      });
+
+      return preloadTask.cancel;
+    }, [active, firstPreloadableKeyId, navigation, preloadWalletDestination]),
+  );
+
   const cardsList = useMemo(
     () =>
       createHomeCardList({
@@ -634,6 +763,7 @@ const Crypto = ({active = true}: CryptoProps) => {
         portfolioPercentageDifferenceByKey:
           visiblePortfolioPercentageDifferenceByKey,
         populateStatus: portfolioPopulateStatus,
+        onDestinationPressIn: preloadWalletDestination,
       }),
     [
       navigation,
@@ -643,6 +773,7 @@ const Crypto = ({active = true}: CryptoProps) => {
       homeCarouselLayoutType,
       hideAllBalances,
       keyList,
+      preloadWalletDestination,
       visibleLegacyPercentageDifferenceByKey,
       portfolioPopulateStatus,
       visiblePortfolioPercentageDifferenceByKey,
