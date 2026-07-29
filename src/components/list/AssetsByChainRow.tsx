@@ -48,6 +48,7 @@ interface Props {
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: (walletId: string, copayerId?: string) => void;
+  onPressIn?: (walletId: string, copayerId?: string) => void;
   hideBalance: boolean;
   showChainAssetsByDefault?: boolean;
   showNetworkHeader?: boolean;
@@ -121,6 +122,7 @@ export const AssetsByChainHeader = memo(
 const AssetsByChainRow = ({
   accountItem,
   onPress,
+  onPressIn,
   hideBalance,
   showChainAssetsByDefault = false,
   showNetworkHeader = true,
@@ -166,6 +168,7 @@ const AssetsByChainRow = ({
             id={item.id}
             hideBalance={hideBalance}
             onPress={() => onPress(item.id, item.copayerId)}
+            onPressIn={() => onPressIn?.(item.id, item.copayerId)}
             wallet={item}
           />
         ) : null;
