@@ -11,7 +11,12 @@ import {
   HeaderTitle,
   Paragraph,
 } from '../../../../components/styled/Text';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -195,6 +200,7 @@ const SendToContactResult = React.memo(
 const SendToContent = ({wallet}: {wallet: Wallet}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -328,11 +334,15 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
   );
 
   useLayoutEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
     navigation.setOptions({
       headerTitle: renderHeaderTitle,
       headerRight: renderHeaderRight,
     });
-  }, [navigation, renderHeaderRight, renderHeaderTitle]);
+  }, [isFocused, navigation, renderHeaderRight, renderHeaderTitle]);
 
   const keyAccounts = useSendToKeyAccounts({
     keys,
@@ -696,6 +706,10 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
   ]);
 
   useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
     let clearSearchTimeout: ReturnType<typeof setTimeout> | undefined;
     const unsubscribe = navigation.addListener('blur', () => {
       debouncedValidateSearchInput.cancel();
@@ -713,7 +727,7 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
         clearTimeout(clearSearchTimeout);
       }
     };
-  }, [debouncedValidateSearchInput, navigation]);
+  }, [debouncedValidateSearchInput, isFocused, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -852,16 +866,17 @@ const SendTo = () => {
     params: {keyId, walletId, copayerId},
   } = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const wallet = useAppSelector(({WALLET}) =>
     findWalletById(WALLET.keys[keyId]?.wallets || [], walletId, copayerId),
   ) as Wallet | undefined;
 
   useEffect(() => {
-    if (!wallet) {
+    if (isFocused && !wallet) {
       logManager.error(`[SendTo] Wallet ${walletId} is not available`);
       navigation.goBack();
     }
-  }, [navigation, wallet, walletId]);
+  }, [isFocused, navigation, wallet, walletId]);
 
   return wallet ? <SendToContent wallet={wallet} /> : null;
 };
