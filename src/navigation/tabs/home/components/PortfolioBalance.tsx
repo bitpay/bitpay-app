@@ -44,7 +44,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {maskIfHidden} from '../../../../utils/hideBalances';
+import {
+  HIDDEN_BALANCE_MASK,
+  maskIfHidden,
+} from '../../../../utils/hideBalances';
 import {
   getVisibleKeysFromKeys,
   getVisibleWalletsFromKeys,
@@ -219,6 +222,12 @@ const PortfolioBalanceChangeRow = ({
   rangeLabel,
   style,
 }: PortfolioBalanceChangeRowProps): React.ReactElement => {
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const displayedDelta =
+    hideAllBalances && deltaFiatFormatted
+      ? HIDDEN_BALANCE_MASK
+      : deltaFiatFormatted;
+
   return (
     <PortfolioBalanceChangeRowContainer
       testID="portfolio-balance-change-row"
@@ -227,7 +236,7 @@ const PortfolioBalanceChangeRow = ({
         percentageDifference={percent}
         hideArrow
         hideSign
-        priceChange={deltaFiatFormatted}
+        priceChange={displayedDelta}
         rangeLabel={rangeLabel}
         fractionDigits={2}
       />
@@ -316,7 +325,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   });
   const cacheEligibleHomeWallets = usePortfolioBalanceChartEligibleWallets({
     wallets: walletsAcrossKeys,
-    enabled: portfolioChartsRequested && !hideAllBalances,
+    enabled: portfolioChartsRequested,
   });
   const homeChartWalletIds = useMemo(
     () =>
@@ -335,7 +344,6 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const activeBalanceChartReadiness = usePortfolioBalanceChartReadiness({
     wallets: cacheEligibleHomeWallets,
     enabled: active && portfolioChartsRequested,
-    hideAllBalances,
   });
   const lastActiveBalanceChartReadinessRef = React.useRef(
     activeBalanceChartReadiness,
@@ -354,7 +362,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     .join(',');
   const balanceChartsEnabled =
     balanceChartReadiness.shouldMountBalanceChart || hasCachedHomeChart;
-  const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
+  const shouldLeftAlignTopSection = balanceChartsEnabled;
   const canCollapseChart = shouldLeftAlignTopSection;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
@@ -592,7 +600,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     wallets: walletsAcrossKeys,
     currentFiatBalance: visibleCurrentBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: active && !portfolioChartsRequested && !hideAllBalances,
+    enabled: active && !portfolioChartsRequested,
   });
   const lastDayChangeRowDataRef = React.useRef(activeLastDayChangeRowData);
   if (active) {
@@ -693,7 +701,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
         </TouchableOpacity>
       </PortfolioTopContent>
 
-      {!hideAllBalances && (displayedChangeRowData || balanceChartsEnabled) ? (
+      {displayedChangeRowData || balanceChartsEnabled ? (
         <PortfolioBalanceChangeRow
           percent={displayedChangeRowData?.percent ?? 0}
           deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
@@ -711,7 +719,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
         />
       ) : null}
 
-      {!hideAllBalances && balanceChartsEnabled ? (
+      {balanceChartsEnabled ? (
         <ChartStage
           onLayout={e => {
             const {width, y} = e.nativeEvent.layout;
