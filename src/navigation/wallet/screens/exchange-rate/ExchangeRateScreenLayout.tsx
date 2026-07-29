@@ -536,9 +536,7 @@ const ExchangeRateScreenLayout = ({
               percent={resolvedTopChangeRow.percent}
               deltaFiatFormatted={resolvedTopChangeRow.deltaFiatFormatted}
               rangeLabel={resolvedTopChangeRow.rangeLabel}
-              maskDeltaWhenBalancesHidden={
-                maskChangeRowDeltaWhenBalancesHidden
-              }
+              maskDeltaWhenBalancesHidden={maskChangeRowDeltaWhenBalancesHidden}
               style={resolvedTopChangeRow.hidden ? {opacity: 0} : undefined}
             />
           ) : null}

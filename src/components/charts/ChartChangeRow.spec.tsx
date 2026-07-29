@@ -15,9 +15,9 @@ jest.mock('../../utils/hooks', () => ({
 
 const mockPercentage = Percentage as unknown as jest.Mock;
 
-const renderChangeRow = (props: Partial<React.ComponentProps<
-  typeof ChartChangeRow
->> = {}) => {
+const renderChangeRow = (
+  props: Partial<React.ComponentProps<typeof ChartChangeRow>> = {},
+) => {
   act(() => {
     TestRenderer.create(
       <ChartChangeRow

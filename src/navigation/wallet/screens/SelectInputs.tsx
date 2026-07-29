@@ -526,7 +526,6 @@ const SelectInputs = () => {
       {inputs && inputs.length ? (
         <FlashList
           contentContainerStyle={{paddingBottom: 20}}
-          estimatedItemSize={94}
           data={inputs}
           keyExtractor={(_item, index) => index.toString()}
           renderItem={({item, index}: {item: Utxo; index: number}) =>

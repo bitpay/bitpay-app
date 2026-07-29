@@ -176,9 +176,7 @@ const searchIconSize = {height: 16, width: 16};
 const ghostSvgStyle = {marginTop: 20};
 const allNetworkSvgStyle = {width: 20, height: 20};
 
-type ChainSelectorFlashListProps<T> = FlashListProps<T> & {
-  estimatedItemSize?: number;
-};
+type ChainSelectorFlashListProps<T> = FlashListProps<T>;
 
 type ChainSelectorListItem = string | {title: string};
 
@@ -462,7 +460,6 @@ const ChainSelectorModalContent = ({
             <ChainSelectorFlashList
               contentContainerStyle={contentContainerStyle}
               data={searchResults}
-              estimatedItemSize={65}
               renderItem={renderChainItem}
               keyExtractor={keyExtractor}
             />
@@ -484,7 +481,6 @@ const ChainSelectorModalContent = ({
             contentContainerStyle={contentContainerStyle}
             data={chainList}
             renderItem={renderItem}
-            estimatedItemSize={65}
             keyExtractor={keyExtractor}
             getItemType={getItemType}
           />
