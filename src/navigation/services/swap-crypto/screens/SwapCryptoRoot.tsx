@@ -156,6 +156,7 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import usePreloadedCustomGlobalSelectList from '../../../wallet/screens/usePreloadedCustomGlobalSelectList';
 import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
@@ -391,6 +392,9 @@ const SwapCryptoRoot: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys: {[key: string]: Key} = useAppSelector(({WALLET}) => WALLET.keys);
+  const selectedSwapToChainFilter = useAppSelector(
+    ({APP}) => APP.selectedLocalChainFilterOption,
+  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -429,6 +433,13 @@ const SwapCryptoRoot: React.FC = () => {
   const [swapCryptoSupportedCoinsTo, setSwapCryptoSupportedCoinsTo] = useState<
     SwapCryptoCoin[]
   >([]);
+  const pendingToWalletSelectionRef = useRef<
+    | {
+        toWallet?: Wallet;
+        createToWalletData?: AddWalletData;
+      }
+    | undefined
+  >(undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
     useState<boolean>(false);
@@ -590,6 +601,17 @@ const SwapCryptoRoot: React.FC = () => {
         break;
     }
   };
+
+  const {
+    preloadedListRef: swapToGlobalSelectCacheRef,
+    preload: preloadSwapToGlobalSelect,
+  } = usePreloadedCustomGlobalSelectList({
+    navigation,
+    keys,
+    customToSelectCurrencies: swapCryptoSupportedCoinsTo,
+    selectedChainFilterOption: selectedSwapToChainFilter,
+    livenetOnly: true,
+  });
 
   const checkAmount = useCallback(
     (amountFrom: number) => {
@@ -1820,11 +1842,10 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
-  const onDismiss = async (
+  const applyToWalletSelection = async (
     toWallet?: Wallet,
     createToWalletData?: AddWalletData,
   ) => {
-    hideModal('toWalletSelector');
     if (toWallet?.currencyAbbreviation) {
       setToWallet(toWallet);
     } else if (createToWalletData && isTSSKey(createToWalletData.key)) {
@@ -1887,6 +1908,26 @@ const SwapCryptoRoot: React.FC = () => {
           showError({msg: err.message});
         }
       }
+    }
+  };
+
+  const onDismiss = (toWallet?: Wallet, createToWalletData?: AddWalletData) => {
+    pendingToWalletSelectionRef.current =
+      toWallet || createToWalletData
+        ? {toWallet, createToWalletData}
+        : undefined;
+    hideModal('toWalletSelector');
+  };
+
+  const handleToWalletSelectorModalHide = () => {
+    const pendingSelection = pendingToWalletSelectionRef.current;
+    pendingToWalletSelectionRef.current = undefined;
+
+    if (pendingSelection) {
+      applyToWalletSelection(
+        pendingSelection.toWallet,
+        pendingSelection.createToWalletData,
+      );
     }
   };
 
@@ -3212,6 +3253,7 @@ const SwapCryptoRoot: React.FC = () => {
                 }
                 isBigScreen={WIDTH > 500}
                 key={fromWalletSelected ? 'swapToEnabled' : 'swapToDisabled'}
+                onPressIn={preloadSwapToGlobalSelect}
                 onPress={() => {
                   if (useDefaultToWallet || !fromWalletSelected) {
                     return;
@@ -3675,6 +3717,7 @@ const SwapCryptoRoot: React.FC = () => {
         modalLibrary="bottom-sheet"
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
+        onModalHide={handleToWalletSelectorModalHide}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect
@@ -3685,6 +3728,9 @@ const SwapCryptoRoot: React.FC = () => {
             useAsModal={true}
             modalTitle={t('Swap To')}
             customToSelectCurrencies={swapCryptoSupportedCoinsTo}
+            preloadedCustomToSelectCurrenciesList={
+              swapToGlobalSelectCacheRef.current
+            }
             globalSelectOnDismiss={onDismiss}
           />
         </GlobalSelectContainer>

@@ -86,6 +86,20 @@ describe('globalSelectListCache', () => {
         getGlobalSelectListCacheKey(args),
       );
     });
+
+    it('separates custom supported currency variants', () => {
+      expect(
+        getGlobalSelectListCacheKey({
+          context: 'sell',
+          variant: 'modal:btc|eth',
+        }),
+      ).not.toBe(
+        getGlobalSelectListCacheKey({
+          context: 'sell',
+          variant: 'modal:btc|sol',
+        }),
+      );
+    });
   });
 
   describe('canCacheGlobalSelectList', () => {
@@ -93,7 +107,7 @@ describe('globalSelectListCache', () => {
       expect(canCacheGlobalSelectList({})).toBe(true);
     });
 
-    it('skips the modal variant and the custom currency flows', () => {
+    it('skips generic modal variants and custom currency flows', () => {
       expect(canCacheGlobalSelectList({useAsModal: true})).toBe(false);
       expect(
         canCacheGlobalSelectList({customSupportedCurrencies: ['btc']}),
@@ -101,6 +115,16 @@ describe('globalSelectListCache', () => {
       expect(
         canCacheGlobalSelectList({customToSelectCurrencies: ['btc']}),
       ).toBe(false);
+    });
+
+    it('caches the Sell modal account list', () => {
+      expect(
+        canCacheGlobalSelectList({
+          context: 'sell',
+          useAsModal: true,
+          customSupportedCurrencies: ['btc'],
+        }),
+      ).toBe(true);
     });
   });
 

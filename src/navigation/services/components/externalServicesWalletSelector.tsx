@@ -51,6 +51,9 @@ import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {HomeCarouselConfig} from '../../../store/app/app.models';
 import ExternalServicesLoadingWalletSkeleton from './ExternalServicesLoadingWalletSkeleton';
+import usePreloadedCustomGlobalSelectList from '../../wallet/screens/usePreloadedCustomGlobalSelectList';
+
+const EMPTY_CUSTOM_CURRENCIES: ToWalletSelectorCustomCurrency[] = [];
 
 const styles = StyleSheet.create({
   globalSelectContainer: {
@@ -216,6 +219,9 @@ const ExternalServicesWalletSelector: React.FC<
   const homeCarouselConfig: HomeCarouselConfig[] = useAppSelector(
     ({APP}) => APP.homeCarouselConfig,
   );
+  const selectedGlobalSelectChainFilter = useAppSelector(
+    ({APP}) => APP.selectedLocalChainFilterOption,
+  );
 
   const preSetWallet = fromWallet;
   const fromCurrencyAbbreviation = currencyAbbreviation?.toLowerCase();
@@ -224,6 +230,26 @@ const ExternalServicesWalletSelector: React.FC<
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
   const autoSelectAttemptedRef = useRef(false);
+  const pendingWalletSelectionRef = useRef<
+    | {
+        newWallet?: Wallet;
+        createNewWalletData?: AddWalletData;
+      }
+    | undefined
+  >(undefined);
+  const {
+    preloadedListRef: buyGlobalSelectCacheRef,
+    preload: preloadBuyGlobalSelect,
+  } = usePreloadedCustomGlobalSelectList({
+    navigation,
+    keys: allKeys,
+    customToSelectCurrencies:
+      context === 'buyCrypto'
+        ? buyCryptoSupportedCoinsFullObj
+        : EMPTY_CUSTOM_CURRENCIES,
+    selectedChainFilterOption: selectedGlobalSelectChainFilter,
+    livenetOnly: !__DEV__,
+  });
 
   const globalSelectRoute =
     fromCurrencyAbbreviation && fromChain
@@ -608,11 +634,10 @@ const ExternalServicesWalletSelector: React.FC<
     sellCryptoSupportedCoinsFullObj?.length,
   ]);
 
-  const onDismiss = async (
+  const applyWalletSelection = async (
     newWallet?: Wallet,
     createNewWalletData?: AddWalletData | undefined,
   ) => {
-    setWalletSelectorModalVisible(false);
     if (newWallet?.currencyAbbreviation) {
       setWallet(newWallet);
       dispatch(
@@ -719,6 +744,29 @@ const ExternalServicesWalletSelector: React.FC<
     }
   };
 
+  const onDismiss = (
+    newWallet?: Wallet,
+    createNewWalletData?: AddWalletData,
+  ) => {
+    pendingWalletSelectionRef.current =
+      newWallet || createNewWalletData
+        ? {newWallet, createNewWalletData}
+        : undefined;
+    setWalletSelectorModalVisible(false);
+  };
+
+  const handleWalletSelectorModalHide = () => {
+    const pendingSelection = pendingWalletSelectionRef.current;
+    pendingWalletSelectionRef.current = undefined;
+
+    if (pendingSelection) {
+      applyWalletSelection(
+        pendingSelection.newWallet,
+        pendingSelection.createNewWalletData,
+      );
+    }
+  };
+
   return (
     <ExternalServicesWalletSelectorContainer>
       {loading ? (
@@ -730,6 +778,9 @@ const ExternalServicesWalletSelector: React.FC<
       ) : (
         <WalletSelector
           style={selectedWallet ? {} : {backgroundColor: Action}}
+          onPressIn={
+            context === 'buyCrypto' ? preloadBuyGlobalSelect : undefined
+          }
           onPress={() => {
             setWalletSelectorModalVisible(true);
           }}>
@@ -784,6 +835,7 @@ const ExternalServicesWalletSelector: React.FC<
         modalLibrary="bottom-sheet"
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
+        onModalHide={handleWalletSelectorModalHide}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect
@@ -802,6 +854,11 @@ const ExternalServicesWalletSelector: React.FC<
             customToSelectCurrencies={
               context === 'buyCrypto'
                 ? buyCryptoSupportedCoinsFullObj
+                : undefined
+            }
+            preloadedCustomToSelectCurrenciesList={
+              context === 'buyCrypto'
+                ? buyGlobalSelectCacheRef.current
                 : undefined
             }
             customSupportedCurrencies={
