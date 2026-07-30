@@ -173,6 +173,7 @@ import {RootState} from '../../../store';
 import {PERF_DEBUG, performanceLog} from '../../../utils/performanceDebug';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
+import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
 
 const EMPTY_ACCOUNT_LIST: AccountRowProps[] = [];
 
@@ -891,6 +892,24 @@ const KeyOverview = () => {
     defaultAltCurrency.isoCode,
     rates,
   ]);
+  const keySettingsPreloadInputsRef = useRef({
+    key,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    dispatch,
+  });
+  keySettingsPreloadInputsRef.current = {
+    key,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    dispatch,
+  };
+  const warmKeySettingsAccountList = useCallback(() => {
+    const preloadInputs = keySettingsPreloadInputsRef.current;
+    if (!preloadInputs.key) {
+      return;
+    }
+
+    resolveKeySettingsAccountList(preloadInputs);
+  }, []);
 
   const pendingTxpCount =
     key?.wallets.reduce(
@@ -973,6 +992,7 @@ const KeyOverview = () => {
               ) : null}
               {checkPrivateKeyEncrypted(key) && !hasMissingEvmNetworks ? (
                 <CogIconContainer
+                  onPressIn={warmKeySettingsAccountList}
                   onPress={() => {
                     navigation.navigate('KeySettings', {
                       keyId: key.id,
@@ -1005,6 +1025,7 @@ const KeyOverview = () => {
     onPressTxpBadge,
     pendingTxpCount,
     theme.dark,
+    warmKeySettingsAccountList,
   ]);
 
   const firstWallet = key?.wallets?.[0];
@@ -1411,6 +1432,7 @@ const KeyOverview = () => {
     description: t('View all the ways to manage and configure your key.'),
     onPress: () => {
       haptic('impactLight');
+      warmKeySettingsAccountList();
       navigation.navigate('KeySettings', {
         keyId: key.id,
       });
@@ -1677,7 +1699,7 @@ const KeyOverview = () => {
   useFocusEffect(
     useCallback(() => {
       preloadedDetailsRef.current = undefined;
-      if (!contentReady || !firstPreloadableDetailsIdentity) {
+      if (!contentReady) {
         return;
       }
 
@@ -1686,9 +1708,16 @@ const KeyOverview = () => {
         transitionFallbackMs: 800,
         idleTimeoutMs: 1200,
         callback: signal => {
-          const itemToPreload = firstPreloadableDetailsItemRef.current;
-          if (!signal.aborted && itemToPreload) {
-            stablePreloadDetails(itemToPreload);
+          if (signal.aborted) {
+            return;
+          }
+
+          warmKeySettingsAccountList();
+          if (firstPreloadableDetailsIdentity) {
+            const itemToPreload = firstPreloadableDetailsItemRef.current;
+            if (itemToPreload) {
+              stablePreloadDetails(itemToPreload);
+            }
           }
         },
       });
@@ -1699,6 +1728,7 @@ const KeyOverview = () => {
       firstPreloadableDetailsIdentity,
       navigation,
       stablePreloadDetails,
+      warmKeySettingsAccountList,
     ]),
   );
 
