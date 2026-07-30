@@ -6,7 +6,7 @@ import {
   ActiveOpacity,
 } from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
-import {H5, H7, ListItemSubText} from '../styled/Text';
+import {H5, ListItemSubText} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {GlobalSelectObj} from '../../navigation/wallet/screens/GlobalSelect';
 import {useTheme} from '../../contexts';
@@ -74,18 +74,21 @@ interface CurrencyBadgeListProps {
 
 const CurrencyBadgeList: React.FC<CurrencyBadgeListProps> = ({chainsImg}) => {
   const chainValues = _.orderBy(Object.values(chainsImg), 'priority', 'asc');
-  let _index = 0;
+  const images = chainValues
+    .map(({badgeUri, badgeImg}) => badgeUri || badgeImg)
+    .filter(
+      (img): img is string | ((props?: any) => React.ReactElement) => !!img,
+    );
+
   return (
     <>
-      {chainValues.map(({badgeUri, badgeImg}) => {
-        const img = badgeUri || badgeImg;
-        if (!img) {
-          return null;
-        }
-        _index = _index + 1;
-        const marginLeft = _index === 1 ? 1 : -6;
+      {images.map((img, index) => {
+        const marginLeft = index === 0 ? 1 : -6;
         return (
-          <Img key={_.uniqueId()} isFirst={_index === 1} style={{marginLeft}}>
+          <Img
+            key={typeof img === 'string' ? `${img}-${index}` : index}
+            isFirst={index === 0}
+            style={{marginLeft}}>
             <CurrencyImage img={img} size={25} />
           </Img>
         );
@@ -95,7 +98,7 @@ const CurrencyBadgeList: React.FC<CurrencyBadgeListProps> = ({chainsImg}) => {
 };
 
 const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
-  const {currencyName, currencyAbbreviation, total, img, chainsImg} = item;
+  const {currencyName, currencyAbbreviation, img, chainsImg} = item;
   return (
     <RowContainer
       noBorder={true}
