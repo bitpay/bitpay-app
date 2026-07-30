@@ -23,7 +23,6 @@ import {
   FlatList,
   SafeAreaView,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
@@ -57,7 +56,6 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import {
-  buildAccountList,
   buildWalletObj,
   checkPrivateKeyEncrypted,
   mapAbbreviationAndName,
@@ -80,9 +78,9 @@ import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
+import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
-const ACCOUNT_LIST_READY_FALLBACK_MS = 2000;
 
 const styles = StyleSheet.create({
   walletSettingsContainer: {
@@ -208,16 +206,15 @@ const KeySettings = () => {
     ({APP}) => APP.selectedChainFilterOption,
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
-  const [accountListReady, setAccountListReady] = useState(false);
-  const memorizedAccountList = useMemo(() => {
-    if (!accountListReady) {
-      return [];
-    }
-
-    return buildAccountList(_key, defaultAltCurrency.isoCode, {}, dispatch, {
-      skipFiatCalculations: true,
-    });
-  }, [accountListReady, defaultAltCurrency.isoCode, dispatch, _key]);
+  const memorizedAccountList = useMemo(
+    () =>
+      resolveKeySettingsAccountList({
+        key: _key,
+        defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+        dispatch,
+      }),
+    [defaultAltCurrency.isoCode, dispatch, _key],
+  );
 
   const accountInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[keyId]?.evmAccountsInfo,
@@ -236,41 +233,6 @@ const KeySettings = () => {
       headerTitle: () => <HeaderTitle>{t('Key Settings')}</HeaderTitle>,
     });
   }, [navigation, t]);
-
-  useEffect(() => {
-    let completed = false;
-    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const complete = () => {
-      if (completed) {
-        return;
-      }
-
-      completed = true;
-      if (fallbackTimer) {
-        clearTimeout(fallbackTimer);
-      }
-      setAccountListReady(true);
-    };
-
-    const unsubscribe = (navigation as any).addListener(
-      'transitionEnd',
-      (event: {data?: {closing?: boolean}}) => {
-        if (!event.data?.closing) {
-          complete();
-        }
-      },
-    );
-    fallbackTimer = setTimeout(complete, ACCOUNT_LIST_READY_FALLBACK_MS);
-
-    return () => {
-      completed = true;
-      if (fallbackTimer) {
-        clearTimeout(fallbackTimer);
-      }
-      unsubscribe();
-    };
-  }, [navigation]);
 
   const buildEncryptModalConfig = useCallback(
     (
@@ -493,22 +455,19 @@ const KeySettings = () => {
           </InfoImageContainer>
         </WalletHeaderContainer>
 
-        {accountListReady ? (
-          <SearchComponentContainer>
-            <SearchComponent<AccountRowProps>
-              searchVal={searchVal}
-              setSearchVal={setSearchVal}
-              searchResults={searchResults}
-              setSearchResults={setSearchResults}
-              searchFullList={memorizedAccountList}
-              context={'keysettings'}
-            />
-          </SearchComponentContainer>
-        ) : null}
+        <SearchComponentContainer>
+          <SearchComponent<AccountRowProps>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            searchFullList={memorizedAccountList}
+            context={'keysettings'}
+          />
+        </SearchComponentContainer>
       </>
     );
   }, [
-    accountListReady,
     keyId,
     keyName,
     memorizedAccountList,
@@ -755,10 +714,9 @@ const KeySettings = () => {
   ]);
 
   const memoizedRenderItem = useCallback(
-    ({item, index}: {item: AccountRowProps; index: number}) => {
+    ({item}: {item: AccountRowProps}) => {
       return (
         <AccountSettingsRow
-          key={index.toString()}
           id={item.id}
           accountItem={item}
           accountInfo={accountInfo}
@@ -789,17 +747,13 @@ const KeySettings = () => {
       <WalletSettingsListContainer>
         <FlatList<AccountRowProps>
           ListHeaderComponent={renderListHeaderComponent}
-          ListFooterComponent={
-            accountListReady ? renderListFooterComponent : null
-          }
+          ListFooterComponent={renderListFooterComponent}
           data={
             !searchVal && !selectedChainFilterOption
               ? memorizedAccountList
               : searchResults
           }
-          ListEmptyComponent={
-            accountListReady ? null : <ActivityIndicator size="small" />
-          }
+          keyExtractor={item => item.id}
           renderItem={memoizedRenderItem}
         />
       </WalletSettingsListContainer>
