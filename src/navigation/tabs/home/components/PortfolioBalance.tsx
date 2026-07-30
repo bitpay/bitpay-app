@@ -60,6 +60,7 @@ import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import type {Rates} from '../../../../store/rate/rate.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
+import BalanceVisibilityButton from '../../../../components/balance/BalanceVisibilityButton';
 
 const portfolioStyles = StyleSheet.create({
   portfolioContainer: {
@@ -672,10 +673,10 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
           </PortfolioBalanceTitle>
           <InfoSvg width={16} height={16} />
         </PortfolioBalanceHeader>
-        <TouchableOpacity
+        <BalanceVisibilityButton
           testID="portfolio-balance-toggle"
-          accessibilityLabel={t('Toggle balance visibility')}
-          onLongPress={() => {
+          hidden={hideAllBalances}
+          onToggle={() => {
             dispatch(toggleHideAllBalances());
           }}>
           {!hideAllBalances ? (
@@ -690,7 +691,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
               {maskIfHidden(true, visibleCurrentBalance)}
             </HiddenBalance>
           )}
-        </TouchableOpacity>
+        </BalanceVisibilityButton>
       </PortfolioTopContent>
 
       {displayedChangeRowData || balanceChartsEnabled ? (

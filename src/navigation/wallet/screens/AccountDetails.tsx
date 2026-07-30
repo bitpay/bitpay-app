@@ -219,6 +219,7 @@ import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -1919,8 +1920,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       <>
         <HeaderContainer>
           <BalanceContainer>
-            <TouchableOpacity
-              onLongPress={() => {
+            <BalanceVisibilityButton
+              testID="account-balance-toggle"
+              hidden={hideAllBalances}
+              onToggle={() => {
                 dispatch(toggleHideAllBalances());
               }}>
               <Row>
@@ -1932,7 +1935,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   <H2>****</H2>
                 )}
               </Row>
-            </TouchableOpacity>
+            </BalanceVisibilityButton>
 
             {showPortfolioValue !== true ||
             shouldRenderAccountBalanceChart ||

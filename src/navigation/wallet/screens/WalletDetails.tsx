@@ -177,6 +177,7 @@ import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 import {openExternalUrl} from '../../../store/app/app.effects';
+import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -1775,8 +1776,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           <>
             <HeaderContainer>
               <BalanceContainer>
-                <TouchableOpacity
-                  onLongPress={() => {
+                <BalanceVisibilityButton
+                  testID="wallet-balance-toggle"
+                  hidden={hideAllBalances}
+                  onToggle={() => {
                     dispatch(toggleHideAllBalances());
                   }}>
                   {!fullWalletObj.isScanning ? (
@@ -1815,7 +1818,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         </CryptoBalanceText>
                       )}
                   </CryptoBalanceRow>
-                </TouchableOpacity>
+                </BalanceVisibilityButton>
 
                 {shouldRenderWalletHeaderSupplement ? (
                   <FullWidthBalanceChartContainer>

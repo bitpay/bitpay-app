@@ -166,6 +166,7 @@ import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import {RootState} from '../../../store';
 import {PERF_DEBUG, performanceLog} from '../../../utils/performanceDebug';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
+import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 
 const EMPTY_ACCOUNT_LIST: AccountRowProps[] = [];
 
@@ -1713,8 +1714,10 @@ const KeyOverview = () => {
         id="KeyOverview:list-header"
         onRender={logReactProfiler}>
         <BalanceContainer>
-          <TouchableOpacity
-            onLongPress={() => {
+          <BalanceVisibilityButton
+            testID="key-balance-toggle"
+            hidden={hideAllBalances}
+            onToggle={() => {
               dispatch(toggleHideAllBalances());
             }}>
             {!hideAllBalances ? (
@@ -1730,7 +1733,7 @@ const KeyOverview = () => {
             ) : (
               <H2>****</H2>
             )}
-          </TouchableOpacity>
+          </BalanceVisibilityButton>
 
           {keyHeaderChangeRowData ||
           shouldRenderKeyBalanceChart ||
