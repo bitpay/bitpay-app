@@ -1021,6 +1021,14 @@ const portfolioChartSurfaceCases: Array<
   ['Home', () => <PortfolioBalance />, 'home_portfolio_balance_chart'],
   ...chartSurfaceCases,
 ];
+const balanceVisibilityCases: Array<
+  [string, () => React.ReactElement, string]
+> = [
+  ['Home', () => <PortfolioBalance />, 'portfolio-balance-toggle'],
+  ['Key Overview', chartSurfaceCases[0][1], 'key-balance-toggle'],
+  ['WalletDetails', makeWalletDetailsScreen, 'wallet-balance-toggle'],
+  ['AccountDetails', makeAccountDetailsScreen, 'account-balance-toggle'],
+];
 
 const finishOpeningTransition = async (screen: string) => {
   if (screen === 'Home') {
@@ -1422,6 +1430,39 @@ describe('portfolio chart visibility guards', () => {
     ).toBeGreaterThan(0);
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
+
+  it.each(balanceVisibilityCases)(
+    'toggles global balance visibility from a regular tap on %s',
+    async (screen, makeScreen, testID) => {
+      let view!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        view = renderWithTheme(makeScreen());
+      });
+      await finishOpeningTransition(screen);
+
+      const pressable = view.root
+        .findAllByProps({testID})
+        .find(node => typeof node.props.onPress === 'function');
+
+      expect(pressable).toBeDefined();
+      expect(pressable?.props.onLongPress).toBeUndefined();
+      expect(pressable?.props.hitSlop).toEqual({
+        top: 8,
+        bottom: 8,
+        left: 16,
+        right: 16,
+      });
+
+      mockDispatch.mockClear();
+      act(() => {
+        pressable?.props.onPress();
+      });
+
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'TOGGLE_HIDE_ALL_BALANCES',
+      });
+    },
+  );
 
   it('keeps the HomeRoot balance section and linking buttons visible when Show Portfolio is disabled', async () => {
     resetState(false, {completedFullPopulate: true});
