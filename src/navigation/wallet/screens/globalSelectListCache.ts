@@ -6,24 +6,41 @@ export const GLOBAL_SELECT_LIST_CACHE_PREFIX = 'globalSelectList:';
 export const getGlobalSelectListCacheKey = ({
   context,
   selectedAccountAddress,
+  variant,
 }: {
   context?: string;
   selectedAccountAddress?: string;
-}): string =>
-  `${GLOBAL_SELECT_LIST_CACHE_PREFIX}${context || ''}:${
+  variant?: string;
+}): string => {
+  const baseKey = `${GLOBAL_SELECT_LIST_CACHE_PREFIX}${context || ''}:${
     selectedAccountAddress || ''
   }`;
 
+  return variant ? `${baseKey}:${variant}` : baseKey;
+};
+
 export const canCacheGlobalSelectList = ({
+  context,
   useAsModal,
   customSupportedCurrencies,
   customToSelectCurrencies,
 }: {
+  context?: string;
   useAsModal?: boolean;
   customSupportedCurrencies?: unknown[];
   customToSelectCurrencies?: unknown[];
-}): boolean =>
-  !useAsModal && !customSupportedCurrencies && !customToSelectCurrencies;
+}): boolean => {
+  const isCacheableSellModal =
+    useAsModal &&
+    context === 'sell' &&
+    !!customSupportedCurrencies &&
+    !customToSelectCurrencies;
+
+  return (
+    isCacheableSellModal ||
+    (!useAsModal && !customSupportedCurrencies && !customToSelectCurrencies)
+  );
+};
 
 export type GlobalSelectInitialAccountSelection = {
   account: {

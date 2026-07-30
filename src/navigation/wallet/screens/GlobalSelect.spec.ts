@@ -1,6 +1,13 @@
 import React from 'react';
 import TestRenderer, {act} from 'react-test-renderer';
-import {FlashListComponent, flattenGlobalSelectData} from './GlobalSelect';
+import {
+  FlashListComponent,
+  flattenGlobalSelectData,
+  preloadCustomGlobalSelectList,
+  resolveCustomGlobalSelectList,
+  shouldRenderCustomGlobalSelectModalImmediately,
+  shouldShowGlobalSelectEmptyState,
+} from './GlobalSelect';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -119,5 +126,146 @@ describe('flattenGlobalSelectData', () => {
         item: currency,
       },
     ]);
+  });
+});
+
+describe('custom modal list preloading', () => {
+  const btc = {
+    currencyAbbreviation: 'btc',
+    chain: 'btc',
+    name: 'Bitcoin',
+    logoUri: 'btc.svg',
+  } as any;
+  const makeWallet = (overrides: Record<string, unknown> = {}) =>
+    ({
+      id: 'wallet-1',
+      keyId: 'key-1',
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+      network: 'livenet',
+      receiveAddress: 'btc-address',
+      balance: {sat: 100},
+      isComplete: () => true,
+      ...overrides,
+    } as any);
+
+  it('reuses a warm list while its currencies and wallets are unchanged', () => {
+    const wallet = makeWallet();
+    const first = resolveCustomGlobalSelectList({
+      customToSelectCurrencies: [btc],
+      wallets: [wallet],
+    });
+    const second = resolveCustomGlobalSelectList({
+      customToSelectCurrencies: [btc],
+      wallets: [wallet],
+      previous: first,
+    });
+
+    expect(second).toBe(first);
+    expect(second.data).toHaveLength(1);
+    expect(second.data[0].availableWallets).toEqual([wallet]);
+  });
+
+  it('invalidates the warm list when a displayed balance changes', () => {
+    const first = resolveCustomGlobalSelectList({
+      customToSelectCurrencies: [btc],
+      wallets: [makeWallet()],
+    });
+    const second = resolveCustomGlobalSelectList({
+      customToSelectCurrencies: [btc],
+      wallets: [makeWallet({balance: {sat: 200}})],
+      previous: first,
+    });
+
+    expect(second).not.toBe(first);
+    expect(second.signature).not.toBe(first.signature);
+  });
+
+  it('preloads only visible livenet wallets for the Swap To modal', () => {
+    const visibleWallet = makeWallet();
+    const preloaded = preloadCustomGlobalSelectList({
+      keys: {
+        'key-1': {
+          wallets: [
+            visibleWallet,
+            makeWallet({id: 'hidden-wallet', hideWallet: true}),
+            makeWallet({id: 'testnet-wallet', network: 'testnet'}),
+          ],
+        },
+      } as any,
+      customToSelectCurrencies: [btc],
+    });
+
+    expect(preloaded.data[0].availableWallets).toEqual([visibleWallet]);
+  });
+
+  it('includes visible testnet wallets when the modal allows them', () => {
+    const visibleWallet = makeWallet();
+    const testnetWallet = makeWallet({
+      id: 'testnet-wallet',
+      network: 'testnet',
+    });
+    const preloaded = preloadCustomGlobalSelectList({
+      keys: {
+        'key-1': {
+          wallets: [
+            visibleWallet,
+            testnetWallet,
+            makeWallet({id: 'hidden-wallet', hideWallet: true}),
+          ],
+        },
+      } as any,
+      customToSelectCurrencies: [btc],
+      livenetOnly: false,
+    });
+
+    expect(preloaded.data[0].availableWallets).toEqual([
+      visibleWallet,
+      testnetWallet,
+    ]);
+  });
+});
+
+describe('custom modal rendering readiness', () => {
+  it.each(['buy', 'swapTo'] as const)(
+    'renders the %s custom wallet list immediately',
+    context => {
+      expect(
+        shouldRenderCustomGlobalSelectModalImmediately({
+          useAsModal: true,
+          context,
+          hasCustomToSelectCurrencies: true,
+          hasCustomSupportedCurrencies: false,
+        }),
+      ).toBe(true);
+    },
+  );
+
+  it('renders the Sell account list immediately', () => {
+    expect(
+      shouldRenderCustomGlobalSelectModalImmediately({
+        useAsModal: true,
+        context: 'sell',
+        hasCustomToSelectCurrencies: false,
+        hasCustomSupportedCurrencies: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('does not expose the empty state before content is ready', () => {
+    expect(
+      shouldShowGlobalSelectEmptyState({
+        isContentReady: false,
+        currenciesSupportedCount: 0,
+        customCurrenciesSupportedCount: 0,
+      }),
+    ).toBe(false);
+    expect(
+      shouldShowGlobalSelectEmptyState({
+        isContentReady: true,
+        currenciesSupportedCount: 0,
+        customCurrenciesSupportedCount: 0,
+      }),
+    ).toBe(true);
   });
 });
