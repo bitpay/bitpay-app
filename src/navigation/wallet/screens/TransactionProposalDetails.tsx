@@ -18,7 +18,12 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+  useLogger,
+} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   getDetailsTitle,
@@ -55,8 +60,6 @@ import {
 } from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
-import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SecureLockIcon from '../../../../assets/img/secure-lock.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
@@ -146,7 +149,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
     justifyContent: 'flex-start',
   },
+  secureLockIcon: {
+    marginTop: -2,
+  },
 });
+
+const TransactionProposalHeaderTitle = ({children}: {children: string}) => (
+  <HeaderTitle>{children}</HeaderTitle>
+);
+
+const PayProSecureIcon = () => (
+  <SecureLockIcon height={18} width={18} style={styles.secureLockIcon} />
+);
 
 const TxpDetailsContainer = ({
   style,
@@ -373,11 +387,12 @@ const TransactionProposalDetails = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>{title}</HeaderTitle>,
+      title,
+      headerTitle: TransactionProposalHeaderTitle,
     });
   }, [navigation, title]);
 
-  const init = async () => {
+  const init = useLatestCallback(async () => {
     try {
       if (!transaction) {
         navigation.goBack();
@@ -404,23 +419,20 @@ const TransactionProposalDetails = () => {
             wallet.currencyAbbreviation,
             transaction.coin,
             transaction.chain,
-            transaction.amount,
+            Number(transaction.amount),
           ),
       );
-      await sleep(500);
       setIsLoading(false);
     } catch (err) {
-      await sleep(500);
       setIsLoading(false);
       const e = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error('[TransactionProposalDetails] ', e);
     }
-  };
+  });
 
-  const checkPayPro = async () => {
+  const checkPayPro = useLatestCallback(async () => {
     try {
       setPayproIsLoading(true);
-      await sleep(400);
       showOngoingProcess('FETCHING_PAYMENT_INFO');
       const address = (await dispatch<Promise<string>>(
         createWalletAddress({wallet: wallet, newAddress: false}),
@@ -438,7 +450,6 @@ const TransactionProposalDetails = () => {
       );
       paymentTimeControl(_payProDetails.expires);
       setPayProDetails(_payProDetails);
-      await sleep(500);
       setPayproIsLoading(false);
       hideOngoingProcess();
     } catch (err) {
@@ -456,7 +467,7 @@ const TransactionProposalDetails = () => {
         ),
       );
     }
-  };
+  });
 
   const paymentTimeControl = (expires: string): void => {
     const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
@@ -470,15 +481,15 @@ const TransactionProposalDetails = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    interval?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr(t('Expired'));
-      if (countDown) {
-        clearInterval(countDown);
+      if (interval) {
+        clearInterval(interval);
       }
       return;
     }
@@ -488,25 +499,12 @@ const TransactionProposalDetails = () => {
     setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
   };
 
-  const getIcon = () => {
-    const _currencyAbbreviation = getCurrencyAbbreviation(
-      wallet.currencyAbbreviation,
-      wallet.chain,
-    );
-
-    return CurrencyListIcons[_currencyAbbreviation] ? (
-      CurrencyListIcons[_currencyAbbreviation]({width: 18, height: 18})
-    ) : (
-      <DefaultSvg width={18} height={18} />
-    );
-  };
-
-  const broadcastTxp = async (txp: TransactionProposal) => {
+  const broadcastTxp = async (proposal: TransactionProposal) => {
     showOngoingProcess('BROADCASTING_TXP');
 
     try {
       logger.debug('Trying to broadcast Txp');
-      const broadcastedTx = await broadcastTx(wallet, txp);
+      const broadcastedTx = await broadcastTx(wallet, proposal);
       logger.debug(`Transaction broadcasted: ${broadcastedTx.txid}`);
       const {fee, amount} = broadcastedTx as {
         fee: number;
@@ -533,7 +531,7 @@ const TransactionProposalDetails = () => {
       navigation.goBack();
     } catch (err: any) {
       logger.error(
-        `Could not broadcast Txp. Coin: ${txp.coin} - Chain: ${txp.chain} - Network: ${wallet.network} - Raw: ${txp.raw}`,
+        `Could not broadcast Txp. Coin: ${proposal.coin} - Chain: ${proposal.chain} - Network: ${wallet.network} - Raw: ${proposal.raw}`,
       );
       let msg: string = t('Could not broadcast payment');
       if (typeof err?.message === 'string') {
@@ -718,13 +716,13 @@ const TransactionProposalDetails = () => {
 
   useEffect(() => {
     init();
-  }, [transaction, wallet]);
+  }, [init, transaction, wallet]);
 
   useEffect(() => {
     if (txp?.payProUrl) {
       checkPayPro();
     }
-  }, [txp]);
+  }, [checkPayPro, txp]);
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -950,13 +948,7 @@ const TransactionProposalDetails = () => {
                 recipientName: txp.payProUrl
                   .replace('https://', '')
                   .split('/')[0],
-                img: () => (
-                  <SecureLockIcon
-                    height={18}
-                    width={18}
-                    style={{marginTop: -2}}
-                  />
-                ),
+                img: PayProSecureIcon,
               }}
               hr
             />
