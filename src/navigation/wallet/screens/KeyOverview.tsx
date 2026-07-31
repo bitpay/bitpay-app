@@ -168,6 +168,7 @@ import {PERF_DEBUG, performanceLog} from '../../../utils/performanceDebug';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
+import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
 
 const EMPTY_ACCOUNT_LIST: AccountRowProps[] = [];
 
@@ -177,19 +178,13 @@ const AccountListItem = React.memo(
     hideBalance,
     animateEntrance,
     onPressItem,
-    onPressInItem,
   }: {
     item: AccountRowProps;
     hideBalance: boolean;
     animateEntrance: boolean;
     onPressItem: (item: AccountRowProps) => void;
-    onPressInItem: (item: AccountRowProps) => void;
   }) => {
     const onPress = useCallback(() => onPressItem(item), [item, onPressItem]);
-    const onPressIn = useCallback(
-      () => onPressInItem(item),
-      [item, onPressInItem],
-    );
 
     return (
       <AccountListRow
@@ -198,7 +193,6 @@ const AccountListItem = React.memo(
         hideBalance={hideBalance}
         animateEntrance={animateEntrance}
         onPress={onPress}
-        onPressIn={onPressIn}
       />
     );
   },
@@ -1549,8 +1543,13 @@ const KeyOverview = () => {
     }
   };
 
+  const detailsPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
   const onPressItem = useCallback(
     (item: AccountRowProps) => {
+      detailsPreloadTaskRef.current?.cancel();
+      detailsPreloadTaskRef.current = undefined;
       haptic('impactLight');
 
       if (IsVMChain(item.chains[0])) {
@@ -1671,9 +1670,9 @@ const KeyOverview = () => {
     (item: AccountRowProps) => preloadDetailsRef.current(item),
     [],
   );
-  const firstPreloadableDetailsItem = useMemo(
+  const singlePreloadableDetailsItem = useMemo(
     () =>
-      memoizedAccountList.find(item => {
+      getSinglePreloadCandidate(memoizedAccountList, item => {
         if (IsVMChain(item.chains[0])) {
           return true;
         }
@@ -1688,12 +1687,14 @@ const KeyOverview = () => {
       }),
     [key.wallets, memoizedAccountList],
   );
-  const firstPreloadableDetailsItemRef = useRef(firstPreloadableDetailsItem);
-  firstPreloadableDetailsItemRef.current = firstPreloadableDetailsItem;
-  const firstPreloadableDetailsIdentity = firstPreloadableDetailsItem
-    ? `${firstPreloadableDetailsItem.keyId}:${
-        firstPreloadableDetailsItem.receiveAddress
-      }:${firstPreloadableDetailsItem.wallets[0]?.id || ''}`
+  const singlePreloadableDetailsItemRef = useRef(singlePreloadableDetailsItem);
+  singlePreloadableDetailsItemRef.current = singlePreloadableDetailsItem;
+  const singlePreloadableDetailsIdentity = singlePreloadableDetailsItem
+    ? [
+        singlePreloadableDetailsItem.keyId,
+        singlePreloadableDetailsItem.receiveAddress,
+        singlePreloadableDetailsItem.wallets[0]?.id || '',
+      ].join(':')
     : undefined;
 
   useFocusEffect(
@@ -1713,20 +1714,26 @@ const KeyOverview = () => {
           }
 
           warmKeySettingsAccountList();
-          if (firstPreloadableDetailsIdentity) {
-            const itemToPreload = firstPreloadableDetailsItemRef.current;
+          if (singlePreloadableDetailsIdentity) {
+            const itemToPreload = singlePreloadableDetailsItemRef.current;
             if (itemToPreload) {
               stablePreloadDetails(itemToPreload);
             }
           }
         },
       });
+      detailsPreloadTaskRef.current = preloadTask;
 
-      return preloadTask.cancel;
+      return () => {
+        preloadTask.cancel();
+        if (detailsPreloadTaskRef.current === preloadTask) {
+          detailsPreloadTaskRef.current = undefined;
+        }
+      };
     }, [
       contentReady,
-      firstPreloadableDetailsIdentity,
       navigation,
+      singlePreloadableDetailsIdentity,
       stablePreloadDetails,
       warmKeySettingsAccountList,
     ]),
@@ -1741,10 +1748,9 @@ const KeyOverview = () => {
           !wasPreloadedRef.current && !hydratedFromSnapshotRef.current
         }
         onPressItem={stableOnPressItem}
-        onPressInItem={stablePreloadDetails}
       />
     ),
-    [hideAllBalances, stableOnPressItem, stablePreloadDetails],
+    [hideAllBalances, stableOnPressItem],
   );
 
   const listHeaderComponent = useMemo(() => {
