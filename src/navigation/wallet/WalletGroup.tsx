@@ -76,6 +76,11 @@ import ClearEncryptPassword, {
 import PayProConfirmTwoFactor, {
   PayProConfirmTwoFactorParamList,
 } from './screens/send/confirm/PayProConfirmTwoFactor';
+import {
+  getAccountDetailsRouteId,
+  getKeyOverviewRouteId,
+  getWalletDetailsRouteId,
+} from './walletRouteIds';
 import {t as i18nextT} from 'i18next';
 const t = i18nextT as (key: string) => string;
 import {useStackScreenOptions} from '../utils/headerHelpers';
@@ -335,6 +340,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.KEY_OVERVIEW}
         component={KeyOverview}
+        getId={getKeyOverviewRouteId}
       />
       <Wallet.Screen
         name={WalletScreens.KEY_EXPLANATION}
@@ -351,6 +357,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.ACCOUNT_DETAILS}
         component={AccountDetails}
+        getId={getAccountDetailsRouteId}
       />
       <Wallet.Screen
         name={WalletScreens.ACCOUNT_SETTINGS}
@@ -359,6 +366,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.WALLET_DETAILS}
         component={WalletDetails}
+        getId={getWalletDetailsRouteId}
       />
       <Wallet.Screen
         name={WalletScreens.WALLET_SETTINGS}
