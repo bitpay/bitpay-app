@@ -1,4 +1,4 @@
-import React, {memo, ReactElement, useEffect, useState} from 'react';
+import React, {memo, ReactElement} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   Column,
@@ -10,7 +10,6 @@ import {
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {hasCachedBlockie} from '../blockie/Blockie';
 import {
   formatCurrencyAbbreviation,
   getProtocolName,
@@ -140,22 +139,6 @@ const AccountListRow = ({
 
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
 
-  const [isBlockieReady, setIsBlockieReady] = useState(
-    () => !isMultiNetworkSupported || hasCachedBlockie(receiveAddress),
-  );
-
-  useEffect(() => {
-    if (isBlockieReady) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setIsBlockieReady(true);
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [isBlockieReady]);
-
   return (
     <Animated.View
       entering={animateEntrance ? FadeIn.duration(800) : undefined}>
@@ -167,19 +150,15 @@ const AccountListRow = ({
         {!hideIcon ? (
           <CurrencyImageContainer>
             {isMultiNetworkSupported ? (
-              isBlockieReady ? (
-                <CurrencyImage
-                  blockie={{
-                    seed: receiveAddress,
-                  }}
-                  badgeUri={
-                    IsSVMChain(chain) ? CurrencyListIcons[chain] : undefined
-                  }
-                  size={40}
-                />
-              ) : (
-                <></>
-              )
+              <CurrencyImage
+                blockie={{
+                  seed: receiveAddress,
+                }}
+                badgeUri={
+                  IsSVMChain(chain) ? CurrencyListIcons[chain] : undefined
+                }
+                size={40}
+              />
             ) : (
               <CurrencyImage
                 img={wallets[0].img}
