@@ -91,7 +91,10 @@ import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import type {RootState} from '../../../store';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
-import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
+import {
+  scheduleAfterInteractionsAndFrames,
+  scheduleAfterTransitionAndIdle,
+} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
 
 export type HomeScreenProps = NativeStackScreenProps<
@@ -687,12 +690,27 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     wasHomeFocusedRef.current = isHomeFocused;
   }, [isHomeFocused]);
 
+  const homeFlowPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
+  const secondHomeFlowPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterInteractionsAndFrames> | undefined
+  >(undefined);
+  const cancelHomeFlowPreloads = useCallback(() => {
+    homeFlowPreloadTaskRef.current?.cancel();
+    secondHomeFlowPreloadTaskRef.current?.cancel();
+    homeFlowPreloadTaskRef.current = undefined;
+    secondHomeFlowPreloadTaskRef.current = undefined;
+  }, []);
+
   useEffect(() => {
     if (!isHomeFocused || appIsLoading) {
       return;
     }
 
-    let secondPreloadTimer: ReturnType<typeof setTimeout> | undefined;
+    let secondPreloadTask:
+      | ReturnType<typeof scheduleAfterInteractionsAndFrames>
+      | undefined;
     const preloadTask = scheduleAfterTransitionAndIdle({
       navigation: navigation as any,
       transitionFallbackMs: 800,
@@ -706,22 +724,34 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           preloadHomeFlow('receive');
         }
         if (canPreloadSend) {
-          secondPreloadTimer = setTimeout(
-            () => {
-              if (!signal.aborted) {
-                preloadHomeFlow('send');
-              }
-            },
-            canPreloadReceive ? 250 : 0,
-          );
+          if (canPreloadReceive) {
+            secondPreloadTask = scheduleAfterInteractionsAndFrames({
+              fallbackMs: 1600,
+              callback: secondSignal => {
+                if (!signal.aborted && !secondSignal.aborted) {
+                  preloadHomeFlow('send');
+                }
+              },
+            });
+            secondHomeFlowPreloadTaskRef.current = secondPreloadTask;
+          } else {
+            if (!signal.aborted) {
+              preloadHomeFlow('send');
+            }
+          }
         }
       },
     });
+    homeFlowPreloadTaskRef.current = preloadTask;
 
     return () => {
       preloadTask.cancel();
-      if (secondPreloadTimer) {
-        clearTimeout(secondPreloadTimer);
+      secondPreloadTask?.cancel();
+      if (homeFlowPreloadTaskRef.current === preloadTask) {
+        homeFlowPreloadTaskRef.current = undefined;
+      }
+      if (secondHomeFlowPreloadTaskRef.current === secondPreloadTask) {
+        secondHomeFlowPreloadTaskRef.current = undefined;
       }
     };
   }, [
@@ -735,8 +765,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
   const receiveLinkingButton = useMemo(
     () => ({
-      onPressIn: () => preloadHomeFlow('receive'),
       cta: () => {
+        cancelHomeFlowPreloads();
         dispatch(
           Analytics.track('Clicked Receive Crypto', {
             context: 'HomeRoot',
@@ -745,12 +775,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(receiveCrypto(navigation, 'HomeRoot'));
       },
     }),
-    [dispatch, navigation, preloadHomeFlow],
+    [cancelHomeFlowPreloads, dispatch, navigation],
   );
   const sendLinkingButton = useMemo(
     () => ({
-      onPressIn: () => preloadHomeFlow('send'),
       cta: () => {
+        cancelHomeFlowPreloads();
         dispatch(
           Analytics.track('Clicked Send Crypto', {
             context: 'HomeRoot',
@@ -759,7 +789,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(sendCrypto('HomeRoot'));
       },
     }),
-    [dispatch, preloadHomeFlow],
+    [cancelHomeFlowPreloads, dispatch],
   );
 
   return (
