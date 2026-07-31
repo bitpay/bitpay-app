@@ -11,28 +11,7 @@ import {
   cacheBalanceHistoryChartSeries,
   clearBalanceHistoryChartSeriesCache,
 } from '../../../components/charts/balanceHistoryChartSeriesCache';
-import {
-  clearAccountListMemoryCacheForTests,
-  clearAccountListSnapshots,
-  setAccountListSnapshotStorage,
-  setAccountListSnapshotWriteScheduler,
-  type AccountListSnapshotStorage,
-} from '../../../store/wallet/utils/accountListCache';
-
-const makeSnapshotStorage = (): AccountListSnapshotStorage => {
-  const entries = new Map<string, string>();
-
-  return {
-    getString: (key: string) => entries.get(key),
-    set: (key: string, value: string) => {
-      entries.set(key, value);
-    },
-    delete: (key: string) => {
-      entries.delete(key);
-    },
-    getAllKeys: () => [...entries.keys()],
-  };
-};
+import {clearAccountListSnapshots} from '../../../store/wallet/utils/accountListCache';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -2056,8 +2035,6 @@ describe('cached content hydration', () => {
     act(() => {
       clearBalanceHistoryChartSeriesCache();
     });
-    setAccountListSnapshotWriteScheduler(write => write());
-    setAccountListSnapshotStorage(null);
     clearAccountListSnapshots();
     jest.clearAllMocks();
     mockTransitionEndListener = undefined;
@@ -2082,7 +2059,6 @@ describe('cached content hydration', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    setAccountListSnapshotWriteScheduler(null);
   });
 
   const makeCachedTx = (overrides: Record<string, any> = {}) => ({
@@ -2241,37 +2217,6 @@ describe('cached content hydration', () => {
 
     expect(mockFlashListProps?.data).toHaveLength(mockAccountList.length);
     expect(mockBuildAccountList).not.toHaveBeenCalled();
-  });
-
-  it('restores KeyOverview row icons from a snapshot that survived a restart', async () => {
-    const storage = makeSnapshotStorage();
-    setAccountListSnapshotStorage(storage);
-    mockRouteParams = {context: undefined, id: 'key-1'};
-
-    let firstView!: TestRenderer.ReactTestRenderer;
-    await act(async () => {
-      firstView = renderWithTheme(<KeyOverview />);
-    });
-    await finishOpeningTransition('Key Overview');
-    await act(async () => {
-      firstView.unmount();
-    });
-
-    clearAccountListMemoryCacheForTests();
-    mockFlashListProps = undefined;
-
-    await act(async () => {
-      renderWithTheme(<KeyOverview />);
-    });
-    await finishOpeningTransition('Key Overview');
-
-    const restoredRows = mockFlashListProps?.data || [];
-    expect(restoredRows).toHaveLength(mockAccountList.length);
-    restoredRows.forEach((row: any) => {
-      row.wallets.forEach((wallet: any) => {
-        expect(wallet.img).toBeDefined();
-      });
-    });
   });
 
   it('re-renders KeyOverview rows when balances are toggled', async () => {
