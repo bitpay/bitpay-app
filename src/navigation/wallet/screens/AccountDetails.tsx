@@ -1662,7 +1662,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
       preloadedWalletDetailsRef.current = preloadIdentity;
       performanceLog(
-        `[PERF-PRELOAD] WalletDetails start wallet:${walletId} source:AccountDetails`,
+        '[PERF-PRELOAD] WalletDetails start source:AccountDetails',
       );
       (navigation as any).preload('WalletDetails', {
         walletId,
@@ -1836,21 +1836,29 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   }, [isLoading, errorLoadingTxs, groupedHistory, ghostTownEmptyState]);
 
   const assetsListCacheKey = `accountDetailsAssets:${keyId}:${selectedAccountAddress}`;
+  const assetsListSignature = useMemo(
+    () =>
+      buildAccountListSignature({
+        wallets: keyFullWalletObjs,
+        keys: [key],
+        quoteCurrency: defaultAltCurrency.isoCode,
+        ratesRevision: getRatesRevision(rates),
+      }),
+    [defaultAltCurrency.isoCode, key, keyFullWalletObjs, rates],
+  );
   const memorizedAssetsByChainList = useMemo(() => {
     if (!contentReady) {
       return (
-        readAccountListSnapshot<AssetsByChainListProps[]>(assetsListCacheKey) ??
-        EMPTY_ASSETS_BY_CHAIN_LIST
+        readAccountListSnapshot<AssetsByChainListProps[]>(
+          assetsListCacheKey,
+          assetsListSignature,
+        ) ?? EMPTY_ASSETS_BY_CHAIN_LIST
       );
     }
 
     return resolveAccountListSnapshot({
       cacheKey: assetsListCacheKey,
-      signature: buildAccountListSignature({
-        wallets: keyFullWalletObjs,
-        quoteCurrency: defaultAltCurrency.isoCode,
-        ratesRevision: getRatesRevision(rates),
-      }),
+      signature: assetsListSignature,
       build: () =>
         buildAssetsByChainList(
           accountItem,
@@ -1860,10 +1868,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   }, [
     accountItem,
     assetsListCacheKey,
+    assetsListSignature,
     contentReady,
     defaultAltCurrency.isoCode,
-    keyFullWalletObjs,
-    rates,
   ]);
 
   const onToggleAssetChain = useCallback(

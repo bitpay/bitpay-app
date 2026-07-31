@@ -832,21 +832,35 @@ const KeyOverview = () => {
   });
 
   const accountListCacheKey = `keyOverviewAccountList:${id}`;
+  const accountListSignature = useMemo(
+    () =>
+      buildAccountListSignature({
+        wallets: key?.wallets,
+        keys: key ? [key] : [],
+        quoteCurrency: defaultAltCurrency.isoCode,
+        ratesRevision: getRatesRevision(rates),
+      }),
+    [defaultAltCurrency.isoCode, key, rates],
+  );
   const hydratedFromSnapshotRef = useRef<boolean | undefined>(undefined);
 
   const memoizedAccountList = useMemo(() => {
     if (hydratedFromSnapshotRef.current === undefined) {
       hydratedFromSnapshotRef.current =
-        readAccountListSnapshot<AccountRowProps[]>(accountListCacheKey) !==
-        undefined;
+        readAccountListSnapshot<AccountRowProps[]>(
+          accountListCacheKey,
+          accountListSignature,
+        ) !== undefined;
     }
 
     // Same rule as the balance chart: a cached list paints right away instead
     // of waiting for the opening transition to finish.
     if (!contentReady) {
       return (
-        readAccountListSnapshot<AccountRowProps[]>(accountListCacheKey) ??
-        EMPTY_ACCOUNT_LIST
+        readAccountListSnapshot<AccountRowProps[]>(
+          accountListCacheKey,
+          accountListSignature,
+        ) ?? EMPTY_ACCOUNT_LIST
       );
     }
 
@@ -854,11 +868,7 @@ const KeyOverview = () => {
     let didBuild = false;
     const accountList = resolveAccountListSnapshot({
       cacheKey: accountListCacheKey,
-      signature: buildAccountListSignature({
-        wallets: key?.wallets,
-        quoteCurrency: defaultAltCurrency.isoCode,
-        ratesRevision: getRatesRevision(rates),
-      }),
+      signature: accountListSignature,
       build: () => {
         didBuild = true;
         return buildAccountList(
@@ -886,10 +896,11 @@ const KeyOverview = () => {
     return accountList;
   }, [
     accountListCacheKey,
+    accountListSignature,
     contentReady,
+    defaultAltCurrency.isoCode,
     dispatch,
     key,
-    defaultAltCurrency.isoCode,
     rates,
   ]);
   const keySettingsPreloadInputsRef = useRef({
@@ -1619,7 +1630,7 @@ const KeyOverview = () => {
 
         preloadedDetailsRef.current = preloadIdentity;
         performanceLog(
-          `[PERF-PRELOAD] AccountDetails start key:${item.keyId} account:${item.receiveAddress} source:KeyOverview`,
+          '[PERF-PRELOAD] AccountDetails start source:KeyOverview',
         );
         (navigation as any).preload('AccountDetails', {
           keyId: item.keyId,
@@ -1647,9 +1658,7 @@ const KeyOverview = () => {
       }
 
       preloadedDetailsRef.current = preloadIdentity;
-      performanceLog(
-        `[PERF-PRELOAD] WalletDetails start wallet:${walletId} source:KeyOverview`,
-      );
+      performanceLog('[PERF-PRELOAD] WalletDetails start source:KeyOverview');
       (navigation as any).preload('WalletDetails', {
         walletId,
         copayerId,
