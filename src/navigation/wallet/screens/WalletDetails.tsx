@@ -111,7 +111,11 @@ import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import MultisigIcon from '../../../../assets/img/icon-multisig-group.svg';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -167,7 +171,6 @@ import {
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
-import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
@@ -552,7 +555,17 @@ const formatSelectedCryptoBalance = (balance: string): string => {
     : balance;
 };
 
-const transactionKeyExtractor = (_item: any, index: number) => index.toString();
+const transactionKeyExtractor = (item: any, index: number) => {
+  if (typeof item === 'string') {
+    return 'section:' + item;
+  }
+
+  return String(
+    item.txid || item.id || item.proposalId || item.createdOn || index,
+  );
+};
+const getTxDescriptionDetails = (key: string | undefined) =>
+  key === 'moonpay' ? 'MoonPay' : undefined;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -618,6 +631,23 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   );
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[uiFormattedWallet.network],
+  );
+  const billPayIconByMerchantId = useMemo(() => {
+    return (accounts || []).reduce<Record<string, string>>(
+      (iconByMerchantId, account) => {
+        const accountDetails = account[account.type];
+        if (accountDetails?.merchantId && accountDetails.merchantIcon) {
+          iconByMerchantId[accountDetails.merchantId] =
+            accountDetails.merchantIcon;
+        }
+        return iconByMerchantId;
+      },
+      {},
+    );
+  }, [accounts]);
+  const giftCardIcons = useMemo(
+    () => getGiftCardIcons(supportedCardMap),
+    [supportedCardMap],
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
@@ -746,7 +776,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           },
         ),
       );
-    } catch (e) {}
+    } catch {}
   };
 
   const onPressWithDelay = async (cb: () => void) => {
@@ -1090,7 +1120,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     ],
   );
 
-  const loadHistory = useCallback(
+  const loadHistory = useLatestCallback(
     async (refresh?: boolean, options?: {showLoader?: boolean}) => {
       if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
         return;
@@ -1140,7 +1170,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         setErrorLoadingTxs(true);
       }
     },
-    [history],
   );
 
   const debouncedLoadHistory = useMemo(
@@ -1245,40 +1274,46 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
-  const listFooterComponent = () => (
-    <>
-      {!groupedHistory?.length ? null : (
-        <View style={{marginBottom: 20}}>
-          <BorderBottom />
-        </View>
-      )}
-      {isLoading ? (
-        <SkeletonContainer>
-          <WalletTransactionSkeletonRow />
-        </SkeletonContainer>
-      ) : null}
-    </>
+  const listFooterComponent = useCallback(
+    () => (
+      <>
+        {!groupedHistory?.length ? null : (
+          <View style={{marginBottom: 20}}>
+            <BorderBottom />
+          </View>
+        )}
+        {isLoading ? (
+          <SkeletonContainer>
+            <WalletTransactionSkeletonRow />
+          </SkeletonContainer>
+        ) : null}
+      </>
+    ),
+    [groupedHistory?.length, isLoading],
   );
 
-  const listEmptyComponent = () => (
-    <>
-      {isLoading !== undefined && !isLoading && !errorLoadingTxs && (
-        <EmptyListContainer>
-          <H5>{t("It's a ghost town in here")}</H5>
-          <GhostSvg style={{marginTop: 20}} />
-        </EmptyListContainer>
-      )}
+  const listEmptyComponent = useCallback(
+    () => (
+      <>
+        {isLoading !== undefined && !isLoading && !errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>{t("It's a ghost town in here")}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
 
-      {isLoading !== undefined && !isLoading && errorLoadingTxs && (
-        <EmptyListContainer>
-          <H5>{t('Could not update transaction history')}</H5>
-          <GhostSvg style={{marginTop: 20}} />
-        </EmptyListContainer>
-      )}
-    </>
+        {isLoading !== undefined && !isLoading && errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>{t('Could not update transaction history')}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+      </>
+    ),
+    [errorLoadingTxs, isLoading, t],
   );
 
-  const goToTransactionDetails = (transaction: any) => {
+  const goToTransactionDetails = useLatestCallback((transaction: any) => {
     navigation.navigate('TransactionDetails', {
       keyId: key.id,
       walletId: fullWalletObj.id,
@@ -1286,7 +1321,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       historyContext: 'wallet',
       transaction,
     });
-  };
+  });
 
   const speedupTransaction = async (transaction: any) => {
     try {
@@ -1451,118 +1486,124 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   };
 
-  const onPressTransaction = useMemo(
-    () => (transaction: any) => {
-      const {hasUnconfirmedInputs, action, isRBF} = transaction;
-      const isReceived = IsReceived(action);
-      const isMoved = IsMoved(action);
-      const currency = currencyAbbreviation.toLowerCase();
+  const onPressTransaction = useLatestCallback((transaction: any) => {
+    const {hasUnconfirmedInputs, action, isRBF} = transaction;
+    const isReceived = IsReceived(action);
+    const isMoved = IsMoved(action);
+    const currency = currencyAbbreviation.toLowerCase();
 
-      if (
-        hasUnconfirmedInputs &&
-        (isReceived || isMoved) &&
-        currency === 'btc'
-      ) {
-        dispatch(
-          showBottomNotificationModal(
-            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+    if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+        ),
+      );
+    } else if (isRBF && isReceived && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          RbfTransaction(
+            () => speedupTransaction(transaction),
+            () => goToTransactionDetails(transaction),
           ),
-        );
-      } else if (isRBF && isReceived && currency === 'btc') {
+        ),
+      );
+    } else if (CanSpeedupTx(transaction, currency, chain)) {
+      if (chain === 'eth') {
         dispatch(
           showBottomNotificationModal(
-            RbfTransaction(
+            SpeedupEthTransaction(
               () => speedupTransaction(transaction),
               () => goToTransactionDetails(transaction),
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency, chain)) {
-        if (chain === 'eth') {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupEthTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        } else {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        }
       } else {
-        goToTransactionDetails(transaction);
+        dispatch(
+          showBottomNotificationModal(
+            SpeedupTransaction(
+              () => speedupTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
       }
+    } else {
+      goToTransactionDetails(transaction);
+    }
+  });
+
+  const onPressTxp = useLatestCallback((transaction: any) => {
+    navigation.navigate('TransactionProposalDetails', {
+      walletId: fullWalletObj.id,
+      transactionId: transaction.id,
+      keyId: key.id,
+    });
+  });
+
+  const onPressTxpBadge = useLatestCallback(() => {
+    navigation.navigate('TransactionProposalNotifications', {
+      walletId: fullWalletObj.credentials.walletId,
+    });
+  });
+
+  const renderTransaction = useCallback(
+    ({item}) => {
+      return (
+        <TransactionRow
+          icon={
+            item.customData?.recipientEmail ? (
+              <ContactIcon
+                name={item.customData?.recipientEmail}
+                size={TRANSACTION_ICON_SIZE}
+                badge={<SentBadgeSvg />}
+              />
+            ) : (
+              TransactionIcons[item.uiIcon]
+            )
+          }
+          iconURI={
+            billPayIconByMerchantId[item.uiIconURI] ||
+            giftCardIcons[item.uiIconURI]
+          }
+          description={item.uiDescription}
+          details={getTxDescriptionDetails(item.customData?.service)}
+          time={item.uiTime}
+          value={item.uiValue}
+          transaction={item}
+          onPressTransaction={onPressTransaction}
+        />
+      );
     },
-    [],
+    [billPayIconByMerchantId, giftCardIcons, onPressTransaction],
   );
+  const renderHistoryItem = useCallback(
+    ({item}: {item: any}) => {
+      if (typeof item === 'string') {
+        return (
+          <TransactionSectionHeaderContainer>
+            <H5>{item}</H5>
+          </TransactionSectionHeaderContainer>
+        );
+      }
 
-  const onPressTxp = useMemo(
-    () => (transaction: any) => {
-      navigation.navigate('TransactionProposalDetails', {
-        walletId: fullWalletObj.id,
-        transactionId: transaction.id,
-        keyId: key.id,
-      });
+      return renderTransaction({item});
     },
-    [],
+    [renderTransaction],
   );
-
-  const onPressTxpBadge = useMemo(
-    () => () => {
-      navigation.navigate('TransactionProposalNotifications', {
-        walletId: fullWalletObj.credentials.walletId,
-      });
-    },
-    [],
-  );
-
-  const getBillPayIcon = (
-    billPayAccounts: BillPayAccount[],
-    merchantId: string,
-  ): string => {
-    const account = (billPayAccounts || []).find(
-      acct => acct[acct.type].merchantId === merchantId,
-    );
-    return account ? account[account.type].merchantIcon : '';
-  };
-
-  const getTxDescriptionDetails = (key: string | undefined) =>
-    key === 'moonpay' ? 'MoonPay' : undefined;
-
-  const renderTransaction = useCallback(({item}) => {
-    return (
-      <TransactionRow
-        icon={
-          item.customData?.recipientEmail ? (
-            <ContactIcon
-              name={item.customData?.recipientEmail}
-              size={TRANSACTION_ICON_SIZE}
-              badge={<SentBadgeSvg />}
-            />
-          ) : (
-            TransactionIcons[item.uiIcon]
-          )
+  const stickyHeaderIndices = useMemo(
+    () =>
+      groupedHistory.reduce<number[]>((indices, item, index) => {
+        if (typeof item === 'string') {
+          indices.push(index);
         }
-        iconURI={
-          getBillPayIcon(accounts, item.uiIconURI) ||
-          getGiftCardIcons(supportedCardMap)[item.uiIconURI]
-        }
-        description={item.uiDescription}
-        details={getTxDescriptionDetails(item.customData?.service)}
-        time={item.uiTime}
-        value={item.uiValue}
-        onPressTransaction={() => onPressTransaction(item)}
-      />
-    );
-  }, []);
+        return indices;
+      }, []),
+    [groupedHistory],
+  );
+  const getHistoryItemType = useCallback(
+    (item: any) => (typeof item === 'string' ? 'sectionHeader' : 'row'),
+    [],
+  );
 
   const renderTxp = useCallback(
     (items: any[]) => {
@@ -1594,7 +1635,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         </View>
       );
     },
-    [needActionPendingTxps, needActionUnsentTxps],
+    [contactList, onPressTxp, onPressTxpBadge, t],
   );
 
   const protocolName = getProtocolName(chain, network);
@@ -2024,17 +2065,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }
         data={groupedHistory}
         keyExtractor={transactionKeyExtractor}
-        renderItem={({item}) => {
-          if (typeof item === 'string') {
-            return (
-              <TransactionSectionHeaderContainer>
-                <H5>{item}</H5>
-              </TransactionSectionHeaderContainer>
-            );
-          } else {
-            return renderTransaction({item});
-          }
-        }}
+        renderItem={renderHistoryItem}
         ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onMomentumScrollBegin={() => setIsScrolling(true)}
@@ -2044,20 +2075,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             debouncedLoadHistory();
           }
         }}
-        stickyHeaderIndices={
-          groupedHistory
-            .map((item, index) => {
-              if (typeof item === 'string') {
-                return index;
-              } else {
-                return null;
-              }
-            })
-            .filter(item => item !== null) as number[]
-        }
-        getItemType={item =>
-          typeof item === 'string' ? 'sectionHeader' : 'row'
-        }
+        stickyHeaderIndices={stickyHeaderIndices}
+        getItemType={getHistoryItemType}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
       />
