@@ -647,9 +647,7 @@ const Crypto = ({active = true}: CryptoProps) => {
           }
 
           preloadedDestinationRef.current = preloadIdentity;
-          performanceLog(
-            `[PERF-PRELOAD] AccountDetails start key:${key.id} account:${fullWalletObj.receiveAddress} source:Home`,
-          );
+          performanceLog('[PERF-PRELOAD] AccountDetails start source:Home');
           (navigation as NavigationProp<any>).preload(
             WalletScreens.ACCOUNT_DETAILS,
             {
@@ -670,9 +668,7 @@ const Crypto = ({active = true}: CryptoProps) => {
         }
 
         preloadedDestinationRef.current = preloadIdentity;
-        performanceLog(
-          `[PERF-PRELOAD] WalletDetails start wallet:${walletId} source:Home`,
-        );
+        performanceLog('[PERF-PRELOAD] WalletDetails start source:Home');
         (navigation as NavigationProp<any>).preload(
           WalletScreens.WALLET_DETAILS,
           {
@@ -690,7 +686,7 @@ const Crypto = ({active = true}: CryptoProps) => {
       }
 
       preloadedDestinationRef.current = preloadIdentity;
-      performanceLog(`[PERF-PRELOAD] KeyOverview start key:${key.id}`);
+      performanceLog('[PERF-PRELOAD] KeyOverview start source:Home');
       (navigation as NavigationProp<any>).preload(WalletScreens.KEY_OVERVIEW, {
         id: key.id,
         _preloadContent: true,

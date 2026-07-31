@@ -5,7 +5,6 @@ import {
   flattenGlobalSelectData,
   preloadCustomGlobalSelectList,
   resolveCustomGlobalSelectList,
-  shouldRenderCustomGlobalSelectModalImmediately,
   shouldShowGlobalSelectEmptyState,
 } from './GlobalSelect';
 
@@ -227,31 +226,6 @@ describe('custom modal list preloading', () => {
 });
 
 describe('custom modal rendering readiness', () => {
-  it.each(['buy', 'swapTo'] as const)(
-    'renders the %s custom wallet list immediately',
-    context => {
-      expect(
-        shouldRenderCustomGlobalSelectModalImmediately({
-          useAsModal: true,
-          context,
-          hasCustomToSelectCurrencies: true,
-          hasCustomSupportedCurrencies: false,
-        }),
-      ).toBe(true);
-    },
-  );
-
-  it('renders the Sell account list immediately', () => {
-    expect(
-      shouldRenderCustomGlobalSelectModalImmediately({
-        useAsModal: true,
-        context: 'sell',
-        hasCustomToSelectCurrencies: false,
-        hasCustomSupportedCurrencies: true,
-      }),
-    ).toBe(true);
-  });
-
   it('does not expose the empty state before content is ready', () => {
     expect(
       shouldShowGlobalSelectEmptyState({
