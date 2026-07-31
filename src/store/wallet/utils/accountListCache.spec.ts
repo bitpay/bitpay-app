@@ -456,6 +456,27 @@ describe('accountListCache', () => {
       expect(readAccountListSnapshot('key-1')).toEqual(['two']);
     });
 
+    it('overwrites the persisted entry when the signature changes', () => {
+      const storage = makeMemoryStorage();
+      setAccountListSnapshotStorage(storage);
+
+      writeAccountListSnapshot('key-1', 'sig-1', ['one']);
+      // Simulate a new app session so the per-key write throttle is reset.
+      setAccountListSnapshotStorage(storage);
+      writeAccountListSnapshot('key-1', 'sig-2', ['two']);
+
+      const snapshotKeys = [...storage.entries.keys()].filter(key =>
+        key.startsWith('accountListSnapshot:'),
+      );
+      const persisted = JSON.parse(
+        storage.entries.get('accountListSnapshot:key-1') || '{}',
+      );
+
+      expect(snapshotKeys).toEqual(['accountListSnapshot:key-1']);
+      expect(persisted.signature).toBe('sig-2');
+      expect(persisted.value).toEqual(['two']);
+    });
+
     it('skips persisting payloads that are too large', () => {
       const storage = makeMemoryStorage();
       setAccountListSnapshotStorage(storage);
@@ -504,6 +525,14 @@ describe('accountListCache', () => {
           id: 'account-1',
           accountName: 'My Account',
           fiatBalanceFormat: '$100.00',
+          keyMaterial: {
+            mnemonic: 'mnemonic-should-not-persist',
+            mnemonicEncrypted: 'mnemonic-encrypted-should-not-persist',
+            xPrivKey: 'xpriv-should-not-persist',
+            xPrivKeyEncrypted: 'xpriv-encrypted-should-not-persist',
+            xPrivKeyEDDSA: 'xpriv-eddsa-should-not-persist',
+            xPrivKeyEDDSAEncrypted: 'xpriv-eddsa-encrypted-should-not-persist',
+          },
           wallets: [
             {
               id: 'wallet-1',
@@ -531,6 +560,12 @@ describe('accountListCache', () => {
         'xprv-should-not-persist',
         'req-should-not-persist',
         'twelve words should not persist',
+        'mnemonic-should-not-persist',
+        'mnemonic-encrypted-should-not-persist',
+        'xpriv-should-not-persist',
+        'xpriv-encrypted-should-not-persist',
+        'xpriv-eddsa-should-not-persist',
+        'xpriv-eddsa-encrypted-should-not-persist',
         'private note',
         'credentials',
         'properties',
