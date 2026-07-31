@@ -6,6 +6,7 @@ import {WalletActionTypes} from '../wallet.types';
 const WALLET_STRUCTURE_CACHE_INVALIDATION_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
   WalletActionTypes.SUCCESS_IMPORT,
+  WalletActionTypes.DELETE_KEY,
 ]);
 
 export const invalidateWalletDerivedCachesForAction = (
