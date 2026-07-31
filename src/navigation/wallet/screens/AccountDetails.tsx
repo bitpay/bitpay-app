@@ -1868,10 +1868,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const memorizedAssetsByChainList = useMemo(() => {
     if (!contentReady) {
       return (
-        readAccountListSnapshot<AssetsByChainListProps[]>(
-          assetsListCacheKey,
-          assetsListSignature,
-        ) ?? EMPTY_ASSETS_BY_CHAIN_LIST
+        readAccountListSnapshot<AssetsByChainListProps[]>(assetsListCacheKey) ??
+        EMPTY_ASSETS_BY_CHAIN_LIST
       );
     }
 
