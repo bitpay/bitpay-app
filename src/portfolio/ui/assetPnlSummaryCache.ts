@@ -54,10 +54,49 @@ type BalanceChartViewModelQueryLike = {
 };
 
 const assetPnlSummaryCache = new Map<string, AssetPnlSummaryCacheEntry>();
+const MAX_ASSET_PNL_SUMMARY_CACHE_ENTRIES = 128;
 const listenersByCacheKey = new Map<string, Set<() => void>>();
 const listenersByCompatibilityKey = new Map<string, Set<() => void>>();
 const clearListeners = new Set<() => void>();
 let assetPnlSummaryCacheGeneration = 0;
+
+const hasActiveAssetPnlSummaryListener = (
+  key: string,
+  entry: AssetPnlSummaryCacheEntry,
+): boolean =>
+  !!listenersByCacheKey.get(key)?.size ||
+  !!listenersByCompatibilityKey.get(
+    buildAssetPnlSummaryCompatibilityKey(entry.identity),
+  )?.size;
+
+const pruneInactiveAssetPnlSummaryEntries = (): void => {
+  if (assetPnlSummaryCache.size <= MAX_ASSET_PNL_SUMMARY_CACHE_ENTRIES) {
+    return;
+  }
+
+  for (const [key, entry] of assetPnlSummaryCache) {
+    if (assetPnlSummaryCache.size <= MAX_ASSET_PNL_SUMMARY_CACHE_ENTRIES) {
+      break;
+    }
+
+    // An active row must never lose the value it is currently rendering.
+    // In-flight entries are also retained to prevent duplicate queries.
+    if (entry.loading || hasActiveAssetPnlSummaryListener(key, entry)) {
+      continue;
+    }
+
+    assetPnlSummaryCache.delete(key);
+  }
+};
+
+const storeAssetPnlSummaryCacheEntry = (
+  key: string,
+  entry: AssetPnlSummaryCacheEntry,
+): void => {
+  assetPnlSummaryCache.delete(key);
+  assetPnlSummaryCache.set(key, entry);
+  pruneInactiveAssetPnlSummaryEntries();
+};
 
 const normalizeString = (value: unknown): string => String(value || '').trim();
 
@@ -239,6 +278,7 @@ export function subscribeAssetPnlSummaryCache(
         listenersByCompatibilityKey.delete(compatibilityKey);
       }
     }
+    pruneInactiveAssetPnlSummaryEntries();
   };
 }
 
@@ -254,7 +294,17 @@ export function subscribeAssetPnlSummaryCacheClear(
 export function getAssetPnlSummaryCacheEntry(
   cacheKey: string | undefined,
 ): AssetPnlSummaryCacheEntry | undefined {
-  return cacheKey ? assetPnlSummaryCache.get(cacheKey) : undefined;
+  if (!cacheKey) {
+    return undefined;
+  }
+  const entry = assetPnlSummaryCache.get(cacheKey);
+  if (!entry) {
+    return undefined;
+  }
+
+  assetPnlSummaryCache.delete(cacheKey);
+  assetPnlSummaryCache.set(cacheKey, entry);
+  return entry;
 }
 
 export function getAssetPnlSummaryCacheClearEpoch(): number {
@@ -289,13 +339,20 @@ const identitiesMatchForProvisionalDisplay = (
 export function findCompatibleAssetPnlSummaryCacheEntry(
   identity: AssetPnlSummaryIdentity,
 ): AssetPnlSummaryCacheEntry | undefined {
-  return Array.from(assetPnlSummaryCache.values())
+  const compatibleEntry = Array.from(assetPnlSummaryCache.entries())
     .reverse()
     .find(
-      entry =>
+      ([, entry]) =>
         entry.summary?.hasPnl &&
         identitiesMatchForProvisionalDisplay(entry.identity, identity),
     );
+  if (!compatibleEntry) {
+    return undefined;
+  }
+
+  const [cacheKey, entry] = compatibleEntry;
+  storeAssetPnlSummaryCacheEntry(cacheKey, entry);
+  return entry;
 }
 
 export function clearAssetPnlSummaryCache(): void {
@@ -481,7 +538,7 @@ function seedAssetPnlSummaryCacheForGeneration(args: {
     return false;
   }
 
-  assetPnlSummaryCache.set(key, {
+  storeAssetPnlSummaryCacheEntry(key, {
     key,
     identity,
     generation: args.generation,
@@ -512,7 +569,7 @@ function setAssetPnlSummaryLoading(args: {
   const key = buildAssetPnlSummaryCacheKey(identity);
   const generation = assetPnlSummaryCacheGeneration;
 
-  assetPnlSummaryCache.set(key, {
+  storeAssetPnlSummaryCacheEntry(key, {
     key,
     identity,
     generation,
@@ -546,7 +603,7 @@ function setAssetPnlSummaryError(args: {
     return;
   }
 
-  assetPnlSummaryCache.set(key, {
+  storeAssetPnlSummaryCacheEntry(key, {
     key,
     identity,
     generation: args.generation,

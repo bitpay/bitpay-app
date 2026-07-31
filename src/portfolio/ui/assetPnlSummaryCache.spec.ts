@@ -2,6 +2,7 @@ import {
   buildAssetPnlSummaryCacheKey,
   buildAssetPnlSummaryCompatibilityKey,
   clearAssetPnlSummaryCacheForTests,
+  getAssetPnlSummaryCacheEntry,
   subscribeAssetPnlSummaryCache,
   subscribeAssetPnlSummaryCacheClear,
   trackAssetPnlSummaryViewModelPromise,
@@ -103,5 +104,35 @@ describe('assetPnlSummaryCache subscriptions', () => {
 
     unsubscribeBtc();
     unsubscribeEth();
+  });
+
+  it('never evicts identities that still have active subscribers', () => {
+    const identities = Array.from({length: 129}, (_, index) =>
+      makeIdentity(`asset-${index}`),
+    );
+    const unsubscribers = identities.map(identity =>
+      subscribeAssetPnlSummaryCache(
+        [buildAssetPnlSummaryCacheKey(identity)],
+        jest.fn(),
+      ),
+    );
+
+    identities.forEach(identity => {
+      trackAssetPnlSummaryViewModelPromise({
+        identity,
+        promise: new Promise(() => undefined),
+      });
+    });
+
+    expect(
+      getAssetPnlSummaryCacheEntry(buildAssetPnlSummaryCacheKey(identities[0])),
+    ).toBeDefined();
+    expect(
+      getAssetPnlSummaryCacheEntry(
+        buildAssetPnlSummaryCacheKey(identities[128]),
+      ),
+    ).toBeDefined();
+
+    unsubscribers.forEach(unsubscribe => unsubscribe());
   });
 });

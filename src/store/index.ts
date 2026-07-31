@@ -92,6 +92,7 @@ import {
 } from './portfolio/portfolio.reducer';
 import {clearWalletPortfolioDataWithRuntime} from './portfolio';
 import {WalletActionTypes} from './wallet/wallet.types';
+import {invalidateWalletDerivedCachesForAction} from './wallet/utils/walletDerivedCacheLifecycle';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
 
@@ -512,10 +513,18 @@ const getStore = async () => {
       return next(action);
     };
 
+  const invalidateWalletDerivedCachesMiddleware: Middleware =
+    () => next => (action: AnyAction) => {
+      const result = next(action);
+      invalidateWalletDerivedCachesForAction(action?.type);
+      return result;
+    };
+
   if (PERF_DEBUG) {
     middlewares.unshift(reduxPerformanceMiddleware);
   }
   middlewares.push(lastActionMiddleware());
+  middlewares.push(invalidateWalletDerivedCachesMiddleware);
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {

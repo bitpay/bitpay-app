@@ -2,60 +2,21 @@ import {
   canCacheGlobalSelectList,
   getGlobalSelectInitialAccountSelection,
   getGlobalSelectListCacheKey,
+  getGlobalSelectSupportedCurrenciesSignature,
   readCachedGlobalSelectList,
 } from './globalSelectListCache';
 import {
-  clearAccountListMemoryCacheForTests,
   clearAccountListSnapshots,
-  setAccountListSnapshotStorage,
-  setAccountListSnapshotWriteScheduler,
   writeAccountListSnapshot,
-  type AccountListSnapshotStorage,
 } from '../../../store/wallet/utils/accountListCache';
 
 jest.mock('../../../store/wallet/utils/currency', () => ({
   IsVMChain: (chain: string) => ['eth', 'matic', 'sol'].includes(chain),
 }));
 
-jest.mock('../../../store/wallet/utils/accountListIcons', () => ({
-  restoreAccountListIcons: jest.fn((value: any) => {
-    if (Array.isArray(value)) {
-      value.forEach(row => {
-        row.img = () => 'icon';
-      });
-    }
-    return value;
-  }),
-}));
-
-const makeMemoryStorage = (): AccountListSnapshotStorage & {
-  entries: Map<string, string>;
-} => {
-  const entries = new Map<string, string>();
-
-  return {
-    entries,
-    getString: (key: string) => entries.get(key),
-    set: (key: string, value: string) => {
-      entries.set(key, value);
-    },
-    delete: (key: string) => {
-      entries.delete(key);
-    },
-    getAllKeys: () => [...entries.keys()],
-  };
-};
-
 describe('globalSelectListCache', () => {
   beforeEach(() => {
-    setAccountListSnapshotWriteScheduler(write => write());
-    setAccountListSnapshotStorage(null);
     clearAccountListSnapshots();
-  });
-
-  afterEach(() => {
-    setAccountListSnapshotStorage(null);
-    setAccountListSnapshotWriteScheduler(null);
   });
 
   describe('getGlobalSelectListCacheKey', () => {
@@ -87,18 +48,59 @@ describe('globalSelectListCache', () => {
       );
     });
 
-    it('separates custom supported currency variants', () => {
+    it('separates modal and screen variants', () => {
       expect(
         getGlobalSelectListCacheKey({
           context: 'sell',
-          variant: 'modal:btc|eth',
+          variant: 'modal',
         }),
       ).not.toBe(
         getGlobalSelectListCacheKey({
           context: 'sell',
-          variant: 'modal:btc|sol',
+          variant: 'screen',
         }),
       );
+    });
+  });
+
+  describe('getGlobalSelectSupportedCurrenciesSignature', () => {
+    it('distinguishes object-based currency lists', () => {
+      const btc = [
+        {
+          currencyAbbreviation: 'btc',
+          chain: 'btc',
+          tokenAddress: undefined,
+        },
+      ];
+      const sol = [
+        {
+          currencyAbbreviation: 'sol',
+          chain: 'sol',
+          tokenAddress: undefined,
+        },
+      ];
+
+      expect(getGlobalSelectSupportedCurrenciesSignature(btc)).not.toBe(
+        getGlobalSelectSupportedCurrenciesSignature(sol),
+      );
+    });
+
+    it('is stable when equivalent objects use a different property order', () => {
+      expect(
+        getGlobalSelectSupportedCurrenciesSignature([
+          {symbol: 'BTC', chain: 'btc'},
+        ]),
+      ).toBe(
+        getGlobalSelectSupportedCurrenciesSignature([
+          {chain: 'btc', symbol: 'BTC'},
+        ]),
+      );
+    });
+
+    it('preserves list order because it affects rendered ordering', () => {
+      expect(
+        getGlobalSelectSupportedCurrenciesSignature(['btc', 'eth']),
+      ).not.toBe(getGlobalSelectSupportedCurrenciesSignature(['eth', 'btc']));
     });
   });
 
@@ -199,7 +201,11 @@ describe('globalSelectListCache', () => {
       writeAccountListSnapshot(cacheKey, 'sig', [{id: 'row-1'}]);
 
       expect(
-        readCachedGlobalSelectList({canCache: false, cacheKey}),
+        readCachedGlobalSelectList({
+          canCache: false,
+          cacheKey,
+          signature: 'sig',
+        }),
       ).toBeUndefined();
     });
 
@@ -208,6 +214,7 @@ describe('globalSelectListCache', () => {
         readCachedGlobalSelectList({
           canCache: true,
           cacheKey: getGlobalSelectListCacheKey({context: 'send'}),
+          signature: 'sig',
         }),
       ).toBeUndefined();
     });
@@ -216,25 +223,26 @@ describe('globalSelectListCache', () => {
       const cacheKey = getGlobalSelectListCacheKey({context: 'receive'});
       writeAccountListSnapshot(cacheKey, 'sig', [{id: 'row-1'}]);
 
-      expect(readCachedGlobalSelectList({canCache: true, cacheKey})).toEqual([
-        {id: 'row-1'},
-      ]);
+      expect(
+        readCachedGlobalSelectList({
+          canCache: true,
+          cacheKey,
+          signature: 'sig',
+        }),
+      ).toEqual([{id: 'row-1'}]);
     });
 
-    it('restores icons on a snapshot coming from disk', () => {
-      const storage = makeMemoryStorage();
-      setAccountListSnapshotStorage(storage);
-      const cacheKey = getGlobalSelectListCacheKey({context: 'send'});
-      writeAccountListSnapshot(cacheKey, 'sig', [{id: 'row-1'}]);
+    it('does not report a stale snapshot as available', () => {
+      const cacheKey = getGlobalSelectListCacheKey({context: 'receive'});
+      writeAccountListSnapshot(cacheKey, 'old-sig', [{id: 'row-1'}]);
 
-      clearAccountListMemoryCacheForTests();
-
-      const restored = readCachedGlobalSelectList<any[]>({
-        canCache: true,
-        cacheKey,
-      });
-
-      expect(restored?.[0].img()).toBe('icon');
+      expect(
+        readCachedGlobalSelectList({
+          canCache: true,
+          cacheKey,
+          signature: 'new-sig',
+        }),
+      ).toBeUndefined();
     });
   });
 });

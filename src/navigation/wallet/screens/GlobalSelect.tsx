@@ -89,7 +89,7 @@ import {
   canCacheGlobalSelectList as canCacheGlobalSelectListFor,
   getGlobalSelectInitialAccountSelection,
   getGlobalSelectListCacheKey,
-  readCachedGlobalSelectList,
+  getGlobalSelectSupportedCurrenciesSignature,
 } from './globalSelectListCache';
 import {
   IsVMChain,
@@ -119,7 +119,7 @@ import {
   keyBackupRequired,
 } from '../../tabs/home/components/Crypto';
 import {Network} from '../../../constants';
-import Animated, {FadeIn} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
@@ -892,8 +892,6 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
 > &
   GlobalSelectProps;
 
-const EMPTY_GLOBAL_SELECT_LIST: any[] = [];
-
 const accountListContexts = [
   'send',
   'sell',
@@ -909,21 +907,6 @@ const accountListContextsRequiringCurrencyCatalog = [
   'swapFrom',
   'coinbaseDeposit',
 ];
-
-export const shouldRenderCustomGlobalSelectModalImmediately = ({
-  useAsModal,
-  context,
-  hasCustomToSelectCurrencies,
-  hasCustomSupportedCurrencies,
-}: {
-  useAsModal?: boolean;
-  context?: GlobalSelectModalContext;
-  hasCustomToSelectCurrencies: boolean;
-  hasCustomSupportedCurrencies: boolean;
-}): boolean =>
-  !!useAsModal &&
-  ((hasCustomToSelectCurrencies && ['buy', 'swapTo'].includes(context || '')) ||
-    (hasCustomSupportedCurrencies && context === 'sell'));
 
 export const shouldShowGlobalSelectEmptyState = ({
   isContentReady,
@@ -1013,28 +996,14 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   route,
 }) => {
   const {t} = useTranslation();
-  let {
-    context,
-    recipient,
-    amount,
-    selectedAccountAddress,
-    assetContext,
-    _preloadContent = false,
-  } = route.params || {};
-  const wasPreloadedRef = useRef(_preloadContent);
+  let {context, recipient, amount, selectedAccountAddress, assetContext} =
+    route.params || {};
   const [isFocused, setIsFocused] = useState(
     () => useAsModal || navigation.isFocused(),
   );
   if (useAsModal && modalContext) {
     context = modalContext;
   }
-  const renderCustomModalListImmediately =
-    shouldRenderCustomGlobalSelectModalImmediately({
-      useAsModal,
-      context,
-      hasCustomToSelectCurrencies: !!customToSelectCurrencies,
-      hasCustomSupportedCurrencies: !!customSupportedCurrencies,
-    });
   const requiresCurrencyCatalog =
     !customToSelectCurrencies &&
     (!accountListContexts.includes(context) ||
@@ -1069,13 +1038,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       tokenOptionsByAddress,
     ],
   );
+  const customSupportedCurrenciesSignature = useMemo(
+    () =>
+      getGlobalSelectSupportedCurrenciesSignature(customSupportedCurrencies),
+    [customSupportedCurrencies],
+  );
   const globalSelectListCacheKey = getGlobalSelectListCacheKey({
     context,
     selectedAccountAddress,
     variant: customSupportedCurrencies
-      ? `${useAsModal ? 'modal' : 'screen'}:${customSupportedCurrencies.join(
-          '|',
-        )}`
+      ? useAsModal
+        ? 'modal'
+        : 'screen'
       : undefined,
   });
   const canCacheGlobalSelectList = canCacheGlobalSelectListFor({
@@ -1084,9 +1058,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     customSupportedCurrencies,
     customToSelectCurrencies,
   });
-  const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
-    useState(_preloadContent || renderCustomModalListImmediately);
-  const hasCachedGlobalSelectListRef = useRef<boolean | undefined>(undefined);
   const customGlobalSelectListCacheRef = useRef(
     preloadedCustomToSelectCurrenciesList,
   );
@@ -1160,25 +1131,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     };
   }, [navigation, useAsModal]);
 
-  useEffect(() => {
-    if (wasPreloadedRef.current || renderCustomModalListImmediately) {
-      return;
-    }
-
-    let cancelled = false;
-    const showList = async () => {
-      await sleep(400);
-      if (!cancelled) {
-        setShowInitiallyHiddenComponents(true);
-      }
-    };
-    showList();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [renderCustomModalListImmediately]);
-
   const NON_BITPAY_SUPPORTED_TOKENS = useMemo(() => {
     if (!allTokensByAddress) {
       return [];
@@ -1200,6 +1152,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       ),
     );
   }, [allTokensByAddress]);
+  const nonBitpaySupportedTokensSignature = useMemo(
+    () =>
+      getGlobalSelectSupportedCurrenciesSignature(NON_BITPAY_SUPPORTED_TOKENS),
+    [NON_BITPAY_SUPPORTED_TOKENS],
+  );
 
   // Filter keys with only incomplete wallets
   const keys = useMemo(() => filterCompleteWallets(_keys), [_keys]);
@@ -1314,41 +1271,31 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     () =>
       buildAccountListSignature({
         wallets,
+        keys: Object.values(keys),
         quoteCurrency: defaultAltCurrencyIsoCode,
         ratesRevision: getRatesRevision(rates),
         extra: [
           context,
           selectedAccountAddress,
-          NON_BITPAY_SUPPORTED_TOKENS.length,
+          nonBitpaySupportedTokensSignature,
           useAsModal ? 'modal' : 'screen',
-          customSupportedCurrencies?.join('|'),
+          customSupportedCurrenciesSignature,
         ],
       }),
     [
-      NON_BITPAY_SUPPORTED_TOKENS.length,
       context,
       defaultAltCurrencyIsoCode,
+      nonBitpaySupportedTokensSignature,
       rates,
       selectedAccountAddress,
-      customSupportedCurrencies,
+      customSupportedCurrenciesSignature,
+      keys,
       useAsModal,
       wallets,
     ],
   );
 
   const currenciesSupportedList = useMemo(() => {
-    if (!showInitiallyHiddenComponents) {
-      return EMPTY_GLOBAL_SELECT_LIST;
-    }
-
-    if (hasCachedGlobalSelectListRef.current === undefined) {
-      hasCachedGlobalSelectListRef.current =
-        readCachedGlobalSelectList({
-          canCache: canCacheGlobalSelectList,
-          cacheKey: globalSelectListCacheKey,
-        }) !== undefined;
-    }
-
     const buildCurrenciesSupportedList = () => {
       const coins = customSupportedCurrencies
         ? customSupportedCurrencies
@@ -1457,7 +1404,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     keys,
     rates,
     requiresCurrencyCatalog,
-    showInitiallyHiddenComponents,
     wallets,
   ]);
 
@@ -1773,9 +1719,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }
 
       preloadedSendToRef.current = preloadIdentity;
-      performanceLog(
-        `[PERF-PRELOAD] SendTo start wallet:${wallet.id} source:GlobalSelect`,
-      );
+      performanceLog('[PERF-PRELOAD] SendTo start source:GlobalSelect');
       (navigation as any).preload('SendTo', {
         keyId: wallet.keyId,
         walletId: wallet.id,
@@ -1890,10 +1834,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               id={account.id}
               accountItem={account}
               hideBalance={hideAllBalances}
-              animateEntrance={
-                !wasPreloadedRef.current &&
-                !hasCachedGlobalSelectListRef.current
-              }
+              animateEntrance={false}
               onPressIn={() => {
                 if (IsVMChain(account.chains[0])) {
                   return;
@@ -2460,29 +2401,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
           selectedAssetsFromAccount.length === 0 && (
-            <>
-              {showInitiallyHiddenComponents ? (
-                <FlashListCointainer
-                  entering={
-                    renderCustomModalListImmediately ||
-                    wasPreloadedRef.current ||
-                    hasCachedGlobalSelectListRef.current
-                      ? undefined
-                      : FadeIn.duration(800)
-                  }>
-                  <FlashListComponent
-                    inModal={useAsModal}
-                    contentContainerStyle={{paddingBottom: 150}}
-                    data={flatListData}
-                    extraData={hideAllBalances}
-                    keyExtractor={(item: GlobalSelectFlatRow) => item.id}
-                    getItemType={(item: GlobalSelectFlatRow) => item.__row}
-                    renderItem={renderItem}
-                    onEndReachedThreshold={0.3}
-                  />
-                </FlashListCointainer>
-              ) : null}
-            </>
+            <FlashListCointainer>
+              <FlashListComponent
+                inModal={useAsModal}
+                contentContainerStyle={{paddingBottom: 150}}
+                data={flatListData}
+                extraData={hideAllBalances}
+                keyExtractor={(item: GlobalSelectFlatRow) => item.id}
+                getItemType={(item: GlobalSelectFlatRow) => item.__row}
+                renderItem={renderItem}
+                onEndReachedThreshold={0.3}
+              />
+            </FlashListCointainer>
           )}
 
         {selectedAssetsFromAccount.length > 0 ? (
@@ -2509,15 +2439,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   </CloseButton>
                 ) : null}
               </TitleNameContainer>
-              <FlashListCointainer
-                entering={
-                  renderCustomModalListImmediately ||
-                  wasPreloadedRef.current ||
-                  hasCachedGlobalSelectListRef.current
-                    ? undefined
-                    : FadeIn.duration(500)
-                }
-                style={{height: HEIGHT - 235}}>
+              <FlashListCointainer style={{height: HEIGHT - 235}}>
                 <FlashListComponent
                   inModal={useAsModal}
                   contentContainerStyle={{paddingBottom: 300}}
@@ -2536,7 +2458,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         ) : null}
 
         {shouldShowGlobalSelectEmptyState({
-          isContentReady: showInitiallyHiddenComponents,
+          isContentReady: true,
           currenciesSupportedCount: currenciesSupportedList.length,
           customCurrenciesSupportedCount: customCurrenciesSupportedList.length,
         }) ? (
