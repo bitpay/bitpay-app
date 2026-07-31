@@ -1,4 +1,4 @@
-import React, {ReactElement, memo} from 'react';
+import React, {ReactElement, memo, useCallback} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../contexts';
 import {BaseText, ListItemSubText} from '../styled/Text';
@@ -57,7 +57,9 @@ interface Props {
   value?: string;
   time?: string;
   chain?: string;
-  onPressTransaction?: () => void;
+  testID?: string;
+  transaction?: unknown;
+  onPressTransaction?: (transaction?: unknown) => void;
 }
 
 const TransactionRow = ({
@@ -68,13 +70,21 @@ const TransactionRow = ({
   value,
   time,
   chain,
+  testID,
+  transaction,
   onPressTransaction,
 }: Props) => {
   const theme = useTheme();
+  const onPress = useCallback(
+    () => onPressTransaction?.(transaction),
+    [onPressTransaction, transaction],
+  );
+
   return (
     <TouchableOpacity
       style={styles.transactionContainer}
-      onPress={onPressTransaction}>
+      testID={testID}
+      onPress={onPressTransaction ? onPress : undefined}>
       {iconURI ? (
         <View style={styles.iconContainer}>
           <RemoteImage

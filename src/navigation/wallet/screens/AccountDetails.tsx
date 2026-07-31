@@ -20,7 +20,11 @@ import {useStore} from 'react-redux';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+} from '../../../utils/hooks';
 import {
   Key,
   Wallet,
@@ -226,6 +230,7 @@ import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
 import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
+import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -1289,6 +1294,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     </>
   );
 
+  const onPressTxpBadge = useLatestCallback(() => {
+    navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
+  });
+
   useLayoutEffect(() => {
     // Preloaded routes receive a placeholder navigation object until focused.
     if (!key || !isFocused) {
@@ -1378,12 +1387,24 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         );
       },
     });
-  }, [navigation, key, accountItem, theme.dark, isFocused]);
+  }, [
+    accountItem,
+    hasAllChains,
+    hasMultipleAccounts,
+    isFocused,
+    isSvmAccount,
+    key,
+    linkedCoinbase,
+    navigation,
+    onPressTxpBadge,
+    pendingProposalsCount,
+    theme.dark,
+  ]);
 
-  const getTxDescriptionDetails = (key: string | undefined) =>
-    key === 'moonpay' ? 'MoonPay' : undefined;
+  const getTxDescriptionDetails = (serviceKey: string | undefined) =>
+    serviceKey === 'moonpay' ? 'MoonPay' : undefined;
 
-  const goToTransactionDetails = (transaction: any) => {
+  const goToTransactionDetails = useLatestCallback((transaction: any) => {
     const fullWalletObj = findWalletById(
       keyFullWalletObjs,
       transaction.walletId,
@@ -1395,60 +1416,53 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       historyContext: 'account',
       transaction,
     });
-  };
+  });
 
-  const onPressTransaction = useMemo(
-    () => (transaction: any) => {
-      const {hasUnconfirmedInputs, action, isRBF, coin, chain} = transaction;
-      const isReceived = IsReceived(action);
-      const isMoved = IsMoved(action);
-      const currency = coin.toLowerCase();
+  const onPressTransaction = useLatestCallback((transaction: any) => {
+    const {hasUnconfirmedInputs, action, isRBF, coin, chain} = transaction;
+    const isReceived = IsReceived(action);
+    const isMoved = IsMoved(action);
+    const currency = coin.toLowerCase();
 
-      if (
-        hasUnconfirmedInputs &&
-        (isReceived || isMoved) &&
-        currency === 'btc'
-      ) {
-        dispatch(
-          showBottomNotificationModal(
-            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+    if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+        ),
+      );
+    } else if (isRBF && isReceived && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          RbfTransaction(
+            () => speedupTransaction(transaction),
+            () => goToTransactionDetails(transaction),
           ),
-        );
-      } else if (isRBF && isReceived && currency === 'btc') {
+        ),
+      );
+    } else if (CanSpeedupTx(transaction, currency, chain)) {
+      if (chain === 'eth') {
         dispatch(
           showBottomNotificationModal(
-            RbfTransaction(
+            SpeedupEthTransaction(
               () => speedupTransaction(transaction),
               () => goToTransactionDetails(transaction),
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency, chain)) {
-        if (chain === 'eth') {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupEthTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        } else {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        }
       } else {
-        goToTransactionDetails(transaction);
+        dispatch(
+          showBottomNotificationModal(
+            SpeedupTransaction(
+              () => speedupTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
       }
-    },
-    [],
-  );
+    } else {
+      goToTransactionDetails(transaction);
+    }
+  });
 
   const speedupTransaction = async (transaction: any) => {
     try {
@@ -1573,7 +1587,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           time={item.uiTime}
           value={item.uiValue}
           chain={item.chain}
-          onPressTransaction={() => onPressTransaction(item)}
+          transaction={item}
+          onPressTransaction={onPressTransaction}
         />
       );
     },
@@ -1594,8 +1609,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [],
   );
 
+  const walletDetailsPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
   const onPressItem = useCallback(
     (walletId: string) => {
+      walletDetailsPreloadTaskRef.current?.cancel();
+      walletDetailsPreloadTaskRef.current = undefined;
       haptic('impactLight');
       const fullWalletObj = findWalletById(
         keyFullWalletObjs,
@@ -1673,9 +1693,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [keyFullWalletObjs, navigation],
   );
 
-  const firstPreloadableWalletId = useMemo(
+  const singlePreloadableWalletId = useMemo(
     () =>
-      keyFullWalletObjs.find(
+      getSinglePreloadCandidate(
+        keyFullWalletObjs,
         wallet =>
           typeof wallet.isComplete === 'function' && wallet.isComplete(),
       )?.id,
@@ -1691,7 +1712,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   useFocusEffect(
     useCallback(() => {
       preloadedWalletDetailsRef.current = undefined;
-      if (!firstPreloadableWalletId) {
+      if (!singlePreloadableWalletId) {
         return;
       }
 
@@ -1701,13 +1722,19 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         idleTimeoutMs: 1200,
         callback: signal => {
           if (!signal.aborted) {
-            stablePreloadWalletDetails(firstPreloadableWalletId);
+            stablePreloadWalletDetails(singlePreloadableWalletId);
           }
         },
       });
+      walletDetailsPreloadTaskRef.current = preloadTask;
 
-      return preloadTask.cancel;
-    }, [firstPreloadableWalletId, navigation, stablePreloadWalletDetails]),
+      return () => {
+        preloadTask.cancel();
+        if (walletDetailsPreloadTaskRef.current === preloadTask) {
+          walletDetailsPreloadTaskRef.current = undefined;
+        }
+      };
+    }, [navigation, singlePreloadableWalletId, stablePreloadWalletDetails]),
   );
 
   const memoizedRenderAssetsItem = useCallback(
@@ -1717,19 +1744,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           id={item.id}
           hideBalance={hideAllBalances}
           onPress={() => onPressItem(item.id)}
-          onPressIn={() => preloadWalletDetails(item.id)}
           wallet={item}
         />
       );
     },
-    [hideAllBalances, onPressItem, preloadWalletDetails],
-  );
-
-  const onPressTxpBadge = useMemo(
-    () => () => {
-      navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
-    },
-    [],
+    [hideAllBalances, onPressItem],
   );
 
   const onRefresh = async () => {
@@ -1833,7 +1852,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         )}
       </>
     );
-  }, [isLoading, errorLoadingTxs, groupedHistory, ghostTownEmptyState]);
+  }, [errorLoadingTxs, ghostTownEmptyState, groupedHistory, isLoading, t]);
 
   const assetsListCacheKey = `accountDetailsAssets:${keyId}:${selectedAccountAddress}`;
   const assetsListSignature = useMemo(
@@ -2184,7 +2203,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     chartableAccountWallets,
     loadInitialHistory,
     displayQuoteCurrency,
-    defaultAltCurrency.isoCode,
     dispatch,
     groupedHistory,
     hasCachedAccountChart,
@@ -2192,8 +2210,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     isAccountBalanceChartDataReadyToQuery,
     isSmallScreen,
     isSvmAccount,
+    keyId,
     balanceChartSurface,
-    keyFullWalletObjs,
     lockedBalanceCurrencyAbbreviation,
     memorizedAssetsByChainList,
     navigation,
@@ -2202,7 +2220,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     searchResultsAssets,
     searchResultsHistory,
     searchVal,
-    selectedChainFilterOption,
+    selectedAccountAddress,
     shouldRenderAccountBalanceChart,
     shouldShowAccountChartPlaceholder,
     shouldPreserveStaleAccountBalanceChart,

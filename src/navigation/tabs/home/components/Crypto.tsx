@@ -80,6 +80,7 @@ import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsSVMChain, IsVMChain} from '../../../../store/wallet/utils/currency';
 import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../../utils/performanceDebug';
+import {getSinglePreloadCandidate} from '../../../../utils/navigationPreload';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
 const styles = StyleSheet.create({
@@ -316,7 +317,7 @@ export const createHomeCardList = ({
   populateStatus,
   context,
   onPress,
-  onDestinationPressIn,
+  onDestinationPress,
   currency,
 }: {
   navigation: any;
@@ -334,7 +335,7 @@ export const createHomeCardList = ({
   populateStatus?: PortfolioPopulateStatus;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
-  onDestinationPressIn?: (key: Key) => void;
+  onDestinationPress?: (key: Key) => void;
   currency?: any;
 }) => {
   let list: {id: string; component: ReactElement}[] = [];
@@ -394,11 +395,6 @@ export const createHomeCardList = ({
             pendingTssSession={hasPendingTssSession}
             tssMetadata={tssMetadata}
             isMultisig={isMultisig}
-            onPressIn={
-              !onPress && canPreloadWalletDestination(key)
-                ? () => onDestinationPressIn?.(key)
-                : undefined
-            }
             onPress={
               onPress
                 ? () => {
@@ -407,6 +403,7 @@ export const createHomeCardList = ({
                   }
                 : () => {
                     haptic('soft');
+                    onDestinationPress?.(key);
                     if (backupComplete || hasPendingTssSession) {
                       if (hasPendingTssSession && key?.tssSession) {
                         const {isCreator} = key.tssSession;
@@ -639,6 +636,13 @@ const Crypto = ({active = true}: CryptoProps) => {
       ? populateStatus
       : undefined;
   const preloadedDestinationRef = useRef<string | undefined>(undefined);
+  const destinationPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
+  const cancelDestinationPreload = useCallback(() => {
+    destinationPreloadTaskRef.current?.cancel();
+    destinationPreloadTaskRef.current = undefined;
+  }, []);
   const preloadWalletDestination = useCallback(
     (key: Key) => {
       if (typeof (navigation as any).preload !== 'function') {
@@ -711,8 +715,8 @@ const Crypto = ({active = true}: CryptoProps) => {
   );
   const keyListRef = useRef(keyList);
   keyListRef.current = keyList;
-  const firstPreloadableKeyId = useMemo(
-    () => keyList.find(canPreloadWalletDestination)?.id,
+  const singlePreloadableKeyId = useMemo(
+    () => getSinglePreloadCandidate(keyList, canPreloadWalletDestination)?.id,
     [keyList],
   );
 
@@ -720,7 +724,7 @@ const Crypto = ({active = true}: CryptoProps) => {
     useCallback(() => {
       preloadedDestinationRef.current = undefined;
 
-      if (!active || !firstPreloadableKeyId) {
+      if (!active || !singlePreloadableKeyId) {
         return;
       }
 
@@ -730,16 +734,22 @@ const Crypto = ({active = true}: CryptoProps) => {
         idleTimeoutMs: 1200,
         callback: signal => {
           const keyToPreload = keyListRef.current.find(
-            key => key.id === firstPreloadableKeyId,
+            key => key.id === singlePreloadableKeyId,
           );
           if (!signal.aborted && keyToPreload) {
             preloadWalletDestination(keyToPreload);
           }
         },
       });
+      destinationPreloadTaskRef.current = preloadTask;
 
-      return preloadTask.cancel;
-    }, [active, firstPreloadableKeyId, navigation, preloadWalletDestination]),
+      return () => {
+        preloadTask.cancel();
+        if (destinationPreloadTaskRef.current === preloadTask) {
+          destinationPreloadTaskRef.current = undefined;
+        }
+      };
+    }, [active, navigation, preloadWalletDestination, singlePreloadableKeyId]),
   );
 
   const cardsList = useMemo(
@@ -756,7 +766,7 @@ const Crypto = ({active = true}: CryptoProps) => {
         portfolioPercentageDifferenceByKey:
           visiblePortfolioPercentageDifferenceByKey,
         populateStatus: portfolioPopulateStatus,
-        onDestinationPressIn: preloadWalletDestination,
+        onDestinationPress: cancelDestinationPreload,
       }),
     [
       navigation,
@@ -766,7 +776,7 @@ const Crypto = ({active = true}: CryptoProps) => {
       homeCarouselLayoutType,
       hideAllBalances,
       keyList,
-      preloadWalletDestination,
+      cancelDestinationPreload,
       visibleLegacyPercentageDifferenceByKey,
       portfolioPopulateStatus,
       visiblePortfolioPercentageDifferenceByKey,
