@@ -27,6 +27,7 @@ describe('walletDerivedCacheLifecycle', () => {
   it.each([
     WalletActionTypes.SUCCESS_CREATE_KEY,
     WalletActionTypes.SUCCESS_IMPORT,
+    WalletActionTypes.DELETE_KEY,
   ])('invalidates derived caches after %s', actionType => {
     expect(invalidateWalletDerivedCachesForAction(actionType)).toBe(true);
     expect(mockClearAccountListSnapshots).toHaveBeenCalledTimes(1);
@@ -36,7 +37,6 @@ describe('walletDerivedCacheLifecycle', () => {
   it.each([
     WalletActionTypes.SUCCESS_ADD_WALLET,
     WalletActionTypes.SUCCESS_UPDATE_KEY,
-    WalletActionTypes.DELETE_KEY,
     undefined,
   ])('does not invalidate derived caches after %s', actionType => {
     expect(invalidateWalletDerivedCachesForAction(actionType)).toBe(false);
