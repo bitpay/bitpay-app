@@ -9,7 +9,6 @@ import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
-import {BrazeWrapper} from '../../lib/Braze';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {Analytics} from '../analytics/analytics.effects';
@@ -44,6 +43,27 @@ interface StartLoginParams {
   password?: string;
   gCaptchaResponse?: string;
 }
+
+export const mergeBrazeUser =
+  (userToMerge: string): Effect<Promise<void>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'mergeBrazeUser',
+          {userToMerge},
+        );
+      } catch (err: any) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.error(
+          '[mergeBrazeUser] Failed to merge Braze user.',
+          errMsg,
+        );
+        throw err;
+      }
+    })();
 
 export const startBitPayIdAnalyticsInit =
   (user: BasicUserInfo): Effect<void> =>
@@ -91,7 +111,7 @@ export const startBitPayIdAnalyticsInit =
             previousBrazeEid,
             eid,
           );
-          await BrazeWrapper.merge(previousBrazeEid, eid);
+          await dispatch(mergeBrazeUser(previousBrazeEid));
         } catch (error) {
           const errMsg =
             error instanceof Error ? error.message : JSON.stringify(error);
