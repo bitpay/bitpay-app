@@ -1,33 +1,11 @@
 import React from 'react';
 import {View} from 'react-native';
 import {render} from '@testing-library/react-native';
+import {Path} from 'react-native-svg';
 import Blockie, {hasCachedBlockie} from './Blockie';
 
-jest.mock('react-native-fast-image', () => {
-  const MockReact = require('react');
-  const {View: MockView} = require('react-native');
-  const FastImage = (props: object) => MockReact.createElement(MockView, props);
-  FastImage.resizeMode = {contain: 'contain'};
-
-  return {
-    __esModule: true,
-    default: FastImage,
-  };
-});
-
-jest.mock('./pnglib', () =>
-  jest.fn().mockImplementation(() => ({
-    buffer: [],
-    color: () => '\x01',
-    getBase64: () => 'mock-png',
-    index: () => 0,
-  })),
-);
-
-const pnglibMock = require('./pnglib') as jest.Mock;
-
 describe('Blockie', () => {
-  it('reuses generated image data for equivalent seeds', () => {
+  it('renders equivalent seeds synchronously with the same SVG data', () => {
     const {rerender, UNSAFE_getAllByType} = render(
       <>
         <Blockie seed="0xABC" size={40} />
@@ -35,12 +13,14 @@ describe('Blockie', () => {
       </>,
     );
 
-    expect(pnglibMock).toHaveBeenCalledTimes(1);
+    const containers = UNSAFE_getAllByType(View);
+    expect(containers[0].props.style).toMatchObject({width: 40, height: 40});
+    expect(containers[1].props.style).toMatchObject({width: 24, height: 24});
 
-    const images = UNSAFE_getAllByType(View);
-    expect(images[0].props.source).toEqual(images[1].props.source);
-    expect(images[0].props.style).toMatchObject({width: 40, height: 40});
-    expect(images[1].props.style).toMatchObject({width: 24, height: 24});
+    const paths = UNSAFE_getAllByType(Path);
+    expect(paths).toHaveLength(4);
+    expect(paths[0].props).toMatchObject(paths[2].props);
+    expect(paths[1].props).toMatchObject(paths[3].props);
 
     rerender(
       <>
@@ -50,7 +30,9 @@ describe('Blockie', () => {
       </>,
     );
 
-    expect(pnglibMock).toHaveBeenCalledTimes(2);
+    const rerenderedPaths = UNSAFE_getAllByType(Path);
+    expect(rerenderedPaths).toHaveLength(6);
+    expect(rerenderedPaths[4].props.d).not.toBe(rerenderedPaths[0].props.d);
   });
 });
 

@@ -23,7 +23,6 @@ export type AccountListSnapshotStorage = {
 const SNAPSHOT_SCHEMA_VERSION = 1;
 const SNAPSHOT_STORAGE_PREFIX = 'accountListSnapshot:';
 const MAX_PERSISTED_SNAPSHOT_BYTES = 256 * 1024;
-const PERSIST_THROTTLE_MS = 5_000;
 
 export const NON_PERSISTABLE_SNAPSHOT_FIELDS = [
   'mnemonic',
@@ -56,7 +55,11 @@ export const NON_PERSISTABLE_SNAPSHOT_FIELDS = [
 const nonPersistableFields = new Set(NON_PERSISTABLE_SNAPSHOT_FIELDS);
 
 const snapshots = new Map<string, AccountListSnapshot>();
-const lastPersistedAt = new Map<string, number>();
+const pendingPersistedSnapshots = new Map<
+  string,
+  AccountListSnapshot & {savedAt: number; generation: number}
+>();
+const scheduledSnapshotWrites = new Set<string>();
 let snapshotGeneration = 0;
 
 let storage: AccountListSnapshotStorage | null | undefined;
@@ -81,8 +84,10 @@ const getStorage = (): AccountListSnapshotStorage | null => {
 export const setAccountListSnapshotStorage = (
   nextStorage: AccountListSnapshotStorage | null,
 ): void => {
+  snapshotGeneration += 1;
+  pendingPersistedSnapshots.clear();
+  scheduledSnapshotWrites.clear();
   storage = nextStorage;
-  lastPersistedAt.clear();
 };
 
 const snapshotReplacer = (key: string, value: unknown): unknown => {
@@ -119,12 +124,14 @@ const readPersistedSnapshot = (
 
     const parsed = JSON.parse(raw) as PersistedAccountListSnapshot;
 
-    if (
-      !isSnapshotUsable(parsed) ||
-      !Array.isArray(parsed.value) ||
-      (signature !== undefined && parsed.signature !== signature)
-    ) {
+    if (!isSnapshotUsable(parsed) || !Array.isArray(parsed.value)) {
       activeStorage.delete(storageKey);
+      return undefined;
+    }
+
+    // Keep the last valid value available for stale-while-revalidate paints.
+    // The next successful write will replace it with the current signature.
+    if (signature !== undefined && parsed.signature !== signature) {
       return undefined;
     }
 
@@ -175,27 +182,42 @@ const persistSnapshot = (
     return;
   }
 
-  const now = Date.now();
-  const lastWrite = lastPersistedAt.get(cacheKey);
-  if (lastWrite !== undefined && now - lastWrite < PERSIST_THROTTLE_MS) {
+  const generation = snapshotGeneration;
+  pendingPersistedSnapshots.set(cacheKey, {
+    signature,
+    value,
+    savedAt: Date.now(),
+    generation,
+  });
+
+  // Coalesce changes made before the idle callback. In particular, startup
+  // balance/rate updates must replace the first snapshot instead of being
+  // dropped by a time-based throttle.
+  if (scheduledSnapshotWrites.has(cacheKey)) {
     return;
   }
 
-  lastPersistedAt.set(cacheKey, now);
-  const generation = snapshotGeneration;
+  scheduledSnapshotWrites.add(cacheKey);
 
   scheduleWrite(() => {
     if (generation !== snapshotGeneration) {
       return;
     }
 
+    scheduledSnapshotWrites.delete(cacheKey);
+    const pendingSnapshot = pendingPersistedSnapshots.get(cacheKey);
+    if (!pendingSnapshot || pendingSnapshot.generation !== generation) {
+      return;
+    }
+    pendingPersistedSnapshots.delete(cacheKey);
+
     try {
       const serialized = JSON.stringify(
         {
           version: SNAPSHOT_SCHEMA_VERSION,
-          savedAt: now,
-          signature,
-          value,
+          savedAt: pendingSnapshot.savedAt,
+          signature: pendingSnapshot.signature,
+          value: pendingSnapshot.value,
         } as PersistedAccountListSnapshot,
         snapshotReplacer,
       );
@@ -446,14 +468,17 @@ export const resolveAccountListSnapshot = <T>({
 };
 
 export const clearAccountListMemoryCacheForTests = (): void => {
+  snapshotGeneration += 1;
   snapshots.clear();
-  lastPersistedAt.clear();
+  pendingPersistedSnapshots.clear();
+  scheduledSnapshotWrites.clear();
 };
 
 export const clearAccountListSnapshots = (): void => {
   snapshotGeneration += 1;
   snapshots.clear();
-  lastPersistedAt.clear();
+  pendingPersistedSnapshots.clear();
+  scheduledSnapshotWrites.clear();
 
   const activeStorage = getStorage();
   if (!activeStorage) {
