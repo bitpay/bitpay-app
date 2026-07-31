@@ -402,6 +402,16 @@ describe('accountListCache', () => {
       expect(value).toEqual(['fresh']);
     });
 
+    it('keeps a stale persisted snapshot available for the first paint', () => {
+      const storage = makeMemoryStorage();
+      setAccountListSnapshotStorage(storage);
+      writeAccountListSnapshot('key-1', 'old-sig', ['stale']);
+      simulateAppRestart();
+
+      expect(readAccountListSnapshot('key-1', 'new-sig')).toBeUndefined();
+      expect(readAccountListSnapshot('key-1')).toEqual(['stale']);
+    });
+
     it('discards persisted payloads from another schema version', () => {
       const storage = makeMemoryStorage();
       storage.set(
@@ -444,7 +454,7 @@ describe('accountListCache', () => {
       expect(storage.entries.has('accountListSnapshot:key-1')).toBe(false);
     });
 
-    it('throttles repeated writes for the same key', () => {
+    it('persists the latest signature for repeated writes to the same key', () => {
       const storage = makeMemoryStorage();
       const setSpy = jest.spyOn(storage, 'set');
       setAccountListSnapshotStorage(storage);
@@ -452,8 +462,28 @@ describe('accountListCache', () => {
       writeAccountListSnapshot('key-1', 'sig-1', ['one']);
       writeAccountListSnapshot('key-1', 'sig-2', ['two']);
 
-      expect(setSpy).toHaveBeenCalledTimes(1);
+      expect(setSpy).toHaveBeenCalledTimes(2);
       expect(readAccountListSnapshot('key-1')).toEqual(['two']);
+      simulateAppRestart();
+      expect(readAccountListSnapshot('key-1', 'sig-2')).toEqual(['two']);
+    });
+
+    it('coalesces pending writes and persists the latest value', () => {
+      const storage = makeMemoryStorage();
+      const scheduled: (() => void)[] = [];
+      setAccountListSnapshotStorage(storage);
+      setAccountListSnapshotWriteScheduler(write => {
+        scheduled.push(write);
+      });
+
+      writeAccountListSnapshot('key-1', 'sig-1', ['one']);
+      writeAccountListSnapshot('key-1', 'sig-2', ['two']);
+
+      expect(scheduled).toHaveLength(1);
+      scheduled[0]();
+      simulateAppRestart();
+
+      expect(readAccountListSnapshot('key-1', 'sig-2')).toEqual(['two']);
     });
 
     it('overwrites the persisted entry when the signature changes', () => {
@@ -461,7 +491,7 @@ describe('accountListCache', () => {
       setAccountListSnapshotStorage(storage);
 
       writeAccountListSnapshot('key-1', 'sig-1', ['one']);
-      // Simulate a new app session so the per-key write throttle is reset.
+      // Simulate a new app session between writes.
       setAccountListSnapshotStorage(storage);
       writeAccountListSnapshot('key-1', 'sig-2', ['two']);
 
