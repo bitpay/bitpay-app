@@ -1,5 +1,4 @@
-import {subscribeAssetPnlSummaryCacheClear} from '../../../portfolio/ui/assetPnlSummaryCache';
-import type {Wallet} from '../wallet.models';
+import type {Key, Wallet} from '../wallet.models';
 import {restoreAccountListIcons} from './accountListIcons';
 
 type AccountListSnapshot = {
@@ -21,13 +20,10 @@ export type AccountListSnapshotStorage = {
   getAllKeys: () => string[];
 };
 
-const MAX_SNAPSHOTS = 20;
 const SNAPSHOT_SCHEMA_VERSION = 1;
 const SNAPSHOT_STORAGE_PREFIX = 'accountListSnapshot:';
 const MAX_PERSISTED_SNAPSHOT_BYTES = 256 * 1024;
-const PERSISTED_SNAPSHOT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const PERSIST_THROTTLE_MS = 5_000;
-const MAX_PERSISTED_SNAPSHOTS = 24;
 
 export const NON_PERSISTABLE_SNAPSHOT_FIELDS = [
   'mnemonic',
@@ -61,6 +57,7 @@ const nonPersistableFields = new Set(NON_PERSISTABLE_SNAPSHOT_FIELDS);
 
 const snapshots = new Map<string, AccountListSnapshot>();
 const lastPersistedAt = new Map<string, number>();
+let snapshotGeneration = 0;
 
 let storage: AccountListSnapshotStorage | null | undefined;
 
@@ -105,6 +102,7 @@ const getStorageKey = (cacheKey: string): string =>
 
 const readPersistedSnapshot = (
   cacheKey: string,
+  signature?: string,
 ): AccountListSnapshot | undefined => {
   const activeStorage = getStorage();
   if (!activeStorage) {
@@ -121,7 +119,11 @@ const readPersistedSnapshot = (
 
     const parsed = JSON.parse(raw) as PersistedAccountListSnapshot;
 
-    if (!isSnapshotUsable(parsed) || !Array.isArray(parsed.value)) {
+    if (
+      !isSnapshotUsable(parsed) ||
+      !Array.isArray(parsed.value) ||
+      (signature !== undefined && parsed.signature !== signature)
+    ) {
       activeStorage.delete(storageKey);
       return undefined;
     }
@@ -161,50 +163,7 @@ const isSnapshotUsable = (
   parsed: PersistedAccountListSnapshot | undefined,
 ): boolean =>
   parsed?.version === SNAPSHOT_SCHEMA_VERSION &&
-  Date.now() - (parsed.savedAt || 0) < PERSISTED_SNAPSHOT_TTL_MS;
-
-// Snapshots whose screen is never opened again (deleted keys or accounts) would
-// sit on disk forever, since the TTL is only checked when that key is read.
-const prunePersistedSnapshots = (
-  activeStorage: AccountListSnapshotStorage,
-): void => {
-  const storageKeys = activeStorage
-    .getAllKeys()
-    .filter(key => key.startsWith(SNAPSHOT_STORAGE_PREFIX));
-
-  if (storageKeys.length <= MAX_PERSISTED_SNAPSHOTS) {
-    return;
-  }
-
-  const survivors: {storageKey: string; savedAt: number}[] = [];
-
-  for (const storageKey of storageKeys) {
-    let parsed: PersistedAccountListSnapshot | undefined;
-
-    try {
-      const raw = activeStorage.getString(storageKey);
-      parsed = raw
-        ? (JSON.parse(raw) as PersistedAccountListSnapshot)
-        : undefined;
-    } catch {}
-
-    if (!isSnapshotUsable(parsed)) {
-      activeStorage.delete(storageKey);
-      continue;
-    }
-
-    survivors.push({storageKey, savedAt: parsed!.savedAt || 0});
-  }
-
-  if (survivors.length <= MAX_PERSISTED_SNAPSHOTS) {
-    return;
-  }
-
-  survivors
-    .sort((a, b) => a.savedAt - b.savedAt)
-    .slice(0, survivors.length - MAX_PERSISTED_SNAPSHOTS)
-    .forEach(({storageKey}) => activeStorage.delete(storageKey));
-};
+  typeof parsed.signature === 'string';
 
 const persistSnapshot = (
   cacheKey: string,
@@ -223,8 +182,13 @@ const persistSnapshot = (
   }
 
   lastPersistedAt.set(cacheKey, now);
+  const generation = snapshotGeneration;
 
   scheduleWrite(() => {
+    if (generation !== snapshotGeneration) {
+      return;
+    }
+
     try {
       const serialized = JSON.stringify(
         {
@@ -242,27 +206,8 @@ const persistSnapshot = (
       }
 
       activeStorage.set(getStorageKey(cacheKey), serialized);
-      prunePersistedSnapshots(activeStorage);
     } catch {}
   });
-};
-
-const ratesRevisions = new WeakMap<object, number>();
-let nextRatesRevision = 0;
-
-export const getRatesRevision = (rates: unknown): number => {
-  if (!rates || typeof rates !== 'object') {
-    return 0;
-  }
-
-  const existing = ratesRevisions.get(rates as object);
-  if (existing !== undefined) {
-    return existing;
-  }
-
-  nextRatesRevision += 1;
-  ratesRevisions.set(rates as object, nextRatesRevision);
-  return nextRatesRevision;
 };
 
 /* eslint-disable no-bitwise */
@@ -277,30 +222,149 @@ const hashValue = (hash: number, value: unknown): number => {
   return nextHash | 0;
 };
 
-const hashWallet = (hash: number, wallet: Wallet): number => {
-  const balance = (wallet as any)?.balance || {};
+const hashStructuredValue = (
+  hash: number,
+  value: unknown,
+  seen = new WeakSet<object>(),
+  depth = 0,
+): number => {
+  if (
+    value === null ||
+    value === undefined ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint'
+  ) {
+    return hashValue(hash, value);
+  }
 
-  let nextHash = hashValue(hash, wallet?.id);
-  nextHash = hashValue(nextHash, (wallet as any)?.credentials?.walletName);
-  nextHash = hashValue(nextHash, balance.sat);
-  nextHash = hashValue(nextHash, balance.satLocked);
-  nextHash = hashValue(nextHash, balance.fiat);
-  nextHash = hashValue(nextHash, (wallet as any)?.hideWallet ? 1 : 0);
-  nextHash = hashValue(nextHash, (wallet as any)?.hideWalletByAccount ? 1 : 0);
-  nextHash = hashValue(nextHash, (wallet as any)?.isScanning ? 1 : 0);
+  if (typeof value === 'function') {
+    return hashValue(hash, '[function]');
+  }
+
+  if (typeof value !== 'object') {
+    return hashValue(hash, String(value));
+  }
+
+  if (depth >= 12) {
+    return hashValue(hash, '[max-depth]');
+  }
+
+  if (seen.has(value)) {
+    return hashValue(hash, '[circular]');
+  }
+  seen.add(value);
+
+  let nextHash = hashValue(hash, Array.isArray(value) ? '[' : '{');
+  if (Array.isArray(value)) {
+    nextHash = hashValue(nextHash, value.length);
+    for (const item of value) {
+      nextHash = hashStructuredValue(nextHash, item, seen, depth + 1);
+    }
+  } else {
+    const record = value as Record<string, unknown>;
+    const keys = Object.keys(record).sort();
+    nextHash = hashValue(nextHash, keys.length);
+    for (const key of keys) {
+      nextHash = hashValue(nextHash, key);
+      nextHash = hashStructuredValue(nextHash, record[key], seen, depth + 1);
+    }
+  }
+
+  seen.delete(value);
+  return hashValue(nextHash, Array.isArray(value) ? ']' : '}');
+};
+
+const ratesRevisions = new WeakMap<object, number>();
+
+export const getRatesRevision = (rates: unknown): number => {
+  if (!rates || typeof rates !== 'object') {
+    return 0;
+  }
+
+  const existing = ratesRevisions.get(rates as object);
+  if (existing !== undefined) {
+    return existing;
+  }
+
+  const revision = hashStructuredValue(5381, rates);
+  ratesRevisions.set(rates as object, revision);
+  return revision;
+};
+
+const hashWallet = (hash: number, wallet: Wallet): number => {
+  const walletData = wallet as any;
+  const credentials = walletData?.credentials || {};
+  let isComplete = true;
+  try {
+    isComplete =
+      typeof credentials.isComplete === 'function'
+        ? credentials.isComplete()
+        : true;
+  } catch {
+    isComplete = false;
+  }
+
+  let nextHash = hashStructuredValue(hash, {
+    id: walletData?.id,
+    keyId: walletData?.keyId,
+    chain: walletData?.chain,
+    chainName: walletData?.chainName,
+    currencyName: walletData?.currencyName,
+    currencyAbbreviation: walletData?.currencyAbbreviation,
+    tokenAddress: walletData?.tokenAddress,
+    network: walletData?.network,
+    walletName: walletData?.walletName,
+    receiveAddress: walletData?.receiveAddress,
+    isScanning: walletData?.isScanning,
+    hideWallet: walletData?.hideWallet,
+    hideWalletByAccount: walletData?.hideWalletByAccount,
+    hideBalance: walletData?.hideBalance,
+    pendingTssSession: walletData?.pendingTssSession,
+    tssMetadata: walletData?.tssMetadata,
+    balance: walletData?.balance,
+    pendingTxps: walletData?.pendingTxps,
+    img:
+      typeof walletData?.img === 'string' ? walletData.img : '[bundled-icon]',
+    badgeImg:
+      typeof walletData?.badgeImg === 'string'
+        ? walletData.badgeImg
+        : '[bundled-icon]',
+    credentials: {
+      walletId: credentials.walletId,
+      walletName: credentials.walletName,
+      account: credentials.account,
+      m: credentials.m,
+      n: credentials.n,
+      tokenAddress: credentials.tokenAddress,
+      isComplete,
+    },
+  });
 
   return nextHash;
 };
+
+const hashKeyAccountMetadata = (hash: number, key: Key): number =>
+  hashStructuredValue(hash, {
+    id: key.id,
+    keyName: key.keyName,
+    backupComplete: key.backupComplete,
+    hideKeyBalance: key.hideKeyBalance,
+    evmAccountsInfo: key.evmAccountsInfo,
+  });
 
 /* eslint-enable no-bitwise */
 
 export const buildAccountListSignature = ({
   wallets = [],
+  keys = [],
   quoteCurrency,
   ratesRevision = 0,
   extra = [],
 }: {
   wallets?: Wallet[];
+  keys?: Key[];
   quoteCurrency?: string;
   ratesRevision?: number;
   extra?: (string | number | boolean | undefined)[];
@@ -312,11 +376,15 @@ export const buildAccountListSignature = ({
     hash = hashValue(hash, extra[index]);
   }
 
+  for (let index = 0; index < keys.length; index++) {
+    hash = hashKeyAccountMetadata(hash, keys[index]);
+  }
+
   for (let index = 0; index < wallets.length; index++) {
     hash = hashWallet(hash, wallets[index]);
   }
 
-  return `${wallets.length}:${hash}`;
+  return `${keys.length}:${wallets.length}:${hash}`;
 };
 
 const storeSnapshotInMemory = <T>(
@@ -326,23 +394,21 @@ const storeSnapshotInMemory = <T>(
 ): void => {
   snapshots.delete(cacheKey);
   snapshots.set(cacheKey, {signature, value});
-
-  while (snapshots.size > MAX_SNAPSHOTS) {
-    const oldestKey = snapshots.keys().next().value;
-    if (oldestKey === undefined) {
-      break;
-    }
-    snapshots.delete(oldestKey);
-  }
 };
 
-export const readAccountListSnapshot = <T>(cacheKey: string): T | undefined => {
+export const readAccountListSnapshot = <T>(
+  cacheKey: string,
+  signature?: string,
+): T | undefined => {
   const inMemory = snapshots.get(cacheKey);
-  if (inMemory) {
+  if (
+    inMemory &&
+    (signature === undefined || inMemory.signature === signature)
+  ) {
     return inMemory.value as T;
   }
 
-  const persisted = readPersistedSnapshot(cacheKey);
+  const persisted = readPersistedSnapshot(cacheKey, signature);
   if (!persisted) {
     return undefined;
   }
@@ -369,11 +435,9 @@ export const resolveAccountListSnapshot = <T>({
   signature: string;
   build: () => T;
 }): T => {
-  const cached = snapshots.get(cacheKey) ?? readPersistedSnapshot(cacheKey);
-
-  if (cached && cached.signature === signature) {
-    storeSnapshotInMemory(cacheKey, signature, cached.value);
-    return cached.value as T;
+  const cached = readAccountListSnapshot<T>(cacheKey, signature);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const value = build();
@@ -387,22 +451,19 @@ export const clearAccountListMemoryCacheForTests = (): void => {
 };
 
 export const clearAccountListSnapshots = (): void => {
+  snapshotGeneration += 1;
   snapshots.clear();
   lastPersistedAt.clear();
 
-  scheduleWrite(() => {
-    const activeStorage = getStorage();
-    if (!activeStorage) {
-      return;
-    }
+  const activeStorage = getStorage();
+  if (!activeStorage) {
+    return;
+  }
 
-    try {
-      activeStorage
-        .getAllKeys()
-        .filter(key => key.startsWith(SNAPSHOT_STORAGE_PREFIX))
-        .forEach(key => activeStorage.delete(key));
-    } catch {}
-  });
+  try {
+    activeStorage
+      .getAllKeys()
+      .filter(key => key.startsWith(SNAPSHOT_STORAGE_PREFIX))
+      .forEach(key => activeStorage.delete(key));
+  } catch {}
 };
-
-subscribeAssetPnlSummaryCacheClear(clearAccountListSnapshots);

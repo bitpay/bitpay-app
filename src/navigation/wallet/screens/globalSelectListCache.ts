@@ -3,6 +3,70 @@ import {IsVMChain} from '../../../store/wallet/utils/currency';
 
 export const GLOBAL_SELECT_LIST_CACHE_PREFIX = 'globalSelectList:';
 
+const normalizeSupportedCurrencySignatureValue = (
+  value: unknown,
+  seen: WeakSet<object>,
+  depth = 0,
+): unknown => {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+
+  if (
+    value === undefined ||
+    typeof value === 'function' ||
+    typeof value === 'symbol' ||
+    typeof value === 'bigint'
+  ) {
+    return undefined;
+  }
+
+  if (typeof value !== 'object' || depth >= 8) {
+    return String(value);
+  }
+
+  if (seen.has(value)) {
+    return '[circular]';
+  }
+  seen.add(value);
+
+  const normalized = Array.isArray(value)
+    ? value.map(item =>
+        normalizeSupportedCurrencySignatureValue(item, seen, depth + 1),
+      )
+    : Object.keys(value as Record<string, unknown>)
+        .sort()
+        .reduce<Record<string, unknown>>((result, key) => {
+          const normalizedValue = normalizeSupportedCurrencySignatureValue(
+            (value as Record<string, unknown>)[key],
+            seen,
+            depth + 1,
+          );
+          if (normalizedValue !== undefined) {
+            result[key] = normalizedValue;
+          }
+          return result;
+        }, {});
+
+  seen.delete(value);
+  return normalized;
+};
+
+export const getGlobalSelectSupportedCurrenciesSignature = (
+  currencies: readonly unknown[] | undefined,
+): string =>
+  JSON.stringify(
+    normalizeSupportedCurrencySignatureValue(
+      currencies || [],
+      new WeakSet<object>(),
+    ),
+  );
+
 export const getGlobalSelectListCacheKey = ({
   context,
   selectedAccountAddress,
@@ -85,8 +149,10 @@ export const getGlobalSelectInitialAccountSelection = (
 export const readCachedGlobalSelectList = <T>({
   canCache,
   cacheKey,
+  signature,
 }: {
   canCache: boolean;
   cacheKey: string;
+  signature: string;
 }): T | undefined =>
-  canCache ? readAccountListSnapshot<T>(cacheKey) : undefined;
+  canCache ? readAccountListSnapshot<T>(cacheKey, signature) : undefined;

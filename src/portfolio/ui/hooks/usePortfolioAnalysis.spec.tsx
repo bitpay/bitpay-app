@@ -203,6 +203,88 @@ describe('usePortfolioAnalysis', () => {
     expect(latestResult?.currentData).toBe(inProgressAnalysis);
   });
 
+  it('does not restore committed analysis after a cleared portfolio is populated again', async () => {
+    const staleAnalysis = {
+      points: [{ts: 1}],
+      assetSummaries: [{assetId: 'btc'}],
+    } as any;
+
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 1;
+    mockUsePortfolioRuntimeQuery.mockReturnValue({
+      data: staleAnalysis,
+      loading: false,
+      error: undefined,
+      quoteCurrency: 'USD',
+      storedWallets: [],
+      eligibleWallets: [],
+      requestKey: 'req-1',
+    });
+
+    let view: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = TestRenderer.create(<HookHarness />);
+    });
+
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = undefined;
+    mockUsePortfolioRuntimeQuery.mockReturnValue({
+      data: undefined,
+      loading: true,
+      error: undefined,
+      quoteCurrency: 'USD',
+      storedWallets: [],
+      eligibleWallets: [],
+      requestKey: 'req-1',
+    });
+    await act(async () => {
+      view!.update(<HookHarness />);
+    });
+
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 2;
+    await act(async () => {
+      view!.update(<HookHarness />);
+    });
+
+    expect(latestResult?.committedData).toBeUndefined();
+    expect(latestResult?.data).toBeUndefined();
+  });
+
+  it('bounds committed analyses while keeping recent requests warm', async () => {
+    mockState.PORTFOLIO.lastFullPopulateCompletedAt = 1;
+
+    const setQuery = (index: number, data: unknown) => {
+      mockUsePortfolioRuntimeQuery.mockReturnValue({
+        data,
+        loading: data === undefined,
+        error: undefined,
+        quoteCurrency: 'USD',
+        storedWallets: [],
+        eligibleWallets: [],
+        requestKey: `req-${index}`,
+      });
+    };
+
+    setQuery(0, {points: [{ts: 0}], assetSummaries: []});
+    let view: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      view = TestRenderer.create(<HookHarness />);
+    });
+
+    for (let index = 1; index <= 50; index += 1) {
+      setQuery(index, {points: [{ts: index}], assetSummaries: []});
+      await act(async () => {
+        view!.update(<HookHarness />);
+      });
+    }
+
+    setQuery(0, undefined);
+    await act(async () => {
+      view!.update(<HookHarness />);
+    });
+
+    expect(latestResult?.committedData).toBeUndefined();
+    expect(latestResult?.data).toBeUndefined();
+  });
+
   it('does not surface the previous quote analysis after the request key changes', async () => {
     const usdAnalysis = {
       points: [{ts: 1}],
