@@ -10,7 +10,6 @@ import {
   writeAccountListSnapshot,
   type AccountListSnapshotStorage,
 } from './accountListCache';
-import {clearAssetPnlSummaryCache} from '../../../portfolio/ui/assetPnlSummaryCache';
 
 jest.mock('./accountListIcons', () => ({
   restoreAccountListIcons: jest.fn((value: any) => {
@@ -51,11 +50,48 @@ const simulateAppRestart = () => {
 
 const makeWallet = (overrides: Record<string, any> = {}): any => ({
   id: 'wallet-1',
-  credentials: {walletName: 'My Wallet'},
-  balance: {sat: 100, satLocked: 0, fiat: 25},
+  keyId: 'key-1',
+  chain: 'btc',
+  chainName: 'Bitcoin',
+  currencyName: 'Bitcoin',
+  currencyAbbreviation: 'btc',
+  network: 'livenet',
+  receiveAddress: 'address-1',
+  credentials: {
+    walletId: 'wallet-1',
+    walletName: 'My Wallet',
+    account: 0,
+    m: 1,
+    n: 1,
+    isComplete: () => true,
+  },
+  balance: {
+    sat: 100,
+    satLocked: 0,
+    satConfirmedLocked: 0,
+    satSpendable: 100,
+    satPending: 0,
+    fiat: 25,
+  },
+  pendingTxps: [],
   hideWallet: false,
   hideWalletByAccount: false,
   isScanning: false,
+  ...overrides,
+});
+
+const makeKey = (overrides: Record<string, any> = {}): any => ({
+  id: 'key-1',
+  keyName: 'My Key',
+  backupComplete: true,
+  hideKeyBalance: false,
+  evmAccountsInfo: {
+    'address-1': {
+      name: 'Account 1',
+      hideAccount: false,
+    },
+  },
+  wallets: [],
   ...overrides,
 });
 
@@ -107,11 +143,72 @@ describe('accountListCache', () => {
       ).not.toBe(base);
       expect(
         buildAccountListSignature({
+          wallets: [makeWallet({walletName: 'Top-level rename'})],
+        }),
+      ).not.toBe(base);
+      expect(
+        buildAccountListSignature({
           wallets: [makeWallet(), makeWallet({id: 'wallet-2'})],
         }),
       ).not.toBe(base);
       expect(
         buildAccountListSignature({wallets: [makeWallet({isScanning: true})]}),
+      ).not.toBe(base);
+    });
+
+    it('changes for every wallet field rendered by account rows', () => {
+      const base = buildAccountListSignature({wallets: [makeWallet()]});
+
+      [
+        {receiveAddress: 'address-2'},
+        {chain: 'eth'},
+        {network: 'testnet'},
+        {tokenAddress: '0xtoken'},
+        {hideBalance: true},
+        {pendingTssSession: true},
+        {pendingTxps: [{id: 'proposal-1'}]},
+        {
+          balance: {
+            ...makeWallet().balance,
+            satPending: 10,
+          },
+        },
+        {
+          credentials: {
+            ...makeWallet().credentials,
+            account: 1,
+          },
+        },
+      ].forEach(change => {
+        expect(
+          buildAccountListSignature({wallets: [makeWallet(change)]}),
+        ).not.toBe(base);
+      });
+    });
+
+    it('changes when key or account display metadata changes', () => {
+      const base = buildAccountListSignature({keys: [makeKey()]});
+
+      expect(
+        buildAccountListSignature({
+          keys: [
+            makeKey({
+              evmAccountsInfo: {
+                'address-1': {name: 'Renamed account', hideAccount: false},
+              },
+            }),
+          ],
+        }),
+      ).not.toBe(base);
+      expect(
+        buildAccountListSignature({
+          keys: [makeKey({keyName: 'Renamed key'})],
+        }),
+      ).not.toBe(base);
+      expect(
+        buildAccountListSignature({
+          keys: [makeKey({backupComplete: false})],
+        }),
       ).not.toBe(base);
     });
 
@@ -158,13 +255,14 @@ describe('accountListCache', () => {
   });
 
   describe('getRatesRevision', () => {
-    it('keeps one revision per rates object identity', () => {
+    it('uses a deterministic revision that survives a cold start', () => {
       const rates = {btc: []};
       const otherRates = {btc: []};
 
       const revision = getRatesRevision(rates);
       expect(getRatesRevision(rates)).toBe(revision);
-      expect(getRatesRevision(otherRates)).not.toBe(revision);
+      expect(getRatesRevision(otherRates)).toBe(revision);
+      expect(getRatesRevision({btc: [{rate: 1}]})).not.toBe(revision);
     });
 
     it('returns 0 for missing rates', () => {
@@ -246,10 +344,11 @@ describe('accountListCache', () => {
   });
 
   describe('readAccountListSnapshot', () => {
-    it('returns the stale snapshot regardless of the current signature', () => {
+    it('never returns a snapshot for a mismatched signature', () => {
       writeAccountListSnapshot('key-1', 'old-sig', ['stale row']);
 
       expect(readAccountListSnapshot('key-1')).toEqual(['stale row']);
+      expect(readAccountListSnapshot('key-1', 'new-sig')).toBeUndefined();
     });
 
     it('returns undefined for an unknown key', () => {
@@ -320,20 +419,20 @@ describe('accountListCache', () => {
       expect(storage.entries.has('accountListSnapshot:key-1')).toBe(false);
     });
 
-    it('discards persisted payloads past the TTL', () => {
+    it('keeps valid persisted payloads regardless of their age', () => {
       const storage = makeMemoryStorage();
       storage.set(
         'accountListSnapshot:key-1',
         JSON.stringify({
           version: 1,
-          savedAt: Date.now() - 8 * 24 * 60 * 60 * 1000,
+          savedAt: Date.now() - 365 * 24 * 60 * 60 * 1000,
           signature: 'sig',
           value: ['row'],
         }),
       );
       setAccountListSnapshotStorage(storage);
 
-      expect(readAccountListSnapshot('key-1')).toBeUndefined();
+      expect(readAccountListSnapshot('key-1', 'sig')).toEqual(['row']);
     });
 
     it('ignores corrupted persisted payloads', () => {
@@ -376,6 +475,24 @@ describe('accountListCache', () => {
 
       expect(storage.entries.has('accountListSnapshot:key-1')).toBe(false);
       expect(storage.entries.get('unrelated-key')).toBe('keep me');
+    });
+
+    it('does not let a pending old write resurrect a cleared snapshot', () => {
+      const storage = makeMemoryStorage();
+      const scheduled: (() => void)[] = [];
+      setAccountListSnapshotStorage(storage);
+      setAccountListSnapshotWriteScheduler(write => {
+        scheduled.push(write);
+      });
+
+      writeAccountListSnapshot('key-old', 'old-sig', ['old']);
+      clearAccountListSnapshots();
+      writeAccountListSnapshot('key-new', 'new-sig', ['new']);
+
+      scheduled.reverse().forEach(write => write());
+
+      expect(storage.entries.has('accountListSnapshot:key-old')).toBe(false);
+      expect(storage.entries.has('accountListSnapshot:key-new')).toBe(true);
     });
 
     it('never writes key material or transaction detail to disk', () => {
@@ -505,50 +622,7 @@ describe('accountListCache', () => {
       expect(getStringSpy).not.toHaveBeenCalled();
     });
 
-    it('drops expired and outdated snapshots once the disk grows', () => {
-      const storage = makeMemoryStorage();
-      const now = Date.now();
-
-      for (let index = 0; index < 24; index++) {
-        storage.set(
-          `accountListSnapshot:fresh-${index}`,
-          JSON.stringify({
-            version: 1,
-            savedAt: now,
-            signature: 'sig',
-            value: ['row'],
-          }),
-        );
-      }
-      storage.set(
-        'accountListSnapshot:expired',
-        JSON.stringify({
-          version: 1,
-          savedAt: now - 8 * 24 * 60 * 60 * 1000,
-          signature: 'sig',
-          value: ['row'],
-        }),
-      );
-      storage.set(
-        'accountListSnapshot:old-schema',
-        JSON.stringify({
-          version: 0,
-          savedAt: now,
-          signature: 'sig',
-          value: ['row'],
-        }),
-      );
-      storage.set('unrelated-key', 'keep me');
-      setAccountListSnapshotStorage(storage);
-
-      writeAccountListSnapshot('key-new', 'sig', ['row']);
-
-      expect(storage.entries.has('accountListSnapshot:expired')).toBe(false);
-      expect(storage.entries.has('accountListSnapshot:old-schema')).toBe(false);
-      expect(storage.entries.get('unrelated-key')).toBe('keep me');
-    });
-
-    it('evicts the oldest snapshots past the disk cap', () => {
+    it('does not evict valid snapshots as more cache keys are added', () => {
       const storage = makeMemoryStorage();
       const now = Date.now();
 
@@ -557,23 +631,21 @@ describe('accountListCache', () => {
           `accountListSnapshot:key-${index}`,
           JSON.stringify({
             version: 1,
-            savedAt: now - (30 - index) * 1000,
+            savedAt: now,
             signature: 'sig',
             value: ['row'],
           }),
         );
       }
+      storage.set('unrelated-key', 'keep me');
       setAccountListSnapshotStorage(storage);
 
-      writeAccountListSnapshot('key-newest', 'sig', ['row']);
+      writeAccountListSnapshot('key-new', 'sig', ['row']);
 
-      const remaining = [...storage.entries.keys()].filter(key =>
-        key.startsWith('accountListSnapshot:'),
-      );
-      expect(remaining).toHaveLength(24);
-      expect(remaining).toContain('accountListSnapshot:key-newest');
-      expect(remaining).not.toContain('accountListSnapshot:key-0');
-      expect(remaining).not.toContain('accountListSnapshot:key-5');
+      expect(storage.entries.has('accountListSnapshot:key-0')).toBe(true);
+      expect(storage.entries.has('accountListSnapshot:key-29')).toBe(true);
+      expect(storage.entries.has('accountListSnapshot:key-new')).toBe(true);
+      expect(storage.entries.get('unrelated-key')).toBe('keep me');
     });
 
     it('works with persistence unavailable', () => {
@@ -586,38 +658,12 @@ describe('accountListCache', () => {
     });
   });
 
-  it('drops every snapshot when the portfolio caches are cleared', () => {
-    writeAccountListSnapshot('key-1', 'sig', ['row']);
-
-    clearAssetPnlSummaryCache();
-
-    expect(readAccountListSnapshot('key-1')).toBeUndefined();
-  });
-
-  it('evicts the least recently used snapshots past the cap', () => {
-    for (let index = 0; index < 21; index++) {
+  it('keeps all in-memory snapshots until explicit invalidation', () => {
+    for (let index = 0; index < 50; index++) {
       writeAccountListSnapshot(`key-${index}`, 'sig', [index]);
     }
 
-    expect(readAccountListSnapshot('key-0')).toBeUndefined();
-    expect(readAccountListSnapshot('key-1')).toEqual([1]);
-    expect(readAccountListSnapshot('key-20')).toEqual([20]);
-  });
-
-  it('keeps reused snapshots from being evicted first', () => {
-    writeAccountListSnapshot('key-oldest', 'sig', ['oldest']);
-    for (let index = 0; index < 19; index++) {
-      writeAccountListSnapshot(`key-${index}`, 'sig', [index]);
-    }
-
-    resolveAccountListSnapshot({
-      cacheKey: 'key-oldest',
-      signature: 'sig',
-      build: () => ['rebuilt'],
-    });
-    writeAccountListSnapshot('key-new', 'sig', ['new']);
-
-    expect(readAccountListSnapshot('key-oldest')).toEqual(['oldest']);
-    expect(readAccountListSnapshot('key-0')).toBeUndefined();
+    expect(readAccountListSnapshot('key-0')).toEqual([0]);
+    expect(readAccountListSnapshot('key-49')).toEqual([49]);
   });
 });
