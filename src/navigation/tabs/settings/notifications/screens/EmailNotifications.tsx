@@ -1,7 +1,6 @@
-import React, {useState} from 'react';
+import React, {useCallback} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {setEmailNotifications} from '../../../../../store/app/app.effects';
 import {SettingsContainer} from '../../SettingsRoot';
@@ -34,6 +33,15 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingHorizontal: parseInt(ScreenGutter, 10),
   },
+  disabled: {
+    opacity: 0.5,
+  },
+  settingRowContent: {
+    flex: 1,
+  },
+  settingTitle: {
+    flexGrow: 0,
+  },
 });
 
 const EmailNotificationsContainer = ({
@@ -53,7 +61,11 @@ const SettingRowContainer = ({
   ...rest
 }: {isDisabled?: boolean} & React.ComponentProps<typeof TouchableOpacity>) => (
   <TouchableOpacity
-    style={[styles.settingRowContainer, {opacity: isDisabled ? 0.5 : 1}, style]}
+    style={[
+      styles.settingRowContainer,
+      isDisabled ? styles.disabled : null,
+      style,
+    ]}
     {...rest}
   />
 );
@@ -69,30 +81,19 @@ const EmailNotifications = () => {
   const {t} = useTranslation();
   const network = useAppSelector(({APP}) => APP.network);
   const emailNotifications = useAppSelector(({APP}) => APP.emailNotifications);
-  const [notificationsAccepted, setNotificationsAccepted] = useState(
-    !!emailNotifications?.accepted,
-  );
-
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const [currentEmail, setCurrentEmail] = useState(
-    user?.email || emailNotifications?.email,
-  );
-
   const dispatch = useAppDispatch();
+  const notificationsAccepted = !!emailNotifications?.accepted;
+  const currentEmail = user?.email || emailNotifications?.email;
 
-  const onPress = () => {
-    const accepted = !notificationsAccepted;
-
-    if (!accepted) {
-      dispatch(setEmailNotifications(accepted, null));
-      setNotificationsAccepted(accepted);
-    } else if (user) {
-      const {email} = user;
-      setCurrentEmail(email);
-      dispatch(setEmailNotifications(accepted, email));
-      setNotificationsAccepted(accepted);
+  const onPress = useCallback(() => {
+    if (!user) {
+      return;
     }
-  };
+
+    const accepted = !notificationsAccepted;
+    dispatch(setEmailNotifications(accepted, accepted ? user.email : null));
+  }, [dispatch, notificationsAccepted, user]);
 
   return (
     <EmailNotificationsContainer>
@@ -102,8 +103,8 @@ const EmailNotifications = () => {
             disabled={!user}
             isDisabled={!user}
             onPress={onPress}>
-            <SettingRow style={{flex: 1}}>
-              <SettingTitle style={{flexGrow: 0}}>
+            <SettingRow style={styles.settingRowContent}>
+              <SettingTitle style={styles.settingTitle}>
                 {t('Enable Email Notifications')}
               </SettingTitle>
               {currentEmail ? (
@@ -122,4 +123,4 @@ const EmailNotifications = () => {
   );
 };
 
-export default EmailNotifications;
+export default React.memo(EmailNotifications);

@@ -839,23 +839,19 @@ const KeyOverview = () => {
   const hydratedFromSnapshotRef = useRef<boolean | undefined>(undefined);
 
   const memoizedAccountList = useMemo(() => {
+    const lastAccountListSnapshot =
+      readAccountListSnapshot<AccountRowProps[]>(accountListCacheKey);
+
     if (hydratedFromSnapshotRef.current === undefined) {
-      hydratedFromSnapshotRef.current =
-        readAccountListSnapshot<AccountRowProps[]>(
-          accountListCacheKey,
-          accountListSignature,
-        ) !== undefined;
+      hydratedFromSnapshotRef.current = lastAccountListSnapshot !== undefined;
     }
 
-    // Same rule as the balance chart: a cached list paints right away instead
-    // of waiting for the opening transition to finish.
+    // Paint the last valid list immediately, even if startup balance/rate
+    // refreshes changed its signature. Once the transition is complete the
+    // current signature is resolved and replaces this snapshot without making
+    // the rows disappear or replay their entrance animation.
     if (!contentReady) {
-      return (
-        readAccountListSnapshot<AccountRowProps[]>(
-          accountListCacheKey,
-          accountListSignature,
-        ) ?? EMPTY_ACCOUNT_LIST
-      );
+      return lastAccountListSnapshot ?? EMPTY_ACCOUNT_LIST;
     }
 
     const startedAt = PERF_DEBUG ? performance.now() : 0;
