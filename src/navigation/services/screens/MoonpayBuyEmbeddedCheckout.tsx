@@ -81,12 +81,13 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
 import MoonpayEmbeddedCheckoutSkeleton from '../components/MoonpayEmbeddedCheckoutSkeleton';
-import {getMoonpayDisclosureCopy} from '../buy-crypto/constants/MoonpayDisclosures';
+import {
+  getMoonpayDisclosureCopy,
+  getMoonpayDefaultDisclosure,
+} from '../buy-crypto/constants/MoonpayDisclosures';
 import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-
-const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms';
 
 // Styled
 export const MoonpayEmbeddedCheckoutContainer = styled.SafeAreaView`
@@ -901,46 +902,55 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         </ScrollView>
 
         <BottomSection>
-          {embeddedQuoteData?.paymentDisclosures?.length
-            ? embeddedQuoteData.paymentDisclosures.map(
+          {(() => {
+            if (!embeddedQuoteData) return null;
+            // If the API returned specific disclosures, render only those.
+            if (embeddedQuoteData?.paymentDisclosures?.length) {
+              return embeddedQuoteData.paymentDisclosures.map(
                 (disclosure: {id: string; version: string}) => {
-                  const {text, url} = getMoonpayDisclosureCopy(
+                  const {segments} = getMoonpayDisclosureCopy(
                     disclosure as any,
                   );
                   return (
                     <DisclosureText
                       key={`${disclosure.id}-${disclosure.version}`}>
-                      {url ? (
-                        <LegalLink onPress={() => openUrl(url)}>
-                          {text}
-                        </LegalLink>
-                      ) : (
-                        text
+                      {segments.map((segment, i) =>
+                        segment.type === 'link' ? (
+                          <LegalLink
+                            key={i}
+                            onPress={() => openUrl(segment.url)}>
+                            {segment.label}
+                          </LegalLink>
+                        ) : (
+                          segment.value
+                        ),
                       )}
                     </DisclosureText>
                   );
                 },
-              )
-            : null}
-          {isNYorWA ? (
-            <LegalText>
-              {t("I agree to MoonPay's")}{' '}
-              <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
-                {t('Terms of Use')}
-              </LegalLink>{' '}
-              {t(
-                'and understand that, once executed, this transaction cannot be cancelled, recalled, refunded, or otherwise undone. Fraudulent transactions may result in the loss of funds with no recourse.',
-              )}
-            </LegalText>
-          ) : (
-            <LegalText>
-              {t("By clicking below, you agree to MoonPay's")}{' '}
-              <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
-                {t('Terms of Use')}
-              </LegalLink>
-              {'.'}
-            </LegalText>
-          )}
+              );
+            } else {
+              // No API disclosures — fall back to geo/generic legal text.
+              const legalSegments = getMoonpayDefaultDisclosure(
+                embeddedQuoteData?.paymentDisclosures,
+                isNYorWA,
+              );
+              if (!legalSegments) return null;
+              return (
+                <LegalText>
+                  {legalSegments.map((segment, i) =>
+                    segment.type === 'link' ? (
+                      <LegalLink key={i} onPress={() => openUrl(segment.url)}>
+                        {segment.label}
+                      </LegalLink>
+                    ) : (
+                      segment.value
+                    ),
+                  )}
+                </LegalText>
+              );
+            }
+          })()}
           {!isLoading && !paymentExpired && initialQuoteSignature ? (
             <MoonPayApplePayFrame
               ref={applePayFrameRef}
