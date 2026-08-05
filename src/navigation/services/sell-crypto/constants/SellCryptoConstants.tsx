@@ -2,6 +2,7 @@ import React from 'react';
 import PaymentMethodIcon from '../../../../components/icons/payment-methods/payment-methods';
 import {
   countriesWithACH,
+  countriesWithCashApp,
   countriesWithGBPTransfer,
   countriesWithSEPA,
 } from '../../constants/PaymentMethodsConstants';
@@ -9,6 +10,7 @@ import {SellCryptoExchangeKey} from '../utils/sell-crypto-utils';
 
 export type WithdrawalMethodKey =
   | 'ach'
+  | 'cashApp'
   | 'creditCard'
   | 'debitCard'
   | 'sepaBankTransfer'
@@ -199,6 +201,30 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
       ramp: false,
       simplex: false,
     },
+    enabled: true,
+  },
+  cashApp: {
+    order: 2.5,
+    label: 'Cash App',
+    method: 'cashApp',
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
+      <PaymentMethodIcon paymentMethodId="cashApp" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="cashApp"
+        width={20}
+        height={20}
+      />
+    ),
+    supportedExchanges: {
+      moonpay: true,
+      ramp: false,
+      simplex: false,
+    },
+    supportedCountries: countriesWithCashApp,
     enabled: true,
   },
   venmo: {

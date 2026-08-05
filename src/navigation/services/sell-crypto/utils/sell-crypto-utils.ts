@@ -71,6 +71,12 @@ export const getSellEnabledPaymentMethods = (
     userCountry,
   );
 
+  WithdrawalMethodsAvailable.cashApp.enabled = isPaymentMethodEnabled(
+    WithdrawalMethodsAvailable.cashApp,
+    locationCountry,
+    userCountry,
+  );
+
   // Helper function to check if a payment method is supported by a specific exchange
   const isSupportedByExchange = (
     exchange: SellCryptoExchangeKey,
