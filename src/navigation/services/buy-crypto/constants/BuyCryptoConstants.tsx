@@ -3,6 +3,7 @@ import {Platform} from 'react-native';
 import PaymentMethodIcon from '../../../../components/icons/payment-methods/payment-methods';
 import {
   countriesWithACH,
+  countriesWithCashApp,
   countriesWithPIX,
   countriesWithSEPA,
 } from '../../constants/PaymentMethodsConstants';
@@ -11,6 +12,7 @@ import {BuyCryptoExchangeKey} from '../utils/buy-crypto-utils';
 export type PaymentMethodKey =
   | 'ach'
   | 'applePay'
+  | 'cashApp'
   | 'creditCard'
   | 'debitCard'
   | 'googlePay'
@@ -109,6 +111,33 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       transak: true,
     },
     enabled: Platform.OS === 'ios',
+  },
+  cashApp: {
+    order: 3.5,
+    label: 'Cash App',
+    method: 'cashApp',
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
+      <PaymentMethodIcon paymentMethodId="cashApp" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="cashApp"
+        width={20}
+        height={20}
+      />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: true,
+      ramp: false,
+      sardine: false,
+      simplex: false,
+      transak: false,
+    },
+    supportedCountries: countriesWithCashApp,
+    enabled: true,
   },
   creditCard: {
     order: 5,

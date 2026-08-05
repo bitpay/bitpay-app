@@ -957,6 +957,9 @@ const ExternalServicesOfferSelector: React.FC<
     if (_paymentMethod === 'sepa_bank_transfer') {
       // Moonpay only accepts EUR as a base currency for SEPA payments
       offers.moonpay.fiatCurrency = 'EUR';
+    } else if (_paymentMethod === 'cash_app') {
+      // Moonpay only accepts USD as a base currency for Cash App payments
+      offers.moonpay.fiatCurrency = 'USD';
     }
 
     offers.moonpay.fiatAmount =
