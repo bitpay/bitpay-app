@@ -83,6 +83,35 @@ PODS:
   - IdensicMobileSDK/Default (1.45.1):
     - IdensicMobileSDK/Core
   - InputMask (6.1.0)
+  - jail-monkey (3.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - libwebp (1.5.0):
     - libwebp/demux (= 1.5.0)
     - libwebp/mux (= 1.5.0)
@@ -3554,6 +3583,7 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - jail-monkey (from `../node_modules/jail-monkey`)
   - MixpanelReactNative (from `../node_modules/mixpanel-react-native`)
   - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
@@ -3720,6 +3750,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2025-09-01-RNv0.82.0-265ef62ff3eb7289d17e366664ac0da82303e101
+  jail-monkey:
+    :path: "../node_modules/jail-monkey"
   MixpanelReactNative:
     :path: "../node_modules/mixpanel-react-native"
   NitroFetch:
@@ -3982,6 +4014,7 @@ SPEC CHECKSUMS:
   hermes-engine: 8642d8f14a548ab718ec112e9bebdfdd154138b5
   IdensicMobileSDK: b32caa39919bd9d0ad64897b2a17de81e16f23fd
   InputMask: 71d291dc54d2deaeac6512afb6ec2304228c0bb7
+  jail-monkey: 5fb4464044974d42743eb25a8bbb367054b8735b
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   Mixpanel-swift: de454db5987bf6f601106520a44663fc556e8cfa
   MixpanelReactNative: e6b7c6c37e88263744c9a5d46a1f05d209b68348

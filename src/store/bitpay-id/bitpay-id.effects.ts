@@ -44,6 +44,7 @@ import {
   setPasskeyCredentials,
   setPasskeyStatus,
 } from '../../store/bitpay-id/bitpay-id.actions';
+import {isDeviceCompromisedError} from '../../utils/deviceIntegrity';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
@@ -268,6 +269,14 @@ export const checkLoginWithPasskey =
       // rewrapping below would launder the error type.
       if (isCloudflareChallengeError(err)) {
         throw err;
+      }
+
+      // Compromised device: fall back to basic auth instead of failing login.
+      if (isDeviceCompromisedError(err)) {
+        logManager.warn(
+          '[checkLoginWithPasskey] passkey auth blocked on compromised device, falling back to basic auth',
+        );
+        return Promise.resolve(false);
       }
 
       const errMsg = err.message || JSON.stringify(err);
