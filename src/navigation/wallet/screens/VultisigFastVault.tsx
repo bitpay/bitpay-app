@@ -153,7 +153,10 @@ const VultisigFastVault: React.FC<Props> = ({navigation}) => {
       });
       setVaultId(id);
       setProgress('');
-      setButtonState('success');
+      // The next stage renders a different button. Do not carry the creation
+      // button's terminal state into verification, where `success` disables
+      // further presses and renders only the green checkmark.
+      setButtonState(undefined);
     } catch (e) {
       setButtonState('failed');
       setProgress('');

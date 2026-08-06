@@ -31,6 +31,7 @@
 - The local stack must not send email. Use the reserved non-deliverable address expected by the upstream API and obtain verification codes only from the `verification-code-logger` Docker service.
 - Cold Android debug/WASM keygen can exceed VultiServer's upstream one-minute relay-completion wait. The local worker build adapter extends only that wait to three minutes while leaving the official checkout clean; its source-shape guard must keep passing.
 - The app must wait for server-side keygen completion before showing verification. Never provide or accept a code unless the logger or matching Redis verification record exists.
+- Multi-stage screens must reset action-button state when advancing. A creation button's `success` state disables the verification button if the same state value is reused.
 - When testing an SDK change, verify the exact `@vultisig/sdk` source resolved by this app. A sibling checkout does not affect Metro automatically; use the package reference pinned in `package.json` and record its commit.
 - Before a user-led Android test, apply `yarn set:dev`, ensure Metro and the local stack are healthy, and configure `adb reverse` for ports `8081`, `8670`, and `8671`.
 - Service health checks alone are not an end-to-end receipt. Confirm that the app starts in the intended clean state, existing BitPay screens still render, no stale Vultisig wallet remains, and the Assets section is not stuck on loading placeholders.
