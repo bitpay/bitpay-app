@@ -45,6 +45,7 @@ import {
 } from '../../../settings/security/SecurityGroup';
 import {BitpayIdScreens} from '../../../../bitpay-id/BitpayIdGroup';
 import {useNavigation} from '@react-navigation/native';
+import EnableLockWarningModal from '../components/EnableLockWarningModal';
 
 export type SecurityHomeProps = NativeStackScreenProps<
   SecurityGroupParamList,
@@ -102,7 +103,9 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const logger = useLogger();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [lockWarningModalVisible, setLockWarningModalVisible] = useState(false);
+  const [lockOptionsModalVisible, setLockOptionsModalVisible] = useState(false);
+  const [pendingWarningConfirm, setPendingWarningConfirm] = useState(false);
   const passkeySupported = usePasskeySupport();
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -113,7 +116,12 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
     ({APP}: RootState) => APP.biometricLockActive,
   );
   const hideModal = () => {
-    setModalVisible(false);
+    setLockOptionsModalVisible(false);
+  };
+
+  const hideLockWarningModal = () => {
+    setLockWarningModalVisible(false);
+    setPendingWarningConfirm(false);
   };
 
   const setPin = () => {
@@ -158,7 +166,7 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
         showBottomNotificationModal(
           BiometricErrorNotification(errMsg, async () => {
             await sleep(500); // wait for error modal to close before reopening this modal
-            setModalVisible(true);
+            setLockOptionsModalVisible(true);
           }),
         ),
       );
@@ -195,7 +203,18 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
       );
       return;
     }
-    setModalVisible(true);
+    setLockOptionsModalVisible(true);
+  };
+
+  const onPressLockWarningConfirm = async () => {
+    if (!pendingWarningConfirm) {
+      return;
+    }
+
+    hideLockWarningModal();
+    setPendingWarningConfirm(false);
+    await sleep(500); // wait for the warning modal to close before opening biometrics
+    setBiometric();
   };
 
   const setLockOption = async (
@@ -206,7 +225,8 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
       case 'fingerprint':
       case 'face':
         await sleep(500); // avoid modal conflicting with options sheet or error sheet
-        setBiometric();
+        setPendingWarningConfirm(true);
+        setLockWarningModalVisible(true);
         break;
 
       case 'pin':
@@ -247,9 +267,14 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
           </Button>
         </Setting>
       </SettingsComponent>
+      <EnableLockWarningModal
+        isVisible={lockWarningModalVisible}
+        onBackdropPress={hideLockWarningModal}
+        onConfirm={onPressLockWarningConfirm}
+      />
       <SheetModal
         modalLibrary={'bottom-sheet'}
-        isVisible={modalVisible}
+        isVisible={lockOptionsModalVisible}
         onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>

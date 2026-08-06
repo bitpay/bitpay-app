@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import {ScrollView} from 'react-native';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -25,6 +25,8 @@ import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {sleep} from '../../../utils/helper-methods';
+import EnableLockWarningModal from '../../tabs/settings/security/components/EnableLockWarningModal';
 
 const PinImage = {
   light: (
@@ -58,6 +60,8 @@ const PinScreen = ({
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const themeType = useThemeType();
+  const [lockWarningModalVisible, setLockWarningModalVisible] = useState(false);
+  const shouldEnableBiometricRef = useRef(false);
 
   useAndroidBackHandler(() => true);
 
@@ -96,6 +100,10 @@ const PinScreen = ({
     dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
   };
 
+  const hideLockWarningModal = () => {
+    setLockWarningModalVisible(false);
+  };
+
   const onSetBiometricPress = async () => {
     try {
       haptic('impactLight');
@@ -126,6 +134,27 @@ const PinScreen = ({
       logger.error(`[Biometrics] failed with error: ${errMsg}`);
       dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
     }
+  };
+
+  const onPressBiometric = () => {
+    haptic('impactLight');
+    shouldEnableBiometricRef.current = true;
+    setLockWarningModalVisible(true);
+  };
+
+  const onPressLockWarningConfirm = async () => {
+    if (!shouldEnableBiometricRef.current) {
+      return;
+    }
+    hideLockWarningModal();
+    await sleep(500);
+    shouldEnableBiometricRef.current = false;
+    await onSetBiometricPress();
+  };
+
+  const onCloseLockWarningModal = () => {
+    shouldEnableBiometricRef.current = false;
+    hideLockWarningModal();
   };
 
   return (
@@ -163,7 +192,7 @@ const PinScreen = ({
             <Button
               testID="biometric-button"
               accessibilityLabel="Set biometric login"
-              onPress={() => onSetBiometricPress()}
+              onPress={onPressBiometric}
               buttonStyle={'secondary'}>
               {t('Biometric')}
             </Button>
@@ -178,6 +207,11 @@ const PinScreen = ({
             </Button>
           </ActionContainer>
         </CtaContainer>
+        <EnableLockWarningModal
+          isVisible={lockWarningModalVisible}
+          onBackdropPress={onCloseLockWarningModal}
+          onConfirm={onPressLockWarningConfirm}
+        />
       </ScrollView>
     </PinContainer>
   );
