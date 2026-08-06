@@ -3,6 +3,7 @@ import {
   Key,
   KeyMethods,
   SupportedHardwareSource,
+  ExternalSignerMetadata,
   Token,
   TransactionProposal,
   Wallet,
@@ -134,6 +135,8 @@ export const buildWalletObj = (
     pendingTxps = [],
     isHardwareWallet = false,
     hardwareData = {},
+    isExternalSigner = false,
+    externalSignerData,
     singleAddress,
     receiveAddress,
     tssKeyId,
@@ -159,6 +162,8 @@ export const buildWalletObj = (
     hardwareData?: {
       accountPath?: string;
     };
+    isExternalSigner?: boolean;
+    externalSignerData?: ExternalSignerMetadata;
     singleAddress: boolean;
     receiveAddress?: string;
     tssKeyId?: string;
@@ -215,6 +220,8 @@ export const buildWalletObj = (
     pendingTxps,
     isHardwareWallet,
     hardwareData,
+    isExternalSigner,
+    externalSignerData,
     singleAddress,
     receiveAddress,
     tssKeyId,

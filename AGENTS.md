@@ -14,8 +14,8 @@
 
 ## Screenshot verification
 
-- Android debug builds must allow screenshots so UI changes can be verified. The debug activity explicitly clears `FLAG_SECURE`; do not remove that debug-only exception while visual verification is required.
-- Keep production screenshot protection unchanged. Never weaken the production build merely to make development screenshots work.
+- Screenshots and screen capture must remain allowed in every build configuration so the app can be visually verified.
+- Do not add `FLAG_SECURE` or any other screenshot-blocking policy to the Android app.
 
 ## Vultisig verification
 

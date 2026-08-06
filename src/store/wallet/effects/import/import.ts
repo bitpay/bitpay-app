@@ -1,5 +1,6 @@
 import {
   Key,
+  ExternalSignerMetadata,
   KeyMethods,
   KeyOptions,
   KeyProperties,
@@ -1023,6 +1024,7 @@ export const startImportFromHardwareWallet =
   ({
     key,
     hardwareSource,
+    externalSigner,
     xPubKey,
     publicKey,
     accountPath,
@@ -1033,7 +1035,8 @@ export const startImportFromHardwareWallet =
     network,
   }: {
     key: Key;
-    hardwareSource: SupportedHardwareSource;
+    hardwareSource?: SupportedHardwareSource;
+    externalSigner?: ExternalSignerMetadata;
     xPubKey?: string;
     publicKey?: string;
     accountPath: string;
@@ -1053,10 +1056,10 @@ export const startImportFromHardwareWallet =
     accountNumber: number;
     network: Network;
   }): Effect<Promise<Wallet>> =>
-  async (dispatch, getState) => {
+  async (dispatch, _getState) => {
     return new Promise(async (resolve, reject) => {
-      if (!hardwareSource) {
-        return reject(new Error('Invalid hardware wallet source'));
+      if (!hardwareSource && !externalSigner) {
+        return reject(new Error('An external signer source is required'));
       }
 
       if (!BitpaySupportedCoins[coin.toLowerCase()]) {
@@ -1080,7 +1083,7 @@ export const startImportFromHardwareWallet =
         return reject(new Error('The wallet is already in the app.'));
       }
 
-      const hwKeyId = key.id;
+      const signerKeyId = key.id;
       const name = dispatch(GetName(coin, chain));
       const credentials = credentialsFromExtendedPublicKey(
         coin,
@@ -1091,7 +1094,7 @@ export const startImportFromHardwareWallet =
         derivationStrategy,
         useNativeSegwit,
         network,
-        hwKeyId,
+        signerKeyId,
         xPubKey,
         publicKey,
       );
@@ -1173,10 +1176,10 @@ export const startImportFromHardwareWallet =
           currencyName,
           walletName,
           keyId: key.id,
-          isHardwareWallet: true,
-          hardwareData: {
-            accountPath,
-          },
+          isHardwareWallet: !!hardwareSource,
+          hardwareData: hardwareSource ? {accountPath} : {},
+          isExternalSigner: !!externalSigner,
+          externalSignerData: externalSigner,
         }),
       ) as Wallet;
 
@@ -1219,6 +1222,13 @@ export const startImportFromHardwareWallet =
       }
     });
   };
+
+/**
+ * Import a BWS wallet backed by public account material while keeping signing
+ * in an external provider such as Vultisig.
+ */
+export const startImportFromExtendedPublicKeyWallet =
+  startImportFromHardwareWallet;
 
 export const startImportFile =
   (decryptBackupText: string, opts: Partial<KeyOptions>): Effect =>

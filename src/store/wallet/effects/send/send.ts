@@ -132,6 +132,10 @@ import {
   startTSSSigning,
   pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
+import {
+  requiresVultisigFastSigning,
+  signTxWithVultisigFast,
+} from '../vultisig/vultisig';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1298,6 +1302,7 @@ export const publishAndSign =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {APP} = getState();
+      const isVultisigSigning = requiresVultisigFastSigning(wallet, key);
 
       if (APP.biometricLockActive && !signingMultipleProposals) {
         try {
@@ -1345,6 +1350,32 @@ export const publishAndSign =
         }
         if (setShowTSSProgressModal) {
           await toggleTSSModal(setShowTSSProgressModal, true);
+        }
+      }
+
+      if (isVultisigSigning && !password) {
+        try {
+          password = await new Promise<string>(async (_resolve, _reject) => {
+            await sleep(500);
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (_password: string) => {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  if (_password) {
+                    _resolve(_password);
+                  } else {
+                    _reject('password required');
+                  }
+                },
+                onCancelHandler: () => {
+                  _reject('password canceled');
+                },
+              }),
+            );
+          });
+        } catch (error) {
+          return reject(error);
         }
       }
 
@@ -1414,14 +1445,22 @@ export const publishAndSign =
           );
         }
 
-        if (key.isReadOnly && !key.hardwareSource) {
+        if (key.isReadOnly && !key.hardwareSource && !isVultisigSigning) {
           // read only wallet
           return resolve(publishedTx);
         }
 
         let signedTx: TransactionProposal | null = null;
 
-        if (isTSSSigning) {
+        if (isVultisigSigning) {
+          signedTx = await signTxWithVultisigFast({
+            key,
+            wallet,
+            txp: txpToSign as TransactionProposal,
+            password: password!,
+          });
+          logManager.debug('success Vultisig sign [publishAndSign]');
+        } else if (isTSSSigning) {
           signedTx = await dispatch(
             startTSSSigning({
               key,

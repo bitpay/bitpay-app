@@ -1,0 +1,10 @@
+{
+  "port": 8080,
+  "redis_server": {
+    "addr": "redis:6379",
+    "user": "",
+    "password": "",
+    "db": 1
+  },
+  "connection_string": ""
+}

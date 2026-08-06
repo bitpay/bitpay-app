@@ -15,6 +15,14 @@ import {SolanaPayOpts} from '../../navigation/wallet/screens/send/confirm/Confir
  */
 export type SupportedHardwareSource = 'ledger'; // only ledger supported currently
 
+export interface VultisigFastSignerMetadata {
+  type: 'vultisig-fast';
+  vaultId: string;
+  accountPath: string;
+}
+
+export type ExternalSignerMetadata = VultisigFastSignerMetadata;
+
 export interface KeyMethods {
   _checkCoin?: Function;
   _checkNetwork?: Function;
@@ -83,6 +91,7 @@ export interface Key {
     };
   };
   hardwareSource?: SupportedHardwareSource;
+  externalSigner?: ExternalSignerMetadata;
   tssSession?: TssSessionData;
 }
 
@@ -163,6 +172,8 @@ export interface WalletObj {
      */
     accountPath?: string;
   };
+  isExternalSigner?: boolean;
+  externalSignerData?: ExternalSignerMetadata;
   tssKeyId?: string;
   pendingTssSession?: boolean;
   tssMetadata?: {id: string; m: number; n: number; partyId: number};

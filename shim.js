@@ -4,6 +4,11 @@ import * as RNWasm from 'react-native-webassembly';
 
 global.self ||= global;
 global.globalThis ||= global;
+// React Native has no DOM. Some dependency graphs expose an HTMLElement global,
+// which makes styled-components/native incorrectly enter browser mode.
+try {
+  delete global.HTMLElement;
+} catch (_) {}
 global.window ||= global;
 global.WebAssembly = RNWasm;
 try { if (global.process) global.process.browser = true; } catch {}

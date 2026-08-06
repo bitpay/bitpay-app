@@ -322,6 +322,16 @@ const StartupGate = () => {
         },
       ],
     });
+
+    requestAnimationFrame(() => {
+      RNBootSplash.hide({fade: true}).catch(err => {
+        logManager.error(
+          `RNBootSplash.hide failed after startup routing: ${
+            err instanceof Error ? err.message : JSON.stringify(err)
+          }`,
+        );
+      });
+    });
   }, [appWasInit, onboardingCompleted, navigation]);
 
   return <View style={{flex: 1, backgroundColor: theme.colors.background}} />;

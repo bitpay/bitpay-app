@@ -4,6 +4,7 @@ import '@ethersproject/shims';
 // import 'fast-text-encoding';
 import './shim';
 import '@walletconnect/react-native-compat';
+import './shims/text-decoder';
 import {AppRegistry, Alert, StatusBar, Appearance, LogBox} from 'react-native';
 import {IS_MAESTRO} from '@env';
 
@@ -34,7 +35,6 @@ import {
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {ThemeProvider} from 'styled-components/native';
 import {
   PaymentSentProvider,
   OngoingProcessProvider,
@@ -42,6 +42,7 @@ import {
   TokenProvider,
   LogProvider,
 } from './src/contexts';
+import {ThemeProvider} from 'styled-components/native';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';
 import {DklsWorkerHost} from './src/dkls/DklsWorker';

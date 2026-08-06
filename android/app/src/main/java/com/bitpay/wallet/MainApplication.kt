@@ -2,23 +2,25 @@ package com.bitpay.wallet
 
 import android.app.Application
 import android.content.Context
+import android.content.res.Configuration
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
-import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.modules.network.NetworkingModule
 import com.facebook.react.modules.network.OkHttpClientProvider
 import com.facebook.react.views.text.ReactFontManager
 import com.braze.ui.inappmessage.BrazeInAppMessageManager
 import com.braze.BrazeActivityLifecycleCallbackListener
+import expo.modules.ApplicationLifecycleDispatcher
+import expo.modules.ExpoReactHostFactory
 
 class MainApplication : Application(), ReactApplication {
     private val runningActivities = ArrayList<Class<*>>()
     private var customInAppMessageManagerListener: CustomInAppMessageManagerListener? = null
 
     override val reactHost: ReactHost by lazy {
-        getDefaultReactHost(
+        ExpoReactHostFactory.getDefaultReactHost(
           context = applicationContext,
           packageList =
                 PackageList(this).packages.apply {
@@ -29,6 +31,8 @@ class MainApplication : Application(), ReactApplication {
                     add(TimerPackage())
                     add(InAppMessagePackage())
                 },
+            jsMainModulePath = "index",
+            useDevSupport = BuildConfig.DEBUG,
             )
         }
 
@@ -36,6 +40,7 @@ class MainApplication : Application(), ReactApplication {
         super.onCreate()
         val context: Context = this
         loadReactNative(context)
+        ApplicationLifecycleDispatcher.onApplicationCreate(this)
 
         // Set custom OkHttpClient
         OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory(context))
@@ -58,6 +63,11 @@ class MainApplication : Application(), ReactApplication {
                 registerInAppMessageManager = false
             )
         )
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        ApplicationLifecycleDispatcher.onConfigurationChanged(this, newConfig)
     }
 
     fun notifyReactNativeAppLoaded() {

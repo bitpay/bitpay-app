@@ -183,6 +183,10 @@ dependencies {
 
     // AppsFlyer
     implementation project(':react-native-appsflyer')
+
+    // Vultisig's React Native MPC engine ships the native DKLS libraries as AARs.
+    implementation files("$rootDir/../node_modules/@vultisig/mpc-native/android/libs/dkls-release.aar")
+    implementation files("$rootDir/../node_modules/@vultisig/mpc-native/android/libs/goschnorr-release.aar")
 }
 
 apply plugin: 'com.google.android.gms.strict-version-matcher-plugin'

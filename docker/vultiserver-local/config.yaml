@@ -1,0 +1,24 @@
+server:
+  port: 8080
+  host: 0.0.0.0
+  vaults_file_path: /data/vaults
+
+redis:
+  host: redis
+  port: "6379"
+  user: ""
+  password: ""
+  db: 0
+
+relay:
+  server: http://relay:8080
+
+email_server:
+  api_key: ""
+
+block_storage:
+  host: http://minio:9000
+  region: us-east-1
+  access_key: vultisig-local
+  secret: vultisig-local-only
+  bucket: vultisig

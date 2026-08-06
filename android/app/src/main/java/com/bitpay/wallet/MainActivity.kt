@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.view.View
 import android.view.WindowManager
 import com.braze.reactbridge.BrazeReactUtils
@@ -15,6 +16,7 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnable
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
 import com.zoontek.rnbootsplash.RNBootSplash
+import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
 
@@ -29,9 +31,20 @@ class MainActivity : ReactActivity() {
      * which allows you to easily enable Fabric and Concurrent React (aka React 18) with two boolean flags.
      */
     override fun createReactActivityDelegate(): ReactActivityDelegate =
-        DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+        ReactActivityDelegateWrapper(
+            this,
+            BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+            DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled),
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (BuildConfig.DEBUG) {
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putString("debug_http_host", "localhost:8081")
+                .apply()
+        }
+
         // Integrity check must run before React Native initialises.
         // super.onCreate is called first in the failure path so the activity window token
         // is valid when AlertDialog.Builder tries to attach the dialog.
@@ -48,11 +61,6 @@ class MainActivity : ReactActivity() {
         (application as MainApplication).addActivityToStack(this.javaClass)
 
         window.apply {
-            setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
-
             if (Build.VERSION.SDK_INT in 19..20) {
                 setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true)
             }

@@ -21,6 +21,7 @@ import WalletSettings from './screens/WalletSettings';
 import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
+import VultisigFastVault from './screens/VultisigFastVault';
 import {H7, HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
@@ -134,6 +135,7 @@ export type WalletGroupParamList = {
     isSvmAccount?: boolean;
   };
   CreationOptions: undefined;
+  VultisigFastVault: undefined;
   Import: ImportParamList;
   CreateEncryptPassword: {key: Key};
   ExtendedPrivateKey: {xPrivKey: string};
@@ -223,6 +225,7 @@ export enum WalletScreens {
   WALLET_DETAILS = 'WalletDetails',
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
+  VULTISIG_FAST_VAULT = 'VultisigFastVault',
   IMPORT = 'Import',
   CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
   EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
@@ -348,6 +351,10 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.CREATION_OPTIONS}
         component={CreationOptions}
+      />
+      <Wallet.Screen
+        name={WalletScreens.VULTISIG_FAST_VAULT}
+        component={VultisigFastVault}
       />
       <Wallet.Screen
         name={WalletScreens.CREATE_ENCRYPT_PASSWORD}

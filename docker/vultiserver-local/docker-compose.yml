@@ -1,0 +1,136 @@
+name: bitpay-vultisig-local
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks: [vultisig-local]
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data"]
+    environment:
+      MINIO_ROOT_USER: vultisig-local
+      MINIO_ROOT_PASSWORD: vultisig-local-only
+    restart: unless-stopped
+    volumes:
+      - minio-data:/data
+    networks: [vultisig-local]
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        until mc alias set local http://minio:9000 vultisig-local vultisig-local-only; do sleep 1; done
+        mc mb --ignore-existing local/vultisig
+    restart: "no"
+    networks: [vultisig-local]
+
+  relay:
+    image: alpine:3.22
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["/app/vultisig-relay", "-config", "/app/relay-config.json"]
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./bin/vultisig-relay:/app/vultisig-relay:ro
+      - ./relay-config.json:/app/relay-config.json:ro
+    networks: [vultisig-local]
+
+  relay-edge:
+    image: nginx:1.27-alpine
+    depends_on:
+      relay:
+        condition: service_started
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    volumes:
+      - ./relay-edge.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "127.0.0.1:8671:8080"
+    networks: [vultisig-local, loopback-edge]
+
+  vultiserver-api:
+    image: alpine:3.22
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    command: ["/app/vultiserver-api"]
+    working_dir: /app
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./bin/vultiserver-api:/app/vultiserver-api:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - vault-data:/data/vaults
+    ports:
+      - "127.0.0.1:8670:8080"
+    networks: [vultisig-local, loopback-edge]
+
+  vultiserver-worker:
+    image: debian:bookworm-slim
+    platform: linux/amd64
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      relay:
+        condition: service_started
+    command: ["/app/vultiserver-worker"]
+    working_dir: /app
+    environment:
+      LD_LIBRARY_PATH: /app/lib
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./bin/vultiserver-worker:/app/vultiserver-worker:ro
+      - ./bin/lib:/app/lib:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - vault-data:/data/vaults
+    networks: [vultisig-local]
+
+  verification-code-logger:
+    image: redis:7.4-alpine
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["/bin/sh", "/app/verification-code-logger.sh"]
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./verification-code-logger.sh:/app/verification-code-logger.sh:ro
+    networks: [vultisig-local]
+
+networks:
+  vultisig-local:
+    internal: true
+  loopback-edge:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
+
+volumes:
+  redis-data:
+  minio-data:
+  vault-data:

@@ -5,3 +5,4 @@ export * from '../effects/rates/rates';
 export * from '../effects/create-multisig/create-multisig';
 export * from '../effects/join-multisig/join-multisig';
 export * from '../effects/status/statusv2';
+export * from '../effects/vultisig/vultisig';

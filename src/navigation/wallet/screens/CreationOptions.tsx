@@ -111,6 +111,14 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       },
     },
     {
+      id: 'vultisigFastVault',
+      title: t('Vultisig Fast Vault'),
+      description: t(
+        'Create a Vultisig Fast Vault that signs a BitPay Bitcoin Testnet4 wallet',
+      ),
+      cta: () => navigation.navigate('VultisigFastVault'),
+    },
+    {
       id: 'addMultisig',
       title: t('Add Shared Wallet'),
       description: t(

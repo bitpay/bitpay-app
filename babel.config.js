@@ -6,6 +6,7 @@ const isTest = NODE_ENV === 'test';
 const plugins = [
   'babel-plugin-transform-import-meta',
   '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-transform-class-static-block',
   '@babel/plugin-transform-shorthand-properties',
   '@babel/plugin-transform-arrow-functions',
   '@babel/plugin-proposal-optional-chaining',

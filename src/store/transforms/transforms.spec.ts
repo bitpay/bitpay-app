@@ -10,6 +10,9 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
+jest.mock('react-native-nitro-fetch', () => ({fetch: jest.fn()}));
+jest.mock('@vultisig/sdk', () => ({}));
+
 jest.mock('../../lib/bwc', () => {
   const mockWalletClient = {
     credentials: {},
@@ -184,6 +187,19 @@ describe('bootstrapKey', () => {
   it('returns key unchanged when key has hardwareSource', () => {
     const key = makeKey({hardwareSource: 'ledger'});
     const result = bootstrapKey(key, 'some-id');
+    expect(result).toBe(key);
+  });
+
+  it('returns key unchanged when key has an external signer', () => {
+    const key = makeKey({
+      externalSigner: {
+        type: 'vultisig-fast',
+        vaultId: 'vault-id',
+        publicKeyEcdsa: 'public-key',
+        accountPath: "m/84'/1'/0'",
+      },
+    } as any);
+    const result = bootstrapKey(key, 'external-signer-key');
     expect(result).toBe(key);
   });
 

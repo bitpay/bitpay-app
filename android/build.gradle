@@ -26,6 +26,7 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+apply plugin: "expo-root-project"
 
 allprojects {
     repositories {
@@ -50,5 +51,21 @@ allprojects {
         maven { url 'https://www.jitpack.io' }
         maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
         maven { url "https://dl.appsflyer.com" }
+        maven {
+            url = uri("https://maven.pkg.github.com/trustwallet/wallet-core")
+            credentials {
+                username = System.getenv("GITHUB_USER")
+                    ?: System.getenv("GITHUB_ACTOR")
+                    ?: System.getenv("TRUSTWALLET_USER")
+                    ?: "token"
+                password = System.getenv("GITHUB_TOKEN")
+                    ?: System.getenv("GH_TOKEN")
+                    ?: System.getenv("TRUSTWALLET_PAT")
+                    ?: ""
+            }
+            content {
+                includeGroup("com.trustwallet")
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ const {
 } = getDefaultConfig();
 
 const SHIM_PATH = path.resolve(__dirname, 'shims/silence-dkls-web.js');
+const FS_PROMISES_SHIM = path.resolve(__dirname, 'shims/fs-promises.js');
 const REAL_SILENCE_PATH = path.resolve(
   __dirname,
   'node_modules/@silencelaboratories/dkls-wasm-ll-web/dkls-wasm-ll-web.js'
@@ -16,10 +17,31 @@ const SILENCE_WASM_PATH = path.resolve(
   __dirname,
   'node_modules/@silencelaboratories/dkls-wasm-ll-web/dkls-wasm-ll-web_bg.wasm'
 );
+const SEVEN_ZIP_SHIM = path.resolve(
+  __dirname,
+  'shims/vultisig-rn-assets.js',
+);
 
 const ALIASES = {
   tslib: path.resolve(__dirname, 'node_modules/tslib/tslib.es6.js'),
   crypto: require.resolve('react-native-quick-crypto'),
+  http: require.resolve('@tradle/react-native-http'),
+  https: require.resolve('https-browserify'),
+  os: require.resolve('react-native-os'),
+  path: require.resolve('path-browserify'),
+  fs: require.resolve('react-native-level-fs'),
+  stream: require.resolve('stream-browserify'),
+  _stream_transform: require.resolve('readable-stream/transform'),
+  _stream_readable: require.resolve('readable-stream/readable'),
+  _stream_writable: require.resolve('readable-stream/writable'),
+  _stream_duplex: require.resolve('readable-stream/duplex'),
+  _stream_passthrough: require.resolve('readable-stream/passthrough'),
+  vm: require.resolve('vm-browserify'),
+  'fs/promises': FS_PROMISES_SHIM,
+  'react-native-fast-pbkdf2': path.resolve(
+    __dirname,
+    'shims/react-native-fast-pbkdf2.js',
+  ),
 };
 
 /**
@@ -74,6 +96,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     moduleName = 'rpc-websockets/dist/index.browser.mjs';
   }
 
+  if (moduleName === '7z-wasm') moduleName = SEVEN_ZIP_SHIM;
+
   if (
     moduleName === '@silencelaboratories/dkls-wasm-ll-web' ||
     moduleName.startsWith('@silencelaboratories/dkls-wasm-ll-web/')
@@ -83,6 +107,10 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
   if (moduleName === '@@silence-original') moduleName = REAL_SILENCE_PATH;
   if (moduleName === '@@silence-wasm')     moduleName = SILENCE_WASM_PATH;
+  if (moduleName === 'fs/promises') moduleName = FS_PROMISES_SHIM;
+  if (moduleName === 'react-native-fast-pbkdf2') {
+    moduleName = ALIASES['react-native-fast-pbkdf2'];
+  }
 
   return context.resolveRequest(
     context,

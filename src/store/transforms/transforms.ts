@@ -83,7 +83,7 @@ export const bootstrapWallets = (wallets: Wallet[]) => {
 export const bootstrapKey = (key: Key, id: string) => {
   if (id === 'readonly') {
     return key;
-  } else if (key.hardwareSource) {
+  } else if (key.hardwareSource || key.externalSigner) {
     return key;
   } else if (key.properties?.metadata) {
     try {
