@@ -119,7 +119,10 @@ export const createVultisigFastVault = async ({
       password,
       signal,
       persistPending: true,
-      waitForServerKeygenComplete: false,
+      // Do not show the verification step until VultiServer has persisted its
+      // share and generated the code. A local debug/WASM keygen can take more
+      // than one minute on a cold Metro bundle.
+      waitForServerKeygenComplete: true,
       onProgress: onProgress as any,
     });
   });

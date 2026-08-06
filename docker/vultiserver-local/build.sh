@@ -55,9 +55,17 @@ docker run --rm \
   -v "$stack_dir/worker/main.go:/src/cmd/worker/main.go:ro" \
   -v "$bin_dir:/out" \
   -v vultiserver-go-mod-cache:/go/pkg/mod \
-  -w /src \
+  -w /tmp \
   golang:1.25-bookworm \
   sh -ec '
+    cp -a /src /tmp/vultiserver
+    cd /tmp/vultiserver
+    matches="$(grep -c "timeout := time.Minute" relay/session.go)"
+    [ "$matches" -eq 1 ] || {
+      echo "unexpected VultiServer completion-timeout source shape" >&2
+      exit 1
+    }
+    sed -i "s/timeout := time.Minute/timeout := 3 * time.Minute/" relay/session.go
     CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -o /out/vultiserver-worker ./cmd/worker
     mkdir -p /out/lib
     cp /go/pkg/mod/github.com/vultisig/go-wrappers@*/includes/linux/*.so /out/lib/

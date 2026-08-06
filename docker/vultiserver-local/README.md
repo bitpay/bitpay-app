@@ -12,11 +12,21 @@ email field, so the app supplies `local-verification@vultisig.invalid`, a
 reserved non-deliverable placeholder that is never processed by an email
 worker.
 
+The build also changes the worker's relay completion wait from one minute to
+three minutes without modifying the official checkout. Cold debug/WASM keygen
+on Android can exceed the upstream one-minute wait even though both MPC parties
+finish successfully. The build verifies the exact upstream source line before
+applying this local-only adapter and fails on upstream drift.
+
 Verification codes are printed by the `verification-code-logger` service:
 
 ```sh
 yarn vultisig:local:logs
 ```
+
+The app waits for server-side keygen completion before showing the verification
+screen. If no code is logged, treat creation as failed rather than inventing or
+accepting a code.
 
 The only host ports are loopback-bound:
 
