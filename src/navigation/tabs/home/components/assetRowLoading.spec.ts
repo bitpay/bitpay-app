@@ -2,6 +2,7 @@ import {
   getAssetRowPnlLoading,
   getAssetRowPopulateLoading,
   resolveAssetRowDisplayPresentation,
+  shouldShowAssetActivationPlaceholder,
   shouldForceAssetListSkeleton,
 } from './assetRowLoading';
 
@@ -201,6 +202,30 @@ describe('shouldForceAssetListSkeleton', () => {
     expect(
       shouldForceAssetListSkeleton({
         forceSkeleton: false,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('shouldShowAssetActivationPlaceholder', () => {
+  const loadingArgs = {
+    portfolioChartsEnabled: true,
+    hasAnyVisibleWalletBalance: true,
+    hasTrackableAssetKeys: true,
+    hasItems: false,
+    hasVisibleWallets: true,
+    populateInProgress: true,
+  };
+
+  it('shows the placeholder while trackable assets are activating', () => {
+    expect(shouldShowAssetActivationPlaceholder(loadingArgs)).toBe(true);
+  });
+
+  it('does not show an endless placeholder for testnet-only balances', () => {
+    expect(
+      shouldShowAssetActivationPlaceholder({
+        ...loadingArgs,
+        hasTrackableAssetKeys: false,
       }),
     ).toBe(false);
   });

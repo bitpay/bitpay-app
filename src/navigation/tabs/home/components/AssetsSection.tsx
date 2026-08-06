@@ -35,6 +35,7 @@ import type {Key} from '../../../../store/wallet/wallet.models';
 import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods';
+import {shouldShowAssetActivationPlaceholder} from './assetRowLoading';
 
 const Container = styled.View`
   margin-top: 5px;
@@ -235,11 +236,14 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     topAssetKeys,
     visibleItems,
   ]);
-  const shouldShowActivationPlaceholder =
-    portfolioChartsEnabled &&
-    hasAnyVisibleWalletBalance &&
-    !items.length &&
-    (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
+  const shouldShowActivationPlaceholder = shouldShowAssetActivationPlaceholder({
+    portfolioChartsEnabled,
+    hasAnyVisibleWalletBalance,
+    hasTrackableAssetKeys: topAssetKeys.length > 0,
+    hasItems: items.length > 0,
+    hasVisibleWallets: visibleWallets.length > 0,
+    populateInProgress: portfolio.populateStatus?.inProgress,
+  });
 
   if (shouldShowActivationPlaceholder) {
     return (

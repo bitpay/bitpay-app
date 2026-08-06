@@ -28,6 +28,23 @@ export function shouldForceAssetListSkeleton(args: {
   return !!args.forceSkeleton;
 }
 
+export function shouldShowAssetActivationPlaceholder(args: {
+  portfolioChartsEnabled: boolean;
+  hasAnyVisibleWalletBalance: boolean;
+  hasTrackableAssetKeys: boolean;
+  hasItems: boolean;
+  hasVisibleWallets: boolean;
+  populateInProgress?: boolean;
+}): boolean {
+  return (
+    args.portfolioChartsEnabled &&
+    args.hasAnyVisibleWalletBalance &&
+    args.hasTrackableAssetKeys &&
+    !args.hasItems &&
+    (args.hasVisibleWallets || !!args.populateInProgress)
+  );
+}
+
 export function resolveAssetRowDisplayPresentation(args: {
   item: AssetRowItem;
   preservedItem?: AssetRowItem;
