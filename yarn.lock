@@ -1786,7 +1786,7 @@
   resolved "https://registry.yarnpkg.com/@braze/react-native-sdk/-/react-native-sdk-20.1.0.tgz#3ef34c045e561affa7756ad8b88c231f8390192f"
   integrity sha512-OM4Nwj2Eld6ICTFFpQQ/EgzG+f+DyW+sN9Y2HyavWIkreBbYXkEtuRPbAmplG4jw8RI4Gqr7S6RPhs0gKQDgfw==
 
-"@bufbuild/protobuf@^2.12.0":
+"@bufbuild/protobuf@^2.13.0":
   version "2.13.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.13.0.tgz#92ae09d6412c658a56b3c2cd867386850064c901"
   integrity sha512-acq7c49vxfm1ggJ95P70TX7ABDM0vxr1SYD3BB0o0jnBLB4OAqeHyKuN+cD3w80gXEDQ2zxHpR6CUeA+O/aU9g==
@@ -4251,7 +4251,7 @@
     "@mysten/utils" "^0.4.0"
     "@scure/base" "^2.2.0"
 
-"@mysten/sui@^2.20.3":
+"@mysten/sui@^2.22.1":
   version "2.23.2"
   resolved "https://registry.yarnpkg.com/@mysten/sui/-/sui-2.23.2.tgz#cf63071e1b98760979a937df757546c539e655b0"
   integrity sha512-cUnE4v/0NSKsdihU09qmSS82pqlRPb6XjPO+iU5KAqSn5rRsEcbJZ/lTsW1INfnmWeHs6/Xobv+vEedDlQ1CZw==
@@ -7643,14 +7643,14 @@
   resolved "https://registry.yarnpkg.com/@vultisig/mpc-types/-/mpc-types-0.2.3.tgz#549a67c3f6b7513fc0f649aed918874d7e3db1e4"
   integrity sha512-4HJhe4JNceVX39d6QUnMp8k0B6676kFA0EJEaTepP7psyUck8VgZV4aMxTdlG2ixcC5S6XSsqkbTtmGvF8ajIA==
 
-"@vultisig/sdk@file:../vultisig-sdk-bitpay.tgz":
-  version "2.20.0"
-  resolved "file:../vultisig-sdk-bitpay.tgz#6cc836a34a2d1998e579c5bda5456169c6799781"
+"@vultisig/sdk@git+https://github.com/secretagentfranco/vultisig-sdk.git#c3bb52daed8a4e3b4bb611569b04de0e43e4297d":
+  version "4.1.0"
+  resolved "git+https://github.com/secretagentfranco/vultisig-sdk.git#c3bb52daed8a4e3b4bb611569b04de0e43e4297d"
   dependencies:
     "7z-wasm" "^1.2.0"
     "@balancer-labs/balancer-maths" "^0.0.41"
     "@balancer/sdk" "6.1.1"
-    "@bufbuild/protobuf" "^2.12.0"
+    "@bufbuild/protobuf" "^2.13.0"
     "@coral-xyz/anchor" "^0.32.1"
     "@cosmjs/encoding" "^0.39.0"
     "@cosmjs/stargate" "^0.39.0"
@@ -7659,7 +7659,7 @@
     "@formatjs/intl-numberformat" "^9.3.11"
     "@formatjs/intl-pluralrules" "^6.3.10"
     "@lifi/sdk" "^4.1.0"
-    "@mysten/sui" "^2.20.3"
+    "@mysten/sui" "^2.22.1"
     "@noble/hashes" "^1.8.0"
     "@polkadot/api" "^16.5.6"
     "@scure/base" "^1.2.5"
@@ -7688,7 +7688,7 @@
     event-target-polyfill "^0.0.4"
     events "^3.3.0"
     i18next "^26.3.1"
-    i18next-http-backend "^4.0.0"
+    i18next-http-backend "^4.0.1"
     isomorphic-fetch "^3.0.0"
     node-fetch "^3.3.2"
     path-browserify "^1.0.1"
@@ -7699,7 +7699,7 @@
     tiny-secp256k1 "^2.2.4"
     util "^0.12.5"
     uuid "^14.0.1"
-    viem "^2.53.1"
+    viem "^2.55.10"
     vite-plugin-node-polyfills "^0.28.0"
     vite-plugin-wasm "^3.6.0"
     ws "^8.21.1"
@@ -12922,7 +12922,7 @@ humanize-ms@^1.2.1:
   dependencies:
     ms "^2.0.0"
 
-i18next-http-backend@^4.0.0:
+i18next-http-backend@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/i18next-http-backend/-/i18next-http-backend-4.0.1.tgz#c94dff85c7a41b1db0c1eac3e004f744c15d1047"
   integrity sha512-O+7MwPCJIKCu68vho8JtD1HF8QHyMPzoChIDFfYCrpaDqX6oq3RqASujnpKEdnNCEOb+kLMOHTNTcGKpj7B1BA==
@@ -20824,7 +20824,7 @@ viem@2.51.3:
     ox "0.14.25"
     ws "8.20.1"
 
-viem@^2.53.1:
+viem@^2.55.10:
   version "2.55.11"
   resolved "https://registry.yarnpkg.com/viem/-/viem-2.55.11.tgz#50aba8e3a686866549e090f111026375d85d914b"
   integrity sha512-RR5MwtdUnFfqw6ZGoFptizywyLOkLuhTL7UafoP3Irf2upXpANakQkLgGqY4H7A7+8JBxjUs6lElGF5zuGjMEw==

@@ -90,7 +90,7 @@
     "@solana/webcrypto-ed25519-polyfill": "2.1.1",
     "@tradle/react-native-http": "2.0.1",
     "@vultisig/mpc-native": "0.1.4",
-    "@vultisig/sdk": "file:../vultisig-sdk-bitpay.tgz",
+    "@vultisig/sdk": "git+https://github.com/secretagentfranco/vultisig-sdk.git#c3bb52daed8a4e3b4bb611569b04de0e43e4297d",
     "@vultisig/walletcore-native": "0.1.2",
     "@walletconnect/jsonrpc-types": "1.0.4",
     "@walletconnect/react-native-compat": "2.21.8",
