@@ -516,7 +516,11 @@ const ExternalServicesOfferSelector: React.FC<
   if (context === 'buyCrypto') {
     if (
       preSetPaymentMethod &&
-      PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey]
+      PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey] &&
+      country &&
+      PaymentMethodsAvailable[
+        preSetPaymentMethod as PaymentMethodKey
+      ]?.supportedCountries?.includes(country)
     ) {
       _paymentMethod =
         PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey];
@@ -536,7 +540,11 @@ const ExternalServicesOfferSelector: React.FC<
   } else if (context === 'sellCrypto') {
     if (
       preSetPaymentMethod &&
-      WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey]
+      WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey] &&
+      country &&
+      WithdrawalMethodsAvailable[
+        preSetPaymentMethod as WithdrawalMethodKey
+      ]?.supportedCountries?.includes(country)
     ) {
       _paymentMethod =
         WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey];

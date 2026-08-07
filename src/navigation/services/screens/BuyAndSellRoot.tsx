@@ -102,7 +102,10 @@ import {RootState} from '../../../store';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import uuid from 'react-native-uuid';
-import {PaymentMethod} from '../buy-crypto/constants/BuyCryptoConstants';
+import {
+  PaymentMethod,
+  PaymentMethodKey,
+} from '../buy-crypto/constants/BuyCryptoConstants';
 import {
   BanxaCreateOrderData,
   BanxaCreateOrderRequestData,
@@ -216,7 +219,10 @@ import {simplexGetCurrencies} from '../../../store/buy-crypto/effects/simplex/si
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import _ from 'lodash';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
-import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
+import {
+  WithdrawalMethod,
+  WithdrawalMethodKey,
+} from '../sell-crypto/constants/SellCryptoConstants';
 import {SellCryptoActions} from '../../../store/sell-crypto';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
@@ -470,6 +476,7 @@ export interface BuyAndSellRootProps {
   currencyAbbreviation?: string; // used from charts and deeplinks.
   chain?: string; // used from charts and deeplinks.
   partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
+  paymentMethod?: PaymentMethodKey | WithdrawalMethodKey | undefined; // used from deeplinks.
   fromDeeplink?: boolean;
   reduceTopGap?: boolean;
 }
@@ -611,6 +618,10 @@ const BuyAndSellRoot = ({
   const fromChain = route.params?.chain?.toLowerCase();
   const preSetPartner = route.params?.partner?.toLowerCase() as
     | BuyCryptoExchangeKey
+    | undefined;
+  const preSetPaymentMethod = route.params?.paymentMethod as
+    | PaymentMethodKey
+    | WithdrawalMethodKey
     | undefined;
   const fromDeeplink = route.params?.fromDeeplink;
 
@@ -4175,6 +4186,7 @@ const BuyAndSellRoot = ({
               chain={selectedWallet?.chain || ''}
               country={country}
               preSetPartner={preSetPartner}
+              preSetPaymentMethod={preSetPaymentMethod}
               buyCryptoConfig={externalServicesConfig?.buyCrypto}
               sellCryptoConfig={externalServicesConfig?.sellCrypto}
               preLoadSellPartnersData={sellCryptoExchangesDefault}

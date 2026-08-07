@@ -74,7 +74,7 @@ export const getSellEnabledPaymentMethods = (
   WithdrawalMethodsAvailable.cashApp.enabled = isPaymentMethodEnabled(
     WithdrawalMethodsAvailable.cashApp,
     locationCountry,
-    userCountry,
+    undefined, // CashApp is only supported for located US. users, so we don't check userCountry here
   );
 
   // Helper function to check if a payment method is supported by a specific exchange
