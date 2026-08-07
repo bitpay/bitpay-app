@@ -114,7 +114,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   },
   cashApp: {
     order: 3.5,
-    label: 'Cash App',
+    label: 'Cash App Pay',
     method: 'cashApp',
     waitingTimeDescription: '< 10 mins',
     imgLogo: (

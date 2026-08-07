@@ -205,7 +205,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
   },
   cashApp: {
     order: 2.5,
-    label: 'Cash App',
+    label: 'Cash App Pay',
     method: 'cashApp',
     waitingTimeDescription: '< 10 mins',
     imgLogo: (
