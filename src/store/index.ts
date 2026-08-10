@@ -1,4 +1,5 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
+import crypto from 'crypto';
 import {
   Action,
   AnyAction,
@@ -14,7 +15,6 @@ import {getUniqueId} from 'react-native-device-info';
 import * as Keychain from 'react-native-keychain';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
-import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
 import {
@@ -28,6 +28,7 @@ import {
   transformPortfolioPopulateStatus,
   encryptSpecificFields,
 } from './transforms/transforms';
+import {decryptPersistValue, encryptPersistValue} from './transforms/encrypt';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
@@ -99,6 +100,16 @@ import {logManager} from '../managers/LogManager';
 import * as Sentry from '@sentry/react-native';
 
 export const storage = new MMKV();
+
+const unencryptedPersistStores = new Set([
+  'APP',
+  'MARKET_STATS',
+  'PORTFOLIO',
+  'RATE',
+  'SHOP',
+  'SHOP_CATALOG',
+  'WALLET',
+]);
 
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
@@ -466,7 +477,7 @@ const getStore = async () => {
     // middlewares.push(inmmutableMiddleware);
   }
 
-  const secretKey = await getEncryptionKey().catch(() => getUniqueId());
+  const secretKey = await getEncryptionKey();
 
   const rootPersistConfig = {
     ...basePersistConfig,
@@ -491,31 +502,56 @@ const getStore = async () => {
         return inboundState;
       }),
       encryptSpecificFields(secretKey),
-      encryptTransform({
-        secretKey,
-        onError: err => {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
+      createTransform<any, any, RootState>(
+        (inboundState, key) => {
+          if (typeof key === 'string' && unencryptedPersistStores.has(key)) {
+            return JSON.stringify(inboundState);
+          }
 
-          store.dispatch(
-            LogActions.persistLog(
-              LogActions.error(`Encrypt transform failed - ${errStr}`),
-            ),
+          return encryptPersistValue(
+            inboundState,
+            secretKey,
+            `persist:${String(key)}`,
           );
-          Sentry.captureException(err, {
-            level: 'error',
-          });
         },
-        unencryptedStores: [
-          'APP',
-          'MARKET_STATS',
-          'PORTFOLIO',
-          'RATE',
-          'SHOP',
-          'SHOP_CATALOG',
-          'WALLET',
-        ],
-      }),
+        (outboundState, key) => {
+          if (typeof key === 'string' && unencryptedPersistStores.has(key)) {
+            if (typeof outboundState === 'string') {
+              try {
+                return JSON.parse(outboundState);
+              } catch {}
+            } else {
+              return outboundState;
+            }
+          }
+
+          if (typeof outboundState !== 'string') {
+            return outboundState;
+          }
+
+          try {
+            return decryptPersistValue(
+              outboundState,
+              secretKey,
+              `persist:${String(key)}`,
+            );
+          } catch (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            store.dispatch(
+              LogActions.persistLog(
+                LogActions.error(
+                  `Decrypt persist transform failed - ${errStr}`,
+                ),
+              ),
+            );
+            Sentry.captureException(err, {
+              level: 'error',
+            });
+            throw err;
+          }
+        },
+      ),
     ],
   };
 
@@ -645,10 +681,25 @@ export async function getEncryptionKey(): Promise<string> {
     Sentry.captureException(err, {
       level: 'error',
     });
+    throw err;
   }
 
-  logManager.warn('getEncryptionKey: generating new key (no existing key)');
-  const newKey = getUniqueId();
+  let hasLegacyPersistedState = false;
+  try {
+    hasLegacyPersistedState =
+      storage.contains('persist:root') || (await backupFileExists());
+  } catch {
+    hasLegacyPersistedState = await backupFileExists();
+  }
+
+  const newKey = hasLegacyPersistedState
+    ? getUniqueId()
+    : crypto.randomBytes(32).toString('base64');
+  logManager.warn(
+    `getEncryptionKey: generating ${
+      hasLegacyPersistedState ? 'legacy-compatible' : 'random'
+    } key (no existing key)`,
+  );
 
   try {
     // Save to keychain
@@ -667,6 +718,7 @@ export async function getEncryptionKey(): Promise<string> {
     Sentry.captureException(err, {
       level: 'error',
     });
+    throw err;
   }
 
   return newKey;

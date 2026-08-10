@@ -582,22 +582,21 @@ describe('encryptSpecificFields', () => {
     expect(result).toBe(state);
   });
 
-  it('inbound: handles encrypt error by calling logTransformFailure', () => {
+  it('inbound: reports and rethrows encryption errors', () => {
     (encryptWalletStore as jest.Mock).mockImplementationOnce(() => {
       throw new Error('encrypt failed');
     });
     const {inFn} = getTransform();
     const state: any = {keys: {}};
-    // Should not throw — the try/catch inside swallows it
-    expect(() => inFn(state, 'WALLET')).not.toThrow();
+    expect(() => inFn(state, 'WALLET')).toThrow('encrypt failed');
   });
 
-  it('outbound: handles decrypt error by calling logTransformFailure', () => {
+  it('outbound: reports and rethrows decryption errors', () => {
     (decryptWalletStore as jest.Mock).mockImplementationOnce(() => {
       throw new Error('decrypt failed');
     });
     const {outFn} = getTransform();
     const state: any = {keys: {}};
-    expect(() => outFn(state, 'WALLET')).not.toThrow();
+    expect(() => outFn(state, 'WALLET')).toThrow('decrypt failed');
   });
 });

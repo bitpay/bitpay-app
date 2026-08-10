@@ -20,6 +20,10 @@ const SILENCE_WASM_PATH = path.resolve(
 const ALIASES = {
   tslib: path.resolve(__dirname, 'node_modules/tslib/tslib.es6.js'),
   crypto: require.resolve('react-native-quick-crypto'),
+  bitauth: path.resolve(
+    __dirname,
+    'node_modules/bitauth/lib/bitauth-browserify.js',
+  ),
 };
 
 /**
