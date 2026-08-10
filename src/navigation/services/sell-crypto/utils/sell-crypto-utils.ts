@@ -15,7 +15,14 @@ import {
 } from './simplex-sell-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
-import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import {
+  PaymentMethodsConfig,
+  SellCryptoConfig,
+} from '../../../../store/external-services/external-services.types';
+import {
+  getExternalServiceSymbol,
+  isPaymentMethodDisabledForPartner,
+} from '../../utils/external-services-utils';
 import {
   getRampSellSupportedCurrencies,
   rampSellSupportedFiatCurrencies,
@@ -36,10 +43,13 @@ export const getSellEnabledPaymentMethods = (
   locationCountry?: string,
   userCountry?: string,
   exchange?: SellCryptoExchangeKey | undefined,
+  sellCryptoConfig?: SellCryptoConfig,
 ): Partial<WithdrawalMethods> => {
   if (!currency || !coin || !chain) {
     return {};
   }
+
+  const paymentMethodsConfig = sellCryptoConfig?.paymentMethods;
 
   const isPaymentMethodEnabled = (
     paymentMethod: WithdrawalMethod,
@@ -87,14 +97,20 @@ export const getSellEnabledPaymentMethods = (
     locationCountry: string | undefined,
     userCountry: string | undefined,
   ) => {
-    return isWithdrawalMethodSupported(
-      exchange,
-      method,
-      coin,
-      chain,
-      currency,
-      locationCountry,
-      userCountry,
+    return (
+      !isPaymentMethodDisabledForPartner(
+        sellCryptoConfig?.[exchange],
+        method.method,
+      ) &&
+      isWithdrawalMethodSupported(
+        exchange,
+        method,
+        coin,
+        chain,
+        currency,
+        locationCountry,
+        userCountry,
+      )
     );
   };
 
@@ -156,6 +172,9 @@ export const getSellEnabledPaymentMethods = (
   const EnabledWithdrawalMethods = pickBy(
     WithdrawalMethodsAvailable,
     method => {
+      if (paymentMethodsConfig?.[method.method]?.disabled) {
+        return false;
+      }
       return (
         method.enabled &&
         getSupportedExchanges(
@@ -174,20 +193,28 @@ export const getSellEnabledPaymentMethods = (
   return EnabledWithdrawalMethods;
 };
 
-export const getDefaultPaymentMethod = (country?: string): WithdrawalMethod => {
+export const getDefaultPaymentMethod = (
+  country?: string,
+  paymentMethodsConfig?: PaymentMethodsConfig,
+): WithdrawalMethod => {
+  const isEnabledByConfig = (key: WithdrawalMethodKey) =>
+    !paymentMethodsConfig?.[key]?.disabled;
   if (!country) {
     return WithdrawalMethodsAvailable.debitCard;
   } else if (
+    isEnabledByConfig('ach') &&
     WithdrawalMethodsAvailable.ach.supportedCountries?.includes(country)
   ) {
     return WithdrawalMethodsAvailable.ach;
   } else if (
+    isEnabledByConfig('gbpBankTransfer') &&
     WithdrawalMethodsAvailable.gbpBankTransfer.supportedCountries?.includes(
       country,
     )
   ) {
     return WithdrawalMethodsAvailable.gbpBankTransfer;
   } else if (
+    isEnabledByConfig('sepaBankTransfer') &&
     WithdrawalMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
       country,
     )
