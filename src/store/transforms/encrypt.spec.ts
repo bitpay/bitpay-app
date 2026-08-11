@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import Aes from 'crypto-js/aes.js';
 import {
   decryptAppStore,
   decryptPersistValue,
@@ -15,6 +14,10 @@ import {
 } from './encrypt';
 
 const secretKey = 'test-device-secret';
+const cryptoJs319FieldFixture =
+  'encrypted:U2FsdGVkX1/EPMhpSvHpnaBttHW7Aqj83wQ6ik7Jgl8=';
+const cryptoJs319PersistFixture =
+  'U2FsdGVkX19mVHQCu4aZtdIU0+n2LBW8Hor2eiDb8jHd1IeHDH4ydP1GmWptXm4xOXAPbdRgGqMnRjxv7CcIHw==';
 
 describe('encrypted field values', () => {
   it('round-trips with AES-GCM and produces randomized ciphertext', () => {
@@ -36,12 +39,10 @@ describe('encrypted field values', () => {
     expect(() => decryptValue(encrypted, secretKey, 'wallet:key-b')).toThrow();
   });
 
-  it('reads the legacy CBC field format', () => {
-    const legacyCbc = `encrypted:${Aes.encrypt(
+  it('reads a fixed CBC field produced by CryptoJS 3.1.9-1', () => {
+    expect(decryptValue(cryptoJs319FieldFixture, secretKey)).toBe(
       'legacy mnemonic',
-      secretKey,
-    ).toString()}`;
-    expect(decryptValue(legacyCbc, secretKey)).toBe('legacy mnemonic');
+    );
   });
 
   it('binds wallet ciphertext to its persisted field location', () => {
@@ -154,16 +155,12 @@ describe('encrypted field values', () => {
     it.each(storeCase.fields)(
       'accepts legacy CBC and modern GCM in %s without changing public fields',
       field => {
-        const plaintext = `${storeCase.name}-secret`;
-        const legacy = `encrypted:${Aes.encrypt(
-          plaintext,
-          secretKey,
-        ).toString()}`;
         const legacyState = storeCase.decrypt(
-          storeCase.buildState(field, legacy),
+          storeCase.buildState(field, cryptoJs319FieldFixture),
         );
-        expect(storeCase.read(legacyState, field)).toBe(plaintext);
+        expect(storeCase.read(legacyState, field)).toBe('legacy mnemonic');
 
+        const plaintext = `${storeCase.name}-secret`;
         const modernState = storeCase.encrypt(
           storeCase.buildState(field, plaintext),
         );
@@ -229,10 +226,10 @@ describe('persisted reducer values', () => {
     ).toThrow();
   });
 
-  it('migrates bare CBC values produced by older releases', () => {
-    const legacy = Aes.encrypt(JSON.stringify(state), secretKey).toString();
-
-    expect(decryptPersistValue(legacy, secretKey, context)).toEqual(state);
+  it('migrates a fixed reducer CBC produced by CryptoJS 3.1.9-1', () => {
+    expect(
+      decryptPersistValue(cryptoJs319PersistFixture, secretKey, context),
+    ).toEqual(state);
   });
 
   it('does not fall back to CBC when GCM encryption fails', () => {
