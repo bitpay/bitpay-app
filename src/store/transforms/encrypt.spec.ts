@@ -1,11 +1,15 @@
 import crypto from 'crypto';
 import Aes from 'crypto-js/aes.js';
 import {
+  decryptAppStore,
   decryptPersistValue,
   deserializePersistValue,
+  decryptShopStore,
   decryptValue,
   decryptWalletStore,
+  encryptAppStore,
   encryptPersistValue,
+  encryptShopStore,
   encryptValue,
   encryptWalletStore,
 } from './encrypt';
@@ -66,6 +70,130 @@ describe('encrypted field values', () => {
       },
     };
     expect(() => decryptWalletStore(swapped, secretKey)).toThrow();
+  });
+
+  type ProtectedStoreCase = {
+    name: string;
+    fields: string[];
+    buildState: (field: string, value: unknown) => any;
+    encrypt: (state: any) => any;
+    decrypt: (state: any) => any;
+    read: (state: any, field: string) => unknown;
+    readPublic: (state: any) => unknown;
+  };
+
+  const protectedStoreCases: ProtectedStoreCase[] = [
+    {
+      name: 'WALLET',
+      fields: [
+        'mnemonic',
+        'mnemonicEncrypted',
+        'xPrivKey',
+        'xPrivKeyEncrypted',
+        'xPrivKeyEDDSA',
+        'xPrivKeyEDDSAEncrypted',
+      ],
+      buildState: (field, value) => ({
+        keys: {
+          keyA: {properties: {[field]: value, fingerPrint: 'public-value'}},
+        },
+      }),
+      encrypt: state => encryptWalletStore(state, secretKey),
+      decrypt: state => decryptWalletStore(state, secretKey),
+      read: (state, field) => state.keys.keyA.properties[field],
+      readPublic: state => state.keys.keyA.properties.fingerPrint,
+    },
+    {
+      name: 'APP',
+      fields: ['priv'],
+      buildState: (field, value) => ({
+        identity: {livenet: {[field]: value, pub: 'public-value'}},
+      }),
+      encrypt: state => encryptAppStore(state, secretKey),
+      decrypt: state => decryptAppStore(state, secretKey),
+      read: (state, field) => state.identity.livenet[field],
+      readPublic: state => state.identity.livenet.pub,
+    },
+    {
+      name: 'SHOP',
+      fields: [
+        'accessKey',
+        'barcodeData',
+        'barcodeImage',
+        'claimCode',
+        'claimLink',
+        'pin',
+      ],
+      buildState: (field, value) => ({
+        giftCards: {
+          livenet: [{[field]: value, displayName: 'public-value'}],
+        },
+      }),
+      encrypt: state => encryptShopStore(state, secretKey),
+      decrypt: state => decryptShopStore(state, secretKey),
+      read: (state, field) => state.giftCards.livenet[0][field],
+      readPublic: state => state.giftCards.livenet[0].displayName,
+    },
+  ];
+
+  describe.each(protectedStoreCases)('$name protected fields', storeCase => {
+    const firstField = storeCase.fields[0];
+
+    it.each(storeCase.fields)('rejects plaintext in %s', field => {
+      expect(() =>
+        storeCase.decrypt(storeCase.buildState(field, 'attacker-controlled')),
+      ).toThrow(field);
+    });
+
+    it('rejects a non-string value', () => {
+      expect(() =>
+        storeCase.decrypt(storeCase.buildState(firstField, {injected: true})),
+      ).toThrow('Expected encrypted protected value');
+    });
+
+    it.each(storeCase.fields)(
+      'accepts legacy CBC and modern GCM in %s without changing public fields',
+      field => {
+        const plaintext = `${storeCase.name}-secret`;
+        const legacy = `encrypted:${Aes.encrypt(
+          plaintext,
+          secretKey,
+        ).toString()}`;
+        const legacyState = storeCase.decrypt(
+          storeCase.buildState(field, legacy),
+        );
+        expect(storeCase.read(legacyState, field)).toBe(plaintext);
+
+        const modernState = storeCase.encrypt(
+          storeCase.buildState(field, plaintext),
+        );
+        expect(storeCase.read(modernState, field)).toMatch(/^field-aesgcm-v1:/);
+        const decrypted = storeCase.decrypt(modernState);
+        expect(storeCase.read(decrypted, field)).toBe(plaintext);
+        expect(storeCase.readPublic(decrypted)).toBe('public-value');
+      },
+    );
+
+    it.each([undefined, null, ''])('allows an absent value (%p)', value => {
+      const state = storeCase.buildState(firstField, value);
+      expect(storeCase.read(storeCase.decrypt(state), firstField)).toBe(value);
+    });
+  });
+
+  it('does not include rejected plaintext in the error', () => {
+    const plaintext = 'attacker-controlled-secret';
+    let capturedError: Error | undefined;
+
+    try {
+      protectedStoreCases[0].decrypt(
+        protectedStoreCases[0].buildState('mnemonic', plaintext),
+      );
+    } catch (err) {
+      capturedError = err as Error;
+    }
+
+    expect(capturedError).toBeDefined();
+    expect(capturedError!.message).not.toContain(plaintext);
   });
 });
 
