@@ -22,7 +22,7 @@ const ALIASES = {
   crypto: require.resolve('react-native-quick-crypto'),
   bitauth: path.resolve(
     __dirname,
-    'node_modules/bitauth/lib/bitauth-browserify.js',
+    'node_modules/bitauth/lib/bitauth-node.js',
   ),
 };
 

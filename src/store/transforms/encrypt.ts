@@ -200,6 +200,25 @@ export const decryptPersistValue = (
   return JSON.parse(legacy);
 };
 
+export const deserializePersistValue = (
+  value: unknown,
+  secretKey: string,
+  context: string,
+  allowPlainJson: boolean,
+): any => {
+  if (typeof value !== 'string') {
+    throw new Error('Expected persisted reducer to be a string');
+  }
+
+  if (allowPlainJson) {
+    try {
+      return JSON.parse(value);
+    } catch {}
+  }
+
+  return decryptPersistValue(value, secretKey, context);
+};
+
 // Generic function to transform wallet store (encrypt or decrypt)
 const transformWalletStore = (
   state: any,
