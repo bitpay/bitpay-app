@@ -21,6 +21,9 @@ const isLegacyEncryptedValue = (value: string) =>
 const isEncryptedValue = (value: string) =>
   isModernEncryptedValue(value) || isLegacyEncryptedValue(value);
 
+const hasProtectedValue = (value: unknown): boolean =>
+  value !== undefined && value !== null && value !== '';
+
 const buildAesKey = (secretKey: string): Buffer => {
   return crypto.createHash('sha256').update(secretKey).digest();
 };
@@ -155,8 +158,12 @@ export const decryptValue = (
   secretKey: string,
   context = defaultFieldContext,
 ): any => {
-  if (typeof value !== 'string' || !isEncryptedValue(value)) {
+  if (!hasProtectedValue(value)) {
     return value;
+  }
+
+  if (typeof value !== 'string' || !isEncryptedValue(value)) {
+    throw new Error(`Expected encrypted protected value at ${context}`);
   }
 
   if (value.startsWith(modernEncryptedPrefix)) {
@@ -224,7 +231,7 @@ const transformWalletStore = (
   state: any,
   secretKey: string,
   transformer: (value: any, secretKey: string, context: string) => any,
-  checkCondition: (value: string) => boolean,
+  checkCondition: (value: any) => boolean,
 ): any => {
   if (!state || !state.keys) {
     return state;
@@ -250,7 +257,7 @@ const transformWalletStore = (
     const updatedProperties = fieldsToTransform.reduce(
       (latestProperties, field) => {
         const value = properties[field];
-        if (value && typeof value === 'string' && checkCondition(value)) {
+        if (hasProtectedValue(value) && checkCondition(value)) {
           latestProperties[field] = transformer(
             value,
             secretKey,
@@ -278,14 +285,12 @@ export const encryptWalletStore = (state: any, secretKey: string): any => {
     state,
     secretKey,
     encryptValue,
-    value => !isEncryptedValue(value),
+    value => typeof value === 'string' && !isEncryptedValue(value),
   );
 };
 
 export const decryptWalletStore = (state: any, secretKey: string): any => {
-  return transformWalletStore(state, secretKey, decryptValue, value =>
-    isEncryptedValue(value),
-  );
+  return transformWalletStore(state, secretKey, decryptValue, () => true);
 };
 
 // Generic function to transform app store (encrypt or decrypt)
@@ -293,19 +298,19 @@ const transformAppStore = (
   state: any,
   secretKey: string,
   transformer: (value: any, secretKey: string, context: string) => any,
-  checkCondition: (value: string) => boolean,
+  checkCondition: (value: any) => boolean,
 ): any => {
   if (!state || !state.identity) {
     return state;
   }
 
   const identity = state.identity[Network.mainnet];
-  if (!identity || !identity.priv) {
+  if (!identity) {
     return state;
   }
 
   const privValue = identity.priv;
-  if (privValue && typeof privValue === 'string' && checkCondition(privValue)) {
+  if (hasProtectedValue(privValue) && checkCondition(privValue)) {
     return {
       ...state,
       identity: {
@@ -329,14 +334,12 @@ export const encryptAppStore = (state: any, secretKey: string): any => {
     state,
     secretKey,
     encryptValue,
-    value => !isEncryptedValue(value),
+    value => typeof value === 'string' && !isEncryptedValue(value),
   );
 };
 
 export const decryptAppStore = (state: any, secretKey: string): any => {
-  return transformAppStore(state, secretKey, decryptValue, value =>
-    isEncryptedValue(value),
-  );
+  return transformAppStore(state, secretKey, decryptValue, () => true);
 };
 
 // Generic function to transform shop store (encrypt or decrypt)
@@ -344,7 +347,7 @@ const transformShopStore = (
   state: any,
   secretKey: string,
   transformer: (value: any, secretKey: string, context: string) => any,
-  checkCondition: (value: string) => boolean,
+  checkCondition: (value: any) => boolean,
 ): any => {
   if (!state || !state.giftCards || !state.giftCards[Network.mainnet]) {
     return state;
@@ -369,7 +372,7 @@ const transformShopStore = (
     const updatedCard = {...card};
     fieldsToTransform.forEach(field => {
       const value = card[field];
-      if (value && typeof value === 'string' && checkCondition(value)) {
+      if (hasProtectedValue(value) && checkCondition(value)) {
         updatedCard[field] = transformer(
           value,
           secretKey,
@@ -396,12 +399,10 @@ export const encryptShopStore = (state: any, secretKey: string): any => {
     state,
     secretKey,
     encryptValue,
-    value => !isEncryptedValue(value),
+    value => typeof value === 'string' && !isEncryptedValue(value),
   );
 };
 
 export const decryptShopStore = (state: any, secretKey: string): any => {
-  return transformShopStore(state, secretKey, decryptValue, value =>
-    isEncryptedValue(value),
-  );
+  return transformShopStore(state, secretKey, decryptValue, () => true);
 };
