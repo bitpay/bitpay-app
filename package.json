@@ -95,7 +95,7 @@
     "bs58": "6.0.0",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
-    "crypto-js": "3.1.9-1",
+    "crypto-js": "4.2.0",
     "eth-sig-util": "3.0.1",
     "ethers": "5.7.2",
     "events": "3.3.0",
