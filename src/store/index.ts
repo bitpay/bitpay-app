@@ -28,7 +28,11 @@ import {
   transformPortfolioPopulateStatus,
   encryptSpecificFields,
 } from './transforms/transforms';
-import {decryptPersistValue, encryptPersistValue} from './transforms/encrypt';
+import {
+  deserializePersistValue,
+  encryptPersistValue,
+} from './transforms/encrypt';
+import {createRehydrationFailureMiddleware} from './persistence-guard';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
@@ -421,7 +425,14 @@ const logger = createLogger({
 });
 
 const getStore = async () => {
+  let rehydrationFailure: Error | null = null;
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
+
+  middlewares.push(
+    createRehydrationFailureMiddleware(error => {
+      rehydrationFailure ??= error;
+    }),
+  );
 
   const cleanupPortfolioOnDeleteKeyMiddleware: Middleware = store => next => {
     return (action: AnyAction) => {
@@ -515,25 +526,12 @@ const getStore = async () => {
           );
         },
         (outboundState, key) => {
-          if (typeof key === 'string' && unencryptedPersistStores.has(key)) {
-            if (typeof outboundState === 'string') {
-              try {
-                return JSON.parse(outboundState);
-              } catch {}
-            } else {
-              return outboundState;
-            }
-          }
-
-          if (typeof outboundState !== 'string') {
-            return outboundState;
-          }
-
           try {
-            return decryptPersistValue(
+            return deserializePersistValue(
               outboundState,
               secretKey,
               `persist:${String(key)}`,
+              typeof key === 'string' && unencryptedPersistStores.has(key),
             );
           } catch (err) {
             const errStr =
@@ -620,7 +618,18 @@ const getStore = async () => {
   storeDispatch(LogActions.clear());
   initLogs.drainAndDispatch(storeDispatch);
 
-  const persistor = persistStore(store);
+  let resolveBootstrap: () => void = () => {};
+  const bootstrapped = new Promise<void>(resolve => {
+    resolveBootstrap = resolve;
+  });
+  const persistor = persistStore(store, undefined, resolveBootstrap);
+
+  await bootstrapped;
+  if (rehydrationFailure) {
+    persistor.pause();
+    Sentry.captureException(rehydrationFailure, {level: 'error'});
+    throw rehydrationFailure;
+  }
 
   if (__DEV__) {
     // persistor.purge().then(() => console.log('purged persistence'));

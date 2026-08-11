@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import Aes from 'crypto-js/aes.js';
 import {
   decryptPersistValue,
+  deserializePersistValue,
   decryptValue,
   decryptWalletStore,
   encryptPersistValue,
@@ -117,5 +118,25 @@ describe('persisted reducer values', () => {
       'random source unavailable',
     );
     randomBytes.mockRestore();
+  });
+
+  it.each([false, true])(
+    'rejects non-string reducers instead of bypassing decryption (plain JSON: %s)',
+    allowPlainJson => {
+      expect(() =>
+        deserializePersistValue(
+          {token: 'injected'},
+          secretKey,
+          context,
+          allowPlainJson,
+        ),
+      ).toThrow('to be a string');
+    },
+  );
+
+  it('reads production JSON only for reducers configured as plaintext', () => {
+    expect(
+      deserializePersistValue(JSON.stringify(state), secretKey, context, true),
+    ).toEqual(state);
   });
 });
