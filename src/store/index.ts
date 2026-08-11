@@ -19,9 +19,11 @@ import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/
 import {Selector} from 'reselect';
 import {
   backupFileExists,
+  backupFileExistsStrict,
   backupPersistRoot,
   readBackupPersistRoot,
 } from './backup/fs-backup';
+import {selectNewEncryptionKey, storeEncryptionKey} from './encryption-key';
 import {
   bindWalletKeys,
   transformContacts,
@@ -693,28 +695,40 @@ export async function getEncryptionKey(): Promise<string> {
     throw err;
   }
 
-  let hasLegacyPersistedState = false;
+  let selectedKey: {key: string; legacyCompatible: boolean};
   try {
-    hasLegacyPersistedState =
-      storage.contains('persist:root') || (await backupFileExists());
-  } catch {
-    hasLegacyPersistedState = await backupFileExists();
+    selectedKey = await selectNewEncryptionKey({
+      hasPersistedRoot: () => storage.contains('persist:root'),
+      hasBackup: backupFileExistsStrict,
+      getLegacyKey: getUniqueId,
+      getRandomKey: () => crypto.randomBytes(32).toString('base64'),
+    });
+  } catch (err) {
+    initLogs.add(
+      LogActions.persistLog(
+        LogActions.error(
+          `getEncryptionKey: key selection failed - ${getErrorString(err)}`,
+        ),
+      ),
+    );
+    Sentry.captureException(err, {
+      level: 'error',
+    });
+    throw err;
   }
 
-  const newKey = hasLegacyPersistedState
-    ? getUniqueId()
-    : crypto.randomBytes(32).toString('base64');
   logManager.warn(
     `getEncryptionKey: generating ${
-      hasLegacyPersistedState ? 'legacy-compatible' : 'random'
+      selectedKey.legacyCompatible ? 'legacy-compatible' : 'random'
     } key (no existing key)`,
   );
 
   try {
-    // Save to keychain
-    await Keychain.setGenericPassword(encryptionKeyId, newKey, {
-      service: encryptionKeyId,
-    });
+    await storeEncryptionKey(
+      encryptionKeyId,
+      selectedKey.key,
+      Keychain.setGenericPassword,
+    );
     logManager.info('getEncryptionKey: stored new key in Keychain');
   } catch (err) {
     initLogs.add(
@@ -730,5 +744,5 @@ export async function getEncryptionKey(): Promise<string> {
     throw err;
   }
 
-  return newKey;
+  return selectedKey.key;
 }
