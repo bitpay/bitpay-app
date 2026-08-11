@@ -225,7 +225,7 @@ jobs:
             --input TestResults.xcresult \
             --output allure-results
 
-      - name: Zip Allure Results
+      - name: Zip Allure Resultss
         if: always()
         run: |
           rm -f allure-results.zip
