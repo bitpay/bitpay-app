@@ -73,22 +73,23 @@ final class Test594_BasicSwapBTC: XCTestCase {
     
     AllureXCTestSupport.step("(12) On the Swap Amount bottom sheet, enter 0.0007 BTC.") {
       swapPage.tapEnterAmount()
-      enterAmountPage.enterAmount(amount: "0.0007")
+      swapPage.tapMinAmount()
+      // enterAmountPage.enterAmount(amount: "0.0007")
     }
     
     AllureXCTestSupport.step("(13) Tap Changelly checkbox.") {
-      swapPage.tapCenterOfScreen()
+      // swapPage.tapCenterOfScreen()
       XCTAssertTrue(swapPage.isChangellyTermsCheckboxDisplayed(),  "Changelly Terms and Conditions checkbox not displayed")
-      // swapPage.tapChangellyTermsCheckbox()
+      swapPage.tapChangellyTermsCheckbox()
     }
     
-//    AllureXCTestSupport.step(
-//      "(14) Verify Slide to Swap button is displayed."
-//    ) {
-//      XCTAssertTrue(
-//        swapPage.isSlideToSwapButtonDisplayed(),
-//        "Slide to Swap button not displayed"
-//      )
-//    }
+    AllureXCTestSupport.step(
+      "(14) Verify Slide to Swap button is displayed."
+    ) {
+      XCTAssertTrue(
+        swapPage.isSlideToSwapButtonDisplayed(),
+        "Slide to Swap button not displayed"
+      )
+    }
   }
 }
