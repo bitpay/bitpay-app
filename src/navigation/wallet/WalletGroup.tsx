@@ -399,11 +399,15 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         component={PayProConfirmTwoFactor}
       />
       <Wallet.Screen
-        options={{
+        options={({route}) => ({
           headerTitle: () => (
-            <HeaderTitle>{t('Create Multisig Wallet')}</HeaderTitle>
+            <HeaderTitle>
+              {route.params.context === 'addTSSWalletMultisig'
+                ? t('Create Threshold Wallet')
+                : t('Create Multisig Wallet')}
+            </HeaderTitle>
           ),
-        }}
+        })}
         name={WalletScreens.CREATE_MULTISIG}
         component={CreateMultisig}
       />
@@ -425,8 +429,6 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen
         options={{
-          gestureEnabled: false,
-          headerLeft: () => null,
           headerTitle: () => (
             <HeaderTitle>{t('Invite Co-Signers')}</HeaderTitle>
           ),
@@ -437,7 +439,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         options={{
           headerTitle: () => (
-            <HeaderTitle>{t('Join Shared Wallet')}</HeaderTitle>
+            <HeaderTitle>{t('Join Threshold Wallet')}</HeaderTitle>
           ),
         }}
         name={WalletScreens.JOIN_TSS_WALLET}
