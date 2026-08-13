@@ -52,7 +52,7 @@ export type AuthGroupParamList = {
   TwoFactorAuthentication: TwoFactorAuthenticationParamList;
   TwoFactorPairing: TwoFactorPairingParamList;
   ForgotPassword: ForgotPasswordParamList;
-  SecureAccount: undefined;
+  SecureAccount: {context?: 'login' | 'signup'} | undefined;
 };
 
 const AuthGroup = ({Auth, theme}: AuthProps) => {
