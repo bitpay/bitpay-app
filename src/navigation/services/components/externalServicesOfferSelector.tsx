@@ -419,6 +419,7 @@ const sellOffersDefault: {
     showOffer: true,
     logo: (
       <SimplexLogo
+        iconOnly={true}
         widthIcon={25}
         heightIcon={25}
         widthLogo={60}
