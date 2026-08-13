@@ -13,7 +13,12 @@ import {BrazeWrapper} from '../../lib/Braze';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {Analytics} from '../analytics/analytics.effects';
-import {isAnonymousBrazeEid, setEmailNotifications} from '../app/app.effects';
+import {
+  isAnonymousBrazeEid,
+  setEmailNotifications,
+  submitDeviceEvent,
+} from '../app/app.effects';
+import {DeviceEvent} from '../../lib/sumsub/deviceIntelligence';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {ShopActions, ShopEffects} from '../shop';
@@ -188,7 +193,9 @@ export const startCreateAccount =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(startPairAndLoadUser(APP.network, secret, undefined));
+      await dispatch(
+        startPairAndLoadUser(APP.network, secret, undefined, 'signup'),
+      );
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
@@ -519,7 +526,12 @@ export const startDeeplinkPairing =
   };
 
 export const startPairAndLoadUser =
-  (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
+  (
+    network: Network,
+    secret: string,
+    code?: string,
+    deviceEvent: DeviceEvent = 'login',
+  ): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
@@ -554,6 +566,18 @@ export const startPairAndLoadUser =
       }
 
       dispatch(startBitPayIdStoreInit(data.user));
+
+      // SumSub Device Intelligence: link this device to the user on login/signup.
+      const {givenName, familyName, email} = data.user?.basicInfo || {};
+      const fullName = [givenName, familyName].filter(Boolean).join(' ');
+      dispatch(
+        submitDeviceEvent({
+          event: deviceEvent,
+          email,
+          fullName: fullName || undefined,
+        }),
+      );
+
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(SumSubEffects.startGetKycStatus());
       dispatch(ShopEffects.startFetchCatalog());
@@ -869,6 +893,8 @@ export const startSubmitForgotPasswordEmail =
         gCaptchaResponse,
       );
       if (data.success) {
+        dispatch(submitDeviceEvent({event: 'password-reset-request', email}));
+
         dispatch(
           BitPayIdActions.forgotPasswordEmailStatus(
             'success',
