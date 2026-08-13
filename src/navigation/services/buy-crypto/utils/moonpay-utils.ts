@@ -292,6 +292,9 @@ export const getMoonpayPaymentMethodFormat = (
       case 'venmo':
         moonpayPaymentMethod = 'venmo';
         break;
+      case 'cashApp':
+        moonpayPaymentMethod = 'cash_app';
+        break;
       default:
         moonpayPaymentMethod = undefined;
         break;

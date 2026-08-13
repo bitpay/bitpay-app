@@ -273,6 +273,7 @@ export interface MoonpayGetCurrencyLimitsRequestData {
 export type MoonpayPaymentType =
   | 'venmo'
   | 'paypal'
+  | 'cash_app'
   | 'apple_pay' // applePay embedded flow
   | 'mobile_wallet' // applePay
   | 'sepa_bank_transfer'

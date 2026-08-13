@@ -93,7 +93,8 @@ export type MoonpayPayoutMethodType =
   | 'sepa_bank_transfer'
   | 'gbp_bank_transfer'
   | 'paypal'
-  | 'venmo';
+  | 'venmo'
+  | 'cash_app';
 
 export interface MoonpayGetSellQuoteRequestData {
   env: 'sandbox' | 'production';
