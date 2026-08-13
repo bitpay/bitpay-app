@@ -177,6 +177,9 @@ jest.mock('../analytics/analytics.effects', () => ({
 }));
 jest.mock('../bitpay-id', () => ({BitPayIdEffects: {}}));
 jest.mock('../card', () => ({CardActions: {}, CardEffects: {}}));
+jest.mock('../sumsub', () => ({
+  SumSubEffects: {startGetKycStatus: jest.fn(() => ({type: 'GET_KYC_STATUS'}))},
+}));
 jest.mock('../coinbase', () => ({
   coinbaseInitialize: jest.fn(() => ({type: 'COINBASE_INITIALIZE'})),
 }));
@@ -190,9 +193,6 @@ jest.mock('../location', () => ({
 }));
 jest.mock('../wallet-connect-v2/wallet-connect-v2.effects', () => ({
   walletConnectV2Init: jest.fn(() => ({type: 'WALLET_CONNECT_INIT'})),
-}));
-jest.mock('../moralis/moralis.effects', () => ({
-  moralisInit: jest.fn(() => ({type: 'MORALIS_INIT'})),
 }));
 jest.mock('../external-services/external-services.effects', () => ({
   prefetchExternalServicesData: jest.fn(() => ({

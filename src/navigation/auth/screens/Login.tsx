@@ -26,7 +26,6 @@ import {
   useAppSelector,
   useSensitiveRefClear,
 } from '../../../utils/hooks';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
@@ -138,22 +137,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       const parentNav = navigation.getParent();
 
       if (!passkeyStatus) {
-        navigation.navigate(AuthScreens.SECURE_ACCOUNT);
+        navigation.navigate(AuthScreens.SECURE_ACCOUNT, {context: 'login'});
       } else if (parentNav?.canGoBack()) {
         parentNav.goBack();
       } else {
+        // Fresh login lands on Home; the Get Verified modal is handled there.
         navigationRef.dispatch(
           CommonActions.reset({
-            index: 1,
+            index: 0,
             routes: [
-              {
-                name: RootStacks.TABS,
-                params: {screen: TabsScreens.HOME},
-              },
-              {
-                name: BitpayIdScreens.PROFILE,
-                params: {},
-              },
+              {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
             ],
           }),
         );

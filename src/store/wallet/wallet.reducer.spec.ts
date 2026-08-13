@@ -1053,10 +1053,6 @@ describe('REMOVE_PENDING_JOINER_SESSION', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// SET_TSS_ENABLED
-// ---------------------------------------------------------------------------
-
 describe('SET_TSS_ENABLED', () => {
   it('sets tssEnabled to true', () => {
     const state = walletReducer(freshState(), {

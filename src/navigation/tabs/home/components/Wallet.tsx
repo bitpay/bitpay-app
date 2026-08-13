@@ -33,6 +33,8 @@ import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {maskIfHidden} from '../../../../utils/hideBalances';
 import {isUnitedKingdomCountry} from '../../../../store/location/location.effects';
+import ThresholdBadge from '../../../../components/threshold-badge/ThresholdBadge';
+import MultisigBadge from '../../../../components/multisig-badge/MultisigBadge';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -45,6 +47,8 @@ interface WalletCardComponentProps {
   hideKeyBalance: boolean;
   context?: 'keySelector';
   pendingTssSession?: boolean;
+  tssMetadata?: {m: number; n: number};
+  isMultisig?: boolean;
 }
 
 export const HeaderImg = styled.View`
@@ -203,6 +207,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   layout,
   context,
   pendingTssSession,
+  tssMetadata,
+  isMultisig,
 }) => {
   const {t} = useTranslation();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -253,7 +259,20 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
                 <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
               </NeedBackupRow>
             ) : (
-              <ListIconRow>{SupportedNetworkIcons}</ListIconRow>
+              <ListIconRow>
+                {SupportedNetworkIcons}
+                {tssMetadata ? (
+                  <ThresholdBadge
+                    m={tssMetadata.m}
+                    n={tssMetadata.n}
+                    size={'list'}
+                    style={{marginLeft: 4}}
+                  />
+                ) : null}
+                {isMultisig ? (
+                  <MultisigBadge size={'list'} style={{marginLeft: 4}} />
+                ) : null}
+              </ListIconRow>
             )}
             <KeyName>{keyName}</KeyName>
           </ListLeftColumn>
@@ -303,6 +322,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         needsBackup,
         hideKeyBalance,
         pendingTssSession,
+        tssMetadata,
+        isMultisig,
       }}
       footer={CardFooter}
       onCTAPress={onPress}

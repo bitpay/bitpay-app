@@ -122,7 +122,14 @@ import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {BuyAndSellRootProps} from '../../navigation/services/screens/BuyAndSellRoot';
-import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
+import {
+  PaymentMethodKey,
+  PaymentMethodsAvailable,
+} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
+import {
+  WithdrawalMethodKey,
+  WithdrawalMethodsAvailable,
+} from '../../navigation/services/sell-crypto/constants/SellCryptoConstants';
 
 export const incomingData =
   (
@@ -1465,6 +1472,9 @@ const handleBuyCryptoUri =
     const amount = getParameterByName('amount', res);
     let coin = getParameterByName('coin', res)?.toLowerCase();
     let chain = getParameterByName('chain', res)?.toLowerCase();
+    let paymentMethod =
+      getParameterByName('paymentMethod', res) ||
+      getParameterByName('payment-method', res);
 
     let _amount: number | undefined;
     if (amount) {
@@ -1484,6 +1494,12 @@ const handleBuyCryptoUri =
       } else {
         coin = undefined;
       }
+    }
+
+    if (paymentMethod) {
+      paymentMethod = PaymentMethodsAvailable[paymentMethod as PaymentMethodKey]
+        ? (paymentMethod as PaymentMethodKey)
+        : undefined;
     }
 
     dispatch(
@@ -1508,6 +1524,7 @@ const handleBuyCryptoUri =
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
+            paymentMethod,
             fromDeeplink: true,
             context: 'buyCrypto',
           } as BuyAndSellRootProps,
@@ -1526,6 +1543,9 @@ const handleSellCryptoUri =
     const amount = getParameterByName('amount', res);
     let coin = getParameterByName('coin', res)?.toLowerCase();
     let chain = getParameterByName('chain', res)?.toLowerCase();
+    let paymentMethod =
+      getParameterByName('paymentMethod', res) ||
+      getParameterByName('payment-method', res);
 
     let _amount: number | undefined;
     if (amount) {
@@ -1545,6 +1565,14 @@ const handleSellCryptoUri =
       } else {
         coin = undefined;
       }
+    }
+
+    if (paymentMethod) {
+      paymentMethod = WithdrawalMethodsAvailable[
+        paymentMethod as WithdrawalMethodKey
+      ]
+        ? (paymentMethod as WithdrawalMethodKey)
+        : undefined;
     }
 
     dispatch(
@@ -1569,6 +1597,7 @@ const handleSellCryptoUri =
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
+            paymentMethod,
             fromDeeplink: true,
             context: 'sellCrypto',
           } as BuyAndSellRootProps,

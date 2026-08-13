@@ -7,6 +7,19 @@ import {
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {t} from 'i18next';
+import {
+  ConfigPaymentMethodKey,
+  ExchangeConfig,
+} from '../../../store/external-services/external-services.types';
+
+export const isPaymentMethodDisabledForPartner = (
+  exchangeConfig: ExchangeConfig | undefined,
+  method: ConfigPaymentMethodKey | undefined,
+): boolean => {
+  return !!(
+    method && exchangeConfig?.config?.paymentMethods?.[method]?.disabled
+  );
+};
 
 export const getExternalServiceSymbol = (
   coin: string,

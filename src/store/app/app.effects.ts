@@ -37,6 +37,7 @@ import {sleep} from '../../utils/helper-methods';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
+import {SumSubEffects} from '../sumsub';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
@@ -124,7 +125,6 @@ import {prefetchExternalServicesData} from '../external-services/external-servic
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
-import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
 import axios from 'axios';
@@ -295,7 +295,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (getState().WALLET_CONNECT_V2?.sessions?.length > 0) {
       dispatch(walletConnectV2Init());
     }
-    dispatch(moralisInit());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
@@ -399,6 +398,7 @@ const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
     }
     dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
     dispatch(CardEffects.startCardStoreInit(data.user));
+    dispatch(SumSubEffects.startGetKycStatus());
   } catch (err: any) {
     if (isAxiosError(err)) {
       logManager.error(`${err.name}: ${err.message}`);

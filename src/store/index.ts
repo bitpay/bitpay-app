@@ -59,6 +59,10 @@ import {
   zenledgerReducer,
 } from './zenledger/zenledger.reducer';
 import {
+  sumSubReducer,
+  sumSubReduxPersistBlackList,
+} from './sumsub/sumsub.reducer';
+import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
@@ -316,6 +320,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
   MARKET_STATS: marketStatsReduxPersistBlackList,
   PORTFOLIO: portfolioReduxPersistBlackList,
+  SUMSUB: sumSubReduxPersistBlackList,
 };
 
 /*
@@ -343,6 +348,7 @@ const reducers = {
   WALLET_CONNECT_V2: walletConnectV2Reducer,
   MARKET_STATS: marketStatsReducer,
   PORTFOLIO: portfolioReducer,
+  SUMSUB: sumSubReducer,
 };
 
 const combinedReducer = combineReducers(reducers);
