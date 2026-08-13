@@ -499,6 +499,8 @@ const BuyAndSellRoot = ({
   const user: User | undefined = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
+  const anonymousEid = useAppSelector(({APP}) => APP.brazeEid);
+  const userEid = user?.eid ?? anonymousEid;
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
     ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
@@ -2611,6 +2613,7 @@ const BuyAndSellRoot = ({
       colorCode: Action,
       theme: theme.dark ? 'dark' : 'light',
       showWalletAddressForm: false,
+      externalCustomerId: userEid,
     };
 
     let _paymentMethod: MoonpayPaymentType | undefined =
@@ -3400,7 +3403,7 @@ const BuyAndSellRoot = ({
       baseCurrencyAmount: offer.sellAmount || +curValRef.current,
       externalTransactionId: externalTransactionId,
       paymentMethod: getMoonpaySellPayoutMethodFormat(paymentMethod!.method),
-      externalCustomerId: user?.eid ?? selectedWallet.id,
+      externalCustomerId: userEid,
       redirectURL:
         APP_DEEPLINK_PREFIX +
         `moonpay?flow=sell&externalId=${externalTransactionId}` +
