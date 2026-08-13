@@ -291,7 +291,22 @@ export interface MoonpayGetSignedPaymentUrlReqData {
   paymentMethod?: MoonpayPaymentType;
   colorCode?: string;
   theme?: 'dark' | 'light';
+  themeId?: string;
   language?: string;
+  externalCustomerId?: string;
+  defaultCurrencyCode?: string;
+  walletAddressTag?: string;
+  walletAddresses?: string; // JSON string, e.g. {"btc":"...","eos":"..."}
+  walletAddressTags?: string; // JSON string, e.g. {"eos":"...","xrp":"..."}
+  quoteCurrencyAmount?: number;
+  contractAddress?: string; // Only supported for DeFi Buy integrations
+  networkCode?: string; // Only supported for DeFi Buy integrations
+  email?: string;
+  areFeesIncluded?: boolean;
+  showAllCurrencies?: boolean;
+  showOnlyCurrencies?: string;
+  unsupportedRegionRedirectUrl?: string;
+  skipUnsupportedRegionScreen?: boolean;
 }
 
 export interface MoonpayGetSignedPaymentUrlData {
