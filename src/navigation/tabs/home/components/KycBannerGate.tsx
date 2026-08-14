@@ -1,8 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextProps,
+  TouchableOpacity,
+  View,
+  ViewProps,
+} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '../../../../contexts';
 import {BaseText} from '../../../../components/styled/Text';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import {
@@ -22,37 +29,81 @@ import IconHomeIdentityVerified from '../../../../../assets/img/home_identity_ve
 import IconAngleRight from '../../../../../assets/img/angle-right.svg';
 import IconClose from '../../../../../assets/img/close-modal-icon.svg';
 
-const BannerContainer = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : LightBlue)};
-  border-radius: 100px;
-  flex-direction: row;
-  align-items: center;
-  margin: 16px ${ScreenGutter} 0;
-  padding: 16px;
-  gap: 4px;
-`;
+const styles = StyleSheet.create({
+  bannerContainer: {
+    borderRadius: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    marginBottom: 0,
+    padding: 16,
+    gap: 4,
+  },
+  bannerDot: {
+    position: 'absolute',
+    top: 0,
+    right: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 100,
+    backgroundColor: '#b42727',
+  },
+  bannerText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 15,
+    marginLeft: 4,
+  },
+  dismissButton: {
+    padding: 0,
+  },
+});
 
-const BannerDot = styled.View`
-  position: absolute;
-  top: 0;
-  right: 4px;
-  width: 12px;
-  height: 12px;
-  border-radius: 100px;
-  background-color: #b42727;
-`;
+const BannerContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.bannerContainer,
+        {backgroundColor: theme.dark ? CharcoalBlack : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const BannerText = styled(BaseText)`
-  flex: 1;
-  font-size: 12px;
-  line-height: 15px;
-  margin-left: 4px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const BannerDot = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.bannerDot, style]} {...rest} />
+);
 
-const DismissButton = styled(TouchableOpacity)`
-  padding: 0;
-`;
+const BannerText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.bannerText,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+
+const DismissButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity style={[styles.dismissButton, style]} {...rest} />
+);
 
 type BannerConfig = {
   message: string;

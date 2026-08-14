@@ -100,11 +100,7 @@ const SettingsDetails = ({
       <Stack.Screen
         name="KycVerification"
         component={VerifyIdentityScreen}
-        options={{
-          headerTitle: () => (
-            <HeaderTitle>{t('Identity Verification')}</HeaderTitle>
-          ),
-        }}
+        options={{title: t('Identity Verification')}}
       />
       <Stack.Screen
         name="External Services"
