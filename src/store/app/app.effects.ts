@@ -42,6 +42,10 @@ import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
+import {
+  submitDeviceEvent as submitFishermanDeviceEvent,
+  type DeviceEventParams,
+} from '../../lib/sumsub/deviceIntelligence';
 import {LocationEffects} from '../location';
 import {WalletActions} from '../wallet';
 import {
@@ -1530,3 +1534,43 @@ export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
     );
   }
 };
+
+// Fingerprints the device and submits the event to SumSub. Network and the BitPay ID token
+// come from state; callers pass only the event fields.
+export const submitDeviceEvent =
+  (
+    params: Omit<DeviceEventParams, 'network' | 'apiToken'>,
+  ): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {APP, BITPAY_ID} = getState();
+    const authenticated = !!BITPAY_ID.apiToken[APP.network];
+    try {
+      const visitorId = await submitFishermanDeviceEvent({
+        ...params,
+        network: APP.network,
+        // Undefined before login, which routes to the public (rate limited) variant.
+        apiToken: BITPAY_ID.apiToken[APP.network],
+      });
+      console.log(`[SumSub DI] '${params.event}' visitorId:`, visitorId);
+      dispatch(
+        Analytics.track('SumSub DI', {
+          deviceEvent: params.event,
+          authenticated,
+          success: true,
+          hasVisitorId: !!visitorId,
+        }),
+      );
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(
+        `[SumSub] Device Intelligence event '${params.event}' failed: ${errorMsg}`,
+      );
+      dispatch(
+        Analytics.track('SumSub DI', {
+          deviceEvent: params.event,
+          authenticated,
+          success: false,
+        }),
+      );
+    }
+  };
