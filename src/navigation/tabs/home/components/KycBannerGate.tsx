@@ -107,6 +107,12 @@ function getHomeBannerConfig(
   };
 }
 
+// Temporarily disabled: the `success` banner is derived from the standing
+// `approved` status rather than a one-time approval event, so it renders on
+// every launch (and for legacy, non-SumSub approvals). Flip back to true once
+// the banner is event-driven and dismissal is per-state.
+const KYC_HOME_BANNER_ENABLED = false;
+
 const KycBannerGate: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -117,7 +123,7 @@ const KycBannerGate: React.FC = () => {
 
   const {t} = useTranslation();
 
-  if (dismissed || !user) {
+  if (!KYC_HOME_BANNER_ENABLED || dismissed || !user) {
     return null;
   }
 
