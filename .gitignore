@@ -38,6 +38,9 @@ local.properties
 *.iml
 *.hprof
 android/app/src/main/res/raw/*
+!android/app/src/main/res/raw/archivo_bold.ttf
+!android/app/src/main/res/raw/archivo_medium.ttf
+!android/app/src/main/res/raw/archivo_regular.ttf
 .cxx/
 *.keystore
 !debug.keystore
