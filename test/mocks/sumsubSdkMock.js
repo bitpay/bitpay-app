@@ -4,6 +4,7 @@
 const builder = {
   withHandlers: () => builder,
   withLocale: jest.fn(() => builder),
+  withTheme: jest.fn(() => builder),
   withDebug: () => builder,
   withAutoCloseOnApprove: () => builder,
   withAnalyticsEnabled: () => builder,
