@@ -100,8 +100,6 @@ export enum AppActionTypes {
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
-  DISMISS_KYC_HOME_BANNER = 'APP/DISMISS_KYC_HOME_BANNER',
-  RESET_KYC_HOME_BANNER = 'APP/RESET_KYC_HOME_BANNER',
   SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
   RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
 }
@@ -463,14 +461,6 @@ interface DismissMarketingContentCard {
   payload: string;
 }
 
-interface DismissKycHomeBanner {
-  type: typeof AppActionTypes.DISMISS_KYC_HOME_BANNER;
-}
-
-interface ResetKycHomeBanner {
-  type: typeof AppActionTypes.RESET_KYC_HOME_BANNER;
-}
-
 interface SetShowKycGetVerifiedModal {
   type: typeof AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL;
   payload: boolean;
@@ -559,7 +549,5 @@ export type AppActionType =
   | DismissWalletConnectStartModal
   | ShowArchaxBanner
   | DismissMarketingContentCard
-  | DismissKycHomeBanner
-  | ResetKycHomeBanner
   | SetShowKycGetVerifiedModal
   | ResetKycGetVerifiedModal;

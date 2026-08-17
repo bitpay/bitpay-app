@@ -6,6 +6,7 @@ import {SumSubActions} from './index';
 import {KycInfo} from './sumsub.reducer';
 import {showBottomNotificationModal} from '../app/app.actions';
 import {CustomErrorMessage} from '../../navigation/wallet/components/ErrorMessages';
+import {deriveKycUiState} from './sumsub.selectors';
 
 // Fetches the backend KYC object and stores it verbatim. No-op when logged out.
 export const startGetKycStatus =
@@ -25,6 +26,17 @@ export const startGetKycStatus =
       // Backend past notStarted is authoritative → drop the stale SDK fallback.
       if (kyc?.status && kyc.status !== 'notStarted') {
         dispatch(SumSubActions.setSdkStatus(network, null));
+      }
+      if (
+        user.eid &&
+        getState().SUMSUB.bannerAck?.[network]?.eid !== user.eid
+      ) {
+        dispatch(
+          SumSubActions.setKycBannerAck(network, {
+            eid: user.eid,
+            state: deriveKycUiState(kyc, getState().SUMSUB.sdkStatus[network]),
+          }),
+        );
       }
       return kyc;
     } catch (err) {

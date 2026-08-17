@@ -32,7 +32,6 @@ import axios from 'axios';
 import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {
   resetKycGetVerifiedModal,
-  resetKycHomeBanner,
   setBrazeEid,
   setEmailNotificationsAccepted,
 } from '../app/app.actions';
@@ -676,7 +675,6 @@ export const startDisconnectBitPayId =
 
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     dispatch(SumSubActions.resetKyc(APP.network));
-    dispatch(resetKycHomeBanner());
     dispatch(resetKycGetVerifiedModal());
     dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
