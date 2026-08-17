@@ -47,6 +47,13 @@ import {
 } from '../../store/bitpay-id/bitpay-id.actions';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
+import {
+  asCloudflareChallenge,
+  challengeOriginFor,
+  isCloudflareChallengeError,
+  safeErrorMessage,
+} from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
 import {sleep} from '../../utils/helper-methods';
 
@@ -54,6 +61,11 @@ interface StartLoginParams {
   email?: string;
   password?: string;
   gCaptchaResponse?: string;
+  /**
+   * Set internally when replaying a login after the user cleared a Cloudflare
+   * challenge, so a still-challenged request can't loop.
+   */
+  isChallengeRetry?: boolean;
 }
 
 export const startBitPayIdAnalyticsInit =
@@ -143,7 +155,7 @@ export const startFetchSession =
       const session = await AuthApi.fetchSession(APP.network);
 
       dispatch(BitPayIdActions.successFetchSession(session));
-    } catch (err) {
+    } catch {
       dispatch(BitPayIdActions.failedFetchSession());
     }
   };
@@ -253,6 +265,12 @@ export const checkLoginWithPasskey =
       }
       return Promise.resolve(true);
     } catch (err: any) {
+      // Rethrow unwrapped so startLogin can present the interstitial —
+      // rewrapping below would launder the error type.
+      if (isCloudflareChallengeError(err)) {
+        throw err;
+      }
+
       const errMsg = err.message || JSON.stringify(err);
 
       // No show error, user canceled
@@ -268,6 +286,7 @@ export const startLogin =
     email,
     password,
     gCaptchaResponse,
+    isChallengeRetry,
   }: StartLoginParams): Effect<Promise<boolean>> =>
   async (dispatch, getState) => {
     try {
@@ -355,16 +374,63 @@ export const startLogin =
       dispatch(BitPayIdActions.successLogin(APP.network, session));
       return true;
     } catch (err: any) {
+      const challenge = asCloudflareChallenge(err);
+
+      // Cloudflare wants the user to prove they're human. Present the
+      // interstitial, then replay the login once with the clearance cookie set.
+      // Only present when the challenge URL is usable — presenting with a
+      // malformed URL would give the modal nothing to load, and the friendly
+      // error below is the better outcome.
+      if (challenge && !isChallengeRetry && challengeOriginFor(challenge.url)) {
+        logManager.info(
+          '[startLogin] Cloudflare challenge received — prompting user.',
+        );
+        ongoingProcessManager.hide();
+
+        const solved = await cloudflareChallengeManager.present(challenge.url);
+
+        if (solved) {
+          // Await the retry to completion before returning: `return dispatch(...)`
+          // would run this frame's `finally` as soon as the inner thunk started,
+          // hiding the LOGGING_IN indicator the retry just showed.
+          const retried: boolean = await dispatch(
+            startLogin({
+              email,
+              password,
+              gCaptchaResponse,
+              isChallengeRetry: true,
+            }),
+          );
+          return retried;
+        }
+
+        dispatch(
+          BitPayIdActions.failedLogin(
+            t('Verification was not completed. Please try again.'),
+          ),
+        );
+        return false;
+      }
+
       let errMsg;
 
-      if (isAxiosError<LoginErrorResponse>(err)) {
+      if (challenge) {
+        errMsg = t(
+          'We could not verify your connection. Please try again in a moment.',
+        );
+      } else if (isAxiosError<LoginErrorResponse>(err)) {
         errMsg = upperFirst(
-          err.response?.data.message ||
+          err.response?.data?.message ||
+            safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
       } else {
-        errMsg = err.message || JSON.stringify(err);
+        // Never surface a raw response body — it may be an HTML error page.
+        errMsg = safeErrorMessage(
+          err.message,
+          t('An unexpected error occurred.'),
+        );
       }
       dispatch(BitPayIdActions.failedLogin(errMsg));
       logManager.error('[startLogin]', err.status, errMsg);
@@ -911,7 +977,7 @@ export const startSubmitForgotPasswordEmail =
           ),
         );
       }
-    } catch (e) {
+    } catch {
       dispatch(BitPayIdActions.forgotPasswordEmailStatus('failed', errMsg));
     } finally {
       ongoingProcessManager.hide();
