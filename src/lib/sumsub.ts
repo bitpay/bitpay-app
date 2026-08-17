@@ -1,4 +1,5 @@
 import SNSMobileSDK from '@sumsub/react-native-mobilesdk-module';
+import {sumSubTheme} from './sumsub/theme';
 
 export interface SumSubSdkResult {
   success: boolean;
@@ -24,6 +25,7 @@ export const launchSumSubSdk = (
       },
     })
     .withLocale(locale)
+    .withTheme(sumSubTheme)
     .withDebug(__DEV__)
     .build();
 
