@@ -175,7 +175,6 @@ export interface AppState {
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
   dismissedMarketingCardIds: string[];
-  kycHomeBannerDismissed: boolean;
   showKycGetVerifiedModal: boolean;
   kycGetVerifiedModalShown: boolean;
 }
@@ -280,7 +279,6 @@ const initialState: AppState = {
   tokensDataLoaded: false,
   showArchaxBanner: false,
   dismissedMarketingCardIds: [],
-  kycHomeBannerDismissed: false,
   showKycGetVerifiedModal: false,
   kycGetVerifiedModalShown: false,
 };
@@ -843,12 +841,6 @@ export const appReducer = (
         dismissedMarketingCardIds: [...state.dismissedMarketingCardIds, cardId],
       };
     }
-
-    case AppActionTypes.DISMISS_KYC_HOME_BANNER:
-      return {...state, kycHomeBannerDismissed: true};
-
-    case AppActionTypes.RESET_KYC_HOME_BANNER:
-      return {...state, kycHomeBannerDismissed: false};
 
     case AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL:
       return {

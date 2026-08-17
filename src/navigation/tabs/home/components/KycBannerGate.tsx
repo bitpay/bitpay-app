@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
@@ -12,9 +12,8 @@ import {
   White,
 } from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {dismissKycHomeBanner} from '../../../../store/app/app.actions';
-import {SumSubSelectors} from '../../../../store/sumsub';
-import {KycUiState} from '../../../../store/sumsub/sumsub.selectors';
+import {SumSubActions, SumSubSelectors} from '../../../../store/sumsub';
+import {KycUiState} from '../../../../store/sumsub/sumsub.types';
 import {BitpayIdScreens} from '../../../bitpay-id/BitpayIdGroup';
 import HomeSection from './HomeSection';
 import {SvgProps} from 'react-native-svg';
@@ -63,14 +62,9 @@ type BannerConfig = {
 };
 
 function getHomeBannerConfig(
-  userVerified: boolean | undefined,
   kycUiState: KycUiState,
   t: (key: string) => string,
 ): BannerConfig | null {
-  if (!userVerified) {
-    return null;
-  }
-  // notStarted is handled by the Get Verified modal, not the banner.
   if (kycUiState === 'notStarted') {
     return null;
   }
@@ -107,27 +101,42 @@ function getHomeBannerConfig(
   };
 }
 
-// Temporarily disabled: the `success` banner is derived from the standing
-// `approved` status rather than a one-time approval event, so it renders on
-// every launch (and for legacy, non-SumSub approvals). Flip back to true once
-// the banner is event-driven and dismissal is per-state.
-const KYC_HOME_BANNER_ENABLED = false;
-
 const KycBannerGate: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const network = useAppSelector(({APP}) => APP.network);
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID?.user?.[network]);
-  const kycUiState = useAppSelector(SumSubSelectors.selectKycUiState);
-  const dismissed = useAppSelector(({APP}) => APP?.kycHomeBannerDismissed);
+  const eid = useAppSelector(({BITPAY_ID}) => BITPAY_ID?.user?.[network]?.eid);
+  const bannerState = useAppSelector(SumSubSelectors.selectKycBannerState);
 
   const {t} = useTranslation();
 
-  if (!KYC_HOME_BANNER_ENABLED || dismissed || !user) {
+  const [held, setHeld] = useState<KycUiState | null>(null);
+  const [dismissed, setDismissed] = useState<KycUiState | null>(null);
+
+  useEffect(() => {
+    setHeld(null);
+    setDismissed(null);
+  }, [eid]);
+
+  useEffect(() => {
+    if (
+      !eid ||
+      !bannerState ||
+      !SumSubSelectors.isOneShotBannerState(bannerState)
+    ) {
+      return;
+    }
+    setHeld(bannerState);
+    dispatch(SumSubActions.setKycBannerAck(network, {eid, state: bannerState}));
+  }, [bannerState, eid, network, dispatch]);
+
+  const displayState = bannerState ?? held;
+
+  if (!displayState || displayState === dismissed) {
     return null;
   }
 
-  const config = getHomeBannerConfig(user.verified, kycUiState, t);
+  const config = getHomeBannerConfig(displayState, t);
 
   if (!config) {
     return null;
@@ -145,7 +154,7 @@ const KycBannerGate: React.FC = () => {
         <BannerText>{config.message}</BannerText>
         {config.dismissible ? (
           <DismissButton
-            onPress={() => dispatch(dismissKycHomeBanner())}
+            onPress={() => setDismissed(displayState)}
             accessibilityLabel="Dismiss KYC notification">
             <IconClose width={16} height={16} />
           </DismissButton>

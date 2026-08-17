@@ -335,3 +335,61 @@ describe('startGetKycStatus', () => {
     expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
   });
 });
+
+describe('startGetKycStatus — home banner baseline', () => {
+  it('records the first status seen for an account as its baseline', async () => {
+    const store = makeLoggedInStore();
+    mockFetchKycStatus.mockResolvedValue({...NOT_STARTED, status: 'approved'});
+
+    await store.dispatch(startGetKycStatus());
+
+    expect(store.getState().SUMSUB.bannerAck[Network.mainnet]).toEqual({
+      eid: EID,
+      state: 'success',
+    });
+  });
+
+  it('does not overwrite an existing baseline, so transitions stay visible', async () => {
+    const store = configureTestStore({
+      APP: {network: Network.mainnet},
+      BITPAY_ID: {
+        user: {[Network.mainnet]: {eid: EID}},
+        apiToken: {[Network.mainnet]: API_TOKEN},
+      },
+      SUMSUB: {
+        bannerAck: {[Network.mainnet]: {eid: EID, state: 'notStarted'}},
+      },
+    });
+    mockFetchKycStatus.mockResolvedValue({...NOT_STARTED, status: 'approved'});
+
+    await store.dispatch(startGetKycStatus());
+
+    expect(store.getState().SUMSUB.bannerAck[Network.mainnet]).toEqual({
+      eid: EID,
+      state: 'notStarted',
+    });
+  });
+
+  it('reseeds when the baseline belongs to a different account', async () => {
+    const store = configureTestStore({
+      APP: {network: Network.mainnet},
+      BITPAY_ID: {
+        user: {[Network.mainnet]: {eid: EID}},
+        apiToken: {[Network.mainnet]: API_TOKEN},
+      },
+      SUMSUB: {
+        bannerAck: {
+          [Network.mainnet]: {eid: 'someone-else', state: 'notStarted'},
+        },
+      },
+    });
+    mockFetchKycStatus.mockResolvedValue({...NOT_STARTED, status: 'approved'});
+
+    await store.dispatch(startGetKycStatus());
+
+    expect(store.getState().SUMSUB.bannerAck[Network.mainnet]).toEqual({
+      eid: EID,
+      state: 'success',
+    });
+  });
+});

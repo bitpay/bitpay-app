@@ -429,14 +429,6 @@ export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
   payload: cardId,
 });
 
-export const dismissKycHomeBanner = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_KYC_HOME_BANNER,
-});
-
-export const resetKycHomeBanner = (): AppActionType => ({
-  type: AppActionTypes.RESET_KYC_HOME_BANNER,
-});
-
 export const setShowKycGetVerifiedModal = (
   payload: boolean,
 ): AppActionType => ({

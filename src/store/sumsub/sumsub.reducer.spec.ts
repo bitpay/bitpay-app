@@ -26,6 +26,7 @@ const approved: KycInfo = {path: 'sumsub', tier: 0, status: 'approved'};
 const seed = (partial: Partial<SumSubState>): SumSubState => ({
   kyc: {...emptyMap},
   sdkStatus: {...emptyMap},
+  bannerAck: {...emptyMap},
   ...partial,
 });
 
