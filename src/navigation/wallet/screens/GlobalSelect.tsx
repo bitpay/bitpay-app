@@ -3,7 +3,12 @@ import styled from 'styled-components/native';
 import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+  useTokenOptionsByAddress,
+} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
@@ -59,7 +64,6 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Effect} from '../../../store';
-import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {
@@ -111,7 +115,7 @@ import {SolanaPayOpts} from './send/confirm/Confirm';
 import cloneDeep from 'lodash.clonedeep';
 import Icons from '../components/WalletIcons';
 import {AppActions} from '../../../store/app';
-import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 
 const ModalHeader = styled.View`
@@ -593,16 +597,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {tokenOptionsByAddress} = useTokenContext();
-  const {keys: _keys, customTokenOptionsByAddress} = useAppSelector(
-    ({WALLET}) => WALLET,
-  );
+  // Was `useAppSelector(({WALLET}) => WALLET)` — the whole slice, so this screen
+  // re-rendered on any wallet-related dispatch. Narrowed to the one field used.
+  const _keys = useAppSelector(({WALLET}) => WALLET.keys);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const allTokensByAddress = {
-    ...BitpaySupportedTokenOptsByAddress,
-    ...tokenOptionsByAddress,
-    ...customTokenOptionsByAddress,
-  };
+  // Shared memoized merge; previously rebuilt inline on every render.
+  const allTokensByAddress = useTokenOptionsByAddress();
   const [dataToDisplay, setDataToDisplay] = useState<
     GlobalSelectObj[] | KeyWalletsRowProps[]
   >([]);
@@ -652,20 +652,27 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     mountComponents();
   }, []);
 
-  const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
-    new Set(
-      Object.entries(allTokensByAddress)
-        .flatMap(([address, tokenData]) => {
-          const symbol = tokenData?.symbol?.toLowerCase();
-          const chain = getChainFromTokenByAddressKey(address);
-          const currency = getCurrencyAbbreviation(symbol, chain);
-          return !BitpaySupportedTokens[address] &&
-            !BitpaySupportedCoins[currency]
-            ? currency
-            : undefined;
-        })
-        .filter((currency): currency is string => currency !== undefined),
-    ),
+  // Walks the entire token registry (thousands of entries) with per-token string
+  // work. This used to run bare in the render body, so it re-ran on every search
+  // keystroke and every modal-visibility toggle on the app's most-used picker.
+  const NON_BITPAY_SUPPORTED_TOKENS = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          Object.entries(allTokensByAddress)
+            .flatMap(([address, tokenData]) => {
+              const symbol = tokenData?.symbol?.toLowerCase();
+              const chain = getChainFromTokenByAddressKey(address);
+              const currency = getCurrencyAbbreviation(symbol, chain);
+              return !BitpaySupportedTokens[address] &&
+                !BitpaySupportedCoins[currency]
+                ? currency
+                : undefined;
+            })
+            .filter((currency): currency is string => currency !== undefined),
+        ),
+      ),
+    [allTokensByAddress],
   );
 
   const filterCompleteWallets = (keys: Keys) => {
@@ -1697,7 +1704,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                             | KeyWalletsRowProps
                           )[])
                     }
-                    keyExtractor={(_, index: number) => index.toString()}
+                    keyExtractor={(
+                      item: GlobalSelectObj | KeyWalletsRowProps,
+                    ) => ('id' in item ? item.id : item.key)}
                     renderItem={renderItem}
                     estimatedItemSize={90}
                     onEndReachedThreshold={0.3}
@@ -1743,7 +1752,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                       ? selectedAssetsFromAccount
                       : (searchResults as AssetsByChainData[])
                   }
-                  keyExtractor={(_, index: number) => index.toString()}
+                  keyExtractor={(item: AssetsByChainData) => item.id}
                   renderItem={memoizedRenderAssetsItem}
                 />
               </FlashListCointainer>
