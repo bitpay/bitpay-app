@@ -66,6 +66,13 @@ def enableSeparateBuildPerCPUArchitecture = false
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ *
+ * DELIBERATELY LEFT FALSE. Enabling R8/ProGuard (plus `shrinkResources`) is a
+ * large download-size win, but proguard-rules.pro is currently empty (comments
+ * only) and this app reflects heavily through bitcore/BWC, Braze, Sumsub, Dosh
+ * and the Ledger transports. Turning it on without building out keep-rules risks
+ * runtime failures that only surface in release builds - on a wallet. It needs a
+ * dedicated change with a full QA pass, not a drive-by flip.
  */
 def enableProguardInReleaseBuilds = false
 
@@ -108,7 +115,12 @@ android {
         versionName "14.46.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
         ndk {
-            abiFilters "armeabi-v7a", "x86_64", "arm64-v8a"
+            // Real devices only. x86_64 is emulator-only and was adding a full
+            // extra copy of every native library (Skia, Reanimated,
+            // quick-crypto, Worklets, VisionCamera, WASM) to the release APK for
+            // 100% of users. AGP unions defaultConfig and buildType abiFilters,
+            // so the debug build type adds the emulator ABI back below.
+            abiFilters "armeabi-v7a", "arm64-v8a"
         }
     }
     splits {
@@ -138,6 +150,11 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            ndk {
+                // Unioned with defaultConfig, so emulator development is
+                // unaffected.
+                abiFilters "x86_64"
+            }
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
