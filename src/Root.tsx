@@ -170,8 +170,20 @@ import {maybePopulatePortfolioOnAppLaunch} from './store/portfolio';
 import {MoonpayEmbeddedCredentialManager} from './navigation/services/components/MoonpayEmbeddedCredentialManager';
 import {isUnitedKingdomCountry} from './store/location/location.effects';
 
-const BWC = BwcProvider.getInstance();
-const Logger = BWC.getLogger();
+// Resolve BWC lazily. `BwcProvider.getInstance()` at module scope forced
+// src/lib/bwc.ts to evaluate during bundle evaluation, and that module's
+// `static API = BWC` pulls in the whole bitcore-wallet-client graph (4
+// bitcore-lib variants + crypto-wallet-core, whose elliptic-curve precompute
+// tables run real work at module init). Metro's inlineRequires would otherwise
+// defer all of it until first use, so the module-scope call was putting several
+// hundred ms of JS on the critical path to first paint.
+let _bwc: ReturnType<typeof BwcProvider.getInstance> | null = null;
+const getBWC = () => {
+  if (!_bwc) {
+    _bwc = BwcProvider.getInstance();
+  }
+  return _bwc;
+};
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -695,7 +707,7 @@ export default () => {
         };
       });
     };
-    patchLogger(Logger);
+    patchLogger(getBWC().getLogger());
   }, []);
 
   const scheme =
@@ -894,8 +906,9 @@ export default () => {
                         continue;
                       }
                       const xPrivKeyHex = key.properties!.xPrivKeyEDDSA;
-                      const derivedAddress =
-                        BWC.getCore().Deriver.derivePrivateKeyWithPath(
+                      const derivedAddress = getBWC()
+                        .getCore()
+                        .Deriver.derivePrivateKeyWithPath(
                           'SOL',
                           wallet.network,
                           xPrivKeyHex,

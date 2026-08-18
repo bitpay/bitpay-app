@@ -25,7 +25,17 @@ import {
 } from './encrypt';
 import {logManager} from '../../managers/LogManager';
 
-const BWCProvider = BwcProvider.getInstance();
+// Resolve BWC lazily. Calling getInstance() at module scope forced src/lib/bwc.ts
+// to evaluate during bundle evaluation, and that module's static API field pulls
+// in the whole bitcore-wallet-client graph. Metro inlineRequires would otherwise
+// defer it until first use.
+let _bwcProvider: ReturnType<typeof BwcProvider.getInstance> | null = null;
+const getBWCProvider = () => {
+  if (!_bwcProvider) {
+    _bwcProvider = BwcProvider.getInstance();
+  }
+  return _bwcProvider;
+};
 
 // Helper for logging transform failures before the store exists
 const logTransformFailure = (
@@ -55,7 +65,7 @@ export const bootstrapWallets = (wallets: Wallet[]) => {
           loadMore: true,
           hasConfirmingTxs: false,
         };
-        const walletClient = BWCProvider.getClient(
+        const walletClient = getBWCProvider().getClient(
           JSON.stringify(wallet.credentials),
         );
         const successLog = `bindWalletClient - ${wallet.id}`;
@@ -104,7 +114,7 @@ export const bootstrapKey = (key: Key, id: string) => {
           reducedPrivateKeyShare.data,
         );
       }
-      const tssKey = BWCProvider.createTssKey(properties);
+      const tssKey = getBWCProvider().createTssKey(properties);
       const _key = merge(key, {
         methods: tssKey,
       });
@@ -120,7 +130,7 @@ export const bootstrapKey = (key: Key, id: string) => {
   } else {
     try {
       const _key = merge(key, {
-        methods: BWCProvider.createKey({
+        methods: getBWCProvider().createKey({
           seedType: 'object',
           seedData: key.properties,
         }),
