@@ -30,25 +30,42 @@ export const startGetTokenOptions =
       logManager.info('starting [startGetTokenOptions]');
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
-      for await (const chain of SUPPORTED_VM_TOKENS) {
-        let tokens = {} as {[key in string]: Token};
-        try {
-          const {data} = await axios.get<{[key in string]: Token}>(
-            `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
-          );
-          tokens = data;
-        } catch (error) {
-          logManager.info(
-            `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
-          );
-        }
-        if (!Array.isArray(tokens)) {
-          logManager.error(
-            `Unexpected response [startGetTokenOptions]: ${tokens}`,
-          );
-          return;
-        }
 
+      // These requests were previously serial (`for await`), so balances — which
+      // are awaited behind this effect in runWalletStoreInit — queued behind one
+      // round trip per supported chain. They are independent, so fetch them
+      // together and merge afterwards.
+      //
+      // Per-chain failures are also isolated now. Previously a single failed
+      // request left `tokens` as `{}`, failed the `Array.isArray` guard and
+      // `return`ed out of the whole effect, skipping both
+      // `tokenManager.setTokenOptions` and the `appTokensDataLoaded` dispatch —
+      // despite the log message stating "continue anyway".
+      const chainResults = await Promise.all(
+        SUPPORTED_VM_TOKENS.map(async chain => {
+          try {
+            const {data} = await axios.get<{[key in string]: Token}>(
+              `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
+            );
+            if (!Array.isArray(data)) {
+              logManager.error(
+                `Unexpected response for ${chain} [startGetTokenOptions]: ${data}`,
+              );
+              return {chain, tokens: [] as Token[]};
+            }
+            return {chain, tokens: data as unknown as Token[]};
+          } catch (error) {
+            logManager.info(
+              `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
+            );
+            return {chain, tokens: [] as Token[]};
+          }
+        }),
+      );
+
+      // Merge in SUPPORTED_VM_TOKENS order so key-collision precedence matches
+      // the previous serial behaviour.
+      for (const {chain, tokens} of chainResults) {
         tokens.forEach(token => {
           if (
             BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]

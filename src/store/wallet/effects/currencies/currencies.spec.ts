@@ -127,25 +127,32 @@ describe('startGetTokenOptions', () => {
     expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
   });
 
-  it('returns early (no setTokenOptions) when the API response is not an array', async () => {
-    // The function checks !Array.isArray(tokens) and returns early
+  // BEHAVIOUR CHANGE: these two cases used to `return` out of the whole effect on
+  // the first bad chain response, skipping BOTH tokenManager.setTokenOptions and
+  // the appTokensDataLoaded dispatch — even though the per-chain catch logs
+  // "continue anyway", and even though balances are awaited behind this effect in
+  // runWalletStoreInit. A single failing chain could therefore stall token data
+  // for every chain. Per-chain failures are now isolated.
+  it('isolates a non-array response for one chain and still completes', async () => {
     mockedAxios.get.mockResolvedValueOnce({data: {someKey: 'someValue'}});
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
 
-    expect(mockedSetTokenOptions).not.toHaveBeenCalled();
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
   });
 
-  it('catches per-chain network error; tokens stays as non-array so returns early', async () => {
+  it('isolates a per-chain network error and still completes', async () => {
     mockedAxios.get.mockRejectedValueOnce(new Error('network error'));
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
 
-    // tokens was never reassigned → stays as {} (not array) → early return
-    expect(mockedSetTokenOptions).not.toHaveBeenCalled();
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
   });
+
 
   it('dispatches failedGetTokenOptions when tokenManager.setTokenOptions throws', async () => {
     // The outer catch is triggered by something outside the inner axios try/catch.

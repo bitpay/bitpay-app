@@ -65,19 +65,18 @@ export const startGetRates =
         logManager.info('startGetRates: fetching new rates...');
         const yesterday = getLastDayTimestampStartOfHourMs();
 
+        // Today's and yesterday's tables are independent; fetching them serially
+        // doubled rate-refresh latency at launch and on every pull-to-refresh.
         logManager.info(
-          `startGetRates: get request to: ${BASE_BWS_URL}/v3/fiatrates/`,
+          `startGetRates: get requests to: ${BASE_BWS_URL}/v3/fiatrates/ (today + ts=${yesterday})`,
         );
-        const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-        logManager.info('startGetRates: success get request');
-
+        const [{data: rates}, {data: lastDayRates}] = await Promise.all([
+          axios.get(`${BASE_BWS_URL}/v3/fiatrates/`),
+          axios.get(`${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`),
+        ]);
         logManager.info(
-          `startGetRates: get request (yesterday) to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
+          'startGetRates: success get requests (today + yesterday)',
         );
-        const {data: lastDayRates} = await axios.get(
-          `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
-        );
-        logManager.info('startGetRates: success get request (yesterday)');
 
         if (context === 'init' || altCurrencyList.length === 0) {
           logManager.info('startGetRates: setting alternative currency list');
@@ -100,8 +99,30 @@ export const startGetRates =
           getTokenRates(),
         )) as any;
 
-        const allRates = {...rates, ...tokenRates};
-        const allLastDayRates = {...lastDayRates, ...tokenLastDayRates};
+        // A failed token-price chunk yields no entries for those tokens, and
+        // SUCCESS_GET_RATES replaces rather than merges
+        // (`{...initialState.rates, ...rates}`), so anything missing here loses
+        // its last-known rate app-wide — and ratesCacheKey is bumped regardless,
+        // so nothing retries for the cache window. There is no good reason to
+        // discard a known-good rate because one HTTP call failed, so carry
+        // forward whatever this cycle did not produce.
+        const previousRates = getState().RATE.rates;
+        const previousLastDayRates = getState().RATE.lastDayRates;
+        const allRates: Rates = {...rates, ...tokenRates};
+        const allLastDayRates: Rates = {
+          ...lastDayRates,
+          ...tokenLastDayRates,
+        };
+        Object.keys(previousRates).forEach(key => {
+          if (!allRates[key]) {
+            allRates[key] = previousRates[key];
+          }
+        });
+        Object.keys(previousLastDayRates).forEach(key => {
+          if (!allLastDayRates[key]) {
+            allLastDayRates[key] = previousLastDayRates[key];
+          }
+        });
 
         dispatch(
           successGetRates({
@@ -203,75 +224,122 @@ export const getTokenRates =
           return chunked_arr;
         };
 
+        // Previously: for chain -> for chunk -> await, so every price chunk on
+        // every chain was its own serial round trip. This runs on each 5-minute
+        // cache expiry AND on every forced refresh (Home pull-to-refresh always
+        // forces). Collect the tasks, fetch them with bounded concurrency, then
+        // process results in order so accumulator precedence is unchanged.
+        const priceTasks: {chain: string; chunk: string[]}[] = [];
         for (const chain of SUPPORTED_VM_TOKENS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
           if (contractAddresses?.length > 0) {
-            const chunks = chunkArray(contractAddresses, 25);
-            for (const chunk of chunks) {
-              const data = await dispatch(
-                getMultipleTokenPrices({addresses: chunk, chain}),
-              );
-              data.forEach((tokenInfo: UnifiedTokenPriceObj) => {
-                const {
-                  usdPrice,
-                  tokenAddress,
-                  '24hrPercentChange': percentChange,
-                } = tokenInfo;
-                const lastUpdate = Date.now();
-
-                if (!usdPrice || !tokenAddress || percentChange == null) {
-                  return;
-                }
-                const formattedTokenAddress = addTokenChainSuffix(
-                  tokenAddress,
-                  chain,
-                );
-                // only save token rates if exist in tokens list
-                if (tokensOptsByAddress[formattedTokenAddress]) {
-                  tokenRates[formattedTokenAddress] = [];
-                  tokenLastDayRates[formattedTokenAddress] = [];
-
-                  altCurrencies.forEach((altCurrency: string) => {
-                    const rate =
-                      dispatch(
-                        calculateUsdToAltFiat(
-                          usdPrice,
-                          altCurrency,
-                          decimalPrecision,
-                          shouldSkipLogging,
-                        ),
-                      ) || 0;
-                    tokenRates[formattedTokenAddress].push({
-                      code: altCurrency.toUpperCase(),
-                      fetchedOn: lastUpdate,
-                      name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                      rate,
-                      ts: lastUpdate,
-                    });
-                    const sign = Number(percentChange) >= 0 ? 1 : -1;
-                    const lastDayRate =
-                      rate /
-                      (1 + (sign * Math.abs(Number(percentChange))) / 100);
-                    const yesterday = moment
-                      .unix(lastUpdate)
-                      .subtract(1, 'days')
-                      .unix();
-                    tokenLastDayRates[formattedTokenAddress].push({
-                      code: altCurrency.toUpperCase(),
-                      fetchedOn: yesterday,
-                      name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                      rate: lastDayRate,
-                      ts: yesterday,
-                    });
-                  });
-                }
-              });
+            for (const chunk of chunkArray(contractAddresses, 25)) {
+              priceTasks.push({chain, chunk});
             }
           } else {
             logManager.info(
               `No tokens wallets for ${chain} found. Skipping getTokenRates...`,
             );
           }
+        }
+
+        const TOKEN_PRICE_FETCH_CONCURRENCY = 5;
+        const priceResults: {chain: string; data: UnifiedTokenPriceObj[]}[] =
+          [];
+        for (
+          let i = 0;
+          i < priceTasks.length;
+          i += TOKEN_PRICE_FETCH_CONCURRENCY
+        ) {
+          const batch = priceTasks.slice(i, i + TOKEN_PRICE_FETCH_CONCURRENCY);
+          const settled = await Promise.all(
+            // Catch per chunk. getMultipleTokenPrices rethrows, and because
+            // results are now processed after all batches complete, an
+            // uncaught rejection here would skip the processing loop entirely
+            // and hand the outer catch EMPTY accumulators — and
+            // SUCCESS_GET_RATES replaces rather than merges
+            // (`{...initialState.rates, ...rates}`), so one transient Moralis
+            // error would wipe every known token rate app-wide. Isolating the
+            // chunk is also strictly better than the original serial code,
+            // which abandoned all remaining chunks on the first failure.
+            batch.map(async ({chain, chunk}) => {
+              try {
+                return {
+                  chain,
+                  data: (await dispatch(
+                    getMultipleTokenPrices({addresses: chunk, chain}),
+                  )) as UnifiedTokenPriceObj[],
+                };
+              } catch (err) {
+                // String(err), not JSON.stringify: a circular non-Error
+                // throwable would make the stringify throw and reject the
+                // batch, defeating the isolation this catch exists for.
+                const errStr = err instanceof Error ? err.message : String(err);
+                logManager.error(
+                  `getTokenRates: token price chunk failed for ${chain} (continue anyway): ${errStr}`,
+                );
+                return {chain, data: [] as UnifiedTokenPriceObj[]};
+              }
+            }),
+          );
+          priceResults.push(...settled);
+        }
+
+        for (const {chain, data} of priceResults) {
+          data.forEach((tokenInfo: UnifiedTokenPriceObj) => {
+            const {
+              usdPrice,
+              tokenAddress,
+              '24hrPercentChange': percentChange,
+            } = tokenInfo;
+            const lastUpdate = Date.now();
+
+            if (!usdPrice || !tokenAddress || percentChange == null) {
+              return;
+            }
+            const formattedTokenAddress = addTokenChainSuffix(
+              tokenAddress,
+              chain,
+            );
+            // only save token rates if exist in tokens list
+            if (tokensOptsByAddress[formattedTokenAddress]) {
+              tokenRates[formattedTokenAddress] = [];
+              tokenLastDayRates[formattedTokenAddress] = [];
+
+              altCurrencies.forEach((altCurrency: string) => {
+                const rate =
+                  dispatch(
+                    calculateUsdToAltFiat(
+                      usdPrice,
+                      altCurrency,
+                      decimalPrecision,
+                      shouldSkipLogging,
+                    ),
+                  ) || 0;
+                tokenRates[formattedTokenAddress].push({
+                  code: altCurrency.toUpperCase(),
+                  fetchedOn: lastUpdate,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  rate,
+                  ts: lastUpdate,
+                });
+                const sign = Number(percentChange) >= 0 ? 1 : -1;
+                const lastDayRate =
+                  rate / (1 + (sign * Math.abs(Number(percentChange))) / 100);
+                const yesterday = moment
+                  .unix(lastUpdate)
+                  .subtract(1, 'days')
+                  .unix();
+                tokenLastDayRates[formattedTokenAddress].push({
+                  code: altCurrency.toUpperCase(),
+                  fetchedOn: yesterday,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  rate: lastDayRate,
+                  ts: yesterday,
+                });
+              });
+            }
+          });
         }
 
         logManager.info('getTokenRates: success');
