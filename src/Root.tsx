@@ -23,6 +23,7 @@ import 'react-native-gesture-handler';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
+import CloudflareChallengeModal from './components/modal/cloudflare-challenge/CloudflareChallenge';
 import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
@@ -1108,6 +1109,7 @@ export default () => {
           <OnGoingProcessModal />
           <InAppNotification />
           <BottomNotificationModal />
+          <CloudflareChallengeModal />
           <DecryptEnterPasswordModal />
           <BlurContainer />
           <PinModal />
