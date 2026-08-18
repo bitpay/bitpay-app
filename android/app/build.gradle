@@ -69,7 +69,7 @@ def enableSeparateBuildPerCPUArchitecture = false
  *
  * DELIBERATELY LEFT FALSE. Enabling R8/ProGuard (plus `shrinkResources`) is a
  * large download-size win, but proguard-rules.pro is currently empty (comments
- * only) and this app reflects heavily through bitcore/BWC, Braze, Sumsub, Dosh
+ * only) and this app reflects heavily through bitcore/BWC, Braze, Sumsub,
  * and the Ledger transports. Turning it on without building out keep-rules risks
  * runtime failures that only surface in release builds - on a wallet. It needs a
  * dedicated change with a full QA pass, not a drive-by flip.
