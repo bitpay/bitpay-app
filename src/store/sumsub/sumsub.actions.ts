@@ -1,6 +1,10 @@
 import {Network} from '../../constants';
 import {KycInfo} from './sumsub.reducer';
-import {SumSubActionType, SumSubActionTypes} from './sumsub.types';
+import {
+  KycBannerAck,
+  SumSubActionType,
+  SumSubActionTypes,
+} from './sumsub.types';
 
 export const setKyc = (
   network: Network,
@@ -16,6 +20,14 @@ export const setSdkStatus = (
 ): SumSubActionType => ({
   type: SumSubActionTypes.SET_SDK_STATUS,
   payload: {network, sdkStatus},
+});
+
+export const setKycBannerAck = (
+  network: Network,
+  ack: KycBannerAck,
+): SumSubActionType => ({
+  type: SumSubActionTypes.SET_BANNER_ACK,
+  payload: {network, ack},
 });
 
 export const resetKyc = (network: Network): SumSubActionType => ({

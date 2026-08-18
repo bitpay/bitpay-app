@@ -8,10 +8,12 @@ import {
   deriveKycUiState,
   isKycEligibleToStart,
   selectCanStartKyc,
+  selectKycBannerState,
   selectKycInfo,
   selectKycUiState,
   selectSdkStatus,
 } from './sumsub.selectors';
+import {KycBannerAck} from './sumsub.types';
 
 const kyc = (partial: Partial<KycInfo>): KycInfo => ({
   path: 'sumsub',
@@ -215,5 +217,131 @@ describe('selectors read the current network slice', () => {
         buildState(kyc({status: 'notStarted', tier: -1}), null, false),
       ),
     ).toBe(false);
+  });
+});
+
+describe('selectKycBannerState', () => {
+  const EID = 'user-eid';
+
+  const buildState = ({
+    info,
+    ack = null,
+    sdkStatus = null,
+    verified = true,
+    eid = EID,
+  }: {
+    info: KycInfo | null;
+    ack?: KycBannerAck | null;
+    sdkStatus?: string | null;
+    verified?: boolean;
+    eid?: string;
+  }): any => ({
+    APP: {network: Network.mainnet},
+    BITPAY_ID: {user: {[Network.mainnet]: {verified, eid}}},
+    SUMSUB: {
+      kyc: {[Network.mainnet]: info},
+      sdkStatus: {[Network.mainnet]: sdkStatus},
+      bannerAck: {[Network.mainnet]: ack},
+    },
+  });
+
+  it('shows the persistent banners regardless of any acknowledgement', () => {
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'requiresAction'}),
+          ack: {eid: EID, state: 'success'},
+        }),
+      ),
+    ).toBe('actionRequired');
+
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'pendingReview'}),
+          ack: {eid: EID, state: 'denied'},
+        }),
+      ),
+    ).toBe('inReview');
+  });
+
+  it('never shows a one-shot banner without a baseline to compare against', () => {
+    expect(
+      selectKycBannerState(buildState({info: kyc({status: 'approved'})})),
+    ).toBeNull();
+    expect(
+      selectKycBannerState(buildState({info: kyc({status: 'rejected'})})),
+    ).toBeNull();
+  });
+
+  it('shows a one-shot banner only on a transition away from the baseline', () => {
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'approved'}),
+          ack: {eid: EID, state: 'notStarted'},
+        }),
+      ),
+    ).toBe('success');
+
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'approved'}),
+          ack: {eid: EID, state: 'success'},
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it("ignores another account's acknowledgement", () => {
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'approved'}),
+          ack: {eid: 'someone-else', state: 'notStarted'},
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it('never shows for a legacy / non-SumSub approval', () => {
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: {path: 'legacy', status: 'approved'},
+          ack: {eid: EID, state: 'notStarted'},
+        }),
+      ),
+    ).toBeNull();
+
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({provider: 'other', status: 'approved'}),
+          ack: {eid: EID, state: 'notStarted'},
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it('shows nothing for notStarted or an unverified email', () => {
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'notStarted'}),
+          ack: {eid: EID, state: 'success'},
+        }),
+      ),
+    ).toBeNull();
+
+    expect(
+      selectKycBannerState(
+        buildState({
+          info: kyc({status: 'requiresAction'}),
+          verified: false,
+        }),
+      ),
+    ).toBeNull();
   });
 });
