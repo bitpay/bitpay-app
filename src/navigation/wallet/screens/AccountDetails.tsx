@@ -13,7 +13,11 @@ import React, {
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useTokenOptionsByAddress,
+} from '../../../utils/hooks';
 import {
   Key,
   Wallet,
@@ -174,8 +178,7 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -398,7 +401,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
   const {width: windowWidth} = useWindowDimensions();
   const {defaultAltCurrency, hideAllBalances, showArchaxBanner} =
@@ -582,13 +584,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+  const _tokenOptionsByAddress = useTokenOptionsByAddress();
 
   const startSyncWallets = async (mnemonic: string) => {
     if (key.isPrivKeyEncrypted) {

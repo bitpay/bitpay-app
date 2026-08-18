@@ -4,3 +4,4 @@ export * from './useDeeplinks';
 export * from './useLogger';
 export * from './useMount';
 export * from './useSensitiveRefClear';
+export * from './useTokenOptionsByAddress';

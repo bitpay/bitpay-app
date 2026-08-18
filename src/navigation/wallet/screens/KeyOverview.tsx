@@ -46,7 +46,6 @@ import {
   EmptyListContainer,
   ChevronContainer,
 } from '../../../components/styled/Containers';
-import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
@@ -84,7 +83,12 @@ import {
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+  useTokenOptionsByAddress,
+} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
   getDecryptPassword,
@@ -125,10 +129,9 @@ import {
   BitpaySupportedEvmCoins,
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
-import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
-import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {useOngoingProcess} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
@@ -490,7 +493,6 @@ const KeyOverview = () => {
   const {width: windowWidth} = useWindowDimensions();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
@@ -809,13 +811,7 @@ const KeyOverview = () => {
     [maybeActivateAllocationGainLoss],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+  const _tokenOptionsByAddress = useTokenOptionsByAddress();
 
   const startSyncWallets = async (mnemonic: string) => {
     if (key.isPrivKeyEncrypted) {

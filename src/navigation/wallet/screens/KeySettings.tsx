@@ -38,7 +38,11 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import InfoIcon from '../../../components/icons/info/Info';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {URL} from '../../../constants';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useTokenOptionsByAddress,
+} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {
   checkEncryptedKeysForEddsaMigration,
@@ -64,15 +68,13 @@ import {
 import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {RootState} from '../../../store';
-import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
 import {useTheme} from 'styled-components/native';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
-import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {useOngoingProcess} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 
@@ -134,7 +136,6 @@ const KeySettings = () => {
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {tokenOptionsByAddress} = useTokenContext();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
@@ -193,13 +194,7 @@ const KeySettings = () => {
     };
   };
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+  const _tokenOptionsByAddress = useTokenOptionsByAddress();
 
   const startSyncWallets = async (mnemonic: string) => {
     if (_key.isPrivKeyEncrypted) {

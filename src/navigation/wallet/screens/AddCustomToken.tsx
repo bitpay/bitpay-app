@@ -53,7 +53,11 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
 import {Network} from '../../../constants';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useTokenOptionsByAddress,
+} from '../../../utils/hooks';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {
   getTokenContractInfo,
@@ -78,11 +82,9 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
-import {RootState} from '../../../store';
-import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import cloneDeep from 'lodash.clonedeep';
-import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
@@ -193,16 +195,9 @@ const AddCustomToken = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
   const {key: _key, selectedAccountAddress, selectedChain} = route.params;
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
+  const tokenOptionsByAddress = useTokenOptionsByAddress();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const key = keys[_key.id];
   const [isTestnet, setIsTestnet] = useState(false);

@@ -6,17 +6,13 @@ import Avatar from '../../../../components/avatar/Avatar';
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
-import {useAppSelector} from '../../../../utils/hooks';
-import {RootState} from '../../../../store';
-import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
-import {Token} from '../../../../store/wallet/wallet.models';
+import {useTokenOptionsByAddress} from '../../../../utils/hooks';
 import {
   addTokenChainSuffix,
   getBadgeImg,
 } from '../../../../utils/helper-methods';
 import {IsVMChain, IsOtherChain} from '../../../../store/wallet/utils/currency';
 import Blockie from '../../../../components/blockie/Blockie';
-import {useTokenContext} from '../../../../contexts';
 
 interface ContactIconProps {
   size?: number;
@@ -54,15 +50,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   badge,
   address,
 }) => {
-  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
-
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
+  const tokenOptionsByAddress = useTokenOptionsByAddress();
   const foundToken =
     tokenAddress &&
     chain &&
@@ -116,4 +104,4 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   );
 };
 
-export default ContactIcon;
+export default React.memo(ContactIcon);

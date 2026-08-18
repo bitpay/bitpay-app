@@ -18,7 +18,7 @@ import {
   White,
 } from '../../../styles/colors';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useTokenOptionsByAddress} from '../../../utils/hooks';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import AddContactIcon from '../../../components/icons/add-contacts/AddContacts';
@@ -31,7 +31,6 @@ import {
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
   DetailColumn,
@@ -39,10 +38,8 @@ import {
   DetailRow,
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
-import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {View} from 'react-native';
-import {useTokenContext} from '../../../contexts';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -97,15 +94,7 @@ const MultipleOutputsTx = ({
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
 
-  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
-
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+  const tokenOptionsByAddress = useTokenOptionsByAddress();
   const foundToken =
     tokenAddress &&
     tokenOptionsByAddress[
