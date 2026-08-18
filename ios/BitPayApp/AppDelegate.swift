@@ -128,7 +128,7 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelegate, UNUserNotificationCenterDelegate {
     static private(set) var shared: AppDelegate!
     // MARK: - Static & Instance Properties
-    private var braze: Braze!
+    private var braze: Braze?
 
     public var isBitPayAppLoaded: Bool = false
     public var cachedInAppMessage: Braze.InAppMessage?
@@ -367,9 +367,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     @objc func setBitPayAppLoaded(_ loaded: Bool) {
       isBitPayAppLoaded = loaded
 
-      if loaded {
-        (braze.inAppMessagePresenter as? BrazeInAppMessageUI)?.presentNext()
-        cachedInAppMessage = nil
-      }
+      guard loaded, let braze else { return }
+
+      (braze.inAppMessagePresenter as? BrazeInAppMessageUI)?.presentNext()
+      cachedInAppMessage = nil
     }
 }
