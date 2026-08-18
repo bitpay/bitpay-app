@@ -87,7 +87,15 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
   const theme = useTheme();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [gainLossMode, setGainLossMode] = useState<GainLossMode>('1D');
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  // Narrowed from `useAppSelector(({PORTFOLIO}) => PORTFOLIO)`. The whole slice
+  // gets a new object identity on every populate-progress tick, which
+  // re-rendered this component ~1-2x/second for the duration of every
+  // portfolio populate.
+  // Only the boolean is read here, so select the primitive: this component then
+  // re-renders when populate starts/stops rather than on every progress tick.
+  const populateInProgress = useAppSelector(
+    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
+  );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
@@ -239,7 +247,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     portfolioChartsEnabled &&
     hasAnyVisibleWalletBalance &&
     !items.length &&
-    (!!visibleWallets.length || !!portfolio.populateStatus?.inProgress);
+    (!!visibleWallets.length || populateInProgress);
 
   if (shouldShowActivationPlaceholder) {
     return (
@@ -267,11 +275,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
     );
   }
 
-  if (
-    !portfolio.populateStatus?.inProgress &&
-    !hasAnyPortfolioData &&
-    !previewItems.length
-  ) {
+  if (!populateInProgress && !hasAnyPortfolioData && !previewItems.length) {
     return null;
   }
 
@@ -294,9 +298,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
       <AssetsList
         items={items}
         isPnlLoading={isPnlLoading}
-        populateInProgress={
-          portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress
-        }
+        populateInProgress={portfolioChartsEnabled && populateInProgress}
         isPopulateLoadingByKey={isPopulateLoadingByKey}
         presentationResetToken={presentationResetToken}
       />

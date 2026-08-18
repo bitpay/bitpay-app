@@ -105,7 +105,13 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const pendingTxps = wallets.flatMap(w => w.pendingTxps);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  // Narrowed from `useAppSelector(({PORTFOLIO}) => PORTFOLIO)`. The whole slice
+  // gets a new object identity on every populate-progress tick, which
+  // re-rendered this component ~1-2x/second for the duration of every
+  // portfolio populate.
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
   const rates = useAppSelector(({RATE}) => RATE.rates) as Rates;
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
@@ -171,7 +177,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   // Exchange Rates
   const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates) as Rates;
   const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    portfolioQuoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   }).toUpperCase();
   const exchangeRateHistoricalRequests = useMemo(

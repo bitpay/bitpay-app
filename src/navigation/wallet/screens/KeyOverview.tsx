@@ -499,7 +499,14 @@ const KeyOverview = () => {
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  // Narrowed from the whole PORTFOLIO slice, which gets a new object identity on
+  // every populate-progress tick.
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
+  const portfolioPopulateStatus = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
+  );
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
@@ -531,7 +538,7 @@ const KeyOverview = () => {
     ({APP}) => APP.selectedChainFilterOption,
   );
   const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    portfolioQuoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   });
 
@@ -742,7 +749,7 @@ const KeyOverview = () => {
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
 
   const isKeyPopulateLoading = isPopulateLoadingForWallets({
-    populateStatus: portfolio.populateStatus,
+    populateStatus: portfolioPopulateStatus,
     wallets: visibleKeyWallets,
   });
 

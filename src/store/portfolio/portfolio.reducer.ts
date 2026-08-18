@@ -143,27 +143,55 @@ export const portfolioReducer = (
         ? state.populateStatus.errors.concat(action.payload.errorsToAdd)
         : state.populateStatus.errors;
 
-      const nextWalletStatusById = action.payload.walletStatusByIdUpdates
+      // Only allocate a new map when an incoming status actually differs, so an
+      // unchanged tick can bail out below.
+      const statusUpdates = action.payload.walletStatusByIdUpdates;
+      const currentStatusById = state.populateStatus.walletStatusById;
+      const statusChanged =
+        !!statusUpdates &&
+        Object.keys(statusUpdates).some(
+          walletId =>
+            (currentStatusById || {})[walletId] !== statusUpdates[walletId],
+        );
+      const nextWalletStatusById = statusChanged
         ? {
-            ...(state.populateStatus.walletStatusById || {}),
-            ...action.payload.walletStatusByIdUpdates,
+            ...(currentStatusById || {}),
+            ...statusUpdates,
           }
-        : state.populateStatus.walletStatusById;
+        : currentStatusById;
       const nextProgressValue = <K extends keyof typeof state.populateStatus>(
         key: K,
       ) => pickDefinedUpdate(action.payload, state.populateStatus, key);
+
+      const nextPopulateStatus = {
+        ...state.populateStatus,
+        currentWalletId: nextProgressValue('currentWalletId'),
+        walletsTotal: nextProgressValue('walletsTotal'),
+        walletsCompleted: nextProgressValue('walletsCompleted'),
+        txRequestsMade: nextProgressValue('txRequestsMade'),
+        txsProcessed: nextProgressValue('txsProcessed'),
+        errors: nextErrors,
+        walletStatusById: nextWalletStatusById,
+      };
+
+      // This action is dispatched from a 200ms poll loop. Without a bailout it
+      // returned a brand-new slice object on every tick even when every field
+      // was identical, re-rendering every whole-slice PORTFOLIO subscriber
+      // (HomeRoot, Crypto, AssetsSection, AllAssets, KeyOverview,
+      // usePortfolioAssetRows) 5x/second and driving a persist flush each time.
+      const populateStatusUnchanged = (
+        Object.keys(nextPopulateStatus) as Array<
+          keyof typeof nextPopulateStatus
+        >
+      ).every(key => nextPopulateStatus[key] === state.populateStatus[key]);
+
+      if (populateStatusUnchanged) {
+        return state;
+      }
+
       return {
         ...state,
-        populateStatus: {
-          ...state.populateStatus,
-          currentWalletId: nextProgressValue('currentWalletId'),
-          walletsTotal: nextProgressValue('walletsTotal'),
-          walletsCompleted: nextProgressValue('walletsCompleted'),
-          txRequestsMade: nextProgressValue('txRequestsMade'),
-          txsProcessed: nextProgressValue('txsProcessed'),
-          errors: nextErrors,
-          walletStatusById: nextWalletStatusById,
-        },
+        populateStatus: nextPopulateStatus,
       };
     }
 

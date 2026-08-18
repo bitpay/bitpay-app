@@ -12,6 +12,7 @@ import {
   setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   startPopulatePortfolio,
+  updatePopulateProgress,
 } from './portfolio.actions';
 import {selectCanRenderPortfolioBalanceCharts} from './portfolio.selectors';
 
@@ -97,7 +98,7 @@ describe('portfolioReducer', () => {
         finishedAt: 200,
         lastFullPopulateCompletedAt: 200,
         quoteCurrency: 'USD',
-        reason: 'completed',
+        reason: 'done',
       }),
     );
 
@@ -113,7 +114,7 @@ describe('portfolioReducer', () => {
       finishPopulatePortfolio({
         finishedAt: 200,
         quoteCurrency: 'USD',
-        reason: 'completed',
+        reason: 'done',
       }),
     );
 
@@ -354,5 +355,110 @@ describe('portfolioReducer', () => {
     expect(
       portfolioReducer(state, markPopulateResumeSettled({settledAt: 300})),
     ).toBe(state);
+  });
+
+  // UPDATE_POPULATE_PROGRESS is dispatched from a 200ms poll loop, so the
+  // identity of the returned slice decides whether every whole-slice subscriber
+  // re-renders 5x/second. These guard the bailout.
+  describe('UPDATE_POPULATE_PROGRESS', () => {
+    it('returns the SAME state object when nothing changed', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({
+          currentWalletId: state.populateStatus.currentWalletId,
+          walletsTotal: state.populateStatus.walletsTotal,
+          walletsCompleted: state.populateStatus.walletsCompleted,
+          txRequestsMade: state.populateStatus.txRequestsMade,
+          txsProcessed: state.populateStatus.txsProcessed,
+        }),
+      );
+      expect(next).toBe(state);
+    });
+
+    it('returns the SAME state when walletStatusByIdUpdates repeats current values', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({
+          walletStatusByIdUpdates: {'wallet-1': 'in_progress'},
+        }),
+      );
+      expect(next).toBe(state);
+    });
+
+    it('propagates a changed progress counter', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({txsProcessed: 42}),
+      );
+      expect(next).not.toBe(state);
+      expect(next.populateStatus.txsProcessed).toBe(42);
+      // untouched fields are preserved
+      expect(next.populateStatus.currentWalletId).toBe(
+        state.populateStatus.currentWalletId,
+      );
+    });
+
+    it('propagates a changed walletsCompleted', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({walletsCompleted: 1}),
+      );
+      expect(next).not.toBe(state);
+      expect(next.populateStatus.walletsCompleted).toBe(1);
+    });
+
+    it('propagates a genuinely changed walletStatusById value', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({
+          walletStatusByIdUpdates: {'wallet-1': 'done'},
+        }),
+      );
+      expect(next).not.toBe(state);
+      expect(next.populateStatus.walletStatusById?.['wallet-1']).toBe('done');
+    });
+
+    it('propagates a new wallet id in walletStatusById', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({
+          walletStatusByIdUpdates: {'wallet-2': 'in_progress'},
+        }),
+      );
+      expect(next).not.toBe(state);
+      expect(next.populateStatus.walletStatusById).toEqual({
+        'wallet-1': 'in_progress',
+        'wallet-2': 'in_progress',
+      });
+    });
+
+    it('propagates appended errors', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({
+          errorsToAdd: [{walletId: 'wallet-1', message: 'boom'}],
+        }),
+      );
+      expect(next).not.toBe(state);
+      expect(next.populateStatus.errors).toEqual([
+        {walletId: 'wallet-1', message: 'boom'},
+      ]);
+    });
+
+    it('does not treat an empty errorsToAdd array as a change', () => {
+      const state = makeState();
+      const next = portfolioReducer(
+        state,
+        updatePopulateProgress({errorsToAdd: []}),
+      );
+      expect(next).toBe(state);
+    });
   });
 });

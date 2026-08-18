@@ -411,7 +411,13 @@ const Crypto = () => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  // Narrowed from `useAppSelector(({PORTFOLIO}) => PORTFOLIO)`. The whole slice
+  // gets a new object identity on every populate-progress tick, which
+  // re-rendered this component ~1-2x/second for the duration of every
+  // portfolio populate.
+  const populateStatus = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
+  );
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
@@ -488,7 +494,7 @@ const Crypto = () => {
     ? portfolioPercentageDifferenceByKey
     : undefined;
   const portfolioPopulateStatus = portfolioChartsEnabled
-    ? portfolio?.populateStatus
+    ? populateStatus
     : undefined;
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
