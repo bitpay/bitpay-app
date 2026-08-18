@@ -316,7 +316,7 @@ describe('bindWalletKeys', () => {
     expect(result).toBe(state);
   });
 
-  it('inbound: strips transactionHistory from wallets', () => {
+  it('inbound: strips transactionHistory from the persisted output', () => {
     const wallet = makeWallet();
     wallet.transactionHistory = {
       transactions: [{id: 'tx'}],
@@ -328,8 +328,36 @@ describe('bindWalletKeys', () => {
         'key-1': {wallets: [wallet]},
       },
     };
-    getInbound()(state);
-    expect(wallet.transactionHistory).toBeUndefined();
+    const result = getInbound()(state);
+    expect(result.keys['key-1'].wallets[0].transactionHistory).toBeUndefined();
+  });
+
+  // Regression guard. redux-persist passes inbound transforms the LIVE store
+  // slice by reference, so this transform used to `delete` transactionHistory off
+  // the real in-memory wallet objects — wiping the tx-history cache on every
+  // persist flush moments after the reducer wrote it, which made the cache
+  // short-circuit in GetTransactionHistory dead and forced constant refetching.
+  it('inbound: does not mutate the live state it is handed', () => {
+    const wallet = makeWallet();
+    const history = {
+      transactions: [{id: 'tx'}],
+      loadMore: false,
+      hasConfirmingTxs: false,
+    };
+    wallet.transactionHistory = history;
+    const key = {wallets: [wallet]};
+    const state: any = {keys: {'key-1': key}};
+
+    const result = getInbound()(state);
+
+    // the live objects are untouched...
+    expect(wallet.transactionHistory).toBe(history);
+    expect(state.keys['key-1']).toBe(key);
+    expect(state.keys['key-1'].wallets[0]).toBe(wallet);
+    // ...and the transform returned new objects rather than the originals
+    expect(result).not.toBe(state);
+    expect(result.keys['key-1']).not.toBe(key);
+    expect(result.keys['key-1'].wallets[0]).not.toBe(wallet);
   });
 
   it('outbound: returns state unchanged when no keys', () => {

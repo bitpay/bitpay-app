@@ -687,6 +687,7 @@ export const GetAccountTransactionHistory =
         transactions: any[];
         loadMore: boolean;
         hasConfirmingTxs: boolean;
+        fetchedAt?: number;
       };
     };
     keyId: string;
@@ -701,6 +702,7 @@ export const GetAccountTransactionHistory =
           transactions: any[];
           loadMore: boolean;
           hasConfirmingTxs: boolean;
+          fetchedAt?: number;
         };
       };
       sortedCompleteHistory: any[];
@@ -715,6 +717,7 @@ export const GetAccountTransactionHistory =
         transactions: any[];
         loadMore: boolean;
         hasConfirmingTxs: boolean;
+        fetchedAt?: number;
       };
     };
     sortedCompleteHistory: any[];
@@ -816,7 +819,12 @@ export const GetTransactionHistory =
     skipWalletProcessing?: boolean;
     skipUiFriendlyList?: boolean;
   }): Effect<
-    Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
+    Promise<{
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+      fetchedAt?: number;
+    }>
   > =>
   async (
     dispatch,
@@ -825,6 +833,7 @@ export const GetTransactionHistory =
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
+    fetchedAt?: number;
   }> => {
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
@@ -897,8 +906,25 @@ export const GetTransactionHistory =
         });
 
         let hasConfirmingTxs: boolean = false;
+        // Only the newest page can be head-scanned for pending txs, so a
+        // load-more call (skip > 0) cannot recompute this. Carry the previous
+        // value forward instead of reporting `false`: this object is stored into
+        // wallet.transactionHistory (directly, or via
+        // GetAccountTransactionHistory -> UPDATE_ACCOUNT_TX_HISTORY), so
+        // reporting false would clobber a correct `true` and silently bypass the
+        // ETH nonce-ordering gate in send.ts after an ordinary "load more" tap.
+        let confirmingTxsFetchedAt: number | undefined =
+          wallet.transactionHistory?.fetchedAt;
+        if (skip) {
+          hasConfirmingTxs = !!wallet.transactionHistory?.hasConfirmingTxs;
+        }
         if (!skip) {
           let transactionHistory;
+          // Age of the data the flag is actually derived from. For the ERC20
+          // branch below that is the LINKED wallet's cached history, not the page
+          // we just fetched, so stamping Date.now() there would advertise a
+          // stale-derived observation as fresh and stop send.ts re-verifying it.
+          let derivedAt: number | undefined;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
           const {WALLET} = getState();
@@ -908,8 +934,10 @@ export const GetTransactionHistory =
               tokens?.includes(walletId),
             );
             transactionHistory = linkedWallet?.transactionHistory?.transactions;
+            derivedAt = linkedWallet?.transactionHistory?.fetchedAt;
           } else {
             transactionHistory = newHistory;
+            derivedAt = Date.now();
           }
 
           // look for sent or moved unconfirmed until find a confirmed
@@ -924,6 +952,9 @@ export const GetTransactionHistory =
               }
             }
           }
+          // Reflects the age of the data the flag was derived from — fresh for
+          // the newest-page branch, the linked wallet's own age for ERC20.
+          confirmingTxsFetchedAt = derivedAt;
           if (!isAccountDetailsView) {
             dispatch(
               updateWalletTxHistory({
@@ -933,12 +964,26 @@ export const GetTransactionHistory =
                   transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
                   loadMore,
                   hasConfirmingTxs,
+                  fetchedAt: confirmingTxsFetchedAt,
                 },
               }),
             );
           }
         }
-        return resolve({transactions: newHistory, loadMore, hasConfirmingTxs});
+        // fetchedAt must be stamped here too, not only on the
+        // updateWalletTxHistory dispatch above: when isAccountDetailsView is
+        // true that dispatch is skipped and GetAccountTransactionHistory
+        // stores THIS object into accountTransactionsHistory, which
+        // UPDATE_ACCOUNT_TX_HISTORY then writes straight into
+        // wallet.transactionHistory. Without it the ETH nonce gate in send.ts
+        // would treat the flag as permanently stale for every wallet whose
+        // history was last loaded from AccountDetails.
+        return resolve({
+          transactions: newHistory,
+          loadMore,
+          hasConfirmingTxs,
+          fetchedAt: confirmingTxsFetchedAt,
+        });
       } catch (err) {
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);

@@ -142,16 +142,29 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
     const keys = inboundState.keys || {};
-    if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys)) {
-        key.wallets.forEach(wallet => delete wallet.transactionHistory);
-
-        inboundState.keys[id] = {
-          ...key,
-        };
-      }
+    if (Object.keys(keys).length === 0) {
+      return inboundState;
     }
-    return inboundState;
+    // NOTE: redux-persist hands inbound transforms the LIVE store slice by
+    // reference (createPersistoid reduces transforms over `lastState[key]`).
+    // Mutating it here mutated in-memory Redux state: `delete
+    // wallet.transactionHistory` wiped the tx-history cache on every persist
+    // flush, moments after the reducer wrote it, so the cache short-circuit in
+    // GetTransactionHistory never hit and history was refetched constantly.
+    // Build a new map instead and never touch `inboundState`.
+    const nextKeys: WalletState['keys'] = {};
+    for (const [id, key] of Object.entries(keys)) {
+      nextKeys[id] = {
+        ...key,
+        // Strip persisted tx history without mutating the live wallet objects.
+        // `Wallet` is a BWC client instance type, so a rest-spread object literal
+        // is not structurally assignable to it; the runtime shape is correct.
+        wallets: key.wallets.map(
+          ({transactionHistory: _omitted, ...wallet}) => wallet as Wallet,
+        ),
+      };
+    }
+    return {...inboundState, keys: nextKeys};
   },
   // transform state being rehydrated
   outboundState => {

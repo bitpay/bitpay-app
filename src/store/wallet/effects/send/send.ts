@@ -41,7 +41,11 @@ import {
   GetMinFee,
   getFeeRatePerKb,
 } from '../fee/fee';
-import {GetInput} from '../transactions/transactions';
+import {
+  GetInput,
+  GetTransactionHistory,
+  TX_HISTORY_LIMIT,
+} from '../transactions/transactions';
 import {
   checkEncryptedKeysForEddsaMigration,
   createAtaAndSend,
@@ -104,6 +108,13 @@ import _ from 'lodash';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {DeviceEventEmitter, Platform} from 'react-native';
+
+// How long a cached `transactionHistory.hasConfirmingTxs` is trusted without
+// re-checking. Past this the flag is NOT discarded — it is re-verified against
+// the network before the send is allowed or blocked (see the gate below). The
+// window only decides when the extra round trip is worth paying; it is not a
+// correctness boundary.
+const HAS_CONFIRMING_TXS_MAX_AGE_MS = 2 * 60 * 1000;
 import {Rates} from '../../../rate/rate.models';
 import {
   getCoinAndChainFromCurrencyCode,
@@ -188,21 +199,109 @@ export const createProposalAndBuildTxDetails =
           tx.signingMethod = 'ecdsa';
         }
 
+        // ETH nonce-ordering gate.
+        //
+        // This was effectively dead until recently: the persist transform used to
+        // delete `wallet.transactionHistory` off live state on every flush, so
+        // `hasConfirmingTxs` was almost always undefined by the time a send ran.
+        // Fixing that mutation re-armed the gate — but nothing recomputes the
+        // flag unless a Wallet/Account details screen is mounted or the user
+        // pulls to refresh, so a cached `true` can be arbitrarily old.
+        //
+        // Neither shortcut is acceptable. Trusting a stale `true` locks the user
+        // out of sending until app restart. Discarding a stale `true` disables
+        // the protection for precisely the case it exists for — a low-gas tx can
+        // stay pending far longer than any TTL worth having, and skipping this
+        // block also skips `setEthAddressNonce`, so `tx.nonce` is never set and
+        // BWS assigns its default, which is exactly the collision the gate
+        // prevents. So when the flag is set but stale, re-verify against the
+        // network before deciding.
         if (
           chain === 'eth' &&
-          wallet.transactionHistory?.hasConfirmingTxs &&
-          context !== 'speedupEth'
+          context !== 'speedupEth' &&
+          wallet.transactionHistory?.hasConfirmingTxs
         ) {
-          if (!queuedTransactions) {
-            return reject({
-              err: new Error(
-                t(
-                  'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+          let hasConfirmingTxs = true;
+          const confirmingTxsFetchedAt = wallet.transactionHistory?.fetchedAt;
+          const isFresh =
+            !!confirmingTxsFetchedAt &&
+            Date.now() - confirmingTxsFetchedAt < HAS_CONFIRMING_TXS_MAX_AGE_MS;
+
+          if (!isFresh) {
+            try {
+              // Re-verify against the LINKED native wallet for ERC20 sends.
+              // GetTransactionHistory derives hasConfirmingTxs for a token
+              // wallet from `linkedWallet.transactionHistory.transactions` read
+              // out of redux — NOT from the page it just fetched. So refreshing
+              // the token wallet would fetch one thing and then recompute the
+              // flag from the very stale cache this re-verification exists to
+              // replace, and stamp that stale-derived result as fresh.
+              //
+              // Refreshing the linked wallet instead takes the `else` branch
+              // there, deriving the flag from its own fresh page, and its
+              // updateWalletTxHistory write refreshes the exact redux entry the
+              // token-wallet computation reads. It is also the semantically
+              // right target: nonces are account-level, and the linked wallet's
+              // history covers pending txs from the native coin and every token
+              // on the account.
+              // Matches the normal history path so contact names resolve the
+              // same way in the rows this call caches.
+              const {CONTACT} = getState();
+              let verificationWallet = wallet;
+              if (IsERCToken(currencyAbbreviation, chain)) {
+                const linkedWallet = keys[wallet.keyId]?.wallets.find(
+                  (linked: Wallet) => linked.tokens?.includes(wallet.id),
+                );
+                if (linkedWallet) {
+                  verificationWallet = linkedWallet;
+                }
+              }
+
+              const refreshed = await dispatch(
+                GetTransactionHistory({
+                  wallet: verificationWallet,
+                  transactionsHistory: [],
+                  limit: TX_HISTORY_LIMIT,
+                  // refresh forces skip=0, which is what makes
+                  // hasConfirmingTxs get recomputed rather than served from
+                  // the cache.
+                  refresh: true,
+                  // Deliberately NOT skipUiFriendlyList/skipWalletProcessing.
+                  // With skip=0 and isAccountDetailsView false this call also
+                  // dispatches updateWalletTxHistory, so whatever it produces
+                  // becomes the cached history that WalletDetails serves via the
+                  // cache short-circuit. Skipping BuildUiFriendlyList would
+                  // store rows without uiIcon/uiDescription and render blank
+                  // transaction rows until the next pull-to-refresh. At
+                  // TX_HISTORY_LIMIT (25) the formatting cost is trivial.
+                  contactList: CONTACT.list,
+                }),
+              );
+              hasConfirmingTxs = !!refreshed.hasConfirmingTxs;
+            } catch (err) {
+              // Fail closed. If the pending state cannot be confirmed, keep the
+              // cached `true` rather than risk a nonce collision; a send on a
+              // dead network would fail moments later anyway.
+              logManager.warn(
+                `Could not re-verify pending ETH txs before send, keeping cached hasConfirmingTxs: ${
+                  err instanceof Error ? err.message : String(err)
+                }`,
+              );
+            }
+          }
+
+          if (hasConfirmingTxs) {
+            if (!queuedTransactions) {
+              return reject({
+                err: new Error(
+                  t(
+                    'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+                  ),
                 ),
-              ),
-            });
-          } else {
-            await dispatch(setEthAddressNonce(wallet, tx));
+              });
+            } else {
+              await dispatch(setEthAddressNonce(wallet, tx));
+            }
           }
         }
 
