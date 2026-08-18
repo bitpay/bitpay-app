@@ -19,6 +19,40 @@ const _outQueue: string[] = [];
 const pendings = new Map<number, Pending>();
 let seq = 1;
 
+// --- lazy mount ---------------------------------------------------------
+// The host used to be mounted unconditionally from index.js, which meant every
+// user paid, on every launch: building a ~1.2MB HTML string (the vendored DKLS
+// wasm + js blobs are ~890KB of base64, JSON.stringify'd into the boot HTML),
+// shipping it across the bridge, and spawning a WebView process — all for a
+// threshold-signature feature most sessions never touch. WASM instantiation was
+// already deferred (`ensureDkls`), but none of the above was.
+//
+// Now the host renders null until something actually calls `callWorker`, which
+// only happens through the Metro alias shim (shims/silence-dkls-web.js) when
+// @bitpay-labs/bitcore-tss runs a TSS keygen/signing operation.
+//
+// `callWorker` already awaits `_readyPromise` and queues into `_outQueue` when
+// `_post` is unset, so calls issued before the WebView finishes booting are
+// preserved rather than dropped.
+let _mountRequested = false;
+const _mountListeners = new Set<() => void>();
+
+/** Ask the DKLS host to mount its WebView. Idempotent. */
+export function requestDklsWorkerMount(): void {
+  if (_mountRequested) {
+    return;
+  }
+  _mountRequested = true;
+  _mountListeners.forEach(listener => listener());
+}
+
+function subscribeDklsMount(listener: () => void): () => void {
+  _mountListeners.add(listener);
+  return () => {
+    _mountListeners.delete(listener);
+  };
+}
+
 const processArgs = (args: any): any => {
   if (!Array.isArray(args)) return args;
 
@@ -47,6 +81,8 @@ const processArgs = (args: any): any => {
 };
 
 export async function callWorker<T = any>(msg: any): Promise<T> {
+  // Boot the WebView on first use rather than at app launch.
+  requestDklsWorkerMount();
   const id = ++seq;
   const processedMsg = {
     ...msg,
@@ -98,7 +134,7 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
   });
 }
 
-export const DklsWorkerHost = () => {
+const DklsWorkerWebView = () => {
   const [bootHtml] = useState(() => {
     return `
 <!doctype html>
@@ -773,6 +809,37 @@ export const DklsWorkerHost = () => {
       />
     </View>
   );
+};
+
+/**
+ * Gate that keeps the DKLS WebView (and the ~1.2MB boot HTML it is handed) out of
+ * app startup. Stays mounted in the root tree but renders nothing until
+ * `requestDklsWorkerMount()` fires from the first `callWorker` call.
+ */
+export const DklsWorkerHost = () => {
+  const [shouldMount, setShouldMount] = useState(_mountRequested);
+
+  useEffect(() => {
+    if (shouldMount) {
+      return;
+    }
+    // requestDklsWorkerMount() is idempotent and only notifies current
+    // listeners, so a request landing between this component's render and this
+    // effect attaching would otherwise be lost forever — the WebView would
+    // never mount and every callWorker would await _readyPromise with no
+    // timeout. Re-check the flag before subscribing.
+    if (_mountRequested) {
+      setShouldMount(true);
+      return;
+    }
+    return subscribeDklsMount(() => setShouldMount(true));
+  }, [shouldMount]);
+
+  if (!shouldMount) {
+    return null;
+  }
+
+  return <DklsWorkerWebView />;
 };
 
 const styles = StyleSheet.create({
