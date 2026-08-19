@@ -82,7 +82,15 @@ export const startKycVerification =
 
       const locale = (APP.defaultLanguage || 'en').split('-')[0];
 
-      const result = await launchSumSubSdk(accessToken, onTokenExpired, locale);
+      const result = await launchSumSubSdk(
+        accessToken,
+        onTokenExpired,
+        locale,
+        {
+          email: user.email,
+          phone: user.phone,
+        },
+      );
 
       dispatch(
         LogActions.debug(`[SumSub] SDK closed — status: ${result.status}`),
