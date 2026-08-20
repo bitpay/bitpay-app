@@ -120,7 +120,6 @@ import {prefetchExternalServicesData} from '../external-services/external-servic
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
-import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
 import axios from 'axios';
@@ -291,7 +290,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (getState().WALLET_CONNECT_V2?.sessions?.length > 0) {
       dispatch(walletConnectV2Init());
     }
-    dispatch(moralisInit());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());

@@ -94,6 +94,7 @@ export enum AppActionTypes {
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
   SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
+  SET_HAS_VIEWED_TSS_ONBOARDING = 'APP/SET_HAS_VIEWED_TSS_ONBOARDING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
@@ -434,6 +435,10 @@ interface SetHasViewedBillsTab {
   type: typeof AppActionTypes.SET_HAS_VIEWED_BILLS_TAB;
 }
 
+interface SetHasViewedTSSOnboarding {
+  type: typeof AppActionTypes.SET_HAS_VIEWED_TSS_ONBOARDING;
+}
+
 interface setUserFeedback {
   type: typeof AppActionTypes.USER_FEEDBACK;
   payload: FeedbackType;
@@ -520,6 +525,7 @@ export type AppActionType =
   | checkingBiometricForSending
   | SetHasViewedZenLedgerWarning
   | SetHasViewedBillsTab
+  | SetHasViewedTSSOnboarding
   | InAppBrowserOpen
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption

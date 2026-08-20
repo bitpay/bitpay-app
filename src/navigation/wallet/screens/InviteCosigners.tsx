@@ -74,6 +74,7 @@ import {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -317,6 +318,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
 
   const {height: screenHeight} = useWindowDimensions();
   const isSmallScreen = screenHeight < 700;
+
+  useAndroidBackHandler(() => true);
 
   const {keyId} = route.params;
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);

@@ -40,7 +40,7 @@ export const APP_NAME = 'bitpay';
 export const APP_NAME_UPPERCASE = 'BitPay';
 export const APP_NETWORK = Network.mainnet;
 export const APP_VERSION = version;
-export const BASE_BITPAY_URLS = {
+export const BASE_BITPAY_URLS: {[key: string]: string} = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',
   [Network.regtest]: REGTEST_BASE_BITPAY_URL || '',
@@ -133,7 +133,7 @@ export const BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   },
 };
 
-export const METHOD_ENVS = {
+export const METHOD_ENVS: {[key: string]: string} = {
   [Network.mainnet]: 'production',
   [Network.testnet]: 'dev',
   [Network.regtest]: 'dev',

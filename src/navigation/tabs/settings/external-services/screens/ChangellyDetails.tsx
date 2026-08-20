@@ -9,9 +9,13 @@ import {Br} from '../../../../../components/styled/Containers';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
-import {changellyGetStatus} from '../../../../../store/swap-crypto/effects/changelly/changelly';
+
 import ChangellyLogo from '../../../../../components/icons/external-services/changelly/changelly-logo';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useLogger,
+  useAppSelector,
+} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -21,7 +25,10 @@ import {
   changellyGetStatusDetails,
   Status,
   changellyGetStatusColor,
+  generateMessageId,
 } from '../../../../../navigation/services/swap-crypto/utils/changelly-utils';
+import {RootState} from '../../../../../store';
+import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 import {
   RowDataContainer,
   CryptoAmountContainer,
@@ -59,6 +66,9 @@ const ChangellyDetails: React.FC = () => {
   const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const [status, setStatus] = useState<Status>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -83,33 +93,56 @@ const ChangellyDetails: React.FC = () => {
     setStatus(changellyGetStatusDetails(swapTx.status));
   };
 
-  const getStatus = (force?: boolean) => {
+  const getStatus = async (force?: boolean) => {
     if (swapTx.status === 'finished' && !force) {
       return;
     }
-    changellyGetStatus(swapTx.exchangeTxId, swapTx.status)
-      .then(data => {
-        if (data.error) {
-          logger.error('Changelly getStatus Error: ' + data.error.message);
-          return;
-        }
-        if (data.result != swapTx.status) {
-          logger.debug('Updating status to: ' + data.result);
-          swapTx.status = data.result;
-          updateStatusDescription();
-          dispatch(
-            SwapCryptoActions.successTxChangelly({
-              changellyTxData: swapTx,
-            }),
-          );
 
-          logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
-        }
-      })
-      .catch(err => {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error('Changelly getStatus Error: ' + errStr);
-      });
+    const walletIsSupported = (wallet: Wallet): boolean =>
+      !!(wallet.credentials && wallet.isComplete());
+
+    const selectedWallet = Object.values(allKeys)
+      .filter(key => key.backupComplete)
+      .flatMap(key => key.wallets ?? [])
+      .find(walletIsSupported);
+
+    if (!selectedWallet) {
+      logger.error('No supported wallet found for Changelly status');
+      return;
+    }
+
+    try {
+      const reqData = {
+        id: generateMessageId(),
+        exchangeTxId: swapTx.exchangeTxId,
+        useV2: true,
+      };
+      logger.debug(
+        'Making a Changelly request with body: ' + JSON.stringify(reqData),
+      );
+      const _raw = await selectedWallet.changellyGetStatus(reqData);
+      const data = _raw?.body ?? _raw;
+
+      if (data.error) {
+        logger.error('Changelly getStatus Error: ' + data.error.message);
+        return;
+      }
+      if (data.result != swapTx.status) {
+        logger.debug('Updating status to: ' + data.result);
+        swapTx.status = data.result;
+        updateStatusDescription();
+        dispatch(
+          SwapCryptoActions.successTxChangelly({
+            changellyTxData: swapTx,
+          }),
+        );
+
+        logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
+      }
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Changelly getStatus Error: ' + errStr);
+    }
   };
 
   const onRefresh = async () => {

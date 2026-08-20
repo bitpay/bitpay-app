@@ -95,7 +95,8 @@ export default function usePortfolioBalanceChartReadiness(args: {
     (isBalanceChartDataReadyToQuery &&
       (hasHistoricalChartData || shouldRenderZeroBalanceChart)) ||
     shouldPreserveStaleBalanceChart;
-  const shouldShowChartLoader = !canRenderBalanceChart && isChartDataPending;
+  const shouldShowChartLoader =
+    !canRenderBalanceChart && (isChartDataPending || isScopePopulateLoading);
   const shouldMountBalanceChart =
     canRenderBalanceChart || shouldShowChartLoader;
 
