@@ -1,3 +1,4 @@
+import {t} from 'i18next';
 import {Effect} from '../index';
 import {SumSubApi} from '../../api/sumsub';
 import {launchSumSubSdk} from '../../lib/sumsub';
@@ -7,6 +8,10 @@ import {KycInfo} from './sumsub.reducer';
 import {showBottomNotificationModal} from '../app/app.actions';
 import {CustomErrorMessage} from '../../navigation/wallet/components/ErrorMessages';
 import {deriveKycUiState} from './sumsub.selectors';
+import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {sleep} from '../../utils/helper-methods';
+
+const MODAL_HANDOFF_DELAY = 600;
 
 // Fetches the backend KYC object and stores it verbatim. No-op when logged out.
 export const startGetKycStatus =
@@ -57,6 +62,15 @@ export const startKycVerification =
       dispatch(
         LogActions.error('[SumSub] Cannot start KYC — user not logged in'),
       );
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t(
+              'Please log in to your BitPay account to verify your identity.',
+            ),
+          }),
+        ),
+      );
       return;
     }
 
@@ -64,13 +78,29 @@ export const startKycVerification =
       SumSubApi.fetchAccessToken(apiToken);
 
     try {
-      const accessToken = await getAccessToken();
+      ongoingProcessManager.show('GENERAL_AWAITING');
+      let accessToken: string | null;
+      try {
+        accessToken = await getAccessToken();
+      } finally {
+        ongoingProcessManager.hide();
+      }
 
-      // Null token → not eligible; not an error, just don't launch the SDK.
       if (!accessToken) {
         dispatch(
           LogActions.info(
             '[SumSub] No access token returned — KYC not available for this user.',
+          ),
+        );
+        await sleep(MODAL_HANDOFF_DELAY);
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              title: t('Verification unavailable'),
+              errMsg: t(
+                "Identity verification isn't available for your account at this time. Please contact support if you need help.",
+              ),
+            }),
           ),
         );
         return;
@@ -114,5 +144,13 @@ export const startKycVerification =
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(LogActions.error(`[SumSub] SDK error: ${msg}`));
+      await sleep(MODAL_HANDOFF_DELAY);
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: msg || t('The verification process encountered an error.'),
+          }),
+        ),
+      );
     }
   };
