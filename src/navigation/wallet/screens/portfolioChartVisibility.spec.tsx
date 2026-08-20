@@ -267,10 +267,6 @@ jest.mock('../../../utils/hooks', () => ({
     debug: jest.fn(),
     error: jest.fn(),
   }),
-  // Screens now read the merged token map through this shared memoized hook
-  // instead of spreading the whole registry inside useAppSelector on every
-  // dispatch. These screens only need it to resolve token metadata, which these
-  // chart-visibility assertions do not exercise.
   useTokenOptionsByAddress: () => ({}),
 }));
 

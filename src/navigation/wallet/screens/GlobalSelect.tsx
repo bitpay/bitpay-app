@@ -36,7 +36,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {groupBy, unionBy, uniqueId, isEmpty} from 'lodash';
+import {groupBy, unionBy, isEmpty} from 'lodash';
 import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {
   Action,
@@ -371,7 +371,7 @@ const buildSelectableCurrenciesList = (
       );
 
       const coinEntry = coins[currencyAbbreviation] || {
-        id: uniqueId('coin_'),
+        id: `coin_${currencyAbbreviation}`,
         currencyName: name,
         currencyAbbreviation,
         chainsImg: {},
@@ -473,7 +473,7 @@ const buildSelectableWalletList = (
           ? 'matic'
           : currencyAbbreviation;
       const coinEntry = coins[key] || {
-        id: uniqueId('coin_'),
+        id: `coin_${key}`,
         currencyName,
         currencyAbbreviation,
         chainsImg: {},
@@ -597,11 +597,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  // Was `useAppSelector(({WALLET}) => WALLET)` — the whole slice, so this screen
-  // re-rendered on any wallet-related dispatch. Narrowed to the one field used.
   const _keys = useAppSelector(({WALLET}) => WALLET.keys);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  // Shared memoized merge; previously rebuilt inline on every render.
   const allTokensByAddress = useTokenOptionsByAddress();
   const [dataToDisplay, setDataToDisplay] = useState<
     GlobalSelectObj[] | KeyWalletsRowProps[]
@@ -652,9 +649,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     mountComponents();
   }, []);
 
-  // Walks the entire token registry (thousands of entries) with per-token string
-  // work. This used to run bare in the render body, so it re-ran on every search
-  // keystroke and every modal-visibility toggle on the app's most-used picker.
   const NON_BITPAY_SUPPORTED_TOKENS = useMemo(
     () =>
       Array.from(
@@ -686,109 +680,126 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   };
 
   // Filter keys with only incomplete wallets
-  const keys = filterCompleteWallets(_keys);
+  const keys = useMemo(() => filterCompleteWallets(_keys), [_keys]);
 
   // all wallets
-  let wallets = Object.values(keys).flatMap(key => key.wallets);
-  // Filter hidden wallets
-  wallets = wallets.filter(
-    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
-  );
-
-  // only show wallets with funds
-  // only show selected account address wallets if selectedAccountAddress is provided
-  if (
-    [
-      'send',
-      'sell',
-      'swapFrom',
-      'coinbaseDeposit',
-      'contact',
-      'scanner',
-    ].includes(context)
-  ) {
-    wallets = wallets.filter(
-      wallet =>
-        wallet.balance.sat > 0 &&
-        (!selectedAccountAddress ||
-          wallet.receiveAddress === selectedAccountAddress),
+  const wallets = useMemo(() => {
+    let _wallets = Object.values(keys).flatMap(key => key.wallets);
+    // Filter hidden wallets
+    _wallets = _wallets.filter(
+      wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
     );
-  }
 
-  // only show selected account address wallets if selectedAccountAddress is provided
-  if (['receive'].includes(context) && selectedAccountAddress) {
-    wallets = wallets.filter(wallet =>
-      selectedAccountAddress
-        ? wallet.receiveAddress === selectedAccountAddress
-        : false,
-    );
-  }
-
-  if (
-    recipient &&
-    ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
-  ) {
-    if (recipient.currency && recipient.chain) {
-      wallets = wallets.filter(
+    // only show wallets with funds
+    // only show selected account address wallets if selectedAccountAddress is provided
+    if (
+      [
+        'send',
+        'sell',
+        'swapFrom',
+        'coinbaseDeposit',
+        'contact',
+        'scanner',
+      ].includes(context)
+    ) {
+      _wallets = _wallets.filter(
         wallet =>
-          (wallet.currencyAbbreviation === recipient?.currency &&
-            wallet.chain === recipient?.chain) ||
-          (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.chain]) ||
-          (recipient?.opts?.showSVMWalletsAndTokens &&
-            BitpaySupportedSvmCoins[wallet.chain]),
+          wallet.balance.sat > 0 &&
+          (!selectedAccountAddress ||
+            wallet.receiveAddress === selectedAccountAddress),
       );
     }
-    if (recipient?.network) {
-      wallets = wallets.filter(wallet => wallet.network === recipient?.network);
+
+    // only show selected account address wallets if selectedAccountAddress is provided
+    if (['receive'].includes(context) && selectedAccountAddress) {
+      _wallets = _wallets.filter(wallet =>
+        selectedAccountAddress
+          ? wallet.receiveAddress === selectedAccountAddress
+          : false,
+      );
     }
-  }
 
-  if (livenetOnly) {
-    wallets = wallets.filter(wallet => wallet.network === 'livenet');
-  }
-
-  if (assetContext?.currencyAbbreviation && assetContext?.chain) {
-    const filterCurrencyAbbreviation =
-      assetContext.currencyAbbreviation.toLowerCase();
-    const filterChain = assetContext.chain.toLowerCase();
-    const filterNetwork = assetContext.network?.toLowerCase();
-    const filterTokenAddress = assetContext.tokenAddress?.toLowerCase();
-
-    wallets = wallets.filter(wallet => {
-      if (wallet.currencyAbbreviation !== filterCurrencyAbbreviation) {
-        return false;
+    if (
+      recipient &&
+      ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
+    ) {
+      if (recipient.currency && recipient.chain) {
+        _wallets = _wallets.filter(
+          wallet =>
+            (wallet.currencyAbbreviation === recipient?.currency &&
+              wallet.chain === recipient?.chain) ||
+            (recipient?.opts?.showEVMWalletsAndTokens &&
+              BitpaySupportedEvmCoins[wallet.chain]) ||
+            (recipient?.opts?.showSVMWalletsAndTokens &&
+              BitpaySupportedSvmCoins[wallet.chain]),
+        );
       }
-      if (wallet.chain !== filterChain) {
-        return false;
+      if (recipient?.network) {
+        _wallets = _wallets.filter(
+          wallet => wallet.network === recipient?.network,
+        );
       }
-      if (filterNetwork && wallet.network !== filterNetwork) {
-        return false;
-      }
+    }
 
-      if (filterTokenAddress) {
-        const walletTokenAddress = wallet.tokenAddress?.toLowerCase();
-        return walletTokenAddress === filterTokenAddress;
-      }
+    if (livenetOnly) {
+      _wallets = _wallets.filter(wallet => wallet.network === 'livenet');
+    }
 
-      return true;
-    });
-  }
+    if (assetContext?.currencyAbbreviation && assetContext?.chain) {
+      const filterCurrencyAbbreviation =
+        assetContext.currencyAbbreviation.toLowerCase();
+      const filterChain = assetContext.chain.toLowerCase();
+      const filterNetwork = assetContext.network?.toLowerCase();
+      const filterTokenAddress = assetContext.tokenAddress?.toLowerCase();
 
-  if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
-    const supportedCurrencies = [
-      ...new Set(
-        customSupportedCurrencies.map(item =>
-          item.currencyAbbreviation.toLowerCase(),
+      _wallets = _wallets.filter(wallet => {
+        if (wallet.currencyAbbreviation !== filterCurrencyAbbreviation) {
+          return false;
+        }
+        if (wallet.chain !== filterChain) {
+          return false;
+        }
+        if (filterNetwork && wallet.network !== filterNetwork) {
+          return false;
+        }
+
+        if (filterTokenAddress) {
+          const walletTokenAddress = wallet.tokenAddress?.toLowerCase();
+          return walletTokenAddress === filterTokenAddress;
+        }
+
+        return true;
+      });
+    }
+
+    if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
+      const supportedCurrencies = [
+        ...new Set(
+          customSupportedCurrencies.map(item =>
+            item.currencyAbbreviation.toLowerCase(),
+          ),
         ),
-      ),
-    ];
-    wallets = wallets.filter(wallet =>
-      supportedCurrencies.includes(wallet.currencyAbbreviation),
-    );
-  }
+      ];
+      _wallets = _wallets.filter(wallet =>
+        supportedCurrencies.includes(wallet.currencyAbbreviation),
+      );
+    }
 
-  const currenciesSupportedList = useMemo(() => {
+    return _wallets;
+  }, [
+    keys,
+    context,
+    selectedAccountAddress,
+    recipient,
+    livenetOnly,
+    assetContext,
+    useAsModal,
+    customSupportedCurrencies,
+  ]);
+
+  const currenciesSupportedList = useMemo<
+    GlobalSelectObj[] | KeyWalletsRowProps[]
+  >(() => {
     const coins = customSupportedCurrencies
       ? customSupportedCurrencies
       : SUPPORTED_COINS;
@@ -872,27 +883,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           };
         })
         .filter(item => item !== null) as KeyWalletsRowProps[];
-      setDataToDisplay(allCurrencyData);
-      const keyWalletsArray = allCurrencyData as KeyWalletsRowProps[];
-      if (
-        keyWalletsArray.length === 1 &&
-        keyWalletsArray[0]?.accounts?.length === 1 &&
-        IsVMChain(keyWalletsArray[0].accounts[0].chains[0])
-      ) {
-        // if only one account and is evm show assets directly
-        const selectedAccount = keyWalletsArray[0].accounts[0];
-        setSelectedEVMAccount({
-          keyId: selectedAccount.keyId,
-          chains: selectedAccount.chains,
-          accountName: selectedAccount.accountName,
-          accountNumber: selectedAccount.accountNumber,
-          receiveAddress: selectedAccount.receiveAddress,
-        });
-        setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
-        setSearchVal('');
-        setSearchResults([]);
-        setHideCloseButton(true);
-      }
       return allCurrencyData;
     } else if (!customToSelectCurrencies) {
       allCurrencyData = buildSelectableWalletList(
@@ -900,26 +890,74 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         wallets,
         context,
       );
-      setDataToDisplay(Object.values(allCurrencyData));
-      return Object.values(allCurrencyData);
+      return Object.values(allCurrencyData) as GlobalSelectObj[];
     } else {
       return [];
     }
-  }, []);
+  }, [
+    wallets,
+    keys,
+    context,
+    rates,
+    defaultAltCurrency.isoCode,
+    dispatch,
+    customSupportedCurrencies,
+    customToSelectCurrencies,
+    NON_BITPAY_SUPPORTED_TOKENS,
+  ]);
 
-  const customCurrenciesSupportedList = useMemo(() => {
-    if (customToSelectCurrencies) {
-      const allCurrencyData = buildSelectableCurrenciesList(
+  const customCurrenciesSupportedList = useMemo<GlobalSelectObj[]>(() => {
+    if (!customToSelectCurrencies) {
+      return [];
+    }
+    return Object.values(
+      buildSelectableCurrenciesList(
         customToSelectCurrencies,
         selectedChainFilterOption,
         wallets,
-      );
-      setDataToDisplay(Object.values(allCurrencyData));
-      return Object.values(allCurrencyData);
-    } else {
-      return [];
+      ),
+    );
+  }, [customToSelectCurrencies, selectedChainFilterOption, wallets]);
+
+  useEffect(() => {
+    setDataToDisplay(
+      customToSelectCurrencies
+        ? customCurrenciesSupportedList
+        : currenciesSupportedList,
+    );
+  }, [
+    customToSelectCurrencies,
+    customCurrenciesSupportedList,
+    currenciesSupportedList,
+  ]);
+
+  const autoSelectedSingleAccountRef = useRef(false);
+  useEffect(() => {
+    if (autoSelectedSingleAccountRef.current || customToSelectCurrencies) {
+      return;
     }
-  }, [selectedChainFilterOption]);
+    const keyWalletsArray = currenciesSupportedList as KeyWalletsRowProps[];
+    if (
+      keyWalletsArray.length !== 1 ||
+      keyWalletsArray[0]?.accounts?.length !== 1 ||
+      !IsVMChain(keyWalletsArray[0].accounts[0].chains[0])
+    ) {
+      return;
+    }
+    autoSelectedSingleAccountRef.current = true;
+    const selectedAccount = keyWalletsArray[0].accounts[0];
+    setSelectedEVMAccount({
+      keyId: selectedAccount.keyId,
+      chains: selectedAccount.chains,
+      accountName: selectedAccount.accountName,
+      accountNumber: selectedAccount.accountNumber,
+      receiveAddress: selectedAccount.receiveAddress,
+    });
+    setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+    setSearchVal('');
+    setSearchResults([]);
+    setHideCloseButton(true);
+  }, [currenciesSupportedList, customToSelectCurrencies]);
 
   const goToBuyCrypto = async () => {
     if (globalSelectOnDismiss) {

@@ -495,9 +495,7 @@ const KeyOverview = () => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
-    ({WALLET}) => WALLET,
-  );
+  const keys: {[key: string]: Key} = useAppSelector(({WALLET}) => WALLET.keys);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
