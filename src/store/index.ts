@@ -296,18 +296,17 @@ export const reduxStorage: Storage = {
   },
 };
 
-// The live persistor, so the middleware below can force a write for actions whose
-// data must not sit in the throttled queue.
 let activePersistor: {flush: () => Promise<void>} | null = null;
+let pendingFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
 const flushPersistenceSoon = () => {
-  const persistor = activePersistor;
-  if (!persistor) {
+  if (!activePersistor || pendingFlushTimer) {
     return;
   }
   // Deferred: flush() dispatches FLUSH, and we are inside a dispatch here.
-  setTimeout(() => {
-    persistor.flush().catch(() => {});
+  pendingFlushTimer = setTimeout(() => {
+    pendingFlushTimer = null;
+    activePersistor?.flush().catch(() => {});
   }, 0);
 };
 
@@ -316,13 +315,13 @@ let persistFlushSubscription: {remove: () => void} | null = null;
 const registerPersistFlushOnBackground = (persistor: {
   flush: () => Promise<void>;
 }) => {
-  // getStore can run more than once (Android Activity recreation), so replace any
-  // previous listener rather than stacking them.
+  // getStore can run more than once, so replace any previous listener rather
+  // than stacking them.
   persistFlushSubscription?.remove();
   persistFlushSubscription = AppState.addEventListener(
     'change',
     nextAppState => {
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
+      if (nextAppState === 'background') {
         persistor.flush().catch(() => {});
       }
     },
@@ -332,32 +331,6 @@ const registerPersistFlushOnBackground = (persistor: {
 const basePersistConfig = {
   storage: reduxStorage,
   stateReconciler: autoMergeLevel2,
-  // redux-persist's throttle defaults to 0, so createPersistoid's interval fires
-  // on effectively every event-loop tick: each dirty slice gets re-transformed
-  // (all root transforms, including the two crypto-js AES ones) and the full root
-  // re-serialized, scanned by removePortfolioChartsPersistRoot and stat-ed for
-  // the backup file, over and over during balance/portfolio sync.
-  //
-  // IMPORTANT: throttle is NOT a write-batching window. createPersistoid drains
-  // exactly ONE key per interval tick and only calls writeStagedState() once the
-  // queue empties. There are 19 persisted reducers plus _persist, and the first
-  // update after rehydrate dirties all of them — at 1000ms that pushed the first
-  // write ~20s past launch.
-  //
-  // 250ms drains far faster, but note the real worst case is NOT bounded by
-  // (keys x throttle): update() re-queues any slice whose reference changed, so
-  // while several slices keep churning inside each interval the queue never
-  // empties and NO write happens for the duration of the burst. That is routine
-  // during a balance/portfolio sync — WALLET, PORTFOLIO and RATE all move, and
-  // LOG's top-level reference changes on every ADD_LOG even though `logs` itself
-  // is transform-blacklisted, so it re-queues too.
-  //
-  // Two things close the resulting durability gap:
-  // registerPersistFlushOnBackground (below) covers user-initiated kills, and
-  // flushing on FS_BACKUP_TRIGGER_ACTIONS covers the high-value writes (key
-  // create/import/delete) that must not wait for a quiet moment. A hard
-  // foreground crash mid-sync can still lose the tail.
-  throttle: 250,
 };
 
 const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
@@ -512,11 +485,6 @@ const getStore = async () => {
         if (action && typeof action.type === 'string') {
           if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
             backupTriggerAction = action.type;
-            // These are precisely the actions worth an immediate write: a
-            // just-created or just-imported key must not sit unwritten in a
-            // starved persist queue (see the throttle note on
-            // basePersistConfig). This also un-stalls the filesystem backup,
-            // which only runs inside reduxStorage.setItem.
             flushPersistenceSoon();
           }
         }
@@ -612,15 +580,6 @@ const getStore = async () => {
           firstRehydrateLogged = true;
           const took = persistStartTs ? Date.now() - persistStartTs : -1;
           try {
-            // This used to JSON.stringify the entire rehydrated payload once for
-            // the total and AGAIN per slice, un-gated, at the most contended
-            // moment of startup — two full serializations of a multi-MB object
-            // purely to log sizes.
-            //
-            // The persisted string is already sitting in MMKV, so read its
-            // length instead: same diagnostic (arguably better, since it is the
-            // real on-disk size) at effectively zero cost. The per-slice
-            // breakdown is genuinely expensive, so it is dev-only now.
             const totalSize = (() => {
               try {
                 return storage.getString('persist:root')?.length ?? -1;
@@ -673,10 +632,6 @@ const getStore = async () => {
 
   const persistor = persistStore(store);
 
-  // Because writes are throttled (see basePersistConfig), there can always be
-  // queued-but-unwritten keys. Nothing else in the app ever called
-  // persistor.flush(), so force the queue out whenever the app leaves the
-  // foreground — that is the point where the process is most likely to be killed.
   activePersistor = persistor;
   registerPersistFlushOnBackground(persistor);
 
