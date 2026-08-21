@@ -33,6 +33,18 @@
       android:networkSecurityConfig="@xml/network_security_config"
       android:requestLegacyExternalStorage="true">
 
+        <!--
+          Lets a shell-initiated profiler (Perfetto/`am profile`) read this app's
+          own atrace sections on a release build, without making it debuggable.
+          Release-safe and zero runtime cost: it only matters while a trace is
+          actively recording, and it does not change behaviour otherwise. On the
+          New Architecture, React Native emits its androidx.tracing sections in
+          release, so this exposes framework startup slices with no other change.
+        -->
+        <profileable
+          android:shell="true"
+          tools:targetApi="q" />
+
         <activity
           android:name=".LaunchActivity"
           android:exported="true">
