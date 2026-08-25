@@ -76,7 +76,6 @@ import {
 } from '../wallet/utils/wallet';
 import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
-  startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
   FormatKeyBalances,
 } from '../wallet/effects/status/status';
@@ -932,23 +931,6 @@ export const setEmailNotifications =
     });
   };
 
-const _startUpdateAllKeyAndWalletStatus = debounce(
-  async (dispatch, chain, tokenAddress) => {
-    dispatch(
-      startUpdateAllKeyAndWalletStatus({
-        context: 'newBlockEvent',
-        force: true,
-        createTokenWalletWithFunds: false,
-        chain,
-        tokenAddress,
-      }),
-    );
-    DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
-  },
-  5000,
-  {leading: true, trailing: false},
-);
-
 const _createWalletAddress = debounce(
   async (dispatch, wallet) => {
     dispatch(createWalletAddress({wallet, newAddress: true}));
@@ -1001,10 +983,7 @@ export const handleBwsEvent =
         return;
       }
 
-      if (
-        !wallet.credentials.walletId &&
-        response.notification_type !== 'NewBlock'
-      ) {
+      if (!wallet.credentials.walletId) {
         return;
       }
 
@@ -1018,16 +997,6 @@ export const handleBwsEvent =
           break;
         case 'NewAddress':
           _createWalletAddress(dispatch, wallet);
-          break;
-        case 'NewBlock':
-          if (response.network && response.network === 'livenet') {
-            // Chain and tokenAddress are passed to check if a new token received funds on that network and create the wallet if necessary
-            _startUpdateAllKeyAndWalletStatus(
-              dispatch,
-              response.chain,
-              response.tokenAddress,
-            );
-          }
           break;
         case 'TxProposalAcceptedBy':
         case 'TxProposalRejectedBy':
