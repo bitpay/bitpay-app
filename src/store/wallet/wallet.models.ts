@@ -151,10 +151,8 @@ export interface WalletObj {
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
-    // When this history was fetched. `hasConfirmingTxs` gates ETH sends, and
-    // nothing recomputes it unless a details screen is mounted or the user
-    // pulls to refresh, so consumers must check freshness before trusting it.
     fetchedAt?: number;
+    hasConfirmingTxsAt?: number;
   };
   hideWallet?: boolean;
   hideWalletByAccount?: boolean;

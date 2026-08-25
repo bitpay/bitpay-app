@@ -255,6 +255,7 @@ interface updateWalletTxHistory {
       loadMore: boolean;
       hasConfirmingTxs: boolean;
       fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
     };
   };
 }
@@ -269,6 +270,7 @@ interface updateAccountTxHistory {
         loadMore: boolean;
         hasConfirmingTxs: boolean;
         fetchedAt?: number;
+        hasConfirmingTxsAt?: number;
       };
     };
   };

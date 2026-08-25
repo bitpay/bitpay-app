@@ -332,11 +332,6 @@ describe('bindWalletKeys', () => {
     expect(result.keys['key-1'].wallets[0].transactionHistory).toBeUndefined();
   });
 
-  // Regression guard. redux-persist passes inbound transforms the LIVE store
-  // slice by reference, so this transform used to `delete` transactionHistory off
-  // the real in-memory wallet objects — wiping the tx-history cache on every
-  // persist flush moments after the reducer wrote it, which made the cache
-  // short-circuit in GetTransactionHistory dead and forced constant refetching.
   it('inbound: does not mutate the live state it is handed', () => {
     const wallet = makeWallet();
     const history = {
@@ -350,14 +345,36 @@ describe('bindWalletKeys', () => {
 
     const result = getInbound()(state);
 
-    // the live objects are untouched...
     expect(wallet.transactionHistory).toBe(history);
     expect(state.keys['key-1']).toBe(key);
     expect(state.keys['key-1'].wallets[0]).toBe(wallet);
-    // ...and the transform returned new objects rather than the originals
     expect(result).not.toBe(state);
     expect(result.keys['key-1']).not.toBe(key);
     expect(result.keys['key-1'].wallets[0]).not.toBe(wallet);
+  });
+
+  it('inbound: preserves every other wallet and key field', () => {
+    const wallet = makeWallet({
+      transactionHistory: {
+        transactions: [{id: 'tx'}],
+        loadMore: false,
+        hasConfirmingTxs: true,
+      },
+    });
+    const key = makeKey({wallets: [wallet]});
+    const state: any = {keys: {'key-1': key}};
+
+    const result = getInbound()(state);
+
+    const expectedWallet = {...wallet};
+    delete expectedWallet.transactionHistory;
+    expect(result.keys['key-1'].wallets[0]).toEqual(expectedWallet);
+    expect(result.keys['key-1'].wallets[0].credentials).toBe(
+      wallet.credentials,
+    );
+    expect(result.keys['key-1'].properties).toBe(key.properties);
+    expect(result.keys['key-1'].methods).toBe(key.methods);
+    expect(result.keys['key-1'].id).toBe(key.id);
   });
 
   it('outbound: returns state unchanged when no keys', () => {

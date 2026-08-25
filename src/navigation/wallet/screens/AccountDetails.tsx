@@ -435,9 +435,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       transactions: any[];
       loadMore: boolean;
       hasConfirmingTxs: boolean;
-      // Carried through from GetTransactionHistory; send.ts uses it to decide
-      // whether hasConfirmingTxs still needs re-verification.
       fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
     };
   }>({});
   const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
