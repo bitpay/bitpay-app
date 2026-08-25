@@ -501,6 +501,185 @@ describe('startGetRates – init context', () => {
 });
 
 // ---------------------------------------------------------------------------
+// startGetRates – carries forward rates this cycle did not produce
+// ---------------------------------------------------------------------------
+describe('startGetRates – carry forward', () => {
+  const mockedAxios = axios as jest.Mocked<typeof axios>;
+  const {getMultipleTokenPrices} = jest.requireMock(
+    '../../../../store/moralis/moralis.effects',
+  );
+
+  const freshRates = {
+    btc: [{code: 'USD', rate: 60000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW}],
+  };
+  const knownTokenRate = [
+    {code: 'USD', rate: 1, name: 'USDC', fetchedOn: NOW, ts: NOW},
+  ];
+
+  const stateWithKnownTokenRate = {
+    RATE: {
+      rates: {btc: [], '0xusdc_e.eth': knownTokenRate},
+      lastDayRates: {'0xusdc_e.eth': knownTokenRate},
+      fiatRateSeriesCache: {},
+      ratesCacheKey: {},
+    },
+    APP: {altCurrencyList: [{isoCode: 'USD', name: 'US Dollar'}]},
+    WALLET: {
+      keys: {
+        key1: {
+          wallets: [
+            {
+              id: 'wallet-eth-1',
+              chain: 'eth',
+              currencyAbbreviation: 'eth',
+              tokens: ['wallet-eth-1-0xusdc'],
+            },
+          ],
+        },
+      },
+      customTokenOptionsByAddress: {},
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getMultipleTokenPrices.mockImplementation(() => () => Promise.resolve([]));
+  });
+
+  it('keeps a known token rate when this cycle produced none', async () => {
+    mockedAxios.get
+      .mockResolvedValueOnce({data: freshRates})
+      .mockResolvedValueOnce({data: freshRates});
+
+    const store = configureTestStore(stateWithKnownTokenRate as any);
+    const result = await store.dispatch(startGetRates({force: true}));
+
+    expect(result['0xusdc_e.eth']).toEqual(knownTokenRate);
+    expect(result).toHaveProperty('btc');
+  });
+
+  it('keeps a known token rate when the token price chunk rejects', async () => {
+    mockedAxios.get
+      .mockResolvedValueOnce({data: freshRates})
+      .mockResolvedValueOnce({data: freshRates});
+    getMultipleTokenPrices.mockImplementation(
+      () => () => Promise.reject(new Error('moralis down')),
+    );
+
+    const store = configureTestStore(stateWithKnownTokenRate as any);
+    const result = await store.dispatch(startGetRates({force: true}));
+
+    expect(result['0xusdc_e.eth']).toEqual(knownTokenRate);
+    expect(result).toHaveProperty('btc');
+  });
+
+  it('keeps a healthy chain token rate when another chain chunk rejects', async () => {
+    mockedAxios.get
+      .mockResolvedValueOnce({data: freshRates})
+      .mockResolvedValueOnce({data: freshRates});
+    getMultipleTokenPrices.mockImplementation(
+      ({chain}: {chain: string}) =>
+        () =>
+          chain === 'eth'
+            ? Promise.reject(new Error('moralis down'))
+            : Promise.resolve([
+                {
+                  usdPrice: 2,
+                  tokenAddress: '0xhealthy',
+                  '24hrPercentChange': '1',
+                },
+              ]),
+    );
+
+    const store = configureTestStore({
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
+      APP: {altCurrencyList: [{isoCode: 'USD', name: 'US Dollar'}]},
+      WALLET: {
+        keys: {
+          key1: {
+            wallets: [
+              {
+                id: 'wallet-eth-1',
+                chain: 'eth',
+                currencyAbbreviation: 'eth',
+                tokens: ['wallet-eth-1-0xusdc'],
+              },
+              {
+                id: 'wallet-matic-1',
+                chain: 'matic',
+                currencyAbbreviation: 'matic',
+                tokens: ['wallet-matic-1-0xhealthy'],
+              },
+            ],
+          },
+        },
+        customTokenOptionsByAddress: {
+          '0xhealthy_e.matic': {symbol: 'HEALTHY'},
+        },
+      },
+    } as any);
+    const result = await store.dispatch(startGetRates({force: true}));
+
+    expect(result['0xhealthy_e.matic']).toHaveLength(1);
+  });
+
+  it('keeps a known token rate when this cycle produced an empty rate array', async () => {
+    mockedAxios.get
+      .mockResolvedValueOnce({data: {btc: []}})
+      .mockResolvedValueOnce({data: {btc: []}});
+    getMultipleTokenPrices.mockImplementation(
+      () => () =>
+        Promise.resolve([
+          {usdPrice: 1, tokenAddress: '0xusdc', '24hrPercentChange': '0'},
+        ]),
+    );
+
+    const store = configureTestStore({
+      ...stateWithKnownTokenRate,
+      APP: {altCurrencyList: []},
+      WALLET: {
+        ...stateWithKnownTokenRate.WALLET,
+        customTokenOptionsByAddress: {'0xusdc_e.eth': {symbol: 'USDC'}},
+      },
+    } as any);
+    const result = await store.dispatch(startGetRates({force: true}));
+
+    expect(result['0xusdc_e.eth']).toEqual(knownTokenRate);
+  });
+
+  it('does not keep a stale rate when this cycle produced a fresh one', async () => {
+    const updatedRates = {
+      btc: [
+        {code: 'USD', rate: 70000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW},
+      ],
+    };
+    mockedAxios.get
+      .mockResolvedValueOnce({data: updatedRates})
+      .mockResolvedValueOnce({data: updatedRates});
+
+    const store = configureTestStore({
+      ...stateWithKnownTokenRate,
+      RATE: {
+        ...stateWithKnownTokenRate.RATE,
+        rates: {
+          btc: [
+            {code: 'USD', rate: 1, name: 'Bitcoin', fetchedOn: NOW, ts: NOW},
+          ],
+        },
+      },
+    } as any);
+    const result = await store.dispatch(startGetRates({force: true}));
+
+    expect(result.btc).toEqual(updatedRates.btc);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // getContractAddresses – extracts token addresses from wallets
 // ---------------------------------------------------------------------------
 describe('getContractAddresses', () => {
