@@ -56,7 +56,7 @@ import {
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import {toStringOrEmpty} from '../../../utils/text';
-import _, {find, isEqual} from 'lodash';
+import {find, isEqual} from 'lodash';
 import {Invoice} from '../../../store/shop/shop.models';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
@@ -1326,7 +1326,7 @@ export const buildAccountList = (
 
     if (!existingAccount) {
       accountMap[accountKey] = {
-        id: _.uniqueId('account_'),
+        id: `account_${keyId}_${accountKey}`,
         keyId,
         chains: [chain],
         accountName: isTokensSupportedChain
@@ -1473,7 +1473,7 @@ const buildUIFormattedAssetsList = (
       chains: [wallet.chain], // useful only for chain selector
       data: [
         {
-          id: _.uniqueId('chain_'),
+          id: `chain_${wallet.chain}_${wallet.receiveAddress ?? ''}`,
           chain: wallet.chain,
           chainImg: wallet.badgeImg || wallet.img,
           chainName: wallet.chainName,
@@ -1587,7 +1587,7 @@ const buildUIFormattedAssets = (
     });
   } else {
     const newChainData: AssetsByChainData = {
-      id: _.uniqueId('chain_'),
+      id: `chain_${wallet.chain}_${wallet.receiveAddress ?? ''}`,
       chain: wallet.chain,
       chainImg: wallet.badgeImg || wallet.img,
       chainName: wallet.chainName,

@@ -315,7 +315,6 @@ const ContactsDetails = ({
             name={contact.name}
             chain={contact.chain}
             address={contact.address}
-            tokenAddress={contact.tokenAddress}
           />
         </ContactImageHeader>
         <Details>

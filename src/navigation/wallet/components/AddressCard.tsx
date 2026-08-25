@@ -54,7 +54,6 @@ const AddressCard: React.FC<AddressCardComponentProps> = ({recipient}) => {
                 name={recipient.recipientName || recipient.recipientAddress}
                 coin={recipient.recipientCoin!}
                 chain={recipient.recipientChain || ''}
-                tokenAddress={recipient.recipientTokenAddress}
                 size={30}
               />
             ) : (

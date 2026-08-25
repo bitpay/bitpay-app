@@ -1,16 +1,11 @@
-import React, {ReactElement} from 'react';
+import React from 'react';
 import styled from 'styled-components/native';
 
 import Avatar from '../../../../components/avatar/Avatar';
 
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
-import {useTokenOptionsByAddress} from '../../../../utils/hooks';
-import {
-  addTokenChainSuffix,
-  getBadgeImg,
-} from '../../../../utils/helper-methods';
+import {getBadgeImg} from '../../../../utils/helper-methods';
 import {IsVMChain, IsOtherChain} from '../../../../store/wallet/utils/currency';
 import Blockie from '../../../../components/blockie/Blockie';
 
@@ -20,14 +15,7 @@ interface ContactIconProps {
   coin?: string;
   chain?: string;
   badge?: JSX.Element;
-  tokenAddress?: string;
   address?: string;
-}
-
-interface BadgeProps {
-  img: string | ((props?: any) => ReactElement);
-  badgeImg: string | ((props?: any) => ReactElement);
-  size?: number;
 }
 
 const ContactIconContainer = styled.View`
@@ -44,31 +32,16 @@ const CoinBadgeContainer = styled.View<{size: number}>`
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,
   chain,
-  tokenAddress,
   size = 50,
   name,
   badge,
   address,
 }) => {
-  const tokenOptionsByAddress = useTokenOptionsByAddress();
-  const foundToken =
-    tokenAddress &&
-    chain &&
-    tokenOptionsByAddress[
-      // `addTokenChainSuffix` already lowercases non-SVM chains and must
-      // preserve case-sensitive SVM mint addresses.
-      addTokenChainSuffix(tokenAddress.trim(), chain)
-    ];
-
   const img =
     coin &&
     chain &&
     (!IsVMChain(chain) || IsOtherChain(chain)) &&
-    (CurrencyListIcons[coin]
-      ? CurrencyListIcons[coin]
-      : foundToken && foundToken?.logoURI
-      ? (foundToken?.logoURI as string)
-      : '');
+    (CurrencyListIcons[coin] ? CurrencyListIcons[coin] : '');
 
   const coinBadge = img ? (
     <CoinBadgeContainer size={size}>

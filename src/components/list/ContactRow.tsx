@@ -52,7 +52,7 @@ interface Props {
 const ContactRow = ({contact, onPress}: Props) => {
   const theme = useTheme();
   const underlayColor = theme.dark ? '#121212' : GhostWhite;
-  const {coin: _coin, name, email, address, chain, tokenAddress} = contact;
+  const {coin: _coin, name, email, address, chain} = contact;
   const coin = getCurrencyAbbreviation(_coin, chain);
   return (
     <ContactContainer underlayColor={underlayColor} onPress={onPress}>
@@ -64,7 +64,6 @@ const ContactRow = ({contact, onPress}: Props) => {
             size={45}
             chain={chain}
             address={address}
-            tokenAddress={tokenAddress}
           />
         </ContactImageContainer>
         <ContactColumn>
