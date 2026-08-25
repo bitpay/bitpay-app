@@ -191,9 +191,6 @@ jest.mock('../location', () => ({
 jest.mock('../wallet-connect-v2/wallet-connect-v2.effects', () => ({
   walletConnectV2Init: jest.fn(() => ({type: 'WALLET_CONNECT_INIT'})),
 }));
-jest.mock('../moralis/moralis.effects', () => ({
-  moralisInit: jest.fn(() => ({type: 'MORALIS_INIT'})),
-}));
 jest.mock('../external-services/external-services.effects', () => ({
   prefetchExternalServicesData: jest.fn(() => ({
     type: 'PREFETCH_EXTERNAL_SERVICES',

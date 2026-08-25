@@ -299,6 +299,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerLeft: () => null,
         }}
         name={WalletScreens.BACKUP_SHARED_KEY}
@@ -424,6 +425,8 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
+          headerLeft: () => null,
           headerTitle: () => (
             <HeaderTitle>{t('Invite Co-Signers')}</HeaderTitle>
           ),

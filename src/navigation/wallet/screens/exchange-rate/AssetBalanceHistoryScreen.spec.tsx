@@ -294,7 +294,7 @@ describe('AssetBalanceHistoryScreen', () => {
     );
   });
 
-  it('does not mount chart work while the asset initial populate scope is still running', async () => {
+  it('mounts chart work with a loader while the asset initial populate scope is still running', async () => {
     const shared = sharedFactory();
     isPopulateLoadingForWallets.mockReturnValue(true);
     mockState.PORTFOLIO = {
@@ -316,11 +316,10 @@ describe('AssetBalanceHistoryScreen', () => {
       TestRenderer.create(<AssetBalanceHistoryScreen shared={shared} />);
     });
 
-    expect(latestBalanceHistoryChartProps).toBeUndefined();
-    expect(usePortfolioAnalysis).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        enabled: false,
-      }),
+    expect(latestBalanceHistoryChartProps).toBeDefined();
+    expect(latestBalanceHistoryChartProps.showLoaderWhenNoSnapshots).toBe(true);
+    expect(latestBalanceHistoryChartProps.isBalanceChartDataReadyToQuery).toBe(
+      false,
     );
   });
 

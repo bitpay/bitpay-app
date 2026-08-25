@@ -465,6 +465,7 @@ export interface BuyAndSellRootProps {
 
   context: ExternalServicesContext;
   fromWallet?: Wallet;
+  fromAccount?: {keyId: string; accountAddress: string}; // used when entering from an EVM/SVM account (AccountDetails)
   amount?: number; // deeplink params are strings, ensure this is number so offers will work
   currencyAbbreviation?: string; // used from charts and deeplinks.
   chain?: string; // used from charts and deeplinks.
@@ -531,6 +532,7 @@ const BuyAndSellRoot = ({
   // Real route params
   const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
+  const fromAccount = route.params?.fromAccount;
 
   const fromAmount = useMemo(() => {
     const DEFAULT_USD_VALUE = 200;
@@ -1096,8 +1098,7 @@ const BuyAndSellRoot = ({
     }
 
     // TODO: add the ability to remove coins or chains from buyCryptoConfig
-    const coinsToRemove =
-      !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
+    const coinsToRemove: string[] = [];
 
     if (coinsToRemove.length > 0) {
       coinsToRemove.forEach((coin: string) => {
@@ -1717,11 +1718,7 @@ const BuyAndSellRoot = ({
         });
 
         if (allSupportedCoins.length > 0) {
-          const coinsToRemove =
-            !locationData || locationData.countryShortCode === 'US'
-              ? ['xrp']
-              : [];
-          coinsToRemove.push('busd');
+          const coinsToRemove: string[] = ['busd'];
 
           if (coinsToRemove.length > 0) {
             logger.debug(
@@ -2828,14 +2825,14 @@ const BuyAndSellRoot = ({
       env: rampEnv,
       hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
       hostAppName: APP_NAME_UPPERCASE,
-      swapAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
-      swapAmount: offer.amountReceivingUnit!,
-      fiatCurrency: offer.fiatCurrency,
+      enabledCryptoAssets: getRampCoinFormat(coin, getRampChainFormat(chain)),
+      outAssetValue: offer.amountReceivingUnit!,
+      inAsset: offer.fiatCurrency,
       enabledFlows: ['ONRAMP'],
       defaultFlow: 'ONRAMP',
       userAddress: address,
       selectedCountryCode: country,
-      defaultAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
+      outAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       finalUrl: redirectUrl,
       paymentMethodType: getRampPaymentMethodFormat(paymentMethod.method),
     };
@@ -3535,18 +3532,16 @@ const BuyAndSellRoot = ({
       userAddress: address, // TODO: ask Ramp team about this for UTXO coins
       hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
       hostAppName: APP_NAME_UPPERCASE,
-      offrampAsset: rampAsset,
-      swapAsset: rampAsset,
-      swapAmount: offer.decimals
+      enabledCryptoAssets: rampAsset,
+      inAssetValue: offer.decimals
         ? Number(offer.sellAmount) * 10 ** offer.decimals
         : undefined,
-      fiatCurrency: offer.fiatCurrency,
+      outAsset: offer.fiatCurrency,
       enabledFlows: 'OFFRAMP',
       defaultFlow: 'OFFRAMP',
       selectedCountryCode: country,
-      defaultAsset: rampAsset,
+      inAsset: rampAsset,
       useSendCryptoCallback: true,
-      useSendCryptoCallbackVersion: 1,
       hideExitButton: false,
     };
 
@@ -4154,6 +4149,7 @@ const BuyAndSellRoot = ({
               sellCryptoSupportedCoinsFullObj ?? []
             }
             fromWallet={fromWallet}
+            fromAccount={fromAccount}
             currencyAbbreviation={fromCurrencyAbbreviation}
             chain={fromChain}
             partner={preSetPartner}
