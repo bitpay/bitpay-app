@@ -31,20 +31,10 @@ export const startGetTokenOptions =
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
 
-      // These requests were previously serial (`for await`), so balances — which
-      // are awaited behind this effect in runWalletStoreInit — queued behind one
-      // round trip per supported chain. They are independent, so fetch them
-      // together and merge afterwards.
-      //
-      // Per-chain failures are also isolated now. Previously a single failed
-      // request left `tokens` as `{}`, failed the `Array.isArray` guard and
-      // `return`ed out of the whole effect, skipping both
-      // `tokenManager.setTokenOptions` and the `appTokensDataLoaded` dispatch —
-      // despite the log message stating "continue anyway".
       const chainResults = await Promise.all(
         SUPPORTED_VM_TOKENS.map(async chain => {
           try {
-            const {data} = await axios.get<{[key in string]: Token}>(
+            const {data} = await axios.get<Token[]>(
               `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
             );
             if (!Array.isArray(data)) {
@@ -53,7 +43,7 @@ export const startGetTokenOptions =
               );
               return {chain, tokens: [] as Token[]};
             }
-            return {chain, tokens: data as unknown as Token[]};
+            return {chain, tokens: data};
           } catch (error) {
             logManager.info(
               `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
@@ -63,8 +53,6 @@ export const startGetTokenOptions =
         }),
       );
 
-      // Merge in SUPPORTED_VM_TOKENS order so key-collision precedence matches
-      // the previous serial behaviour.
       for (const {chain, tokens} of chainResults) {
         tokens.forEach(token => {
           if (

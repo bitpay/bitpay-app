@@ -1,5 +1,5 @@
 import {Effect} from '../../../index';
-import {Wallet, WalletStatus} from '../../wallet.models';
+import {Key, Wallet, WalletStatus} from '../../wallet.models';
 import {successUpdateWalletBalancesAndStatus} from '../../wallet.actions';
 import _ from 'lodash';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
@@ -11,6 +11,8 @@ import {
   updateKeyStatus,
 } from './status';
 import {logManager} from '../../../../managers/LogManager';
+import {mapWithConcurrency} from '../../../../utils/concurrency';
+import {WALLET_REQUEST_CONCURRENCY} from '../../../../constants/wallet';
 
 export const clearWalletBalances =
   (): Effect<Promise<void>> => async (dispatch, getState) => {
@@ -135,30 +137,21 @@ export const getUpdatedWalletBalances =
       }
     }
 
-    // Process regular keys.
-    //
-    // Previously a serial `for (const key of keys) await …`, so time-to-balances
-    // grew linearly with key count — the one place this path is used is Home
-    // pull-to-refresh and asset-screen refresh. The v1 equivalent in status.ts
-    // already uses Promise.all; this brings v2 in line.
-    //
-    // Rejection semantics are preserved: no per-key catch is added, so the first
-    // failure still propagates out of getUpdatedWalletBalances exactly as the
-    // serial loop did. (One difference: the remaining keys' requests are now
-    // already in flight when that happens, rather than never being issued.)
-    const keyStatusResults = await Promise.all(
-      keys.map(key =>
-        dispatch(
+    const keyStatusResults = await mapWithConcurrency(
+      keys,
+      WALLET_REQUEST_CONCURRENCY,
+      async key => ({
+        key,
+        keyBalance: await dispatch(
           updateKeyStatus({
             key,
             force,
             dataOnly: true,
           }),
-        ).then((keyBalance: any) => ({key, keyBalance})),
-      ),
+        ),
+      }),
     );
 
-    // Accumulate in the original key order so downstream ordering is unchanged.
     for (const {key, keyBalance} of keyStatusResults) {
       if (keyBalance) {
         keyBalances.push({
@@ -166,7 +159,7 @@ export const getUpdatedWalletBalances =
           totalBalance: keyBalance.totalBalance,
           totalBalanceLastDay: keyBalance.totalBalanceLastDay,
         });
-        keyBalance.walletUpdates.forEach((walletUpdate: any) => {
+        keyBalance.walletUpdates.forEach(walletUpdate => {
           walletBalances.push({
             keyId: key.id,
             walletId: walletUpdate.walletId,
@@ -180,31 +173,30 @@ export const getUpdatedWalletBalances =
       }
     }
 
-    // Process read-only keys — previously serial per key AND per wallet, so a
-    // user with a handful of read-only wallets paid one full round trip each.
-    // The per-wallet catch is kept, so a single failing wallet is still isolated
-    // rather than failing the whole refresh.
-    const readOnlyResults = await Promise.all(
-      readOnlyKeys.flatMap(key =>
-        key.wallets.map((wallet: Wallet) =>
-          dispatch(
+    const readOnlyWallets = readOnlyKeys.flatMap((key: Key) =>
+      key.wallets.map((wallet: Wallet) => ({key, wallet})),
+    );
+    const readOnlyResults = await mapWithConcurrency(
+      readOnlyWallets,
+      WALLET_REQUEST_CONCURRENCY,
+      async ({key, wallet}) => {
+        try {
+          const status = await dispatch(
             updateWalletStatus({
               wallet,
               defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
               rates,
               lastDayRates,
             }),
-          ).then(
-            (status: any) => ({keyId: key.id, walletId: wallet.id, status}),
-            (error: unknown) => {
-              logManager.error(
-                `Error updating wallet status for read-only wallet ${wallet.id}: ${error}`,
-              );
-              return undefined;
-            },
-          ),
-        ),
-      ),
+          );
+          return {keyId: key.id, walletId: wallet.id, status};
+        } catch (error) {
+          logManager.error(
+            `Error updating wallet status for read-only wallet ${wallet.id}: ${error}`,
+          );
+          return undefined;
+        }
+      },
     );
 
     for (const result of readOnlyResults) {

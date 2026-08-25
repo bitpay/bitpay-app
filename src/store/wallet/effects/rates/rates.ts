@@ -4,7 +4,10 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 import {HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
-import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
+import {
+  RATES_CACHE_DURATION,
+  WALLET_REQUEST_CONCURRENCY,
+} from '../../../../constants/wallet';
 import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
 import {
   failedGetRates,
@@ -21,6 +24,7 @@ import {
   getLastDayTimestampStartOfHourMs,
   getErrorString,
 } from '../../../../utils/helper-methods';
+import {mapWithConcurrency} from '../../../../utils/concurrency';
 import {
   getMultipleTokenPrices,
   UnifiedTokenPriceObj,
@@ -65,8 +69,6 @@ export const startGetRates =
         logManager.info('startGetRates: fetching new rates...');
         const yesterday = getLastDayTimestampStartOfHourMs();
 
-        // Today's and yesterday's tables are independent; fetching them serially
-        // doubled rate-refresh latency at launch and on every pull-to-refresh.
         logManager.info(
           `startGetRates: get requests to: ${BASE_BWS_URL}/v3/fiatrates/ (today + ts=${yesterday})`,
         );
@@ -99,13 +101,6 @@ export const startGetRates =
           getTokenRates(),
         )) as any;
 
-        // A failed token-price chunk yields no entries for those tokens, and
-        // SUCCESS_GET_RATES replaces rather than merges
-        // (`{...initialState.rates, ...rates}`), so anything missing here loses
-        // its last-known rate app-wide — and ratesCacheKey is bumped regardless,
-        // so nothing retries for the cache window. There is no good reason to
-        // discard a known-good rate because one HTTP call failed, so carry
-        // forward whatever this cycle did not produce.
         const previousRates = getState().RATE.rates;
         const previousLastDayRates = getState().RATE.lastDayRates;
         const allRates: Rates = {...rates, ...tokenRates};
@@ -114,12 +109,12 @@ export const startGetRates =
           ...tokenLastDayRates,
         };
         Object.keys(previousRates).forEach(key => {
-          if (!allRates[key]) {
+          if (!allRates[key]?.length) {
             allRates[key] = previousRates[key];
           }
         });
         Object.keys(previousLastDayRates).forEach(key => {
-          if (!allLastDayRates[key]) {
+          if (!allLastDayRates[key]?.length) {
             allLastDayRates[key] = previousLastDayRates[key];
           }
         });
@@ -224,11 +219,6 @@ export const getTokenRates =
           return chunked_arr;
         };
 
-        // Previously: for chain -> for chunk -> await, so every price chunk on
-        // every chain was its own serial round trip. This runs on each 5-minute
-        // cache expiry AND on every forced refresh (Home pull-to-refresh always
-        // forces). Collect the tasks, fetch them with bounded concurrency, then
-        // process results in order so accumulator precedence is unchanged.
         const priceTasks: {chain: string; chunk: string[]}[] = [];
         for (const chain of SUPPORTED_VM_TOKENS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
@@ -243,47 +233,26 @@ export const getTokenRates =
           }
         }
 
-        const TOKEN_PRICE_FETCH_CONCURRENCY = 5;
-        const priceResults: {chain: string; data: UnifiedTokenPriceObj[]}[] =
-          [];
-        for (
-          let i = 0;
-          i < priceTasks.length;
-          i += TOKEN_PRICE_FETCH_CONCURRENCY
-        ) {
-          const batch = priceTasks.slice(i, i + TOKEN_PRICE_FETCH_CONCURRENCY);
-          const settled = await Promise.all(
-            // Catch per chunk. getMultipleTokenPrices rethrows, and because
-            // results are now processed after all batches complete, an
-            // uncaught rejection here would skip the processing loop entirely
-            // and hand the outer catch EMPTY accumulators — and
-            // SUCCESS_GET_RATES replaces rather than merges
-            // (`{...initialState.rates, ...rates}`), so one transient Moralis
-            // error would wipe every known token rate app-wide. Isolating the
-            // chunk is also strictly better than the original serial code,
-            // which abandoned all remaining chunks on the first failure.
-            batch.map(async ({chain, chunk}) => {
-              try {
-                return {
-                  chain,
-                  data: (await dispatch(
-                    getMultipleTokenPrices({addresses: chunk, chain}),
-                  )) as UnifiedTokenPriceObj[],
-                };
-              } catch (err) {
-                // String(err), not JSON.stringify: a circular non-Error
-                // throwable would make the stringify throw and reject the
-                // batch, defeating the isolation this catch exists for.
-                const errStr = err instanceof Error ? err.message : String(err);
-                logManager.error(
-                  `getTokenRates: token price chunk failed for ${chain} (continue anyway): ${errStr}`,
-                );
-                return {chain, data: [] as UnifiedTokenPriceObj[]};
-              }
-            }),
-          );
-          priceResults.push(...settled);
-        }
+        const priceResults = await mapWithConcurrency(
+          priceTasks,
+          WALLET_REQUEST_CONCURRENCY,
+          async ({chain, chunk}) => {
+            try {
+              return {
+                chain,
+                data: (await dispatch(
+                  getMultipleTokenPrices({addresses: chunk, chain}),
+                )) as UnifiedTokenPriceObj[],
+              };
+            } catch (err) {
+              const errStr = err instanceof Error ? err.message : String(err);
+              logManager.error(
+                `getTokenRates: token price chunk failed for ${chain} (continue anyway): ${errStr}`,
+              );
+              return {chain, data: [] as UnifiedTokenPriceObj[]};
+            }
+          },
+        );
 
         for (const {chain, data} of priceResults) {
           data.forEach((tokenInfo: UnifiedTokenPriceObj) => {

@@ -29,12 +29,11 @@ jest.mock('../../../../managers/TokenManager', () => ({
   },
 }));
 
-// Provide a minimal constant set so the loop only runs over 'eth'
 jest.mock('../../../../constants/currencies', () => {
   const actual = jest.requireActual('../../../../constants/currencies');
   return {
     ...actual,
-    SUPPORTED_VM_TOKENS: ['eth'],
+    SUPPORTED_VM_TOKENS: ['eth', 'matic'],
     // Keep BitpaySupportedTokens empty so custom tokens aren't filtered
     BitpaySupportedTokens: {},
   };
@@ -109,7 +108,7 @@ describe('startGetTokenOptions', () => {
 
   it('calls tokenManager.setTokenOptions after a successful response with an array of tokens', async () => {
     const token = makeToken();
-    mockedAxios.get.mockResolvedValueOnce({data: [token]});
+    mockedAxios.get.mockResolvedValue({data: [token]});
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
@@ -119,7 +118,7 @@ describe('startGetTokenOptions', () => {
 
   it('dispatches APP_TOKENS_DATA_LOADED on success', async () => {
     const token = makeToken();
-    mockedAxios.get.mockResolvedValueOnce({data: [token]});
+    mockedAxios.get.mockResolvedValue({data: [token]});
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
@@ -127,38 +126,59 @@ describe('startGetTokenOptions', () => {
     expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
   });
 
-  // BEHAVIOUR CHANGE: these two cases used to `return` out of the whole effect on
-  // the first bad chain response, skipping BOTH tokenManager.setTokenOptions and
-  // the appTokensDataLoaded dispatch — even though the per-chain catch logs
-  // "continue anyway", and even though balances are awaited behind this effect in
-  // runWalletStoreInit. A single failing chain could therefore stall token data
-  // for every chain. Per-chain failures are now isolated.
-  it('isolates a non-array response for one chain and still completes', async () => {
-    mockedAxios.get.mockResolvedValueOnce({data: {someKey: 'someValue'}});
-
-    const store = configureTestStore({});
-    await store.dispatch(startGetTokenOptions());
-
-    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
-    expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
-  });
-
-  it('isolates a per-chain network error and still completes', async () => {
-    mockedAxios.get.mockRejectedValueOnce(new Error('network error'));
+  it('keeps tokens from a healthy chain when another chain returns a non-array', async () => {
+    const token = makeToken({address: '0xhealthy', symbol: 'OK'});
+    mockedAxios.get.mockImplementation((url: string) =>
+      url.endsWith('/eth')
+        ? Promise.resolve({data: {someKey: 'someValue'}})
+        : Promise.resolve({data: [token]}),
+    );
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
 
     expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    const {tokenOptionsByAddress} = mockedSetTokenOptions.mock.calls[0][0];
+    expect(Object.keys(tokenOptionsByAddress)).toHaveLength(1);
     expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
   });
 
+  it('keeps tokens from a healthy chain when another chain request fails', async () => {
+    const token = makeToken({address: '0xhealthy', symbol: 'OK'});
+    mockedAxios.get.mockImplementation((url: string) =>
+      url.endsWith('/eth')
+        ? Promise.reject(new Error('network error'))
+        : Promise.resolve({data: [token]}),
+    );
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    const {tokenOptionsByAddress} = mockedSetTokenOptions.mock.calls[0][0];
+    expect(Object.keys(tokenOptionsByAddress)).toHaveLength(1);
+    expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
+  });
+
+  it('passes empty token maps when every chain fails', async () => {
+    mockedAxios.get.mockRejectedValue(new Error('network error'));
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    const {tokenOptionsByAddress, tokenDataByAddress} =
+      mockedSetTokenOptions.mock.calls[0][0];
+    expect(tokenOptionsByAddress).toEqual({});
+    expect(tokenDataByAddress).toEqual({});
+    expect(AppActions.appTokensDataLoaded).toHaveBeenCalled();
+  });
 
   it('dispatches failedGetTokenOptions when tokenManager.setTokenOptions throws', async () => {
     // The outer catch is triggered by something outside the inner axios try/catch.
     // Make setTokenOptions throw to simulate an unexpected outer error.
     const token = makeToken();
-    mockedAxios.get.mockResolvedValueOnce({data: [token]});
+    mockedAxios.get.mockResolvedValue({data: [token]});
     mockedSetTokenOptions.mockImplementationOnce(() => {
       throw new Error('storage failure');
     });
@@ -173,7 +193,7 @@ describe('startGetTokenOptions', () => {
 
   it('includes the token in setTokenOptions when it is not a BitpaySupported token', async () => {
     const token = makeToken({address: '0xdeadbeef', symbol: 'TEST'});
-    mockedAxios.get.mockResolvedValueOnce({data: [token]});
+    mockedAxios.get.mockResolvedValue({data: [token]});
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
@@ -190,7 +210,7 @@ describe('startGetTokenOptions', () => {
       symbol: 'MYT',
       decimals: 8,
     });
-    mockedAxios.get.mockResolvedValueOnce({data: [token]});
+    mockedAxios.get.mockResolvedValue({data: [token]});
 
     const store = configureTestStore({});
     await store.dispatch(startGetTokenOptions());
@@ -198,7 +218,8 @@ describe('startGetTokenOptions', () => {
     expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
     const {tokenDataByAddress} = mockedSetTokenOptions.mock.calls[0][0];
     const values = Object.values(tokenDataByAddress) as any[];
-    expect(values.length).toBe(1);
+    expect(values.length).toBe(2);
+    expect(values.map(v => v.chain)).toEqual(['eth', 'matic']);
     expect(values[0].coin).toBe('myt');
     expect(values[0].unitInfo.unitDecimals).toBe(8);
     expect(values[0].properties.isCustom).toBe(true);
