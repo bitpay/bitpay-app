@@ -82,6 +82,13 @@ export const startKycVerification =
 
       const locale = (APP.defaultLanguage || 'en').split('-')[0];
 
+      try {
+        await SumSubApi.startKycAttempt(apiToken);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`[SumSub] startKycAttempt failed: ${msg}`));
+      }
+
       const result = await launchSumSubSdk(accessToken, onTokenExpired, locale);
 
       dispatch(

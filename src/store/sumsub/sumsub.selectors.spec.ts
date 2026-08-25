@@ -10,6 +10,7 @@ import {
   selectCanStartKyc,
   selectKycBannerState,
   selectKycInfo,
+  selectKycStatusFetched,
   selectKycUiState,
   selectSdkStatus,
 } from './sumsub.selectors';
@@ -28,6 +29,7 @@ describe('deriveKycUiState — backend precedence', () => {
     expect(deriveKycUiState(kyc({status: 'requiresAction'}))).toBe(
       'actionRequired',
     );
+    expect(deriveKycUiState(kyc({status: 'inProgress'}))).toBe('inProgress');
     expect(deriveKycUiState(kyc({status: 'notStarted'}))).toBe('notStarted');
   });
 
@@ -39,7 +41,6 @@ describe('deriveKycUiState — backend precedence', () => {
 
   it('falls back to inReview for any in-flight/unknown backend status', () => {
     expect(deriveKycUiState(kyc({status: 'pendingReview'}))).toBe('inReview');
-    expect(deriveKycUiState(kyc({status: 'inProgress'}))).toBe('inReview');
     expect(deriveKycUiState(kyc({status: 'somethingNew'}))).toBe('inReview');
   });
 });
@@ -114,6 +115,12 @@ describe('isKycEligibleToStart', () => {
     ).toBe(true);
   });
 
+  it('is false once the backend reports an open attempt', () => {
+    expect(
+      isKycEligibleToStart(kyc({status: 'inProgress', tier: -1}), null, true),
+    ).toBe(false);
+  });
+
   it('is false when the SDK reports an in-progress session', () => {
     expect(isKycEligibleToStart(eligible, 'Incomplete', true)).toBe(false);
     expect(isKycEligibleToStart(eligible, 'Pending', true)).toBe(false);
@@ -163,6 +170,7 @@ describe('selectors read the current network slice', () => {
     info: KycInfo | null,
     sdkStatus: string | null = null,
     verified = true,
+    statusFetched = true,
   ): any => ({
     APP: {network: Network.mainnet},
     BITPAY_ID: {user: {[Network.mainnet]: {verified}}},
@@ -176,6 +184,11 @@ describe('selectors read the current network slice', () => {
         [Network.mainnet]: sdkStatus,
         [Network.testnet]: null,
         [Network.regtest]: null,
+      },
+      statusFetched: {
+        [Network.mainnet]: statusFetched,
+        [Network.testnet]: false,
+        [Network.regtest]: false,
       },
     },
   });
@@ -211,6 +224,17 @@ describe('selectors read the current network slice', () => {
     ).toBe(false);
   });
 
+  it('selectCanStartKyc is false until the backend status is fetched', () => {
+    const eligible = kyc({status: 'notStarted', tier: -1});
+    expect(selectCanStartKyc(buildState(eligible, null, true, false))).toBe(
+      false,
+    );
+    expect(
+      selectKycStatusFetched(buildState(eligible, null, true, false)),
+    ).toBe(false);
+    expect(selectKycStatusFetched(buildState(eligible))).toBe(true);
+  });
+
   it('selectCanStartKyc is false when the email is not verified', () => {
     expect(
       selectCanStartKyc(
@@ -243,6 +267,14 @@ describe('selectKycBannerState', () => {
       sdkStatus: {[Network.mainnet]: sdkStatus},
       bannerAck: {[Network.mainnet]: ack},
     },
+  });
+
+  it('shows a persistent banner for an open attempt (RN-2901)', () => {
+    expect(
+      selectKycBannerState(
+        buildState({info: kyc({status: 'inProgress', tier: -1})}),
+      ),
+    ).toBe('inProgress');
   });
 
   it('shows the persistent banners regardless of any acknowledgement', () => {
