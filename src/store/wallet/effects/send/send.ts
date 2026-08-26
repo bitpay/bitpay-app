@@ -41,7 +41,12 @@ import {
   GetMinFee,
   getFeeRatePerKb,
 } from '../fee/fee';
-import {GetInput} from '../transactions/transactions';
+import {
+  GetInput,
+  GetTransactionHistory,
+  TX_HISTORY_LIMIT,
+} from '../transactions/transactions';
+import {updateWalletTxHistory} from '../../wallet.actions';
 import {
   checkEncryptedKeysForEddsaMigration,
   createAtaAndSend,
@@ -136,6 +141,8 @@ import {
   pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
 
+const HAS_CONFIRMING_TXS_MAX_AGE_MS = 10 * 1000;
+
 export const createProposalAndBuildTxDetails =
   (
     tx: TransactionOptions,
@@ -190,19 +197,91 @@ export const createProposalAndBuildTxDetails =
 
         if (
           chain === 'eth' &&
-          wallet.transactionHistory?.hasConfirmingTxs &&
-          context !== 'speedupEth'
+          context !== 'speedupEth' &&
+          wallet.transactionHistory?.hasConfirmingTxs
         ) {
-          if (!queuedTransactions) {
+          const cachedHistory = wallet.transactionHistory;
+          let hasConfirmingTxs = true;
+          let verified = true;
+          const isFresh =
+            !!cachedHistory.hasConfirmingTxsAt &&
+            Date.now() - cachedHistory.hasConfirmingTxsAt <
+              HAS_CONFIRMING_TXS_MAX_AGE_MS;
+
+          if (!isFresh) {
+            const isToken = IsERCToken(currencyAbbreviation, chain);
+            try {
+              const verificationWallet = isToken
+                ? getFullLinkedWallet(keys[wallet.keyId], wallet)
+                : wallet;
+
+              if (!verificationWallet) {
+                verified = false;
+              } else {
+                const {CONTACT} = getState();
+                const refreshed = await dispatch(
+                  GetTransactionHistory({
+                    wallet: verificationWallet,
+                    transactionsHistory: [],
+                    limit: TX_HISTORY_LIMIT,
+                    refresh: true,
+                    contactList: CONTACT.list,
+                  }),
+                );
+
+                const recomputedFromFreshPage = !!refreshed.hasConfirmingTxsAt;
+
+                if (recomputedFromFreshPage) {
+                  hasConfirmingTxs = !!refreshed.hasConfirmingTxs;
+                  if (isToken) {
+                    dispatch(
+                      updateWalletTxHistory({
+                        walletId: wallet.id,
+                        keyId: wallet.keyId,
+                        transactionHistory: {
+                          ...cachedHistory,
+                          hasConfirmingTxs,
+                          hasConfirmingTxsAt: refreshed.hasConfirmingTxsAt,
+                        },
+                      }),
+                    );
+                  }
+                } else {
+                  verified = false;
+                }
+              }
+            } catch (err) {
+              verified = false;
+              logManager.warn(
+                `Could not re-verify pending ETH txs before send: ${
+                  err instanceof Error ? err.message : String(err)
+                }`,
+              );
+            }
+          }
+
+          if (!verified) {
             return reject({
               err: new Error(
                 t(
-                  'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+                  'Could not check this account for pending transactions. Check your connection and try again.',
                 ),
               ),
             });
-          } else {
-            await dispatch(setEthAddressNonce(wallet, tx));
+          }
+
+          if (hasConfirmingTxs) {
+            if (!queuedTransactions) {
+              return reject({
+                err: new Error(
+                  t(
+                    'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+                  ),
+                ),
+              });
+            } else {
+              await dispatch(setEthAddressNonce(wallet, tx));
+            }
           }
         }
 
@@ -379,7 +458,9 @@ const setEthAddressNonce =
           }`,
         );
 
-        tx.nonce = suggestedNonce;
+        if (tx.nonce == null) {
+          tx.nonce = suggestedNonce;
+        }
 
         return resolve();
       } catch (error: any) {

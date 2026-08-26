@@ -171,6 +171,8 @@ export const updateWalletTxHistory = (payload: {
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
+    fetchedAt?: number;
+    hasConfirmingTxsAt?: number;
   };
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
@@ -184,6 +186,8 @@ export const updateAccountTxHistory = (payload: {
       transactions: any[];
       loadMore: boolean;
       hasConfirmingTxs: boolean;
+      fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
     };
   };
 }): WalletActionType => ({

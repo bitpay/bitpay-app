@@ -1,4 +1,5 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
+import {AppState} from 'react-native';
 import {
   Action,
   AnyAction,
@@ -319,6 +320,38 @@ export const reduxStorage: Storage = {
   },
 };
 
+let activePersistor: {flush: () => Promise<void>} | null = null;
+let pendingFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+const flushPersistenceSoon = () => {
+  if (!activePersistor || pendingFlushTimer) {
+    return;
+  }
+  // flush() dispatches FLUSH, and this runs inside a dispatch.
+  pendingFlushTimer = setTimeout(() => {
+    pendingFlushTimer = null;
+    activePersistor?.flush().catch(() => {});
+  }, 0);
+};
+
+let persistFlushSubscription: {remove: () => void} | null = null;
+
+const registerPersistFlushOnBackground = (persistor: {
+  flush: () => Promise<void>;
+}) => {
+  // getStore can run more than once, so replace any previous listener rather
+  // than stacking them.
+  persistFlushSubscription?.remove();
+  persistFlushSubscription = AppState.addEventListener(
+    'change',
+    nextAppState => {
+      if (nextAppState === 'background') {
+        persistor.flush().catch(() => {});
+      }
+    },
+  );
+};
+
 const basePersistConfig = {
   storage: reduxStorage,
   stateReconciler: autoMergeLevel2,
@@ -507,6 +540,7 @@ const getStore = async () => {
         if (action && typeof action.type === 'string') {
           if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
             backupTriggerAction = action.type;
+            flushPersistenceSoon();
           }
         }
       } catch (_) {}
@@ -696,6 +730,9 @@ const getStore = async () => {
   initLogs.drainAndDispatch(storeDispatch);
 
   const persistor = persistStore(store);
+
+  activePersistor = persistor;
+  registerPersistFlushOnBackground(persistor);
 
   if (__DEV__) {
     // persistor.purge().then(() => console.log('purged persistence'));

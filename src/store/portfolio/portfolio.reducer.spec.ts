@@ -214,6 +214,45 @@ describe('portfolioReducer', () => {
     expect(result.populateStatus.walletStatusById?.['wallet-1']).toBe('done');
   });
 
+  it('updates populate progress when a new wallet id is reported', () => {
+    const state = makeState();
+    const result = portfolioReducer(
+      state,
+      updatePopulateProgress({
+        walletStatusByIdUpdates: {'wallet-2': 'in_progress'},
+      }),
+    );
+
+    expect(result).not.toBe(state);
+    expect(result.populateStatus.walletStatusById).toEqual({
+      'wallet-1': 'in_progress',
+      'wallet-2': 'in_progress',
+    });
+  });
+
+  it('appends populate progress errors', () => {
+    const state = makeState();
+    const result = portfolioReducer(
+      state,
+      updatePopulateProgress({
+        errorsToAdd: [{walletId: 'wallet-1', message: 'boom'}],
+      }),
+    );
+
+    expect(result).not.toBe(state);
+    expect(result.populateStatus.errors).toEqual([
+      {walletId: 'wallet-1', message: 'boom'},
+    ]);
+  });
+
+  it('preserves state identity for an empty populate progress error list', () => {
+    const state = makeState();
+
+    expect(
+      portfolioReducer(state, updatePopulateProgress({errorsToAdd: []})),
+    ).toBe(state);
+  });
+
   it('stores and clears atomic snapshot balance mismatches by wallet id', () => {
     const mismatch = {
       walletId: 'wallet-1',
