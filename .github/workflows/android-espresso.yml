@@ -21,10 +21,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use HTTPS instead of SSH for GitHub git dependencies
+      - name: Force HTTPS for GitHub git dependencies
         run: |
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
           git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+          git config --global url."https://github.com/".insteadOf "git://github.com/"
+
+      - name: Rewrite yarn.lock git+ssh URLs to HTTPS
+        run: |
+          if [ -f yarn.lock ]; then
+            sed -i 's#ssh://git@github.com/#https://github.com/#g' yarn.lock
+            sed -i 's#git+ssh://git@github.com/#https://github.com/#g' yarn.lock
+            sed -i 's#git@github.com:#https://github.com/#g' yarn.lock
+          fi
 
       - name: Free disk space
         run: |
@@ -66,7 +76,9 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+        run: yarn install --frozen-lockfile --network-timeout 600000
 
       - name: Check disk space after dependency install
         run: |
