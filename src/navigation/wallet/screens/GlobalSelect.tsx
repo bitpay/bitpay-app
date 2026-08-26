@@ -2401,7 +2401,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                       : (searchResults as AssetsByChainData[])
                   }
                   extraData={hideAllBalances}
-                  keyExtractor={(_, index: number) => index.toString()}
+                  keyExtractor={(item: AssetsByChainData) => item.id}
                   renderItem={memoizedRenderAssetsItem}
                 />
               </FlashListCointainer>

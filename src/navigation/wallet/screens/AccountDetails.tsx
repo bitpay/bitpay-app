@@ -655,6 +655,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       transactions: any[];
       loadMore: boolean;
       hasConfirmingTxs: boolean;
+      fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
     };
   }>({});
   const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
