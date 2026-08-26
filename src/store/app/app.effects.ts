@@ -619,6 +619,43 @@ export const startInAppNotification =
   };
 
 /**
+ * Dismiss the native InAppBrowser, but only if we actually opened one via
+ * openUrlWithInAppBrowser (tracked in APP.inAppBrowserOpen). Some flows (e.g.
+ * Buy/Sell) render their own in-app WebView modal
+ * instead of the native IAB. Calling InAppBrowser.close() unconditionally
+ * (e.g. whenever a bitpay:// deep link is received) can dismiss whatever modal happens to be
+ * presented at that moment - including that unrelated WebView modal - since
+ * the underlying native module simply dismisses the topmost presented
+ * screen rather than a specific tracked IAB session.
+ */
+export const dismissInAppBrowserIfOpen =
+  (): Effect<void> => async (dispatch, getState) => {
+    const {APP} = getState();
+    if (!APP.inAppBrowserOpen) {
+      logManager.debug(
+        '[dismissInAppBrowserIfOpen] IAB not open, skipping close',
+      );
+      return;
+    }
+    logManager.debug(
+      '[dismissInAppBrowserIfOpen] IAB is open, attempting close...',
+    );
+    try {
+      const isAvailable = await InAppBrowser.isAvailable();
+      if (isAvailable) {
+        await InAppBrowser.close();
+      }
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(
+        '[dismissInAppBrowserIfOpen] Error closing IAB: ' + errStr,
+      );
+    } finally {
+      dispatch(AppActions.setInAppBrowserOpen(false));
+    }
+  };
+
+/**
  * Open a URL with the InAppBrowser if available, else lets the device handle the URL.
  * @param url
  * @param options
