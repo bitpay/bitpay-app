@@ -3,6 +3,7 @@ import {
   ColorValue,
   LayoutChangeEvent,
   StyleProp,
+  StyleSheet,
   View,
   ViewStyle,
 } from 'react-native';
@@ -11,7 +12,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import styled from 'styled-components/native';
 import {Action, Grey} from '../../styles/colors';
 
 interface ProgressBarProps {
@@ -24,33 +24,32 @@ interface ProgressBarProps {
 const BAR_HEIGHT = 4;
 const BAR_BORDER_RADIUS = 15;
 
-const ProgressContainer = styled.View`
-  justify-content: center;
-  position: relative;
-`;
-
-const ProgressTrack = styled.View`
-  background-color: ${Grey};
-  border-radius: ${BAR_BORDER_RADIUS}px;
-  height: ${BAR_HEIGHT}px;
-  overflow: hidden;
-  position: absolute;
-  width: 100%;
-`;
-
-const Progress = styled(Animated.View)`
-  background-color: ${Action};
-  height: 100%;
-  left: -100%;
-  position: relative;
-`;
-
-const IconContainer = styled(Animated.View)`
-  align-items: flex-end;
-  left: -100%;
-  position: relative;
-  width: 100%;
-`;
+const styles = StyleSheet.create({
+  progressContainer: {
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  progressTrack: {
+    backgroundColor: Grey,
+    borderRadius: BAR_BORDER_RADIUS,
+    height: BAR_HEIGHT,
+    overflow: 'hidden',
+    position: 'absolute',
+    width: '100%',
+  },
+  progress: {
+    backgroundColor: Action,
+    height: '100%',
+    left: '-100%',
+    position: 'relative',
+  },
+  iconContainer: {
+    alignItems: 'flex-end',
+    left: '-100%',
+    position: 'relative',
+    width: '100%',
+  },
+});
 
 const clamp = (value: number, min: number, max: number) => {
   return Math.min(max, Math.max(min, value));
@@ -104,21 +103,29 @@ const ProgressBar: React.FC<PropsWithChildren<ProgressBarProps>> = props => {
   }, []);
 
   return (
-    <ProgressContainer onLayout={onBarLayout}>
-      <ProgressTrack style={backgroundColor ? {backgroundColor} : null}>
-        <Progress
-          style={[animatedStyle, color ? {backgroundColor: color} : null]}
+    <View style={styles.progressContainer} onLayout={onBarLayout}>
+      <View
+        style={[
+          styles.progressTrack,
+          backgroundColor ? {backgroundColor} : null,
+        ]}>
+        <Animated.View
+          style={[
+            styles.progress,
+            animatedStyle,
+            color ? {backgroundColor: color} : null,
+          ]}
         />
-      </ProgressTrack>
+      </View>
 
       {ProgressIcon ? (
-        <IconContainer style={animatedStyle}>
+        <Animated.View style={[styles.iconContainer, animatedStyle]}>
           <View style={iconStyle} onLayout={onIconLayout}>
             <ProgressIcon />
           </View>
-        </IconContainer>
+        </Animated.View>
       ) : null}
-    </ProgressContainer>
+    </View>
   );
 };
 

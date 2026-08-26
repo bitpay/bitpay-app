@@ -3,72 +3,123 @@ import {H5, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
-import styled from 'styled-components/native';
-import {
-  Hr,
-  ScreenGutter,
-  SettingTitle,
-} from '../../../../components/styled/Containers';
+import {useTheme} from '../../../../contexts';
+import {Hr, SettingTitle} from '../../../../components/styled/Containers';
 import {LightBlack, NeutralSlate} from '../../../../styles/colors';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
-import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   GetPrecision,
   IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
-import {View} from 'react-native';
-import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {
-  formatCurrencyAbbreviation,
-  sleep,
-} from '../../../../utils/helper-methods';
+  ScrollView as RNScrollView,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import WalletInformationSkeleton from './WalletInformationSkeleton';
+import {formatCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
 
-const InfoContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const DEFERRED_LOAD_FALLBACK_MS = 2000;
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  infoContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  infoLabel: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 3,
+  },
+  infoSettingsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    height: 58,
+  },
+  settingsHeader: {
+    marginTop: 15,
+    marginRight: 0,
+    marginBottom: 5,
+    marginLeft: 0,
+  },
+  copyImgContainer: {
+    justifyContent: 'center',
+    marginRight: 5,
+  },
+  copyImgContainerRight: {
+    justifyContent: 'center',
+    marginLeft: 5,
+  },
+  copyRow: {
+    flexDirection: 'row',
+  },
+});
 
-const InfoLabel = styled.View`
-  padding: 5px 10px;
-  border-radius: 3px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+const InfoLabel = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.infoLabel,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InfoSettingsRow = styled.View`
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  height: 58px;
-`;
+const InfoSettingsRow = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.infoSettingsRow, style]} {...rest} />
+);
 
-const SettingsHeader = styled(InfoSettingsRow)`
-  margin: 15px 0 5px 0;
-`;
+const SettingsHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View
+    style={[styles.infoSettingsRow, styles.settingsHeader, style]}
+    {...rest}
+  />
+);
 
-const CopyImgContainer = styled.View`
-  justify-content: center;
-  margin-right: 5px;
-`;
+const CopyImgContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.copyImgContainer, style]} {...rest} />
+);
 
-const CopyImgContainerRight = styled.View`
-  justify-content: center;
-  margin-left: 5px;
-`;
+const CopyImgContainerRight = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.copyImgContainerRight, style]} {...rest} />
+);
 
-const CopyRow = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
+const CopyRow = ({style, ...rest}: TouchableOpacityProps) => (
+  <TouchableOpacity style={[styles.copyRow, style]} {...rest} />
+);
 
 export const getLinkedWallet = (key: Key, wallet: Wallet) => {
   const {
@@ -90,8 +141,18 @@ const WalletInformation = () => {
   const {t} = useTranslation();
   const logger = useLogger();
   const {
-    params: {wallet},
+    params: {
+      keyId: routeKeyId,
+      walletId: routeWalletId,
+      copayerId: routeCopayerId,
+    },
   } = useRoute<RouteProp<WalletGroupParamList, 'WalletInformation'>>();
+  const key = useAppSelector(({WALLET}) => WALLET.keys[routeKeyId]);
+  const wallet = findWalletById(
+    key.wallets,
+    routeWalletId,
+    routeCopayerId,
+  ) as Wallet;
 
   const {
     chain,
@@ -115,7 +176,6 @@ const WalletInformation = () => {
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedWalletId, setCopiedWalletId] = useState(false);
   const [copiedAddressType, setCopiedAddressType] = useState(false);
@@ -177,30 +237,55 @@ const WalletInformation = () => {
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
 
   useEffect(() => {
-    wallet?.getStatus(
-      {
-        tokenAddress: token ? token.address : null,
-        network: wallet.network,
-      },
-      async (err: any, status: Status) => {
-        if (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logger.error(`error [WalletInformation] [getStatus]: ${errStr}`);
-          setIsLoading(false);
-        } else if (status) {
-          setCopayers(status.wallet.copayers);
-          setBalanceByAddress(status.balance.byAddress);
-          await sleep(500);
-          setIsLoading(false);
+    let active = true;
+    let started = false;
+    const load = () => {
+      if (started || !active) {
+        return;
+      }
+
+      started = true;
+      wallet?.getStatus(
+        {
+          tokenAddress: token?.address,
+        },
+        (err, status) => {
+          if (!active) {
+            return;
+          }
+          if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [WalletInformation] [getStatus]: ${errStr}`);
+            setIsLoading(false);
+          } else if (status) {
+            setCopayers(status.wallet.copayers);
+            setBalanceByAddress(status.balance.byAddress);
+            setIsLoading(false);
+          }
+        },
+      );
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          load();
         }
       },
     );
-  }, [wallet]);
+    const fallbackTimer = setTimeout(load, DEFERRED_LOAD_FALLBACK_MS);
+
+    return () => {
+      active = false;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
+  }, [logger, navigation, token, wallet]);
 
   return (
-    <InfoContainer>
-      <ScrollView>
+    <SafeAreaView style={styles.infoContainer}>
+      <RNScrollView style={styles.scrollView}>
         {isLoading ? (
           <WalletInformationSkeleton />
         ) : (
@@ -436,8 +521,8 @@ const WalletInformation = () => {
             ) : null}
           </>
         )}
-      </ScrollView>
-    </InfoContainer>
+      </RNScrollView>
+    </SafeAreaView>
   );
 };
 

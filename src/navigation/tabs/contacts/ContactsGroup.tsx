@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import ContactsRoot from './screens/ContactsRoot';
@@ -34,7 +35,6 @@ export enum ContactsScreens {
 
 const ContactsGroup = ({Contacts, theme}: ContactsProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <Contacts.Group screenOptions={commonOptions}>
       <Contacts.Screen name={ContactsScreens.ROOT} component={ContactsRoot} />

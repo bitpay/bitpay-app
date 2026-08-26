@@ -214,6 +214,12 @@ describe('balanceChartData view model hydration', () => {
           totalPnlPercent: '15',
         },
       ],
+      walletFiatBalanceByWalletId: {
+        'wallet-1': [100, 105],
+      },
+      walletRemainingCostBasisFiatByWalletId: {
+        'wallet-1': [80, 80],
+      },
       minMax: {
         minIndex: '0',
         maxIndex: '1',
@@ -231,6 +237,12 @@ describe('balanceChartData view model hydration', () => {
     expect(hydrated?.maxIndex).toBe(1);
     expect(hydrated?.minPoint).toBe(hydrated?.graphPoints[0]);
     expect(hydrated?.maxPoint).toBe(hydrated?.graphPoints[1]);
+    expect(hydrated?.walletFiatBalanceByWalletId).toEqual({
+      'wallet-1': [100, 105],
+    });
+    expect(hydrated?.walletRemainingCostBasisFiatByWalletId).toEqual({
+      'wallet-1': [80, 80],
+    });
   });
 
   it('uses render timestamps for selection mapping while keeping analysis timestamps intact', () => {

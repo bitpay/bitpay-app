@@ -9,7 +9,8 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
@@ -33,70 +34,152 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const SpecificAmtQRContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  specificAmtQRContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  paragraphContainer: {
+    marginTop: 10,
+    marginHorizontal: 0,
+    marginBottom: 20,
+  },
+  qrContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+    flexDirection: 'column',
+    padding: 25,
+    borderRadius: 12,
+    minHeight: 390,
+    justifyContent: 'center',
+  },
+  qrCodeContainer: {
+    margin: 20,
+    width: 225,
+    height: 225,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: White,
+    borderRadius: 12,
+  },
+  qrHeader: {
+    textAlign: 'center',
+    marginTop: 10,
+    marginHorizontal: 0,
+    marginBottom: 20,
+  },
+  copyToClipboard: {
+    borderWidth: 1,
+    borderColor: '#9ba3ae',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    minHeight: 55,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  addressText: {
+    fontSize: 16,
+    paddingTop: 0,
+    paddingRight: 20,
+    paddingBottom: 0,
+    paddingLeft: 10,
+  },
+  copyImgContainer: {
+    borderRightColor: LightBlue,
+    borderRightWidth: 1,
+    paddingRight: 10,
+    height: 25,
+    justifyContent: 'center',
+  },
+});
 
-const ParagraphContainer = styled.View`
-  margin: 10px 0 20px;
-`;
+const SpecificAmtQRContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.specificAmtQRContainer, style]} {...rest} />
+);
 
-const QRContainer = styled.View`
-  margin-top: 20px;
-  align-items: center;
-  flex-direction: column;
-  padding: 25px;
-  border-radius: 12px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  min-height: 390px;
-  justify-content: center;
-`;
+const StyledScrollView: React.FC<React.ComponentProps<typeof ScrollView>> = ({
+  style,
+  ...rest
+}) => <ScrollView style={[styles.scrollView, style]} {...rest} />;
 
-const QRCodeContainer = styled.View`
-  margin: 20px;
-  width: 225px;
-  height: 225px;
-  justify-content: center;
-  align-items: center;
-  background-color: ${White};
-  border-radius: 12px;
-`;
+const ParagraphContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.paragraphContainer, style]} {...rest} />;
 
-const QRHeader = styled(H4)`
-  text-align: center;
-  margin: 10px 0 20px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const QRContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.qrContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CopyToClipboard = styled(TouchableOpacity)`
-  border: 1px solid #9ba3ae;
-  border-radius: 4px;
-  padding: 0 10px;
-  min-height: 55px;
-  align-items: center;
-  flex-direction: row;
-`;
+const QRCodeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.qrCodeContainer, style]} {...rest} />;
 
-const AddressText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : '#6f7782')};
-  padding: 0 20px 0 10px;
-`;
+const QRHeader: React.FC<React.ComponentProps<typeof H4>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H4
+      style={[styles.qrHeader, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const CopyImgContainer = styled.View`
-  border-right-color: ${LightBlue};
-  border-right-width: 1px;
-  padding-right: 10px;
-  height: 25px;
-  justify-content: center;
-`;
+const CopyToClipboard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.copyToClipboard, style]} {...rest} />
+);
 
-const ShareIconContainer = styled(TouchableOpacity)``;
+const AddressText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.addressText,
+        {color: theme.dark ? White : '#6f7782'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const CopyImgContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.copyImgContainer, style]} {...rest} />;
+
+const ShareIconContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = props => <TouchableOpacity {...props} />;
 
 const RequestSpecificAmountQR = () => {
   const {t} = useTranslation();
@@ -189,7 +272,7 @@ const RequestSpecificAmountQR = () => {
 
   return (
     <SpecificAmtQRContainer>
-      <ScrollView>
+      <StyledScrollView>
         <H5>{t('Payment Request')}</H5>
         <ParagraphContainer>
           <Paragraph>
@@ -240,7 +323,7 @@ const RequestSpecificAmountQR = () => {
             </>
           )}
         </QRContainer>
-      </ScrollView>
+      </StyledScrollView>
     </SpecificAmtQRContainer>
   );
 };

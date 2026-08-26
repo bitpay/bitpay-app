@@ -294,11 +294,37 @@ describe('UPDATE_PORTFOLIO_BALANCE', () => {
   });
 
   it('computes 0 when there are no keys', () => {
-    const state = walletReducer(freshState(), {
+    const base = freshState();
+    const state = walletReducer(base, {
       type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
     });
     expect(state.portfolioBalance.current).toBe(0);
     expect(state.portfolioBalance.lastDay).toBe(0);
+    expect(state).toBe(base);
+  });
+
+  it('preserves the state reference when the totals have not changed', () => {
+    const key = makeKey({
+      id: 'k1',
+      totalBalance: 200,
+      totalBalanceLastDay: 150,
+    });
+    const base: WalletState = {
+      ...freshState(),
+      keys: {k1: key},
+      portfolioBalance: {
+        current: 200,
+        lastDay: 150,
+        previous: 75,
+      },
+    };
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
+    });
+
+    expect(state).toBe(base);
+    expect(state.portfolioBalance.previous).toBe(75);
   });
 });
 
@@ -918,6 +944,161 @@ describe('migration flags', () => {
 // ---------------------------------------------------------------------------
 
 describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('preserves key and wallet references for semantically equal results', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(123456);
+    const pendingTxps = [{txid: 'pending-1'}] as any;
+    const wallet = makeWallet({
+      balance: makeBalance({sat: 10}) as any,
+      pendingTxps,
+      singleAddress: true,
+    });
+    const key = makeKey({
+      wallets: [wallet],
+      totalBalance: 100,
+      totalBalanceLastDay: 90,
+    });
+    const untouchedKey = makeKey({id: 'key-2'});
+    const base: WalletState = {
+      ...freshState(),
+      keys: {'key-1': key, 'key-2': untouchedKey},
+      portfolioBalance: {current: 100, lastDay: 90, previous: 80},
+    };
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+      payload: {
+        keyBalances: [
+          {keyId: 'key-1', totalBalance: 100, totalBalanceLastDay: 90},
+        ],
+        walletBalances: [
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-1',
+            status: {
+              balance: makeBalance({sat: 10}),
+              pendingTxps: [{txid: 'pending-1'}] as any,
+              singleAddress: true,
+            },
+          },
+        ],
+      },
+    });
+
+    expect(state.keys).toBe(base.keys);
+    expect(state.keys['key-1']).toBe(key);
+    expect(state.keys['key-1'].wallets).toBe(key.wallets);
+    expect(state.keys['key-1'].wallets[0]).toBe(wallet);
+    expect(state.keys['key-2']).toBe(untouchedKey);
+    expect(state.portfolioBalance).toBe(base.portfolioBalance);
+    expect(state.balanceCacheKey['key-1']).toBe(123456);
+    expect(state.balanceCacheKey['wallet-1']).toBeUndefined();
+  });
+
+  it('only replaces wallets and keys whose status actually changed', () => {
+    const changedWallet = makeWallet({
+      id: 'wallet-1',
+      balance: makeBalance({sat: 1}) as any,
+      singleAddress: false,
+    });
+    const unchangedWallet = makeWallet({
+      id: 'wallet-2',
+      balance: makeBalance({sat: 2}) as any,
+      singleAddress: true,
+    });
+    const key = makeKey({wallets: [changedWallet, unchangedWallet]});
+    const untouchedKey = makeKey({id: 'key-2'});
+    const base: WalletState = {
+      ...freshState(),
+      keys: {'key-1': key, 'key-2': untouchedKey},
+    };
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+      payload: {
+        keyBalances: [],
+        walletBalances: [
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-1',
+            status: {
+              balance: makeBalance({sat: 3}),
+              pendingTxps: [],
+              singleAddress: false,
+            },
+          },
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-2',
+            status: {
+              balance: makeBalance({sat: 2}),
+              pendingTxps: [],
+              singleAddress: true,
+            },
+          },
+        ],
+      },
+    });
+
+    expect(state.keys).not.toBe(base.keys);
+    expect(state.keys['key-1']).not.toBe(key);
+    expect(state.keys['key-1'].wallets).not.toBe(key.wallets);
+    expect(state.keys['key-1'].wallets[0]).not.toBe(changedWallet);
+    expect(state.keys['key-1'].wallets[1]).toBe(unchangedWallet);
+    expect(state.keys['key-2']).toBe(untouchedKey);
+  });
+
+  it('only timestamps aggregate key ids that exist in state', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(654321);
+    const base = stateWithKey(
+      {totalBalance: 1, totalBalanceLastDay: 1},
+      {
+        balance: makeBalance({sat: 1}) as any,
+        singleAddress: false,
+      },
+    );
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+      payload: {
+        keyBalances: [
+          {
+            keyId: 'key-1',
+            cacheKey: 'key-1:address-1',
+            totalBalance: 1,
+            totalBalanceLastDay: 1,
+          },
+          {keyId: 'missing-key', totalBalance: 1, totalBalanceLastDay: 1},
+        ],
+        walletBalances: [
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-1',
+            status: {
+              balance: makeBalance({sat: 1}),
+              pendingTxps: [],
+              singleAddress: false,
+            },
+          },
+          {
+            keyId: 'key-1',
+            walletId: 'missing-wallet',
+            status: {
+              balance: makeBalance(),
+              pendingTxps: [],
+              singleAddress: false,
+            },
+          },
+        ],
+      },
+    });
+
+    expect(state.balanceCacheKey).toEqual({'key-1:address-1': 654321});
+  });
+
   it('updates key totalBalance and totalBalanceLastDay', () => {
     const base = stateWithKey({totalBalance: 0, totalBalanceLastDay: 0});
     const state = walletReducer(base, {

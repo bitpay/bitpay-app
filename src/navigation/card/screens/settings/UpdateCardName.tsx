@@ -1,8 +1,14 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Keyboard} from 'react-native';
-import styled from 'styled-components/native';
+import {
+  Keyboard,
+  ScrollView,
+  ScrollViewProps,
+  View,
+  ViewProps,
+  StyleSheet,
+} from 'react-native';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
@@ -17,13 +23,22 @@ export interface UpdateCardNameScreenParamList {
   card: Card;
 }
 
-const ContentContainer = styled.ScrollView`
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  contentContainer: {
+    padding: parseInt(ScreenGutter, 10),
+  },
+  formContainer: {
+    marginBottom: 24,
+  },
+});
 
-const FormContainer = styled.View`
-  margin-bottom: 24px;
-`;
+const ContentContainer = ({style, ...rest}: ScrollViewProps) => (
+  <ScrollView style={[styles.contentContainer, style]} {...rest} />
+);
+
+const FormContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.formContainer, style]} {...rest} />
+);
 
 const createErrorConfig = (
   message: string,

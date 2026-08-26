@@ -1,11 +1,22 @@
-import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   BaseText,
   HeaderTitle,
   Paragraph,
 } from '../../../../components/styled/Text';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -27,21 +38,25 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {Effect, RootState} from '../../../../store';
 import {getErrorString, sleep} from '../../../../utils/helper-methods';
-import {Key, Wallet} from '../../../../store/wallet/wallet.models';
-import {Rates} from '../../../../store/rate/rate.models';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   CheckIfLegacyBCH,
   ValidDataTypes,
   ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {Linking, View} from 'react-native';
+import {
+  Linking,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
-import KeyWalletsRow, {
-  KeyWalletsRowProps,
-} from '../../../../components/list/KeyWalletsRow';
+import KeyWalletsRow from '../../../../components/list/KeyWalletsRow';
+import type {WalletRowProps} from '../../../../components/list/WalletRow';
 import {
   GetPayProOptions,
   GetInvoiceCurrency,
@@ -53,7 +68,6 @@ import {
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import {
-  AppDispatch,
   useAppDispatch,
   useAppSelector,
   useLogger,
@@ -76,10 +90,6 @@ import {
 } from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
-import {
-  buildAccountList,
-  buildKeyWalletRowsFromAccountList,
-} from '../../../../store/wallet/utils/wallet';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
@@ -90,303 +100,308 @@ import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {Network, URL} from '../../../../constants';
+import {URL} from '../../../../constants';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {useOngoingProcess} from '../../../../contexts';
 import {logManager} from '../../../../managers/LogManager';
+import {
+  BuildKeyAccountRow,
+  useDebouncedSendToValidation,
+  useSendToKeyAccounts,
+} from './sendTo.utils';
+import {logReactProfiler} from '../../../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../../../../components/performance/PerformanceProfiler';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
 
-const SafeAreaView = styled.SafeAreaView`
-  flex: 1;
-`;
+export {BuildKeyAccountRow};
 
-const ScrollView = styled.ScrollView`
-  flex: 1;
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  safeArea: {flex: 1},
+  scrollContent: {paddingHorizontal: parseInt(ScreenGutter, 10)},
+  scrollView: {flex: 1, marginTop: 20},
+  contactContainer: {marginTop: 20},
+  contactTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  contactTitle: {marginLeft: 10},
+  emailContainer: {flexDirection: 'row', marginTop: 10},
+  emailIconContainer: {
+    alignItems: 'center',
+    borderRadius: 50,
+    justifyContent: 'center',
+    marginRight: 13,
+    height: 50,
+    width: 50,
+  },
+  emailTextContainer: {justifyContent: 'center'},
+  emailText: {fontWeight: '600'},
+  infoSheetMessage: {paddingVertical: 20},
+});
 
-const ContactContainer = styled.View`
-  margin-top: 20px;
-`;
+export const ContactTitleContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...props}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.contactTitleContainer,
+        {borderBottomColor: theme.dark ? LightBlack : LightBlue},
+        style,
+      ]}
+      {...props}
+    />
+  );
+};
 
-export const ContactTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-bottom-width: 1px;
-  margin-bottom: 10px;
-`;
-
-export const ContactTitle = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 10px;
-`;
-
-const EmailContainer = styled.View`
-  flex-direction: row;
-  margin-top: 10px;
-`;
-
-const EmailIconContainer = styled.View`
-  align-items: center;
-  background-color: ${({theme}) => (theme.dark ? Midnight : '#EDF0FE')};
-  border-radius: 50px;
-  justify-content: center;
-  margin-right: 13px;
-  height: 50px;
-  width: 50px;
-`;
-
-const EmailTextContainer = styled.View`
-  justify-content: center;
-`;
-
-const EmailText = styled(Paragraph)`
-  font-weight: 600;
-`;
-
-const InfoSheetMessage = styled.View`
-  padding: 20px 0;
-`;
+export const ContactTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...props
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.contactTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...props}
+    />
+  );
+};
 
 const isEmailAddress = (text: string) => {
   if (!text.includes('@')) {
     return false;
   }
-
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
 };
 
-export const BuildKeyAccountRow = (
-  keys: {[key in string]: Key},
-  currentWalletId: string,
-  currentCurrencyAbbreviation: string,
-  currentChain: string,
-  currentNetwork: Network,
-  defaultAltCurrencyIsoCode: string,
-  searchInput: string,
-  rates: Rates,
-  dispatch: AppDispatch,
-  logger: any,
-) => {
-  let filteredKeys: KeyWalletsRowProps[] = [];
-  filteredKeys = Object.entries(keys)
-    .map(([key, value]) => {
-      try {
-        const updatedKey = {
-          ...value,
-          wallets: value.wallets,
-        };
-        const accountList = buildAccountList(
-          updatedKey,
-          defaultAltCurrencyIsoCode,
-          rates,
-          dispatch,
-          {
-            filterByHideWallet: true,
-            filterByWalletOptions: true,
-            network: currentNetwork,
-            chain: currentChain,
-            currencyAbbreviation: currentCurrencyAbbreviation,
-            walletId: currentWalletId,
-            searchInput,
-          },
-        );
+const MemoizedKeyWalletsRow = React.memo(KeyWalletsRow);
+const MemoizedOptionsSheet = React.memo(OptionsSheet);
 
-        const {accounts, mergedUtxoAndEvmAccounts} =
-          buildKeyWalletRowsFromAccountList(
-            accountList,
-            defaultAltCurrencyIsoCode,
-          );
-        return {
-          key,
-          keyName: value.keyName || 'My Key',
-          backupComplete: value.backupComplete,
-          accounts,
-          mergedUtxoAndEvmAccounts,
-        };
-      } catch (err) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error(`Error while building key account row: ${errStr}`);
-      }
-    })
-    .filter(Boolean) as KeyWalletsRowProps[];
-  return filteredKeys;
+type SendToContactResultProps = {
+  contact: ContactRowProps;
+  onSelect: (contact: ContactRowProps) => void;
 };
 
-const SendTo = () => {
+const SendToContactResult = React.memo(
+  ({contact, onSelect}: SendToContactResultProps) => {
+    const onPress = useCallback(() => onSelect(contact), [contact, onSelect]);
+    return <ContactRow contact={contact} onPress={onPress} />;
+  },
+);
+
+const SendToContent = ({wallet}: {wallet: Wallet}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const route = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
 
-  const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrencyIsoCode = useAppSelector(
+    ({APP}) => APP.defaultAltCurrency.isoCode,
+  );
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
+  const [walletSearchInput, setWalletSearchInput] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
-  const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
-    Promise<ReceivingAddress[]>
-  >(Promise.resolve([]));
+  const emailAddressSearchPromiseRef = useRef<Promise<ReceivingAddress[]>>(
+    Promise.resolve([]),
+  );
 
-  const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
 
   const isUtxo = IsUtxoChain(chain);
   const isXrp = IsOtherChain(chain);
 
-  const selectInputOption: Option = {
-    img: <Icons.SelectInputs />,
-    title: t('Select Inputs for this Transaction'),
-    description: t("Choose which inputs you'd like to use to send crypto."),
-    onPress: async () => {
-      await sleep(500);
-      navigation.navigate('SendToOptions', {
-        title: t('Select Inputs'),
-        wallet,
-        context: 'selectInputs',
-      });
-    },
-  };
+  const openWalletOptions = useCallback(() => {
+    setShowWalletOptions(true);
+  }, []);
+  const closeWalletOptions = useCallback(() => {
+    setShowWalletOptions(false);
+  }, []);
 
-  const multisendOption: Option = {
-    img: <Icons.Multisend />,
-    title: t('Transfer to Multiple Recipients'),
-    description: t('Send crypto to multiple contacts or addresses.'),
-    onPress: async () => {
-      await sleep(500);
-      navigation.navigate('SendToOptions', {
-        title: t('Multiple Recipients'),
-        wallet,
-        context: 'multisend',
-      });
-    },
-  };
+  const assetOptions = useMemo<Array<Option>>(() => {
+    const selectInputOption: Option = {
+      img: <Icons.SelectInputs />,
+      title: t('Select Inputs for this Transaction'),
+      description: t("Choose which inputs you'd like to use to send crypto."),
+      onPress: () => {
+        navigation.navigate('SendToOptions', {
+          title: t('Select Inputs'),
+          wallet,
+          context: 'selectInputs',
+        });
+      },
+    };
 
-  const BridgeToPolygon: Option = {
-    img: <Icons.BridgeToPolygon />,
-    title: t('Bridge to Polygon'),
-    description: t('Transfer your assets to Polygon network'),
-    onPress: () => {
-      Linking.openURL(URL.POLYGON_BRIDGE);
-    },
-  };
+    const multisendOption: Option = {
+      img: <Icons.Multisend />,
+      title: t('Transfer to Multiple Recipients'),
+      description: t('Send crypto to multiple contacts or addresses.'),
+      onPress: () => {
+        navigation.navigate('SendToOptions', {
+          title: t('Multiple Recipients'),
+          wallet,
+          context: 'multisend',
+        });
+      },
+    };
 
-  const BridgeToArbitrum: Option = {
-    img: <Icons.BridgeToPolygon />,
-    title: t('Bridge to Arbitrum'),
-    description: t('Transfer your assets to Arbitrum network'),
-    onPress: () => {
-      Linking.openURL(URL.ARBITRUM_BRIDGE);
-    },
-  };
-
-  const BridgeToBase: Option = {
-    img: <Icons.BridgeToPolygon />,
-    title: t('Bridge to Base'),
-    description: t('Transfer your assets to Base network'),
-    onPress: () => {
-      Linking.openURL(URL.BASE_BRIDGE);
-    },
-  };
-
-  const BridgeToOptimism: Option = {
-    img: <Icons.BridgeToPolygon />,
-    title: t('Bridge to Optimism'),
-    description: t('Transfer your assets to Optimism network'),
-    onPress: () => {
-      Linking.openURL(URL.OPTIMISM_BRIDGE);
-    },
-  };
-
-  const bridgeOptions: Array<{chain: string; option: Option}> = [
-    {chain: 'matic', option: BridgeToPolygon},
-    {chain: 'arb', option: BridgeToArbitrum},
-    {chain: 'base', option: BridgeToBase},
-    {chain: 'op', option: BridgeToOptimism},
-  ];
-
-  const assetOptions: Array<Option> = isUtxo
-    ? [multisendOption, selectInputOption]
-    : bridgeOptions.reduce(
-        (acc: Array<Option>, {chain: bridgeChain, option}) => {
-          if (chain === bridgeChain || chain === 'eth') {
-            acc.push(option);
-          }
-          return acc;
+    const bridgeOptions: Array<{chain: string; option: Option}> = [
+      {
+        chain: 'matic',
+        option: {
+          img: <Icons.BridgeToPolygon />,
+          title: t('Bridge to Polygon'),
+          description: t('Transfer your assets to Polygon network'),
+          onPress: () => {
+            Linking.openURL(URL.POLYGON_BRIDGE);
+          },
         },
-        [],
-      );
+      },
+      {
+        chain: 'arb',
+        option: {
+          img: <Icons.BridgeToPolygon />,
+          title: t('Bridge to Arbitrum'),
+          description: t('Transfer your assets to Arbitrum network'),
+          onPress: () => {
+            Linking.openURL(URL.ARBITRUM_BRIDGE);
+          },
+        },
+      },
+      {
+        chain: 'base',
+        option: {
+          img: <Icons.BridgeToPolygon />,
+          title: t('Bridge to Base'),
+          description: t('Transfer your assets to Base network'),
+          onPress: () => {
+            Linking.openURL(URL.BASE_BRIDGE);
+          },
+        },
+      },
+      {
+        chain: 'op',
+        option: {
+          img: <Icons.BridgeToPolygon />,
+          title: t('Bridge to Optimism'),
+          description: t('Transfer your assets to Optimism network'),
+          onPress: () => {
+            Linking.openURL(URL.OPTIMISM_BRIDGE);
+          },
+        },
+      },
+    ];
+
+    if (isUtxo) {
+      return [multisendOption, selectInputOption];
+    }
+
+    return bridgeOptions
+      .filter(({chain: bridgeChain}) => {
+        return chain === bridgeChain || chain === 'eth';
+      })
+      .map(({option}) => option);
+  }, [chain, isUtxo, navigation, t, wallet]);
+
+  const headerTitle = t('Send To');
+  const hasAssetOptions = assetOptions.length > 0;
+  const renderHeaderTitle = useCallback(
+    () => <HeaderTitle>{headerTitle}</HeaderTitle>,
+    [headerTitle],
+  );
+  const renderHeaderRight = useCallback(
+    () => (hasAssetOptions ? <Settings onPress={openWalletOptions} /> : null),
+    [hasAssetOptions, openWalletOptions],
+  );
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
-      headerRight: () =>
-        assetOptions.length ? (
-          <Settings
-            onPress={() => {
-              setShowWalletOptions(true);
-            }}
-          />
-        ) : null,
-    });
-  });
+    if (!isFocused) {
+      return;
+    }
 
-  const keyAccounts: KeyWalletsRowProps[] = BuildKeyAccountRow(
+    navigation.setOptions({
+      headerTitle: renderHeaderTitle,
+      headerRight: renderHeaderRight,
+    });
+  }, [isFocused, navigation, renderHeaderRight, renderHeaderTitle]);
+
+  const keyAccounts = useSendToKeyAccounts({
     keys,
-    id,
-    currencyAbbreviation,
-    chain,
-    network,
-    defaultAltCurrency.isoCode,
-    searchInput,
+    currentWalletId: id,
+    currentCurrencyAbbreviation: currencyAbbreviation,
+    currentChain: chain,
+    currentNetwork: network,
+    defaultAltCurrencyIsoCode,
+    searchInput: walletSearchInput,
     rates,
     dispatch,
     logger,
-  );
+  });
 
   const contacts = useMemo(() => {
     const normalizedSearch = searchInput.toLowerCase();
+    const normalizedCurrencyAbbreviation = currencyAbbreviation.toLowerCase();
+    const normalizedChain = chain.toLowerCase();
+    const isEvm = IsEVMChain(chain);
+    const isSvm = IsSVMChain(chain);
 
     const matchesContact = (contact: ContactRowProps) =>
       contact.network === network &&
       (contact.name.toLowerCase().includes(normalizedSearch) ||
         contact.email?.toLowerCase().includes(normalizedSearch));
 
-    return allContacts.filter(contact => {
+    return allContacts.filter((contact: ContactRowProps) => {
       if (isUtxo || isXrp) {
         return (
-          contact.coin === currencyAbbreviation.toLowerCase() &&
-          contact.chain === chain.toLowerCase() &&
+          contact.coin === normalizedCurrencyAbbreviation &&
+          contact.chain === normalizedChain &&
           matchesContact(contact)
         );
       }
 
-      if (IsEVMChain(chain)) {
+      if (isEvm) {
         return IsEVMChain(contact.chain) && matchesContact(contact);
       }
 
-      if (IsSVMChain(chain)) {
+      if (isSvm) {
         return IsSVMChain(contact.chain) && matchesContact(contact);
       }
 
       return false;
     });
-  }, [allContacts, currencyAbbreviation, chain, network, searchInput]);
+  }, [
+    allContacts,
+    chain,
+    currencyAbbreviation,
+    isUtxo,
+    isXrp,
+    network,
+    searchInput,
+  ]);
 
-  const onErrorMessageDismiss = () => {
+  const onErrorMessageDismiss = useCallback(() => {
     setSearchInput('');
-  };
+    setWalletSearchInput('');
+  }, []);
 
   const BchLegacyAddressInfoDismiss = (searchText: string) => {
     try {
@@ -394,15 +409,16 @@ const SendTo = () => {
         searchText.replace(/^(bitcoincash:|bchtest:|bchreg:)/, ''),
       );
       setSearchInput(cashAddr);
+      setWalletSearchInput(cashAddr);
       validateAndNavigateToConfirm(cashAddr);
-    } catch (error) {
+    } catch {
       dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
     }
   };
 
   const checkCoinAndNetwork =
     (data: any, isPayPro?: boolean): Effect<boolean> =>
-    dispatch => {
+    dispatchEffect => {
       let isValid = false;
       if (isPayPro) {
         isValid =
@@ -417,7 +433,7 @@ const SendTo = () => {
         if (isLegacy) {
           const appName = APP_NAME_UPPERCASE;
 
-          dispatch(
+          dispatchEffect(
             showBottomNotificationModal(
               BchLegacyAddressInfo(appName, () => {
                 // TODO: This doesn't seem to work
@@ -534,56 +550,142 @@ const SendTo = () => {
     }
   };
 
-  const onSendToWallet = async (selectedWallet: Wallet) => {
-    try {
-      const {
-        credentials,
-        currencyAbbreviation: currency,
-        id: walletId,
-        keyId,
-        walletName,
-        receiveAddress,
-        chain,
-      } = selectedWallet;
+  const validateAndNavigateToConfirmRef = useRef(validateAndNavigateToConfirm);
+  validateAndNavigateToConfirmRef.current = validateAndNavigateToConfirm;
 
-      let address = receiveAddress;
+  const debouncedValidateSearchInput = useDebouncedSendToValidation(text => {
+    setWalletSearchInput(text);
+    validateAndNavigateToConfirmRef.current(text);
+  });
 
-      if (!address) {
-        showOngoingProcess('GENERATING_ADDRESS');
-        address = await dispatch<Promise<string>>(
-          createWalletAddress({wallet: selectedWallet, newAddress: false}),
-        );
-        hideOngoingProcess();
+  const onSearchInputChange = useCallback(
+    (text: string) => {
+      setSearchInput(text);
+
+      if (user && isEmailAddress(text.trim())) {
+        debouncedValidateSearchInput.cancel();
+        setWalletSearchInput(text);
+        validateAndNavigateToConfirmRef.current(text);
+        return;
       }
 
-      const recipient = {
-        type: 'wallet',
-        name: walletName || credentials.walletName,
-        walletId,
-        keyId,
-        address,
-        currency,
-        chain,
-      };
+      setSearchIsEmailAddress(false);
+      debouncedValidateSearchInput(text);
+    },
+    [debouncedValidateSearchInput, user],
+  );
 
+  const onSendToWallet = useCallback(
+    async (selectedWallet: Wallet) => {
+      try {
+        const {
+          credentials,
+          currencyAbbreviation: currency,
+          id: walletId,
+          keyId,
+          walletName,
+          receiveAddress,
+          chain: selectedWalletChain,
+        } = selectedWallet;
+
+        let address = receiveAddress;
+
+        if (!address) {
+          showOngoingProcess('GENERATING_ADDRESS');
+          address = await dispatch<Promise<string>>(
+            createWalletAddress({wallet: selectedWallet, newAddress: false}),
+          );
+          hideOngoingProcess();
+        }
+
+        const recipient = {
+          type: 'wallet',
+          name: walletName || credentials.walletName,
+          walletId,
+          keyId,
+          address,
+          currency,
+          chain: selectedWalletChain,
+        };
+
+        dispatch(
+          goToAmount({
+            coin: wallet.currencyAbbreviation,
+            chain: wallet.chain,
+            recipient,
+            wallet,
+          }),
+        );
+      } catch (err: any) {
+        logger.error(`Send To: ${getErrorString(err)}`);
+        hideOngoingProcess();
+      }
+    },
+    [dispatch, hideOngoingProcess, logger, showOngoingProcess, wallet],
+  );
+
+  const onKeyWalletPress = useCallback(
+    (selectedWallet: Wallet | WalletRowProps) => {
+      if (!('credentials' in selectedWallet)) {
+        return;
+      }
+
+      const selectedKey = keys[selectedWallet.keyId];
+      if (selectedKey.backupComplete) {
+        onSendToWallet(selectedWallet);
+        return;
+      }
+
+      logger.debug('Key selected. Needs backup.');
       dispatch(
-        goToAmount({
-          coin: wallet.currencyAbbreviation,
-          chain: wallet.chain,
-          recipient,
-          wallet,
-        }),
+        showBottomNotificationModal(
+          keyBackupRequired(selectedKey, navigation, dispatch, 'send'),
+        ),
       );
-    } catch (err: any) {
-      logger.error(`Send To: ${getErrorString(err)}`);
-      hideOngoingProcess();
-    }
-  };
+    },
+    [dispatch, keys, logger, navigation, onSendToWallet],
+  );
+
+  const onContactSelect = useCallback(
+    (item: ContactRowProps) => {
+      try {
+        validateAndNavigateToConfirmRef.current(item.address, {
+          context: 'contact',
+          name: item.name,
+          destinationTag: item.tag || item.destinationTag,
+        });
+      } catch (err) {
+        logger.error(`Send To [Contacts]: ${getErrorString(err)}`);
+      }
+    },
+    [logger],
+  );
+
+  const onOpenScanner = useCallback(() => {
+    haptic('impactLight');
+    dispatch(
+      Analytics.track('Open Scanner', {
+        context: 'SendTo',
+      }),
+    );
+    navigation.navigate('ScanRoot', {
+      onScanComplete: data => {
+        try {
+          if (data) {
+            validateAndNavigateToConfirmRef.current(data);
+          }
+        } catch (err) {
+          const e = err instanceof Error ? err.message : JSON.stringify(err);
+          logManager.error('[OpenScanner SendTo] ', e);
+        }
+      },
+    });
+  }, [dispatch, navigation]);
 
   useEffect(() => {
-    const getReceivingAddresses = async () => {
+    if (searchIsEmailAddress) {
       const email = searchInput.trim().toLowerCase();
-      const searchPromise = dispatch(
+      emailAddressSearchPromiseRef.current = dispatch(
         BitPayIdEffects.startFetchReceivingAddresses({
           email,
           currency: getCurrencyCodeFromCoinAndChain(
@@ -592,13 +694,8 @@ const SendTo = () => {
           ),
         }),
       ).catch(_ => Promise.resolve([]));
-      setEmailAddressSearchPromise(searchPromise);
-      await searchPromise;
-    };
-    if (searchIsEmailAddress) {
-      getReceivingAddresses();
     } else {
-      setEmailAddressSearchPromise(Promise.resolve([]));
+      emailAddressSearchPromiseRef.current = Promise.resolve([]);
     }
   }, [
     searchIsEmailAddress,
@@ -609,14 +706,35 @@ const SendTo = () => {
   ]);
 
   useEffect(() => {
-    return navigation.addListener('blur', () =>
-      setTimeout(() => setSearchInput(''), 300),
-    );
-  }, [navigation]);
+    if (!isFocused) {
+      return;
+    }
+
+    let clearSearchTimeout: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = navigation.addListener('blur', () => {
+      debouncedValidateSearchInput.cancel();
+      setSearchIsEmailAddress(false);
+      emailAddressSearchPromiseRef.current = Promise.resolve([]);
+      clearSearchTimeout = setTimeout(() => {
+        setSearchInput('');
+        setWalletSearchInput('');
+      }, 300);
+    });
+
+    return () => {
+      unsubscribe();
+      if (clearSearchTimeout) {
+        clearTimeout(clearSearchTimeout);
+      }
+    };
+  }, [debouncedValidateSearchInput, isFocused, navigation]);
 
   return (
-    <SafeAreaView>
-      <ScrollView keyboardShouldPersistTaps={'handled'}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps={'handled'}>
         <SearchContainer>
           <SearchInput
             testID="send-to-address-input"
@@ -624,36 +742,13 @@ const SendTo = () => {
             placeholder={t('Search contact or enter address')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
-            onChangeText={(text: string) => {
-              setSearchInput(text);
-              validateAndNavigateToConfirm(text);
-            }}
+            onChangeText={onSearchInputChange}
           />
           <TouchableOpacity
             testID="send-to-scan-qr-button"
             accessibilityLabel="Send to scan qr button"
             activeOpacity={0.75}
-            onPress={() => {
-              haptic('impactLight');
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'SendTo',
-                }),
-              );
-              navigation.navigate('ScanRoot', {
-                onScanComplete: data => {
-                  try {
-                    if (data) {
-                      validateAndNavigateToConfirm(data);
-                    }
-                  } catch (err) {
-                    const e =
-                      err instanceof Error ? err.message : JSON.stringify(err);
-                    logManager.error('[OpenScanner SendTo] ', e);
-                  }
-                },
-              });
-            }}>
+            onPress={onOpenScanner}>
             <ScanSvg />
           </TouchableOpacity>
         </SearchContainer>
@@ -665,14 +760,15 @@ const SendTo = () => {
             activeOpacity={ActiveOpacity}
             onPress={async () => {
               const email = searchInput.toLowerCase();
-              const emailReceivingAddresses = await emailAddressSearchPromise;
+              const emailReceivingAddresses =
+                await emailAddressSearchPromiseRef.current;
               const addressMatchingCurrency = emailReceivingAddresses.find(
                 ({coin, chain: addressChain}) =>
                   currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
                   chain.toLowerCase() === addressChain.toLowerCase(),
               );
               addressMatchingCurrency
-                ? validateAndNavigateToConfirm(
+                ? validateAndNavigateToConfirmRef.current(
                     addressMatchingCurrency.address,
                     {email},
                   )
@@ -682,12 +778,14 @@ const SendTo = () => {
                       title: 'Unable to Send to Contact',
                       message: '',
                       message2: (
-                        <InfoSheetMessage>
+                        <View style={styles.infoSheetMessage}>
                           <Paragraph>
-                            <EmailText>{email}</EmailText> is not yet able to
-                            receive crypto to their email.
+                            <Paragraph style={styles.emailText}>
+                              {email}
+                            </Paragraph>{' '}
+                            is not yet able to receive crypto to their email.
                           </Paragraph>
-                        </InfoSheetMessage>
+                        </View>
                       ),
                       enableBackdropDismiss: true,
                       actions: [
@@ -702,85 +800,85 @@ const SendTo = () => {
                     }),
                   );
             }}>
-            <EmailContainer>
-              <EmailIconContainer>
+            <View style={styles.emailContainer}>
+              <View
+                style={[
+                  styles.emailIconContainer,
+                  {backgroundColor: theme.dark ? Midnight : '#EDF0FE'},
+                ]}>
                 <SendLightSvg />
-              </EmailIconContainer>
-              <EmailTextContainer>
+              </View>
+              <View style={styles.emailTextContainer}>
                 <Paragraph>
-                  Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
+                  Send to{' '}
+                  <Paragraph style={styles.emailText}>
+                    {searchInput.toLowerCase()}
+                  </Paragraph>
                 </Paragraph>
-              </EmailTextContainer>
-            </EmailContainer>
+              </View>
+            </View>
           </TouchableOpacity>
         ) : null}
 
-        {contacts.length > 0 && !searchIsEmailAddress ? (
-          <ContactContainer>
-            <ContactTitleContainer>
-              {ContactsSvg({})}
-              <ContactTitle>{t('Contacts')}</ContactTitle>
-            </ContactTitleContainer>
+        <PerformanceProfiler id="SendTo:contacts" onRender={logReactProfiler}>
+          {contacts.length > 0 && !searchIsEmailAddress ? (
+            <View style={styles.contactContainer}>
+              <ContactTitleContainer>
+                {ContactsSvg({})}
+                <ContactTitle>{t('Contacts')}</ContactTitle>
+              </ContactTitleContainer>
 
-            {contacts.map((item, index) => {
-              return (
-                <ContactRow
-                  key={index}
+              {contacts.map((item: ContactRowProps) => (
+                <SendToContactResult
+                  key={`${item.network}:${item.chain}:${item.address}:${
+                    item.destinationTag ?? item.tag ?? ''
+                  }:${item.name}:${item.email ?? ''}`}
                   contact={item}
-                  onPress={() => {
-                    try {
-                      if (item) {
-                        validateAndNavigateToConfirm(item.address, {
-                          context: 'contact',
-                          name: item.name,
-                          destinationTag: item.tag || item.destinationTag,
-                        });
-                      }
-                    } catch (err) {
-                      logger.error(
-                        `Send To [Contacts]: ${getErrorString(err)}`,
-                      );
-                    }
-                  }}
+                  onSelect={onContactSelect}
                 />
-              );
-            })}
-          </ContactContainer>
-        ) : null}
+              ))}
+            </View>
+          ) : null}
+        </PerformanceProfiler>
 
-        <OptionsSheet
+        <MemoizedOptionsSheet
           isVisible={showWalletOptions}
-          closeModal={() => setShowWalletOptions(false)}
+          closeModal={closeWalletOptions}
           options={assetOptions}
         />
 
-        <View style={{marginTop: 10}}>
-          <KeyWalletsRow
-            keyAccounts={keyAccounts}
-            hideBalance={hideAllBalances}
-            onPress={(selectedWallet: Wallet) => {
-              const selectedKey = keys[selectedWallet.keyId];
-              if (selectedKey.backupComplete) {
-                onSendToWallet(selectedWallet);
-              } else {
-                logger.debug('Key selected. Needs backup.');
-                dispatch(
-                  showBottomNotificationModal(
-                    keyBackupRequired(
-                      selectedKey,
-                      navigation,
-                      dispatch,
-                      'send',
-                    ),
-                  ),
-                );
-              }
-            }}
-          />
-        </View>
+        <PerformanceProfiler id="SendTo:wallets" onRender={logReactProfiler}>
+          <View style={{marginTop: 10}}>
+            <MemoizedKeyWalletsRow
+              keyAccounts={keyAccounts}
+              hideBalance={hideAllBalances}
+              onPress={onKeyWalletPress}
+            />
+          </View>
+        </PerformanceProfiler>
       </ScrollView>
     </SafeAreaView>
   );
+};
+
+const SendTo = () => {
+  const {
+    params: {keyId, walletId, copayerId},
+  } = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId]?.wallets || [], walletId, copayerId),
+  ) as Wallet | undefined;
+
+  useEffect(() => {
+    if (isFocused && !wallet) {
+      logManager.error(`[SendTo] Wallet ${walletId} is not available`);
+      navigation.goBack();
+    }
+  }, [isFocused, navigation, wallet, walletId]);
+
+  return wallet ? <SendToContent wallet={wallet} /> : null;
 };
 
 export default SendTo;

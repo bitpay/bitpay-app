@@ -1,7 +1,14 @@
 import React, {useState, useEffect, useLayoutEffect} from 'react';
-import {ScrollView, Modal, useWindowDimensions} from 'react-native';
+import {
+  ScrollView,
+  Modal,
+  useWindowDimensions,
+  StyleSheet,
+  View,
+  SafeAreaView,
+  TouchableOpacity as RNTouchableOpacity,
+} from 'react-native';
 import {shareNative} from '../../../utils/share';
-import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
@@ -70,232 +77,542 @@ import QrCodeSvgBlack from '../../../../assets/img/qr-code-black.svg';
 import QrCodeSvgGrey from '../../../../assets/img/qr-code-grey.svg';
 import ShareIcon from '../../../../assets/img/share-icon.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
-const Container = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: parseInt(ScreenGutter, 10),
+  },
+  headerContainer: {
+    marginBottom: 24,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  coSignerContainerTitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  coSignerContainer: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 17,
+  },
+  coSignerRow: {
+    borderRadius: 12,
+  },
+  coSignerInfo: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  coSignerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  coSignerStatus: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    padding: 8,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
+    width: 40,
+    height: 40,
+    padding: 12,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContainer: {
+    padding: parseInt(ScreenGutter, 10),
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerButton: {
+    padding: 8,
+    minWidth: 60,
+  },
+  placeholderView: {
+    minWidth: 60,
+    height: 40,
+  },
+  modalContent: {
+    flex: 1,
+  },
+  topSection: {
+    paddingVertical: 24,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  topSectionContainer: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    height: 390,
+    justifyContent: 'center',
+  },
+  inputContainer: {
+    padding: 16,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '400',
+    marginBottom: 12,
+  },
+  statusContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    flex: 1,
+    width: '100%',
+  },
+  qrCodeWrapper: {
+    backgroundColor: White,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  buttonWrapper: {
+    width: '100%',
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  sessionIdHelpBanner: {
+    marginTop: 8,
+    marginBottom: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  sessionIdHelpTitle: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+  },
+  helpStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  helpStepBubble: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    marginTop: 1,
+  },
+  helpStepBubbleText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: White,
+  },
+  helpStepText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+});
 
-const Content = styled(ScrollView)`
-  padding: ${ScreenGutter};
-`;
+const Container = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.container, style]} {...rest} />
+);
 
-const HeaderContainer = styled.View`
-  margin-bottom: 24px;
-`;
+const Content = ({style, ...rest}: React.ComponentProps<typeof ScrollView>) => (
+  <ScrollView style={[styles.content, style]} {...rest} />
+);
 
-const Subtitle = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  line-height: 24px;
-`;
+const HeaderContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.headerContainer, style]} {...rest} />
+);
 
-const CoSignerContainerTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-weight: 400;
-  line-height: 24px;
-`;
+const Subtitle = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.subtitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CoSignerContainer = styled.View`
-  padding: 16px;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  gap: 17px;
-`;
+const CoSignerContainerTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.coSignerContainerTitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CoSignerRow = styled.TouchableOpacity`
-  border-radius: 12px;
-`;
+const CoSignerContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.coSignerContainer,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CoSignerInfo = styled.View`
-  flex: 1;
-`;
+const CoSignerRow = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof RNTouchableOpacity>) => (
+  <RNTouchableOpacity style={[styles.coSignerRow, style]} {...rest} />
+);
 
-const NameRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const CoSignerInfo = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.coSignerInfo, style]} {...rest} />
+);
 
-const CoSignerName = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 16px;
-  font-weight: 500;
-  flex: 1;
-`;
+const NameRow = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.nameRow, style]} {...rest} />
+);
 
-const CoSignerStatus = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 14px;
-  margin-top: 4px;
-`;
+const CoSignerName = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.coSignerName,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AddButton = styled.View`
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-  border-radius: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F5F5')};
-  align-items: center;
-  justify-content: center;
-`;
+const CoSignerStatus = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.coSignerStatus,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CheckMark = styled.View`
-  width: 40px;
-  height: 40px;
-  padding: 12px;
-  border-radius: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? '#004D27' : Success25)};
-  align-items: center;
-  justify-content: center;
-`;
+const AddButton = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addButton,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F5F5'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ButtonContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const CheckMark = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.checkMark,
+        {backgroundColor: theme.dark ? '#004D27' : Success25},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ModalContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const ButtonContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.buttonContainer, style]} {...rest} />
+);
 
-const ModalHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px ${ScreenGutter};
-`;
+const ModalContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ModalTitle = styled(BaseText)`
-  font-size: 18px;
-  font-weight: 600;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  text-align: center;
-  flex: 1;
-`;
+const ModalHeader = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.modalHeader, style]} {...rest} />
+);
 
-const HeaderButton = styled.TouchableOpacity`
-  padding: 8px;
-  min-width: 60px;
-`;
+const ModalTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.modalTitle, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+};
 
-const PlaceholderView = styled.View`
-  min-width: 60px;
-  height: 40px;
-`;
+const HeaderButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof RNTouchableOpacity>) => (
+  <RNTouchableOpacity style={[styles.headerButton, style]} {...rest} />
+);
 
-const ModalContent = styled.ScrollView`
-  flex: 1;
-`;
+const PlaceholderView = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.placeholderView, style]} {...rest} />
+);
 
-const TopSection = styled.View`
-  padding: 24px ${ScreenGutter};
-`;
+const ModalContent = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof ScrollView>) => (
+  <ScrollView style={[styles.modalContent, style]} {...rest} />
+);
 
-const TopSectionInputContainer = styled.View``;
+const TopSection = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.topSection, style]} {...rest} />
+);
 
-const TopSectionContainer = styled.View`
-  align-items: center;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  height: 390px;
-  justify-content: center;
-`;
+const TopSectionInputContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => <View style={style} {...rest} />;
 
-const InputContainer = styled.View`
-  padding: 16px;
-  width: 100%;
-`;
+const TopSectionContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.topSectionContainer,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const InputLabel = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 12px;
-`;
+const InputContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.inputContainer, style]} {...rest} />
+);
 
-const ScanButton = styled.TouchableOpacity``;
+const InputLabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.inputLabel, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+};
 
-const StatusContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  flex: 1;
-  width: 100%;
-`;
+const ScanButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof RNTouchableOpacity>) => (
+  <RNTouchableOpacity style={style} {...rest} />
+);
 
-const QRCodeWrapper = styled.View`
-  background-color: ${White};
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-`;
+const StatusContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.statusContainer, style]} {...rest} />
+);
 
-const ShareButton = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
-`;
+const QRCodeWrapper = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.qrCodeWrapper, style]} {...rest} />
+);
 
-const ButtonWrapper = styled.View`
-  width: 100%;
-  padding: 0 16px;
-  margin-top: 20px;
-`;
+const ShareButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof RNTouchableOpacity>) => (
+  <RNTouchableOpacity style={[styles.shareButton, style]} {...rest} />
+);
 
-const SessionIdHelpBanner = styled.View`
-  margin-top: 8px;
-  margin-bottom: 16px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
-`;
+const ButtonWrapper = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.buttonWrapper, style]} {...rest} />
+);
 
-const SessionIdHelpTitle = styled(BaseText)`
-  font-size: 13px;
-  line-height: 19px;
-  font-weight: 600;
-  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
-`;
+const SessionIdHelpBanner = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.sessionIdHelpBanner,
+        {backgroundColor: theme.dark ? Midnight : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HelpStepRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-  margin-bottom: 10px;
-`;
+const SessionIdHelpTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.sessionIdHelpTitle,
+        {color: theme.dark ? White : BitPay},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HelpStepBubble = styled.View`
-  width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-  margin-top: 1px;
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : BitPay)};
-`;
+const HelpStepRow = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.helpStepRow, style]} {...rest} />
+);
 
-const HelpStepBubbleText = styled(BaseText)`
-  font-size: 11px;
-  font-weight: 700;
-  color: ${White};
-`;
+const HelpStepBubble = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.helpStepBubble,
+        {backgroundColor: theme.dark ? SlateDark : BitPay},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HelpStepText = styled(BaseText)`
-  flex: 1;
-  font-size: 13px;
-  line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
-`;
+const HelpStepBubbleText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.helpStepBubbleText, style]} {...rest} />
+);
+
+const HelpStepText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.helpStepText, {color: theme.dark ? White : BitPay}, style]}
+      {...rest}
+    />
+  );
+};
+
 export interface InviteCoSignersParamsList {
   keyId: string;
 }

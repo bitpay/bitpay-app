@@ -1,6 +1,5 @@
 import React from 'react';
-import {StyleProp, ViewStyle} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {Warning, Warning25} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
@@ -15,17 +14,19 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-const BetaBadge = styled.View`
-  background-color: ${Warning25};
-  border-radius: 100px;
-  padding: 2px 4px;
-`;
-
-const BetaBadgeText = styled(BaseText)`
-  color: ${Warning};
-  font-size: 10px;
-  line-height: 13px;
-`;
+const styles = StyleSheet.create({
+  betaBadge: {
+    backgroundColor: Warning25,
+    borderRadius: 100,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  betaBadgeText: {
+    color: Warning,
+    fontSize: 10,
+    lineHeight: 13,
+  },
+});
 
 const ThresholdBadge: React.FC<Props> = ({m, n, size = 'list', style}) => {
   const {t} = useTranslation();
@@ -35,9 +36,9 @@ const ThresholdBadge: React.FC<Props> = ({m, n, size = 'list', style}) => {
       size={size}
       style={style}
       icon={
-        <BetaBadge>
-          <BetaBadgeText>{t('Beta')}</BetaBadgeText>
-        </BetaBadge>
+        <View style={styles.betaBadge}>
+          <BaseText style={styles.betaBadgeText}>{t('Beta')}</BaseText>
+        </View>
       }
       label={`${t('Threshold')} ${m}/${n}`}
     />

@@ -5,7 +5,7 @@ import {AppActions} from '../../../store/app';
 import {ModalId} from '../../../store/app/app.reducer';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
-import {useTheme as useStyledTheme} from 'styled-components/native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 
 type ModalPropsEx = {
   id: ModalId;

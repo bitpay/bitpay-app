@@ -34,13 +34,12 @@ import {
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {ThemeProvider} from 'styled-components/native';
 import {
   PaymentSentProvider,
   OngoingProcessProvider,
   BottomSheetProvider,
   TokenProvider,
-  LogProvider,
+  ThemeProvider,
 } from './src/contexts';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';
@@ -229,20 +228,18 @@ const AppWrapper = () => {
         />
         <GestureHandlerRootView style={{flex: 1}}>
           <TokenProvider>
-            <LogProvider>
-              <OngoingProcessProvider>
-                <BottomSheetModalProvider>
-                  <BottomSheetProvider>
-                    <PaymentSentProvider>
-                      <DklsWorkerHost />
-                      <AppInitialization>
-                        <Root />
-                      </AppInitialization>
-                    </PaymentSentProvider>
-                  </BottomSheetProvider>
-                </BottomSheetModalProvider>
-              </OngoingProcessProvider>
-            </LogProvider>
+            <OngoingProcessProvider>
+              <BottomSheetModalProvider>
+                <BottomSheetProvider>
+                  <PaymentSentProvider>
+                    <DklsWorkerHost />
+                    <AppInitialization>
+                      <Root />
+                    </AppInitialization>
+                  </PaymentSentProvider>
+                </BottomSheetProvider>
+              </BottomSheetModalProvider>
+            </OngoingProcessProvider>
           </TokenProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>

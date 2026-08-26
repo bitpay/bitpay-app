@@ -1,5 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, ScrollView, View, StyleSheet} from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  View,
+  StyleSheet,
+  Text,
+  SafeAreaView,
+  ViewProps,
+  TextProps,
+} from 'react-native';
 import Modal from 'react-native-modal';
 import {
   useTheme,
@@ -8,7 +17,7 @@ import {
   useNavigation,
   CommonActions,
 } from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   Black,
@@ -90,144 +99,365 @@ import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 // Styled
-export const MoonpayEmbeddedCheckoutContainer = styled.SafeAreaView`
-  flex: 1;
-  margin: 14px;
-`;
+const styles = StyleSheet.create({
+  root: {flex: 1},
+  moonpayEmbeddedCheckoutContainer: {
+    flex: 1,
+    margin: 14,
+  },
+  rowText: {
+    fontSize: 13,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 39,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 22,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
+  totalContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  cryptoTotalText: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  fiatTotalText: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  rowDataContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 0,
+  },
+  bottomSection: {
+    paddingTop: 16,
+  },
+  legalText: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  disclosureText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  poweredByContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  poweredByText: {
+    fontSize: 11,
+    marginRight: 4,
+  },
+  poweredByPartner: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  webViewModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    overflow: 'scroll',
+  },
+  webViewModalHeader: {
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+  },
+  webViewCloseButton: {
+    padding: 10,
+  },
+  webViewCloseText: {
+    fontSize: 24,
+  },
+});
 
-const RowLabel = styled(BaseText)`
-  font-size: 13px;
-`;
+export const MoonpayEmbeddedCheckoutContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => (
+  <SafeAreaView
+    style={[styles.moonpayEmbeddedCheckoutContainer, style]}
+    {...rest}
+  />
+);
 
-const RowData = styled(BaseText)`
-  font-size: 13px;
-`;
+const RowLabel = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.rowText, style]} {...rest} />
+  ),
+);
+RowLabel.displayName = 'RowLabel';
 
-const HeaderContainer = styled.View`
-  align-items: center;
-  margin-bottom: 24px;
-`;
+const RowData = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.rowText, style]} {...rest} />
+  ),
+);
+RowData.displayName = 'RowData';
 
-const IconRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 20px;
-`;
+const HeaderContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.headerContainer, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  font-size: 39px;
-  font-weight: 700;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 10px;
-`;
+const IconRow: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.iconRow, style]} {...rest} />
+);
 
-const Subtitle = styled(BaseText)`
-  font-size: 13px;
-  line-height: 22px;
-  font-weight: 400;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const Title = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useStyledTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[styles.title, {color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+Title.displayName = 'Title';
 
-const TotalContainer = styled.View`
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-`;
+const Subtitle = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useStyledTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.subtitle,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Subtitle.displayName = 'Subtitle';
 
-const CryptoTotalText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 700;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 12px;
-`;
+const TotalContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.totalContainer, style]} {...rest} />
+);
 
-const FiatTotalText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const CryptoTotalText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.cryptoTotalText,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+CryptoTotalText.displayName = 'CryptoTotalText';
 
-export const RowDataContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 0;
-`;
+const FiatTotalText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.fiatTotalText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+FiatTotalText.displayName = 'FiatTotalText';
 
-const BottomSection = styled.View`
-  padding-top: 16px;
-`;
+export const RowDataContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.rowDataContainer, style]} {...rest} />
+);
 
-const LegalText = styled(BaseText)`
-  font-size: 13px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-bottom: 16px;
-  line-height: 20px;
-`;
+const BottomSection: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.bottomSection, style]} {...rest} />
+);
 
-const LegalLink = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-`;
+const LegalText = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useStyledTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.legalText,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+LegalText.displayName = 'LegalText';
 
-const DisclosureText = styled(BaseText)`
-  font-size: 12px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-bottom: 12px;
-  line-height: 18px;
-`;
+const LegalLink = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[{color: theme.dark ? LinkBlue : Action}, style]}
+      {...rest}
+    />
+  );
+});
+LegalLink.displayName = 'LegalLink';
 
-const PoweredByContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-top: 12px;
-`;
+const DisclosureText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.disclosureText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+DisclosureText.displayName = 'DisclosureText';
 
-const PoweredByText = styled(BaseText)`
-  font-size: 11px;
-  margin-right: 4px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const PoweredByContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.poweredByContainer, style]} {...rest} />
+);
 
-const PoweredByPartner = styled(BaseText)`
-  font-size: 11px;
-  font-weight: 700;
-  color: ${({theme: {dark}}) => (dark ? White : '#565656')};
-`;
+const PoweredByText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.poweredByText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PoweredByText.displayName = 'PoweredByText';
 
-const WebViewModalContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  overflow: scroll;
-`;
+const PoweredByPartner = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.poweredByPartner,
+        {color: theme.dark ? White : '#565656'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PoweredByPartner.displayName = 'PoweredByPartner';
 
-const WebViewModalHeader = styled.View<{topInset: number}>`
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
-  justify-content: center;
-  align-items: flex-start;
-  padding-horizontal: 15px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
-`;
+const WebViewModalContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.webViewModalContainer, style]} {...rest} />
+);
 
-const WebViewCloseButton = styled(TouchableOpacity)`
-  padding: 10px;
-`;
+const WebViewModalHeader: React.FC<ViewProps & {topInset: number}> = ({
+  style,
+  topInset,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.webViewModalHeader,
+        {
+          marginTop: topInset,
+          backgroundColor: theme.dark ? '#1a1a1a' : '#f8f8f8',
+          borderBottomColor: theme.dark ? '#333' : '#ddd',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WebViewCloseText = styled(BaseText)`
-  font-size: 24px;
-  color: ${({theme: {dark}}) => (dark ? '#ccc' : '#333')};
-`;
+const WebViewCloseButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.webViewCloseButton, style]} {...rest} />
+);
+
+const WebViewCloseText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.webViewCloseText,
+        {color: theme.dark ? '#ccc' : '#333'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WebViewCloseText.displayName = 'WebViewCloseText';
 
 export interface MoonpayBuyEmbeddedCheckoutProps {
   wallet: Wallet;
@@ -1095,9 +1325,5 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {flex: 1},
-});
 
 export default MoonpayBuyEmbeddedCheckout;

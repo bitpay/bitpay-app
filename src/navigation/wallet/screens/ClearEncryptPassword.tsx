@@ -1,12 +1,12 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {Pressable, SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   ActionContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {Link, Paragraph} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
-import {Pressable} from 'react-native';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 
 import {URL} from '../../../constants';
@@ -21,27 +21,30 @@ export type ClearEncryptPasswordParamList = {
   keyId: string;
 };
 
-const ClearEncryptPasswordContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
-const ClearEncryptPasswordParagraph = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const ClearEncryptPasswordParagraphLink = styled(Link)`
-  font-size: 16px;
-  font-style: normal;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  paragraph: {
+    marginBottom: 15,
+  },
+  link: {
+    fontSize: 16,
+    fontStyle: 'normal',
+  },
+  linkPressable: {
+    maxHeight: 22,
+    alignSelf: 'flex-start',
+  },
+});
 
 const ClearEncryptPassword = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {
@@ -49,24 +52,27 @@ const ClearEncryptPassword = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'ClearEncryptPassword'>>();
 
   return (
-    <ClearEncryptPasswordContainer>
-      <ScrollView>
-        <ClearEncryptPasswordParagraph>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <Paragraph
+          style={[styles.paragraph, {color: theme.dark ? White : SlateDark}]}>
           {t(
             'Because your encrypted password is not stored by BitPay, there is no way to reset it.',
           )}
-        </ClearEncryptPasswordParagraph>
-        <ClearEncryptPasswordParagraph>
+        </Paragraph>
+        <Paragraph
+          style={[styles.paragraph, {color: theme.dark ? White : SlateDark}]}>
           {t(
             'If you need to regain access to your wallet because you have forgotten or lost the encrypt password, you must restore the wallet using the 12 word recovery phrase.',
           )}
-        </ClearEncryptPasswordParagraph>
-        <ClearEncryptPasswordParagraph>
+        </Paragraph>
+        <Paragraph
+          style={[styles.paragraph, {color: theme.dark ? White : SlateDark}]}>
           {t(
             'If you do not have the recovery phrase, you will not be able to regain access to your wallet',
           )}{' '}
           <Pressable
-            style={{maxHeight: 22, alignSelf: 'flex-start'}}
+            style={styles.linkPressable}
             onPress={() =>
               dispatch(
                 openUrlWithInAppBrowser(
@@ -74,11 +80,9 @@ const ClearEncryptPassword = () => {
                 ),
               )
             }>
-            <ClearEncryptPasswordParagraphLink>
-              {t('Read more.')}
-            </ClearEncryptPasswordParagraphLink>
+            <Link style={styles.link}>{t('Read more.')}</Link>
           </Pressable>
-        </ClearEncryptPasswordParagraph>
+        </Paragraph>
 
         <ActionContainer>
           <Button
@@ -89,7 +93,7 @@ const ClearEncryptPassword = () => {
           </Button>
         </ActionContainer>
       </ScrollView>
-    </ClearEncryptPasswordContainer>
+    </SafeAreaView>
   );
 };
 

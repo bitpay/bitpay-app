@@ -1,14 +1,14 @@
 import {H4, Paragraph} from '../../../../../components/styled/Text';
 import React, {useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import {SlateDark, White} from '../../../../../styles/colors';
 import {
   Fee,
+  FeeLevels,
   getFeeLevelsUsingBwcClient,
   GetFeeOptions,
 } from '../../../../../store/wallet/effects/fee/fee';
-import * as _ from 'lodash';
 import {
   GetFeeUnits,
   GetTheme,
@@ -24,69 +24,149 @@ import {
   FeeLevelStepsHeader,
   FeeLevelStepsHeaderSubTitle,
 } from '../../../../wallet/screens/send/TransactionLevel';
-import {View} from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView as RNScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
-import {sleep} from '../../../../../utils/helper-methods';
 import NetworkPolicyPlaceholder from '../../components/NetworkPolicyPlaceholder';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {SUPPORTED_VM_TOKENS} from '../../../../../constants/currencies';
+import {useNavigation} from '@react-navigation/native';
 
-const NetworkFeePolicyContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+type SupportedFeeChain = 'btc' | 'eth' | 'matic' | 'arb' | 'base' | 'op';
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+type FeeOption = Omit<Fee, 'level'> & {
+  level: FeeLevels;
+  feeUnit: string;
+  uiLevel: string;
+  feePerSatByte: number;
+  uiFeePerSatByte: string;
+  avgConfirmationTime?: string;
+};
 
-const NetworkFeePolicyParagraph = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 15px;
-`;
+type FeeOptionsByChain = Record<SupportedFeeChain, FeeOption[]>;
 
-const StepsHeaderContainer = styled.View`
-  margin: ${ScreenGutter} 0;
-`;
+const SUPPORTED_FEE_CHAINS: SupportedFeeChain[] = [
+  'btc',
+  'eth',
+  'matic',
+  'arb',
+  'base',
+  'op',
+];
+const EMPTY_FEE_OPTIONS_BY_CHAIN: FeeOptionsByChain = {
+  btc: [],
+  eth: [],
+  matic: [],
+  arb: [],
+  base: [],
+  op: [],
+};
+const DEFERRED_LOAD_FALLBACK_MS = 2000;
 
-const CurrencyImageContainer = styled.View`
-  margin-right: 10px;
-`;
+const styles = StyleSheet.create({
+  networkFeePolicyContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  networkFeePolicyParagraph: {
+    marginBottom: 15,
+  },
+  stepsHeaderContainer: {
+    marginVertical: parseInt(ScreenGutter, 10),
+  },
+  currencyImageContainer: {
+    marginRight: 10,
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    marginBottom: parseInt(ScreenGutter, 10),
+    paddingHorizontal: 3,
+  },
+  bottomLabelContainer: {
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+  },
+  feeOptionsContainer: {
+    marginBottom: 35,
+  },
+  topLabelContainer: {
+    minHeight: 30,
+  },
+});
 
-const StepsContainer = styled.View`
-  flex-direction: row;
-  margin: 0 0 ${ScreenGutter} 0;
-  padding: 0 3px;
-`;
+const NetworkFeePolicyContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => (
+  <SafeAreaView style={styles.networkFeePolicyContainer}>
+    {children}
+  </SafeAreaView>
+);
 
-const BottomLabelContainer = styled.View`
-  justify-content: space-between;
-  flex-direction: row;
-`;
+const ScrollView: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <RNScrollView style={styles.scrollView}>{children}</RNScrollView>
+);
 
-const FeeOptionsContainer = styled.View`
-  margin-bottom: 35px;
-`;
+const NetworkFeePolicyParagraph: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.networkFeePolicyParagraph,
+        {color: theme.dark ? White : SlateDark},
+      ]}>
+      {children}
+    </Paragraph>
+  );
+};
 
-const TopLabelContainer = styled.View`
-  min-height: 30px;
-`;
+const StepsHeaderContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.stepsHeaderContainer}>{children}</View>;
+
+const CurrencyImageContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.currencyImageContainer}>{children}</View>;
+
+const StepsContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.stepsContainer}>{children}</View>
+);
+
+const BottomLabelContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.bottomLabelContainer}>{children}</View>;
+
+const FeeOptionsContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.feeOptionsContainer}>{children}</View>;
+
+const TopLabelContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.topLabelContainer}>{children}</View>;
 
 const FeeOptions = ({
   feeOptions,
   chain,
   chainName,
 }: {
-  feeOptions: any[];
-  chain: 'btc' | 'eth' | 'matic' | 'arb' | 'base' | 'op';
+  feeOptions: FeeOption[];
+  chain: SupportedFeeChain;
   chainName: string;
 }) => {
   const dispatch = useAppDispatch();
-  const cachedFeeLevels = useAppSelector(({WALLET}) => WALLET.feeLevel);
-  const [selectedLevel, setSelectedLevel] = useState(cachedFeeLevels[chain]);
+  const cachedFeeLevel = useAppSelector(({WALLET}) => WALLET.feeLevel[chain]);
+  const [selectedLevel, setSelectedLevel] = useState(cachedFeeLevel);
 
   const getSelectedFeeOption = () => {
     return feeOptions?.find(({level}) => level === selectedLevel);
@@ -196,88 +276,105 @@ const FeeOptions = ({
 
 const NetworkFeePolicy = () => {
   const {t} = useTranslation();
-  const network = 'livenet';
-  const [ethFeeOptions, setEthFeeOptions] = useState<any[]>();
-  const [maticFeeOptions, setMaticFeeOptions] = useState<any[]>();
-  const [arbFeeOptions, setArbFeeOptions] = useState<any[]>();
-  const [baseFeeOptions, setBaseFeeOptions] = useState<any[]>();
-  const [opFeeOptions, setOpFeeOptions] = useState<any[]>();
-  const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
-  const [isLoading, setIsLoading] = useState(true);
-
-  const initFeeLevel = async (currencyAbbreviation: string, chain: string) => {
-    let feeOptions: any[] = [];
-    const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(chain);
-    try {
-      const _feeLevels = await getFeeLevelsUsingBwcClient(chain, network);
-      if (_.isEmpty(_feeLevels)) {
-        return;
-      }
-
-      _feeLevels.forEach((fee: Fee) => {
-        const {feePerKb, level, nbBlocks} = fee;
-        const feeOption: any = {
-          ...fee,
-          feeUnit,
-          // @ts-ignore
-          uiLevel: GetFeeOptions(chain)[level],
-        };
-        const _feePerSatByte = feePerKb / feeUnitAmount;
-        feeOption.feePerSatByte = parseFloat(_feePerSatByte.toFixed(2));
-        feeOption.uiFeePerSatByte = !isNaN(feeOption.feePerSatByte)
-          ? `${feeOption.feePerSatByte} ${
-              currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
-            }`
-          : t('Confirmation');
-
-        if (SUPPORTED_VM_TOKENS.includes(chain)) {
-          // @ts-ignore
-          feeOption.avgConfirmationTime = evmAvgTime[level];
-        }
-
-        if (currencyAbbreviation === 'btc') {
-          const min = nbBlocks * blockTime;
-          const hours = Math.floor(min / 60);
-          feeOption.avgConfirmationTime =
-            hours > 0
-              ? hours === 1
-                ? t('within an hour')
-                : t('within hours', {hours})
-              : t('within minutes', {min});
-        }
-        feeOptions.push(feeOption);
-      });
-
-      feeOptions = feeOptions.reverse();
-
-      if (currencyAbbreviation === 'btc') {
-        setBtcFeeOptions(feeOptions);
-      } else if (currencyAbbreviation === 'eth') {
-        setEthFeeOptions(feeOptions);
-      } else if (currencyAbbreviation === 'matic') {
-        setMaticFeeOptions(feeOptions);
-      } else if (currencyAbbreviation === 'arb') {
-        setArbFeeOptions(feeOptions);
-      } else if (currencyAbbreviation === 'base') {
-        setBaseFeeOptions(feeOptions);
-      } else if (currencyAbbreviation === 'op') {
-        setOpFeeOptions(feeOptions);
-      }
-    } catch (e) {
-      return;
-    }
-  };
-  const init = async () => {
-    ['btc', 'eth', 'matic', 'arb', 'base', 'op'].forEach((ca: string) =>
-      initFeeLevel(ca, ca),
-    );
-    await sleep(500);
-    setIsLoading(false);
-  };
+  const navigation = useNavigation();
+  const [feeOptionsByChain, setFeeOptionsByChain] =
+    useState<FeeOptionsByChain>();
 
   useEffect(() => {
-    init();
-  }, []);
+    let isActive = true;
+
+    const initFeeLevel = async (
+      chain: SupportedFeeChain,
+    ): Promise<FeeOption[]> => {
+      const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(chain);
+
+      try {
+        const feeLevels = await getFeeLevelsUsingBwcClient(chain, 'livenet');
+        if (!feeLevels.length) {
+          return [];
+        }
+
+        return feeLevels
+          .map((fee: Fee) => {
+            const {feePerKb, nbBlocks} = fee;
+            const level = fee.level as FeeLevels;
+            const feePerSatByte = parseFloat(
+              (feePerKb / feeUnitAmount).toFixed(2),
+            );
+            const feeOption: FeeOption = {
+              ...fee,
+              level,
+              feeUnit,
+              uiLevel: GetFeeOptions(chain)[level],
+              feePerSatByte,
+              uiFeePerSatByte: !isNaN(feePerSatByte)
+                ? `${feePerSatByte} ${
+                    chain === 'btc' ? t('Satoshis per byte') : feeUnit
+                  }`
+                : t('Confirmation'),
+            };
+
+            if (SUPPORTED_VM_TOKENS.includes(chain)) {
+              feeOption.avgConfirmationTime =
+                evmAvgTime[level as keyof typeof evmAvgTime];
+            }
+
+            if (chain === 'btc') {
+              const min = nbBlocks * blockTime;
+              const hours = Math.floor(min / 60);
+              feeOption.avgConfirmationTime =
+                hours > 0
+                  ? hours === 1
+                    ? t('within an hour')
+                    : t('within hours', {hours})
+                  : t('within minutes', {min});
+            }
+
+            return feeOption;
+          })
+          .reverse();
+      } catch {
+        return [];
+      }
+    };
+
+    let started = false;
+    const init = () => {
+      if (started || !isActive) {
+        return;
+      }
+      started = true;
+
+      SUPPORTED_FEE_CHAINS.forEach(chain => {
+        void initFeeLevel(chain).then(feeOptions => {
+          if (!isActive) {
+            return;
+          }
+
+          setFeeOptionsByChain(current => ({
+            ...(current ?? EMPTY_FEE_OPTIONS_BY_CHAIN),
+            [chain]: feeOptions,
+          }));
+        });
+      });
+    };
+
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          init();
+        }
+      },
+    );
+    const fallbackTimer = setTimeout(init, DEFERRED_LOAD_FALLBACK_MS);
+
+    return () => {
+      isActive = false;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
+  }, [navigation, t]);
 
   return (
     <NetworkFeePolicyContainer>
@@ -288,14 +385,14 @@ const NetworkFeePolicy = () => {
           )}
         </NetworkFeePolicyParagraph>
 
-        {isLoading ? (
+        {feeOptionsByChain === undefined ? (
           <NetworkPolicyPlaceholder />
         ) : (
           <>
             <View>
-              {btcFeeOptions && btcFeeOptions.length > 0 ? (
+              {feeOptionsByChain.btc.length > 0 ? (
                 <FeeOptions
-                  feeOptions={btcFeeOptions}
+                  feeOptions={feeOptionsByChain.btc}
                   chain={'btc'}
                   chainName={'Bitcoin'}
                 />
@@ -303,9 +400,9 @@ const NetworkFeePolicy = () => {
             </View>
 
             <View>
-              {ethFeeOptions && ethFeeOptions.length > 0 ? (
+              {feeOptionsByChain.eth.length > 0 ? (
                 <FeeOptions
-                  feeOptions={ethFeeOptions}
+                  feeOptions={feeOptionsByChain.eth}
                   chain={'eth'}
                   chainName={'Ethereum'}
                 />
@@ -313,9 +410,9 @@ const NetworkFeePolicy = () => {
             </View>
 
             <View>
-              {maticFeeOptions && maticFeeOptions.length > 0 ? (
+              {feeOptionsByChain.matic.length > 0 ? (
                 <FeeOptions
-                  feeOptions={maticFeeOptions}
+                  feeOptions={feeOptionsByChain.matic}
                   chain={'matic'}
                   chainName={'Polygon'}
                 />
@@ -323,9 +420,9 @@ const NetworkFeePolicy = () => {
             </View>
 
             <View>
-              {arbFeeOptions && arbFeeOptions.length > 0 ? (
+              {feeOptionsByChain.arb.length > 0 ? (
                 <FeeOptions
-                  feeOptions={arbFeeOptions}
+                  feeOptions={feeOptionsByChain.arb}
                   chain={'arb'}
                   chainName={'Arbitrum'}
                 />
@@ -333,9 +430,9 @@ const NetworkFeePolicy = () => {
             </View>
 
             <View>
-              {baseFeeOptions && baseFeeOptions.length > 0 ? (
+              {feeOptionsByChain.base.length > 0 ? (
                 <FeeOptions
-                  feeOptions={baseFeeOptions}
+                  feeOptions={feeOptionsByChain.base}
                   chain={'base'}
                   chainName={'Base'}
                 />
@@ -343,9 +440,9 @@ const NetworkFeePolicy = () => {
             </View>
 
             <View>
-              {opFeeOptions && opFeeOptions.length > 0 ? (
+              {feeOptionsByChain.op.length > 0 ? (
                 <FeeOptions
-                  feeOptions={opFeeOptions}
+                  feeOptions={feeOptionsByChain.op}
                   chain={'op'}
                   chainName={'Optimism'}
                 />

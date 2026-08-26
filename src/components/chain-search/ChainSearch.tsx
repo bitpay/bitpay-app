@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet} from 'react-native';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {
   SearchRoundContainer,
@@ -17,7 +17,7 @@ import {useTranslation} from 'react-i18next';
 import {WC_SUPPORTED_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {ignoreGlobalListContextList} from '../../components/modal/chain-selector/ChainSelector';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {View} from 'react-native';
@@ -33,54 +33,119 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 type SearchableWallet = Wallet | WalletRowProps;
 
-export const SearchIconContainer = styled.View`
-  margin: 14px;
-`;
+const styles = StyleSheet.create({
+  searchIconContainer: {
+    margin: 14,
+  },
+  searchFilterContainer: {
+    minWidth: 60,
+    maxWidth: 130,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    height: 32,
+    marginTop: 'auto' as any,
+    marginRight: 8,
+    marginBottom: 'auto' as any,
+    marginLeft: 15,
+    borderWidth: 1,
+  },
+  rowFilterContainer: {
+    flexDirection: 'row',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  leftSideContainer: {
+    flexDirection: 'row',
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    paddingRight: 35,
+  },
+  searchFilterLabelContainer: {
+    marginLeft: 15,
+    marginRight: 15,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+  },
+  searchFilterLabel: {
+    fontSize: 12,
+    fontWeight: '400',
+    minWidth: 70,
+  },
+  searchFilterIconContainer: {
+    marginRight: 12,
+  },
+});
 
-export const SearchFilterContainer = styled(TouchableOpacity)`
-  min-width: 60px;
-  max-width: 130px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 20px;
-  height: 32px;
-  margin: auto 8px auto 15px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? Action : 'transparent')};
-  background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
-`;
+export const SearchIconContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.searchIconContainer, style]} {...rest} />
+);
 
-export const RowFilterContainer = styled.View`
-  flex-direction: row;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
+export const SearchFilterContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.searchFilterContainer,
+        {
+          borderColor: theme.dark ? Action : 'transparent',
+          backgroundColor: theme.dark ? '#2240C440' : LightBlue,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const LeftSideContainer = styled.View`
-  flex-direction: row;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  flex: 1 1 auto;
-  padding-right: 35px;
-`;
+export const RowFilterContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.rowFilterContainer, style]} {...rest} />
+);
 
-export const SearchFilterLabelContainer = styled.View`
-  margin-left: 15px;
-  margin-right: 15px;
-  flex: 1 1 auto;
-`;
+const LeftSideContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.leftSideContainer, style]} {...rest} />;
 
-export const SearchFilterLabel = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  font-size: 12px;
-  font-weight: 400;
-  min-width: 70px;
-`;
+export const SearchFilterLabelContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.searchFilterLabelContainer, style]} {...rest} />
+);
 
-export const SearchFilterIconContainer = styled.View`
-  margin-right: 12px;
-`;
+export const SearchFilterLabel: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.searchFilterLabel,
+        {color: theme.dark ? White : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+export const SearchFilterIconContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.searchFilterIconContainer, style]} {...rest} />
+);
 
 export interface SearchableItem {
   currencyName?: string;
@@ -166,7 +231,12 @@ const SearchComponent = <T extends SearchableItem>({
     debounce((text: string) => {
       setSearchVal(text?.toLowerCase());
       const normalizedText = normalizeText(text);
-      let results = cloneDeep(searchFullList);
+      const hasActiveSearch = Boolean(
+        normalizedText || selectedChainFilterOption,
+      );
+      let results = hasActiveSearch
+        ? cloneDeep(searchFullList)
+        : searchFullList;
       // Ignore error when there is no results
       if (['addUtxoWallet', 'addEVMWallet'].includes(context)) {
         const chains = searchFullList.flatMap(
@@ -426,9 +496,11 @@ const SearchComponent = <T extends SearchableItem>({
 
         setChainsOptions(chains);
       }
-      setSearchResults(results);
+      if (hasActiveSearch) {
+        setSearchResults(results);
+      }
     }, 300),
-    [selectedChainFilterOption, searchFullList],
+    [context, selectedChainFilterOption, searchFullList],
   );
 
   const updateSelectedChainInfo = () => {
@@ -443,7 +515,12 @@ const SearchComponent = <T extends SearchableItem>({
 
   useEffect(() => {
     updateSearchResults(searchVal);
+    updateSearchResults.flush();
     updateSelectedChainInfo();
+
+    return () => {
+      updateSearchResults.cancel();
+    };
   }, [selectedChainFilterOption, searchFullList]);
 
   const _SearchFilterContainer = () => {

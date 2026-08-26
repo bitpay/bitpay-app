@@ -1,49 +1,47 @@
 import React from 'react';
-import {Image, ImageSourcePropType} from 'react-native';
+import {Image, ImageSourcePropType, StyleSheet, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import Button from '../button/Button';
 import {BaseText, H5, Link} from '../styled/Text';
 
-const FeatureImage = styled(Image)`
-  height: 100%;
-  width: 100%;
-  transform: scale(0.8);
-`;
-
-const BottomDescriptionContainer = styled.View`
-  background: ${({theme}) => theme.colors.background};
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10%;
-`;
-
-const DescriptionTitle = styled(H5)`
-  text-align: center;
-`;
-
-const DescriptionText = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 25px;
-  letter-spacing: 0;
-  text-align: center;
-  margin-top: 20px;
-`;
-
-const LinkText = styled(Link)`
-  font-weight: 500;
-  font-size: 16px;
-`;
-
-const CtaContainer = styled.View`
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  featureImage: {
+    height: '100%',
+    width: '100%',
+    transform: [{scale: 0.8}],
+  },
+  bottomDescriptionContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: '10%',
+  },
+  descriptionTitle: {
+    textAlign: 'center',
+  },
+  descriptionText: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 25,
+    letterSpacing: 0,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  linkText: {
+    fontWeight: '500',
+    fontSize: 16,
+  },
+  ctaContainer: {
+    marginTop: 20,
+  },
+  featureCardContainer: {
+    flex: 1,
+  },
+});
 
 interface Props {
   image: ImageSourcePropType;
@@ -53,16 +51,6 @@ interface Props {
   cta: () => void;
 }
 
-const FeatureCardContainer = styled(LinearGradient).attrs(({theme}) => ({
-  colors: theme.dark ? ['#606060', '#26272A'] : ['#FFFFFF', '#EBEDF8'],
-  start: {x: 0, y: 0},
-  end: {x: 0, y: 0},
-  useAngle: true,
-  angle: 225,
-}))`
-  flex: 1;
-`;
-
 const FeatureCard = ({
   image,
   descriptionTitle,
@@ -71,24 +59,39 @@ const FeatureCard = ({
   cta,
 }: Props) => {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   return (
-    <FeatureCardContainer>
-      <FeatureImage
+    <LinearGradient
+      style={styles.featureCardContainer}
+      colors={theme.dark ? ['#606060', '#26272A'] : ['#FFFFFF', '#EBEDF8']}
+      start={{x: 0, y: 0}}
+      end={{x: 0, y: 0}}
+      useAngle
+      angle={225}>
+      <Image
         resizeMode={'contain'}
-        style={{marginTop: insets.top}}
+        style={[styles.featureImage, {marginTop: insets.top}]}
         source={image}
       />
-      <BottomDescriptionContainer>
-        <DescriptionTitle bold>{descriptionTitle}</DescriptionTitle>
-        <DescriptionText>{descriptionText}</DescriptionText>
-        <CtaContainer>
+      <View
+        style={[
+          styles.bottomDescriptionContainer,
+          {backgroundColor: theme.colors.background},
+        ]}>
+        <H5 bold style={styles.descriptionTitle}>
+          {descriptionTitle}
+        </H5>
+        <BaseText style={[styles.descriptionText, {color: theme.colors.text}]}>
+          {descriptionText}
+        </BaseText>
+        <View style={styles.ctaContainer}>
           <Button buttonType={'link'} onPress={cta}>
-            <LinkText>{ctaText}</LinkText>
+            <Link style={styles.linkText}>{ctaText}</Link>
           </Button>
-        </CtaContainer>
-      </BottomDescriptionContainer>
-    </FeatureCardContainer>
+        </View>
+      </View>
+    </LinearGradient>
   );
 };
 

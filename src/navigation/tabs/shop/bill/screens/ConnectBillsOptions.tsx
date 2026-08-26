@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
-import {Linking, ScrollView} from 'react-native';
+import {Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ScreenContainer,
@@ -19,7 +19,7 @@ import {
   TextAlign,
 } from '../../../../../components/styled/Text';
 import {AddSvg, SearchSvg, SyncSvg} from '../../components/svg/ShopTabSvgs';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {
   Action,
   LightBlue,
@@ -33,83 +33,188 @@ import UserInfo from '../../components/UserInfo';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {AppActions} from '../../../../../store/app';
 
-const TitleText = styled(H5)`
-  margin-bottom: 14px;
-  margin-top: 16px;
-`;
+const styles = StyleSheet.create({
+  titleText: {
+    marginBottom: 14,
+    marginTop: 16,
+  },
+  connectOptions: {
+    marginTop: 20,
+    width: '100%',
+  },
+  connectOption: {
+    borderRadius: 12,
+    flexDirection: 'row',
+    marginTop: 15,
+    width: '100%',
+  },
+  connectOptionIcon: {
+    marginRight: 15,
+    borderRadius: 11,
+    height: 44,
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  connectOptionTextContainer: {
+    flexShrink: 1,
+    marginTop: -2,
+  },
+  connectOptionHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  connectOptionHeader: {
+    marginBottom: 5,
+  },
+  connectOptionLabelContainer: {
+    borderRadius: 6,
+    paddingTop: 4,
+    paddingHorizontal: 9,
+    paddingBottom: 2,
+    marginTop: -8,
+    justifyContent: 'center',
+  },
+  connectOptionLabelText: {
+    fontWeight: '400',
+  },
+});
 
-const ConnectOptions = styled.View`
-  margin-top: 20px;
-  width: 100%;
-`;
+const TitleText = ({style, ...rest}: React.ComponentProps<typeof H5>) => (
+  <H5 style={[styles.titleText, style]} {...rest} />
+);
+
+const ConnectOptions = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.connectOptions, style]} {...rest} />
+);
 
 interface OptionProps {
   selected: boolean;
 }
 
-const ConnectOption = styled.View<OptionProps>`
-  ${({selected, theme}) =>
-    selected && theme.dark ? 'background-color: #081125;' : ''};
-  border: ${({selected}) => (selected ? 1.5 : 1)}px solid;
-  border-radius: 12px;
-  border-color: ${({selected, theme}) =>
-    selected ? Action : theme.dark ? SlateDark : Slate30};
-  flex-direction: row;
-  margin-top: 15px;
-  padding: 21px;
-  padding-left: 17px;
-  ${({selected}) =>
-    selected
-      ? `
-      padding: 20.5px;
-      padding-left: 16.5px;
-  `
-      : ''}
-  width: 100%;
-`;
+const ConnectOption = ({
+  selected,
+  style,
+  ...rest
+}: OptionProps & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  const padding = selected ? 20.5 : 21;
+  const paddingLeft = selected ? 16.5 : 17;
+  return (
+    <View
+      style={[
+        styles.connectOption,
+        selected && theme.dark ? {backgroundColor: '#081125'} : null,
+        {
+          borderWidth: selected ? 1.5 : 1,
+          borderColor: selected ? Action : theme.dark ? SlateDark : Slate30,
+        },
+        {
+          padding,
+          paddingLeft,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const DescriptionText = styled(OptionDescription)`
-  ${({theme}) => (theme.dark ? `color: ${Slate};` : '')};
-`;
+const DescriptionText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof OptionDescription>) => {
+  const theme = useTheme();
+  return (
+    <OptionDescription
+      style={[theme.dark ? {color: Slate} : null, style]}
+      {...rest}
+    />
+  );
+};
 
-const ConnectOptionIcon = styled.View<OptionProps>`
-  margin-right: 15px;
-  background-color: ${({selected, theme}) =>
-    selected ? Action : theme.dark ? Midnight : LightBlue};
-  border-radius: 11px;
-  height: 44px;
-  width: 44px;
-  align-items: center;
-  justify-content: center;
-`;
+const ConnectOptionIcon = ({
+  selected,
+  style,
+  ...rest
+}: OptionProps & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.connectOptionIcon,
+        {
+          backgroundColor: selected
+            ? Action
+            : theme.dark
+            ? Midnight
+            : LightBlue,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ConnectOptionTextContainer = styled.View`
-  flex-shrink: 1;
-  margin-top: -2px;
-`;
+const ConnectOptionTextContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.connectOptionTextContainer, style]} {...rest} />
+);
 
-const ConnectOptionHeaderContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
+const ConnectOptionHeaderContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.connectOptionHeaderContainer, style]} {...rest} />
+);
 
-const ConnectOptionHeader = styled(H5)`
-  margin-bottom: 5px;
-`;
+const ConnectOptionHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof H5>) => (
+  <H5 style={[styles.connectOptionHeader, style]} {...rest} />
+);
 
-const ConnectOptionLabelContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? '#0B754A' : Success25)};
-  border-radius: 6px;
-  padding: 4px 9px 2px;
-  margin-top: -8px;
-  justify-content: center;
-`;
+const ConnectOptionLabelContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.connectOptionLabelContainer,
+        {backgroundColor: theme.dark ? '#0B754A' : Success25},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ConnectOptionLabelText = styled(OptionDescription)`
-  color: ${({theme}) => (theme.dark ? Success25 : '#0b754a')};
-  font-weight: 400;
-`;
+const ConnectOptionLabelText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof OptionDescription>) => {
+  const theme = useTheme();
+  return (
+    <OptionDescription
+      style={[
+        styles.connectOptionLabelText,
+        {color: theme.dark ? Success25 : '#0b754a'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const ConnectBillsOptions = ({
   navigation,

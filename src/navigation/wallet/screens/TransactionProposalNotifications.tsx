@@ -4,7 +4,7 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 import {
   CurrencyColumn,
   CurrencyImageContainer,
@@ -18,7 +18,11 @@ import {
   HeaderTitle,
   ListItemSubText,
 } from '../../../components/styled/Text';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+} from '../../../utils/hooks';
 import {WalletGroupParamList} from '../WalletGroup';
 import React, {
   useCallback,
@@ -27,7 +31,6 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import _ from 'lodash';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {
   Key,
@@ -36,11 +39,16 @@ import {
   TSSSigningStatus,
   TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
-import {RefreshControl, SectionList, View} from 'react-native';
+import {
+  RefreshControl,
+  SafeAreaView,
+  SectionList,
+  StyleSheet,
+  View,
+} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
-import {TRANSACTION_ROW_HEIGHT} from '../../../components/list/TransactionRow';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -71,51 +79,125 @@ import {
 } from '../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
+import {
+  buildTransactionProposalNotificationSections,
+  GroupedTxpsByWallet,
+} from './transactionProposalNotificationsModel';
 
-const NotificationsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ListHeaderPadding = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-`;
+const styles = StyleSheet.create({
+  notificationsContainer: {
+    flex: 1,
+  },
+  listHeaderPadding: {
+    padding: 10,
+    marginTop: 10,
+  },
+  transactionSectionHeaderContainer: {
+    padding: gutter,
+    height: 55,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  proposalsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkBoxContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    paddingRight: 10,
+  },
+  enabledRow: {
+    opacity: 1,
+  },
+  listFooter: {
+    marginBottom: 20,
+  },
+});
 
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const NotificationsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.notificationsContainer, style]} {...rest} />
+);
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+const ListHeaderPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.listHeaderPadding, style]} {...rest} />;
 
-const ProposalsContainer = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const TransactionSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CheckBoxContainer = styled.View`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 80px;
-  padding-right: 10px;
-`;
+const BorderBottom: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-type GroupedTxpsByWallet = {
-  id: number;
-  walletId: string;
-  txps: TransactionProposal[];
-  needSign: boolean;
+const ListFooterBorder = () => (
+  <View style={styles.listFooter}>
+    <BorderBottom />
+  </View>
+);
+
+const ProposalsContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.proposalsContainer, style]} {...rest} />
+);
+
+const CheckBoxContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.checkBoxContainer, style]} {...rest} />;
+
+const NotificationsHeaderTitle = ({children}: {children: string}) => (
+  <HeaderTitle>{children}</HeaderTitle>
+);
+
+const countSuccessAndFailed = (arrayData: (TransactionProposal | Error)[]) => {
+  const count = {success: 0, failed: 0};
+  arrayData.forEach((data: TransactionProposal | Error) => {
+    if (data instanceof Error) {
+      count.failed += 1;
+    } else if (data?.id) {
+      count.success += 1;
+    }
+  });
+  return count;
 };
 
 const TransactionProposalNotifications = () => {
@@ -130,29 +212,20 @@ const TransactionProposalNotifications = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const wallets = keyId
-    ? keys[keyId].wallets
-    : Object.values(keys).flatMap(k => k.wallets);
+  const wallets = useMemo<Wallet[]>(
+    () =>
+      keyId
+        ? keys[keyId]?.wallets || []
+        : Object.values(keys).flatMap(key => key.wallets),
+    [keyId, keys],
+  );
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [allTxps, setAllTxps] = useState(
-    [] as {
-      title: string;
-      type: string;
-      data: GroupedTxpsByWallet[];
-    }[],
-  );
   const [selectingProposalsWalletId, setSelectingProposalsWalletId] =
     useState('');
   const [txpsToSign, setTxpsToSign] = useState([] as TransactionProposal[]);
-  const [txpChecked, setTxpChecked] = useState(
-    {} as {
-      [key in string]: boolean;
-    },
-  );
-  const [selectAll, setSelectAll] = useState(false);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
@@ -192,153 +265,52 @@ const TransactionProposalNotifications = () => {
     setResetSwipeButton,
   });
 
-  let pendingTxps: TransactionProposal[] = wallets.flatMap(w => w.pendingTxps);
-
-  if (walletId) {
-    pendingTxps = _.filter(pendingTxps, txp => {
-      return txp.walletId === walletId;
-    });
-  }
+  const pendingTxps = useMemo(
+    () =>
+      wallets
+        .filter(
+          wallet =>
+            !walletId ||
+            wallet.id === walletId ||
+            wallet.credentials?.walletId === walletId,
+        )
+        .flatMap(wallet => wallet.pendingTxps || []),
+    [walletId, wallets],
+  );
+  const allTxps = useMemo(
+    () =>
+      buildTransactionProposalNotificationSections({
+        keys,
+        wallets,
+        walletId,
+        translate: t,
+      }),
+    [keys, t, walletId, wallets],
+  );
+  const txpChecked = useMemo(
+    () =>
+      txpsToSign.reduce<Record<string, boolean>>((checkedById, proposal) => {
+        checkedById[proposal.id] = true;
+        return checkedById;
+      }, {}),
+    [txpsToSign],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Notifications')}</HeaderTitle>,
+      title: t('Notifications'),
+      headerTitle: NotificationsHeaderTitle,
     });
   }, [navigation, t]);
 
-  const setTxpsByStatus = (txps: TransactionProposal[]): void => {
-    let txpsUnsent: TransactionProposal[] = [];
-    let txpsPending: TransactionProposal[] = [];
-    let txpsAccepted: TransactionProposal[] = [];
-    let txpsRejected: TransactionProposal[] = [];
-
-    txps.forEach(txp => {
-      // Check if txp were checked before
-      let _txpChecked: any = {};
-      _txpChecked[txp.id] = _.indexOf(txpsToSign, txp) >= 0 ? true : false;
-
-      setTxpChecked({...txpChecked, ..._txpChecked});
-
-      const action: any = _.find(txp.actions, {
-        copayerId: txp.copayerId,
-      });
-
-      if ((!action || action.type === 'failed') && txp.status === 'pending') {
-        txp.pendingForUs = true;
-      }
-
-      if (txp.requiredSignatures === 1) {
-        !txp.payProUrl ? txpsUnsent.push(txp) : txpsRejected.push(txp);
-      } else if (action && action.type === 'accept') {
-        txp.statusForUs = 'accepted';
-        txpsAccepted.push(txp);
-      } else if (action && action.type === 'reject') {
-        txp.statusForUs = 'rejected';
-        txpsRejected.push(txp);
-      } else {
-        txp.statusForUs = 'pending';
-        txpsPending.push(txp);
-      }
-    });
-    setAllTxpsByWallet({txpsUnsent, txpsPending, txpsAccepted, txpsRejected});
-  };
-
-  const getTxpToBeSigned = (
-    txpsPerWallet: TransactionProposal[],
-    canBeSigned: boolean,
-  ): number => {
-    let i = 0;
-    txpsPerWallet.forEach(txp => {
-      if (txp.statusForUs === 'pending' && canBeSigned && txp.amountStr) {
-        i = i + 1;
-      }
-    });
-    return i;
-  };
-
-  const groupByWallets = (
-    txps: TransactionProposal[],
-  ): GroupedTxpsByWallet[] => {
-    const walletIdGetter = (txp: TransactionProposal) => txp.walletId;
-    const map = new Map();
-    const txpsByWallet: any[] = [];
-
-    txps.forEach((txp: TransactionProposal) => {
-      const _walletId = walletIdGetter(txp);
-      const collection = map.get(_walletId);
-
-      if (!collection) {
-        map.set(_walletId, [txp]);
-      } else {
-        collection.push(txp);
-      }
-    });
-    Array.from(map).forEach(txpsPerWallet => {
-      const fullWalletObj = findWalletById(wallets, txpsPerWallet[0]) as Wallet;
-      const canBeSigned = !keys[fullWalletObj.keyId].isReadOnly;
-      const txpToBeSigned = getTxpToBeSigned(txpsPerWallet[1], canBeSigned);
-      txpsByWallet.push({
-        id: Math.random(),
-        walletId: txpsPerWallet[0],
-        txps: txpsPerWallet[1],
-        needSign: txpToBeSigned > 0,
-      });
-    });
-    return txpsByWallet;
-  };
-
-  const setAllTxpsByWallet = ({
-    txpsUnsent,
-    txpsPending,
-    txpsAccepted,
-    txpsRejected,
-  }: {
-    txpsUnsent: TransactionProposal[];
-    txpsPending: TransactionProposal[];
-    txpsAccepted: TransactionProposal[];
-    txpsRejected: TransactionProposal[];
-  }): void => {
-    let _allTxps = [];
-    if (txpsUnsent.length > 0) {
-      _allTxps.push({
-        title: t('Unsent Transactions'),
-        type: 'pending',
-        data: groupByWallets(txpsUnsent),
-      });
-    }
-    if (txpsPending.length > 0) {
-      _allTxps.push({
-        title: t('Payment Proposal'),
-        type: 'pending',
-        data: groupByWallets(txpsPending),
-      });
-    }
-    if (txpsAccepted.length > 0) {
-      _allTxps.push({
-        title: t('Accepted'),
-        type: 'accepted',
-        data: groupByWallets(txpsAccepted),
-      });
-    }
-    if (txpsRejected.length > 0) {
-      _allTxps.push({
-        title: t('Rejected'),
-        type: 'rejected',
-        data: groupByWallets(txpsRejected),
-      });
-    }
-    setAllTxps(_allTxps);
-    if (navigation.canGoBack() && _allTxps.length === 0) {
+  useEffect(() => {
+    if (!allTxps.length && navigation.canGoBack()) {
       navigation.goBack();
     }
-  };
+  }, [allTxps.length, navigation]);
 
-  const updatePendingProposals = (): void => {
-    setTxpsByStatus(pendingTxps);
-  };
-
-  const onPressTxp = useMemo(
-    () => (transaction: TransactionProposal, fullWalletObj: Wallet) => {
+  const onPressTxp = useLatestCallback(
+    (transaction: TransactionProposal, fullWalletObj: Wallet) => {
       const key = keys[fullWalletObj.keyId];
       navigation.navigate('TransactionProposalDetails', {
         walletId: fullWalletObj.id,
@@ -346,104 +318,71 @@ const TransactionProposalNotifications = () => {
         keyId: key.id,
       });
     },
-    [keys, navigation],
   );
 
   const txpSelectAll = useCallback(
-    (txps: TransactionProposal[], walletId: string) => {
-      let _txpChecked: {
-        [key in string]: boolean;
-      } = {};
-      let _txpsToSign: TransactionProposal[] = [];
-      const selectingFromAnotherWallet =
-        selectingProposalsWalletId !== walletId;
-      if (selectingFromAnotherWallet) {
-        // remove old selections
-        setSelectingProposalsWalletId(walletId);
-      }
+    (txps: TransactionProposal[], selectedWalletId: string) => {
+      const allAreSelected =
+        selectingProposalsWalletId === selectedWalletId &&
+        txps.length > 0 &&
+        txps.every(txp => txpChecked[txp.id]);
 
-      if (selectAll) {
+      if (allAreSelected) {
+        setSelectingProposalsWalletId('');
         setTxpsToSign([]);
-        setTxpChecked(_txpChecked);
-        setSelectAll(false);
       } else {
-        txps.forEach(txp => {
-          _txpChecked[txp.id] = true;
-          _txpsToSign.push(txp);
-        });
-        selectingFromAnotherWallet
-          ? setTxpsToSign(_txpsToSign)
-          : setTxpsToSign(txpsToSign.concat(_txpsToSign));
-        selectingFromAnotherWallet
-          ? setTxpChecked(_txpChecked)
-          : setTxpChecked({...txpChecked, ..._txpChecked});
-        setSelectAll(true);
+        setSelectingProposalsWalletId(selectedWalletId);
+        setTxpsToSign(txps);
       }
     },
-    [setTxpsToSign, setTxpChecked, setSelectAll, txpsToSign, txpChecked],
+    [selectingProposalsWalletId, txpChecked],
   );
 
   const txpSelectionChange = useCallback(
-    (txp: TransactionProposal, walletId: string) => {
-      let _txpChecked: {
-        [key in string]: boolean;
-      } = {};
-      let _txpsToSign: TransactionProposal[] = [];
-      const selectingFromAnotherWallet =
-        selectingProposalsWalletId !== walletId;
-      if (selectingFromAnotherWallet) {
-        // remove old selections
-        setSelectingProposalsWalletId(walletId);
+    (txp: TransactionProposal, selectedWalletId: string) => {
+      const wallet = findWalletById(wallets, selectedWalletId) as Wallet;
+      if (!wallet) {
+        return;
       }
 
-      const wallet = findWalletById(wallets, walletId) as Wallet;
-      const isTSS = isTSSWallet(wallet);
+      const isSelected =
+        selectingProposalsWalletId === selectedWalletId &&
+        txpsToSign.some(txpToSign => txpToSign.id === txp.id);
 
-      if (_.indexOf(txpsToSign, txp) >= 0) {
-        _.remove(txpsToSign, txpToSign => {
-          return txpToSign.id === txp.id;
-        });
-        _txpChecked[txp.id] = false;
+      let nextSelection: TransactionProposal[];
+      if (isSelected) {
+        nextSelection = txpsToSign.filter(txpToSign => txpToSign.id !== txp.id);
+      } else if (
+        selectingProposalsWalletId !== selectedWalletId ||
+        isTSSWallet(wallet)
+      ) {
+        nextSelection = [txp];
       } else {
-        // For TSS wallets, only allow one transaction at a time
-        if (isTSS) {
-          setTxpsToSign([]);
-          setTxpChecked({});
-          _txpChecked = {};
-        }
-
-        _txpChecked[txp.id] = true;
-        _txpsToSign.push(txp);
+        nextSelection = [...txpsToSign, txp];
       }
-      selectingFromAnotherWallet || isTSS
-        ? setTxpsToSign(_txpsToSign)
-        : setTxpsToSign(txpsToSign.concat(_txpsToSign));
-      selectingFromAnotherWallet || isTSS
-        ? setTxpChecked(_txpChecked)
-        : setTxpChecked({...txpChecked, ..._txpChecked});
-      setSelectAll(false);
+
+      setSelectingProposalsWalletId(
+        nextSelection.length ? selectedWalletId : '',
+      );
+      setTxpsToSign(nextSelection);
     },
-    [
-      setTxpsToSign,
-      setTxpChecked,
-      setSelectAll,
-      txpsToSign,
-      txpChecked,
-      wallets,
-      keys,
-    ],
+    [selectingProposalsWalletId, txpsToSign, wallets],
   );
 
   const renderTxpByWallet = useCallback(
     ({item}: {item: GroupedTxpsByWallet}) => {
       const fullWalletObj = findWalletById(wallets, item.walletId) as Wallet;
+      if (!fullWalletObj) {
+        return null;
+      }
+
       const {
         img,
         badgeImg,
         currencyAbbreviation,
         currencyName,
-        keyId,
-        credentials: {walletName, m, n, walletId: _walletId},
+        keyId: walletKeyId,
+        credentials: {walletName, m, n},
         tssMetadata,
       } = fullWalletObj;
 
@@ -451,7 +390,7 @@ const TransactionProposalNotifications = () => {
 
       return (
         <>
-          <RowContainer disabled={true} style={{opacity: 1}}>
+          <RowContainer disabled={true} style={styles.enabledRow}>
             <CurrencyImageContainer>
               <CurrencyImage img={img} size={45} badgeUri={badgeImg} />
             </CurrencyImageContainer>
@@ -468,14 +407,14 @@ const TransactionProposalNotifications = () => {
                   : n > 1
                   ? `- Multisig ${m}/${n}`
                   : null}
-                {keyId.includes('readonly') ? '- Read Only' : null}
+                {walletKeyId.includes('readonly') ? '- Read Only' : null}
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 && !isTSS ? (
               <TouchableOpacity
                 onPress={() => {
                   haptic('impactLight');
-                  txpSelectAll(item.txps, _walletId);
+                  txpSelectAll(item.txps, fullWalletObj.id);
                 }}>
                 <Link>{t('Select All')}</Link>
               </TouchableOpacity>
@@ -504,7 +443,7 @@ const TransactionProposalNotifications = () => {
                       <TouchableOpacity
                         touchableLibrary={'react-native-gesture-handler'}
                         onPress={() => {
-                          txpSelectionChange(txp, _walletId);
+                          txpSelectionChange(txp, fullWalletObj.id);
                         }}>
                         <Checkbox
                           checked={!!txpChecked[txp.id]}
@@ -524,94 +463,84 @@ const TransactionProposalNotifications = () => {
       );
     },
     [
-      wallets,
-      keys,
-      selectingProposalsWalletId,
-      txpChecked,
-      txpSelectionChange,
+      contactList,
+      logger,
       onPressTxp,
+      t,
+      txpChecked,
+      txpSelectAll,
+      txpSelectionChange,
+      wallets,
     ],
   );
 
-  const keyExtractor = useCallback(
-    (item: GroupedTxpsByWallet) => item.id.toString(),
+  const keyExtractor = useCallback((item: GroupedTxpsByWallet) => item.id, []);
+  const renderSectionHeader = useCallback(
+    ({section: {title}}: {section: {title: string}}) => (
+      <TransactionSectionHeaderContainer>
+        <H5>{title}</H5>
+      </TransactionSectionHeaderContainer>
+    ),
     [],
   );
+  const renderItemSeparator = useCallback(() => <BorderBottom />, []);
 
-  const getItemLayout = useCallback(
-    (data: any, index: number) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
-
-  const listFooterComponent = () => {
-    return (
-      <>
-        {!allTxps?.length ? null : (
-          <View style={{marginBottom: 20}}>
-            <BorderBottom />
-          </View>
-        )}
-      </>
+  const updateWalletsWithProposals = useLatestCallback(async () => {
+    const walletIdsWithProposals = new Set(
+      pendingTxps.map(txp => txp.walletId),
     );
-  };
-
-  const updateWalletsWithProposals = async () => {
-    const walletIdsWithProposals = _.uniq(pendingTxps.map(txp => txp.walletId));
-    const keyIdsWithProposals: string[] = walletIdsWithProposals
-      .map(walletId => findWalletById(wallets, walletId)?.keyId)
-      .filter((keyId): keyId is string => !!keyId);
-    const keyIds = _.uniq(keyIdsWithProposals);
-    const keysWithProposals: Key[] = keyIds.map(
-      (keyIdString: string) => keys[keyIdString],
+    const keyIdsWithProposals = new Set(
+      wallets
+        .filter(
+          wallet =>
+            walletIdsWithProposals.has(wallet.id) ||
+            walletIdsWithProposals.has(wallet.credentials?.walletId),
+        )
+        .map(wallet => wallet.keyId),
     );
+    const keysWithProposals = Array.from(keyIdsWithProposals)
+      .map(proposalKeyId => keys[proposalKeyId])
+      .filter((key): key is Key => !!key);
+    const readOnlyKeys = keysWithProposals.filter(key => key.isReadOnly);
+    const writableKeys = keysWithProposals.filter(key => !key.isReadOnly);
 
-    const [readOnlyKeys, _keys] = _.partition(keysWithProposals, 'isReadOnly');
-
-    Promise.all([
-      dispatch(startUpdateAllWalletStatusForKeys({keys: _keys, force: true})),
-      dispatch(
-        startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys, force: true}),
-      ),
+    await Promise.all([
+      writableKeys.length
+        ? dispatch(
+            startUpdateAllWalletStatusForKeys({
+              keys: writableKeys,
+              force: true,
+            }),
+          )
+        : Promise.resolve(),
+      readOnlyKeys.length
+        ? dispatch(
+            startUpdateAllWalletStatusForReadOnlyKeys({
+              readOnlyKeys,
+              force: true,
+            }),
+          )
+        : Promise.resolve(),
     ]);
-  };
+  });
 
-  const onRefresh = async () => {
+  const onRefresh = useLatestCallback(async () => {
     setRefreshing(true);
-    await sleep(1000);
     try {
-      await dispatch(startGetRates({}));
-      await updateWalletsWithProposals();
-    } catch (err) {
+      await Promise.all([
+        dispatch(startGetRates({})),
+        updateWalletsWithProposals(),
+      ]);
+    } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
+    } finally {
+      setRefreshing(false);
     }
-    setRefreshing(false);
-  };
+  });
 
-  const countSuccessAndFailed = (
-    arrayData: (TransactionProposal | Error)[],
-  ) => {
-    const count = {success: 0, failed: 0};
-    arrayData.forEach((data: TransactionProposal | Error) => {
-      if (data instanceof Error) {
-        count.failed = count.failed + 1;
-      } else if (data && data.id) {
-        count.success = count.success + 1;
-      }
-    });
-    return count;
-  };
-
-  const onCloseModal = async () => {
+  const onCloseModal = useLatestCallback(() => {
     hidePaymentSent();
-  };
-
-  useEffect(() => {
-    updatePendingProposals();
-  }, [keys]);
+  });
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -655,28 +584,18 @@ const TransactionProposalNotifications = () => {
             onRefresh={onRefresh}
           />
         }
-        ListHeaderComponent={() => {
-          return <ListHeaderPadding />;
-        }}
+        ListHeaderComponent={ListHeaderPadding}
         sections={allTxps}
         stickySectionHeadersEnabled={true}
         keyExtractor={keyExtractor}
         renderItem={renderTxpByWallet}
-        renderSectionHeader={({section: {title}}) => {
-          return (
-            <TransactionSectionHeaderContainer>
-              <H5>{title}</H5>
-            </TransactionSectionHeaderContainer>
-          );
-        }}
-        ItemSeparatorComponent={() => <BorderBottom />}
-        ListFooterComponent={listFooterComponent}
-        onEndReachedThreshold={0.5}
+        renderSectionHeader={renderSectionHeader}
+        ItemSeparatorComponent={renderItemSeparator}
+        ListFooterComponent={allTxps.length ? ListFooterBorder : null}
         maxToRenderPerBatch={15}
-        getItemLayout={getItemLayout}
       />
 
-      {txpsToSign && Object.values(txpsToSign)[0] ? (
+      {txpsToSign.length ? (
         <SwipeButton
           title={t('Sign selected')}
           forceReset={resetSwipeButton}
@@ -714,7 +633,7 @@ const TransactionProposalNotifications = () => {
               } else {
                 const data = (await dispatch<any>(
                   publishAndSignMultipleProposals({
-                    txps: Object.values(txpsToSign),
+                    txps: txpsToSign,
                     key,
                     wallet,
                   }),
@@ -758,7 +677,6 @@ const TransactionProposalNotifications = () => {
               }
               setSelectingProposalsWalletId('');
               setTxpsToSign([]);
-              setTxpChecked({});
               setResetSwipeButton(true);
             } catch (err) {
               await sleep(500);

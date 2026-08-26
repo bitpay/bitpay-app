@@ -1,5 +1,13 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
+import {
+  SafeAreaView,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {BaseText} from '../../../components/styled/Text';
@@ -14,44 +22,90 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const signupUrl: string = 'https://www.coinbase.com/signup';
 
-const CoinbaseContainer = styled.SafeAreaView`
-  flex: 1;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  coinbaseContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  coinbaseHeaderContainer: {
+    textAlign: 'center',
+    marginBottom: 40,
+    marginTop: -50,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+  noConnectedContainer: {
+    paddingHorizontal: 15,
+  },
+  noConnectedIcon: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginTop: 30,
+    marginRight: 0,
+    marginBottom: 8,
+    marginLeft: 0,
+  },
+  subTitle: {
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+});
 
-const CoinbaseHeaderContainer = styled.View`
-  text-align: center;
-  margin-bottom: 40px;
-  margin-top: -50px;
-`;
+const CoinbaseContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.coinbaseContainer, style]} {...rest} />
+);
 
-const ButtonContainer = styled.View`
-  margin-top: 20px;
-`;
+const CoinbaseHeaderContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.coinbaseHeaderContainer, style]} {...rest} />
+);
 
-const NoConnectedContainer = styled.View`
-  padding: 0 15px;
-`;
+const ButtonContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.buttonContainer, style]} {...rest} />
+);
 
-const NoConnectedIcon = styled.View`
-  display: flex;
-  align-items: center;
-`;
+const NoConnectedContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.noConnectedContainer, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  text-align: center;
-  font-size: 26px;
-  font-weight: bold;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin: 30px 0 8px 0;
-`;
+const NoConnectedIcon = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.noConnectedIcon, style]} {...rest} />
+);
 
-const SubTitle = styled(BaseText)`
-  text-align: center;
-  font-size: 16px;
-  line-height: 22px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const Title = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.title, {color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+});
+
+const SubTitle = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.subTitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
 const CoinbaseIntro = () => {
   const {t} = useTranslation();

@@ -1,8 +1,7 @@
-import {useNavigation} from '@react-navigation/native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
@@ -16,26 +15,52 @@ import {Key} from '../../../../store/wallet/wallet.models';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {keyBackupRequired} from '../../home/components/Crypto';
 import {SettingsComponent} from '../SettingsRoot';
+import {resolveKeySettingsAccountList} from '../../../wallet/screens/keySettingsAccountListCache';
 
-const CreateOrImportLink = styled(Link)`
-  font-weight: 500;
-  font-size: 18px;
-`;
+const styles = StyleSheet.create({
+  createOrImportLink: {
+    fontWeight: '500',
+    fontSize: 18,
+  },
+});
+
+const CreateOrImportLink = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Link>) => (
+  <Link style={[styles.createOrImportLink, style]} {...rest} />
+);
+
 const WalletsAndKeys = () => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<any>>();
   const dispatch = useAppDispatch();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const keyList = Object.values(keys);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
+  const defaultAltCurrencyIsoCode = useAppSelector(
+    ({APP}) => APP.defaultAltCurrency.isoCode,
+  );
+  const keyList: Key[] = Object.values(keys);
+
+  const warmKeySettingsAccountList = (key: Key) => {
+    resolveKeySettingsAccountList({
+      key,
+      defaultAltCurrencyIsoCode,
+      dispatch,
+    });
+  };
 
   const onPressKey = (key: Key) => {
-    key.backupComplete
-      ? navigation.navigate('KeySettings', {key})
-      : dispatch(
-          showBottomNotificationModal(
-            keyBackupRequired(key, navigation, dispatch, 'settings'),
-          ),
-        );
+    if (key.backupComplete) {
+      warmKeySettingsAccountList(key);
+      navigation.navigate('KeySettings', {keyId: key.id});
+      return;
+    }
+
+    dispatch(
+      showBottomNotificationModal(
+        keyBackupRequired(key, navigation, dispatch, 'settings'),
+      ),
+    );
   };
 
   return (
@@ -43,10 +68,19 @@ const WalletsAndKeys = () => {
       {keyList.length
         ? keyList.map(key => (
             <View key={key.id}>
-              <Setting onPress={() => onPressKey(key)}>
+              <Setting
+                onPressIn={() => {
+                  if (key.backupComplete) {
+                    warmKeySettingsAccountList(key);
+                  }
+                }}
+                onPress={() => onPressKey(key)}>
                 <SettingTitle>{key.keyName}</SettingTitle>
                 {key.backupComplete ? (
-                  <Button buttonType={'pill'} onPress={() => onPressKey(key)}>
+                  <Button
+                    buttonType={'pill'}
+                    onPressIn={() => warmKeySettingsAccountList(key)}
+                    onPress={() => onPressKey(key)}>
                     {key.wallets.length}{' '}
                     {key.wallets.length === 1 ? 'Wallet' : 'Wallets'}
                   </Button>

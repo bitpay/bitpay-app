@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import * as Svg from 'react-native-svg';
-import styled from 'styled-components/native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
 import {BaseText} from '../../../components/styled/Text';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
@@ -24,39 +24,73 @@ interface CardFrontProps {
   designCurrency: VirtualDesignCurrency;
 }
 
-const CardFrontContainer = styled.View`
-  position: relative;
-`;
+const styles = StyleSheet.create({
+  cardFrontContainer: {
+    position: 'relative',
+  },
+  cardBalanceLabelRow: {
+    color: White,
+    fontSize: 10,
+    fontWeight: '500',
+    left: 0,
+    paddingHorizontal: 20,
+    position: 'absolute',
+    top: 80,
+  },
+  cardBalanceValueRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: 39,
+    left: 0,
+    maxWidth: '100%',
+    paddingHorizontal: 20,
+    position: 'absolute',
+    top: 94,
+  },
+  cardBalance: {
+    color: White,
+    fontWeight: '500',
+    marginRight: 20,
+    flexShrink: 1,
+  },
+});
 
-const CardBalanceLabelRow = styled(BaseText)`
-  color: ${White};
-  font-size: 10px;
-  font-weight: 500;
-  left: 0px;
-  padding: 0 20px;
-  position: absolute;
-  top: 80px;
-`;
+const CardFrontContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardFrontContainer, style]} {...rest} />
+);
 
-const CardBalanceValueRow = styled.View`
-  align-items: center;
-  flex-direction: row;
-  height: 39px;
-  left: 0px;
-  max-width: 100%;
-  padding: 0 20px;
-  position: absolute;
-  top: 94px;
-`;
+const CardBalanceLabelRow = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.cardBalanceLabelRow, style]} {...rest} />
+  ),
+);
 
-const CardBalance = styled(BaseText)<{balance: number}>`
-  color: ${White};
-  font-size: ${({balance}) =>
-    balance >= 1e9 ? 21 : balance >= 1e8 ? 24 : balance >= 1e6 ? 26 : 28}px;
-  font-weight: 500;
-  margin-right: 20px;
-  flex-shrink: 1;
-`;
+const CardBalanceValueRow = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardBalanceValueRow, style]} {...rest} />
+);
+
+const CardBalance = React.forwardRef<Text, TextProps & {balance: number}>(
+  ({balance, style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.cardBalance,
+        {
+          fontSize:
+            balance >= 1e9
+              ? 21
+              : balance >= 1e8
+              ? 24
+              : balance >= 1e6
+              ? 26
+              : 28,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  ),
+);
 
 const BRAND_LOGOS: {[k: string]: JSX.Element} = {
   Mastercard: (

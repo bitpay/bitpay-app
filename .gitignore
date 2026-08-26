@@ -79,8 +79,7 @@ yarn-error.log
 .metro-health-check*
 
 .env
-.env.development
-.env.production
+.env.*
 
 # Jest
 #

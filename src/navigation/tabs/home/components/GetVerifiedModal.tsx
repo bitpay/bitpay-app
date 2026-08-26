@@ -1,7 +1,16 @@
 import React, {useRef} from 'react';
-import {Pressable, TouchableOpacity} from 'react-native';
-import styled from 'styled-components/native';
+import {
+  Pressable,
+  PressableProps,
+  StyleSheet,
+  Text,
+  TextProps,
+  TouchableOpacity,
+  View,
+  ViewProps,
+} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import {useTheme} from '../../../../contexts';
 import {BaseText} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
 import Button from '../../../../components/button/Button';
@@ -19,54 +28,116 @@ import {navigationRef} from '../../../../Root';
 import IconKycGetVerified from '../../../../../assets/img/kyc_get_verified.svg';
 import IconClose from '../../../../../assets/img/close-modal-icon.svg';
 
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCard: {
+    width: WIDTH - 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  illustrationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
+  content: {
+    padding: 24,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+});
+
 // The sheet is fullscreen; this dims the screen and centers the card.
-const Backdrop = styled.Pressable`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-`;
+const Backdrop = ({style, ...rest}: PressableProps) => (
+  <Pressable
+    style={state => [
+      styles.backdrop,
+      typeof style === 'function' ? style(state) : style,
+    ]}
+    {...rest}
+  />
+);
 
-const ModalCard = styled.View`
-  width: ${WIDTH - 32}px;
-  border-radius: 16px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  overflow: hidden;
-`;
+const ModalCard = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalCard,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const IllustrationContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(34, 64, 196, 0.25)' : LightBlue};
-`;
+const IllustrationContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.illustrationContainer,
+        {backgroundColor: theme.dark ? 'rgba(34, 64, 196, 0.25)' : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CloseButton = styled(TouchableOpacity)`
-  position: absolute;
-  top: 16px;
-  right: 16px;
-`;
+const CloseButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity style={[styles.closeButton, style]} {...rest} />
+);
 
-const Content = styled.View`
-  padding: 24px;
-`;
+const Content = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.content, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  font-size: 22px;
-  font-weight: 700;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : '#000000')};
-  margin-bottom: 8px;
-`;
+const Title = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.title, {color: theme.dark ? White : '#000000'}, style]}
+      {...rest}
+    />
+  );
+});
 
-const Body = styled(BaseText)`
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 24px;
-`;
+const Body = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.body, {color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+});
 
 const GetVerifiedModal: React.FC = () => {
   const {t} = useTranslation();

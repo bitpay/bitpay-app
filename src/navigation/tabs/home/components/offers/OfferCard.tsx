@@ -1,7 +1,7 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
-import {Linking} from 'react-native';
-import styled from 'styled-components/native';
+import {Linking, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -150,67 +150,159 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   );
 };
 
-const OfferWrapper = styled(TouchableOpacity)`
-  width: 250px;
-  border-radius: 12px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  overflow: hidden;
-`;
+const offerStyles = StyleSheet.create({
+  offerWrapper: {
+    width: 250,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  coverImageContainer: {
+    width: '100%',
+    height: 100,
+    overflow: 'hidden',
+  },
+  coverImage: {
+    width: '100%',
+    height: 120,
+  },
+  coverImageFallback: {
+    flex: 1,
+  },
+  offerContent: {
+    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+  },
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    marginTop: -39,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderRadius: 40,
+  },
+  offerIcon: {
+    width: 40,
+    height: 40,
+  },
+  offerTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  offerDescription: {
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+});
 
-const CoverImageContainer = styled.View`
-  width: 100%;
-  height: 100px;
-  overflow: hidden;
-`;
+const OfferWrapper: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        offerStyles.offerWrapper,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CoverImage = styled(FastImage)`
-  width: 100%;
-  height: 120px;
-`;
+const CoverImageContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={offerStyles.coverImageContainer}>{children}</View>;
 
-const CoverImageFallback = styled.View`
-  flex: 1;
-`;
+const CoverImage: React.FC<React.ComponentProps<typeof FastImage>> = ({
+  style,
+  ...rest
+}) => <FastImage style={[offerStyles.coverImage, style]} {...rest} />;
 
-const OfferContent = styled.View`
-  padding: 18px 20px 20px;
-  background: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
-  border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-`;
+const CoverImageFallback: React.FC = () => (
+  <View style={offerStyles.coverImageFallback} />
+);
 
-const IconWrapper = styled.View`
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-  margin-top: -39px;
-  overflow: hidden;
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 40px;
-`;
+const OfferContent: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        offerStyles.offerContent,
+        {
+          backgroundColor: theme.dark ? CharcoalBlack : White,
+          borderTopColor: theme.dark ? LightBlack : Slate30,
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const OfferIcon = styled(FastImage)`
-  width: 40px;
-  height: 40px;
-`;
+const IconWrapper: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        offerStyles.iconWrapper,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const TextContainer = styled.View``;
+const OfferIcon: React.FC<React.ComponentProps<typeof FastImage>> = ({
+  style,
+  ...rest
+}) => <FastImage style={[offerStyles.offerIcon, style]} {...rest} />;
 
-const OfferTitle = styled(BaseText)`
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 600;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 6px;
-`;
+const TextContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View>{children}</View>
+);
 
-const OfferDescription = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const OfferTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        offerStyles.offerTitle,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const OfferDescription: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        offerStyles.offerDescription,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export default OfferCard;

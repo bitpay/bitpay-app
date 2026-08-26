@@ -1,5 +1,5 @@
 import debounce from 'lodash.debounce';
-import React, {memo, useMemo, useRef} from 'react';
+import React, {memo, useLayoutEffect, useMemo, useRef} from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -8,7 +8,8 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
-import styled from 'styled-components/native';
+import {useTheme} from '../../contexts';
+import {StyleProp, StyleSheet, TextStyle, View, ViewStyle} from 'react-native';
 import {
   Action,
   Air,
@@ -32,11 +33,11 @@ import {BaseText} from '../styled/Text';
 import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
-import {StyleProp, ViewStyle} from 'react-native';
 import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from '@components/base/TouchableOpacity';
+import type {BitPayTheme} from '../../themes/bitpay';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle =
@@ -85,247 +86,441 @@ export const BUTTON_HEIGHT = 63;
 export const PILL_RADIUS = 50;
 export const LINK_RADIUS = 0;
 
-const ButtonBaseText = styled(BaseText)`
-  line-height: 25px;
-  text-align: center;
-`;
+const styles = StyleSheet.create({
+  buttonBaseText: {
+    lineHeight: 25,
+    textAlign: 'center',
+  },
+  buttonContent: {
+    borderWidth: 2,
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  buttonIconContainer: {
+    marginRight: 10,
+  },
+  pillContent: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderRadius: PILL_RADIUS,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  pillText: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22.03,
+    textAlign: 'center',
+  },
+  linkContent: {
+    padding: 10,
+  },
+  linkText: {
+    fontSize: 18,
+    fontWeight: '500',
+  },
+});
 
-const ButtonContainer = styled(TouchableOpacity)<ButtonProps>`
-  border-radius: ${({borderRadius, buttonType}) =>
+const ButtonBaseText: React.FC<
+  React.PropsWithChildren<{style?: StyleProp<TextStyle>}>
+> = ({style, ...rest}) => (
+  <BaseText style={[styles.buttonBaseText, style]} {...rest} />
+);
+
+type ButtonContainerProps = Pick<ButtonProps, 'buttonType' | 'borderRadius'> &
+  TouchableOpacityProps;
+
+const ButtonContainer: React.FC<
+  React.PropsWithChildren<ButtonContainerProps>
+> = ({borderRadius, buttonType, style, children, ...rest}) => {
+  const computedBorderRadius =
     borderRadius ??
     (buttonType === 'link'
       ? LINK_RADIUS
       : buttonType === 'pill'
       ? PILL_RADIUS
-      : BUTTON_RADIUS)}px;
-  position: relative;
-  overflow: hidden;
-`;
+      : BUTTON_RADIUS);
+  return (
+    <TouchableOpacity
+      style={[
+        {
+          borderRadius: computedBorderRadius,
+          position: 'relative',
+          overflow: 'hidden',
+        },
+        style,
+      ]}
+      {...rest}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({
-    disabled,
-    theme,
-    outline,
-    danger,
-    secondary,
-    backgroundColor,
-  }) => {
-    if (disabled) {
-      return theme.dark ? DisabledDark : Disabled;
+const getButtonContentBackground = ({
+  disabled,
+  theme,
+  outline,
+  danger,
+  secondary,
+  backgroundColor,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (disabled) {
+    return theme.dark ? DisabledDark : Disabled;
+  }
+  if (secondary) {
+    return 'transparent';
+  }
+  if (danger) {
+    return outline ? 'transparent' : theme.dark ? Caution50 : Caution60;
+  }
+  if (backgroundColor) {
+    return backgroundColor;
+  }
+  return Action;
+};
+
+const getButtonContentBorderColor = ({
+  danger,
+  disabled,
+  secondary,
+  outline,
+  theme,
+  backgroundColor,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (disabled) {
+    return theme.dark ? DisabledDark : Disabled;
+  }
+  if (secondary) {
+    return backgroundColor || Action;
+  }
+  if (danger) {
+    return outline ? (theme.dark ? Caution50 : Caution60) : 'transparent';
+  }
+  if (backgroundColor) {
+    return backgroundColor;
+  }
+  return Action;
+};
+
+const ButtonContent: React.FC<ButtonOptionProps> = ({
+  height,
+  danger,
+  secondary,
+  outline,
+  disabled,
+  backgroundColor,
+  borderRadius,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.buttonContent,
+        {
+          backgroundColor: getButtonContentBackground({
+            disabled,
+            theme,
+            outline,
+            danger,
+            secondary,
+            backgroundColor,
+          }),
+          borderColor: getButtonContentBorderColor({
+            danger,
+            disabled,
+            secondary,
+            outline,
+            theme,
+            backgroundColor,
+          }),
+          borderRadius: borderRadius ?? BUTTON_RADIUS,
+          height: height || BUTTON_HEIGHT,
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
+
+const getButtonTextColor = ({
+  danger,
+  disabled,
+  secondary,
+  outline,
+  theme,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (disabled) {
+    return theme.dark ? DisabledTextDark : DisabledText;
+  }
+  if (secondary) {
+    return theme?.dark ? theme.colors.text : Action;
+  }
+  if (danger) {
+    return outline
+      ? theme.dark
+        ? Caution50
+        : Caution60
+      : theme.dark
+      ? Caution60
+      : White;
+  }
+  return White;
+};
+
+const ButtonText: React.FC<ButtonOptionProps> = ({
+  danger,
+  disabled,
+  secondary,
+  outline,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <ButtonBaseText
+      style={[
+        styles.buttonText,
+        {
+          color: getButtonTextColor({
+            danger,
+            disabled,
+            secondary,
+            outline,
+            theme,
+          }),
+        },
+      ]}>
+      {children}
+    </ButtonBaseText>
+  );
+};
+
+const ButtonIconContainer: React.FC<React.PropsWithChildren<{}>> = ({
+  children,
+}) => <View style={styles.buttonIconContainer}>{children}</View>;
+
+const ButtonContainerFlex: React.FC<
+  React.PropsWithChildren<{hasIcon: boolean}>
+> = ({hasIcon, children}) => (
+  <View
+    style={{
+      flexDirection: 'row',
+      justifyContent: hasIcon ? 'space-between' : 'center',
+      paddingLeft: hasIcon ? 10 : 0,
+      alignItems: 'center',
+    }}>
+    {children}
+  </View>
+);
+
+const ButtonTextContainer: React.FC<React.PropsWithChildren<{}>> = ({
+  children,
+}) => <View>{children}</View>;
+
+const StatefulButtonContent: React.FC<
+  React.PropsWithChildren<{hidden: boolean}>
+> = ({hidden, children}) => {
+  const childOpacity = useSharedValue(hidden ? 0 : 1);
+  const previousHiddenRef = useRef(hidden);
+
+  useLayoutEffect(() => {
+    if (previousHiddenRef.current === hidden) {
+      return;
     }
 
-    if (secondary) {
-      return 'transparent';
-    }
+    previousHiddenRef.current = hidden;
+    childOpacity.value = withDelay(
+      hidden ? 0 : DURATION,
+      withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+    );
+  }, [childOpacity, hidden]);
 
-    if (danger) {
-      if (outline) {
-        return 'transparent';
-      } else {
-        return theme.dark ? Caution50 : Caution60;
-      }
-    }
+  const childrenStyle = useAnimatedStyle(() => ({
+    opacity: childOpacity.value,
+  }));
 
-    if (backgroundColor) {
-      return backgroundColor;
-    }
+  return <Animated.View style={childrenStyle}>{children}</Animated.View>;
+};
 
-    return Action;
-  }};
-  border: 2px solid
-    ${({danger, disabled, secondary, outline, theme, backgroundColor}) => {
-      if (disabled) {
-        return theme.dark ? DisabledDark : Disabled;
-      }
+const getPillBackground = ({
+  secondary,
+  cancel,
+  theme,
+  action,
+  outline,
+  danger,
+  disabled,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (secondary) {
+    return outline ? 'transparent' : theme?.dark ? Midnight : Air;
+  }
+  if (cancel) {
+    return theme?.dark ? LightBlack : NeutralSlate;
+  }
+  if (danger) {
+    return outline ? 'transparent' : theme.dark ? Caution50 : Caution60;
+  }
+  if (action) {
+    return disabled ? (theme.dark ? DisabledDark : Disabled) : Action;
+  }
+  return theme?.dark ? Midnight : Air;
+};
 
-      if (secondary) {
-        if (backgroundColor) {
-          return backgroundColor;
-        }
-        return Action;
-      }
+const getPillBorderColor = ({
+  secondary,
+  outline,
+  cancel,
+  danger,
+  theme,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (danger) {
+    return outline ? (theme.dark ? Caution50 : Caution60) : 'transparent';
+  }
+  if (secondary) {
+    return outline ? (theme?.dark ? White : Action) : 'transparent';
+  }
+  if (cancel) {
+    return theme?.dark ? LightBlack : NeutralSlate;
+  }
+  return theme?.dark ? Midnight : Air;
+};
 
-      if (danger) {
-        if (outline) {
-          return theme.dark ? Caution50 : Caution60;
-        } else {
-          return 'transparent';
-        }
-      }
+const PillContent: React.FC<ButtonOptionProps> = ({
+  secondary,
+  cancel,
+  action,
+  outline,
+  danger,
+  disabled,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.pillContent,
+        {
+          backgroundColor: getPillBackground({
+            secondary,
+            cancel,
+            theme,
+            action,
+            outline,
+            danger,
+            disabled,
+          }),
+          borderColor: getPillBorderColor({
+            secondary,
+            outline,
+            cancel,
+            danger,
+            theme,
+          }),
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-      if (backgroundColor) {
-        return backgroundColor;
-      }
-
-      return Action;
-    }};
-  border-radius: ${({borderRadius}) => borderRadius ?? BUTTON_RADIUS}px;
-  height: ${({height}) => height || BUTTON_HEIGHT}px;
-  justify-content: center;
-`;
-
-const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
-  font-size: 18px;
-  font-weight: 500;
-
-  color: ${({danger, disabled, secondary, outline, theme}) => {
-    if (disabled) {
-      return theme.dark ? DisabledTextDark : DisabledText;
-    }
-
-    if (secondary) {
-      return theme?.dark ? theme.colors.text : Action;
-    }
-
-    if (danger) {
-      if (outline) {
-        return theme.dark ? Caution50 : Caution60;
-      } else {
-        return theme.dark ? Caution60 : White;
-      }
-    }
-
+const getPillTextColor = ({
+  disabled,
+  cancel,
+  theme,
+  danger,
+  outline,
+  action,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (disabled) {
+    return theme.dark ? DisabledTextDark : DisabledText;
+  }
+  if (cancel) {
+    return theme?.dark ? White : SlateDark;
+  }
+  if (action) {
     return White;
-  }};
-`;
+  }
+  if (danger) {
+    return outline
+      ? theme.dark
+        ? Caution50
+        : Caution60
+      : theme.dark
+      ? Caution60
+      : White;
+  }
+  return theme?.dark ? White : Action;
+};
 
-const ButtonIconContainer = styled.View`
-  margin-right: 10px;
-`;
+const PillText: React.FC<ButtonOptionProps> = ({
+  disabled,
+  cancel,
+  danger,
+  outline,
+  action,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.pillText,
+        {
+          color: getPillTextColor({
+            disabled,
+            cancel,
+            theme,
+            danger,
+            outline,
+            action,
+          }),
+        },
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const ButtonContainerFlex = styled.View<{hasIcon: boolean}>`
-  flex-direction: row;
-  justify-content: ${({hasIcon}) => (hasIcon ? 'space-between' : 'center')};
-  padding-left: ${({hasIcon}) => (hasIcon ? 10 : 0)}px;
-  align-items: center;
-`;
+const LinkContent: React.FC<React.PropsWithChildren<{}>> = ({children}) => (
+  <View style={styles.linkContent}>{children}</View>
+);
 
-const ButtonTextContainer = styled.View``;
+const getLinkTextColor = ({
+  disabled,
+  danger,
+  theme,
+}: ButtonOptionProps & {theme: BitPayTheme}): string => {
+  if (disabled) {
+    return DisabledDark;
+  }
+  if (danger) {
+    return theme.dark ? Caution50 : Caution60;
+  }
+  if (theme?.dark) {
+    return theme.colors.text;
+  }
+  return Action;
+};
 
-const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({
-    secondary,
-    cancel,
-    theme,
-    action,
-    outline,
-    danger,
-    disabled,
-  }) => {
-    if (secondary) {
-      if (outline) {
-        return 'transparent';
-      } else {
-        return theme?.dark ? Midnight : Air;
-      }
-    }
-
-    if (cancel) {
-      return theme?.dark ? LightBlack : NeutralSlate;
-    }
-
-    if (danger) {
-      if (outline) {
-        return 'transparent';
-      } else {
-        return theme.dark ? Caution50 : Caution60;
-      }
-    }
-
-    if (action) {
-      if (disabled) {
-        return theme.dark ? DisabledDark : Disabled;
-      } else {
-        return Action;
-      }
-    }
-
-    return theme?.dark ? Midnight : Air;
-  }};
-  border-style: solid;
-  border-width: 1px;
-  border-color: ${({secondary, outline, cancel, danger, theme}) => {
-    if (danger) {
-      if (outline) {
-        return theme.dark ? Caution50 : Caution60;
-      } else {
-        return 'transparent';
-      }
-    }
-
-    if (secondary) {
-      if (outline) {
-        return theme?.dark ? White : Action;
-      } else {
-        return 'transparent';
-      }
-    }
-
-    if (cancel) {
-      return theme?.dark ? LightBlack : NeutralSlate;
-    }
-
-    return theme?.dark ? Midnight : Air;
-  }};
-  border-radius: ${PILL_RADIUS}px;
-  padding: 8px 15px;
-`;
-
-const PillText = styled(BaseText)<ButtonOptionProps>`
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 22.03px;
-  text-align: center;
-
-  color: ${({disabled, cancel, theme, danger, outline, action}) => {
-    if (disabled) {
-      return theme.dark ? DisabledTextDark : DisabledText;
-    }
-
-    if (cancel) {
-      return theme?.dark ? White : SlateDark;
-    }
-
-    if (action) {
-      return White;
-    }
-
-    if (danger) {
-      if (outline) {
-        return theme.dark ? Caution50 : Caution60;
-      } else {
-        return theme.dark ? Caution60 : White;
-      }
-    }
-
-    return theme?.dark ? White : Action;
-  }};
-`;
-
-const LinkContent = styled.View<ButtonOptionProps>`
-  padding: 10px;
-`;
-
-const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
-  color: ${({disabled, danger, theme}) => {
-    if (disabled) {
-      return DisabledDark;
-    }
-
-    if (danger) {
-      return theme.dark ? Caution50 : Caution60;
-    }
-
-    if (theme?.dark) {
-      return theme.colors.text;
-    }
-
-    return Action;
-  }};
-  font-size: 18px;
-  font-weight: 500;
-`;
+const LinkText: React.FC<ButtonOptionProps> = ({
+  disabled,
+  danger,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <ButtonBaseText
+      style={[
+        styles.linkText,
+        {color: getLinkTextColor({disabled, danger, theme})},
+      ]}>
+      {children}
+    </ButtonBaseText>
+  );
+};
 
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const {
@@ -357,16 +552,10 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const isSuccess = state === 'success';
   const isFailure = state === 'failed';
   const hideContent = !!state;
-
-  const childOpacity = useSharedValue(1);
-  childOpacity.value = withDelay(
-    hideContent ? 0 : DURATION,
-    withTiming(hideContent ? 0 : 1, {duration: 0, easing: Easing.linear}),
+  const supportsAnimatedState = Object.prototype.hasOwnProperty.call(
+    props,
+    'state',
   );
-
-  const childrenStyle = useAnimatedStyle(() => ({
-    opacity: childOpacity.value,
-  }));
 
   let ButtonTypeContainer: React.FC<ButtonOptionProps>;
   let ButtonTypeText: React.FC<ButtonOptionProps>;
@@ -436,48 +625,73 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         action={action}
         backgroundColor={backgroundColor}
         borderRadius={borderRadius}>
-        <Animated.View style={childrenStyle}>
-          <ButtonContainerFlex hasIcon={!!icon}>
-            <ButtonTextContainer>
-              <ButtonTypeText
-                secondary={secondary}
-                cancel={cancel}
-                danger={danger}
-                disabled={disabled}
-                outline={outline}
-                action={action}>
-                {children}
-              </ButtonTypeText>
-            </ButtonTextContainer>
-            {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
-          </ButtonContainerFlex>
-        </Animated.View>
+        {supportsAnimatedState ? (
+          <StatefulButtonContent hidden={hideContent}>
+            <ButtonContainerFlex hasIcon={!!icon}>
+              <ButtonTextContainer>
+                <ButtonTypeText
+                  secondary={secondary}
+                  cancel={cancel}
+                  danger={danger}
+                  disabled={disabled}
+                  outline={outline}
+                  action={action}>
+                  {children}
+                </ButtonTypeText>
+              </ButtonTextContainer>
+              {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
+            </ButtonContainerFlex>
+          </StatefulButtonContent>
+        ) : (
+          <View>
+            <ButtonContainerFlex hasIcon={!!icon}>
+              <ButtonTextContainer>
+                <ButtonTypeText
+                  secondary={secondary}
+                  cancel={cancel}
+                  danger={danger}
+                  disabled={disabled}
+                  outline={outline}
+                  action={action}>
+                  {children}
+                </ButtonTypeText>
+              </ButtonTextContainer>
+              {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
+            </ButtonContainerFlex>
+          </View>
+        )}
       </ButtonTypeContainer>
 
-      <ButtonOverlay
-        isVisible={isLoading}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}>
-        <ButtonSpinner buttonStyle={buttonStyle} />
-      </ButtonOverlay>
+      {isLoading ? (
+        <ButtonOverlay
+          isVisible
+          buttonStyle={buttonStyle}
+          buttonType={buttonType}>
+          <ButtonSpinner buttonStyle={buttonStyle} />
+        </ButtonOverlay>
+      ) : null}
 
-      <ButtonOverlay
-        isVisible={isSuccess}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Success}
-        animate>
-        <Icons.Check buttonStyle={buttonStyle} />
-      </ButtonOverlay>
+      {isSuccess ? (
+        <ButtonOverlay
+          isVisible
+          buttonStyle={buttonStyle}
+          buttonType={buttonType}
+          backgroundColor={Success}
+          animate>
+          <Icons.Check buttonStyle={buttonStyle} />
+        </ButtonOverlay>
+      ) : null}
 
-      <ButtonOverlay
-        isVisible={isFailure}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Caution}
-        animate>
-        <Icons.Close buttonStyle={buttonStyle} />
-      </ButtonOverlay>
+      {isFailure ? (
+        <ButtonOverlay
+          isVisible
+          buttonStyle={buttonStyle}
+          buttonType={buttonType}
+          backgroundColor={Caution}
+          animate>
+          <Icons.Close buttonStyle={buttonStyle} />
+        </ButtonOverlay>
+      ) : null}
     </ButtonContainer>
   );
 };

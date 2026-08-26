@@ -1,9 +1,9 @@
 import React, {memo, useState} from 'react';
 import FastImage from 'react-native-fast-image';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../components/back/Back';
-import {H4, H6, Link, TextAlign} from '../../../components/styled/Text';
+import {H4, Link} from '../../../components/styled/Text';
 import {
   UriContainer,
   UriContainerTouchable,
@@ -24,63 +24,56 @@ import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {BottomNotificationCta} from '../bottom-notification/BottomNotification';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const CloseModalButton = styled(TouchableOpacity)`
-  height: 40px;
-  width: 40px;
-  border-radius: 50px;
-  background-color: #9ba3ae33;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 8px;
-`;
-
-const ContentContainer = styled.View`
-  padding: 16px 16px;
-`;
-
-const RowContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const StyledTouchableOpacity = styled(TouchableOpacity)``;
-
-const IconContainer = styled(FastImage)`
-  width: 30px;
-  height: 30px;
-  margin-right: 5px;
-  align-items: center;
-  justify-content: center;
-`;
-
-const WalletSelectMenuHeaderContainer = styled(
-  _WalletSelectMenuHeaderContainer,
-)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-`;
-
-const CenteredTitleContainer = styled.View`
-  align-items: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 20px;
-`;
-
-const InvisiblePlaceholder = styled.View`
-  width: 41px;
-`;
+const styles = StyleSheet.create({
+  closeModalButton: {
+    height: 40,
+    width: 40,
+    borderRadius: 50,
+    backgroundColor: '#9ba3ae33',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  contentContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  rowContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  iconContainer: {
+    width: 30,
+    height: 30,
+    marginRight: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletSelectMenuHeaderContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  centeredTitleContainer: {
+    alignItems: 'center',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 20,
+  },
+  invisiblePlaceholder: {
+    width: 41,
+  },
+});
 
 interface VerifyContextModalProps {
   isVisible: boolean;
@@ -148,30 +141,33 @@ const VerifyContextModal = ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <WalletSelectMenuContainer style={{minHeight: 300}}>
-        <WalletSelectMenuHeaderContainer>
-          <CloseModalButton onPress={closeModal}>
+        <_WalletSelectMenuHeaderContainer
+          style={styles.walletSelectMenuHeaderContainer}>
+          <TouchableOpacity
+            style={styles.closeModalButton}
+            onPress={closeModal}>
             <Back
               color={theme.dark ? 'white' : 'black'}
               background={'rgba(255, 255, 255, 0.2)'}
               opacity={1}
             />
-          </CloseModalButton>
-          <CenteredTitleContainer>
+          </TouchableOpacity>
+          <View style={styles.centeredTitleContainer}>
             <H4>{modalTitle}</H4>
-          </CenteredTitleContainer>
-          <InvisiblePlaceholder style={{width: 41}} />
-        </WalletSelectMenuHeaderContainer>
-        <ContentContainer>
-          <RowContainer>
-            <RowContainer>
+          </View>
+          <View style={[styles.invisiblePlaceholder, {width: 41}]} />
+        </_WalletSelectMenuHeaderContainer>
+        <View style={styles.contentContainer}>
+          <View style={styles.rowContainer}>
+            <View style={styles.rowContainer}>
               {peerIcon && !imageError ? (
-                <IconContainer>
+                <View style={styles.iconContainer}>
                   <FastImage
                     source={{uri: peerIcon}}
                     style={{width: 18, height: 18}}
                     onError={() => setImageError(true)}
                   />
-                </IconContainer>
+                </View>
               ) : (
                 <DefaultImage width={30} height={30} style={{marginRight: 5}} />
               )}
@@ -180,7 +176,7 @@ const VerifyContextModal = ({
                   {peerName}
                 </H4>
               </View>
-            </RowContainer>
+            </View>
             {peerUrl && (
               <UriContainerTouchable
                 onPress={() => dispatch(openUrlWithInAppBrowser(peerUrl))}>
@@ -190,7 +186,7 @@ const VerifyContextModal = ({
                 </UriContainer>
               </UriContainerTouchable>
             )}
-          </RowContainer>
+          </View>
           <Banner
             height={100}
             type={type}
@@ -199,7 +195,7 @@ const VerifyContextModal = ({
             hasBackgroundColor={true}
             icon={VerifyIcon}
           />
-          <RowContainer style={{paddingTop: 16}}>
+          <View style={[styles.rowContainer, {paddingTop: 16}]}>
             <BottomNotificationCta
               onPress={closeModal}
               suppressHighlighting={true}
@@ -215,8 +211,8 @@ const VerifyContextModal = ({
               }}>
               {t('REMOVE')}
             </BottomNotificationCta>
-          </RowContainer>
-        </ContentContainer>
+          </View>
+        </View>
       </WalletSelectMenuContainer>
     </SheetModal>
   );

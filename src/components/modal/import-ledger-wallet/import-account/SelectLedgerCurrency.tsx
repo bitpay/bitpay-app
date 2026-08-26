@@ -4,7 +4,7 @@ import AppEth from '@ledgerhq/hw-app-eth';
 import Xrp from '@ledgerhq/hw-app-xrp';
 import Transport from '@ledgerhq/hw-transport';
 import React, {useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {Platform, ScrollView, StyleSheet, View} from 'react-native';
 import {
   CurrencyColumn,
   CurrencyImageContainer,
@@ -46,7 +46,6 @@ import {
 } from '../../../../store/wallet/wallet.actions';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
 import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
-import {Platform} from 'react-native';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import BitpaySvg from '../../../../../assets/img/wallet/transactions/bitpay.svg';
@@ -256,14 +255,14 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
   },
 };
 
-const CurrencyListContainer = styled.View`
-  flex-direction: column;
-  align-items: center;
-  margin-top: 24px;
-  margin-bottom: 24px;
-`;
-
-const ScrollView = styled.ScrollView``;
+const styles = StyleSheet.create({
+  currencyListContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 24,
+  },
+});
 
 const CHAINS = [
   {
@@ -984,7 +983,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           </>
         ) : (
           <>
-            <CurrencyListContainer>
+            <View style={styles.currencyListContainer}>
               {CHAINS.map((c, index) => (
                 <RowContainerWithoutBorders
                   onPress={() => onContinue(c.chain)}
@@ -1014,7 +1013,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
                   <Hr />
                 </RowContainerWithoutBorders>
               ))}
-            </CurrencyListContainer>
+            </View>
             <Button
               buttonType={'link'}
               testID="ledger-add-by-derivation-path-button"

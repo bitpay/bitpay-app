@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {RootState} from '../../../../../store';
 import debounce from 'lodash.debounce';
 import AltCurrenciesRow, {
@@ -14,7 +14,15 @@ import {
   NoResultsImgContainer,
   NoResultsDescription,
 } from '../../../../../components/styled/Containers';
-import {FlatList, Keyboard, SectionList, View} from 'react-native';
+import {
+  FlatList,
+  ActivityIndicator,
+  Keyboard,
+  SafeAreaView,
+  SectionList,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -32,55 +40,96 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../../../contexts';
 
-const AltCurrencySettingsContainer = styled.SafeAreaView`
-  margin-top: 20px;
-  flex: 1;
-`;
+const LIST_READY_FALLBACK_MS = 2000;
 
-const Header = styled.View`
-  padding: 20px ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  altCurrencySettingsContainer: {
+    marginTop: 20,
+    flex: 1,
+  },
+  header: {
+    paddingVertical: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  searchResults: {
+    marginBottom: 50,
+  },
+  label: {
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 18,
+    textTransform: 'uppercase',
+    opacity: 0.75,
+    marginBottom: 6,
+  },
+  hr: {
+    marginHorizontal: 15,
+  },
+  searchIconContainer: {
+    padding: 10,
+  },
+  listHeader: {
+    fontSize: 18,
+    textAlign: 'left',
+    marginBottom: 16,
+    marginTop: 0,
+    flexGrow: 1,
+    fontWeight: '500',
+    paddingHorizontal: 15,
+  },
+});
 
-const SearchResults = styled.View`
-  margin: 0 0 50px 0;
-`;
+const AltCurrencySettingsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView
+    style={[styles.altCurrencySettingsContainer, style]}
+    {...rest}
+  />
+);
 
-const Label = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : LightBlack)};
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 18px;
-  text-transform: uppercase;
-  opacity: 0.75;
-  margin-bottom: 6px;
-`;
+const Header = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.header, style]} {...rest} />
+);
 
-const Hr = styled(_Hr)`
-  margin: 0 15px;
-`;
+const SearchResults = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.searchResults, style]} {...rest} />
+);
 
-const SearchIconContainer = styled.View`
-  padding: 10px;
-`;
+const Label = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.label, {color: theme.dark ? White : LightBlack}, style]}
+      {...rest}
+    />
+  );
+};
 
-interface HideableViewProps {
-  show: boolean;
-}
+const Hr = ({style, ...rest}: React.ComponentProps<typeof _Hr>) => (
+  <_Hr style={[styles.hr, style]} {...rest} />
+);
 
-const HideableView = styled.View<HideableViewProps>`
-  display: ${({show}) => (show ? 'flex' : 'none')};
-`;
+const SearchIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.searchIconContainer, style]} {...rest} />
+);
 
-const ListHeader = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Black)};
-  font-size: 18px;
-  text-align: left;
-  margin-bottom: 16px;
-  margin-top: 0px;
-  flex-grow: 1;
-  font-weight: 500;
-  padding: 0 15px;
-`;
+const ListHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.listHeader, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+};
 
 const AltCurrencySettings = () => {
   const {t} = useTranslation();
@@ -93,7 +142,9 @@ const AltCurrencySettings = () => {
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
-  const portfolio = useAppSelector(({PORTFOLIO}: RootState) => PORTFOLIO);
+  const portfolioPopulateInProgress = useAppSelector(
+    ({PORTFOLIO}: RootState) => !!PORTFOLIO.populateStatus?.inProgress,
+  );
   const recentDefaultAltCurrency = useAppSelector(
     ({APP}) => APP.recentDefaultAltCurrency,
   );
@@ -132,6 +183,7 @@ const AltCurrencySettings = () => {
   }, [alternativeCurrencies, recentDefaultAltCurrency, selectedAltCurrency]);
 
   const [searchVal, setSearchVal] = useState('');
+  const [listReady, setListReady] = useState(false);
   const [searchResults, setSearchResults] = useState(
     [] as AltCurrenciesRowProps[],
   );
@@ -162,6 +214,39 @@ const AltCurrencySettings = () => {
     };
   }, [updateSearchResults]);
 
+  useEffect(() => {
+    let completed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    const complete = () => {
+      if (completed) {
+        return;
+      }
+
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      setListReady(true);
+    };
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          complete();
+        }
+      },
+    );
+    fallbackTimer = setTimeout(complete, LIST_READY_FALLBACK_MS);
+
+    return () => {
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      unsubscribe();
+    };
+  }, [navigation]);
+
   const keyExtractor = (item: AltCurrenciesRowProps) => {
     return item.isoCode;
   };
@@ -186,10 +271,7 @@ const AltCurrencySettings = () => {
               const isDisplayCurrencyChange =
                 !!nextQuoteCurrency &&
                 currentDisplayQuoteCurrency !== nextQuoteCurrency;
-              const isPopulateInProgress =
-                !!portfolio.populateStatus?.inProgress;
-
-              if (isDisplayCurrencyChange && isPopulateInProgress) {
+              if (isDisplayCurrencyChange && portfolioPopulateInProgress) {
                 dispatch(cancelPopulatePortfolio());
               }
 
@@ -216,7 +298,7 @@ const AltCurrencySettings = () => {
       dispatch,
       hideOngoingProcess,
       navigation,
-      portfolio,
+      portfolioPopulateInProgress,
       selectedAltCurrency,
       showOngoingProcess,
     ],
@@ -240,8 +322,8 @@ const AltCurrencySettings = () => {
           </SearchIconContainer>
         </SearchContainer>
       </Header>
-      <HideableView show={!!searchVal}>
-        {searchResults.length ? (
+      {searchVal ? (
+        searchResults.length ? (
           <SearchResults>
             <FlatList
               data={searchResults}
@@ -259,24 +341,26 @@ const AltCurrencySettings = () => {
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </NoResultsDescription>
           </NoResultsContainer>
-        )}
-      </HideableView>
-
-      <HideableView show={!searchVal}>
+        )
+      ) : (
         <SearchResults>
-          <SectionList
-            contentContainerStyle={{paddingBottom: 150, marginTop: 5}}
-            sections={altCurrencyList}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            stickySectionHeadersEnabled={false}
-            renderSectionHeader={({section: {title}}) => (
-              <ListHeader>{title}</ListHeader>
-            )}
-            renderSectionFooter={() => <View style={{marginBottom: 30}} />}
-          />
+          {listReady ? (
+            <SectionList
+              contentContainerStyle={{paddingBottom: 150, marginTop: 5}}
+              sections={altCurrencyList}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+              stickySectionHeadersEnabled={false}
+              renderSectionHeader={({section: {title}}) => (
+                <ListHeader>{title}</ListHeader>
+              )}
+              renderSectionFooter={() => <View style={{marginBottom: 30}} />}
+            />
+          ) : (
+            <ActivityIndicator size="small" />
+          )}
         </SearchResults>
-      </HideableView>
+      )}
     </AltCurrencySettingsContainer>
   );
 };

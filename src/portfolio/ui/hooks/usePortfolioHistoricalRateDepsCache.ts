@@ -137,6 +137,7 @@ export function usePortfolioHistoricalRateDepsCache(args: {
     maxAgeMs: args.maxAgeMs,
     refreshToken: args.refreshToken,
     enabled: args.enabled !== false && !!canonicalGroup?.requests?.length,
+    retainCacheWhenDisabled: true,
   });
   const displayQuoteCacheState = useRuntimeFiatRateSeriesCache({
     quoteCurrency: displayQuoteGroup?.quoteCurrency || '',
@@ -150,6 +151,7 @@ export function usePortfolioHistoricalRateDepsCache(args: {
       args.enabled !== false &&
       displayQuoteGroup?.quoteCurrency !== 'USD' &&
       !!displayQuoteGroup?.requests?.length,
+    retainCacheWhenDisabled: true,
   });
 
   const emptyCacheRef = useRef<FiatRateSeriesCache>({});

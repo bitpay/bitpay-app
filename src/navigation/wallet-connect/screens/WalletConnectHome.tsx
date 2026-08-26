@@ -1,6 +1,10 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
-import styled from 'styled-components/native';
 import {
   H5,
   H7,
@@ -35,7 +39,15 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {FlatList, Platform} from 'react-native';
+import {
+  FlatList,
+  Platform,
+  View,
+  Text,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -92,44 +104,127 @@ export type WalletConnectHomeParamList = {
   notificationRequestId?: number;
 };
 
-const SummaryContainer = styled.View<{hasRequest: boolean}>`
-  padding-bottom: ${({hasRequest}) => (hasRequest ? '0px' : '80px')};
-`;
+const styles = StyleSheet.create({
+  summaryContainerWithRequest: {
+    paddingBottom: 0,
+  },
+  summaryContainerWithoutRequest: {
+    paddingBottom: 80,
+  },
+  noteContainer: {
+    borderRadius: 40,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  noteContainerDappUri: {
+    maxWidth: 175,
+  },
+  noteContainerDefault: {
+    maxWidth: 126,
+  },
+  noteLabel: {
+    marginLeft: 5,
+  },
+  prContainer: {
+    flex: 1,
+  },
+  clipboardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  balanceColumn: {
+    alignItems: 'flex-end',
+    marginRight: 10,
+  },
+  verifyIconContainer: {
+    padding: 10,
+    borderRadius: 50,
+  },
+});
 
-export const NoteContainer = styled(TouchableOpacity)<{isDappUri?: boolean}>`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-radius: 40px;
-  max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
-  justify-content: center;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 20px;
-`;
+const SummaryContainer = ({
+  hasRequest,
+  children,
+}: {
+  hasRequest: boolean;
+  children: React.ReactNode;
+}) => (
+  <View
+    style={
+      hasRequest
+        ? styles.summaryContainerWithRequest
+        : styles.summaryContainerWithoutRequest
+    }>
+    {children}
+  </View>
+);
 
-export const NoteLabel = styled(H7)`
-  margin-left: 5px;
-`;
+export const NoteContainer = ({
+  isDappUri,
+  disabled,
+  onPress,
+  children,
+}: {
+  isDappUri?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.noteContainer,
+        isDappUri ? styles.noteContainerDappUri : styles.noteContainerDefault,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const PRContainer = styled.View`
-  flex: 1;
-`;
+export const NoteLabel = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H7>
+>(({style, ...rest}, ref) => (
+  <H7 ref={ref} style={[styles.noteLabel, style]} {...rest} />
+));
+NoteLabel.displayName = 'NoteLabel';
 
-export const ClipboardContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-`;
+const PRContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.prContainer}>{children}</View>
+);
 
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-  margin-right: 10px;
-`;
+export const ClipboardContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.clipboardContainer}>{children}</View>
+);
 
-const VerifyIconContainer = styled(TouchableOpacity)`
-  padding: 10px;
-  border-radius: 50px;
-`;
+const BalanceColumn = ({children}: {children: React.ReactNode}) => (
+  <Column style={styles.balanceColumn}>{children}</Column>
+);
+
+const VerifyIconContainer = ({
+  style,
+  onPress,
+  children,
+}: {
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => (
+  <TouchableOpacity
+    style={[styles.verifyIconContainer, style]}
+    onPress={onPress}>
+    {children}
+  </TouchableOpacity>
+);
 
 const processRequest = (request: WCV2RequestType, keys: Keys) => {
   const {senderAddress, swapFromCurrencyAbbreviation, swapFromChain} = request;
@@ -169,7 +264,7 @@ const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const [imageError, setImageError] = useState(false);

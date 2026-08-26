@@ -1,5 +1,6 @@
 import React from 'react';
-import {Theme} from '@react-navigation/native';
+import {Theme, useTheme} from '@react-navigation/native';
+import {View, ViewProps, StyleSheet} from 'react-native';
 import {HeaderTitle} from '../../components/styled/Text';
 import WalletConnectIntro, {
   WalletConnectIntroParamList,
@@ -14,12 +15,12 @@ import WalletConnectConnections, {
 import WalletConnectRequestDetails, {
   WalletConnectRequestDetailsParamList,
 } from './screens/WalletConnectRequestDetails';
-import styled from 'styled-components/native';
 import {WalletConnectIconContainer} from './styled/WalletConnectContainers';
 import WalletConnectConfirm, {
   WalletConnectConfirmParamList,
 } from './screens/WalletConnectConfirm';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root} from '../../Root';
 import {useStackScreenOptions} from '../utils/headerHelpers';
 
@@ -28,14 +29,30 @@ interface WalletConnectProps {
   theme: Theme;
 }
 
-const WalletConnectHeaderTitle = styled.View`
-  align-items: center;
-  flex-direction: row;
-  border-width: 1px;
-  border-color: ${({theme}) => theme.colors.border};
-  padding: 5px 8px;
-  border-radius: 50px;
-`;
+const styles = StyleSheet.create({
+  walletConnectHeaderTitle: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    borderWidth: 1,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 50,
+  },
+});
+
+const WalletConnectHeaderTitle = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.walletConnectHeaderTitle,
+        {borderColor: theme.colors.border},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export const WalletConnectHeader = () => {
   return (
@@ -66,7 +83,6 @@ export enum WalletConnectScreens {
 
 const WalletConnectGroup = ({WalletConnect, theme}: WalletConnectProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <WalletConnect.Group screenOptions={commonOptions}>
       <WalletConnect.Screen

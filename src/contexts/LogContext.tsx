@@ -1,34 +1,33 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
+import {useEffect, useState} from 'react';
 import {logManager, LogData} from '../managers/LogManager';
 import {LogLevel} from '../store/log/log.models';
 
-const LogContext = createContext<LogData | null>(null);
-
-export const LogProvider: React.FC<{children: ReactNode}> = ({children}) => {
-  const [logData, setLogData] = useState<LogData>(logManager.getLogData());
-
-  useEffect(() => {
-    const unsubscribe = logManager.subscribe(data => {
-      setLogData(data);
-    });
-    return unsubscribe;
-  }, []);
-
-  return <LogContext.Provider value={logData}>{children}</LogContext.Provider>;
+const EMPTY_LOG_DATA: LogData = {
+  logs: [],
+  count: 0,
 };
 
-export const useLogContext = (): LogData => {
-  const context = useContext(LogContext);
-  if (!context) {
-    throw new Error('useLogContext must be used within LogProvider');
-  }
-  return context;
+export const useLogContext = (enabled = true): LogData => {
+  const [logData, setLogData] = useState<LogData>(() =>
+    enabled ? logManager.getLogData() : EMPTY_LOG_DATA,
+  );
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    return logManager.subscribe(nextLogData => {
+      setLogData(currentLogData =>
+        currentLogData.logs === nextLogData.logs &&
+        currentLogData.count === nextLogData.count
+          ? currentLogData
+          : nextLogData,
+      );
+    });
+  }, [enabled]);
+
+  return enabled ? logData : EMPTY_LOG_DATA;
 };
 
 export const useLogCount = (): number => {

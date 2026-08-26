@@ -28,7 +28,11 @@ import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {mergeAccountTransactions} from '../../utils/cachedTxHistory';
+import {
+  formatFiatAmount,
+  getFullLinkedWallet,
+} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {
   updateAccountTxHistory,
@@ -51,6 +55,7 @@ const Errors = BWC.getErrors();
 
 export const TX_HISTORY_LIMIT = 25;
 export const BWS_TX_HISTORY_LIMIT = 1001;
+const TX_HISTORY_CACHE_MAX_AGE_MS = 10 * 1000;
 
 const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
   const {currencyAbbreviation, chain, network} = wallet;
@@ -687,6 +692,8 @@ export const GetAccountTransactionHistory =
         transactions: any[];
         loadMore: boolean;
         hasConfirmingTxs: boolean;
+        fetchedAt?: number;
+        hasConfirmingTxsAt?: number;
       };
     };
     keyId: string;
@@ -701,6 +708,8 @@ export const GetAccountTransactionHistory =
           transactions: any[];
           loadMore: boolean;
           hasConfirmingTxs: boolean;
+          fetchedAt?: number;
+          hasConfirmingTxsAt?: number;
         };
       };
       sortedCompleteHistory: any[];
@@ -715,6 +724,8 @@ export const GetAccountTransactionHistory =
         transactions: any[];
         loadMore: boolean;
         hasConfirmingTxs: boolean;
+        fetchedAt?: number;
+        hasConfirmingTxsAt?: number;
       };
     };
     sortedCompleteHistory: any[];
@@ -745,41 +756,34 @@ export const GetAccountTransactionHistory =
       });
       const results = await Promise.all(transactionPromises);
 
-      // filter transactions by txid, but prioritize the one that isERC20 when is not Received
-      let transactionsWithoutRepeated = results
-        .flat()
-        .reduce((acc: any[], transaction: any) => {
-          const existingTransaction = acc.find(
-            (t: any) => t.txid === transaction.txid,
-          );
-
-          if (!existingTransaction || IsReceived(transaction.action)) {
-            acc.push(transaction);
-          } else if (IsERCToken(transaction.coin, transaction.chain)) {
-            const index = acc.findIndex(
-              (t: any) => t.txid === transaction.txid,
-            );
-            acc[index] = transaction;
-          }
-
-          return acc;
-        }, [] as any[]);
-
-      if (selectedChainFilterOption) {
-        transactionsWithoutRepeated = transactionsWithoutRepeated.filter(
-          (tx: any) => {
-            return tx.chain === selectedChainFilterOption;
-          },
-        );
-      }
-
-      allTransactions = transactionsWithoutRepeated.sort(
-        (a: any, b: any) =>
-          new Date(b.time || b.createdOn).getTime() -
-          new Date(a.time || a.createdOn).getTime(),
-      );
+      allTransactions = mergeAccountTransactions({
+        transactionLists: results,
+        selectedChainFilterOption,
+      });
 
       const sortedCompleteHistory = allTransactions.slice(0, limit);
+
+      const key = getState().WALLET.keys[keyId];
+      if (key) {
+        wallets.forEach(wallet => {
+          if (!IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+            return;
+          }
+          const linkedWallet = getFullLinkedWallet(key, wallet);
+          const linkedHistoryFromThisBatch = linkedWallet
+            ? accountTransactionsHistory[linkedWallet.id]
+            : undefined;
+          const tokenHistory = accountTransactionsHistory[wallet.id];
+          if (!linkedHistoryFromThisBatch || !tokenHistory) {
+            return;
+          }
+          accountTransactionsHistory[wallet.id] = {
+            ...tokenHistory,
+            hasConfirmingTxs: linkedHistoryFromThisBatch.hasConfirmingTxs,
+            hasConfirmingTxsAt: linkedHistoryFromThisBatch.hasConfirmingTxsAt,
+          };
+        });
+      }
 
       dispatch(
         updateAccountTxHistory({
@@ -816,7 +820,13 @@ export const GetTransactionHistory =
     skipWalletProcessing?: boolean;
     skipUiFriendlyList?: boolean;
   }): Effect<
-    Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
+    Promise<{
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+      fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
+    }>
   > =>
   async (
     dispatch,
@@ -825,6 +835,8 @@ export const GetTransactionHistory =
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
+    fetchedAt?: number;
+    hasConfirmingTxsAt?: number;
   }> => {
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
@@ -855,7 +867,16 @@ export const GetTransactionHistory =
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
 
-      if (transactionHistory?.transactions?.length && !refresh && !skip) {
+      const cachedAt = transactionHistory?.fetchedAt;
+      const isCacheFresh =
+        !!cachedAt && Date.now() - cachedAt < TX_HISTORY_CACHE_MAX_AGE_MS;
+
+      if (
+        transactionHistory?.transactions?.length &&
+        !refresh &&
+        !skip &&
+        isCacheFresh
+      ) {
         return resolve(transactionHistory);
       }
 
@@ -897,8 +918,20 @@ export const GetTransactionHistory =
         });
 
         let hasConfirmingTxs: boolean = false;
+        // Only the newest page can be head-scanned for pending txs, so a
+        // load-more call carries the previous value forward rather than
+        // reporting false and clobbering a correct `true`.
+        let hasConfirmingTxsAt: number | undefined =
+          wallet.transactionHistory?.hasConfirmingTxsAt;
+        let fetchedAt: number | undefined =
+          wallet.transactionHistory?.fetchedAt;
+        if (skip) {
+          hasConfirmingTxs = !!wallet.transactionHistory?.hasConfirmingTxs;
+        }
         if (!skip) {
+          fetchedAt = Date.now();
           let transactionHistory;
+          let derivedAt: number | undefined;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
           const {WALLET} = getState();
@@ -908,8 +941,10 @@ export const GetTransactionHistory =
               tokens?.includes(walletId),
             );
             transactionHistory = linkedWallet?.transactionHistory?.transactions;
+            derivedAt = linkedWallet?.transactionHistory?.fetchedAt;
           } else {
             transactionHistory = newHistory;
+            derivedAt = Date.now();
           }
 
           // look for sent or moved unconfirmed until find a confirmed
@@ -924,7 +959,8 @@ export const GetTransactionHistory =
               }
             }
           }
-          if (!isAccountDetailsView) {
+          hasConfirmingTxsAt = derivedAt;
+          if (!isAccountDetailsView && !isExportHistoryView) {
             dispatch(
               updateWalletTxHistory({
                 walletId: walletId,
@@ -933,12 +969,20 @@ export const GetTransactionHistory =
                   transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
                   loadMore,
                   hasConfirmingTxs,
+                  fetchedAt,
+                  hasConfirmingTxsAt,
                 },
               }),
             );
           }
         }
-        return resolve({transactions: newHistory, loadMore, hasConfirmingTxs});
+        return resolve({
+          transactions: newHistory,
+          loadMore,
+          hasConfirmingTxs,
+          fetchedAt,
+          hasConfirmingTxsAt,
+        });
       } catch (err) {
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);

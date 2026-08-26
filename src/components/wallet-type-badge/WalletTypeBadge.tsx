@@ -1,6 +1,6 @@
 import React, {ReactNode} from 'react';
-import {StyleProp, ViewStyle} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
+import {useTheme} from '../../contexts';
 import {BaseText} from '../styled/Text';
 import {LightBlack, Slate30, SlateDark} from '../../styles/colors';
 
@@ -13,35 +13,57 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-const Container = styled.View`
-  flex-direction: row;
-  align-items: center;
-  align-self: flex-start;
-  gap: 4px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 16px;
-  padding: 4px 8px;
-`;
-
-const Label = styled(BaseText)<{size: WalletTypeBadgeSize}>`
-  font-style: normal;
-  font-weight: 400;
-  font-size: ${({size}) => (size === 'card' ? 13 : 12)}px;
-  line-height: ${({size}) => (size === 'card' ? 20 : 15)}px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  label: {
+    fontStyle: 'normal',
+    fontWeight: '400',
+  },
+  cardLabel: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  listLabel: {
+    fontSize: 12,
+    lineHeight: 15,
+  },
+});
 
 const WalletTypeBadge: React.FC<Props> = ({
   icon,
   label,
   size = 'list',
   style,
-}) => (
-  <Container style={style}>
-    {icon}
-    <Label size={size}>{label}</Label>
-  </Container>
-);
+}) => {
+  const theme = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.container,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}>
+      {icon}
+      <BaseText
+        style={[
+          styles.label,
+          size === 'card' ? styles.cardLabel : styles.listLabel,
+          {color: theme.dark ? Slate30 : SlateDark},
+        ]}>
+        {label}
+      </BaseText>
+    </View>
+  );
+};
 
 export default WalletTypeBadge;

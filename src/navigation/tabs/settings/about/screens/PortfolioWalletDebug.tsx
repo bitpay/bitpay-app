@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {Platform, ScrollView} from 'react-native';
+import {Platform, ScrollView, StyleSheet, Text} from 'react-native';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useTranslation} from 'react-i18next';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -67,41 +67,83 @@ type PortfolioWalletDebugScreenProps = NativeStackScreenProps<
   AboutScreens.PORTFOLIO_WALLET_DEBUG
 >;
 
-const JsonLineText = styled.Text`
-  padding: 12px;
-  font-size: 12px;
-  line-height: 16px;
-  font-family: ${Platform.OS === 'ios' ? 'Menlo' : 'monospace'};
-  color: ${({theme}) => theme.colors.text};
-`;
+const walletDebugStyles = StyleSheet.create({
+  jsonLineText: {
+    padding: 12,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  sectionTitle: {
+    paddingHorizontal: 12,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  sectionText: {
+    paddingTop: 0,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  controlLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 2,
+    marginBottom: 8,
+    opacity: 0.7,
+  },
+});
 
-const SectionTitle = styled.Text`
-  padding: 0 12px;
-  color: ${({theme}) => theme.colors.text};
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 600;
-`;
+const JsonLineText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[walletDebugStyles.jsonLineText, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const SectionText = styled.Text`
-  padding: 0 12px 12px;
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  line-height: 18px;
-`;
+const SectionTitle: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[walletDebugStyles.sectionTitle, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const ErrorText = styled(SectionText)`
-  color: ${({theme}) => theme.colors.notification};
-`;
+const SectionText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[walletDebugStyles.sectionText, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
-const ControlLabel = styled.Text`
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  line-height: 16px;
-  margin-top: 2px;
-  margin-bottom: 8px;
-  opacity: 0.7;
-`;
+const ErrorText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        walletDebugStyles.sectionText,
+        {color: theme.colors.notification},
+      ]}>
+      {children}
+    </Text>
+  );
+};
+
+const ControlLabel: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <Text style={[walletDebugStyles.controlLabel, {color: theme.colors.text}]}>
+      {children}
+    </Text>
+  );
+};
 
 const csvEscape = (value: unknown): string => {
   const nextValue = value == null ? '' : String(value);

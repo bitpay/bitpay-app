@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {
   CharcoalBlack,
   LightBlack,
@@ -9,15 +9,10 @@ import {
   White,
 } from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
-import {
-  ActiveOpacity,
-  CardGutter,
-  Row,
-  ScreenGutter,
-} from '../styled/Containers';
+import {ActiveOpacity, Row} from '../styled/Containers';
 import Card from '../card/Card';
 import Percentage from '../percentage/Percentage';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {BaseText, H3} from '../styled/Text';
 import {shouldScale} from '../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
@@ -44,66 +39,84 @@ interface HomeCardProps {
   body: BodyProps;
   footer?: ReactNode;
   onCTAPress?: () => void;
+  onCTAPressIn?: () => void;
   backgroundImg?: () => ReactElement;
 }
 
-const CardBodyHeader = styled(BaseText)`
-  font-size: 12px;
-  line-height: 15px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-top: ${CardGutter};
-  margin-bottom: 1px;
-`;
+const styles = StyleSheet.create({
+  cardBodyHeader: {
+    fontSize: 12,
+    lineHeight: 15,
+    marginTop: 15,
+    marginBottom: 1,
+  },
+  cardBodyDesc: {
+    fontWeight: '500',
+    fontSize: 18,
+    lineHeight: 25,
+    marginTop: 15,
+  },
+  cardPrice: {
+    lineHeight: 30,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  cardPill: {
+    backgroundColor: '#cbf3e8',
+    alignSelf: 'flex-start',
+    borderRadius: 7,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  cardPillText: {
+    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 19,
+    color: SlateDark,
+  },
+  cardContainer: {
+    left: 12,
+  },
+  needBackupText: {
+    fontSize: 12,
+    textAlign: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderRadius: 3,
+    position: 'absolute',
+    marginTop: 5,
+  },
+});
 
-const CardBodyDesc = styled(BaseText)`
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 25px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-top: ${CardGutter};
-`;
-
-const CardPrice = styled(BaseText)<{scale: boolean}>`
-  font-size: ${({scale}) => (scale ? 15 : 20)}px;
-  line-height: 30px;
-  font-weight: bold;
-  color: ${({theme}) => theme.colors.text};
-  margin-bottom: 2px;
-`;
-
-const CardPill = styled.View`
-  background-color: #cbf3e8;
-  align-self: flex-start;
-  border-radius: 7px;
-  padding: 4px 8px;
-`;
-
-const CardPillText = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 19px;
-  color: ${SlateDark};
-`;
-
-const CardContainer = styled(TouchableOpacity)`
-  left: ${ScreenGutter};
-`;
-
-export const NeedBackupText = styled(BaseText)`
-  font-size: 12px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  padding: 2px 4px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  border-radius: 3px;
-  position: absolute;
-  margin-top: 5px;
-`;
+export const NeedBackupText: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.needBackupText,
+        {
+          color: theme.dark ? White : SlateDark,
+          borderColor: theme.dark ? SlateDark : Slate30,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export const HOME_CARD_HEIGHT = 143;
 export const HOME_CARD_WIDTH = 170;
 
-const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
+const HomeCard: React.FC<HomeCardProps> = ({
+  body,
+  footer,
+  onCTAPress,
+  onCTAPressIn,
+}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const {
@@ -126,14 +139,33 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
         <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'card'} />
       ) : null}
       {isMultisig ? <MultisigBadge size={'card'} /> : null}
-      {title && <CardBodyHeader>{title}</CardBodyHeader>}
+      {title && (
+        <BaseText
+          style={[
+            styles.cardBodyHeader,
+            {color: theme.dark ? Slate30 : SlateDark},
+          ]}>
+          {title}
+        </BaseText>
+      )}
       {needsBackup && !pendingTssSession ? (
         <Row>
           <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
         </Row>
       ) : !hideKeyBalance ? (
         <>
-          {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
+          {value && (
+            <BaseText
+              style={[
+                styles.cardPrice,
+                {
+                  fontSize: shouldScale(value) ? 15 : 20,
+                  color: theme.colors.text,
+                },
+              ]}>
+              {value}
+            </BaseText>
+          )}
           {percentageDifference || percentageDifference === 0 ? (
             <Percentage
               percentageDifference={percentageDifference}
@@ -142,15 +174,23 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
             />
           ) : null}
           {pillText && (
-            <CardPill>
-              <CardPillText>{pillText}</CardPillText>
-            </CardPill>
+            <View style={styles.cardPill}>
+              <BaseText style={styles.cardPillText}>{pillText}</BaseText>
+            </View>
           )}
         </>
       ) : (
         <H3>****</H3>
       )}
-      {description && <CardBodyDesc>{description}</CardBodyDesc>}
+      {description && (
+        <BaseText
+          style={[
+            styles.cardBodyDesc,
+            {color: theme.dark ? White : SlateDark},
+          ]}>
+          {description}
+        </BaseText>
+      )}
     </View>
   );
 
@@ -166,7 +206,11 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
   const FooterComp = footer ?? DefaultFooter;
 
   return (
-    <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
+    <TouchableOpacity
+      style={styles.cardContainer}
+      activeOpacity={ActiveOpacity}
+      onPressIn={onCTAPressIn}
+      onPress={_onPress}>
       <Card
         body={BodyComp}
         footer={FooterComp}
@@ -178,7 +222,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
           width: HOME_CARD_WIDTH,
         }}
       />
-    </CardContainer>
+    </TouchableOpacity>
   );
 };
 

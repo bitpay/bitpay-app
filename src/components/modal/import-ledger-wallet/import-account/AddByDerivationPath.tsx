@@ -34,7 +34,6 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import styled from 'styled-components/native';
 import {
   EVMAccountParams,
   UtxoAccountParams,

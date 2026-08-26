@@ -1,10 +1,9 @@
 import React, {useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, ScrollView} from 'react-native';
+import {Linking, ScrollView, SafeAreaView, StyleSheet} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../../contexts';
 import LinearGradient from 'react-native-linear-gradient';
-import styled from 'styled-components/native';
 import {MerchantGroupParamList} from '../MerchantGroup';
 import RemoteImage from '../../components/RemoteImage';
 import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
@@ -24,30 +23,65 @@ import {
 } from '../../../../../components/styled/Text';
 import HeaderBackButton from '../../../../../components/back/HeaderBackButton';
 
-const MerchantDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  merchantDetailsContainer: {
+    flex: 1,
+  },
+  gradientBox: {
+    width: WIDTH,
+    height: 80,
+  },
+  contentContainer: {
+    paddingTop: 0,
+    paddingHorizontal: 3,
+    paddingBottom: 100,
+  },
+  merchantName: {
+    marginBottom: 15,
+  },
+  divider: {
+    marginVertical: 25,
+  },
+  sectionHeader: {
+    marginBottom: 15,
+  },
+});
 
-const GradientBox = styled(LinearGradient)`
-  width: ${WIDTH}px;
-  height: 80px;
-`;
+const MerchantDetailsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.merchantDetailsContainer, style]} {...rest} />
+);
 
-const ContentContainer = styled(SectionContainer)`
-  padding: 0 3px 100px;
-`;
+const GradientBox = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof LinearGradient>) => (
+  <LinearGradient style={[styles.gradientBox, style]} {...rest} />
+);
 
-const MerchantName = styled(H3)`
-  margin-bottom: 15px;
-`;
+const ContentContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionContainer>) => (
+  <SectionContainer style={[styles.contentContainer, style]} {...rest} />
+);
 
-const Divider = styled(SectionDivider)`
-  margin: 25px 0;
-`;
+const MerchantName = ({style, ...rest}: React.ComponentProps<typeof H3>) => (
+  <H3 style={[styles.merchantName, style]} {...rest} />
+);
 
-const SectionHeader = styled(H5)`
-  margin-bottom: 15px;
-`;
+const Divider = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionDivider>) => (
+  <SectionDivider style={[styles.divider, style]} {...rest} />
+);
+
+const SectionHeader = ({style, ...rest}: React.ComponentProps<typeof H5>) => (
+  <H5 style={[styles.sectionHeader, style]} {...rest} />
+);
 
 const MerchantDetails = ({
   route,

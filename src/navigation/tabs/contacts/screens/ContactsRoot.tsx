@@ -2,8 +2,8 @@ import React, {useState, useCallback, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {useTheme} from 'styled-components/native';
-import {FlatList, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
+import {FlatList, SafeAreaView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
@@ -27,106 +27,158 @@ import ContactRow, {
 } from '../../../../components/list/ContactRow';
 import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
 
-const ContactsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const NoContacts = styled.View`
-  padding: 0 20px;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-`;
-
-const NoContactsIcon = styled.View`
-  display: flex;
-  align-items: center;
-`;
-
-const NoContactsTitle = styled(BaseText)`
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 20px;
-`;
-
-const ButtonContainer = styled.View`
-  margin-top: 40px;
-`;
-
-const NoContactsSubTitle = styled(BaseText)`
-  text-align: center;
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const Title = styled(BaseText)`
-  font-size: 14px;
-  font-weight: bold;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 8px;
-`;
-
-const ContentTitle = styled.View`
-  flex-direction: row;
-  justify-content: flex-start;
-  padding-left: 7px;
-`;
-
-const ContentIcon = styled.View`
-  padding-right: 10px;
-`;
-
-const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
-  flex-direction: row;
-  margin: 10px 15px;
-  justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
-`;
-
 const horizontalPadding = 20;
-const SearchBox = styled(BoxInput)`
-  width: ${WIDTH - horizontalPadding * 2}px;
-  font-size: 16px;
-  position: relative;
-`;
 
-const SearchContainer = styled.View`
-  padding: 0 ${horizontalPadding}px;
-  margin: 20px 0;
-`;
+const styles = StyleSheet.create({
+  contactsContainer: {
+    flex: 1,
+  },
+  noContacts: {
+    paddingHorizontal: 20,
+    height: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  noContactsIcon: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  noContactsTitle: {
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    marginTop: 40,
+  },
+  noContactsSubTitle: {
+    textAlign: 'center',
+    fontSize: 12,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  contentTitle: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingLeft: 7,
+  },
+  contentIcon: {
+    paddingRight: 10,
+  },
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    marginVertical: 10,
+    marginHorizontal: 15,
+  },
+  searchBox: {
+    width: WIDTH - horizontalPadding * 2,
+    fontSize: 16,
+    position: 'relative',
+  },
+  searchContainer: {
+    paddingHorizontal: horizontalPadding,
+    marginVertical: 20,
+  },
+  searchResults: {
+    marginBottom: 50,
+  },
+  noResultsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    minHeight: HEIGHT - 300,
+    paddingTop: 20,
+  },
+  noResultsHeader: {
+    fontSize: 17,
+  },
+  hr: {
+    alignSelf: 'center',
+    borderBottomWidth: 1,
+    marginHorizontal: horizontalPadding,
+    width: WIDTH - horizontalPadding * 2,
+  },
+});
 
-const SearchResults = styled.View`
-  margin: 0 0 50px 0;
-`;
+const NoContactsTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.noContactsTitle, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const NoResultsContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: ${HEIGHT - 300}px;
-  padding-top: 20px;
-`;
+const NoContactsSubTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.noContactsSubTitle,
+        {color: theme.dark ? White : SlateDark},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const NoResultsHeader = styled(H4)`
-  font-size: 17px;
-`;
+const Title: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.title, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const Hr = styled.View`
-  align-self: center;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
-  border-bottom-width: 1px;
-  margin: 0 ${horizontalPadding}px;
-  width: ${WIDTH - horizontalPadding * 2}px;
-`;
+const SearchBox: React.FC<React.ComponentProps<typeof BoxInput>> = ({
+  style,
+  ...rest
+}) => <BoxInput style={[styles.searchBox, style]} {...rest} />;
+
+const NoResultsHeader: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <H4 style={styles.noResultsHeader}>{children}</H4>;
+
+const Hr: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[styles.hr, {borderBottomColor: theme.dark ? LightBlack : Cloud}]}
+    />
+  );
+};
 
 interface HideableViewProps {
   show: boolean;
+  children?: React.ReactNode;
 }
 
-const HideableView = styled.View<HideableViewProps>`
-  display: ${({show}) => (show ? 'flex' : 'none')};
-`;
+const HideableView: React.FC<HideableViewProps> = ({show, children}) => (
+  <View style={show ? {display: 'flex'} : {display: 'none'}}>{children}</View>
+);
+
+const SectionHeaderContainer: React.FC<{
+  justifyContent?: string;
+  children?: React.ReactNode;
+}> = ({justifyContent, children}) => (
+  <View
+    style={[
+      styles.sectionHeaderContainer,
+      {justifyContent: (justifyContent as any) || 'flex-start'},
+    ]}>
+    {children}
+  </View>
+);
 
 const ContactsRoot = ({}: NativeStackScreenProps<
   ContactsGroupParamList,
@@ -184,10 +236,10 @@ const ContactsRoot = ({}: NativeStackScreenProps<
   };
 
   return (
-    <ContactsContainer style={{paddingTop: insets.top}}>
+    <SafeAreaView style={[styles.contactsContainer, {paddingTop: insets.top}]}>
       {contactList.length ? (
         <>
-          <SearchContainer>
+          <View style={styles.searchContainer}>
             <Controller
               control={control}
               rules={{
@@ -207,70 +259,70 @@ const ContactsRoot = ({}: NativeStackScreenProps<
               )}
               name="search"
             />
-          </SearchContainer>
+          </View>
           <SectionHeaderContainer justifyContent={'space-between'}>
-            <ContentTitle>
+            <View style={styles.contentTitle}>
               <AddressBookIcon />
               <Title>{t('Contacts')}</Title>
-            </ContentTitle>
+            </View>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               testID="contacts-add-contact-button"
               accessibilityLabel="Add contact"
               onPress={goToCreateContact}>
-              <ContentIcon>
+              <View style={styles.contentIcon}>
                 {theme.dark ? <AddContactIconWhite /> : <AddContactIcon />}
-              </ContentIcon>
+              </View>
             </TouchableOpacity>
           </SectionHeaderContainer>
           <Hr />
           <HideableView show={!!searchVal}>
             {searchResults.length ? (
-              <SearchResults>
+              <View style={styles.searchResults}>
                 <FlatList
                   contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
                   data={searchResults}
                   renderItem={renderItem}
                   keyExtractor={keyExtractor}
                 />
-              </SearchResults>
+              </View>
             ) : (
-              <NoResultsContainer>
+              <View style={styles.noResultsContainer}>
                 <NoResultsHeader>{t('No Results')}</NoResultsHeader>
-              </NoResultsContainer>
+              </View>
             )}
           </HideableView>
           <HideableView show={!searchVal}>
-            <SearchResults>
+            <View style={styles.searchResults}>
               <FlatList
                 contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
                 data={contactList}
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
               />
-            </SearchResults>
+            </View>
           </HideableView>
         </>
       ) : (
-        <NoContacts>
-          <NoContactsIcon>
+        <View style={styles.noContacts}>
+          <View style={styles.noContactsIcon}>
             <AddressBookIcon width={60} height={100} />
-          </NoContactsIcon>
+          </View>
           <NoContactsTitle>{t('No contacts yet')}</NoContactsTitle>
           <NoContactsSubTitle>
             {t('Get started by adding your first one.')}
           </NoContactsSubTitle>
-          <ButtonContainer>
+          <View style={styles.buttonContainer}>
             <Button
               testID="contacts-new-contact-button"
               accessibilityLabel="New contact"
               onPress={goToCreateContact}
               children="New Contact"
             />
-          </ButtonContainer>
-        </NoContacts>
+          </View>
+        </View>
       )}
-    </ContactsContainer>
+    </SafeAreaView>
   );
 };
 

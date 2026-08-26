@@ -1,4 +1,9 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+  useTheme,
+} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
@@ -17,21 +22,27 @@ import {
   DeviceEventEmitter,
   Linking,
   RefreshControl,
+  SafeAreaView,
+  StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 import {shareNative} from '../../../utils/share';
 import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceChartLoadingPlaceholder from '../../../components/charts/BalanceChartLoadingPlaceholder';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../components/charts/fiatTimeframes';
+import {useHasCachedBalanceHistoryChartSeries} from '../../../components/charts/balanceHistoryChartSeriesCache';
 import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
+import usePortfolioBalanceChartEligibleWallets from '../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
 import Settings from '../../../components/settings/Settings';
 import {
   Balance,
@@ -100,7 +111,11 @@ import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import MultisigIcon from '../../../../assets/img/icon-multisig-group.svg';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -117,14 +132,20 @@ import {
   ProposalBadgeContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import TransactionRow, {
-  TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/TransactionRow';
+import TransactionRow from '../../../components/list/TransactionRow';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
-import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {
+  INITIAL_CACHED_TX_HYDRATION_LIMIT,
+  flattenTransactionGroups,
+  getCachedWalletTransactions,
+} from '../../../store/wallet/utils/cachedTxHistory';
+import {
+  DeviceEmitterEvents,
+  WalletLoadHistoryTarget,
+} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
 import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/swap-crypto-utils';
@@ -150,7 +171,6 @@ import {
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
-import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
@@ -160,12 +180,13 @@ import type {RootState} from '../../../store';
 import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
+import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
-  key?: Key;
   skipInitializeHistory?: boolean;
   copayerId?: string;
+  _preloadContent?: boolean;
 };
 
 type WalletDetailsScreenProps = NativeStackScreenProps<
@@ -173,141 +194,328 @@ type WalletDetailsScreenProps = NativeStackScreenProps<
   'WalletDetails'
 >;
 
-const WalletDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const HeaderContainer = styled.View`
-  margin: 18px 0 24px;
-`;
+const styles = StyleSheet.create({
+  walletDetailsContainer: {
+    flex: 1,
+  },
+  headerContainer: {
+    marginTop: 18,
+    marginHorizontal: 0,
+    marginBottom: 24,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  cryptoBalanceRow: {
+    marginTop: -5,
+  },
+  touchableRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  balanceContainer: {
+    paddingTop: 0,
+    paddingHorizontal: 15,
+    paddingBottom: 22,
+    flexDirection: 'column',
+  },
+  hiddenChart: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
+  },
+  transactionSectionHeaderContainer: {
+    padding: gutter,
+    height: 55,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  skeletonContainer: {
+    marginBottom: 20,
+  },
+  emptyListContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  lockedBalanceContainer: {
+    flexDirection: 'row',
+    padding: gutter,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 75,
+  },
+  description: {
+    overflow: 'hidden',
+    fontSize: 16,
+  },
+  tailContainer: {
+    marginLeft: 'auto' as any,
+  },
+  value: {
+    textAlign: 'right',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  fiat: {
+    fontSize: 14,
+    textAlign: 'right',
+  },
+  headerKeyName: {
+    textAlign: 'center',
+    marginLeft: 5,
+    fontSize: 12,
+    lineHeight: 20,
+  },
+  headerSubTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeContainerBase: {
+    borderWidth: 1,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    borderRadius: 3,
+  },
+  typeContainerMargin: {
+    marginTop: 10,
+    marginHorizontal: 4,
+    marginBottom: 0,
+  },
+  networkBadgeRow: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  networkBadgeContainerMargin: {
+    marginTop: 0,
+    marginHorizontal: 0,
+    marginBottom: 0,
+    marginRight: 4,
+  },
+  iconContainer: {
+    marginRight: 5,
+  },
+  typeText: {
+    fontSize: 12,
+  },
+  cryptoBalanceText: {
+    fontSize: 13,
+  },
+  linkText: {
+    fontWeight: '500',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+});
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-`;
+const WalletDetailsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.walletDetailsContainer, style]} {...rest} />
+);
 
-const CryptoBalanceRow = styled(Row)`
-  margin-top: -5px;
-`;
+const HeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.headerContainer, style]} {...rest} />;
 
-const TouchableRow = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-`;
+const Row: React.FC<React.ComponentProps<typeof View>> = ({style, ...rest}) => (
+  <View style={[styles.row, style]} {...rest} />
+);
 
-const BalanceContainer = styled.View`
-  padding: 0 15px 22px;
-  flex-direction: column;
-`;
+const CryptoBalanceRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <Row style={[styles.cryptoBalanceRow, style]} {...rest} />;
 
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const TouchableRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.touchableRow, style]} {...rest} />;
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+const BalanceContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.balanceContainer, style]} {...rest} />;
 
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const TransactionSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
+const BorderBottom: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const LockedBalanceContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding: ${ScreenGutter};
-  justify-content: center;
-  align-items: center;
-  height: 75px;
-`;
+const SkeletonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.skeletonContainer, style]} {...rest} />;
 
-const Description = styled(BaseText)`
-  overflow: hidden;
-  font-size: 16px;
-`;
+const EmptyListContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.emptyListContainer, style]} {...rest} />;
 
-const TailContainer = styled.View`
-  margin-left: auto;
-`;
+const LockedBalanceContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.lockedBalanceContainer, style]} {...rest} />
+);
 
-const HeadContainer = styled.View``;
+const Description: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.description, style]} {...rest} />;
 
-const Value = styled(BaseText)`
-  text-align: right;
-  font-weight: 700;
-  font-size: 16px;
-`;
+const TailContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.tailContainer, style]} {...rest} />;
 
-const Fiat = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: right;
-`;
+const HeadContainer: React.FC<React.ComponentProps<typeof View>> = props => (
+  <View {...props} />
+);
 
-const HeaderKeyName = styled(BaseText)`
-  text-align: center;
-  margin-left: 5px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  font-size: 12px;
-  line-height: 20px;
-`;
+const Value: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.value, style]} {...rest} />;
 
-const HeaderSubTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const Fiat: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      style={[styles.fiat, {color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
 
-const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  padding: 2px 5px;
-  border-radius: 3px;
-  margin: 10px 4px 0;
-`;
+const HeaderKeyName: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      style={[
+        styles.headerKeyName,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const NetworkBadgeRow = styled(Row)`
-  align-items: center;
-  margin-top: 10px;
-`;
+const HeaderSubTitleContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.headerSubTitleContainer, style]} {...rest} />;
 
-const NetworkBadgeContainer = styled(TypeContainer)`
-  margin: 0 4px 0 0;
-`;
+const TypeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <HeaderSubTitleContainer
+      style={[
+        styles.typeContainerBase,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        styles.typeContainerMargin,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const IconContainer = styled.View`
-  margin-right: 5px;
-`;
+const NetworkBadgeRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <Row style={[styles.networkBadgeRow, style]} {...rest} />;
 
-const TypeText = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-`;
+const NetworkBadgeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => (
+  <TypeContainer
+    style={[styles.networkBadgeContainerMargin, style]}
+    {...rest}
+  />
+);
 
-const CryptoBalanceText = styled(Paragraph)`
-  font-size: 13px;
-`;
+const IconContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.iconContainer, style]} {...rest} />;
 
-const LinkText = styled(Link)`
-  font-weight: 500;
-  font-size: 18px;
-  text-align: center;
-`;
+const TypeText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      style={[
+        styles.typeText,
+        {color: theme.dark ? LuckySevens : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const CryptoBalanceText: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => <Paragraph style={[styles.cryptoBalanceText, style]} {...rest} />;
+
+const LinkText: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  ...rest
+}) => <Link style={[styles.linkText, style]} {...rest} />;
 
 const getWalletType = (
   key: Key,
@@ -347,10 +555,21 @@ const formatSelectedCryptoBalance = (balance: string): string => {
     : balance;
 };
 
-const transactionKeyExtractor = (_item: any, index: number) => index.toString();
+const transactionKeyExtractor = (item: any, index: number) => {
+  if (typeof item === 'string') {
+    return 'section:' + item;
+  }
+
+  return String(
+    item.txid || item.id || item.proposalId || item.createdOn || index,
+  );
+};
+const getTxDescriptionDetails = (key: string | undefined) =>
+  key === 'moonpay' ? 'MoonPay' : undefined;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
   const theme = useTheme();
@@ -358,10 +577,30 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, skipInitializeHistory, copayerId} = route.params;
-
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const {
+    walletId,
+    skipInitializeHistory,
+    copayerId,
+    _preloadContent = false,
+  } = route.params;
+  const wasPreloadedRef = useRef(_preloadContent);
+  const [contentReady, setContentReady] = useState(_preloadContent);
+  const [secondaryContentReady, setSecondaryContentReady] =
+    useState(_preloadContent);
+  const [renderedWalletChartIdentity, setRenderedWalletChartIdentity] =
+    useState<string>();
+  const fullWalletObj = useAppSelector(({WALLET}) => {
+    for (const walletKey of Object.values(WALLET.keys) as Key[]) {
+      const wallet = findWalletById(walletKey.wallets, walletId, copayerId) as
+        | Wallet
+        | undefined;
+      if (wallet) {
+        return wallet;
+      }
+    }
+  }) as Wallet;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[fullWalletObj.keyId]);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const supportedCardMap = useAppSelector(
     ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
   );
@@ -375,28 +614,97 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     ScreenGutter,
   );
 
-  const wallets = (Object.values(keys) as Key[]).flatMap(k => k.wallets);
-
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
-    useAppSelector(({APP}) => APP);
-  const fullWalletObj = findWalletById(wallets, walletId, copayerId) as Wallet;
-  const key = keys[fullWalletObj.keyId];
-  const uiFormattedWallet = buildUIFormattedWallet(
-    fullWalletObj,
-    defaultAltCurrency.isoCode,
-    rates,
-    dispatch,
-    'symbol',
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
+  const uiFormattedWallet = useMemo(
+    () =>
+      buildUIFormattedWallet(
+        fullWalletObj,
+        defaultAltCurrency.isoCode,
+        rates,
+        dispatch,
+        'symbol',
+      ),
+    [defaultAltCurrency.isoCode, dispatch, fullWalletObj, rates],
   );
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[uiFormattedWallet.network],
+  );
+  const billPayIconByMerchantId = useMemo(() => {
+    return (accounts || []).reduce<Record<string, string>>(
+      (iconByMerchantId, account) => {
+        const accountDetails = account[account.type];
+        if (accountDetails?.merchantId && accountDetails.merchantIcon) {
+          iconByMerchantId[accountDetails.merchantId] =
+            accountDetails.merchantIcon;
+        }
+        return iconByMerchantId;
+      },
+      {},
+    );
+  }, [accounts]);
+  const giftCardIcons = useMemo(
+    () => getGiftCardIcons(supportedCardMap),
+    [supportedCardMap],
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+
+  useEffect(() => {
+    if (wasPreloadedRef.current) {
+      return;
+    }
+
+    let completed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finishOpeningTransition = () => {
+      if (completed) {
+        return;
+      }
+
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      setContentReady(true);
+    };
+
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          finishOpeningTransition();
+        }
+      },
+    );
+    fallbackTimer = setTimeout(finishOpeningTransition, 700);
+
+    return () => {
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      unsubscribe();
+    };
+  }, [navigation]);
+
+  useEffect(() => {
+    if (!contentReady) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSecondaryContentReady(true);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [contentReady, navigation]);
 
   const getLatestWalletFromReduxState = useCallback(() => {
     const state = reduxStore.getState() as RootState;
@@ -415,6 +723,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, [copayerId, reduxStore, walletId]);
 
   useLayoutEffect(() => {
+    // Preloaded routes receive a placeholder navigation object until focused.
+    if (!isFocused) {
+      return;
+    }
+
     navigation.setOptions({
       headerTitle: () => (
         <View style={{height: 'auto'}}>
@@ -435,7 +748,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet.walletName, key.keyName]);
+  }, [navigation, uiFormattedWallet.walletName, key.keyName, isFocused]);
 
   const ShareAddress = async () => {
     try {
@@ -463,7 +776,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           },
         ),
       );
-    } catch (e) {}
+    } catch {}
   };
 
   const onPressWithDelay = async (cb: () => void) => {
@@ -534,8 +847,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     onPress: () =>
       onPressWithDelay(() =>
         navigation.navigate('WalletSettings', {
-          key,
+          keyId: key.id,
           walletId,
+          copayerId,
         }),
       ),
   });
@@ -623,6 +937,26 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   });
   const chartWallets = useMemo(() => [fullWalletObj], [fullWalletObj]);
   const showFiatBalance = network !== Network.testnet;
+  const cacheEligibleWallets = usePortfolioBalanceChartEligibleWallets({
+    wallets: chartWallets,
+    enabled: showPortfolioValue === true && showFiatBalance,
+  });
+  const walletChartWalletIds = useMemo(
+    () =>
+      cacheEligibleWallets
+        .map(wallet => wallet.id)
+        .filter(Boolean)
+        .sort(),
+    [cacheEligibleWallets],
+  );
+  const walletChartIdentity = `${walletChartWalletIds.join(
+    ',',
+  )}|${chartQuoteCurrency}|${DEFAULT_BALANCE_CHART_TIMEFRAME}`;
+  const hasCachedWalletChart = useHasCachedBalanceHistoryChartSeries({
+    walletIds: walletChartWalletIds,
+    quoteCurrency: chartQuoteCurrency,
+    timeframe: DEFAULT_BALANCE_CHART_TIMEFRAME,
+  });
   const {
     shouldMountBalanceChart: shouldMountWalletBalanceChart,
     shouldShowChartLoader: shouldShowWalletChartLoader,
@@ -631,19 +965,23 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
     chartableWallets,
   } = usePortfolioBalanceChartReadiness({
-    wallets: chartWallets,
-    enabled: showPortfolioValue === true && showFiatBalance,
-    hideAllBalances,
+    wallets: cacheEligibleWallets,
+    enabled:
+      (secondaryContentReady || hasCachedWalletChart) &&
+      showPortfolioValue === true &&
+      showFiatBalance,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
+  const shouldRenderWalletBalanceChart =
+    shouldMountWalletBalanceChart || hasCachedWalletChart;
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartableWallets,
     quoteCurrency: chartQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: shouldMountWalletBalanceChart,
+    enabled: shouldRenderWalletBalanceChart,
     isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
     preserveChartDrivenStateWhileNotReady:
-      shouldPreserveStaleWalletBalanceChart,
+      shouldPreserveStaleWalletBalanceChart || hasCachedWalletChart,
     resetKey: `${walletId}:${copayerId || ''}`,
   });
 
@@ -662,7 +1000,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     wallets: chartWallets,
     currentFiatBalance: fullWalletObj?.balance?.fiat,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances && showFiatBalance,
+    enabled: showPortfolioValue !== true && showFiatBalance,
   });
   const walletHeaderChangeRowData =
     showPortfolioValue === true
@@ -695,56 +1033,100 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     : coinColor;
   const chartGradientBackgroundColor = assetTheme?.gradientBackgroundColor;
 
-  const [history, setHistory] = useState<any[]>([]);
-  const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
-  const [loadMore, setLoadMore] = useState(true);
-  const [isLoading, setIsLoading] = useState<boolean>();
+  // Same rule as the balance chart: cached rows paint on the first render
+  // instead of waiting for the opening transition to finish.
+  const hydratedHistory = useMemo(
+    () =>
+      getCachedWalletTransactions({
+        wallet: fullWalletObj,
+        limit: INITIAL_CACHED_TX_HYDRATION_LIMIT,
+        formatTransactions: ({transactions, wallet}) =>
+          BuildUiFriendlyList(
+            transactions,
+            wallet.currencyAbbreviation,
+            wallet.chain,
+            contactList,
+            wallet.tokenAddress,
+            wallet.credentials?.walletId || wallet.id,
+          ),
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  const hasHydratedHistoryRef = useRef(hydratedHistory.length > 0);
+
+  const [history, setHistory] = useState<any[]>(hydratedHistory);
+  const [groupedHistory, setGroupedHistory] = useState<any[]>(() =>
+    hydratedHistory.length
+      ? flattenTransactionGroups(GroupTransactionHistory(hydratedHistory))
+      : [],
+  );
+  const [loadMore, setLoadMore] = useState(
+    hydratedHistory.length
+      ? (fullWalletObj as any)?.transactionHistory?.loadMore !== false
+      : true,
+  );
+  const [isLoading, setIsLoading] = useState<boolean | undefined>(
+    hydratedHistory.length ? false : undefined,
+  );
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
-  const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
-    const txpsPending: TransactionProposal[] = [];
-    const txpsUnsent: TransactionProposal[] = [];
-    const formattedPendingTxps = BuildUiFriendlyList(
-      pendingTxps,
-      currencyAbbreviation,
+  const setNeedActionTxps = useCallback(
+    (pendingTxps: TransactionProposal[]) => {
+      const txpsPending: TransactionProposal[] = [];
+      const txpsUnsent: TransactionProposal[] = [];
+      const formattedPendingTxps = BuildUiFriendlyList(
+        pendingTxps,
+        currencyAbbreviation,
+        chain,
+        [],
+        tokenAddress,
+        walletId,
+      );
+      formattedPendingTxps.forEach((txp: any) => {
+        const action: any = _.find(txp.actions, {
+          copayerId: fullWalletObj.credentials.copayerId,
+        });
+
+        if (
+          ((!action || action.type === 'failed') && txp.status === 'pending') ||
+          (action && txp.status === 'accepted')
+        ) {
+          const target =
+            fullWalletObj.credentials.n > 1 ? txpsPending : txpsUnsent;
+          target.push(txp);
+        }
+      });
+      setNeedActionPendingTxps(current =>
+        current.length === 0 && txpsPending.length === 0
+          ? current
+          : txpsPending,
+      );
+      setNeedActionUnsentTxps(current =>
+        current.length === 0 && txpsUnsent.length === 0 ? current : txpsUnsent,
+      );
+    },
+    [
       chain,
-      [],
+      currencyAbbreviation,
+      fullWalletObj.credentials.copayerId,
+      fullWalletObj.credentials.n,
       tokenAddress,
       walletId,
-    );
-    formattedPendingTxps.forEach((txp: any) => {
-      const action: any = _.find(txp.actions, {
-        copayerId: fullWalletObj.credentials.copayerId,
-      });
+    ],
+  );
 
-      const setPendingTx = (_txp: TransactionProposal) => {
-        fullWalletObj.credentials.n > 1
-          ? txpsPending.push(_txp)
-          : txpsUnsent.push(_txp);
-        setNeedActionPendingTxps(txpsPending);
-        setNeedActionUnsentTxps(txpsUnsent);
-      };
-      if ((!action || action.type === 'failed') && txp.status === 'pending') {
-        setPendingTx(txp);
-      }
-      // unsent transactions
-      if (action && txp.status === 'accepted') {
-        setPendingTx(txp);
-      }
-    });
-  };
-
-  const loadHistory = useCallback(
-    async (refresh?: boolean) => {
+  const loadHistory = useLatestCallback(
+    async (refresh?: boolean, options?: {showLoader?: boolean}) => {
       if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
         return;
       }
       try {
-        setIsLoading(!refresh);
+        setIsLoading(options?.showLoader ?? !refresh);
         setErrorLoadingTxs(false);
         if (!refresh) {
           // Allow one frame for chart/list loaders to render before heavy history work.
@@ -769,16 +1151,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
           if (_history?.length) {
             setHistory(_history);
-            const transactionGroups = GroupTransactionHistory(_history);
-            const flattenedGroups = transactionGroups.reduce(
-              (allTransactions, section) => [
-                ...allTransactions,
-                section.title,
-                ...section.data,
-              ],
-              [] as any[],
+            setGroupedHistory(
+              flattenTransactionGroups(GroupTransactionHistory(_history)),
             );
-            setGroupedHistory(flattenedGroups);
           }
 
           setLoadMore(_loadMore);
@@ -795,7 +1170,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         setErrorLoadingTxs(true);
       }
     },
-    [history],
   );
 
   const debouncedLoadHistory = useMemo(
@@ -805,34 +1179,88 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const loadHistoryRef = useRef(debouncedLoadHistory);
 
+  useEffect(() => {
+    loadHistoryRef.current = debouncedLoadHistory;
+
+    return () => {
+      debouncedLoadHistory.cancel();
+    };
+  }, [debouncedLoadHistory]);
+
   const updateWalletStatusAndProfileBalance = async () => {
     await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
     dispatch(updatePortfolioBalance());
   };
+  const updateWalletStatusAndProfileBalanceRef = useRef(
+    updateWalletStatusAndProfileBalance,
+  );
+  updateWalletStatusAndProfileBalanceRef.current =
+    updateWalletStatusAndProfileBalance;
+
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(
+        Analytics.track('View Wallet', {
+          coin: fullWalletObj?.currencyAbbreviation,
+        }),
+      );
+    }, [dispatch, fullWalletObj?.currencyAbbreviation]),
+  );
 
   useEffect(() => {
-    dispatch(
-      Analytics.track('View Wallet', {
-        coin: fullWalletObj?.currencyAbbreviation,
-      }),
-    );
-    updateWalletStatusAndProfileBalance();
-    if (!skipInitializeHistory) {
-      debouncedLoadHistory();
+    if (!contentReady || !isFocused) {
+      return;
     }
-  }, []);
+
+    const historyTimer = setTimeout(() => {
+      if (!skipInitializeHistory) {
+        hasHydratedHistoryRef.current
+          ? loadHistoryRef.current(true, {showLoader: true})
+          : loadHistoryRef.current();
+      }
+    }, 700);
+    const statusTimer = setTimeout(() => {
+      updateWalletStatusAndProfileBalanceRef.current();
+    }, 1400);
+
+    return () => {
+      clearTimeout(historyTimer);
+      clearTimeout(statusTimer);
+    };
+  }, [contentReady, isFocused, skipInitializeHistory]);
 
   useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
     setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-      () => {
+      (payload?: string | WalletLoadHistoryTarget) => {
+        if (
+          typeof payload === 'object' &&
+          (payload.historyContext !== 'wallet' ||
+            payload.keyId !== key.id ||
+            payload.walletId !== fullWalletObj.id ||
+            (payload.copayerId &&
+              payload.copayerId !== fullWalletObj.credentials?.copayerId))
+        ) {
+          return;
+        }
         loadHistoryRef.current(true);
         setNeedActionTxps(fullWalletObj.pendingTxps);
       },
     );
     return () => subscription.remove();
-  }, [keys]);
+  }, [
+    fullWalletObj.credentials?.copayerId,
+    fullWalletObj.id,
+    fullWalletObj.pendingTxps,
+    isFocused,
+    key.id,
+    setNeedActionTxps,
+  ]);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -846,47 +1274,54 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
-  const listFooterComponent = () => (
-    <>
-      {!groupedHistory?.length ? null : (
-        <View style={{marginBottom: 20}}>
-          <BorderBottom />
-        </View>
-      )}
-      {isLoading ? (
-        <SkeletonContainer>
-          <WalletTransactionSkeletonRow />
-        </SkeletonContainer>
-      ) : null}
-    </>
+  const listFooterComponent = useCallback(
+    () => (
+      <>
+        {!groupedHistory?.length ? null : (
+          <View style={{marginBottom: 20}}>
+            <BorderBottom />
+          </View>
+        )}
+        {isLoading ? (
+          <SkeletonContainer>
+            <WalletTransactionSkeletonRow />
+          </SkeletonContainer>
+        ) : null}
+      </>
+    ),
+    [groupedHistory?.length, isLoading],
   );
 
-  const listEmptyComponent = () => (
-    <>
-      {!isLoading && !errorLoadingTxs && (
-        <EmptyListContainer>
-          <H5>{t("It's a ghost town in here")}</H5>
-          <GhostSvg style={{marginTop: 20}} />
-        </EmptyListContainer>
-      )}
+  const listEmptyComponent = useCallback(
+    () => (
+      <>
+        {isLoading !== undefined && !isLoading && !errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>{t("It's a ghost town in here")}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
 
-      {!isLoading && errorLoadingTxs && (
-        <EmptyListContainer>
-          <H5>{t('Could not update transaction history')}</H5>
-          <GhostSvg style={{marginTop: 20}} />
-        </EmptyListContainer>
-      )}
-    </>
+        {isLoading !== undefined && !isLoading && errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>{t('Could not update transaction history')}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+      </>
+    ),
+    [errorLoadingTxs, isLoading, t],
   );
 
-  const goToTransactionDetails = (transaction: any) => {
-    const onTxDescriptionChange = () => debouncedLoadHistory(true);
+  const goToTransactionDetails = useLatestCallback((transaction: any) => {
     navigation.navigate('TransactionDetails', {
-      wallet: fullWalletObj,
+      keyId: key.id,
+      walletId: fullWalletObj.id,
+      copayerId: fullWalletObj.credentials?.copayerId,
+      historyContext: 'wallet',
       transaction,
-      onTxDescriptionChange,
     });
-  };
+  });
 
   const speedupTransaction = async (transaction: any) => {
     try {
@@ -1051,118 +1486,124 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   };
 
-  const onPressTransaction = useMemo(
-    () => (transaction: any) => {
-      const {hasUnconfirmedInputs, action, isRBF} = transaction;
-      const isReceived = IsReceived(action);
-      const isMoved = IsMoved(action);
-      const currency = currencyAbbreviation.toLowerCase();
+  const onPressTransaction = useLatestCallback((transaction: any) => {
+    const {hasUnconfirmedInputs, action, isRBF} = transaction;
+    const isReceived = IsReceived(action);
+    const isMoved = IsMoved(action);
+    const currency = currencyAbbreviation.toLowerCase();
 
-      if (
-        hasUnconfirmedInputs &&
-        (isReceived || isMoved) &&
-        currency === 'btc'
-      ) {
-        dispatch(
-          showBottomNotificationModal(
-            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+    if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+        ),
+      );
+    } else if (isRBF && isReceived && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          RbfTransaction(
+            () => speedupTransaction(transaction),
+            () => goToTransactionDetails(transaction),
           ),
-        );
-      } else if (isRBF && isReceived && currency === 'btc') {
+        ),
+      );
+    } else if (CanSpeedupTx(transaction, currency, chain)) {
+      if (chain === 'eth') {
         dispatch(
           showBottomNotificationModal(
-            RbfTransaction(
+            SpeedupEthTransaction(
               () => speedupTransaction(transaction),
               () => goToTransactionDetails(transaction),
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency, chain)) {
-        if (chain === 'eth') {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupEthTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        } else {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        }
       } else {
-        goToTransactionDetails(transaction);
+        dispatch(
+          showBottomNotificationModal(
+            SpeedupTransaction(
+              () => speedupTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
       }
+    } else {
+      goToTransactionDetails(transaction);
+    }
+  });
+
+  const onPressTxp = useLatestCallback((transaction: any) => {
+    navigation.navigate('TransactionProposalDetails', {
+      walletId: fullWalletObj.id,
+      transactionId: transaction.id,
+      keyId: key.id,
+    });
+  });
+
+  const onPressTxpBadge = useLatestCallback(() => {
+    navigation.navigate('TransactionProposalNotifications', {
+      walletId: fullWalletObj.credentials.walletId,
+    });
+  });
+
+  const renderTransaction = useCallback(
+    ({item}) => {
+      return (
+        <TransactionRow
+          icon={
+            item.customData?.recipientEmail ? (
+              <ContactIcon
+                name={item.customData?.recipientEmail}
+                size={TRANSACTION_ICON_SIZE}
+                badge={<SentBadgeSvg />}
+              />
+            ) : (
+              TransactionIcons[item.uiIcon]
+            )
+          }
+          iconURI={
+            billPayIconByMerchantId[item.uiIconURI] ||
+            giftCardIcons[item.uiIconURI]
+          }
+          description={item.uiDescription}
+          details={getTxDescriptionDetails(item.customData?.service)}
+          time={item.uiTime}
+          value={item.uiValue}
+          transaction={item}
+          onPressTransaction={onPressTransaction}
+        />
+      );
     },
-    [],
+    [billPayIconByMerchantId, giftCardIcons, onPressTransaction],
   );
+  const renderHistoryItem = useCallback(
+    ({item}: {item: any}) => {
+      if (typeof item === 'string') {
+        return (
+          <TransactionSectionHeaderContainer>
+            <H5>{item}</H5>
+          </TransactionSectionHeaderContainer>
+        );
+      }
 
-  const onPressTxp = useMemo(
-    () => (transaction: any) => {
-      navigation.navigate('TransactionProposalDetails', {
-        walletId: fullWalletObj.id,
-        transactionId: transaction.id,
-        keyId: key.id,
-      });
+      return renderTransaction({item});
     },
-    [],
+    [renderTransaction],
   );
-
-  const onPressTxpBadge = useMemo(
-    () => () => {
-      navigation.navigate('TransactionProposalNotifications', {
-        walletId: fullWalletObj.credentials.walletId,
-      });
-    },
-    [],
-  );
-
-  const getBillPayIcon = (
-    billPayAccounts: BillPayAccount[],
-    merchantId: string,
-  ): string => {
-    const account = (billPayAccounts || []).find(
-      acct => acct[acct.type].merchantId === merchantId,
-    );
-    return account ? account[account.type].merchantIcon : '';
-  };
-
-  const getTxDescriptionDetails = (key: string | undefined) =>
-    key === 'moonpay' ? 'MoonPay' : undefined;
-
-  const renderTransaction = useCallback(({item}) => {
-    return (
-      <TransactionRow
-        icon={
-          item.customData?.recipientEmail ? (
-            <ContactIcon
-              name={item.customData?.recipientEmail}
-              size={TRANSACTION_ICON_SIZE}
-              badge={<SentBadgeSvg />}
-            />
-          ) : (
-            TransactionIcons[item.uiIcon]
-          )
+  const stickyHeaderIndices = useMemo(
+    () =>
+      groupedHistory.reduce<number[]>((indices, item, index) => {
+        if (typeof item === 'string') {
+          indices.push(index);
         }
-        iconURI={
-          getBillPayIcon(accounts, item.uiIconURI) ||
-          getGiftCardIcons(supportedCardMap)[item.uiIconURI]
-        }
-        description={item.uiDescription}
-        details={getTxDescriptionDetails(item.customData?.service)}
-        time={item.uiTime}
-        value={item.uiValue}
-        onPressTransaction={() => onPressTransaction(item)}
-      />
-    );
-  }, []);
+        return indices;
+      }, []),
+    [groupedHistory],
+  );
+  const getHistoryItemType = useCallback(
+    (item: any) => (typeof item === 'string' ? 'sectionHeader' : 'row'),
+    [],
+  );
 
   const renderTxp = useCallback(
     (items: any[]) => {
@@ -1194,7 +1635,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         </View>
       );
     },
-    [needActionPendingTxps, needActionUnsentTxps],
+    [contactList, onPressTxp, onPressTxpBadge, t],
   );
 
   const protocolName = getProtocolName(chain, network);
@@ -1321,15 +1762,32 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     theme.dark,
     walletType,
   ]);
-  const canShowWalletHeaderExtras =
-    !hideAllBalances && !fullWalletObj.isScanning;
+  const canShowWalletHeaderExtras = !fullWalletObj.isScanning;
   const shouldRenderWalletChart =
-    canShowWalletHeaderExtras && shouldMountWalletBalanceChart;
+    canShowWalletHeaderExtras && shouldRenderWalletBalanceChart;
+  const hasRenderedWalletChart =
+    renderedWalletChartIdentity === walletChartIdentity || hasCachedWalletChart;
+  const shouldShowWalletChartPlaceholder =
+    canShowWalletHeaderExtras &&
+    showPortfolioValue === true &&
+    showFiatBalance &&
+    !hasRenderedWalletChart &&
+    !hasCachedWalletChart &&
+    cacheEligibleWallets.length > 0;
+  const onWalletChartRenderableSeriesChange = useCallback(
+    (hasRenderableSeries: boolean) => {
+      if (hasRenderableSeries) {
+        setRenderedWalletChartIdentity(walletChartIdentity);
+      }
+    },
+    [walletChartIdentity],
+  );
   const shouldRenderWalletHeaderSupplement =
     canShowWalletHeaderExtras &&
     (!!walletChartPreContent ||
       !!walletHeaderChangeRowData ||
-      shouldRenderWalletChart);
+      shouldRenderWalletChart ||
+      shouldShowWalletChartPlaceholder);
 
   return (
     <WalletDetailsContainer>
@@ -1345,8 +1803,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           <>
             <HeaderContainer>
               <BalanceContainer>
-                <TouchableOpacity
-                  onLongPress={() => {
+                <BalanceVisibilityButton
+                  testID="wallet-balance-toggle"
+                  hidden={hideAllBalances}
+                  onToggle={() => {
                     dispatch(toggleHideAllBalances());
                   }}>
                   {!fullWalletObj.isScanning ? (
@@ -1385,7 +1845,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         </CryptoBalanceText>
                       )}
                   </CryptoBalanceRow>
-                </TouchableOpacity>
+                </BalanceVisibilityButton>
 
                 {shouldRenderWalletHeaderSupplement ? (
                   <FullWidthBalanceChartContainer>
@@ -1394,39 +1854,58 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       content={walletChartPreContent}
                       contentTopMargin={12}
                       changeRowStyle={walletChartChangeRowStyle}
-                      reserveChangeRowSpace={shouldRenderWalletChart}
+                      reserveChangeRowSpace={
+                        shouldRenderWalletChart ||
+                        shouldShowWalletChartPlaceholder
+                      }
                     />
+                    {shouldShowWalletChartPlaceholder ? (
+                      <BalanceChartLoadingPlaceholder />
+                    ) : null}
                     {shouldRenderWalletChart ? (
-                      <BalanceHistoryChart
-                        wallets={chartableWallets}
-                        quoteCurrency={chartQuoteCurrency}
-                        rates={rates}
-                        lineColor={chartLineColor}
-                        gradientStartColor={chartGradientBackgroundColor}
-                        showLoaderWhenNoSnapshots={shouldShowWalletChartLoader}
-                        renderZeroBalanceWhenNoSnapshots={
-                          shouldRenderZeroWalletBalanceChart
-                        }
-                        isBalanceChartDataReadyToQuery={
-                          isWalletBalanceChartDataReadyToQuery
-                        }
-                        preserveVisibleSeriesWhileNotReady={
-                          shouldPreserveStaleWalletBalanceChart
-                        }
-                        showChangeRow={false}
-                        onSelectedBalanceChange={
-                          balanceChartSurface.chartCallbacks
-                            .onSelectedBalanceChange
-                        }
-                        onDisplayedAnalysisPointChange={
-                          balanceChartSurface.chartCallbacks
-                            .onDisplayedAnalysisPointChange
-                        }
-                        onChangeRowData={
-                          balanceChartSurface.chartCallbacks.onChangeRowData
-                        }
-                        timeframeSelectorWidth={timeframeSelectorWidth}
-                      />
+                      <View
+                        style={
+                          shouldShowWalletChartPlaceholder
+                            ? styles.hiddenChart
+                            : undefined
+                        }>
+                        <BalanceHistoryChart
+                          wallets={chartableWallets}
+                          quoteCurrency={chartQuoteCurrency}
+                          rates={rates}
+                          lineColor={chartLineColor}
+                          gradientStartColor={chartGradientBackgroundColor}
+                          showLoaderWhenNoSnapshots={
+                            shouldShowWalletChartLoader
+                          }
+                          renderZeroBalanceWhenNoSnapshots={
+                            shouldRenderZeroWalletBalanceChart
+                          }
+                          isBalanceChartDataReadyToQuery={
+                            isWalletBalanceChartDataReadyToQuery
+                          }
+                          preserveVisibleSeriesWhileNotReady={
+                            shouldPreserveStaleWalletBalanceChart ||
+                            hasCachedWalletChart
+                          }
+                          showChangeRow={false}
+                          onSelectedBalanceChange={
+                            balanceChartSurface.chartCallbacks
+                              .onSelectedBalanceChange
+                          }
+                          onDisplayedAnalysisPointChange={
+                            balanceChartSurface.chartCallbacks
+                              .onDisplayedAnalysisPointChange
+                          }
+                          onChangeRowData={
+                            balanceChartSurface.chartCallbacks.onChangeRowData
+                          }
+                          onRenderableSeriesChange={
+                            onWalletChartRenderableSeriesChange
+                          }
+                          timeframeSelectorWidth={timeframeSelectorWidth}
+                        />
+                      </View>
                     ) : null}
                   </FullWidthBalanceChartContainer>
                 ) : null}
@@ -1529,7 +2008,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           chain: fullWalletObj.chain || '',
                         }),
                       );
-                      navigation.navigate('SendTo', {wallet: fullWalletObj});
+                      navigation.navigate('SendTo', {
+                        keyId: key.id,
+                        walletId: fullWalletObj.id,
+                        copayerId: fullWalletObj.credentials?.copayerId,
+                      });
                     },
                   }}
                 />
@@ -1582,17 +2065,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }
         data={groupedHistory}
         keyExtractor={transactionKeyExtractor}
-        renderItem={({item}) => {
-          if (typeof item === 'string') {
-            return (
-              <TransactionSectionHeaderContainer>
-                <H5>{item}</H5>
-              </TransactionSectionHeaderContainer>
-            );
-          } else {
-            return renderTransaction({item});
-          }
-        }}
+        renderItem={renderHistoryItem}
         ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onMomentumScrollBegin={() => setIsScrolling(true)}
@@ -1602,23 +2075,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             debouncedLoadHistory();
           }
         }}
-        stickyHeaderIndices={
-          groupedHistory
-            .map((item, index) => {
-              if (typeof item === 'string') {
-                return index;
-              } else {
-                return null;
-              }
-            })
-            .filter(item => item !== null) as number[]
-        }
-        getItemType={item =>
-          typeof item === 'string' ? 'sectionHeader' : 'row'
-        }
+        stickyHeaderIndices={stickyHeaderIndices}
+        getItemType={getHistoryItemType}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
-        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
       />
 
       <OptionsSheet

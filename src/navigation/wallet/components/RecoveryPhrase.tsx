@@ -1,12 +1,10 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {
   Caution,
   LightBlack,
   LuckySevens,
   NeutralSlate,
-  Slate10,
-  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -23,7 +21,6 @@ import {
   ImportTextInput,
   Row,
   ScanContainer,
-  ScreenGutter,
   SheetContainer,
 } from '../../../components/styled/Containers';
 import Button, {ButtonState} from '../../../components/button/Button';
@@ -33,7 +30,7 @@ import {
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
-import {Controller, useForm} from 'react-hook-form';
+import {useForm} from 'react-hook-form';
 import {
   BaseText,
   H4,
@@ -45,6 +42,9 @@ import {
 } from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
+import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
   startCreateKeyWithOpts,
@@ -82,7 +82,16 @@ import {
 } from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {AppState, FlatList, TextInput, View} from 'react-native';
+import {
+  AppState,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {
@@ -102,122 +111,298 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 import haptic from '../../../components/haptic-feedback/haptic';
 
-const ScrollViewContainer = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  scrollViewContainer: {
+    marginTop: 20,
+  },
+  contentView: {
+    paddingTop: 0,
+    paddingRight: 12,
+    paddingBottom: 20,
+    paddingLeft: 12,
+  },
+  passwordParagraph: {
+    marginTop: 0,
+    marginRight: 20,
+    marginBottom: 20,
+    marginLeft: 20,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 10,
+  },
+  cuationText: {
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  optionTitle: {
+    fontSize: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+    top: 0,
+    left: 20,
+  },
+  currencySelectorContainer: {
+    marginVertical: 20,
+    position: 'relative',
+  },
+  currencyContainer: {
+    paddingHorizontal: 20,
+    height: 55,
+    borderWidth: 1,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  currencyName: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    marginLeft: 10,
+    color: '#9ba3ae',
+  },
+  currencySelectionModalContainer: {
+    padding: 15,
+    minHeight: 200,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  inputContainer: {
+    padding: 18,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  currencyColumn: {
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  currencyTitleColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+  },
+  currencyTitle: {
+    margin: 0,
+    padding: 0,
+  },
+  currencySubTitle: {
+    fontSize: 12,
+  },
+});
 
-const ContentView = styled.View`
-  padding: 0 ${ScreenGutter} 20px ${ScreenGutter};
-`;
+const ScrollViewContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof KeyboardAwareScrollView>) => (
+  <KeyboardAwareScrollView
+    style={[styles.scrollViewContainer, style]}
+    {...rest}
+  />
+);
 
-const PasswordParagraph = styled(BaseText)`
-  margin: 0px 20px 20px 20px;
-  color: ${({theme}) => theme.colors.description};
-`;
+const ContentView = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.contentView, style]} {...rest} />
+);
 
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 10px;
-`;
+const PasswordParagraph = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.passwordParagraph,
+          {color: theme.colors.description},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const CuationText = styled(Small)`
-  padding: 5px 0 0 0px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const ErrorText = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.errorText, style]} {...rest} />
+));
+
+const CuationText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <Small
+        ref={ref}
+        style={[
+          styles.cuationText,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
 const schema = yup.object().shape({
   text: yup.string().required(),
 });
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const CheckBoxContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.checkBoxContainer, style]} {...rest} />
+);
 
-const OptionTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const OptionTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.optionTitle,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const Label = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
-  top: 0;
-  left: 20px;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : SlateDark)};
-`;
+const Label = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.label,
+        {color: theme && theme.dark ? theme.colors.text : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
-const CurrencySelectorContainer = styled.View`
-  margin: 20px 0;
-  position: relative;
-`;
+const CurrencySelectorContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.currencySelectorContainer, style]} {...rest} />
+);
 
-const CurrencyContainer = styled(TouchableOpacity)`
-  background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  padding: 0 20px;
-  height: 55px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-`;
+const CurrencyContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.currencyContainer,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          borderColor: theme.dark ? LightBlack : NeutralSlate,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CurrencyName = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  margin-left: 10px;
-  color: #9ba3ae;
-`;
+const CurrencyName = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.currencyName, style]} {...rest} />
+  ),
+);
 
-const CurrencySelectionModalContainer = styled(SheetContainer)`
-  padding: 15px;
-  min-height: 200px;
-`;
+const CurrencySelectionModalContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SheetContainer>) => (
+  <SheetContainer
+    style={[styles.currencySelectionModalContainer, style]}
+    {...rest}
+  />
+);
 
 const CurrencyOptions = SupportedCurrencyOptions.filter(
   currency => !currency.isToken,
 );
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
 
-const InputContainer = styled.View`
-  padding: 18px;
-`;
+const InputContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.inputContainer, style]} {...rest} />
+);
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
-`;
+const CtaContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof _CtaContainer>) => (
+  <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />
+);
 
-const CurrencyColumn = styled.View`
-  justify-content: center;
-  margin-right: 8px;
-`;
+const CurrencyColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.currencyColumn, style]} {...rest} />
+);
 
-const CurrencyTitleColumn = styled(CurrencyColumn)`
-  flex: 1 1 auto;
-`;
+const CurrencyTitleColumn = ({style, ...rest}: ViewProps) => (
+  <View
+    style={[styles.currencyColumn, styles.currencyTitleColumn, style]}
+    {...rest}
+  />
+);
 
-const CurrencyTitle = styled(H7).attrs(() => ({
-  medium: true,
-}))`
-  margin: 0;
-  padding: 0;
-`;
+const CurrencyTitle = React.forwardRef<Text, TextProps & {medium?: boolean}>(
+  ({style, medium = true, ...rest}, ref) => (
+    <H7
+      ref={ref}
+      medium={medium}
+      style={[styles.currencyTitle, style]}
+      {...rest}
+    />
+  ),
+);
 
-const CurrencySubTitle = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-  font-size: 12px;
-`;
+const CurrencySubTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.currencySubTitle,
+          {color: theme.dark ? LuckySevens : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
 const RecoveryPhrase = () => {
   const {t} = useTranslation();
+  const onPerformanceLayout = useScreenRenderPerformance(
+    'Import.RecoveryPhrase',
+  );
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
@@ -242,19 +427,49 @@ const RecoveryPhrase = () => {
     isMultisig: false,
   });
   const wordsRef = useRef<TextInput>(null);
-  const {clearSensitive} = useSensitiveRefClear([wordsRef]);
+  const sensitiveInputRefs = useRef([wordsRef]).current;
+  const {clearSensitive} = useSensitiveRefClear(sensitiveInputRefs);
 
   const {
-    control,
     handleSubmit,
+    register,
     setValue,
     formState: {errors},
     getValues,
-  } = useForm({resolver: yupResolver(schema)});
+    unregister,
+  } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: {text: ''},
+  });
 
-  const showErrorModal = (e: Error) => {
+  useEffect(() => {
+    register('text');
+    return () => unregister('text');
+  }, [register, unregister]);
+
+  const updateRecoveryPhraseValue = useCallback(
+    (text: string) => {
+      setValue('text', text);
+    },
+    [setValue],
+  );
+
+  const updateRecoveryPhraseFromExternalSource = useCallback(
+    (text: string) => {
+      setValue('text', text);
+      wordsRef.current?.setNativeProps({text});
+    },
+    [setValue],
+  );
+
+  const clearRecoveryPhrase = useCallback(() => {
+    clearSensitive();
+    setValue('text', '');
+  }, [clearSensitive, setValue]);
+
+  const showErrorModal = (e: Error, submittedText?: string) => {
     if (e && e.message === 'WALLET_DOES_NOT_EXIST') {
-      const {text} = getValues();
+      const text = submittedText ?? getValues().text;
       setOptsAndCreate(text, advancedOptions);
     } else {
       dispatch(
@@ -309,8 +524,8 @@ const RecoveryPhrase = () => {
           }),
         );
       }
-      setValue('text', recoveryObj.data);
-    } catch (err) {
+      updateRecoveryPhraseFromExternalSource(recoveryObj.data);
+    } catch {
       showErrorModal(new Error('The recovery phrase is invalid.'));
     }
   };
@@ -384,7 +599,7 @@ const RecoveryPhrase = () => {
 
   const onSubmit = (formData: {text: string}) => {
     const {text} = formData;
-    clearSensitive();
+    clearRecoveryPhrase();
 
     let keyOpts: Partial<KeyOptions> = {};
 
@@ -396,7 +611,7 @@ const RecoveryPhrase = () => {
     } catch (err: any) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);
-      showErrorModal(err);
+      showErrorModal(err, text);
       return;
     }
 
@@ -482,7 +697,7 @@ const RecoveryPhrase = () => {
       setImportButtonState(undefined);
       hideOngoingProcess();
       await sleep(600);
-      showErrorModal(err);
+      showErrorModal(err, importData.words ?? importData.xPrivKey);
       return;
     }
   };
@@ -507,7 +722,7 @@ const RecoveryPhrase = () => {
       } catch (err: any) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logger.error(errMsg);
-        showErrorModal(err);
+        showErrorModal(err, text);
         return;
       }
 
@@ -545,7 +760,7 @@ const RecoveryPhrase = () => {
         );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
-      } catch (error) {
+      } catch {
         // ignore error
       }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
@@ -563,7 +778,7 @@ const RecoveryPhrase = () => {
       logger.error(errMsg);
       hideOngoingProcess();
       await sleep(500);
-      showErrorModal(err);
+      showErrorModal(err, text);
       setRecreateWallet(false);
       return;
     }
@@ -615,313 +830,331 @@ const RecoveryPhrase = () => {
     if (route.params?.importQrCodeData) {
       processImportQrCode(route.params.importQrCodeData);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'inactive' || state === 'background') {
-        clearSensitive();
+        clearRecoveryPhrase();
       }
     });
     return () => sub.remove();
-  }, [clearSensitive]);
+  }, [clearRecoveryPhrase]);
 
   return (
     <ScrollViewContainer
       testID="recovery-phrase-view"
       accessibilityLabel="Recovery phrase view"
+      onLayout={onPerformanceLayout}
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
-      <ContentView keyboardShouldPersistTaps={'handled'}>
-        <Paragraph>
-          {t(
-            'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
-          )}
-        </Paragraph>
+      <ContentView>
+        <PerformanceProfiler
+          id="RecoveryPhrase:intro"
+          onRender={logReactProfiler}>
+          <Paragraph>
+            {t(
+              'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
+            )}
+          </Paragraph>
+        </PerformanceProfiler>
 
-        <HeaderContainer>
-          <ImportTitle>{t('Recovery phrase')}</ImportTitle>
+        <PerformanceProfiler
+          id="RecoveryPhrase:header"
+          onRender={logReactProfiler}>
+          <HeaderContainer>
+            <ImportTitle>{t('Recovery phrase')}</ImportTitle>
 
-          <ScanContainer
-            testID="scan-button"
-            accessibilityLabel="Scan QR code"
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'RecoveryPhrase',
-                }),
-              );
-              navigation.navigate('ScanRoot', {
-                onScanComplete: data => {
-                  processImportQrCode(data);
-                },
-              });
-            }}>
-            <ScanSvg />
-          </ScanContainer>
-        </HeaderContainer>
+            <ScanContainer
+              testID="scan-button"
+              accessibilityLabel="Scan QR code"
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                dispatch(
+                  Analytics.track('Open Scanner', {
+                    context: 'RecoveryPhrase',
+                  }),
+                );
+                navigation.navigate('ScanRoot', {
+                  onScanComplete: data => {
+                    processImportQrCode(data);
+                  },
+                });
+              }}>
+              <ScanSvg />
+            </ScanContainer>
+          </HeaderContainer>
+        </PerformanceProfiler>
 
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <ImportTextInput
-              ref={wordsRef}
-              testID="import-text-input"
-              accessibilityLabel="Enter recovery phrase"
-              multiline
-              autoCapitalize={'none'}
-              numberOfLines={3}
-              onChangeText={(text: string) => onChange(text)}
-              onBlur={onBlur}
-              value={value}
-              autoCorrect={false}
-              spellCheck={false}
-              autoComplete="off"
-              textContentType={IS_IOS ? 'password' : undefined}
-              keyboardType={IS_ANDROID ? 'visible-password' : undefined}
-            />
-          )}
-          name="text"
-          defaultValue=""
-        />
+        <PerformanceProfiler
+          id="RecoveryPhrase:controller"
+          onRender={logReactProfiler}>
+          <ImportTextInput
+            ref={wordsRef}
+            testID="import-text-input"
+            accessibilityLabel="Enter recovery phrase"
+            multiline
+            autoCapitalize={'none'}
+            numberOfLines={3}
+            onChangeText={updateRecoveryPhraseValue}
+            defaultValue=""
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+            textContentType={IS_IOS ? 'password' : undefined}
+            keyboardType={IS_ANDROID ? 'visible-password' : undefined}
+          />
+        </PerformanceProfiler>
 
         {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
         <CuationText>
           {t('This process may take a few minutes to complete.')}
         </CuationText>
-        <CtaContainer>
-          <AdvancedOptionsContainer
-            testID="advanced-options-container"
-            accessibilityLabel="Advanced options container">
-            <AdvancedOptionsButton
-              testID="show-advanced-options"
-              accessibilityLabel="Show advanced options"
-              onPress={() => {
-                Haptic('impactLight');
-                setShowAdvancedOptions(!showAdvancedOptions);
-              }}>
-              {showAdvancedOptions ? (
-                <>
-                  <AdvancedOptionsButtonText>
-                    {t('Hide Advanced Options')}
-                  </AdvancedOptionsButtonText>
-                  <ChevronUpSvg />
-                </>
-              ) : (
-                <>
-                  <AdvancedOptionsButtonText>
-                    {t('Show Advanced Options')}
-                  </AdvancedOptionsButtonText>
-                  <ChevronDownSvg />
-                </>
-              )}
-            </AdvancedOptionsButton>
-            {showAdvancedOptions && !derivationPathEnabled && (
-              <AdvancedOptions>
-                <RowContainer
-                  activeOpacity={1}
-                  onPress={() => {
-                    setIncludeTestnetWallets(!includeTestnetWallets);
-                  }}>
-                  <Column>
-                    <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
-                  </Column>
-                  <CheckBoxContainer
-                    testID="include-testnet-wallet-checkbox"
-                    accessibilityLabel="Include testnet wallets">
-                    <Checkbox
-                      checked={includeTestnetWallets}
-                      onPress={() => {
-                        setIncludeTestnetWallets(!includeTestnetWallets);
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
-              </AdvancedOptions>
-            )}
-            {showAdvancedOptions && !derivationPathEnabled && (
-              <AdvancedOptions>
-                <RowContainer
-                  activeOpacity={1}
-                  onPress={() => {
-                    setIncludeLegacyWallets(!includeLegacyWallets);
-                  }}>
-                  <Column>
-                    <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
-                  </Column>
-                  <CheckBoxContainer
-                    testID="include-legacy-wallet-checkbox"
-                    accessibilityLabel="Include legacy wallets">
-                    <Checkbox
-                      checked={includeLegacyWallets}
-                      onPress={() => {
-                        setIncludeLegacyWallets(!includeLegacyWallets);
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
-              </AdvancedOptions>
-            )}
-            {showAdvancedOptions && (
-              <AdvancedOptions>
-                <RowContainer
-                  activeOpacity={1}
-                  onPress={() => {
-                    setDerivationPathEnabled(!derivationPathEnabled);
-                  }}>
-                  <Column>
-                    <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
-                  </Column>
-                  <CheckBoxContainer
-                    testID="specify-derivation-path-checkbox"
-                    accessibilityLabel="Specify derivation path">
-                    <Checkbox
-                      checked={derivationPathEnabled}
-                      onPress={() => {
-                        setDerivationPathEnabled(!derivationPathEnabled);
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
-              </AdvancedOptions>
-            )}
-            {showAdvancedOptions && derivationPathEnabled && (
-              <AdvancedOptions>
-                <CurrencySelectorContainer>
-                  <Label>{t('CURRENCY')}</Label>
-                  <CurrencyContainer
-                    testID="currency-container"
-                    accessibilityLabel="Currency container"
-                    activeOpacity={ActiveOpacity}
-                    onPress={() => {
-                      setCurrencyModalVisible(true);
-                    }}>
-                    <Row
-                      style={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}>
-                      <View
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}>
-                        <CurrencyImage
-                          img={selectedCurrency.img}
-                          badgeUri={selectedCurrency.badgeUri}
-                          size={30}
-                        />
-                        <CurrencyName>
-                          {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
-                        </CurrencyName>
-                      </View>
-                      <Icons.DownToggle />
-                    </Row>
-                  </CurrencyContainer>
-                </CurrencySelectorContainer>
-              </AdvancedOptions>
-            )}
-            <SheetModal
-              isVisible={currencyModalVisible}
-              onBackdropPress={() => setCurrencyModalVisible(false)}>
-              <CurrencySelectionModalContainer>
-                <TextAlign align={'center'}>
-                  <H4>{t('Select a Coin')}</H4>
-                </TextAlign>
-                <FlatList
-                  contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                  data={CurrencyOptions}
-                  keyExtractor={keyExtractor}
-                  renderItem={renderItem}
-                />
-              </CurrencySelectionModalContainer>
-            </SheetModal>
-            {showAdvancedOptions && derivationPathEnabled && (
-              <AdvancedOptions>
-                <InputContainer>
-                  <BoxInput
-                    testID="derivation-path-box-input"
-                    accessibilityLabel="Derivation path"
-                    label={'DERIVATION PATH'}
-                    onChangeText={(text: string) =>
-                      setAdvancedOptions({
-                        ...advancedOptions,
-                        derivationPath: text,
-                      })
-                    }
-                    value={advancedOptions.derivationPath}
-                  />
-                </InputContainer>
-              </AdvancedOptions>
-            )}
-            {showAdvancedOptions &&
-              derivationPathEnabled &&
-              advancedOptions.derivationPath ===
-                DefaultDerivationPath.defaultBTC && (
+        <PerformanceProfiler
+          id="RecoveryPhrase:advanced-options"
+          onRender={logReactProfiler}>
+          <CtaContainer>
+            <AdvancedOptionsContainer
+              testID="advanced-options-container"
+              accessibilityLabel="Advanced options container">
+              <AdvancedOptionsButton
+                testID="show-advanced-options"
+                accessibilityLabel="Show advanced options"
+                onPress={() => {
+                  Haptic('impactLight');
+                  setShowAdvancedOptions(!showAdvancedOptions);
+                }}>
+                {showAdvancedOptions ? (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Hide Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronUpSvg />
+                  </>
+                ) : (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Show Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronDownSvg />
+                  </>
+                )}
+              </AdvancedOptionsButton>
+              {showAdvancedOptions && !derivationPathEnabled && (
                 <AdvancedOptions>
                   <RowContainer
                     activeOpacity={1}
                     onPress={() => {
-                      setAdvancedOptions({
-                        ...advancedOptions,
-                        isMultisig: !advancedOptions.isMultisig,
-                      });
+                      setIncludeTestnetWallets(!includeTestnetWallets);
                     }}>
                     <Column>
-                      <OptionTitle>{t('Shared Wallet')}</OptionTitle>
+                      <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
                     </Column>
                     <CheckBoxContainer
-                      testID="shared-wallet-checkbox"
-                      accessibilityLabel="Shared wallet">
+                      testID="include-testnet-wallet-checkbox"
+                      accessibilityLabel="Include testnet wallets">
                       <Checkbox
-                        checked={advancedOptions.isMultisig}
+                        checked={includeTestnetWallets}
                         onPress={() => {
-                          setAdvancedOptions({
-                            ...advancedOptions,
-                            isMultisig: !advancedOptions.isMultisig,
-                          });
+                          setIncludeTestnetWallets(!includeTestnetWallets);
                         }}
                       />
                     </CheckBoxContainer>
                   </RowContainer>
                 </AdvancedOptions>
               )}
-            {showAdvancedOptions && (
-              <AdvancedOptions>
-                <InputContainer>
-                  <BoxInput
-                    testID="password-input-box"
-                    accessibilityLabel="Wallet password"
-                    placeholder={'strongPassword123'}
-                    type={'password'}
-                    onChangeText={(text: string) =>
-                      setAdvancedOptions({...advancedOptions, passphrase: text})
-                    }
-                    value={advancedOptions.passphrase}
+              {showAdvancedOptions && !derivationPathEnabled && (
+                <AdvancedOptions>
+                  <RowContainer
+                    activeOpacity={1}
+                    onPress={() => {
+                      setIncludeLegacyWallets(!includeLegacyWallets);
+                    }}>
+                    <Column>
+                      <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
+                    </Column>
+                    <CheckBoxContainer
+                      testID="include-legacy-wallet-checkbox"
+                      accessibilityLabel="Include legacy wallets">
+                      <Checkbox
+                        checked={includeLegacyWallets}
+                        onPress={() => {
+                          setIncludeLegacyWallets(!includeLegacyWallets);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
+              {showAdvancedOptions && (
+                <AdvancedOptions>
+                  <RowContainer
+                    activeOpacity={1}
+                    onPress={() => {
+                      setDerivationPathEnabled(!derivationPathEnabled);
+                    }}>
+                    <Column>
+                      <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
+                    </Column>
+                    <CheckBoxContainer
+                      testID="specify-derivation-path-checkbox"
+                      accessibilityLabel="Specify derivation path">
+                      <Checkbox
+                        checked={derivationPathEnabled}
+                        onPress={() => {
+                          setDerivationPathEnabled(!derivationPathEnabled);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
+              {showAdvancedOptions && derivationPathEnabled && (
+                <AdvancedOptions>
+                  <CurrencySelectorContainer>
+                    <Label>{t('CURRENCY')}</Label>
+                    <CurrencyContainer
+                      testID="currency-container"
+                      accessibilityLabel="Currency container"
+                      activeOpacity={ActiveOpacity}
+                      onPress={() => {
+                        setCurrencyModalVisible(true);
+                      }}>
+                      <Row
+                        style={{
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
+                        <View
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}>
+                          <CurrencyImage
+                            img={selectedCurrency.img}
+                            badgeUri={selectedCurrency.badgeUri}
+                            size={30}
+                          />
+                          <CurrencyName>
+                            {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
+                          </CurrencyName>
+                        </View>
+                        <Icons.DownToggle />
+                      </Row>
+                    </CurrencyContainer>
+                  </CurrencySelectorContainer>
+                </AdvancedOptions>
+              )}
+              <SheetModal
+                isVisible={currencyModalVisible}
+                unmountContentWhenHidden
+                onBackdropPress={() => setCurrencyModalVisible(false)}>
+                <CurrencySelectionModalContainer>
+                  <TextAlign align={'center'}>
+                    <H4>{t('Select a Coin')}</H4>
+                  </TextAlign>
+                  <FlatList
+                    contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
+                    data={CurrencyOptions}
+                    keyExtractor={keyExtractor}
+                    renderItem={renderItem}
                   />
-                </InputContainer>
-                <PasswordParagraph>
-                  {t(
-                    "This field is only for users who, in previous versions (it's not supported anymore), set a password to protect their recovery phrase. This field is not for your encrypt password.",
-                  )}
-                </PasswordParagraph>
-              </AdvancedOptions>
-            )}
-          </AdvancedOptionsContainer>
-        </CtaContainer>
+                </CurrencySelectionModalContainer>
+              </SheetModal>
+              {showAdvancedOptions && derivationPathEnabled && (
+                <AdvancedOptions>
+                  <InputContainer>
+                    <BoxInput
+                      testID="derivation-path-box-input"
+                      accessibilityLabel="Derivation path"
+                      label={'DERIVATION PATH'}
+                      onChangeText={(text: string) =>
+                        setAdvancedOptions({
+                          ...advancedOptions,
+                          derivationPath: text,
+                        })
+                      }
+                      value={advancedOptions.derivationPath}
+                    />
+                  </InputContainer>
+                </AdvancedOptions>
+              )}
+              {showAdvancedOptions &&
+                derivationPathEnabled &&
+                advancedOptions.derivationPath ===
+                  DefaultDerivationPath.defaultBTC && (
+                  <AdvancedOptions>
+                    <RowContainer
+                      activeOpacity={1}
+                      onPress={() => {
+                        setAdvancedOptions({
+                          ...advancedOptions,
+                          isMultisig: !advancedOptions.isMultisig,
+                        });
+                      }}>
+                      <Column>
+                        <OptionTitle>{t('Shared Wallet')}</OptionTitle>
+                      </Column>
+                      <CheckBoxContainer
+                        testID="shared-wallet-checkbox"
+                        accessibilityLabel="Shared wallet">
+                        <Checkbox
+                          checked={advancedOptions.isMultisig}
+                          onPress={() => {
+                            setAdvancedOptions({
+                              ...advancedOptions,
+                              isMultisig: !advancedOptions.isMultisig,
+                            });
+                          }}
+                        />
+                      </CheckBoxContainer>
+                    </RowContainer>
+                  </AdvancedOptions>
+                )}
+              {showAdvancedOptions && (
+                <AdvancedOptions>
+                  <InputContainer>
+                    <BoxInput
+                      testID="password-input-box"
+                      accessibilityLabel="Wallet password"
+                      placeholder={'strongPassword123'}
+                      type={'password'}
+                      onChangeText={(text: string) =>
+                        setAdvancedOptions({
+                          ...advancedOptions,
+                          passphrase: text,
+                        })
+                      }
+                      value={advancedOptions.passphrase}
+                    />
+                  </InputContainer>
+                  <PasswordParagraph>
+                    {t(
+                      "This field is only for users who, in previous versions (it's not supported anymore), set a password to protect their recovery phrase. This field is not for your encrypt password.",
+                    )}
+                  </PasswordParagraph>
+                </AdvancedOptions>
+              )}
+            </AdvancedOptionsContainer>
+          </CtaContainer>
+        </PerformanceProfiler>
 
-        <Button
-          testID="import-wallet-button"
-          accessibilityLabel="Import wallet"
-          buttonStyle={'primary'}
-          state={importButtonState}
-          onPress={handleSubmit(onSubmit)}>
-          {t('Import Wallet')}
-        </Button>
+        <PerformanceProfiler
+          id="RecoveryPhrase:submit"
+          onRender={logReactProfiler}>
+          <Button
+            testID="import-wallet-button"
+            accessibilityLabel="Import wallet"
+            buttonStyle={'primary'}
+            state={importButtonState}
+            onPress={handleSubmit(onSubmit)}>
+            {t('Import Wallet')}
+          </Button>
+        </PerformanceProfiler>
       </ContentView>
     </ScrollViewContainer>
   );

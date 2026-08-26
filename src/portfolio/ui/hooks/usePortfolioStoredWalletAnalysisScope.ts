@@ -13,6 +13,8 @@ import {
   resolveCurrentRatesAsOfMs,
 } from '../common';
 
+const EMPTY_DISABLED_RATES: Rates = {};
+
 export const getPortfolioWalletsInputSignature = (wallets: Wallet[]): string =>
   (wallets || [])
     .map(wallet =>
@@ -73,11 +75,19 @@ export function usePortfolioStoredWalletAnalysisScope(args: {
 }) {
   const enabled = args.enabled !== false;
   const dispatch = useAppDispatch();
+  const walletsRef = useRef(args.wallets);
+  walletsRef.current = args.wallets;
   const defaultAltCurrencyIsoCode = useAppSelector(
     ({APP}) => APP.defaultAltCurrency?.isoCode,
   );
-  const storeRates = useAppSelector(({RATE}) => RATE.rates);
-  const ratesUpdatedAt = useAppSelector(({RATE}) => RATE.ratesUpdatedAt);
+  const shouldSelectStoreRates =
+    enabled && typeof args.ratesOverride === 'undefined';
+  const storeRates = useAppSelector(({RATE}) =>
+    shouldSelectStoreRates ? RATE.rates : EMPTY_DISABLED_RATES,
+  );
+  const ratesUpdatedAt = useAppSelector(({RATE}) =>
+    shouldSelectStoreRates ? RATE.ratesUpdatedAt : undefined,
+  );
   const committedRevisionToken = useAppSelector(({PORTFOLIO}) =>
     enabled
       ? buildCommittedPortfolioRevisionToken({
@@ -106,6 +116,13 @@ export function usePortfolioStoredWalletAnalysisScope(args: {
     [enabled, rates, ratesUpdatedAt],
   );
   const walletsInputSignature = getPortfolioWalletsInputSignature(args.wallets);
+  const stableWalletsInput = useMemo(
+    () => ({
+      signature: walletsInputSignature,
+      wallets: walletsRef.current,
+    }),
+    [walletsInputSignature],
+  );
 
   const walletScope = useMemo(() => {
     if (!enabled) {
@@ -123,16 +140,9 @@ export function usePortfolioStoredWalletAnalysisScope(args: {
       dispatch,
       quoteCurrency,
       rates,
-      wallets: args.wallets,
+      wallets: stableWalletsInput.wallets,
     });
-  }, [
-    args.wallets,
-    dispatch,
-    enabled,
-    quoteCurrency,
-    rates,
-    walletsInputSignature,
-  ]);
+  }, [dispatch, enabled, quoteCurrency, rates, stableWalletsInput]);
 
   return {
     ...walletScope,

@@ -1,10 +1,10 @@
 import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
-import {ImageStyle, Linking, StyleProp} from 'react-native';
+import {ImageStyle, Linking, StyleProp, StyleSheet, View} from 'react-native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -35,35 +35,81 @@ const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
   return src && typeof src === 'function';
 };
 
-const AdvertisementCardContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 12px;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 100px;
-  overflow: hidden;
-  padding: 16px 35px 16px 76px;
-  position: relative;
-`;
+const styles = StyleSheet.create({
+  advertisementCardContainer: {
+    borderRadius: 12,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    minHeight: 100,
+    overflow: 'hidden',
+    paddingTop: 16,
+    paddingRight: 35,
+    paddingBottom: 16,
+    paddingLeft: 76,
+    position: 'relative',
+  },
+  advertisementCardTitle: {
+    fontStyle: 'normal',
+    fontWeight: 'bold',
+    fontSize: 14,
+    lineHeight: 23,
+    marginBottom: 5,
+  },
+  advertisementCardDescription: {
+    fontSize: 12,
+  },
+  iconContainer: {
+    position: 'absolute',
+    left: 16,
+  },
+});
 
-const AdvertisementCardTitle = styled(BaseText)`
-  font-style: normal;
-  font-weight: bold;
-  font-size: 14px;
-  line-height: 23px;
-  margin-bottom: 5px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const AdvertisementCardContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.advertisementCardContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AdvertisementCardDescription = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-`;
+const AdvertisementCardTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.advertisementCardTitle, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const IconContainer = styled.View`
-  position: absolute;
-  left: 16px;
-`;
+const AdvertisementCardDescription: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.advertisementCardDescription,
+        {color: theme.dark ? Slate : SlateDark},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
+
+const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconContainer}>{children}</View>
+);
 
 const ADVERTISEMENT_ICON_HEIGHT = 50;
 const ADVERTISEMENT_ICON_WIDTH = 50;

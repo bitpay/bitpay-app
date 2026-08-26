@@ -1,9 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, SafeAreaView, StyleSheet} from 'react-native';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -46,10 +45,12 @@ const PinImage = {
     />
   ),
 };
-const PinContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: stretch;
-`;
+const styles = StyleSheet.create({
+  pinContainer: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+});
 
 const PinScreen = ({
   navigation,
@@ -129,7 +130,7 @@ const PinScreen = ({
   };
 
   return (
-    <PinContainer testID="security-view">
+    <SafeAreaView style={styles.pinContainer} testID="security-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -179,7 +180,7 @@ const PinScreen = ({
           </ActionContainer>
         </CtaContainer>
       </ScrollView>
-    </PinContainer>
+    </SafeAreaView>
   );
 };
 

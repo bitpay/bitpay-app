@@ -139,28 +139,52 @@ export const portfolioReducer = (
     }
 
     case PortfolioActionTypes.UPDATE_POPULATE_PROGRESS: {
-      const nextErrors = action.payload.errorsToAdd?.length
-        ? state.populateStatus.errors.concat(action.payload.errorsToAdd)
-        : state.populateStatus.errors;
-
-      const nextWalletStatusById = action.payload.walletStatusByIdUpdates
-        ? {
-            ...(state.populateStatus.walletStatusById || {}),
-            ...action.payload.walletStatusByIdUpdates,
-          }
-        : state.populateStatus.walletStatusById;
       const nextProgressValue = <K extends keyof typeof state.populateStatus>(
         key: K,
       ) => pickDefinedUpdate(action.payload, state.populateStatus, key);
+      const currentWalletId = nextProgressValue('currentWalletId');
+      const walletsTotal = nextProgressValue('walletsTotal');
+      const walletsCompleted = nextProgressValue('walletsCompleted');
+      const txRequestsMade = nextProgressValue('txRequestsMade');
+      const txsProcessed = nextProgressValue('txsProcessed');
+      const nextErrors = action.payload.errorsToAdd?.length
+        ? state.populateStatus.errors.concat(action.payload.errorsToAdd)
+        : state.populateStatus.errors;
+      const walletStatusByIdUpdates = action.payload.walletStatusByIdUpdates;
+      const hasWalletStatusChange =
+        !!walletStatusByIdUpdates &&
+        Object.entries(walletStatusByIdUpdates).some(
+          ([walletId, value]) =>
+            state.populateStatus.walletStatusById?.[walletId] !== value,
+        );
+      const nextWalletStatusById = hasWalletStatusChange
+        ? {
+            ...(state.populateStatus.walletStatusById || {}),
+            ...walletStatusByIdUpdates,
+          }
+        : state.populateStatus.walletStatusById;
+
+      if (
+        currentWalletId === state.populateStatus.currentWalletId &&
+        walletsTotal === state.populateStatus.walletsTotal &&
+        walletsCompleted === state.populateStatus.walletsCompleted &&
+        txRequestsMade === state.populateStatus.txRequestsMade &&
+        txsProcessed === state.populateStatus.txsProcessed &&
+        nextErrors === state.populateStatus.errors &&
+        nextWalletStatusById === state.populateStatus.walletStatusById
+      ) {
+        return state;
+      }
+
       return {
         ...state,
         populateStatus: {
           ...state.populateStatus,
-          currentWalletId: nextProgressValue('currentWalletId'),
-          walletsTotal: nextProgressValue('walletsTotal'),
-          walletsCompleted: nextProgressValue('walletsCompleted'),
-          txRequestsMade: nextProgressValue('txRequestsMade'),
-          txsProcessed: nextProgressValue('txsProcessed'),
+          currentWalletId,
+          walletsTotal,
+          walletsCompleted,
+          txRequestsMade,
+          txsProcessed,
           errors: nextErrors,
           walletStatusById: nextWalletStatusById,
         },

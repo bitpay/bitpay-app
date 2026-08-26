@@ -1,16 +1,15 @@
 import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {
-  CTA_RESERVED,
   CtaContainerAbsolute,
   HeaderRightContainer,
   isNarrowHeight,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -24,10 +23,14 @@ import {Slate30, SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import SuccessIcon from '../../../../assets/img/success.svg';
-import {KeyboardAvoidingView, Platform, View} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useHeaderHeight} from '@react-navigation/elements';
 
 type VerifyPhraseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -38,54 +41,60 @@ export interface VerifyPhraseParamList {
   keyId: string;
   words: string[];
   context: string;
-  key: Key;
+  key?: Key;
   walletTermsAccepted: boolean;
 }
 
-interface WordItem {
-  word: string;
-  isActive: boolean;
-}
+const styles = StyleSheet.create({
+  verifyPhraseForm: {
+    paddingHorizontal: 20,
+  },
+  verifyPhraseField: {
+    marginBottom: 20,
+  },
+  headerContainer: {
+    margin: 10,
+  },
+  headerText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  validationBadge: {
+    position: 'absolute',
+    right: 13,
+    top: '50%',
+  },
+  verifyPhraseContainer: {
+    flex: 1,
+  },
+  headerContainerLargeMargin: {
+    margin: 25,
+  },
+  verifyPhraseFormFlex: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+});
 
-const VerifyPhraseForm = styled.View`
-  padding: 0 20px;
-`;
-
-const VerifyPhraseField = styled.View`
-  margin-bottom: 20px;
-`;
-
-const HeaderContainer = styled.View`
-  margin: 10px;
-`;
-
-const HeaderText = styled(BaseText)`
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-`;
-
-const ValidationBadge = styled.View`
-  position: absolute;
-  right: 13px;
-  top: 50%;
-`;
-
-const VerifyPhraseContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const HeaderContainerLargeMargin = styled.View`
-  margin: 25px;
-`;
-
-const VerifyPhraseFormFlex = styled.View`
-  flex: 1;
-  padding: 0 20px;
-`;
+const HeaderText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.headerText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const schema = yup.object().shape({
   word1: yup.string().required().trim(),
@@ -118,7 +127,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const {errors} = formState;
 
   const {params} = route;
-  const {words, keyId, context, key, walletTermsAccepted} = params;
+  const storedKey = useAppSelector(({WALLET}) => WALLET.keys[params.keyId]);
+  const {words, keyId, context, walletTermsAccepted} = params;
+  const key = params.key ?? storedKey;
 
   const [word1Validation, setWord1Validation] = useState(false);
   const [word2Validation, setWord2Validation] = useState(false);
@@ -202,7 +213,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                   context,
                   navigation,
                   walletTermsAccepted,
-                  key: {...key, backupComplete: true},
+                  key: key ? {...key, backupComplete: true} : undefined,
                 }),
               primary: true,
             },
@@ -326,7 +337,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         keyboardShouldPersistTaps="handled"
         extraHeight={0}
         extraScrollHeight={scrollExtraHeight}>
-        <HeaderContainer>
+        <View style={styles.headerContainer}>
           <HeaderText>
             {t(
               'Verify you saved your recovery phrase correctly by writing in ' +
@@ -342,9 +353,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               },
             )}
           </HeaderText>
-        </HeaderContainer>
-        <VerifyPhraseForm>
-          <VerifyPhraseField>
+        </View>
+        <View style={styles.verifyPhraseForm}>
+          <View style={styles.verifyPhraseField}>
             <Controller
               key={'word1'}
               control={control}
@@ -368,12 +379,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               name={'word1'}
             />
             {word1Validation ? (
-              <ValidationBadge>
+              <View style={styles.validationBadge}>
                 <SuccessIcon />
-              </ValidationBadge>
+              </View>
             ) : null}
-          </VerifyPhraseField>
-          <VerifyPhraseField>
+          </View>
+          <View style={styles.verifyPhraseField}>
             <Controller
               key={'word2'}
               control={control}
@@ -397,12 +408,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               name={'word2'}
             />
             {word2Validation ? (
-              <ValidationBadge>
+              <View style={styles.validationBadge}>
                 <SuccessIcon />
-              </ValidationBadge>
+              </View>
             ) : null}
-          </VerifyPhraseField>
-          <VerifyPhraseField>
+          </View>
+          <View style={styles.verifyPhraseField}>
             <Controller
               key={'word3'}
               control={control}
@@ -426,12 +437,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               name={'word3'}
             />
             {word3Validation ? (
-              <ValidationBadge>
+              <View style={styles.validationBadge}>
                 <SuccessIcon />
-              </ValidationBadge>
+              </View>
             ) : null}
-          </VerifyPhraseField>
-        </VerifyPhraseForm>
+          </View>
+        </View>
       </KeyboardAwareScrollView>
       <CtaContainerAbsolute testID="cta-container">
         <Button
@@ -442,8 +453,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       </CtaContainerAbsolute>
     </KeyboardAvoidingView>
   ) : (
-    <VerifyPhraseContainer testID="verify-phrase-container">
-      <HeaderContainerLargeMargin>
+    <SafeAreaView
+      testID="verify-phrase-container"
+      style={styles.verifyPhraseContainer}>
+      <View style={styles.headerContainerLargeMargin}>
         <HeaderText>
           {t(
             'Verify you saved your recovery phrase correctly by writing in ' +
@@ -459,10 +472,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             },
           )}
         </HeaderText>
-      </HeaderContainerLargeMargin>
+      </View>
 
-      <VerifyPhraseFormFlex>
-        <VerifyPhraseField>
+      <View style={styles.verifyPhraseFormFlex}>
+        <View style={styles.verifyPhraseField}>
           <Controller
             key={'word1'}
             control={control}
@@ -486,13 +499,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             name={'word1'}
           />
           {word1Validation ? (
-            <ValidationBadge>
+            <View style={styles.validationBadge}>
               <SuccessIcon />
-            </ValidationBadge>
+            </View>
           ) : null}
-        </VerifyPhraseField>
+        </View>
 
-        <VerifyPhraseField>
+        <View style={styles.verifyPhraseField}>
           <Controller
             key={'word2'}
             control={control}
@@ -516,13 +529,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             name={'word2'}
           />
           {word2Validation ? (
-            <ValidationBadge>
+            <View style={styles.validationBadge}>
               <SuccessIcon />
-            </ValidationBadge>
+            </View>
           ) : null}
-        </VerifyPhraseField>
+        </View>
 
-        <VerifyPhraseField>
+        <View style={styles.verifyPhraseField}>
           <Controller
             key={'word3'}
             control={control}
@@ -546,12 +559,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             name={'word3'}
           />
           {word3Validation ? (
-            <ValidationBadge>
+            <View style={styles.validationBadge}>
               <SuccessIcon />
-            </ValidationBadge>
+            </View>
           ) : null}
-        </VerifyPhraseField>
-      </VerifyPhraseFormFlex>
+        </View>
+      </View>
 
       <CtaContainerAbsolute testID="cta-container">
         <Button
@@ -560,7 +573,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
           Confirm
         </Button>
       </CtaContainerAbsolute>
-    </VerifyPhraseContainer>
+    </SafeAreaView>
   );
 };
 

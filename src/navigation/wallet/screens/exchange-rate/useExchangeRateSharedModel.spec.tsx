@@ -21,17 +21,11 @@ jest.mock('@react-navigation/native', () => ({
   }),
 }));
 
-jest.mock('styled-components/native', () => {
-  const styled = (Component: any) => () => Component;
-
-  return {
-    __esModule: true,
-    default: styled,
-    useTheme: () => ({
-      dark: false,
-    }),
-  };
-});
+jest.mock('../../../../contexts', () => ({
+  useTheme: () => ({
+    dark: false,
+  }),
+}));
 
 jest.mock('../../../../components/back/HeaderBackButton', () => () => null);
 jest.mock('../../../../components/styled/Text', () => ({

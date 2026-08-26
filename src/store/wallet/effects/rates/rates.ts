@@ -4,14 +4,12 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 import {HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
-import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
-import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
 import {
-  failedGetRates,
-  successGetRates,
-  updateCacheKey,
-} from '../../../rate/rate.actions';
-import {CacheKeys} from '../../../rate/rate.models';
+  RATES_CACHE_DURATION,
+  WALLET_REQUEST_CONCURRENCY,
+} from '../../../../constants/wallet';
+import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
+import {failedGetRates, successGetRates} from '../../../rate/rate.actions';
 import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
@@ -21,6 +19,7 @@ import {
   getLastDayTimestampStartOfHourMs,
   getErrorString,
 } from '../../../../utils/helper-methods';
+import {mapWithConcurrency} from '../../../../utils/concurrency';
 import {
   getMultipleTokenPrices,
   UnifiedTokenPriceObj,
@@ -32,6 +31,8 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import type {Key, Wallet} from '../../wallet.models';
 
+const ratesRequestsInFlight = new WeakMap<object, Promise<Rates>>();
+
 export const startGetRates =
   ({
     context,
@@ -41,43 +42,46 @@ export const startGetRates =
     force?: boolean;
   }): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
-    return new Promise(async resolve => {
-      logManager.info('startGetRates: starting...');
-      const {
-        RATE: {ratesCacheKey, rates: cachedRates},
-        APP: {altCurrencyList},
-      } = getState();
-      if (
-        !isCacheKeyStale(
-          ratesCacheKey[DEFAULT_DATE_RANGE],
-          RATES_CACHE_DURATION,
-        ) &&
-        !force &&
-        altCurrencyList.length > 0
-      ) {
-        logManager.info('startGetRates: success (using cached rates)');
-        return resolve(cachedRates);
-      }
+    logManager.info('startGetRates: starting...');
 
-      dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
+    const requestKey = dispatch as object;
+    const activeRequest = ratesRequestsInFlight.get(requestKey);
+    if (activeRequest) {
+      logManager.info('startGetRates: joining active request');
+      return activeRequest;
+    }
 
+    const {
+      RATE: {ratesCacheKey, rates: cachedRates},
+      APP: {altCurrencyList},
+    } = getState();
+    if (
+      !isCacheKeyStale(
+        ratesCacheKey[DEFAULT_DATE_RANGE],
+        RATES_CACHE_DURATION,
+      ) &&
+      !force &&
+      altCurrencyList.length > 0
+    ) {
+      logManager.info('startGetRates: success (using cached rates)');
+      return cachedRates;
+    }
+
+    const request = Promise.resolve().then(async (): Promise<Rates> => {
       try {
         logManager.info('startGetRates: fetching new rates...');
         const yesterday = getLastDayTimestampStartOfHourMs();
 
         logManager.info(
-          `startGetRates: get request to: ${BASE_BWS_URL}/v3/fiatrates/`,
+          `startGetRates: get requests to: ${BASE_BWS_URL}/v3/fiatrates/ (today + ts=${yesterday})`,
         );
-        const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-        logManager.info('startGetRates: success get request');
-
+        const [{data: rates}, {data: lastDayRates}] = await Promise.all([
+          axios.get(`${BASE_BWS_URL}/v3/fiatrates/`),
+          axios.get(`${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`),
+        ]);
         logManager.info(
-          `startGetRates: get request (yesterday) to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
+          'startGetRates: success get requests (today + yesterday)',
         );
-        const {data: lastDayRates} = await axios.get(
-          `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
-        );
-        logManager.info('startGetRates: success get request (yesterday)');
 
         if (context === 'init' || altCurrencyList.length === 0) {
           logManager.info('startGetRates: setting alternative currency list');
@@ -100,8 +104,23 @@ export const startGetRates =
           getTokenRates(),
         )) as any;
 
-        const allRates = {...rates, ...tokenRates};
-        const allLastDayRates = {...lastDayRates, ...tokenLastDayRates};
+        const previousRates = getState().RATE.rates;
+        const previousLastDayRates = getState().RATE.lastDayRates;
+        const allRates: Rates = {...rates, ...tokenRates};
+        const allLastDayRates: Rates = {
+          ...lastDayRates,
+          ...tokenLastDayRates,
+        };
+        Object.keys(previousRates).forEach(key => {
+          if (!allRates[key]?.length) {
+            allRates[key] = previousRates[key];
+          }
+        });
+        Object.keys(previousLastDayRates).forEach(key => {
+          if (!allLastDayRates[key]?.length) {
+            allLastDayRates[key] = previousLastDayRates[key];
+          }
+        });
 
         dispatch(
           successGetRates({
@@ -110,14 +129,24 @@ export const startGetRates =
           }),
         );
         logManager.info('startGetRates: success');
-        resolve(allRates);
+        return allRates;
       } catch (err) {
         const errorStr = getErrorString(err);
         dispatch(failedGetRates());
         logManager.error(`startGetRates: failed ${errorStr}`);
-        resolve(getState().RATE.rates); // Return cached rates
+        return getState().RATE.rates; // Return cached rates
       }
     });
+
+    ratesRequestsInFlight.set(requestKey, request);
+
+    try {
+      return await request;
+    } finally {
+      if (ratesRequestsInFlight.get(requestKey) === request) {
+        ratesRequestsInFlight.delete(requestKey);
+      }
+    }
   };
 
 export const refreshRatesForPortfolioPnl =
@@ -203,75 +232,96 @@ export const getTokenRates =
           return chunked_arr;
         };
 
+        const priceTasks: {chain: string; chunk: string[]}[] = [];
         for (const chain of SUPPORTED_VM_TOKENS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
           if (contractAddresses?.length > 0) {
-            const chunks = chunkArray(contractAddresses, 25);
-            for (const chunk of chunks) {
-              const data = await dispatch(
-                getMultipleTokenPrices({addresses: chunk, chain}),
-              );
-              data.forEach((tokenInfo: UnifiedTokenPriceObj) => {
-                const {
-                  usdPrice,
-                  tokenAddress,
-                  '24hrPercentChange': percentChange,
-                } = tokenInfo;
-                const lastUpdate = Date.now();
-
-                if (!usdPrice || !tokenAddress || percentChange == null) {
-                  return;
-                }
-                const formattedTokenAddress = addTokenChainSuffix(
-                  tokenAddress,
-                  chain,
-                );
-                // only save token rates if exist in tokens list
-                if (tokensOptsByAddress[formattedTokenAddress]) {
-                  tokenRates[formattedTokenAddress] = [];
-                  tokenLastDayRates[formattedTokenAddress] = [];
-
-                  altCurrencies.forEach((altCurrency: string) => {
-                    const rate =
-                      dispatch(
-                        calculateUsdToAltFiat(
-                          usdPrice,
-                          altCurrency,
-                          decimalPrecision,
-                          shouldSkipLogging,
-                        ),
-                      ) || 0;
-                    tokenRates[formattedTokenAddress].push({
-                      code: altCurrency.toUpperCase(),
-                      fetchedOn: lastUpdate,
-                      name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                      rate,
-                      ts: lastUpdate,
-                    });
-                    const sign = Number(percentChange) >= 0 ? 1 : -1;
-                    const lastDayRate =
-                      rate /
-                      (1 + (sign * Math.abs(Number(percentChange))) / 100);
-                    const yesterday = moment
-                      .unix(lastUpdate)
-                      .subtract(1, 'days')
-                      .unix();
-                    tokenLastDayRates[formattedTokenAddress].push({
-                      code: altCurrency.toUpperCase(),
-                      fetchedOn: yesterday,
-                      name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                      rate: lastDayRate,
-                      ts: yesterday,
-                    });
-                  });
-                }
-              });
+            for (const chunk of chunkArray(contractAddresses, 25)) {
+              priceTasks.push({chain, chunk});
             }
           } else {
             logManager.info(
               `No tokens wallets for ${chain} found. Skipping getTokenRates...`,
             );
           }
+        }
+
+        const priceResults = await mapWithConcurrency(
+          priceTasks,
+          WALLET_REQUEST_CONCURRENCY,
+          async ({chain, chunk}) => {
+            try {
+              return {
+                chain,
+                data: (await dispatch(
+                  getMultipleTokenPrices({addresses: chunk, chain}),
+                )) as UnifiedTokenPriceObj[],
+              };
+            } catch (err) {
+              const errStr = err instanceof Error ? err.message : String(err);
+              logManager.error(
+                `getTokenRates: token price chunk failed for ${chain} (continue anyway): ${errStr}`,
+              );
+              return {chain, data: [] as UnifiedTokenPriceObj[]};
+            }
+          },
+        );
+
+        for (const {chain, data} of priceResults) {
+          data.forEach((tokenInfo: UnifiedTokenPriceObj) => {
+            const {
+              usdPrice,
+              tokenAddress,
+              '24hrPercentChange': percentChange,
+            } = tokenInfo;
+            const lastUpdate = Date.now();
+
+            if (!usdPrice || !tokenAddress || percentChange == null) {
+              return;
+            }
+            const formattedTokenAddress = addTokenChainSuffix(
+              tokenAddress,
+              chain,
+            );
+            // only save token rates if exist in tokens list
+            if (tokensOptsByAddress[formattedTokenAddress]) {
+              tokenRates[formattedTokenAddress] = [];
+              tokenLastDayRates[formattedTokenAddress] = [];
+
+              altCurrencies.forEach((altCurrency: string) => {
+                const rate =
+                  dispatch(
+                    calculateUsdToAltFiat(
+                      usdPrice,
+                      altCurrency,
+                      decimalPrecision,
+                      shouldSkipLogging,
+                    ),
+                  ) || 0;
+                tokenRates[formattedTokenAddress].push({
+                  code: altCurrency.toUpperCase(),
+                  fetchedOn: lastUpdate,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  rate,
+                  ts: lastUpdate,
+                });
+                const sign = Number(percentChange) >= 0 ? 1 : -1;
+                const lastDayRate =
+                  rate / (1 + (sign * Math.abs(Number(percentChange))) / 100);
+                const yesterday = moment
+                  .unix(lastUpdate)
+                  .subtract(1, 'days')
+                  .unix();
+                tokenLastDayRates[formattedTokenAddress].push({
+                  code: altCurrency.toUpperCase(),
+                  fetchedOn: yesterday,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  rate: lastDayRate,
+                  ts: yesterday,
+                });
+              });
+            }
+          });
         }
 
         logManager.info('getTokenRates: success');

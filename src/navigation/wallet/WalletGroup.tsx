@@ -21,10 +21,9 @@ import WalletSettings from './screens/WalletSettings';
 import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
-import {H7, HeaderTitle} from '../../components/styled/Text';
+import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
-  Key,
   Wallet as WalletModel,
   type WalletStatusPayload,
 } from '../../store/wallet/wallet.models';
@@ -77,7 +76,13 @@ import ClearEncryptPassword, {
 import PayProConfirmTwoFactor, {
   PayProConfirmTwoFactorParamList,
 } from './screens/send/confirm/PayProConfirmTwoFactor';
-import {useTranslation} from 'react-i18next';
+import {
+  getAccountDetailsRouteId,
+  getKeyOverviewRouteId,
+  getWalletDetailsRouteId,
+} from './walletRouteIds';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {useStackScreenOptions} from '../utils/headerHelpers';
 import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
@@ -89,10 +94,7 @@ import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
 import {Root} from '../../Root';
-import {AccountRowProps} from '../../components/list/AccountListRow';
 import KeyInformation from './screens/KeyInformation';
-import {useAppSelector} from '../../utils/hooks';
-import {RootState} from '../../store';
 import BackupSharedKeyScreen, {
   BackupSharedKeyParamList,
 } from './screens/BackupSharedKey';
@@ -115,34 +117,44 @@ export type WalletGroupParamList = {
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList | undefined;
-  KeyOverview: {id: string; context?: 'createNewMultisigKey'};
+  KeyOverview: {
+    id: string;
+    context?: 'createNewMultisigKey';
+    _preloadContent?: boolean;
+  };
   KeyExplanation: undefined;
-  KeySettings: {key: Key; context?: 'createEncryptPassword'};
+  KeySettings: {keyId: string; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
-    key: Key;
+    keyId: string;
     wallet?: {walletId: string; walletName: string | undefined};
-    accountItem?: AccountRowProps;
+    account?: {
+      accountAddress: string;
+      accountName: string | undefined;
+    };
     context: 'key' | 'wallet' | 'account';
   };
   AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
-  WalletSettings: {walletId: string; key: Key; copayerId?: string};
+  WalletSettings: {walletId: string; keyId: string; copayerId?: string};
   AccountSettings: {
-    key: Key;
+    keyId: string;
     selectedAccountAddress: string;
     context: 'keySettings' | 'accountDetails';
     isSvmAccount?: boolean;
   };
   CreationOptions: undefined;
   Import: ImportParamList;
-  CreateEncryptPassword: {key: Key};
+  CreateEncryptPassword: {keyId: string};
   ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
   KeyInformation: undefined;
   ExportKey: {code: string; keyName: string | undefined};
   WalletAmountScreen: AmountScreenParamList;
   SendTo: {
-    wallet: WalletModel;
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+    _preloadContent?: boolean;
   };
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
@@ -157,9 +169,11 @@ export type WalletGroupParamList = {
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {
-    wallet: WalletModel;
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+    historyContext: 'account' | 'wallet';
     transaction: any;
-    onTxDescriptionChange: () => void;
   };
   TransactionProposalDetails: {
     walletId: string;
@@ -174,9 +188,15 @@ export type WalletGroupParamList = {
   };
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
-  WalletInformation: {wallet: WalletModel; accountItem?: AccountRowProps};
+  WalletInformation: {
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+  };
   ExportWallet: {
-    wallet: WalletModel;
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
     keyObj: {
       mnemonic: string;
       mnemonicHasPassphrase: boolean;
@@ -184,7 +204,7 @@ export type WalletGroupParamList = {
     };
   };
   ExportTSSWallet: ExportTSSWalletParamList;
-  Addresses: {wallet: WalletModel};
+  Addresses: {keyId: string; walletId: string; copayerId?: string};
   AllAddresses: AllAddressesParamList;
   ExchangeRate: {
     currencyName: string;
@@ -199,8 +219,16 @@ export type WalletGroupParamList = {
   SendToOptions: SendToOptionsParamList;
   SelectInputs: SelectInputsParamList;
   EnterBuyerProvidedEmail: {data: string};
-  ExportTransactionHistory: {wallet: WalletModel};
-  ClearTransactionHistoryCache: {wallet: WalletModel; key: Key};
+  ExportTransactionHistory: {
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+  };
+  ClearTransactionHistoryCache: {
+    keyId: string;
+    walletId: string;
+    copayerId?: string;
+  };
   PaperWallet: {scannedPrivateKey: string};
 };
 
@@ -264,10 +292,6 @@ export enum WalletScreens {
 }
 
 const WalletGroup = ({Wallet, theme}: WalletProps) => {
-  const {t} = useTranslation();
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Wallet.Group screenOptions={commonOptions}>
@@ -316,6 +340,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.KEY_OVERVIEW}
         component={KeyOverview}
+        getId={getKeyOverviewRouteId}
       />
       <Wallet.Screen
         name={WalletScreens.KEY_EXPLANATION}
@@ -332,6 +357,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.ACCOUNT_DETAILS}
         component={AccountDetails}
+        getId={getAccountDetailsRouteId}
       />
       <Wallet.Screen
         name={WalletScreens.ACCOUNT_SETTINGS}
@@ -340,6 +366,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.WALLET_DETAILS}
         component={WalletDetails}
+        getId={getWalletDetailsRouteId}
       />
       <Wallet.Screen
         name={WalletScreens.WALLET_SETTINGS}
@@ -482,6 +509,11 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         }}
         name={WalletScreens.GLOBAL_SELECT}
         component={GlobalSelect}
+        getId={({params}) =>
+          ['receive', 'send'].includes(params.context)
+            ? `home-${params.context}`
+            : undefined
+        }
       />
       <Wallet.Screen
         options={{

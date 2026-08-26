@@ -1,6 +1,7 @@
 import React from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import MinusSvg from '../../../../../assets/img/minus.svg';
 import PlusSvg from '../../../../../assets/img/plus.svg';
 import {BaseText} from '../../../../components/styled/Text';
@@ -9,32 +10,66 @@ import {Action, BitPay} from '../../../../styles/colors';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 
-const Selector = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  selector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  changeDenomButton: {
+    height: 39,
+    width: 39,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 30,
+    borderWidth: 1,
+  },
+  selectedAmount: {
+    fontSize: 50,
+    fontWeight: '500',
+    minWidth: 185,
+    paddingHorizontal: 15,
+    textAlign: 'center',
+  },
+});
 
-const ChangeDenomButton = styled.View`
-  height: 39px;
-  width: 39px;
-  border: 1px solid black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 30px;
-  border: 1px solid ${({theme}) => (theme.dark ? Action : BitPay)};
-`;
+const Selector = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.selector, style]} {...rest} />
+);
 
-const SelectedAmount = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? Action : BitPay)};
-  font-size: 50px;
-  font-weight: 500;
-  min-width: 185px;
-  padding: 0 15px;
-  text-align: center;
-`;
+const ChangeDenomButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.changeDenomButton,
+        {borderColor: theme.dark ? Action : BitPay},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const SelectedAmount = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.selectedAmount,
+        {color: theme.dark ? Action : BitPay},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export default ({
   cardConfig,

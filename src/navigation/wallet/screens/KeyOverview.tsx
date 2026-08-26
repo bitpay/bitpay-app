@@ -9,24 +9,28 @@ import React, {
 import {
   CommonActions,
   RouteProp,
+  useFocusEffect,
   useIsFocused,
   useNavigation,
   useRoute,
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
+import {useStore} from 'react-redux';
 import {
   LayoutChangeEvent,
   LogBox,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   View,
   useWindowDimensions,
 } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   Balance,
@@ -46,7 +50,6 @@ import {
   EmptyListContainer,
   ChevronContainer,
 } from '../../../components/styled/Containers';
-import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
@@ -87,10 +90,11 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
+  getActiveWalletStoreInitPromise,
   getDecryptPassword,
-  refreshRatesForPortfolioPnl,
   normalizeMnemonic,
   serverAssistedImport,
+  startGetRates,
 } from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
@@ -101,6 +105,12 @@ import {
   buildWalletObj,
   checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
+import {
+  buildAccountListSignature,
+  getRatesRevision,
+  readAccountListSnapshot,
+  resolveAccountListSnapshot,
+} from '../../../store/wallet/utils/accountListCache';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -116,6 +126,8 @@ import {
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
+import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
+import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import _ from 'lodash';
 import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
@@ -130,12 +142,16 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceChartLoadingPlaceholder from '../../../components/charts/BalanceChartLoadingPlaceholder';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../components/charts/fiatTimeframes';
+import {useHasCachedBalanceHistoryChartSeries} from '../../../components/charts/balanceHistoryChartSeriesCache';
 import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
+import usePortfolioBalanceChartEligibleWallets from '../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -153,153 +169,383 @@ import {
 } from '../../../utils/portfolio/assets';
 import usePortfolioGainLossSummary from '../../../portfolio/ui/hooks/usePortfolioGainLossSummary';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
+import {RootState} from '../../../store';
+import {PERF_DEBUG, performanceLog} from '../../../utils/performanceDebug';
+import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
+import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
+import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
+import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
+
+const EMPTY_ACCOUNT_LIST: AccountRowProps[] = [];
+
+const AccountListItem = React.memo(
+  ({
+    item,
+    hideBalance,
+    animateEntrance,
+    onPressItem,
+  }: {
+    item: AccountRowProps;
+    hideBalance: boolean;
+    animateEntrance: boolean;
+    onPressItem: (item: AccountRowProps) => void;
+  }) => {
+    const onPress = useCallback(() => onPressItem(item), [item, onPressItem]);
+
+    return (
+      <AccountListRow
+        id={item.id}
+        accountItem={item}
+        hideBalance={hideBalance}
+        animateEntrance={animateEntrance}
+        onPress={onPress}
+      />
+    );
+  },
+);
+AccountListItem.displayName = 'AccountListItem';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
 
-export const KeyToggle = styled(TouchableOpacity)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-  gap: 5px;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-export const KeyDropdown = styled.SafeAreaView`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  max-height: 75%;
-`;
+const styles = StyleSheet.create({
+  keyToggle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  keyDropdown: {
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    maxHeight: '75%',
+  },
+  keyDropdownOptionsContainer: {
+    paddingHorizontal: gutter,
+  },
+  cogIconContainer: {
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    width: 40,
+  },
+  overviewContainer: {
+    flex: 1,
+  },
+  balanceContainer: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    alignItems: 'center',
+  },
+  walletListHeader: {
+    padding: 10,
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  walletListFooterContainer: {
+    paddingTop: 10,
+    paddingRight: 10,
+    paddingBottom: 100,
+    paddingLeft: 10,
+    marginTop: 15,
+    gap: 12,
+  },
+  addWalletLinkContainer: {
+    paddingVertical: 13,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  addWalletLink: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  addWalletLinkButton: {
+    paddingHorizontal: 20,
+  },
+  addWalletSpacer: {
+    height: 10,
+  },
+  allocationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  allocationHeaderAction: {
+    padding: 6,
+  },
+  allocationFooter: {
+    marginTop: 20,
+    paddingBottom: 5,
+  },
+  allocationDivider: {
+    height: 1,
+    opacity: 1,
+    marginVertical: 12,
+  },
+  allocationLabel: {
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 14,
+  },
+  allocationValue: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 24,
+    marginTop: 4,
+  },
+  hiddenChart: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
+  },
+  allocationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  allocationColumn: {
+    flex: 1,
+  },
+  allocationMetricValue: {
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 4,
+  },
+});
 
-export const KeyDropdownOptionsContainer = styled.ScrollView`
-  padding: 0 ${ScreenGutter};
-`;
+export const KeyToggle: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.keyToggle, style]} {...rest} />
+);
 
-export const CogIconContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 50px;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  width: 40px;
-`;
+export const KeyDropdown: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SafeAreaView
+      style={[
+        styles.keyDropdown,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OverviewContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+export const KeyDropdownOptionsContainer: React.FC<
+  React.ComponentProps<typeof ScrollView>
+> = ({style, ...rest}) => (
+  <ScrollView style={[styles.keyDropdownOptionsContainer, style]} {...rest} />
+);
 
-const BalanceContainer = styled.View`
-  margin-top: 8px;
-  padding: 10px 15px;
-  align-items: center;
-`;
+const OtherKeyDropdownOptions: React.FC<{
+  currentKeyId: string;
+  defaultAltCurrencyIsoCode: string;
+  hideKeyBalance: boolean;
+  onSelectKey: (keyId: string) => void;
+}> = ({
+  currentKeyId,
+  defaultAltCurrencyIsoCode,
+  hideKeyBalance,
+  onSelectKey,
+}) => {
+  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
 
-const WalletListHeader = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+  return (
+    <>
+      {Object.values(keys)
+        .filter(key => key.backupComplete && key.id !== currentKeyId)
+        .map(key => (
+          <DropdownOption
+            key={key.id}
+            optionId={key.id}
+            optionName={key.keyName}
+            wallets={key.wallets}
+            totalBalance={key.totalBalance}
+            onPress={onSelectKey}
+            defaultAltCurrencyIsoCode={defaultAltCurrencyIsoCode}
+            hideKeyBalance={hideKeyBalance}
+          />
+        ))}
+    </>
+  );
+};
 
-const WalletListFooterContainer = styled.View`
-  padding: 10px 10px 100px 10px;
-  margin-top: 15px;
-  gap: 12px;
-`;
+export const CogIconContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.cogIconContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AddWalletLinkContainer = styled.View`
-  padding: 13px 0;
-  align-items: center;
-  margin-bottom: 15px;
-`;
+const OverviewContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof SafeAreaView>
+>(({style, ...rest}, ref) => (
+  <SafeAreaView ref={ref} style={[styles.overviewContainer, style]} {...rest} />
+));
 
-const AddWalletLink = styled(Link).attrs(() => ({
-  suppressHighlighting: true,
-}))`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-`;
+const BalanceContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.balanceContainer, style]} {...rest} />;
 
-const AddWalletLinkButton = styled(TouchableOpacity)`
-  padding: 0 20px;
-`;
+const WalletListHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletListHeader, style]} {...rest} />;
 
-const AddWalletSpacer = styled.View`
-  height: 10px;
-`;
+const WalletListFooterContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.walletListFooterContainer, style]} {...rest} />
+);
 
-const AllocationHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 0 10px;
-`;
+const AddWalletLinkContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.addWalletLinkContainer, style]} {...rest} />;
 
-const AllocationHeaderAction = styled(TouchableOpacity)`
-  padding: 6px;
-`;
+const AddWalletLink: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  suppressHighlighting = true,
+  ...rest
+}) => (
+  <Link
+    suppressHighlighting={suppressHighlighting}
+    style={[styles.addWalletLink, style]}
+    {...rest}
+  />
+);
 
-const AllocationFooter = styled.View`
-  margin-top: 20px;
-  padding-bottom: 5px;
-`;
+const AddWalletLinkButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.addWalletLinkButton, style]} {...rest} />
+);
 
-const AllocationDivider = styled.View`
-  height: 1px;
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  opacity: 1;
-  margin: 12px 0;
-`;
+const AddWalletSpacer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.addWalletSpacer, style]} {...rest} />;
 
-const AllocationLabel = styled(BaseText)`
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 14px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const AllocationHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationHeader, style]} {...rest} />;
 
-const AllocationValue = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${({theme}) => theme.colors.text};
-  margin-top: 4px;
-`;
+const AllocationHeaderAction: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.allocationHeaderAction, style]} {...rest} />
+);
 
-const AllocationRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-`;
+const AllocationFooter: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationFooter, style]} {...rest} />;
 
-const AllocationColumn = styled.View`
-  flex: 1;
-`;
+const AllocationDivider: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.allocationDivider,
+        {backgroundColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AllocationMetricValue = styled(BaseText)<{positive?: boolean}>`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  margin-top: 4px;
-  color: ${({positive, theme: {dark}}) => {
-    if (positive === true) {
-      return getDifferenceColor(true, dark);
-    }
-    if (positive === false) {
-      return getDifferenceColor(false, dark);
-    }
-    return dark ? White : SlateDark;
-  }};
-`;
+const AllocationLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.allocationLabel,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const AllocationValue: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.allocationValue, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
+
+const AllocationRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationRow, style]} {...rest} />;
+
+const AllocationColumn: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.allocationColumn, style]} {...rest} />;
+
+const AllocationMetricValue: React.FC<
+  React.ComponentProps<typeof BaseText> & {positive?: boolean}
+> = ({positive, style, ...rest}) => {
+  const theme = useTheme();
+  const color =
+    positive === true
+      ? getDifferenceColor(true, theme.dark)
+      : positive === false
+      ? getDifferenceColor(false, theme.dark)
+      : theme.dark
+      ? White
+      : SlateDark;
+  return (
+    <BaseText
+      style={[styles.allocationMetricValue, {color}, style]}
+      {...rest}
+    />
+  );
+};
 
 const AllocationMetricSkeleton: React.FC<{
   align?: 'left' | 'right' | 'center';
@@ -326,15 +572,23 @@ const AllocationMetricSkeleton: React.FC<{
   );
 };
 
-const HeaderTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const headerRowStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
 
-const HeaderRightContainer = styled(_HeaderRightContainer)`
-  flex-direction: row;
-  align-items: center;
-`;
+const HeaderTitleContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[headerRowStyles.row, style]} {...rest} />;
+
+const HeaderRightContainer: React.FC<
+  React.ComponentProps<typeof _HeaderRightContainer>
+> = ({style, ...rest}) => (
+  <_HeaderRightContainer style={[headerRowStyles.row, style]} {...rest} />
+);
 
 const KeyOverviewAllocationGainLossFooter = React.memo(
   ({
@@ -479,27 +733,48 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
 
 const KeyOverview = () => {
   const {t} = useTranslation();
-  const {
-    params: {id, context},
-  } = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
+  const {id, context, _preloadContent = false} = route.params;
+  const wasPreloadedRef = useRef(_preloadContent);
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
+  const reduxStore = useStore();
   const logger = useLogger();
   const theme = useTheme();
-  const isFocused = useIsFocused();
   const {width: windowWidth} = useWindowDimensions();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
-    ({WALLET}) => WALLET,
-  );
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const [contentReady, setContentReady] = useState(_preloadContent);
+  const [renderedKeyChartIdentity, setRenderedKeyChartIdentity] =
+    useState<string>();
+  const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[id]) as Key;
+  const hasMultipleKeys = useAppSelector(({WALLET}) => {
+    let completedKeyCount = 0;
+
+    for (const candidateKey of Object.values(
+      WALLET.keys as Record<string, Key>,
+    )) {
+      if (candidateKey.backupComplete) {
+        completedKeyCount += 1;
+        if (completedKeyCount > 1) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  });
+  const rates = useAppSelector(({RATE}) => RATE.rates);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
@@ -509,7 +784,6 @@ const KeyOverview = () => {
   );
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
-  const key = keys[id];
   const viewedKeyId = key?.id;
   const [shouldLoadAllocationGainLoss, setShouldLoadAllocationGainLoss] =
     useState(false);
@@ -521,25 +795,122 @@ const KeyOverview = () => {
     setShouldLoadAllocationGainLoss(false);
     allocationFooterVisibilityCheckInFlightRef.current = false;
   }, [id]);
-  const hasMultipleKeys =
-    Object.values(keys).filter(k => k.backupComplete).length > 1;
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data: {closing: boolean}}) => {
+        if (event.data.closing) {
+          return;
+        }
+
+        setContentReady(true);
+      },
+    );
+
+    return unsubscribe;
+  }, [navigation]);
+
   const [searchVal, setSearchVal] = useState('');
-  const [isViewUpdating, setIsViewUpdating] = useState(false);
+  const activeViewUpdateRef = useRef<{
+    keyId: string;
+    promise: Promise<void>;
+  } | null>(null);
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
   const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    portfolioQuoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   });
 
+  const accountListCacheKey = `keyOverviewAccountList:${id}`;
+  const accountListSignature = useMemo(
+    () =>
+      buildAccountListSignature({
+        wallets: key?.wallets,
+        keys: key ? [key] : [],
+        quoteCurrency: defaultAltCurrency.isoCode,
+        ratesRevision: getRatesRevision(rates),
+      }),
+    [defaultAltCurrency.isoCode, key, rates],
+  );
+  const hydratedFromSnapshotRef = useRef<boolean | undefined>(undefined);
+
   const memoizedAccountList = useMemo(() => {
-    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
-      filterByHideWallet: true,
+    const lastAccountListSnapshot =
+      readAccountListSnapshot<AccountRowProps[]>(accountListCacheKey);
+
+    if (hydratedFromSnapshotRef.current === undefined) {
+      hydratedFromSnapshotRef.current = lastAccountListSnapshot !== undefined;
+    }
+
+    // Paint the last valid list immediately, even if startup balance/rate
+    // refreshes changed its signature. Once the transition is complete the
+    // current signature is resolved and replaces this snapshot without making
+    // the rows disappear or replay their entrance animation.
+    if (!contentReady) {
+      return lastAccountListSnapshot ?? EMPTY_ACCOUNT_LIST;
+    }
+
+    const startedAt = PERF_DEBUG ? performance.now() : 0;
+    let didBuild = false;
+    const accountList = resolveAccountListSnapshot({
+      cacheKey: accountListCacheKey,
+      signature: accountListSignature,
+      build: () => {
+        didBuild = true;
+        return buildAccountList(
+          key,
+          defaultAltCurrency.isoCode,
+          rates,
+          dispatch,
+          {
+            filterByHideWallet: true,
+          },
+        );
+      },
     });
-  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
+
+    if (PERF_DEBUG) {
+      performanceLog(
+        `[PERF-KEY-OVERVIEW] accountList source:${
+          didBuild ? 'build' : 'cache'
+        } rows:${accountList.length} durationMs:${
+          Math.round((performance.now() - startedAt) * 10) / 10
+        } preloaded:${wasPreloadedRef.current}`,
+      );
+    }
+
+    return accountList;
+  }, [
+    accountListCacheKey,
+    accountListSignature,
+    contentReady,
+    defaultAltCurrency.isoCode,
+    dispatch,
+    key,
+    rates,
+  ]);
+  const keySettingsPreloadInputsRef = useRef({
+    key,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    dispatch,
+  });
+  keySettingsPreloadInputsRef.current = {
+    key,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    dispatch,
+  };
+  const warmKeySettingsAccountList = useCallback(() => {
+    const preloadInputs = keySettingsPreloadInputsRef.current;
+    if (!preloadInputs.key) {
+      return;
+    }
+
+    resolveKeySettingsAccountList(preloadInputs);
+  }, []);
 
   const pendingTxpCount =
     key?.wallets.reduce(
@@ -571,7 +942,9 @@ const KeyOverview = () => {
   }, [key?.id, navigation]);
 
   useLayoutEffect(() => {
-    if (!key) {
+    // React Navigation gives preloaded routes a placeholder navigation object.
+    // Its setOptions intentionally throws until the route becomes focused.
+    if (!key || !isFocused) {
       return;
     }
 
@@ -620,10 +993,10 @@ const KeyOverview = () => {
               ) : null}
               {checkPrivateKeyEncrypted(key) && !hasMissingEvmNetworks ? (
                 <CogIconContainer
-                  onPress={async () => {
-                    await sleep(500);
+                  onPressIn={warmKeySettingsAccountList}
+                  onPress={() => {
                     navigation.navigate('KeySettings', {
-                      key,
+                      keyId: key.id,
                     });
                   }}
                   activeOpacity={ActiveOpacity}>
@@ -649,9 +1022,11 @@ const KeyOverview = () => {
     hasMultipleKeys,
     linkedCoinbase,
     hasMissingEvmNetworks,
+    isFocused,
     onPressTxpBadge,
     pendingTxpCount,
     theme.dark,
+    warmKeySettingsAccountList,
   ]);
 
   const firstWallet = key?.wallets?.[0];
@@ -679,12 +1054,39 @@ const KeyOverview = () => {
     });
   }, [context, firstWallet, logger, navigation]);
 
-  const {totalBalance = 0} =
-    useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+  const totalBalance = key?.totalBalance ?? 0;
 
   const visibleKeyWallets = useMemo(() => {
     return getVisibleWalletsForKey(key);
   }, [key]);
+  const cacheEligibleKeyWallets = usePortfolioBalanceChartEligibleWallets({
+    wallets: visibleKeyWallets,
+    enabled: showPortfolioValue === true,
+  });
+  const keyChartWalletIds = useMemo(
+    () =>
+      cacheEligibleKeyWallets
+        .map(wallet => wallet.id)
+        .filter(Boolean)
+        .sort(),
+    [cacheEligibleKeyWallets],
+  );
+  const keyChartScopeIdentity = `${keyChartWalletIds.join(
+    ',',
+  )}|${quoteCurrency}|${DEFAULT_BALANCE_CHART_TIMEFRAME}`;
+  const hasCachedKeyChart = useHasCachedBalanceHistoryChartSeries({
+    walletIds: keyChartWalletIds,
+    quoteCurrency,
+    timeframe: DEFAULT_BALANCE_CHART_TIMEFRAME,
+  });
+  const renderableKeyWallets = useMemo(
+    () => (contentReady ? visibleKeyWallets : []),
+    [contentReady, visibleKeyWallets],
+  );
+  const keyBalanceChartWallets = useMemo(
+    () => (contentReady || hasCachedKeyChart ? cacheEligibleKeyWallets : []),
+    [cacheEligibleKeyWallets, contentReady, hasCachedKeyChart],
+  );
   const {
     canRenderBalanceChart: canRenderKeyBalanceChart,
     shouldMountBalanceChart: shouldMountKeyBalanceChart,
@@ -694,11 +1096,12 @@ const KeyOverview = () => {
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
-    wallets: visibleKeyWallets,
-    enabled: showPortfolioValue === true,
-    hideAllBalances,
+    wallets: keyBalanceChartWallets,
+    enabled: (contentReady || hasCachedKeyChart) && showPortfolioValue === true,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
+  const shouldRenderKeyBalanceChart =
+    shouldMountKeyBalanceChart || hasCachedKeyChart;
   const visibleKeyWalletIds = useMemo(
     () => visibleKeyWallets.map(wallet => wallet.id).filter(Boolean),
     [visibleKeyWallets],
@@ -708,31 +1111,47 @@ const KeyOverview = () => {
     quoteCurrency,
     fallbackBalance: totalBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: shouldMountKeyBalanceChart,
+    enabled: shouldRenderKeyBalanceChart,
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
-    preserveChartDrivenStateWhileNotReady: shouldPreserveStaleKeyBalanceChart,
+    preserveChartDrivenStateWhileNotReady:
+      shouldPreserveStaleKeyBalanceChart || hasCachedKeyChart,
     resetKey: id,
   });
   const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
-    wallets: visibleKeyWallets,
+    wallets: renderableKeyWallets,
     currentFiatBalance: totalBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances,
+    enabled: contentReady && showPortfolioValue !== true,
   });
   const keyHeaderChangeRowData =
     showPortfolioValue === true
       ? balanceChartSurface.changeRowData
       : legacyLastDayChangeRowData;
+  const hasRenderedKeyChart =
+    renderedKeyChartIdentity === keyChartScopeIdentity || hasCachedKeyChart;
+  const shouldShowKeyChartPlaceholder =
+    showPortfolioValue === true &&
+    !hasRenderedKeyChart &&
+    !hasCachedKeyChart &&
+    cacheEligibleKeyWallets.length > 0;
+  const onKeyChartRenderableSeriesChange = useCallback(
+    (hasRenderableSeries: boolean) => {
+      if (hasRenderableSeries) {
+        setRenderedKeyChartIdentity(keyChartScopeIdentity);
+      }
+    },
+    [keyChartScopeIdentity],
+  );
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
-    return visibleKeyWallets.map((w: Wallet) => ({
+    return renderableKeyWallets.map((w: Wallet) => ({
       currencyAbbreviation: w.currencyAbbreviation,
       chain: w.chain,
       tokenAddress: w.tokenAddress,
       currencyName: w.currencyName,
       fiatBalance: (w.balance as any)?.fiat,
     }));
-  }, [visibleKeyWallets]);
+  }, [renderableKeyWallets]);
 
   const allocationData = useMemo(() => {
     return buildAllocationDataFromWalletRows(
@@ -741,10 +1160,12 @@ const KeyOverview = () => {
     );
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
 
-  const isKeyPopulateLoading = isPopulateLoadingForWallets({
-    populateStatus: portfolio.populateStatus,
-    wallets: visibleKeyWallets,
-  });
+  const isKeyPopulateLoading = useAppSelector(({PORTFOLIO}) =>
+    isPopulateLoadingForWallets({
+      populateStatus: PORTFOLIO.populateStatus,
+      wallets: renderableKeyWallets,
+    }),
+  );
 
   const showAllocationGainLossFooter = canRenderKeyBalanceChart;
 
@@ -809,15 +1230,15 @@ const KeyOverview = () => {
     [maybeActivateAllocationGainLoss],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const startSyncWallets = async (mnemonic: string) => {
+    const {customTokenOptionsByAddress} = (reduxStore.getState() as RootState)
+      .WALLET;
+    const tokenOptionsForSync = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
     };
-  });
 
-  const startSyncWallets = async (mnemonic: string) => {
     if (key.isPrivKeyEncrypted) {
       // To close decrypt modal
       await sleep(500);
@@ -859,7 +1280,7 @@ const KeyOverview = () => {
                   currencyAbbreviation,
                   currencyName,
                 } as any,
-                _tokenOptionsByAddress,
+                tokenOptionsForSync,
               ),
             );
           });
@@ -970,9 +1391,8 @@ const KeyOverview = () => {
       description: t(
         'Choose another currency you would like to add to your key.',
       ),
-      onPress: async () => {
+      onPress: () => {
         haptic('impactLight');
-        await sleep(500);
         navigation.navigate('AddingOptions', {
           key,
         });
@@ -998,11 +1418,10 @@ const KeyOverview = () => {
       description: t(
         'Prevent an unauthorized user from sending funds out of your wallet.',
       ),
-      onPress: async () => {
+      onPress: () => {
         haptic('impactLight');
-        await sleep(500);
         navigation.navigate('CreateEncryptPassword', {
-          key,
+          keyId: key.id,
         });
       },
     });
@@ -1012,11 +1431,11 @@ const KeyOverview = () => {
     img: <Icons.Settings />,
     title: t('Key Settings'),
     description: t('View all the ways to manage and configure your key.'),
-    onPress: async () => {
+    onPress: () => {
       haptic('impactLight');
-      await sleep(500);
+      warmKeySettingsAccountList();
       navigation.navigate('KeySettings', {
-        key,
+        keyId: key.id,
       });
     },
   });
@@ -1026,18 +1445,31 @@ const KeyOverview = () => {
       if (!key) {
         return;
       }
-      if (isViewUpdating) {
+
+      while (activeViewUpdateRef.current) {
+        const activeUpdate = activeViewUpdateRef.current;
         logger.debug(
-          'KeyOverview is updating. Do not start forced updateAll...',
+          'KeyOverview is updating. Waiting for the active update...',
         );
-        return;
+        try {
+          await activeUpdate.promise;
+        } catch {}
+
+        if (!forceUpdate && activeUpdate.keyId === key.id) {
+          return;
+        }
       }
 
-      try {
-        setIsViewUpdating(true);
-        await dispatch(
-          refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
-        );
+      const updatePromise = (async () => {
+        const activeStartupInit = getActiveWalletStoreInitPromise();
+        if (!forceUpdate && activeStartupInit) {
+          const {walletInitSuccess} = await activeStartupInit;
+          if (walletInitSuccess) {
+            return;
+          }
+        }
+
+        await dispatch(startGetRates({force: forceUpdate}) as any);
         await Promise.all([
           dispatch(
             startUpdateAllWalletStatusForKey({
@@ -1048,14 +1480,27 @@ const KeyOverview = () => {
           ),
           sleep(1000),
         ]);
-        dispatch(updatePortfolioBalance());
-        setIsViewUpdating(false);
+        if (key.isReadOnly) {
+          dispatch(updatePortfolioBalance());
+        }
+      })();
+
+      activeViewUpdateRef.current = {
+        keyId: key.id,
+        promise: updatePromise,
+      };
+
+      try {
+        await updatePromise;
       } catch {
-        setIsViewUpdating(false);
         dispatch(showBottomNotificationModal(BalanceUpdateError()));
+      } finally {
+        if (activeViewUpdateRef.current?.promise === updatePromise) {
+          activeViewUpdateRef.current = null;
+        }
       }
     },
-    [dispatch, isViewUpdating, key, logger],
+    [dispatch, key, logger],
   );
 
   const updateStatusForKeyRef = useRef(updateStatusForKey);
@@ -1064,14 +1509,16 @@ const KeyOverview = () => {
     updateStatusForKeyRef.current = updateStatusForKey;
   }, [updateStatusForKey]);
 
-  useEffect(() => {
-    if (!isFocused || !viewedKeyId) {
-      return;
-    }
+  useFocusEffect(
+    useCallback(() => {
+      if (!viewedKeyId) {
+        return;
+      }
 
-    dispatch(Analytics.track('View Key'));
-    updateStatusForKeyRef.current(false);
-  }, [dispatch, isFocused, viewedKeyId]);
+      dispatch(Analytics.track('View Key'));
+      updateStatusForKeyRef.current(false);
+    }, [dispatch, viewedKeyId]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -1101,8 +1548,13 @@ const KeyOverview = () => {
     }
   };
 
+  const detailsPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
   const onPressItem = useCallback(
     (item: AccountRowProps) => {
+      detailsPreloadTaskRef.current?.cancel();
+      detailsPreloadTaskRef.current = undefined;
       haptic('impactLight');
 
       if (IsVMChain(item.chains[0])) {
@@ -1134,7 +1586,6 @@ const KeyOverview = () => {
               fullWalletObj.openWallet({}, () => {
                 navigation.navigate('WalletDetails', {
                   walletId: fullWalletObj.credentials.walletId,
-                  key,
                   copayerId: item.copayerId,
                 });
               });
@@ -1151,7 +1602,6 @@ const KeyOverview = () => {
         });
       } else {
         navigation.navigate('WalletDetails', {
-          key,
           walletId: fullWalletObj.credentials.walletId,
           copayerId: fullWalletObj.credentials.copayerId,
         });
@@ -1160,28 +1610,164 @@ const KeyOverview = () => {
     [key, logger, navigation],
   );
 
-  const memoizedRenderItem = useCallback(
-    ({item}: {item: AccountRowProps}) => {
-      return (
-        <AccountListRow
-          id={item.id}
-          accountItem={item}
-          hideBalance={hideAllBalances}
-          onPress={() => {
-            onPressItem(item);
-          }}
-        />
+  const preloadedDetailsRef = useRef<string | undefined>(undefined);
+  const preloadDetails = useCallback(
+    (item: AccountRowProps) => {
+      if (typeof (navigation as any).preload !== 'function') {
+        return;
+      }
+
+      if (IsVMChain(item.chains[0])) {
+        const preloadIdentity = `account:${item.keyId}:${item.receiveAddress}`;
+        if (preloadedDetailsRef.current === preloadIdentity) {
+          return;
+        }
+
+        preloadedDetailsRef.current = preloadIdentity;
+        performanceLog(
+          '[PERF-PRELOAD] AccountDetails start source:KeyOverview',
+        );
+        (navigation as any).preload('AccountDetails', {
+          keyId: item.keyId,
+          selectedAccountAddress: item.receiveAddress,
+          isSvmAccount: IsSVMChain(item.chains[0]),
+          _preloadContent: true,
+        });
+        return;
+      }
+
+      const fullWalletObj = key.wallets.find(
+        wallet =>
+          wallet.id === item.wallets[0].id &&
+          (!item.copayerId || wallet.credentials?.copayerId === item.copayerId),
       );
+      if (!fullWalletObj?.isComplete()) {
+        return;
+      }
+
+      const walletId = fullWalletObj.credentials.walletId;
+      const copayerId = fullWalletObj.credentials.copayerId;
+      const preloadIdentity = `wallet:${walletId}:${copayerId || ''}`;
+      if (preloadedDetailsRef.current === preloadIdentity) {
+        return;
+      }
+
+      preloadedDetailsRef.current = preloadIdentity;
+      performanceLog('[PERF-PRELOAD] WalletDetails start source:KeyOverview');
+      (navigation as any).preload('WalletDetails', {
+        walletId,
+        copayerId,
+        _preloadContent: true,
+      });
     },
-    [hideAllBalances, onPressItem],
+    [key.wallets, navigation],
+  );
+
+  const onPressItemRef = useRef(onPressItem);
+  onPressItemRef.current = onPressItem;
+  const stableOnPressItem = useCallback(
+    (item: AccountRowProps) => onPressItemRef.current(item),
+    [],
+  );
+  const preloadDetailsRef = useRef(preloadDetails);
+  preloadDetailsRef.current = preloadDetails;
+  const stablePreloadDetails = useCallback(
+    (item: AccountRowProps) => preloadDetailsRef.current(item),
+    [],
+  );
+  const singlePreloadableDetailsItem = useMemo(
+    () =>
+      getSinglePreloadCandidate(memoizedAccountList, item => {
+        if (IsVMChain(item.chains[0])) {
+          return true;
+        }
+
+        return key.wallets.some(
+          wallet =>
+            wallet.id === item.wallets[0].id &&
+            (!item.copayerId ||
+              wallet.credentials?.copayerId === item.copayerId) &&
+            wallet.isComplete(),
+        );
+      }),
+    [key.wallets, memoizedAccountList],
+  );
+  const singlePreloadableDetailsItemRef = useRef(singlePreloadableDetailsItem);
+  singlePreloadableDetailsItemRef.current = singlePreloadableDetailsItem;
+  const singlePreloadableDetailsIdentity = singlePreloadableDetailsItem
+    ? [
+        singlePreloadableDetailsItem.keyId,
+        singlePreloadableDetailsItem.receiveAddress,
+        singlePreloadableDetailsItem.wallets[0]?.id || '',
+      ].join(':')
+    : undefined;
+
+  useFocusEffect(
+    useCallback(() => {
+      preloadedDetailsRef.current = undefined;
+      if (!contentReady) {
+        return;
+      }
+
+      const preloadTask = scheduleAfterTransitionAndIdle({
+        navigation: navigation as any,
+        transitionFallbackMs: 800,
+        idleTimeoutMs: 1200,
+        callback: signal => {
+          if (signal.aborted) {
+            return;
+          }
+
+          warmKeySettingsAccountList();
+          if (singlePreloadableDetailsIdentity) {
+            const itemToPreload = singlePreloadableDetailsItemRef.current;
+            if (itemToPreload) {
+              stablePreloadDetails(itemToPreload);
+            }
+          }
+        },
+      });
+      detailsPreloadTaskRef.current = preloadTask;
+
+      return () => {
+        preloadTask.cancel();
+        if (detailsPreloadTaskRef.current === preloadTask) {
+          detailsPreloadTaskRef.current = undefined;
+        }
+      };
+    }, [
+      contentReady,
+      navigation,
+      singlePreloadableDetailsIdentity,
+      stablePreloadDetails,
+      warmKeySettingsAccountList,
+    ]),
+  );
+
+  const memoizedRenderItem = useCallback(
+    ({item}: {item: AccountRowProps}) => (
+      <AccountListItem
+        item={item}
+        hideBalance={hideAllBalances}
+        animateEntrance={
+          !wasPreloadedRef.current && !hydratedFromSnapshotRef.current
+        }
+        onPressItem={stableOnPressItem}
+      />
+    ),
+    [hideAllBalances, stableOnPressItem],
   );
 
   const listHeaderComponent = useMemo(() => {
     return (
-      <>
+      <PerformanceProfiler
+        id="KeyOverview:list-header"
+        onRender={logReactProfiler}>
         <BalanceContainer>
-          <TouchableOpacity
-            onLongPress={() => {
+          <BalanceVisibilityButton
+            testID="key-balance-toggle"
+            hidden={hideAllBalances}
+            onToggle={() => {
               dispatch(toggleHideAllBalances());
             }}>
             {!hideAllBalances ? (
@@ -1197,39 +1783,53 @@ const KeyOverview = () => {
             ) : (
               <H2>****</H2>
             )}
-          </TouchableOpacity>
+          </BalanceVisibilityButton>
 
-          {!hideAllBalances &&
-          (keyHeaderChangeRowData || shouldMountKeyBalanceChart) ? (
+          {keyHeaderChangeRowData ||
+          shouldRenderKeyBalanceChart ||
+          shouldShowKeyChartPlaceholder ? (
             <FullWidthBalanceChartContainer>
               <BalanceHeaderSupplement
                 changeRowData={keyHeaderChangeRowData}
-                reserveChangeRowSpace={shouldMountKeyBalanceChart}
+                reserveChangeRowSpace={
+                  shouldRenderKeyBalanceChart || shouldShowKeyChartPlaceholder
+                }
               />
-              {shouldMountKeyBalanceChart ? (
-                <BalanceHistoryChart
-                  wallets={chartableVisibleKeyWallets}
-                  quoteCurrency={quoteCurrency}
-                  rates={rates}
-                  timeframeSelectorWidth={timeframeSelectorWidth}
-                  showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
-                  renderZeroBalanceWhenNoSnapshots={
-                    shouldRenderZeroKeyBalanceChart
-                  }
-                  isBalanceChartDataReadyToQuery={
-                    isKeyBalanceChartDataReadyToQuery
-                  }
-                  preserveVisibleSeriesWhileNotReady={
-                    shouldPreserveStaleKeyBalanceChart
-                  }
-                  showChangeRow={false}
-                  onSelectedBalanceChange={
-                    balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                  }
-                  onChangeRowData={
-                    balanceChartSurface.chartCallbacks.onChangeRowData
-                  }
-                />
+              {shouldShowKeyChartPlaceholder ? (
+                <BalanceChartLoadingPlaceholder />
+              ) : null}
+              {shouldRenderKeyBalanceChart ? (
+                <View
+                  style={
+                    shouldShowKeyChartPlaceholder
+                      ? styles.hiddenChart
+                      : undefined
+                  }>
+                  <BalanceHistoryChart
+                    wallets={chartableVisibleKeyWallets}
+                    quoteCurrency={quoteCurrency}
+                    rates={rates}
+                    timeframeSelectorWidth={timeframeSelectorWidth}
+                    showLoaderWhenNoSnapshots={shouldShowKeyChartLoader}
+                    renderZeroBalanceWhenNoSnapshots={
+                      shouldRenderZeroKeyBalanceChart
+                    }
+                    isBalanceChartDataReadyToQuery={
+                      isKeyBalanceChartDataReadyToQuery
+                    }
+                    preserveVisibleSeriesWhileNotReady={
+                      shouldPreserveStaleKeyBalanceChart || hasCachedKeyChart
+                    }
+                    showChangeRow={false}
+                    onSelectedBalanceChange={
+                      balanceChartSurface.chartCallbacks.onSelectedBalanceChange
+                    }
+                    onChangeRowData={
+                      balanceChartSurface.chartCallbacks.onChangeRowData
+                    }
+                    onRenderableSeriesChange={onKeyChartRenderableSeriesChange}
+                  />
+                </View>
               ) : null}
             </FullWidthBalanceChartContainer>
           ) : null}
@@ -1247,38 +1847,36 @@ const KeyOverview = () => {
               searchVal={searchVal}
               setSearchVal={setSearchVal}
               searchResults={searchResults}
-              setSearchResults={nextSearchResults => {
-                setSearchResults(nextSearchResults);
-                setIsLoadingInitial(false);
-              }}
+              setSearchResults={setSearchResults}
               searchFullList={memoizedAccountList}
               context={'keyoverview'}
             />
           </View>
         </WalletListHeader>
-      </>
+      </PerformanceProfiler>
     );
   }, [
     chartableVisibleKeyWallets,
-    defaultAltCurrency.isoCode,
     dispatch,
     balanceChartSurface,
     keyHeaderChangeRowData,
+    hasCachedKeyChart,
     hideAllBalances,
     memoizedAccountList,
+    onKeyChartRenderableSeriesChange,
     quoteCurrency,
     rates,
     searchResults,
     searchVal,
     isKeyBalanceChartDataReadyToQuery,
-    shouldMountKeyBalanceChart,
+    shouldRenderKeyBalanceChart,
+    shouldShowKeyChartPlaceholder,
     shouldPreserveStaleKeyBalanceChart,
     shouldRenderZeroKeyBalanceChart,
     shouldShowKeyChartLoader,
     t,
     timeframeSelectorWidth,
     totalBalance,
-    visibleKeyWallets,
   ]);
 
   const renderListFooterComponent = useCallback(() => {
@@ -1390,13 +1988,13 @@ const KeyOverview = () => {
 
   const listEmptyComponent = useMemo(
     () =>
-      !isLoadingInitial ? (
+      contentReady ? (
         <EmptyListContainer>
           <H5>{t("It's a ghost town in here")}</H5>
           <GhostSvg style={{marginTop: 20}} />
         </EmptyListContainer>
       ) : null,
-    [t, isLoadingInitial],
+    [contentReady, t],
   );
 
   const renderDataComponent = useMemo(() => {
@@ -1410,13 +2008,38 @@ const KeyOverview = () => {
     selectedChainFilterOption,
   ]);
 
+  const accountKeyExtractor = useCallback(
+    (item: AccountRowProps) => item.id,
+    [],
+  );
+
+  const [footerReady, setFooterReady] = useState(false);
+
+  useEffect(() => {
+    if (!contentReady || footerReady) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => setFooterReady(true));
+
+    return () => cancelAnimationFrame(frame);
+  }, [contentReady, footerReady]);
+
   const listFooterComponent = useMemo(() => {
+    if (!footerReady) {
+      return null;
+    }
+
     return (
-      <View ref={allocationFooterViewRef} onLayout={onAllocationFooterLayout}>
-        {renderListFooterComponent()}
-      </View>
+      <PerformanceProfiler
+        id="KeyOverview:list-footer"
+        onRender={logReactProfiler}>
+        <View ref={allocationFooterViewRef} onLayout={onAllocationFooterLayout}>
+          {renderListFooterComponent()}
+        </View>
+      </PerformanceProfiler>
     );
-  }, [onAllocationFooterLayout, renderListFooterComponent]);
+  }, [footerReady, onAllocationFooterLayout, renderListFooterComponent]);
 
   return (
     <OverviewContainer ref={overviewContainerRef} onLayout={onOverviewLayout}>
@@ -1433,6 +2056,8 @@ const KeyOverview = () => {
         ListHeaderComponent={listHeaderComponent}
         ListFooterComponent={listFooterComponent}
         data={renderDataComponent}
+        extraData={hideAllBalances}
+        keyExtractor={accountKeyExtractor}
         renderItem={memoizedRenderItem}
         ListEmptyComponent={listEmptyComponent}
       />
@@ -1453,25 +2078,19 @@ const KeyOverview = () => {
         <KeyDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Keys')}</HeaderTitle>
           <KeyDropdownOptionsContainer>
-            {Object.values(keys)
-              .filter(_key => _key.backupComplete && _key.id !== id)
-              .map(_key => (
-                <DropdownOption
-                  key={_key.id}
-                  optionId={_key.id}
-                  optionName={_key.keyName}
-                  wallets={_key.wallets}
-                  totalBalance={_key.totalBalance}
-                  onPress={keyId => {
-                    setShowKeyDropdown(false);
-                    navigation.setParams({
-                      id: keyId,
-                    } as any);
-                  }}
-                  defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-                  hideKeyBalance={hideAllBalances}
-                />
-              ))}
+            {showKeyDropdown ? (
+              <OtherKeyDropdownOptions
+                currentKeyId={id}
+                defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+                hideKeyBalance={hideAllBalances}
+                onSelectKey={keyId => {
+                  setShowKeyDropdown(false);
+                  navigation.setParams({
+                    id: keyId,
+                  } as any);
+                }}
+              />
+            ) : null}
             {linkedCoinbase ? (
               <CoinbaseDropdownOption
                 onPress={() => {

@@ -1,8 +1,16 @@
 import React from 'react';
-import {Dimensions, Text, Platform} from 'react-native';
+import {
+  Dimensions,
+  Text,
+  Platform,
+  StyleSheet,
+  View,
+  TextInput,
+  TouchableOpacity as RNTouchableOpacity,
+  ViewStyle,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {css} from 'styled-components/native';
-import {TextInput} from 'react-native';
+import {useTheme} from '../../contexts';
 import {
   Feather,
   LightBlack,
@@ -18,7 +26,6 @@ import {
   Black,
   Success25,
   LinkBlue,
-  Midnight,
   Caution,
 } from '../../styles/colors';
 import {BaseText} from './Text';
@@ -31,63 +38,501 @@ export const isNarrowHeight = HEIGHT < 700;
 export const CTA_RESERVED = 104;
 
 export const ScreenGutter = '12px';
+
+const phase0Styles = StyleSheet.create({
+  imageContainer: {
+    marginVertical: 10,
+    marginHorizontal: 0,
+    display: 'flex',
+  },
+  titleContainer: {
+    width: WIDTH * 0.75,
+  },
+  textContainer: {
+    marginTop: 10,
+    padding: 10,
+    width: WIDTH * 0.9,
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignSelf: 'stretch',
+    flexDirection: 'column',
+    marginTop: 30,
+  },
+  actionContainer: {
+    marginVertical: 5,
+    marginHorizontal: 0,
+  },
+});
+
+interface ImageContainerProps {
+  justifyContent?: string;
+}
+
+export const ImageContainer = React.forwardRef<
+  View,
+  ImageContainerProps & React.ComponentProps<typeof View>
+>(({justifyContent, style, ...rest}, ref) => (
+  <View
+    ref={ref}
+    style={[
+      phase0Styles.imageContainer,
+      {justifyContent: (justifyContent || 'center') as any},
+      style,
+    ]}
+    {...rest}
+  />
+));
+ImageContainer.displayName = 'ImageContainer';
+
+export const TitleContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[phase0Styles.titleContainer, style]} {...rest} />
+));
+TitleContainer.displayName = 'TitleContainer';
+
+export const TextContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[phase0Styles.textContainer, style]} {...rest} />
+));
+TextContainer.displayName = 'TextContainer';
+
+export const CtaContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[phase0Styles.ctaContainer, style]} {...rest} />
+));
+CtaContainer.displayName = 'CtaContainer';
+
+export const ActionContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[phase0Styles.actionContainer, style]} {...rest} />
+));
+ActionContainer.displayName = 'ActionContainer';
+
+const styles = StyleSheet.create({
+  headerRightContainer: {height: 40},
+  headerTitleContainer: {marginTop: 10, padding: 10},
+  screenContainer: {flex: 1},
+  subTextContainer: {width: WIDTH * 0.8, marginTop: 10},
+  ctaContainerAbsoluteBase: {
+    padding: 15,
+    position: 'absolute',
+    paddingBottom: 10,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  hr: {borderBottomWidth: 1},
+  column: {flex: 1, flexDirection: 'column'},
+  row: {flex: 1, flexDirection: 'row'},
+  listContainer: {flex: 1},
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    marginVertical: 0,
+    marginHorizontal: 6,
+  },
+  rowContainerWithoutBorders: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  rowContainerWithoutFeedback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    marginVertical: 0,
+    marginHorizontal: 10,
+  },
+  currencyColumn: {marginLeft: 8, gap: 2},
+  currencyImageContainer: {
+    height: 50,
+    width: 50,
+    display: 'flex',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius: 8,
+    marginRight: 3,
+  },
+  cardContainer: {borderRadius: 12, overflow: 'hidden'},
+  sheetContainer: {
+    paddingVertical: 30,
+    justifyContent: 'center',
+    alignContent: 'center',
+    maxHeight: HEIGHT - 100,
+  },
+  setting: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    height: 58,
+    paddingLeft: 15,
+    paddingRight: 15,
+  },
+  settingTitle: {
+    flexGrow: 1,
+    flexShrink: 1,
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    letterSpacing: 0,
+    textAlign: 'left',
+    marginRight: 5,
+  },
+  settingDescription: {fontSize: 14},
+  settingView: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 58,
+  },
+  info: {borderRadius: 8, padding: 15, marginBottom: 15},
+  infoTriangle: {
+    width: 12,
+    height: 12,
+    position: 'absolute',
+    top: -12,
+    left: 20,
+    borderLeftWidth: 12,
+    borderLeftColor: 'transparent',
+    borderRightWidth: 12,
+    borderRightColor: 'transparent',
+    borderBottomWidth: 12,
+  },
+  advancedOptionsContainer: {
+    borderRadius: 6,
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  advancedOptionsButton: {
+    height: 60,
+    padding: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  advancedOptionsButtonText: {fontSize: 16, lineHeight: 25},
+  advancedOptions: {borderStyle: 'solid', borderTopWidth: 1},
+  importContainer: {paddingVertical: 10, paddingHorizontal: 0},
+  importTextInput: {
+    height: 80,
+    borderWidth: 0.75,
+    borderColor: Slate,
+    borderTopRightRadius: 4,
+    borderTopLeftRadius: 4,
+    textAlignVertical: 'top',
+    padding: 5,
+    fontSize: 16,
+  },
+  scanContainer: {
+    height: 25,
+    width: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerContainer: {
+    paddingTop: 20,
+    paddingRight: 0,
+    paddingBottom: 10,
+    paddingLeft: 0,
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionContainer: {flex: 1},
+  optionListContainer: {flex: 1, paddingHorizontal: 12, marginTop: 30},
+  optionList: {
+    height: 'auto',
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  optionInfoContainer: {padding: 20, justifyContent: 'center', flex: 1},
+  searchContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#9ba3ae',
+    alignItems: 'center',
+    borderTopRightRadius: 4,
+    borderTopLeftRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    marginBottom: 20,
+  },
+  searchInput: {
+    flex: 1,
+    paddingHorizontal: 10,
+    borderRightWidth: 1,
+    height: 32,
+    backgroundColor: 'transparent',
+  },
+  searchRoundContainer: {
+    flexDirection: 'row',
+    display: 'flex',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 100,
+    alignItems: 'center',
+    height: 50,
+  },
+  searchRoundInput: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  hiddenContainer: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 40,
+  },
+  copyToClipboardContainer: {
+    borderWidth: 1,
+    borderColor: '#9ba3ae',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    height: 55,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  copyImgContainer: {
+    borderRightWidth: 1,
+    paddingRight: 10,
+    height: 25,
+    justifyContent: 'center',
+  },
+  noResultsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    minHeight: HEIGHT - 300,
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+  },
+  noResultsImgContainer: {paddingBottom: 40},
+  noResultsDescription: {fontSize: 16},
+  proposalBadgeContainer: {
+    backgroundColor: Action,
+    borderRadius: 10,
+    height: 30,
+    width: 30,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    padding: 4,
+    borderRadius: 2.4,
+    gap: 4,
+    height: 22,
+  },
+  badgeContainerTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    padding: 4,
+    borderRadius: 2.4,
+    gap: 4,
+    height: 20,
+  },
+  emptyListContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  chevronContainerTouchable: {
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
+    height: 20,
+    width: 20,
+  },
+  chevronContainer: {
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
+    height: 20,
+    width: 20,
+  },
+  accountChainsContainer: {
+    flexDirection: 'row',
+    flexShrink: 1,
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 50,
+  },
+  sellTxIconBadge: {position: 'absolute', right: 0, bottom: 0},
+  closeButtonContainer: {
+    margin: 'auto' as any,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tssqrSectionContainer: {borderRadius: 12, height: 390},
+  tssqrContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    backgroundColor: White,
+    borderRadius: 12,
+    margin: 16,
+  },
+  tssShareContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingTop: 16,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+  },
+  tssShareButtonText: {fontSize: 16, fontWeight: '500', marginLeft: 8},
+  tssStepsSection: {paddingVertical: 24, paddingHorizontal: 12},
+  tssStepsContainer: {padding: 16, borderRadius: 12, borderWidth: 1},
+  tssStepRow: {flexDirection: 'row', alignItems: 'flex-start'},
+  tssStepRowWithButton: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  tssStepContentWithButton: {flex: 1, paddingBottom: 20, paddingRight: 8},
+  tssStepRail: {width: 40, alignItems: 'center', marginRight: 12},
+  tssStepIndicator: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tssStepConnector: {width: 2, flexGrow: 1, marginTop: 0},
+  tssStepContent: {flex: 1, paddingBottom: 20},
+  tssContinuePillButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 50,
+    backgroundColor: Action,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    gap: 8,
+  },
+  tssContinuePillText: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 24,
+    color: White,
+  },
+  tssInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 16,
+  },
+  tssStyledInput: {flex: 1, fontSize: 16, padding: 0},
+  tssErrorText: {color: Caution, fontSize: 14, marginBottom: 12},
+  tssStepsSectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
+    lineHeight: 30,
+  },
+  tssStepNumber: {fontSize: 16, fontWeight: '400'},
+  tssStepTitle: {fontSize: 16, fontWeight: '500', lineHeight: 24},
+  tssStepSubtitle: {fontSize: 13, fontWeight: '400', lineHeight: 20},
+  tssStatusText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 10,
+    lineHeight: 24,
+  },
+  tssStatusSubText: {
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 4,
+    lineHeight: 20,
+  },
+});
+
 // Nav
-export const HeaderRightContainer = styled.View`
-  height: 40px;
-`;
+export const HeaderRightContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.headerRightContainer, style]} {...rest} />
+));
+HeaderRightContainer.displayName = 'HeaderRightContainer';
 
-export const ImageContainer = styled.View<{justifyContent?: string}>`
-  margin: 10px 0;
-  display: flex;
-  justify-content: ${({justifyContent}) => justifyContent || 'center'};
-`;
+export const HeaderTitleContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.headerTitleContainer, style]} {...rest} />
+));
+HeaderTitleContainer.displayName = 'HeaderTitleContainer';
 
-export const HeaderTitleContainer = styled.View`
-  margin-top: 10px;
-  padding: 10px;
-`;
+export const ScreenContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.screenContainer, style]} {...rest} />
+));
+ScreenContainer.displayName = 'ScreenContainer';
 
-export const ScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+export const SubTextContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.subTextContainer, style]} {...rest} />
+));
+SubTextContainer.displayName = 'SubTextContainer';
 
-export const TitleContainer = styled.View`
-  width: ${WIDTH * 0.75}px;
-`;
+interface CtaContainerAbsoluteBaseProps {
+  background?: boolean;
+}
 
-export const TextContainer = styled.View`
-  margin-top: 10px;
-  padding: 10px;
-  width: ${WIDTH * 0.9}px;
-`;
-
-export const SubTextContainer = styled.View`
-  width: ${WIDTH * 0.8}px;
-  margin-top: 10px;
-`;
-
-export const CtaContainer = styled.View`
-  padding: 10px ${ScreenGutter};
-  align-self: stretch;
-  flex-direction: column;
-  margin-top: 30px;
-`;
-
-const CtaContainerAbsoluteBase = styled.View<{background?: boolean}>`
-  padding: 15px;
-  position: absolute;
-  padding-bottom: 10px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  ${({background}) =>
-    background &&
-    css`
-      background: ${({theme}) => theme.colors.background};
-    `};
-`;
+const CtaContainerAbsoluteBase = React.forwardRef<
+  View,
+  CtaContainerAbsoluteBaseProps & React.ComponentProps<typeof View>
+>(({background, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.ctaContainerAbsoluteBase,
+        background ? {backgroundColor: theme.colors.background} : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+CtaContainerAbsoluteBase.displayName = 'CtaContainerAbsoluteBase';
 
 export const CtaContainerAbsolute = React.forwardRef<
   React.ElementRef<typeof CtaContainerAbsoluteBase>,
@@ -104,28 +549,50 @@ export const CtaContainerAbsolute = React.forwardRef<
     />
   );
 });
+CtaContainerAbsolute.displayName = 'CtaContainerAbsolute';
 
 export const Br: React.FC = () => <Text />;
 
-export const Hr = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
-  border-bottom-width: 1px;
-`;
+export const Hr = React.forwardRef<View, React.ComponentProps<typeof View>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.hr,
+          {borderBottomColor: theme.dark ? LightBlack : '#ebecee'},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Hr.displayName = 'Hr';
 
-export const Column = styled.View`
-  flex: 1;
-  flex-direction: column;
-`;
+export const Column = React.forwardRef<View, React.ComponentProps<typeof View>>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.column, style]} {...rest} />
+  ),
+);
+Column.displayName = 'Column';
 
-export const Row = styled.View`
-  flex: 1;
-  flex-direction: row;
-`;
+export const Row = React.forwardRef<View, React.ComponentProps<typeof View>>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.row, style]} {...rest} />
+  ),
+);
+Row.displayName = 'Row';
 
 // LIST
-export const ListContainer = styled.View`
-  flex: 1;
-`;
+export const ListContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.listContainer, style]} {...rest} />
+));
+ListContainer.displayName = 'ListContainer';
 
 interface RowContainerProps {
   isLast?: boolean;
@@ -133,629 +600,1119 @@ interface RowContainerProps {
   isDisabled?: boolean;
 }
 
-export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 4px;
-  margin: 0 6px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-bottom-width: ${({isLast, noBorder}) =>
-    isLast || noBorder ? 0 : 1}px;
-  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
-`;
+export const RowContainer: React.FC<
+  RowContainerProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({isLast, noBorder, isDisabled, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.rowContainer,
+        {
+          borderBottomColor: theme.dark ? LightBlack : LightBlue,
+          borderBottomWidth: isLast || noBorder ? 0 : 1,
+          opacity: isDisabled ? 0.5 : 1,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const RowContainerWithoutBorders = styled(
-  TouchableOpacity,
-)<RowContainerProps>`
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 0px;
-`;
+export const RowContainerWithoutBorders: React.FC<
+  RowContainerProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({
+  isLast: _isLast,
+  noBorder: _noBorder,
+  isDisabled: _isDisabled,
+  style,
+  ...rest
+}) => (
+  <TouchableOpacity
+    style={[styles.rowContainerWithoutBorders, style]}
+    {...rest}
+  />
+);
 
-export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 4px;
-  margin: 0 10px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
-`;
+export const RowContainerWithoutFeedback = React.forwardRef<
+  View,
+  RowContainerProps & React.ComponentProps<typeof View>
+>(
+  (
+    {isLast, noBorder: _noBorder, isDisabled: _isDisabled, style, ...rest},
+    ref,
+  ) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.rowContainerWithoutFeedback,
+          {
+            borderBottomColor: theme.dark ? LightBlack : LightBlue,
+            borderBottomWidth: isLast ? 0 : 1,
+          },
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+RowContainerWithoutFeedback.displayName = 'RowContainerWithoutFeedback';
 
-export const CurrencyColumn = styled(Column)`
-  margin-left: 8px;
-  gap: 2px;
-`;
+export const CurrencyColumn = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View
+    ref={ref}
+    style={[styles.column, styles.currencyColumn, style]}
+    {...rest}
+  />
+));
+CurrencyColumn.displayName = 'CurrencyColumn';
 
-export const CurrencyImageContainer = styled.View`
-  height: 50px;
-  width: 50px;
-  display: flex;
-  justify-content: center;
-  align-self: center;
-  border-radius: 8px;
-  margin-right: 3px;
-`;
+export const CurrencyImageContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.currencyImageContainer, style]} {...rest} />
+));
+CurrencyImageContainer.displayName = 'CurrencyImageContainer';
 
 // Card
 export const CardGutter = '15px';
 
-export const CardContainer = styled.View`
-  background: ${({theme}) => (theme.dark ? LightBlack : White)};
-  border-radius: 12px;
-  overflow: hidden;
-`;
+export const CardContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.cardContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+CardContainer.displayName = 'CardContainer';
 
 export interface SheetParams {
   placement?: 'top' | 'bottom';
   paddingHorizontal?: number;
 }
 
-export const SheetContainer = styled.View<SheetParams>`
-  padding: 30px ${({paddingHorizontal}) =>
-    paddingHorizontal === 0 ? 0 : 30}px;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
-  justify-content: center;
-  align-content: center;
-  border-${({placement}: SheetParams) =>
-    placement === 'top' ? 'bottom' : 'top'}-left-radius: 17px;
-  border-${({placement}: SheetParams) =>
-    placement === 'top' ? 'bottom' : 'top'}-right-radius: 17px;
-  max-height: ${HEIGHT - 100}px;
-`;
+export const SheetContainer = React.forwardRef<
+  View,
+  SheetParams & React.ComponentProps<typeof View>
+>(({placement, paddingHorizontal, style, ...rest}, ref) => {
+  const theme = useTheme();
+  const topPlacement = placement === 'top';
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.sheetContainer,
+        {
+          paddingHorizontal: paddingHorizontal === 0 ? 0 : 30,
+          backgroundColor: theme.dark ? LightBlack : White,
+          borderTopLeftRadius: topPlacement ? 0 : 17,
+          borderTopRightRadius: topPlacement ? 0 : 17,
+          borderBottomLeftRadius: topPlacement ? 17 : 0,
+          borderBottomRightRadius: topPlacement ? 17 : 0,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SheetContainer.displayName = 'SheetContainer';
 
 // Settings List
-export const Setting = styled(TouchableOpacity)`
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  height: 58px;
-  padding-left: 15px;
-  padding-right: 15px;
-`;
+export const Setting: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.setting, style]} {...rest} />
+);
 
-export const SettingTitle = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-  flex-grow: 1;
-  flex-shrink: 1;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-align: left;
-  margin-right: 5px;
-`;
+export const SettingTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.settingTitle, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+});
+SettingTitle.displayName = 'SettingTitle';
 
-export const SettingDescription = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 14px;
-`;
+export const SettingDescription = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.settingDescription,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SettingDescription.displayName = 'SettingDescription';
 
 interface SettingIconProps {
   prefix?: boolean;
   suffix?: boolean;
 }
 
-export const SettingIcon = styled.View<SettingIconProps>`
-  ${({prefix = false}) =>
-    prefix &&
-    css`
-      margin-right: ${ScreenGutter};
-    `}
-  ${({suffix = false}) =>
-    suffix &&
-    css`
-      margin-left: ${ScreenGutter};
-    `}
-`;
+export const SettingIcon = React.forwardRef<
+  View,
+  SettingIconProps & React.ComponentProps<typeof View>
+>(({prefix, suffix, style, ...rest}, ref) => (
+  <View
+    ref={ref}
+    style={[
+      prefix ? {marginRight: 12} : null,
+      suffix ? {marginLeft: 12} : null,
+      style,
+    ]}
+    {...rest}
+  />
+));
+SettingIcon.displayName = 'SettingIcon';
 
-export const SettingView = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 58px;
-`;
-
-export const ActionContainer = styled.View`
-  margin: 5px 0;
-`;
+export const SettingView = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.settingView, style]} {...rest} />
+));
+SettingView.displayName = 'SettingView';
 
 // Info
-export const Info = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : '#f8f9fe')};
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-`;
+export const Info = React.forwardRef<View, React.ComponentProps<typeof View>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.info,
+          {backgroundColor: theme.dark ? SlateDark : '#f8f9fe'},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Info.displayName = 'Info';
 
-export const InfoTriangle = styled.View`
-  width: 12px;
-  height: 12px;
-  position: absolute;
-  top: -12px;
-  left: 20px;
-  border-left-width: 12px;
-  border-left-color: transparent;
-  border-right-width: 12px;
-  border-right-color: transparent;
-  border-bottom-width: 12px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#f8f9fe')};
-`;
+export const InfoTriangle = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.infoTriangle,
+        {borderBottomColor: theme.dark ? SlateDark : '#f8f9fe'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+InfoTriangle.displayName = 'InfoTriangle';
 
-export const AdvancedOptionsContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
-  border-radius: 6px;
-  margin-bottom: 20px;
-  margin-top: 10px;
-`;
+export const AdvancedOptionsContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.advancedOptionsContainer,
+        {backgroundColor: theme.dark ? LightBlack : Feather},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+AdvancedOptionsContainer.displayName = 'AdvancedOptionsContainer';
 
-export const AdvancedOptionsButton = styled(TouchableOpacity)`
-  height: 60px;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
-  padding: 18px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 6px;
-`;
+export const AdvancedOptionsButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.advancedOptionsButton,
+        {backgroundColor: theme.dark ? LightBlack : Feather},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const AdvancedOptionsButtonText = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
-`;
+export const AdvancedOptionsButtonText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.advancedOptionsButtonText,
+        {color: theme.dark ? White : NotificationPrimary},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+AdvancedOptionsButtonText.displayName = 'AdvancedOptionsButtonText';
 
-export const AdvancedOptions = styled.View`
-  border-style: solid;
-  border-top-width: 1px;
-  border-top-color: ${({theme}) => (theme.dark ? SlateDark : Slate30)};
-`;
+export const AdvancedOptions = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.advancedOptions,
+        {borderTopColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+AdvancedOptions.displayName = 'AdvancedOptions';
 
-const Gutter = '10px';
-export const ImportContainer = styled.View`
-  padding: ${Gutter} 0;
-`;
+export const ImportContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.importContainer, style]} {...rest} />
+));
+ImportContainer.displayName = 'ImportContainer';
 
-export const ImportTextInput = styled.TextInput`
-  height: 80px;
-  color: ${({theme}) => theme.colors.text};
-  background: ${({theme}) => theme.colors.background};
-  border: 0.75px solid ${Slate};
-  border-top-right-radius: 4px;
-  border-top-left-radius: 4px;
-  text-align-vertical: top;
-  padding: 5px;
-  font-size: 16px;
-`;
+export const ImportTextInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      ref={ref}
+      style={[
+        styles.importTextInput,
+        {color: theme.colors.text, backgroundColor: theme.colors.background},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ImportTextInput.displayName = 'ImportTextInput';
 
-export const InfoImageContainer = styled.View<{infoMargin: string}>`
-  margin: ${({infoMargin}) => infoMargin};
-`;
+interface InfoImageContainerProps {
+  infoMargin: string;
+}
 
-export const ScanContainer = styled(TouchableOpacity)`
-  height: 25px;
-  width: 25px;
-  align-items: center;
-  justify-content: center;
-`;
+export const InfoImageContainer = React.forwardRef<
+  View,
+  InfoImageContainerProps & React.ComponentProps<typeof View>
+>(({infoMargin, style, ...rest}, ref) => (
+  <View ref={ref} style={[parseCssMargin(infoMargin), style]} {...rest} />
+));
+InfoImageContainer.displayName = 'InfoImageContainer';
 
-export const HeaderContainer = styled.View`
-  padding: 20px 0px 10px 0px;
-  justify-content: space-between;
-  flex-direction: row;
-  align-items: center;
-`;
+export const ScanContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.scanContainer, style]} {...rest} />
+);
+
+export const HeaderContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.headerContainer, style]} {...rest} />
+));
+HeaderContainer.displayName = 'HeaderContainer';
 
 // creation and add wallet
-export const OptionContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+export const OptionContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.optionContainer, style]} {...rest} />
+));
+OptionContainer.displayName = 'OptionContainer';
 
-export const OptionListContainer = styled.View`
-  flex: 1;
-  padding: 0 ${ScreenGutter};
-  margin-top: 30px;
-`;
+export const OptionListContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.optionListContainer, style]} {...rest} />
+));
+OptionListContainer.displayName = 'OptionListContainer';
 
-export const OptionList = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
-  height: auto;
-  border-radius: 12px;
-  margin-bottom: ${ScreenGutter};
-  flex-direction: row;
-  overflow: hidden;
-`;
+export const OptionList: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.optionList,
+        {backgroundColor: theme.dark ? LightBlack : Feather},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const OptionInfoContainer = styled.View`
-  padding: 20px;
-  justify-content: center;
-  flex: 1;
-`;
+export const OptionInfoContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.optionInfoContainer, style]} {...rest} />
+));
+OptionInfoContainer.displayName = 'OptionInfoContainer';
 
-// Search
+export const SearchContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.searchContainer, style]} {...rest} />
+));
+SearchContainer.displayName = 'SearchContainer';
 
-export const SearchContainer = styled.View`
-  flex-direction: row;
-  border: 1px solid #9ba3ae;
-  align-items: center;
-  border-top-right-radius: 4px;
-  border-top-left-radius: 4px;
-  padding: 4px 0;
-  margin-bottom: 20px;
-`;
-
-export const SearchInput = styled.TextInput`
-  flex: 1;
-  padding: 0 10px;
-  border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : LightBlue)};
-  height: 32px;
-  color: ${({theme}) => theme.colors.text};
-  background-color: transparent;
-`;
+export const SearchInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      ref={ref}
+      style={[
+        styles.searchInput,
+        {
+          borderRightColor: theme.dark ? '#45484E' : LightBlue,
+          color: theme.colors.text,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SearchInput.displayName = 'SearchInput';
 
 // Search Round
-export const SearchRoundContainer = styled.View`
-  flex-direction: row;
-  display: flex;
-  justify-content: space-between;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  border-radius: 100px;
-  align-items: center;
-  height: 50px;
-`;
+export const SearchRoundContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.searchRoundContainer,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SearchRoundContainer.displayName = 'SearchRoundContainer';
 
-export const SearchRoundInput = styled.TextInput`
-  flex: 1;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  background-color: transparent;
-  font-size: 16px;
-  font-weight: 400;
-`;
+export const SearchRoundInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      ref={ref}
+      style={[
+        styles.searchRoundInput,
+        {color: theme.dark ? Slate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SearchRoundInput.displayName = 'SearchRoundInput';
 
-// Hidden label
+export const HiddenContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.hiddenContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+HiddenContainer.displayName = 'HiddenContainer';
 
-export const HiddenContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  padding: 5px 10px;
-  border-radius: 40px;
-`;
+export const CopyToClipboardContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[styles.copyToClipboardContainer, style]}
+    {...rest}
+  />
+);
+CopyToClipboardContainer.displayName = 'CopyToClipboardContainer';
 
-// Copy to Clipboard
-
-export const CopyToClipboardContainer = styled(TouchableOpacity)`
-  border: 1px solid #9ba3ae;
-  border-radius: 4px;
-  padding: 0 10px;
-  height: 55px;
-  align-items: center;
-  flex-direction: row;
-`;
-
-export const CopyImgContainer = styled.View`
-  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : LightBlue)};
-  border-right-width: 1px;
-  padding-right: 10px;
-  height: 25px;
-  justify-content: center;
-`;
+export const CopyImgContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.copyImgContainer,
+        {borderRightColor: theme.dark ? '#46494E' : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+CopyImgContainer.displayName = 'CopyImgContainer';
 
 // Search box no result
+export const NoResultsContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.noResultsContainer, style]} {...rest} />
+));
+NoResultsContainer.displayName = 'NoResultsContainer';
 
-export const NoResultsContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: ${HEIGHT - 300}px;
-  padding: 20px 40px;
-`;
+export const NoResultsImgContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.noResultsImgContainer, style]} {...rest} />
+));
+NoResultsImgContainer.displayName = 'NoResultsImgContainer';
 
-export const NoResultsImgContainer = styled.View`
-  padding-bottom: 40px;
-`;
+export const NoResultsDescription = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.noResultsDescription, style]} {...rest} />
+));
+NoResultsDescription.displayName = 'NoResultsDescription';
 
-export const NoResultsDescription = styled(BaseText)`
-  font-size: 16px;
-`;
+export const ProposalBadgeContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.proposalBadgeContainer, style]} {...rest} />
+);
 
-export const ProposalBadgeContainer = styled(TouchableOpacity)`
-  background: ${Action};
-  border-radius: 10px;
-  height: 30px;
-  width: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+export const BadgeContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.badgeContainer,
+        {borderColor: theme.dark ? LuckySevens : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+BadgeContainer.displayName = 'BadgeContainer';
 
-export const BadgeContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
-  padding: 4px;
-  border-radius: 2.4px;
-  gap: 4px;
-  height: 22px;
-`;
+export const BadgeContainerTouchable: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.badgeContainerTouchable,
+        {borderColor: theme.dark ? LuckySevens : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const BadgeContainerTouchable = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
-  padding: 4px;
-  border-radius: 2.4px;
-  gap: 4px;
-  height: 20px;
-`;
+export const EmptyListContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.emptyListContainer, style]} {...rest} />
+));
+EmptyListContainer.displayName = 'EmptyListContainer';
 
-export const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
+export const ChevronContainerTouchable: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.chevronContainerTouchable,
+        {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const ChevronContainerTouchable = styled(TouchableOpacity)`
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
-  margin-left: 2px;
-  height: 20px;
-  width: 20px;
-`;
+export const ChevronContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.chevronContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ChevronContainer.displayName = 'ChevronContainer';
 
-export const ChevronContainer = styled.View`
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  margin-left: 2px;
-  height: 20px;
-  width: 20px;
-`;
+const parseCssNumber = (value: string): number => parseFloat(value);
 
-export const AccountChainsContainer = styled(TouchableOpacity)<{
+const parseCssPadding = (
+  value: string,
+): {padding: number} | {paddingVertical: number; paddingHorizontal: number} => {
+  const parts = value.trim().split(/\s+/).map(parseCssNumber);
+  if (parts.length === 1) {
+    return {padding: parts[0]};
+  }
+  return {paddingVertical: parts[0], paddingHorizontal: parts[1]};
+};
+
+const parseCssMargin = (value: string): ViewStyle => {
+  const [top, right = top, bottom = top, left = right] = value
+    .trim()
+    .split(/\s+/)
+    .map(parseCssNumber);
+  return {
+    marginTop: top,
+    marginRight: right,
+    marginBottom: bottom,
+    marginLeft: left,
+  };
+};
+
+interface AccountChainsContainerProps {
   padding?: string;
   maxWidth?: string;
-}>`
-  flex-direction: row;
-  flex-shrink: 1;
-  align-items: center;
-  gap: 10px;
-  border-radius: 50px;
-  padding: ${({padding}) => padding ?? '5px 10px'};
-  max-width: ${({maxWidth}) => (maxWidth ? `${maxWidth}` : '250px')};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+}
+
+export const AccountChainsContainer: React.FC<
+  AccountChainsContainerProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({padding, maxWidth, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.accountChainsContainer,
+        parseCssPadding(padding ?? '5px 10px'),
+        {
+          maxWidth: maxWidth ? parseCssNumber(maxWidth) : 250,
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 interface SellTxIconProps {
   height?: number;
   width?: number;
 }
 
-export const SellTxIcon = styled.View<SellTxIconProps>`
-  ${({height}) =>
-    css`
-      height: ${height ?? '44px'};
-    `}
-  ${({width}) =>
-    css`
-      width: ${width ?? '44px'};
-    `}
-  position: relative;
-`;
+export const SellTxIcon = React.forwardRef<
+  View,
+  SellTxIconProps & React.ComponentProps<typeof View>
+>(({height, width, style, ...rest}, ref) => (
+  <View
+    ref={ref}
+    style={[
+      {height: height ?? 44, width: width ?? 44, position: 'relative'},
+      style,
+    ]}
+    {...rest}
+  />
+));
+SellTxIcon.displayName = 'SellTxIcon';
 
-export const SellTxIconBadge = styled.View`
-  position: absolute;
-  right: 0px;
-  bottom: 0px;
-`;
+export const SellTxIconBadge = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.sellTxIconBadge, style]} {...rest} />
+));
+SellTxIconBadge.displayName = 'SellTxIconBadge';
 
-export const CloseButtonContainer = styled(TouchableOpacity)`
-  margin: auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+export const CloseButtonContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.closeButtonContainer, style]} {...rest} />
+);
 
-export const ArchaxBannerContainer = styled.View<{
+interface ArchaxBannerContainerProps {
   inset?: any;
   isSmallScreen?: boolean;
-}>`
-  background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
-  overflow: hidden;
-  margin-top: ${({inset}) => inset?.top ?? 0}px;
-  padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
-`;
+}
 
-export const TSSQRSectionContainer = styled.View<{
+export const ArchaxBannerContainer = React.forwardRef<
+  View,
+  ArchaxBannerContainerProps & React.ComponentProps<typeof View>
+>(({inset, isSmallScreen, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        {
+          backgroundColor: theme.dark ? '#a25718' : '#ffedc9',
+          overflow: 'hidden',
+          marginTop: inset?.top ?? 0,
+          padding: isSmallScreen ? 8 : 16,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ArchaxBannerContainer.displayName = 'ArchaxBannerContainer';
+
+interface TSSQRSectionContainerProps {
   hideBorder?: boolean;
   fullWidth?: boolean;
-}>`
-  border-radius: 12px;
-  border-width: ${({hideBorder}) => (hideBorder ? 0 : 1)}px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  height: 390px;
-  align-items: ${({fullWidth}) => (fullWidth ? 'stretch' : 'center')};
-`;
+}
 
-export const TSSQRContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background-color: ${White};
-  border-radius: 12px;
-  margin: 16px;
-`;
+export const TSSQRSectionContainer = React.forwardRef<
+  View,
+  TSSQRSectionContainerProps & React.ComponentProps<typeof View>
+>(({hideBorder, fullWidth, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.tssqrSectionContainer,
+        {
+          borderWidth: hideBorder ? 0 : 1,
+          borderColor: theme.dark ? SlateDark : Slate30,
+          alignItems: fullWidth ? 'stretch' : 'center',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSQRSectionContainer.displayName = 'TSSQRSectionContainer';
 
-export const TSSShareContainer = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding-top: 16px;
-  padding-bottom: 16px;
-  border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
+export const TSSQRContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssqrContainer, style]} {...rest} />
+));
+TSSQRContainer.displayName = 'TSSQRContainer';
 
-export const TSSShareButtonText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-  margin-left: 8px;
-`;
+export const TSSShareContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.tssShareContainer,
+        {borderTopColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSShareContainer.displayName = 'TSSShareContainer';
 
-export const TSSStepsSection = styled.View`
-  padding: 24px ${ScreenGutter};
-`;
+export const TSSShareButtonText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.tssShareButtonText,
+        {color: theme.dark ? LinkBlue : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSShareButtonText.displayName = 'TSSShareButtonText';
 
-export const TSSStepsContainer = styled.View`
-  padding: 16px;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
+export const TSSStepsSection = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssStepsSection, style]} {...rest} />
+));
+TSSStepsSection.displayName = 'TSSStepsSection';
 
-export const TSSStepRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-`;
+export const TSSStepsContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.tssStepsContainer,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSStepsContainer.displayName = 'TSSStepsContainer';
 
-export const TSSStepRowWithButton = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-`;
+export const TSSStepRow = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssStepRow, style]} {...rest} />
+));
+TSSStepRow.displayName = 'TSSStepRow';
 
-export const TSSStepContentWithButton = styled.View`
-  flex: 1;
-  padding-bottom: 20px;
-  padding-right: 8px;
-`;
+export const TSSStepRowWithButton = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssStepRowWithButton, style]} {...rest} />
+));
+TSSStepRowWithButton.displayName = 'TSSStepRowWithButton';
 
-export const TSSStepRail = styled.View`
-  width: 40px;
-  align-items: center;
-  margin-right: 12px;
-`;
+export const TSSStepContentWithButton = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssStepContentWithButton, style]} {...rest} />
+));
+TSSStepContentWithButton.displayName = 'TSSStepContentWithButton';
 
-export const TSSStepIndicator = styled.View<{
+export const TSSStepRail = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssStepRail, style]} {...rest} />
+));
+TSSStepRail.displayName = 'TSSStepRail';
+
+interface TSSStepIndicatorProps {
   active?: boolean;
   completed?: boolean;
-}>`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: ${({theme: {dark}, active, completed}) =>
-    active
-      ? dark
-        ? '#2240C440'
-        : LightBlue
-      : completed
-      ? dark
-        ? '#004D27'
-        : Success25
-      : dark
-      ? '#2A2A2A'
-      : '#F5F5F5'};
-  align-items: center;
-  justify-content: center;
-`;
+}
 
-export const TSSStepConnector = styled.View<{completed?: boolean}>`
-  width: 2px;
-  flex-grow: 1;
-  margin-top: 0px;
-  background-color: ${({theme: {dark}, completed}) =>
-    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
-`;
+export const TSSStepIndicator = React.forwardRef<
+  View,
+  TSSStepIndicatorProps & React.ComponentProps<typeof View>
+>(({active, completed, style, ...rest}, ref) => {
+  const theme = useTheme();
+  const dark = theme.dark;
+  const backgroundColor = active
+    ? dark
+      ? '#2240C440'
+      : LightBlue
+    : completed
+    ? dark
+      ? '#004D27'
+      : Success25
+    : dark
+    ? '#2A2A2A'
+    : '#F5F5F5';
+  return (
+    <View
+      ref={ref}
+      style={[styles.tssStepIndicator, {backgroundColor}, style]}
+      {...rest}
+    />
+  );
+});
+TSSStepIndicator.displayName = 'TSSStepIndicator';
 
-export const TSSStepContent = styled.View`
-  flex: 1;
-  padding-bottom: 20px;
-`;
+interface TSSStepConnectorProps {
+  completed?: boolean;
+}
 
-export const TSSContinuePillButton = styled.TouchableOpacity`
-  padding: 8px 16px;
-  border-radius: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? Action : Action)};
-  align-self: flex-start;
-  margin-top: 2px;
-  gap: 8px;
-`;
+export const TSSStepConnector = React.forwardRef<
+  View,
+  TSSStepConnectorProps & React.ComponentProps<typeof View>
+>(({completed, style, ...rest}, ref) => {
+  const theme = useTheme();
+  const dark = theme.dark;
+  const backgroundColor = completed
+    ? dark
+      ? '#004D27'
+      : Success25
+    : dark
+    ? '#2A2A2A'
+    : '#F5F5F5';
+  return (
+    <View
+      ref={ref}
+      style={[styles.tssStepConnector, {backgroundColor}, style]}
+      {...rest}
+    />
+  );
+});
+TSSStepConnector.displayName = 'TSSStepConnector';
 
-export const TSSContinuePillText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${White};
-`;
+export const TSSStepContent = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.tssStepContent, style]} {...rest} />
+));
+TSSStepContent.displayName = 'TSSStepContent';
 
-export const TSSInputWrapper = styled.View`
-  flex-direction: row;
-  align-items: center;
-  border-radius: 8px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? NeutralSlate : Black)};
-  padding: 12px;
-  margin-bottom: 16px;
-`;
+export const TSSContinuePillButton = React.forwardRef<
+  React.ElementRef<typeof RNTouchableOpacity>,
+  React.ComponentProps<typeof RNTouchableOpacity>
+>(({style, ...rest}, ref) => (
+  <RNTouchableOpacity
+    ref={ref}
+    style={[styles.tssContinuePillButton, style]}
+    {...rest}
+  />
+));
+TSSContinuePillButton.displayName = 'TSSContinuePillButton';
 
-export const TSSStyledInput = styled(TextInput)`
-  flex: 1;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  padding: 0;
-`;
+export const TSSContinuePillText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.tssContinuePillText, style]} {...rest} />
+));
+TSSContinuePillText.displayName = 'TSSContinuePillText';
 
-export const TSSErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 14px;
-  margin-bottom: 12px;
-`;
+export const TSSInputWrapper = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.tssInputWrapper,
+        {borderColor: theme.dark ? NeutralSlate : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSInputWrapper.displayName = 'TSSInputWrapper';
 
-export const TSSStepsSectionTitle = styled(BaseText)`
-  font-size: 20px;
-  font-weight: 600;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 12px;
-  line-height: 30px;
-`;
+export const TSSStyledInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      ref={ref}
+      style={[
+        styles.tssStyledInput,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSStyledInput.displayName = 'TSSStyledInput';
 
-export const TSSStepNumber = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  font-weight: 400;
-`;
+export const TSSErrorText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.tssErrorText, style]} {...rest} />
+));
+TSSErrorText.displayName = 'TSSErrorText';
 
-export const TSSStepTitle = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  line-height: 24px;
-`;
+export const TSSStepsSectionTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.tssStepsSectionTitle,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSStepsSectionTitle.displayName = 'TSSStepsSectionTitle';
 
-export const TSSStepSubtitle = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  line-height: 20px;
-`;
+export const TSSStepNumber = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.tssStepNumber, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+});
+TSSStepNumber.displayName = 'TSSStepNumber';
 
-export const TSSStatusText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-top: 10px;
-  line-height: 24px;
-`;
+export const TSSStepTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.tssStepTitle, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+});
+TSSStepTitle.displayName = 'TSSStepTitle';
 
-export const TSSStatusSubText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-top: 4px;
-  line-height: 20px;
-`;
+export const TSSStepSubtitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.tssStepSubtitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSStepSubtitle.displayName = 'TSSStepSubtitle';
+
+export const TSSStatusText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.tssStatusText, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+});
+TSSStatusText.displayName = 'TSSStatusText';
+
+export const TSSStatusSubText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.tssStatusSubText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TSSStatusSubText.displayName = 'TSSStatusSubText';

@@ -8,18 +8,15 @@ import {
   ActiveOpacity,
   CtaContainerAbsolute,
 } from '../../../../../../components/styled/Containers';
-import {H7} from '../../../../../../components/styled/Text';
+import {BaseText, H7} from '../../../../../../components/styled/Text';
 import HamburgerSvg from '../../../../../../../assets/img/hamburger.svg';
 import Button from '../../../../../../components/button/Button';
-import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector} from '../../../../../../utils/hooks';
 import {setHomeCarouselLayoutType} from '../../../../../../store/app/app.actions';
 import {setHomeCarouselConfigAndPopulateNewlyVisibleKeys} from '../../../../../../store/app/homeCarousel.effects';
 import {useNavigation} from '@react-navigation/native';
-import {useTheme} from '@react-navigation/native';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {
   CarouselSvg,
   createCustomizeCardList,
@@ -37,11 +34,133 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../../store/analytics/analytics.effects';
-import CustomTabBar from '../../../../../../components/custom-tab-bar/CustomTabBar';
-import {useOngoingProcess} from '../../../../../../contexts';
+import {useOngoingProcess, useTheme} from '../../../../../../contexts';
+import {StyleSheet, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  Action,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+} from '../../../../../../styles/colors';
 
-// Layout selector
-const Noop = () => null;
+type LayoutType = 'carousel' | 'listView';
+
+const styles = StyleSheet.create({
+  layoutSelector: {
+    alignSelf: 'center',
+    borderRadius: 50,
+    flexDirection: 'row',
+    height: 56,
+    marginTop: 20,
+    padding: 5,
+    width: 320,
+  },
+  layoutOption: {
+    alignItems: 'center',
+    borderRadius: 50,
+    flexDirection: 'row',
+    gap: 5,
+    height: 44,
+    justifyContent: 'center',
+    width: 150,
+  },
+  layoutOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+});
+
+const LayoutSelector = memo(
+  ({
+    initialLayoutType,
+    layoutType,
+    onChange,
+  }: {
+    initialLayoutType: LayoutType;
+    layoutType: LayoutType;
+    onChange: (layoutType: LayoutType) => void;
+  }) => {
+    const {t} = useTranslation();
+    const theme = useTheme();
+    const options: LayoutType[] =
+      initialLayoutType === 'carousel'
+        ? ['carousel', 'listView']
+        : ['listView', 'carousel'];
+
+    return (
+      <View
+        style={[
+          styles.layoutSelector,
+          {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        ]}>
+        {options.map(option => {
+          const focused = option === layoutType;
+
+          return (
+            <TouchableOpacity
+              key={option}
+              style={[
+                styles.layoutOption,
+                {backgroundColor: focused ? Action : 'transparent'},
+              ]}
+              onPress={() => {
+                if (option !== layoutType) {
+                  haptic('soft');
+                  onChange(option);
+                }
+              }}>
+              {option === 'carousel' ? (
+                <CarouselSvg focused={focused} theme={theme} />
+              ) : (
+                <ListViewSvg focused={focused} theme={theme} />
+              )}
+              <BaseText
+                style={[
+                  styles.layoutOptionText,
+                  {
+                    color: theme.dark
+                      ? NeutralSlate
+                      : focused
+                      ? NeutralSlate
+                      : SlateDark,
+                  },
+                ]}>
+                {option === 'carousel' ? t('Carousel') : t('List View')}
+              </BaseText>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  },
+);
+LayoutSelector.displayName = 'LayoutSelector';
+
+const VisibleRow = memo(function VisibleRow({
+  item,
+  onToggle,
+}: {
+  item: CustomizeItem;
+  onToggle: (item: CustomizeItem) => void;
+}) {
+  const drag = useReorderableDrag();
+
+  return (
+    <CustomizeCardContainer
+      delayLongPress={100}
+      onLongPress={() => {
+        haptic('soft');
+        drag();
+      }}
+      activeOpacity={ActiveOpacity}>
+      <HamburgerContainer>
+        <HamburgerSvg />
+      </HamburgerContainer>
+      <CustomizeCard item={item} toggle={() => onToggle(item)} />
+    </CustomizeCardContainer>
+  );
+});
 
 const CustomizeHomeSettings = () => {
   const {t} = useTranslation();
@@ -59,16 +178,16 @@ const CustomizeHomeSettings = () => {
   const [initialLayoutType] = useState(defaultLayoutType);
   const [layoutType, setLayoutType] = useState(defaultLayoutType);
   const navigation = useNavigation();
-  const theme = useTheme();
-  const [_visible, _hidden] = createCustomizeCardList({
-    keys: Object.values(keys),
-    hasCoinbase,
-    homeCarouselConfig,
-  });
-  const [visibleList, setVisibleList] = useState(_visible);
+  const [initialLists] = useState(() =>
+    createCustomizeCardList({
+      keys: Object.values(keys),
+      hasCoinbase,
+      homeCarouselConfig,
+    }),
+  );
+  const [visibleList, setVisibleList] = useState(initialLists[0]);
   const [dirty, setDirty] = useState(false);
-  const [hiddenList, setHiddenList] = useState(_hidden);
-  const Tab = createMaterialTopTabNavigator();
+  const [hiddenList, setHiddenList] = useState(initialLists[1]);
 
   const toggle = useCallback((item: CustomizeItem) => {
     const newItem = {...item};
@@ -84,30 +203,6 @@ const CustomizeHomeSettings = () => {
       setVisibleList(prev => prev.concat(newItem));
     }
   }, []);
-
-  const VisibleRow = memo(function VisibleRow({
-    item,
-    onToggle,
-  }: {
-    item: CustomizeItem;
-    onToggle: (i: CustomizeItem) => void;
-  }) {
-    const drag = useReorderableDrag();
-    return (
-      <CustomizeCardContainer
-        delayLongPress={100}
-        onLongPress={() => {
-          haptic('soft');
-          drag();
-        }}
-        activeOpacity={ActiveOpacity}>
-        <HamburgerContainer>
-          <HamburgerSvg />
-        </HamburgerContainer>
-        <CustomizeCard item={item} toggle={() => onToggle(item)} />
-      </CustomizeCardContainer>
-    );
-  });
 
   const visibleRenderItem = useCallback(
     ({item}: {item: CustomizeItem}) => (
@@ -156,102 +251,40 @@ const CustomizeHomeSettings = () => {
     );
   };
 
-  const memoizedFooterList = useMemo(() => {
+  const hiddenItems = useMemo(() => {
     return (
-      <FlashList
-        ListHeaderComponent={() => {
-          return hiddenList.length ? (
-            <ListHeader>{t('Hidden')}</ListHeader>
-          ) : null;
-        }}
-        contentContainerStyle={{paddingBottom: 250}}
-        data={hiddenList}
-        renderItem={({item}: any) => {
-          return (
-            <CustomizeCardContainer activeOpacity={ActiveOpacity}>
-              <CustomizeCard item={item} toggle={() => toggle(item)} />
-            </CustomizeCardContainer>
-          );
-        }}
-        keyExtractor={item => item.key}
-      />
+      <>
+        {hiddenList.length ? <ListHeader>{t('Hidden')}</ListHeader> : null}
+        {hiddenList.map(item => (
+          <CustomizeCardContainer activeOpacity={ActiveOpacity} key={item.key}>
+            <CustomizeCard item={item} toggle={() => toggle(item)} />
+          </CustomizeCardContainer>
+        ))}
+      </>
     );
-  }, [hiddenList, toggle]);
+  }, [hiddenList, t, toggle]);
+
+  const renderHiddenItems = useCallback(() => hiddenItems, [hiddenItems]);
+  const renderVisibleHeader = useCallback(
+    () =>
+      visibleList.length ? <ListHeader>{t('Favorites')}</ListHeader> : null,
+    [t, visibleList.length],
+  );
 
   return (
     <CustomizeHomeContainer>
       <LayoutToggleContainer>
         <H7>{t('Home Layout')}</H7>
-        <Tab.Navigator
-          initialRouteName={layoutType}
-          style={{marginTop: 20}}
-          tabBar={props => <CustomTabBar {...props} />}
-          screenListeners={{
-            tabPress: tab => {
-              haptic('soft');
-              if (tab.target) {
-                const _layoutType = tab.target.split('-')[0] as
-                  | 'carousel'
-                  | 'listView';
-                setLayoutType(_layoutType);
-              }
-            },
-          }}>
-          {initialLayoutType === 'carousel' ? (
-            <>
-              <Tab.Screen
-                name={'carousel'}
-                component={Noop}
-                options={{
-                  tabBarLabel: t('Carousel'),
-                  tabBarIcon: ({focused}) => (
-                    <CarouselSvg focused={focused} theme={theme} />
-                  ),
-                }}
-              />
-              <Tab.Screen
-                name={'listView'}
-                component={Noop}
-                options={{
-                  tabBarLabel: t('List View'),
-                  tabBarIcon: ({focused}) => (
-                    <ListViewSvg focused={focused} theme={theme} />
-                  ),
-                }}
-              />
-            </>
-          ) : (
-            <>
-              <Tab.Screen
-                name={'listView'}
-                component={Noop}
-                options={{
-                  tabBarLabel: t('List View'),
-                  tabBarIcon: ({focused}) => (
-                    <ListViewSvg focused={focused} theme={theme} />
-                  ),
-                }}
-              />
-              <Tab.Screen
-                name={'carousel'}
-                component={Noop}
-                options={{
-                  tabBarLabel: t('Carousel'),
-                  tabBarIcon: ({focused}) => (
-                    <CarouselSvg focused={focused} theme={theme} />
-                  ),
-                }}
-              />
-            </>
-          )}
-        </Tab.Navigator>
+        <LayoutSelector
+          initialLayoutType={initialLayoutType}
+          layoutType={layoutType}
+          onChange={setLayoutType}
+        />
       </LayoutToggleContainer>
 
       <ReorderableList
-        ListHeaderComponent={() =>
-          visibleList.length ? <ListHeader>{t('Favorites')}</ListHeader> : null
-        }
-        ListFooterComponent={() => memoizedFooterList}
+        ListHeaderComponent={renderVisibleHeader}
+        ListFooterComponent={renderHiddenItems}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 250}}
         onReorder={handleReorder}
         data={visibleList}

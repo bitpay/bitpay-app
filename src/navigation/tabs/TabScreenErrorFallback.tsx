@@ -1,12 +1,12 @@
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, ScrollView} from 'react-native';
+import {Linking, ScrollView, StyleSheet, View} from 'react-native';
 import ErrorBoundary from 'react-native-error-boundary';
 import * as Sentry from '@sentry/react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import styled from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {
   ScreenContainer,
   ScreenGutter,
@@ -36,44 +36,40 @@ interface TabsScreenErrorFallbackProps {
   options?: TabsScreenErrorFallbackOptions;
 }
 
-const TabScreenContainer = styled(ScreenContainer)`
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
-`;
-
-const TabScreenErrorBody = styled.View`
-  align-items: center;
-  align-self: center;
-  padding: ${ScreenGutter};
-  gap: 15px;
-`;
-
-const ErrorBox = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  border-radius: 8px;
-  padding: 25px;
-  max-height: 315px;
-  max-width: ${WIDTH - 40}px;
-  margin-top: 20px;
-  overflow: hidden;
-`;
-
-const StackTrace = styled(Paragraph)`
-  font-size: 12px;
-  line-height: 18px;
-`;
-
-const StackTraceContainer = styled.View`
-  flex-shrink: 1;
-`;
-
-const ErrorMessageContainer = styled.View`
-  padding: 20px;
-  border: 1px solid ${({theme}) => (theme.dark ? '#353535' : Grey)};
-  border-radius: 6px;
-  margin-bottom: 10px;
-`;
+const styles = StyleSheet.create({
+  tabScreenContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexGrow: 1,
+  },
+  tabScreenErrorBody: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    padding: parseInt(ScreenGutter, 10),
+    gap: 15,
+  },
+  errorBox: {
+    borderRadius: 8,
+    padding: 25,
+    maxHeight: 315,
+    maxWidth: WIDTH - 40,
+    marginTop: 20,
+    overflow: 'hidden',
+  },
+  stackTrace: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  stackTraceContainer: {
+    flexShrink: 1,
+  },
+  errorMessageContainer: {
+    padding: 20,
+    borderWidth: 1,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+});
 
 const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
   error,
@@ -82,6 +78,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
 }) => {
   const {t} = useTranslation();
   const navigation = useNavigation<any>();
+  const theme = useTheme();
   return (
     <TabContainer>
       {options?.includeHeader ? (
@@ -95,8 +92,8 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
         </HeaderContainer>
       ) : null}
       <ScrollView contentContainerStyle={{flex: 1}}>
-        <TabScreenContainer>
-          <TabScreenErrorBody>
+        <ScreenContainer style={styles.tabScreenContainer}>
+          <View style={styles.tabScreenErrorBody}>
             <WarningSvg height={50} width={50} />
             <H3>Something Went Wrong</H3>
             <TextAlign align={'center'}>
@@ -111,16 +108,26 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
                 , and provide the error message below.
               </Paragraph>
             </TextAlign>
-            <ErrorBox>
-              <ErrorMessageContainer>
+            <View
+              style={[
+                styles.errorBox,
+                {backgroundColor: theme.dark ? LightBlack : Slate10},
+              ]}>
+              <View
+                style={[
+                  styles.errorMessageContainer,
+                  {borderColor: theme.dark ? '#353535' : Grey},
+                ]}>
                 <Paragraph>{error?.message || ''}</Paragraph>
-              </ErrorMessageContainer>
-              <StackTraceContainer>
-                <StackTrace>{error?.stack || stackTrace || ''}</StackTrace>
-              </StackTraceContainer>
-            </ErrorBox>
-          </TabScreenErrorBody>
-        </TabScreenContainer>
+              </View>
+              <View style={styles.stackTraceContainer}>
+                <Paragraph style={styles.stackTrace}>
+                  {error?.stack || stackTrace || ''}
+                </Paragraph>
+              </View>
+            </View>
+          </View>
+        </ScreenContainer>
       </ScrollView>
     </TabContainer>
   );

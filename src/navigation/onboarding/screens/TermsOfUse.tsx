@@ -1,10 +1,16 @@
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
+import {
+  DeviceEventEmitter,
+  Linking,
+  ScrollView,
+  SafeAreaView,
+  View,
+  StyleSheet,
+} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import {HeaderTitle, Link, Paragraph} from '../../../components/styled/Text';
@@ -39,37 +45,71 @@ export interface TermsOfUseModel {
   accessibilityLabel: string;
 }
 
-const StatementText = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-`;
+const styles = StyleSheet.create({
+  statementLink: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    lineHeight: 25,
+    letterSpacing: 0,
+  },
+  termsOfUseContainer: {
+    position: 'relative',
+    flex: 1,
+  },
+  termsContainer: {
+    paddingTop: 20,
+    paddingHorizontal: 10,
+    paddingBottom: 100,
+  },
+});
 
-const StatementTextUnderline = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-  text-decoration: underline;
-  text-decoration-color: ${({theme}) => theme.colors.text};
-`;
+const StatementText = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return <Paragraph style={{color: theme.colors.text}}>{children}</Paragraph>;
+};
 
-const StatementTextBold = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-  font-weight: 500;
-`;
+const StatementTextUnderline = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={{
+        color: theme.colors.text,
+        textDecorationLine: 'underline',
+        textDecorationColor: theme.colors.text,
+      }}>
+      {children}
+    </Paragraph>
+  );
+};
 
-const StatementLink = styled(Link)`
-  font-size: 16px;
-  font-style: normal;
-  line-height: 25px;
-  letter-spacing: 0;
-`;
+const StatementTextBold = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph style={{color: theme.colors.text, fontWeight: '500'}}>
+      {children}
+    </Paragraph>
+  );
+};
 
-const TermsOfUseContainer = styled.SafeAreaView`
-  position: relative;
-  flex: 1;
-`;
-
-// need padding-bottom for the CTA
-const TermsContainer = styled.View`
-  padding: 20px 10px 100px;
-`;
+const StatementLink = ({
+  testID,
+  accessibilityLabel,
+  onPress,
+  children,
+}: {
+  testID?: string;
+  accessibilityLabel?: string;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => (
+  <Link
+    testID={testID}
+    accessibilityLabel={accessibilityLabel}
+    onPress={onPress}
+    style={styles.statementLink}>
+    {children}
+  </Link>
+);
 
 const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   const {t} = useTranslation();
@@ -161,14 +201,16 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   };
 
   return (
-    <TermsOfUseContainer testID="terms-of-use-container">
+    <SafeAreaView
+      style={styles.termsOfUseContainer}
+      testID="terms-of-use-container">
       <ScrollView>
-        <TermsContainer>
+        <View style={styles.termsContainer}>
           <StatementText>{t('I understand that:')}</StatementText>
           {termsList.map((term: TermsOfUseModel) => {
             return <TermsBox term={term} emit={setChecked} key={term.id} />;
           })}
-        </TermsContainer>
+        </View>
       </ScrollView>
 
       <CtaContainerAbsolute testID="cta-container">
@@ -202,7 +244,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
           {t('Agree and Continue')}
         </Button>
       </CtaContainerAbsolute>
-    </TermsOfUseContainer>
+    </SafeAreaView>
   );
 };
 

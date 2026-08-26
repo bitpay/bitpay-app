@@ -54,8 +54,49 @@ type BalanceChartViewModelQueryLike = {
 };
 
 const assetPnlSummaryCache = new Map<string, AssetPnlSummaryCacheEntry>();
-const listeners = new Set<() => void>();
+const MAX_ASSET_PNL_SUMMARY_CACHE_ENTRIES = 128;
+const listenersByCacheKey = new Map<string, Set<() => void>>();
+const listenersByCompatibilityKey = new Map<string, Set<() => void>>();
+const clearListeners = new Set<() => void>();
 let assetPnlSummaryCacheGeneration = 0;
+
+const hasActiveAssetPnlSummaryListener = (
+  key: string,
+  entry: AssetPnlSummaryCacheEntry,
+): boolean =>
+  !!listenersByCacheKey.get(key)?.size ||
+  !!listenersByCompatibilityKey.get(
+    buildAssetPnlSummaryCompatibilityKey(entry.identity),
+  )?.size;
+
+const pruneInactiveAssetPnlSummaryEntries = (): void => {
+  if (assetPnlSummaryCache.size <= MAX_ASSET_PNL_SUMMARY_CACHE_ENTRIES) {
+    return;
+  }
+
+  for (const [key, entry] of assetPnlSummaryCache) {
+    if (assetPnlSummaryCache.size <= MAX_ASSET_PNL_SUMMARY_CACHE_ENTRIES) {
+      break;
+    }
+
+    // An active row must never lose the value it is currently rendering.
+    // In-flight entries are also retained to prevent duplicate queries.
+    if (entry.loading || hasActiveAssetPnlSummaryListener(key, entry)) {
+      continue;
+    }
+
+    assetPnlSummaryCache.delete(key);
+  }
+};
+
+const storeAssetPnlSummaryCacheEntry = (
+  key: string,
+  entry: AssetPnlSummaryCacheEntry,
+): void => {
+  assetPnlSummaryCache.delete(key);
+  assetPnlSummaryCache.set(key, entry);
+  pruneInactiveAssetPnlSummaryEntries();
+};
 
 const normalizeString = (value: unknown): string => String(value || '').trim();
 
@@ -155,37 +196,120 @@ export function buildAssetPnlSummaryCacheKey(
   });
 }
 
-function emitChange(): void {
-  for (const listener of Array.from(listeners)) {
-    listener();
-  }
-}
-
-export function subscribeAssetPnlSummaryCache(
-  listener: () => void,
-): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getAssetPnlSummaryCacheEntry(
-  cacheKey: string | undefined,
-): AssetPnlSummaryCacheEntry | undefined {
-  return cacheKey ? assetPnlSummaryCache.get(cacheKey) : undefined;
-}
-
-export function getAssetPnlSummaryCacheClearEpoch(): number {
-  return assetPnlSummaryCacheGeneration;
-}
-
 const getSpotRatesRevisionSig = (summaryCacheRevisionSig: string): string => {
   const separatorIndex = summaryCacheRevisionSig.indexOf('|');
   return separatorIndex === -1
     ? summaryCacheRevisionSig
     : summaryCacheRevisionSig.slice(0, separatorIndex);
 };
+
+export function buildAssetPnlSummaryCompatibilityKey(
+  identity: AssetPnlSummaryIdentity,
+): string {
+  const normalized = normalizeAssetPnlSummaryIdentity(identity);
+
+  return JSON.stringify({
+    assetKey: normalized.assetKey,
+    currencyAbbreviation: normalized.currencyAbbreviation,
+    chain: normalized.chain || '',
+    tokenAddress: normalized.tokenAddress || '',
+    walletIds: normalized.walletIds,
+    storedWalletRequestSig: normalized.storedWalletRequestSig,
+    quoteCurrency: normalized.quoteCurrency,
+    timeframe: normalized.timeframe,
+    currentRatesSignature: normalized.currentRatesSignature,
+    chartDataRevisionSig: normalized.chartDataRevisionSig,
+    asOfMs: normalized.asOfMs ?? '',
+    balanceOffset: normalized.balanceOffset ?? 0,
+    spotRatesRevisionSig: getSpotRatesRevisionSig(
+      normalized.summaryCacheRevisionSig,
+    ),
+  });
+}
+
+function emitChange(cacheKey: string, identity: AssetPnlSummaryIdentity): void {
+  const listeners = new Set(listenersByCacheKey.get(cacheKey) || []);
+  for (const listener of listenersByCompatibilityKey.get(
+    buildAssetPnlSummaryCompatibilityKey(identity),
+  ) || []) {
+    listeners.add(listener);
+  }
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+export function subscribeAssetPnlSummaryCache(
+  cacheKeys: readonly string[],
+  listener: () => void,
+  compatibilityKeys: readonly string[] = [],
+): () => void {
+  const subscribedCacheKeys = Array.from(
+    new Set(cacheKeys.filter(cacheKey => !!cacheKey)),
+  );
+  const subscribedCompatibilityKeys = Array.from(
+    new Set(compatibilityKeys.filter(compatibilityKey => !!compatibilityKey)),
+  );
+
+  for (const cacheKey of subscribedCacheKeys) {
+    const listeners = listenersByCacheKey.get(cacheKey) || new Set();
+    listeners.add(listener);
+    listenersByCacheKey.set(cacheKey, listeners);
+  }
+  for (const compatibilityKey of subscribedCompatibilityKeys) {
+    const listeners =
+      listenersByCompatibilityKey.get(compatibilityKey) || new Set();
+    listeners.add(listener);
+    listenersByCompatibilityKey.set(compatibilityKey, listeners);
+  }
+
+  return () => {
+    for (const cacheKey of subscribedCacheKeys) {
+      const listeners = listenersByCacheKey.get(cacheKey);
+      listeners?.delete(listener);
+      if (!listeners?.size) {
+        listenersByCacheKey.delete(cacheKey);
+      }
+    }
+    for (const compatibilityKey of subscribedCompatibilityKeys) {
+      const listeners = listenersByCompatibilityKey.get(compatibilityKey);
+      listeners?.delete(listener);
+      if (!listeners?.size) {
+        listenersByCompatibilityKey.delete(compatibilityKey);
+      }
+    }
+    pruneInactiveAssetPnlSummaryEntries();
+  };
+}
+
+export function subscribeAssetPnlSummaryCacheClear(
+  listener: () => void,
+): () => void {
+  clearListeners.add(listener);
+  return () => {
+    clearListeners.delete(listener);
+  };
+}
+
+export function getAssetPnlSummaryCacheEntry(
+  cacheKey: string | undefined,
+): AssetPnlSummaryCacheEntry | undefined {
+  if (!cacheKey) {
+    return undefined;
+  }
+  const entry = assetPnlSummaryCache.get(cacheKey);
+  if (!entry) {
+    return undefined;
+  }
+
+  assetPnlSummaryCache.delete(cacheKey);
+  assetPnlSummaryCache.set(cacheKey, entry);
+  return entry;
+}
+
+export function getAssetPnlSummaryCacheClearEpoch(): number {
+  return assetPnlSummaryCacheGeneration;
+}
 
 const identitiesMatchForProvisionalDisplay = (
   leftIdentity: AssetPnlSummaryIdentity,
@@ -215,19 +339,40 @@ const identitiesMatchForProvisionalDisplay = (
 export function findCompatibleAssetPnlSummaryCacheEntry(
   identity: AssetPnlSummaryIdentity,
 ): AssetPnlSummaryCacheEntry | undefined {
-  return Array.from(assetPnlSummaryCache.values())
+  const compatibleEntry = Array.from(assetPnlSummaryCache.entries())
     .reverse()
     .find(
-      entry =>
+      ([, entry]) =>
         entry.summary?.hasPnl &&
         identitiesMatchForProvisionalDisplay(entry.identity, identity),
     );
+  if (!compatibleEntry) {
+    return undefined;
+  }
+
+  const [cacheKey, entry] = compatibleEntry;
+  storeAssetPnlSummaryCacheEntry(cacheKey, entry);
+  return entry;
 }
 
 export function clearAssetPnlSummaryCache(): void {
   assetPnlSummaryCacheGeneration += 1;
   assetPnlSummaryCache.clear();
-  emitChange();
+
+  const listeners = new Set(clearListeners);
+  for (const cacheKeyListeners of listenersByCacheKey.values()) {
+    for (const listener of cacheKeyListeners) {
+      listeners.add(listener);
+    }
+  }
+  for (const compatibilityKeyListeners of listenersByCompatibilityKey.values()) {
+    for (const listener of compatibilityKeyListeners) {
+      listeners.add(listener);
+    }
+  }
+  for (const listener of listeners) {
+    listener();
+  }
 }
 
 export const clearAssetPnlSummaryCacheForTests = clearAssetPnlSummaryCache;
@@ -393,7 +538,7 @@ function seedAssetPnlSummaryCacheForGeneration(args: {
     return false;
   }
 
-  assetPnlSummaryCache.set(key, {
+  storeAssetPnlSummaryCacheEntry(key, {
     key,
     identity,
     generation: args.generation,
@@ -402,7 +547,7 @@ function seedAssetPnlSummaryCacheForGeneration(args: {
     error: undefined,
     promise: undefined,
   });
-  emitChange();
+  emitChange(key, identity);
   return true;
 }
 
@@ -424,7 +569,7 @@ function setAssetPnlSummaryLoading(args: {
   const key = buildAssetPnlSummaryCacheKey(identity);
   const generation = assetPnlSummaryCacheGeneration;
 
-  assetPnlSummaryCache.set(key, {
+  storeAssetPnlSummaryCacheEntry(key, {
     key,
     identity,
     generation,
@@ -433,7 +578,7 @@ function setAssetPnlSummaryLoading(args: {
     error: undefined,
     promise: args.promise,
   });
-  emitChange();
+  emitChange(key, identity);
   return {key, generation};
 }
 
@@ -458,7 +603,7 @@ function setAssetPnlSummaryError(args: {
     return;
   }
 
-  assetPnlSummaryCache.set(key, {
+  storeAssetPnlSummaryCacheEntry(key, {
     key,
     identity,
     generation: args.generation,
@@ -467,7 +612,7 @@ function setAssetPnlSummaryError(args: {
     error: args.error,
     promise: undefined,
   });
-  emitChange();
+  emitChange(key, identity);
 }
 
 function attachAssetPnlSummaryPromiseHandlers(args: {

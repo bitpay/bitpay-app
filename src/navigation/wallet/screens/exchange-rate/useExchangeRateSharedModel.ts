@@ -6,7 +6,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import {useCallback, useEffect, useLayoutEffect, useMemo} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
@@ -114,10 +114,6 @@ const formatAssetWalletCryptoBalance = (value: unknown): string => {
     ? ZERO_ASSET_WALLET_CRYPTO_BALANCE
     : text;
 };
-
-const HeaderTitleText = styled(HeaderTitle)`
-  font-size: 20px;
-`;
 
 const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   const theme = useTheme();
@@ -439,7 +435,7 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () =>
-        React.createElement(HeaderTitleText, null, currencyName),
+        React.createElement(HeaderTitle, {style: {fontSize: 20}}, currencyName),
       headerLeft: () => React.createElement(HeaderBackButton),
     });
   }, [currencyName, navigation]);

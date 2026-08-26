@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
 import SwapCurrenciesSvg from '../../../../assets/img/swap-currencies.svg';
 import Button, {ButtonState} from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -216,7 +215,10 @@ import {
   simplexSellEnv,
 } from '../sell-crypto/utils/simplex-sell-utils';
 import {simplexGetCurrencies} from '../../../store/buy-crypto/effects/simplex/simplex';
-import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '../../../components/base/TouchableOpacity';
 import _ from 'lodash';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {
@@ -225,9 +227,17 @@ import {
 } from '../sell-crypto/constants/SellCryptoConstants';
 import {SellCryptoActions} from '../../../store/sell-crypto';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import Modal from 'react-native-modal';
-import {ActivityIndicator, Linking, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Linking,
+  SafeAreaView,
+  StyleSheet,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import WebView, {
   WebViewMessageEvent,
@@ -249,135 +259,302 @@ import {IS_ANDROID} from '../../../constants';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 
-const AmountContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  amountContainer: {
+    flex: 1,
+  },
+  ctaContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  amountHeroContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  actionContainer: {
+    marginBottom: 15,
+    width: '100%',
+  },
+  buttonContainer: {
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  viewContainer: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  virtualKeyboardContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  spinnerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  amountText: {
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  amountEquivText: {
+    fontSize: 12,
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 15,
+  },
+  selectedOfferAmountText: {
+    fontSize: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    marginBottom: 4,
+  },
+  currencySuperScript: {
+    position: 'absolute',
+    top: 10,
+    right: -20,
+  },
+  currencyText: {
+    position: 'absolute',
+  },
+  swapCurrenciesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+    borderRadius: 100,
+  },
+  webViewModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    overflow: 'scroll',
+  },
+  webViewModalHeader: {
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+  },
+  webViewCloseButton: {
+    padding: 10,
+  },
+  webViewCloseText: {
+    fontSize: 24,
+  },
+});
 
-const CtaContainer = styled.View<{
-  isSmallScreen?: boolean;
-  justifyCenter?: boolean;
-}>`
-  width: 100%;
-  flex-direction: row;
-  justify-content: ${({justifyCenter}) =>
-    justifyCenter ? 'center' : 'space-between'};
-  align-items: center;
-`;
+const AmountContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.amountContainer, style]} {...rest} />
+);
 
-export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
-  flex-direction: column;
-  align-items: center;
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
-  padding: 0 ${ScreenGutter};
-`;
+const CtaContainer: React.FC<ViewProps & {justifyCenter?: boolean}> = ({
+  style,
+  justifyCenter,
+  ...rest
+}) => (
+  <View
+    style={[
+      styles.ctaContainer,
+      {justifyContent: justifyCenter ? 'center' : 'space-between'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const ActionContainer = styled.View<{isModal?: boolean}>`
-  margin-bottom: 15px;
-  width: 100%;
-`;
+export const AmountHeroContainer: React.FC<
+  ViewProps & {isSmallScreen: boolean}
+> = ({style, isSmallScreen, ...rest}) => (
+  <View
+    style={[
+      styles.amountHeroContainer,
+      {marginTop: isSmallScreen ? 0 : 20},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const ButtonContainer = styled.View`
-  padding: 0 ${ScreenGutter};
-`;
+const ActionContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.actionContainer, style]} {...rest} />
+);
 
-const ViewContainer = styled.View`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
+const ButtonContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.buttonContainer, style]} {...rest} />
+);
 
-const VirtualKeyboardContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-`;
+const ViewContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.viewContainer, style]} {...rest} />
+);
 
-const Row = styled.View`
-  flex-direction: row;
-`;
+const VirtualKeyboardContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.virtualKeyboardContainer, style]} {...rest} />
+);
 
-const SpinnerContainer = styled.View<{
-  isSmallScreen?: boolean;
-  addMarginBottom?: boolean;
-}>`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: ${({isSmallScreen}) => (isSmallScreen ? '50px' : '70px')};
-  margin-bottom: ${({addMarginBottom}) => (addMarginBottom ? '40px' : '0')};
-`;
+const Row: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.row, style]} {...rest} />
+);
 
-const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
-  font-size: ${({bigAmount}) => (bigAmount ? '35px' : '50px')};
-  font-weight: 500;
-  text-align: center;
-  color: ${({theme}) => theme.colors.text};
-`;
+const SpinnerContainer: React.FC<
+  ViewProps & {isSmallScreen?: boolean; addMarginBottom?: boolean}
+> = ({style, isSmallScreen, addMarginBottom, ...rest}) => (
+  <View
+    style={[
+      styles.spinnerContainer,
+      {
+        minHeight: isSmallScreen ? 50 : 70,
+        marginBottom: addMarginBottom ? 40 : 0,
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const AmountEquivText = styled(AmountText)`
-  font-size: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  padding: 4px 8px;
-  border-radius: 15px;
-`;
+const AmountText: React.FC<TextProps & {bigAmount?: boolean}> = ({
+  style,
+  bigAmount,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.amountText,
+        {fontSize: bigAmount ? 35 : 50, color: theme.colors.text},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SelectedOfferAmountText = styled(AmountText)`
-  font-size: 12px;
-  padding: 2px 8px;
-  margin-bottom: 4px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const AmountEquivText: React.FC<TextProps & {bigAmount?: boolean}> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <AmountText
+      style={[
+        styles.amountEquivText,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CurrencySuperScript = styled.View`
-  position: absolute;
-  top: 10px;
-  right: -20px;
-`;
-const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
-  font-size: ${({bigAmount}) => (bigAmount ? '12px' : '20px')};
-  color: ${({theme}) => theme.colors.text};
-  position: absolute;
-`;
+const SelectedOfferAmountText: React.FC<TextProps & {bigAmount?: boolean}> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <AmountText
+      style={[
+        styles.selectedOfferAmountText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SwapCurrenciesButton = styled(TouchableOpacity)<{
-  isSmallScreen?: boolean;
-}>`
-  flex-direction: row;
-  align-items: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
-  padding: 5px;
-  border-radius: 100px;
-`;
+const CurrencySuperScript: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.currencySuperScript, style]} {...rest} />
+);
 
-const WebViewModalContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  overflow: scroll;
-`;
+const CurrencyText: React.FC<TextProps & {bigAmount?: boolean}> = ({
+  style,
+  bigAmount,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.currencyText,
+        {fontSize: bigAmount ? 12 : 20, color: theme.colors.text},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WebViewModalHeader = styled.View<{topInset: number}>`
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
-  justify-content: center;
-  align-items: flex-start;
-  padding-horizontal: 15px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
-`;
+const SwapCurrenciesButton: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.swapCurrenciesButton,
+        {backgroundColor: theme.dark ? LightBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WebViewCloseButton = styled(TouchableOpacity)`
-  padding: 10px;
-`;
+const WebViewModalContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.webViewModalContainer, style]} {...rest} />
+);
 
-const WebViewCloseText = styled(BaseText)`
-  font-size: 24px;
-  color: ${({theme: {dark}}) => (dark ? '#ccc' : '#333')};
-`;
+const WebViewModalHeader: React.FC<ViewProps & {topInset: number}> = ({
+  style,
+  topInset,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.webViewModalHeader,
+        {
+          marginTop: topInset,
+          backgroundColor: theme.dark ? '#1a1a1a' : '#f8f8f8',
+          borderBottomColor: theme.dark ? '#333' : '#ddd',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const WebViewCloseButton: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.webViewCloseButton, style]} {...rest} />;
+
+const WebViewCloseText: React.FC<TextProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.webViewCloseText,
+        {color: theme.dark ? '#ccc' : '#333'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export interface Limits {
   min?: number;

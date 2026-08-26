@@ -48,4 +48,31 @@ describe('buildBalanceChartViewModelFromAnalysisChart', () => {
     expect(viewModel.latestTotalFiatBalance).toBe(120);
     expect(viewModel.latestDisplayedTotalFiatBalance).toBe(125);
   });
+
+  it('keeps the compact per-wallet series needed for cross-scope chart caching', () => {
+    const walletFiatBalanceByWalletId = {
+      'wallet-1': [40, 45, 50],
+      'wallet-2': [60, 65, 70],
+    };
+    const walletRemainingCostBasisFiatByWalletId = {
+      'wallet-1': [30, 30, 30],
+      'wallet-2': [50, 50, 50],
+    };
+
+    const viewModel = buildBalanceChartViewModelFromAnalysisChart({
+      chart: makeChart({
+        walletFiatBalanceByWalletId,
+        walletRemainingCostBasisFiatByWalletId,
+      }),
+      walletIds: ['wallet-1', 'wallet-2'],
+      dataRevisionSig: 'revision-1',
+    });
+
+    expect(viewModel.walletFiatBalanceByWalletId).toEqual(
+      walletFiatBalanceByWalletId,
+    );
+    expect(viewModel.walletRemainingCostBasisFiatByWalletId).toEqual(
+      walletRemainingCostBasisFiatByWalletId,
+    );
+  });
 });

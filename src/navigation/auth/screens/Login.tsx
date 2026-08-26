@@ -1,6 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -9,6 +9,11 @@ import {
   NativeSyntheticEvent,
   TextInput,
   TextInputEndEditingEventData,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
 } from 'react-native';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -60,39 +65,80 @@ interface LoginFormFieldValues {
   password: string;
 }
 
-const LoginContainer = styled.View`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  loginContainer: {
+    flex: 1,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 18,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  footerContainer: {
+    marginTop: 32,
+    marginBottom: 32,
+  },
+  footerLink: {
+    fontSize: 18,
+    textAlign: 'center',
+  },
+});
 
-const DividerContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 28px;
-`;
+const LoginContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.loginContainer, style]} {...rest} />
+);
 
-const DividerLine = styled.View`
-  flex: 1;
-  height: 1px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-`;
+const DividerContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.dividerContainer, style]} {...rest} />
+);
 
-const DividerText = styled.Text`
-  margin: 0 18px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 14px;
-  font-weight: 500;
-`;
+const DividerLine = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.dividerLine,
+        {backgroundColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const FooterContainer = styled.View`
-  margin-top: 32px;
-  margin-bottom: 32px;
-`;
+const DividerText = ({style, ...rest}: TextProps) => {
+  const theme = useTheme();
+  return (
+    <Text
+      style={[
+        styles.dividerText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const FooterLink = styled(Link)`
-  font-size: 18px;
-  text-align: center;
-`;
+const FooterContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.footerContainer, style]} {...rest} />
+);
+
+const FooterLink = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <Link ref={ref} style={[styles.footerLink, style]} {...rest} />
+  ),
+);
 
 const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();

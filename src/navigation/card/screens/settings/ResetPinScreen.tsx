@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
-import styled from 'styled-components/native';
+import {View, ViewProps, StyleSheet} from 'react-native';
 import Spinner from '../../../../components/spinner/Spinner';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {AppActions} from '../../../../store/app';
@@ -32,10 +32,16 @@ const StatusTextMap: Record<number, string> = {
   [StatusCodes.UNKNOWN_ERROR]: 'Unknown error',
 };
 
-const SpinnerWrapper = styled.View`
-  align-items: center;
-  margin-top: 24px;
-`;
+const styles = StyleSheet.create({
+  spinnerWrapper: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+});
+
+const SpinnerWrapper = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.spinnerWrapper, style]} {...rest} />
+);
 
 const ResetPinScreen: React.FC<
   NativeStackScreenProps<CardStackParamList, CardScreens.RESET_PIN>

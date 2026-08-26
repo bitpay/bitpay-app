@@ -3,8 +3,8 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   ActiveOpacity,
   Hr,
@@ -25,7 +25,7 @@ import {
   checkPrivateKeyEncrypted,
   findWalletById,
 } from '../../../store/wallet/utils/wallet';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
 import {
   checkEncryptedKeysForEddsaMigration,
@@ -54,53 +54,89 @@ import {logManager} from '../../../managers/LogManager';
 
 const Constants = BwcProvider.getInstance().getConstants();
 
-const WalletSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginVertical: 5,
+  },
+  walletNameContainer: {
+    paddingTop: 10,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  infoDescription: {
+    fontSize: 16,
+  },
+  verticalPadding: {
+    paddingVertical: gutter,
+  },
+});
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
-`;
+const Title: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.title, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const WalletNameContainer = styled(TouchableOpacity)`
-  padding: 10px 0 20px 0;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const WalletNameContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.walletNameContainer, style]} {...rest} />
+);
 
-const InfoDescription = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const InfoDescription: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.infoDescription, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const VerticalPadding: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.verticalPadding}>{children}</View>;
 
-const WalletSettingsTitle = styled(SettingTitle)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const WalletSettingsTitle: React.FC<
+  React.ComponentProps<typeof SettingTitle>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SettingTitle
+      style={[{color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
 
 const WalletSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {walletId, key, copayerId},
+    params: {walletId, keyId, copayerId},
   } = useRoute<RouteProp<WalletGroupParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
 
-  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
-  const evmAccountsInfo = useAppSelector(
-    ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
-  );
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]) as Key;
+  const wallets: Wallet[] = key.wallets;
+  const evmAccountsInfo = key.evmAccountsInfo;
   const wallet = findWalletById(wallets, walletId, copayerId) as Wallet;
   const [hadVisibleWallet, setHadVisibleWallet] = useState(() =>
     wallets.some(w => w.hideWallet === false && IsVMChain(w.chain)),
@@ -191,16 +227,16 @@ const WalletSettings = () => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Wallet Settings')}</HeaderTitle>,
     });
-  });
+  }, [navigation, t]);
   return (
-    <WalletSettingsContainer>
-      <ScrollView>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
             navigation.navigate('UpdateKeyOrWalletName', {
-              key,
+              keyId,
               wallet: {
                 walletId,
                 walletName: walletName || credentialsWalletName,
@@ -266,7 +302,11 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('WalletInformation', {wallet});
+              navigation.navigate('WalletInformation', {
+                keyId,
+                walletId,
+                copayerId,
+              });
             }}>
             <WalletSettingsTitle>{t('Information')}</WalletSettingsTitle>
           </Setting>
@@ -276,7 +316,11 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Addresses', {wallet});
+              navigation.navigate('Addresses', {
+                keyId,
+                walletId,
+                copayerId,
+              });
             }}>
             <WalletSettingsTitle>{t('Addresses')}</WalletSettingsTitle>
           </Setting>
@@ -286,7 +330,11 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('ExportTransactionHistory', {wallet});
+              navigation.navigate('ExportTransactionHistory', {
+                keyId,
+                walletId,
+                copayerId,
+              });
             }}>
             <WalletSettingsTitle>
               {t('Export Transaction History')}
@@ -319,7 +367,9 @@ const WalletSettings = () => {
                       showDecryptPasswordModal(
                         buildEncryptModalConfig(async decryptedKey => {
                           navigation.navigate('ExportWallet', {
-                            wallet,
+                            keyId,
+                            walletId,
+                            copayerId,
                             keyObj: {...decryptedKey, ..._keyObj},
                           });
                         }),
@@ -335,7 +385,9 @@ const WalletSettings = () => {
                       Object.assign(combinedKey, keyData);
                     });
                     navigation.navigate('ExportWallet', {
-                      wallet,
+                      keyId,
+                      walletId,
+                      copayerId,
                       keyObj: {...combinedKey, ..._keyObj},
                     });
                   }
@@ -351,8 +403,9 @@ const WalletSettings = () => {
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('ClearTransactionHistoryCache', {
-                wallet,
-                key,
+                keyId,
+                walletId,
+                copayerId,
               });
             }}>
             <WalletSettingsTitle>
@@ -362,7 +415,7 @@ const WalletSettings = () => {
           <Hr />
         </VerticalPadding>
       </ScrollView>
-    </WalletSettingsContainer>
+    </SafeAreaView>
   );
 };
 

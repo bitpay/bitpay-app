@@ -6,7 +6,7 @@ import {
 } from '@components/styled/Containers';
 import Button from '@components/button/Button';
 import SheetModal from '@components/modal/base/sheet/SheetModal';
-import {Platform, NativeModules} from 'react-native';
+import {NativeModules, Platform, StyleSheet, View} from 'react-native';
 import React, {useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {useThemeType} from '../../../../../utils/hooks/useThemeType';
@@ -23,7 +23,7 @@ import FaceImg from '../../../../../../assets/img/face.svg';
 import FaceDarkModeImg from '../../../../../../assets/img/face-darkmode.svg';
 import PinImg from '../../../../../../assets/img/pin.svg';
 import PinDarkModeImg from '../../../../../../assets/img/pin-darkmode.svg';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {
   LightBlue,
   Midnight,
@@ -38,18 +38,12 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {usePasskeySupport} from '../../../../../utils/usePasskeySupport';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import {User} from '../../../../../store/bitpay-id/bitpay-id.models';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {
-  SecurityGroupParamList,
-  SecurityScreens,
-} from '../../../settings/security/SecurityGroup';
 import {BitpayIdScreens} from '../../../../bitpay-id/BitpayIdGroup';
-import {useNavigation} from '@react-navigation/native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 
-export type SecurityHomeProps = NativeStackScreenProps<
-  SecurityGroupParamList,
-  SecurityScreens.HOME
->;
+export type SecurityHomeProps = {
+  navigation: NavigationProp<any>;
+};
 
 const FingerprintSvg = {
   light: <FingerprintImg />,
@@ -66,36 +60,79 @@ const PinSvg = {
   dark: <PinDarkModeImg />,
 };
 
-const ImgContainer = styled(TouchableOpacity)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 65px;
-  width: 65px;
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
-  border-radius: 50px;
-`;
+const styles = StyleSheet.create({
+  imgContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 65,
+    width: 65,
+    borderRadius: 50,
+  },
+  header: {
+    flexDirection: 'row',
+  },
+  title: {
+    width: '100%',
+    textAlign: 'center',
+  },
+  enableLockModalParagraph: {
+    marginTop: 15,
+    marginHorizontal: 0,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  imgRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginBottom: 20,
+  },
+});
 
-const Header = styled.View`
-  flex-direction: row;
-`;
+const ImgContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.imgContainer,
+        {backgroundColor: theme.dark ? Midnight : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const Title = styled(H4)`
-  width: 100%;
-  text-align: center;
-`;
+const Header = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.header, style]} {...rest} />
+);
 
-const EnableLockModalParagraph = styled(Paragraph)`
-  margin: 15px 0 20px;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  text-align: center;
-`;
+const Title = ({style, ...rest}: React.ComponentProps<typeof H4>) => (
+  <H4 style={[styles.title, style]} {...rest} />
+);
 
-const ImgRow = styled.View`
-  flex-direction: row;
-  justify-content: space-evenly;
-  margin-bottom: 20px;
-`;
+const EnableLockModalParagraph = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.enableLockModalParagraph,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const ImgRow = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.imgRow, style]} {...rest} />
+);
 const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
   const {t} = useTranslation();
   const navigator = useNavigation();

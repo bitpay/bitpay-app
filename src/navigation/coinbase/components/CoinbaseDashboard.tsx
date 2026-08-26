@@ -1,8 +1,15 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlashList} from '@shopify/flash-list';
-import {RefreshControl, View} from 'react-native';
-import styled from 'styled-components/native';
+import {
+  RefreshControl,
+  View,
+  ViewProps,
+  SafeAreaView,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import WalletRow from '../../../components/list/WalletRow';
 import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -44,39 +51,79 @@ import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import DropdownOption from '../../wallet/components/DropdownOption';
 
-const OverviewContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  overviewContainer: {
+    flex: 1,
+  },
+  balanceContainer: {
+    height: '15%',
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  balance: {
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 53,
+    letterSpacing: 0,
+    textAlign: 'center',
+  },
+  balanceScaled: {
+    fontSize: 25,
+  },
+  balanceUnscaled: {
+    fontSize: 35,
+  },
+  walletListHeader: {
+    padding: 10,
+    marginTop: 10,
+  },
+  skeletonContainer: {
+    marginBottom: 20,
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingTop: 13,
+  },
+});
 
-const BalanceContainer = styled.View`
-  height: 15%;
-  margin-top: 20px;
-  padding: 10px 15px;
-`;
+const OverviewContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.overviewContainer, style]} {...rest} />
+);
 
-const Balance = styled(BaseText)<{scale: boolean}>`
-  font-size: ${({scale}) => (scale ? 25 : 35)}px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 53px;
-  letter-spacing: 0;
-  text-align: center;
-`;
+const BalanceContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.balanceContainer, style]} {...rest} />
+);
 
-const WalletListHeader = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-`;
+const Balance = React.forwardRef<Text, TextProps & {scale: boolean}>(
+  ({scale, style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.balance,
+        scale ? styles.balanceScaled : styles.balanceUnscaled,
+        style,
+      ]}
+      {...rest}
+    />
+  ),
+);
 
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const WalletListHeader = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.walletListHeader, style]} {...rest} />
+);
 
-const HeaderTitleContainer = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  padding-top: 13px;
-`;
+const SkeletonContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.skeletonContainer, style]} {...rest} />
+);
+
+const HeaderTitleContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.headerTitleContainer, style]} {...rest} />
+);
 
 const CoinbaseDashboard = () => {
   const {t} = useTranslation();
@@ -98,9 +145,10 @@ const CoinbaseDashboard = () => {
   );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
 
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
@@ -289,7 +337,6 @@ const CoinbaseDashboard = () => {
           }}
           data={accounts}
           renderItem={renderItem}
-          estimatedItemSize={70}
           ListFooterComponent={listFooterComponent}
         />
       ) : null}

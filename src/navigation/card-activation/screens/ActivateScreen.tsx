@@ -3,7 +3,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard, TextInput} from 'react-native';
+import {Keyboard, TextInput, SafeAreaView, StyleSheet} from 'react-native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {BaseText} from '../../../components/styled/Text';
@@ -24,15 +24,23 @@ import {
   CardActivationScreens,
   CardActivationGroupParamList,
 } from '../CardActivationGroup';
-import styled from 'styled-components/native';
 
 export type ActivateScreenParamList = {
   card: Card;
 };
 
-const ActivateScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  activateScreenContainer: {
+    flex: 1,
+  },
+});
+
+const ActivateScreenContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.activateScreenContainer, style]} {...rest} />
+);
 
 const getDisplayFields = (card: Card) => {
   const {activation} = ProviderConfig[card.provider];

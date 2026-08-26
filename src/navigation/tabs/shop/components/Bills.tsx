@@ -1,8 +1,8 @@
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Trans, useTranslation} from 'react-i18next';
-import {Linking, Platform, View} from 'react-native';
+import {Linking, Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {
@@ -46,42 +46,96 @@ import {PaymentList} from '../bill/components/PaymentList';
 
 let hasFetchedRuntimeSettingsOnThisLaunch = false;
 
-const Subtitle = styled(Paragraph)`
-  font-size: 14px;
-  line-height: 21px;
-  width: 310px;
-  margin-top: 10px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
-  text-align: center;
-  margin-bottom: 20px;
-`;
+const styles = StyleSheet.create({
+  subtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    width: 310,
+    marginTop: 10,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  billsValueProp: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cautionIcon: {
+    marginBottom: 24,
+  },
+  billsHeaderContainer: {
+    marginTop: 15,
+  },
+  billsHeader: {
+    marginTop: 0,
+  },
+  joinWaitlistButton: {
+    width: WIDTH - 32,
+    marginTop: 24,
+  },
+  billsHeaderButton: {
+    marginTop: 0,
+  },
+});
 
-const BillsValueProp = styled.View`
-  flex-grow: 1;
-  align-items: center;
-  justify-content: center;
-`;
+const Subtitle = ({style, ...rest}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.subtitle,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CautionIcon = styled(CautionIconSvg)`
-  margin-bottom: 24px;
-`;
+const BillsValueProp = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.billsValueProp, style]} {...rest} />
+);
 
-const BillsHeaderContainer = styled(SectionHeaderContainer)`
-  margin-top: 15px;
-`;
+const CautionIcon = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof CautionIconSvg>) => (
+  <CautionIconSvg style={[styles.cautionIcon, style]} {...rest} />
+);
 
-const BillsHeader = styled(SectionHeader)`
-  margin-top: 0;
-`;
+const BillsHeaderContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionHeaderContainer>) => (
+  <SectionHeaderContainer
+    style={[styles.billsHeaderContainer, style]}
+    {...rest}
+  />
+);
 
-const JoinWaitlistButton = styled(Button)`
-  width: ${WIDTH - 32}px;
-  margin-top: 24px;
-`;
+const BillsHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionHeader>) => (
+  <SectionHeader style={[styles.billsHeader, style]} {...rest} />
+);
 
-const BillsHeaderButton = styled(SectionHeaderButton)`
-  margin-top: 0;
-`;
+const JoinWaitlistButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Button>) => (
+  <Button style={[styles.joinWaitlistButton, style]} {...rest} />
+);
+
+const BillsHeaderButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionHeaderButton>) => (
+  <SectionHeaderButton style={[styles.billsHeaderButton, style]} {...rest} />
+);
 
 export const Bills = () => {
   const dispatch = useAppDispatch();

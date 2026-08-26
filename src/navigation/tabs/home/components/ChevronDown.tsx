@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {Slate, SlateDark} from '../../../../styles/colors';
 
 const ChevronDown: React.FC<{width?: number; height?: number}> = ({

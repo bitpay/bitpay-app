@@ -1,7 +1,6 @@
 import React from 'react';
-import {View} from 'react-native';
+import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
 import {SvgProps} from 'react-native-svg';
-import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {
   ActiveOpacity,
@@ -13,21 +12,32 @@ import {H4} from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import Spinner, {ToggleSpinnerState} from './ToggleSpinner';
 
-export const CategoryRow = styled.View`
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-  min-height: 58px;
-`;
+const styles = StyleSheet.create({
+  categoryRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 58,
+  },
+  categoryHeading: {
+    fontWeight: '700',
+    marginTop: 25,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 58,
+  },
+});
 
-export const CategoryHeading = styled(H4)`
-  font-weight: 700;
-  margin-top: 25px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 58px;
-`;
+export const CategoryRow = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.categoryRow, style]} {...rest} />
+);
+
+export const CategoryHeading = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <H4 ref={ref} style={[styles.categoryHeading, style]} {...rest} />
+  ),
+);
 
 interface SettingsRowBaseProps {
   Icon: React.FC<SvgProps>;

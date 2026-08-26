@@ -2,9 +2,9 @@ import {Rect, Svg} from 'react-native-svg';
 import {Theme} from '@react-navigation/native';
 import {LightBlack, SlateDark, White} from '../../../../../../styles/colors';
 import React from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet, View, ViewProps} from 'react-native';
+import {useTheme} from '../../../../../../contexts';
 import {H7} from '../../../../../../components/styled/Text';
-import {ScreenGutter} from '../../../../../../components/styled/Containers';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {Key, Wallet} from '../../../../../../store/wallet/wallet.models';
 import {HomeCarouselConfig} from '../../../../../../store/app/app.models';
@@ -77,69 +77,170 @@ export const ListViewSvg = ({
   );
 };
 
-export const CustomizeHomeContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  customizeHomeContainer: {
+    flex: 1,
+  },
+  listHeader: {
+    padding: 12,
+  },
+  listFooterButtonContainer: {
+    paddingHorizontal: 12,
+  },
+  column: {
+    flexDirection: 'column',
+    flex: 1,
+    maxWidth: '75%',
+    marginVertical: 3,
+  },
+  row: {
+    flexDirection: 'row',
+    marginVertical: 3,
+  },
+  draggableContentContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  hideImgContainer: {
+    alignItems: 'flex-end',
+    marginRight: -5,
+  },
+  toggle: {
+    right: 10,
+    width: 50,
+  },
+  customizeCardContainer: {
+    marginTop: 0,
+    marginRight: 12,
+    marginBottom: 12,
+    marginLeft: 12,
+    overflow: 'hidden',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  hamburgerContainer: {
+    marginRight: 15,
+  },
+  layoutToggleContainer: {
+    minHeight: 120,
+    marginTop: 30,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+  },
+  needsBackupContainer: {
+    minHeight: 22,
+  },
+});
 
-export const ListHeader = styled(H7)`
-  padding: ${ScreenGutter};
-`;
+export const CustomizeHomeContainer = React.forwardRef<
+  React.ComponentRef<typeof SafeAreaView>,
+  React.ComponentProps<typeof SafeAreaView>
+>(({style, ...rest}, ref) => (
+  <SafeAreaView
+    ref={ref}
+    style={[styles.customizeHomeContainer, style]}
+    {...rest}
+  />
+));
+CustomizeHomeContainer.displayName = 'CustomizeHomeContainer';
 
-export const ListFooterButtonContainer = styled.View`
-  padding: 0 ${ScreenGutter};
-`;
+export const ListHeader = React.forwardRef<
+  React.ComponentRef<typeof H7>,
+  React.ComponentProps<typeof H7>
+>(({style, ...rest}, ref) => (
+  <H7 ref={ref} style={[styles.listHeader, style]} {...rest} />
+));
+ListHeader.displayName = 'ListHeader';
 
-export const Column = styled.View`
-  flex-direction: column;
-  flex: 1;
-  max-width: 75%;
-  margin: 3px 0;
-`;
+export const ListFooterButtonContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View
+      ref={ref}
+      style={[styles.listFooterButtonContainer, style]}
+      {...rest}
+    />
+  ),
+);
+ListFooterButtonContainer.displayName = 'ListFooterButtonContainer';
 
-export const Row = styled.View`
-  flex-direction: row;
-  margin: 3px 0;
-`;
+export const Column = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.column, style]} {...rest} />
+  ),
+);
+Column.displayName = 'Column';
 
-const DraggableContentContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
-`;
+export const Row = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.row, style]} {...rest} />
+  ),
+);
+Row.displayName = 'Row';
 
-const HideImgContainer = styled.View`
-  align-items: flex-end;
-  margin-right: -5;
-`;
+const DraggableContentContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View
+      ref={ref}
+      style={[styles.draggableContentContainer, style]}
+      {...rest}
+    />
+  ),
+);
+DraggableContentContainer.displayName = 'DraggableContentContainer';
 
-export const Toggle = styled(TouchableOpacity)`
-  right: 10px;
-  width: 50px;
-`;
+const HideImgContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.hideImgContainer, style]} {...rest} />
+  ),
+);
+HideImgContainer.displayName = 'HideImgContainer';
 
-export const CustomizeCardContainer = styled(props => <ListCard {...props} />)`
-  margin: 0 ${ScreenGutter} ${ScreenGutter} ${ScreenGutter};
-  overflow: hidden;
-  padding: 15px 20px;
-`;
+export const Toggle: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.toggle, style]} {...rest} />
+);
 
-export const HamburgerContainer = styled.View`
-  margin-right: 15px;
-`;
+export const CustomizeCardContainer: React.FC<
+  React.ComponentProps<typeof ListCard>
+> = ({style, ...rest}) => (
+  <ListCard style={[styles.customizeCardContainer, style]} {...rest} />
+);
 
-export const LayoutToggleContainer = styled.View`
-  min-height: 120px;
-  margin-top: 30px;
-  padding: 0 ${ScreenGutter};
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
-  border-bottom-width: 1px;
-`;
+export const HamburgerContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.hamburgerContainer, style]} {...rest} />
+  ),
+);
+HamburgerContainer.displayName = 'HamburgerContainer';
 
-const NeedsBackupContainer = styled.View`
-  min-height: 22px;
-`;
+export const LayoutToggleContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <View
+        ref={ref}
+        style={[
+          styles.layoutToggleContainer,
+          {borderBottomColor: theme.dark ? LightBlack : '#ebecee'},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+LayoutToggleContainer.displayName = 'LayoutToggleContainer';
+
+const NeedsBackupContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.needsBackupContainer, style]} {...rest} />
+  ),
+);
+NeedsBackupContainer.displayName = 'NeedsBackupContainer';
 
 export const createCustomizeCardList = ({
   keys,

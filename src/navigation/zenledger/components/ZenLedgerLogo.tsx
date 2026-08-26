@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {Path, Svg, G, Defs, ClipPath, Rect} from 'react-native-svg';
 import {White} from '../../../styles/colors';
 
