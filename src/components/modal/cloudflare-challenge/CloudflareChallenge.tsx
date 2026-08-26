@@ -1,11 +1,17 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ActivityIndicator} from 'react-native';
+import {
+  ActivityIndicator,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {WebView, WebViewNavigation} from 'react-native-webview';
 import CookieManager from '@preeternal/react-native-cookie-manager';
-import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
 import {IS_ANDROID} from '../../../constants';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {useTheme} from '../../../contexts';
 import {BaseText} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import {logManager} from '../../../managers/LogManager';
@@ -23,45 +29,40 @@ const CLEARANCE_COOKIE = 'cf_clearance';
 // alone aren't a reliable success signal.
 const CLEARANCE_POLL_MS = 1000;
 
-const Container = styled.SafeAreaView`
-  flex: 1;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
-`;
-
-const Header = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-`;
-
-const Title = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 700;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-`;
-
-const CancelButton = styled.TouchableOpacity`
-  padding: 8px;
-`;
-
-const CancelText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-`;
-
-const Loader = styled.View`
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  cancelButton: {
+    padding: 8,
+  },
+  cancelText: {
+    fontSize: 16,
+  },
+  loader: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const CloudflareChallengeModal: React.FC = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const [state, setState] = useState<CloudflareChallengeState>(
     cloudflareChallengeManager.getState(),
   );
@@ -188,15 +189,29 @@ const CloudflareChallengeModal: React.FC = () => {
         }
       }}>
       {displayUrl && origin ? (
-        <Container>
-          <Header>
-            <Title>{t('Verifying your browser')}</Title>
-            <CancelButton
+        <SafeAreaView
+          style={[
+            styles.container,
+            {backgroundColor: theme.dark ? LightBlack : White},
+          ]}>
+          <View style={styles.header}>
+            <BaseText
+              style={[styles.title, {color: theme.dark ? White : SlateDark}]}>
+              {t('Verifying your browser')}
+            </BaseText>
+            <TouchableOpacity
+              style={styles.cancelButton}
               onPress={() => finish(false)}
               accessibilityLabel="Cancel verification">
-              <CancelText>{t('Cancel')}</CancelText>
-            </CancelButton>
-          </Header>
+              <BaseText
+                style={[
+                  styles.cancelText,
+                  {color: theme.dark ? White : SlateDark},
+                ]}>
+                {t('Cancel')}
+              </BaseText>
+            </TouchableOpacity>
+          </View>
 
           <WebView
             source={{uri: displayUrl}}
@@ -228,11 +243,11 @@ const CloudflareChallengeModal: React.FC = () => {
           />
 
           {loading ? (
-            <Loader pointerEvents={'none'}>
+            <View style={styles.loader} pointerEvents={'none'}>
               <ActivityIndicator />
-            </Loader>
+            </View>
           ) : null}
-        </Container>
+        </SafeAreaView>
       ) : null}
     </SheetModal>
   );
