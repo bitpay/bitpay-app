@@ -13,6 +13,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {requestDklsWorkerMount} from '../../../dkls/DklsWorker';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   startTSSCeremony,
@@ -668,6 +669,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       headerLeft: isCeremonyStarted ? () => null : undefined,
     });
   }, [isCeremonyStarted, navigation]);
+
+  useEffect(() => {
+    requestDklsWorkerMount();
+  }, []);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
