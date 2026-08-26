@@ -151,6 +151,8 @@ export interface WalletObj {
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
+    fetchedAt?: number;
+    hasConfirmingTxsAt?: number;
   };
   hideWallet?: boolean;
   hideWalletByAccount?: boolean;
