@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
   },
   ctaContainer: {
     paddingVertical: 10,
+    paddingHorizontal: 0,
   },
   currencyColumn: {
     justifyContent: 'center',
