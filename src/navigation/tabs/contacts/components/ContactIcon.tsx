@@ -132,4 +132,4 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   );
 };
 
-export default ContactIcon;
+export default React.memo(ContactIcon);
