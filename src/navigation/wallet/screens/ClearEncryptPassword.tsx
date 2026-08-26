@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     marginTop: 20,
-    paddingHorizontal: ScreenGutter,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
   },
   paragraph: {
     marginBottom: 15,

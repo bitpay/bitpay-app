@@ -80,9 +80,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 20,
   },
+  optionChevronContainer: {
+    justifyContent: 'flex-start',
+    paddingTop: 4,
+  },
   optionTextContainer: {
     alignItems: 'flex-start',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     flexDirection: 'column',
     flex: 1,
   },
@@ -401,7 +405,11 @@ const OptionsSheet = ({
                         )}
                     </View>
                     {showChevron && (
-                      <View style={styles.optionIconContainer}>
+                      <View
+                        style={[
+                          styles.optionIconContainer,
+                          styles.optionChevronContainer,
+                        ]}>
                         <AngleRight />
                       </View>
                     )}

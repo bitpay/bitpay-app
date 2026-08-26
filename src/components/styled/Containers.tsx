@@ -7,6 +7,7 @@ import {
   View,
   TextInput,
   TouchableOpacity as RNTouchableOpacity,
+  ViewStyle,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../contexts';
@@ -951,11 +952,7 @@ export const InfoImageContainer = React.forwardRef<
   View,
   InfoImageContainerProps & React.ComponentProps<typeof View>
 >(({infoMargin, style, ...rest}, ref) => (
-  <View
-    ref={ref}
-    style={[{margin: parseCssNumber(infoMargin)}, style]}
-    {...rest}
-  />
+  <View ref={ref} style={[parseCssMargin(infoMargin), style]} {...rest} />
 ));
 InfoImageContainer.displayName = 'InfoImageContainer';
 
@@ -1250,6 +1247,19 @@ const parseCssPadding = (
     return {padding: parts[0]};
   }
   return {paddingVertical: parts[0], paddingHorizontal: parts[1]};
+};
+
+const parseCssMargin = (value: string): ViewStyle => {
+  const [top, right = top, bottom = top, left = right] = value
+    .trim()
+    .split(/\s+/)
+    .map(parseCssNumber);
+  return {
+    marginTop: top,
+    marginRight: right,
+    marginBottom: bottom,
+    marginLeft: left,
+  };
 };
 
 interface AccountChainsContainerProps {
