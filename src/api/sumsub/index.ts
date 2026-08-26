@@ -3,6 +3,7 @@ import BitPayIdApi from '../bitpay';
 // Signed /api/v2 RPC methods (map to BitPayUser.* server-side, same channel DI uses).
 export const GET_KYC_ACCESS_TOKEN_METHOD = 'getKycAccessToken';
 export const GET_KYC_STATUS_METHOD = 'getKycStatus';
+export const START_KYC_ATTEMPT_METHOD = 'startKycAttempt';
 
 export interface KycActiveAttempt {
   targetTier?: number;
@@ -51,7 +52,15 @@ const fetchKycStatus = async (apiToken: string): Promise<KycStatusResponse> => {
   return result;
 };
 
+const startKycAttempt = async (apiToken: string): Promise<void> => {
+  const result = await BitPayIdApi.apiCall(apiToken, START_KYC_ATTEMPT_METHOD, {
+    platform: 'mobile',
+  });
+  console.log('[SumSub] startKycAttempt →', JSON.stringify(result));
+};
+
 export const SumSubApi = {
   fetchAccessToken,
   fetchKycStatus,
+  startKycAttempt,
 };

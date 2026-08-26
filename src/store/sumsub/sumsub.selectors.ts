@@ -13,6 +13,8 @@ const backendStatusToUiState = (status?: string): KycUiState => {
       return 'denied';
     case 'requiresAction':
       return 'actionRequired';
+    case 'inProgress':
+      return 'inProgress';
     case 'notStarted':
     case undefined:
       return 'notStarted';
@@ -70,7 +72,11 @@ export const isKycEligibleToStart = (
 
 // Banners that stay up for as long as the KYC sits in that state — they are not
 // dismissible and must never be suppressed by an acknowledgement.
-const PERSISTENT_BANNER_STATES: KycUiState[] = ['actionRequired', 'inReview'];
+const PERSISTENT_BANNER_STATES: KycUiState[] = [
+  'inProgress',
+  'actionRequired',
+  'inReview',
+];
 
 // Banners that announce an outcome. They are events, not standing state, so
 // they are shown once per transition and then acknowledged.
@@ -87,6 +93,11 @@ export const selectSdkStatus = (state: RootState): string | null =>
 
 export const selectKycUiState = (state: RootState): KycUiState =>
   deriveKycUiState(selectKycInfo(state), selectSdkStatus(state));
+
+// False until `getKycStatus` answers in this app run; a rehydrated `kyc` alone
+// is not a fresh enough signal to prompt the user to start KYC.
+export const selectKycStatusFetched = (state: RootState): boolean =>
+  !!state.SUMSUB?.statusFetched?.[state.APP.network];
 
 export const selectKycBannerAck = (state: RootState): KycBannerAck | null =>
   state.SUMSUB?.bannerAck?.[state.APP.network] ?? null;
@@ -126,6 +137,7 @@ export const selectKycBannerState = (state: RootState): KycUiState | null => {
 };
 
 export const selectCanStartKyc = (state: RootState): boolean =>
+  selectKycStatusFetched(state) &&
   isKycEligibleToStart(
     selectKycInfo(state),
     selectSdkStatus(state),

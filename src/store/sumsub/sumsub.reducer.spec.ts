@@ -23,10 +23,17 @@ const notStarted: KycInfo = {
 
 const approved: KycInfo = {path: 'sumsub', tier: 0, status: 'approved'};
 
+const unfetchedMap = {
+  [Network.mainnet]: false,
+  [Network.testnet]: false,
+  [Network.regtest]: false,
+};
+
 const seed = (partial: Partial<SumSubState>): SumSubState => ({
   kyc: {...emptyMap},
   sdkStatus: {...emptyMap},
   bannerAck: {...emptyMap},
+  statusFetched: {...unfetchedMap},
   ...partial,
 });
 
@@ -66,6 +73,12 @@ describe('sumSubReducer', () => {
     expect(state.kyc[Network.testnet]).toBeNull();
   });
 
+  it('SET_KYC marks the status as fetched for that network only', () => {
+    const state = sumSubReducer(undefined, setKyc(Network.mainnet, notStarted));
+    expect(state.statusFetched[Network.mainnet]).toBe(true);
+    expect(state.statusFetched[Network.testnet]).toBe(false);
+  });
+
   it('SET_SDK_STATUS stores the raw SDK status for the given network', () => {
     const state = sumSubReducer(
       undefined,
@@ -94,10 +107,12 @@ describe('sumSubReducer', () => {
         [Network.mainnet]: 'Incomplete',
         [Network.testnet]: 'Pending',
       },
+      statusFetched: {...unfetchedMap, [Network.mainnet]: true},
     });
     const state = sumSubReducer(seeded, resetKyc(Network.mainnet));
     expect(state.kyc[Network.mainnet]).toBeNull();
     expect(state.sdkStatus[Network.mainnet]).toBeNull();
+    expect(state.statusFetched[Network.mainnet]).toBe(false);
     expect(state.kyc[Network.testnet]).toBe(notStarted);
     expect(state.sdkStatus[Network.testnet]).toBe('Pending');
   });
@@ -108,6 +123,7 @@ describe('sumSubReducer', () => {
     const state = sumSubReducer(legacy, setKyc(Network.mainnet, approved));
     expect(state.kyc[Network.mainnet]).toBe(approved);
     expect(state.sdkStatus[Network.mainnet]).toBeNull();
+    expect(state.statusFetched[Network.mainnet]).toBe(true);
   });
 
   it('does not mutate the previous state', () => {
