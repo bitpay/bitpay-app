@@ -607,7 +607,6 @@ export type UpdateAllKeyAndWalletStatusContext =
   | 'importWallet'
   | 'init'
   | 'appEffectsDebounced'
-  | 'newBlockEvent'
   | 'startMigration';
 
 export const startUpdateAllKeyAndWalletStatus =
