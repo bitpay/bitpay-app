@@ -122,8 +122,8 @@ class OnboardingPage {
     }
 
     fun clickBottomSheetLater() {
-        WaitUtils.waitForView(bottomSheetLaterButton)
-        onView(bottomSheetLaterButton).perform(click())
+        WaitUtils.waitForViewEffectivelyVisible(bottomSheetLaterButton)
+        onView(bottomSheetLaterButton).perform(WaitUtils.forceClick)
     }
 
     fun verifyBackupRecoveryPhraseDisplayed(): Boolean {

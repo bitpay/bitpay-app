@@ -124,6 +124,7 @@ class OnboardingPage {
   }
 
   func skipOnboarding() {
+    XCTAssertTrue(skipButton.waitForExistence(timeout: 10), "Skip button not found")
     skipButton.tap()
   }
 
@@ -149,13 +150,9 @@ class OnboardingPage {
 
   func acceptTerms() {
     XCTAssertTrue(checkbox1.waitForExistence(timeout: 10))
-    checkbox1.tap()
-    checkbox2.tap()
-
-    let coordinate = checkbox3.coordinate(
-      withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)
-    )
-    coordinate.tap()
+    checkbox1.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
+    checkbox2.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
+    checkbox3.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
   }
 
   func tapAgreeAndContinueButton() {
