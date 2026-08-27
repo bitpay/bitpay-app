@@ -281,7 +281,7 @@ describe('startKycVerification — failure handling', () => {
     expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
   });
 
-  it('surfaces the backend reason when the token mint throws', async () => {
+  it('never leaks the raw server error into the modal', async () => {
     const store = makeLoggedInStore();
     mockFetchAccessToken.mockRejectedValue(
       new Error('Region not supported for identity verification'),
@@ -289,10 +289,10 @@ describe('startKycVerification — failure handling', () => {
 
     await store.dispatch(startKycVerification());
 
+    const {message} = store.getState().APP.bottomNotificationModalConfig!;
     expect(store.getState().APP.showBottomNotificationModal).toBe(true);
-    expect(
-      store.getState().APP.bottomNotificationModalConfig?.message,
-    ).toContain('Region not supported');
+    expect(message).toBe('The verification process encountered an error.');
+    expect(message).not.toContain('Region not supported');
   });
 });
 

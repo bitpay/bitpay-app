@@ -148,7 +148,7 @@ export const startKycVerification =
       dispatch(
         showBottomNotificationModal(
           CustomErrorMessage({
-            errMsg: msg || t('The verification process encountered an error.'),
+            errMsg: t('The verification process encountered an error.'),
           }),
         ),
       );
