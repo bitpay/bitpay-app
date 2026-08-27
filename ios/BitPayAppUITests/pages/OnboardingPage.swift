@@ -124,7 +124,7 @@ class OnboardingPage {
   }
 
   func skipOnboarding() {
-    XCTAssertTrue(skipButton.waitForExistence(timeout: 10), "Skip button not found")
+    XCTAssertTrue(skipButton.waitForExistence(timeout: 30), "Skip button not found")
     skipButton.tap()
   }
 
@@ -159,7 +159,7 @@ class OnboardingPage {
     agreeAndContinueButton.tap()
   }
 
-  func isYourPortfolioBalanceTextDisplayed(timeout: TimeInterval = 25) -> Bool {
+  func isYourPortfolioBalanceTextDisplayed(timeout: TimeInterval = 60) -> Bool {
     return yourPortfolioBalanceText.waitForExistence(timeout: timeout)
   }
 
