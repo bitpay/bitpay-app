@@ -18,32 +18,32 @@ class OnboardingPage {
   // MARK: - Elements
 
   var continueWithoutAnAccountButton: XCUIElement {
-    app.descendants(matching: .any)
-      .matching(NSPredicate(format: "label == 'Continue without an account'"))
-      .firstMatch
+    app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'continue-without-an-account-button'")
+    ).firstMatch
   }
 
   var skipButton: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Skip'")
+      matching: NSPredicate(format: "identifier == 'skip-button'")
     ).firstMatch
   }
 
   var skipBackupButton: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Skip backup'")
+      matching: NSPredicate(format: "identifier == 'skip-button'")
     ).firstMatch
   }
 
   var createKeyButton: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Create a key'")
+      matching: NSPredicate(format: "identifier == 'create-a-key-button'")
     ).firstMatch
   }
   
   var alreadyHaveWalletKeyButton: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'I already have a key'")
+      matching: NSPredicate(format: "identifier == 'i-already-have-a-key-button'")
     ).firstMatch
   }
 
@@ -53,12 +53,14 @@ class OnboardingPage {
 
   var laterButton: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'LATER'")
+      matching: NSPredicate(format: "identifier == 'bottom-notification-secondary-action-button'")
     ).firstMatch
   }
 
   var gotItButton: XCUIElement {
-    app.staticTexts["GOT IT"]
+    app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'bottom-notification-primary-action-button'")
+    ).firstMatch
   }
 
   var checkbox1: XCUIElement {
@@ -75,13 +77,13 @@ class OnboardingPage {
 
   var agreeAndContinueButton: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Agree and continue'")
+      matching: NSPredicate(format: "identifier == 'agree-and-continue-button'")
     ).firstMatch
   }
 
   var yourPortfolioBalanceText: XCUIElement {
     app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "label == 'Portfolio balance info'")
+      matching: NSPredicate(format: "identifier == 'portfolio-balance-info-button'")
     ).firstMatch
   }
 
@@ -109,12 +111,29 @@ class OnboardingPage {
   }
 
   func skipOnboarding() {
-    XCTAssertTrue(skipButton.waitForExistence(timeout: 30), "Skip button not found")
-    skipButton.tap()
+    if skipButton.waitForExistence(timeout: 30) {
+      skipButton.tap()
+      return
+    }
+
+    let skipLabelFallback = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'Skip'")
+    ).firstMatch
+    XCTAssertTrue(skipLabelFallback.waitForExistence(timeout: 5), "Skip button not found")
+    skipLabelFallback.tap()
   }
 
   func skipBackup() {
-    skipBackupButton.tap()
+    if skipBackupButton.waitForExistence(timeout: 20) {
+      skipBackupButton.tap()
+      return
+    }
+
+    let skipBackupLabelFallback = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'Skip backup'")
+    ).firstMatch
+    XCTAssertTrue(skipBackupLabelFallback.waitForExistence(timeout: 5), "Skip backup button not found")
+    skipBackupLabelFallback.tap()
   }
 
   func createWallet() {
@@ -130,7 +149,16 @@ class OnboardingPage {
   }
 
   func tapLater() {
-    laterButton.tap()
+    if laterButton.waitForExistence(timeout: 20) {
+      laterButton.tap()
+      return
+    }
+
+    let laterLabelFallback = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'LATER'")
+    ).firstMatch
+    XCTAssertTrue(laterLabelFallback.waitForExistence(timeout: 5), "Later button not found")
+    laterLabelFallback.tap()
   }
 
   func acceptTerms() {
@@ -145,7 +173,14 @@ class OnboardingPage {
   }
 
   func isYourPortfolioBalanceTextDisplayed(timeout: TimeInterval = 60) -> Bool {
-    return yourPortfolioBalanceText.waitForExistence(timeout: timeout)
+    if yourPortfolioBalanceText.waitForExistence(timeout: timeout) {
+      return true
+    }
+
+    let labelFallback = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'Portfolio balance info'")
+    ).firstMatch
+    return labelFallback.waitForExistence(timeout: 5)
   }
 
   func swipeOnboarding() {
@@ -153,6 +188,13 @@ class OnboardingPage {
   }
 
   func tapGotIt() {
-    gotItButton.tap()
+    if gotItButton.waitForExistence(timeout: 20) {
+      gotItButton.tap()
+      return
+    }
+
+    let gotItLabelFallback = app.staticTexts["GOT IT"]
+    XCTAssertTrue(gotItLabelFallback.waitForExistence(timeout: 5), "Got it button not found")
+    gotItLabelFallback.tap()
   }
 }

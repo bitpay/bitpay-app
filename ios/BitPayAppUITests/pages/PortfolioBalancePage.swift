@@ -19,7 +19,7 @@ class PortfolioBalancePage {
   // MARK: - Elements
 
   var yourPortfolioBalanceText: XCUIElement {
-    app.otherElements["Portfolio Balance"].firstMatch
+    app.otherElements["portfolio-balance-info-button"].firstMatch
   }
 
   var addCryptoButton: XCUIElement {
