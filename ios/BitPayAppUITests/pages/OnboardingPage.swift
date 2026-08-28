@@ -135,9 +135,9 @@ class OnboardingPage {
 
   func acceptTerms() {
     XCTAssertTrue(checkbox1.waitForExistence(timeout: 10))
-    checkbox1.tap()
-    checkbox2.tap()
-    checkbox3.tap()
+    checkbox1.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+    checkbox2.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+    checkbox3.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
   }
 
   func tapAgreeAndContinueButton() {

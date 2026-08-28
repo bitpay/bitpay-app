@@ -9,7 +9,9 @@ import androidx.test.espresso.action.CoordinatesProvider
 import androidx.test.espresso.action.GeneralClickAction
 import androidx.test.espresso.action.Press
 import androidx.test.espresso.action.Tap
+import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
+import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import android.view.View
 import org.hamcrest.Matcher
@@ -25,13 +27,13 @@ class KeyboardPage {
     // ---- Actions ----
     fun enterAmount(amount: String = "0") {
         for (char in amount) {
-            // Use a positive sibling check to uniquely identify keyboard keys.
-            // "0" shares the bottom row with ".", so hasSibling(withText("."))
-            // distinguishes the keyboard "0" from any amount-display "0".
-            // Other digits are unambiguous (the display shows the full amount
-            // string in one text view, so withText("3") won't match "30").
+            // Key labels are nested under per-key containers; sibling checks must
+            // be applied at the parent level, not directly between text views.
             val key: Matcher<View> = when (char) {
-                '0' -> allOf(withText("0"), hasSibling(withText(".")))
+                '0' -> allOf(
+                    withText("0"),
+                    withParent(hasSibling(hasDescendant(withText("."))))
+                )
                 else -> withText(char.toString())
             }
             WaitUtils.waitForView(key)
@@ -52,11 +54,16 @@ class KeyboardPage {
      * between the keypad keys "6" and "9".
      */
     fun clickBackspace(count: Int = 1) {
-        // Use adjacent-key sibling checks so these matchers target keyboard keys
-        // only — if the displayed amount contains "6" or "9", withText alone would
-        // be ambiguous and waitForView would time out after 30 s.
-        val sixKey = allOf(withText("6"), hasSibling(withText("5")))
-        val nineKey = allOf(withText("9"), hasSibling(withText("8")))
+        // The digit labels are not direct siblings; constrain via each label's
+        // parent being adjacent to the expected neighbor key container.
+        val sixKey = allOf(
+            withText("6"),
+            withParent(hasSibling(hasDescendant(withText("5"))))
+        )
+        val nineKey = allOf(
+            withText("9"),
+            withParent(hasSibling(hasDescendant(withText("8"))))
+        )
 
         WaitUtils.waitForView(sixKey)
         WaitUtils.waitForView(nineKey)
