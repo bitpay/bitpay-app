@@ -62,30 +62,15 @@ class OnboardingPage {
   }
 
   var checkbox1: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(
-        format:
-          "label CONTAINS 'Checkbox, My funds are held and controlled on this device'"
-      )
-    ).firstMatch
+    app.descendants(matching: .any).matching(identifier: "first-term-checkbox").firstMatch
   }
 
   var checkbox2: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(
-        format:
-          "label CONTAINS 'Checkbox, BitPay can never recover my funds for me'"
-      )
-    ).firstMatch
+    app.descendants(matching: .any).matching(identifier: "second-term-checkbox").firstMatch
   }
 
   var checkbox3: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(
-        format:
-          "label CONTAINS 'Checkbox, I have read, understood and accepted the Wallet Terms of Use'"
-      )
-    ).firstMatch
+    app.descendants(matching: .any).matching(identifier: "third-term-checkbox").firstMatch
   }
 
   var agreeAndContinueButton: XCUIElement {
@@ -150,9 +135,9 @@ class OnboardingPage {
 
   func acceptTerms() {
     XCTAssertTrue(checkbox1.waitForExistence(timeout: 10))
-    checkbox1.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
-    checkbox2.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
-    checkbox3.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
+    checkbox1.tap()
+    checkbox2.tap()
+    checkbox3.tap()
   }
 
   func tapAgreeAndContinueButton() {
