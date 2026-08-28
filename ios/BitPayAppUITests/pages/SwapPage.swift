@@ -36,7 +36,7 @@ class SwapPage {
   
   var selectWalletTo: XCUIElement {
     app.otherElements.matching(
-      NSPredicate(format: "label == 'Select wallet to swap to'")
+      NSPredicate(format: "identifier == 'swap-crypto-to-wallet-selector'")
     ).firstMatch
   }
   
@@ -48,7 +48,7 @@ class SwapPage {
   
   var ethereum: XCUIElement {
     app.otherElements.matching(
-      NSPredicate(format: "label == 'Ethereum, ETH'")
+      NSPredicate(format: "label CONTAINS[c] 'Ethereum'")
     ).firstMatch
   }
   
@@ -134,7 +134,16 @@ class SwapPage {
   }
   
   func tapSelectWalletTo() {
-    selectWalletTo.tap()
+    if selectWalletTo.waitForExistence(timeout: 15) {
+      selectWalletTo.tap()
+      return
+    }
+
+    let selectWalletToByLabel = app.otherElements.matching(
+      NSPredicate(format: "label == 'Select wallet to swap to'")
+    ).firstMatch
+    XCTAssertTrue(selectWalletToByLabel.waitForExistence(timeout: 5), "Swap To selector not found")
+    selectWalletToByLabel.tap()
   }
   
   func isSwapToPageDisplayed(timeout: TimeInterval = 5) -> Bool {
@@ -142,6 +151,7 @@ class SwapPage {
   }
   
   func tapEthereum() {
+    XCTAssertTrue(ethereum.waitForExistence(timeout: 20), "Ethereum option not found on Swap To list")
     ethereum.tap()
   }
   

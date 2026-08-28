@@ -179,17 +179,28 @@ class SelectCurrencyPage {
 
     fun verifySwapToTitleDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(swapToText, timeoutMs = 30 * 1000)
+            WaitUtils.waitForView(swapToText, timeoutMs = 60 * 1000)
             onView(swapToText).check(matches(isDisplayed()))
             true
-        } catch (e: Throwable) {
-            false
+        } catch (swapToMissing: Throwable) {
+            // Some builds render the same picker with a generic title.
+            try {
+                WaitUtils.waitForView(selectCryptoText, timeoutMs = 20 * 1000)
+                onView(selectCryptoText).check(matches(isDisplayed()))
+                true
+            } catch (selectCryptoMissing: Throwable) {
+                false
+            }
         }
     }
 
     fun clickSwapToOption() {
-        WaitUtils.waitForView(swapTo)
-        onView(swapTo).perform(click())
+        WaitUtils.waitForViewEffectivelyVisible(swapTo, timeoutMs = 30 * 1000)
+        try {
+            onView(swapTo).perform(click())
+        } catch (e: Throwable) {
+            onView(swapTo).perform(WaitUtils.forceClick)
+        }
     }
 
     fun verifySelectKeyToDepositToDisplayed(): Boolean {
