@@ -110,11 +110,13 @@ const CardOffers: React.FC<CardOffersProps> = props => {
       } else if (contentCard.openURLInWebView) {
         dispatch(AppEffects.openUrlWithInAppBrowser(url));
       } else {
-        Linking.canOpenURL(url).then(canOpenUrl => {
-          if (canOpenUrl) {
-            Linking.openURL(url);
-          }
-        });
+        Linking.canOpenURL(url)
+          .catch(() => false)
+          .then(canOpenUrl => {
+            if (canOpenUrl) {
+              dispatch(AppEffects.openExternalUrl(url, false));
+            }
+          });
       }
     } else {
       dispatch(CardEffects.startOpenDosh());

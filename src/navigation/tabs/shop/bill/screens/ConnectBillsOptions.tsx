@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
-import {Linking, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ScreenContainer,
@@ -32,6 +32,7 @@ import {
 import UserInfo from '../../components/UserInfo';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {AppActions} from '../../../../../store/app';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const TitleText = styled(H5)`
   margin-bottom: 14px;
@@ -162,7 +163,9 @@ const ConnectBillsOptions = ({
           {
             text: t('UPDATE INFO'),
             action: () => {
-              Linking.openURL('https://bitpay.com/request-help/wizard');
+              dispatch(
+                openExternalUrl('https://bitpay.com/request-help/wizard'),
+              );
               dispatch(Analytics.track('Bill Pay - Clicked Update User Info'));
             },
           },

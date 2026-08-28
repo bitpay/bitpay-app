@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
-import {Linking} from 'react-native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {
@@ -184,11 +183,11 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
 
         if (!handled) {
           if (url.startsWith(APP_DEEPLINK_PREFIX)) {
-            Linking.openURL(url);
+            dispatch(AppEffects.openExternalUrl(url, false));
           } else if (openURLInWebView) {
             dispatch(AppEffects.openUrlWithInAppBrowser(url));
           } else {
-            Linking.openURL(url);
+            dispatch(AppEffects.openExternalUrl(url));
           }
         }
       } catch (err) {
@@ -196,9 +195,7 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
         const errorMsg =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.debug(errorMsg);
-        Linking.openURL(url).catch(() => {
-          dispatch(AppEffects.openUrlWithInAppBrowser(url));
-        });
+        dispatch(AppEffects.openExternalUrl(url));
       }
     },
     [dispatch, urlEventHandler],

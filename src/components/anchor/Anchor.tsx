@@ -1,6 +1,9 @@
 import React from 'react';
 import {Linking} from 'react-native';
-import {openUrlWithInAppBrowser} from '../../store/app/app.effects';
+import {
+  openExternalUrl,
+  openUrlWithInAppBrowser,
+} from '../../store/app/app.effects';
 import {useAppDispatch} from '../../utils/hooks';
 import {Link} from '../styled/Text';
 
@@ -20,7 +23,7 @@ const A: React.FC<React.PropsWithChildren<AnchorProps>> = props => {
       );
 
       if (download && canHrefBeHandled) {
-        Linking.openURL(href);
+        dispatch(openExternalUrl(href, false));
         return;
       }
 

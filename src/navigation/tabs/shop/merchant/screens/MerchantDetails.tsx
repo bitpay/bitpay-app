@@ -1,6 +1,6 @@
 import React, {useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTheme} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -23,6 +23,8 @@ import {
   Paragraph,
 } from '../../../../../components/styled/Text';
 import HeaderBackButton from '../../../../../components/back/HeaderBackButton';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const MerchantDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -54,6 +56,7 @@ const MerchantDetails = ({
   navigation,
 }: NativeStackScreenProps<MerchantGroupParamList, 'MerchantDetails'>) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const {directIntegration} = route.params;
   const iconHeight = 70;
@@ -88,7 +91,7 @@ const MerchantDetails = ({
       </ScrollView>
       <FooterButtonContainer>
         <Button
-          onPress={() => Linking.openURL(directIntegration.link)}
+          onPress={() => dispatch(openExternalUrl(directIntegration.link))}
           buttonStyle={'primary'}>
           {t('Go to') + ' ' + directIntegration.displayName}
         </Button>

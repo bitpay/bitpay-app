@@ -655,15 +655,25 @@ export const dismissInAppBrowserIfOpen =
     }
   };
 
+const getUrlProtocolForLogs = (url: string): string => {
+  try {
+    return new URL(url).protocol.replace(':', '');
+  } catch {
+    return 'unknown';
+  }
+};
+
 /**
  * Open a URL with the InAppBrowser if available, else lets the device handle the URL.
  * @param url
  * @param options
- * @returns
+ * @returns True after the InAppBrowser session ends without error or an
+ * external handler accepts the URL. False when all available handlers fail.
  */
 export const openUrlWithInAppBrowser =
-  (url: string, options: InAppBrowserOptions = {}): Effect =>
+  (url: string, options: InAppBrowserOptions = {}): Effect<Promise<boolean>> =>
   async dispatch => {
+    const urlProtocol = getUrlProtocolForLogs(url);
     let isIabAvailable = false;
 
     try {
@@ -676,7 +686,7 @@ export const openUrlWithInAppBrowser =
     const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
 
     try {
-      logManager.info(`Opening URL ${url} with ${handler}`);
+      logManager.info(`Opening ${urlProtocol} URL with ${handler}`);
 
       if (isIabAvailable) {
         try {
@@ -698,10 +708,8 @@ export const openUrlWithInAppBrowser =
 
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.info(`InAppBrowser closed with type: ${result.type}`);
-        } catch (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${errStr}`;
+        } catch {
+          const logMsg = `Error opening ${urlProtocol} URL with ${handler}. Trying external browser.`;
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.error(logMsg);
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
@@ -713,12 +721,32 @@ export const openUrlWithInAppBrowser =
         dispatch(AppActions.setInAppBrowserOpen(false));
         await Linking.openURL(url);
       }
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const logMsg = `Error opening URL ${url} with ${handler}.\n${errStr}`;
+
+      return true;
+    } catch {
+      const logMsg = `Error opening ${urlProtocol} URL with ${handler}.`;
 
       dispatch(AppActions.setInAppBrowserOpen(false));
       logManager.error(logMsg);
+      return false;
+    }
+  };
+
+/** Returns true only when Linking.openURL succeeds. */
+export const openExternalUrl =
+  (url: string, fallbackToInAppBrowser = true): Effect<Promise<boolean>> =>
+  async dispatch => {
+    try {
+      await Linking.openURL(url);
+      return true;
+    } catch {
+      logManager.error(`Error opening ${getUrlProtocolForLogs(url)} URL.`);
+
+      if (fallbackToInAppBrowser) {
+        dispatch(openUrlWithInAppBrowser(url));
+      }
+
+      return false;
     }
   };
 

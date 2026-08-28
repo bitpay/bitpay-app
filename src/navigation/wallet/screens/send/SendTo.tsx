@@ -35,7 +35,7 @@ import {
   ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {Linking, View} from 'react-native';
+import {View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
@@ -94,6 +94,7 @@ import {Network, URL} from '../../../../constants';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {useOngoingProcess} from '../../../../contexts';
 import {logManager} from '../../../../managers/LogManager';
+import {openExternalUrl} from '../../../../store/app/app.effects';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -278,7 +279,7 @@ const SendTo = () => {
     title: t('Bridge to Polygon'),
     description: t('Transfer your assets to Polygon network'),
     onPress: () => {
-      Linking.openURL(URL.POLYGON_BRIDGE);
+      dispatch(openExternalUrl(URL.POLYGON_BRIDGE));
     },
   };
 
@@ -287,7 +288,7 @@ const SendTo = () => {
     title: t('Bridge to Arbitrum'),
     description: t('Transfer your assets to Arbitrum network'),
     onPress: () => {
-      Linking.openURL(URL.ARBITRUM_BRIDGE);
+      dispatch(openExternalUrl(URL.ARBITRUM_BRIDGE));
     },
   };
 
@@ -296,7 +297,7 @@ const SendTo = () => {
     title: t('Bridge to Base'),
     description: t('Transfer your assets to Base network'),
     onPress: () => {
-      Linking.openURL(URL.BASE_BRIDGE);
+      dispatch(openExternalUrl(URL.BASE_BRIDGE));
     },
   };
 
@@ -305,7 +306,7 @@ const SendTo = () => {
     title: t('Bridge to Optimism'),
     description: t('Transfer your assets to Optimism network'),
     onPress: () => {
-      Linking.openURL(URL.OPTIMISM_BRIDGE);
+      dispatch(openExternalUrl(URL.OPTIMISM_BRIDGE));
     },
   };
 
