@@ -58,6 +58,10 @@ final class Test594_BasicSwapBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(9) On the Swap To list screen, tap Ethereum (ETH).") {
+      XCTAssertTrue(
+        swapPage.isSwapToPageDisplayed(timeout: 15),
+        "Swap To list not displayed"
+      )
       swapPage.tapEthereum()
     }
     

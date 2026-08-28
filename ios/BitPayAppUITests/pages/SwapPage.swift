@@ -45,6 +45,12 @@ class SwapPage {
       NSPredicate(format: "label == 'Swap To'")
     ).firstMatch
   }
+
+  var selectCrypto: XCUIElement {
+    app.otherElements.matching(
+      NSPredicate(format: "label == 'Select Crypto'")
+    ).firstMatch
+  }
   
   var ethereum: XCUIElement {
     app.otherElements.matching(
@@ -147,7 +153,10 @@ class SwapPage {
   }
   
   func isSwapToPageDisplayed(timeout: TimeInterval = 5) -> Bool {
-    return swapTo.waitForExistence(timeout: timeout)
+    if swapTo.waitForExistence(timeout: timeout) {
+      return true
+    }
+    return selectCrypto.waitForExistence(timeout: 3)
   }
   
   func tapEthereum() {
