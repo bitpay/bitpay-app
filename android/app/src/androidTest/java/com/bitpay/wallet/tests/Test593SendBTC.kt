@@ -42,7 +42,10 @@ class Test593SendBTC : BaseTest() {
         }
 
         allureStep("Verify 'I understand' checkbox 1 is displayed") {
-            onboardingPage.verifyIUnderstandCheckbox1Displayed()
+            assertTrue(
+                "Important screen - checkbox 1 not displayed",
+                onboardingPage.verifyIUnderstandCheckbox1Displayed()
+            )
         }
 
         allureStep("Check all three 'I understand' checkboxes") {

@@ -9,7 +9,10 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withResourceName
+import android.view.View
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matcher
+import org.junit.Assert.assertTrue
 
 class OnboardingPage {
 
@@ -28,20 +31,11 @@ class OnboardingPage {
 
     // private val iUnderstandCheckBox1 = withTestId("first-term-checkbox")
 
-    private val iUnderstandCheckBox1 = allOf(
-        withTestId("first-term-checkbox"),
-        withContentDescription("Checkbox")
-    )
+    private val iUnderstandCheckBox1 = withTestId("first-term-checkbox")
 
-    private val iUnderstandCheckBox2 = allOf(
-        withTestId("second-term-checkbox"),
-        withContentDescription("Checkbox")
-    )
+    private val iUnderstandCheckBox2 = withTestId("second-term-checkbox")
 
-    private val iUnderstandCheckBox3 = allOf(
-        withTestId("third-term-checkbox"),
-        withContentDescription("Checkbox")
-    )
+    private val iUnderstandCheckBox3 = withTestId("third-term-checkbox")
 
 //    private val iUnderstandCheckBox2 = withTestId("second-term-checkbox")
 //    private val iUnderstandCheckBox3 = withTestId("third-term-checkbox")
@@ -81,9 +75,12 @@ class OnboardingPage {
     }
 
     fun clickSkip() {
-        WaitUtils.waitForView(skipButton)
-        Thread.sleep(1000)
-        onView(skipButton).perform(click())
+        WaitUtils.waitForViewEffectivelyVisible(skipButton)
+        try {
+            onView(skipButton).perform(click())
+        } catch (e: Throwable) {
+            onView(skipButton).perform(WaitUtils.forceClick)
+        }
     }
 
     fun clickCreateKey() {
@@ -142,7 +139,7 @@ class OnboardingPage {
 
     fun verifyIUnderstandCheckbox1Displayed(): Boolean {
         return try {
-            WaitUtils.waitForView(iUnderstandCheckBox1, 900000)
+            WaitUtils.waitForViewEffectivelyVisible(iUnderstandCheckBox1, timeoutMs = 180000)
             onView(iUnderstandCheckBox1).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
@@ -151,26 +148,54 @@ class OnboardingPage {
     }
 
     fun clickIUnderstandCheckbox1() {
-        WaitUtils.waitForView(iUnderstandCheckBox1)
-        onView(iUnderstandCheckBox1).perform(click())
-        Thread.sleep(1000)
+        clickTermsCheckbox(iUnderstandCheckBox1, "first-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox2() {
-        WaitUtils.waitForView(iUnderstandCheckBox2)
-        onView(iUnderstandCheckBox2).perform(click())
-        Thread.sleep(1000)
+        clickTermsCheckbox(iUnderstandCheckBox2, "second-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox3() {
-        WaitUtils.waitForView(iUnderstandCheckBox3)
-        onView(iUnderstandCheckBox3).perform(click())
-        Thread.sleep(1000)
+        clickTermsCheckbox(iUnderstandCheckBox3, "third-term-checkbox")
     }
 
     fun clickAgreeAndContinue() {
-        WaitUtils.waitForView(agreeAndContinueButton)
+        // The third checkbox can occasionally miss taps; retry checkbox taps
+        // until CTA is enabled instead of moving on to a wrong screen state.
+        for (attempt in 1..3) {
+            if (isAgreeAndContinueEnabled()) {
+                onView(agreeAndContinueButton).perform(click())
+                return
+            }
+            clickIUnderstandCheckbox1()
+            clickIUnderstandCheckbox2()
+            clickIUnderstandCheckbox3()
+        }
+
+        assertTrue(
+            "Agree and Continue button did not enable after selecting all terms",
+            isAgreeAndContinueEnabled()
+        )
         onView(agreeAndContinueButton).perform(click())
+    }
+
+    private fun clickTermsCheckbox(checkbox: Matcher<View>, name: String) {
+        WaitUtils.waitForViewEffectivelyVisible(checkbox, timeoutMs = 30000)
+        try {
+            onView(checkbox).perform(click())
+        } catch (e: Throwable) {
+            onView(checkbox).perform(WaitUtils.forceClick)
+        }
+        Thread.sleep(350)
+    }
+
+    private fun isAgreeAndContinueEnabled(): Boolean {
+        return try {
+            WaitUtils.waitForViewEnabled(agreeAndContinueButton, timeoutMs = 3000, intervalMs = 250)
+            true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
 }

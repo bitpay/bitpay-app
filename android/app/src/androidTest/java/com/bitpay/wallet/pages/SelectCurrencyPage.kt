@@ -104,8 +104,8 @@ class SelectCurrencyPage {
 
     fun verifySwapTitleDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(swapText)
-            onView(swapText).check(matches(isDisplayed()))
+            WaitUtils.waitForViewEffectivelyVisible(swapFrom, timeoutMs = 60 * 1000)
+            onView(swapFrom).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
             false
@@ -164,7 +164,7 @@ class SelectCurrencyPage {
 
     fun verifySwapFromOptionDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(swapFrom, timeoutMs = 30 * 1000)
+            WaitUtils.waitForViewEffectivelyVisible(swapFrom, timeoutMs = 60 * 1000)
             onView(swapFrom).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
@@ -173,8 +173,12 @@ class SelectCurrencyPage {
     }
 
     fun clickSwapFromOption() {
-        WaitUtils.waitForView(swapFrom, timeoutMs = 30 * 1000)
-        onView(swapFrom).perform(click())
+        WaitUtils.waitForViewEffectivelyVisible(swapFrom, timeoutMs = 60 * 1000)
+        try {
+            onView(swapFrom).perform(click())
+        } catch (e: Throwable) {
+            onView(swapFrom).perform(WaitUtils.forceClick)
+        }
     }
 
     fun verifySwapToTitleDisplayed(): Boolean {

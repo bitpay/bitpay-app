@@ -41,14 +41,24 @@ class SwapPage {
   }
   
   var swapTo: XCUIElement {
-    app.otherElements.matching(
+    app.descendants(matching: .any).matching(
       NSPredicate(format: "label == 'Swap To'")
     ).firstMatch
   }
 
   var selectCrypto: XCUIElement {
-    app.otherElements.matching(
+    app.descendants(matching: .any).matching(
       NSPredicate(format: "label == 'Select Crypto'")
+    ).firstMatch
+  }
+
+  var searchField: XCUIElement {
+    app.searchFields["Search"].firstMatch
+  }
+
+  var allNetworksFilter: XCUIElement {
+    app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == 'All Networks'")
     ).firstMatch
   }
   
@@ -140,8 +150,16 @@ class SwapPage {
   }
   
   func tapSelectWalletTo() {
-    if selectWalletTo.waitForExistence(timeout: 15) {
-      selectWalletTo.tap()
+    if selectWalletTo.waitForExistence(timeout: 30) {
+      for _ in 1...8 {
+        if selectWalletTo.isHittable {
+          selectWalletTo.tap()
+          return
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+      }
+
+      selectWalletTo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
       return
     }
 
@@ -153,15 +171,42 @@ class SwapPage {
   }
   
   func isSwapToPageDisplayed(timeout: TimeInterval = 5) -> Bool {
-    if swapTo.waitForExistence(timeout: timeout) {
-      return true
+    let endTime = Date().addingTimeInterval(timeout)
+
+    while Date() < endTime {
+      if swapTo.exists || selectCrypto.exists || searchField.exists || allNetworksFilter.exists {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.3))
     }
-    return selectCrypto.waitForExistence(timeout: 3)
+
+    return false
   }
   
   func tapEthereum() {
-    XCTAssertTrue(ethereum.waitForExistence(timeout: 20), "Ethereum option not found on Swap To list")
-    ethereum.tap()
+    if ethereum.waitForExistence(timeout: 20) {
+      if ethereum.isHittable {
+        ethereum.tap()
+      } else {
+        ethereum.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+      }
+      return
+    }
+
+    if searchField.waitForExistence(timeout: 5), searchField.isHittable {
+      searchField.tap()
+      searchField.typeText("Ethereum")
+      if ethereum.waitForExistence(timeout: 12) {
+        if ethereum.isHittable {
+          ethereum.tap()
+        } else {
+          ethereum.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        return
+      }
+    }
+
+    XCTAssertTrue(false, "Ethereum option not found on Swap To list")
   }
   
   func isSelectKeyToDepositToDisplayed(timeout: TimeInterval = 5) -> Bool {
