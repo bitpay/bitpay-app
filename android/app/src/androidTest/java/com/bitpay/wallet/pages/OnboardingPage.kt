@@ -9,10 +9,12 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withResourceName
+import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import android.view.View
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
+import com.bitpay.wallet.utils.WaitUtils.withIndex
 
 class OnboardingPage {
 
@@ -29,13 +31,29 @@ class OnboardingPage {
         withTestId("bottom-notification-primary-action-button")
     private val backupRecoveryPhraseElement = withContentDescription("Backup your recovery phrase")
 
-    // private val iUnderstandCheckBox1 = withTestId("first-term-checkbox")
+    private fun iUnderstandCheckBox1Matchers(): List<Matcher<View>> {
+        return listOf(
+            allOf(withTestId("first-term-checkbox"), isClickable()),
+            withIndex(withTestId("first-term-checkbox"), 1),
+            withIndex(withTestId("first-term-checkbox"), 0)
+        )
+    }
 
-    private val iUnderstandCheckBox1 = withTestId("first-term-checkbox")
+    private fun iUnderstandCheckBox2Matchers(): List<Matcher<View>> {
+        return listOf(
+            allOf(withTestId("second-term-checkbox"), isClickable()),
+            withIndex(withTestId("second-term-checkbox"), 1),
+            withIndex(withTestId("second-term-checkbox"), 0)
+        )
+    }
 
-    private val iUnderstandCheckBox2 = withTestId("second-term-checkbox")
-
-    private val iUnderstandCheckBox3 = withTestId("third-term-checkbox")
+    private fun iUnderstandCheckBox3Matchers(): List<Matcher<View>> {
+        return listOf(
+            allOf(withTestId("third-term-checkbox"), isClickable()),
+            withIndex(withTestId("third-term-checkbox"), 1),
+            withIndex(withTestId("third-term-checkbox"), 0)
+        )
+    }
 
 //    private val iUnderstandCheckBox2 = withTestId("second-term-checkbox")
 //    private val iUnderstandCheckBox3 = withTestId("third-term-checkbox")
@@ -138,25 +156,19 @@ class OnboardingPage {
     }
 
     fun verifyIUnderstandCheckbox1Displayed(): Boolean {
-        return try {
-            WaitUtils.waitForViewEffectivelyVisible(iUnderstandCheckBox1, timeoutMs = 180000)
-            onView(iUnderstandCheckBox1).check(matches(isDisplayed()))
-            true
-        } catch (e: Throwable) {
-            false
-        }
+        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 180000)
     }
 
     fun clickIUnderstandCheckbox1() {
-        clickTermsCheckbox(iUnderstandCheckBox1, "first-term-checkbox")
+        clickTermsCheckbox(iUnderstandCheckBox1Matchers(), "first-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox2() {
-        clickTermsCheckbox(iUnderstandCheckBox2, "second-term-checkbox")
+        clickTermsCheckbox(iUnderstandCheckBox2Matchers(), "second-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox3() {
-        clickTermsCheckbox(iUnderstandCheckBox3, "third-term-checkbox")
+        clickTermsCheckbox(iUnderstandCheckBox3Matchers(), "third-term-checkbox")
     }
 
     fun clickAgreeAndContinue() {
@@ -179,14 +191,38 @@ class OnboardingPage {
         onView(agreeAndContinueButton).perform(click())
     }
 
-    private fun clickTermsCheckbox(checkbox: Matcher<View>, name: String) {
-        WaitUtils.waitForViewEffectivelyVisible(checkbox, timeoutMs = 30000)
-        try {
-            onView(checkbox).perform(click())
-        } catch (e: Throwable) {
-            onView(checkbox).perform(WaitUtils.forceClick)
+    private fun clickTermsCheckbox(matchers: List<Matcher<View>>, name: String) {
+        var lastError: Throwable? = null
+
+        for (matcher in matchers) {
+            try {
+                WaitUtils.waitForViewEffectivelyVisible(matcher, timeoutMs = 15000)
+                try {
+                    onView(matcher).perform(click())
+                } catch (e: Throwable) {
+                    onView(matcher).perform(WaitUtils.forceClick)
+                }
+                Thread.sleep(350)
+                return
+            } catch (e: Throwable) {
+                lastError = e
+            }
         }
-        Thread.sleep(350)
+
+        throw lastError ?: RuntimeException("Failed to click $name")
+    }
+
+    private fun isAnyMatcherDisplayed(matchers: List<Matcher<View>>, timeoutMs: Long): Boolean {
+        val slice = (timeoutMs / matchers.size).coerceAtLeast(3000)
+        for (matcher in matchers) {
+            try {
+                WaitUtils.waitForViewEffectivelyVisible(matcher, timeoutMs = slice)
+                return true
+            } catch (_: Throwable) {
+                // Try next matcher.
+            }
+        }
+        return false
     }
 
     private fun isAgreeAndContinueEnabled(): Boolean {

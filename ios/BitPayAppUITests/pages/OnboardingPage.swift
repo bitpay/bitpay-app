@@ -162,14 +162,32 @@ class OnboardingPage {
   }
 
   func acceptTerms() {
-    XCTAssertTrue(checkbox1.waitForExistence(timeout: 10))
-    checkbox1.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
-    checkbox2.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
-    checkbox3.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+    XCTAssertTrue(waitForCheckbox("first-term-checkbox", timeout: 30), "First term checkbox not found")
+
+    tapCheckbox("first-term-checkbox")
+    tapCheckbox("second-term-checkbox")
+    tapCheckbox("third-term-checkbox")
+
+    XCTAssertTrue(
+      waitForAgreeAndContinueEnabled(timeout: 10),
+      "Agree and Continue did not enable after accepting all terms"
+    )
   }
 
   func tapAgreeAndContinueButton() {
-    agreeAndContinueButton.tap()
+    XCTAssertTrue(agreeAndContinueButton.waitForExistence(timeout: 20), "Agree and Continue button not found")
+    for _ in 1...8 {
+      if agreeAndContinueButton.isEnabled {
+        break
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+    }
+
+    if agreeAndContinueButton.isHittable {
+      agreeAndContinueButton.tap()
+    } else {
+      agreeAndContinueButton.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
   }
 
   func isYourPortfolioBalanceTextDisplayed(timeout: TimeInterval = 60) -> Bool {
@@ -196,5 +214,52 @@ class OnboardingPage {
     let gotItLabelFallback = app.staticTexts["GOT IT"]
     XCTAssertTrue(gotItLabelFallback.waitForExistence(timeout: 5), "Got it button not found")
     gotItLabelFallback.tap()
+  }
+
+  // MARK: - Private Helpers
+
+  private func waitForCheckbox(_ identifier: String, timeout: TimeInterval) -> Bool {
+    let endTime = Date().addingTimeInterval(timeout)
+    while Date() < endTime {
+      let query = app.descendants(matching: .any).matching(identifier: identifier)
+      if query.firstMatch.exists {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+    }
+    return false
+  }
+
+  private func tapCheckbox(_ identifier: String) {
+    let query = app.descendants(matching: .any).matching(identifier: identifier)
+    XCTAssertTrue(query.firstMatch.waitForExistence(timeout: 15), "Checkbox not found: \(identifier)")
+
+    // Prefer hittable node when duplicated identifier is present.
+    let maxCandidates = min(query.count, 4)
+    for idx in 0..<maxCandidates {
+      let candidate = query.element(boundBy: idx)
+      if candidate.exists && candidate.isHittable {
+        candidate.tap()
+        return
+      }
+    }
+
+    let fallback = query.firstMatch
+    fallback.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+  }
+
+  private func waitForAgreeAndContinueEnabled(timeout: TimeInterval) -> Bool {
+    guard agreeAndContinueButton.waitForExistence(timeout: timeout) else {
+      return false
+    }
+
+    let endTime = Date().addingTimeInterval(timeout)
+    while Date() < endTime {
+      if agreeAndContinueButton.isEnabled {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+    }
+    return false
   }
 }
