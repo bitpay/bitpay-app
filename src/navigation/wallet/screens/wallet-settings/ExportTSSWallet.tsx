@@ -246,7 +246,7 @@ const ExportTSSWallet = () => {
     const encrypted = BWC.getEncryption().encryptWithPassword(
       JSON.stringify(backup),
       password,
-      {iter: 1000},
+      {iter: 600_000}
     );
 
     return JSON.stringify(encrypted);
