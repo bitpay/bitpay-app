@@ -1,5 +1,7 @@
 const mockStartWalletStoreInit = jest.fn();
 const mockGetLocationData = jest.fn();
+const mockCleanupDisabledSessionLogs = jest.fn(() => Promise.resolve());
+const mockHasSessionLogsCleanupRun = jest.fn(() => false);
 
 jest.mock('react-native', () => ({
   DeviceEventEmitter: {
@@ -296,6 +298,12 @@ jest.mock('../../managers/LogManager', () => ({
     warn: jest.fn(),
   },
 }));
+jest.mock('../../utils/sessionLogs', () => ({
+  cleanupDisabledSessionLogs: (...args: any[]) =>
+    mockCleanupDisabledSessionLogs(...args),
+  hasSessionLogsCleanupRun: (...args: any[]) =>
+    mockHasSessionLogsCleanupRun(...args),
+}));
 
 import {startAppInit} from './app.effects';
 
@@ -349,8 +357,18 @@ const makeState = () =>
   } as any);
 
 describe('startAppInit', () => {
+  const originalDev = global.__DEV__;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    global.__DEV__ = false;
+    mockHasSessionLogsCleanupRun.mockReturnValue(false);
+    mockStartWalletStoreInit.mockResolvedValue({walletInitSuccess: true});
+    mockGetLocationData.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    global.__DEV__ = originalDev;
   });
 
   it('does not wait for wallet store init before completing app init', async () => {
@@ -376,5 +394,26 @@ describe('startAppInit', () => {
     walletInit.resolve({walletInitSuccess: true});
     locationData.resolve();
     await initPromise;
+
+    expect(mockCleanupDisabledSessionLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not clean session logs again after the production cleanup has run', async () => {
+    mockHasSessionLogsCleanupRun.mockReturnValue(true);
+    const dispatch = jest.fn(action => action);
+
+    await startAppInit()(dispatch, jest.fn(makeState), undefined as any);
+
+    expect(mockCleanupDisabledSessionLogs).not.toHaveBeenCalled();
+  });
+
+  it('does not run the production session log cleanup in DEV', async () => {
+    global.__DEV__ = true;
+    const dispatch = jest.fn(action => action);
+
+    await startAppInit()(dispatch, jest.fn(makeState), undefined as any);
+
+    expect(mockHasSessionLogsCleanupRun).not.toHaveBeenCalled();
+    expect(mockCleanupDisabledSessionLogs).not.toHaveBeenCalled();
   });
 });
