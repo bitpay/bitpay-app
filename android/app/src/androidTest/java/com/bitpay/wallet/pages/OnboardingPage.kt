@@ -8,7 +8,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
-import androidx.test.espresso.matcher.ViewMatchers.withResourceName
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import android.view.View
 import org.hamcrest.Matchers.allOf
@@ -156,6 +155,7 @@ class OnboardingPage {
     }
 
     fun verifyIUnderstandCheckbox1Displayed(): Boolean {
+        prepareTermsScreen()
         return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 180000)
     }
 
@@ -192,6 +192,7 @@ class OnboardingPage {
     }
 
     private fun clickTermsCheckbox(matchers: List<Matcher<View>>, name: String) {
+        prepareTermsScreen()
         var lastError: Throwable? = null
 
         for (matcher in matchers) {
@@ -210,6 +211,69 @@ class OnboardingPage {
         }
 
         throw lastError ?: RuntimeException("Failed to click $name")
+    }
+
+    private fun prepareTermsScreen(timeoutMs: Long = 45000) {
+        val end = System.currentTimeMillis() + timeoutMs
+
+        while (System.currentTimeMillis() < end) {
+            if (isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 1200)) {
+                return
+            }
+
+            var dismissedSomething = false
+
+            // Import flow may land on backup prompt before terms.
+            if (isMatcherVisible(backupKeyPromptText, timeoutMs = 800) ||
+                isMatcherVisible(backupRecoveryPhraseElement, timeoutMs = 800)
+            ) {
+                dismissedSomething = dismissedSomething or clickSkipIfVisible()
+            }
+
+            // After skipping backup, a bottom sheet can block terms.
+            if (isMatcherVisible(bottomSheetLaterButton, timeoutMs = 800)) {
+                dismissedSomething = dismissedSomething or clickBottomSheetLaterIfVisible()
+            }
+
+            if (!dismissedSomething) {
+                Thread.sleep(300)
+            }
+        }
+    }
+
+    private fun clickSkipIfVisible(): Boolean {
+        return try {
+            WaitUtils.waitForViewEffectivelyVisible(skipButton, timeoutMs = 2000, intervalMs = 200)
+            try {
+                onView(skipButton).perform(click())
+            } catch (e: Throwable) {
+                onView(skipButton).perform(WaitUtils.forceClick)
+            }
+            Thread.sleep(300)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun clickBottomSheetLaterIfVisible(): Boolean {
+        return try {
+            WaitUtils.waitForViewEffectivelyVisible(bottomSheetLaterButton, timeoutMs = 2000, intervalMs = 200)
+            onView(bottomSheetLaterButton).perform(WaitUtils.forceClick)
+            Thread.sleep(300)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun isMatcherVisible(matcher: Matcher<View>, timeoutMs: Long): Boolean {
+        return try {
+            WaitUtils.waitForViewEffectivelyVisible(matcher, timeoutMs = timeoutMs, intervalMs = 200)
+            true
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     private fun isAnyMatcherDisplayed(matchers: List<Matcher<View>>, timeoutMs: Long): Boolean {

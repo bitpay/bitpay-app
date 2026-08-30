@@ -230,9 +230,21 @@ class SwapPage {
   }
   
   func tapChangellyTermsCheckbox() {
-    app.swipeUp()
-    sleep(1)
-    changellyTermsCheckbox.tap()
+    XCTAssertTrue(
+      changellyTermsCheckbox.waitForExistence(timeout: 20),
+      "Changelly Terms checkbox not found"
+    )
+
+    for _ in 1...4 {
+      if changellyTermsCheckbox.isHittable {
+        changellyTermsCheckbox.tap()
+        return
+      }
+      app.swipeUp()
+      RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+    }
+
+    changellyTermsCheckbox.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
   }
   
   func tapMinAmount() {
