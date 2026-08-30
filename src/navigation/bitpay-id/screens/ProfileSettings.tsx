@@ -1,6 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
+import moment from 'moment';
 import styled from 'styled-components/native';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
@@ -167,6 +168,14 @@ const SettingsSectionDescription = styled(BaseText)`
   line-height: 18px;
 `;
 
+const LastLoginDetail = styled(SettingsSectionDescription)`
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+`;
+
+const LastLoginAlert = styled(SettingsSectionDescription)`
+  margin-top: 10px;
+`;
+
 export const ProfileSettingsScreen = ({}: ProfileProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -175,6 +184,9 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const apiToken = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.apiToken[APP.network],
+  );
+  const lastLogin = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.lastLogin[network],
   );
 
   const kycUiState = useAppSelector(SumSubSelectors.selectKycUiState);
@@ -185,10 +197,18 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
     if (apiToken) {
       dispatch(BitPayIdEffects.startFetchSecuritySettings()).catch(() => {});
       dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken)).catch(() => {});
+      dispatch(BitPayIdEffects.startFetchLastLogin()).catch(() => {});
     }
   }, [apiToken, dispatch]);
 
   const hasName = user?.givenName || user?.familyName;
+  const lastLoginLocation = [
+    lastLogin?.city,
+    lastLogin?.region,
+    lastLogin?.country,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   if (!user) {
     return <></>;
@@ -275,6 +295,40 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
                 <ChevronRight />
               </SettingsItem>
             </TouchableOpacity>
+
+            {lastLogin?.date ? (
+              <>
+                <SectionSpacer />
+                <H5>{t('Last Login')}</H5>
+                <SettingsItem>
+                  <SettingsSectionBody>
+                    <SettingsSectionHeader>
+                      {moment(lastLogin.date).format('MMM DD, YYYY hh:mm a')}
+                    </SettingsSectionHeader>
+                    {lastLogin.device ? (
+                      <LastLoginDetail>{lastLogin.device}</LastLoginDetail>
+                    ) : null}
+                    {lastLoginLocation ? (
+                      <LastLoginDetail>{lastLoginLocation}</LastLoginDetail>
+                    ) : null}
+                    {lastLogin.ipAddress ? (
+                      <LastLoginDetail>
+                        {t('IP Address')}: {lastLogin.ipAddress}
+                      </LastLoginDetail>
+                    ) : null}
+                    <LastLoginAlert>
+                      {t("Don't recognize this activity?")}{' '}
+                      <Link
+                        onPress={() => {
+                          navigation.navigate(SecurityScreens.HOME);
+                        }}>
+                        {t('Secure your account')}
+                      </Link>
+                    </LastLoginAlert>
+                  </SettingsSectionBody>
+                </SettingsItem>
+              </>
+            ) : null}
           </>
         ) : null}
         <SectionSpacer />
