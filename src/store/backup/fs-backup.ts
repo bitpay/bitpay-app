@@ -13,6 +13,7 @@ const TEMP_FILE = BASE_DIR + '/persist-root.json.tmp';
 
 let cachedBackupExists: boolean = false;
 let backupCacheGeneration = 0;
+let rotateReported: boolean = false;
 
 // Serial queue — ensures only one write uses the shared TEMP_FILE at a time
 let backupQueue: Promise<void> = Promise.resolve();
@@ -32,18 +33,23 @@ function hasEncryptedWalletSecrets(rawJson: string): boolean {
 }
 
 async function ensureDir(): Promise<void> {
+  const exists = await RNFS.exists(BASE_DIR);
+  if (!exists) {
+    await RNFS.mkdir(BASE_DIR);
+  }
+}
+
+// iOS moveFile (NSFileManager moveItemAtPath) throws instead of overwriting an
+// existing destination; Android renameTo replaces it atomically, so only clear
+// the destination once a move has actually failed
+async function moveOverwriting(src: string, dest: string): Promise<void> {
   try {
-    const exists = await RNFS.exists(BASE_DIR);
-    if (!exists) {
-      await RNFS.mkdir(BASE_DIR);
-    }
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(`Backup ensureDir failed - ${getErrorString(err)}`),
-      ),
-    );
-    Sentry.captureException(err, {level: 'error'});
+    await RNFS.moveFile(src, dest);
+  } catch {
+    try {
+      await RNFS.unlink(dest);
+    } catch {}
+    await RNFS.moveFile(src, dest);
   }
 }
 
@@ -77,10 +83,10 @@ export function backupPersistRoot(rawJson: string): Promise<void> {
     return Promise.resolve();
   }
 
-  backupQueue = backupQueue
-    .then(() => _backupPersistRoot(rawJson))
-    .catch(() => {});
-  return backupQueue;
+  const run = backupQueue.then(() => _backupPersistRoot(rawJson));
+  // Keep the queue serial without poisoning it, while still surfacing failures
+  backupQueue = run.catch(() => {});
+  return run;
 }
 
 export function removePersistRootBackups(): Promise<void> {
@@ -126,69 +132,75 @@ export function resumePersistRootBackups(
   }
   const rawJson = deferredBackup;
   deferredBackup = null;
+  // Already reported by _backupPersistRoot; a cache write failure must not fail
+  // the caller (wallet secrets migration rolls back on rejection)
   return rawJson && !discardDeferred
-    ? backupPersistRoot(rawJson)
+    ? backupPersistRoot(rawJson).catch(() => {})
     : Promise.resolve();
 }
 
 async function _backupPersistRoot(rawJson: string): Promise<void> {
+  let filtered = rawJson;
   try {
-    let filtered = rawJson;
+    const parsed = JSON.parse(rawJson);
+    delete parsed.MARKET_STATS;
+    delete parsed.PORTFOLIO;
+    delete parsed.PORTFOLIO_CHARTS;
+    delete parsed.RATE;
+    delete parsed.SHOP_CATALOG;
+    filtered = JSON.stringify(parsed);
+  } catch {
+    // If parse fails, keep raw json — better to have a backup than none
+  }
+
+  // Both platforms can wipe the cache directory at any point — including between
+  // ensureDir() and the write, or between the write and the move — so recreate
+  // it and retry once before giving up
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const parsed = JSON.parse(rawJson);
-      delete parsed.MARKET_STATS;
-      delete parsed.PORTFOLIO;
-      delete parsed.PORTFOLIO_CHARTS;
-      delete parsed.RATE;
-      delete parsed.SHOP_CATALOG;
-      filtered = JSON.stringify(parsed);
-    } catch {}
+      await ensureDir();
+      await RNFS.writeFile(TEMP_FILE, filtered, 'utf8');
 
-    await ensureDir();
+      const finalExists = await RNFS.exists(FINAL_FILE);
+      if (finalExists) {
+        try {
+          await moveOverwriting(FINAL_FILE, BACKUP_FILE);
+        } catch (err) {
+          initLogs.add(
+            LogActions.persistLog(
+              LogActions.error(`Backup rotate failed - ${getErrorString(err)}`),
+            ),
+          );
+          // Once per session: a permanently frozen .bak must not be silent, but
+          // rotation runs on every backup and is best-effort
+          if (!rotateReported) {
+            rotateReported = true;
+            Sentry.captureException(err, {level: 'error'});
+          }
+        }
+      }
 
-    // Write to temp file first
-    await RNFS.writeFile(TEMP_FILE, filtered, 'utf8');
-
-    // Rotate current to .bak if present
-    const finalExists = await RNFS.exists(FINAL_FILE);
-    if (finalExists) {
+      await moveOverwriting(TEMP_FILE, FINAL_FILE);
+      cachedBackupExists = true;
+      return;
+    } catch (err) {
       try {
-        // Remove old .bak if exists to keep only one rolling backup
-        const bakExists = await RNFS.exists(BACKUP_FILE);
-        if (bakExists) {
-          await RNFS.unlink(BACKUP_FILE);
+        const tmpExists = await RNFS.exists(TEMP_FILE);
+        if (tmpExists) {
+          await RNFS.unlink(TEMP_FILE);
         }
       } catch {}
-      try {
-        await RNFS.moveFile(FINAL_FILE, BACKUP_FILE);
-      } catch (err) {
+      if (attempt > 0) {
+        cachedBackupExists = false;
         initLogs.add(
           LogActions.persistLog(
-            LogActions.error(`Backup rotate failed - ${getErrorString(err)}`),
+            LogActions.error(`Backup write failed - ${getErrorString(err)}`),
           ),
         );
         Sentry.captureException(err, {level: 'error'});
+        throw err;
       }
     }
-
-    // Atomically move temp to final
-    await RNFS.moveFile(TEMP_FILE, FINAL_FILE);
-    cachedBackupExists = true;
-  } catch (err) {
-    // Best-effort logging; avoid throwing to not impact primary persist
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(`Backup write failed - ${getErrorString(err)}`),
-      ),
-    );
-    Sentry.captureException(err, {level: 'error'});
-    // Cleanup temp if left behind
-    try {
-      const tmpExists = await RNFS.exists(TEMP_FILE);
-      if (tmpExists) {
-        await RNFS.unlink(TEMP_FILE);
-      }
-    } catch {}
   }
 }
 
