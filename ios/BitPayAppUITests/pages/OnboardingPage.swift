@@ -128,6 +128,10 @@ class OnboardingPage {
   }
 
   func tapContinuewithoutAnAccount() {
+    if isPostContinueScreenVisible(timeout: 2) {
+      return
+    }
+
     XCTAssertTrue(
       tapFirstHittableElement(
         candidates: [
@@ -312,6 +316,30 @@ class OnboardingPage {
     for element in candidates where element.exists {
       element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
       return true
+    }
+    return false
+  }
+
+  private func isPostContinueScreenVisible(timeout: TimeInterval) -> Bool {
+    let skipById = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'skip-button'")
+    ).firstMatch
+    let createKey = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'create-a-key-button'")
+    ).firstMatch
+    let alreadyHaveKey = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'i-already-have-a-key-button'")
+    ).firstMatch
+    let portfolio = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'portfolio-balance-info-button'")
+    ).firstMatch
+
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if skipById.exists || createKey.exists || alreadyHaveKey.exists || portfolio.exists {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.2))
     }
     return false
   }

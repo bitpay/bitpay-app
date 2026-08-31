@@ -33,6 +33,8 @@ class OnboardingPage {
     private val importTitleText = withText("Import")
     private val importWalletButton = withTestId("import-wallet-button")
     private val loadingTokensText = withText(startsWith("Loading "))
+    private val portfolioBalanceText = withTestId("portfolio-balance-info-button")
+    private val myKeyText = withText("My Key")
 
     private fun iUnderstandCheckBox1Matchers(): List<Matcher<View>> {
         return listOf(
@@ -110,6 +112,20 @@ class OnboardingPage {
     }
 
     fun clickAlreadyHaveKey() {
+        if (isMatcherVisible(alreadyHaveKeyButton, timeoutMs = 3000)) {
+            WaitUtils.waitForView(alreadyHaveKeyButton)
+            onView(alreadyHaveKeyButton).perform(click())
+            return
+        }
+
+        // If onboarding is already completed or import screen is already open,
+        // this action is a no-op to keep reruns deterministic.
+        if (isPostOnboardingStateVisible(timeoutMs = 2500) ||
+            isMatcherVisible(importTitleText, timeoutMs = 1500)
+        ) {
+            return
+        }
+
         WaitUtils.waitForView(alreadyHaveKeyButton)
         onView(alreadyHaveKeyButton).perform(click())
     }
@@ -160,22 +176,38 @@ class OnboardingPage {
 
     fun verifyIUnderstandCheckbox1Displayed(): Boolean {
         prepareTermsScreen()
+        if (isPostOnboardingStateVisible(timeoutMs = 2000)) {
+            return true
+        }
         return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 420000)
     }
 
     fun clickIUnderstandCheckbox1() {
+        if (isPostOnboardingStateVisible(timeoutMs = 1500)) {
+            return
+        }
         clickTermsCheckbox(iUnderstandCheckBox1Matchers(), "first-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox2() {
+        if (isPostOnboardingStateVisible(timeoutMs = 1500)) {
+            return
+        }
         clickTermsCheckbox(iUnderstandCheckBox2Matchers(), "second-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox3() {
+        if (isPostOnboardingStateVisible(timeoutMs = 1500)) {
+            return
+        }
         clickTermsCheckbox(iUnderstandCheckBox3Matchers(), "third-term-checkbox")
     }
 
     fun clickAgreeAndContinue() {
+        if (isPostOnboardingStateVisible(timeoutMs = 2000)) {
+            return
+        }
+
         // The third checkbox can occasionally miss taps; retry checkbox taps
         // until CTA is enabled instead of moving on to a wrong screen state.
         for (attempt in 1..3) {
@@ -222,6 +254,10 @@ class OnboardingPage {
         var lastImportRetryAt = 0L
 
         while (System.currentTimeMillis() < end) {
+            if (isPostOnboardingStateVisible(timeoutMs = 1000)) {
+                return
+            }
+
             if (isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 1200)) {
                 return
             }
@@ -258,6 +294,11 @@ class OnboardingPage {
                 Thread.sleep(300)
             }
         }
+    }
+
+    private fun isPostOnboardingStateVisible(timeoutMs: Long): Boolean {
+        return isMatcherVisible(portfolioBalanceText, timeoutMs) ||
+            isMatcherVisible(myKeyText, timeoutMs)
     }
 
     private fun clickSkipIfVisible(): Boolean {
