@@ -90,7 +90,7 @@
     "@walletconnect/jsonrpc-types": "1.0.4",
     "@walletconnect/react-native-compat": "2.21.8",
     "asyncstorage-down": "4.2.0",
-    "axios": "0.21.1",
+    "axios": "0.33.0",
     "babel-plugin-module-resolver": "4.1.0",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
@@ -101,7 +101,7 @@
     "ethers": "5.7.2",
     "events": "3.3.0",
     "fast-text-encoding": "1.0.6",
-    "flatted": "3.2.5",
+    "flatted": "3.4.4",
     "https-browserify": "1.0.0",
     "i18next": "21.6.4",
     "intl": "1.2.5",
@@ -206,7 +206,7 @@
     "yup": "0.32.11"
   },
   "devDependencies": {
-    "@babel/core": "7.25.2",
+    "@babel/core": "7.29.6",
     "@babel/plugin-proposal-export-namespace-from": "7.16.0",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.16.7",
     "@babel/plugin-proposal-optional-chaining": "7.16.7",
