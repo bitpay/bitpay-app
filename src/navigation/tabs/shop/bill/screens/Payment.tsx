@@ -9,7 +9,7 @@ import {
   Paragraph,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
-import {Linking, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import {
   BillOption,
   SectionContainer,
@@ -26,6 +26,7 @@ import {BillAccountPill} from '../components/BillAccountPill';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const HeroSection = styled.View`
   width: 100%;
@@ -93,7 +94,7 @@ const Payment = ({
   const sheetOptions: Array<Option> = [
     {
       onPress: () => {
-        Linking.openURL('https://bitpay.com/request-help/wizard');
+        dispatch(openExternalUrl('https://bitpay.com/request-help/wizard'));
         dispatch(
           Analytics.track('Bill Pay - Clicked Contact Support', {
             ...baseEventParams,

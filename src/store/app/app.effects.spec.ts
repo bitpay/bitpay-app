@@ -24,7 +24,13 @@ jest.mock('@braze/react-native-sdk', () => ({
 
 jest.mock('react-native-bootsplash', () => ({hide: jest.fn()}));
 jest.mock('react-native-in-app-review', () => ({}));
-jest.mock('react-native-inappbrowser-reborn', () => ({}));
+jest.mock('react-native-inappbrowser-reborn', () => ({
+  __esModule: true,
+  default: {
+    isAvailable: jest.fn(),
+    open: jest.fn(),
+  },
+}));
 jest.mock('react-native-permissions', () => ({
   check: jest.fn(),
   checkNotifications: jest.fn(),
@@ -276,6 +282,10 @@ jest.mock('./app.actions', () => ({
   setConfirmedTxAccepted: jest.fn(() => ({type: 'SET_CONFIRMED_TX'})),
   setEDDSAKeyMigrationComplete: jest.fn(() => ({type: 'SET_EDDSA_DONE'})),
   setEmailNotificationsAccepted: jest.fn(() => ({type: 'SET_EMAIL_NOTIFS'})),
+  setInAppBrowserOpen: jest.fn(payload => ({
+    payload,
+    type: 'SET_IN_APP_BROWSER_OPEN',
+  })),
   setMigrationComplete: jest.fn(() => ({type: 'SET_MIGRATION_DONE'})),
   setNotificationsAccepted: jest.fn(() => ({type: 'SET_NOTIFS'})),
   setUserFeedback: jest.fn(() => ({type: 'SET_USER_FEEDBACK'})),
@@ -297,7 +307,14 @@ jest.mock('../../managers/LogManager', () => ({
   },
 }));
 
-import {startAppInit} from './app.effects';
+import {
+  openExternalUrl,
+  openUrlWithInAppBrowser,
+  startAppInit,
+} from './app.effects';
+import {logManager} from '../../managers/LogManager';
+import {Linking} from 'react-native';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -376,5 +393,170 @@ describe('startAppInit', () => {
     walletInit.resolve({walletInitSuccess: true});
     locationData.resolve();
     await initPromise;
+  });
+});
+
+const resetUrlMocks = () => {
+  jest.clearAllMocks();
+  (Linking.openURL as jest.Mock).mockReset();
+  (InAppBrowser.isAvailable as jest.Mock).mockReset();
+  (InAppBrowser.open as jest.Mock).mockReset();
+};
+
+describe('openUrlWithInAppBrowser', () => {
+  beforeEach(resetUrlMocks);
+
+  it('resolves true after the in app browser session ends', async () => {
+    const browserSession = deferred<{type: string}>();
+    const onOpen = jest.fn();
+    (InAppBrowser.isAvailable as jest.Mock).mockResolvedValue(true);
+    (InAppBrowser.open as jest.Mock).mockReturnValue(browserSession.promise);
+
+    const didOpenPromise = openUrlWithInAppBrowser('https://bitpay.com')(
+      jest.fn(),
+      jest.fn(),
+      undefined as any,
+    );
+    didOpenPromise.then(onOpen);
+    await flushMicrotasks();
+
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(Linking.openURL).not.toHaveBeenCalled();
+
+    browserSession.resolve({type: 'dismiss'});
+
+    await expect(didOpenPromise).resolves.toBe(true);
+  });
+
+  it('returns true when the in app browser fails but the external handler opens the url', async () => {
+    (InAppBrowser.isAvailable as jest.Mock).mockResolvedValue(true);
+    (InAppBrowser.open as jest.Mock).mockRejectedValue(
+      new Error('No activity'),
+    );
+    (Linking.openURL as jest.Mock).mockResolvedValue(true);
+
+    const didOpen = await openUrlWithInAppBrowser('https://bitpay.com')(
+      jest.fn(),
+      jest.fn(),
+      undefined as any,
+    );
+
+    expect(didOpen).toBe(true);
+    expect(InAppBrowser.open).toHaveBeenCalledWith(
+      'https://bitpay.com',
+      expect.any(Object),
+    );
+    expect(Linking.openURL).toHaveBeenCalledWith('https://bitpay.com');
+  });
+
+  it('returns false when the in app browser and external handler fail without exposing the url', async () => {
+    const url =
+      'https://CLAIM-CODE.merchant.example/redeem/SIGNED-TOKEN?signature=SECRET';
+    const openError = new Error(`Unable to open URL: ${url}`);
+    (InAppBrowser.isAvailable as jest.Mock).mockResolvedValue(true);
+    (InAppBrowser.open as jest.Mock).mockRejectedValue(openError);
+    (Linking.openURL as jest.Mock).mockRejectedValue(openError);
+
+    const didOpen = await openUrlWithInAppBrowser(url)(
+      jest.fn(),
+      jest.fn(),
+      undefined as any,
+    );
+
+    const logs = [
+      ...(logManager.info as jest.Mock).mock.calls,
+      ...(logManager.error as jest.Mock).mock.calls,
+    ]
+      .flat()
+      .join(' ')
+      .toLowerCase();
+    expect(didOpen).toBe(false);
+    expect(InAppBrowser.open).toHaveBeenCalledWith(url, expect.any(Object));
+    expect(logs).toContain('https');
+    expect(logs).not.toContain('claim-code');
+    expect(logs).not.toContain('signed-token');
+    expect(logs).not.toContain('secret');
+  });
+
+  it('returns false when only the external handler is available and it fails', async () => {
+    (InAppBrowser.isAvailable as jest.Mock).mockResolvedValue(false);
+    (Linking.openURL as jest.Mock).mockRejectedValue(
+      new Error('Unable to open URL: https://bitpay.com'),
+    );
+
+    const didOpen = await openUrlWithInAppBrowser('https://bitpay.com')(
+      jest.fn(),
+      jest.fn(),
+      undefined as any,
+    );
+
+    expect(didOpen).toBe(false);
+    expect(InAppBrowser.open).not.toHaveBeenCalled();
+  });
+});
+
+describe('openExternalUrl', () => {
+  beforeEach(resetUrlMocks);
+
+  it('does not fall back when the device opens the url', async () => {
+    (Linking.openURL as jest.Mock).mockResolvedValue(true);
+    const dispatch = jest.fn();
+
+    const didOpen = await openExternalUrl('https://bitpay.com')(
+      dispatch,
+      jest.fn(),
+      undefined as any,
+    );
+
+    expect(didOpen).toBe(true);
+    expect(Linking.openURL).toHaveBeenCalledWith('https://bitpay.com');
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the in app browser when the device rejects', async () => {
+    (Linking.openURL as jest.Mock).mockRejectedValue(
+      new Error('Unable to open URL: https://bitpay.com'),
+    );
+    const dispatch = jest.fn();
+
+    const didOpen = await openExternalUrl('https://bitpay.com')(
+      dispatch,
+      jest.fn(),
+      undefined as any,
+    );
+
+    expect(didOpen).toBe(false);
+    expect(dispatch).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('returns false without falling back and redacts sensitive url data', async () => {
+    const url =
+      'https://CLAIM-CODE.merchant.example/redeem/SIGNED-TOKEN?signature=SECRET';
+    (Linking.openURL as jest.Mock).mockRejectedValue(
+      new Error(`Unable to open URL: ${url}`),
+    );
+    const dispatch = jest.fn();
+
+    const didOpen = await openExternalUrl(url, false)(
+      dispatch,
+      jest.fn(),
+      undefined as any,
+    );
+
+    expect(didOpen).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(logManager.error).toHaveBeenCalledWith('Error opening https URL.');
+
+    const logs = [
+      ...(logManager.info as jest.Mock).mock.calls,
+      ...(logManager.error as jest.Mock).mock.calls,
+    ]
+      .flat()
+      .join(' ')
+      .toLowerCase();
+    expect(logs).toContain('https');
+    expect(logs).not.toContain('claim-code');
+    expect(logs).not.toContain('signed-token');
+    expect(logs).not.toContain('secret');
   });
 });

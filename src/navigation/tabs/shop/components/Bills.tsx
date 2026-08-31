@@ -2,7 +2,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
-import {Linking, Platform, View} from 'react-native';
+import {Platform, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {
@@ -143,7 +143,7 @@ export const Bills = () => {
   const onSubmit = async () => {
     try {
       if (!user) {
-        Linking.openURL('https://bitpay.com/bill-pay');
+        dispatch(AppEffects.openExternalUrl('https://bitpay.com/bill-pay'));
       } else {
         setWaitlistButtonState('loading');
         if (!isJoinedWaitlist) {
@@ -221,7 +221,11 @@ export const Bills = () => {
           {
             text: t('UPDATE INFO'),
             action: () => {
-              Linking.openURL('https://bitpay.com/request-help/wizard');
+              dispatch(
+                AppEffects.openExternalUrl(
+                  'https://bitpay.com/request-help/wizard',
+                ),
+              );
               dispatch(Analytics.track('Bill Pay - Clicked Update User Info'));
             },
           },

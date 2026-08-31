@@ -1,6 +1,6 @@
 import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
-import {ImageStyle, Linking, StyleProp} from 'react-native';
+import {ImageStyle, StyleProp} from 'react-native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
@@ -143,7 +143,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));
     } else {
-      Linking.openURL(url);
+      dispatch(AppEffects.openExternalUrl(url));
     }
   };
 

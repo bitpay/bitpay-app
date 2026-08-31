@@ -5,7 +5,7 @@ import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {H5, Paragraph} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView, View} from 'react-native';
+import {ScrollView, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   LightBlack,
@@ -39,6 +39,7 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
 import {ShopEffects} from '../../../../../store/shop';
 import {useOngoingProcess} from '../../../../../contexts';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const BillPayOption = styled.View<{hasBorderTop?: boolean}>`
   flex-direction: row;
@@ -171,7 +172,7 @@ const PayBill = ({
     },
     {
       onPress: () => {
-        Linking.openURL('https://bitpay.com/request-help/wizard');
+        dispatch(openExternalUrl('https://bitpay.com/request-help/wizard'));
         dispatch(
           Analytics.track('Bill Pay - Clicked Contact Support', {
             ...baseEventParams,
