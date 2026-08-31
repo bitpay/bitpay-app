@@ -9,6 +9,7 @@
  * chain) to get a fresh module instance per-test.
  */
 import RNFS from 'react-native-fs';
+import * as Sentry from '@sentry/react-native';
 
 // Mock only what fs-backup needs from helper-methods. Using requireActual here
 // would pull in the bwc/bitcore-lib chain and cause duplicate-instance errors
@@ -33,6 +34,76 @@ jest.mock('../../store/log/initLogs', () => ({
 }));
 
 const mockedRNFS = RNFS as jest.Mocked<typeof RNFS>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: in-memory fs reproducing the native semantics this module has to
+// survive — Android writeFile ENOENTs when the parent directory is gone, and
+// iOS moveFile refuses to overwrite an existing destination (Android renameTo
+// does overwrite, so these tests hold the stricter platform to account).
+// ─────────────────────────────────────────────────────────────────────────────
+type Entry = 'dir' | 'final' | 'bak' | 'tmp';
+
+const entryOf = (path: string): Entry =>
+  path.endsWith('.tmp')
+    ? 'tmp'
+    : path.endsWith('.bak')
+    ? 'bak'
+    : path.endsWith('.json')
+    ? 'final'
+    : 'dir';
+
+function mockFs(initial: Entry[] = []): Map<Entry, string> {
+  const fs = new Map<Entry, string>(initial.map(e => [e, `stale-${e}`]));
+
+  (mockedRNFS.exists as jest.Mock).mockImplementation((path: string) =>
+    Promise.resolve(fs.has(entryOf(path))),
+  );
+  (mockedRNFS.mkdir as jest.Mock).mockImplementation((path: string) => {
+    fs.set(entryOf(path), '');
+    return Promise.resolve();
+  });
+  (mockedRNFS.writeFile as jest.Mock).mockImplementation(
+    (path: string, contents: string) => {
+      if (!fs.has('dir')) {
+        return Promise.reject(
+          new Error(
+            `ENOENT: open failed: ENOENT (No such file or directory), open '${path}'`,
+          ),
+        );
+      }
+      fs.set(entryOf(path), contents);
+      return Promise.resolve();
+    },
+  );
+  (mockedRNFS.unlink as jest.Mock).mockImplementation((path: string) => {
+    fs.delete(entryOf(path));
+    return Promise.resolve();
+  });
+  (mockedRNFS.moveFile as jest.Mock).mockImplementation(
+    (src: string, dest: string) => {
+      if (!fs.has(entryOf(src))) {
+        return Promise.reject(
+          new Error(`"${src}" couldn't be moved: the former doesn't exist`),
+        );
+      }
+      if (fs.has(entryOf(dest))) {
+        return Promise.reject(
+          new Error(
+            `"${src}" couldn't be moved: an item with the same name already exists`,
+          ),
+        );
+      }
+      fs.set(entryOf(dest), fs.get(entryOf(src))!);
+      fs.delete(entryOf(src));
+      return Promise.resolve();
+    },
+  );
+
+  return fs;
+}
+
+const movesFor = () =>
+  (mockedRNFS.moveFile as jest.Mock).getMockImplementation()!;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: get a fresh module instance (resets module-level cachedBackupExists)
@@ -90,11 +161,7 @@ describe('backupFileExists', () => {
 describe('backupPersistRoot', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
-    (mockedRNFS.writeFile as jest.Mock).mockResolvedValue(undefined);
-    (mockedRNFS.moveFile as jest.Mock).mockResolvedValue(undefined);
-    (mockedRNFS.unlink as jest.Mock).mockResolvedValue(undefined);
-    (mockedRNFS.mkdir as jest.Mock).mockResolvedValue(undefined);
+    mockFs(['dir']);
   });
 
   it('strips MARKET_STATS, PORTFOLIO, RATE, SHOP_CATALOG and keeps other fields', async () => {
@@ -106,7 +173,6 @@ describe('backupPersistRoot', () => {
       SHOP_CATALOG: {d: 4},
       WALLET: {keys: {}},
     });
-    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
     await backupPersistRoot(raw);
 
     expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(1);
@@ -123,90 +189,145 @@ describe('backupPersistRoot', () => {
   it('writes raw JSON unchanged when JSON.parse fails', async () => {
     const {backupPersistRoot} = getFreshModule();
     const rawJson = 'not valid json {{{}}}';
-    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
     await backupPersistRoot(rawJson);
 
     expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(1);
     expect((mockedRNFS.writeFile as jest.Mock).mock.calls[0][1]).toBe(rawJson);
   });
 
-  it('creates the directory when it does not exist', async () => {
+  it('creates the directory when it does not exist and still lands the backup', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(false) // ensureDir: BASE_DIR not exists → mkdir
-      .mockResolvedValue(false); // final file does not exist
+    const fs = mockFs([]);
     await backupPersistRoot('{}');
     expect(mockedRNFS.mkdir).toHaveBeenCalledTimes(1);
+    expect(fs.has('final')).toBe(true);
+    expect(fs.has('tmp')).toBe(false);
   });
 
   it('skips mkdir when the directory already exists', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true) // ensureDir: dir exists
-      .mockResolvedValue(false); // no final file
     await backupPersistRoot('{}');
     expect(mockedRNFS.mkdir).not.toHaveBeenCalled();
   });
 
   it('rotates final→backup and moves temp→final when final exists but backup does not', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true) // ensureDir: dir exists
-      .mockResolvedValueOnce(true) // finalExists = true
-      .mockResolvedValueOnce(false); // bakExists = false → no unlink
+    const fs = mockFs(['dir', 'final']);
     await backupPersistRoot('{}');
-    expect(mockedRNFS.unlink).not.toHaveBeenCalled();
     expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2); // FINAL→BAK, TEMP→FINAL
+    expect(fs.get('final')).toBe('{}');
+    expect(fs.get('bak')).toBe('stale-final'); // previous final rolled over
   });
 
-  it('unlinks old backup before rotating when both final and backup exist', async () => {
+  it('unlinks the old backup before rotating when both final and backup exist', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true) // ensureDir: dir exists
-      .mockResolvedValueOnce(true) // finalExists = true
-      .mockResolvedValueOnce(true); // bakExists = true → unlink
+    const fs = mockFs(['dir', 'final', 'bak']);
     await backupPersistRoot('{}');
     expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
     expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2);
+    expect(fs.get('final')).toBe('{}');
   });
 
-  it('still moves temp→final even when the final→backup rotation throws', async () => {
+  // A failed rotation leaves the final file in place, and iOS moveFile refuses
+  // to overwrite it: `"persist-root.json.tmp" couldn't be moved to "redux"
+  // because an item with the same name already exists`.
+  it('drops the leftover final file when the final→backup rotation throws', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true) // ensureDir: dir exists
-      .mockResolvedValueOnce(true) // finalExists
-      .mockResolvedValueOnce(false); // bakExists = false
-    (mockedRNFS.moveFile as jest.Mock)
-      .mockRejectedValueOnce(new Error('rotate failed'))
-      .mockResolvedValueOnce(undefined);
-    await backupPersistRoot('{}');
+    const fs = mockFs(['dir', 'final']);
+    const move = movesFor();
+    let calls = 0;
+    (mockedRNFS.moveFile as jest.Mock).mockImplementation((src, dest) =>
+      ++calls === 1
+        ? Promise.reject(new Error('rotate failed'))
+        : move(src, dest),
+    );
+
+    await expect(backupPersistRoot('{"new":true}')).resolves.toBeUndefined();
     expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2);
+    expect(fs.get('final')).toBe('{"new":true}'); // not the stale file
+    expect(fs.has('tmp')).toBe(false);
+    // Rotation is best-effort, so it must not reach Sentry — the write landed
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
-  it('cleans up temp file when writeFile throws', async () => {
+  // `ENOENT: open failed: ENOENT (No such file or directory), open
+  // '.../cache/bitpay/redux/persist-root.json.tmp'` — the cache directory was
+  // wiped after ensureDir() had already checked it.
+  it('retries the write when the cache directory is wiped before the write', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.writeFile as jest.Mock).mockRejectedValueOnce(
-      new Error('write error'),
-    );
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true) // ensureDir: dir exists
-      .mockResolvedValueOnce(true); // tmpExists = true → unlink temp
-    await backupPersistRoot('{}');
-    expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
+    const fs = mockFs(['dir']);
+    const write = (mockedRNFS.writeFile as jest.Mock).getMockImplementation()!;
+    let wiped = false;
+    (mockedRNFS.writeFile as jest.Mock).mockImplementation((path, contents) => {
+      if (!wiped) {
+        wiped = true;
+        fs.clear(); // system cleared the cache dir between ensureDir and here
+      }
+      return write(path, contents);
+    });
+
+    await expect(backupPersistRoot('{}')).resolves.toBeUndefined();
+    expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(2);
+    expect(mockedRNFS.mkdir).toHaveBeenCalledTimes(1); // recreated on the retry
+    expect(fs.get('final')).toBe('{}');
   });
 
-  it('does not throw even if temp file cleanup also fails', async () => {
+  it('retries the write when the cache directory is wiped between write and move', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.writeFile as jest.Mock).mockRejectedValueOnce(
+    const fs = mockFs(['dir']);
+    const move = movesFor();
+    let wiped = false;
+    (mockedRNFS.moveFile as jest.Mock).mockImplementation((src, dest) => {
+      if (!wiped) {
+        wiped = true;
+        fs.clear();
+      }
+      return move(src, dest);
+    });
+
+    await expect(backupPersistRoot('{}')).resolves.toBeUndefined();
+    expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(2);
+    expect(fs.get('final')).toBe('{}');
+  });
+
+  it('cleans up the temp file and rejects when the write keeps failing', async () => {
+    const {backupPersistRoot} = getFreshModule();
+    const fs = mockFs(['dir']);
+    (mockedRNFS.writeFile as jest.Mock).mockImplementation(() => {
+      fs.set('tmp', '');
+      return Promise.reject(new Error('write error'));
+    });
+
+    await expect(backupPersistRoot('{}')).rejects.toThrow('write error');
+    expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(2);
+    expect(fs.has('tmp')).toBe(false);
+    // A write that never lands is the case that does get reported
+    expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports the original error even if temp file cleanup also fails', async () => {
+    const {backupPersistRoot} = getFreshModule();
+    mockFs(['dir', 'tmp']);
+    (mockedRNFS.writeFile as jest.Mock).mockRejectedValue(
       new Error('write error'),
     );
-    (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true) // ensureDir: dir exists
-      .mockResolvedValueOnce(true); // tmpExists = true
-    (mockedRNFS.unlink as jest.Mock).mockRejectedValueOnce(
+    (mockedRNFS.unlink as jest.Mock).mockRejectedValue(
       new Error('unlink error'),
     );
+
+    await expect(backupPersistRoot('{}')).rejects.toThrow('write error');
+  });
+
+  it('keeps the queue usable after a failed backup', async () => {
+    const {backupPersistRoot} = getFreshModule();
+    (mockedRNFS.writeFile as jest.Mock).mockRejectedValue(
+      new Error('write error'),
+    );
+    await expect(backupPersistRoot('{}')).rejects.toThrow('write error');
+
+    const fs = mockFs(['dir']);
     await expect(backupPersistRoot('{}')).resolves.toBeUndefined();
+    expect(fs.get('final')).toBe('{}');
   });
 });
 
