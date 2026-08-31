@@ -20,6 +20,7 @@ import {Selector} from 'reselect';
 import {
   backupFileExists,
   backupPersistRoot,
+  ensureBackupDir,
   readBackupPersistRoot,
 } from './backup/fs-backup';
 import {
@@ -589,6 +590,8 @@ const getStore = async () => {
   // Clear any stale logs, and immediately flush any initLogs that were added before the store was initialized
   storeDispatch(LogActions.clear());
   initLogs.drainAndDispatch(storeDispatch);
+
+  await ensureBackupDir();
 
   const persistor = persistStore(store);
 
