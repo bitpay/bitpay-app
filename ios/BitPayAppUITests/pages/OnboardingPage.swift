@@ -17,9 +17,21 @@ class OnboardingPage {
 
   // MARK: - Elements
 
-  var continueWithoutAnAccountButton: XCUIElement {
+  var continueWithoutAnAccountButtonById: XCUIElement {
     app.descendants(matching: .any).element(
       matching: NSPredicate(format: "identifier == 'continue-without-an-account-button'")
+    ).firstMatch
+  }
+
+  var continueWithoutAnAccountButtonByLabel: XCUIElement {
+    app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'Continue without an account'")
+    ).firstMatch
+  }
+
+  var continueWithoutAnAccountButtonByA11yIdAsLabel: XCUIElement {
+    app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "label == 'continue-without-an-account-button'")
     ).firstMatch
   }
 
@@ -103,11 +115,30 @@ class OnboardingPage {
   }
   
   func isContinueWithoutAccountButtonDisplayed(timeout: TimeInterval = 15) -> Bool  {
-    return continueWithoutAnAccountButton.waitForExistence(timeout: timeout)
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if continueWithoutAnAccountButtonById.exists ||
+        continueWithoutAnAccountButtonByLabel.exists ||
+        continueWithoutAnAccountButtonByA11yIdAsLabel.exists {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+    }
+    return false
   }
 
   func tapContinuewithoutAnAccount() {
-    continueWithoutAnAccountButton.tap()
+    XCTAssertTrue(
+      tapFirstHittableElement(
+        candidates: [
+          continueWithoutAnAccountButtonById,
+          continueWithoutAnAccountButtonByLabel,
+          continueWithoutAnAccountButtonByA11yIdAsLabel,
+        ],
+        timeout: 25
+      ),
+      "Continue without an account button not tappable"
+    )
   }
 
   func skipOnboarding() {
@@ -259,6 +290,28 @@ class OnboardingPage {
         return true
       }
       RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+    }
+    return false
+  }
+
+  private func tapFirstHittableElement(
+    candidates: [XCUIElement],
+    timeout: TimeInterval
+  ) -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      for element in candidates where element.exists {
+        if element.isHittable {
+          element.tap()
+          return true
+        }
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+    }
+
+    for element in candidates where element.exists {
+      element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+      return true
     }
     return false
   }

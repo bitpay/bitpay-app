@@ -20,7 +20,15 @@ class HomePage {
   var continueWithoutAnAccountButton: XCUIElement {
     app.descendants(matching: .any)
       .matching(
-        NSPredicate(format: "label == 'continue-without-an-account-button'")
+        NSPredicate(format: "identifier == 'continue-without-an-account-button'")
+      )
+      .firstMatch
+  }
+
+  var continueWithoutAnAccountButtonByLabel: XCUIElement {
+    app.descendants(matching: .any)
+      .matching(
+        NSPredicate(format: "label == 'Continue without an account'")
       )
       .firstMatch
   }
@@ -96,7 +104,24 @@ class HomePage {
   }
 
   func tapContinuewithoutAnAccount() {
-    continueWithoutAnAccountButton.tap()
+    if continueWithoutAnAccountButton.waitForExistence(timeout: 20) {
+      if continueWithoutAnAccountButton.isHittable {
+        continueWithoutAnAccountButton.tap()
+      } else {
+        continueWithoutAnAccountButton.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+      }
+      return
+    }
+
+    XCTAssertTrue(
+      continueWithoutAnAccountButtonByLabel.waitForExistence(timeout: 5),
+      "Continue without an account button not found"
+    )
+    if continueWithoutAnAccountButtonByLabel.isHittable {
+      continueWithoutAnAccountButtonByLabel.tap()
+    } else {
+      continueWithoutAnAccountButtonByLabel.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
   }
 
   func skipOnboarding() {

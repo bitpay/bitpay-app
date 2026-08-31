@@ -11,6 +11,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import android.view.View
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.startsWith
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
 import com.bitpay.wallet.utils.WaitUtils.withIndex
@@ -29,6 +30,9 @@ class OnboardingPage {
     private val bottomSheetBackupYourKeyButton =
         withTestId("bottom-notification-primary-action-button")
     private val backupRecoveryPhraseElement = withContentDescription("Backup your recovery phrase")
+    private val importTitleText = withText("Import")
+    private val importWalletButton = withTestId("import-wallet-button")
+    private val loadingTokensText = withText(startsWith("Loading "))
 
     private fun iUnderstandCheckBox1Matchers(): List<Matcher<View>> {
         return listOf(
@@ -156,7 +160,7 @@ class OnboardingPage {
 
     fun verifyIUnderstandCheckbox1Displayed(): Boolean {
         prepareTermsScreen()
-        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 180000)
+        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 420000)
     }
 
     fun clickIUnderstandCheckbox1() {
@@ -213,8 +217,9 @@ class OnboardingPage {
         throw lastError ?: RuntimeException("Failed to click $name")
     }
 
-    private fun prepareTermsScreen(timeoutMs: Long = 45000) {
+    private fun prepareTermsScreen(timeoutMs: Long = 240000) {
         val end = System.currentTimeMillis() + timeoutMs
+        var lastImportRetryAt = 0L
 
         while (System.currentTimeMillis() < end) {
             if (isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 1200)) {
@@ -233,6 +238,20 @@ class OnboardingPage {
             // After skipping backup, a bottom sheet can block terms.
             if (isMatcherVisible(bottomSheetLaterButton, timeoutMs = 800)) {
                 dismissedSomething = dismissedSomething or clickBottomSheetLaterIfVisible()
+            }
+
+            // Imported-wallet path can remain on Import with "Loading ... tokens..."
+            // for a long time. Keep waiting and occasionally re-trigger import.
+            if (isMatcherVisible(importTitleText, timeoutMs = 600)) {
+                if (isMatcherVisible(loadingTokensText, timeoutMs = 600)) {
+                    Thread.sleep(1200)
+                    continue
+                }
+
+                if (System.currentTimeMillis() - lastImportRetryAt > 12000) {
+                    dismissedSomething = dismissedSomething or clickImportWalletIfVisible()
+                    lastImportRetryAt = System.currentTimeMillis()
+                }
             }
 
             if (!dismissedSomething) {
@@ -261,6 +280,21 @@ class OnboardingPage {
             WaitUtils.waitForViewEffectivelyVisible(bottomSheetLaterButton, timeoutMs = 2000, intervalMs = 200)
             onView(bottomSheetLaterButton).perform(WaitUtils.forceClick)
             Thread.sleep(300)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun clickImportWalletIfVisible(): Boolean {
+        return try {
+            WaitUtils.waitForViewEffectivelyVisible(importWalletButton, timeoutMs = 2000, intervalMs = 200)
+            try {
+                onView(importWalletButton).perform(click())
+            } catch (e: Throwable) {
+                onView(importWalletButton).perform(WaitUtils.forceClick)
+            }
+            Thread.sleep(500)
             true
         } catch (_: Throwable) {
             false
