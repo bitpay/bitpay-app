@@ -21,6 +21,7 @@ import {
   startBitPayIdStoreInit,
   startBitPayIdAnalyticsInit,
   checkLoginWithPasskey,
+  startLogin,
   startSubmitForgotPasswordEmail,
   startTwoFactorAuth,
   startDisconnectBitPayId,
@@ -45,6 +46,12 @@ jest.mock('../../managers/OngoingProcessManager', () => ({
   ongoingProcessManager: {
     show: jest.fn(),
     hide: jest.fn(),
+  },
+}));
+
+jest.mock('../../managers/CloudflareChallengeManager', () => ({
+  cloudflareChallengeManager: {
+    present: jest.fn(),
   },
 }));
 
@@ -80,6 +87,7 @@ jest.mock('../analytics/analytics.effects', () => ({
 jest.mock('../app/app.effects', () => ({
   isAnonymousBrazeEid: jest.fn(() => false),
   setEmailNotifications: jest.fn(() => ({type: 'APP/SET_EMAIL_NOTIFICATIONS'})),
+  submitDeviceEvent: jest.fn(() => () => Promise.resolve()),
 }));
 
 jest.mock('../shop', () => ({
@@ -151,6 +159,8 @@ import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
 import BitPayIdApi from '../../api/bitpay';
 import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
+import {CloudflareChallengeError} from '../../utils/cloudflare';
+import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
 import * as helperMethods from '../../utils/helper-methods';
 import {isAnonymousBrazeEid} from '../app/app.effects';
 import {Analytics} from '../analytics/analytics.effects';
@@ -159,6 +169,7 @@ const MockAuthApi = AuthApi as jest.Mocked<typeof AuthApi>;
 const MockUserApi = UserApi as jest.Mocked<typeof UserApi>;
 const MockGetPasskeyStatus = getPasskeyStatus as jest.Mock;
 const MockSignInWithPasskey = signInWithPasskey as jest.Mock;
+const MockCloudflarePresent = cloudflareChallengeManager.present as jest.Mock;
 const MockIsAnonymousBrazeEid = isAnonymousBrazeEid as jest.Mock;
 const MockBitPayIdApiCall = BitPayIdApi.apiCall as jest.Mock;
 const MockAnalyticsEndMergingUser = Analytics.endMergingUser as jest.Mock;
@@ -454,6 +465,100 @@ describe('checkLoginWithPasskey', () => {
         checkLoginWithPasskey('alice@example.com', Network.mainnet, 'csrf'),
       ),
     ).rejects.toThrow('Unexpected passkey failure');
+  });
+
+  it('rethrows a CloudflareChallengeError unwrapped so startLogin can present the challenge', async () => {
+    MockGetPasskeyStatus.mockResolvedValueOnce({passkey: true});
+    MockSignInWithPasskey.mockRejectedValueOnce(
+      new CloudflareChallengeError('https://bitpay.com/auth/passkey', 403),
+    );
+    const store = baseStore();
+    await expect(
+      store.dispatch(
+        checkLoginWithPasskey('alice@example.com', Network.mainnet, 'csrf'),
+      ),
+    ).rejects.toBeInstanceOf(CloudflareChallengeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// startLogin (Cloudflare challenge handling)
+// ---------------------------------------------------------------------------
+
+describe('startLogin (Cloudflare challenge handling)', () => {
+  const CHALLENGED_URL = 'https://bitpay.com/auth/passkey/status?email=a%40b.c';
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('presents the challenge and fails without retrying when the user dismisses it', async () => {
+    MockGetPasskeyStatus.mockRejectedValueOnce(
+      new CloudflareChallengeError(CHALLENGED_URL, 403),
+    );
+    MockCloudflarePresent.mockResolvedValueOnce(false);
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    expect(MockCloudflarePresent).toHaveBeenCalledTimes(1);
+    expect(MockCloudflarePresent).toHaveBeenCalledWith(CHALLENGED_URL);
+    expect(MockGetPasskeyStatus).toHaveBeenCalledTimes(1);
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+  });
+
+  it('replays the login once after the challenge is solved', async () => {
+    MockGetPasskeyStatus.mockRejectedValueOnce(
+      new CloudflareChallengeError(CHALLENGED_URL, 403),
+    ).mockRejectedValueOnce(new Error('Invalid credentials'));
+    MockCloudflarePresent.mockResolvedValueOnce(true);
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    expect(MockCloudflarePresent).toHaveBeenCalledTimes(1);
+    // Login ran twice: original attempt + one replay.
+    expect(MockGetPasskeyStatus).toHaveBeenCalledTimes(2);
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.loginError).toBe('Invalid credentials');
+  });
+
+  it('does not loop when the replayed login is challenged again', async () => {
+    MockGetPasskeyStatus.mockRejectedValue(
+      new CloudflareChallengeError(CHALLENGED_URL, 403),
+    );
+    MockCloudflarePresent.mockResolvedValue(true);
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    expect(MockCloudflarePresent).toHaveBeenCalledTimes(1);
+    expect(MockGetPasskeyStatus).toHaveBeenCalledTimes(2);
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+  });
+
+  it('skips the interstitial when the challenge URL is unusable', async () => {
+    MockGetPasskeyStatus.mockRejectedValueOnce(
+      new CloudflareChallengeError('', 403),
+    );
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    // Presenting a modal with nothing to load would strand the user; the
+    // friendly error is the correct outcome.
+    expect(MockCloudflarePresent).not.toHaveBeenCalled();
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
   });
 });
 

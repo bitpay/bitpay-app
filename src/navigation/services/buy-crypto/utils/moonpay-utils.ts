@@ -64,9 +64,10 @@ export const moonpaySupportedCoins = [
   'matic', // pol_polygon in Moonpay // backward compatibility
   'pol', // pol_polygon in Moonpay
   'sol',
+  'xrp',
 ];
 
-export const nonUSMoonpaySupportedCoins = ['xrp'];
+export const nonUSMoonpaySupportedCoins = [];
 
 export const moonpaySupportedErc20Tokens = [
   'bat',
@@ -290,6 +291,9 @@ export const getMoonpayPaymentMethodFormat = (
         break;
       case 'venmo':
         moonpayPaymentMethod = 'venmo';
+        break;
+      case 'cashApp':
+        moonpayPaymentMethod = 'cash_app';
         break;
       default:
         moonpayPaymentMethod = undefined;

@@ -37,10 +37,15 @@ import {sleep} from '../../utils/helper-methods';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
+import {SumSubEffects} from '../sumsub';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
+import {
+  submitDeviceEvent as submitFishermanDeviceEvent,
+  type DeviceEventParams,
+} from '../../lib/sumsub/deviceIntelligence';
 import {LocationEffects} from '../location';
 import {WalletActions} from '../wallet';
 import {
@@ -393,6 +398,7 @@ const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
     }
     dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
     dispatch(CardEffects.startCardStoreInit(data.user));
+    dispatch(SumSubEffects.startGetKycStatus());
   } catch (err: any) {
     if (isAxiosError(err)) {
       logManager.error(`${err.name}: ${err.message}`);
@@ -610,6 +616,43 @@ export const startInAppNotification =
     const _message = _InAppNotificationMessages[key];
 
     dispatch(AppActions.showInAppNotification(context, _message, request));
+  };
+
+/**
+ * Dismiss the native InAppBrowser, but only if we actually opened one via
+ * openUrlWithInAppBrowser (tracked in APP.inAppBrowserOpen). Some flows (e.g.
+ * Buy/Sell) render their own in-app WebView modal
+ * instead of the native IAB. Calling InAppBrowser.close() unconditionally
+ * (e.g. whenever a bitpay:// deep link is received) can dismiss whatever modal happens to be
+ * presented at that moment - including that unrelated WebView modal - since
+ * the underlying native module simply dismisses the topmost presented
+ * screen rather than a specific tracked IAB session.
+ */
+export const dismissInAppBrowserIfOpen =
+  (): Effect<void> => async (dispatch, getState) => {
+    const {APP} = getState();
+    if (!APP.inAppBrowserOpen) {
+      logManager.debug(
+        '[dismissInAppBrowserIfOpen] IAB not open, skipping close',
+      );
+      return;
+    }
+    logManager.debug(
+      '[dismissInAppBrowserIfOpen] IAB is open, attempting close...',
+    );
+    try {
+      const isAvailable = await InAppBrowser.isAvailable();
+      if (isAvailable) {
+        await InAppBrowser.close();
+      }
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(
+        '[dismissInAppBrowserIfOpen] Error closing IAB: ' + errStr,
+      );
+    } finally {
+      dispatch(AppActions.setInAppBrowserOpen(false));
+    }
   };
 
 /**
@@ -1528,3 +1571,43 @@ export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
     );
   }
 };
+
+// Fingerprints the device and submits the event to SumSub. Network and the BitPay ID token
+// come from state; callers pass only the event fields.
+export const submitDeviceEvent =
+  (
+    params: Omit<DeviceEventParams, 'network' | 'apiToken'>,
+  ): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {APP, BITPAY_ID} = getState();
+    const authenticated = !!BITPAY_ID.apiToken[APP.network];
+    try {
+      const visitorId = await submitFishermanDeviceEvent({
+        ...params,
+        network: APP.network,
+        // Undefined before login, which routes to the public (rate limited) variant.
+        apiToken: BITPAY_ID.apiToken[APP.network],
+      });
+      console.log(`[SumSub DI] '${params.event}' visitorId:`, visitorId);
+      dispatch(
+        Analytics.track('SumSub DI', {
+          deviceEvent: params.event,
+          authenticated,
+          success: true,
+          hasVisitorId: !!visitorId,
+        }),
+      );
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(
+        `[SumSub] Device Intelligence event '${params.event}' failed: ${errorMsg}`,
+      );
+      dispatch(
+        Analytics.track('SumSub DI', {
+          deviceEvent: params.event,
+          authenticated,
+          success: false,
+        }),
+      );
+    }
+  };

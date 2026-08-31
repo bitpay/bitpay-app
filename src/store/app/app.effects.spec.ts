@@ -177,6 +177,9 @@ jest.mock('../analytics/analytics.effects', () => ({
 }));
 jest.mock('../bitpay-id', () => ({BitPayIdEffects: {}}));
 jest.mock('../card', () => ({CardActions: {}, CardEffects: {}}));
+jest.mock('../sumsub', () => ({
+  SumSubEffects: {startGetKycStatus: jest.fn(() => ({type: 'GET_KYC_STATUS'}))},
+}));
 jest.mock('../coinbase', () => ({
   coinbaseInitialize: jest.fn(() => ({type: 'COINBASE_INITIALIZE'})),
 }));

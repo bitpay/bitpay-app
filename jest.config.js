@@ -8,7 +8,7 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|\@react-navigation|(react-navigation(-.*))|\@sentry|uuid|victory|(victory(-.*))|lodash-es))',
+    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|@sentry|uuid|victory|(victory(-.*))|lodash-es))',
   ],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest',
@@ -25,12 +25,17 @@ module.exports = {
     '@test/(.*)': '<rootDir>/test/$1',
     // Redirect bare styled-components to the native version (some files import
     // 'styled-components' instead of 'styled-components/native', which breaks in tests)
-    '^styled-components$': '<rootDir>/node_modules/styled-components/native/dist/styled-components.native.cjs.js',
+    '^styled-components$':
+      '<rootDir>/node_modules/styled-components/native/dist/styled-components.native.cjs.js',
     // Force ESM-only crypto packages to CJS builds
     '^uuid$': require.resolve('uuid'),
-    '^paillier-bigint$': '<rootDir>/node_modules/paillier-bigint/dist/cjs/index.node.cjs',
-    '^bigint-crypto-utils$': '<rootDir>/node_modules/bigint-crypto-utils/dist/cjs/index.node.cjs',
+    '^paillier-bigint$':
+      '<rootDir>/node_modules/paillier-bigint/dist/cjs/index.node.cjs',
+    '^bigint-crypto-utils$':
+      '<rootDir>/node_modules/bigint-crypto-utils/dist/cjs/index.node.cjs',
     '^@env$': '<rootDir>/test/mock.js',
+    '^@sumsub/react-native-mobilesdk-module$':
+      '<rootDir>/test/mocks/sumsubSdkMock.js',
   },
   roots: ['<rootDir>/src/'],
   collectCoverageFrom: [

@@ -93,7 +93,8 @@ export type MoonpayPayoutMethodType =
   | 'sepa_bank_transfer'
   | 'gbp_bank_transfer'
   | 'paypal'
-  | 'venmo';
+  | 'venmo'
+  | 'cash_app';
 
 export interface MoonpayGetSellQuoteRequestData {
   env: 'sandbox' | 'production';
@@ -149,10 +150,16 @@ export interface MoonpayGetSellSignedPaymentUrlRequestData {
   externalCustomerId?: string;
   colorCode?: string;
   theme?: 'dark' | 'light';
+  themeId?: string;
   language?: string;
+  email?: string;
   showWalletAddressForm?: boolean;
   unsupportedRegionRedirectUrl?: string;
   skipUnsupportedRegionScreen?: string;
+  defaultBaseCurrencyCode?: string;
+  quoteCurrencyAmount?: number;
+  refundWalletAddresses?: string; // JSON string, e.g. {"btc":"...","bch":"..."}
+  showAllCurrencies?: boolean;
 }
 
 export interface MoonpayGetSellSignedPaymentUrlData {

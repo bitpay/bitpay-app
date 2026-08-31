@@ -21,6 +21,7 @@
 		5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5BCF1C342740B8B2006D872E /* BootSplash.storyboard */; };
 		5BEA4BF02838402700AB2121 /* RCTPaymentPass.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.mm */; };
 		6D615C4929725FD70063DB8E /* RCTTimer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6D615C4729725FD70063DB8E /* RCTTimer.mm */; };
+		CA5471E01A2B3C4D5E6F7001 /* RCTCrashTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA5471E01A2B3C4D5E6F7002 /* RCTCrashTest.mm */; };
 		6D7C95E72E9007E200F0D481 /* RCTPushPermissionManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6D7C95E62E9007E200F0D481 /* RCTPushPermissionManager.mm */; };
 		71BABDA4524A43E98A190C87 /* Archivo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Archivo-Light.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -55,6 +56,8 @@
 		5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = BitPayApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6D615C4729725FD70063DB8E /* RCTTimer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTTimer.mm; sourceTree = "<group>"; };
 		6D615C4829725FD70063DB8E /* RCTTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTTimer.h; sourceTree = "<group>"; };
+		CA5471E01A2B3C4D5E6F7002 /* RCTCrashTest.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTCrashTest.mm; sourceTree = "<group>"; };
+		CA5471E01A2B3C4D5E6F7003 /* RCTCrashTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTCrashTest.h; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Archivo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Light.ttf"; path = "../assets/fonts/Archivo-Light.ttf"; sourceTree = "<group>"; };
 		6D7C95E62E9007E200F0D481 /* RCTPushPermissionManager.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = RCTPushPermissionManager.mm; sourceTree = "<group>"; };
 		715670CB346B45A7A9EC2044 /* Archivo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Bold.ttf"; path = "../assets/fonts/Archivo-Bold.ttf"; sourceTree = "<group>"; };
@@ -98,6 +101,8 @@
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				6D615C4829725FD70063DB8E /* RCTTimer.h */,
 				6D615C4729725FD70063DB8E /* RCTTimer.mm */,
+				CA5471E01A2B3C4D5E6F7003 /* RCTCrashTest.h */,
+				CA5471E01A2B3C4D5E6F7002 /* RCTCrashTest.mm */,
 				5B31AAFC2786381C002765E1 /* RCTDosh.h */,
 				5B31AAFD2786387B002765E1 /* RCTDosh.mm */,
 				5B31AB5E2786515A002765E1 /* Dosh.swift */,
@@ -372,6 +377,7 @@
 				6D7C95E72E9007E200F0D481 /* RCTPushPermissionManager.mm in Sources */,
 				5BEA4BF02838402700AB2121 /* RCTPaymentPass.mm in Sources */,
 				6D615C4929725FD70063DB8E /* RCTTimer.mm in Sources */,
+				CA5471E01A2B3C4D5E6F7001 /* RCTCrashTest.mm in Sources */,
 				ECCB92782860B25D00F9CF8B /* SilentPushEvent.mm in Sources */,
 				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
 				52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */,

@@ -428,3 +428,14 @@ export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
   type: AppActionTypes.DISMISS_MARKETING_CONTENT_CARD,
   payload: cardId,
 });
+
+export const setShowKycGetVerifiedModal = (
+  payload: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL,
+  payload,
+});
+
+export const resetKycGetVerifiedModal = (): AppActionType => ({
+  type: AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL,
+});

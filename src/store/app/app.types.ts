@@ -100,6 +100,8 @@ export enum AppActionTypes {
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
+  SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
+  RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
 }
 
 interface ImportLedgerModalToggled {
@@ -459,6 +461,15 @@ interface DismissMarketingContentCard {
   payload: string;
 }
 
+interface SetShowKycGetVerifiedModal {
+  type: typeof AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL;
+  payload: boolean;
+}
+
+interface ResetKycGetVerifiedModal {
+  type: typeof AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -537,4 +548,6 @@ export type AppActionType =
   | ShowWalletConnectStartModal
   | DismissWalletConnectStartModal
   | ShowArchaxBanner
-  | DismissMarketingContentCard;
+  | DismissMarketingContentCard
+  | SetShowKycGetVerifiedModal
+  | ResetKycGetVerifiedModal;
