@@ -54,6 +54,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'isImportLedgerModalVisible',
   'showArchaxBanner',
   'hasViewedTSSOnboarding',
+  'showKycGetVerifiedModal',
+  'kycGetVerifiedModalShown',
 ];
 
 export type ModalId =
@@ -173,6 +175,8 @@ export interface AppState {
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
   dismissedMarketingCardIds: string[];
+  showKycGetVerifiedModal: boolean;
+  kycGetVerifiedModalShown: boolean;
 }
 
 const initialState: AppState = {
@@ -275,6 +279,8 @@ const initialState: AppState = {
   tokensDataLoaded: false,
   showArchaxBanner: false,
   dismissedMarketingCardIds: [],
+  showKycGetVerifiedModal: false,
+  kycGetVerifiedModalShown: false,
 };
 
 export const appReducer = (
@@ -835,6 +841,21 @@ export const appReducer = (
         dismissedMarketingCardIds: [...state.dismissedMarketingCardIds, cardId],
       };
     }
+
+    case AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL:
+      return {
+        ...state,
+        showKycGetVerifiedModal: action.payload,
+        kycGetVerifiedModalShown:
+          action.payload || state.kycGetVerifiedModalShown,
+      };
+
+    case AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL:
+      return {
+        ...state,
+        showKycGetVerifiedModal: false,
+        kycGetVerifiedModalShown: false,
+      };
 
     default:
       return state;

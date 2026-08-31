@@ -20,6 +20,9 @@ project = Xcodeproj::Project.open(project_path)
 min_ios_version_supported = project.build_configurations.first.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
 ######
 
+source 'https://cdn.cocoapods.org/'
+source 'https://github.com/SumSubstance/Specs.git'
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 

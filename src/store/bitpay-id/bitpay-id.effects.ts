@@ -12,10 +12,16 @@ import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {Analytics} from '../analytics/analytics.effects';
-import {isAnonymousBrazeEid, setEmailNotifications} from '../app/app.effects';
+import {
+  isAnonymousBrazeEid,
+  setEmailNotifications,
+  submitDeviceEvent,
+} from '../app/app.effects';
+import {DeviceEvent} from '../../lib/sumsub/deviceIntelligence';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {ShopActions, ShopEffects} from '../shop';
+import {SumSubActions, SumSubEffects} from '../sumsub';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
@@ -23,7 +29,11 @@ import {ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
-import {setBrazeEid, setEmailNotificationsAccepted} from '../app/app.actions';
+import {
+  resetKycGetVerifiedModal,
+  setBrazeEid,
+  setEmailNotificationsAccepted,
+} from '../app/app.actions';
 import {
   getPasskeyCredentials,
   getPasskeyStatus,
@@ -35,6 +45,13 @@ import {
 } from '../../store/bitpay-id/bitpay-id.actions';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
+import {
+  asCloudflareChallenge,
+  challengeOriginFor,
+  isCloudflareChallengeError,
+  safeErrorMessage,
+} from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
 import {sleep} from '../../utils/helper-methods';
 
@@ -42,6 +59,11 @@ interface StartLoginParams {
   email?: string;
   password?: string;
   gCaptchaResponse?: string;
+  /**
+   * Set internally when replaying a login after the user cleared a Cloudflare
+   * challenge, so a still-challenged request can't loop.
+   */
+  isChallengeRetry?: boolean;
 }
 
 export const mergeBrazeUser =
@@ -152,7 +174,7 @@ export const startFetchSession =
       const session = await AuthApi.fetchSession(APP.network);
 
       dispatch(BitPayIdActions.successFetchSession(session));
-    } catch (err) {
+    } catch {
       dispatch(BitPayIdActions.failedFetchSession());
     }
   };
@@ -202,7 +224,9 @@ export const startCreateAccount =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(startPairAndLoadUser(APP.network, secret, undefined));
+      await dispatch(
+        startPairAndLoadUser(APP.network, secret, undefined, 'signup'),
+      );
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
@@ -260,6 +284,12 @@ export const checkLoginWithPasskey =
       }
       return Promise.resolve(true);
     } catch (err: any) {
+      // Rethrow unwrapped so startLogin can present the interstitial —
+      // rewrapping below would launder the error type.
+      if (isCloudflareChallengeError(err)) {
+        throw err;
+      }
+
       const errMsg = err.message || JSON.stringify(err);
 
       // No show error, user canceled
@@ -275,6 +305,7 @@ export const startLogin =
     email,
     password,
     gCaptchaResponse,
+    isChallengeRetry,
   }: StartLoginParams): Effect<Promise<boolean>> =>
   async (dispatch, getState) => {
     try {
@@ -362,16 +393,63 @@ export const startLogin =
       dispatch(BitPayIdActions.successLogin(APP.network, session));
       return true;
     } catch (err: any) {
+      const challenge = asCloudflareChallenge(err);
+
+      // Cloudflare wants the user to prove they're human. Present the
+      // interstitial, then replay the login once with the clearance cookie set.
+      // Only present when the challenge URL is usable — presenting with a
+      // malformed URL would give the modal nothing to load, and the friendly
+      // error below is the better outcome.
+      if (challenge && !isChallengeRetry && challengeOriginFor(challenge.url)) {
+        logManager.info(
+          '[startLogin] Cloudflare challenge received — prompting user.',
+        );
+        ongoingProcessManager.hide();
+
+        const solved = await cloudflareChallengeManager.present(challenge.url);
+
+        if (solved) {
+          // Await the retry to completion before returning: `return dispatch(...)`
+          // would run this frame's `finally` as soon as the inner thunk started,
+          // hiding the LOGGING_IN indicator the retry just showed.
+          const retried: boolean = await dispatch(
+            startLogin({
+              email,
+              password,
+              gCaptchaResponse,
+              isChallengeRetry: true,
+            }),
+          );
+          return retried;
+        }
+
+        dispatch(
+          BitPayIdActions.failedLogin(
+            t('Verification was not completed. Please try again.'),
+          ),
+        );
+        return false;
+      }
+
       let errMsg;
 
-      if (isAxiosError<LoginErrorResponse>(err)) {
+      if (challenge) {
+        errMsg = t(
+          'We could not verify your connection. Please try again in a moment.',
+        );
+      } else if (isAxiosError<LoginErrorResponse>(err)) {
         errMsg = upperFirst(
-          err.response?.data.message ||
+          err.response?.data?.message ||
+            safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
       } else {
-        errMsg = err.message || JSON.stringify(err);
+        // Never surface a raw response body — it may be an HTML error page.
+        errMsg = safeErrorMessage(
+          err.message,
+          t('An unexpected error occurred.'),
+        );
       }
       dispatch(BitPayIdActions.failedLogin(errMsg));
       logManager.error('[startLogin]', err.status, errMsg);
@@ -533,7 +611,12 @@ export const startDeeplinkPairing =
   };
 
 export const startPairAndLoadUser =
-  (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
+  (
+    network: Network,
+    secret: string,
+    code?: string,
+    deviceEvent: DeviceEvent = 'login',
+  ): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
@@ -568,7 +651,20 @@ export const startPairAndLoadUser =
       }
 
       dispatch(startBitPayIdStoreInit(data.user));
+
+      // SumSub Device Intelligence: link this device to the user on login/signup.
+      const {givenName, familyName, email} = data.user?.basicInfo || {};
+      const fullName = [givenName, familyName].filter(Boolean).join(' ');
+      dispatch(
+        submitDeviceEvent({
+          event: deviceEvent,
+          email,
+          fullName: fullName || undefined,
+        }),
+      );
+
       dispatch(CardEffects.startCardStoreInit(data.user));
+      dispatch(SumSubEffects.startGetKycStatus());
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>
         dispatch(ShopEffects.redeemSyncedGiftCards()),
@@ -664,6 +760,8 @@ export const startDisconnectBitPayId =
     }
 
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+    dispatch(SumSubActions.resetKyc(APP.network));
+    dispatch(resetKycGetVerifiedModal());
     dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));
@@ -879,6 +977,8 @@ export const startSubmitForgotPasswordEmail =
         gCaptchaResponse,
       );
       if (data.success) {
+        dispatch(submitDeviceEvent({event: 'password-reset-request', email}));
+
         dispatch(
           BitPayIdActions.forgotPasswordEmailStatus(
             'success',
@@ -895,7 +995,7 @@ export const startSubmitForgotPasswordEmail =
           ),
         );
       }
-    } catch (e) {
+    } catch {
       dispatch(BitPayIdActions.forgotPasswordEmailStatus('failed', errMsg));
     } finally {
       ongoingProcessManager.hide();

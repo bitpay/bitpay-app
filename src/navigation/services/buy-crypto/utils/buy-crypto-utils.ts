@@ -29,7 +29,11 @@ import {
 } from './transak-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
-import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
+import {
+  getExternalServiceSymbol,
+  isPaymentMethodDisabledForPartner,
+} from '../../utils/external-services-utils';
 
 export type BuyCryptoExchangeKey =
   | 'banxa'
@@ -54,10 +58,12 @@ export const getBuyEnabledPaymentMethods = (
   chain?: string,
   country?: string,
   exchange?: BuyCryptoExchangeKey | undefined,
+  buyCryptoConfig?: BuyCryptoConfig,
 ): Partial<PaymentMethods> => {
   if (!currency || !coin || !chain) {
     return {};
   }
+  const paymentMethodsConfig = buyCryptoConfig?.paymentMethods;
   Object.values(PaymentMethodsAvailable).forEach(pm => {
     if (
       pm.enabled &&
@@ -69,57 +75,18 @@ export const getBuyEnabledPaymentMethods = (
   });
 
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
+    if (!method.enabled || paymentMethodsConfig?.[method.method]?.disabled) {
+      return false;
+    }
+    const isSupportedByExchange = (exch: BuyCryptoExchangeKey) =>
+      !isPaymentMethodDisabledForPartner(
+        buyCryptoConfig?.[exch],
+        method.method,
+      ) &&
+      isPaymentMethodSupported(exch, method, coin, chain, currency, country);
     return exchange && BuyCryptoSupportedExchanges.includes(exchange)
-      ? method.enabled &&
-          isPaymentMethodSupported(
-            exchange,
-            method,
-            coin,
-            chain,
-            currency,
-            country,
-          )
-      : method.enabled &&
-          (isPaymentMethodSupported(
-            'banxa',
-            method,
-            coin,
-            chain,
-            currency,
-            country,
-          ) ||
-            isPaymentMethodSupported(
-              'moonpay',
-              method,
-              coin,
-              chain,
-              currency,
-              country,
-            ) ||
-            isPaymentMethodSupported('ramp', method, coin, chain, currency) ||
-            isPaymentMethodSupported(
-              'sardine',
-              method,
-              coin,
-              chain,
-              currency,
-              country,
-            ) ||
-            isPaymentMethodSupported(
-              'simplex',
-              method,
-              coin,
-              chain,
-              currency,
-            ) ||
-            isPaymentMethodSupported(
-              'transak',
-              method,
-              coin,
-              chain,
-              currency,
-              country,
-            ));
+      ? isSupportedByExchange(exchange)
+      : BuyCryptoSupportedExchanges.some(isSupportedByExchange);
   });
 
   return EnabledPaymentMethods;

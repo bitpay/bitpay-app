@@ -320,6 +320,9 @@ export const getMoonpaySellPayoutMethodFormat = (
     case 'venmo':
       formattedPaymentMethod = 'venmo';
       break;
+    case 'cashApp':
+      formattedPaymentMethod = 'cash_app';
+      break;
     default:
       formattedPaymentMethod = undefined;
       break;
@@ -347,6 +350,9 @@ export const getPayoutMethodKeyFromMoonpayType = (
     case 'gbp_bank_transfer':
       formattedPaymentMethod = 'gbpBankTransfer';
       break;
+    case 'cash_app':
+      formattedPaymentMethod = 'cashApp';
+      break;
     default:
       formattedPaymentMethod = undefined;
       break;
@@ -360,6 +366,7 @@ export const getMoonpayFiatListByPayoutMethod = (
   let fiatList: string[];
   switch (method) {
     case 'ach':
+    case 'cashApp':
       fiatList = ['USD'];
       break;
     case 'creditCard':

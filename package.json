@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.45.0",
+  "version": "14.46.3",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -84,6 +84,8 @@
     "@solana/sysvars": "3.0.2",
     "@solana/web3.js": "1.98.2",
     "@solana/webcrypto-ed25519-polyfill": "2.1.1",
+    "@sumsub/fisherman": "2.1.0",
+    "@sumsub/react-native-mobilesdk-module": "1.45.1",
     "@tradle/react-native-http": "2.0.1",
     "@walletconnect/jsonrpc-types": "1.0.4",
     "@walletconnect/react-native-compat": "2.21.8",

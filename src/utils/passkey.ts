@@ -17,6 +17,11 @@ import {
 import {Network} from '../constants';
 import {PasskeyCredential} from '../store/bitpay-id/bitpay-id.models';
 import BitPayIdApi from '../api/bitpay';
+import {
+  CloudflareChallengeError,
+  isCloudflareChallenge,
+  safeErrorMessage,
+} from './cloudflare';
 
 type Json = Record<string, any>;
 
@@ -25,19 +30,34 @@ async function handleFetchError(res: Response, url: string): Promise<void> {
 
   let message = res.statusText;
   let body: any;
+  let text = '';
 
   try {
-    const text = await res.text();
+    text = await res.text();
     if (text) {
       try {
         body = JSON.parse(text);
-        message = body.message || body.error || text;
+        message = body.message || body.error || safeErrorMessage(text, message);
       } catch {
-        message = text; // plain text
+        // Not JSON. Only surface it if it isn't an HTML error page — otherwise
+        // the whole document ends up rendered as the error message.
+        message = safeErrorMessage(text, message);
       }
     }
   } catch {
     /* ignore body parse errors */
+  }
+
+  // Cloudflare answers a challenged request with an interstitial rather than
+  // our API's JSON, so this has to be checked before treating it as a failure.
+  if (
+    isCloudflareChallenge({
+      status: res.status,
+      headers: res.headers,
+      body: text,
+    })
+  ) {
+    throw new CloudflareChallengeError(url, res.status);
   }
 
   const error = new Error(message);

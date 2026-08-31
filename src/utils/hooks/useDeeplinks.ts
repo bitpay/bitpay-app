@@ -7,7 +7,6 @@ import {
 import {useMemo, useRef} from 'react';
 import {DeviceEventEmitter, Linking, NativeModules} from 'react-native';
 import AppsFlyer from 'react-native-appsflyer';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
   APP_CRYPTO_PREFIX,
   APP_DEEPLINK_PREFIX,
@@ -21,8 +20,10 @@ import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
 import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
-import {AppActions} from '../../store/app';
-import {incomingLink} from '../../store/app/app.effects';
+import {
+  dismissInAppBrowserIfOpen,
+  incomingLink,
+} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
 import {useLogger} from './useLogger';
 import {DebugScreens} from '../../navigation/Debug';
@@ -126,18 +127,7 @@ export const useUrlEventHandler = () => {
         }
       }
 
-      try {
-        // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
-        InAppBrowser.isAvailable().then(isAvailable => {
-          if (isAvailable) {
-            InAppBrowser.close();
-            dispatch(AppActions.setInAppBrowserOpen(false));
-          }
-        });
-      } catch (err) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error('[deeplink] not available from IAB: ' + errStr);
-      }
+      dispatch(dismissInAppBrowserIfOpen());
 
       return handled;
     }
