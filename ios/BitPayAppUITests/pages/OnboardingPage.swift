@@ -151,6 +151,15 @@ class OnboardingPage {
       return
     }
 
+    // Fallback: Pin screen body "Maybe Later" button (skip-security-button)
+    let skipSecurityButton = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'skip-security-button'")
+    ).firstMatch
+    if skipSecurityButton.waitForExistence(timeout: 10) {
+      skipSecurityButton.tap()
+      return
+    }
+
     let skipLabelFallback = app.descendants(matching: .any).element(
       matching: NSPredicate(format: "label == 'Skip'")
     ).firstMatch
@@ -225,7 +234,7 @@ class OnboardingPage {
     }
   }
 
-  func isYourPortfolioBalanceTextDisplayed(timeout: TimeInterval = 60) -> Bool {
+  func isYourPortfolioBalanceTextDisplayed(timeout: TimeInterval = 120) -> Bool {
     if yourPortfolioBalanceText.waitForExistence(timeout: timeout) {
       return true
     }

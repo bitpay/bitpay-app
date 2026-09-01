@@ -37,7 +37,11 @@ class ImportWalletPage {
     }
 
     fun clickImportWallet() {
-        WaitUtils.waitForView(importWalletButton)
+        // A previous test can leave the app's wallet discovery modal active.
+        // Wait for that existing import to settle before attempting another submit.
+        if (waitForImportButtonOrFlowAdvance(timeoutMs = 900000)) {
+            return
+        }
 
         var advanced = false
         for (attempt in 1..3) {
@@ -63,14 +67,39 @@ class ImportWalletPage {
         }
     }
 
+    /**
+     * @return true when an existing import already advanced to a terminal screen;
+     * false when the import form is ready for submission.
+     */
+    private fun waitForImportButtonOrFlowAdvance(timeoutMs: Long): Boolean {
+        val end = System.currentTimeMillis() + timeoutMs
+
+        while (System.currentTimeMillis() < end) {
+            if (hasImportFlowAdvanced(timeoutMs = 1000)) {
+                return true
+            }
+
+            if (isVisible(importWalletButton, 1000)) {
+                return false
+            }
+
+            // Ongoing wallet discovery is a valid in-progress state, not a missing locator.
+            if (isVisible(loadingTokensText, 1200)) {
+                Thread.sleep(1200)
+            } else {
+                Thread.sleep(300)
+            }
+        }
+
+        throw RuntimeException(
+            "Import screen did not become ready and existing wallet discovery did not complete within ${timeoutMs / 60000} minutes."
+        )
+    }
+
     private fun waitForImportFlowAdvance(timeoutMs: Long): Boolean {
         val end = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < end) {
-            if (isVisible(firstTermCheckbox, 1000) ||
-                isVisible(backupKeyPromptText, 1000) ||
-                isVisible(portfolioBalanceText, 1000) ||
-                isVisible(myKeyText, 1000)
-            ) {
+            if (hasImportFlowAdvanced(timeoutMs = 1000)) {
                 return true
             }
 
@@ -82,6 +111,13 @@ class ImportWalletPage {
             }
         }
         return false
+    }
+
+    private fun hasImportFlowAdvanced(timeoutMs: Long): Boolean {
+        return isVisible(firstTermCheckbox, timeoutMs) ||
+            isVisible(backupKeyPromptText, timeoutMs) ||
+            isVisible(portfolioBalanceText, timeoutMs) ||
+            isVisible(myKeyText, timeoutMs)
     }
 
     private fun isVisible(matcher: org.hamcrest.Matcher<android.view.View>, timeoutMs: Long): Boolean {
