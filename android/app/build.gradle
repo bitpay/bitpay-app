@@ -107,6 +107,7 @@ android {
         versionName "14.46.3"
         versionCode 91212441
         missingDimensionStrategy 'react-native-camera', 'mlkit'
+        testInstrumentationRunner "io.qameta.allure.android.runners.AllureAndroidJUnitRunner"
         ndk {
             abiFilters "armeabi-v7a", "x86_64", "arm64-v8a"
         }
@@ -166,6 +167,22 @@ android {
 }
 
 dependencies {
+    // Espresso libraries
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation 'org.hamcrest:hamcrest:2.2'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+
+    // Allure reporting
+    androidTestImplementation "io.qameta.allure:allure-kotlin-model:2.4.0"
+    androidTestImplementation "io.qameta.allure:allure-kotlin-commons:2.4.0"
+    androidTestImplementation "io.qameta.allure:allure-kotlin-junit4:2.4.0"
+    androidTestImplementation "io.qameta.allure:allure-kotlin-android:2.4.0"
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation platform('com.google.firebase:firebase-bom:29.1.0')
@@ -174,6 +191,10 @@ dependencies {
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
     implementation("androidx.core:core-splashscreen:1.0.0")
+
+    // Test Orchestrator + TestStorage
+    androidTestUtil "androidx.test:orchestrator:1.5.1"
+    androidTestImplementation "androidx.test.services:test-services:1.5.0"
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
