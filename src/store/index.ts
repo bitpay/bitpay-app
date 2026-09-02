@@ -230,7 +230,11 @@ export const reduxStorage: Storage = {
                 `Backed up store to filesystem, triggered by ${triggerLabel}.`,
               ),
             )
-            .catch(() => {});
+            // Retry on the next persist:root write rather than waiting for
+            // another trigger action, which may never come
+            .catch(() => {
+              backupTriggerAction = triggerLabel;
+            });
           backupTriggerAction = null;
         }
       }
