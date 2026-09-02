@@ -113,6 +113,7 @@ interface ExternalServicesWalletSelectorScreenProps {
   sellCryptoSupportedCoinsFullObj?: SellCryptoCoin[] | undefined;
   onWalletSelected?: (wallet: Wallet) => void;
   fromWallet?: Wallet;
+  fromAccount?: {keyId: string; accountAddress: string}; // used when entering from an EVM/SVM account (AccountDetails)
   currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
   chain?: string | undefined; // used from charts and deeplinks.
   partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
@@ -131,6 +132,7 @@ const ExternalServicesWalletSelector: React.FC<
   sellCryptoSupportedCoins,
   onWalletSelected,
   fromWallet,
+  fromAccount,
   currencyAbbreviation,
   chain,
   loading,
@@ -188,6 +190,22 @@ const ExternalServicesWalletSelector: React.FC<
     }
   };
 
+  const isWalletBuySupported = (wallet: Wallet): boolean => {
+    return (
+      wallet.credentials &&
+      wallet.network === 'livenet' &&
+      wallet.isComplete() &&
+      !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
+      buyCryptoSupportedCoins.includes(
+        getExternalServiceSymbol(
+          wallet.currencyAbbreviation.toLowerCase(),
+          wallet.chain,
+        ),
+      )
+    );
+  };
+
   const selectFirstAvailableWallet = async () => {
     const keysList: Key[] = Object.values(allKeys).filter(
       key => key.backupComplete,
@@ -196,6 +214,47 @@ const ExternalServicesWalletSelector: React.FC<
     if (!keysList[0]) {
       await sleep(300);
       walletError('emptyKeyList');
+      return;
+    }
+
+    if (
+      context === 'buyCrypto' &&
+      !preSetWallet?.id &&
+      !fromCurrencyAbbreviation
+    ) {
+      let scopedWallets: Wallet[];
+      if (fromAccount?.keyId && fromAccount?.accountAddress) {
+        const accountKey = keysList.find(k => k.id === fromAccount.keyId);
+        scopedWallets = (accountKey?.wallets || []).filter(
+          w => w.receiveAddress === fromAccount.accountAddress,
+        );
+      } else {
+        scopedWallets = keysList.flatMap(k => k.wallets || []);
+      }
+      const candidateWallets = scopedWallets.filter(isWalletBuySupported);
+
+      const lastPurchaseWalletId = buyCryptoOpts?.lastPurchaseData?.walletId;
+      const lastUsedWallet = lastPurchaseWalletId
+        ? candidateWallets.find(w => w.id === lastPurchaseWalletId)
+        : undefined;
+      if (lastUsedWallet) {
+        setWallet(lastUsedWallet);
+        return;
+      }
+
+      const fundedWallets = candidateWallets.filter(
+        w => (w.balance?.sat || 0) > 0,
+      );
+      if (fundedWallets[0]) {
+        const [highestBalanceWallet] = orderBy(
+          fundedWallets,
+          w => w.balance?.fiat || 0,
+          'desc',
+        );
+        _setSelectedWallet(highestBalanceWallet);
+        return;
+      }
+
       return;
     }
 

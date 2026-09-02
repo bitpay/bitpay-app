@@ -40,6 +40,7 @@ import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -93,6 +94,7 @@ const AccountSettings = () => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const _key: Key = keys[key.id];
+  const tssMetadata = _key.wallets.find(wallet => wallet.tssKeyId)?.tssMetadata;
 
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
@@ -288,7 +290,15 @@ const AccountSettings = () => {
         <Hr />
 
         <AssetsHeaderContainer>
-          <Title>{t('Assets')}</Title>
+          <Title>{t('Wallets')}</Title>
+          {tssMetadata ? (
+            <ThresholdBadge
+              m={tssMetadata.m}
+              n={tssMetadata.n}
+              size={'list'}
+              style={{marginLeft: 4}}
+            />
+          ) : null}
         </AssetsHeaderContainer>
 
         <SearchComponentContainer>

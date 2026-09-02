@@ -118,27 +118,26 @@ export interface RampPaymentUrlConfigParams {
   flow?: 'buy' | 'sell'; // Default: buy
   hostLogoUrl: string;
   hostAppName: string;
-  swapAsset?: string; // E.g. MATIC_*,ETH_DAI,ETH_USDC,ETH_USDS,ETH_USDT
-  offrampAsset?: string; // E.g. MATIC_*,ETH_DAI,ETH_USDC,ETH_USDS,ETH_USDT
-  // swapAmount(number): the amount should be provided in wei or token units. You can block editing value of the transaction by providing swapAmount and single swapAsset parameters e.g. https://buy.rampnetwork.com/?swapAmount=100000000000000000&swapAsset=ETH for 0.1 ETH
-  swapAmount?: string | number;
-  // fiatCurrency (string) and fiatValue (int): are two optional parameters that allow you to pre-set the total fiat value of the purchase that will be suggested to the user. They have to be used together as they don't work separately.
-  fiatCurrency?: string;
-  fiatValue?: number;
+  enabledCryptoAssets?: string; // Comma-separated list of enabled crypto assets (applies to all flows). E.g. MATIC_*,ETH_DAI,ETH_USDC,ETH_USDS,ETH_USDT
+  // inAsset (string: The incoming asset (sent by the user), can be a crypto asset key or fiat currency code) and inAssetValue (int): are two optional parameters that allow you to pre-set the total fiat value of the purchase that will be suggested to the user. They have to be used together as they don't work separately.
+  inAsset?: string;
+  // inAssetValue(number): the amount should be provided in wei or token units. You can block editing value of the transaction by providing swapAmount and single swapAsset parameters e.g. https://buy.rampnetwork.com/?swapAmount=100000000000000000&swapAsset=ETH for 0.1 ETH
+  inAssetValue?: number;
+  // outAsset (string: The outgoing asset (received by the user), can be a crypto asset key or fiat currency code)
+  outAsset?: string; // E.g. USD, EUR, BRL, ARS, BASE_USDC, BTC_BTC
+  outAssetValue?: string; // The outgoing asset value in units (no decimals) E.g. 10000 for $100.00 USD, 1000 for $10.00 USD
   enabledFlows: RampFlow[] | RampFlow;
   defaultFlow: RampFlow;
   // userAddress: An optional string parameter that pre-sets the address the crypto will be sent to. For off-ramp, will be treated as a source address from which the crypto will be sent from.
   userAddress?: string;
   userEmailAddress?: string;
   selectedCountryCode: string;
-  defaultAsset: string;
   finalUrl?: string; // On-ramp param to return to the app
   useSendCryptoCallback?: boolean; // Off-ramp param to show wallet button in checkout page
   // paymentMethodType: ON-ramp only. An optional string parameter that pre-selects payment method for your user to make their onramping experience even quicker.
   paymentMethodType?: RampPaymentMethodType;
   // hideExitButton: An optional boolean parameter to show or hide internal exit button on widget.
   hideExitButton?: boolean;
-  useSendCryptoCallbackVersion?: number;
 }
 
 export interface RampGetSellSignedPaymentUrlData {

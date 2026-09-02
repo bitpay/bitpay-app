@@ -94,11 +94,14 @@ export enum AppActionTypes {
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
   SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
+  SET_HAS_VIEWED_TSS_ONBOARDING = 'APP/SET_HAS_VIEWED_TSS_ONBOARDING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
+  SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
+  RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
 }
 
 interface ImportLedgerModalToggled {
@@ -434,6 +437,10 @@ interface SetHasViewedBillsTab {
   type: typeof AppActionTypes.SET_HAS_VIEWED_BILLS_TAB;
 }
 
+interface SetHasViewedTSSOnboarding {
+  type: typeof AppActionTypes.SET_HAS_VIEWED_TSS_ONBOARDING;
+}
+
 interface setUserFeedback {
   type: typeof AppActionTypes.USER_FEEDBACK;
   payload: FeedbackType;
@@ -452,6 +459,15 @@ interface ShowArchaxBanner {
 interface DismissMarketingContentCard {
   type: typeof AppActionTypes.DISMISS_MARKETING_CONTENT_CARD;
   payload: string;
+}
+
+interface SetShowKycGetVerifiedModal {
+  type: typeof AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL;
+  payload: boolean;
+}
+
+interface ResetKycGetVerifiedModal {
+  type: typeof AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL;
 }
 
 export type AppActionType =
@@ -520,6 +536,7 @@ export type AppActionType =
   | checkingBiometricForSending
   | SetHasViewedZenLedgerWarning
   | SetHasViewedBillsTab
+  | SetHasViewedTSSOnboarding
   | InAppBrowserOpen
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
@@ -531,4 +548,6 @@ export type AppActionType =
   | ShowWalletConnectStartModal
   | DismissWalletConnectStartModal
   | ShowArchaxBanner
-  | DismissMarketingContentCard;
+  | DismissMarketingContentCard
+  | SetShowKycGetVerifiedModal
+  | ResetKycGetVerifiedModal;

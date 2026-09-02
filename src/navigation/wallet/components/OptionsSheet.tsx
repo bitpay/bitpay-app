@@ -1,7 +1,8 @@
 import React, {ReactElement} from 'react';
+import {useTheme} from '@react-navigation/native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {BaseText, H4, TextAlign} from '../../../components/styled/Text';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import {
   ActiveOpacity,
   SheetContainer,
@@ -11,23 +12,62 @@ import {Platform, Image, ImageSourcePropType} from 'react-native';
 import {
   Black,
   Slate,
+  Slate30,
   White,
   SlateDark,
-  Warning,
   Caution,
+  Feather,
+  LightBlack,
+  Warning,
+  Warning25,
 } from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import Back from '../../../components/back/Back';
 import AngleRight from '../../../../assets/img/angle-right.svg';
+import ClockOutlineIcon from '../../../../assets/img/icon-clock-outline.svg';
+import AlertTriangleIcon from '../../../../assets/img/icon-alert-triangle.svg';
+import InfoIcon from '../../../components/icons/info/Info';
 
-const OptionsTitleContainer = styled.View`
-  margin-bottom: 25px;
+const OptionsHeaderContainer = styled.View<{cardStyle?: boolean}>`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: ${({cardStyle}) => (cardStyle ? 12 : 25)}px;
 `;
 
-const OptionContainer = styled(TouchableOpacity)<SheetParams>`
+const OptionsHeaderTitleContainer = styled.View`
+  position: absolute;
+  left: 0;
+  right: 0;
+  align-items: center;
+`;
+
+const OptionsHeaderPlaceholder = styled.View`
+  width: 41px;
+`;
+
+const OptionContainer = styled(TouchableOpacity)<
+  SheetParams & {cardStyle?: boolean}
+>`
   flex-direction: row;
   align-items: stretch;
-  padding-${({placement}) => placement}: 31px;
+  ${({cardStyle, placement}) =>
+    cardStyle
+      ? css`
+          padding: 16px;
+          margin-bottom: 12px;
+        `
+      : css`
+          padding-${placement}: 31px;
+        `}
+  ${({cardStyle, theme: {dark}}) =>
+    cardStyle &&
+    css`
+      background-color: ${dark ? LightBlack : Feather};
+      border-radius: 12px;
+    `}
 `;
 
 const OptionIconContainer = styled.View`
@@ -35,37 +75,53 @@ const OptionIconContainer = styled.View`
   width: 20px;
 `;
 
-const OptionTextContainer = styled.View`
+const OptionTextContainer = styled.View<{cardStyle?: boolean}>`
   align-items: flex-start;
-  justify-content: space-around;
+  justify-content: center;
   flex-direction: column;
-  margin: 0 20px;
+  margin: ${({cardStyle}) => (cardStyle ? '0 8px 0 0' : '0 20px')};
   flex: 1;
 `;
 
-const OptionTitleText = styled(BaseText)`
+const OptionTitleText = styled(BaseText)<{cardStyle?: boolean}>`
   font-style: normal;
-  font-weight: 600;
+  font-weight: ${({cardStyle}) => (cardStyle ? 500 : 600)};
   font-size: 16px;
-  line-height: 22px;
+  line-height: ${({cardStyle}) => (cardStyle ? 24 : 22)}px;
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   margin-bottom: 6px;
 `;
 
-const OptionDescriptionText = styled(BaseText)`
+const OptionDescriptionText = styled(BaseText)<{cardStyle?: boolean}>`
   font-style: normal;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate : Black)};
+  font-size: ${({cardStyle}) => (cardStyle ? 16 : 14)}px;
+  line-height: ${({cardStyle}) => (cardStyle ? 24 : 20)}px;
+  color: ${({cardStyle, theme: {dark}}) =>
+    cardStyle ? (dark ? Slate30 : SlateDark) : dark ? Slate : Black};
   margin-top: 3px;
 `;
 
 const SubDescriptionContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? '#000000' : '#F5F5F5')};
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-top: 12px;
+  width: 100%;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+`;
+
+const SubDescriptionRow = styled.View`
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const SubDescriptionRowSpacer = styled.View`
+  height: 4px;
+`;
+
+const SubDescriptionIconContainer = styled.View`
+  margin-right: 4px;
 `;
 
 const OptionSubDescriptionText = styled(BaseText)`
@@ -74,17 +130,44 @@ const OptionSubDescriptionText = styled(BaseText)`
   font-size: 13px;
   line-height: 20px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  flex: 1;
 `;
 
-const BoldText = styled(BaseText)`
-  font-weight: 700;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+const OptionBadgeContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  align-self: flex-start;
+  background-color: ${Warning25};
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 8px;
 `;
+
+const OptionBadgeText = styled(BaseText)`
+  font-style: normal;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  color: ${Warning};
+`;
+
+export interface SubDescriptionItem {
+  icon: 'clock' | 'warning' | 'info';
+  text: string;
+}
+
+const subDescriptionIcons = {
+  clock: ClockOutlineIcon,
+  warning: AlertTriangleIcon,
+  info: InfoIcon,
+};
 
 export interface Option {
   img?: ReactElement;
   imgSrc?: ImageSourcePropType;
-  subDescription?: string;
+  badge?: string;
+  subDescriptionItems?: SubDescriptionItem[];
+  cardStyle?: boolean;
   title?: string;
   description?: string;
   onPress: () => void;
@@ -98,29 +181,22 @@ interface Props extends SheetParams {
   isVisible: boolean;
   closeModal: () => void;
   title?: string;
+  onBack?: () => void;
   options: Array<Option>;
   placement?: SheetPlacement;
   paddingHorizontal?: number;
 }
 
-const renderSubDescription = (text: string) => {
-  const parts = text.split(/(\*\*[^*]+\*\*)/);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      const boldText = part.slice(2, -2);
-      return <BoldText key={index}>{boldText}</BoldText>;
-    }
-    return part;
-  });
-};
-
 const OptionsSheet = ({
   isVisible,
   closeModal,
   title,
+  onBack,
   options,
   paddingHorizontal,
 }: Props) => {
+  const theme = useTheme();
+  const hasCardStyle = options.some(option => option.cardStyle);
   const sheetPlacement = 'bottom' as SheetPlacement;
   const topStyles = {
     paddingTop: Platform.OS === 'android' ? 0 : 31,
@@ -135,11 +211,21 @@ const OptionsSheet = ({
         placement={sheetPlacement}
         paddingHorizontal={paddingHorizontal}>
         {title ? (
-          <OptionsTitleContainer>
-            <TextAlign align={'center'}>
-              <H4>{title}</H4>
-            </TextAlign>
-          </OptionsTitleContainer>
+          <OptionsHeaderContainer cardStyle={hasCardStyle}>
+            {onBack ? (
+              <TouchableOpacity onPress={onBack}>
+                <Back opacity={1} />
+              </TouchableOpacity>
+            ) : (
+              <OptionsHeaderPlaceholder />
+            )}
+            <OptionsHeaderTitleContainer pointerEvents="none">
+              <TextAlign align={'center'}>
+                <H4>{title}</H4>
+              </TextAlign>
+            </OptionsHeaderTitleContainer>
+            <OptionsHeaderPlaceholder />
+          </OptionsHeaderContainer>
         ) : null}
         {options.map(
           (
@@ -148,7 +234,9 @@ const OptionsSheet = ({
               imgSrc,
               title: optionTitle,
               description,
-              subDescription,
+              badge,
+              subDescriptionItems,
+              cardStyle,
               onPress,
               optionElement,
               showChevron,
@@ -159,6 +247,7 @@ const OptionsSheet = ({
               <OptionContainer
                 style={index === 0 && sheetPlacement === 'top' && topStyles}
                 placement={sheetPlacement}
+                cardStyle={cardStyle}
                 key={index}
                 activeOpacity={ActiveOpacity}
                 onPress={async () => {
@@ -176,24 +265,56 @@ const OptionsSheet = ({
                         <Image source={imgSrc} />
                       </OptionIconContainer>
                     )}
-                    <OptionTextContainer>
-                      {optionTitle ? (
-                        <OptionTitleText>{optionTitle}</OptionTitleText>
+                    <OptionTextContainer cardStyle={cardStyle}>
+                      {badge ? (
+                        <OptionBadgeContainer>
+                          <OptionBadgeText>{badge}</OptionBadgeText>
+                        </OptionBadgeContainer>
                       ) : null}
-                      <OptionDescriptionText>
+                      {optionTitle ? (
+                        <OptionTitleText cardStyle={cardStyle}>
+                          {optionTitle}
+                        </OptionTitleText>
+                      ) : null}
+                      <OptionDescriptionText cardStyle={cardStyle}>
                         {description}
                       </OptionDescriptionText>
-                      {subDescription && (
-                        <SubDescriptionContainer>
-                          <OptionSubDescriptionText>
-                            {renderSubDescription(subDescription)}
-                          </OptionSubDescriptionText>
-                        </SubDescriptionContainer>
-                      )}
+                      {subDescriptionItems &&
+                        subDescriptionItems.length > 0 && (
+                          <SubDescriptionContainer>
+                            {subDescriptionItems.map((item, itemIndex) => {
+                              const ItemIcon = subDescriptionIcons[item.icon];
+                              return (
+                                <React.Fragment key={itemIndex}>
+                                  {itemIndex > 0 && <SubDescriptionRowSpacer />}
+                                  <SubDescriptionRow>
+                                    <SubDescriptionIconContainer>
+                                      <ItemIcon
+                                        width={16}
+                                        height={16}
+                                        size={16}
+                                        bgColor={theme.dark ? White : SlateDark}
+                                        color={
+                                          item.icon === 'warning'
+                                            ? Caution
+                                            : theme.dark
+                                            ? White
+                                            : SlateDark
+                                        }
+                                      />
+                                    </SubDescriptionIconContainer>
+                                    <OptionSubDescriptionText>
+                                      {item.text}
+                                    </OptionSubDescriptionText>
+                                  </SubDescriptionRow>
+                                </React.Fragment>
+                              );
+                            })}
+                          </SubDescriptionContainer>
+                        )}
                     </OptionTextContainer>
                     {showChevron && (
-                      <OptionIconContainer
-                        style={{justifyContent: 'flex-start', paddingTop: 4}}>
+                      <OptionIconContainer>
                         <AngleRight />
                       </OptionIconContainer>
                     )}

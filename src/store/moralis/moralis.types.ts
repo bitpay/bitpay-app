@@ -56,3 +56,28 @@ export type MoralisWalletApprovalsData = {
   cursor: string | null;
   result: MoralisWalletApprovalsDataResultObject[];
 };
+
+export type MoralisTokenPriceData = {
+  tokenName?: string;
+  tokenSymbol?: string;
+  tokenLogo?: string;
+  tokenDecimals?: string;
+  nativePrice?: {
+    value: string;
+    decimals: number;
+    name: string;
+    symbol: string;
+    address: string;
+  };
+  usdPrice: number;
+  usdPriceFormatted?: string;
+  '24hrPercentChange'?: string;
+  exchangeAddress?: string;
+  exchangeName?: string;
+  tokenAddress?: string;
+  toBlock?: string;
+  possibleSpam: boolean;
+  verifiedContract: boolean;
+  pairAddress?: string;
+  pairTotalLiquidityUsd?: string;
+};

@@ -405,6 +405,10 @@ export const setHasViewedBillsTab = (): AppActionType => ({
   type: AppActionTypes.SET_HAS_VIEWED_BILLS_TAB,
 });
 
+export const setHasViewedTSSOnboarding = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_TSS_ONBOARDING,
+});
+
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
   type: AppActionTypes.USER_FEEDBACK,
   payload: feedBack,
@@ -423,4 +427,15 @@ export const showArchaxBanner = (payload: boolean): AppActionType => ({
 export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
   type: AppActionTypes.DISMISS_MARKETING_CONTENT_CARD,
   payload: cardId,
+});
+
+export const setShowKycGetVerifiedModal = (
+  payload: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL,
+  payload,
+});
+
+export const resetKycGetVerifiedModal = (): AppActionType => ({
+  type: AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL,
 });

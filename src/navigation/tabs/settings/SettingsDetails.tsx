@@ -8,6 +8,7 @@ import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../../components/styled/Text';
 import General from './components/General';
 import SecurityHome from './security/screens/SecurityHome';
+import VerifyIdentityScreen from '../../bitpay-id/screens/VerifyIdentity';
 import Notifications from './components/Notifications';
 import Connections from './components/Connections';
 import ExternalServices from './components/ExternalServices';
@@ -42,6 +43,7 @@ export type SettingsDetailsParamList = {
   ContactsRoot: undefined;
   BitPayIdProfile: undefined;
   Login: undefined;
+  KycVerification: undefined;
 };
 
 export type SettingsDetailsScreens = keyof SettingsDetailsParamList;
@@ -107,6 +109,15 @@ const SettingsDetails = ({
         component={SecurityHome}
         options={{
           headerTitle: () => <HeaderTitle>{t('Security')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="KycVerification"
+        component={VerifyIdentityScreen}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Identity Verification')}</HeaderTitle>
+          ),
         }}
       />
       <Stack.Screen
