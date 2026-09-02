@@ -1,6 +1,7 @@
 import moment from 'moment';
-import {LogEntry} from './log.models';
+import {LogEntry, sanitizeLogMessage} from './log.models';
 import {LogActionType, LogActionTypes} from './log.types';
+import {appendPersistedLog} from './initLogs';
 import {storage} from '../index';
 
 export const logReduxPersistBlackList = ['logs'];
@@ -31,23 +32,9 @@ export const logReducer = (
       };
 
     case LogActionTypes.ADD_PERSISTED_LOG:
-      const newPersistedLog = {
-        timestamp: action.payload.timestamp,
-        level: action.payload.level,
-        message: sanitizeLogMessage(action.payload.message),
-      };
-
-      // Store persisted logs in a different entry in storage
-      // to avoid losing them if anything happens to persist:root
-      try {
-        const persistLogs = storage.getString('persist:logs') || '[]';
-        storage.set(
-          'persist:logs',
-          JSON.stringify([...JSON.parse(persistLogs), newPersistedLog]),
-        );
-      } catch (error) {
-        console.error('Error adding persisted log:', error);
-      }
+      // Persisted logs live under their own storage key so they survive
+      // anything happening to persist:root
+      const newPersistedLog = appendPersistedLog(action.payload);
 
       return {
         ...state,
@@ -84,10 +71,3 @@ export const logReducer = (
       return state;
   }
 };
-
-function sanitizeLogMessage(message: string) {
-  message = message.replace('/xpriv.*/', '[...]');
-  message = message.replace('/walletPrivKey.*/', 'walletPrivKey:[...]');
-
-  return message;
-}
