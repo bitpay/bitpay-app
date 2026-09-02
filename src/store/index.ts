@@ -128,18 +128,11 @@ const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
 
 let backupTriggerAction: string | null = null;
 
-// Module-scoped logger that safely logs before and after store initialization
 let storeDispatch: ((action: AnyAction) => void) | null = null;
-const addLog = (log: AddLog) => {
-  try {
-    if (storeDispatch) {
-      storeDispatch(log);
-    } else {
-      // Fallback to initLogs buffer until store is ready
-      initLogs.add(log);
-    }
-  } catch (_) {}
-};
+// Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
+// mutates LOG state, which makes redux-persist write persist:root through the
+// same storage that just failed
+const addLog = (log: AddLog) => initLogs.add(log);
 
 const restoreFromBackup = (reason: string): Promise<string | null> => {
   const startTs = Date.now();
