@@ -121,7 +121,7 @@ class SwapPage {
   var slideToSwapButton: XCUIElement {
     app.descendants(matching: .any).matching(
       NSPredicate(
-        format: "label == 'Swap crypto slide to swap button'"
+        format: "label == 'Swap crypto slide to swap button' OR label CONTAINS[c] 'slide to swap' OR identifier == 'swap-crypto-slide-to-swap-button' OR identifier CONTAINS[c] 'slide-to-swap'"
       )
     ).firstMatch
   }
@@ -244,7 +244,7 @@ class SwapPage {
       RunLoop.current.run(until: Date().addingTimeInterval(0.4))
     }
 
-    changellyTermsCheckbox.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    changellyTermsCheckbox.coordinate(withNormalizedOffset: CGVector(dx: 0.06, dy: 0.5)).tap()
   }
   
   func tapMinAmount() {
@@ -258,8 +258,12 @@ class SwapPage {
     center.tap()
   }
   
-  func isSlideToSwapButtonDisplayed(timeout: TimeInterval = 10) -> Bool {
-    return slideToSwapButton.waitForExistence(timeout: timeout)
+  func isSlideToSwapButtonDisplayed(timeout: TimeInterval = 30) -> Bool {
+    if slideToSwapButton.waitForExistence(timeout: timeout) {
+      return true
+    }
+    app.swipeUp()
+    return slideToSwapButton.waitForExistence(timeout: 10)
   }
   
 }

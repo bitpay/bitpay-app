@@ -90,7 +90,24 @@ jobs:
       - name: Create env file
         env:
           ENV_FILE: ${{ secrets.ENV_DEVELOPMENT }}
-        run: echo "$ENV_FILE" > .env.development
+        run: |
+          echo "$ENV_FILE" > .env.development
+          # E2E stability: redux-logger serializes the ENTIRE Redux state tree
+          # to logcat on every dispatched action. A recovery-phrase import fires
+          # hundreds of actions (per wallet, per chain, per token) and the
+          # serialization pins the JS thread long enough to blow past the
+          # Espresso wait budgets, so force dev logging off for the automated
+          # run regardless of what the secret carries.
+          sed -i '/^DISABLE_DEVELOPMENT_LOGGING=/d' .env.development
+          echo "DISABLE_DEVELOPMENT_LOGGING=true" >> .env.development
+          # E2E stability: index.js only calls LogBox.ignoreAllLogs() when
+          # IS_MAESTRO === 'true'. Without it, any console.error during bootstrap
+          # (e.g. "zenledgerInitialize: credentials not found" when the secret
+          # carries no ZenLedger creds) throws up the RN LogBox "Console Error"
+          # overlay, which covers the onboarding screen and makes every test
+          # fail on a missing skip-button. Force the flag on for the automated run.
+          sed -i '/^IS_MAESTRO=/d' .env.development
+          echo "IS_MAESTRO=true" >> .env.development
 
       - name: Create Sentry properties
         run: |
