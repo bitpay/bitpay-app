@@ -89,7 +89,9 @@ jest.mock('../../navigation/card-activation/CardActivationGroup', () => ({
   CardActivationScreens: {},
 }));
 jest.mock('../../navigation/tabs/TabsStack', () => ({TabsScreens: {}}));
-jest.mock('../../navigation/wallet/WalletGroup', () => ({WalletScreens: {}}));
+jest.mock('../../navigation/wallet/WalletGroup', () => ({
+  WalletScreens: {WALLET_DETAILS: 'WalletDetails'},
+}));
 jest.mock('../../navigation/tabs/shop/merchant/MerchantGroup', () => ({
   MerchantScreens: {},
 }));
@@ -111,7 +113,7 @@ jest.mock(
 jest.mock('../../components/styled/Containers', () => ({isNotMobile: false}));
 
 jest.mock('../../Root', () => ({
-  navigationRef: {isReady: jest.fn(() => true)},
+  navigationRef: {isReady: jest.fn(() => true), navigate: jest.fn()},
   RootStacks: {},
 }));
 jest.mock('../../navigation/NavigationService', () => ({
@@ -297,7 +299,9 @@ jest.mock('../../managers/LogManager', () => ({
   },
 }));
 
-import {startAppInit} from './app.effects';
+import {incomingLink, startAppInit} from './app.effects';
+import {navigationRef} from '../../Root';
+import {findWalletByIdHashed} from '../wallet/utils/wallet';
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -376,5 +380,95 @@ describe('startAppInit', () => {
     walletInit.resolve({walletInitSuccess: true});
     locationData.resolve();
     await initPromise;
+  });
+});
+
+describe('incomingLink', () => {
+  const walletId = 'wallet-1';
+  const baseWallet = {credentials: {walletId, copayerId: 'copayer-1'}};
+  const tokenWallet = {
+    credentials: {walletId: `${walletId}-0xtoken`, copayerId: 'copayer-1'},
+  };
+  const key = {id: 'key-1', wallets: [baseWallet, tokenWallet]};
+
+  const makeDeeplinkState = () =>
+    ({
+      ...makeState(),
+      APP: {...makeState().APP, appIsReadyForDeeplinking: true},
+      SHOP_CATALOG: {
+        availableCardMap: {},
+        categoriesAndCurations: {categories: {}},
+        integrations: {},
+      },
+      WALLET: {keys: {'key-1': key}},
+    } as any);
+
+  const runIncomingLink = async (url: string) => {
+    const getState = jest.fn(makeDeeplinkState);
+    const dispatch: any = jest.fn(action =>
+      typeof action === 'function' ? action(dispatch, getState) : action,
+    );
+    const handled = incomingLink(url)(dispatch, getState, undefined as any);
+    await flushMicrotasks();
+    return handled;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (findWalletByIdHashed as jest.Mock).mockResolvedValue({
+      wallet: baseWallet,
+      keyId: 'key-1',
+    });
+  });
+
+  it('opens the wallet on the transaction the notification refers to', async () => {
+    const handled = await runIncomingLink(
+      'bitpay://wallet?walletId=hashed&tokenAddress=null&multisigContractAddress=null&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-1&title=Funds received&body=You received 0.1 BTC',
+    );
+
+    expect(handled).toBe(true);
+    expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+      key,
+      walletId,
+      copayerId: 'copayer-1',
+      txid: 'tx-1',
+    });
+  });
+
+  it('opens the token wallet when the notification carries a tokenAddress', async () => {
+    await runIncomingLink(
+      'bitpay://wallet?walletId=hashed&tokenAddress=0xTokEn&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-2',
+    );
+
+    expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+      key,
+      walletId: tokenWallet.credentials.walletId,
+      copayerId: 'copayer-1',
+      txid: 'tx-2',
+    });
+  });
+
+  it('opens the wallet details with no transaction when the notification carries no txid', async () => {
+    await runIncomingLink(
+      'bitpay://wallet?walletId=hashed&tokenAddress=null&copayerId=hashedCopayer&notification_type=NewOutgoingTx&txid=null',
+    );
+
+    expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+      key,
+      walletId,
+      copayerId: 'copayer-1',
+      txid: undefined,
+    });
+  });
+
+  it('does not navigate when the wallet is not found', async () => {
+    (findWalletByIdHashed as jest.Mock).mockResolvedValue({
+      wallet: undefined,
+      keyId: undefined,
+    });
+
+    await runIncomingLink('bitpay://wallet?walletId=hashed&txid=tx-3');
+
+    expect(navigationRef.navigate).not.toHaveBeenCalled();
   });
 });

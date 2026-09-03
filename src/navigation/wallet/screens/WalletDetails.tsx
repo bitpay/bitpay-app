@@ -166,6 +166,7 @@ export type WalletDetailsScreenParamList = {
   key?: Key;
   skipInitializeHistory?: boolean;
   copayerId?: string;
+  txid?: string;
 };
 
 type WalletDetailsScreenProps = NativeStackScreenProps<
@@ -358,7 +359,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, skipInitializeHistory, copayerId} = route.params;
+  const {walletId, skipInitializeHistory, copayerId, txid} = route.params;
 
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -703,6 +704,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
+  const openedTxidRef = useRef<string | undefined>(undefined);
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
@@ -887,6 +889,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       onTxDescriptionChange,
     });
   };
+
+  useEffect(() => {
+    if (!txid || openedTxidRef.current === txid) {
+      return;
+    }
+    const transaction = history.find(tx => tx.txid === txid);
+    if (transaction) {
+      openedTxidRef.current = txid;
+      goToTransactionDetails(transaction);
+    }
+  }, [txid, history, goToTransactionDetails]);
 
   const speedupTransaction = async (transaction: any) => {
     try {

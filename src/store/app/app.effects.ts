@@ -1257,6 +1257,45 @@ export const incomingLink =
         handler = () => {
           navigationRef.navigate(WalletScreens.CREATION_OPTIONS, params);
         };
+      } else if (params.walletId) {
+        handler = async () => {
+          const {
+            WALLET: {keys},
+          } = getState();
+          const {wallet, keyId} = await findWalletByIdHashed(
+            keys,
+            params.walletId,
+            null,
+          );
+
+          if (!wallet || !keyId) {
+            return;
+          }
+
+          const key = keys[keyId];
+          const tokenAddress =
+            params.tokenAddress && params.tokenAddress !== 'null'
+              ? params.tokenAddress
+              : undefined;
+          const txid =
+            params.txid && params.txid !== 'null' ? params.txid : undefined;
+          const tokenWalletId =
+            `${wallet.credentials.walletId}-${tokenAddress}`.toLowerCase();
+          const targetWallet =
+            (tokenAddress &&
+              key.wallets.find(
+                (w: Wallet) =>
+                  w.credentials.walletId.toLowerCase() === tokenWalletId,
+              )) ||
+            wallet;
+
+          navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
+            key,
+            walletId: targetWallet.credentials.walletId,
+            copayerId: targetWallet.credentials.copayerId,
+            txid,
+          });
+        };
       }
     } else if (pathSegments[0] === 'card') {
       const cardPath = pathSegments[1];
