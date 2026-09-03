@@ -64,6 +64,8 @@ open class BaseTest {
     @Before
     fun setup() {
         if (!skipRelaunch) launchApp()
+        dismissLogboxIfPresent()
+        dismissDebuggerNotificationIfPresent()
         if (!skipOnboardingHandling) handleOnboardingIfPresent()
     }
 
@@ -98,6 +100,58 @@ open class BaseTest {
     }
 
     /**
+     * Dismisses the React Native Logbox error overlay if it is present.
+     * The overlay (shown only in DEV builds) blocks all UI interaction, so it
+     * must be cleared before any test can proceed. Loops up to 5 times to
+     * handle multiple stacked errors (e.g. "Log 2 of 2").
+     */
+    private fun dismissLogboxIfPresent() {
+        val logboxIndicator = withText("Console Error")
+        val dismissButton = withText("Dismiss")
+
+        repeat(5) {
+            try {
+                WaitUtils.waitForView(logboxIndicator, timeoutMs = 3000)
+                android.util.Log.w("BaseTest", "Logbox overlay detected — dismissing")
+                onView(dismissButton).perform(click())
+                Thread.sleep(500)
+            } catch (_: Throwable) {
+                return
+            }
+        }
+    }
+
+    /**
+     * Dismisses React Native's "Open debugger to view warnings." notification if
+     * it is showing. In dev builds a console warning surfaces this pill pinned to
+     * the bottom of the screen, where it overlays — and swallows taps meant for —
+     * bottom-aligned buttons such as "Continue without an account". RN only shows
+     * it once per session, so a single dismissal holds. No-op if it isn't present.
+     */
+    private fun dismissDebuggerNotificationIfPresent() {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val selector = By.descContains("Open debugger to view warnings")
+        val pill = device.wait(Until.findObject(selector), 5000) ?: return
+
+        android.util.Log.w("BaseTest", "Debugger-warnings notification present — dismissing")
+
+        val bounds = pill.visibleBounds
+        // The dismiss "X" is the right-most clickable child; fall back to a tap at
+        // the notification's trailing edge if it can't be resolved.
+        val dismiss = pill.findObjects(By.clickable(true))
+            .filter { it.visibleBounds != bounds }
+            .maxByOrNull { it.visibleBounds.centerX() }
+        dismiss?.click() ?: device.click(bounds.right - 40, bounds.centerY())
+        device.waitForIdle()
+
+        if (device.hasObject(selector)) {
+            device.click(bounds.right - 40, bounds.centerY())
+            device.waitForIdle()
+        }
+        Thread.sleep(300)
+    }
+
+    /**
      * If the onboarding "Continue without an account" screen is currently
      * displayed, walk through the standard onboarding flow once so every
      * test starts from a consistent post-onboarding state.
@@ -110,6 +164,7 @@ open class BaseTest {
         }
 
         onboardingPage.waitForPageToLoad()
+        dismissDebuggerNotificationIfPresent()
         onboardingPage.clickContinueWithoutAccount()
         onboardingPage.clickSkip() // Skip turn on notifications
 
