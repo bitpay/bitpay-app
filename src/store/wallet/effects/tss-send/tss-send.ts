@@ -71,6 +71,23 @@ const loadSigningSession = async (
   }
 };
 
+// BWS expires signing sessions and rejects participants whose TSS scheme
+// version does not match the one the session was started with.
+const toSignError = (error: Error): Error => {
+  const errorMsg = error?.message || '';
+  if (errorMsg.startsWith('TSS_SESSION_EXPIRED')) {
+    return new Error(
+      'This signing session expired. Delete this proposal and create a new one.',
+    );
+  }
+  if (errorMsg.startsWith('TSS_MISMATCH_VERSION')) {
+    return new Error(
+      'A co-signer is running an incompatible app version. Everyone must update to the same version.',
+    );
+  }
+  return error;
+};
+
 const clearSigningSession = async (sessionId: string): Promise<void> => {
   try {
     await AsyncStorage.removeItem(TSS_SESSION_PREFIX + sessionId);
@@ -350,7 +367,7 @@ const signInput = async (params: {
               return;
             }
           } else {
-            rejectSign(startError);
+            rejectSign(toSignError(startError));
             return;
           }
         }
@@ -521,7 +538,7 @@ const signInput = async (params: {
           }
           tssSign.unsubscribe();
           clearSigningSession(sessionId);
-          rejectSign(error);
+          rejectSign(toSignError(error));
         });
 
       tssSign.subscribe();

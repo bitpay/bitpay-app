@@ -870,6 +870,27 @@ describe('startTSSSigning', () => {
     ).rejects.toThrow('network unreachable');
   });
 
+  it('rejects with an actionable message when start() fails because the signing session expired', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    configureNextTssSign(instance => {
+      instance.start.mockRejectedValue(
+        new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+      );
+    });
+
+    await expect(
+      store.dispatch(
+        startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+      ),
+    ).rejects.toThrow(
+      'This signing session expired. Delete this proposal and create a new one.',
+    );
+  });
+
   it('recovers from a mid-session TSS_ROUND_ALREADY_DONE error event via getSignatureFromServer', async () => {
     const store = configureTestStore();
     const wallet = makeTssWallet();
@@ -955,6 +976,52 @@ describe('startTSSSigning', () => {
       TSS_SESSION_PREFIX + 'txp-1:input0',
     );
     expect(saved).toBeNull();
+  });
+
+  it('rejects with an actionable message when BWS reports the signing session expired', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    tssSign.emit(
+      'error',
+      new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+    );
+
+    await expect(resultPromise).rejects.toThrow(
+      'This signing session expired. Delete this proposal and create a new one.',
+    );
+    expect(tssSign.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('rejects with an actionable message when BWS reports a TSS version mismatch', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    tssSign.emit(
+      'error',
+      new Error('TSS_MISMATCH_VERSION: TSS version does not match'),
+    );
+
+    await expect(resultPromise).rejects.toThrow(
+      'A co-signer is running an incompatible app version. Everyone must update to the same version.',
+    );
+    expect(tssSign.unsubscribe).toHaveBeenCalled();
   });
 
   it('rejects with a stall error if no round progress happens for 30s', async () => {
