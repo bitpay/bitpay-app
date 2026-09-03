@@ -262,7 +262,10 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           setCreatedKey(key);
           setIsWalletReady(true);
         } catch (err: any) {
-          if (err.message === 'CEREMONY_ALREADY_RUNNING') {
+          if (
+            err.message === 'CEREMONY_ALREADY_RUNNING' ||
+            err.message === 'CEREMONY_CANCELLED'
+          ) {
             return;
           }
           logger.error(`[TSS Join - resume] Error: ${err.message}`);
@@ -274,6 +277,10 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
               : err.message === 'CEREMONY_STUCK'
               ? t(
                   'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please ask the creator to start a new wallet.',
+                )
+              : err.message === 'CEREMONY_VERSION_MISMATCH'
+              ? t(
+                  'A co-signer is running an incompatible app version. Everyone must update to the same version — please ask the creator to start a new wallet.',
                 )
               : err.message || t('Failed to resume ceremony');
           dispatch(
@@ -392,12 +399,23 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       setCreatedKey(key);
       setIsWalletReady(true);
     } catch (err: any) {
+      if (err.message === 'CEREMONY_CANCELLED') {
+        return;
+      }
       setCurrentStep(2);
       logger.error(`[TSS Join - handleJoin] Error: ${err.message}`);
       const joinErrMsg =
         err.message === 'CEREMONY_STUCK'
           ? t(
               'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please ask the creator to start a new wallet.',
+            )
+          : err.message === 'CEREMONY_TIMEOUT'
+          ? t(
+              'The wallet creation timed out. This session is no longer valid — please ask the creator to start a new wallet.',
+            )
+          : err.message === 'CEREMONY_VERSION_MISMATCH'
+          ? t(
+              'A co-signer is running an incompatible app version. Everyone must update to the same version — please ask the creator to start a new wallet.',
             )
           : t('Failed to join wallet. Please try again.');
       setJoinError(joinErrMsg);
