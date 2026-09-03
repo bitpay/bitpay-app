@@ -485,7 +485,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       setCreatedKey(updatedKey);
       setIsCeremonyComplete(true);
     } catch (err: any) {
-      if (err.message === 'CEREMONY_ALREADY_RUNNING') {
+      if (
+        err.message === 'CEREMONY_ALREADY_RUNNING' ||
+        err.message === 'CEREMONY_CANCELLED'
+      ) {
         return;
       }
       logger.error(`[TSS] Ceremony error: ${err.message}`);
@@ -498,6 +501,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           : err.message === 'CEREMONY_STUCK'
           ? t(
               'Session out of sync with the server. This can happen if a device was restarted during the ceremony — please create a new wallet.',
+            )
+          : err.message === 'CEREMONY_VERSION_MISMATCH'
+          ? t(
+              'A co-signer is running an incompatible app version. Everyone must update to the same version — please create a new wallet.',
             )
           : err.message || t('Failed to create wallet');
       dispatch(
