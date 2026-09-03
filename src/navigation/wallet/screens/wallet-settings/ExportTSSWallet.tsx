@@ -476,7 +476,7 @@ const ExportTSSWallet = () => {
               onPress={handleSubmit(shareKeyshareFile)}
               state={shareButtonState}
               buttonStyle={'primary'}>
-              {t('Share Backup File')}
+              {t('Save Backup File')}
             </Button>
           </PasswordActionContainer>
         </PasswordFormContainer>
