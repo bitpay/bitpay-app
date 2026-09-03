@@ -541,6 +541,35 @@ describe('startTSSSigning', () => {
     await resultPromise;
   });
 
+  it('forwards the decrypt password to restoreSession so an encrypted key share can be read back', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    await seedSavedSession('txp-1:input0', 'saved-sign-data', 1);
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({
+        key,
+        wallet,
+        txp,
+        callbacks: noopCallbacks(),
+        password: 'my-password',
+      }),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    expect(tssSign.restoreSession).toHaveBeenCalledWith({
+      session: 'txp-1:input0:saved-sign-data',
+      password: 'my-password',
+    });
+
+    driveToComplete(tssSign, 2);
+    await resultPromise;
+  });
+
   it('notifies onCopayerStatusChange for every restored participant plus self if missing', async () => {
     const store = configureTestStore();
     const wallet = makeTssWallet({
@@ -703,6 +732,43 @@ describe('startTSSSigning', () => {
       session: 'txp-1:input0:retry-sign-data',
     });
     expect(tssSign.id).toBe('txp-1:input0');
+
+    driveToComplete(tssSign);
+    await resultPromise;
+  });
+
+  it('forwards the decrypt password to the retry-recovery restoreSession too', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    await seedSavedSession('txp-1:input0', 'retry-sign-data', 1);
+    jest.spyOn(AsyncStorage, 'getItem').mockResolvedValueOnce(null);
+
+    configureNextTssSign(instance => {
+      instance.start.mockRejectedValueOnce(
+        new Error('TSS_ROUND_MESSAGE_EXISTS: dup'),
+      );
+      instance.getSignatureFromServer.mockResolvedValueOnce(null);
+    });
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({
+        key,
+        wallet,
+        txp,
+        callbacks: noopCallbacks(),
+        password: 'my-password',
+      }),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    expect(tssSign.restoreSession).toHaveBeenCalledWith({
+      session: 'txp-1:input0:retry-sign-data',
+      password: 'my-password',
+    });
 
     driveToComplete(tssSign);
     await resultPromise;
