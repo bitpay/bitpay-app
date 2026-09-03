@@ -1214,6 +1214,15 @@ const buildTransactionProposal =
     });
   };
 
+// BWC defaults BCH proposals to schnorr, but TSS produces ECDSA signatures.
+const withTssBchSigningMethod = <T extends Partial<TransactionProposal>>(
+  wallet: Wallet,
+  txp: T,
+): T =>
+  wallet.tssKeyId && wallet.credentials.chain === 'bch'
+    ? {...txp, signingMethod: 'ecdsa'}
+    : txp;
+
 export const startSendPayment =
   ({
     txp,
@@ -1236,7 +1245,7 @@ export const startSendPayment =
     return new Promise(async (resolve, reject) => {
       try {
         wallet.createTxProposal(
-          {...txp, dryRun: false},
+          withTssBchSigningMethod(wallet, {...txp, dryRun: false}),
           async (err: Error, proposal: TransactionProposal) => {
             if (err) {
               return reject(err);
@@ -1688,7 +1697,7 @@ export const createTxProposal =
   (dispatch, getState) => {
     return new Promise((resolve, reject) => {
       wallet.createTxProposal(
-        txp,
+        withTssBchSigningMethod(wallet, txp),
         (err: Error, createdTxp: TransactionProposal) => {
           if (err) {
             return reject({
