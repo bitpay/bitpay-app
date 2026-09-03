@@ -11,6 +11,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import android.view.View
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.anyOf
+import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.startsWith
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
@@ -32,7 +34,22 @@ class OnboardingPage {
     private val backupRecoveryPhraseElement = withContentDescription("Backup your recovery phrase")
     private val importTitleText = withText("Import")
     private val importWalletButton = withTestId("import-wallet-button")
-    private val loadingTokensText = withText(startsWith("Loading "))
+
+    private val ongoingProcessMessage = withTestId("ongoing-process-message")
+    private val loadingTokensText = withText(
+        anyOf(
+            startsWith("Loading "),
+            startsWith("Adding "),
+            startsWith("Searching "),
+            startsWith("Checking "),
+            startsWith("Deriving "),
+            startsWith("Found "),
+            startsWith("No wallets"),
+            startsWith("No more wallets"),
+            startsWith("Getting wallet"),
+            containsString("Almost there"),
+        )
+    )
     private val portfolioBalanceText = withTestId("portfolio-balance-info-button")
     private val myKeyText = withText("My Key")
 
@@ -263,6 +280,13 @@ class OnboardingPage {
             }
 
             var dismissedSomething = false
+
+            if (isMatcherVisible(ongoingProcessMessage, timeoutMs = 600) ||
+                isMatcherVisible(loadingTokensText, timeoutMs = 600)
+            ) {
+                Thread.sleep(1500)
+                continue
+            }
 
             // Import flow may land on backup prompt before terms.
             if (isMatcherVisible(backupKeyPromptText, timeoutMs = 800) ||

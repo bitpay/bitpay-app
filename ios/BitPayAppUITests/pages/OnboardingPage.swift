@@ -113,8 +113,39 @@ class OnboardingPage {
       askAppNotToTrackButton.tap()
     }
   }
-  
+
+
+  /// No-op in Release builds or when no overlay is present. Mirrors the Android
+  /// BaseTest `dismissLogboxIfPresent` / `dismissDebuggerNotificationIfPresent`.
+  func dismissReactNativeDevOverlays(attempts: Int = 5) {
+    let dismissLabel = NSPredicate(
+      format: "label CONTAINS[c] 'debugger' OR label CONTAINS[c] 'view warnings' OR label CONTAINS[c] 'view errors'"
+    )
+
+    for _ in 0..<attempts {
+      // Full-screen redbox / opened LogBox inspector: tap its "Dismiss" control.
+      let dismissButton = app.buttons["Dismiss"].firstMatch
+      if dismissButton.waitForExistence(timeout: 0.5) {
+        dismissButton.tap()
+        continue
+      }
+      let dismissText = app.staticTexts["Dismiss"].firstMatch
+      if dismissText.exists {
+        dismissText.tap()
+        continue
+      }
+
+      // Collapsed notification pill: dismiss via the trailing-edge "x".
+      let notification = app.descendants(matching: .any).element(matching: dismissLabel).firstMatch
+      guard notification.waitForExistence(timeout: 0.5) else {
+        return
+      }
+      notification.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+    }
+  }
+
   func isContinueWithoutAccountButtonDisplayed(timeout: TimeInterval = 15) -> Bool  {
+    dismissReactNativeDevOverlays()
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline {
       if continueWithoutAnAccountButtonById.exists ||
@@ -128,6 +159,8 @@ class OnboardingPage {
   }
 
   func tapContinuewithoutAnAccount() {
+    dismissReactNativeDevOverlays()
+
     if isPostContinueScreenVisible(timeout: 2) {
       return
     }
@@ -269,18 +302,18 @@ class OnboardingPage {
     let query = app.descendants(matching: .any).matching(identifier: identifier)
     XCTAssertTrue(query.firstMatch.waitForExistence(timeout: 15), "Checkbox not found: \(identifier)")
 
-    // Prefer hittable node when duplicated identifier is present.
-    let maxCandidates = min(query.count, 4)
-    for idx in 0..<maxCandidates {
-      let candidate = query.element(boundBy: idx)
-      if candidate.exists && candidate.isHittable {
-        candidate.tap()
-        return
-      }
-    }
+  
+    let box = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier == %@ AND label == %@", identifier, "Checkbox"))
+      .firstMatch
+    let target = box.waitForExistence(timeout: 5) ? box : query.firstMatch
 
-    let fallback = query.firstMatch
-    fallback.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    if target.isHittable {
+      target.tap()
+    } else {
+      // The box only covers the toggle, so its own centre is a safe fallback.
+      target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
   }
 
   private func waitForAgreeAndContinueEnabled(timeout: TimeInterval) -> Bool {

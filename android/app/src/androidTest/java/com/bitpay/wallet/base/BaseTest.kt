@@ -1,6 +1,9 @@
 package com.bitpay.wallet.base
 
 import android.content.Intent
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.bitpay.wallet.pages.OnboardingPage
@@ -9,6 +12,7 @@ import org.junit.Before
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import com.bitpay.wallet.utils.allureScreenshot
+import com.bitpay.wallet.utils.WaitUtils
 import org.junit.Rule
 import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.By
