@@ -201,7 +201,10 @@ const signInput = async (params: {
           `[TSS Sign] Restoring saved session — sessionId: ${sessionId}, lastRound: ${savedSession.round}`,
         );
         try {
-          await tssSign.restoreSession({session: savedSession.exported});
+          await tssSign.restoreSession({
+            session: savedSession.exported,
+            password,
+          });
           logManager.debug(
             `[TSS Sign] Session restored successfully — resuming from round ${savedSession.round}`,
           );
@@ -319,7 +322,10 @@ const signInput = async (params: {
             const savedForRetry = await loadSigningSession(sessionId);
             if (savedForRetry) {
               try {
-                await tssSign.restoreSession({session: savedForRetry.exported});
+                await tssSign.restoreSession({
+                  session: savedForRetry.exported,
+                  password,
+                });
                 logManager.debug(
                   `[TSS Sign] Session restored, re-registering listeners and subscribing`,
                 );
