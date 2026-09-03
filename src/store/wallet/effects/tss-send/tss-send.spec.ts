@@ -113,7 +113,12 @@ function makeTssSignCtor() {
       start: jest.fn(async () => {
         instance.emit('copayerReady', _opts?.credentials?.copayerId);
       }),
-      restoreSession: jest.fn(() => Promise.resolve()),
+      // Real BWC restoreSession() takes the session id from everything before
+      // the last colon of the exported string.
+      restoreSession: jest.fn(({session}: {session: string}) => {
+        instance.id = session.slice(0, session.lastIndexOf(':'));
+        return Promise.resolve();
+      }),
       exportSession: jest.fn(() => 'exported-sign-session'),
       getSignature: jest.fn(() => ({r: 'r', s: 's'})),
       getSignatureFromServer: jest.fn(() => Promise.resolve(null)),
@@ -377,7 +382,11 @@ const seedSavedSession = async (
 ) => {
   await AsyncStorage.setItem(
     TSS_SESSION_PREFIX + sessionId,
-    JSON.stringify({signData, round, savedAt: Date.now()}),
+    JSON.stringify({
+      exported: `${sessionId}:${signData}`,
+      round,
+      savedAt: Date.now(),
+    }),
   );
 };
 
@@ -521,7 +530,7 @@ describe('startTSSSigning', () => {
 
     const tssSign = tssSignInstances[0];
     expect(tssSign.restoreSession).toHaveBeenCalledWith({
-      session: 'placeholder:saved-sign-data',
+      session: 'txp-1:input0:saved-sign-data',
     });
     expect(tssSign.id).toBe('txp-1:input0');
     expect(wallet.request.get).toHaveBeenCalledWith(
@@ -691,7 +700,7 @@ describe('startTSSSigning', () => {
     const tssSign = tssSignInstances[0];
     expect(tssSign.start).toHaveBeenCalled();
     expect(tssSign.restoreSession).toHaveBeenCalledWith({
-      session: 'placeholder:retry-sign-data',
+      session: 'txp-1:input0:retry-sign-data',
     });
     expect(tssSign.id).toBe('txp-1:input0');
 
@@ -1129,13 +1138,12 @@ describe('startTSSSigning', () => {
     await resultPromise;
   });
 
-  it('strips the sessionId prefix from exported session data before persisting it', async () => {
+  it('persists the exported session verbatim, sessionId prefix included', async () => {
     const store = configureTestStore();
     const wallet = makeTssWallet();
     const key = makeTssKeyObj({wallets: [wallet]});
     const txp = makeTxp();
 
-    // Real exportSession() returns "<sessionId>:<data>"; the prefix is stripped.
     configureNextTssSign(instance => {
       instance.exportSession.mockReturnValue('txp-1:input0:the-real-data');
     });
@@ -1148,7 +1156,7 @@ describe('startTSSSigning', () => {
     const saved = await AsyncStorage.getItem(
       TSS_SESSION_PREFIX + 'txp-1:input0',
     );
-    expect(JSON.parse(saved!).signData).toBe('the-real-data');
+    expect(JSON.parse(saved!).exported).toBe('txp-1:input0:the-real-data');
 
     driveToComplete(tssSignInstances[0]);
     await resultPromise;
