@@ -6,10 +6,10 @@ import com.bitpay.wallet.utils.WaitUtils.withTestId
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.pressImeActionButton
-import androidx.test.espresso.matcher.ViewMatchers.withText
-import org.hamcrest.Matchers.anyOf
-import org.hamcrest.Matchers.containsString
-import org.hamcrest.Matchers.startsWith
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 
 class ImportWalletPage {
 
@@ -17,28 +17,25 @@ class ImportWalletPage {
     private val recoveryPhraseInputField = withTestId("import-text-input")
     private val importWalletButton = withTestId("import-wallet-button")
 
-    private val ongoingProcessMessage = withTestId("ongoing-process-message")
-    private val importInProgressText = withText(
-        anyOf(
-            startsWith("Loading "),
-            startsWith("Adding "),
-            startsWith("Searching "),
-            startsWith("Checking "),
-            startsWith("Deriving "),
-            startsWith("Found "),
-            startsWith("No wallets"),
-            startsWith("No more wallets"),
-            startsWith("Getting wallet"),
-            containsString("Almost there"),
-        )
-    )
-    private val firstTermCheckbox = withTestId("first-term-checkbox")
-    private val backupKeyPromptText = withText("Would you like to backup your key?")
-    private val portfolioBalanceText = withTestId("portfolio-balance-info-button")
-    private val myKeyText = withText("My Key")
+    // The import pins the app's main thread for minutes; Espresso onView() polling
+    // blocks on idle-sync and starves it further, so the wait below uses
+    // UiAutomator (no idle-sync) and matches by text / content-description.
+    private val ongoingProcessDesc = By.desc("ongoing-process-message")
+    private val importInProgressText = By.textStartsWith("Loading ")
+    private val importWalletButtonDesc = By.desc("Import wallet")
+
+    // Any one of these means the import has moved off the Import screen.
+    private val firstTermCheckboxDesc = By.desc("first-term-checkbox")
+    private val termsHeadingText = By.text("I understand that:")
+    private val agreeAndContinueText = By.text("Agree and Continue")
+    private val backupPromptText = By.text("Would you like to backup your key?")
+    private val myKeyText = By.text("My Key")
 
     private val importAdvanceBudgetMs = 600_000L
-    private val resubmitCooldownMs = 20_000L
+    private val resubmitCooldownMs = 30_000L
+
+    private val device: UiDevice
+        get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
 
     // ---- Actions ----
@@ -70,11 +67,7 @@ class ImportWalletPage {
         )
     }
 
-    /**
-     * Taps the Import CTA. Returns false (never throws) once the button is gone
-     * from the hierarchy - that just means the import has already moved past the
-     * Import screen and there is nothing left to tap.
-     */
+    // First tap while the app is still idle — Espresso is fine here.
     private fun submitImport(): Boolean {
         return try {
             onView(importWalletButton).perform(click())
@@ -89,44 +82,51 @@ class ImportWalletPage {
         }
     }
 
-    private fun waitForImportFlowAdvance(timeoutMs: Long): Boolean {
-        val end = System.currentTimeMillis() + timeoutMs
-        var lastResubmitAt = System.currentTimeMillis()
-
-        while (System.currentTimeMillis() < end) {
-            // The flow has advanced if any of the next-screen shapes is up.
-            if (isVisible(firstTermCheckbox, 800) ||
-                isVisible(backupKeyPromptText, 800) ||
-                isVisible(portfolioBalanceText, 800) ||
-                isVisible(myKeyText, 800)
-            ) {
-                return true
-            }
-
-            if (isVisible(ongoingProcessMessage, 800) || isVisible(importInProgressText, 800)) {
-                Thread.sleep(1500)
-                continue
-            }
-
-            if (isVisible(importWalletButton, 800) &&
-                System.currentTimeMillis() - lastResubmitAt > resubmitCooldownMs
-            ) {
-                submitImport()
-                lastResubmitAt = System.currentTimeMillis()
-            }
-
-            Thread.sleep(500)
-        }
-        return false
-    }
-
-    private fun isVisible(matcher: org.hamcrest.Matcher<android.view.View>, timeoutMs: Long): Boolean {
+    private fun resubmitViaUiAutomator(): Boolean {
+        val btn = device.findObject(importWalletButtonDesc)
+            ?: device.findObject(By.text("Import Wallet"))
+            ?: return false
         return try {
-            WaitUtils.waitForViewEffectivelyVisible(matcher, timeoutMs = timeoutMs, intervalMs = 200)
+            btn.click()
             true
         } catch (_: Throwable) {
             false
         }
     }
 
+    private fun waitForImportFlowAdvance(timeoutMs: Long): Boolean {
+        val end = System.currentTimeMillis() + timeoutMs
+        var lastResubmitAt = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() < end) {
+            if (device.hasObject(firstTermCheckboxDesc) ||
+                device.hasObject(termsHeadingText) ||
+                device.hasObject(agreeAndContinueText) ||
+                device.hasObject(backupPromptText) ||
+                device.hasObject(myKeyText)
+            ) {
+                return true
+            }
+
+            if (device.hasObject(ongoingProcessDesc) ||
+                device.hasObject(importInProgressText)
+            ) {
+                Thread.sleep(1_500)
+                continue
+            }
+
+            // Back on the Import screen and idle — the first tap may have been
+            // dropped. Re-submit, at most once per cooldown.
+            if (device.hasObject(importWalletButtonDesc) &&
+                System.currentTimeMillis() - lastResubmitAt > resubmitCooldownMs
+            ) {
+                resubmitViaUiAutomator()
+                lastResubmitAt = System.currentTimeMillis()
+            }
+
+            Thread.sleep(1_000)
+        }
+
+        return device.wait(Until.hasObject(firstTermCheckboxDesc), 5_000) != null
+    }
 }
