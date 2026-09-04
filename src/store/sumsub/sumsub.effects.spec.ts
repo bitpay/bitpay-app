@@ -42,6 +42,8 @@ const mockLaunchSumSubSdk = launchSumSubSdk as jest.Mock;
 const EID = 'user-eid-123';
 const API_TOKEN = 'api-token-xyz';
 const ACCESS_TOKEN = 'sumsub-access-token';
+const EMAIL = 'user@bitpay.com';
+const PHONE = '+15550001111';
 
 const NOT_STARTED = {
   path: 'sumsub',
@@ -55,7 +57,7 @@ const makeLoggedInStore = () =>
   configureTestStore({
     APP: {network: Network.mainnet},
     BITPAY_ID: {
-      user: {[Network.mainnet]: {eid: EID}},
+      user: {[Network.mainnet]: {eid: EID, email: EMAIL, phone: PHONE}},
       apiToken: {[Network.mainnet]: API_TOKEN},
     },
   });
@@ -111,6 +113,7 @@ describe('startKycVerification — happy path', () => {
       ACCESS_TOKEN,
       expect.any(Function),
       'en',
+      {email: EMAIL, phone: PHONE},
     );
   });
 
@@ -129,6 +132,7 @@ describe('startKycVerification — happy path', () => {
       ACCESS_TOKEN,
       expect.any(Function),
       'es',
+      {email: undefined, phone: undefined},
     );
   });
 

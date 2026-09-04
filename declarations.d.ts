@@ -64,13 +64,22 @@ declare module '@sumsub/react-native-mobilesdk-module' {
     onEvent?: (event: SumSubEventPayload) => void;
   }
 
+  interface SumSubDocumentDefinition {
+    idDocType?: string;
+    country?: string;
+  }
+
   interface SumSubSdkBuilder {
     withHandlers(handlers: SumSubHandlers): SumSubSdkBuilder;
     withLocale(locale: string): SumSubSdkBuilder;
     withDebug(debug: boolean): SumSubSdkBuilder;
+    withTheme(theme: object): SumSubSdkBuilder;
     withAutoCloseOnApprove(delayMs: number): SumSubSdkBuilder;
     withAnalyticsEnabled(enabled: boolean): SumSubSdkBuilder;
     withApplicantConf(conf: {email?: string; phone?: string}): SumSubSdkBuilder;
+    withPreferredDocumentDefinitions(
+      definitions: Record<string, SumSubDocumentDefinition>,
+    ): SumSubSdkBuilder;
     build(): {
       launch(): Promise<SumSubSdkResult>;
       dismiss(): void;
