@@ -34,6 +34,10 @@ import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
+import {
+  getDeviceIntegrity,
+  reportDeviceIntegrityToSentry,
+} from '../../utils/deviceIntegrity';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
@@ -170,6 +174,32 @@ const SSL_PINS = {
   GOOGLE_WE1: 'kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=',
 };
 
+// Silent-tier root/jailbreak telemetry: tag Sentry + analytics on detection.
+export const reportDeviceIntegrity = (): Effect => dispatch => {
+  try {
+    const result = getDeviceIntegrity();
+    reportDeviceIntegrityToSentry(result);
+
+    if (result.isCompromised) {
+      logManager.warn(
+        `[deviceIntegrity] compromised device detected (reason: ${result.reason})`,
+      );
+      dispatch(
+        Analytics.track('Device Integrity Compromised', {
+          hookDetected: result.hookDetected,
+          mockLocationEnabled: result.mockLocationEnabled,
+          reason: result.reason ?? 'unknown',
+        }),
+      );
+    }
+  } catch (err) {
+    logManager.error(
+      '[deviceIntegrity] failed to report: ' +
+        (err instanceof Error ? err.message : JSON.stringify(err)),
+    );
+  }
+};
+
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     logManager.info(
@@ -210,6 +240,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
+
+    dispatch(reportDeviceIntegrity());
 
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());

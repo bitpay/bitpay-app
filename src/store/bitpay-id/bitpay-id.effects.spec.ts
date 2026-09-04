@@ -530,6 +530,18 @@ describe('startLogin (Cloudflare challenge handling)', () => {
     expect(MockCloudflarePresent).not.toHaveBeenCalled();
     expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
   });
+
+  it('falls back to basic auth (resolves false) when the device is compromised', async () => {
+    MockGetPasskeyStatus.mockResolvedValueOnce({passkey: true});
+    MockSignInWithPasskey.mockRejectedValueOnce(
+      Object.assign(new Error('blocked'), {code: 'DEVICE_COMPROMISED'}),
+    );
+    const store = baseStore();
+    const result = await store.dispatch(
+      checkLoginWithPasskey('alice@example.com', Network.mainnet, 'csrf'),
+    );
+    expect(result).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
