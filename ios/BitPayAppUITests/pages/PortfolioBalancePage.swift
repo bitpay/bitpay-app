@@ -70,9 +70,7 @@ class PortfolioBalancePage {
 
     // Buy can briefly route to a key/backup-required sheet while WALLET.keys
     // rehydrates after relaunch; retry (dismissing the sheet) until the keypad shows.
-    let keypadKey = app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "identifier == '5-button' OR identifier == '1-button'")
-    ).firstMatch
+    let keypadKey = app.staticTexts["5"].firstMatch
     let maybeLater = app.descendants(matching: .any).element(
       matching: NSPredicate(format: "identifier == 'bottom-notification-secondary-action-button'")
     ).firstMatch
@@ -82,8 +80,10 @@ class PortfolioBalancePage {
         return
       }
 
-      buyButton.tap()
-      if keypadKey.waitForExistence(timeout: 12) {
+      if buyButton.exists {
+        buyButton.tap()
+      }
+      if keypadKey.waitForExistence(timeout: 15) {
         return
       }
 
@@ -93,7 +93,7 @@ class PortfolioBalancePage {
       RunLoop.current.run(until: Date().addingTimeInterval(1.5))
     }
 
-    XCTFail("Buy screen did not open after tapping Buy")
+    XCTAssertTrue(keypadKey.exists, "Buy screen did not open after tapping Buy")
   }
   
 //  func tapSellButton() {

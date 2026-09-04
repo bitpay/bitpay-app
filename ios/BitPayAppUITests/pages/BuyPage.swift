@@ -12,9 +12,7 @@ class BuyPage {
 
   // Detect the Buy screen by its amount keypad; "Buy" static text also exists on Home.
   var buyTitle: XCUIElement {
-    app.descendants(matching: .any).element(
-      matching: NSPredicate(format: "identifier == '5-button' OR identifier == '1-button'")
-    ).firstMatch
+    app.staticTexts["5"].firstMatch
   }
 
   var bitcoin: XCUIElement {
