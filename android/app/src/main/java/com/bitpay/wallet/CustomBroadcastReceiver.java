@@ -3,6 +3,7 @@ package com.bitpay.wallet;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -41,13 +42,38 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
                 break;
             case Constants.BRAZE_PUSH_INTENT_NOTIFICATION_OPENED:
                 Log.d(TAG, "Opened push notification.");
-                BrazeNotificationUtils.routeUserWithNotificationOpenedIntent(context, intent);
+                try {
+                    BrazeNotificationUtils.routeUserWithNotificationOpenedIntent(context, intent);
+                } catch (Exception e) {
+                    // Braze routes the deep link with startActivities() and only catches
+                    // ActivityNotFoundException. Anything else escaping onReceive kills the process.
+                    Log.e(TAG, "Failed to route notification opened intent.", e);
+                    launchMainActivity(context, intent);
+                }
                 break;
             case Constants.BRAZE_PUSH_INTENT_NOTIFICATION_DELETED:
                 Log.d(TAG, "Received push notification deleted intent.");
                 break;
             default:
                 Log.d(TAG, String.format("Ignoring intent with unsupported action %s", action));
+        }
+    }
+
+    // Retries the tap with a single activity, so the deep link still reaches Linking.
+    private void launchMainActivity(Context context, Intent pushIntent) {
+        try {
+            Intent launchIntent = new Intent(context, MainActivity.class);
+            launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+            String deepLink = pushIntent.getStringExtra(Constants.BRAZE_PUSH_DEEP_LINK_KEY);
+            if (deepLink != null && !deepLink.isEmpty()) {
+                launchIntent.setAction(Intent.ACTION_VIEW);
+                launchIntent.setData(Uri.parse(deepLink));
+            }
+
+            context.startActivity(launchIntent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to open the app after a notification tap.", e);
         }
     }
 }
