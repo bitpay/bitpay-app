@@ -124,10 +124,6 @@ const CryptoHeaderActions = styled.View`
   gap: 8px;
 `;
 
-const _renderItem = ({item}: {item: {id: string; component: ReactElement}}) => {
-  return <CarouselItemContainer>{item.component}</CarouselItemContainer>;
-};
-
 export const keyBackupRequired = (
   key: Key,
   navigation: NavigationProp<any>,
@@ -403,6 +399,7 @@ export const createHomeCardList = ({
 };
 
 const Crypto = () => {
+  const [carouselHeight, setCarouselHeight] = useState(HOME_CARD_HEIGHT + 20);
   const {t: translate} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -626,11 +623,23 @@ const Crypto = () => {
             vertical={false}
             style={{width: WIDTH}}
             width={HOME_CARD_WIDTH + 16}
-            height={HOME_CARD_HEIGHT + 20}
+            height={carouselHeight}
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
-            renderItem={_renderItem}
+            renderItem={({item}) => (
+              <CarouselItemContainer
+                onLayout={({nativeEvent}) =>
+                  setCarouselHeight(current =>
+                    Math.max(
+                      current,
+                      Math.ceil(nativeEvent.layout.height) + 20,
+                    ),
+                  )
+                }>
+                {item.component}
+              </CarouselItemContainer>
+            )}
             enabled={true}
           />
         </CarouselContainer>

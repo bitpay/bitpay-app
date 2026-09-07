@@ -71,7 +71,7 @@ export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
   align-items: center;
   justify-content: space-between;
   padding: 15px;
-  height: 75px;
+  min-height: 75px;
 `;
 
 export const Img = styled.View<{isFirst: boolean}>`
@@ -93,6 +93,7 @@ export const RemainingAssetsLabel = styled(BaseText)`
 `;
 
 const NeedBackupText = styled(BaseText)`
+  max-width: 100%;
   font-size: 12px;
   text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
@@ -164,7 +165,7 @@ const KeyName = styled(BaseText)`
 const ListWalletCard = styled(ListCard)`
   border-radius: 12px;
   padding: 16px;
-  height: 78px;
+  min-height: 78px;
 `;
 
 const ListIconRow = styled(HeaderImg)`

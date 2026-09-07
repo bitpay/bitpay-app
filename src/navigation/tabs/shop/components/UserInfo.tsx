@@ -8,15 +8,14 @@ import {
   FieldLabel,
   FieldValue,
 } from './styled/ShopTabComponents';
-import {ScrollableBottomNotificationMessageContainer} from '../../../../components/modal/bottom-notification/BottomNotification';
+import {BottomNotificationMessageContainer} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 const UserInfo = () => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   return (
-    <ScrollableBottomNotificationMessageContainer
-      contentContainerStyle={{paddingBottom: 10}}>
+    <BottomNotificationMessageContainer style={{paddingBottom: 10}}>
       <FieldGroup>
         <FieldLabel>First Name</FieldLabel>
         <Field disabled>
@@ -59,7 +58,7 @@ const UserInfo = () => {
           <FieldValue>{user?.address}</FieldValue>
         </Field>
       </FieldGroup>
-    </ScrollableBottomNotificationMessageContainer>
+    </BottomNotificationMessageContainer>
   );
 };
 
