@@ -8,7 +8,8 @@ const builder = {
   withDebug: () => builder,
   withAutoCloseOnApprove: () => builder,
   withAnalyticsEnabled: () => builder,
-  withApplicantConf: () => builder,
+  withApplicantConf: jest.fn(() => builder),
+  withPreferredDocumentDefinitions: jest.fn(() => builder),
   build: () => ({
     launch: jest.fn().mockResolvedValue({
       success: true,

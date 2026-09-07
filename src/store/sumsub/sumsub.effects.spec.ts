@@ -7,6 +7,7 @@ import {Network} from '../../constants';
 import {startKycVerification, startGetKycStatus} from './sumsub.effects';
 import {SumSubApi} from '../../api/sumsub';
 import {launchSumSubSdk} from '../../lib/sumsub';
+import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -33,10 +34,21 @@ jest.mock('../../lib/sumsub', () => ({
   launchSumSubSdk: jest.fn(),
 }));
 
+jest.mock('../../managers/OngoingProcessManager', () => ({
+  ongoingProcessManager: {
+    show: jest.fn(),
+    hide: jest.fn(),
+  },
+}));
+
 const mockFetchAccessToken = SumSubApi.fetchAccessToken as jest.Mock;
 const mockFetchKycStatus = SumSubApi.fetchKycStatus as jest.Mock;
 const mockStartKycAttempt = SumSubApi.startKycAttempt as jest.Mock;
 const mockLaunchSumSubSdk = launchSumSubSdk as jest.Mock;
+const mockOngoingProcess = ongoingProcessManager as unknown as {
+  show: jest.Mock;
+  hide: jest.Mock;
+};
 
 // ---------------------------------------------------------------------------
 // Helper: build a store seeded with a logged-in user
@@ -44,6 +56,8 @@ const mockLaunchSumSubSdk = launchSumSubSdk as jest.Mock;
 const EID = 'user-eid-123';
 const API_TOKEN = 'api-token-xyz';
 const ACCESS_TOKEN = 'sumsub-access-token';
+const EMAIL = 'user@bitpay.com';
+const PHONE = '+15550001111';
 
 const NOT_STARTED = {
   path: 'sumsub',
@@ -57,7 +71,7 @@ const makeLoggedInStore = () =>
   configureTestStore({
     APP: {network: Network.mainnet},
     BITPAY_ID: {
-      user: {[Network.mainnet]: {eid: EID}},
+      user: {[Network.mainnet]: {eid: EID, email: EMAIL, phone: PHONE}},
       apiToken: {[Network.mainnet]: API_TOKEN},
     },
   });
@@ -98,6 +112,17 @@ describe('startKycVerification — auth guard', () => {
     expect(mockFetchAccessToken).not.toHaveBeenCalled();
     expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
   });
+
+  it('tells the user to log in instead of failing silently', async () => {
+    const store = configureTestStore({
+      APP: {network: Network.mainnet},
+      BITPAY_ID: {user: {}, apiToken: {[Network.mainnet]: API_TOKEN}},
+    });
+
+    await store.dispatch(startKycVerification());
+
+    expect(store.getState().APP.showBottomNotificationModal).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -114,6 +139,7 @@ describe('startKycVerification — happy path', () => {
       ACCESS_TOKEN,
       expect.any(Function),
       'en',
+      {email: EMAIL, phone: PHONE},
     );
   });
 
@@ -132,6 +158,7 @@ describe('startKycVerification — happy path', () => {
       ACCESS_TOKEN,
       expect.any(Function),
       'es',
+      {email: undefined, phone: undefined},
     );
   });
 
@@ -275,7 +302,15 @@ describe('startKycVerification — failure handling', () => {
 
     expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
     expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
-    expect(store.getState().APP.showBottomNotificationModal).not.toBe(true);
+  });
+
+  it('surfaces a message when the backend returns no token', async () => {
+    const store = makeLoggedInStore();
+    mockFetchAccessToken.mockResolvedValue(null);
+
+    await store.dispatch(startKycVerification());
+
+    expect(store.getState().APP.showBottomNotificationModal).toBe(true);
   });
 
   it('resolves when fetching the access token fails', async () => {
@@ -287,6 +322,55 @@ describe('startKycVerification — failure handling', () => {
     ).resolves.toBeUndefined();
     expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
     expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
+  });
+
+  it('never leaks the raw server error into the modal', async () => {
+    const store = makeLoggedInStore();
+    mockFetchAccessToken.mockRejectedValue(
+      new Error('Region not supported for identity verification'),
+    );
+
+    await store.dispatch(startKycVerification());
+
+    const {message} = store.getState().APP.bottomNotificationModalConfig!;
+    expect(store.getState().APP.showBottomNotificationModal).toBe(true);
+    expect(message).toBe('The verification process encountered an error.');
+    expect(message).not.toContain('Region not supported');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Loading indicator around the token mint
+// ---------------------------------------------------------------------------
+describe('startKycVerification — spinner', () => {
+  it('shows and hides the spinner around the token mint', async () => {
+    const store = makeLoggedInStore();
+
+    await store.dispatch(startKycVerification());
+
+    expect(mockOngoingProcess.show).toHaveBeenCalledWith('GENERAL_AWAITING');
+    expect(mockOngoingProcess.hide).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the spinner even when the token mint throws', async () => {
+    const store = makeLoggedInStore();
+    mockFetchAccessToken.mockRejectedValue(new Error('token endpoint down'));
+
+    await store.dispatch(startKycVerification());
+
+    expect(mockOngoingProcess.hide).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the spinner before the SDK is launched', async () => {
+    const store = makeLoggedInStore();
+    mockLaunchSumSubSdk.mockImplementation(async () => {
+      expect(mockOngoingProcess.hide).toHaveBeenCalledTimes(1);
+      return {success: true, status: 'Approved'};
+    });
+
+    await store.dispatch(startKycVerification());
+
+    expect(mockLaunchSumSubSdk).toHaveBeenCalled();
   });
 });
 
