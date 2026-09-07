@@ -48,6 +48,8 @@ i18n
   .init({
     resources,
     compatibilityJSON: 'v3',
+    keySeparator: false,
+    nsSeparator: false,
     lng: detectedLanguage,
     fallbackLng: 'en',
     debug: false,
