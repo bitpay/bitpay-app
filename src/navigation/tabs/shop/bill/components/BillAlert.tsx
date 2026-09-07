@@ -1,5 +1,4 @@
 import React from 'react';
-import {Linking} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {Link, Paragraph} from '../../../../../components/styled/Text';
 import {
@@ -10,6 +9,8 @@ import {
 } from '../../../../../styles/colors';
 import ClockSvg from '../../../../../../assets/img/bills/clock.svg';
 import InfoSvg from '../../../home/components/InfoSvg';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const AlertContainer = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
@@ -48,6 +49,7 @@ export default ({
   variant?: 'noLateFees' | 'servicePaused';
 }) => {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   return (
     <AlertContainer>
       {variant === 'servicePaused' ? (
@@ -70,8 +72,10 @@ export default ({
               service will resume.
               <AlertLink
                 onPress={() =>
-                  Linking.openURL(
-                    'https://support.bitpay.com/hc/en-us/articles/41956465346061-Pausing-Bill-Pay-Services-on-2025-12-26',
+                  dispatch(
+                    openExternalUrl(
+                      'https://support.bitpay.com/hc/en-us/articles/41956465346061-Pausing-Bill-Pay-Services-on-2025-12-26',
+                    ),
                   )
                 }>
                 {' Learn more'}

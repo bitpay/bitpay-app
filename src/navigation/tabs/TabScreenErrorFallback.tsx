@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import ErrorBoundary from 'react-native-error-boundary';
 import * as Sentry from '@sentry/react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -26,6 +26,8 @@ import {H3, Link, Paragraph, TextAlign} from '../../components/styled/Text';
 import WarningSvg from '../../../assets/img/warning.svg';
 import Icons from '../wallet/components/WalletIcons';
 import {Grey, LightBlack, Slate10} from '../../styles/colors';
+import {useAppDispatch} from '../../utils/hooks';
+import {openExternalUrl} from '../../store/app/app.effects';
 
 interface TabsScreenErrorFallbackOptions {
   includeHeader?: boolean;
@@ -81,6 +83,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
   options,
 }) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
   return (
     <TabContainer>
@@ -104,7 +107,9 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
                 We are unable to load this tab. If this error persists, please{' '}
                 <Link
                   onPress={() =>
-                    Linking.openURL('https://bitpay.com/request-help/wizard')
+                    dispatch(
+                      openExternalUrl('https://bitpay.com/request-help/wizard'),
+                    )
                   }>
                   {t('contact BitPay Support')}
                 </Link>

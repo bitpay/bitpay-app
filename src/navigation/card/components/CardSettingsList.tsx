@@ -72,7 +72,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     const canUrlBeHandled = await Linking.canOpenURL(url).catch(() => false);
 
     if (download && canUrlBeHandled) {
-      Linking.openURL(url);
+      dispatch(AppEffects.openExternalUrl(url, false));
       return;
     }
 

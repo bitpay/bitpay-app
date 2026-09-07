@@ -9,7 +9,7 @@ import {
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   LightBlack,
@@ -43,6 +43,7 @@ import BillItem, {BillItemProps} from '../components/BillItem';
 import AmountModal from '../../../../../components/amount/AmountModal';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const AccountHeader = styled.View`
   padding: 0 16px 5px;
@@ -157,7 +158,8 @@ const PayAllBills = ({
 
   const sheetOptions: Array<Option> = [
     {
-      onPress: () => Linking.openURL('https://bitpay.com/request-help/wizard'),
+      onPress: () =>
+        dispatch(openExternalUrl('https://bitpay.com/request-help/wizard')),
       optionElement: () => {
         return (
           <BillOption isLast={true}>

@@ -77,7 +77,6 @@ import {
 import {Key, Token, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
-import {Linking} from 'react-native';
 import {
   BitcoreLibs,
   bitcoreLibs,
@@ -98,7 +97,7 @@ import {
   BitpaySupportedSvmCoins,
 } from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
-import {submitDeviceEvent} from '../app/app.effects';
+import {openExternalUrl, submitDeviceEvent} from '../app/app.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
@@ -455,8 +454,10 @@ const handleUnlock =
               {
                 text: t('Verify'),
                 action: () => {
-                  Linking.openURL(
-                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
+                  dispatch(
+                    openExternalUrl(
+                      `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
+                    ),
                   );
                 },
               },

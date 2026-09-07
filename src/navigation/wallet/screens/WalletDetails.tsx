@@ -15,7 +15,6 @@ import React, {
 import {useTranslation} from 'react-i18next';
 import {
   DeviceEventEmitter,
-  Linking,
   RefreshControl,
   Text,
   View,
@@ -160,6 +159,7 @@ import type {RootState} from '../../../store';
 import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
+import {openExternalUrl} from '../../../store/app/app.effects';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -1022,7 +1022,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       if (url) {
         withConfirmation
           ? openPopUpConfirmation(coin, url)
-          : Linking.openURL(url);
+          : dispatch(openExternalUrl(url));
       }
     }
   };
@@ -1038,7 +1038,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           {
             text: t('CONTINUE'),
             action: () => {
-              Linking.openURL(url);
+              dispatch(openExternalUrl(url));
             },
             primary: true,
           },

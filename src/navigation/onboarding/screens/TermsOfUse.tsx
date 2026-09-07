@@ -2,7 +2,7 @@ import {CommonActions} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
+import {DeviceEventEmitter, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -22,6 +22,7 @@ import {
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {sleep} from '../../../utils/helper-methods';
+import {openExternalUrl} from '../../../store/app/app.effects';
 
 type TermsOfUseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -122,7 +123,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
           <StatementLink
             testID="terms-of-use-wallet-link"
             accessibilityLabel="Wallet terms of use"
-            onPress={() => Linking.openURL(URL.TOU_WALLET)}>
+            onPress={() => dispatch(openExternalUrl(URL.TOU_WALLET))}>
             {t('Wallet Terms of Use.')}
           </StatementLink>
         </StatementText>

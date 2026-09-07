@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Linking} from 'react-native';
+import {View} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -38,7 +38,10 @@ import {
   formatFiatAmount,
   toggleThenUntoggle,
 } from '../../../../../utils/helper-methods';
-import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {
+  openExternalUrl,
+  openUrlWithInAppBrowser,
+} from '../../../../../store/app/app.effects';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -389,8 +392,8 @@ const Confirm = () => {
           {
             text: t('GET VERIFIED'),
             action: () => {
-              onDismiss().then(async () => {
-                await Linking.openURL(url);
+              onDismiss().then(() => {
+                dispatch(openExternalUrl(url));
               });
             },
             primary: true,

@@ -183,9 +183,23 @@ const ZenLedgerImport: React.FC = () => {
         });
         return;
       }
-      dispatch(openUrlWithInAppBrowser(signup_url));
+      const didOpenZenLedger = await dispatch(
+        openUrlWithInAppBrowser(signup_url),
+      );
+
+      if (!navigation.isFocused()) {
+        return;
+      }
+
+      if (!didOpenZenLedger) {
+        throw new Error(t('ZenLedger import failed. Please try again.'));
+      }
+
       await sleep(500);
-      navigation.goBack();
+
+      if (navigation.isFocused()) {
+        navigation.goBack();
+      }
     } catch (e) {
       hideOngoingProcess();
       await sleep(500);
