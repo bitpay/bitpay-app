@@ -26,6 +26,7 @@ jest.mock('../../api/sumsub', () => ({
   SumSubApi: {
     fetchAccessToken: jest.fn(),
     fetchKycStatus: jest.fn(),
+    startKycAttempt: jest.fn(),
   },
 }));
 
@@ -42,6 +43,7 @@ jest.mock('../../managers/OngoingProcessManager', () => ({
 
 const mockFetchAccessToken = SumSubApi.fetchAccessToken as jest.Mock;
 const mockFetchKycStatus = SumSubApi.fetchKycStatus as jest.Mock;
+const mockStartKycAttempt = SumSubApi.startKycAttempt as jest.Mock;
 const mockLaunchSumSubSdk = launchSumSubSdk as jest.Mock;
 const mockOngoingProcess = ongoingProcessManager as unknown as {
   show: jest.Mock;
@@ -78,6 +80,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockFetchAccessToken.mockResolvedValue(ACCESS_TOKEN);
   mockFetchKycStatus.mockResolvedValue(NOT_STARTED);
+  mockStartKycAttempt.mockResolvedValue(undefined);
   mockLaunchSumSubSdk.mockResolvedValue({success: true, status: 'Approved'});
 });
 
@@ -182,6 +185,42 @@ describe('startKycVerification — happy path', () => {
 
     expect(refreshed).toBe(ACCESS_TOKEN);
     expect(mockFetchAccessToken).toHaveBeenCalledWith(API_TOKEN);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Server-side attempt
+// ---------------------------------------------------------------------------
+describe('startKycVerification — startKycAttempt', () => {
+  it('opens the attempt before launching the SDK', async () => {
+    const store = makeLoggedInStore();
+
+    await store.dispatch(startKycVerification());
+
+    expect(mockStartKycAttempt).toHaveBeenCalledWith(API_TOKEN);
+    expect(mockStartKycAttempt.mock.invocationCallOrder[0]).toBeLessThan(
+      mockLaunchSumSubSdk.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('never opens an attempt when the user is not eligible for a token', async () => {
+    const store = makeLoggedInStore();
+    mockFetchAccessToken.mockResolvedValue(null);
+
+    await store.dispatch(startKycVerification());
+
+    expect(mockStartKycAttempt).not.toHaveBeenCalled();
+    expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
+  });
+
+  it('still launches the SDK when opening the attempt fails', async () => {
+    const store = makeLoggedInStore();
+    mockStartKycAttempt.mockRejectedValue(new Error('boom'));
+
+    await store.dispatch(startKycVerification());
+
+    // Bookkeeping must never lock the user out of verification.
+    expect(mockLaunchSumSubSdk).toHaveBeenCalled();
   });
 });
 

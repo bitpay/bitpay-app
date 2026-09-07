@@ -3,6 +3,7 @@ import {KycInfo} from './sumsub.reducer';
 
 export type KycUiState =
   | 'notStarted'
+  | 'inProgress'
   | 'actionRequired'
   | 'denied'
   | 'inReview'

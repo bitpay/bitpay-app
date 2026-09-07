@@ -82,6 +82,13 @@ const STATE_CONFIG: Record<
   Exclude<KycUiState, 'notStarted'>,
   KycStateConfig
 > = {
+  inProgress: {
+    icon: IconKycStatusPending,
+    iconBg: Warning25,
+    titleKey: 'Finish verifying your identity',
+    bodyKey:
+      'You have a verification in progress. Click the button below to pick up where you left off.',
+  },
   actionRequired: {
     icon: IconKycStatusDenied,
     iconBg: Caution25,
@@ -165,7 +172,9 @@ export const VerifyIdentityScreen: React.FC = () => {
       </Content>
 
       <ButtonContainer>
-        {state === 'actionRequired' ? (
+        {state === 'inProgress' ? (
+          <Button onPress={handleResume}>{t('Continue Verification')}</Button>
+        ) : state === 'actionRequired' ? (
           <Button onPress={handleResume}>{t('Resume Application')}</Button>
         ) : (
           <Button onPress={goHome}>{t('Go Home')}</Button>

@@ -25,6 +25,13 @@ export interface SumSubState {
   bannerAck: {
     [key in Network]: KycBannerAck | null;
   };
+  // Whether `getKycStatus` has answered since the app started. Not persisted:
+  // a rehydrated `kyc` can be stale (the status may have moved on server-side
+  // while the app was closed), and prompting to start KYC off a stale
+  // notStarted is what re-shows the Get Verified modal.
+  statusFetched: {
+    [key in Network]: boolean;
+  };
 }
 
 const initialState: SumSubState = {
@@ -43,9 +50,16 @@ const initialState: SumSubState = {
     [Network.testnet]: null,
     [Network.regtest]: null,
   },
+  statusFetched: {
+    [Network.mainnet]: false,
+    [Network.testnet]: false,
+    [Network.regtest]: false,
+  },
 };
 
-export const sumSubReduxPersistBlackList: (keyof SumSubState)[] = [];
+export const sumSubReduxPersistBlackList: (keyof SumSubState)[] = [
+  'statusFetched',
+];
 
 export const sumSubReducer = (
   state: SumSubState = initialState,
@@ -60,6 +74,9 @@ export const sumSubReducer = (
   if (!state.bannerAck) {
     state = {...state, bannerAck: initialState.bannerAck};
   }
+  if (!state.statusFetched) {
+    state = {...state, statusFetched: initialState.statusFetched};
+  }
   switch (action.type) {
     case SumSubActionTypes.SET_KYC:
       return {
@@ -67,6 +84,10 @@ export const sumSubReducer = (
         kyc: {
           ...state.kyc,
           [action.payload.network]: action.payload.kyc,
+        },
+        statusFetched: {
+          ...state.statusFetched,
+          [action.payload.network]: true,
         },
       };
 
@@ -98,6 +119,10 @@ export const sumSubReducer = (
         sdkStatus: {
           ...state.sdkStatus,
           [action.payload.network]: null,
+        },
+        statusFetched: {
+          ...state.statusFetched,
+          [action.payload.network]: false,
         },
       };
 
