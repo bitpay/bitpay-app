@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+require('intl-pluralrules');
 const i18next = require('i18next');
 
 const languages = ['en', 'de', 'es', 'fr', 'ja', 'nl', 'pt', 'ru', 'zh'];
@@ -41,31 +42,30 @@ async function checkTranslations(catalogs) {
     ),
     lng: 'en',
     fallbackLng: 'en',
-    compatibilityJSON: 'v3',
     keySeparator: false,
     nsSeparator: false,
     interpolation: {escapeValue: false},
   });
   const resolver = instance.services.pluralResolver;
+  const pluralSuffixes = ['_zero', '_one', '_two', '_few', '_many', '_other'];
   const families = Object.keys(en)
-    .filter(key => key.endsWith('_plural'))
-    .map(key => key.slice(0, -7));
-  const bases = Object.keys(en).filter(key => !key.endsWith('_plural'));
-
-  for (const key of families) {
-    if (!Object.hasOwn(en, key)) {
-      errors.push(`en: missing plural base ${JSON.stringify(key)}`);
-    }
-  }
+    .filter(key => key.endsWith('_one'))
+    .map(key => key.slice(0, -4));
+  const bases = Object.keys(en).filter(
+    key => !pluralSuffixes.some(suffix => key.endsWith(suffix)),
+  );
 
   for (const [lang, catalog] of Object.entries(catalogs)) {
     const expected = new Map();
-    for (const key of bases) {
+    for (const key of new Set([...bases, ...families])) {
       if (families.includes(key)) {
+        if (Object.hasOwn(catalog, key)) {
+          expected.set(key, key + '_other');
+        }
         for (const suffix of resolver.getSuffixes(lang)) {
           expected.set(
             key + suffix,
-            key + (suffix === '' || suffix === '_0' ? '' : '_plural'),
+            key + (suffix === '_one' ? '_one' : '_other'),
           );
         }
       } else {

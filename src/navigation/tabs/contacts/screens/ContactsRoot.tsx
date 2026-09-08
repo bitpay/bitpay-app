@@ -202,7 +202,7 @@ const ContactsRoot = ({}: NativeStackScreenProps<
                     updateSearchResults(text);
                   }}
                   value={value}
-                  type={t('search')}
+                  type="search"
                 />
               )}
               name="search"
