@@ -54,7 +54,11 @@ export type ConfigPaymentMethodKey =
   | 'paypal'
   | 'pisp'
   | 'pix'
-  | 'venmo';
+  | 'venmo'
+  // MoonPay embedded flow only — independent from the general 'applePay' /
+  // 'creditCard' / 'debitCard' keys above, which also cover the Kayak flow.
+  | 'applePayEmbedded'
+  | 'cardEmbedded';
 
 export type PaymentMethodConfig = {
   disabled?: boolean;
