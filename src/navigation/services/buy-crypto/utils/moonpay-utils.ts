@@ -1,9 +1,13 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
-import {MoonpayPaymentType} from '../../../../store/buy-crypto/buy-crypto.models';
+import {
+  MoonpayCardBrand,
+  MoonpayPaymentType,
+} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethodKey} from '../constants/BuyCryptoConstants';
+import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -278,7 +282,7 @@ export const getMoonpayPaymentMethodFormat = (
     switch (method) {
       case 'debitCard':
       case 'creditCard':
-        moonpayPaymentMethod = 'credit_debit_card';
+        moonpayPaymentMethod = isEmbeddedFlow ? 'card' : 'credit_debit_card';
         break;
       case 'sepaBankTransfer':
         moonpayPaymentMethod = 'sepa_bank_transfer';
@@ -301,6 +305,83 @@ export const getMoonpayPaymentMethodFormat = (
     }
   }
   return moonpayPaymentMethod;
+};
+let _moonpayEmbeddedApplePaySupported = false;
+
+export const getMoonpayEmbeddedApplePaySupported = (): boolean =>
+  _moonpayEmbeddedApplePaySupported;
+
+export const setMoonpayEmbeddedApplePaySupported = (
+  supported: boolean,
+): void => {
+  _moonpayEmbeddedApplePaySupported = supported;
+};
+
+// Whether MoonPay's embedded flow is allowed, for a given payment method, by
+// the remote config and (for Apple Pay) device support. embeddedBuyDisabled
+// is a global kill switch: if set, every embedded payment method is disabled
+// regardless of the per-method flags below it. Otherwise, each embedded
+// payment method has its own flag.
+export const isMoonpayEmbeddedPaymentMethodEnabled = (
+  method: PaymentMethodKey | undefined,
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+): boolean => {
+  const moonpayConfig = buyCryptoConfig?.moonpay?.config;
+  if (moonpayConfig?.embeddedBuyDisabled === true) {
+    return false;
+  }
+  const moonpayPaymentMethods = moonpayConfig?.paymentMethods;
+  switch (method) {
+    case 'applePay':
+      return (
+        getMoonpayEmbeddedApplePaySupported() &&
+        !moonpayPaymentMethods?.applePayEmbedded?.disabled
+      );
+    case 'creditCard':
+    case 'debitCard':
+      return !moonpayPaymentMethods?.cardEmbedded?.disabled;
+    default:
+      return false;
+  }
+};
+
+// Whether at least one embedded payment method is still enabled by config —
+// used to decide if it's worth connecting to MoonPay's embedded flow at all.
+export const isAnyMoonpayEmbeddedPaymentMethodEnabled = (
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+): boolean =>
+  isMoonpayEmbeddedPaymentMethodEnabled('applePay', buyCryptoConfig) ||
+  isMoonpayEmbeddedPaymentMethodEnabled('creditCard', buyCryptoConfig);
+
+export const getMoonpayCardBrandLabel = (brand: MoonpayCardBrand): string => {
+  switch (brand) {
+    case 'visa':
+      return 'Visa';
+    case 'mastercard':
+      return 'Mastercard';
+    case 'maestro':
+      return 'Maestro';
+    case 'american_express':
+      return 'American Express';
+    default:
+      return t('Card');
+  }
+};
+
+// reasons documented for a saved card's availability.reasons
+export const getMoonpayCardUnavailableReason = (
+  reason: string | undefined,
+): string | undefined => {
+  switch (reason) {
+    case 'card_expired':
+      return t('Expired');
+    case 'card_declined':
+      return t('Declined');
+    case 'card_blocked':
+      return t('Blocked');
+    default:
+      return reason ? t('Unavailable') : undefined;
+  }
 };
 
 export const getMoonpayFiatAmountLimits = () => {
