@@ -85,6 +85,16 @@ The app uses i18next `compatibilityJSON: 'v3'`. For each English base plus
 | ru | `_0` (1, 21), `_1` (2–4, 22), `_2` (0, 5, 11–14) |
 | ja, zh | `_0` |
 
+These suffixes belong to the JSON v3 format, which i18next removed in v24. The
+app currently pins i18next 21.6.4, so they are correct today. Any upgrade to
+i18next 24 or later must convert every plural family to the v4 suffixes
+(`_one`, `_other`, `_few`, `_many`, `_zero`), drop `compatibilityJSON` from
+`i18n.js`, and update this table in the same pull request. There are 121 v3
+plural keys across the nine catalogs; `i18next-v4-format-converter` performs the
+conversion. Leaving the upgrade and the conversion in separate pull requests
+breaks every pluralized message silently, because a missing suffix falls back to
+the key.
+
 Pass a numeric `count` at the call site. Do not copy English plural suffixes into
 Russian, Japanese or Chinese. Use whole messages with interpolation or `Trans`
 for new sentences spanning links or styled fragments. Existing fragments must
