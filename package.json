@@ -44,8 +44,7 @@
     "reset-braze": "node ./scripts/braze-config-reset.js",
     "reset-google-maps": "node ./scripts/google-maps-reset.js",
     "translation:extract": "yarn run i18next 'src/**/*.{js,jsx,ts,tsx}'",
-    "translation:upload": "crowdin upload sources --identity crowdin-credentials.yml",
-    "translation:download": "crowdin download --identity crowdin-credentials.yml"
+    "translation:check": "node --test scripts/check-translations.test.js && node scripts/check-translations.js"
   },
   "dependencies": {
     "@bitpay-labs/bitcore-wallet-client": "11.10.6",

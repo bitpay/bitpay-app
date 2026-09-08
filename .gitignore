@@ -87,7 +87,7 @@ yarn-error.log
 .jest/
 coverage/
 
-# Crowdin
+# Legacy translation credentials
 crowdin-credentials.yml
 
 # Ruby

@@ -48,6 +48,7 @@ const TransactItemContainer = styled(TouchableOpacity)`
 const ItemIconContainer = styled.View<{disabled: boolean}>`
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   ${({disabled}) =>
     disabled &&
@@ -61,6 +62,8 @@ const ItemIconContainer = styled.View<{disabled: boolean}>`
 `;
 
 const ItemTextContainer = styled.View<{disabled: boolean}>`
+  flex: 1;
+  min-width: 0;
   align-items: flex-start;
   justify-content: space-around;
   flex-direction: column;
