@@ -206,7 +206,6 @@ const ButtonContainerFlex = styled.View<{hasIcon: boolean}>`
 
 const ButtonTextContainer = styled.View`
   flex-shrink: 1;
-  min-width: 0;
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`

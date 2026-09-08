@@ -23,8 +23,7 @@ const CreateOrImportLink = styled(Link)`
 `;
 
 const KeyStatusButton = styled(Button)`
-  max-width: 50%;
-  flex-shrink: 1;
+  flex-shrink: 0;
 `;
 
 const WalletsAndKeys = () => {
