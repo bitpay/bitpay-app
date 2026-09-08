@@ -45,12 +45,7 @@ import {
   ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
