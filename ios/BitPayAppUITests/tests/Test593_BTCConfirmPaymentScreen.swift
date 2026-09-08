@@ -14,6 +14,8 @@ final class Test593_BTCConfirmPaymentScreen: XCTestCase {
     onboardingPage.handleTrackingPermissionIfDisplayed()
     
     AppFlows.completeOnboardingIfRequired(app: app)
+
+    AppFlows.goToHomeScreen(app: app)
   }
   
   @MainActor

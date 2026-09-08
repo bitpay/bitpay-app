@@ -11,6 +11,7 @@ import PairingScreen, {
   BitPayIdPairingScreenParamList,
 } from './screens/BitPayIdPairingScreen';
 import Profile from './screens/ProfileSettings';
+import VerifyIdentityScreen from './screens/VerifyIdentity';
 import ReceiveSettings from './screens/ReceiveSettings';
 import {useTranslation} from 'react-i18next';
 import ReceivingEnabled from './screens/ReceivingEnabled';
@@ -35,6 +36,7 @@ export type BitpayIdGroupParamList = {
   ReceivingEnabled: undefined;
   EnableTwoFactor: EnableTwoFactorScreenParamList;
   TwoFactorEnabled: TwoFactorEnabledScreenParamList;
+  VerifyIdentity: undefined;
 };
 
 export enum BitpayIdScreens {
@@ -45,6 +47,7 @@ export enum BitpayIdScreens {
   ENABLE_TWO_FACTOR = 'EnableTwoFactor',
   TWO_FACTOR = 'TwoFactor',
   TWO_FACTOR_ENABLED = 'TwoFactorEnabled',
+  VERIFY_IDENTITY = 'VerifyIdentity',
 }
 
 const BitpayIdGroup = ({BitpayId, theme}: BitpayIdProps) => {
@@ -120,6 +123,13 @@ const BitpayIdGroup = ({BitpayId, theme}: BitpayIdProps) => {
         component={TwoFactorEnabled}
         options={{
           headerLeft: () => null,
+        }}
+      />
+      <BitpayId.Screen
+        name={BitpayIdScreens.VERIFY_IDENTITY}
+        component={VerifyIdentityScreen}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Verify Identity')}</HeaderTitle>,
         }}
       />
     </BitpayId.Group>

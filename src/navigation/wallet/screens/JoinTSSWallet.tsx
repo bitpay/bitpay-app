@@ -6,6 +6,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
 import {useTheme} from 'styled-components/native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
@@ -207,6 +208,9 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [partyKey, setPartyKey] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+
+  useAndroidBackHandler(() => currentStep === 3);
+
   // const [showInviteInput, setShowInviteInput] = useState(false);
   const [showWaitingCopayers, setShowWaitingCopayers] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -473,9 +477,12 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   useLayoutEffect(() => {
     const showMenu = currentStep === 1 || currentStep === 2;
     navigation.setOptions({
+      gestureEnabled: currentStep !== 3,
       headerLeft:
         currentStep === 2
           ? () => <HeaderBackButton onPress={() => setCurrentStep(1)} />
+          : currentStep === 3
+          ? () => null
           : undefined,
       headerRight: showMenu
         ? () => <Settings onPress={() => setShowOptions(true)} />

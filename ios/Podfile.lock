@@ -3,11 +3,11 @@ PODS:
     - AppsFlyerFramework/Main (= 6.17.9)
   - AppsFlyerFramework/Main (6.17.9)
   - boost (1.84.0)
-  - braze-react-native-sdk (22.0.0):
+  - braze-react-native-sdk (20.1.0):
     - boost
-    - BrazeKit (~> 16.0.0)
-    - BrazeLocation (~> 16.0.0)
-    - BrazeUI (~> 16.0.0)
+    - BrazeKit (~> 14.0.4)
+    - BrazeLocation (~> 14.0.4)
+    - BrazeUI (~> 14.0.4)
     - DoubleConversion
     - fast_float
     - fmt
@@ -34,11 +34,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - BrazeKit (16.0.0)
-  - BrazeLocation (16.0.0):
-    - BrazeKit (= 16.0.0)
-  - BrazeUI (16.0.0):
-    - BrazeKit (= 16.0.0)
+  - BrazeKit (14.0.4)
+  - BrazeLocation (14.0.4):
+    - BrazeKit (= 14.0.4)
+  - BrazeUI (14.0.4):
+    - BrazeKit (= 14.0.4)
   - BVLinearGradient (2.6.2):
     - React-Core
   - CookieManager (6.3.0):
@@ -77,6 +77,11 @@ PODS:
   - hermes-engine (0.82.0):
     - hermes-engine/Pre-built (= 0.82.0)
   - hermes-engine/Pre-built (0.82.0)
+  - IdensicMobileSDK (1.45.1):
+    - IdensicMobileSDK/Default (= 1.45.1)
+  - IdensicMobileSDK/Core (1.45.1)
+  - IdensicMobileSDK/Default (1.45.1):
+    - IdensicMobileSDK/Core
   - InputMask (6.1.0)
   - libwebp (1.5.0):
     - libwebp/demux (= 1.5.0)
@@ -2119,6 +2124,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-mobilesdk-module (1.45.1):
+    - IdensicMobileSDK (= 1.45.1)
+    - React-Core
   - react-native-netinfo (11.4.1):
     - React-Core
   - react-native-pager-view (6.7.1):
@@ -3596,6 +3604,7 @@ DEPENDENCIES:
   - react-native-keyevent (from `../node_modules/react-native-keyevent`)
   - react-native-mail (from `../node_modules/react-native-mail`)
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
+  - "react-native-mobilesdk-module (from `../node_modules/@sumsub/react-native-mobilesdk-module`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-passkey (from `../node_modules/react-native-passkey`)
@@ -3671,6 +3680,8 @@ DEPENDENCIES:
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
+  https://github.com/SumSubstance/Specs.git:
+    - IdensicMobileSDK
   trunk:
     - AppsFlyerFramework
     - BrazeKit
@@ -3807,6 +3818,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-mail"
   react-native-mmkv:
     :path: "../node_modules/react-native-mmkv"
+  react-native-mobilesdk-module:
+    :path: "../node_modules/@sumsub/react-native-mobilesdk-module"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
@@ -3955,10 +3968,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppsFlyerFramework: 4f9a8237d40e9093941aef760cd77d606238aedd
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  braze-react-native-sdk: 94ac1ea2d8c97ff2202d0640b637260e769b0a89
-  BrazeKit: df43704bad6ec810a5b8959a1594f6f3b9a7073c
-  BrazeLocation: dffce52158a99b0ba143e72787605752043a5ec9
-  BrazeUI: 0df18f06502e9b73009a462248c4858c19decb5d
+  braze-react-native-sdk: 12e813e4a989839c912c87acc4a2ab72c5652df5
+  BrazeKit: ba951d2299c1d16b541cf35cdd7250d03e28a0fb
+  BrazeLocation: d6938a737f123bb9e6632246d1abea40eeb12768
+  BrazeUI: 1d733e1dea4d81f95f261b52cc6e4b91a0eccca8
   BVLinearGradient: 34a999fda29036898a09c6a6b728b0b4189e1a44
   CookieManager: ae06e97a79ea66832add0c8aa501a7986bdbb72d
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
@@ -3967,6 +3980,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 8642d8f14a548ab718ec112e9bebdfdd154138b5
+  IdensicMobileSDK: b32caa39919bd9d0ad64897b2a17de81e16f23fd
   InputMask: 71d291dc54d2deaeac6512afb6ec2304228c0bb7
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   Mixpanel-swift: de454db5987bf6f601106520a44663fc556e8cfa
@@ -4021,6 +4035,7 @@ SPEC CHECKSUMS:
   react-native-keyevent: fa167ff93e90b5d86b1678885669ff8ec099bf09
   react-native-mail: 8fdcd3aef007c33a6877a18eb4cf7447a1d4ce4a
   react-native-mmkv: 31524b627cc06d5099f45c9128d8e918e0a4a71d
+  react-native-mobilesdk-module: 4de0a4d2082038296c46dced4d0b37dc769d4db7
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: e17f0602f115f6a6a8953e58f2182dbe8eeb0bd5
   react-native-passkey: a47610edc6e8a5b829f6679ac169bd9f87e5a51a
@@ -4099,6 +4114,6 @@ SPEC CHECKSUMS:
   VisionCamera: 05e4bc4783174689a5878a0797015ab32afae9e4
   Yoga: 93bc00d78638987f9ffd928f4a9f895d3e601bc3
 
-PODFILE CHECKSUM: 91e915b372fe50cffa909299965ad28bb54bc3f7
+PODFILE CHECKSUM: ba7e8fb1bcf09886d28c9f47483308a00448ff8b
 
 COCOAPODS: 1.15.2

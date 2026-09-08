@@ -2,7 +2,6 @@ import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {sardineEnv} from '../../../../navigation/services/buy-crypto/utils/sardine-utils';
 import {
-  SardineGetOrderDetailsRequestData,
   SardinePaymentType,
   SardinePaymentUrlConfigParams,
 } from '../../buy-crypto.models';
@@ -81,32 +80,4 @@ export const sardineGetSignedPaymentUrl = (
   const url = `${checkoutUrl}/?${urlParams}`;
 
   return url;
-};
-
-export const sardineGetOrderDetails = async (
-  requestData: SardineGetOrderDetailsRequestData,
-): Promise<any> => {
-  try {
-    const body = requestData;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/sardine/ordersDetails',
-      body,
-      config,
-    );
-
-    if (data?.data && data.data instanceof Array) {
-      return Promise.resolve(data.data[0]);
-    } else {
-      return Promise.resolve(data);
-    }
-  } catch (err) {
-    return Promise.reject(err);
-  }
 };

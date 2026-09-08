@@ -22,6 +22,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {checkEncryptPassword} from '../../utils/wallet';
 import {broadcastTx, checkBiometricForSending, getTx} from '../send/send';
+import {getErrorName} from '../../../../constants/BWCError';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TSS_SESSION_PREFIX = 'TSS_SIGN_SESSION_';
@@ -227,7 +228,45 @@ const signInput = async (params: {
           logManager.debug(
             `[TSS Sign] Session restored successfully — resuming from round ${savedSession.round}`,
           );
-          callbacks.onStatusChange('signature_generation');
+          if (savedSession.round > 0) {
+            callbacks.onStatusChange('signature_generation');
+            // Recover the participants who were in the original session so the UI
+            // can show their signed state immediately without waiting for copayerReady.
+            try {
+              const {body} = await (wallet as any).request.get(
+                `/v1/tss/sign/${sessionId}/0`,
+              );
+              const participants: string[] = body?.participants ?? [];
+              logManager.debug(
+                `[TSS Sign] Restore (round ${savedSession.round}): found ${participants.length} participant(s) in round 0`,
+              );
+              for (const participantId of participants) {
+                callbacks.onCopayerStatusChange(participantId, 'signed');
+              }
+              if (!participants.includes(wallet.credentials.copayerId)) {
+                callbacks.onCopayerStatusChange(
+                  wallet.credentials.copayerId,
+                  'signed',
+                );
+              }
+            } catch (fetchErr: any) {
+              logManager.warn(
+                `[TSS Sign] Could not fetch round 0 participants: ${fetchErr?.message}`,
+              );
+              callbacks.onCopayerStatusChange(
+                wallet.credentials.copayerId,
+                'signed',
+              );
+            }
+          } else {
+            logManager.debug(
+              `[TSS Sign] Restore at round 0 — staying in waiting_for_cosigners until all participants join`,
+            );
+            callbacks.onCopayerStatusChange(
+              wallet.credentials.copayerId,
+              'signed',
+            );
+          }
         } catch (restoreError: any) {
           logManager.warn(
             `[TSS Sign] Failed to restore session, falling back to start() — error: ${restoreError?.message}`,
@@ -335,8 +374,64 @@ const signInput = async (params: {
         }
       }
 
+      // subscribe() polls forever if the other copayer goes silent.
+      // Calling start() to recover is unsafe — BWS already has later-round
+      // data and would reject it with TSS_ROUND_ALREADY_DONE.
+      const STALL_TIMEOUT_MS = 30_000;
+      let stallTimeoutId: ReturnType<typeof setTimeout> | null = null;
+      let stalled = false;
+
+      const handleStall = async () => {
+        stallTimeoutId = null;
+        if (stalled) {
+          return;
+        }
+        stalled = true;
+        logManager.warn(
+          `[TSS Sign] Input ${inputIndex + 1} Stall timeout after ${
+            STALL_TIMEOUT_MS / 1000
+          }s — no round progress`,
+        );
+        tssSign.unsubscribe();
+        try {
+          const sig = await tssSign.getSignatureFromServer();
+          if (sig) {
+            logManager.debug(
+              `[TSS Sign] Input ${
+                inputIndex + 1
+              } recovered from server after stall timeout`,
+            );
+            await clearSigningSession(sessionId);
+            resolveSign(toBwsSignatureFormat(sig, txp.chain));
+            return;
+          }
+        } catch (fetchErr: any) {
+          logManager.warn(
+            `[TSS Sign] getSignatureFromServer failed after stall timeout: ${fetchErr?.message}`,
+          );
+        }
+        await clearSigningSession(sessionId);
+        rejectSign(
+          new Error(
+            'Signing session stalled waiting for the other co-signer. Please try signing again.',
+          ),
+        );
+      };
+
+      const armStallTimer = () => {
+        if (stallTimeoutId) {
+          clearTimeout(stallTimeoutId);
+        }
+        stallTimeoutId = setTimeout(handleStall, STALL_TIMEOUT_MS);
+      };
+
+      if (savedSession) {
+        armStallTimer();
+      }
+
       tssSign
         .on('roundready', (round: number) => {
+          armStallTimer();
           logManager.debug(
             `[TSS Sign] Input ${inputIndex + 1} Round ${round} ready`,
           );
@@ -377,6 +472,10 @@ const signInput = async (params: {
           callbacks.onRoundUpdate(round, 'submitted');
         })
         .on('complete', () => {
+          if (stallTimeoutId) {
+            clearTimeout(stallTimeoutId);
+            stallTimeoutId = null;
+          }
           logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
           try {
             const sig = tssSign.getSignature();
@@ -414,6 +513,10 @@ const signInput = async (params: {
               logManager.debug(
                 `[TSS Sign] Recovered signature from server after error event`,
               );
+              if (stallTimeoutId) {
+                clearTimeout(stallTimeoutId);
+                stallTimeoutId = null;
+              }
               tssSign.unsubscribe();
               clearSigningSession(sessionId);
               resolveSign(toBwsSignatureFormat(sig, txp.chain));
@@ -421,6 +524,19 @@ const signInput = async (params: {
             return;
           }
 
+          if (errorMsg.startsWith('TSS_ROUND_TOO_EARLY')) {
+            logManager.debug(
+              `[TSS Sign] Input ${
+                inputIndex + 1
+              } TSS_ROUND_TOO_EARLY — waiting for other participant`,
+            );
+            return;
+          }
+
+          if (stallTimeoutId) {
+            clearTimeout(stallTimeoutId);
+            stallTimeoutId = null;
+          }
           tssSign.unsubscribe();
           clearSigningSession(sessionId);
           rejectSign(error);
@@ -540,7 +656,6 @@ export const startTSSSigning =
         // All signing participants push signatures — not just the creator.
         // This handles the case where a read-only wallet creates the txp
         // and the actual signers (who are not the creator) must push.
-        // ignore errors here
         let signedTXP: TransactionProposal | null = null;
         try {
           signedTXP = await new Promise<TransactionProposal>(
@@ -560,11 +675,23 @@ export const startTSSSigning =
             },
           );
         } catch (error) {
-          logManager.error(
-            `[TSS Sign] Error pushing signatures: ${
-              error instanceof Error ? error.message : JSON.stringify(error)
-            }`,
+          const errMsg =
+            error instanceof Error ? error.message : JSON.stringify(error);
+          logManager.error(`[TSS Sign] Error pushing signatures: ${errMsg}`);
+          const errCode = (error as any)?.code ?? getErrorName(error as any);
+          const RACE_CONDITION_CODES = new Set([
+            'COPAYER_VOTED', // this copayer already voted in a prior session
+            'TX_NOT_ACCEPTED', // TXP no longer in pending state
+            'BAD_SIGNATURES', // TXP state changed after other copayer pushed first
+          ]);
+          logManager.debug(
+            `[TSS Sign] pushSignatures errCode: ${errCode} — ignorable: ${RACE_CONDITION_CODES.has(
+              errCode,
+            )}`,
           );
+          if (!RACE_CONDITION_CODES.has(errCode)) {
+            throw error;
+          }
         }
 
         logManager.debug('[TSS Sign] TSS signing completed successfully');
@@ -676,7 +803,7 @@ export const joinTSSSigningSession =
         return broadcastedTxp;
       }
     } catch (err) {
-      callbacks.onStatusChange('error');
+      callbacks.onError(err instanceof Error ? err : new Error(String(err)));
       throw err;
     }
   };

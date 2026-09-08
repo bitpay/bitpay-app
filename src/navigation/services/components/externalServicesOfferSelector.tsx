@@ -121,7 +121,10 @@ import _ from 'lodash';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import OfferSelectorModal from './OfferSelectorModal';
-import {getErrorMessage} from '../utils/external-services-utils';
+import {
+  getErrorMessage,
+  isPaymentMethodDisabledForPartner,
+} from '../utils/external-services-utils';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {
   ExternalServicesContext,
@@ -419,6 +422,7 @@ const sellOffersDefault: {
     showOffer: true,
     logo: (
       <SimplexLogo
+        iconOnly={true}
         widthIcon={25}
         heightIcon={25}
         widthLogo={60}
@@ -512,45 +516,79 @@ const ExternalServicesOfferSelector: React.FC<
     ({SELL_CRYPTO}) => SELL_CRYPTO.opts,
   );
 
-  let _paymentMethod: PaymentMethod | WithdrawalMethod | undefined;
-  if (context === 'buyCrypto') {
-    if (
-      preSetPaymentMethod &&
-      PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey]
-    ) {
-      _paymentMethod =
-        PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey];
-    } else if (
-      buyCryptoOpts?.selectedPaymentMethod &&
-      PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod] &&
-      !preSetPartner
-    ) {
-      _paymentMethod =
-        PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod];
-    } else {
-      _paymentMethod =
-        Platform.OS === 'ios'
-          ? PaymentMethodsAvailable.applePay
-          : PaymentMethodsAvailable.debitCard;
+  const paymentMethodsConfig =
+    context === 'buyCrypto'
+      ? buyCryptoConfig?.paymentMethods
+      : sellCryptoConfig?.paymentMethods;
+
+  const isPaymentMethodEnabledByConfig = (
+    method: PaymentMethodKey | WithdrawalMethodKey | undefined,
+  ): boolean => !method || !paymentMethodsConfig?.[method]?.disabled;
+
+  // Resolves the payment/withdrawal method to use, in order of priority:
+  // 1. preSetPaymentMethod (deeplink), 2. last method used (opts), 3. default.
+  // Each candidate is validated against the remote paymentMethods config.
+  const resolvePaymentMethod = ():
+    | PaymentMethod
+    | WithdrawalMethod
+    | undefined => {
+    if (context === 'buyCrypto') {
+      if (
+        preSetPaymentMethod &&
+        PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey] &&
+        isPaymentMethodEnabledByConfig(preSetPaymentMethod) &&
+        country &&
+        PaymentMethodsAvailable[
+          preSetPaymentMethod as PaymentMethodKey
+        ]?.supportedCountries?.includes(country)
+      ) {
+        return PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey];
+      }
+      if (
+        buyCryptoOpts?.selectedPaymentMethod &&
+        PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod] &&
+        isPaymentMethodEnabledByConfig(buyCryptoOpts.selectedPaymentMethod) &&
+        !preSetPartner
+      ) {
+        return PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod];
+      }
+      return Platform.OS === 'ios' && isPaymentMethodEnabledByConfig('applePay')
+        ? PaymentMethodsAvailable.applePay
+        : PaymentMethodsAvailable.debitCard;
+    } else if (context === 'sellCrypto') {
+      if (
+        preSetPaymentMethod &&
+        WithdrawalMethodsAvailable[
+          preSetPaymentMethod as WithdrawalMethodKey
+        ] &&
+        isPaymentMethodEnabledByConfig(preSetPaymentMethod) &&
+        country &&
+        WithdrawalMethodsAvailable[
+          preSetPaymentMethod as WithdrawalMethodKey
+        ]?.supportedCountries?.includes(country)
+      ) {
+        return WithdrawalMethodsAvailable[
+          preSetPaymentMethod as WithdrawalMethodKey
+        ];
+      }
+      if (
+        sellCryptoOpts?.selectedWithdrawalMethod &&
+        WithdrawalMethodsAvailable[sellCryptoOpts.selectedWithdrawalMethod] &&
+        isPaymentMethodEnabledByConfig(
+          sellCryptoOpts.selectedWithdrawalMethod,
+        ) &&
+        !preSetPartner
+      ) {
+        return WithdrawalMethodsAvailable[
+          sellCryptoOpts.selectedWithdrawalMethod
+        ];
+      }
+      return getDefaultPaymentMethod(country, paymentMethodsConfig);
     }
-  } else if (context === 'sellCrypto') {
-    if (
-      preSetPaymentMethod &&
-      WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey]
-    ) {
-      _paymentMethod =
-        WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey];
-    } else if (
-      sellCryptoOpts?.selectedWithdrawalMethod &&
-      WithdrawalMethodsAvailable[sellCryptoOpts.selectedWithdrawalMethod] &&
-      !preSetPartner
-    ) {
-      _paymentMethod =
-        WithdrawalMethodsAvailable[sellCryptoOpts.selectedWithdrawalMethod];
-    } else {
-      _paymentMethod = getDefaultPaymentMethod(country);
-    }
-  }
+    return undefined;
+  };
+
+  const _paymentMethod = resolvePaymentMethod();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(
     _paymentMethod as PaymentMethod,
@@ -562,6 +600,33 @@ const ExternalServicesOfferSelector: React.FC<
   const [withdrawalMethod, setWithdrawalMethod] = useState<
     WithdrawalMethod | undefined
   >(_paymentMethod as WithdrawalMethod);
+
+  // The config props arrive asynchronously, so the initial useState value may
+  // hold a method that is disabled by config. Re-validate when config arrives,
+  // re-resolving with the same priority chain (preSet > last used > default).
+  useEffect(() => {
+    if (!paymentMethodsConfig) {
+      return;
+    }
+    if (
+      context === 'buyCrypto' &&
+      paymentMethod &&
+      !isPaymentMethodEnabledByConfig(paymentMethod.method)
+    ) {
+      const fallback = resolvePaymentMethod() as PaymentMethod;
+      setPaymentMethod(fallback);
+      onSelectPaymentMethod?.(fallback);
+    } else if (
+      context === 'sellCrypto' &&
+      withdrawalMethod &&
+      !isPaymentMethodEnabledByConfig(withdrawalMethod.method)
+    ) {
+      const fallback = resolvePaymentMethod() as WithdrawalMethod;
+      setWithdrawalMethod(fallback);
+      onSelectPaymentMethod?.(fallback);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethodsConfig]);
 
   if (context === 'buyCrypto') {
     BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
@@ -587,6 +652,10 @@ const ExternalServicesOfferSelector: React.FC<
                     exchangeFiatCurrency,
                     country,
                   ) &&
+                  !isPaymentMethodDisabledForPartner(
+                    buyCryptoConfig?.[preSetPartner],
+                    paymentMethod.method,
+                  ) &&
                   (!buyCryptoConfig?.[preSetPartner] ||
                     !buyCryptoConfig?.[preSetPartner]?.removed)
                 : false;
@@ -599,6 +668,10 @@ const ExternalServicesOfferSelector: React.FC<
                 chain,
                 exchangeFiatCurrency,
                 country,
+              ) &&
+              !isPaymentMethodDisabledForPartner(
+                buyCryptoConfig?.[exchange],
+                paymentMethod.method,
               ) &&
               (!buyCryptoConfig?.[exchange] ||
                 !buyCryptoConfig?.[exchange]?.removed);
@@ -652,6 +725,10 @@ const ExternalServicesOfferSelector: React.FC<
                     country,
                     user?.country,
                   ) &&
+                  !isPaymentMethodDisabledForPartner(
+                    sellCryptoConfig?.[preSetPartner],
+                    withdrawalMethod.method,
+                  ) &&
                   (!sellCryptoConfig?.[preSetPartner] ||
                     !sellCryptoConfig?.[preSetPartner]?.removed)
                 : false;
@@ -665,6 +742,10 @@ const ExternalServicesOfferSelector: React.FC<
                 exchangeSellFiatCurrency,
                 country,
                 user?.country,
+              ) &&
+              !isPaymentMethodDisabledForPartner(
+                sellCryptoConfig?.[exchange],
+                withdrawalMethod.method,
               ) &&
               (!sellCryptoConfig?.[exchange] ||
                 !sellCryptoConfig?.[exchange]?.removed);
@@ -957,6 +1038,9 @@ const ExternalServicesOfferSelector: React.FC<
     if (_paymentMethod === 'sepa_bank_transfer') {
       // Moonpay only accepts EUR as a base currency for SEPA payments
       offers.moonpay.fiatCurrency = 'EUR';
+    } else if (_paymentMethod === 'cash_app') {
+      // Moonpay only accepts USD as a base currency for Cash App payments
+      offers.moonpay.fiatCurrency = 'USD';
     }
 
     offers.moonpay.fiatAmount =

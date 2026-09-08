@@ -400,7 +400,7 @@ export const simplexPaymentRequest = (
           address,
           tag: '',
         },
-        original_http_ref_url: 'https://' + getPassthroughUri(),
+        original_http_ref_url: getPassthroughUri(),
       },
     },
   };

@@ -20,6 +20,7 @@ import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {GIT_COMMIT_HASH} from '@env';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {triggerJsCrash, triggerNativeCrash} from '../../../../lib/crash-test';
 
 interface LinkSetting {
   key: string;
@@ -124,6 +125,26 @@ const About = () => {
           </View>
         );
       })}
+
+      {__DEV__ ? (
+        <>
+          <Hr />
+          <Setting>
+            <SettingTitle>{t('Crash Test (DEV)')}</SettingTitle>
+          </Setting>
+          <View style={{paddingHorizontal: 15, paddingBottom: 15}}>
+            <Button
+              buttonStyle="danger"
+              style={{marginBottom: 10}}
+              onPress={() => triggerNativeCrash()}>
+              {t('Trigger Native Crash')}
+            </Button>
+            <Button buttonStyle="danger" onPress={() => triggerJsCrash()}>
+              {t('Trigger JS Crash')}
+            </Button>
+          </View>
+        </>
+      ) : null}
     </SettingsComponent>
   );
 };

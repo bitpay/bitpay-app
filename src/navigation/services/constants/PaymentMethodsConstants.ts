@@ -51,3 +51,7 @@ export const countriesWithGBPTransfer = [
 export const countriesWithPIX = [
   'BR', // Brazil
 ];
+
+export const countriesWithCashApp = [
+  'US', // United States
+];

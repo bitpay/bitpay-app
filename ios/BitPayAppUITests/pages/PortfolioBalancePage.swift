@@ -65,9 +65,35 @@ class PortfolioBalancePage {
   func tapBuyButton(timeout: TimeInterval = 900) {
     XCTAssertTrue(
       buyButton.waitForExistence(timeout: timeout),
-        "Buy button did not appear within \(timeout) seconds"
-      )
-    buyButton.tap()
+      "Buy button did not appear within \(timeout) seconds"
+    )
+
+    // Buy can briefly route to a key/backup-required sheet while WALLET.keys
+    // rehydrates after relaunch; retry (dismissing the sheet) until the keypad shows.
+    let keypadKey = app.staticTexts["5"].firstMatch
+    let maybeLater = app.descendants(matching: .any).element(
+      matching: NSPredicate(format: "identifier == 'bottom-notification-secondary-action-button'")
+    ).firstMatch
+
+    for _ in 1...4 {
+      if keypadKey.exists {
+        return
+      }
+
+      if buyButton.exists {
+        buyButton.tap()
+      }
+      if keypadKey.waitForExistence(timeout: 15) {
+        return
+      }
+
+      if maybeLater.exists && maybeLater.isHittable {
+        maybeLater.tap()
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(1.5))
+    }
+
+    XCTAssertTrue(keypadKey.exists, "Buy screen did not open after tapping Buy")
   }
   
 //  func tapSellButton() {

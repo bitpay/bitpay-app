@@ -5,3 +5,4 @@ node ./scripts/mute-require-cycle-warnings.js
 node ./scripts/multi-modal-patch.js
 node ./scripts/git-commit-hash.js
 node ./scripts/generate-dkls-vendor.js
+node ./scripts/check-abi-filters.js

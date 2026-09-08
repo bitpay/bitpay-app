@@ -12,6 +12,7 @@ import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
+import {SumSubEffects, SumSubSelectors} from '../../../store/sumsub';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import AuthFormContainer, {
@@ -74,6 +75,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
+  const kycSdkStatus = useAppSelector(SumSubSelectors.selectSdkStatus);
   const [emailVerified, setEmailVerified] = useState(false);
 
   const goToPreviousScreen = useCallback(() => {
@@ -93,6 +95,32 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
       }),
     );
   }, [navigation]);
+
+  // Like goToPreviousScreen, but routes a KYC-eligible user into VerifyIdentity.
+  const goToProfileWithKycCheck = useCallback(async () => {
+    if (!onboardingCompleted) {
+      goToPreviousScreen();
+      return;
+    }
+    const routes = [
+      {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
+      {name: BitpayIdScreens.PROFILE, params: {}},
+    ];
+    const kyc = await dispatch(SumSubEffects.startGetKycStatus());
+    // Only called from the isVerified branch, so email is verified here.
+    if (SumSubSelectors.isKycEligibleToStart(kyc, kycSdkStatus, true)) {
+      routes.push({name: BitpayIdScreens.VERIFY_IDENTITY, params: {}});
+    }
+    navigation.dispatch(
+      CommonActions.reset({index: routes.length - 1, routes}),
+    );
+  }, [
+    dispatch,
+    navigation,
+    onboardingCompleted,
+    goToPreviousScreen,
+    kycSdkStatus,
+  ]);
 
   const onPressBackButtonRef = useRef(goToPreviousScreen);
   onPressBackButtonRef.current = goToPreviousScreen;
@@ -169,12 +197,20 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
 
       setEmailVerified(true);
       if (!passkeyStatus) {
-        navigation.navigate(AuthScreens.SECURE_ACCOUNT);
+        navigation.navigate(AuthScreens.SECURE_ACCOUNT, {context: 'signup'});
       } else {
-        goToPreviousScreen();
+        goToProfileWithKycCheck();
       }
     }
-  }, [dispatch, navigation, isVerified, csrfToken, email, goToPreviousScreen]);
+  }, [
+    dispatch,
+    navigation,
+    isVerified,
+    csrfToken,
+    email,
+    passkeyStatus,
+    goToProfileWithKycCheck,
+  ]);
 
   const resendVerificationEmail = () => {
     AuthApi.sendVerificationEmail(network, csrfToken);

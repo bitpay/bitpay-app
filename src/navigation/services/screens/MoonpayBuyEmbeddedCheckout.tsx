@@ -81,11 +81,13 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
 import MoonpayEmbeddedCheckoutSkeleton from '../components/MoonpayEmbeddedCheckoutSkeleton';
+import {
+  getMoonpayDisclosureCopy,
+  getMoonpayDefaultDisclosure,
+} from '../buy-crypto/constants/MoonpayDisclosures';
 import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-
-const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms';
 
 // Styled
 export const MoonpayEmbeddedCheckoutContainer = styled.SafeAreaView`
@@ -169,6 +171,14 @@ const LegalText = styled(BaseText)`
 
 const LegalLink = styled.Text`
   color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
+`;
+
+const DisclosureText = styled(BaseText)`
+  font-size: 12px;
+  text-align: center;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  margin-bottom: 12px;
+  line-height: 18px;
 `;
 
 const PoweredByContainer = styled.View`
@@ -646,6 +656,21 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const disclosures = embeddedQuoteData?.paymentDisclosures;
+    if (!disclosures?.length) {
+      return;
+    }
+    disclosures.forEach((d: {id: string; version: string}) => {
+      const {isFallback} = getMoonpayDisclosureCopy(d as any);
+      if (isFallback) {
+        logger.warn(
+          `[MoonpayEmbeddedCheckout] Unknown MoonPay payment disclosure (id: ${d.id}, version: ${d.version}). Rendering conservative fallback — update MoonpayDisclosures.ts.`,
+        );
+      }
+    });
+  }, [embeddedQuoteData?.paymentDisclosures]);
+
+  useEffect(() => {
     if (
       remainingTimeStr === 'expired' &&
       !expiredAnalyticSent &&
@@ -877,25 +902,55 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         </ScrollView>
 
         <BottomSection>
-          {isNYorWA ? (
-            <LegalText>
-              {t("I agree to MoonPay's")}{' '}
-              <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
-                {t('Terms of Use')}
-              </LegalLink>{' '}
-              {t(
-                'and understand that, once executed, this transaction cannot be cancelled, recalled, refunded, or otherwise undone. Fraudulent transactions may result in the loss of funds with no recourse.',
-              )}
-            </LegalText>
-          ) : (
-            <LegalText>
-              {t("By clicking below, you agree to MoonPay's")}{' '}
-              <LegalLink onPress={() => openUrl(MOONPAY_TERMS_URL)}>
-                {t('Terms of Use')}
-              </LegalLink>
-              {'.'}
-            </LegalText>
-          )}
+          {(() => {
+            if (!embeddedQuoteData) return null;
+            // If the API returned specific disclosures, render only those.
+            if (embeddedQuoteData?.paymentDisclosures?.length) {
+              return embeddedQuoteData.paymentDisclosures.map(
+                (disclosure: {id: string; version: string}) => {
+                  const {segments} = getMoonpayDisclosureCopy(
+                    disclosure as any,
+                  );
+                  return (
+                    <DisclosureText
+                      key={`${disclosure.id}-${disclosure.version}`}>
+                      {segments.map((segment, i) =>
+                        segment.type === 'link' ? (
+                          <LegalLink
+                            key={i}
+                            onPress={() => openUrl(segment.url)}>
+                            {segment.label}
+                          </LegalLink>
+                        ) : (
+                          segment.value
+                        ),
+                      )}
+                    </DisclosureText>
+                  );
+                },
+              );
+            } else {
+              // No API disclosures — fall back to geo/generic legal text.
+              const legalSegments = getMoonpayDefaultDisclosure(
+                embeddedQuoteData?.paymentDisclosures,
+                isNYorWA,
+              );
+              if (!legalSegments) return null;
+              return (
+                <LegalText>
+                  {legalSegments.map((segment, i) =>
+                    segment.type === 'link' ? (
+                      <LegalLink key={i} onPress={() => openUrl(segment.url)}>
+                        {segment.label}
+                      </LegalLink>
+                    ) : (
+                      segment.value
+                    ),
+                  )}
+                </LegalText>
+              );
+            }
+          })()}
           {!isLoading && !paymentExpired && initialQuoteSignature ? (
             <MoonPayApplePayFrame
               ref={applePayFrameRef}

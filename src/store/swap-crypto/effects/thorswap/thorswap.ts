@@ -3,8 +3,6 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
-  ThorswapGetSwapTxData,
-  ThorswapGetSwapTxRequestData,
 } from '../../models/thorswap.models';
 import {logManager} from '../../../../managers/LogManager';
 
@@ -56,34 +54,6 @@ export const thorswapGetSupportedChains = async (requestData: any) => {
   } catch (err) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
     logManager.error('Error fetching Thorswap supported chains: ' + errStr);
-    return Promise.reject(err);
-  }
-};
-
-export const thorswapGetSwapTx = async (
-  requestData: ThorswapGetSwapTxRequestData,
-): Promise<ThorswapGetSwapTxData> => {
-  try {
-    const body = requestData;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/thorswap/getSwapTx',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error(
-      'Error fetching Thorswap swap transaction data: ' + errStr,
-    );
     return Promise.reject(err);
   }
 };

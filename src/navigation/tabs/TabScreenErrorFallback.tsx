@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Linking, ScrollView} from 'react-native';
 import ErrorBoundary from 'react-native-error-boundary';
+import * as Sentry from '@sentry/react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -153,6 +154,14 @@ export const withErrorFallback = <T extends TabScreenProps>(
       <ErrorBoundary
         FallbackComponent={fallbackComponent}
         onError={(err, stack) => {
+          Sentry.captureException(err, {
+            level: 'error',
+            tags: {
+              errorBoundary: 'tab-screen',
+              screen: TabScreen.displayName || TabScreen.name || 'unknown',
+            },
+            extra: {componentStack: stack},
+          });
           setError(err);
           setStackTrace(stack);
         }}>

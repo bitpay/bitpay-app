@@ -1,4 +1,4 @@
-import {useScrollToTop, useTheme} from '@react-navigation/native';
+import {useIsFocused, useScrollToTop, useTheme} from '@react-navigation/native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
@@ -15,6 +15,7 @@ import {
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   setShowKeyMigrationFailureModal,
+  setShowKycGetVerifiedModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
@@ -51,6 +52,8 @@ import {
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {SumSubSelectors} from '../../../store/sumsub';
+import GetVerifiedModal from './components/GetVerifiedModal';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
 import ArchaxFooter from '../../../components/archax/archax-footer';
@@ -64,6 +67,7 @@ import {
 } from '../../../constants/currencies';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../constants/wallet';
 import SecurePasskeyBannerGate from './components/SecurePasskeyBannerGate';
+import KycBannerGate from './components/KycBannerGate';
 import DefaultMarketingCards from './components/DefaultMarketingCards';
 import AllocationSection from './components/AllocationSection';
 import AssetsSection from './components/AssetsSection';
@@ -112,6 +116,13 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const portfolioChartsRequested = showPortfolioValue === true;
   const hasKeys = Object.values(keys).length;
+
+  const canStartKyc = useAppSelector(SumSubSelectors.selectCanStartKyc);
+  const isFocused = useIsFocused();
+  const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
+  const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
+  const appLocked = showPinModal || showBiometricModal;
+  const kycModalShown = useAppSelector(({APP}) => APP.kycGetVerifiedModalShown);
 
   const portfolioAllocationTotalFiat = useMemo(() => {
     return getPortfolioAllocationTotalFiat({
@@ -260,6 +271,17 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
+  // Get Verified modal
+  useEffect(() => {
+    if (canStartKyc && isFocused && !appLocked && !kycModalShown) {
+      const timer = setTimeout(
+        () => dispatch(setShowKycGetVerifiedModal(true)),
+        1000,
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [dispatch, canStartKyc, isFocused, appLocked, kycModalShown]);
+
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
   const homeViewportRef = useRef<View>(null);
@@ -402,6 +424,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                   onRefresh={onRefresh}
                 />
               }>
+              {/* ////////////////////////////// KYC NOTIFICATION */}
+              <KycBannerGate />
+
               {/* ////////////////////////////// PORTFOLIO BALANCE */}
               <HomeSection style={{marginTop: 20, marginBottom: 20}}>
                 <PortfolioBalance />
@@ -506,6 +531,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         </>
       )}
       <KeyMigrationFailureModal />
+      <GetVerifiedModal />
     </TabContainer>
   );
 };

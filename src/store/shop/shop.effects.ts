@@ -259,6 +259,7 @@ export const startRedeemGiftCard =
           'Invoice is unpaid or payment has not confirmed',
         ];
         const isDelayed =
+          !errMessage ||
           pendingMessages.includes(errMessage) ||
           errMessage.indexOf('Please wait') !== -1;
         return {

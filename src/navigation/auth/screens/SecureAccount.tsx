@@ -8,7 +8,14 @@ import {
 import {BaseText, Paragraph} from '../../../components/styled/Text';
 import {Action, LightBlue, Slate30, SlateDark} from '../../../styles/colors';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
-import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
+import {
+  CommonActions,
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
+import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import PasskeyPersonSetupIcon from '../../../../assets/img/passkey-person-setup.svg';
 import PasskeyPersonSetupIconDark from '../../../../assets/img/passkey-person-setup-dark.svg';
@@ -29,6 +36,7 @@ import {
 } from '../../../store/bitpay-id/bitpay-id.actions';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import {SumSubEffects, SumSubSelectors} from '../../../store/sumsub';
 
 const AccountSecurityScreenContainer = styled.SafeAreaView`
   flex: 1;
@@ -126,6 +134,8 @@ export const SecureAccountScreen = () => {
   const dispatch = useAppDispatch();
   const {dark} = useTheme();
   const navigation = useNavigation();
+  const route =
+    useRoute<RouteProp<AuthGroupParamList, AuthScreens.SECURE_ACCOUNT>>();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const network = useAppSelector(({APP}) => APP.network);
   const session: Session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
@@ -133,22 +143,37 @@ export const SecureAccountScreen = () => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
+  const kycSdkStatus = useAppSelector(SumSubSelectors.selectSdkStatus);
 
-  const onSkipPressRef = useRef(() => {
-    const routesStack = [];
-    if (onboardingCompleted) {
-      routesStack.push(
-        {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-        {name: BitpayIdScreens.PROFILE, params: {}},
+  const onSkipPressRef = useRef(async () => {
+    if (!onboardingCompleted) {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{name: OnboardingScreens.NOTIFICATIONS, params: {}}],
+        }),
       );
-    } else {
-      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
+      return;
     }
+
+    const context = route.params?.context;
+    const routes: {name: string; params: object}[] = [
+      {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
+    ];
+
+    // Login just lands on Home; the Get Verified modal is handled there.
+    // Signup (reached post-email-verification) walks an eligible user through
+    // VerifyIdentity after the passkey step.
+    if (context !== 'login') {
+      routes.push({name: BitpayIdScreens.PROFILE, params: {}});
+      const kyc = await dispatch(SumSubEffects.startGetKycStatus());
+      if (SumSubSelectors.isKycEligibleToStart(kyc, kycSdkStatus, true)) {
+        routes.push({name: BitpayIdScreens.VERIFY_IDENTITY, params: {}});
+      }
+    }
+
     navigation.dispatch(
-      CommonActions.reset({
-        index: 1,
-        routes: routesStack,
-      }),
+      CommonActions.reset({index: routes.length - 1, routes}),
     );
   });
 

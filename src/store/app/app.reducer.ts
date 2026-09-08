@@ -53,6 +53,9 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'tokensDataLoaded',
   'isImportLedgerModalVisible',
   'showArchaxBanner',
+  'hasViewedTSSOnboarding',
+  'showKycGetVerifiedModal',
+  'kycGetVerifiedModalShown',
 ];
 
 export type ModalId =
@@ -166,11 +169,14 @@ export interface AppState {
   checkingBiometricForSending: boolean;
   hasViewedZenLedgerWarning: boolean;
   hasViewedBillsTab: boolean;
+  hasViewedTSSOnboarding: boolean;
   isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
   dismissedMarketingCardIds: string[];
+  showKycGetVerifiedModal: boolean;
+  kycGetVerifiedModalShown: boolean;
 }
 
 const initialState: AppState = {
@@ -267,11 +273,14 @@ const initialState: AppState = {
   checkingBiometricForSending: false,
   hasViewedZenLedgerWarning: false,
   hasViewedBillsTab: false,
+  hasViewedTSSOnboarding: false,
   isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
   dismissedMarketingCardIds: [],
+  showKycGetVerifiedModal: false,
+  kycGetVerifiedModalShown: false,
 };
 
 export const appReducer = (
@@ -792,6 +801,12 @@ export const appReducer = (
         hasViewedBillsTab: true,
       };
 
+    case AppActionTypes.SET_HAS_VIEWED_TSS_ONBOARDING:
+      return {
+        ...state,
+        hasViewedTSSOnboarding: true,
+      };
+
     case AppActionTypes.USER_FEEDBACK:
       return {
         ...state,
@@ -826,6 +841,21 @@ export const appReducer = (
         dismissedMarketingCardIds: [...state.dismissedMarketingCardIds, cardId],
       };
     }
+
+    case AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL:
+      return {
+        ...state,
+        showKycGetVerifiedModal: action.payload,
+        kycGetVerifiedModalShown:
+          action.payload || state.kycGetVerifiedModalShown,
+      };
+
+    case AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL:
+      return {
+        ...state,
+        showKycGetVerifiedModal: false,
+        kycGetVerifiedModalShown: false,
+      };
 
     default:
       return state;

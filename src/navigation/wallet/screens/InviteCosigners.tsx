@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useLayoutEffect} from 'react';
 import {ScrollView, Modal, useWindowDimensions} from 'react-native';
 import {shareNative} from '../../../utils/share';
 import styled from 'styled-components/native';
@@ -74,6 +74,7 @@ import {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -318,6 +319,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const {height: screenHeight} = useWindowDimensions();
   const isSmallScreen = screenHeight < 700;
 
+  useAndroidBackHandler(() => true);
+
   const {keyId} = route.params;
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
   const tssSession = key?.tssSession;
@@ -341,6 +344,15 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
   const [addCoSignerError, setAddCoSignerError] = useState<string | null>(null);
+
+  useAndroidBackHandler(() => isCeremonyStarted);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: !isCeremonyStarted,
+      headerLeft: isCeremonyStarted ? () => null : undefined,
+    });
+  }, [isCeremonyStarted, navigation]);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
@@ -859,7 +871,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
         <HeaderContainer>
           <Subtitle>
             {t(
-              'Add the co-signers below. They will need join the wallet from their device and provide you with their session ID or QR code.',
+              'Add the co-signers below. They will need to join the wallet from their device and provide you with their session ID or QR code.',
             )}
           </Subtitle>
         </HeaderContainer>

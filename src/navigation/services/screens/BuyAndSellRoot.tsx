@@ -102,7 +102,10 @@ import {RootState} from '../../../store';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import uuid from 'react-native-uuid';
-import {PaymentMethod} from '../buy-crypto/constants/BuyCryptoConstants';
+import {
+  PaymentMethod,
+  PaymentMethodKey,
+} from '../buy-crypto/constants/BuyCryptoConstants';
 import {
   BanxaCreateOrderData,
   BanxaCreateOrderRequestData,
@@ -216,7 +219,10 @@ import {simplexGetCurrencies} from '../../../store/buy-crypto/effects/simplex/si
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import _ from 'lodash';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
-import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
+import {
+  WithdrawalMethod,
+  WithdrawalMethodKey,
+} from '../sell-crypto/constants/SellCryptoConstants';
 import {SellCryptoActions} from '../../../store/sell-crypto';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
@@ -465,10 +471,12 @@ export interface BuyAndSellRootProps {
 
   context: ExternalServicesContext;
   fromWallet?: Wallet;
+  fromAccount?: {keyId: string; accountAddress: string}; // used when entering from an EVM/SVM account (AccountDetails)
   amount?: number; // deeplink params are strings, ensure this is number so offers will work
   currencyAbbreviation?: string; // used from charts and deeplinks.
   chain?: string; // used from charts and deeplinks.
   partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
+  paymentMethod?: PaymentMethodKey | WithdrawalMethodKey | undefined; // used from deeplinks.
   fromDeeplink?: boolean;
   reduceTopGap?: boolean;
 }
@@ -498,6 +506,8 @@ const BuyAndSellRoot = ({
   const user: User | undefined = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
+  const anonymousEid = useAppSelector(({APP}) => APP.brazeEid);
+  const userEid = user?.eid ?? anonymousEid;
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
     ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
@@ -531,6 +541,7 @@ const BuyAndSellRoot = ({
   // Real route params
   const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
+  const fromAccount = route.params?.fromAccount;
 
   const fromAmount = useMemo(() => {
     const DEFAULT_USD_VALUE = 200;
@@ -609,6 +620,10 @@ const BuyAndSellRoot = ({
   const fromChain = route.params?.chain?.toLowerCase();
   const preSetPartner = route.params?.partner?.toLowerCase() as
     | BuyCryptoExchangeKey
+    | undefined;
+  const preSetPaymentMethod = route.params?.paymentMethod as
+    | PaymentMethodKey
+    | WithdrawalMethodKey
     | undefined;
   const fromDeeplink = route.params?.fromDeeplink;
 
@@ -1096,8 +1111,7 @@ const BuyAndSellRoot = ({
     }
 
     // TODO: add the ability to remove coins or chains from buyCryptoConfig
-    const coinsToRemove =
-      !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
+    const coinsToRemove: string[] = [];
 
     if (coinsToRemove.length > 0) {
       coinsToRemove.forEach((coin: string) => {
@@ -1717,11 +1731,7 @@ const BuyAndSellRoot = ({
         });
 
         if (allSupportedCoins.length > 0) {
-          const coinsToRemove =
-            !locationData || locationData.countryShortCode === 'US'
-              ? ['xrp']
-              : [];
-          coinsToRemove.push('busd');
+          const coinsToRemove: string[] = ['busd'];
 
           if (coinsToRemove.length > 0) {
             logger.debug(
@@ -2614,6 +2624,7 @@ const BuyAndSellRoot = ({
       colorCode: Action,
       theme: theme.dark ? 'dark' : 'light',
       showWalletAddressForm: false,
+      externalCustomerId: userEid,
     };
 
     let _paymentMethod: MoonpayPaymentType | undefined =
@@ -2828,14 +2839,14 @@ const BuyAndSellRoot = ({
       env: rampEnv,
       hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
       hostAppName: APP_NAME_UPPERCASE,
-      swapAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
-      swapAmount: offer.amountReceivingUnit!,
-      fiatCurrency: offer.fiatCurrency,
+      enabledCryptoAssets: getRampCoinFormat(coin, getRampChainFormat(chain)),
+      outAssetValue: offer.amountReceivingUnit!,
+      inAsset: offer.fiatCurrency,
       enabledFlows: ['ONRAMP'],
       defaultFlow: 'ONRAMP',
       userAddress: address,
       selectedCountryCode: country,
-      defaultAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
+      outAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       finalUrl: redirectUrl,
       paymentMethodType: getRampPaymentMethodFormat(paymentMethod.method),
     };
@@ -3403,7 +3414,7 @@ const BuyAndSellRoot = ({
       baseCurrencyAmount: offer.sellAmount || +curValRef.current,
       externalTransactionId: externalTransactionId,
       paymentMethod: getMoonpaySellPayoutMethodFormat(paymentMethod!.method),
-      externalCustomerId: user?.eid ?? selectedWallet.id,
+      externalCustomerId: userEid,
       redirectURL:
         APP_DEEPLINK_PREFIX +
         `moonpay?flow=sell&externalId=${externalTransactionId}` +
@@ -3535,18 +3546,16 @@ const BuyAndSellRoot = ({
       userAddress: address, // TODO: ask Ramp team about this for UTXO coins
       hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
       hostAppName: APP_NAME_UPPERCASE,
-      offrampAsset: rampAsset,
-      swapAsset: rampAsset,
-      swapAmount: offer.decimals
+      enabledCryptoAssets: rampAsset,
+      inAssetValue: offer.decimals
         ? Number(offer.sellAmount) * 10 ** offer.decimals
         : undefined,
-      fiatCurrency: offer.fiatCurrency,
+      outAsset: offer.fiatCurrency,
       enabledFlows: 'OFFRAMP',
       defaultFlow: 'OFFRAMP',
       selectedCountryCode: country,
-      defaultAsset: rampAsset,
+      inAsset: rampAsset,
       useSendCryptoCallback: true,
-      useSendCryptoCallbackVersion: 1,
       hideExitButton: false,
     };
 
@@ -4154,6 +4163,7 @@ const BuyAndSellRoot = ({
               sellCryptoSupportedCoinsFullObj ?? []
             }
             fromWallet={fromWallet}
+            fromAccount={fromAccount}
             currencyAbbreviation={fromCurrencyAbbreviation}
             chain={fromChain}
             partner={preSetPartner}
@@ -4179,6 +4189,7 @@ const BuyAndSellRoot = ({
               chain={selectedWallet?.chain || ''}
               country={country}
               preSetPartner={preSetPartner}
+              preSetPaymentMethod={preSetPaymentMethod}
               buyCryptoConfig={externalServicesConfig?.buyCrypto}
               sellCryptoConfig={externalServicesConfig?.sellCrypto}
               preLoadSellPartnersData={sellCryptoExchangesDefault}

@@ -40,6 +40,7 @@ import {
   getPaymentMethodIconByKey,
 } from '../constants/BuyCryptoConstants';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {getCachedExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
 import {sleep} from '../../../../utils/helper-methods';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -155,6 +156,7 @@ const PaymentMethodsModal = ({
   );
 
   const getEnabledPaymentMethods = () => {
+    const externalServicesConfig = getCachedExternalServicesConfig()?.config;
     switch (context) {
       case 'buyCrypto':
         return getBuyEnabledPaymentMethods(
@@ -163,6 +165,7 @@ const PaymentMethodsModal = ({
           chain,
           locationData?.countryShortCode || 'US',
           preSetPartner as BuyCryptoExchangeKey,
+          externalServicesConfig?.buyCrypto,
         );
 
       case 'sellCrypto':
@@ -173,6 +176,7 @@ const PaymentMethodsModal = ({
           locationData?.countryShortCode || 'US',
           user?.country,
           preSetPartner as SellCryptoExchangeKey,
+          externalServicesConfig?.sellCrypto,
         );
 
       default:

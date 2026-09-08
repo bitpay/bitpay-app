@@ -275,6 +275,57 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   const [showSigningHelp, setShowSigningHelp] = useState(false);
   const signingStartedAt = useRef<number | null>(null);
 
+  const copayerOpacities = useRef<Map<string, Animated.Value>>(
+    new Map(),
+  ).current;
+  const [hiddenCopayerIds, setHiddenCopayerIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const fadeAnimationDone = useRef(false);
+
+  useEffect(() => {
+    copayers.forEach(c => {
+      if (!copayerOpacities.has(c.id)) {
+        copayerOpacities.set(c.id, new Animated.Value(1));
+      }
+    });
+  }, [copayers, copayerOpacities]);
+
+  useEffect(() => {
+    if (status !== 'signature_generation') {
+      fadeAnimationDone.current = false;
+      setHiddenCopayerIds(new Set());
+      copayerOpacities.forEach(opacity => opacity.setValue(1));
+    }
+  }, [status, copayerOpacities]);
+
+  useEffect(() => {
+    if (status !== 'signature_generation') return;
+    if (fadeAnimationDone.current) return;
+    const signedCount = copayers.filter(c => c.signed).length;
+    const m = wallet?.tssMetadata?.m ?? copayers.length;
+    if (signedCount < m) return;
+
+    fadeAnimationDone.current = true;
+
+    const toFade = copayers.filter(c => !c.signed);
+    if (!toFade.length) return;
+
+    const animations = toFade
+      .map(c => copayerOpacities.get(c.id))
+      .filter((v): v is Animated.Value => !!v)
+      .map(opacity =>
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      );
+    Animated.parallel(animations).start(() => {
+      setHiddenCopayerIds(new Set(toFade.map(c => c.id)));
+    });
+  }, [status, copayers, copayerOpacities, wallet]);
+
   useEffect(() => {
     if (status === 'signature_generation') {
       if (signingStartedAt.current === null) {
@@ -370,6 +421,10 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     return 'pending';
   };
 
+  const creatorCopayerName = wallet?.copayers?.find(
+    c => c.id === txpCreatorId,
+  )?.name;
+
   const steps = [
     {
       title: t('Proposal Created'),
@@ -392,13 +447,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   ];
 
   const handleClose = () => {
-    if (
-      status !== 'complete' &&
-      status !== 'broadcasting' &&
-      status !== 'signature_generation'
-    ) {
-      setModalVisible(false);
-    }
+    setModalVisible(false);
   };
 
   useEffect(() => {
@@ -516,25 +565,40 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                         </HelpBanner>
                       )}
                       {step.subtitle && (
-                        <StepSubtitle>{step.subtitle}</StepSubtitle>
+                        <StepSubtitle>
+                          {index === 0 && creatorCopayerName
+                            ? `${step.subtitle} - ${t(
+                                'Created by',
+                              )}: ${creatorCopayerName}`
+                            : step.subtitle}
+                        </StepSubtitle>
                       )}
 
-                      {showCopayers && (
+                      {showCopayers && copayers.length > 0 && (
                         <CopayerList style={{marginTop: 8}}>
-                          {copayers.map((copayer, idx) => (
-                            <CopayerRow key={copayer.id || idx}>
-                              <CopayerIndicator signed={copayer.signed}>
-                                {copayer.signed ? (
-                                  <SuccessIcon width={12} height={12} />
-                                ) : (
-                                  <Loader size={16} spinning />
-                                )}
-                              </CopayerIndicator>
-                              <CopayerName signed={copayer.signed}>
-                                {copayer.name}
-                              </CopayerName>
-                            </CopayerRow>
-                          ))}
+                          {copayers
+                            .filter(c => !hiddenCopayerIds.has(c.id))
+                            .map(copayer => (
+                              <Animated.View
+                                key={copayer.id}
+                                style={{
+                                  opacity:
+                                    copayerOpacities.get(copayer.id) ?? 1,
+                                }}>
+                                <CopayerRow>
+                                  <CopayerIndicator signed={copayer.signed}>
+                                    {copayer.signed ? (
+                                      <SuccessIcon width={12} height={12} />
+                                    ) : (
+                                      <Loader size={16} spinning />
+                                    )}
+                                  </CopayerIndicator>
+                                  <CopayerName signed={copayer.signed}>
+                                    {copayer.name}
+                                  </CopayerName>
+                                </CopayerRow>
+                              </Animated.View>
+                            ))}
                         </CopayerList>
                       )}
                     </StepContent>

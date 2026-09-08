@@ -3,13 +3,17 @@ export type ExchangeConfig = {
   removed?: boolean;
   disabledTitle?: string;
   disabledMessage?: string;
-  config?: any;
+  config?: {
+    paymentMethods?: PaymentMethodsConfig;
+    [key: string]: any; // Other partner-specific configuration properties can be added here
+  };
 };
 
 export type BuyCryptoConfig = {
   disabled?: boolean;
   disabledTitle?: string;
   disabledMessage?: string;
+  paymentMethods?: PaymentMethodsConfig;
   banxa?: ExchangeConfig;
   moonpay?: ExchangeConfig;
   ramp?: ExchangeConfig;
@@ -23,6 +27,7 @@ export type SellCryptoConfig = {
   disabled?: boolean;
   disabledTitle?: string;
   disabledMessage?: string;
+  paymentMethods?: PaymentMethodsConfig;
   moonpay?: ExchangeConfig;
   ramp?: ExchangeConfig;
   simplex?: ExchangeConfig;
@@ -34,6 +39,29 @@ export type SwapCryptoConfig = {
   disabledMessage?: string;
   changelly?: ExchangeConfig;
   thorswap?: ExchangeConfig;
+};
+
+export type ConfigPaymentMethodKey =
+  | 'ach'
+  | 'applePay'
+  | 'cashApp'
+  | 'creditCard'
+  | 'debitCard'
+  | 'googlePay'
+  | 'sepaBankTransfer'
+  | 'gbpBankTransfer'
+  | 'other'
+  | 'paypal'
+  | 'pisp'
+  | 'pix'
+  | 'venmo';
+
+export type PaymentMethodConfig = {
+  disabled?: boolean;
+};
+
+export type PaymentMethodsConfig = {
+  [key in ConfigPaymentMethodKey]?: PaymentMethodConfig;
 };
 
 export type ExternalServicesConfig = {

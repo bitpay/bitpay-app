@@ -245,6 +245,7 @@ const TransactionProposalDetails = () => {
   );
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const [hasSwiped, setHasSwiped] = useState(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
     'waiting_for_cosigners',
   );
@@ -564,6 +565,7 @@ const TransactionProposalDetails = () => {
   const onSwipeComplete = async () => {
     try {
       if (isTSSWallet(wallet)) {
+        setHasSwiped(true);
         await joinTSSSigning();
         return;
       }
@@ -749,7 +751,7 @@ const TransactionProposalDetails = () => {
           {isTSSWallet(wallet) ? (
             <>
               {(txp.creatorId === wallet.credentials.copayerId ||
-                txp.canBeRemoved) &&
+                Math.floor(Date.now() / 1000) - txp.createdOn > 10 * 60) &&
                 !key.isReadOnly && (
                   <Button
                     testID="txp-details-tss-delete-proposal-button"
@@ -800,6 +802,7 @@ const TransactionProposalDetails = () => {
               isModalVisible={showTSSProgressModal}
               onModalVisibilityChange={setShowTSSProgressModal}
               txpCreatorId={transaction.creatorId}
+              hideTracker={!hasSwiped}
             />
           )}
 

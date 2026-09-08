@@ -23,6 +23,8 @@ import {shouldScale} from '../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import ArrowRightSvg from '../../navigation/tabs/home/components/ArrowRightSvg';
+import ThresholdBadge from '../threshold-badge/ThresholdBadge';
+import MultisigBadge from '../multisig-badge/MultisigBadge';
 
 interface BodyProps {
   title?: string;
@@ -34,6 +36,8 @@ interface BodyProps {
   percentageSuffix?: string;
   hideKeyBalance: boolean;
   pendingTssSession?: boolean;
+  tssMetadata?: {m: number; n: number};
+  isMultisig?: boolean;
 }
 
 interface HomeCardProps {
@@ -112,10 +116,16 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
     percentageSuffix,
     hideKeyBalance,
     pendingTssSession,
+    tssMetadata,
+    isMultisig,
   } = body;
 
   const BodyComp = (
     <View>
+      {tssMetadata ? (
+        <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'card'} />
+      ) : null}
+      {isMultisig ? <MultisigBadge size={'card'} /> : null}
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
       {needsBackup && !pendingTssSession ? (
         <Row>

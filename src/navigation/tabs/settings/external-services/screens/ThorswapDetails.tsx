@@ -11,7 +11,11 @@ import haptic from '../../../../../components/haptic-feedback/haptic';
 import {thorswapTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 // import {thorswapGetStatus} from '../../../../../store/swap-crypto/effects/thorswap/thorswap';
 import ThorswapLogo from '../../../../../components/icons/external-services/thorswap/thorswap-logo';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useLogger,
+  useAppSelector,
+} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -51,8 +55,9 @@ import {
   ThorswapGetSwapTxRequestData,
   ThorswapTrackingStatus,
 } from '../../../../../store/swap-crypto/models/thorswap.models';
-import {thorswapGetSwapTx} from '../../../../../store/swap-crypto/effects/thorswap/thorswap';
 import cloneDeep from 'lodash.clonedeep';
+import {RootState} from '../../../../../store';
+import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
 export interface ThorswapDetailsProps {
   swapTx: thorswapTxData;
@@ -67,6 +72,9 @@ const ThorswapDetails: React.FC = () => {
   const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const [status, setStatus] = useState<Status>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -126,10 +134,22 @@ const ThorswapDetails: React.FC = () => {
       hash: swapTx.txHash,
     };
 
+    const walletIsSupported = (wallet: Wallet): boolean =>
+      !!(wallet.credentials && wallet.isComplete());
+
+    const selectedWallet = Object.values(allKeys)
+      .filter(key => key.backupComplete)
+      .flatMap(key => key.wallets ?? [])
+      .find(walletIsSupported);
+
+    if (!selectedWallet) {
+      logger.error('No supported wallet found for Thorswap status');
+      return;
+    }
+
     try {
-      const swapTxData: ThorswapGetSwapTxData = await thorswapGetSwapTx(
-        reqData,
-      );
+      const _raw = await selectedWallet.thorswapGetSwapTx(reqData);
+      const swapTxData: ThorswapGetSwapTxData = _raw?.body ?? _raw;
       let shouldUpdate = false;
       if (swapTxData?.result) {
         if (

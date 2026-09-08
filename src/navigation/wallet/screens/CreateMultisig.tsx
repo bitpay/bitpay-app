@@ -1,9 +1,8 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
 import {
-  Paragraph,
   BaseText,
   Link,
   InfoTitle,
@@ -17,7 +16,7 @@ import {
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
-import {useForm, Controller} from 'react-hook-form';
+import {useForm, Controller, useWatch} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
@@ -60,7 +59,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
-import {IsSegwitCoin, GetName} from '../../../store/wallet/utils/currency';
+import {IsSegwitCoin} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess} from '../../../contexts';
 import Banner from '../../../components/banner/Banner';
 
@@ -220,6 +219,40 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     getValues,
     formState: {errors, isSubmitting},
   } = useForm({resolver: yupResolver(schema)});
+  const watchedRequiredSignatures = useWatch({
+    control,
+    name: 'requiredSignatures',
+    defaultValue: 2,
+  });
+  const watchedTotalCopayers = useWatch({
+    control,
+    name: 'totalCopayers',
+    defaultValue: 3,
+  });
+
+  useEffect(() => {
+    if (watchedRequiredSignatures !== watchedTotalCopayers) {
+      return;
+    }
+
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Risk Warning'),
+        message: t(
+          'Using the max number of co-signers increases your risk. If any co-signer loses access, your funds will be permanently lost. BitPay cannot recover this wallet.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('GOT IT'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  }, [dispatch, t, watchedRequiredSignatures, watchedTotalCopayers]);
 
   const singleAddressCurrency =
     BitpaySupportedCoins[currency?.toLowerCase() as string]?.properties

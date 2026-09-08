@@ -1,0 +1,226 @@
+diff --git a/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.cpp b/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.cpp
+index 61fe6fa..d9a031b 100644
+--- a/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.cpp
++++ b/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.cpp
+@@ -5,6 +5,6 @@
+ namespace worklets {
+ 
+ std::set<jsi::Runtime *> WorkletRuntimeRegistry::registry_{};
+-std::mutex WorkletRuntimeRegistry::mutex_{};
++std::shared_mutex WorkletRuntimeRegistry::mutex_{};
+ 
+ } // namespace worklets
+diff --git a/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.h b/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.h
+index d97ed29..ec93a41 100644
+--- a/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.h
++++ b/node_modules/react-native-worklets/Common/cpp/worklets/Registries/WorkletRuntimeRegistry.h
+@@ -3,8 +3,9 @@
+ #include <jsi/jsi.h>
+ #include <react/debug/react_native_assert.h>
+ 
+-#include <mutex>
+ #include <set>
++#include <shared_mutex>
++#include <utility>
+ 
+ using namespace facebook;
+ 
+@@ -13,27 +14,29 @@ namespace worklets {
+ class WorkletRuntimeRegistry {
+  private:
+   static std::set<jsi::Runtime *> registry_;
+-  static std::mutex mutex_; // Protects `registry_`.
++  static std::shared_mutex mutex_;
+ 
+   WorkletRuntimeRegistry() {} // private ctor
+ 
+   static void registerRuntime(jsi::Runtime &runtime) {
+-    std::lock_guard<std::mutex> lock(mutex_);
++    std::lock_guard<std::shared_mutex> lock(mutex_);
+     registry_.insert(&runtime);
+   }
+ 
+   static void unregisterRuntime(jsi::Runtime &runtime) {
+-    std::lock_guard<std::mutex> lock(mutex_);
++    std::lock_guard<std::shared_mutex> lock(mutex_);
+     registry_.erase(&runtime);
+   }
+ 
+   friend class WorkletRuntimeCollector;
+ 
+  public:
+-  static bool isRuntimeAlive(jsi::Runtime *runtime) {
++  template <typename TFn>
++  static void runWhileLocked(jsi::Runtime *runtime, TFn &&fn) {
+     react_native_assert(runtime != nullptr && "runtime is nullptr");
+-    std::lock_guard<std::mutex> lock(mutex_);
+-    return registry_.find(runtime) != registry_.end();
++    std::shared_lock<std::shared_mutex> lock(mutex_);
++    const bool isAlive = registry_.find(runtime) != registry_.end();
++    std::forward<TFn>(fn)(isAlive);
+   }
+ };
+ 
+diff --git a/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h b/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
+index 1c20158..a7009f6 100644
+--- a/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
++++ b/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
+@@ -6,6 +6,7 @@
+ #include <jsi/jsi.h>
+ 
+ #include <memory>
++#include <mutex>
+ #include <string>
+ #include <utility>
+ #include <vector>
+@@ -16,35 +17,37 @@ namespace worklets {
+ 
+ jsi::Function getValueUnpacker(jsi::Runtime &rt);
+ 
+-inline void cleanupIfRuntimeExists(jsi::Runtime *rt, std::unique_ptr<jsi::Value> &value) {
+-  if (rt != nullptr && !WorkletRuntimeRegistry::isRuntimeAlive(rt)) {
+-    // The below use of unique_ptr.release prevents the smart pointer from
+-    // calling the destructor of the kept object. This effectively results in
+-    // leaking some memory. We do this on purpose, as sometimes we would keep
+-    // references to JSI objects past the lifetime of its runtime (e.g.,
+-    // shared values references from the RN VM holds reference to JSI objects
+-    // on the UI runtime). When the UI runtime is terminated, the orphaned JSI
+-    // objects would crash the app when their destructors are called, because
+-    // they call into a memory that's managed by the terminated runtime. We
+-    // accept the tradeoff of leaking memory here, as it has a limited impact.
+-    // This scenario can only occur when the React instance is torn down which
+-    // happens in development mode during app reloads, or in production when
+-    // the app is being shut down gracefully by the system. An alternative
+-    // solution would require us to keep track of all JSI values that are in
+-    // use which would require additional data structure and compute spent on
+-    // bookkeeping that only for the sake of destroying the values in time
+-    // before the runtime is terminated. Note that the underlying memory that
+-    // jsi::Value refers to is managed by the VM and gets freed along with the
+-    // runtime.
+-    value.release(); // NOLINT
++// Frees the heap-allocated jsi::Value wrapper without running ~jsi::Value.
++// Use when the runtime that owns the JSI handle is already gone. When the
++// owning runtime is terminated, the orphaned JSI objects would crash the app
++// if their destructors ran, because they call into memory managed by the
++// terminated runtime. The JS object itself lived inside the runtime's heap
++// and was reclaimed with the runtime; only the C++ wrapper allocation
++// remains, and we free it here without invoking ~jsi::Value.
++// See https://github.com/facebook/hermes/blob/75b617a/API/jsi/jsi/jsi.h#L833
++inline void freeWithoutCallingDestructor(std::unique_ptr<jsi::Value> &value) {
++  ::operator delete(value.release());
++}
++
++inline void cleanupRuntimeAware(jsi::Runtime *rt, std::unique_ptr<jsi::Value> &value) {
++  if (value == nullptr || rt == nullptr) {
++    return;
+   }
++  WorkletRuntimeRegistry::runWhileLocked(rt, [&value](bool isAlive) {
++    if (isAlive) {
++      value.reset();
++    } else {
++      freeWithoutCallingDestructor(value);
++    }
++  });
+ }
+ 
+ template <typename BaseClass>
+ class RetainingSerializable : virtual public BaseClass {
+  private:
+   jsi::Runtime *primaryRuntime_;
+-  jsi::Runtime *secondaryRuntime_;
++  std::mutex secondaryCacheMutex_;
++  jsi::Runtime *secondaryRuntime_{nullptr};
+   std::unique_ptr<jsi::Value> secondaryValue_;
+ 
+  public:
+@@ -62,20 +65,55 @@ class RetainingSerializable : virtual public BaseClass {
+       // shared value is created and then accessed on the same runtime
+       return BaseClass::toJSValue(rt);
+     }
+-    if (secondaryValue_ == nullptr) {
+-      auto value = BaseClass::toJSValue(rt);
+-      secondaryValue_ = std::make_unique<jsi::Value>(rt, value);
+-      secondaryRuntime_ = &rt;
++
++    bool hasDifferentRuntimeCache = false;
++    {
++      // The same retained graph can be materialized concurrently by multiple
++      // Worklet Runtimes, so all secondary-cache access is synchronized.
++      std::lock_guard<std::mutex> lock(secondaryCacheMutex_);
++      if (secondaryValue_ != nullptr) {
++        if (&rt == secondaryRuntime_) {
++          return jsi::Value(rt, *secondaryValue_);
++        }
++
++        // The first secondary runtime remains the cache owner. A different
++        // runtime must materialize an uncached, runtime-affine representation.
++        hasDifferentRuntimeCache = true;
++      }
++    }
++
++    // Materialization can recursively visit nested serializables and perform
++    // JSI operations, so it must not run while this cache mutex is held.
++    auto value = BaseClass::toJSValue(rt);
++    if (hasDifferentRuntimeCache) {
+       return value;
+     }
+-    if (&rt == secondaryRuntime_) {
+-      return jsi::Value(rt, *secondaryValue_);
++
++    auto candidate = std::make_unique<jsi::Value>(rt, value);
++
++    {
++      std::lock_guard<std::mutex> lock(secondaryCacheMutex_);
++      if (secondaryValue_ == nullptr) {
++        secondaryRuntime_ = &rt;
++        secondaryValue_ = std::move(candidate);
++      }
+     }
+-    return BaseClass::toJSValue(rt);
++
++    // If another runtime published first, `candidate` is destroyed here on
++    // the runtime thread where it was created and `value` stays runtime-correct.
++    return value;
+   }
+ 
+   ~RetainingSerializable() {
+-    cleanupIfRuntimeExists(secondaryRuntime_, secondaryValue_);
++    jsi::Runtime *secondaryRuntime = nullptr;
++    std::unique_ptr<jsi::Value> secondaryValue;
++    {
++      std::lock_guard<std::mutex> lock(secondaryCacheMutex_);
++      secondaryRuntime = secondaryRuntime_;
++      secondaryRuntime_ = nullptr;
++      secondaryValue = std::move(secondaryValue_);
++    }
++    cleanupRuntimeAware(secondaryRuntime, secondaryValue);
+   }
+ };
+ 
+@@ -246,7 +284,7 @@ class SerializableRemoteFunction : public Serializable,
+   }
+ 
+   ~SerializableRemoteFunction() override {
+-    cleanupIfRuntimeExists(runtime_, function_);
++    cleanupRuntimeAware(runtime_, function_);
+   }
+ 
+   jsi::Value toJSValue(jsi::Runtime &rt) override;
+@@ -261,7 +299,7 @@ class SerializableInitializer : public Serializable {
+   std::unique_ptr<SerializableObject> initializer_;
+   std::unique_ptr<jsi::Value> remoteValue_;
+   mutable std::mutex initializationMutex_;
+-  jsi::Runtime *remoteRuntime_;
++  jsi::Runtime *remoteRuntime_{nullptr};
+ 
+  public:
+   SerializableInitializer(jsi::Runtime &rt, const jsi::Object &initializerObject)
+@@ -269,7 +307,7 @@ class SerializableInitializer : public Serializable {
+         initializer_(std::make_unique<SerializableObject>(rt, initializerObject)) {}
+ 
+   ~SerializableInitializer() override {
+-    cleanupIfRuntimeExists(remoteRuntime_, remoteValue_);
++    cleanupRuntimeAware(remoteRuntime_, remoteValue_);
+   }
+ 
+   jsi::Value toJSValue(jsi::Runtime &rt) override;

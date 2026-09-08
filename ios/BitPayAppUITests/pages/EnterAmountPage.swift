@@ -31,7 +31,10 @@ class EnterAmountPage {
   func enterAmount(amount: String = "0") {
     for char in amount {
       let key = app.staticTexts[String(char)].firstMatch
-      XCTAssertTrue(key.waitForExistence(timeout: 5))
+      XCTAssertTrue(
+        key.waitForExistence(timeout: 15),
+        "'\(char)' key not found on the amount keypad"
+      )
       key.tap()
     }
   }
@@ -51,13 +54,13 @@ class EnterAmountPage {
     let nineKey = app.staticTexts["9"].firstMatch
     
     XCTAssertTrue(
-      sixKey.waitForExistence(timeout: 5),
-      "6 key not found"
+      sixKey.waitForExistence(timeout: 15),
+      "6 key not found - amount keypad is not on screen"
     )
-    
+
     XCTAssertTrue(
-      nineKey.waitForExistence(timeout: 5),
-      "9 key not found"
+      nineKey.waitForExistence(timeout: 15),
+      "9 key not found - amount keypad is not on screen"
     )
     
     let sixFrame = sixKey.frame

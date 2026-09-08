@@ -28,6 +28,7 @@ class MainApplication : Application(), ReactApplication {
                     add(SilentPushPackage())
                     add(TimerPackage())
                     add(InAppMessagePackage())
+                    add(CrashTestPackage())
                 },
             )
         }

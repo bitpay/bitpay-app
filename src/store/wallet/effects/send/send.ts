@@ -96,7 +96,10 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
-import {openUrlWithInAppBrowser} from '../../../app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  submitDeviceEvent,
+} from '../../../app/app.effects';
 import _ from 'lodash';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
@@ -1494,6 +1497,35 @@ export const publishAndSign =
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;
         logManager.info(`resultTx [publishAndSign]: ${resultTx?.txid}`);
+
+        // SumSub Device Intelligence: track BitPay invoice payments only (not plain sends).
+        if (broadcastedTx && txp.payProUrl) {
+          // SumSub expects the decimal coin amount, not base units.
+          const sentSat = (broadcastedTx as {amount?: number}).amount;
+          const decimalAmount =
+            sentSat != null
+              ? dispatch(
+                  SatToUnit(
+                    sentSat,
+                    wallet.currencyAbbreviation,
+                    wallet.chain,
+                    wallet.tokenAddress,
+                  ),
+                )
+              : undefined;
+          const invoiceId = String(txp.payProUrl)
+            .split('/i/')[1]
+            ?.split('?')[0];
+          dispatch(
+            submitDeviceEvent({
+              event: 'payment-posted',
+              currencyCode: wallet.currencyAbbreviation?.toUpperCase(),
+              amount: decimalAmount,
+              invoiceId,
+              paymentTxnId: resultTx?.txid,
+            }),
+          );
+        }
 
         if (APP.notificationsAccepted && wallet.chain === 'btc') {
           wallet.txConfirmationSubscribe(
