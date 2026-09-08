@@ -805,7 +805,7 @@ const PayProConfirm = () => {
         <>
           <SwipeButton
             disabled={disableSwipeSendButton}
-            title={t(t('Slide to send'))}
+            title={t('Slide to send')}
             forceReset={resetSwipeButton}
             onSwipeComplete={onSwipeComplete}
           />

@@ -3564,14 +3564,14 @@ const SwapCryptoRoot: React.FC = () => {
                   setShowCheckTermsMsg(true);
                 }}>
                 <SwipeButton
-                  title={t(t('Slide to swap'))}
+                  title={t('Slide to swap')}
                   disabled={true}
                   onSwipeComplete={() => {}}
                 />
               </TouchableOpacity>
             ) : (
               <SwipeButton
-                title={t(t('Slide to swap'))}
+                title={t('Slide to swap')}
                 disabled={false}
                 onSwipeComplete={onSwipeComplete}
                 forceReset={resetSwipeButton}

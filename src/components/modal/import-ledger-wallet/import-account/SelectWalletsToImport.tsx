@@ -123,11 +123,15 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
       <DescriptionRow>
         {props.scannedWalletsIds && props.scannedWalletsIds[0] ? (
           <Paragraph style={{textAlign: 'center'}}>
-            {t("We've identified wallets on your Ledger with balances or activity. Choose which ones you want to add.")}
+            {t(
+              "We've identified wallets on your Ledger with balances or activity. Choose which ones you want to add.",
+            )}
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            {t("We didn't identify new wallets on your Ledger with balances or activity. You can add wallets by entering their derivation paths manually")}
+            {t(
+              "We didn't identify new wallets on your Ledger with balances or activity. You can add wallets by entering their derivation paths manually",
+            )}
           </Paragraph>
         )}
       </DescriptionRow>
@@ -180,7 +184,9 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
                 ? 'ledger-connect-wallets-button'
                 : 'ledger-connect-wallet-button'
             }
-            accessibilityLabel={`Connect ${selectedWallets} wallet`}
+            accessibilityLabel={`Connect ${selectedWallets} ${
+              selectedWallets > 1 ? 'wallets' : 'wallet'
+            }`}
             onPress={_onComplete}>
             {t('Connect {{count}} wallet', {count: selectedWallets})}
           </Button>

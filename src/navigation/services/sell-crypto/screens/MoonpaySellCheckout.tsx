@@ -1295,14 +1295,14 @@ const MoonpaySellCheckout: React.FC = () => {
                 setShowCheckTermsMsg(true);
               }}>
               <SwipeButton
-                title={t(t('Slide to sell'))}
+                title={t('Slide to sell')}
                 disabled={true}
                 onSwipeComplete={() => {}}
               />
             </TouchableOpacity>
           ) : (
             <SwipeButton
-              title={t(t('Slide to sell'))}
+              title={t('Slide to sell')}
               disabled={false}
               onSwipeComplete={onSwipeComplete}
               forceReset={resetSwipeButton}
