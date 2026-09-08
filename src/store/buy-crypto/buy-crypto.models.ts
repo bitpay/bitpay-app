@@ -543,7 +543,7 @@ export interface MoonpayIncomingData {
   transactionId?: string;
   status?: string;
   cryptoAmount?: number; // embedded
-  fiatBaseAmount?: number; // embedded
+  fiatTotalAmount?: number; // embedded
 }
 
 export interface SardineGetAuthTokenRequestData {
