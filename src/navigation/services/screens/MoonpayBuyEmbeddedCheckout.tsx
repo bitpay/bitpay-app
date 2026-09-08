@@ -861,7 +861,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           <RowDataContainer>
             <RowLabel>{t('Using')}</RowLabel>
             <RowData>
-              {t('MoonPay using')} {isCardPaymentMethod ? t('Card') : paymentMethod?.label}
+              {t('MoonPay using')}{' '}
+              {isCardPaymentMethod ? t('Card') : paymentMethod?.label}
             </RowData>
           </RowDataContainer>
           <ItemDivisor />
@@ -1107,8 +1108,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                       exchange: 'moonpay',
                       context: 'MoonpayBuyEmbeddedCheckout',
                       paymentMethod: paymentMethod?.method || '',
-                      amount:
-                        Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
                       coin:
                         cloneDeep(
                           wallet?.currencyAbbreviation,
