@@ -180,6 +180,29 @@ const InteractiveLineChart = ({
   topAxisLabelRef.current = TopAxisLabel;
   bottomAxisLabelRef.current = BottomAxisLabel;
 
+  /**
+   * Gesture callbacks are re-created by callers whenever a point is selected
+   * (e.g. `onGestureEnded` depends on `selectedPoint`). Route them through refs
+   * so the graph element below stays referentially stable during a pan.
+   */
+  const onGestureStartRef = React.useRef(onGestureStart);
+  const onGestureEndRef = React.useRef(onGestureEnd);
+  const onPointSelectedRef = React.useRef(onPointSelected);
+
+  onGestureStartRef.current = onGestureStart;
+  onGestureEndRef.current = onGestureEnd;
+  onPointSelectedRef.current = onPointSelected;
+
+  const handleGestureStart = React.useCallback(() => {
+    onGestureStartRef.current?.();
+  }, []);
+  const handleGestureEnd = React.useCallback(() => {
+    onGestureEndRef.current?.();
+  }, []);
+  const handlePointSelected = React.useCallback((point: GraphPoint) => {
+    onPointSelectedRef.current?.(point);
+  }, []);
+
   const effectiveLineThickness =
     typeof lineThickness === 'number' ? lineThickness : theme.dark ? 2 : 4;
 
@@ -537,9 +560,16 @@ const InteractiveLineChart = ({
     firstPointGuideLineTopTarget != null &&
     graphOpacity > 0;
 
-  const chartInner = (
-    <ChartInner testID="interactive-line-chart-inner" onLayout={onChartLayout}>
-      {hasDrawablePoints ? (
+  const [gradientFillStart, gradientFillEnd] = gradientFillColors;
+
+  // Keep this element exactly the same across renders when nothing real
+  // changed. Redrawing this chart briefly locks something the screen also
+  // needs to respond to your finger — doing that on every point selected
+  // while dragging is what froze the app ("app not responding") before
+  // this fix. Change a prop below carelessly and it breaks silently.
+  const lineGraph = React.useMemo(
+    () =>
+      hasDrawablePoints ? (
         <LineGraph
           testID="interactive-line-chart-graph"
           points={pointsForGraph}
@@ -555,15 +585,15 @@ const InteractiveLineChart = ({
           panGestureDelay={panGestureDelay}
           enablePanGesture={enablePanGesture}
           color={color}
-          gradientFillColors={gradientFillColors}
+          gradientFillColors={[gradientFillStart, gradientFillEnd]}
           TopAxisLabel={TopAxisLabel ? ResolvedTopAxisLabel : undefined}
           BottomAxisLabel={
             BottomAxisLabel ? ResolvedBottomAxisLabel : undefined
           }
           SelectionDot={SelectionDot}
-          onGestureStart={onGestureStart}
-          onGestureEnd={onGestureEnd}
-          onPointSelected={onPointSelected}
+          onGestureStart={handleGestureStart}
+          onGestureEnd={handleGestureEnd}
+          onPointSelected={handlePointSelected}
           onLayout={({nativeEvent: {layout}}) => {
             const next = {
               x: layout.x,
@@ -588,7 +618,38 @@ const InteractiveLineChart = ({
             opacity: graphOpacity,
           }}
         />
-      ) : null}
+      ) : null,
+    [
+      ResolvedBottomAxisLabel,
+      ResolvedTopAxisLabel,
+      SelectionDot,
+      TopAxisLabel,
+      BottomAxisLabel,
+      animated,
+      color,
+      enablePanGesture,
+      gradientFillStart,
+      gradientFillEnd,
+      graphHeight,
+      graphMarginTop,
+      graphOpacity,
+      handleGestureEnd,
+      handleGestureStart,
+      handlePointSelected,
+      hasDrawablePoints,
+      lineGraphRange,
+      panGestureDelay,
+      pointsForGraph,
+      resolvedChartWidth,
+      resolvedLineThicknessForGraph,
+      stableHorizontalPadding,
+      stableVerticalPadding,
+    ],
+  );
+
+  const chartInner = (
+    <ChartInner testID="interactive-line-chart-inner" onLayout={onChartLayout}>
+      {lineGraph}
       {shouldRenderFirstPointGuideLine ? (
         <Reanimated.View
           pointerEvents="none"
