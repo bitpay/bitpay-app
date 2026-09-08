@@ -127,7 +127,9 @@ export const moonpayGetPaymentMethodsEmbedded = async (
     return Promise.resolve(data?.data ?? data);
   } catch (err: any) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error('Error getting Moonpay payment methods embedded: ' + errStr);
+    logManager.error(
+      'Error getting Moonpay payment methods embedded: ' + errStr,
+    );
     return Promise.reject(err);
   }
 };

@@ -91,7 +91,8 @@ export function MoonpayEmbeddedCredentialManager() {
     cachedConfig?.buyCrypto?.moonpay?.config?.embeddedBuyDisabled;
 
   // Apple Pay embedded additionally needs native wallet support.
-  const applePaySupportConditionsMet = Platform.OS === 'ios' && applePaySupported;
+  const applePaySupportConditionsMet =
+    Platform.OS === 'ios' && applePaySupported;
 
   // Embedded buy is available for all Moonpay supported countries except UK.
   const localConditionsMet = country !== 'GB';

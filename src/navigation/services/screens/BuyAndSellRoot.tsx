@@ -2493,10 +2493,11 @@ const BuyAndSellRoot = ({
       // Embedded only works through MoonPay's connect flow.
       // If the user isn't connected, the checks below fall through to
       // the standard MoonPay (Kayak) flow.
-      const isMoonpayEmbeddedPaymentMethod = isMoonpayEmbeddedPaymentMethodEnabled(
-        paymentMethod?.method,
-        buyCryptoConfig,
-      );
+      const isMoonpayEmbeddedPaymentMethod =
+        isMoonpayEmbeddedPaymentMethodEnabled(
+          paymentMethod?.method,
+          buyCryptoConfig,
+        );
       if (moonpayEmbeddedEnabled && isMoonpayEmbeddedPaymentMethod) {
         const embeddedStatus = getMoonpayEmbeddedStatus();
         const cachedCredentials = getMoonpayEmbeddedCredentials();

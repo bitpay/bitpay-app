@@ -147,12 +147,15 @@ const MoonpayDetails: React.FC = () => {
             if (
               txDetails?.source?.amount &&
               Number(txDetails.source.amount) > 0 &&
-              Number(txDetails.source.amount) != paymentRequest.fiat_total_amount
+              Number(txDetails.source.amount) !=
+                paymentRequest.fiat_total_amount
             ) {
               logger.debug(
                 'Updating fiat total amount to: ' + txDetails.source.amount,
               );
-              paymentRequest.fiat_total_amount = Number(txDetails.source.amount);
+              paymentRequest.fiat_total_amount = Number(
+                txDetails.source.amount,
+              );
             }
             needUpdate = true;
           }
