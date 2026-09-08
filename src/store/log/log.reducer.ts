@@ -2,6 +2,10 @@ import moment from 'moment';
 import {LogEntry} from './log.models';
 import {LogActionType, LogActionTypes} from './log.types';
 import {storage} from '../index';
+import {
+  isSessionLogsEnabled,
+  PERSISTED_SESSION_LOGS_STORAGE_KEY,
+} from '../../utils/sessionLogs';
 
 export const logReduxPersistBlackList = ['logs'];
 
@@ -19,6 +23,10 @@ export const logReducer = (
 ): LogState => {
   switch (action.type) {
     case LogActionTypes.ADD_LOG:
+      if (!isSessionLogsEnabled()) {
+        return state;
+      }
+
       const newLog = {
         timestamp: action.payload.timestamp,
         level: action.payload.level,
@@ -31,6 +39,10 @@ export const logReducer = (
       };
 
     case LogActionTypes.ADD_PERSISTED_LOG:
+      if (!isSessionLogsEnabled()) {
+        return state;
+      }
+
       const newPersistedLog = {
         timestamp: action.payload.timestamp,
         level: action.payload.level,
@@ -40,9 +52,10 @@ export const logReducer = (
       // Store persisted logs in a different entry in storage
       // to avoid losing them if anything happens to persist:root
       try {
-        const persistLogs = storage.getString('persist:logs') || '[]';
+        const persistLogs =
+          storage.getString(PERSISTED_SESSION_LOGS_STORAGE_KEY) || '[]';
         storage.set(
-          'persist:logs',
+          PERSISTED_SESSION_LOGS_STORAGE_KEY,
           JSON.stringify([...JSON.parse(persistLogs), newPersistedLog]),
         );
       } catch (error) {
@@ -60,10 +73,12 @@ export const logReducer = (
       // Store persisted logs in a different entry in storage
       // to avoid losing them if anything happens to persist:root
       try {
-        const persistLogs = storage.getString('persist:logs');
+        const persistLogs = storage.getString(
+          PERSISTED_SESSION_LOGS_STORAGE_KEY,
+        );
         if (persistLogs) {
           storage.set(
-            'persist:logs',
+            PERSISTED_SESSION_LOGS_STORAGE_KEY,
             JSON.stringify(
               (JSON.parse(persistLogs) || []).filter(
                 (logEvent: LogEntry) => new Date(logEvent.timestamp) > weekAgo,

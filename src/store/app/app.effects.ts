@@ -147,6 +147,10 @@ import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
 import {NotificationsSettingsScreens} from '../../navigation/tabs/settings/notifications/NotificationsGroup';
 import {logManager} from '../../managers/LogManager';
 import {
+  cleanupDisabledSessionLogs,
+  hasSessionLogsCleanupRun,
+} from '../../utils/sessionLogs';
+import {
   initializeSslPinning,
   isSslPinningAvailable,
 } from 'react-native-ssl-public-key-pinning';
@@ -277,6 +281,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(startContactPolMigration());
       dispatch(setPolygonMigrationComplete());
       logManager.info('success [setPolygonMigrationComplete]');
+    }
+
+    if (!__DEV__ && !hasSessionLogsCleanupRun()) {
+      await cleanupDisabledSessionLogs();
     }
 
     dispatch(migrateShopCatalog());

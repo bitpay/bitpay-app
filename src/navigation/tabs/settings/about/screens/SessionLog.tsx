@@ -43,6 +43,10 @@ import {shareFile as shareFileUtil} from '../../../../../utils/share';
 import RNFS from 'react-native-fs';
 import {logManager} from '../../../../../managers/LogManager';
 import {useLogContext} from '../../../../../contexts/LogContext';
+import {
+  PERSISTED_SESSION_LOGS_STORAGE_KEY,
+  withTemporarySessionLogFile,
+} from '../../../../../utils/sessionLogs';
 
 type SessionLogsScreenProps = NativeStackScreenProps<
   AboutGroupParamList,
@@ -199,19 +203,21 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
           ? RNFS.LibraryDirectoryPath
           : RNFS.TemporaryDirectoryPath;
       const txtFilename = `${APP_NAME_UPPERCASE}-logs`;
-      let filePath = `${rootPath}/${txtFilename}`;
 
-      await RNFS.mkdir(filePath);
+      await withTemporarySessionLogFile(
+        rootPath,
+        txtFilename,
+        data,
+        async filePath => {
+          const opts: ShareOptions = {
+            title: txtFilename,
+            url: `file://${filePath}`,
+            subject: `${APP_NAME_UPPERCASE} Logs`,
+          };
 
-      filePath += '.txt';
-      const opts: ShareOptions = {
-        title: txtFilename,
-        url: `file://${filePath}`,
-        subject: `${APP_NAME_UPPERCASE} Logs`,
-      };
-
-      await RNFS.writeFile(filePath, data, 'utf8');
-      await dispatch(shareFileUtil(opts));
+          await dispatch(shareFileUtil(opts));
+        },
+      );
     } catch (err: any) {
       logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
@@ -281,7 +287,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   }, [navigation]);
 
   useEffect(() => {
-    const value = storage.getString('persist:logs');
+    const value = storage.getString(PERSISTED_SESSION_LOGS_STORAGE_KEY);
     if (value) {
       const _filteredPersistedLogs = JSON.parse(value).filter(
         (log: LogEntry) =>

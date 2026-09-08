@@ -14,6 +14,7 @@ import RNFS from 'react-native-fs';
 import {ShareOptions} from 'react-native-share';
 import {shareFile as shareFileUtil} from '../utils/share';
 import DeviceInfo from 'react-native-device-info';
+import {withTemporarySessionLogFile} from '../utils/sessionLogs';
 const IS_DESKTOP = DeviceInfo.getDeviceType();
 
 export enum DebugScreens {
@@ -88,19 +89,21 @@ const DebugScreen: React.FC<
           ? RNFS.LibraryDirectoryPath
           : RNFS.TemporaryDirectoryPath;
       const txtFilename = 'App-logs';
-      let filePath = `${rootPath}/${txtFilename}`;
 
-      await RNFS.mkdir(filePath);
+      await withTemporarySessionLogFile(
+        rootPath,
+        txtFilename,
+        data,
+        async filePath => {
+          const opts: ShareOptions = {
+            title: txtFilename,
+            url: `file://${filePath}`,
+            subject: 'App Logs',
+          };
 
-      filePath += '.txt';
-      const opts: ShareOptions = {
-        title: txtFilename,
-        url: `file://${filePath}`,
-        subject: 'App Logs',
-      };
-
-      await RNFS.writeFile(filePath, data, 'utf8');
-      await dispatch(shareFileUtil(opts));
+          await dispatch(shareFileUtil(opts));
+        },
+      );
     } catch (error: any) {
       Alert.alert(
         'Error',
