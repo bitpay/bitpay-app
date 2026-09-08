@@ -1105,10 +1105,11 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     // MoonPay embedded flow (Apple Pay | Cards)
-    const isMoonpayEmbeddedPaymentMethod = isMoonpayEmbeddedPaymentMethodEnabled(
-      paymentMethod?.method,
-      buyCryptoConfig,
-    );
+    const isMoonpayEmbeddedPaymentMethod =
+      isMoonpayEmbeddedPaymentMethodEnabled(
+        paymentMethod?.method,
+        buyCryptoConfig,
+      );
     if (
       preferMoonpayApplePay &&
       isMoonpayEmbeddedPaymentMethod &&
