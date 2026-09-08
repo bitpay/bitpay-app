@@ -846,7 +846,7 @@ const RecoveryPhrase = () => {
                   <BoxInput
                     testID="derivation-path-box-input"
                     accessibilityLabel="Derivation path"
-                    label={'DERIVATION PATH'}
+                    label={t('DERIVATION PATH')}
                     onChangeText={(text: string) =>
                       setAdvancedOptions({
                         ...advancedOptions,

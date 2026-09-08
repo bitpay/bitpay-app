@@ -2456,7 +2456,7 @@ const SwapCryptoRoot: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Miner Fee Notice',
+        title: t('Miner Fee Notice'),
         message: msg,
         enableBackdropDismiss: true,
         actions: [
@@ -3564,14 +3564,14 @@ const SwapCryptoRoot: React.FC = () => {
                   setShowCheckTermsMsg(true);
                 }}>
                 <SwipeButton
-                  title={'Slide to swap'}
+                  title={t(t('Slide to swap'))}
                   disabled={true}
                   onSwipeComplete={() => {}}
                 />
               </TouchableOpacity>
             ) : (
               <SwipeButton
-                title={'Slide to swap'}
+                title={t(t('Slide to swap'))}
                 disabled={false}
                 onSwipeComplete={onSwipeComplete}
                 forceReset={resetSwipeButton}

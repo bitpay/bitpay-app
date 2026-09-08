@@ -284,7 +284,7 @@ const ContactsAdd = ({
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  placeholder={'Crypto address'}
+                  placeholder={t('Crypto address')}
                   label={t('ADDRESS')}
                   onBlur={onBlur}
                   onChangeText={(newValue: string) => {
@@ -331,7 +331,7 @@ const ContactsAdd = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                placeholder={'Tag'}
+                placeholder={t('Tag')}
                 label={t('TAG')}
                 onBlur={onBlur}
                 onChangeText={onChange}

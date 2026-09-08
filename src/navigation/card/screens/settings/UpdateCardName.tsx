@@ -1,5 +1,6 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
+import {t as translate} from 'i18next';
 import {useTranslation} from 'react-i18next';
 import {Keyboard} from 'react-native';
 import styled from 'styled-components/native';
@@ -30,7 +31,7 @@ const createErrorConfig = (
   action: () => any,
 ): BottomNotificationConfig => ({
   type: 'error',
-  title: 'Something went wrong',
+  title: translate('Something went wrong'),
   message,
   enableBackdropDismiss: true,
   actions: [

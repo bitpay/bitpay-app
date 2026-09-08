@@ -121,7 +121,7 @@ import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantGroup
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
-import {ShortcutList} from '../../constants/shortcuts';
+import {getShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
@@ -371,7 +371,7 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
 
   if (onboardingCompleted) {
     QuickActions.clearShortcutItems();
-    QuickActions.setShortcutItems(ShortcutList);
+    QuickActions.setShortcutItems(getShortcutList());
   }
   await dispatch(Analytics.initialize());
 

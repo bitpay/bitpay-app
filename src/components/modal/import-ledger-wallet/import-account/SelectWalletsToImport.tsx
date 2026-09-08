@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import Button from '../../../button/Button';
 import {useState} from 'react';
 import {H4, H7, Paragraph} from '../../../styled/Text';
@@ -36,6 +37,7 @@ const WalletsFoundContainer = styled.View`
 `;
 
 export const SelectWalletsToImport: React.FC<Props> = props => {
+  const {t} = useTranslation();
   const [uiFormattedWallets, setUiFormattedWallets] = useState<
     (WalletRowProps & {selected: boolean})[]
   >([]);
@@ -115,20 +117,17 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
   return (
     <Wrapper>
       <Header>
-        <H4>Connect Wallets</H4>
+        <H4>{t('Connect Wallets')}</H4>
       </Header>
 
       <DescriptionRow>
         {props.scannedWalletsIds && props.scannedWalletsIds[0] ? (
           <Paragraph style={{textAlign: 'center'}}>
-            We've identified wallets on your Ledger with balances or activity.
-            Choose which ones you want to add.
+            {t("We've identified wallets on your Ledger with balances or activity. Choose which ones you want to add.")}
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            We didn't identify new wallets on your Ledger with balances or
-            activity. You can add wallets by entering their derivation paths
-            manually
+            {t("We didn't identify new wallets on your Ledger with balances or activity. You can add wallets by entering their derivation paths manually")}
           </Paragraph>
         )}
       </DescriptionRow>
@@ -136,23 +135,13 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
       {uiFormattedWallets[0] ? (
         <>
           <WalletsFoundContainer>
-            {uiFormattedWallets.length > 1 ? (
-              <H7
-                style={{
-                  fontWeight: '700',
-                  color: theme.dark ? Slate30 : SlateDark,
-                }}>
-                {uiFormattedWallets.length} Wallets Found
-              </H7>
-            ) : (
-              <H7
-                style={{
-                  fontWeight: '700',
-                  color: theme.dark ? Slate30 : SlateDark,
-                }}>
-                {uiFormattedWallets.length} Wallet Found
-              </H7>
-            )}
+            <H7
+              style={{
+                fontWeight: '700',
+                color: theme.dark ? Slate30 : SlateDark,
+              }}>
+              {t('{{count}} wallet found', {count: uiFormattedWallets.length})}
+            </H7>
           </WalletsFoundContainer>
           <Hr />
         </>
@@ -185,21 +174,16 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
 
       {selectedWallets ? (
         <ActionsRow>
-          {selectedWallets > 1 ? (
-            <Button
-              testID="ledger-connect-wallets-button"
-              accessibilityLabel={`Connect ${selectedWallets} wallets`}
-              onPress={_onComplete}>
-              Connect {selectedWallets} Wallets
-            </Button>
-          ) : (
-            <Button
-              testID="ledger-connect-wallet-button"
-              accessibilityLabel={`Connect ${selectedWallets} wallet`}
-              onPress={_onComplete}>
-              Connect {selectedWallets} Wallet
-            </Button>
-          )}
+          <Button
+            testID={
+              selectedWallets > 1
+                ? 'ledger-connect-wallets-button'
+                : 'ledger-connect-wallet-button'
+            }
+            accessibilityLabel={`Connect ${selectedWallets} wallet`}
+            onPress={_onComplete}>
+            {t('Connect {{count}} wallet', {count: selectedWallets})}
+          </Button>
         </ActionsRow>
       ) : null}
 
@@ -210,7 +194,7 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
             testID="ledger-add-by-derivation-path-button"
             accessibilityLabel="Add by derivation path"
             onPress={props.onAddByDerivationPathSelected}>
-            Add by Derivation Path
+            {t('Add by Derivation Path')}
           </Button>
         </ActionsRow>
       </View>

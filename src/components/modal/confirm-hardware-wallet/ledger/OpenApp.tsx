@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import BluetoothIconSvg from '../../../../../assets/img/icon-bluetooth.svg';
@@ -20,6 +21,8 @@ const IconWrapper = styled.View`
 export const OpenApp: React.FC<{
   connectionMethod: 'ble' | 'hid' | null;
 }> = props => {
+  const {t} = useTranslation();
+
   return (
     <>
       <Wrapper>
@@ -29,7 +32,7 @@ export const OpenApp: React.FC<{
             justifyContent: 'flex-end',
             display: 'flex',
           }}>
-          <H3>Approve on your Ledger</H3>
+          <H3>{t('Approve on your Ledger')}</H3>
         </Header>
 
         <DescriptionRow
@@ -40,8 +43,7 @@ export const OpenApp: React.FC<{
             style={{
               textAlign: 'center',
             }}>
-            Ensure it's unlocked and set to the appropriate currency
-            application.
+            {t("Ensure it's unlocked and set to the appropriate currency application.")}
           </Paragraph>
         </DescriptionRow>
 
@@ -58,7 +60,7 @@ export const OpenApp: React.FC<{
         </IconRow>
 
         <ActionsRow>
-          <Button state={'loading'}>Sending...</Button>
+          <Button state={'loading'}>{t('Sending...')}</Button>
         </ActionsRow>
       </Wrapper>
     </>

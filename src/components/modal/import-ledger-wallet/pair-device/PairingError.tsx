@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import {H3, Paragraph as _Paragraph} from '../../../styled/Text';
 import {
   ViaBluetoothButton,
@@ -13,21 +14,23 @@ interface Props {
 }
 
 export const PairingError: React.FC<Props> = props => {
+  const {t} = useTranslation();
+
   return (
     <Wrapper>
       <Header>
-        <H3>An Error Has Occured</H3>
+        <H3>{t('An Error Has Occured')}</H3>
       </Header>
 
       <ErrorDescriptionColumn error={props.error} />
 
       <ActionsRow>
         <ViaBluetoothButton onPress={props.onConnectBle}>
-          Connect via Bluetooth
+          {t('Connect via Bluetooth')}
         </ViaBluetoothButton>
 
         <ViaUsbButton secondary={true} onPress={props.onConnectHid}>
-          Connect via USB
+          {t('Connect via USB')}
         </ViaUsbButton>
       </ActionsRow>
     </Wrapper>

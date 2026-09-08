@@ -303,7 +303,7 @@ export const SecureAccountScreen = () => {
             </IconBadge>
             <TitleContainer>
               <TitleText numberOfLines={2}>
-                Set Up a Passkey (Recommended)
+                {t('Set Up a Passkey (Recommended)')}
               </TitleText>
             </TitleContainer>
           </CardTitleContainer>
@@ -313,13 +313,13 @@ export const SecureAccountScreen = () => {
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  Sign in with Face ID, Touch ID, or a security key
+                  {t('Sign in with Face ID, Touch ID, or a security key')}
                 </BulletText>
               </BulletRow>
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  No passwords needed for a faster, safer login
+                  {t('No passwords needed for a faster, safer login')}
                 </BulletText>
               </BulletRow>
             </Bullets>
@@ -343,7 +343,7 @@ export const SecureAccountScreen = () => {
             </IconBadge>
             <TitleContainer>
               <TitleText numberOfLines={2}>
-                Set Up 2-Factor Authentication
+                {t('Set Up 2-Factor Authentication')}
               </TitleText>
             </TitleContainer>
           </CardTitleContainer>
@@ -353,13 +353,13 @@ export const SecureAccountScreen = () => {
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  Use an Authenticator app or SMS verification
+                  {t('Use an Authenticator app or SMS verification')}
                 </BulletText>
               </BulletRow>
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  Adds an extra layer of security to your password
+                  {t('Adds an extra layer of security to your password')}
                 </BulletText>
               </BulletRow>
             </Bullets>

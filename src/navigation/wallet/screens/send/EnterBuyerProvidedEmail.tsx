@@ -62,7 +62,7 @@ const EnterBuyerProvidedEmail: React.FC = () => {
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
-            title: 'Something went wrong',
+            title: t('Something went wrong'),
             message: t('Please try again.'),
             enableBackdropDismiss: true,
             actions: [

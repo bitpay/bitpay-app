@@ -1,5 +1,6 @@
 // Coinbase API
 import axios from 'axios';
+import {t} from 'i18next';
 
 import {
   CoinbaseAccountsProps,
@@ -37,7 +38,9 @@ const getOauthStateCode = (): string => {
 
 const getTokenError = (): CoinbaseErrorsProps => {
   return {
-    errors: [{id: 'MISSING_ACCESS_TOKEN', message: 'Access Token not found'}],
+    errors: [
+      {id: 'MISSING_ACCESS_TOKEN', message: t('Access Token not found')},
+    ],
   };
 };
 

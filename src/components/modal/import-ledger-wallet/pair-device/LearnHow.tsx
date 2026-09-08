@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {BaseText, H3, Paragraph} from '../../../styled/Text';
 import Button from '../../../button/Button';
@@ -59,29 +60,29 @@ const InstructionsText = styled(BaseText)`
   font-weight: 400;
 `;
 
-const INSTRUCTIONS = [
-  'Connect and unlock your Ledger device.',
-  'Open your preferred compatible wallet.',
-  'Navigate to Settings, then Blind Signing.',
-  'Toggle settings so Blind Signing is Enabled.',
-];
-
 export const LearnHow: React.FC<Props> = props => {
+  const {t} = useTranslation();
+  const instructions = [
+    t('Connect and unlock your Ledger device.'),
+    t('Open your preferred compatible wallet.'),
+    t('Navigate to Settings, then Blind Signing.'),
+    t('Toggle settings so Blind Signing is Enabled.'),
+  ];
+
   return (
     <Wrapper>
       <Header>
-        <H3>Enable Blind Signing</H3>
+        <H3>{t('Enable Blind Signing')}</H3>
       </Header>
 
       <DescriptionRow>
         <Paragraph>
-          Enabling blind signing allows you to manage and sign transactions from
-          your Ledger wallet using the BitPay app.
+          {t('Enabling blind signing allows you to manage and sign transactions from your Ledger wallet using the BitPay app.')}
         </Paragraph>
       </DescriptionRow>
 
       <InstructionsCard>
-        {INSTRUCTIONS.map((inst, idx) => (
+        {instructions.map((inst, idx) => (
           <InstructionsRow key={idx} isFirst={idx <= 0}>
             <InstructionNumberColumn>
               <InstructionNumberIcon>
@@ -97,7 +98,7 @@ export const LearnHow: React.FC<Props> = props => {
       </InstructionsCard>
 
       <ActionsRow>
-        <Button onPress={props.onContinue}>Continue</Button>
+        <Button onPress={props.onContinue}>{t('Continue')}</Button>
       </ActionsRow>
     </Wrapper>
   );

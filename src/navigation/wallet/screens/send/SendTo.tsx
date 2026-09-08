@@ -680,7 +680,7 @@ const SendTo = () => {
                 : dispatch(
                     showBottomNotificationModal({
                       type: 'warning',
-                      title: 'Unable to Send to Contact',
+                      title: t('Unable to Send to Contact'),
                       message: '',
                       message2: (
                         <InfoSheetMessage>

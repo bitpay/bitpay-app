@@ -509,7 +509,7 @@ const GiftCardDetails = ({
                       dispatch(openExternalUrl(giftCard.claimLink as string))
                     }
                     buttonStyle={'primary'}>
-                    {cardConfig.redeemButtonText || 'View Redemption Code'}
+                    {cardConfig.redeemButtonText || t('View Redemption Code')}
                   </Button>
                 ) : (
                   <Button

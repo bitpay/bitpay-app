@@ -530,7 +530,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
       </ScrollView>
       {ctxp ? (
         <SwipeButton
-          title={'Slide to approve'}
+          title={t(t('Slide to approve'))}
           onSwipeComplete={() => {
             try {
               logger.debug('Swipe completed. Making payment...');

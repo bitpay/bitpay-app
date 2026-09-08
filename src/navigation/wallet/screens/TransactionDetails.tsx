@@ -671,7 +671,7 @@ const TransactionDetails = () => {
                 <DetailRow>
                   <H7>{t('Status')}</H7>
                   <DetailColumn>
-                    <H7 style={{color: Caution}}>{'Fail'}</H7>
+                    <H7 style={{color: Caution}}>{t('Fail')}</H7>
                   </DetailColumn>
                 </DetailRow>
 

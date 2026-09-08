@@ -1,4 +1,5 @@
 import React from 'react';
+import {t} from 'i18next';
 import moment from 'moment';
 import styled from 'styled-components/native';
 import {Paragraph} from '../../../../../components/styled/Text';
@@ -173,18 +174,18 @@ const StatusText = styled(Paragraph)<BillStatusStyleProps>`
 
 const getBillStatus = (account: BillPayAccount) => {
   if (account.paymentStatus === 'activating') {
-    return {status: 'connecting', statusText: 'Connecting'};
+    return {status: 'connecting', statusText: t('Connecting')};
   }
   const nextPaymentDueDate = account[account.type].paddedNextPaymentDueDate;
   if (!nextPaymentDueDate) {
-    return {status: 'dueLater', statusText: 'No payment due'};
+    return {status: 'dueLater', statusText: t('No payment due')};
   }
   const now = new Date();
   const dueDate = moment(nextPaymentDueDate).utc().toDate();
   const fourDaysFromNow = moment(now).add(5, 'days').toDate();
   const fourteenDaysFromNow = moment(now).add(14, 'days').toDate();
   const dueDateString = moment(dueDate).utc().format('MM/DD/YY');
-  const dueStatusString = `Due ${dueDateString}`;
+  const dueStatusString = t('Due {{date}}', {date: dueDateString});
   if (fourDaysFromNow > dueDate) {
     return {status: 'dueNow', statusText: dueStatusString};
   }
@@ -200,8 +201,8 @@ export default ({account, payment}: BillStatusProps) => {
       ? payment.status || 'processing'
       : 'processing';
   const paymentStatusText = statusFields[payment && payment.status]
-    ? statusFields[paymentStatusStyle].text
-    : payment?.status || 'Processing';
+    ? t(statusFields[paymentStatusStyle].text)
+    : payment?.status || t('Processing');
   const statusStyle = payment
     ? paymentStatusStyle
     : getBillStatus(account).status;

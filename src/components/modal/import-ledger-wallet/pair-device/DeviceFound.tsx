@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import {H3, Paragraph} from '../../../styled/Text';
 import Button from '../../../button/Button';
 import DeviceFoundIconSvg from '../../../../../assets/img/icon-device-found.svg';
@@ -15,24 +16,24 @@ interface Props {
 }
 
 export const DeviceFound: React.FC<Props> = props => {
+  const {t} = useTranslation();
+
   return (
     <Wrapper>
       <Header>
-        <H3>Device Found</H3>
+        <H3>{t('Device Found')}</H3>
       </Header>
 
       <DescriptionRow
         style={{
           flexGrow: 0,
         }}>
-        <Paragraph>Ethereum account?</Paragraph>
+        <Paragraph>{t('Ethereum account?')}</Paragraph>
       </DescriptionRow>
 
       <DescriptionRow>
         <Paragraph>
-          Prior to continuing, if you are planning to import an Ethereum
-          account, please make sure blind signing is enabled on your Ledger
-          wallet.
+          {t('Prior to continuing, if you are planning to import an Ethereum account, please make sure blind signing is enabled on your Ledger wallet.')}
         </Paragraph>
       </DescriptionRow>
 
@@ -41,11 +42,11 @@ export const DeviceFound: React.FC<Props> = props => {
       </IconRow>
 
       <ActionsRow>
-        <Button onPress={props.onLearnHow}>Learn How</Button>
+        <Button onPress={props.onLearnHow}>{t('Learn How')}</Button>
       </ActionsRow>
       <ActionsRow>
         <Button buttonType={'link'} onPress={props.onContinue}>
-          Skip
+          {t('Skip')}
         </Button>
       </ActionsRow>
     </Wrapper>

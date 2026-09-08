@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import {Link, Paragraph} from '../../../../../components/styled/Text';
 import {
@@ -48,6 +49,7 @@ export default ({
 }: {
   variant?: 'noLateFees' | 'servicePaused';
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   return (
@@ -67,9 +69,7 @@ export default ({
         {variant === 'servicePaused' ? (
           <>
             <AlertText>
-              Bill Pay service has been temporarily paused. At this time, we are
-              unable to provide a confirmed timeline for when the Bill Pay
-              service will resume.
+              {t('Bill Pay service has been temporarily paused. At this time, we are unable to provide a confirmed timeline for when the Bill Pay service will resume.')}
               <AlertLink
                 onPress={() =>
                   dispatch(
@@ -78,17 +78,16 @@ export default ({
                     ),
                   )
                 }>
-                {' Learn more'}
+                {' '}
+                {t('Learn more')}
               </AlertLink>
             </AlertText>
           </>
         ) : (
           <>
-            <AlertHeader>No late fees</AlertHeader>
+            <AlertHeader>{t('No late fees')}</AlertHeader>
             <AlertText style={{marginBottom: 4}}>
-              Your bank will give you credit for making this payment within one
-              business day, but it may take 3-7 business days for it to show up
-              on your bank statement.
+              {t('Your bank will give you credit for making this payment within one business day, but it may take 3-7 business days for it to show up on your bank statement.')}
             </AlertText>
           </>
         )}

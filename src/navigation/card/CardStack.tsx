@@ -53,7 +53,7 @@ const CardStack = () => {
         name={CardScreens.HOME}
         component={CardHome}
         options={{
-          title: 'Card',
+          title: t('Card'),
           headerLeft: () => null,
           headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
         }}
@@ -78,7 +78,7 @@ const CardStack = () => {
         component={CardSettings}
         options={{
           headerTitle: () => <HeaderTitle>{t('Card Details')}</HeaderTitle>,
-          title: 'Settings',
+          title: t('Settings'),
         }}
       />
       <Card.Screen

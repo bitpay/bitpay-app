@@ -121,7 +121,7 @@ const BackupOnboarding: React.FC = () => {
 
     try {
       const opts: ShareOptions = {
-        title: 'BitPay Backup Template',
+        title: t('BitPay Backup Template'),
         url: `file://${sourceFilePath}`,
         type: 'application/pdf',
         subject: 'BitPay Backup Template',

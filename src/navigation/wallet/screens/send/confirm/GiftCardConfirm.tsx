@@ -771,7 +771,7 @@ const Confirm = () => {
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
               getBoostAmount(cardConfig, amount) ? (
                 <Amount
-                  description={'Subtotal'}
+                  description={t('Subtotal')}
                   amount={{
                     fiatAmount: formatFiatAmount(amount, cardConfig.currency),
                     cryptoAmount: '',
@@ -781,7 +781,7 @@ const Confirm = () => {
                 />
               ) : (
                 <Amount
-                  description={'Discount'}
+                  description={t('Discount')}
                   amount={{
                     fiatAmount: `— ${formatFiatAmount(
                       unsoldGiftCard.totalDiscount,

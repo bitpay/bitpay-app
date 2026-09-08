@@ -348,6 +348,7 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
     liveFiatTotal: number;
     wallets: Wallet[];
   }) => {
+    const {t} = useTranslation();
     const {summary: gainLossSummary, loading: isGainLossSummaryLoading} =
       usePortfolioGainLossSummary({
         wallets,
@@ -446,7 +447,7 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
         <AllocationRow>
           {showAllTimeGainLossColumn ? (
             <AllocationColumn style={{paddingRight: 12}}>
-              <AllocationLabel>All-Time Gain / Loss ($)</AllocationLabel>
+              <AllocationLabel>{t('All-Time Gain / Loss ($)')}</AllocationLabel>
               {showAllTimeGainLossSkeleton ? (
                 <AllocationMetricSkeleton />
               ) : allTimeGainLossText !== null ? (
@@ -459,7 +460,7 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
           <AllocationColumn
             style={showAllTimeGainLossColumn ? {paddingLeft: 12} : undefined}>
             <AllocationLabel style={{textAlign: 'right'}}>
-              Today's Gain / Loss ($)
+              {t("Today's Gain / Loss ($)")}
             </AllocationLabel>
             {showTodayGainLossSkeleton ? (
               <AllocationMetricSkeleton align="right" />
@@ -1291,7 +1292,7 @@ const KeyOverview = () => {
           onPress={() =>
             (navigation as any).navigate('AllAssets', {keyId: id})
           }>
-          See All Assets
+          {t('See All Assets')}
         </Button>
 
         {key && !key.isReadOnly && !isTSSKey(key) ? (
@@ -1304,7 +1305,7 @@ const KeyOverview = () => {
                   key,
                 });
               }}>
-              <AddWalletLink>Add Wallet</AddWalletLink>
+              <AddWalletLink>{t('Add Wallet')}</AddWalletLink>
             </AddWalletLinkButton>
           </AddWalletLinkContainer>
         ) : key ? (
@@ -1325,7 +1326,7 @@ const KeyOverview = () => {
               style={{marginLeft: 0, marginRight: 0}}
               header={
                 <AllocationHeader>
-                  <HomeSectionTitle>Allocation</HomeSectionTitle>
+                  <HomeSectionTitle>{t('Allocation')}</HomeSectionTitle>
                   <AllocationHeaderAction
                     activeOpacity={ActiveOpacity}
                     onPress={() =>
@@ -1339,7 +1340,7 @@ const KeyOverview = () => {
               }
               footer={
                 <AllocationFooter>
-                  <AllocationLabel>Portfolio Value</AllocationLabel>
+                  <AllocationLabel>{t('Portfolio Value')}</AllocationLabel>
                   <AllocationValue>
                     {!hideAllBalances
                       ? formatFiatAmount(
@@ -1386,6 +1387,7 @@ const KeyOverview = () => {
     showAllocationGainLossFooter,
     totalBalance,
     visibleKeyWallets,
+    t,
   ]);
 
   const listEmptyComponent = useMemo(

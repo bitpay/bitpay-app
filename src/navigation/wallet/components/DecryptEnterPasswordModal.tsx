@@ -107,7 +107,7 @@ const DecryptEnterPasswordModal = React.memo(() => {
   const renderPasswordInput = useCallback(
     ({field: {onChange, onBlur, value}}) => (
       <BoxInput
-        label={'ENCRYPTION PASSWORD'}
+        label={t('ENCRYPTION PASSWORD')}
         type={'password'}
         onBlur={onBlur}
         onChangeText={(text: string) => onChange(text)}
@@ -115,7 +115,7 @@ const DecryptEnterPasswordModal = React.memo(() => {
         value={value}
       />
     ),
-    [errors.password?.message],
+    [errors.password?.message, t],
   );
 
   const handleSubmitMemoized = useMemo(

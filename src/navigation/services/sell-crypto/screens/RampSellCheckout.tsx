@@ -818,7 +818,7 @@ const RampSellCheckout: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Miner Fee Notice',
+        title: t('Miner Fee Notice'),
         message: msg,
         enableBackdropDismiss: true,
         actions: [
@@ -1174,14 +1174,14 @@ const RampSellCheckout: React.FC = () => {
                 setShowCheckTermsMsg(true);
               }}>
               <SwipeButton
-                title={'Slide to sell'}
+                title={t(t('Slide to sell'))}
                 disabled={true}
                 onSwipeComplete={() => {}}
               />
             </TouchableOpacity>
           ) : (
             <SwipeButton
-              title={'Slide to sell'}
+              title={t(t('Slide to sell'))}
               disabled={false}
               onSwipeComplete={onSwipeComplete}
               forceReset={resetSwipeButton}

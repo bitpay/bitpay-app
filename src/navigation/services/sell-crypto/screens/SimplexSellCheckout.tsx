@@ -786,7 +786,7 @@ const SimplexSellCheckout: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Miner Fee Notice',
+        title: t('Miner Fee Notice'),
         message: msg,
         enableBackdropDismiss: true,
         actions: [
@@ -1071,7 +1071,7 @@ const SimplexSellCheckout: React.FC = () => {
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  placeholder={'Crypto address'}
+                  placeholder={t('Crypto address')}
                   onBlur={onBlur}
                   onChangeText={(newValue: string) => {
                     const trimmedValue = newValue.trim();
@@ -1252,14 +1252,14 @@ const SimplexSellCheckout: React.FC = () => {
                 setShowCheckTermsMsg(true);
               }}>
               <SwipeButton
-                title={'Slide to sell'}
+                title={t(t('Slide to sell'))}
                 disabled={true}
                 onSwipeComplete={() => {}}
               />
             </TouchableOpacity>
           ) : (
             <SwipeButton
-              title={'Slide to sell'}
+              title={t(t('Slide to sell'))}
               disabled={false}
               onSwipeComplete={onSwipeComplete}
               forceReset={resetSwipeButton}

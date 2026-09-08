@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {CommonActions, useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {ActiveOpacity} from '@components/base/TouchableOpacity';
@@ -55,6 +56,7 @@ const IconArrowRight = styled.View`
 `;
 
 const SecurePasskeyBanner: React.FC = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   return (
     <PasskeyBannerContainer
@@ -79,9 +81,9 @@ const SecurePasskeyBanner: React.FC = () => {
         );
       }}>
       <PasskeyBannerContainerTitle>
-        Secure your account
+        {t('Secure your account')}
       </PasskeyBannerContainerTitle>
-      <PasskeyBannerDescription>Create a Passkey</PasskeyBannerDescription>
+      <PasskeyBannerDescription>{t('Create a Passkey')}</PasskeyBannerDescription>
       <IconContainer>
         <SecurePasskeyIcon />
       </IconContainer>

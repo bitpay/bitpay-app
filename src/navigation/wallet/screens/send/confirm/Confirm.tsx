@@ -721,7 +721,7 @@ const Confirm = () => {
             {solanaPayOpts ? (
               <>
                 <Hr style={{marginBottom: 15}} />
-                <H6>{'SolanaPay Data'}</H6>
+                <H6>{t('SolanaPay Data')}</H6>
                 {solanaPayOpts?.label ? (
                   <SharedDetailRow
                     height={40}

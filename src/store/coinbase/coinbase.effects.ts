@@ -1,4 +1,5 @@
 import {Effect} from '../index';
+import {t} from 'i18next';
 import {
   exchangeRatesPending,
   exchangeRatesSuccess,
@@ -164,8 +165,9 @@ export const coinbaseLinkAccount =
         errors: [
           {
             id: 'STATE_INCORRECT',
-            message:
+            message: t(
               'Looks like you are trying to connect using a different device.',
+            ),
           },
         ],
       };

@@ -465,7 +465,7 @@ const Confirm = () => {
         <>
           <SwipeButton
             disabled={disableSwipeSendButton}
-            title={'Slide to send'}
+            title={t(t('Slide to send'))}
             forceReset={resetSwipeButton}
             onSwipeComplete={async () => {
               try {

@@ -78,11 +78,14 @@ const AmountSublabelText = styled(Paragraph)`
   font-size: 14px;
 `;
 
-const getCustomAmountSublabel = (account: BillPayAccount) => {
+const getCustomAmountSublabel = (
+  account: BillPayAccount,
+  t: (key: string) => string,
+) => {
   return () => (
     <AmountSublabel>
       <AmountSublabelText>
-        Current Balance:{' '}
+        {t('Current Balance:')}{' '}
         <AmountSublabelText style={{fontWeight: '500'}}>
           {formatFiatAmount(account[account.type].balance, 'USD', {
             customPrecision: 'minimal',
@@ -239,7 +242,7 @@ const PayBill = ({
     navigation.navigate(BillScreens.BILL_AMOUNT, {
       headerTitle,
       fiatCurrencyAbbreviation: 'USD',
-      customAmountSublabel: getCustomAmountSublabel(account),
+      customAmountSublabel: getCustomAmountSublabel(account, t),
       onAmountSelected: submittedAmount =>
         onAmountScreenSubmit(+submittedAmount),
     });
@@ -296,17 +299,18 @@ const PayBill = ({
                     />
                   </CheckboxContainer>
                   <LineItemLabelContainer>
-                    <Paragraph>Minimum Payment Due</Paragraph>
+                    <Paragraph>{t('Minimum Payment Due')}</Paragraph>
                     {account[account.type].paddedNextPaymentDueDate ? (
                       <LineItemSublabel>
-                        Due{' '}
-                        {moment(
-                          new Date(
-                            account[account.type].paddedNextPaymentDueDate,
-                          ),
-                        )
-                          .utc()
-                          .format('MMMM D, YYYY')}
+                        {t('Due {{date}}', {
+                          date: moment(
+                            new Date(
+                              account[account.type].paddedNextPaymentDueDate!,
+                            ),
+                          )
+                            .utc()
+                            .format('MMMM D, YYYY'),
+                        })}
                       </LineItemSublabel>
                     ) : null}
                   </LineItemLabelContainer>
@@ -337,7 +341,7 @@ const PayBill = ({
                     />
                   </CheckboxContainer>
                   <LineItemLabelContainer>
-                    <Paragraph>Last Statement Balance</Paragraph>
+                    <Paragraph>{t('Last Statement Balance')}</Paragraph>
                   </LineItemLabelContainer>
                   <BillPayOptionAmount>
                     {formatFiatAmount(
@@ -363,7 +367,7 @@ const PayBill = ({
                   />
                 </CheckboxContainer>
                 <LineItemLabelContainer>
-                  <Paragraph>Current Balance</Paragraph>
+                  <Paragraph>{t('Current Balance')}</Paragraph>
                 </LineItemLabelContainer>
                 <BillPayOptionAmount>
                   {formatFiatAmount(account[account.type].balance || 0, 'USD', {
@@ -384,16 +388,18 @@ const PayBill = ({
                   />
                 </CheckboxContainer>
                 <LineItemLabelContainer>
-                  <Paragraph>Other Amount</Paragraph>
+                  <Paragraph>{t('Other Amount')}</Paragraph>
                 </LineItemLabelContainer>
               </BillPayOption>
             </TouchableOpacity>
             <LineItemSublabel style={{textAlign: 'right', marginTop: 10}}>
               {account[account.type].lastSuccessfulSync
-                ? `Balance as of ${moment(
-                    new Date(account[account.type].lastSuccessfulSync),
-                  ).format('l, h:mm a')}`
-                : 'Balance may be out of date'}
+                ? t('Balance as of {{date}}', {
+                    date: moment(
+                      new Date(account[account.type].lastSuccessfulSync!),
+                    ).format('l, h:mm a'),
+                  })
+                : t('Balance may be out of date')}
             </LineItemSublabel>
           </View>
         </SectionContainer>
