@@ -968,7 +968,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             <DescriptionRow>
               {isPromptOpenApp ? (
                 <Paragraph style={{textAlign: 'center'}}>
-                  {t('Approve the app BitPay so wallets can be added to your device.')}
+                  {t(
+                    'Approve the app BitPay so wallets can be added to your device.',
+                  )}
                 </Paragraph>
               ) : (
                 <Paragraph style={{textAlign: 'center'}}>

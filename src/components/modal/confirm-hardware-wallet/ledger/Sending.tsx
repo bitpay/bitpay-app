@@ -44,7 +44,9 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           style={{
             textAlign: 'center',
           }}>
-          {t("Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.")}
+          {t(
+            "Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.",
+          )}
         </Paragraph>
       </DescriptionRow>
 

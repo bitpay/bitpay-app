@@ -104,7 +104,9 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
             <H3>{t('Something Went Wrong')}</H3>
             <TextAlign align={'center'}>
               <Paragraph>
-                {t('We are unable to load this tab. If this error persists, please')}{' '}
+                {t(
+                  'We are unable to load this tab. If this error persists, please',
+                )}{' '}
                 <Link
                   onPress={() =>
                     dispatch(

@@ -18,7 +18,8 @@ export const getShortcutList = (): Array<ShortcutItem> => [
   {
     type: 'receive',
     title: t('Receive'),
-    icon: Platform.OS === 'ios' ? 'ReceiveCrypto' : 'ic_shortcut_receive_crypto',
+    icon:
+      Platform.OS === 'ios' ? 'ReceiveCrypto' : 'ic_shortcut_receive_crypto',
     userInfo: {url: ''},
   },
   {

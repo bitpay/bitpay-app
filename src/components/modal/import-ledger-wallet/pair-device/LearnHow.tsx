@@ -77,7 +77,9 @@ export const LearnHow: React.FC<Props> = props => {
 
       <DescriptionRow>
         <Paragraph>
-          {t('Enabling blind signing allows you to manage and sign transactions from your Ledger wallet using the BitPay app.')}
+          {t(
+            'Enabling blind signing allows you to manage and sign transactions from your Ledger wallet using the BitPay app.',
+          )}
         </Paragraph>
       </DescriptionRow>
 

@@ -33,7 +33,9 @@ export const DeviceFound: React.FC<Props> = props => {
 
       <DescriptionRow>
         <Paragraph>
-          {t('Prior to continuing, if you are planning to import an Ethereum account, please make sure blind signing is enabled on your Ledger wallet.')}
+          {t(
+            'Prior to continuing, if you are planning to import an Ethereum account, please make sure blind signing is enabled on your Ledger wallet.',
+          )}
         </Paragraph>
       </DescriptionRow>
 

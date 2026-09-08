@@ -58,11 +58,15 @@ export const LedgerIntro: React.FC<Props> = props => {
       <DescriptionRow>
         {noSupportedTransportTypes ? (
           <Paragraph style={{textAlign: 'center'}}>
-            {t('This device does not support communication with Ledger wallets.')}
+            {t(
+              'This device does not support communication with Ledger wallets.',
+            )}
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            {t('Manage your Ledger with BitPay. To continue, ensure your Ledger device is unlocked.')}
+            {t(
+              'Manage your Ledger with BitPay. To continue, ensure your Ledger device is unlocked.',
+            )}
           </Paragraph>
         )}
       </DescriptionRow>

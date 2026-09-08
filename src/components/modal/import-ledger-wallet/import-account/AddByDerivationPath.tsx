@@ -438,11 +438,15 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       <DescriptionRow style={{marginTop: 12}}>
         {isPromptOpenApp ? (
           <Paragraph style={{textAlign: 'center'}}>
-            {t('Approve the app BitPay so wallets can be added to your device.')}
+            {t(
+              'Approve the app BitPay so wallets can be added to your device.',
+            )}
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            {t('Verify the derivation path of the wallet you are attempting to import within your Ledger Live App.')}
+            {t(
+              'Verify the derivation path of the wallet you are attempting to import within your Ledger Live App.',
+            )}
           </Paragraph>
         )}
       </DescriptionRow>

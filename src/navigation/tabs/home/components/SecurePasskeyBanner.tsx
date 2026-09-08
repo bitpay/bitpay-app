@@ -83,7 +83,9 @@ const SecurePasskeyBanner: React.FC = () => {
       <PasskeyBannerContainerTitle>
         {t('Secure your account')}
       </PasskeyBannerContainerTitle>
-      <PasskeyBannerDescription>{t('Create a Passkey')}</PasskeyBannerDescription>
+      <PasskeyBannerDescription>
+        {t('Create a Passkey')}
+      </PasskeyBannerDescription>
       <IconContainer>
         <SecurePasskeyIcon />
       </IconContainer>

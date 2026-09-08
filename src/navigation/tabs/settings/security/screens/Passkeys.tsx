@@ -450,7 +450,9 @@ const PasskeyScreen: React.FC = () => {
                   <PasskeyPersonSetup width={36} height={36} />
                 </IconContainerIntro>
                 <DescriptionIntro>
-                  {t('Passkeys are encrypted digital keys you create using your fingerprint, face, or screen lock.')}
+                  {t(
+                    'Passkeys are encrypted digital keys you create using your fingerprint, face, or screen lock.',
+                  )}
                 </DescriptionIntro>
               </RowIntro>
               <Button

@@ -197,7 +197,9 @@ export const ConfirmLedgerStart: React.FC<
           {noSupportedTransportTypes ? (
             <DescriptionRow>
               <Paragraph>
-                {t('Connecting via Bluetooth or USB not supported by this device.')}
+                {t(
+                  'Connecting via Bluetooth or USB not supported by this device.',
+                )}
               </Paragraph>
             </DescriptionRow>
           ) : (
@@ -207,7 +209,9 @@ export const ConfirmLedgerStart: React.FC<
                   style={{
                     textAlign: 'center',
                   }}>
-                  {t("Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.")}
+                  {t(
+                    "Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.",
+                  )}
                 </Paragraph>
               </DescriptionRow>
 

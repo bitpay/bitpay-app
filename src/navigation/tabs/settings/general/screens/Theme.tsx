@@ -49,8 +49,9 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
           title: `${
             network === testModeNetwork ? 'Disable' : 'Enable'
           } Test Mode`,
-          message:
-            t('Tap continue to switch networks. Your app will restart to enable the new network.'),
+          message: t(
+            'Tap continue to switch networks. Your app will restart to enable the new network.',
+          ),
           enableBackdropDismiss: false,
           actions: [
             {

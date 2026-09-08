@@ -43,7 +43,9 @@ export const OpenApp: React.FC<{
             style={{
               textAlign: 'center',
             }}>
-            {t("Ensure it's unlocked and set to the appropriate currency application.")}
+            {t(
+              "Ensure it's unlocked and set to the appropriate currency application.",
+            )}
           </Paragraph>
         </DescriptionRow>
 
