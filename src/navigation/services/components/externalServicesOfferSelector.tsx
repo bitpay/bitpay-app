@@ -74,6 +74,7 @@ import {
 import {
   getMoonpayFixedCurrencyAbbreviation,
   getMoonpayPaymentMethodFormat,
+  isMoonpayEmbeddedPaymentMethodEnabled,
   moonpayEnv,
 } from '../buy-crypto/utils/moonpay-utils';
 import {
@@ -1103,10 +1104,14 @@ const ExternalServicesOfferSelector: React.FC<
       );
     }
 
-    // MoonPay embedded flow
+    // MoonPay embedded flow (Apple Pay | Cards)
+    const isMoonpayEmbeddedPaymentMethod = isMoonpayEmbeddedPaymentMethodEnabled(
+      paymentMethod?.method,
+      buyCryptoConfig,
+    );
     if (
       preferMoonpayApplePay &&
-      paymentMethod?.method === 'applePay' &&
+      isMoonpayEmbeddedPaymentMethod &&
       selectedWallet
     ) {
       const embeddedStatus = getMoonpayEmbeddedStatus();
