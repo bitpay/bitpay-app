@@ -12,6 +12,8 @@ export default defineConfig({
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
     removeUnusedKeys: false,
+    extractFromComments: false,
+    sort: false,
     ignore: ['**/*.spec.tsx', '**/*.spec.ts', 'node_modules/**'],
   },
 });
