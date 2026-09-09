@@ -48,6 +48,7 @@ import {
 import {
   calculateAnyFiatToAltFiat,
   getBuyCryptoFiatLimits,
+  getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -1109,6 +1110,7 @@ const ExternalServicesOfferSelector: React.FC<
       isMoonpayEmbeddedPaymentMethodEnabled(
         paymentMethod?.method,
         buyCryptoConfig,
+        getMoonpayEmbeddedApplePaySupported(),
       );
     if (
       preferMoonpayApplePay &&

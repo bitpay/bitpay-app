@@ -29,6 +29,7 @@ import {
   registerMoonpayEmbeddedRecheckListener,
   setMoonpayEmbeddedAnonymousCredentials,
   setMoonpayEmbeddedCredentials,
+  setMoonpayEmbeddedApplePaySupported,
   setMoonpayEmbeddedEnabled,
   setMoonpayEmbeddedStatus,
 } from '../../../store/buy-crypto/buy-crypto.effects';
@@ -37,7 +38,6 @@ import {MoonPayResetFrame} from './MoonPayResetFrame';
 import {
   isAnyMoonpayEmbeddedPaymentMethodEnabled,
   moonpayEnv,
-  setMoonpayEmbeddedApplePaySupported,
 } from '../buy-crypto/utils/moonpay-utils';
 import {MoonpayClientCredentials} from '../utils/moonpayFrameCrypto';
 import {logManager} from '../../../managers/LogManager';
@@ -95,7 +95,7 @@ export function MoonpayEmbeddedCredentialManager() {
     Platform.OS === 'ios' && applePaySupported;
 
   // Embedded buy is available for all Moonpay supported countries except UK.
-  const localConditionsMet = country !== 'GB';
+  const localConditionsMet = !!country && country !== 'GB';
 
   // No point connecting if the global switch is off, or if every specific
   // embedded payment method (Apple Pay, Cards) has been disabled by config
@@ -105,7 +105,10 @@ export function MoonpayEmbeddedCredentialManager() {
     !!userEid &&
     (!cachedConfigObj ||
       (embeddedBuyDisabled !== true &&
-        isAnyMoonpayEmbeddedPaymentMethodEnabled(cachedConfig?.buyCrypto)));
+        isAnyMoonpayEmbeddedPaymentMethodEnabled(
+          cachedConfig?.buyCrypto,
+          applePaySupportConditionsMet,
+        )));
 
   // -------------------------------------------------------------------------
   // Keep module-level cache in sync with the derived flags
