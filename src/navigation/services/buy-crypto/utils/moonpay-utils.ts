@@ -306,17 +306,6 @@ export const getMoonpayPaymentMethodFormat = (
   }
   return moonpayPaymentMethod;
 };
-let _moonpayEmbeddedApplePaySupported = false;
-
-export const getMoonpayEmbeddedApplePaySupported = (): boolean =>
-  _moonpayEmbeddedApplePaySupported;
-
-export const setMoonpayEmbeddedApplePaySupported = (
-  supported: boolean,
-): void => {
-  _moonpayEmbeddedApplePaySupported = supported;
-};
-
 // Whether MoonPay's embedded flow is allowed, for a given payment method, by
 // the remote config and (for Apple Pay) device support. embeddedBuyDisabled
 // is a global kill switch: if set, every embedded payment method is disabled
@@ -325,6 +314,7 @@ export const setMoonpayEmbeddedApplePaySupported = (
 export const isMoonpayEmbeddedPaymentMethodEnabled = (
   method: PaymentMethodKey | undefined,
   buyCryptoConfig: BuyCryptoConfig | undefined,
+  applePaySupported?: boolean,
 ): boolean => {
   const moonpayConfig = buyCryptoConfig?.moonpay?.config;
   if (moonpayConfig?.embeddedBuyDisabled === true) {
@@ -334,7 +324,7 @@ export const isMoonpayEmbeddedPaymentMethodEnabled = (
   switch (method) {
     case 'applePay':
       return (
-        getMoonpayEmbeddedApplePaySupported() &&
+        !!applePaySupported &&
         !moonpayPaymentMethods?.applePayEmbedded?.disabled
       );
     case 'creditCard':
@@ -345,13 +335,17 @@ export const isMoonpayEmbeddedPaymentMethodEnabled = (
   }
 };
 
-// Whether at least one embedded payment method is still enabled by config —
-// used to decide if it's worth connecting to MoonPay's embedded flow at all.
+// Whether at least one embedded payment method is still usable — used to
+// decide if it's worth connecting to MoonPay's embedded flow at all.
 export const isAnyMoonpayEmbeddedPaymentMethodEnabled = (
   buyCryptoConfig: BuyCryptoConfig | undefined,
+  applePaySupported: boolean,
 ): boolean =>
-  isMoonpayEmbeddedPaymentMethodEnabled('applePay', buyCryptoConfig) ||
-  isMoonpayEmbeddedPaymentMethodEnabled('creditCard', buyCryptoConfig);
+  isMoonpayEmbeddedPaymentMethodEnabled(
+    'applePay',
+    buyCryptoConfig,
+    applePaySupported,
+  ) || isMoonpayEmbeddedPaymentMethodEnabled('creditCard', buyCryptoConfig);
 
 export const getMoonpayCardBrandLabel = (brand: MoonpayCardBrand): string => {
   switch (brand) {
