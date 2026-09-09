@@ -34,7 +34,7 @@ import {createWalletAddress} from '../address/address';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import uniqBy from 'lodash.uniqby';
 import {logManager} from '../../../../managers/LogManager';
-import {type BulkClient} from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/bulkclient';
+import {type BulkClient} from '@bitpay-labs/bitcore-wallet-client/src/lib/bulkclient';
 export const startUpdateWalletStatus =
   ({key, wallet, force}: {key: Key; wallet: Wallet; force?: boolean}): Effect =>
   async (dispatch, getState) => {

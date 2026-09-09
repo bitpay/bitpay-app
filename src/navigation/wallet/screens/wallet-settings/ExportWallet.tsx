@@ -169,7 +169,7 @@ const ExportWallet = () => {
     backup = JSON.stringify(backup);
 
     return JSON.stringify(
-      Encryption.encryptWithPassword(backup, password, {iter: 1000}),
+      Encryption.encryptWithPassword(backup, password, {iter: 600_000}),
     );
   };
 
