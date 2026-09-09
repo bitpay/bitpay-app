@@ -42,15 +42,15 @@ jobs:
       - name: Generate DKLS vendor files
         run: node ./scripts/generate-dkls-vendor.js
 
-      - name: Create env file
-        env:
-          ENV_FILE: ${{ secrets.ENV_DEVELOPMENT }}
-        run: echo "$ENV_FILE" > .env.development
-
-      - name: Create Sentry properties
+      - name: Create local test environment file
         run: |
-          echo "${{ secrets.SENTRY_PROPERTIES }}" > sentry.properties
-          echo "${{ secrets.SENTRY_PROPERTIES }}" > ios/sentry.properties
+          cp .env.template .env.development
+          echo "DISABLE_DEVELOPMENT_LOGGING=true" >> .env.development
+          echo "IS_MAESTRO=true" >> .env.development
+
+      - name: Create local Sentry properties
+        run: |
+          touch sentry.properties ios/sentry.properties
 
       - name: Set native config values
         run: yarn set:dev
@@ -122,11 +122,6 @@ jobs:
           fi
           echo "iOS version: $IOS_VERSION"
           echo "IOS_VERSION=$IOS_VERSION" >> $GITHUB_ENV
-
-      - name: Apply production configuration
-        run: |
-          export NODE_ENV=production
-          yarn set:prod
 
       - name: Build for testing
         env:
