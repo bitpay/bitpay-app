@@ -2321,5 +2321,12 @@
   "{{key}} wallet": "{{key}} 钱包",
   "{{name}} asset": "{{name}} 资产",
   "{{title}} offer": "{{title}} 优惠",
-  "{{wallet}} wallet": "{{wallet}} 钱包"
+  "{{wallet}} wallet": "{{wallet}} 钱包",
+  "For your security, this action isn't available on rooted or jailbroken devices.": "为了您的安全，此操作在已 root 或越狱的设备上不可用。",
+  "Please log in to your BitPay account to verify your identity.": "请登录您的 BitPay 账户以验证您的身份。",
+  "Verification unavailable": "无法进行验证",
+  "Identity verification isn't available for your account at this time. Please contact support if you need help.": "您的账户目前无法进行身份验证。如需帮助，请联系支持团队。",
+  "The verification process encountered an error.": "验证过程中出现错误。",
+  "Continue Verification": "继续验证",
+  "Continue your identity verification.": "请继续完成身份验证。"
 }

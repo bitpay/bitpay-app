@@ -2354,5 +2354,12 @@
   "{{key}} wallet": "Кошелёк {{key}}",
   "{{name}} asset": "Актив {{name}}",
   "{{title}} offer": "Предложение {{title}}",
-  "{{wallet}} wallet": "Кошелёк {{wallet}}"
+  "{{wallet}} wallet": "Кошелёк {{wallet}}",
+  "For your security, this action isn't available on rooted or jailbroken devices.": "В целях вашей безопасности это действие недоступно на устройствах с root-доступом или джейлбрейком.",
+  "Please log in to your BitPay account to verify your identity.": "Войдите в свой аккаунт BitPay, чтобы подтвердить свою личность.",
+  "Verification unavailable": "Подтверждение недоступно",
+  "Identity verification isn't available for your account at this time. Please contact support if you need help.": "Подтверждение личности сейчас недоступно для вашего аккаунта. Свяжитесь с поддержкой, если вам нужна помощь.",
+  "The verification process encountered an error.": "При подтверждении личности произошла ошибка.",
+  "Continue Verification": "Продолжить подтверждение",
+  "Continue your identity verification.": "Продолжите подтверждение личности."
 }

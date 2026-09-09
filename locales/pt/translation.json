@@ -2354,5 +2354,12 @@
   "{{key}} wallet": "Carteira {{key}}",
   "{{name}} asset": "Ativo {{name}}",
   "{{title}} offer": "Oferta de {{title}}",
-  "{{wallet}} wallet": "Carteira {{wallet}}"
+  "{{wallet}} wallet": "Carteira {{wallet}}",
+  "For your security, this action isn't available on rooted or jailbroken devices.": "Para sua segurança, esta ação não está disponível em dispositivos com root ou jailbreak.",
+  "Please log in to your BitPay account to verify your identity.": "Entre na sua conta BitPay para verificar sua identidade.",
+  "Verification unavailable": "Verificação não disponível",
+  "Identity verification isn't available for your account at this time. Please contact support if you need help.": "A verificação de identidade não está disponível para sua conta neste momento. Fale com o suporte se precisar de ajuda.",
+  "The verification process encountered an error.": "Ocorreu um erro no processo de verificação.",
+  "Continue Verification": "Continuar a verificação",
+  "Continue your identity verification.": "Continue sua verificação de identidade."
 }

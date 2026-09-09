@@ -2344,5 +2344,11 @@
   "{{key}} wallet": "{{key}} wallet",
   "{{name}} asset": "{{name}} asset",
   "{{title}} offer": "{{title}} offer",
-  "{{wallet}} wallet": "{{wallet}} wallet"
+  "{{wallet}} wallet": "{{wallet}} wallet",
+  "Please log in to your BitPay account to verify your identity.": "Please log in to your BitPay account to verify your identity.",
+  "Verification unavailable": "Verification unavailable",
+  "Identity verification isn't available for your account at this time. Please contact support if you need help.": "Identity verification isn't available for your account at this time. Please contact support if you need help.",
+  "The verification process encountered an error.": "The verification process encountered an error.",
+  "Continue Verification": "Continue Verification",
+  "Continue your identity verification.": "Continue your identity verification."
 }

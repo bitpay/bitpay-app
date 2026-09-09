@@ -2321,5 +2321,12 @@
   "{{key}} wallet": "{{key}}ウォレット",
   "{{name}} asset": "{{name}}資産",
   "{{title}} offer": "{{title}}のオファー",
-  "{{wallet}} wallet": "{{wallet}}ウォレット"
+  "{{wallet}} wallet": "{{wallet}}ウォレット",
+  "For your security, this action isn't available on rooted or jailbroken devices.": "セキュリティ上の理由により、root化またはジェイルブレイクされた端末ではこの操作を行えません。",
+  "Please log in to your BitPay account to verify your identity.": "本人確認を行うには、BitPayアカウントにログインしてください。",
+  "Verification unavailable": "本人確認を利用できません",
+  "Identity verification isn't available for your account at this time. Please contact support if you need help.": "現在、お客様のアカウントでは本人確認をご利用いただけません。サポートが必要な場合はサポートにお問い合わせください。",
+  "The verification process encountered an error.": "本人確認の処理中にエラーが発生しました。",
+  "Continue Verification": "本人確認を続ける",
+  "Continue your identity verification.": "本人確認を続けてください。"
 }

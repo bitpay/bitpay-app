@@ -2343,5 +2343,12 @@
   "{{key}} wallet": "Wallet {{key}}",
   "{{name}} asset": "Activum {{name}}",
   "{{title}} offer": "Aanbieding van {{title}}",
-  "{{wallet}} wallet": "Wallet {{wallet}}"
+  "{{wallet}} wallet": "Wallet {{wallet}}",
+  "For your security, this action isn't available on rooted or jailbroken devices.": "Voor uw veiligheid is deze actie niet beschikbaar op gerootete of gejailbreakte apparaten.",
+  "Please log in to your BitPay account to verify your identity.": "Log in op uw BitPay-account om uw identiteit te verifiëren.",
+  "Verification unavailable": "Verificatie niet beschikbaar",
+  "Identity verification isn't available for your account at this time. Please contact support if you need help.": "Identiteitsverificatie is momenteel niet beschikbaar voor uw account. Neem contact op met support als u hulp nodig hebt.",
+  "The verification process encountered an error.": "Er is een fout opgetreden tijdens de verificatie.",
+  "Continue Verification": "Verificatie voortzetten",
+  "Continue your identity verification.": "Zet uw identiteitsverificatie voort."
 }
