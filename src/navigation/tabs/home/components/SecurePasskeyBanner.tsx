@@ -1,6 +1,7 @@
 import React from 'react';
 import {CommonActions, useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {ActiveOpacity} from '@components/base/TouchableOpacity';
 import SecurePasskeyIcon from '../../../../../assets/img/secure-passkey.svg';
 import ArrowRightSvg from './ArrowRightSvg';
@@ -17,42 +18,80 @@ import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SecurityScreens} from '../../../../navigation/tabs/settings/security/SecurityGroup';
 
-const PasskeyBannerContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
-  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-width: 1px;
-  border-radius: 12px;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 100px;
-  padding: 16px 35px 16px 76px;
-  margin: 8px ${ScreenGutter} 22px;
-  position: relative;
-  gap: 8px;
-`;
+const styles = StyleSheet.create({
+  passkeyBannerContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    minHeight: 100,
+    paddingTop: 16,
+    paddingRight: 35,
+    paddingBottom: 16,
+    paddingLeft: 76,
+    marginTop: 8,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    marginBottom: 22,
+    position: 'relative',
+    gap: 8,
+  },
+  passkeyBannerContainerTitle: {
+    fontStyle: 'normal',
+    fontSize: 12,
+    color: '#335cff',
+    marginLeft: 26,
+    textTransform: 'uppercase',
+  },
+  passkeyBannerDescription: {
+    fontSize: 16,
+    marginLeft: 26,
+  },
+  iconContainer: {
+    position: 'absolute',
+    left: 16,
+  },
+  iconArrowRight: {
+    position: 'absolute',
+    right: 16,
+  },
+});
 
-const PasskeyBannerContainerTitle = styled(BaseText)`
-  font-style: normal;
-  font-size: 12px;
-  color: #335cff;
-  margin-left: 26px;
-  text-transform: uppercase;
-`;
+const PasskeyBannerContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.passkeyBannerContainer,
+        {
+          backgroundColor: theme.dark ? CharcoalBlack : White,
+          borderColor: theme.dark ? LightBlack : Slate30,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PasskeyBannerDescription = styled(BaseText)`
-  font-size: 16px;
-  margin-left: 26px;
-`;
+const PasskeyBannerContainerTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => (
+  <BaseText style={styles.passkeyBannerContainerTitle}>{children}</BaseText>
+);
 
-const IconContainer = styled.View`
-  position: absolute;
-  left: 16px;
-`;
+const PasskeyBannerDescription: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <BaseText style={styles.passkeyBannerDescription}>{children}</BaseText>;
 
-const IconArrowRight = styled.View`
-  position: absolute;
-  right: 16px;
-`;
+const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconContainer}>{children}</View>
+);
+
+const IconArrowRight: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconArrowRight}>{children}</View>
+);
 
 const SecurePasskeyBanner: React.FC = () => {
   const navigation = useNavigation();

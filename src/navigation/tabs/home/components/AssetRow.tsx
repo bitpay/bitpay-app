@@ -1,8 +1,8 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {ImageRequireSource} from 'react-native';
+import {ImageRequireSource, StyleSheet, View} from 'react-native';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import type {RootStackParamList} from '../../../../Root';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -42,107 +42,220 @@ const supportedCurrencyOptionLookup = createSupportedCurrencyOptionLookup(
 const PRESERVED_ASSET_ROW_LOADING_DELAY_MS = 250;
 const PERCENT_PILL_SKELETON_FILL_VALUE = '-2.22%';
 
-const Row = styled(TouchableOpacity)<{isLast: boolean}>`
-  flex-direction: row;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-`;
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  assetInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  assetName: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  assetAmount: {
+    marginTop: 2,
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  values: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  deltaFiatSkeletonContainer: {
+    alignItems: 'flex-end',
+    marginTop: 6,
+  },
+  fiatAmount: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  deltaFiat: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  percentPill: {
+    position: 'relative',
+    borderRadius: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    marginRight: 14,
+  },
+  percentSkeletonOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronContainer: {
+    width: 9,
+    alignItems: 'flex-end',
+  },
+});
 
-const IconContainer = styled.View`
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-`;
+const Row: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {isLast: boolean}
+> = ({isLast, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.row,
+        {
+          borderBottomWidth: isLast ? 0 : 1,
+          borderBottomColor: theme.dark ? LightBlack : LightBlue,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AssetInfo = styled.View`
-  flex: 1;
-  justify-content: center;
-`;
+const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconContainer}>{children}</View>
+);
 
-const AssetName = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  color: ${({theme}) => theme.colors.text};
-`;
+const AssetInfo: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.assetInfo}>{children}</View>
+);
 
-const AssetAmount = styled(H7)`
-  margin-top: 2px;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const AssetName: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.assetName, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const Values = styled.View`
-  align-items: flex-end;
-  justify-content: center;
-  margin-right: 12px;
-`;
+const AssetAmount: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H7
+      style={[
+        styles.assetAmount,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const DeltaFiatSkeletonContainer = styled.View`
-  align-items: flex-end;
-  margin-top: 6px;
-`;
+const Values: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.values}>{children}</View>
+);
 
-const FiatAmount = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const DeltaFiatSkeletonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.deltaFiatSkeletonContainer}>{children}</View>;
 
-const DeltaFiat = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}, isPositive, hasPnl}) =>
-    hasPnl ? getDifferenceColor(isPositive, dark) : dark ? Slate30 : SlateDark};
-`;
+const FiatAmount: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.fiatAmount, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const PercentPill = styled.View`
-  position: relative;
-  border-radius: 50px;
-  padding: 8px 10px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  background-color: ${({theme: {dark}}) => (dark ? 'transparent' : White)};
-  margin-right: 14px;
-`;
+const DeltaFiat: React.FC<
+  React.ComponentProps<typeof BaseText> & {
+    isPositive: boolean;
+    hasPnl: boolean;
+  }
+> = ({isPositive, hasPnl, style, ...rest}) => {
+  const theme = useTheme();
+  const color = hasPnl
+    ? getDifferenceColor(isPositive, theme.dark)
+    : theme.dark
+    ? Slate30
+    : SlateDark;
+  return <BaseText style={[styles.deltaFiat, {color}, style]} {...rest} />;
+};
 
-const PercentText = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}, isPositive, hasPnl}) =>
-    hasPnl ? getDifferenceColor(isPositive, dark) : dark ? Slate30 : SlateDark};
-`;
+const PercentPill: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.percentPill,
+        {
+          borderColor: theme.dark ? SlateDark : Slate30,
+          backgroundColor: theme.dark ? 'transparent' : White,
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const PercentSkeletonAnchor = styled(PercentText)`
-  opacity: 0;
-`;
+const PercentText: React.FC<
+  React.ComponentProps<typeof BaseText> & {
+    isPositive: boolean;
+    hasPnl: boolean;
+  }
+> = ({isPositive, hasPnl, style, ...rest}) => {
+  const theme = useTheme();
+  const color = hasPnl
+    ? getDifferenceColor(isPositive, theme.dark)
+    : theme.dark
+    ? Slate30
+    : SlateDark;
+  return <BaseText style={[styles.deltaFiat, {color}, style]} {...rest} />;
+};
 
-const PercentSkeletonOverlay = styled.View`
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  align-items: center;
-  justify-content: center;
-`;
+const PercentSkeletonAnchor: React.FC<
+  React.ComponentProps<typeof PercentText>
+> = ({style, ...rest}) => (
+  <PercentText style={[{opacity: 0}, style]} {...rest} />
+);
 
-const ChevronContainer = styled.View<{visible: boolean}>`
-  width: 9px;
-  align-items: flex-end;
-  opacity: ${({visible}) => (visible ? 1 : 0)};
-`;
+const PercentSkeletonOverlay: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.percentSkeletonOverlay}>{children}</View>;
+
+const ChevronContainer: React.FC<{
+  visible: boolean;
+  children?: React.ReactNode;
+}> = ({visible, children}) => (
+  <View style={[styles.chevronContainer, {opacity: visible ? 1 : 0}]}>
+    {children}
+  </View>
+);
 
 interface Props {
   item: AssetRowItem;

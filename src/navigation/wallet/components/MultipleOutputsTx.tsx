@@ -3,7 +3,8 @@ import {useAppSelector} from '../../../utils/hooks/useAppSelector';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {GetContactName} from '../../../store/wallet/effects/transactions/transactions';
-import styled from 'styled-components/native';
+import {StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {H7} from '../../../components/styled/Text';
 import CardSvg from '../../../../assets/img/wallet/transactions/card.svg';
@@ -39,52 +40,42 @@ import {
   DetailRow,
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
-import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {View} from 'react-native';
 import {useTokenContext} from '../../../contexts';
 
-const MisunderstoodOutputsText = styled(H7)`
-  margin-bottom: 5px;
-`;
-
-const MultiOptionsContainer = styled(View)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 10px;
-  margin-bottom: 5px;
-  padding: 10px;
-  flex: 1;
-`;
-
-const MultiOptionsText = styled(H7)`
-  margin: 0 5px;
-  width: 50%;
-`;
-
-const MultiOptionsMessageContainer = styled.View`
-  margin: 5px 0;
-`;
-
-const MultiOptionsMessage = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const ContactsIconContainer = styled(TouchableOpacity)`
-  margin-left: 5px;
-`;
-
-const RecipientsContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-`;
-
-const DetailsContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  misunderstoodOutputsText: {
+    marginBottom: 5,
+  },
+  multiOptionsContainer: {
+    borderRadius: 10,
+    marginBottom: 5,
+    padding: 10,
+    flex: 1,
+  },
+  multiOptionsText: {
+    marginHorizontal: 5,
+    width: '50%',
+  },
+  multiOptionsMessageContainer: {
+    marginVertical: 5,
+  },
+  contactsIconContainer: {
+    marginLeft: 5,
+  },
+  recipientsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  detailsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
 
 const MultipleOutputsTx = ({
   tx,
@@ -94,18 +85,23 @@ const MultipleOutputsTx = ({
   tokenAddress: string | undefined;
 }) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
 
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
+  const tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+      ...customTokenOptionsByAddress,
+    }),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
   const foundToken =
     tokenAddress &&
     tokenOptionsByAddress[
@@ -302,7 +298,8 @@ const MultipleOutputsTx = ({
                 </SendToPillContainer>
 
                 {!txOutputs[0].contactName ? (
-                  <ContactsIconContainer
+                  <TouchableOpacity
+                    style={styles.contactsIconContainer}
                     activeOpacity={ActiveOpacity}
                     onPress={() =>
                       gotoAddContacts({
@@ -312,7 +309,7 @@ const MultipleOutputsTx = ({
                       })
                     }>
                     <AddContactIcon />
-                  </ContactsIconContainer>
+                  </TouchableOpacity>
                 ) : null}
               </DetailRow>
             ) : null}
@@ -339,18 +336,25 @@ const MultipleOutputsTx = ({
 
       {tx.hasMultiplesOutputs && showMultiOptions
         ? txOutputs.map((output: any, i: number) => (
-            <RecipientsContainer key={i}>
-              <MultiOptionsContainer>
-                <DetailsContainer>
+            <View style={styles.recipientsContainer} key={i}>
+              <View
+                style={[
+                  styles.multiOptionsContainer,
+                  {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+                ]}>
+                <View style={styles.detailsContainer}>
                   {getIcon(
                     output.toAddress || output.address || output.addressToShow,
                   )}
-                  <MultiOptionsText numberOfLines={1} ellipsizeMode={'middle'}>
+                  <H7
+                    style={styles.multiOptionsText}
+                    numberOfLines={1}
+                    ellipsizeMode={'middle'}>
                     {output.contactName ||
                       output.addressToShow ||
                       output.toAddress ||
                       output.address}
-                  </MultiOptionsText>
+                  </H7>
 
                   {copied &&
                   (copiedAddress === output.toAddress ||
@@ -364,21 +368,23 @@ const MultipleOutputsTx = ({
                       <H7>{output.alternativeAmountStr}</H7>
                     ) : null}
                   </DetailColumn>
-                </DetailsContainer>
+                </View>
 
                 {output.message ? (
-                  <MultiOptionsMessageContainer>
-                    <MultiOptionsMessage
+                  <View style={styles.multiOptionsMessageContainer}>
+                    <H7
+                      style={{color: theme.dark ? White : SlateDark}}
                       numberOfLines={2}
                       ellipsizeMode={'tail'}>
                       {output.message}
-                    </MultiOptionsMessage>
-                  </MultiOptionsMessageContainer>
+                    </H7>
+                  </View>
                 ) : null}
-              </MultiOptionsContainer>
+              </View>
 
               {!output.contactName ? (
-                <ContactsIconContainer
+                <TouchableOpacity
+                  style={styles.contactsIconContainer}
                   activeOpacity={ActiveOpacity}
                   onPress={() =>
                     gotoAddContacts({
@@ -386,18 +392,18 @@ const MultipleOutputsTx = ({
                     })
                   }>
                   <AddContactIcon />
-                </ContactsIconContainer>
+                </TouchableOpacity>
               ) : null}
-            </RecipientsContainer>
+            </View>
           ))
         : null}
 
       {tx.misunderstoodOutputs ? (
-        <MisunderstoodOutputsText>
+        <H7 style={styles.misunderstoodOutputsText}>
           {t(
             'There are some misunderstood outputs, please view on blockchain.',
           )}
-        </MisunderstoodOutputsText>
+        </H7>
       ) : null}
 
       <Hr />

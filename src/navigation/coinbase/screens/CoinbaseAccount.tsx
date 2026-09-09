@@ -15,8 +15,13 @@ import {
   useLogger,
   useMount,
 } from '../../../utils/hooks';
-import styled from 'styled-components/native';
-import {RefreshControl, View, Platform} from 'react-native';
+import {
+  RefreshControl,
+  View,
+  Platform,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
@@ -40,9 +45,7 @@ import {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import TransactionRow, {
-  TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/TransactionRow';
+import TransactionRow from '../../../components/list/TransactionRow';
 
 import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {
@@ -93,94 +96,184 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
-const AccountContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const screenGutter = parseInt(ScreenGutter, 10);
 
-const Row = styled.View`
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  accountContainer: {
+    flex: 1,
+  },
+  row: {
+    alignItems: 'center',
+  },
+  balanceContainer: {
+    marginVertical: 20,
+    paddingHorizontal: 15,
+    paddingBottom: 10,
+  },
+  typeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    borderRadius: 3,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  typeText: {
+    fontSize: 12,
+  },
+  type: {
+    fontSize: 12,
+    borderWidth: 1,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    borderRadius: 3,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  emptyListContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  skeletonContainer: {
+    marginBottom: 20,
+  },
+  transactionSectionHeaderContainer: {
+    padding: screenGutter,
+    height: 55,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    marginRight: 5,
+  },
+  walletSelectMenuContainer: {
+    padding: screenGutter,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    maxHeight: '75%',
+  },
+  walletSelectMenuHeaderContainer: {
+    paddingVertical: 50,
+  },
+  globalSelectContainer: {
+    flex: 1,
+  },
+});
 
-const BalanceContainer = styled.View`
-  margin: 20px 0;
-  padding: 0 15px 10px;
-`;
+const TypeContainer = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.typeContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const HeaderSubTitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const TypeText = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.typeText, {color: theme.dark ? LuckySevens : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  padding: 2px 5px;
-  border-radius: 3px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-`;
+const Type = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.type,
+        {
+          color: theme.dark ? LuckySevens : SlateDark,
+          borderColor: theme.dark ? LightBlack : Slate30,
+        },
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const TypeText = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-`;
+const BorderBottom = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+      ]}
+    />
+  );
+};
 
-const Type = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  padding: 2px 5px;
-  border-radius: 3px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-`;
+const TransactionSectionHeaderContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+export const WalletSelectMenuContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.walletSelectMenuContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
+export const WalletSelectMenuHeaderContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.walletSelectMenuHeaderContainer, style]} {...rest} />
+);
 
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
-`;
-
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const IconContainer = styled.View`
-  margin-right: 5px;
-`;
-
-export const WalletSelectMenuContainer = styled.View`
-  padding: ${ScreenGutter};
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  max-height: 75%;
-`;
-
-export const WalletSelectMenuHeaderContainer = styled.View`
-  padding: 50px 0;
-`;
-
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const GlobalSelectContainer = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.globalSelectContainer,
+        {backgroundColor: theme.dark ? Black : White},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
 export type CoinbaseAccountScreenParamList = {
   accountId: string;
@@ -313,9 +406,9 @@ const CoinbaseAccount = ({
           </View>
         )}
         {isLoading && initialLoad ? (
-          <SkeletonContainer>
+          <View style={styles.skeletonContainer}>
             <WalletTransactionSkeletonRow />
-          </SkeletonContainer>
+          </View>
         ) : null}
       </>
     );
@@ -325,14 +418,14 @@ const CoinbaseAccount = ({
     return (
       <>
         {!initialLoad && !groupedTransactions.length && (
-          <EmptyListContainer>
+          <View style={styles.emptyListContainer}>
             <H5>
               {!errorLoadingTxs
                 ? t("It's a ghost town in here")
                 : t('Could not update transaction history')}
             </H5>
             <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
+          </View>
         )}
       </>
     );
@@ -695,7 +788,7 @@ const CoinbaseAccount = ({
   const keyExtractor = useCallback((item, index) => index.toString(), []);
 
   return (
-    <AccountContainer>
+    <SafeAreaView style={styles.accountContainer}>
       <FlashList
         refreshControl={
           <RefreshControl
@@ -707,15 +800,15 @@ const CoinbaseAccount = ({
         ListHeaderComponent={() => {
           return (
             <>
-              <BalanceContainer>
-                <Row>
+              <View style={styles.balanceContainer}>
+                <View style={styles.row}>
                   {cryptoAmount && (
                     <Balance scale={shouldScale(cryptoAmount)}>
                       {cryptoAmount} {currencyAbbreviation}
                     </Balance>
                   )}
-                </Row>
-                <Row>
+                </View>
+                <View style={styles.row}>
                   <H5>
                     {fiatAmount
                       ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
@@ -724,13 +817,13 @@ const CoinbaseAccount = ({
                   {account?.primary ? <Type>Primary</Type> : null}
                   {protocolName ? (
                     <TypeContainer>
-                      <IconContainer>
+                      <View style={styles.iconContainer}>
                         <Icons.Network />
-                      </IconContainer>
+                      </View>
                       <TypeText>{protocolName}</TypeText>
                     </TypeContainer>
                   ) : null}
-                </Row>
+                </View>
                 <LinkingButtons
                   receive={{
                     cta: deposit,
@@ -748,12 +841,11 @@ const CoinbaseAccount = ({
                   sell={{cta: () => null, hide: true}}
                   swap={{cta: () => null, hide: true}}
                 />
-              </BalanceContainer>
+              </View>
             </>
           );
         }}
         data={groupedTransactions}
-        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
         stickyHeaderIndices={
           groupedTransactions
             .map((item, index) => {
@@ -816,7 +908,7 @@ const CoinbaseAccount = ({
         onClose={() => setAmountModalVisible(false)}
         onSubmit={amt => onEnteredAmount(amt)}
       />
-    </AccountContainer>
+    </SafeAreaView>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import FastImage from 'react-native-fast-image';
-import styled from 'styled-components/native';
+import FastImage, {FastImageProps} from 'react-native-fast-image';
+import {View, ViewProps, StyleSheet} from 'react-native';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
 import {useAppSelector} from '../../../utils/hooks';
@@ -11,25 +11,37 @@ interface SettingsSlideProps {
   card: Card;
 }
 
-const SettingsSlideContainer = styled.View`
-  position: relative;
-  height: ${CARD_HEIGHT}px;
-  width: ${CARD_WIDTH}px;
-`;
+const styles = StyleSheet.create({
+  settingsSlideContainer: {
+    position: 'relative',
+    height: CARD_HEIGHT,
+    width: CARD_WIDTH,
+  },
+  placeholderContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  styledImage: {
+    height: CARD_HEIGHT,
+    width: CARD_WIDTH,
+    borderRadius: 10,
+  },
+});
 
-const PlaceholderContainer = styled.View`
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-`;
+const SettingsSlideContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.settingsSlideContainer, style]} {...rest} />
+);
 
-const StyledImage = styled(FastImage)`
-  height: ${CARD_HEIGHT}px;
-  width: ${CARD_WIDTH}px;
-  border-radius: 10px;
-`;
+const PlaceholderContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.placeholderContainer, style]} {...rest} />
+);
+
+const StyledImage = (props: FastImageProps) => (
+  <FastImage {...props} style={[styles.styledImage, props.style]} />
+);
 
 const SettingsSlide: React.FC<SettingsSlideProps> = props => {
   const {card} = props;

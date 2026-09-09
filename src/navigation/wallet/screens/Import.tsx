@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';
@@ -8,6 +8,7 @@ import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
 
 type ImportScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -20,14 +21,18 @@ export interface ImportParamList {
   importQrCodeData?: string;
 }
 
-const ImportContainer = styled.SafeAreaView`
-  flex: 1;
-  margin-top: 10px;
-`;
+const Tab = createMaterialTopTabNavigator();
+
+const styles = StyleSheet.create({
+  importContainer: {
+    flex: 1,
+    marginTop: 10,
+  },
+});
 
 const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
-  const Tab = createMaterialTopTabNavigator();
+  const onPerformanceLayout = useScreenRenderPerformance('Import');
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -37,8 +42,13 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   }, [navigation, t]);
 
   return (
-    <ImportContainer testID="import-view">
-      <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
+    <SafeAreaView
+      style={styles.importContainer}
+      testID="import-view"
+      onLayout={onPerformanceLayout}>
+      <Tab.Navigator
+        screenOptions={{lazy: true, lazyPreloadDistance: 0}}
+        tabBar={props => <CustomTabBar {...props} />}>
         <Tab.Screen
           name={t('Phrase')}
           component={RecoveryPhrase}
@@ -50,7 +60,7 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
           initialParams={route.params}
         />
       </Tab.Navigator>
-    </ImportContainer>
+    </SafeAreaView>
   );
 };
 

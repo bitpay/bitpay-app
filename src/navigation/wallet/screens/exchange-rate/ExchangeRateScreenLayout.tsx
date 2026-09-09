@@ -1,8 +1,14 @@
 import {type NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {RefreshControl, ScrollView, View} from 'react-native';
+import {
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {Path, Svg} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {
@@ -38,182 +44,438 @@ import {
 } from './exchangeRateTopChangeRow';
 import ArchaxFooter from '../../../../components/archax/archax-footer';
 
-const ScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const TopSection = styled(TouchableOpacity)`
-  margin-top: 10px;
-  align-items: center;
-  padding: 0 16px;
-`;
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+  },
+  topSection: {
+    marginTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  abbreviationLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400',
+    marginBottom: 2,
+  },
+  priceTextLarge: {
+    fontSize: 32,
+    lineHeight: 38,
+    marginBottom: 5,
+  },
+  priceTextNormal: {
+    fontSize: 40,
+    lineHeight: 50,
+    marginBottom: 5,
+  },
+  actionsContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 30,
+    marginTop: 18,
+    marginHorizontal: gutter,
+    marginBottom: 3,
+  },
+  walletCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    marginVertical: 8,
+    marginHorizontal: gutter,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    height: 75,
+  },
+  walletLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  walletName: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  walletSub: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 4,
+  },
+  walletRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  walletAmount: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  marketCardContainer: {
+    marginVertical: 20,
+    marginHorizontal: gutter,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  marketHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  marketHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  marketTitle: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  marketPrice: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  divider: {
+    height: 1,
+  },
+  marketBody: {
+    padding: 14,
+  },
+  subSectionTitle: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  statsGridRow: {
+    flexDirection: 'row',
+  },
+  statBlock: {
+    flex: 1,
+    flexBasis: 0,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 15,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  aboutText: {
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 15,
+  },
+});
 
-const AbbreviationLabel = styled(BaseText)`
-  font-size: 13px;
-  line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-weight: 400;
-  margin-bottom: 2px;
-`;
+const ScreenContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.screenContainer, style]} {...rest} />;
 
-const PriceText = styled(H2)<{isLargeNumber?: boolean}>`
-  font-size: ${({isLargeNumber}) => (isLargeNumber ? '32px' : '40px')};
-  line-height: ${({isLargeNumber}) => (isLargeNumber ? '38px' : '50px')};
-  margin-bottom: 5px;
-`;
+const TopSection: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.topSection, style]} {...rest} />;
 
-const ActionsContainer = styled.View`
-  margin-top: 20px;
-  margin-bottom: 20px;
-`;
+const AbbreviationLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.abbreviationLabel,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SectionTitle = styled(H5)`
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 30px;
-  margin: 18px ${ScreenGutter} 3px;
-`;
+const PriceText: React.FC<
+  React.ComponentProps<typeof H2> & {isLargeNumber?: boolean}
+> = ({isLargeNumber, style, ...rest}) => (
+  <H2
+    style={[
+      isLargeNumber ? styles.priceTextLarge : styles.priceTextNormal,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const WalletCard = styled(TouchableOpacity)`
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : Slate10)};
-  border-radius: 12px;
-  margin: 8px ${ScreenGutter};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px;
-  height: 75px;
-`;
+const ActionsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.actionsContainer, style]} {...rest} />;
 
-const WalletLeft = styled.View`
-  flex: 1;
-  padding-right: 10px;
-`;
+const SectionTitle: React.FC<React.ComponentProps<typeof H5>> = ({
+  style,
+  ...rest
+}) => <H5 style={[styles.sectionTitle, style]} {...rest} />;
 
-const WalletName = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 18px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const WalletCard: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.walletCard,
+        {
+          borderColor: theme.dark ? LightBlack : Slate10,
+          backgroundColor: theme.dark ? CharcoalBlack : Slate10,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WalletSub = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  margin-top: 4px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : LuckySevens)};
-`;
+const WalletLeft: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletLeft, style]} {...rest} />;
 
-const WalletRight = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-`;
+const WalletName: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.walletName, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const WalletAmount = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 24px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const WalletSub: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.walletSub,
+        {color: theme.dark ? Slate30 : LuckySevens},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const MarketCardContainer = styled.View`
-  margin: 20px ${ScreenGutter} 20px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 12px;
-`;
+const WalletRight: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletRight, style]} {...rest} />;
 
-const MarketHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-`;
+const WalletAmount: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.walletAmount, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const MarketHeaderLeft = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-`;
+const MarketCardContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.marketCardContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const MarketTitle = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const MarketHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.marketHeader, style]} {...rest} />;
 
-const MarketPrice = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 24px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const MarketHeaderLeft: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.marketHeaderLeft, style]} {...rest} />;
 
-const Divider = styled.View`
-  height: 1px;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-`;
+const MarketTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.marketTitle, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const MarketBody = styled.View`
-  padding: 14px;
-  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : Slate10)};
-`;
+const MarketPrice: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.marketPrice, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const SubSectionTitle = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 20px;
-  color: ${({theme}) => theme.colors.text};
-  margin-bottom: 10px;
-`;
+const Divider: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.divider,
+        {backgroundColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const StatsGridRow = styled.View`
-  flex-direction: row;
-`;
+const MarketBody: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.marketBody,
+        {backgroundColor: theme.dark ? CharcoalBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const StatBlock = styled.View`
-  flex: 1;
-  flex-basis: 0px;
-`;
+const SubSectionTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.subSectionTitle, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const StatLabel = styled(BaseText)`
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 15px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-bottom: 4px;
-`;
+const StatsGridRow: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.statsGridRow, style]} {...rest} />;
 
-const StatValue = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 24px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const StatBlock: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.statBlock, style]} {...rest} />;
 
-const AboutText = styled(BaseText)`
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 15px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const StatLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.statLabel,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const StatValue: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.statValue, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
+
+const AboutText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.aboutText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 type ExchangeRateScreenLayoutProps = {
   chartSection: React.ReactNode;
   changeRow?: ExchangeRateChangeRow;
+  maskChangeRowDeltaWhenBalancesHidden?: boolean;
   isRefreshing: boolean;
   marketPriceDisplay: string;
   onRefresh: () => void;
@@ -226,6 +488,7 @@ type ExchangeRateScreenLayoutProps = {
 const ExchangeRateScreenLayout = ({
   chartSection,
   changeRow,
+  maskChangeRowDeltaWhenBalancesHidden = false,
   isRefreshing,
   marketPriceDisplay,
   onRefresh,
@@ -273,6 +536,7 @@ const ExchangeRateScreenLayout = ({
               percent={resolvedTopChangeRow.percent}
               deltaFiatFormatted={resolvedTopChangeRow.deltaFiatFormatted}
               rangeLabel={resolvedTopChangeRow.rangeLabel}
+              maskDeltaWhenBalancesHidden={maskChangeRowDeltaWhenBalancesHidden}
               style={resolvedTopChangeRow.hidden ? {opacity: 0} : undefined}
             />
           ) : null}
@@ -376,7 +640,6 @@ const ExchangeRateScreenLayout = ({
                 onPress={() => {
                   navigation.navigate('WalletDetails', {
                     walletId: wallet.credentials?.walletId || wallet.id,
-                    key: shared.keys[wallet.keyId],
                     copayerId: wallet.credentials?.copayerId,
                   });
                 }}>

@@ -8,6 +8,15 @@ import {
   H4,
 } from '../../../components/styled/Text';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {
+  DeviceEventEmitter,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -25,12 +34,8 @@ import {
   TxActions,
   IsTSSShared,
 } from '../../../store/wallet/effects/transactions/transactions';
-import styled from 'styled-components/native';
-import {
-  ActiveOpacity,
-  Hr,
-  ScreenGutter,
-} from '../../../components/styled/Containers';
+import {useTheme} from '../../../contexts';
+import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {
   GetBlockExplorerUrl,
   IsCustomERCToken,
@@ -67,13 +72,13 @@ import {
   Recipient,
   TransactionDetailsBuilt,
   TransactionOptionsContext,
+  Wallet,
 } from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {TxDescription} from './send/confirm/TxDescription';
 import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
-import {LogActions} from '../../../store/log';
 import {RootState} from '../../../store';
 import {getDecodedTransactionsByHash} from '../../../store/moralis/moralis.effects';
 import {
@@ -81,81 +86,186 @@ import {
   LabelTipText,
 } from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
 import {logManager} from '../../../managers/LogManager';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {
+  DeviceEmitterEvents,
+  WalletLoadHistoryTarget,
+} from '../../../constants/device-emitter-events';
 
-const TxsDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  txsDetailsContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  subTitle: {
+    fontSize: 14,
+    fontWeight: '300',
+  },
+  verticalSpace: {
+    marginVertical: 10,
+  },
+  transactionIdText: {
+    maxWidth: 150,
+  },
+  timelineContainer: {
+    paddingVertical: 15,
+  },
+  timelineItem: {
+    paddingVertical: 10,
+  },
+  timelineDescription: {
+    marginHorizontal: 10,
+  },
+  timelineBorderLeft: {
+    position: 'absolute',
+    left: 18,
+    width: 1,
+    zIndex: -1,
+  },
+  iconBackground: {
+    height: 35,
+    width: 35,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailLink: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+  },
+  copyImgContainer: {
+    justifyContent: 'center',
+    marginRight: 5,
+  },
+  copyTransactionId: {
+    flexDirection: 'row',
+  },
+});
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const TxsDetailsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.txsDetailsContainer, style]} {...rest} />
+);
 
-const SubTitle = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 300;
-`;
+const ScrollView = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof KeyboardAwareScrollView>) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const VerticalSpace = styled.View`
-  margin: 10px 0;
-`;
+const SubTitle = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.subTitle, style]} {...rest} />
+));
 
-const TransactionIdText = styled(H7)`
-  max-width: 150px;
-`;
+const VerticalSpace = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.verticalSpace, style]} {...rest} />
+);
 
-const TimelineContainer = styled.View`
-  padding: 15px 0;
-`;
+const TransactionIdText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <H7 ref={ref} style={[styles.transactionIdText, style]} {...rest} />
+  ),
+);
 
-const TimelineItem = styled.View`
-  padding: 10px 0;
-`;
+const TimelineContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineContainer, style]} {...rest} />
+);
 
-const TimelineDescription = styled.View`
-  margin: 0 10px;
-`;
+const TimelineItem = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineItem, style]} {...rest} />
+);
 
-const TimelineBorderLeft = styled.View<{isFirst: boolean; isLast: boolean}>`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  position: absolute;
-  top: ${({isFirst}) => (isFirst ? '45px' : 0)};
-  bottom: ${({isLast}) => (isLast ? '15px' : 0)};
-  left: 18px;
-  width: 1px;
-  z-index: -1;
-`;
-const TimelineTime = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const TimelineDescription = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineDescription, style]} {...rest} />
+);
 
-const IconBackground = styled.View`
-  height: 35px;
-  width: 35px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const TimelineBorderLeft = ({
+  isFirst,
+  isLast,
+}: {
+  isFirst: boolean;
+  isLast: boolean;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.timelineBorderLeft,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          top: isFirst ? 45 : 0,
+          bottom: isLast ? 15 : 0,
+        },
+      ]}
+    />
+  );
+};
 
-const NumberIcon = styled(IconBackground)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+const TimelineTime = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <H7
+        ref={ref}
+        style={[{color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const DetailLink = styled(Link)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-`;
+const IconBackground = ({
+  style,
+  children,
+}: {
+  style?: ViewProps['style'];
+  children?: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.iconBackground,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const CopyImgContainer = styled.View`
-  justify-content: center;
-  margin-right: 5px;
-`;
+const NumberIcon = ({children}: {children?: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <IconBackground
+      style={{backgroundColor: theme.dark ? LightBlack : NeutralSlate}}>
+      {children}
+    </IconBackground>
+  );
+};
 
-const CopyTransactionId = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
+const DetailLink = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <Link ref={ref} style={[styles.detailLink, style]} {...rest} />
+  ),
+);
+
+const CopyImgContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.copyImgContainer, style]} {...rest} />
+);
+
+const CopyTransactionId: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.copyTransactionId, style]} {...rest} />
+);
 
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
   return (
@@ -208,11 +318,18 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
   );
 };
 
-const TransactionDetails = () => {
+type TransactionDetailsContentProps = {
+  transaction: any;
+  wallet: Wallet;
+  historyTarget: WalletLoadHistoryTarget;
+};
+
+const TransactionDetailsContent = ({
+  transaction,
+  wallet,
+  historyTarget,
+}: TransactionDetailsContentProps) => {
   const logger = useLogger();
-  const {
-    params: {transaction, wallet, onTxDescriptionChange},
-  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {t} = useTranslation();
@@ -469,7 +586,10 @@ const TransactionDetails = () => {
       };
       transaction.uiDescription = newTxDescription;
       setTxDescription(newTxDescription);
-      onTxDescriptionChange();
+      DeviceEventEmitter.emit(
+        DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+        historyTarget,
+      );
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error('[EditTxNote] ', e);
@@ -737,6 +857,41 @@ const TransactionDetails = () => {
         </ScrollView>
       ) : null}
     </TxsDetailsContainer>
+  );
+};
+
+const TransactionDetails = () => {
+  const {
+    params: {transaction, keyId, walletId, copayerId, historyContext},
+  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
+  const navigation = useNavigation();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId]?.wallets || [], walletId, copayerId),
+  ) as Wallet | undefined;
+
+  useEffect(() => {
+    if (!wallet) {
+      logManager.error(
+        `[TransactionDetails] Wallet ${walletId} is not available`,
+      );
+      navigation.goBack();
+    }
+  }, [navigation, wallet, walletId]);
+
+  if (!wallet) {
+    return (
+      <TxsDetailsContainer>
+        <TransactionDetailSkeleton />
+      </TxsDetailsContainer>
+    );
+  }
+
+  return (
+    <TransactionDetailsContent
+      transaction={transaction}
+      wallet={wallet}
+      historyTarget={{keyId, walletId, copayerId, historyContext}}
+    />
   );
 };
 

@@ -9,7 +9,6 @@ import {
   BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
-import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Network} from '../../constants';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
@@ -21,7 +20,7 @@ import {
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {ActivityIndicator, Platform, View} from 'react-native';
+import {ActivityIndicator, Platform, StyleSheet, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {IsERCToken, IsVMChain} from '../../store/wallet/utils/currency';
@@ -29,23 +28,23 @@ import GasTokenSvg from '../../../assets/img/gas-token.svg';
 import {getCurrencyCodeFromCoinAndChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {SupportedTransactionCurrencies} from '../../store/wallet/effects/paypro/paypro';
 
-const SpinnerContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding-right: 10px;
-`;
-
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const NestedArrowContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-`;
+const styles = StyleSheet.create({
+  spinnerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  balanceColumn: {
+    alignItems: 'flex-end',
+  },
+  nestedArrowContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+});
 
 export interface WalletRowProps extends SearchableItem {
   id: string;
@@ -96,6 +95,7 @@ interface Props {
   isLast?: boolean;
   noBorder?: boolean;
   onPress: () => void;
+  onPressIn?: () => void;
   hideBalance: boolean;
   supportedTransactionCurrencies?: SupportedTransactionCurrencies;
 }
@@ -173,6 +173,7 @@ const WalletRow = ({
   wallet,
   hideIcon,
   onPress,
+  onPressIn,
   isLast,
   hideBalance,
   noBorder,
@@ -214,6 +215,7 @@ const WalletRow = ({
       testID={`wallet-row-${wallet.currencyAbbreviation}-${wallet.id}`}
       accessibilityLabel={`${walletName || currencyName} wallet`}
       onPress={onPress}
+      onPressIn={onPressIn}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
       noBorder={noBorder}
       isDisabled={
@@ -221,9 +223,9 @@ const WalletRow = ({
       }
       disabled={supportedTransactionCurrencies && (isDisabled || !isAvailable)}>
       {isToken && (
-        <NestedArrowContainer>
+        <View style={styles.nestedArrowContainer}>
           <NestedArrowIcon />
-        </NestedArrowContainer>
+        </View>
       )}
       {!hideIcon ? (
         <CurrencyImageContainer>
@@ -272,7 +274,7 @@ const WalletRow = ({
         </Row>
       </CurrencyColumn>
       {!isScanning ? (
-        <BalanceColumn>
+        <Column style={styles.balanceColumn}>
           {!hideBalance ? (
             <>
               <H5 numberOfLines={1} ellipsizeMode="tail">
@@ -289,11 +291,11 @@ const WalletRow = ({
           ) : (
             <H5>****</H5>
           )}
-        </BalanceColumn>
+        </Column>
       ) : (
-        <SpinnerContainer>
+        <View style={styles.spinnerContainer}>
           <ActivityIndicator color={ProgressBlue} />
-        </SpinnerContainer>
+        </View>
       )}
     </RowContainer>
   );

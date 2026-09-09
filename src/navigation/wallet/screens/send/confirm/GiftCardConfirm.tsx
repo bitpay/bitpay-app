@@ -1,12 +1,11 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import {
   useNavigation,
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
-import styled from 'styled-components/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {
@@ -116,9 +115,7 @@ export interface GiftCardConfirmParamList {
   txDetails?: TxDetails;
 }
 
-const BoostAppliedText = styled(BaseText)`
-  margin-left: 10px;
-`;
+const styles = StyleSheet.create({boostAppliedText: {marginLeft: 10}});
 
 enum GiftCardInvoiceCreationErrors {
   couponExpired = 'This promotion is no longer available.',
@@ -144,7 +141,7 @@ const GiftCardHeader = ({
         <DetailRow>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <H4>{formatFiatAmount(boostedAmount, cardConfig.currency)}</H4>
-            <BoostAppliedText>
+            <BaseText style={styles.boostAppliedText}>
               {hasVisibleBoost(cardConfig) ? (
                 <>
                   <GiftCardDiscountText
@@ -156,7 +153,7 @@ const GiftCardHeader = ({
                   />
                 </>
               ) : null}
-            </BoostAppliedText>
+            </BaseText>
           </View>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>

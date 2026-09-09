@@ -41,3 +41,10 @@ export enum DeviceEmitterEvents {
   APP_TOKENS_DATA_LOADED = 'APP_TOKENS_DATA_LOADED',
   SHOULD_DELETE_BRAZE_USER = 'SHOULD_DELETE_BRAZE_USER',
 }
+
+export type WalletLoadHistoryTarget = {
+  keyId: string;
+  walletId: string;
+  copayerId?: string;
+  historyContext: 'account' | 'wallet';
+};

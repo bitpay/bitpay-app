@@ -1,17 +1,24 @@
 import React, {memo} from 'react';
 import {ContentCard} from '@braze/react-native-sdk';
+import {StyleSheet, View} from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import {ScreenGutter, WIDTH} from '../../../../../components/styled/Containers';
 import OfferCard from './OfferCard';
-import styled from 'styled-components/native';
 
 const horizontalPadding = Number(ScreenGutter.replace('px', ''));
 
-const CarouselItemContainer = styled.View`
-  padding-left: ${horizontalPadding}px;
-  padding-right: 0;
-  padding-top: 15px;
-`;
+const styles = StyleSheet.create({
+  carouselItemContainer: {
+    paddingLeft: horizontalPadding,
+    paddingRight: 0,
+    paddingTop: 15,
+  },
+});
+
+const CarouselItemContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.carouselItemContainer, style]} {...rest} />;
 
 interface OfferSlidesProps {
   contentCards: ContentCard[];

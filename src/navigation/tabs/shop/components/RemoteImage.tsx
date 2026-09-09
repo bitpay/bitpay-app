@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, {css} from 'styled-components/native';
+import {Image, View} from 'react-native';
 import ErrorBoundary from 'react-native-error-boundary';
 import {SvgUri} from 'react-native-svg';
 import {Slate} from '../../../../styles/colors';
@@ -11,30 +11,56 @@ interface ImageParams {
   fallbackComponent?: () => JSX.Element;
 }
 
-const ImageContainer = styled.View<ImageParams>`
-  ${({height, width, borderRadius}) => css`
-    border-radius: ${borderRadius}px;
-    overflow: hidden;
-    height: ${height}px;
-    width: ${width}px;
-  `}
-`;
+const ImageContainer = ({
+  height,
+  width,
+  borderRadius,
+  style,
+  ...rest
+}: ImageParams & React.ComponentProps<typeof View>) => (
+  <View
+    style={[
+      {
+        borderRadius,
+        overflow: 'hidden',
+        height,
+        width,
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const RemoteImage = styled.Image<ImageParams>`
-  ${({height, width}) => css`
-    height: ${height}px;
-    width: ${width}px;
-  `}
-`;
+const RemoteImage = ({
+  height,
+  width,
+  style,
+  ...rest
+}: ImageParams & React.ComponentProps<typeof Image>) => (
+  <Image style={[{height, width}, style]} {...rest} />
+);
 
-const DefaultFallbackComponent = styled.View<ImageParams>`
-  ${({height, width, borderRadius}) => css`
-    height: ${height}px;
-    width: ${width}px;
-    border-radius: ${borderRadius}px;
-    background-color: ${Slate};
-  `}
-`;
+const DefaultFallbackComponent = ({
+  height,
+  width,
+  borderRadius,
+  style,
+  ...rest
+}: ImageParams & React.ComponentProps<typeof View>) => (
+  <View
+    style={[
+      {
+        height,
+        width,
+        borderRadius,
+        backgroundColor: Slate,
+      },
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 export default ({
   uri,

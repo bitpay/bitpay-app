@@ -1,6 +1,7 @@
 import React from 'react';
+import {StyleSheet, View} from 'react-native';
 import * as Svg from 'react-native-svg';
-import styled from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {Action, LinkBlue, Midnight, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import ProfileIcon from './ProfileIcon';
@@ -18,44 +19,50 @@ interface InitialsProps {
   bright?: boolean;
 }
 
-const AvatarContainer = styled.View`
-  position: relative;
-`;
-
-const BadgeContainer = styled.View<{size: number}>`
-  position: absolute;
-  height: ${({size}) => size}px;
-  width: ${({size}) => size}px;
-  right: 0;
-  bottom: 0;
-`;
-
-const InitialsCircle = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? Action : Midnight)};
-  height: ${77}px;
-  width: ${77}px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-`;
-
-const InitialsText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : LinkBlue)};
-  font-size: 32px;
-  font-weight: 500;
-`;
+const styles = StyleSheet.create({
+  avatarContainer: {
+    position: 'relative',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+  },
+  initialsCircle: {
+    height: 77,
+    width: 77,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialsText: {
+    fontSize: 32,
+    fontWeight: '500',
+  },
+});
 
 const Initials: React.FC<InitialsProps> = ({
   size = 24,
   initials,
   bright = false,
 }) => {
+  const theme = useTheme();
   return (
     <>
       {bright ? (
-        <InitialsCircle>
-          <InitialsText>{(initials || '').substring(0, 2)}</InitialsText>
-        </InitialsCircle>
+        <View
+          style={[
+            styles.initialsCircle,
+            {backgroundColor: theme.dark ? Action : Midnight},
+          ]}>
+          <BaseText
+            style={[
+              styles.initialsText,
+              {color: theme.dark ? White : LinkBlue},
+            ]}>
+            {(initials || '').substring(0, 2)}
+          </BaseText>
+        </View>
       ) : (
         <Svg.Svg height={size} width={size} viewBox="0 0 24 24">
           <Svg.Circle
@@ -85,7 +92,7 @@ export const Avatar: React.FC<AvatarProps> = props => {
   const {initials = '', size = 35, badge, bright} = props;
 
   return (
-    <AvatarContainer>
+    <View style={styles.avatarContainer}>
       {initials.length ? (
         <Initials size={size} initials={initials} bright={bright} />
       ) : (
@@ -93,9 +100,15 @@ export const Avatar: React.FC<AvatarProps> = props => {
       )}
 
       {badge ? (
-        <BadgeContainer size={size * 0.35}>{badge()}</BadgeContainer>
+        <View
+          style={[
+            styles.badgeContainer,
+            {height: size * 0.35, width: size * 0.35},
+          ]}>
+          {badge()}
+        </View>
       ) : null}
-    </AvatarContainer>
+    </View>
   );
 };
 

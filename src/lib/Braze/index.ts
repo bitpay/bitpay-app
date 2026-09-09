@@ -155,9 +155,14 @@ export type BrazeUserAttributes = {
   [K in (typeof nonCustomAttributes)[number]]?: string;
 } & Record<string, any>;
 
-export type BrazeStatus = 'idle' | 'initializing' | 'ready' | 'failed';
+export type BrazeStatus =
+  | 'idle'
+  | 'initializing'
+  | 'ready'
+  | 'disabled'
+  | 'failed';
 
-class BrazeClientWrapper {
+export class BrazeClientWrapper {
   private status: BrazeStatus = 'idle';
   private initPromise: Promise<void> | null = null;
   private initError: unknown = null;
@@ -167,7 +172,16 @@ class BrazeClientWrapper {
   } = {};
 
   async init(): Promise<void> {
-    if (this.status === 'ready') {
+    if (this.status === 'ready' || this.status === 'disabled') {
+      return;
+    }
+
+    if (!this.hasSdkConfiguration()) {
+      this.status = 'disabled';
+      this.initError = null;
+      logManager.warn(
+        '[Braze] disabled because the API key or endpoint is not configured',
+      );
       return;
     }
 
@@ -284,6 +298,10 @@ class BrazeClientWrapper {
   }
 
   private async ensureReady(): Promise<boolean> {
+    if (this.status === 'disabled') {
+      return false;
+    }
+
     if (this.status === 'ready') {
       return true;
     }
@@ -299,6 +317,12 @@ class BrazeClientWrapper {
 
     logManager.warn('[Braze] called before SDK was ready');
     return false;
+  }
+
+  private hasSdkConfiguration(): boolean {
+    const apiKey =
+      Platform.OS === 'ios' ? BRAZE_API_KEY_IOS : BRAZE_API_KEY_ANDROID;
+    return Boolean(apiKey && BRAZE_API_ENDPOINT);
   }
 
   private async initializeSdk(): Promise<void> {

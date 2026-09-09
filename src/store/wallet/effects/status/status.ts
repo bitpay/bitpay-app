@@ -18,6 +18,7 @@ import {
   successUpdateAllKeysAndStatus,
   successUpdateKey,
   successUpdateKeysTotalBalance,
+  successUpdateWalletBalancesAndStatus,
   successUpdateWalletStatus,
   updatePortfolioBalance,
 } from '../../wallet.actions';
@@ -195,6 +196,7 @@ export const updateKeyStatus =
     Promise<
       | {
           keyId: string;
+          cacheKey: string;
           totalBalance: number;
           totalBalanceLastDay: number;
           walletUpdates: Array<{
@@ -213,11 +215,18 @@ export const updateKeyStatus =
       const {defaultAltCurrency} = APP;
       const {balanceCacheKey} = WALLET;
       const {rates, lastDayRates} = RATE;
+      const scopedBalanceCacheKey = accountAddress
+        ? `${key.id}:${accountAddress}`
+        : key.id;
+      const hasFreshScopedBalance =
+        !isCacheKeyStale(
+          balanceCacheKey[scopedBalanceCacheKey],
+          BALANCE_CACHE_DURATION,
+        ) ||
+        (!!accountAddress &&
+          !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION));
 
-      if (
-        !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION) &&
-        !force
-      ) {
+      if (hasFreshScopedBalance && !force) {
         logManager.debug(`Key: ${key.id} - skipping balance update`);
         return resolve(undefined);
       }
@@ -429,6 +438,7 @@ export const updateKeyStatus =
 
         return resolve({
           keyId: key.id,
+          cacheKey: scopedBalanceCacheKey,
           totalBalance: getTotalFiatBalance(balances),
           totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
           walletUpdates,
@@ -460,22 +470,60 @@ export const startUpdateAllWalletStatusForKeys =
     accountAddress?: string;
     force?: boolean;
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
         logManager.info('starting [startUpdateAllWalletStatusForKeys]');
         const keyUpdatesPromises = keys.map(key =>
-          dispatch(updateKeyStatus({key, accountAddress, force})),
+          dispatch(
+            updateKeyStatus({
+              key,
+              accountAddress,
+              force,
+              dataOnly: true,
+            }),
+          ),
         );
         const keyUpdates = (await Promise.all(keyUpdatesPromises)).filter(
           Boolean,
-        ) as {
+        ) as Array<{
           keyId: string;
+          cacheKey: string;
           totalBalance: number;
           totalBalanceLastDay: number;
-        }[];
+          walletUpdates: Array<{
+            walletId: string;
+            balance: WalletBalance;
+            pendingTxps: TransactionProposal[];
+            singleAddress: boolean;
+          }>;
+        }>;
         if (keyUpdates.length > 0) {
-          dispatch(successUpdateKeysTotalBalance(keyUpdates));
+          dispatch(
+            successUpdateWalletBalancesAndStatus({
+              keyBalances: keyUpdates.map(
+                ({keyId, cacheKey, totalBalance, totalBalanceLastDay}) => ({
+                  keyId,
+                  cacheKey,
+                  totalBalance,
+                  totalBalanceLastDay,
+                }),
+              ),
+              walletBalances: keyUpdates.flatMap(({keyId, walletUpdates}) =>
+                walletUpdates.map(
+                  ({walletId, balance, pendingTxps, singleAddress}) => ({
+                    keyId,
+                    walletId,
+                    status: {
+                      balance,
+                      pendingTxps,
+                      singleAddress,
+                    },
+                  }),
+                ),
+              ),
+            }),
+          );
         }
         logManager.info('success [startUpdateAllWalletStatusForKeys]');
         resolve();
@@ -570,7 +618,6 @@ export type UpdateAllKeyAndWalletStatusContext =
   | 'importWallet'
   | 'init'
   | 'appEffectsDebounced'
-  | 'newBlockEvent'
   | 'startMigration';
 
 export const startUpdateAllKeyAndWalletStatus =

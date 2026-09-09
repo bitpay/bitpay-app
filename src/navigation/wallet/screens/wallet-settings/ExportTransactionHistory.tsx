@@ -1,20 +1,26 @@
 import {RouteProp, useRoute} from '@react-navigation/native';
 import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import Button from '../../../../components/button/Button';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import {
   BWS_TX_HISTORY_LIMIT,
   GetTransactionHistory,
 } from '../../../../store/wallet/effects/transactions/transactions';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {WalletGroupParamList} from '../../WalletGroup';
 import _ from 'lodash';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import RNFS from 'react-native-fs';
-import {PermissionsAndroid, Platform} from 'react-native';
+import {
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {ShareOptions} from 'react-native-share';
 import {shareFile as shareFileUtil} from '../../../../utils/share';
 import Papa from 'papaparse';
@@ -27,40 +33,43 @@ import {
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {LogActions} from '../../../../store/log';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import Mailer from 'react-native-mail';
 import {IS_DESKTOP} from '../../../../constants';
 import {logManager} from '../../../../managers/LogManager';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 
-const ExportTransactionHistoryContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
-const ExportTransactionHistoryDescription = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const ButtonContainer = styled.View`
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  description: {
+    marginBottom: 15,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+});
 
 type Option = 'download' | 'email';
 type BtnState = 'loading' | 'success' | 'failed' | undefined;
 
 const ExportTransactionHistory = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const {
-    params: {wallet},
+    params: {keyId, walletId, copayerId},
   } = useRoute<RouteProp<WalletGroupParamList, 'ExportTransactionHistory'>>();
+  const wallet = useAppSelector(({WALLET}) =>
+    findWalletById(WALLET.keys[keyId].wallets, walletId, copayerId),
+  ) as Wallet;
 
   const [buttonStateCsv, setButtonStateCsv] = useState<BtnState>();
   const [buttonStateEmail, setButtonStateEmail] = useState<BtnState>();
@@ -282,30 +291,31 @@ const ExportTransactionHistory = () => {
   );
 
   return (
-    <ExportTransactionHistoryContainer>
-      <ScrollView>
-        <ExportTransactionHistoryDescription>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <Paragraph
+          style={[styles.description, {color: theme.dark ? White : SlateDark}]}>
           {t('Export your transaction history as a .csv file')}
-        </ExportTransactionHistoryDescription>
+        </Paragraph>
 
-        <ButtonContainer>
+        <View style={styles.buttonContainer}>
           <Button state={buttonStateCsv} onPress={() => onSubmit('download')}>
             {t('Share File')}
           </Button>
-        </ButtonContainer>
+        </View>
 
         {!IS_DESKTOP && (
-          <ButtonContainer>
+          <View style={styles.buttonContainer}>
             <Button
               state={buttonStateEmail}
               onPress={() => onSubmit('email')}
               buttonStyle={'secondary'}>
               {t('Send by Email')}
             </Button>
-          </ButtonContainer>
+          </View>
         )}
       </ScrollView>
-    </ExportTransactionHistoryContainer>
+    </SafeAreaView>
   );
 };
 

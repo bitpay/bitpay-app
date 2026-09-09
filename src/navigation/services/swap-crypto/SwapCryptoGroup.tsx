@@ -1,13 +1,14 @@
 import React from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {Theme} from '@react-navigation/native';
+import {Theme, useTheme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot, {
   SwapCryptoRootScreenParams,
 } from './screens/SwapCryptoRoot';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {useAppSelector} from '../../../utils/hooks';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root, navigationRef} from '../../../Root';
 import {useStackScreenOptions} from '../../utils/headerHelpers';
 import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
@@ -37,9 +38,10 @@ export enum SwapCryptoScreens {
   SWAP_CRYPTO_APPROVE = 'SwapCryptoApproveErc20',
 }
 
-const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
-  const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
+type SwapHistoryPath = SwapCryptoExchangeKey | 'general';
+
+const SwapHistoryHeaderRight = () => {
+  const theme = useTheme();
   const changellyHistory: changellyTxData = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
@@ -50,7 +52,6 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
   type SwapTxs = {
     [key in SwapCryptoExchangeKey]: changellyTxData[] | thorswapTxData[];
   };
-  type SwapHistoryPath = SwapCryptoExchangeKey | 'general';
   type SwapHistoryData = {
     path: SwapHistoryPath;
     exchangesWithHistory: number;
@@ -61,11 +62,11 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
     thorswap: Object.values(thorswapHistory),
   };
 
-  const getHistoryData = (swapTxs: SwapTxs): SwapHistoryData => {
+  const getHistoryData = (transactions: SwapTxs): SwapHistoryData => {
     let exchangeWithTxs: SwapHistoryPath = 'general';
     let count = 0;
 
-    for (const [key, value] of Object.entries(swapTxs)) {
+    for (const [key, value] of Object.entries(transactions)) {
       if (Array.isArray(value) && value.length > 0) {
         exchangeWithTxs = key as SwapHistoryPath;
         count++;
@@ -84,6 +85,49 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
 
   const swapHistoryData = getHistoryData(swapTxs);
 
+  if (swapHistoryData.exchangesWithHistory === 0) {
+    return null;
+  }
+
+  return (
+    <HeaderRightContainer>
+      <TouchableOpacity
+        style={{
+          borderRadius: 100,
+          backgroundColor: theme.dark ? LightBlack : Slate10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+        }}
+        onPress={() => {
+          switch (swapHistoryData.path) {
+            case 'changelly':
+              navigationRef.navigate(
+                ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
+              );
+              break;
+            case 'thorswap':
+              navigationRef.navigate(
+                ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
+              );
+              break;
+            default:
+              navigationRef.navigate(
+                ExternalServicesSettingsScreens.SWAP_HISTORY_SELECTOR,
+              );
+              break;
+          }
+        }}>
+        <SwapHistoryIcon width={42} height={42} />
+      </TouchableOpacity>
+    </HeaderRightContainer>
+  );
+};
+
+const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
+  const commonOptions = useStackScreenOptions(theme);
+
   return (
     <SwapCrypto.Group screenOptions={commonOptions}>
       <SwapCrypto.Screen
@@ -91,42 +135,7 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
         component={SwapCryptoRoot}
         options={{
           headerTitle: () => <HeaderTitle>{t('Swap')}</HeaderTitle>,
-          headerRight: () => (
-            <HeaderRightContainer>
-              {swapHistoryData.exchangesWithHistory > 0 ? (
-                <TouchableOpacity
-                  style={{
-                    borderRadius: 100,
-                    backgroundColor: theme.dark ? LightBlack : Slate10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 0,
-                  }}
-                  onPress={() => {
-                    switch (swapHistoryData.path) {
-                      case 'changelly':
-                        navigationRef.navigate(
-                          ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
-                        );
-                        break;
-                      case 'thorswap':
-                        navigationRef.navigate(
-                          ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
-                        );
-                        break;
-                      default:
-                        navigationRef.navigate(
-                          ExternalServicesSettingsScreens.SWAP_HISTORY_SELECTOR,
-                        );
-                        break;
-                    }
-                  }}>
-                  <SwapHistoryIcon width={42} height={42} />
-                </TouchableOpacity>
-              ) : null}
-            </HeaderRightContainer>
-          ),
+          headerRight: () => <SwapHistoryHeaderRight />,
         }}
       />
       <SwapCrypto.Screen

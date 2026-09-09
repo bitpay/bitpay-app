@@ -2,7 +2,8 @@ import React, {useEffect, useRef, useState} from 'react';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput, {INPUT_HEIGHT} from '../../../components/form/BoxInput';
-import styled, {css, useTheme} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
@@ -25,6 +26,7 @@ import {
 } from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
 import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {
   startGetRates,
@@ -59,7 +61,10 @@ import {useOngoingProcess} from '../../../contexts';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import {logManager} from '../../../managers/LogManager';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import UploadSvg from '../../../../assets/img/upload.svg';
 import UploadDarkSvg from '../../../../assets/img/upload-dark.svg';
 import CancelSvg from '../../../../assets/img/cancel.svg';
@@ -69,31 +74,101 @@ import Clipboard from '@react-native-clipboard/clipboard';
 const BWCProvider = BwcProvider.getInstance();
 const Encryption = BWCProvider.getEncryption();
 
-const ScrollViewContainer = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-`;
-
-const ContentView = styled(ScrollView)`
-  padding: 0 ${ScreenGutter};
-`;
-
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 0;
-`;
-
-const FormRow = styled.View`
-  margin-bottom: 24px;
-`;
-
-const DescriptionText = styled(BaseText)`
-  font-size: 14px;
-  line-height: 20px;
-  color: ${({theme}) => (theme.dark ? '#999' : SlateDark)};
-  margin-bottom: 24px;
-`;
+const styles = StyleSheet.create({
+  scrollViewContainer: {
+    marginTop: 20,
+  },
+  contentView: {
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    paddingTop: 5,
+  },
+  formRow: {
+    marginBottom: 24,
+  },
+  descriptionText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  fileInputLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    opacity: 0.75,
+    marginBottom: 6,
+  },
+  fileInputContainer: {
+    borderWidth: 0.75,
+    padding: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+    height: INPUT_HEIGHT,
+    borderRadius: 4,
+  },
+  fileInputText: {
+    flex: 1,
+    padding: 10,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  fileChipContainer: {
+    flex: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fileChip: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  fileChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  fileInputPlaceholder: {
+    flex: 1,
+    padding: 10,
+    fontSize: 14,
+    fontWeight: '500',
+    color: Slate,
+  },
+  pasteContainer: {
+    display: 'flex',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 100,
+  },
+  pasteContainerText: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  iconButton: {
+    width: INPUT_HEIGHT,
+    height: INPUT_HEIGHT,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearButton: {
+    width: INPUT_HEIGHT,
+    height: INPUT_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 interface FileContainerProps {
   isFocused: boolean;
@@ -101,117 +176,65 @@ interface FileContainerProps {
   disabled?: boolean;
 }
 
-const FileInputLabel = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : '#1b1b1b')};
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.75;
-  margin-bottom: 6px;
-`;
+const FileInputContainer: React.FC<
+  FileContainerProps & {children?: React.ReactNode}
+> = ({isFocused, isError, disabled, children}) => {
+  const theme = useTheme();
 
-const FileInputContainer = styled.View<FileContainerProps>`
-  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
-  padding: 1px;
-  flex-direction: row;
-  align-items: center;
-  position: relative;
-  height: ${INPUT_HEIGHT}px;
-  background-color: ${({theme}) => (theme.dark ? Black : White)};
-  border-radius: 4px;
+  let borderColor = theme.dark ? LuckySevens : Slate;
+  let backgroundColor = theme.dark ? Black : White;
+  let borderBottomColor = borderColor;
 
-  ${({isFocused, theme}) =>
-    isFocused &&
-    css`
-      background: ${theme.dark ? 'transparent' : '#fafbff'};
-      border-color: ${theme.dark ? LuckySevens : Slate};
-      border-bottom-color: ${ProgressBlue};
-    `}
+  if (isFocused) {
+    backgroundColor = theme.dark ? 'transparent' : '#fafbff';
+    borderColor = theme.dark ? LuckySevens : Slate;
+    borderBottomColor = ProgressBlue;
+  }
 
-  ${({isError, theme}) =>
-    isError &&
-    css`
-      background: ${theme.dark ? '#090304' : '#EF476F0A'};
-      border-color: #fbc7d1;
-      border-bottom-color: ${Caution};
-    `}
+  if (isError) {
+    backgroundColor = theme.dark ? '#090304' : '#EF476F0A';
+    borderColor = '#fbc7d1';
+    borderBottomColor = Caution;
+  }
 
-  ${({disabled, theme}) =>
-    disabled &&
-    css`
-      border-color: ${theme.dark ? LightBlack : NeutralSlate};
-      background: ${theme.dark ? LightBlack : NeutralSlate};
-    `}
-`;
+  if (disabled) {
+    borderColor = theme.dark ? LightBlack : NeutralSlate;
+    backgroundColor = theme.dark ? LightBlack : NeutralSlate;
+    borderBottomColor = borderColor;
+  }
 
-const FileInputText = styled(BaseText)`
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: ${({theme}) => theme.colors.text};
-`;
+  return (
+    <View
+      style={[
+        styles.fileInputContainer,
+        {borderColor, backgroundColor, borderBottomColor},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const FileChipContainer = styled.View`
-  flex: 1;
-  padding: 6px 10px;
-  flex-direction: row;
-  align-items: center;
-`;
+const PasteContainer: React.FC<TouchableOpacityProps> = ({style, ...props}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.pasteContainer,
+        {backgroundColor: theme.dark ? Midnight : LightBlue},
+        style,
+      ]}
+      {...props}
+    />
+  );
+};
 
-const FileChip = styled.View`
-  padding: 4px 10px;
-  border-radius: 20px;
-  border-width: 1px;
-  border-color: ${({theme}) => (theme.dark ? LinkBlue : Action)};
-  background-color: ${({theme}) => (theme.dark ? Midnight : LightBlue)};
-`;
+const IconButton: React.FC<TouchableOpacityProps> = ({style, ...props}) => (
+  <TouchableOpacity style={[styles.iconButton, style]} {...props} />
+);
 
-const FileChipText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 500;
-  color: ${({theme}) => (theme.dark ? LinkBlue : Action)};
-`;
-
-const FileInputPlaceholder = styled(BaseText)`
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: ${Slate};
-`;
-
-const PasteContainer = styled(TouchableOpacity)`
-  display: flex;
-  padding: 4px 8px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 100px;
-  background-color: ${({theme}) => (theme.dark ? Midnight : LightBlue)};
-`;
-
-const PasteContainerText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? LinkBlue : Action)};
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-`;
-
-const IconButton = styled(TouchableOpacity)`
-  width: ${INPUT_HEIGHT}px;
-  height: ${INPUT_HEIGHT}px;
-  border-radius: 0px;
-  background-color: transparent;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ClearButton = styled(TouchableOpacity)`
-  width: ${INPUT_HEIGHT}px;
-  height: ${INPUT_HEIGHT}px;
-  align-items: center;
-  justify-content: center;
-`;
+const ClearButton: React.FC<TouchableOpacityProps> = ({style, ...props}) => (
+  <TouchableOpacity style={[styles.clearButton, style]} {...props} />
+);
 
 interface FileOrTextFieldValues {
   text: string;
@@ -224,6 +247,7 @@ const schema = yup.object().shape({
 });
 
 const FileOrText = () => {
+  const onPerformanceLayout = useScreenRenderPerformance('Import.FileOrText');
   const {t} = useTranslation();
   const logger = useLogger();
   const theme = useTheme();
@@ -428,7 +452,6 @@ const FileOrText = () => {
         name: WalletScreens.WALLET_DETAILS,
         params: {
           walletId: firstWallet?.id,
-          key,
         },
       };
       const routes = IsVMChain(firstWallet?.chain)
@@ -534,38 +557,72 @@ const FileOrText = () => {
   const fileError = errors.text?.message;
 
   return (
-    <ScrollViewContainer
+    <KeyboardAwareScrollView
       testID="file-or-text-view"
       accessibilityLabel="File or text view"
+      onLayout={onPerformanceLayout}
+      style={styles.scrollViewContainer}
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
-      <ContentView keyboardShouldPersistTaps={'handled'}>
-        <DescriptionText>
+      <ScrollView
+        style={styles.contentView}
+        keyboardShouldPersistTaps={'handled'}>
+        <BaseText
+          style={[
+            styles.descriptionText,
+            {color: theme.dark ? '#999' : SlateDark},
+          ]}>
           {t(
             'Upload or paste in the file that was generated when you backed up your key. Exported wallet files and keyshare files are supported.',
           )}
-        </DescriptionText>
+        </BaseText>
 
-        <FormRow>
-          <FileInputLabel>{t('FILE')}</FileInputLabel>
+        <View style={styles.formRow}>
+          <BaseText
+            style={[
+              styles.fileInputLabel,
+              {color: theme.dark ? White : '#1b1b1b'},
+            ]}>
+            {t('FILE')}
+          </BaseText>
 
           <FileInputContainer isFocused={fileFocused} isError={!!fileError}>
             {uploadedFileName ? (
               isFromClipboard ? (
-                <FileChipContainer>
-                  <FileChip>
-                    <FileChipText numberOfLines={1} ellipsizeMode="tail">
+                <View style={styles.fileChipContainer}>
+                  <View
+                    style={[
+                      styles.fileChip,
+                      {
+                        borderColor: theme.dark ? LinkBlue : Action,
+                        backgroundColor: theme.dark ? Midnight : LightBlue,
+                      },
+                    ]}>
+                    <BaseText
+                      style={[
+                        styles.fileChipText,
+                        {color: theme.dark ? LinkBlue : Action},
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
                       {uploadedFileName}
-                    </FileChipText>
-                  </FileChip>
-                </FileChipContainer>
+                    </BaseText>
+                  </View>
+                </View>
               ) : (
-                <FileInputText numberOfLines={1} ellipsizeMode="tail">
+                <BaseText
+                  style={[styles.fileInputText, {color: theme.colors.text}]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {uploadedFileName}
-                </FileInputText>
+                </BaseText>
               )
             ) : (
-              <FileInputPlaceholder numberOfLines={1} ellipsizeMode="tail" />
+              <BaseText
+                style={styles.fileInputPlaceholder}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              />
             )}
 
             {uploadedFileName ? (
@@ -581,7 +638,13 @@ const FileOrText = () => {
                   onPress={handlePasteClipboard}
                   onPressIn={() => setFileFocused(true)}
                   onPressOut={() => setFileFocused(false)}>
-                  <PasteContainerText>{t('Paste')}</PasteContainerText>
+                  <BaseText
+                    style={[
+                      styles.pasteContainerText,
+                      {color: theme.dark ? LinkBlue : Action},
+                    ]}>
+                    {t('Paste')}
+                  </BaseText>
                 </PasteContainer>
 
                 <IconButton
@@ -595,15 +658,15 @@ const FileOrText = () => {
           </FileInputContainer>
 
           {fileError ? (
-            <ErrorText>
+            <BaseText style={styles.errorText}>
               {typeof fileError === 'string'
                 ? fileError.charAt(0).toUpperCase() + fileError.slice(1)
                 : String(fileError)}
-            </ErrorText>
+            </BaseText>
           ) : null}
-        </FormRow>
+        </View>
 
-        <FormRow>
+        <View style={styles.formRow}>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
@@ -622,7 +685,7 @@ const FileOrText = () => {
             name="password"
             defaultValue=""
           />
-        </FormRow>
+        </View>
 
         <Button
           testID="import-wallet-button"
@@ -632,8 +695,8 @@ const FileOrText = () => {
           onPress={onSubmit}>
           {t('Import Wallet')}
         </Button>
-      </ContentView>
-    </ScrollViewContainer>
+      </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 

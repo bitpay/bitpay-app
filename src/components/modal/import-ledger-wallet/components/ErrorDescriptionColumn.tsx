@@ -1,36 +1,36 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, View} from 'react-native';
 import {Black, Warning25} from '../../../../styles/colors';
 import {Paragraph as _Paragraph} from '../../../styled/Text';
 import WarningBrownSvg from '../../../../../assets/img/warning-brown.svg';
 
-const Paragraph = styled(_Paragraph)`
-  flex: 1;
-  color: ${Black};
-`;
+const styles = StyleSheet.create({
+  paragraph: {flex: 1, color: Black},
+  descriptionColumn: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Warning25,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 32,
+  },
+  warningImageContainer: {paddingRight: 8},
+});
 
-const DescriptionColumn = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-  justify-content: center;
-  background-color: ${Warning25};
-  border-radius: 12px;
-  padding: 12px;
-  margin-top: 32px;
-`;
-
-const WarningImageContainer = styled.View`
-  padding-right: 8px;
-`;
+const Paragraph: React.FC<React.ComponentProps<typeof _Paragraph>> = ({
+  style,
+  ...rest
+}) => <_Paragraph style={[styles.paragraph, style]} {...rest} />;
 
 export const ErrorDescriptionColumn = ({error}: {error: string}) => {
   return (
-    <DescriptionColumn>
-      <WarningImageContainer>
+    <View style={styles.descriptionColumn}>
+      <View style={styles.warningImageContainer}>
         <WarningBrownSvg />
-      </WarningImageContainer>
+      </View>
       <Paragraph>{error}</Paragraph>
-    </DescriptionColumn>
+    </View>
   );
 };

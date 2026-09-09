@@ -391,10 +391,12 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
-        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
+      if (state.bottomNotificationModalConfig === undefined) {
+        return state;
+      }
       return {
         ...state,
         bottomNotificationModalConfig: undefined,
@@ -820,6 +822,9 @@ export const appReducer = (
       };
 
     case AppActionTypes.SHOW_ARCHAX_BANNER:
+      if (state.showArchaxBanner === action.payload) {
+        return state;
+      }
       return {
         ...state,
         showArchaxBanner: action.payload,

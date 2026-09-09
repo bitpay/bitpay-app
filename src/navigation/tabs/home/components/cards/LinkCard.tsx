@@ -1,5 +1,6 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {BaseText} from '../../../../../components/styled/Text';
 import {
   ActiveOpacity,
@@ -16,30 +17,54 @@ interface LinkCardProps {
   disabled?: boolean;
 }
 
-const LinkCardContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 12px;
-  padding: 15px;
-  max-width: 215px;
-  height: 72px;
-  margin-right: 20px;
-  position: relative;
-  left: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  linkCardContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 15,
+    maxWidth: 215,
+    height: 72,
+    marginRight: 20,
+    position: 'relative',
+    left: parseInt(ScreenGutter, 10),
+  },
+  linkCardText: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'left',
+    flexShrink: 1,
+  },
+  linkCardImageContainer: {
+    marginRight: 10,
+  },
+});
 
-const LinkCardText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 500;
-  text-align: left;
-  flex-shrink: 1;
-`;
+const LinkCardContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.linkCardContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const LinkCardImageContainer = styled.View`
-  margin-right: 10px;
-`;
+const LinkCardText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.linkCardText, style]} {...rest} />;
+
+const LinkCardImageContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.linkCardImageContainer}>{children}</View>;
 
 const LinkCard: React.FC<LinkCardProps> = ({image, description, onPress}) => {
   const theme = useTheme();

@@ -1,4 +1,10 @@
-import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
+import {
+  CommonActions,
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+  useTheme,
+} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import _ from 'lodash';
 import React, {
@@ -10,17 +16,21 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import {useStore} from 'react-redux';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+} from '../../../utils/hooks';
 import {
   Key,
   Wallet,
   TransactionProposal,
   KeyMethods,
 } from '../../../store/wallet/wallet.models';
-import styled from 'styled-components/native';
 import {
   KeyToggle as AccountToogle,
   KeyDropdown as AccountDropdown,
@@ -29,18 +39,29 @@ import {
 import {
   DeviceEventEmitter,
   RefreshControl,
+  SafeAreaView,
   SectionList,
+  StyleProp,
+  StyleSheet,
   View,
+  ViewStyle,
   useWindowDimensions,
 } from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import BalanceChartLoadingPlaceholder from '../../../components/charts/BalanceChartLoadingPlaceholder';
 import BalanceHeaderSupplement from '../../../components/charts/BalanceHeaderSupplement';
 import FullWidthBalanceChartContainer from '../../../components/charts/FullWidthBalanceChartContainer';
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
+import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../components/charts/fiatTimeframes';
+import {useHasCachedBalanceHistoryChartSeries} from '../../../components/charts/balanceHistoryChartSeriesCache';
 import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
+import usePortfolioBalanceChartEligibleWallets from '../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
 import {
   Badge,
   Balance,
@@ -52,6 +73,7 @@ import {
   ProposalBadge,
 } from '../../../components/styled/Text';
 import {
+  setLocalAssetsDropdown,
   showBottomNotificationModal,
   toggleHideAllBalances,
   setDefaultChainFilterOption,
@@ -71,6 +93,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {
   createMultipleWallets,
+  getActiveWalletStoreInitPromise,
   getDecryptPassword,
   startGetRates,
   serverAssistedImport,
@@ -92,8 +115,12 @@ import {
   SpeedupTransaction,
   UnconfirmedInputs,
 } from '../components/ErrorMessages';
-import {WalletRowProps} from '../../../components/list/WalletRow';
-import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
+import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
+import {AssetsByChainHeader} from '../../../components/list/AssetsByChainRow';
+import {
+  buildVirtualizedAssetsByChainSections,
+  VirtualizedAssetsByChainSection,
+} from '../../../components/list/assetsByChainSections';
 import {
   ActiveOpacity,
   BadgeContainerTouchable,
@@ -129,7 +156,6 @@ import {
   TRANSACTION_ICON_SIZE,
   TransactionIcons,
 } from '../../../constants/TransactionIcons';
-import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
 import {
@@ -141,6 +167,11 @@ import {
   IsReceived,
   TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
+import {
+  INITIAL_CACHED_TX_HYDRATION_LIMIT,
+  getCachedAccountTransactionHistory,
+  getCachedAccountTransactions,
+} from '../../../store/wallet/utils/cachedTxHistory';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,
@@ -154,12 +185,23 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {
   buildAccountList,
   buildAssetsByChainList,
+  getWalletAccountVisibilityKey,
   findWalletById,
   buildWalletObj,
+  isWalletVisibleForKey,
   mapAbbreviationAndName,
   checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
-import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {
+  buildAccountListSignature,
+  getRatesRevision,
+  readAccountListSnapshot,
+  resolveAccountListSnapshot,
+} from '../../../store/wallet/utils/accountListCache';
+import {
+  DeviceEmitterEvents,
+  WalletLoadHistoryTarget,
+} from '../../../constants/device-emitter-events';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 import KeySvg from '../../../../assets/img/key.svg';
@@ -185,12 +227,17 @@ import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import ThresholdBadge from '../../../components/threshold-badge/ThresholdBadge';
+import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
+import {performanceLog} from '../../../utils/performanceDebug';
+import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
+import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
   keyId: string;
   skipInitializeHistory?: boolean;
   isSvmAccount?: boolean;
+  _preloadContent?: boolean;
 };
 
 type AccountDetailsScreenProps = NativeStackScreenProps<
@@ -231,9 +278,7 @@ export interface GroupedHistoryProps extends SearchableItem {
   time: number;
 }
 
-interface AccountProposalsProps {
-  [key: string]: TransactionProposal[];
-}
+const EMPTY_ASSETS_BY_CHAIN_LIST: AssetsByChainListProps[] = [];
 
 const transactionItemLayout = (_data: any, index: number) => ({
   length: TRANSACTION_ROW_HEIGHT,
@@ -241,119 +286,213 @@ const transactionItemLayout = (_data: any, index: number) => ({
   index,
 });
 
-const BorderBottom = styled.View`
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
+const styles = StyleSheet.create({
+  borderBottom: {
+    borderBottomWidth: 1,
+  },
+  accountDetailsContainer: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  walletListHeader: {
+    padding: 10,
+  },
+  copyToClipboardContainer: {
+    justifyContent: 'center',
+    height: 20,
+  },
+  headerContainer: {
+    marginTop: 18,
+    marginBottom: 24,
+  },
+  transactionSectionHeaderContainer: {
+    padding: parseInt(ScreenGutter, 10),
+    height: 55,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  skeletonContainer: {
+    marginBottom: 20,
+  },
+  lockedBalanceContainer: {
+    flexDirection: 'row',
+    padding: parseInt(ScreenGutter, 10),
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 75,
+  },
+  description: {
+    overflow: 'hidden',
+    marginRight: 175,
+    fontSize: 16,
+  },
+  tailContainer: {
+    marginLeft: 'auto',
+  },
+  value: {
+    textAlign: 'right',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  balanceContainer: {
+    paddingTop: 0,
+    paddingHorizontal: 15,
+    paddingBottom: 22,
+    flexDirection: 'column',
+  },
+  hiddenChart: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
+  },
+  assetsDataContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerListContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addCustomTokenContainer: {
+    margin: 40,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centeredText: {
+    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '400',
+    marginLeft: 4,
+  },
+  accountMetadataRow: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+});
 
-const AccountDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const BorderBottom = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.borderBottom,
+        {borderBottomColor: theme.dark ? LightBlack : Air},
+      ]}
+    />
+  );
+};
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-`;
+const Row: React.FC<{
+  style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode;
+}> = ({style, children}) => <View style={[styles.row, style]}>{children}</View>;
 
-const WalletListHeader = styled(TouchableOpacity)`
-  padding: 10px;
-`;
+const WalletListHeader: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => <TouchableOpacity style={[styles.walletListHeader, style]} {...props} />;
 
-const WalletListHeaderLabel = styled.View<{
+const WalletListHeaderLabel: React.FC<{
   isActive: boolean;
-}>`
-  opacity: ${({isActive}) => (isActive ? 1 : 0.4)};
-`;
+  children?: React.ReactNode;
+}> = ({isActive, children}) => (
+  <View style={{opacity: isActive ? 1 : 0.4}}>{children}</View>
+);
 
-const CopyToClipboardContainer = styled.View`
-  justify-content: center;
-  height: 20px;
-`;
+const CopyToClipboardContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.copyToClipboardContainer}>{children}</View>;
 
-const HeaderContainer = styled.View`
-  margin: 18px 0 24px;
-`;
+const HeaderContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.headerContainer}>{children}</View>;
 
-const TransactionSectionHeaderContainer = styled.View`
-  padding: ${ScreenGutter};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const TransactionSectionHeaderContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.transactionSectionHeaderContainer,
+        {backgroundColor: theme.dark ? LightBlack : '#F5F6F7'},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const SkeletonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.skeletonContainer}>{children}</View>;
 
-const LockedBalanceContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding: ${ScreenGutter};
-  justify-content: center;
-  align-items: center;
-  height: 75px;
-`;
+const LockedBalanceContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => (
+  <TouchableOpacity style={[styles.lockedBalanceContainer, style]} {...props} />
+);
 
-const Description = styled(BaseText)`
-  overflow: hidden;
-  margin-right: 175px;
-  font-size: 16px;
-`;
+const Description: React.FC<React.ComponentProps<typeof BaseText>> = props => (
+  <BaseText {...props} style={[styles.description, props.style]} />
+);
 
-const TailContainer = styled.View`
-  margin-left: auto;
-`;
+const TailContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.tailContainer}>{children}</View>
+);
 
-const Value = styled(BaseText)`
-  text-align: right;
-  font-weight: 700;
-  font-size: 16px;
-`;
+const Value: React.FC<React.ComponentProps<typeof BaseText>> = props => (
+  <BaseText {...props} style={[styles.value, props.style]} />
+);
 
-const BalanceContainer = styled.View`
-  padding: 0 15px 22px;
-  flex-direction: column;
-`;
+const BalanceContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.balanceContainer}>{children}</View>;
 
-const AssetsDataContainer = styled(Row)`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const AssetsDataContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.assetsDataContainer}>{children}</View>;
 
-const HeaderListContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+const HeaderListContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.headerListContainer}>{children}</View>;
 
-const AddCustomTokenContainer = styled(TouchableOpacity)`
-  margin: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+const AddCustomTokenContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => (
+  <TouchableOpacity
+    style={[styles.addCustomTokenContainer, style]}
+    {...props}
+  />
+);
 
-const CenteredText = styled(BaseText)`
-  text-align: center;
-  font-size: 12px;
-  line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: 400;
-  margin-left: 4px;
-`;
-
-const AccountMetadataRow = styled.View`
-  align-items: center;
-  align-self: center;
-  flex-direction: row;
-  gap: 8px;
-`;
+const CenteredText: React.FC<React.ComponentProps<typeof BaseText>> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[
+        styles.centeredText,
+        {color: theme.dark ? White : SlateDark},
+        props.style,
+      ]}
+    />
+  );
+};
 
 type AccountAddressBadgeProps = {
   address?: string;
@@ -396,23 +535,74 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
+  const reduxStore = useStore();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
   const {width: windowWidth} = useWindowDimensions();
-  const {defaultAltCurrency, hideAllBalances, showArchaxBanner} =
-    useAppSelector(({APP}) => APP);
+  const {
+    selectedAccountAddress,
+    keyId,
+    isSvmAccount,
+    _preloadContent = false,
+  } = route.params;
+  const wasPreloadedRef = useRef(_preloadContent);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
-  const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
+  const [contentReady, setContentReady] = useState(_preloadContent);
+  const [renderedAccountChartIdentity, setRenderedAccountChartIdentity] =
+    useState<string>();
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[keyId],
   ) as Key;
   const [searchVal, setSearchVal] = useState('');
   const [activeTab, setActiveTab] = useState<AccountDetailsTab>('wallets');
+
+  useEffect(() => {
+    if (wasPreloadedRef.current) {
+      return;
+    }
+
+    let completed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finishOpeningTransition = () => {
+      if (completed) {
+        return;
+      }
+
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      setContentReady(true);
+    };
+
+    const unsubscribe = (navigation as any).addListener(
+      'transitionEnd',
+      (event: {data?: {closing?: boolean}}) => {
+        if (!event.data?.closing) {
+          finishOpeningTransition();
+        }
+      },
+    );
+    fallbackTimer = setTimeout(finishOpeningTransition, 700);
+
+    return () => {
+      completed = true;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+      unsubscribe();
+    };
+  }, [navigation]);
 
   useEffect(() => {
     if (!showPortfolioValue && activeTab === 'allocation') {
@@ -423,36 +613,24 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
+  const selectedAccountAssetsDropdown = useAppSelector(
+    ({APP}) => APP.selectedLocalAssetsDropdown?.[selectedAccountAddress],
+  );
   const isSmallScreen = windowWidth < 400;
   const timeframeSelectorWidth = getTimeframeSelectorWidth(
     windowWidth,
     ScreenGutter,
   );
   const network = useAppSelector(({APP}) => APP.network);
-  const [history, setHistory] = useState<any[]>([]);
-  const [accountTransactionsHistory, setAccountTransactionsHistory] = useState<{
-    [key: string]: {
-      transactions: any[];
-      loadMore: boolean;
-      hasConfirmingTxs: boolean;
-    };
-  }>({});
-  const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
-    [],
-  );
   const [loadMoreIndex, setLoadMoreIndex] = useState(1);
-  const [loadMore, setLoadMore] = useState(true);
-  const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
-  const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
-  const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const supportedCardMap = useAppSelector(
     ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const committedPortfolioQuoteCurrency = useAppSelector(
     ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
   );
@@ -481,9 +659,92 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       ),
     [key, selectedAccountAddress],
   );
-  const tssMetadata = keyFullWalletObjs.find(
-    wallet => wallet.tssKeyId,
-  )?.tssMetadata;
+  const [accountTransactionsHistory, setAccountTransactionsHistory] = useState<{
+    [key: string]: {
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+      fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
+    };
+  }>({});
+  const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
+    [],
+  );
+  const [loadMore, setLoadMore] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean | undefined>();
+  const hasHydratedHistoryRef = useRef(false);
+  const hydrationHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (!contentReady || hydrationHandledRef.current) {
+      return;
+    }
+    hydrationHandledRef.current = true;
+
+    const cachedAccountHistory = getCachedAccountTransactionHistory({
+      wallets: keyFullWalletObjs,
+      limit: TX_HISTORY_LIMIT,
+    });
+    const transactions = getCachedAccountTransactions({
+      wallets: keyFullWalletObjs,
+      selectedChainFilterOption,
+      limit: INITIAL_CACHED_TX_HYDRATION_LIMIT,
+      perWalletLimit: INITIAL_CACHED_TX_HYDRATION_LIMIT,
+      formatTransactions: ({transactions: cachedTransactions, wallet}) =>
+        BuildUiFriendlyList(
+          cachedTransactions,
+          wallet.currencyAbbreviation,
+          wallet.chain,
+          contactList,
+          wallet.tokenAddress,
+          wallet.credentials?.walletId || wallet.id,
+          true,
+        ),
+    });
+
+    if (!transactions.length) {
+      return;
+    }
+
+    hasHydratedHistoryRef.current = true;
+    setAccountTransactionsHistory(cachedAccountHistory);
+    setGroupedHistory(GroupTransactionHistory(transactions));
+    setLoadMore(
+      Object.values(cachedAccountHistory).some(entry => entry.loadMore),
+    );
+    setIsLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentReady]);
+
+  const tssMetadata = useMemo(
+    () => keyFullWalletObjs.find(wallet => wallet.tssKeyId)?.tssMetadata,
+    [keyFullWalletObjs],
+  );
+  const displayQuoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+  });
+  const cacheEligibleAccountWallets = usePortfolioBalanceChartEligibleWallets({
+    wallets: keyFullWalletObjs,
+    enabled: showPortfolioValue === true,
+  });
+  const accountChartWalletIds = useMemo(
+    () =>
+      cacheEligibleAccountWallets
+        .map(wallet => wallet.id)
+        .filter(Boolean)
+        .sort(),
+    [cacheEligibleAccountWallets],
+  );
+  const accountChartIdentity = `${accountChartWalletIds.join(
+    ',',
+  )}|${displayQuoteCurrency}|${DEFAULT_BALANCE_CHART_TIMEFRAME}`;
+  const hasCachedAccountChart = useHasCachedBalanceHistoryChartSeries({
+    walletIds: accountChartWalletIds,
+    quoteCurrency: displayQuoteCurrency,
+    timeframe: DEFAULT_BALANCE_CHART_TIMEFRAME,
+  });
   const {
     shouldMountBalanceChart: shouldMountAccountBalanceChart,
     shouldShowChartLoader: shouldShowAccountChartLoader,
@@ -492,31 +753,69 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
-    wallets: keyFullWalletObjs,
-    enabled: showPortfolioValue === true,
-    hideAllBalances,
+    wallets: cacheEligibleAccountWallets,
+    enabled:
+      (contentReady || hasCachedAccountChart) && showPortfolioValue === true,
     renderZeroBalanceChartWhenNoSnapshots: true,
   });
+  const shouldRenderAccountBalanceChart =
+    shouldMountAccountBalanceChart || hasCachedAccountChart;
   const accountWalletIds = useMemo(
     () => keyFullWalletObjs.map(wallet => wallet.id).filter(Boolean),
     [keyFullWalletObjs],
   );
-  let pendingTxps: AccountProposalsProps = {};
-  keyFullWalletObjs.forEach(x => {
-    if (x.pendingTxps.length > 0) {
-      pendingTxps[x.id] = Array.isArray(pendingTxps[x.id])
-        ? pendingTxps[x.id].concat(x.pendingTxps)
-        : x.pendingTxps;
-    }
-  });
-  const pendingProposalsCount = Object.values(pendingTxps).length;
-  const memorizedAccountList = useMemo(() => {
+  const pendingProposalsCount = useMemo(
+    () =>
+      keyFullWalletObjs.reduce(
+        (count, wallet) => count + (wallet.pendingTxps.length > 0 ? 1 : 0),
+        0,
+      ),
+    [keyFullWalletObjs],
+  );
+  const activeAccountList = useMemo(() => {
     return (
       buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
         filterByHideWallet: true,
+        filterByCustomWallets: keyFullWalletObjs,
       }).filter(({chains}) => IsVMChain(chains[0])) || {}
     );
-  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
+  }, [dispatch, key, keyFullWalletObjs, defaultAltCurrency.isoCode, rates]);
+
+  const hasMultipleAccounts = useMemo(() => {
+    const visibleAccountKeys = new Set<string>();
+
+    for (const wallet of key.wallets) {
+      if (!IsVMChain(wallet.chain) || !isWalletVisibleForKey(key, wallet)) {
+        continue;
+      }
+
+      visibleAccountKeys.add(getWalletAccountVisibilityKey(wallet));
+      if (visibleAccountKeys.size > 1) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [key]);
+
+  const accountDropdownListRef =
+    useRef<typeof activeAccountList>(activeAccountList);
+  const accountDropdownList = useMemo(() => {
+    if (!showAccountDropdown) {
+      return accountDropdownListRef.current;
+    }
+
+    const accountsForDropdown = buildAccountList(
+      key,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+      {filterByHideWallet: true},
+    ).filter(({chains}) => IsVMChain(chains[0]));
+
+    accountDropdownListRef.current = accountsForDropdown;
+    return accountsForDropdown;
+  }, [defaultAltCurrency.isoCode, dispatch, key, rates, showAccountDropdown]);
 
   useEffect(() => {
     if (!isSmallScreen || !showPortfolioValue) {
@@ -528,21 +827,21 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     }
   }, [dispatch, isSmallScreen, selectedChainFilterOption, showPortfolioValue]);
 
-  const accountItem = memorizedAccountList.find(
-    a => a.receiveAddress === selectedAccountAddress,
-  )!;
-  const displayQuoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: committedPortfolioQuoteCurrency,
-    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-  });
+  const accountItem = useMemo(
+    () =>
+      activeAccountList.find(
+        account => account.receiveAddress === selectedAccountAddress,
+      )!,
+    [activeAccountList, selectedAccountAddress],
+  );
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartableAccountWallets,
     quoteCurrency: displayQuoteCurrency,
     fallbackCurrency: defaultAltCurrency.isoCode,
-    enabled: shouldMountAccountBalanceChart,
+    enabled: shouldRenderAccountBalanceChart,
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
     preserveChartDrivenStateWhileNotReady:
-      shouldPreserveStaleAccountBalanceChart,
+      shouldPreserveStaleAccountBalanceChart || hasCachedAccountChart,
     resetKey: `${keyId}:${selectedAccountAddress || ''}`,
   });
   const totalBalance =
@@ -559,38 +858,70 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     wallets: keyFullWalletObjs,
     currentFiatBalance: accountItem?.fiatBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: showPortfolioValue !== true && !hideAllBalances,
+    enabled: showPortfolioValue !== true,
   });
   const accountHeaderChangeRowData =
     showPortfolioValue === true
       ? balanceChartSurface.changeRowData
       : legacyLastDayChangeRowData;
-  const hasMultipleAccounts = memorizedAccountList.length > 1;
+  const hasRenderedAccountChart =
+    renderedAccountChartIdentity === accountChartIdentity ||
+    hasCachedAccountChart;
+  const shouldShowAccountChartPlaceholder =
+    showPortfolioValue === true &&
+    !hasRenderedAccountChart &&
+    !hasCachedAccountChart &&
+    cacheEligibleAccountWallets.length > 0;
+  const onAccountChartRenderableSeriesChange = useCallback(
+    (hasRenderableSeries: boolean) => {
+      if (hasRenderableSeries) {
+        setRenderedAccountChartIdentity(accountChartIdentity);
+      }
+    },
+    [accountChartIdentity],
+  );
   const accountChartPreContent = useMemo(
     () => (
-      <AccountMetadataRow>
+      <View style={styles.accountMetadataRow}>
         <AccountAddressBadge address={accountItem?.receiveAddress} />
         {tssMetadata ? (
           <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'list'} />
         ) : null}
-      </AccountMetadataRow>
+      </View>
     ),
     [accountItem?.receiveAddress, tssMetadata],
   );
 
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
+  ) as BillPayAccount[] | undefined;
+  const billPayIconByMerchantId = useMemo(() => {
+    return (accounts || []).reduce<Record<string, string>>(
+      (iconByMerchantId, account) => {
+        const accountDetails = account[account.type];
+        if (accountDetails?.merchantId && accountDetails.merchantIcon) {
+          iconByMerchantId[accountDetails.merchantId] =
+            accountDetails.merchantIcon;
+        }
+        return iconByMerchantId;
+      },
+      {},
+    );
+  }, [accounts]);
+  const giftCardIcons = useMemo(
+    () => getGiftCardIcons(supportedCardMap),
+    [supportedCardMap],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const startSyncWallets = async (mnemonic: string) => {
+    const {customTokenOptionsByAddress} = (reduxStore.getState() as RootState)
+      .WALLET;
+    const tokenOptionsForSync = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
     };
-  });
 
-  const startSyncWallets = async (mnemonic: string) => {
     if (key.isPrivKeyEncrypted) {
       // To close decrypt modal
       await sleep(500);
@@ -632,7 +963,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   currencyAbbreviation,
                   currencyName,
                 } as any,
-                _tokenOptionsByAddress,
+                tokenOptionsForSync,
               ),
             );
           });
@@ -749,56 +1080,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     img: <Icons.Settings />,
     title: t('Account Settings'),
     description: t('View all the ways to manage and configure your account.'),
-    onPress: async () => {
+    onPress: () => {
       haptic('impactLight');
-      await sleep(500);
       navigation.navigate('AccountSettings', {
-        key,
+        keyId: key.id,
         selectedAccountAddress: accountItem?.receiveAddress,
         context: 'accountDetails',
         isSvmAccount,
       });
     },
   });
-
-  const setNeedActionTxps = (accountProposals: AccountProposalsProps) => {
-    Object.entries(accountProposals).forEach(([walletId, pendingTxps]) => {
-      const txpsPending: TransactionProposal[] = [];
-      const txpsUnsent: TransactionProposal[] = [];
-      const {
-        currencyAbbreviation,
-        chain,
-        tokenAddress,
-        credentials: {copayerId, n},
-      } = keyFullWalletObjs.find(w => w.id === walletId) as Wallet;
-      const formattedPendingTxps = BuildUiFriendlyList(
-        pendingTxps,
-        currencyAbbreviation,
-        chain,
-        [],
-        tokenAddress,
-        walletId,
-      );
-      formattedPendingTxps.forEach((txp: any) => {
-        const action: any = _.find(txp.actions, {
-          copayerId: copayerId,
-        });
-
-        const setPendingTx = (_txp: TransactionProposal) => {
-          n > 1 ? txpsPending.push(_txp) : txpsUnsent.push(_txp);
-          setNeedActionPendingTxps(txpsPending);
-          setNeedActionUnsentTxps(txpsUnsent);
-        };
-        if ((!action || action.type === 'failed') && txp.status === 'pending') {
-          setPendingTx(txp);
-        }
-        // unsent transactions
-        if (action && txp.status === 'accepted') {
-          setPendingTx(txp);
-        }
-      });
-    });
-  };
 
   const loadHistory = useCallback(
     async (
@@ -812,42 +1103,39 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         setIsLoading(true);
         setErrorLoadingTxs(false);
 
-        const [transactionHistory] = await Promise.all([
-          dispatch(
-            GetAccountTransactionHistory({
-              wallets: keyFullWalletObjs,
-              accountTransactionsHistory,
-              keyId: key.id,
-              limit: TX_HISTORY_LIMIT * loadMoreIndex,
-              contactList,
-              refresh,
-              selectedChainFilterOption: _selectedChainFilterOption,
-            }),
-          ),
-        ]);
+        const transactionHistory = await dispatch(
+          GetAccountTransactionHistory({
+            wallets: keyFullWalletObjs,
+            accountTransactionsHistory,
+            keyId: key.id,
+            limit: TX_HISTORY_LIMIT * loadMoreIndex,
+            contactList,
+            refresh,
+            selectedChainFilterOption: _selectedChainFilterOption,
+          }),
+        );
 
-        setLoadMoreIndex(loadMoreIndex + 1);
+        setLoadMoreIndex(currentIndex => currentIndex + 1);
         if (transactionHistory) {
-          let {accountTransactionsHistory, sortedCompleteHistory: _history} =
-            transactionHistory;
+          const {
+            accountTransactionsHistory: nextAccountTransactionsHistory,
+            sortedCompleteHistory,
+          } = transactionHistory;
 
-          setAccountTransactionsHistory(accountTransactionsHistory);
+          setAccountTransactionsHistory(nextAccountTransactionsHistory);
 
-          if (_history?.length) {
-            setHistory(_history);
-            const grouped = GroupTransactionHistory(_history);
-            setGroupedHistory(grouped);
+          if (sortedCompleteHistory?.length) {
+            setGroupedHistory(GroupTransactionHistory(sortedCompleteHistory));
           } else {
             setGroupedHistory([]);
           }
 
-          const hasLoadMore = Object.values(accountTransactionsHistory).some(
-            ({loadMore}) => loadMore,
-          );
+          const hasLoadMore = Object.values(
+            nextAccountTransactionsHistory,
+          ).some(({loadMore: walletHasMore}) => walletHasMore);
           setLoadMore(hasLoadMore);
         }
 
-        await sleep(1000);
         setIsLoading(false);
       } catch (e) {
         const errStr = e instanceof Error ? e.message : JSON.stringify(e);
@@ -859,7 +1147,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         setErrorLoadingTxs(true);
       }
     },
-    [history],
+    [
+      accountTransactionsHistory,
+      contactList,
+      dispatch,
+      key.id,
+      keyFullWalletObjs,
+      loadMore,
+      loadMoreIndex,
+    ],
   );
 
   const debouncedLoadHistory = useMemo(() => {
@@ -875,39 +1171,95 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const loadHistoryRef = useRef(debouncedLoadHistory);
 
+  useEffect(() => {
+    loadHistoryRef.current = debouncedLoadHistory;
+
+    return () => {
+      debouncedLoadHistory.cancel();
+    };
+  }, [debouncedLoadHistory]);
+
+  const hasFetchedHistoryRef = useRef(false);
+
+  const loadInitialHistory = useCallback(() => {
+    const shouldRefresh =
+      hasHydratedHistoryRef.current && !hasFetchedHistoryRef.current;
+    hasFetchedHistoryRef.current = true;
+    loadHistoryRef.current(selectedChainFilterOption, shouldRefresh);
+  }, [selectedChainFilterOption]);
+
   const updateWalletStatusAndProfileBalance = async () => {
+    const activeStartupInit = getActiveWalletStoreInitPromise();
+    if (activeStartupInit) {
+      const {walletInitSuccess} = await activeStartupInit;
+      if (walletInitSuccess) {
+        return;
+      }
+    }
+
     await dispatch(
       startUpdateAllWalletStatusForKey({
         key,
         accountAddress: accountItem?.receiveAddress,
-        force: true,
+        force: false,
       }),
     );
-    dispatch(updatePortfolioBalance());
+    if (key.isReadOnly) {
+      dispatch(updatePortfolioBalance());
+    }
   };
+  const updateWalletStatusAndProfileBalanceRef = useRef(
+    updateWalletStatusAndProfileBalance,
+  );
+  updateWalletStatusAndProfileBalanceRef.current =
+    updateWalletStatusAndProfileBalance;
+
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(Analytics.track('View Account'));
+    }, [dispatch]),
+  );
 
   useEffect(() => {
-    dispatch(Analytics.track('View Account'));
+    if (!contentReady || !isFocused) {
+      return;
+    }
+
     const timer = setTimeout(() => {
-      updateWalletStatusAndProfileBalance();
+      updateWalletStatusAndProfileBalanceRef.current();
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [contentReady, isFocused]);
 
   useEffect(() => {
-    setNeedActionTxps(pendingTxps);
+    if (!isFocused) {
+      return;
+    }
+
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-      (_selectedChainFilterOption?: string | undefined) => {
+      (payload?: string | WalletLoadHistoryTarget) => {
+        if (
+          typeof payload === 'object' &&
+          (payload.historyContext !== 'account' ||
+            payload.keyId !== key.id ||
+            !keyFullWalletObjs.some(
+              wallet =>
+                wallet.id === payload.walletId &&
+                (!payload.copayerId ||
+                  wallet.credentials?.copayerId === payload.copayerId),
+            ))
+        ) {
+          return;
+        }
         const selected =
-          _selectedChainFilterOption ?? selectedChainFilterOption;
+          typeof payload === 'string' ? payload : selectedChainFilterOption;
         loadHistoryRef.current(selected, true);
-        setNeedActionTxps(pendingTxps);
       },
     );
     return () => subscription.remove();
-  }, [key]);
+  }, [isFocused, key.id, keyFullWalletObjs, selectedChainFilterOption]);
 
   const listFooterComponentTxsTab = useCallback(() => {
     return (
@@ -919,7 +1271,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         ) : null}
       </>
     );
-  }, [isLoading, groupedHistory]);
+  }, [isLoading]);
 
   const listFooterComponentAssetsTab = () => (
     <>
@@ -944,8 +1296,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     </>
   );
 
+  const onPressTxpBadge = useLatestCallback(() => {
+    navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
+  });
+
   useLayoutEffect(() => {
-    if (!key) {
+    // Preloaded routes receive a placeholder navigation object until focused.
+    if (!key || !isFocused) {
       return;
     }
 
@@ -1010,7 +1367,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   touchableLibrary={'react-native-gesture-handler'}
                   onPress={() =>
                     navigation.navigate('AccountSettings', {
-                      key,
+                      keyId: key.id,
                       selectedAccountAddress: accountItem?.receiveAddress,
                       context: 'accountDetails',
                       isSvmAccount,
@@ -1032,87 +1389,82 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         );
       },
     });
-  }, [navigation, key, accountItem, theme.dark]);
+  }, [
+    accountItem,
+    hasAllChains,
+    hasMultipleAccounts,
+    isFocused,
+    isSvmAccount,
+    key,
+    linkedCoinbase,
+    navigation,
+    onPressTxpBadge,
+    pendingProposalsCount,
+    theme.dark,
+  ]);
 
-  const getBillPayIcon = (
-    billPayAccounts: BillPayAccount[],
-    merchantId: string,
-  ): string => {
-    const account = (billPayAccounts || []).find(
-      acct => acct[acct.type].merchantId === merchantId,
-    );
-    return account ? account[account.type].merchantIcon : '';
-  };
+  const getTxDescriptionDetails = (serviceKey: string | undefined) =>
+    serviceKey === 'moonpay' ? 'MoonPay' : undefined;
 
-  const getTxDescriptionDetails = (key: string | undefined) =>
-    key === 'moonpay' ? 'MoonPay' : undefined;
-
-  const goToTransactionDetails = (transaction: any) => {
-    const onTxDescriptionChange = () =>
-      debouncedLoadHistory(selectedChainFilterOption, true);
+  const goToTransactionDetails = useLatestCallback((transaction: any) => {
     const fullWalletObj = findWalletById(
       keyFullWalletObjs,
       transaction.walletId,
     ) as Wallet;
     navigation.navigate('TransactionDetails', {
-      wallet: fullWalletObj,
+      keyId: key.id,
+      walletId: fullWalletObj.id,
+      copayerId: fullWalletObj.credentials?.copayerId,
+      historyContext: 'account',
       transaction,
-      onTxDescriptionChange,
     });
-  };
+  });
 
-  const onPressTransaction = useMemo(
-    () => (transaction: any) => {
-      const {hasUnconfirmedInputs, action, isRBF, coin, chain} = transaction;
-      const isReceived = IsReceived(action);
-      const isMoved = IsMoved(action);
-      const currency = coin.toLowerCase();
+  const onPressTransaction = useLatestCallback((transaction: any) => {
+    const {hasUnconfirmedInputs, action, isRBF, coin, chain} = transaction;
+    const isReceived = IsReceived(action);
+    const isMoved = IsMoved(action);
+    const currency = coin.toLowerCase();
 
-      if (
-        hasUnconfirmedInputs &&
-        (isReceived || isMoved) &&
-        currency === 'btc'
-      ) {
-        dispatch(
-          showBottomNotificationModal(
-            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+    if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+        ),
+      );
+    } else if (isRBF && isReceived && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          RbfTransaction(
+            () => speedupTransaction(transaction),
+            () => goToTransactionDetails(transaction),
           ),
-        );
-      } else if (isRBF && isReceived && currency === 'btc') {
+        ),
+      );
+    } else if (CanSpeedupTx(transaction, currency, chain)) {
+      if (chain === 'eth') {
         dispatch(
           showBottomNotificationModal(
-            RbfTransaction(
+            SpeedupEthTransaction(
               () => speedupTransaction(transaction),
               () => goToTransactionDetails(transaction),
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency, chain)) {
-        if (chain === 'eth') {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupEthTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        } else {
-          dispatch(
-            showBottomNotificationModal(
-              SpeedupTransaction(
-                () => speedupTransaction(transaction),
-                () => goToTransactionDetails(transaction),
-              ),
-            ),
-          );
-        }
       } else {
-        goToTransactionDetails(transaction);
+        dispatch(
+          showBottomNotificationModal(
+            SpeedupTransaction(
+              () => speedupTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
       }
-    },
-    [],
-  );
+    } else {
+      goToTransactionDetails(transaction);
+    }
+  });
 
   const speedupTransaction = async (transaction: any) => {
     try {
@@ -1212,34 +1564,38 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     }
   };
 
-  const renderTransaction = useCallback(({item}: {item: any}) => {
-    return (
-      <TransactionRow
-        key={item.txid}
-        icon={
-          item.customData?.recipientEmail ? (
-            <ContactIcon
-              name={item.customData?.recipientEmail}
-              size={TRANSACTION_ICON_SIZE}
-              badge={<SentBadgeSvg />}
-            />
-          ) : (
-            TransactionIcons[item.uiIcon]
-          )
-        }
-        iconURI={
-          getBillPayIcon(accounts, item.uiIconURI) ||
-          getGiftCardIcons(supportedCardMap)[item.uiIconURI]
-        }
-        description={item.uiDescription}
-        details={getTxDescriptionDetails(item.customData?.service)}
-        time={item.uiTime}
-        value={item.uiValue}
-        chain={item.chain}
-        onPressTransaction={() => onPressTransaction(item)}
-      />
-    );
-  }, []);
+  const renderTransaction = useCallback(
+    ({item}: {item: any}) => {
+      return (
+        <TransactionRow
+          key={item.txid}
+          icon={
+            item.customData?.recipientEmail ? (
+              <ContactIcon
+                name={item.customData?.recipientEmail}
+                size={TRANSACTION_ICON_SIZE}
+                badge={<SentBadgeSvg />}
+              />
+            ) : (
+              TransactionIcons[item.uiIcon]
+            )
+          }
+          iconURI={
+            billPayIconByMerchantId[item.uiIconURI] ||
+            giftCardIcons[item.uiIconURI]
+          }
+          description={item.uiDescription}
+          details={getTxDescriptionDetails(item.customData?.service)}
+          time={item.uiTime}
+          value={item.uiValue}
+          chain={item.chain}
+          transaction={item}
+          onPressTransaction={onPressTransaction}
+        />
+      );
+    },
+    [billPayIconByMerchantId, giftCardIcons, onPressTransaction],
+  );
 
   const renderSectionHeader = useCallback(
     ({section: {title, time}}: {section: {title: string; time?: string}}) => {
@@ -1255,96 +1611,146 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const onPressTxp = useMemo(
-    () => (transaction: any) => {
-      navigation.navigate('TransactionProposalDetails', {
-        walletId: transaction.walletId,
-        transactionId: transaction.id,
-        keyId: key.id,
+  const walletDetailsPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
+  const onPressItem = useCallback(
+    (walletId: string) => {
+      walletDetailsPreloadTaskRef.current?.cancel();
+      walletDetailsPreloadTaskRef.current = undefined;
+      haptic('impactLight');
+      const fullWalletObj = findWalletById(
+        keyFullWalletObjs,
+        walletId,
+      ) as Wallet;
+      if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
+        fullWalletObj.getStatus(
+          {network: fullWalletObj.network},
+          (err, status) => {
+            if (err) {
+              const errStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              logManager.error(`[getStatus] Error: ${errStr}`);
+            } else {
+              if (status?.wallet?.status === 'complete') {
+                fullWalletObj.openWallet({}, () => {
+                  navigation.navigate('WalletDetails', {
+                    walletId,
+                    copayerId: fullWalletObj.credentials?.copayerId,
+                  });
+                });
+                return;
+              }
+              if (!status?.wallet) {
+                return;
+              }
+              navigation.navigate('Copayers', {
+                wallet: fullWalletObj,
+                status: status.wallet,
+              });
+            }
+          },
+        );
+      } else {
+        navigation.navigate('WalletDetails', {
+          walletId,
+          copayerId: fullWalletObj.credentials?.copayerId,
+        });
+      }
+    },
+    [keyFullWalletObjs, navigation],
+  );
+
+  const preloadedWalletDetailsRef = useRef<string | undefined>(undefined);
+  const preloadWalletDetails = useCallback(
+    (walletId: string) => {
+      const fullWalletObj = findWalletById(
+        keyFullWalletObjs,
+        walletId,
+      ) as Wallet;
+      if (
+        typeof fullWalletObj?.isComplete !== 'function' ||
+        !fullWalletObj.isComplete() ||
+        typeof (navigation as any).preload !== 'function'
+      ) {
+        return;
+      }
+
+      const copayerId = fullWalletObj.credentials?.copayerId;
+      const preloadIdentity = `${walletId}:${copayerId || ''}`;
+      if (preloadedWalletDetailsRef.current === preloadIdentity) {
+        return;
+      }
+
+      preloadedWalletDetailsRef.current = preloadIdentity;
+      performanceLog(
+        '[PERF-PRELOAD] WalletDetails start source:AccountDetails',
+      );
+      (navigation as any).preload('WalletDetails', {
+        walletId,
+        copayerId,
+        _preloadContent: true,
       });
     },
+    [keyFullWalletObjs, navigation],
+  );
+
+  const singlePreloadableWalletId = useMemo(
+    () =>
+      getSinglePreloadCandidate(
+        keyFullWalletObjs,
+        wallet =>
+          typeof wallet.isComplete === 'function' && wallet.isComplete(),
+      )?.id,
+    [keyFullWalletObjs],
+  );
+  const preloadWalletDetailsRef = useRef(preloadWalletDetails);
+  preloadWalletDetailsRef.current = preloadWalletDetails;
+  const stablePreloadWalletDetails = useCallback(
+    (walletId: string) => preloadWalletDetailsRef.current(walletId),
     [],
   );
 
-  const renderTxp = useCallback(({item}: {item: any}) => {
-    return (
-      <TransactionProposalRow
-        key={item.id}
-        icon={TransactionIcons[item.uiIcon]}
-        creator={item.uiCreator}
-        time={item.uiTime}
-        value={item.uiValue}
-        message={item.message}
-        onPressTransaction={() => onPressTxp(item)}
-        recipientCount={item.recipientCount}
-        toAddress={item.toAddress}
-        tokenAddress={item.tokenAddress}
-        chain={item.chain}
-        contactList={contactList}
-      />
-    );
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      preloadedWalletDetailsRef.current = undefined;
+      if (!singlePreloadableWalletId) {
+        return;
+      }
 
-  const onPressItem = (walletId: string) => {
-    haptic('impactLight');
-    const fullWalletObj = findWalletById(keyFullWalletObjs, walletId) as Wallet;
-    if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
-      fullWalletObj.getStatus(
-        {network: fullWalletObj.network},
-        (err, status) => {
-          if (err) {
-            const errStr =
-              err instanceof Error ? err.message : JSON.stringify(err);
-            logManager.error(`[getStatus] Error: ${errStr}`);
-          } else {
-            if (status?.wallet?.status === 'complete') {
-              fullWalletObj.openWallet({}, () => {
-                navigation.navigate('WalletDetails', {
-                  walletId,
-                  key,
-                });
-              });
-              return;
-            }
-            if (!status?.wallet) {
-              return;
-            }
-            navigation.navigate('Copayers', {
-              wallet: fullWalletObj,
-              status: status.wallet,
-            });
+      const preloadTask = scheduleAfterTransitionAndIdle({
+        navigation: navigation as any,
+        transitionFallbackMs: 800,
+        idleTimeoutMs: 1200,
+        callback: signal => {
+          if (!signal.aborted) {
+            stablePreloadWalletDetails(singlePreloadableWalletId);
           }
         },
-      );
-    } else {
-      navigation.navigate('WalletDetails', {
-        key,
-        walletId,
       });
-    }
-  };
+      walletDetailsPreloadTaskRef.current = preloadTask;
+
+      return () => {
+        preloadTask.cancel();
+        if (walletDetailsPreloadTaskRef.current === preloadTask) {
+          walletDetailsPreloadTaskRef.current = undefined;
+        }
+      };
+    }, [navigation, singlePreloadableWalletId, stablePreloadWalletDetails]),
+  );
 
   const memoizedRenderAssetsItem = useCallback(
-    ({item}: {item: AssetsByChainData}) => {
+    ({item}: {item: WalletRowProps}) => {
       return (
-        <AssetsByChainRow
+        <WalletRow
           id={item.id}
-          accountItem={item}
           hideBalance={hideAllBalances}
-          onPress={walletId => onPressItem(walletId)}
-          showChainAssetsByDefault={memorizedAssetsByChainList.length === 1}
-          showNetworkHeader={memorizedAssetsByChainList.length > 1}
+          onPress={() => onPressItem(item.id)}
+          wallet={item}
         />
       );
     },
-    [key, accountItem, hideAllBalances],
-  );
-
-  const onPressTxpBadge = useMemo(
-    () => () => {
-      navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
-    },
-    [],
+    [hideAllBalances, onPressItem],
   );
 
   const onRefresh = async () => {
@@ -1369,7 +1775,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       } else {
         await walletStatusRefresh;
       }
-      dispatch(updatePortfolioBalance());
+      if (key.isReadOnly) {
+        dispatch(updatePortfolioBalance());
+      }
       Promise.resolve()
         .then(() =>
           dispatch(
@@ -1387,7 +1795,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             )}`,
           );
         });
-      setNeedActionTxps(pendingTxps);
     } catch {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -1403,6 +1810,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [t]);
 
+  const filteredAccountWallets = useMemo(() => {
+    const accountWallets = (accountItem?.wallets || []) as WalletRowProps[];
+    return selectedChainFilterOption
+      ? accountWallets.filter(
+          wallet => wallet.chain === selectedChainFilterOption,
+        )
+      : accountWallets;
+  }, [accountItem?.wallets, selectedChainFilterOption]);
+
   const accountAllocationData = useMemo(() => {
     if (activeTab !== 'allocation') {
       return {
@@ -1413,21 +1829,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       };
     }
 
-    const wallets = (accountItem?.wallets || []) as WalletRowProps[];
-    const filteredWallets = selectedChainFilterOption
-      ? wallets.filter(w => w.chain === selectedChainFilterOption)
-      : wallets;
-
     return buildAllocationDataFromWalletRows(
-      filteredWallets,
+      filteredAccountWallets,
       defaultAltCurrency.isoCode,
     );
-  }, [
-    activeTab,
-    accountItem?.wallets,
-    defaultAltCurrency.isoCode,
-    selectedChainFilterOption,
-  ]);
+  }, [activeTab, defaultAltCurrency.isoCode, filteredAccountWallets]);
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
@@ -1448,22 +1854,88 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         )}
       </>
     );
-  }, [isLoading, errorLoadingTxs, groupedHistory, ghostTownEmptyState]);
+  }, [errorLoadingTxs, ghostTownEmptyState, groupedHistory, isLoading, t]);
 
+  const assetsListCacheKey = `accountDetailsAssets:${keyId}:${selectedAccountAddress}`;
+  const assetsListSignature = useMemo(
+    () =>
+      buildAccountListSignature({
+        wallets: keyFullWalletObjs,
+        keys: [key],
+        quoteCurrency: defaultAltCurrency.isoCode,
+        ratesRevision: getRatesRevision(rates),
+      }),
+    [defaultAltCurrency.isoCode, key, keyFullWalletObjs, rates],
+  );
   const memorizedAssetsByChainList = useMemo(() => {
-    return buildAssetsByChainList(accountItem, defaultAltCurrency.isoCode);
-  }, [key, accountItem, defaultAltCurrency.isoCode]);
+    if (!contentReady) {
+      return (
+        readAccountListSnapshot<AssetsByChainListProps[]>(assetsListCacheKey) ??
+        EMPTY_ASSETS_BY_CHAIN_LIST
+      );
+    }
 
-  const wallets = (accountItem?.wallets || []) as WalletRowProps[];
-  const filteredWallets = selectedChainFilterOption
-    ? wallets.filter(w => w.chain === selectedChainFilterOption)
-    : wallets;
+    return resolveAccountListSnapshot({
+      cacheKey: assetsListCacheKey,
+      signature: assetsListSignature,
+      build: () =>
+        buildAssetsByChainList(
+          accountItem,
+          defaultAltCurrency.isoCode,
+        ) as AssetsByChainListProps[],
+    });
+  }, [
+    accountItem,
+    assetsListCacheKey,
+    assetsListSignature,
+    contentReady,
+    defaultAltCurrency.isoCode,
+  ]);
 
-  const allocationHasAnyBalance = filteredWallets.some(w => {
-    const sat = Number((w as any)?.balance?.sat) || 0;
-    const fiat = Number((w as any)?.fiatBalance) || 0;
-    return sat > 0 || fiat > 0;
-  });
+  const onToggleAssetChain = useCallback(
+    (chain: string, expanded: boolean) => {
+      const selectedLocalAssetsDropdown = (reduxStore.getState() as RootState)
+        .APP.selectedLocalAssetsDropdown;
+      dispatch(
+        setLocalAssetsDropdown({
+          ...selectedLocalAssetsDropdown,
+          [selectedAccountAddress]: {
+            ...selectedAccountAssetsDropdown,
+            [chain]: expanded,
+          },
+        }),
+      );
+    },
+    [
+      dispatch,
+      reduxStore,
+      selectedAccountAddress,
+      selectedAccountAssetsDropdown,
+    ],
+  );
+
+  const renderAssetsSectionHeader = useCallback(
+    ({section}: {section: VirtualizedAssetsByChainSection}) => (
+      <AssetsByChainHeader
+        accountItem={section.accountItem}
+        expanded={section.expanded}
+        hideBalance={hideAllBalances}
+        onToggle={onToggleAssetChain}
+        showNetworkHeader={memorizedAssetsByChainList.length > 1}
+      />
+    ),
+    [hideAllBalances, memorizedAssetsByChainList.length, onToggleAssetChain],
+  );
+
+  const allocationHasAnyBalance = useMemo(
+    () =>
+      filteredAccountWallets.some(wallet => {
+        const sat = Number((wallet as any)?.balance?.sat) || 0;
+        const fiat = Number((wallet as any)?.fiatBalance) || 0;
+        return sat > 0 || fiat > 0;
+      }),
+    [filteredAccountWallets],
+  );
 
   const isAllocationLoading =
     activeTab === 'allocation' &&
@@ -1483,8 +1955,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       <>
         <HeaderContainer>
           <BalanceContainer>
-            <TouchableOpacity
-              onLongPress={() => {
+            <BalanceVisibilityButton
+              testID="account-balance-toggle"
+              hidden={hideAllBalances}
+              onToggle={() => {
                 dispatch(toggleHideAllBalances());
               }}>
               <Row>
@@ -1496,44 +1970,63 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   <H2>****</H2>
                 )}
               </Row>
-            </TouchableOpacity>
+            </BalanceVisibilityButton>
 
-            {!hideAllBalances &&
-            (showPortfolioValue !== true || shouldMountAccountBalanceChart) ? (
+            {showPortfolioValue !== true ||
+            shouldRenderAccountBalanceChart ||
+            shouldShowAccountChartPlaceholder ? (
               <FullWidthBalanceChartContainer>
                 <BalanceHeaderSupplement
                   changeRowData={accountHeaderChangeRowData}
                   content={accountChartPreContent}
-                  reserveChangeRowSpace={shouldMountAccountBalanceChart}
+                  reserveChangeRowSpace={
+                    shouldRenderAccountBalanceChart ||
+                    shouldShowAccountChartPlaceholder
+                  }
                 />
-                {shouldMountAccountBalanceChart ? (
-                  <BalanceHistoryChart
-                    wallets={chartableAccountWallets}
-                    quoteCurrency={displayQuoteCurrency}
-                    rates={rates}
-                    timeframeSelectorWidth={timeframeSelectorWidth}
-                    showLoaderWhenNoSnapshots={shouldShowAccountChartLoader}
-                    renderZeroBalanceWhenNoSnapshots={
-                      shouldRenderZeroAccountBalanceChart
-                    }
-                    isBalanceChartDataReadyToQuery={
-                      isAccountBalanceChartDataReadyToQuery
-                    }
-                    preserveVisibleSeriesWhileNotReady={
-                      shouldPreserveStaleAccountBalanceChart
-                    }
-                    showChangeRow={false}
-                    onSelectedBalanceChange={
-                      balanceChartSurface.chartCallbacks.onSelectedBalanceChange
-                    }
-                    onDisplayedAnalysisPointChange={
-                      balanceChartSurface.chartCallbacks
-                        .onDisplayedAnalysisPointChange
-                    }
-                    onChangeRowData={
-                      balanceChartSurface.chartCallbacks.onChangeRowData
-                    }
-                  />
+                {shouldShowAccountChartPlaceholder ? (
+                  <BalanceChartLoadingPlaceholder />
+                ) : null}
+                {shouldRenderAccountBalanceChart ? (
+                  <View
+                    style={
+                      shouldShowAccountChartPlaceholder
+                        ? styles.hiddenChart
+                        : undefined
+                    }>
+                    <BalanceHistoryChart
+                      wallets={chartableAccountWallets}
+                      quoteCurrency={displayQuoteCurrency}
+                      rates={rates}
+                      timeframeSelectorWidth={timeframeSelectorWidth}
+                      showLoaderWhenNoSnapshots={shouldShowAccountChartLoader}
+                      renderZeroBalanceWhenNoSnapshots={
+                        shouldRenderZeroAccountBalanceChart
+                      }
+                      isBalanceChartDataReadyToQuery={
+                        isAccountBalanceChartDataReadyToQuery
+                      }
+                      preserveVisibleSeriesWhileNotReady={
+                        shouldPreserveStaleAccountBalanceChart ||
+                        hasCachedAccountChart
+                      }
+                      showChangeRow={false}
+                      onSelectedBalanceChange={
+                        balanceChartSurface.chartCallbacks
+                          .onSelectedBalanceChange
+                      }
+                      onDisplayedAnalysisPointChange={
+                        balanceChartSurface.chartCallbacks
+                          .onDisplayedAnalysisPointChange
+                      }
+                      onChangeRowData={
+                        balanceChartSurface.chartCallbacks.onChangeRowData
+                      }
+                      onRenderableSeriesChange={
+                        onAccountChartRenderableSeriesChange
+                      }
+                    />
+                  </View>
                 ) : null}
               </FullWidthBalanceChartContainer>
             ) : null}
@@ -1623,6 +2116,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           <HeaderListContainer>
             <WalletListHeader
               activeOpacity={1}
+              testID="account-details-wallets-tab"
+              accessibilityRole="button"
+              accessibilityLabel={t('Wallets')}
               onPress={() => {
                 setActiveTab('wallets');
               }}>
@@ -1633,6 +2129,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             {showPortfolioValue ? (
               <WalletListHeader
                 activeOpacity={1}
+                testID="account-details-allocation-tab"
+                accessibilityRole="button"
+                accessibilityLabel={t('Allocation')}
                 onPress={() => {
                   setActiveTab('allocation');
                 }}>
@@ -1643,10 +2142,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             ) : null}
             <WalletListHeader
               activeOpacity={1}
+              testID="account-details-activity-tab"
+              accessibilityRole="button"
+              accessibilityLabel={t('Activity')}
               onPress={async () => {
                 setActiveTab('activity');
                 await sleep(200);
-                debouncedLoadHistory(selectedChainFilterOption);
+                loadInitialHistory();
               }}>
               <WalletListHeaderLabel isActive={isActivityTab}>
                 <H5>{t('Activity')}</H5>
@@ -1699,26 +2201,28 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     accountItem?.fiatLockedBalanceFormat,
     accountItem?.receiveAddress,
     chartableAccountWallets,
-    debouncedLoadHistory,
+    loadInitialHistory,
     displayQuoteCurrency,
-    defaultAltCurrency.isoCode,
     dispatch,
     groupedHistory,
+    hasCachedAccountChart,
     hideAllBalances,
     isAccountBalanceChartDataReadyToQuery,
     isSmallScreen,
     isSvmAccount,
+    keyId,
     balanceChartSurface,
-    keyFullWalletObjs,
     lockedBalanceCurrencyAbbreviation,
     memorizedAssetsByChainList,
     navigation,
+    onAccountChartRenderableSeriesChange,
     rates,
     searchResultsAssets,
     searchResultsHistory,
     searchVal,
-    selectedChainFilterOption,
-    shouldMountAccountBalanceChart,
+    selectedAccountAddress,
+    shouldRenderAccountBalanceChart,
+    shouldShowAccountChartPlaceholder,
     shouldPreserveStaleAccountBalanceChart,
     shouldRenderZeroAccountBalanceChart,
     shouldShowAccountChartLoader,
@@ -1775,11 +2279,24 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       return [];
     }
 
-    if (!searchVal && !selectedChainFilterOption) {
-      return isActivityTab ? groupedHistory : memorizedAssetsByChainList;
-    } else {
-      return isActivityTab ? searchResultsHistory : searchResultsAssets;
+    const filteredSections =
+      !searchVal && !selectedChainFilterOption
+        ? isActivityTab
+          ? groupedHistory
+          : memorizedAssetsByChainList
+        : isActivityTab
+        ? searchResultsHistory
+        : searchResultsAssets;
+
+    if (isActivityTab) {
+      return filteredSections;
     }
+
+    return buildVirtualizedAssetsByChainSections(
+      filteredSections as Partial<AssetsByChainListProps>[],
+      selectedAccountAssetsDropdown,
+      memorizedAssetsByChainList.length === 1,
+    );
   }, [
     searchVal,
     selectedChainFilterOption,
@@ -1788,10 +2305,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     searchResultsHistory,
     groupedHistory,
     memorizedAssetsByChainList,
+    selectedAccountAssetsDropdown,
   ]);
 
+  const hasWalletSectionHeaders =
+    activeTab === 'wallets' && renderDataSectionComponent.length > 0;
   const listEmptyComponentForTab =
-    activeTab === 'allocation' ? null : listEmptyComponent;
+    activeTab === 'allocation' || hasWalletSectionHeaders
+      ? null
+      : listEmptyComponent;
 
   const sectionListKeyExtractor = useCallback(
     (item: any, _index: number) =>
@@ -1799,10 +2321,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [activeTab],
   );
 
+  const sectionListExtraData = useMemo(
+    () => `${activeTab}:${hideAllBalances}`,
+    [activeTab, hideAllBalances],
+  );
+
   return (
-    <AccountDetailsContainer>
+    <SafeAreaView style={styles.accountDetailsContainer}>
       <SectionList
-        extraData={activeTab}
+        extraData={sectionListExtraData}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -1821,6 +2348,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         keyExtractor={sectionListKeyExtractor}
         //@ts-ignore
         sections={renderDataSectionComponent}
+        renderSectionHeader={
+          activeTab === 'wallets'
+            ? (renderAssetsSectionHeader as any)
+            : activeTab === 'activity'
+            ? renderSectionHeader
+            : undefined
+        }
+        stickySectionHeadersEnabled={activeTab === 'activity'}
         renderItem={
           activeTab === 'wallets'
             ? memoizedRenderAssetsItem
@@ -1829,9 +2364,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             : () => null
         }
         {...(activeTab === 'activity' && {
-          renderSectionHeader,
           stickyHeaderIndices: [groupedHistory?.length],
-          stickySectionHeadersEnabled: true,
           ItemSeparatorComponent: itemSeparatorComponent,
           onMomentumScrollBegin: () => setIsScrolling(true),
           onMomentumScrollEnd: () => setIsScrolling(false),
@@ -1844,7 +2377,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           maxToRenderPerBatch: 15,
         })}
         ListEmptyComponent={listEmptyComponentForTab}
-        getItemLayout={transactionItemLayout}
+        getItemLayout={
+          activeTab === 'activity' ? transactionItemLayout : undefined
+        }
       />
 
       <SheetModal
@@ -1854,7 +2389,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         <AccountDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Accounts')}</HeaderTitle>
           <AccountDropdownOptionsContainer>
-            {Object.values(memorizedAccountList).map(_accountItem => (
+            {accountDropdownList.map(_accountItem => (
               <DropdownOption
                 key={_accountItem?.id}
                 optionId={_accountItem?.id}
@@ -1863,7 +2398,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 totalBalance={_accountItem?.fiatBalance}
                 onPress={(accountId: string) => {
                   setShowAccountDropdown(false);
-                  const selectedAccountItem = memorizedAccountList.find(
+                  const selectedAccountItem = accountDropdownList.find(
                     account => account.id === accountId,
                   );
                   navigation.setParams({
@@ -1918,7 +2453,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           context={'accountdetails'}
         />
       ) : null}
-    </AccountDetailsContainer>
+    </SafeAreaView>
   );
 };
 

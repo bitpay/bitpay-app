@@ -2,7 +2,16 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import _ from 'lodash';
 import uniqBy from 'lodash.uniqby';
-import styled from 'styled-components/native';
+import {
+  SafeAreaView,
+  ScrollView as RNScrollView,
+  ScrollViewProps,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -51,76 +60,156 @@ import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import FooterButtonContainer from '../../../components/footer/FooterButtonContainer';
 import {useOngoingProcess} from '../../../contexts';
 
-const ReceiveSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  receiveSettingsContainer: {
+    flex: 1,
+  },
+  viewContainer: {
+    padding: 16,
+    flexDirection: 'column',
+  },
+  viewBody: {
+    flexGrow: 1,
+    paddingBottom: 150,
+  },
+  sectionHeader: {
+    marginTop: 20,
+  },
+  addressItem: {
+    alignItems: 'center',
+    borderWidth: 0.75,
+    borderRadius: 8,
+    flexDirection: 'row',
+    height: 55,
+    paddingHorizontal: 15,
+    marginTop: 10,
+    paddingLeft: 2,
+  },
+  addressItemText: {
+    flexGrow: 1,
+    flexShrink: 1,
+    marginLeft: 1,
+  },
+  addressPillContainer: {
+    height: 37,
+    marginRight: 20,
+    width: 100,
+  },
+  walletName: {
+    fontSize: 16,
+  },
+  addButton: {
+    height: 30,
+    width: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 11,
+    marginRight: 9,
+  },
+  moreCurrenciesText: {
+    fontSize: 14,
+  },
+  unusedCurrencies: {
+    flexDirection: 'row',
+  },
+  unusedCurrencyIcons: {
+    flexDirection: 'row',
+    marginRight: 30,
+  },
+});
 
-const ViewContainer = styled.ScrollView`
-  padding: 16px;
-  flex-direction: column;
-`;
+const ReceiveSettingsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.receiveSettingsContainer, style]} {...rest} />
+);
 
-const ViewBody = styled.View`
-  flex-grow: 1;
-  padding-bottom: 150px;
-`;
+const ViewContainer = ({style, ...rest}: ScrollViewProps) => (
+  <RNScrollView style={[styles.viewContainer, style]} {...rest} />
+);
 
-const SectionHeader = styled(H5)`
-  margin-top: 20px;
-`;
+const ViewBody = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.viewBody, style]} {...rest} />
+);
 
-const AddressItem = styled.View`
-  align-items: center;
-  border: 0.75px solid ${Slate};
-  border-color: ${({theme: {dark}}) => (dark ? Slate : Slate30)};
-  border-radius: 8px;
-  flex-direction: row;
-  height: 55px;
-  padding: 0 15px;
-  margin-top: 10px;
-  padding-left: 2px;
-`;
+const SectionHeader = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <H5 ref={ref} style={[styles.sectionHeader, style]} {...rest} />
+  ),
+);
 
-const AddressItemText = styled(Paragraph)`
-  flex-grow: 1;
-  flex-shrink: 1;
-  margin-left: 1px;
-`;
+const AddressItem = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addressItem,
+        {borderColor: theme.dark ? Slate : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AddressPillContainer = styled.View`
-  height: 37px;
-  margin-right: 20px;
-  width: 100px;
-`;
+const AddressItemText = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => (
+  <Paragraph ref={ref} style={[styles.addressItemText, style]} {...rest} />
+));
 
-const WalletName = styled(BaseText)`
-  font-size: 16px;
-`;
+const AddressPillContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.addressPillContainer, style]} {...rest} />
+);
 
-const AddButton = styled.View`
-  height: 30px;
-  width: 30px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  margin-left: 11px;
-  margin-right: 9px;
-`;
+const WalletName = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.walletName, style]} {...rest} />
+  ),
+);
 
-const MoreCurrenciesText = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 14px;
-`;
+const AddButton = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addButton,
+        {backgroundColor: theme.dark ? LightBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const UnusedCurrencies = styled.View`
-  flex-direction: row;
-`;
+const MoreCurrenciesText = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[
+        styles.moreCurrenciesText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
-const UnusedCurrencyIcons = styled.View`
-  flex-direction: row;
-  margin-right: 30px;
-`;
+const UnusedCurrencies = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.unusedCurrencies, style]} {...rest} />
+);
+
+const UnusedCurrencyIcons = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.unusedCurrencyIcons, style]} {...rest} />
+);
 
 const numVisibleCurrencyIcons = 3;
 

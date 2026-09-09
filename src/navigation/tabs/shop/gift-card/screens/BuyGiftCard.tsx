@@ -1,5 +1,11 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {Platform, ScrollView, View} from 'react-native';
+import {
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -13,7 +19,7 @@ import {
   Paragraph,
   TextAlign,
 } from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme as useStyledTheme} from '../../../../../contexts';
 import {
   ActiveOpacity,
   HEIGHT,
@@ -58,88 +64,208 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import GiftCardImage from '../../components/GiftCardImage';
 import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 
-const AmountSublabel = styled.View`
-  padding: 7px 18px;
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 35px;
-`;
+const styles = StyleSheet.create({
+  amountSublabel: {
+    paddingVertical: 7,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderRadius: 35,
+  },
+  amountSublabelText: {
+    fontSize: 14,
+  },
+  buyGiftCardContainer: {
+    flex: 1,
+  },
+  gradientBox: {
+    width: WIDTH,
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  amountContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  amount: {
+    marginTop: 25,
+    marginHorizontal: 0,
+    marginBottom: Platform.OS === 'android' ? 30 : 25,
+    fontSize: 38,
+    fontWeight: '500',
+  },
+  discountContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomWidth: 1,
+    marginTop: -5,
+    padding: 17,
+  },
+  descriptionBox: {
+    width: WIDTH,
+    paddingTop: 20,
+    paddingHorizontal: horizontalPadding,
+    paddingBottom: Platform.OS === 'android' ? 75 : 50,
+  },
+  denomSelectionContainer: {
+    marginBottom: 40,
+    marginTop: 26,
+  },
+  supportedAmounts: {
+    marginTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  supportedAmountsLabel: {
+    marginBottom: 2,
+  },
+  boostPill: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: 30,
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: -10,
+    marginHorizontal: 0,
+    marginBottom: 30,
+    paddingTop: 8,
+    paddingRight: 9,
+    paddingBottom: 8,
+    paddingLeft: 10,
+  },
+});
 
-const AmountSublabelText = styled(Paragraph)`
-  font-size: 14px;
-`;
+const AmountSublabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.amountSublabel,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const BuyGiftCardContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const AmountSublabelText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.amountSublabelText, style]} {...rest} />
+);
 
-const GradientBox = styled(LinearGradient)`
-  width: ${WIDTH}px;
-  align-items: center;
-  flex: 1;
-  justify-content: center;
-`;
+const BuyGiftCardContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.buyGiftCardContainer, style]} {...rest} />
+);
 
-const AmountContainer = styled.View`
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+const GradientBox = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof LinearGradient>) => (
+  <LinearGradient style={[styles.gradientBox, style]} {...rest} />
+);
 
-const Amount = styled(BaseText)`
-  margin: 25px 0 32px;
-  margin-bottom: ${Platform.OS === 'android' ? 30 : 25}px;
-  font-size: 38px;
-  font-weight: 500;
-`;
+const AmountContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.amountContainer, style]} {...rest} />
+);
 
-const DescriptionContainer = styled.View``;
-const DiscountContainer = styled.View`
-  align-items: center;
-  background-color: ${({theme}) => theme.colors.background};
-  justify-content: center;
-  flex-direction: row;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? '#0f0f0f' : Feather)};
-  margin-top: -5px;
-  padding: 17px;
-`;
+const Amount = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.amount, style]} {...rest} />
+);
 
-const DescriptionBox = styled.View`
-  width: ${WIDTH}px;
-  background-color: ${({theme}) =>
-    theme.dark ? theme.colors.background : 'transparent'};
-  padding: 20px ${horizontalPadding}px ${Platform.OS === 'android' ? 75 : 50}px;
-`;
+const DescriptionContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => <View style={style} {...rest} />;
 
-const DenomSelectionContainer = styled.View`
-  margin-bottom: 40px;
-  margin-top: 26px;
-`;
+const DiscountContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.discountContainer,
+        {
+          backgroundColor: theme.colors.background,
+          borderBottomColor: theme.dark ? '#0f0f0f' : Feather,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SupportedAmounts = styled.View`
-  margin-top: 10px;
-  align-items: center;
-  padding: 0 30px;
-`;
+const DescriptionBox = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.descriptionBox,
+        {
+          backgroundColor: theme.dark ? theme.colors.background : 'transparent',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SupportedAmountsLabel = styled(GiftCardDenomText)`
-  margin-bottom: 2px;
-`;
+const DenomSelectionContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.denomSelectionContainer, style]} {...rest} />
+);
 
-const BoostPill = styled.View`
-  align-items: center;
-  align-self: center;
-  justify-self: center;
-  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
-  border-radius: 30px;
-  flex-direction: row;
-  gap: 7px;
-  margin: -10px 0 30px;
-  padding: 8px 9px 8px 10px;
-`;
+const SupportedAmounts = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.supportedAmounts, style]} {...rest} />
+);
+
+const SupportedAmountsLabel = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof GiftCardDenomText>) => (
+  <GiftCardDenomText style={[styles.supportedAmountsLabel, style]} {...rest} />
+);
+
+const BoostPill = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.boostPill,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 

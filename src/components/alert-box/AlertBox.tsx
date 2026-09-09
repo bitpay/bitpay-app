@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, {css} from 'styled-components/native';
+import {StyleSheet, Text, View} from 'react-native';
 import {
   Caution,
   Caution25,
@@ -51,30 +51,21 @@ const palette: AlertPalette = {
   },
 };
 
-const AlertBoxContainer = styled.View<AlertBoxProps>`
-  ${({type}) => {
-    const {background, text} = palette[type || 'default'] || palette.default;
-
-    return css`
-      background-color: ${background};
-      color: ${text};
-    `;
-  }}
-  padding: ${ScreenGutter};
-  border-radius: 4px;
-`;
-
-const AlertBoxMessage = styled.Text<AlertBoxProps>`
-  color: ${({type}) => (palette[type || 'default'] || palette.default).text};
-`;
+const styles = StyleSheet.create({
+  container: {
+    padding: parseInt(ScreenGutter, 10),
+    borderRadius: 4,
+  },
+});
 
 const AlertBox: React.FC<AlertBoxProps> = props => {
   const {type = 'default', children} = props;
+  const colors = palette[type || 'default'] || palette.default;
 
   return (
-    <AlertBoxContainer type={type}>
-      <AlertBoxMessage type={type}>{children}</AlertBoxMessage>
-    </AlertBoxContainer>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <Text style={{color: colors.text}}>{children}</Text>
+    </View>
   );
 };
 

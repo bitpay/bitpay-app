@@ -1,6 +1,6 @@
 import React from 'react';
 import {Svg, Path, G, Mask, Polygon, Rect} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {PaymentMethodKey} from '../../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 import {WithdrawalMethodKey} from '../../../navigation/services/sell-crypto/constants/SellCryptoConstants';
 import {White} from '../../../styles/colors';

@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../contexts';
+import {StyleSheet, View} from 'react-native';
 import {Svg, Path} from 'react-native-svg';
 import {
   White,
@@ -7,7 +8,6 @@ import {
   LightBlack,
   NeutralSlate,
 } from '../../../styles/colors';
-import styled from 'styled-components/native';
 
 const ShareSvg: React.FC<{isDark: boolean}> = ({isDark}) => {
   return (
@@ -20,22 +20,27 @@ const ShareSvg: React.FC<{isDark: boolean}> = ({isDark}) => {
   );
 };
 
-const ShareContainer = styled.View`
-  height: 40px;
-  width: 40px;
-  border-radius: 50px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  shareContainer: {
+    height: 40,
+    width: 40,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const ShareIcon = () => {
   const theme = useTheme();
 
   return (
-    <ShareContainer>
+    <View
+      style={[
+        styles.shareContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+      ]}>
       <ShareSvg isDark={theme.dark} />
-    </ShareContainer>
+    </View>
   );
 };
 

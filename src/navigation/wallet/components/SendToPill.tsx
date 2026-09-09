@@ -1,5 +1,6 @@
 import React, {ReactElement, useState} from 'react';
-import styled from 'styled-components/native';
+import {Pressable, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   BitPay,
   LightBlack,
@@ -24,32 +25,83 @@ interface StyleProps {
   height?: string;
 }
 
-export const PillContainer = styled.Pressable<StyleProps>`
-  background-color: ${({theme: {dark}, accent}) =>
-    dark ? LightBlack : accent === 'action' ? LightBlue : NeutralSlate};
-  flex-direction: row;
-  border-radius: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 11px;
-  height: ${({height}) => (height ? height : '100%')};
-  max-width: 202px;
-`;
+const styles = StyleSheet.create({
+  pillContainer: {
+    flexDirection: 'row',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    maxWidth: 202,
+  },
+  iconContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  pillText: {
+    flexDirection: 'row',
+    marginLeft: 5,
+  },
+  arrowContainer: {
+    marginLeft: 8,
+  },
+});
 
-const IconContainer = styled.View`
-  padding: 10px 0px;
-`;
+export const PillContainer = React.forwardRef<
+  React.ElementRef<typeof Pressable>,
+  StyleProps & React.ComponentProps<typeof Pressable>
+>(({accent, height, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Pressable
+      ref={ref}
+      style={state => [
+        styles.pillContainer,
+        {
+          backgroundColor: theme.dark
+            ? LightBlack
+            : accent === 'action'
+            ? LightBlue
+            : NeutralSlate,
+          height: (height ? height : '100%') as any,
+        },
+        typeof style === 'function' ? style(state) : style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PillContainer.displayName = 'PillContainer';
 
-export const PillText = styled(H7)<StyleProps>`
-  ${({theme: {dark}, accent}) =>
-    !dark && accent === 'action' ? `color: ${BitPay};` : ''};
-  flex-direction: row;
-  margin-left: 5px;
-`;
+const IconContainer = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.iconContainer, style]} {...rest} />
+);
 
-const ArrowContainer = styled.View`
-  margin-left: 8px;
-`;
+export const PillText = React.forwardRef<
+  React.ElementRef<typeof H7>,
+  StyleProps & React.ComponentProps<typeof H7>
+>(({accent, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <H7
+      ref={ref}
+      style={[
+        styles.pillText,
+        !theme.dark && accent === 'action' ? {color: BitPay} : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PillText.displayName = 'PillText';
+
+const ArrowContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.arrowContainer, style]} {...rest} />
+);
 
 const SendToPill = ({
   icon,

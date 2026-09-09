@@ -310,6 +310,32 @@ const getFormatterOptions = (
   return formatterOptions;
 };
 
+const FIAT_FORMATTER_CACHE_LIMIT = 32;
+const fiatFormatterCache = new Map<string, Intl.NumberFormat>();
+
+const formatLocaleNumber = (
+  amount: number,
+  formatterOptions: Intl.NumberFormatOptions,
+): string => {
+  const cacheKey = JSON.stringify(formatterOptions);
+  const cachedFormatter = fiatFormatterCache.get(cacheKey);
+  if (cachedFormatter) {
+    fiatFormatterCache.delete(cacheKey);
+    fiatFormatterCache.set(cacheKey, cachedFormatter);
+    return cachedFormatter.format(amount);
+  }
+
+  const formatter = new Intl.NumberFormat('en-US', formatterOptions);
+  if (fiatFormatterCache.size >= FIAT_FORMATTER_CACHE_LIMIT) {
+    const oldestCacheKey = fiatFormatterCache.keys().next().value;
+    if (oldestCacheKey !== undefined) {
+      fiatFormatterCache.delete(oldestCacheKey);
+    }
+  }
+  fiatFormatterCache.set(cacheKey, formatter);
+  return formatter.format(amount);
+};
+
 export const formatFiatAmount = (
   amount: number,
   currency: string = 'USD',
@@ -323,15 +349,14 @@ export const formatFiatAmount = (
   const currencyDisplay = opts.currencyDisplay || 'symbol';
 
   if (currencyDisplay === 'symbol') {
-    return amount.toLocaleString('en-US', formatterOptions);
+    return formatLocaleNumber(amount, formatterOptions);
   }
 
   let code: string | undefined;
-  let numberString = amount
-    .toLocaleString('en-US', {
-      ...formatterOptions,
-      currencyDisplay: 'code',
-    })
+  let numberString = formatLocaleNumber(amount, {
+    ...formatterOptions,
+    currencyDisplay: 'code',
+  })
     .split('')
     .map(char => {
       if (char.match(/[A-Za-z]/)) {
@@ -446,15 +471,14 @@ export const formatFiatAmountObj = (
   });
 
   if (currencyDisplay === 'symbol') {
-    return {amount: amount.toLocaleString('en-US', formatterOptions)};
+    return {amount: formatLocaleNumber(amount, formatterOptions)};
   }
 
   let code: string | undefined;
-  let numberString = amount
-    .toLocaleString('en-US', {
-      ...formatterOptions,
-      currencyDisplay: 'code',
-    })
+  let numberString = formatLocaleNumber(amount, {
+    ...formatterOptions,
+    currencyDisplay: 'code',
+  })
     .split('')
     .map(char => {
       if (char.match(/[A-Za-z]/)) {

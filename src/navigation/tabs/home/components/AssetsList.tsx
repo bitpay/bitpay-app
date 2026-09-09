@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import AssetRow from './AssetRow';
 import {AssetRowItem} from '../../../../utils/portfolio/assets';
@@ -11,9 +11,17 @@ import {
   shouldForceAssetListSkeleton,
 } from './assetRowLoading';
 
-const List = styled.View`
-  margin: 10px ${ScreenGutter} 10px;
-`;
+const styles = StyleSheet.create({
+  list: {
+    marginTop: 10,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    marginBottom: 10,
+  },
+});
+
+const List: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.list}>{children}</View>
+);
 
 interface Props {
   items: AssetRowItem[];

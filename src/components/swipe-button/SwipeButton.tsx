@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
+import {StyleSheet, View} from 'react-native';
 import RNSwipeButton from 'rn-swipe-button';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {
   NotificationPrimary,
   White,
@@ -9,7 +10,6 @@ import {
 } from '../../styles/colors';
 import SlideArrowSVG from '../../../assets/img/slide-arrow.svg';
 import haptic from '../haptic-feedback/haptic';
-import styled from 'styled-components/native';
 import * as Svg from 'react-native-svg';
 import Animated, {
   Easing,
@@ -30,33 +30,33 @@ export interface SwipeButtonConfig {
 
 const buttonHeight = 77;
 
-const SwipeButtonBackground = styled.View`
-  background-color: ${NotificationPrimary};
-  border-radius: 50px;
-`;
-
-const SwipeButtonContainer = styled.View`
-  padding: 5px 10%;
-`;
-
-const SlideArrow = styled(SlideArrowSVG)`
-  position: absolute;
-  right: 30px;
-  top: 31px;
-  z-index: -1;
-`;
-
-const OverlayContainer = styled.View`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 50px;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-`;
+const styles = StyleSheet.create({
+  swipeButtonBackground: {
+    backgroundColor: NotificationPrimary,
+    borderRadius: 50,
+  },
+  swipeButtonContainer: {
+    paddingVertical: 5,
+    paddingHorizontal: '10%',
+  },
+  slideArrow: {
+    position: 'absolute',
+    right: 30,
+    top: 31,
+    zIndex: -1,
+  },
+  overlayContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+});
 
 const SwipeBitpayLogo = (disabled?: boolean) => {
   const theme = useTheme();
@@ -124,12 +124,13 @@ const SwipeButtonOverlay: React.FC<{
         },
       ]}
       pointerEvents={isVisible ? 'auto' : 'none'}>
-      <OverlayContainer
-        style={{
-          backgroundColor: getBackgroundColor(),
-        }}>
+      <View
+        style={[
+          styles.overlayContainer,
+          {backgroundColor: getBackgroundColor()},
+        ]}>
         {getIcon()}
-      </OverlayContainer>
+      </View>
     </Animated.View>
   );
 };
@@ -147,8 +148,8 @@ const SwipeButton = ({
   const isLoading = state === 'loading';
 
   return (
-    <SwipeButtonContainer>
-      <SwipeButtonBackground>
+    <View style={styles.swipeButtonContainer}>
+      <View style={styles.swipeButtonBackground}>
         <RNSwipeButton
           containerStyles={{
             borderRadius: 50,
@@ -194,10 +195,10 @@ const SwipeButton = ({
           }}
           disabled={disabled}
         />
-        <SlideArrow />
+        <SlideArrowSVG style={styles.slideArrow} />
         <SwipeButtonOverlay isVisible={isLoading} state="loading" />
-      </SwipeButtonBackground>
-    </SwipeButtonContainer>
+      </View>
+    </View>
   );
 };
 

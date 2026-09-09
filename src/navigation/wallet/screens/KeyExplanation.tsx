@@ -1,8 +1,8 @@
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useMemo, useRef, useState} from 'react';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -89,16 +89,15 @@ const KeyExplanationImages = {
   },
 };
 
-const KeyExplanationContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const CarouselContainer = styled.SafeAreaView``;
-
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  keyExplanationContainer: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+});
 
 const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
   const {t} = useTranslation();
@@ -142,8 +141,8 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
   const progressValue = useSharedValue<number>(0);
 
   return (
-    <KeyExplanationContainer>
-      <CarouselContainer>
+    <SafeAreaView style={styles.keyExplanationContainer}>
+      <SafeAreaView>
         <Carousel
           loop={false}
           vertical={false}
@@ -163,9 +162,9 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
           }}
           renderItem={slideProps => <OnboardingSlide {...slideProps} />}
         />
-      </CarouselContainer>
+      </SafeAreaView>
       <CtaContainerAbsolute>
-        <Row>
+        <View style={styles.row}>
           {[...Array(keyExplanationSlides.length)].map((_, index) => {
             return (
               <PaginationDots
@@ -177,7 +176,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
               />
             );
           })}
-        </Row>
+        </View>
         <ActionContainer>
           <Button
             buttonStyle={'primary'}
@@ -195,7 +194,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
           </Button>
         </ActionContainer>
       </CtaContainerAbsolute>
-    </KeyExplanationContainer>
+    </SafeAreaView>
   );
 };
 

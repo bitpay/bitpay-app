@@ -6,7 +6,8 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {Action, LightBlack} from '../../styles/colors';
 import {BitPayB} from './Spinner.Icons';
 
@@ -16,27 +17,24 @@ type SpinnerProps = {
   size?: number;
 };
 
-const SpinnerContainer = styled.View<{size: number}>`
-  height: ${({size}) => size}px;
-  justify-content: center;
-  position: relative;
-  width: ${({size}) => size}px;
-`;
-
-const SpinnerRing = styled(Animated.View)<{size: number}>`
-  border: 3px solid ${({theme}) => (theme.dark ? LightBlack : '#f6f7f8')};
-  border-top-color: ${Action};
-  border-radius: ${({size}) => size}px;
-  height: 100%;
-  width: 100%;
-`;
-
-const SpinnerIconContainer = styled.View`
-  align-self: center;
-  position: absolute;
-`;
+const styles = StyleSheet.create({
+  spinnerContainer: {
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  spinnerRing: {
+    borderWidth: 3,
+    height: '100%',
+    width: '100%',
+  },
+  spinnerIconContainer: {
+    alignSelf: 'center',
+    position: 'absolute',
+  },
+});
 
 const Spinner = (props: SpinnerProps) => {
+  const theme = useTheme();
   const size = Math.max(props.size || DEFAULT_SIZE, 0);
   const scale = 0.5;
   const iconSize = scale * size;
@@ -53,13 +51,23 @@ const Spinner = (props: SpinnerProps) => {
   }));
 
   return (
-    <SpinnerContainer size={size}>
-      <SpinnerRing size={size} style={spin} />
+    <View style={[styles.spinnerContainer, {height: size, width: size}]}>
+      <Animated.View
+        style={[
+          styles.spinnerRing,
+          {
+            borderColor: theme.dark ? LightBlack : '#f6f7f8',
+            borderTopColor: Action,
+            borderRadius: size,
+          },
+          spin,
+        ]}
+      />
 
-      <SpinnerIconContainer>
+      <View style={styles.spinnerIconContainer}>
         <BitPayB size={iconSize} />
-      </SpinnerIconContainer>
-    </SpinnerContainer>
+      </View>
+    </View>
   );
 };
 

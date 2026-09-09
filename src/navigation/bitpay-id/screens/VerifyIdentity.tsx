@@ -1,8 +1,9 @@
 import React, {useEffect} from 'react';
 import {SvgProps} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {StyleSheet, Text, TextProps, View, ViewProps} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useTheme} from '../../../contexts';
 import {H2, H3, Paragraph} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -25,50 +26,103 @@ import IconKycStatusPending from '../../../../assets/img/kyc_status_pending.svg'
 import IconKycStatusDenied from '../../../../assets/img/kyc_status_denied.svg';
 import IconKycGetVerified from '../../../../assets/img/kyc_get_verified.svg';
 
-const Container = styled(SafeAreaView)`
-  flex: 1;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingVertical: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  content: {
+    flex: 1,
+    paddingVertical: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  iconStatus: {
+    marginBottom: 8,
+  },
+  title: {
+    textAlign: 'left',
+  },
+  body: {
+    textAlign: 'left',
+    fontWeight: '400',
+  },
+  buttonContainer: {
+    marginTop: 32,
+  },
+  getVerifiedTitle: {
+    fontSize: 31,
+    lineHeight: 38,
+    textAlign: 'left',
+    fontWeight: '700',
+    marginBottom: 32,
+  },
+  illustrationContainer: {
+    borderRadius: 32,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+});
 
-const Content = styled.View`
-  flex: 1;
-  padding: 0 ${ScreenGutter};
-`;
+const Container = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.container, style]} {...rest} />
+);
 
-const IconStatus = styled.View`
-  margin-bottom: 8px;
-`;
+const Content = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.content, style]} {...rest} />
+);
 
-const Title = styled(H3)`
-  text-align: left;
-`;
+const IconStatus = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.iconStatus, style]} {...rest} />
+);
 
-const Body = styled(Paragraph)`
-  text-align: left;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-  font-weight: 400;
-`;
+const Title = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <H3 ref={ref} style={[styles.title, style]} {...rest} />
+));
 
-const ButtonContainer = styled.View`
-  margin-top: 32px;
-`;
+const Body = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[
+        styles.body,
+        {color: theme.dark ? NeutralSlate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
-const GetVerifiedTitle = styled(H2)`
-  font-size: 31px;
-  line-height: 38px;
-  text-align: left;
-  font-weight: 700;
-  margin-bottom: 32px;
-`;
+const ButtonContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.buttonContainer, style]} {...rest} />
+);
 
-const IllustrationContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-radius: 32px;
-  padding: 24px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
-`;
+const GetVerifiedTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <H2 ref={ref} style={[styles.getVerifiedTitle, style]} {...rest} />
+  ),
+);
+
+const IllustrationContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.illustrationContainer,
+        {backgroundColor: theme.dark ? LightBlack : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 // notStarted renders onboarding; every other state uses STATE_CONFIG below.
 type KycStateConfig = {

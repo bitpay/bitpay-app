@@ -10,6 +10,7 @@ import {
 } from '../../../utils/portfolio/balanceChartData';
 import {
   buildAssetPnlSummaryCacheKey,
+  buildAssetPnlSummaryCompatibilityKey,
   findCompatibleAssetPnlSummaryCacheEntry,
   getAssetPnlSummaryCacheEntry,
   loadAssetPnlSummary,
@@ -60,13 +61,10 @@ export function useAssetPnlSummaries(args: {
   refreshToken?: string | number;
 }): Record<string, AssetPnlSummaryState> {
   const enabled = args.enabled !== false;
-  const [cacheRevision, setCacheRevision] = useState(0);
-
-  useEffect(() => {
-    return subscribeAssetPnlSummaryCache(() => {
-      setCacheRevision(revision => revision + 1);
-    });
-  }, []);
+  const [cacheSnapshot, setCacheSnapshot] = useState(() => ({
+    findCompatibleEntry: findCompatibleAssetPnlSummaryCacheEntry,
+    getEntry: getAssetPnlSummaryCacheEntry,
+  }));
 
   const historicalRateWallets = useMemo(() => {
     const byWalletId = new Map<string, StoredWallet>();
@@ -142,7 +140,7 @@ export function useAssetPnlSummaries(args: {
         balanceOffset: spec.balanceOffset,
       });
       const cacheKey = buildAssetPnlSummaryCacheKey(identity);
-      const exactCacheEntry = getAssetPnlSummaryCacheEntry(cacheKey);
+      const exactCacheEntry = cacheSnapshot.getEntry(cacheKey);
       const allowUnavailableSummary = spec.allowUnavailableSummary !== false;
       const hasDisplayableExactSummary =
         !!exactCacheEntry?.summary &&
@@ -154,7 +152,7 @@ export function useAssetPnlSummaries(args: {
         !!exactCacheEntry?.error;
       const compatibleCacheEntry =
         !hasDisplayableExactSummary && !hasDisplayableExactError
-          ? findCompatibleAssetPnlSummaryCacheEntry(identity)
+          ? cacheSnapshot.findCompatibleEntry(identity)
           : undefined;
       const cacheEntry =
         hasDisplayableExactSummary || hasDisplayableExactError
@@ -189,11 +187,41 @@ export function useAssetPnlSummaries(args: {
     return next;
   }, [
     args.specs,
-    cacheRevision,
+    cacheSnapshot,
     enabled,
     historicalRateDeps.cache,
     historicalRateDeps.error,
-    historicalRateDeps.loading,
+  ]);
+  const subscribedCacheKeysSignature = Object.values(statesByKey)
+    .map(state => state.cacheKey)
+    .sort((left, right) => left.localeCompare(right))
+    .join('\u0000');
+  const subscribedCompatibilityKeysSignature = Object.values(statesByKey)
+    .map(state => buildAssetPnlSummaryCompatibilityKey(state.identity))
+    .sort((left, right) => left.localeCompare(right))
+    .join('\u0000');
+
+  useEffect(() => {
+    if (!enabled || !subscribedCacheKeysSignature) {
+      return;
+    }
+
+    return subscribeAssetPnlSummaryCache(
+      subscribedCacheKeysSignature.split('\u0000'),
+      () => {
+        setCacheSnapshot({
+          findCompatibleEntry: findCompatibleAssetPnlSummaryCacheEntry,
+          getEntry: getAssetPnlSummaryCacheEntry,
+        });
+      },
+      subscribedCompatibilityKeysSignature
+        ? subscribedCompatibilityKeysSignature.split('\u0000')
+        : [],
+    );
+  }, [
+    enabled,
+    subscribedCacheKeysSignature,
+    subscribedCompatibilityKeysSignature,
   ]);
 
   useEffect(() => {

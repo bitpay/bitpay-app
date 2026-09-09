@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import styled, {css} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
@@ -58,102 +59,88 @@ import {
   TitleContainer,
   viewOnBlockchain,
 } from './SendingToERC20Warning';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
-const CopyToClipboard = styled(TouchableOpacity)`
-  border: 1px solid #9ba3ae;
-  border-radius: 4px;
-  padding: 0 10px;
-  height: 55px;
-  align-items: center;
-  flex-direction: row;
-`;
+const styles = StyleSheet.create({
+  copyToClipboard: {
+    borderWidth: 1,
+    borderColor: '#9ba3ae',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    height: 55,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  addressText: {
+    fontSize: 16,
+    paddingLeft: 5,
+    paddingRight: 20,
+  },
+  copyImgContainer: {
+    borderRightWidth: 1,
+    paddingRight: 10,
+    height: 25,
+    justifyContent: 'center',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    margin: 15,
+  },
+  qrCodeBackground: {
+    backgroundColor: White,
+    width: isNarrowHeight ? 190 : 225,
+    height: isNarrowHeight ? 190 : 225,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  loadingContainer: {
+    minHeight: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  receiveAddressContainer: {
+    minHeight: 500,
+  },
+  warningContainer: {
+    borderRadius: 4,
+    padding: isNarrowHeight ? 5 : 20,
+    marginBottom: 20,
+  },
+  warningHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  warningTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  warningDescription: {
+    fontSize: 14,
+    paddingHorizontal: 10,
+    lineHeight: 20,
+  },
+  warningDescriptionToken: {
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+  },
+});
 
-const AddressText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
-  padding: 0 20px 0 5px;
-`;
-
-const CopyImgContainer = styled.View`
-  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : LightBlue)};
-  border-right-width: 1px;
-  padding-right: 10px;
-  height: 25px;
-  justify-content: center;
-`;
-
-const QRCodeContainer = styled.View`
-  align-items: center;
-  margin: 15px;
-`;
-
-const QRCodeBackground = styled.View`
-  background-color: ${White};
-  width: ${isNarrowHeight ? '190px' : '225px'};
-  height: ${isNarrowHeight ? '190px' : '225px'};
-  justify-content: center;
-  align-items: center;
-  border-radius: 12px;
-`;
-
-const LoadingContainer = styled.View`
-  min-height: 300px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const LoadingText = styled(H4)`
-  color: ${({theme}) => theme.colors.text};
-  margin: 10px 0;
-  text-align: center;
-`;
-
-const ReceiveAddressContainer = styled(SheetContainer)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  min-height: 500px;
-`;
-
-const CloseButtonText = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-`;
-
-const WarningContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 4px;
-  padding: ${isNarrowHeight ? '5px' : '20px'}
-  margin-bottom: 20px;
-`;
-
-const WarningHeader = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 0px;
-`;
-
-const WarningTitle = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme}) => theme.colors.text};
-  font-weight: bold;
-`;
-
-const WarningDescription = styled(BaseText)<{isToken?: boolean}>`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  padding: 0px 10px;
-  ${({isToken}) =>
-    isToken &&
-    css`
-      padding-bottom: 20px;
-      border-bottom-width: 1px;
-      border-bottom-color: ${({theme: {dark}}) =>
-        dark ? LightBlack : LightBlue};
-    `};
-  line-height: 20px;
-`;
+const CopyToClipboard: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => <TouchableOpacity style={[styles.copyToClipboard, style]} {...props} />;
 
 interface Props {
   isVisible: boolean;
@@ -164,6 +151,7 @@ interface Props {
 
 const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const [copied, setCopied] = useState(false);
@@ -184,7 +172,11 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
     }
   };
 
-  const setIsSingleAddress = () => {
+  useEffect(() => {
+    if (!isVisible || wasInit) {
+      return;
+    }
+
     wallet?.getStatus({network: wallet.network}, (err: any, status: Status) => {
       if (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
@@ -193,11 +185,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
         setSingleAddress(status?.wallet?.singleAddress);
       }
     });
-  };
-
-  useEffect(() => {
-    setIsSingleAddress();
-  }, []);
+  }, [isVisible, logger, wallet, wasInit]);
 
   useEffect(() => {
     if (!copied) {
@@ -334,7 +322,11 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={_closeModal}>
-      <ReceiveAddressContainer>
+      <SheetContainer
+        style={[
+          styles.receiveAddressContainer,
+          {backgroundColor: theme.dark ? LightBlack : White},
+        ]}>
         {!singleAddress && isUtxo ? (
           <ReceiveAddressHeader
             onPressRefresh={() => createAddress(true)}
@@ -348,43 +340,76 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
             <CopyToClipboard
               onPress={copyToClipboard}
               activeOpacity={ActiveOpacity}>
-              <CopyImgContainer>
+              <View
+                style={[
+                  styles.copyImgContainer,
+                  {borderRightColor: theme.dark ? '#46494E' : LightBlue},
+                ]}>
                 {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
-              </CopyImgContainer>
-              <AddressText numberOfLines={1} ellipsizeMode={'middle'}>
+              </View>
+              <BaseText
+                style={[
+                  styles.addressText,
+                  {color: theme.dark ? NeutralSlate : '#6F7782'},
+                ]}
+                numberOfLines={1}
+                ellipsizeMode={'middle'}>
                 {protocolPrefix
                   ? address.replace(protocolPrefix + ':', '')
                   : address}
-              </AddressText>
+              </BaseText>
             </CopyToClipboard>
 
-            <QRCodeContainer>
-              <QRCodeBackground>
+            <View style={styles.qrCodeContainer}>
+              <View style={styles.qrCodeBackground}>
                 <QRCode value={address} size={isNarrowHeight ? 180 : 200} />
-              </QRCodeBackground>
-            </QRCodeContainer>
+              </View>
+            </View>
           </>
         ) : loading ? (
-          <LoadingContainer>
-            <LoadingText>{t('Generating Address...')}</LoadingText>
-          </LoadingContainer>
+          <View style={styles.loadingContainer}>
+            <H4 style={[styles.loadingText, {color: theme.colors.text}]}>
+              {t('Generating Address...')}
+            </H4>
+          </View>
         ) : (
-          <LoadingContainer>
+          <View style={styles.loadingContainer}>
             <GhostSvg />
-            <LoadingText>
+            <H4 style={[styles.loadingText, {color: theme.colors.text}]}>
               {t('Something went wrong. Please try again.')}
-            </LoadingText>
-          </LoadingContainer>
+            </H4>
+          </View>
         )}
 
         {context &&
         ['accountdetails', 'globalselect'].includes(context) &&
         IsVMChain(wallet.chain) ? (
-          <WarningContainer>
-            <WarningHeader>
+          <View
+            style={[
+              styles.warningContainer,
+              {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+            ]}>
+            <View style={styles.warningHeader}>
               <WarningSvg />
-              <WarningDescription isToken={wallet.credentials.token?.address}>
-                <WarningTitle>{t('Warning!')}</WarningTitle>
+              <BaseText
+                style={[
+                  styles.warningDescription,
+                  {color: theme.dark ? White : Black},
+                  wallet.credentials.token?.address
+                    ? [
+                        styles.warningDescriptionToken,
+                        {
+                          borderBottomColor: theme.dark
+                            ? LightBlack
+                            : LightBlue,
+                        },
+                      ]
+                    : null,
+                ]}>
+                <BaseText
+                  style={[styles.warningTitle, {color: theme.colors.text}]}>
+                  {t('Warning!')}
+                </BaseText>
                 {'\n'}
                 {IsSVMChain(wallet.chain)
                   ? t(
@@ -403,15 +428,36 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
                         ),
                       },
                     )}
-              </WarningDescription>
-            </WarningHeader>
-          </WarningContainer>
+              </BaseText>
+            </View>
+          </View>
         ) : (
-          <WarningContainer>
-            <WarningHeader>
+          <View
+            style={[
+              styles.warningContainer,
+              {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+            ]}>
+            <View style={styles.warningHeader}>
               <WarningSvg />
-              <WarningDescription isToken={wallet.credentials.token?.address}>
-                <WarningTitle>{t('Warning!')}</WarningTitle>
+              <BaseText
+                style={[
+                  styles.warningDescription,
+                  {color: theme.dark ? White : Black},
+                  wallet.credentials.token?.address
+                    ? [
+                        styles.warningDescriptionToken,
+                        {
+                          borderBottomColor: theme.dark
+                            ? LightBlack
+                            : LightBlue,
+                        },
+                      ]
+                    : null,
+                ]}>
+                <BaseText
+                  style={[styles.warningTitle, {color: theme.colors.text}]}>
+                  {t('Warning!')}
+                </BaseText>
                 {'\n'}
                 {t(
                   'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
@@ -422,8 +468,8 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
                     ),
                   },
                 )}
-              </WarningDescription>
-            </WarningHeader>
+              </BaseText>
+            </View>
             {wallet.credentials.token?.address ? (
               <>
                 <ContractHeaderContainer>
@@ -441,12 +487,14 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
                 </ContractAddressText>
               </>
             ) : null}
-          </WarningContainer>
+          </View>
         )}
         <CloseButtonContainer onPress={_closeModal}>
-          <CloseButtonText>{t('CLOSE')}</CloseButtonText>
+          <Paragraph style={{color: theme.dark ? White : Action}}>
+            {t('CLOSE')}
+          </Paragraph>
         </CloseButtonContainer>
-      </ReceiveAddressContainer>
+      </SheetContainer>
     </SheetModal>
   );
 };

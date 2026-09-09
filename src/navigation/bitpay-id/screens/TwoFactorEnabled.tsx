@@ -1,5 +1,5 @@
 import React, {useRef} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, View, ViewProps, StyleSheet} from 'react-native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';
@@ -20,21 +20,41 @@ type TwoFactorEnabledProps = NativeStackScreenProps<
 
 export type TwoFactorEnabledScreenParamList = undefined;
 
-const TwoFactorEnabledScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  twoFactorEnabledScreenContainer: {
+    flex: 1,
+  },
+  viewContainer: {
+    paddingTop: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+    paddingBottom: 20,
+    height: '100%',
+  },
+  viewBody: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+});
 
-const ViewContainer = styled.View`
-  padding: 0 ${ScreenGutter} 20px;
-  height: 100%;
-`;
+const TwoFactorEnabledScreenContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView
+    style={[styles.twoFactorEnabledScreenContainer, style]}
+    {...rest}
+  />
+);
 
-const ViewBody = styled.View`
-  flex-grow: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-`;
+const ViewContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.viewContainer, style]} {...rest} />
+);
+
+const ViewBody = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.viewBody, style]} {...rest} />
+);
 
 const TwoFactorEnabled = ({navigation}: TwoFactorEnabledProps) => {
   const {t} = useTranslation();

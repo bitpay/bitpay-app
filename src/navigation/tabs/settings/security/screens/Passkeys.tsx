@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {SettingsContainer} from '../../SettingsRoot';
 import {
   ScreenGutter,
@@ -45,100 +46,249 @@ import {BaseText} from '../../../../../components/styled/Text';
 import {useOngoingProcess} from '../../../../../contexts';
 import {logManager} from '../../../../../managers/LogManager';
 
-const ScrollContainer = styled.ScrollView``;
+const styles = StyleSheet.create({
+  passkeyBoxContainer: {
+    marginVertical: 20,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+  iconContainer: {
+    marginTop: 10,
+  },
+  passkeyTitleContainer: {
+    marginTop: 20,
+    marginRight: 0,
+    marginBottom: 10,
+    marginLeft: 5,
+  },
+  passkeyTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  passkeyDescription: {
+    fontSize: 14,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  optionContainer: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  optionTextContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'space-around',
+    flexDirection: 'column',
+    marginHorizontal: 25,
+  },
+  optionTitleText: {
+    fontStyle: 'normal',
+    fontWeight: '500',
+    fontSize: 18,
+    lineHeight: 28,
+  },
+  optionIconContainer: {
+    justifyContent: 'center',
+    width: 24,
+  },
+  cardIntro: {
+    marginVertical: 15,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingBottom: 16,
+    backgroundColor: 'transparent',
+    gap: 25,
+  },
+  titleIntro: {
+    padding: 16,
+    fontWeight: '500',
+    fontSize: 16,
+    borderBottomWidth: 1,
+  },
+  rowIntro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  iconContainerIntro: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  descriptionIntro: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+  },
+});
 
-const PasskeyBoxContainer = styled.View`
-  margin: 20px ${ScreenGutter};
-  padding: 0 ${ScreenGutter};
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
-  border-radius: 10px;
-`;
+const ScrollContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof ScrollView>) => (
+  <ScrollView style={style} {...rest} />
+);
 
-const IconContainer = styled.View`
-  margin-top: 10px;
-`;
+const PasskeyBoxContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.passkeyBoxContainer,
+        {borderColor: theme.dark ? LightBlack : Feather},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PasskeyTitleContainer = styled.View`
-  margin: 20px 0 10px 5px;
-`;
+const IconContainer = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.iconContainer, style]} {...rest} />
+);
 
-const PasskeyTitle = styled(SettingTitle)`
-  font-size: 16px;
-  font-weight: bold;
-`;
+const PasskeyTitleContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.passkeyTitleContainer, style]} {...rest} />
+);
 
-const PasskeyDescription = styled(SettingDescription)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-top: 5px;
-  margin-bottom: 10px;
-`;
+const PasskeyTitle = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SettingTitle>) => (
+  <SettingTitle style={[styles.passkeyTitle, style]} {...rest} />
+);
 
-const OptionContainer = styled(TouchableOpacity)<SheetParams>`
-  flex-direction: row;
-  align-items: stretch;
-  padding-${({placement}) => placement}: 41px;
-`;
+const PasskeyDescription = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SettingDescription>) => {
+  const theme = useTheme();
+  return (
+    <SettingDescription
+      style={[
+        styles.passkeyDescription,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OptionTextContainer = styled.View`
-  align-items: flex-start;
-  justify-content: space-around;
-  flex-direction: column;
-  margin: 0 25px;
-`;
+const OptionContainer = ({
+  placement,
+  style,
+  ...rest
+}: SheetParams & React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity
+    style={[
+      styles.optionContainer,
+      placement === 'top' ? {paddingTop: 41} : {paddingBottom: 41},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const OptionTitleText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 28px;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-`;
+const OptionTextContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.optionTextContainer, style]} {...rest} />
+);
 
-const OptionIconContainer = styled.View`
-  justify-content: center;
-  width: 24px;
-`;
+const OptionTitleText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.optionTitleText,
+        {color: theme.dark ? White : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CardIntro = styled.View`
-  margin: 15px ${ScreenGutter};
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 8px;
-  padding-bottom: 16px;
-  background-color: transparent;
-  gap: 25px;
-`;
+const OptionIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.optionIconContainer, style]} {...rest} />
+);
 
-const TitleIntro = styled(BaseText)`
-  padding: 16px;
-  font-weight: 500;
-  font-size: 16px;
-  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-bottom-width: 1px;
-`;
+const CardIntro = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.cardIntro,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const RowIntro = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 20px;
-  margin-left: 20px;
-  margin-right: 20px;
-`;
+const TitleIntro = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.titleIntro,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const IconContainerIntro = styled.View`
-  margin-right: 12px;
-  margin-top: 2px;
-`;
+const RowIntro = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.rowIntro, style]} {...rest} />
+);
 
-const DescriptionIntro = styled(BaseText)`
-  flex: 1;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const IconContainerIntro = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.iconContainerIntro, style]} {...rest} />
+);
+
+const DescriptionIntro = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.descriptionIntro,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const PasskeyScreen: React.FC = () => {
   const {t} = useTranslation();

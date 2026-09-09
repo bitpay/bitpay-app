@@ -1,19 +1,18 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useEffect, useLayoutEffect, useRef, useCallback} from 'react';
-import {ScrollView} from 'react-native';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
-import {OnboardingImage} from '../components/Containers';
-import Button from '../../../components/button/Button';
+import React, {useEffect, useLayoutEffect, useCallback} from 'react';
 import {
-  ActionContainer,
-  CtaContainer,
-  ImageContainer,
-  isNarrowHeight,
-  TextContainer,
-  TitleContainer,
-} from '../../../components/styled/Containers';
-import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {useTheme} from '../../../contexts';
+import {OnboardingImage} from '../components/Containers';
+import {isNarrowHeight, WIDTH} from '../../../components/styled/Containers';
+import {Action, SlateDark, Slate30, White} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {useTranslation} from 'react-i18next';
@@ -28,11 +27,81 @@ import {sleep} from '../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useScreenRenderPerformance} from '../../../utils/hooks/useScreenRenderPerformance';
 
-const CreateKeyContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: stretch;
-`;
+const styles = StyleSheet.create({
+  createKeyContainer: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+  imageContainer: {
+    marginVertical: 10,
+    marginHorizontal: 0,
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  titleContainer: {
+    width: WIDTH * 0.75,
+  },
+  titleText: {
+    fontSize: 25,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    letterSpacing: 0,
+    textAlign: 'center',
+  },
+  textContainer: {
+    marginTop: 10,
+    padding: 10,
+    width: WIDTH * 0.9,
+  },
+  bodyText: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    lineHeight: 25,
+    letterSpacing: 0,
+    textAlign: 'center',
+  },
+  ctaContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignSelf: 'stretch',
+    flexDirection: 'column',
+    marginTop: 30,
+  },
+  actionContainer: {
+    marginVertical: 5,
+    marginHorizontal: 0,
+  },
+  primaryButton: {
+    height: 63,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Action,
+    backgroundColor: Action,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: White,
+  },
+  secondaryButton: {
+    height: 63,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Action,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 18,
+    fontWeight: '500',
+  },
+});
+
 const KeyImage = {
   light: (
     <OnboardingImage
@@ -61,13 +130,15 @@ const CreateOrImportKey = ({
   OnboardingScreens.CREATE_KEY
 >) => {
   const {t} = useTranslation();
+  const onPerformanceLayout = useScreenRenderPerformance('CreateKey');
   const themeType = useThemeType();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const isImportLedgerModalVisible = useAppSelector(
     ({APP}) => APP.isImportLedgerModalVisible,
   );
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   useAndroidBackHandler(() => true);
 
@@ -137,42 +208,47 @@ const CreateOrImportKey = ({
       navigation.navigate('TermsOfUse');
     }
   }, [isImportLedgerModalVisible]);
+
+  const textColor = theme.colors.text;
+  const bodyColor = theme.dark ? Slate30 : SlateDark;
+  const secondaryTextColor = theme.dark ? theme.colors.text : Action;
+
   return (
-    <CreateKeyContainer testID="create-key-view">
+    <SafeAreaView
+      style={styles.createKeyContainer}
+      testID="create-key-view"
+      onLayout={onPerformanceLayout}>
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
         }}>
-        <ImageContainer>{KeyImage[themeType]}</ImageContainer>
-        <TitleContainer>
-          <TextAlign align={'center'}>
-            <H3>{t('Create a key or import an existing key')}</H3>
-          </TextAlign>
-        </TitleContainer>
-        <TextContainer>
-          <TextAlign align={'center'}>
-            <Paragraph>
-              {t(
-                "Store your assets safely and securely with BitPay's self-custody app.",
-              )}
-            </Paragraph>
-          </TextAlign>
-        </TextContainer>
-        <CtaContainer testID="cta-container">
-          <ActionContainer>
-            <Button
+        <View style={styles.imageContainer}>{KeyImage[themeType]}</View>
+        <View style={styles.titleContainer}>
+          <Text style={[styles.titleText, {color: textColor}]}>
+            {t('Create a key or import an existing key')}
+          </Text>
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={[styles.bodyText, {color: bodyColor}]}>
+            {t(
+              "Store your assets safely and securely with BitPay's self-custody app.",
+            )}
+          </Text>
+        </View>
+        <View testID="cta-container" style={styles.ctaContainer}>
+          <View style={styles.actionContainer}>
+            <TouchableOpacity
               testID="create-a-key-button"
               accessibilityLabel="Create a key"
-              buttonStyle={'primary'}
-              onPress={onCreateKeyPress}>
-              {t('Create a Key')}
-            </Button>
-          </ActionContainer>
-          <ActionContainer>
-            <Button
+              onPress={onCreateKeyPress}
+              style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>{t('Create a Key')}</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.actionContainer}>
+            <TouchableOpacity
               testID="i-already-have-a-key-button"
               accessibilityLabel="I already have a key"
-              buttonStyle={'secondary'}
               onPress={() => {
                 dispatch(
                   Analytics.track('Clicked Import Key', {
@@ -187,22 +263,20 @@ const CreateOrImportKey = ({
                 navigation.navigate('Import', {
                   context: 'onboarding',
                 });
-              }}>
-              {t('I already have a Key')}
-            </Button>
-          </ActionContainer>
-          {/* <ActionContainer>
-            <Button
-              buttonStyle={'secondary'}
-              onPress={() => {
-                dispatch(AppActions.importLedgerModalToggled(true));
-              }}>
-              {t('Connect your Ledger Nano X')}
-            </Button>
-          </ActionContainer> */}
-        </CtaContainer>
+              }}
+              style={styles.secondaryButton}>
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  {color: secondaryTextColor},
+                ]}>
+                {t('I already have a Key')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
-    </CreateKeyContainer>
+    </SafeAreaView>
   );
 };
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {DirectoryDiscount} from '../../../../store/shop/shop.models';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
@@ -11,13 +10,23 @@ interface DiscountTextProps {
   fontWeight?: number;
 }
 
-const DiscountText = styled(BaseText)<DiscountTextProps>`
-  ${({fontSize}) => (fontSize ? `font-size: ${fontSize}px;` : '')};
-  ${({fontSize}) =>
-    fontSize ? `line-height: ${Math.round(fontSize * 1.3)}px;` : ''};
-  ${({fontWeight}) => `font-weight: ${fontWeight ?? 600};`};
-  ${({color}) => (color ? `color: ${color};` : '')};
-`;
+const DiscountText = ({
+  fontSize,
+  fontWeight,
+  color,
+  style,
+  ...rest
+}: DiscountTextProps & React.ComponentProps<typeof BaseText>) => (
+  <BaseText
+    style={[
+      fontSize ? {fontSize, lineHeight: Math.round(fontSize * 1.3)} : null,
+      {fontWeight: `${fontWeight ?? 600}` as any},
+      color ? {color} : null,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 const getDisplayablePercentage = (percentage: number) => {
   return parseFloat((getBoostPercentage(percentage!) * 100).toFixed(1));

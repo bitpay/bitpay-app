@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg, G, Polygon} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {White} from '../../../../styles/colors';
 
 const RampLogoSvg: React.FC<{
