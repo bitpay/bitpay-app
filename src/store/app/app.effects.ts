@@ -32,6 +32,7 @@ import {CardScreens} from '../../navigation/card/CardStack';
 import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
+import {IsSVMChain} from '../wallet/utils/currency';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {
@@ -1270,6 +1271,9 @@ export const incomingShopLink =
     return {merchantName};
   };
 
+export const TOKEN_WALLET_LOOKUP_TIMEOUT = 3000;
+export const TOKEN_WALLET_LOOKUP_INTERVAL = 500;
+
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
@@ -1332,25 +1336,52 @@ export const incomingLink =
             return;
           }
 
-          const key = keys[keyId];
           const tokenAddress =
             params.tokenAddress && params.tokenAddress !== 'null'
               ? params.tokenAddress
               : undefined;
           const txid =
             params.txid && params.txid !== 'null' ? params.txid : undefined;
-          const tokenWalletId =
-            `${wallet.credentials.walletId}-${tokenAddress}`.toLowerCase();
-          const targetWallet =
-            (tokenAddress &&
-              key.wallets.find(
+
+          let targetWallet = wallet;
+
+          if (tokenAddress) {
+            const tokenWalletId =
+              `${wallet.credentials.walletId}-${tokenAddress}`.toLowerCase();
+            const findTokenWallet = () =>
+              getState().WALLET.keys[keyId]?.wallets.find(
                 (w: Wallet) =>
                   w.credentials.walletId.toLowerCase() === tokenWalletId,
-              )) ||
-            wallet;
+              );
+
+            let tokenWallet = findTokenWallet();
+
+            for (
+              let waited = 0;
+              !tokenWallet && waited < TOKEN_WALLET_LOOKUP_TIMEOUT;
+              waited += TOKEN_WALLET_LOOKUP_INTERVAL
+            ) {
+              await sleep(TOKEN_WALLET_LOOKUP_INTERVAL);
+              tokenWallet = findTokenWallet();
+            }
+
+            if (!tokenWallet) {
+              logManager.info(
+                'Deeplink: token wallet not found. Opening the account.',
+              );
+              navigationRef.navigate(WalletScreens.ACCOUNT_DETAILS, {
+                keyId,
+                selectedAccountAddress: wallet.receiveAddress,
+                isSvmAccount: IsSVMChain(wallet.credentials.chain),
+              });
+              return;
+            }
+
+            targetWallet = tokenWallet;
+          }
 
           navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
-            key,
+            key: getState().WALLET.keys[keyId] || keys[keyId],
             walletId: targetWallet.credentials.walletId,
             copayerId: targetWallet.credentials.copayerId,
             txid,
