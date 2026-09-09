@@ -22,3 +22,8 @@ export interface LogEntry {
    */
   message: string;
 }
+
+export const sanitizeLogMessage = (message: string) =>
+  message
+    .replace('/xpriv.*/', '[...]')
+    .replace('/walletPrivKey.*/', 'walletPrivKey:[...]');
