@@ -51,6 +51,7 @@ import {
   calculateUsdToAltFiat,
   getBuyCryptoFiatLimits,
   getMoonpayEmbeddedAnonymousCredentials,
+  getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedEnabled,
   getMoonpayEmbeddedStatus,
@@ -2497,6 +2498,7 @@ const BuyAndSellRoot = ({
         isMoonpayEmbeddedPaymentMethodEnabled(
           paymentMethod?.method,
           buyCryptoConfig,
+          getMoonpayEmbeddedApplePaySupported(),
         );
       if (moonpayEmbeddedEnabled && isMoonpayEmbeddedPaymentMethod) {
         const embeddedStatus = getMoonpayEmbeddedStatus();
@@ -2739,7 +2741,7 @@ const BuyAndSellRoot = ({
         destinationChain,
       ),
       paymentMethodMoonpayFormat:
-        getMoonpayPaymentMethodFormat(paymentMethod.method) ?? undefined,
+        getMoonpayPaymentMethodFormat(paymentMethod.method, true) ?? undefined,
     };
 
     const checkoutParams = {
