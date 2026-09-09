@@ -52,6 +52,7 @@ import {
   PaymentMethodKey,
 } from '../buy-crypto/constants/BuyCryptoConstants';
 import {
+  getMoonpayCardBrandLabel,
   getMoonpayFixedCurrencyAbbreviation,
   getMoonpayPaymentMethodFormat,
   moonpayEnv,
@@ -328,6 +329,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   >();
   const [loadingCardPaymentMethod, setLoadingCardPaymentMethod] =
     useState(false);
+  const [cardPaymentMethodsFailed, setCardPaymentMethodsFailed] =
+    useState(false);
+  const [cardQuoteFailed, setCardQuoteFailed] = useState(false);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [showSelectCardModal, setShowSelectCardModal] = useState(false);
 
@@ -337,6 +341,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const [cardQuoteSignature, setCardQuoteSignature] = useState<string | null>(
     null,
   );
+  const [cardPaymentStarted, setCardPaymentStarted] = useState(false);
   const [cardPaymentButtonState, setCardPaymentButtonState] =
     useState<ButtonState>();
 
@@ -386,6 +391,16 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
   };
 
+  // Stops the scheduled refresh but keeps quoteReqDataRef, so the quote can
+  // still be re-fetched on demand (e.g. when the buy frame reports the quote
+  // expired mid-payment).
+  const stopQuoteRefreshTimer = (): void => {
+    if (quoteRefreshTimerRef.current) {
+      clearTimeout(quoteRefreshTimerRef.current);
+      quoteRefreshTimerRef.current = undefined;
+    }
+  };
+
   const cancelQuoteRefresh = (): void => {
     if (quoteRefreshTimerRef.current) {
       clearTimeout(quoteRefreshTimerRef.current);
@@ -415,8 +430,18 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       const newQuoteData: MoonpayQuoteEmbeddedData =
         await moonpayGetQuoteEmbedded(reqData);
       if (newQuoteData?.signature) {
-        // setQuoteSignature(newQuoteData.signature);
         applePayFrameRef.current?.updateQuote(newQuoteData.signature);
+        if (reqData.paymentMethodId) {
+          const executableSignature = newQuoteData.executable
+            ? newQuoteData.signature
+            : null;
+          setCardQuoteSignature(executableSignature);
+          if (executableSignature) {
+            // Pushes the quote into an already-mounted buy frame instead of
+            // remounting it (the signature is part of the frame URL).
+            buyFrameRef.current?.updateQuote(executableSignature);
+          }
+        }
       }
       setEmbeddedQuoteData(newQuoteData);
       if (newQuoteData?.source?.amount && newQuoteData?.fees) {
@@ -448,7 +473,11 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         ', ' +
         offer.fiatAmount +
         ' ' +
-        offer.fiatCurrency,
+        offer.fiatCurrency +
+        ' | paymentMethod: ' +
+        (paymentMethod?.method ?? 'unknown') +
+        ' | moonpayFormat: ' +
+        JSON.stringify(moonpayFormatData),
     );
     let _paymentMethod: MoonpayPaymentType | undefined =
       getMoonpayPaymentMethodFormat(
@@ -504,6 +533,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   // user can pay without going through the add-card frame again.
   const loadCardPaymentMethod = useCallback(async () => {
     setLoadingCardPaymentMethod(true);
+    setCardPaymentMethodsFailed(false);
     try {
       const reqData: MoonpayGetPaymentMethodsEmbeddedRequestData = {
         accessToken: credentials.accessToken,
@@ -514,6 +544,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       setCardPaymentMethods(cards);
       setCardPaymentMethod(cards.find(card => card.availability?.active));
     } catch (err) {
+      setCardPaymentMethodsFailed(true);
       logger.error(
         'Failed to load MoonPay saved cards: ' +
           (err instanceof Error ? err.message : JSON.stringify(err)),
@@ -540,35 +571,85 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     }).start();
   }, [showAddCardModal, cardModalHeightAnim]);
 
-  // Fetches an executable quote bound to the selected card, then mounts the
-  // (headless) buy frame to run the transaction with it.
-  const startCardPayment = async (cardId: string) => {
-    // Capture the base request before cancelQuoteRefresh() nulls the ref out.
-    const baseReqData = quoteReqDataRef.current;
-    if (!baseReqData) {
-      return;
-    }
-    cancelQuoteRefresh();
-    setCardPaymentButtonState('loading');
-    try {
+  // Re-quotes bound to the selected card. MoonPay evaluates card-specific
+  // requirements (fees, limits, disclosures) from the card id, so this runs as
+  // soon as a card is selected: the amounts, fees and disclosures on screen —
+  // and the signature the buy frame will charge — all come from this quote.
+  const loadCardQuote = useCallback(
+    async (cardId: string) => {
+      const baseReqData = quoteReqDataRef.current;
+      if (!baseReqData) {
+        return;
+      }
       const reqData: MoonpayGetQuoteEmbeddedRequestData = {
         ...baseReqData,
         paymentMethodId: cardId,
       };
-      const quote: MoonpayQuoteEmbeddedData = await moonpayGetQuoteEmbedded(
-        reqData,
-      );
-      if (!quote?.signature || !quote.executable) {
-        throw new Error(
-          'MoonPay returned a non-executable quote for the selected card',
+      quoteReqDataRef.current = reqData;
+      setCardQuoteSignature(null);
+      setCardQuoteFailed(false);
+      try {
+        const quote: MoonpayQuoteEmbeddedData = await moonpayGetQuoteEmbedded(
+          reqData,
+        );
+        if (!quote?.signature || !quote.executable) {
+          throw new Error(
+            'MoonPay returned a non-executable quote for the selected card',
+          );
+        }
+        setEmbeddedQuoteData(quote);
+        if (quote.source?.amount && quote.fees) {
+          setTotalFiatAmount(
+            Number(quote.source.amount) -
+              Number(quote.fees.moonpay?.amount ?? 0) -
+              Number(quote.fees.partner?.amount ?? 0) -
+              Number(quote.fees.network?.amount ?? 0),
+          );
+        }
+        if (quote.expiresAt) {
+          if (countDown) {
+            clearInterval(countDown);
+          }
+          paymentTimeControl(new Date(quote.expiresAt).getTime());
+          scheduleQuoteRefresh(quote.expiresAt);
+        }
+        setCardQuoteSignature(quote.signature);
+      } catch (err) {
+        setCardQuoteFailed(true);
+        logger.error(
+          'Failed to get MoonPay card quote: ' +
+            (err instanceof Error ? err.message : JSON.stringify(err)),
         );
       }
-      setEmbeddedQuoteData(quote);
-      setCardQuoteSignature(quote.signature);
-    } catch (err) {
-      setCardPaymentButtonState(undefined);
-      showError(err, 'cardQuoteFailed');
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [logger],
+  );
+
+  useEffect(() => {
+    if (!isCardPaymentMethod || !cardPaymentMethod?.id || isLoading) {
+      return;
     }
+    loadCardQuote(cardPaymentMethod.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCardPaymentMethod, cardPaymentMethod?.id, isLoading]);
+
+  // The quote was already fetched and approved on screen, so paying is just
+  // mounting the buy frame with it. The refresh is stopped first so the quote
+  // can't change under an in-flight payment.
+  const startCardPayment = () => {
+    if (!cardQuoteSignature) {
+      return;
+    }
+    // Freeze the scheduled refresh so the total can't change under an
+    // in-flight payment, but keep the request data: if MoonPay reports the
+    // quote expired, onQuoteExpired re-quotes and pushes it with setQuote.
+    stopQuoteRefreshTimer();
+    if (countDown) {
+      clearInterval(countDown);
+    }
+    setCardPaymentButtonState('loading');
+    setCardPaymentStarted(true);
   };
 
   const getErrorMsgFromError = (err: any): string => {
@@ -747,7 +828,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
 
   const handleChallengeCancel = async () => {
     setChallengeUrl(null);
-    setCardQuoteSignature(null);
+    setCardPaymentStarted(false);
     setCardPaymentButtonState(undefined);
     setExpiredAnalyticSent(false);
     logger.debug('MoonPay challenge cancelled by user.');
@@ -862,7 +943,11 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             <RowLabel>{t('Using')}</RowLabel>
             <RowData>
               {t('MoonPay using')}{' '}
-              {isCardPaymentMethod ? t('Card') : paymentMethod?.label}
+              {isCardPaymentMethod && cardPaymentMethod
+                ? getMoonpayCardBrandLabel(cardPaymentMethod.brand) +
+                  ' •••• ' +
+                  cardPaymentMethod.last4
+                : paymentMethod?.label}
             </RowData>
           </RowDataContainer>
           <ItemDivisor />
@@ -941,19 +1026,23 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               ) : null}
               <RowDataContainer>
                 <RowLabel>{t('New quote in')}</RowLabel>
-                {!!remainingTimeStr && (
-                  <RowData
-                    style={{
-                      color: paymentExpired
-                        ? Caution
-                        : theme.dark
-                        ? White
-                        : Black,
-                    }}>
-                    {remainingTimeStr === 'expired'
-                      ? t('Expired')
-                      : remainingTimeStr}
-                  </RowData>
+                {cardPaymentStarted ? (
+                  <ActivityIndicator color={ProgressBlue} size={'small'} />
+                ) : (
+                  !!remainingTimeStr && (
+                    <RowData
+                      style={{
+                        color: paymentExpired
+                          ? Caution
+                          : theme.dark
+                          ? White
+                          : Black,
+                      }}>
+                      {remainingTimeStr === 'expired'
+                        ? t('Expired')
+                        : remainingTimeStr}
+                    </RowData>
+                  )
                 )}
               </RowDataContainer>
               <ItemDivisor />
@@ -1087,65 +1176,83 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             }
           })()}
           {isCardPaymentMethod ? (
-            cardQuoteSignature ? (
-              <MoonPayBuyFrame
-                ref={buyFrameRef}
-                clientToken={credentials.clientToken}
-                signature={cardQuoteSignature}
-                onReady={() => {
-                  logger.debug('MoonPay Buy frame ready');
-                }}
-                onComplete={async (payload: BuyFrameCompletePayload) => {
-                  await handleTransactionComplete(payload.transaction);
-                }}
-                onChallenge={(url: string) => {
-                  cancelQuoteRefresh();
-                  logger.debug(
-                    'MoonPay Cards challenge required, opening challenge frame',
-                  );
-                  dispatch(
-                    Analytics.track('Buy Crypto Challenge Started', {
-                      exchange: 'moonpay',
-                      context: 'MoonpayBuyEmbeddedCheckout',
-                      paymentMethod: paymentMethod?.method || '',
-                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                      coin:
-                        cloneDeep(
-                          wallet?.currencyAbbreviation,
-                        )?.toLowerCase() || '',
-                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
-                      fiatCurrency: offer?.fiatCurrency || '',
-                    }),
-                  );
-                  setChallengeUrl(url);
-                }}
-                onError={(error: BuyFrameErrorPayload) => {
-                  setCardQuoteSignature(null);
-                  setCardPaymentButtonState(undefined);
-                  cancelQuoteRefresh();
-                  logger.error(
-                    'MoonPay Buy frame error: [' +
-                      error.code +
-                      '] ' +
-                      error.message,
-                  );
-                  showError(error, error.code, error.message);
-                }}
-              />
+            cardPaymentStarted && cardQuoteSignature ? (
+              <>
+                <SpinnerContainer>
+                  <ActivityIndicator color={ProgressBlue} />
+                </SpinnerContainer>
+                <MoonPayBuyFrame
+                  ref={buyFrameRef}
+                  clientToken={credentials.clientToken}
+                  signature={cardQuoteSignature}
+                  onReady={() => {
+                    logger.debug('MoonPay Buy frame ready');
+                  }}
+                  onComplete={async (payload: BuyFrameCompletePayload) => {
+                    await handleTransactionComplete(payload.transaction);
+                  }}
+                  onChallenge={(url: string) => {
+                    cancelQuoteRefresh();
+                    logger.debug(
+                      'MoonPay Cards challenge required, opening challenge frame',
+                    );
+                    dispatch(
+                      Analytics.track('Buy Crypto Challenge Started', {
+                        exchange: 'moonpay',
+                        context: 'MoonpayBuyEmbeddedCheckout',
+                        paymentMethod: paymentMethod?.method || '',
+                        amount:
+                          Number((offer as CryptoOffer)?.fiatAmount) || '',
+                        coin:
+                          cloneDeep(
+                            wallet?.currencyAbbreviation,
+                          )?.toLowerCase() || '',
+                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        fiatCurrency: offer?.fiatCurrency || '',
+                      }),
+                    );
+                    setChallengeUrl(url);
+                  }}
+                  onQuoteExpired={refreshQuote}
+                  onError={(error: BuyFrameErrorPayload) => {
+                    setCardPaymentStarted(false);
+                    setCardPaymentButtonState(undefined);
+                    cancelQuoteRefresh();
+                    logger.error(
+                      'MoonPay Buy frame error: [' +
+                        error.code +
+                        '] ' +
+                        error.message,
+                    );
+                    showError(error, error.code, error.message);
+                  }}
+                />
+              </>
             ) : (
               <>
+                {cardPaymentMethodsFailed || cardQuoteFailed ? (
+                  <DisclosureText>
+                    {t('Something went wrong. Please try again later.')}
+                  </DisclosureText>
+                ) : null}
                 <Button
                   onPress={() =>
                     cardPaymentMethod
-                      ? startCardPayment(cardPaymentMethod.id)
+                      ? startCardPayment()
                       : setShowAddCardModal(true)
                   }
                   disabled={
-                    isLoading || paymentExpired || loadingCardPaymentMethod
+                    isLoading ||
+                    paymentExpired ||
+                    loadingCardPaymentMethod ||
+                    (!!cardPaymentMethod && !cardQuoteSignature)
                   }
                   state={
                     cardPaymentMethod
-                      ? cardPaymentButtonState
+                      ? cardPaymentButtonState ??
+                        (!cardQuoteSignature && !cardQuoteFailed
+                          ? 'loading'
+                          : undefined)
                       : loadingCardPaymentMethod
                       ? 'loading'
                       : undefined
@@ -1158,16 +1265,18 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                       cardPaymentMethod.last4
                     : t('Add a card to continue')}
                 </Button>
-                {cardPaymentMethod ? (
+                {cardPaymentMethods.length ? (
                   <TouchableOpacity
                     onPress={() =>
-                      hasOtherSelectableCards
+                      hasOtherSelectableCards || !cardPaymentMethod
                         ? setShowSelectCardModal(true)
                         : setShowAddCardModal(true)
                     }
                     style={{alignItems: 'center', marginTop: 12}}>
                     <LegalLink>
-                      {hasOtherSelectableCards
+                      {!cardPaymentMethod
+                        ? t('MoonPay linked cards')
+                        : hasOtherSelectableCards
                         ? t('Select a different card')
                         : t('Use a different card')}
                     </LegalLink>
@@ -1288,6 +1397,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                     );
                     await handleTransactionComplete(payload.transaction);
                   } else {
+                    setCardPaymentStarted(false);
+                    setCardPaymentButtonState(undefined);
                     logger.error(
                       'MoonPay challenge completed but no transaction data received',
                     );
@@ -1302,14 +1413,18 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 onCancelled={handleChallengeCancel}
                 onError={error => {
                   setChallengeUrl(null);
+                  setCardPaymentStarted(false);
+                  setCardPaymentButtonState(undefined);
                   cancelQuoteRefresh();
                   logger.error(
-                    'MoonPay Apple Pay Challenge frame error: [' +
-                      error.code +
+                    'MoonPay ' +
+                      paymentMethod?.method +
+                      ' Challenge frame error: [' +
+                      error?.code +
                       '] ' +
-                      error.message,
+                      error?.message,
                   );
-                  showError(error, error.code, error.message);
+                  showError(error, error?.code, error?.message);
                 }}
               />
             ) : null}

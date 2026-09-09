@@ -1,8 +1,9 @@
 import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
   useRef,
   useState,
-  useCallback,
-  useImperativeHandle,
   forwardRef,
 } from 'react';
 import {
@@ -38,13 +39,14 @@ interface MoonPayBuyFrameProps {
   onComplete: (payload: BuyFrameCompletePayload) => void;
   onChallenge: (url: string) => void;
   onError: (error: BuyFrameErrorPayload) => void;
+  onQuoteExpired?: () => void;
 }
 
 // Headless "buy" frame used to execute a purchase from a quote signature that
 // already carries the payment method (e.g. a saved card). Used by the Cards
 // embedded flow the same way MoonPayApplePayFrame is used for Apple Pay,
-// except it has no visible button of its own — the app renders its own
-// "Pay" button and mounts this frame once the user taps it.
+// except it has no visible button of its own: the app renders its own "Pay"
+// button and mounts this frame once the user taps it.
 export const MoonPayBuyFrame = forwardRef<BuyFrameRef, MoonPayBuyFrameProps>(
   (
     {
@@ -55,18 +57,22 @@ export const MoonPayBuyFrame = forwardRef<BuyFrameRef, MoonPayBuyFrameProps>(
       onComplete,
       onChallenge,
       onError,
+      onQuoteExpired,
     },
     ref,
   ) => {
     const [channelId] = useState(generateChannelId);
     const webViewRef = useRef<MoonPayWebViewRef>(null);
 
-    const frameUrl = `${FRAME_ORIGIN}/platform/v1/buy?${new URLSearchParams({
-      clientToken,
-      channelId,
-      signature,
-      ...(externalTransactionId && {externalTransactionId}),
-    }).toString()}`;
+    const [frameUrl] = useState(
+      () =>
+        `${FRAME_ORIGIN}/platform/v1/buy?${new URLSearchParams({
+          clientToken,
+          channelId,
+          signature,
+          ...(externalTransactionId && {externalTransactionId}),
+        }).toString()}`,
+    );
 
     useImperativeHandle(
       ref,
@@ -99,12 +105,18 @@ export const MoonPayBuyFrame = forwardRef<BuyFrameRef, MoonPayBuyFrameProps>(
             onChallenge(challengePayload.url);
             break;
           }
-          case 'error':
-            onError(data.payload as BuyFrameErrorPayload);
+          case 'error': {
+            const error = data.payload as BuyFrameErrorPayload;
+            if (error.code === 'quoteExpired') {
+              onQuoteExpired?.();
+            } else {
+              onError(error);
+            }
             break;
+          }
         }
       },
-      [onReady, onComplete, onChallenge, onError],
+      [onReady, onComplete, onChallenge, onError, onQuoteExpired],
     );
 
     return (
