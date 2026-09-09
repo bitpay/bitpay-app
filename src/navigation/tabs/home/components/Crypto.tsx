@@ -1,5 +1,11 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {ReactElement, useEffect, useMemo, useState} from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
@@ -399,7 +405,7 @@ export const createHomeCardList = ({
 };
 
 const Crypto = () => {
-  const [carouselHeight, setCarouselHeight] = useState(HOME_CARD_HEIGHT + 20);
+  const [cardHeights, setCardHeights] = useState<Record<string, number>>({});
   const {t: translate} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -532,6 +538,32 @@ const Crypto = () => {
     visiblePortfolioPercentageDifferenceByKey,
   ]);
 
+  const renderCarouselItem = useCallback(
+    ({item}: {item: {id: string; component: ReactElement}}) => (
+      <CarouselItemContainer
+        onLayout={({nativeEvent}) => {
+          const height = Math.ceil(nativeEvent.layout.height);
+          setCardHeights(current =>
+            current[item.id] === height
+              ? current
+              : {...current, [item.id]: height},
+          );
+        }}>
+        {item.component}
+      </CarouselItemContainer>
+    ),
+    [],
+  );
+
+  const carouselHeight = useMemo(
+    () =>
+      cardsList.list.reduce(
+        (tallest, {id}) => Math.max(tallest, cardHeights[id] ?? 0),
+        HOME_CARD_HEIGHT,
+      ) + 20,
+    [cardsList.list, cardHeights],
+  );
+
   if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
@@ -627,19 +659,7 @@ const Crypto = () => {
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
-            renderItem={({item}) => (
-              <CarouselItemContainer
-                onLayout={({nativeEvent}) =>
-                  setCarouselHeight(current =>
-                    Math.max(
-                      current,
-                      Math.ceil(nativeEvent.layout.height) + 20,
-                    ),
-                  )
-                }>
-                {item.component}
-              </CarouselItemContainer>
-            )}
+            renderItem={renderCarouselItem}
             enabled={true}
           />
         </CarouselContainer>
