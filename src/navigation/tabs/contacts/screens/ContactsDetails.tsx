@@ -341,7 +341,7 @@ const ContactsDetails = ({
               onPress={copyToClipboard}
               activeOpacity={0.7}
               testID="contacts-details-copy-address-button"
-              accessibilityLabel="Copy address">
+              accessibilityLabel={t('Copy address')}>
               <CopyImgContainer>
                 {copied ? <CopiedSvg width={17} /> : null}
               </CopyImgContainer>

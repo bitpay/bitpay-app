@@ -162,7 +162,7 @@ const CreateOrImportKey = ({
           <ActionContainer>
             <Button
               testID="create-a-key-button"
-              accessibilityLabel="Create a key"
+              accessibilityLabel={t('Create a Key')}
               buttonStyle={'primary'}
               onPress={onCreateKeyPress}>
               {t('Create a Key')}
@@ -171,7 +171,7 @@ const CreateOrImportKey = ({
           <ActionContainer>
             <Button
               testID="i-already-have-a-key-button"
-              accessibilityLabel="I already have a key"
+              accessibilityLabel={t('I already have a Key')}
               buttonStyle={'secondary'}
               onPress={() => {
                 dispatch(

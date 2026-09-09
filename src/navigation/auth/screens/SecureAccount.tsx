@@ -184,7 +184,7 @@ export const SecureAccountScreen = () => {
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip"
+            accessibilityLabel={t('Skip')}
             buttonType={'pill'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
@@ -291,7 +291,7 @@ export const SecureAccountScreen = () => {
         </HeaderTextContainer>
         <CardPressable
           testID="secure-account-setup-passkey-button"
-          accessibilityLabel="Set up a passkey"
+          accessibilityLabel={t('Set up a passkey')}
           onPress={goToPasskeySetup}>
           <CardTitleContainer>
             <IconBadge>
@@ -331,7 +331,7 @@ export const SecureAccountScreen = () => {
 
         <CardPressable
           testID="secure-account-setup-two-factor-button"
-          accessibilityLabel="Set up two-factor authentication"
+          accessibilityLabel={t('Set Up Two-Factor Authentication')}
           onPress={goToTwoFactorSetup}>
           <CardTitleContainer>
             <IconBadge>

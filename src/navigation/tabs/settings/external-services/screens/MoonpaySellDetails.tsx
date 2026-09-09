@@ -350,7 +350,7 @@ const MoonpaySellDetails: React.FC = () => {
               </LabelTipText>
               <TouchableOpacity
                 testID="moonpay-sell-order-status-link"
-                accessibilityLabel="Check order status"
+                accessibilityLabel={t('Check order status')}
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(
@@ -385,7 +385,7 @@ const MoonpaySellDetails: React.FC = () => {
                   </LabelTipText>
                   <TouchableOpacity
                     testID="moonpay-sell-support-link"
-                    accessibilityLabel="Contact support"
+                    accessibilityLabel={t('Contact Support')}
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -407,7 +407,7 @@ const MoonpaySellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="moonpay-sell-copy-deposit-address-button"
-                accessibilityLabel="Moonpay sell copy deposit address button"
+                accessibilityLabel={t('Copy deposit address')}
                 onPress={() => {
                   if (sellOrder.address_to) {
                     copyText(sellOrder.address_to);
@@ -432,7 +432,7 @@ const MoonpaySellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="moonpay-sell-copy-refund-address-button"
-                accessibilityLabel="Moonpay sell copy refund address button"
+                accessibilityLabel={t('Copy refund address')}
                 onPress={() => {
                   copyText(sellOrder.refund_address);
                   setCopiedRefundAddress(true);
@@ -454,7 +454,7 @@ const MoonpaySellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="moonpay-sell-copy-transaction-id-button"
-                accessibilityLabel="Moonpay sell copy transaction id button"
+                accessibilityLabel={t('Copy transaction ID')}
                 onPress={() => {
                   copyText(sellOrder.tx_sent_id!);
                   setCopiedTransactionSentId(true);
@@ -476,7 +476,7 @@ const MoonpaySellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="moonpay-sell-copy-sell-order-id-button"
-                accessibilityLabel="Moonpay sell copy sell order id button"
+                accessibilityLabel={t('Copy sell order ID')}
                 onPress={() => {
                   copyText(sellOrder.transaction_id!);
                   setCopiedTransactionId(true);
@@ -499,7 +499,7 @@ const MoonpaySellDetails: React.FC = () => {
               style={{marginBottom: Platform.OS === 'android' ? 20 : 0}}>
               <TouchableOpacity
                 testID="moonpay-sell-copy-external-order-id-button"
-                accessibilityLabel="Moonpay sell copy external order id button"
+                accessibilityLabel={t('Copy external order ID')}
                 onPress={() => {
                   copyText(sellOrder.external_id);
                   setCopiedExternalId(true);
@@ -521,7 +521,7 @@ const MoonpaySellDetails: React.FC = () => {
           sourceWallet ? (
             <RemoveCta
               testID="moonpay-sell-cancel-order-button"
-              accessibilityLabel="Moonpay sell cancel order button"
+              accessibilityLabel={t('Cancel order')}
               onPress={async () => {
                 haptic('impactLight');
                 dispatch(
@@ -613,7 +613,7 @@ const MoonpaySellDetails: React.FC = () => {
             !sourceWallet) ? (
             <RemoveCta
               testID="moonpay-sell-remove-order-button"
-              accessibilityLabel="Moonpay sell remove order button"
+              accessibilityLabel={t('Remove order')}
               onPress={async () => {
                 haptic('impactLight');
                 dispatch(

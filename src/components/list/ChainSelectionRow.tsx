@@ -1,4 +1,5 @@
 import React, {memo} from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Slate30, SlateDark} from '../../styles/colors';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
@@ -42,6 +43,7 @@ interface ChainSelectionRowProps {
 
 export const ChainSelectionRow: React.FC<ChainSelectionRowProps> = memo(
   props => {
+    const {t} = useTranslation();
     const {onToggle, chainObj} = props;
     const {coin: currencyAbbreviation, chain, img, name} = chainObj;
 
@@ -50,7 +52,7 @@ export const ChainSelectionRow: React.FC<ChainSelectionRowProps> = memo(
         testID={`currency-selection-container-${chain}`}>
         <FlexRow
           testID={`chain-selection-row-${currencyAbbreviation}-${chain}`}
-          accessibilityLabel={`${name} chain selection`}
+          accessibilityLabel={t('{{chain}} chain selection', {chain: name})}
           onPress={() => onToggle(currencyAbbreviation, chain)}>
           <CurrencyColumn>
             <CurrencyImage img={img!} />

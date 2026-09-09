@@ -130,14 +130,14 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
       <TouchableOpacity
         touchableLibrary={'react-native-gesture-handler'}
         testID="cancel-button"
-        accessibilityLabel="Go back"
+        accessibilityLabel={t('Go back')}
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
         onPress={onPressBackButtonRef.current}>
         <Back opacity={1} />
       </TouchableOpacity>
     );
-  }, []);
+  }, [t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -219,7 +219,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const GoBackLink = () => (
     <Link
       testID="go-back-link-button"
-      accessibilityLabel="Go back"
+      accessibilityLabel={t('Go back')}
       onPress={() => goToPreviousScreen()}>
       {t('Go Back')}
     </Link>
@@ -253,7 +253,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
               {t("Email didn't arrive?")}{' '}
               <Link
                 testID="resend-link-button"
-                accessibilityLabel="Resend verification email"
+                accessibilityLabel={t('Resend verification email')}
                 onPress={() => resendVerificationEmail()}>
                 {t('Resend link')}
               </Link>

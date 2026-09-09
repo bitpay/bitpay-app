@@ -678,7 +678,7 @@ const AddCustomToken = ({
         <ButtonContainer>
           <Button
             testID="add-custom-token-button"
-            accessibilityLabel="Add custom token"
+            accessibilityLabel={t('Add Custom Token')}
             disabled={!walletNameValue || invalidTokenAddress}
             onPress={add}
             buttonStyle={'primary'}>

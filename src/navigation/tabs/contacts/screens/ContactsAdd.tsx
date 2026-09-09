@@ -301,7 +301,7 @@ const ContactsAdd = ({
                     ) : (
                       <ScanButtonContainer
                         testID="contacts-add-scan-address-button"
-                        accessibilityLabel="Scan address QR code"
+                        accessibilityLabel={t('Scan address QR code')}
                         onPress={goToScan}>
                         <ScanSvg />
                       </ScanButtonContainer>
@@ -349,7 +349,7 @@ const ContactsAdd = ({
         <ActionContainer>
           <Button
             testID="contacts-add-submit-button"
-            accessibilityLabel={contact ? 'Save contact' : 'Add contact'}
+            accessibilityLabel={contact ? t('Save contact') : t('Add Contact')}
             onPress={onSubmit}>
             {contact ? t('Save Contact') : t('Add Contact')}
           </Button>

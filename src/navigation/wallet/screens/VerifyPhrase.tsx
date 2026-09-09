@@ -297,7 +297,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       <HeaderRightContainer>
         <Button
           testID="cancel-button"
-          accessibilityLabel="Cancel"
+          accessibilityLabel={t('Cancel')}
           buttonType={'pill'}
           onPress={onPressHeaderCancelRef.current}>
           {t('Cancel')}

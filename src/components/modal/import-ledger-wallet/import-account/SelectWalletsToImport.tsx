@@ -154,9 +154,10 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
         <RowContainerWithoutBorders
           key={index}
           testID={`ledger-wallet-select-row-${index}`}
-          accessibilityLabel={`${
-            uiFormattedWallet.walletName || uiFormattedWallet.currencyName
-          } wallet`}
+          accessibilityLabel={t('{{wallet}} wallet', {
+            wallet:
+              uiFormattedWallet.walletName || uiFormattedWallet.currencyName,
+          })}
           onPress={() => onPress(uiFormattedWallet)}>
           <Column style={{maxWidth: '90%'}}>
             <WalletRow
@@ -184,9 +185,9 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
                 ? 'ledger-connect-wallets-button'
                 : 'ledger-connect-wallet-button'
             }
-            accessibilityLabel={`Connect ${selectedWallets} ${
-              selectedWallets > 1 ? 'wallets' : 'wallet'
-            }`}
+            accessibilityLabel={t('Connect {{count}} wallet', {
+              count: selectedWallets,
+            })}
             onPress={_onComplete}>
             {t('Connect {{count}} wallet', {count: selectedWallets})}
           </Button>
@@ -198,7 +199,7 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
           <Button
             buttonType={'link'}
             testID="ledger-add-by-derivation-path-button"
-            accessibilityLabel="Add by derivation path"
+            accessibilityLabel={t('Add By Derivation Path')}
             onPress={props.onAddByDerivationPathSelected}>
             {t('Add by Derivation Path')}
           </Button>

@@ -214,7 +214,9 @@ const WalletRow = ({
     <RowContainer
       activeOpacity={ActiveOpacity}
       testID={`wallet-row-${wallet.currencyAbbreviation}-${wallet.id}`}
-      accessibilityLabel={`${walletName || currencyName} wallet`}
+      accessibilityLabel={t('{{wallet}} wallet', {
+        wallet: walletName || currencyName,
+      })}
       onPress={onPress}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
       noBorder={noBorder}

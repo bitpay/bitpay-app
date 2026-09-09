@@ -339,7 +339,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           <HeaderRightContainer>
             <Button
               testID="skip-button"
-              accessibilityLabel="Skip"
+              accessibilityLabel={t('Skip')}
               buttonType={'pill'}
               onPress={() => {
                 haptic('impactLight');
@@ -466,7 +466,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           }}>
           <Button
             testID="on-cta-press-button"
-            accessibilityLabel="Add wallet"
+            accessibilityLabel={t('Add wallet')}
             onPress={onCtaPress}
             buttonStyle={'primary'}>
             {ctaTitle || t('Continue')}

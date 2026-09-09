@@ -250,7 +250,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       <ListWalletCard
         activeOpacity={ActiveOpacity}
         testID={`wallet-card-${keyName}`}
-        accessibilityLabel={`${keyName} wallet`}
+        accessibilityLabel={t('{{key}} wallet', {key: keyName})}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
         <ListRow>

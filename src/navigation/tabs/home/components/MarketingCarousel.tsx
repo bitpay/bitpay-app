@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
@@ -60,6 +61,7 @@ interface MarketingCarouselProps {
 const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
   contentCards,
 }) => {
+  const {t} = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [dismissedCardIds, setDismissedCardIds] = useState<string[]>([]);
   const skipNextCardPressRef = useRef(false);
@@ -272,7 +274,7 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
               <CloseButton
                 activeOpacity={ActiveOpacity}
                 testID="dismiss-marketing-carousel"
-                accessibilityLabel="Dismiss marketing card"
+                accessibilityLabel={t('Dismiss marketing card')}
                 onPressIn={() => {
                   skipNextCardPressRef.current = true;
                 }}
@@ -340,7 +342,9 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
               active={index === activeIndex}
               testID={`marketing-carousel-slide-${index + 1}`}
               accessibilityRole="button"
-              accessibilityLabel={`Go to slide ${index + 1}`}
+              accessibilityLabel={t('Go to slide {{number}}', {
+                number: index + 1,
+              })}
               onPress={() => {
                 if (index !== activeIndex) {
                   carouselRef.current?.scrollTo({index, animated: true});

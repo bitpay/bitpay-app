@@ -646,7 +646,9 @@ const TransactionDetails = () => {
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
                     testID="transaction-details-unconfirmed-link"
-                    accessibilityLabel="Learn about unconfirmed transactions"
+                    accessibilityLabel={t(
+                      'Learn about unconfirmed transactions',
+                    )}
                     onPress={() => {
                       dispatch(
                         openUrlWithInAppBrowser(URL.HELP_TXS_UNCONFIRMED),
@@ -690,7 +692,7 @@ const TransactionDetails = () => {
 
               <CopyTransactionId
                 testID="transaction-details-copy-txid-button"
-                accessibilityLabel="Transaction details copy txid button"
+                accessibilityLabel={t('Copy transaction ID')}
                 onPress={() => copyText(txs.txid!)}>
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
@@ -728,7 +730,7 @@ const TransactionDetails = () => {
           <VerticalSpace>
             <Button
               testID="transaction-details-view-on-blockchain-button"
-              accessibilityLabel="Transaction details view on blockchain button"
+              accessibilityLabel={t('View on blockchain')}
               buttonStyle={'secondary'}
               onPress={goToBlockchain}>
               {t('View On Blockchain')}

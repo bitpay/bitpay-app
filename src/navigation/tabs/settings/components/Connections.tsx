@@ -1,5 +1,6 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import {Image} from 'react-native';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
@@ -43,6 +44,7 @@ const ConnectionIconContainer = styled.View`
 `;
 
 const Connections = () => {
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<SettingsDetailsParamList, 'Connections'>>();
   const {redirectTo} = route.params || {};
   const navigation = useNavigation();
@@ -160,7 +162,7 @@ const Connections = () => {
     <SettingsComponent>
       <Setting
         testID="settings-connections-coinbase-row"
-        accessibilityLabel="Coinbase"
+        accessibilityLabel={t('Coinbase')}
         onPress={() => goToCoinbase()}>
         <ConnectionItemContainer>
           <ConnectionIconContainer>
@@ -173,7 +175,7 @@ const Connections = () => {
       <Hr />
       <Setting
         testID="settings-connections-method-row"
-        accessibilityLabel="Method bill pay"
+        accessibilityLabel={t('Method (Bill Pay)')}
         onPress={() => goToMethod()}>
         <ConnectionItemContainer>
           <ConnectionIconContainer style={{marginLeft: 6, marginRight: 9}}>
@@ -188,7 +190,7 @@ const Connections = () => {
         <>
           <Setting
             testID="settings-connections-moonpay-row"
-            accessibilityLabel="Moonpay"
+            accessibilityLabel={t('Moonpay')}
             onPress={() => goToMoonpay()}>
             <ConnectionItemContainer>
               <ConnectionIconContainer style={{marginLeft: 3}}>
@@ -203,7 +205,7 @@ const Connections = () => {
       ) : null}
       <Setting
         testID="settings-connections-walletconnect-row"
-        accessibilityLabel="WalletConnect"
+        accessibilityLabel={t('WalletConnect')}
         onPress={() => {
           haptic('impactLight');
           goToWalletConnect();
@@ -219,7 +221,7 @@ const Connections = () => {
       <Hr />
       <Setting
         testID="settings-connections-zenledger-row"
-        accessibilityLabel="ZenLedger taxes"
+        accessibilityLabel={t('ZenLedger taxes')}
         onPress={() => {
           haptic('impactLight');
           dispatch(

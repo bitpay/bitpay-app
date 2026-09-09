@@ -62,7 +62,7 @@ const SecurePasskeyBanner: React.FC = () => {
     <PasskeyBannerContainer
       activeOpacity={ActiveOpacity}
       testID="home-secure-passkey-banner-button"
-      accessibilityLabel="Create a passkey to secure your account"
+      accessibilityLabel={t('Create a passkey to secure your account')}
       onPress={() => {
         navigation.dispatch(
           CommonActions.reset({

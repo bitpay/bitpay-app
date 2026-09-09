@@ -230,7 +230,7 @@ const AltCurrencySettings = () => {
           <SearchInput
             placeholder={''}
             testID="alt-currency-search-input"
-            accessibilityLabel="Search currency"
+            accessibilityLabel={t('Search Currency')}
             onChangeText={(text: string) => {
               updateSearchResults(text);
             }}

@@ -216,7 +216,7 @@ const ContactsRoot = ({}: NativeStackScreenProps<
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               testID="contacts-add-contact-button"
-              accessibilityLabel="Add contact"
+              accessibilityLabel={t('Add Contact')}
               onPress={goToCreateContact}>
               <ContentIcon>
                 {theme.dark ? <AddContactIconWhite /> : <AddContactIcon />}
@@ -263,7 +263,7 @@ const ContactsRoot = ({}: NativeStackScreenProps<
           <ButtonContainer>
             <Button
               testID="contacts-new-contact-button"
-              accessibilityLabel="New contact"
+              accessibilityLabel={t('New Contact')}
               onPress={goToCreateContact}
               children="New Contact"
             />
