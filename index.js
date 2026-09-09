@@ -54,7 +54,7 @@ Sentry.init({
   sendDefaultPii: false,
   enableLogs: false,
   enableAutoNativeBreadcrumbs: false,
-  autoSessionTracking: false,
+  autoSessionTracking: true,
   maxBreadcrumbs: 500,
   beforeSend(event) {
     if (event.contexts) {
@@ -65,8 +65,18 @@ Sentry.init({
       delete event.tags.device;
       delete event.tags.device_id;
     }
+    // Keep event.user.id. With no user set explicitly, the RN SDK fills it from
+    // deviceContextIntegration with the native installation ID -- a random
+    // per-install UUID minted by the native SDK, not PII. Deleting it left every
+    // JS-layer issue reporting count_unique(user) == 0 while native crashes --
+    // which never run this hook, because beforeSend is stripped from the options
+    // handed to the native SDK -- reported real user counts. Strip the actually
+    // identifying fields instead.
     if (event.user) {
-      delete event.user.id;
+      delete event.user.email;
+      delete event.user.username;
+      delete event.user.ip_address;
+      delete event.user.geo;
     }
     if (event.breadcrumbs) {
       event.breadcrumbs = event.breadcrumbs.filter(b => b.category === 'log');
