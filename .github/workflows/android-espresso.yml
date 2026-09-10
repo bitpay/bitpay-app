@@ -1,8 +1,10 @@
 name: Android Espresso E2E
 
 on:
-  schedule:
-    - cron: '0 08 * * *' # every day at 08:00 UTC
+  workflow_run:
+    workflows: ["iOS XCUITest"]
+    types:
+      - completed
 
 concurrency:
   group: e2e-android-espresso-${{ github.ref }}
@@ -10,7 +12,6 @@ concurrency:
 
 jobs:
   android-espresso-tests:
-    if: ${{ github.event.schedule == '0 08 * * *' }}
     name: Android Espresso UI Tests
     runs-on: ubuntu-latest
     timeout-minutes: 120
