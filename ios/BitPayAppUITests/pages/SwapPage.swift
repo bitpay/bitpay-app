@@ -11,9 +11,7 @@ class SwapPage {
   // MARK: - Elements
   
   var swapTitle: XCUIElement {
-    app.otherElements.matching(
-      NSPredicate(format: "label == 'Swap'")
-    ).firstMatch
+    app.staticTexts["Swap"].firstMatch
   }
   
   var selectWalletFrom: XCUIElement {
