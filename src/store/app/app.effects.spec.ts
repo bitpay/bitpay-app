@@ -724,5 +724,35 @@ describe('incomingLink', () => {
         isSvmAccount: false,
       });
     });
+
+    it('opens the base wallet when the account has no receive address yet', async () => {
+      const addressLessWallet = {credentials: baseWallet.credentials};
+      const addressLessKey = {id: 'key-1', wallets: [addressLessWallet]};
+      (findWalletByIdHashed as jest.Mock).mockResolvedValue({
+        wallet: addressLessWallet,
+        keyId: 'key-1',
+      });
+
+      await runIncomingLink(
+        'bitpay://wallet?walletId=hashed&tokenAddress=0xTokEn&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-6',
+        () =>
+          ({
+            ...makeDeeplinkState(),
+            WALLET: {keys: {'key-1': addressLessKey}},
+          } as any),
+      );
+      await flushLookups();
+
+      expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+        key: addressLessKey,
+        walletId,
+        copayerId: 'copayer-1',
+        txid: 'tx-6',
+      });
+      expect(navigationRef.navigate).not.toHaveBeenCalledWith(
+        'AccountDetails',
+        expect.anything(),
+      );
+    });
   });
 });

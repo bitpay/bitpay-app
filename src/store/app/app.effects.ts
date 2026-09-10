@@ -1366,18 +1366,26 @@ export const incomingLink =
             }
 
             if (!tokenWallet) {
-              logManager.info(
-                'Deeplink: token wallet not found. Opening the account.',
-              );
-              navigationRef.navigate(WalletScreens.ACCOUNT_DETAILS, {
-                keyId,
-                selectedAccountAddress: wallet.receiveAddress,
-                isSvmAccount: IsSVMChain(wallet.credentials.chain),
-              });
-              return;
-            }
+              const selectedAccountAddress = wallet.receiveAddress;
 
-            targetWallet = tokenWallet;
+              if (selectedAccountAddress) {
+                logManager.info(
+                  'Deeplink: token wallet not found. Opening the account.',
+                );
+                navigationRef.navigate(WalletScreens.ACCOUNT_DETAILS, {
+                  keyId,
+                  selectedAccountAddress,
+                  isSvmAccount: IsSVMChain(wallet.credentials.chain),
+                });
+                return;
+              }
+
+              logManager.info(
+                'Deeplink: token wallet not found and the wallet has no receive address. Opening the wallet.',
+              );
+            } else {
+              targetWallet = tokenWallet;
+            }
           }
 
           navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
