@@ -1364,14 +1364,19 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bitgo/sdk-lib-mpc@^10.1.2":
-  version "10.8.1"
-  resolved "https://registry.yarnpkg.com/@bitgo/sdk-lib-mpc/-/sdk-lib-mpc-10.8.1.tgz#494bd3d1476d31f1e200033163811464d4a0af7c"
-  integrity sha512-FUHqupDQWiozu298T5Ocv9SVKvNr+0PSov/lfQubUYKeDsj2LBIUzpmKJAJqbXmo/Ok/X6QqWz0DUrHNuPZCxg==
+"@bitgo/sdk-lib-mpc@^10.15.0":
+  version "10.20.0"
+  resolved "https://registry.yarnpkg.com/@bitgo/sdk-lib-mpc/-/sdk-lib-mpc-10.20.0.tgz#ddb9fe64eae4bc1686aadabc9c1fad4299040ed1"
+  integrity sha512-N1F27bQtQ4sXfRkoeD65Dg7NRWLZKp2VmvVh4xv3rSE2nS8FG82entpH+IReXGRmki9IrnQpWXrMwjZenl355w==
   dependencies:
+    "@bitgo/wasm-mps" "1.14.0"
     "@noble/curves" "1.8.1"
     "@silencelaboratories/dkls-wasm-ll-node" "1.2.0-pre.4"
+    "@silencelaboratories/dkls-wasm-ll-vrf-node" "1.0.0-pre.9"
+    "@silencelaboratories/dkls-wasm-ll-vrf-web" "1.0.0-pre.9"
     "@silencelaboratories/dkls-wasm-ll-web" "1.2.0-pre.4"
+    "@silencelaboratories/eddsa-wasm-node" "1.0.0-pre.9"
+    "@silencelaboratories/eddsa-wasm-web" "1.0.0-pre.9"
     "@types/superagent" "4.1.15"
     "@wasmer/wasi" "^1.2.2"
     bigint-crypto-utils "3.1.4"
@@ -1383,6 +1388,11 @@
     openpgp "5.11.3"
     paillier-bigint "3.3.0"
     secp256k1 "5.0.1"
+
+"@bitgo/wasm-mps@1.14.0":
+  version "1.14.0"
+  resolved "https://registry.yarnpkg.com/@bitgo/wasm-mps/-/wasm-mps-1.14.0.tgz#5a5dece54486006852735651df7a63f7f61fc050"
+  integrity sha512-PDVU5Yg8HWy6fHH0iHstUXKLNggyXXGMCSAFCfaVSi36bfFuRKa5fd2ljMGKHl6RaAhQOvv4h2njVomYtjADEQ==
 
 "@bitpay-labs/bitcore-lib-cash@^11.10.4":
   version "11.10.4"
@@ -1444,21 +1454,21 @@
     "@bitpay-labs/bitcore-lib" "^11.10.4"
     unorm "^1.4.1"
 
-"@bitpay-labs/bitcore-tss@^11.10.4":
-  version "11.10.4"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-tss/-/bitcore-tss-11.10.4.tgz#3de737e6a9d9f3487ae609c3416d871c287500da"
-  integrity sha512-o2cwXMnxxoGrbBqVuNGBJqevlGofSnsn1CC8do+laMzkDlOw9357D2unJNVXN8ZCMj1tPbBPKEIDQdUJDN8+aA==
+"@bitpay-labs/bitcore-tss@^11.10.8":
+  version "11.10.8"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-tss/-/bitcore-tss-11.10.8.tgz#fa8be607b92412adbd78df73dc308b5470354e57"
+  integrity sha512-CgVWgw8iYMF3xR6EO2sfvGwu1PmJsRKifqhh5wNrgP5JyQi1YdGIjWEN7IsjnwixoSN/YYFk9btez1Qz5DosOw==
   dependencies:
-    "@bitgo/sdk-lib-mpc" "^10.1.2"
+    "@bitgo/sdk-lib-mpc" "^10.15.0"
     "@bitpay-labs/bitcore-lib" "^11.10.4"
 
-"@bitpay-labs/bitcore-wallet-client@11.10.6":
-  version "11.10.6"
-  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-wallet-client/-/bitcore-wallet-client-11.10.6.tgz#1cbdaede69c318d80cb87dd66cfee422241aa449"
-  integrity sha512-f3PQzSoW5ydQL4/Dgu5zYNgmRaS8EDINYGj6JJyfY5KYXPCnsIrTfxO+YMilVgRCy37Cp+R6T2Z1oXtFIOcCjQ==
+"@bitpay-labs/bitcore-wallet-client@11.10.8":
+  version "11.10.8"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-wallet-client/-/bitcore-wallet-client-11.10.8.tgz#e2f5fd967af42791763f24fa093b113019ac0575"
+  integrity sha512-MW7lbl4XEw/6apJi+mNHUxeSTqfixFJuNC94LCguuxsHVxPHqhlUlxejRxNJK8Kv7xEoXih3znoHSXBx0TnEMA==
   dependencies:
     "@bitpay-labs/bitcore-mnemonic" "^11.10.4"
-    "@bitpay-labs/bitcore-tss" "^11.10.4"
+    "@bitpay-labs/bitcore-tss" "^11.10.8"
     "@bitpay-labs/crypto-wallet-core" "^11.10.4"
     async "0.9.2"
     bip38 "1.4.0"
@@ -4098,6 +4108,16 @@
   resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-node/-/dkls-wasm-ll-node-1.2.0-pre.4.tgz#0f8f9a802d564bb2b36561ac770493d63af146e1"
   integrity sha512-KWHR/6SCa67mrYVPbhNjzoYEKadhQ5cL3UPI4UgtVZEk/Fc5yB0AaYUX3DuWHskxQTvj0mF2shYcZe9OubkvnQ==
 
+"@silencelaboratories/dkls-wasm-ll-vrf-node@1.0.0-pre.9":
+  version "1.0.0-pre.9"
+  resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-vrf-node/-/dkls-wasm-ll-vrf-node-1.0.0-pre.9.tgz#e7e8548255dea3fe84a7d41eb371c4c79df6f382"
+  integrity sha512-K1f8MfPWodWj4v1OftxjDuSHrES3yxMSaNwvZDilHVhsW6wml+HwhOLQEbyMZWjFg0zUoZp+lQvKJYa7FJZq/A==
+
+"@silencelaboratories/dkls-wasm-ll-vrf-web@1.0.0-pre.9":
+  version "1.0.0-pre.9"
+  resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-vrf-web/-/dkls-wasm-ll-vrf-web-1.0.0-pre.9.tgz#d524bfd47d9a77f446416f7b4ca95c0d94a9dab8"
+  integrity sha512-aPuHtl4jV6DjekpD4CS1zclgN3ZG3xyWpDzL5Baadkkl2L+RMc3BZ3I0P4L/NGUxcaW09rKD7p4qpShEX1SPXw==
+
 "@silencelaboratories/dkls-wasm-ll-web@1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-web/-/dkls-wasm-ll-web-1.2.0.tgz#8ee4e4af18f53f2b816e8505f6a3b0d944919899"
@@ -4107,6 +4127,16 @@
   version "1.2.0-pre.4"
   resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-web/-/dkls-wasm-ll-web-1.2.0-pre.4.tgz#a6ca7f951c0c2cc682c7390ae7ba12c1b055fcad"
   integrity sha512-RDyGVX6nyABPchnucl4IOV78LWzXBV9QucRiitRNONo3pfO4z375T00lI/wPiId13wXb8YNkB1Ej90hBNUK25A==
+
+"@silencelaboratories/eddsa-wasm-node@1.0.0-pre.9":
+  version "1.0.0-pre.9"
+  resolved "https://registry.yarnpkg.com/@silencelaboratories/eddsa-wasm-node/-/eddsa-wasm-node-1.0.0-pre.9.tgz#cfe4a57249abe4663f9fec44420ea4cb897dd90e"
+  integrity sha512-fKN+GEL4Zd2BvkfSUPhDHhdi4I2EuB6liMrLsq9QPi0PVZP4DazDL4QbeTattPhnXvHqhmGF0g3Au0jvSpG7cg==
+
+"@silencelaboratories/eddsa-wasm-web@1.0.0-pre.9":
+  version "1.0.0-pre.9"
+  resolved "https://registry.yarnpkg.com/@silencelaboratories/eddsa-wasm-web/-/eddsa-wasm-web-1.0.0-pre.9.tgz#cb7fda8350b106da3e9e754055c88d00246ff228"
+  integrity sha512-OSkQDsPSvQt+Wlg8dI38yE5WxTxb3wdK0zhoOCg/KYKCysNBjA2sJhUNm6+ICPRaAv/dsx3PGxt3aVUaV48Eog==
 
 "@sinclair/typebox@^0.24.1":
   version "0.24.51"

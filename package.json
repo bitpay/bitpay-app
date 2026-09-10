@@ -48,7 +48,7 @@
     "translation:download": "crowdin download --identity crowdin-credentials.yml"
   },
   "dependencies": {
-    "@bitpay-labs/bitcore-wallet-client": "11.10.6",
+    "@bitpay-labs/bitcore-wallet-client": "11.10.8",
     "@braze/react-native-sdk": "20.1.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
