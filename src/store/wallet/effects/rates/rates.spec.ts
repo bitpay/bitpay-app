@@ -565,6 +565,51 @@ describe('getContractAddresses', () => {
     expect(result).toEqual([]);
   });
 
+  it('keeps the mint casing for SVM token wallets', () => {
+    const mint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const state = {
+      WALLET: {
+        keys: {
+          key1: {
+            wallets: [
+              {
+                id: 'wallet-sol-1',
+                chain: 'sol',
+                currencyAbbreviation: 'sol',
+                tokens: [`wallet-sol-1-${mint}`],
+              },
+            ],
+          },
+        },
+        customTokenOptionsByAddress: {},
+      },
+    };
+    const store = configureTestStore(state as any);
+    expect(store.dispatch(getContractAddresses('sol'))).toEqual([mint]);
+  });
+
+  it('ignores token ids that belong to another wallet', () => {
+    const state = {
+      WALLET: {
+        keys: {
+          key1: {
+            wallets: [
+              {
+                id: 'w1',
+                chain: 'eth',
+                currencyAbbreviation: 'eth',
+                tokens: ['w1-0xmine', 'w2-0xsomeoneelse'],
+              },
+            ],
+          },
+        },
+        customTokenOptionsByAddress: {},
+      },
+    };
+    const store = configureTestStore(state as any);
+    expect(store.dispatch(getContractAddresses('eth'))).toEqual(['0xmine']);
+  });
+
   it('deduplicates token addresses across wallets', () => {
     const tokenAddress = '0xSharedToken';
     const state = {

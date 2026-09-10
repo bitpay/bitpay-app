@@ -646,6 +646,39 @@ describe('incomingLink', () => {
     });
   });
 
+  it('opens the token wallet whose mint casing matches the notification', async () => {
+    const mint = 'So11111111111111111111111111111111111111112';
+    const lookalikeTokenWallet = {
+      credentials: {
+        walletId: `${walletId}-${mint.toLowerCase()}`,
+        copayerId: 'copayer-1',
+      },
+    };
+    const svmTokenWallet = {
+      credentials: {walletId: `${walletId}-${mint}`, copayerId: 'copayer-1'},
+    };
+    const svmKey = {
+      id: 'key-1',
+      wallets: [baseWallet, lookalikeTokenWallet, svmTokenWallet],
+    };
+
+    await runIncomingLink(
+      `bitpay://wallet?walletId=hashed&tokenAddress=${mint}&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-7`,
+      () =>
+        ({
+          ...makeDeeplinkState(),
+          WALLET: {keys: {'key-1': svmKey}},
+        } as any),
+    );
+
+    expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+      key: svmKey,
+      walletId: svmTokenWallet.credentials.walletId,
+      copayerId: 'copayer-1',
+      txid: 'tx-7',
+    });
+  });
+
   it('opens the wallet details with no transaction when the notification carries no txid', async () => {
     await runIncomingLink(
       'bitpay://wallet?walletId=hashed&tokenAddress=null&copayerId=hashedCopayer&notification_type=NewOutgoingTx&txid=null',

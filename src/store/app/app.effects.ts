@@ -33,6 +33,10 @@ import {CardActivationScreens} from '../../navigation/card-activation/CardActiva
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {IsSVMChain} from '../wallet/utils/currency';
+import {
+  buildTokenWalletId,
+  findByTokenWalletId,
+} from '../wallet/utils/token-wallet-id';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {
@@ -1346,12 +1350,15 @@ export const incomingLink =
           let targetWallet = wallet;
 
           if (tokenAddress) {
-            const tokenWalletId =
-              `${wallet.credentials.walletId}-${tokenAddress}`.toLowerCase();
+            const tokenWalletId = buildTokenWalletId(
+              wallet.credentials.walletId,
+              tokenAddress,
+            );
             const findTokenWallet = () =>
-              getState().WALLET.keys[keyId]?.wallets.find(
-                (w: Wallet) =>
-                  w.credentials.walletId.toLowerCase() === tokenWalletId,
+              findByTokenWalletId(
+                getState().WALLET.keys[keyId]?.wallets,
+                tokenWalletId,
+                (w: Wallet) => w.credentials.walletId,
               );
 
             let tokenWallet = findTokenWallet();
