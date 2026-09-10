@@ -1,10 +1,16 @@
 name: Android Espresso E2E
 
 on:
-  workflow_run:
-    workflows: ["iOS XCUITest"]
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select the environment (Sandbox or Automation)"
+        required: true
+        default: "Sandbox"
+        type: choice
+        options:
+          - Sandbox
+          - Main_Workspace
 
 concurrency:
   group: e2e-android-espresso-${{ github.ref }}
@@ -253,20 +259,26 @@ jobs:
       - name: Upload Results to Testlio
         if: always()
         env:
-          RUN_API_TOKEN: ${{ secrets.TESTLIO_RUN_TOKEN_BITPAY }}
           TESTLIO_DEVICE_ID: 363a5ce7-6cef-436c-8531-6c07195c8fe8
         run: |
+          if [ "${{ inputs.environment }}" = "Sandbox" ]; then
+            export RUN_API_TOKEN="${{ secrets.TESTLIO_RUN_TOKEN }}"
+            export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config-sandbox.json"
+          else
+            export RUN_API_TOKEN="${{ secrets.TESTLIO_RUN_TOKEN_BITPAY }}"
+            export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config.json"
+          fi
           testlio create-run \
             --testConfig testlio-cli/test-config.json \
-            --projectConfig testlio-cli/project-config.json \
+            --projectConfig "$TESTLIO_PROJECT_CONFIG" \
             --externalResults true \
             --resultProvider local \
             --automatedDeviceIds "$TESTLIO_DEVICE_ID"
 
           testlio parse-run-results \
-            --projectConfig testlio-cli/project-config.json \
+            --projectConfig "$TESTLIO_PROJECT_CONFIG" \
             --path allure-results.zip \
             --automatedDeviceId "$TESTLIO_DEVICE_ID"
 
           testlio finalize-results \
-            --projectConfig testlio-cli/project-config.json
+            --projectConfig "$TESTLIO_PROJECT_CONFIG"
