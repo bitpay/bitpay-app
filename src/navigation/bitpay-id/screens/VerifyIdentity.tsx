@@ -27,6 +27,13 @@ import IconKycGetVerified from '../../../../assets/img/kyc_get_verified.svg';
 
 const Container = styled(SafeAreaView)`
   flex: 1;
+`;
+
+// flexGrow keeps the status states' button pinned to the bottom when the
+// content is shorter than the viewport
+const ScrollContainer = styled.ScrollView.attrs({
+  contentContainerStyle: {flexGrow: 1},
+})`
   padding: 0 ${ScreenGutter};
 `;
 
@@ -144,19 +151,21 @@ export const VerifyIdentityScreen: React.FC = () => {
   if (state === 'notStarted') {
     return (
       <Container>
-        <GetVerifiedTitle>{t('Get verified')}</GetVerifiedTitle>
-        <IllustrationContainer>
-          <IconKycGetVerified width={214} height={217} />
-        </IllustrationContainer>
-        <Body>
-          {t(
-            "To keep your account secure and compliant, we'll need to collect a few additional pieces of information. These quick steps help protect your funds, enable payments, and meet regulatory requirements.",
-          )}
-        </Body>
+        <ScrollContainer>
+          <GetVerifiedTitle>{t('Get verified')}</GetVerifiedTitle>
+          <IllustrationContainer>
+            <IconKycGetVerified width={214} height={217} />
+          </IllustrationContainer>
+          <Body>
+            {t(
+              "To keep your account secure and compliant, we'll need to collect a few additional pieces of information. These quick steps help protect your funds, enable payments, and meet regulatory requirements.",
+            )}
+          </Body>
 
-        <ButtonContainer>
-          <Button onPress={handleResume}>{t('Verify My Identity')}</Button>
-        </ButtonContainer>
+          <ButtonContainer>
+            <Button onPress={handleResume}>{t('Verify My Identity')}</Button>
+          </ButtonContainer>
+        </ScrollContainer>
       </Container>
     );
   }
@@ -165,21 +174,23 @@ export const VerifyIdentityScreen: React.FC = () => {
 
   return (
     <Container>
-      <Content>
-        <IconStatus>{Icon && <Icon />}</IconStatus>
-        <Title>{t(titleKey)}</Title>
-        <Body>{t(bodyKey)}</Body>
-      </Content>
+      <ScrollContainer>
+        <Content>
+          <IconStatus>{Icon && <Icon />}</IconStatus>
+          <Title>{t(titleKey)}</Title>
+          <Body>{t(bodyKey)}</Body>
+        </Content>
 
-      <ButtonContainer>
-        {state === 'inProgress' ? (
-          <Button onPress={handleResume}>{t('Continue Verification')}</Button>
-        ) : state === 'actionRequired' ? (
-          <Button onPress={handleResume}>{t('Resume Application')}</Button>
-        ) : (
-          <Button onPress={goHome}>{t('Go Home')}</Button>
-        )}
-      </ButtonContainer>
+        <ButtonContainer>
+          {state === 'inProgress' ? (
+            <Button onPress={handleResume}>{t('Continue Verification')}</Button>
+          ) : state === 'actionRequired' ? (
+            <Button onPress={handleResume}>{t('Resume Application')}</Button>
+          ) : (
+            <Button onPress={goHome}>{t('Go Home')}</Button>
+          )}
+        </ButtonContainer>
+      </ScrollContainer>
     </Container>
   );
 };
