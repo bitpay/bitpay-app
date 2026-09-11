@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   transactionSectionHeaderContainer: {
     padding: gutter,
-    height: 55,
+    minHeight: 55,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     padding: gutter,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 75,
+    minHeight: 75,
   },
   description: {
     overflow: 'hidden',

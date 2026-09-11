@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    height: 75,
+    minHeight: 75,
   },
   recipientAmount: {
     fontStyle: 'normal',
@@ -62,7 +62,7 @@ const ListCard: React.FC<TouchableOpacityProps> = ({style, ...props}) => {
 
 const AddressCard: React.FC<AddressCardComponentProps> = ({recipient}) => {
   return (
-    <ListCard activeOpacity={ActiveOpacity} style={{height: 59, margin: 0}}>
+    <ListCard activeOpacity={ActiveOpacity} style={{minHeight: 59, margin: 0}}>
       <Row style={{alignItems: 'center', justifyContent: 'space-between'}}>
         <Row style={{alignItems: 'center', justifyContent: 'flex-start'}}>
           <View style={styles.contactImageContainer}>

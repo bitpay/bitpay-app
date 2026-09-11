@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {
   Pressable,
-  PressableProps,
+  ScrollView,
   StyleSheet,
   Text,
   TextProps,
@@ -30,10 +30,21 @@ import IconKycGetVerified from '../../../../../assets/img/kyc_get_verified.svg';
 import IconClose from '../../../../../assets/img/close-modal-icon.svg';
 
 const styles = StyleSheet.create({
-  backdrop: {
+  backdropScroll: {
     flex: 1,
-    alignItems: 'center',
+  },
+  backdropScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   modalCard: {
     width: WIDTH - 32,
@@ -68,15 +79,18 @@ const styles = StyleSheet.create({
   },
 });
 
-// The sheet is fullscreen; this dims the screen and centers the card.
-const Backdrop = ({style, ...rest}: PressableProps) => (
-  <Pressable
-    style={state => [
-      styles.backdrop,
-      typeof style === 'function' ? style(state) : style,
-    ]}
-    {...rest}
-  />
+// The card keeps its natural height and stays centred while it fits; once it no
+// longer does, this scrolls instead of the card clipping its own content.
+// Centring lives on the content container, not on a `flex-grow` child: a
+// stretched child would centre its overflow out of both ends and put the top of
+// the card permanently out of reach.
+const BackdropScroll: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <ScrollView
+    style={styles.backdropScroll}
+    contentContainerStyle={styles.backdropScrollContent}
+    showsVerticalScrollIndicator={false}>
+    {children}
+  </ScrollView>
 );
 
 const ModalCard = ({style, ...rest}: ViewProps) => {
@@ -179,7 +193,8 @@ const GetVerifiedModal: React.FC = () => {
       backgroundColor={'rgba(0, 0, 0, 0.4)'}
       onBackdropPress={dismiss}
       onModalHide={handleModalHide}>
-      <Backdrop onPress={dismiss}>
+      <BackdropScroll>
+        <Pressable style={styles.backdrop} onPress={dismiss} />
         {/* Absorb taps on the card. */}
         <Pressable onPress={() => {}}>
           <ModalCard>
@@ -204,7 +219,7 @@ const GetVerifiedModal: React.FC = () => {
             </Content>
           </ModalCard>
         </Pressable>
-      </Backdrop>
+      </BackdropScroll>
     </SheetModal>
   );
 };

@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   webViewModalHeader: {
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    height: 50,
+    minHeight: 50,
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 15,
@@ -434,6 +434,7 @@ const AmountText: React.FC<TextProps & {bigAmount?: boolean}> = ({
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         styles.amountText,
         {fontSize: bigAmount ? 35 : 50, color: theme.colors.text},
@@ -490,6 +491,7 @@ const CurrencyText: React.FC<TextProps & {bigAmount?: boolean}> = ({
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         styles.currencyText,
         {fontSize: bigAmount ? 12 : 20, color: theme.colors.text},

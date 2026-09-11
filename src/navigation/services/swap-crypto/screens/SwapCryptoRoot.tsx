@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 48,
+    minHeight: 48,
   },
   offerSelectorContainer: {
     borderWidth: 1,
@@ -2860,7 +2860,7 @@ const SwapCryptoRoot: React.FC = () => {
                           />
                           <WalletSelectorName
                             ellipsizeMode="tail"
-                            numberOfLines={1}
+                            numberOfLines={2}
                             style={{marginRight: 12}}>
                             {fromWalletSelected.walletName
                               ? fromWalletSelected.walletName
@@ -2870,7 +2870,7 @@ const SwapCryptoRoot: React.FC = () => {
                       ) : (
                         <WalletSelectorName
                           ellipsizeMode="tail"
-                          numberOfLines={1}
+                          numberOfLines={2}
                           style={{fontWeight: '500', color: White}}>
                           {t('Choose Wallet')}
                         </WalletSelectorName>
@@ -3141,7 +3141,7 @@ const SwapCryptoRoot: React.FC = () => {
                       />
                       <WalletSelectorName
                         ellipsizeMode="tail"
-                        numberOfLines={1}
+                        numberOfLines={2}
                         style={{marginRight: 12}}>
                         {toWalletSelected.walletName
                           ? toWalletSelected.walletName
@@ -3151,7 +3151,7 @@ const SwapCryptoRoot: React.FC = () => {
                   ) : (
                     <WalletSelectorName
                       ellipsizeMode="tail"
-                      numberOfLines={1}
+                      numberOfLines={2}
                       style={{fontWeight: '500', color: White}}>
                       {t('Choose Crypto')}
                     </WalletSelectorName>

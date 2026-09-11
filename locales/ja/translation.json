@@ -2282,5 +2282,6 @@
   "Wallet data could not be opened": "ウォレットのデータを開けませんでした",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "ローカルデータは保持されています。再試行するか、サポートにお問い合わせください。アプリをアンインストールしたり、アプリのデータを消去したりしないでください。参照コード：{{id}}。",
   "Retry": "再試行",
-  "There are no wallets with enough funds on the {{network}} network.": "{{network}} ネットワークに十分な残高があるウォレットはありません。"
+  "There are no wallets with enough funds on the {{network}} network.": "{{network}} ネットワークに十分な残高があるウォレットはありません。",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "BitPayアプリを削除、またはデバイスを紛失した場合は、資産へのアクセスを復元するためにリカバリーフレーズが必要になります。"
 }

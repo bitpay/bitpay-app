@@ -13,7 +13,7 @@ import {
 import {BaseText} from '../../../../components/styled/Text';
 import {HomeSectionTitle} from './Styled';
 import ChevronRightSvg from './ChevronRightSvg';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppSelector, useIsLargeFont} from '../../../../utils/hooks';
 import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   buildAllocationDataFromWalletRows,
@@ -83,6 +83,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  contentRowStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
   donutContainer: {
     width: 88,
     height: 88,
@@ -93,24 +97,37 @@ const styles = StyleSheet.create({
   legendGrid: {
     flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 10,
     justifyContent: 'space-between',
+  },
+  legendGridStacked: {
+    alignSelf: 'stretch',
+    marginTop: 12,
   },
   legendColumn: {
     flex: 1,
+    minWidth: 120,
     gap: 10,
+  },
+  legendColumnStacked: {
+    minWidth: '100%',
   },
   legendItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
   },
   legendDot: {
     width: 9,
     height: 9,
+    flexShrink: 0,
     borderRadius: 8,
     marginRight: 8,
     borderWidth: 1,
   },
   legendText: {
+    flexShrink: 1,
     fontSize: 13,
     fontStyle: 'normal',
     fontWeight: '400',
@@ -151,20 +168,35 @@ const Card: React.FC<{style?: any; children?: React.ReactNode}> = ({
   );
 };
 
-const ContentRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <View style={styles.contentRow}>{children}</View>
+const ContentRow: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => (
+  <View style={[styles.contentRow, stacked && styles.contentRowStacked]}>
+    {children}
+  </View>
 );
 
 const DonutContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.donutContainer}>{children}</View>
 );
 
-const LegendGrid: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <View style={styles.legendGrid}>{children}</View>
+const LegendGrid: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => (
+  <View style={[styles.legendGrid, stacked && styles.legendGridStacked]}>
+    {children}
+  </View>
 );
 
-const LegendColumn: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <View style={styles.legendColumn}>{children}</View>
+const LegendColumn: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => (
+  <View style={[styles.legendColumn, stacked && styles.legendColumnStacked]}>
+    {children}
+  </View>
 );
 
 const LegendItemRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
@@ -388,11 +420,12 @@ export const AllocationDonutLegendCard: React.FC<{
 }> = ({legendItems, slices, style, header, footer, isLoading}) => {
   const theme = useTheme();
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const leftColumn = legendItems.slice(0, 3);
   const rightColumn = legendItems.slice(3);
   const renderLegendColumn = (items: AllocationLegendItem[]) => {
     return (
-      <LegendColumn>
+      <LegendColumn stacked={stacked}>
         {items.map(item => {
           const dotColor = theme.dark ? item.color.dark : item.color.light;
 
@@ -501,12 +534,12 @@ export const AllocationDonutLegendCard: React.FC<{
   return (
     <Card style={style}>
       {header}
-      <ContentRow>
+      <ContentRow stacked={stacked}>
         <DonutContainer>
           <DonutChart size={80} strokeWidth={12} slices={slices} />
         </DonutContainer>
 
-        <LegendGrid>
+        <LegendGrid stacked={stacked}>
           {renderLegendColumn(leftColumn)}
           {renderLegendColumn(rightColumn)}
         </LegendGrid>

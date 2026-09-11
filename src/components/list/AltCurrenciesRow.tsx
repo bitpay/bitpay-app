@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   altCurrencyIsoCodeContainer: {
-    width: 60,
-    height: 40,
+    minWidth: 60,
+    minHeight: 40,
     borderRadius: 27.5,
     alignItems: 'center',
     justifyContent: 'center',

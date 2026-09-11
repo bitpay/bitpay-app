@@ -45,8 +45,10 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     marginTop: 0,
     marginRight: parseInt(ScreenGutter, 10),
     marginBottom: 0,

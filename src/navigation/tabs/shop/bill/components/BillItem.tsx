@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   payButton: {
-    height: 32,
+    minHeight: 32,
     backgroundColor: Action,
     borderRadius: 50,
     maxWidth: 90,

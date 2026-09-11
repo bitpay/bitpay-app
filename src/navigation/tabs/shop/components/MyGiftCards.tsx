@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 50,
+    minHeight: 50,
     marginVertical: 10,
     marginHorizontal: horizontalPadding,
   },

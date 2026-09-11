@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     borderColor: '#9ba3ae',
     borderRadius: 4,
     paddingHorizontal: 10,
-    height: 55,
+    minHeight: 55,
     alignItems: 'center',
     flexDirection: 'row',
   },
