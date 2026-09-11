@@ -38,6 +38,8 @@ const HomeRowContainer = styled.View`
 const Header = styled.View`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0 ${ScreenGutter} 0 16px;
   justify-content: space-between;
   align-items: center;
@@ -45,6 +47,7 @@ const Header = styled.View`
 
 const HeaderLeft = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   flex-shrink: 1;
 `;

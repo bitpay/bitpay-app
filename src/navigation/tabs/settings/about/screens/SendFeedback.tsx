@@ -84,7 +84,7 @@ const EmojiActionContainer = styled.View`
 
 const EmojiAction = styled(TouchableOpacity)`
   width: 44px;
-  height: 44px;
+  min-height: 44px;
 `;
 
 const ListItem = styled(Setting)`

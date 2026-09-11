@@ -211,7 +211,7 @@ const WebViewModalHeader = styled.View<{topInset: number}>`
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
+  min-height: 50px;
   background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
   justify-content: center;
   align-items: flex-start;
@@ -733,7 +733,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           <ItemDivisor />
           <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
             <RowLabel>{t('Destination')}</RowLabel>
-            <SelectedOptionContainer style={{height: 30}}>
+            <SelectedOptionContainer style={{minHeight: 30}}>
               <SelectedOptionCol>
                 <CurrencyImage
                   img={wallet.img}

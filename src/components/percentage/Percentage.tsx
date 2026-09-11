@@ -15,16 +15,20 @@ const PercentageContainer = styled(BaseText)<{
   font-size: 13px;
   line-height: 18px;
   color: ${({color}) => color};
+  flex-shrink: 1;
 `;
 
 const PercentageRow = styled.View`
   flex-direction: row;
   align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 1;
 `;
 
 const RangeLabel = styled(BaseText)`
   font-size: 13px;
   line-height: 18px;
+  flex-shrink: 1;
   color: ${({theme}) => getNeutralChangeColor(theme.dark)};
   font-weight: 400;
   margin-left: 5px;

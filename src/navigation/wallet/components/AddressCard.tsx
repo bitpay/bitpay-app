@@ -24,7 +24,7 @@ const ListCard = styled(TouchableOpacity)`
   align-items: center;
   justify-content: space-between;
   padding: 15px;
-  height: 75px;
+  min-height: 75px;
 `;
 
 const RecipientAmount = styled(BaseText)`
@@ -45,7 +45,7 @@ const ContactImageContainer = styled.View`
 
 const AddressCard: React.FC<AddressCardComponentProps> = ({recipient}) => {
   return (
-    <ListCard activeOpacity={ActiveOpacity} style={{height: 59, margin: 0}}>
+    <ListCard activeOpacity={ActiveOpacity} style={{minHeight: 59, margin: 0}}>
       <Row style={{alignItems: 'center', justifyContent: 'space-between'}}>
         <Row style={{alignItems: 'center', justifyContent: 'flex-start'}}>
           <ContactImageContainer>

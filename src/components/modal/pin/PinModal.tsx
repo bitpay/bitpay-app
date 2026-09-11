@@ -43,11 +43,13 @@ const PinMessagesContainer = styled(Animated.View)`
   align-items: center;
   text-align: center;
   margin-top: 32px;
+  padding: 0 24px;
 `;
 
 const PinMessage = styled(H5)`
   color: ${White};
   line-height: 25px;
+  text-align: center;
 `;
 
 const PinMessagesErrorContainer = styled(Animated.View)`

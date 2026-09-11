@@ -311,7 +311,10 @@ const SpinnerContainer = styled.View<{
   margin-bottom: ${({addMarginBottom}) => (addMarginBottom ? '40px' : '0')};
 `;
 
-const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
+// Display-sized figure: it shrinks to fit rather than overflowing the hero.
+const AmountText = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.3,
+}))<{bigAmount?: boolean}>`
   font-size: ${({bigAmount}) => (bigAmount ? '35px' : '50px')};
   font-weight: 500;
   text-align: center;
@@ -338,7 +341,9 @@ const CurrencySuperScript = styled.View`
   top: 10px;
   right: -20px;
 `;
-const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
+const CurrencyText = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.3,
+}))<{bigAmount?: boolean}>`
   font-size: ${({bigAmount}) => (bigAmount ? '12px' : '20px')};
   color: ${({theme}) => theme.colors.text};
   position: absolute;
@@ -364,7 +369,7 @@ const WebViewModalHeader = styled.View<{topInset: number}>`
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
+  min-height: 50px;
   background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
   justify-content: center;
   align-items: flex-start;

@@ -25,8 +25,11 @@ import {SvgProps} from 'react-native-svg';
 
 const BANNER_HEIGHT = 80;
 
+// `$height` is transient on purpose: RN declares `height` as a valid native View
+// prop (BaseViewConfig), so a plain `height` prop would be forwarded and applied
+// as a hard height, clipping the text at large font sizes.
 const BannerContainer = styled.View<{
-  height?: number;
+  $height?: number;
   containerBgColor?: string;
 }>`
   background-color: ${({theme: {dark}, containerBgColor}) =>
@@ -34,9 +37,8 @@ const BannerContainer = styled.View<{
   border-radius: 10px;
   margin: 10px 0;
   padding: 10px 12px;
-  align-items: flex-start;
   justify-content: space-between;
-  min-height: ${({height}) => height || BANNER_HEIGHT}px;
+  min-height: ${({$height}) => $height || BANNER_HEIGHT}px;
 `;
 
 const Description = styled.View`
@@ -44,7 +46,11 @@ const Description = styled.View`
   flex: 1;
 `;
 
-const BannerRow = styled(Row)`
+// Deliberately not `styled(Row)`: Row is `flex: 1` (flex-basis 0), and as the
+// only child of this column it would contribute no intrinsic height, collapsing
+// the container to its min-height and spilling the text out of both edges.
+const BannerRow = styled.View`
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
 `;
@@ -132,7 +138,7 @@ const Banner = ({
     : undefined;
 
   return (
-    <BannerContainer height={height} containerBgColor={containerBgColor}>
+    <BannerContainer $height={height} containerBgColor={containerBgColor}>
       <BannerRow>
         {icon ? React.createElement(icon) : <Info bgColor={bgColor} />}
         <Description>

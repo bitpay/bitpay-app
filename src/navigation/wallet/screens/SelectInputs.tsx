@@ -78,7 +78,7 @@ const ItemRowContainer = styled.View`
   align-items: center;
   flex-direction: row;
   justify-content: space-between;
-  height: 55px;
+  min-height: 55px;
 `;
 
 const SelectInputsContainer = styled.SafeAreaView`
@@ -107,7 +107,7 @@ const DropdownRow = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: space-between;
   flex-wrap: nowrap;
-  height: 48px;
+  min-height: 48px;
 `;
 
 const DropdownTitle = styled.View`

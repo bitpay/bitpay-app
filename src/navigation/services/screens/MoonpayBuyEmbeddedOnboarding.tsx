@@ -135,7 +135,7 @@ const WebViewModalHeader = styled.View<{topInset: number}>`
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
+  min-height: 50px;
   background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
   justify-content: center;
   align-items: flex-start;

@@ -42,7 +42,7 @@ const BchHeaderAction = styled(TouchableOpacity)<{isActive: boolean}>`
   margin: 0 10px -1px;
   border-bottom-color: ${({isActive}) => (isActive ? Action : 'transparent')};
   border-bottom-width: 1px;
-  height: 60px;
+  min-height: 60px;
 `;
 
 const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`

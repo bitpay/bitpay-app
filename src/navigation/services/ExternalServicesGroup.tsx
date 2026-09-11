@@ -89,6 +89,8 @@ const ExternalServicesGroup = ({
                   <H7
                     ellipsizeMode="tail"
                     numberOfLines={1}
+                    // Fixed-height nav header chrome.
+                    maxFontSizeMultiplier={1.4}
                     style={{flexShrink: 1, fontSize: 13, letterSpacing: 0}}>
                     {getEVMAccountName(route.params.fromWallet, allKeys)
                       ? getEVMAccountName(route.params.fromWallet, allKeys)
