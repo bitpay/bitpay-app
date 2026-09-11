@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Keyboard,
+  Platform,
   ScrollView,
   View,
   StyleSheet,
@@ -333,6 +335,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     useState(false);
   const [cardQuoteFailed, setCardQuoteFailed] = useState(false);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [showSelectCardModal, setShowSelectCardModal] = useState(false);
 
   const cardModalHeightAnim = useRef(
@@ -563,13 +566,31 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   }, [isCardPaymentMethod]);
 
   useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+    const showSub = Keyboard.addListener('keyboardDidShow', e =>
+      setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardHeight(0),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     Animated.timing(cardModalHeightAnim, {
-      toValue: showAddCardModal ? HEIGHT : CARD_SELECTOR_MODAL_HEIGHT,
-      duration: 280,
+      toValue: showAddCardModal
+        ? HEIGHT - keyboardHeight - (insets?.top ?? 0)
+        : CARD_SELECTOR_MODAL_HEIGHT,
+      duration: keyboardHeight ? 0 : 280,
       easing: Easing.inOut(Easing.ease),
       useNativeDriver: false, // animating height — not supported by the native driver
     }).start();
-  }, [showAddCardModal, cardModalHeightAnim]);
+  }, [showAddCardModal, keyboardHeight, insets?.top, cardModalHeightAnim]);
 
   // Re-quotes bound to the selected card. MoonPay evaluates card-specific
   // requirements (fees, limits, disclosures) from the card id, so this runs as
