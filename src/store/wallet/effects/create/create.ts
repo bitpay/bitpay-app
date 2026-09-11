@@ -14,6 +14,10 @@ import {
   mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {
+  buildTokenWalletId,
+  findByTokenWalletId,
+} from '../../utils/token-wallet-id';
+import {
   successAddWallet,
   successCreateKey,
   successUpdateKey,
@@ -920,9 +924,10 @@ export const detectAndCreateTokensForEachEvmWallet =
           !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
         const notAlreadyCreated =
           !tokenAddress ||
-          !w.tokens ||
-          !cloneDeep(w.tokens).some(t =>
-            t?.toLowerCase().includes(tokenAddress.toLowerCase()),
+          !findByTokenWalletId(
+            w.tokens,
+            buildTokenWalletId(w.id, tokenAddress),
+            t => t,
           );
         return _IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
@@ -949,10 +954,11 @@ export const detectAndCreateTokensForEachEvmWallet =
 
             filteredTokens = moralisSVMWithBalanceData.filter(svmToken => {
               return (
-                (!w.tokens ||
-                  !cloneDeep(w.tokens).some(token =>
-                    token.includes(svmToken.mint),
-                  )) &&
+                !findByTokenWalletId(
+                  w.tokens,
+                  buildTokenWalletId(w.id, svmToken.mint),
+                  token => token,
+                ) &&
                 svmToken.amount &&
                 svmToken.decimals &&
                 parseFloat(svmToken.amount) / Math.pow(10, svmToken.decimals) >=
@@ -973,12 +979,12 @@ export const detectAndCreateTokensForEachEvmWallet =
               );
 
             filteredTokens = erc20WithBalanceData.filter(erc20Token => {
-              // Filter by: token already created in the key (present in w.tokens), possible spam and significant balance
               return (
-                (!w.tokens ||
-                  !cloneDeep(w.tokens).some(token =>
-                    token.includes(erc20Token.token_address),
-                  )) &&
+                !findByTokenWalletId(
+                  w.tokens,
+                  buildTokenWalletId(w.id, erc20Token.token_address),
+                  token => token,
+                ) &&
                 !erc20Token.possible_spam &&
                 erc20Token.verified_contract &&
                 erc20Token.balance &&
@@ -1002,19 +1008,18 @@ export const detectAndCreateTokensForEachEvmWallet =
           }
 
           for (const [index, tokenToAdd] of filteredTokens.entries()) {
-            const existingTokenWallet = key.wallets.filter(wallet => {
-              return (
-                wallet.id ===
-                `${w.id}-${cloneDeep(tokenToAdd.token_address).toLowerCase()}`
-              );
-            });
-            if (existingTokenWallet[0]) {
+            const existingTokenWallet = findByTokenWalletId(
+              key.wallets,
+              buildTokenWalletId(w.id, tokenToAdd.token_address),
+              wallet => wallet.id,
+            );
+            if (existingTokenWallet) {
               // workaround for cases where the token was already created but for some reason was not included in the list of tokens in the associated wallet
               logManager.debug(
                 `Token ${tokenToAdd.symbol} (${tokenToAdd.token_address}) already created for this wallet. Adding to tokens list in the associated wallet`,
               );
 
-              (w.tokens || []).push(existingTokenWallet[0].id);
+              (w.tokens || []).push(existingTokenWallet.id);
               w.tokens = uniq(w.tokens);
 
               await dispatch(
