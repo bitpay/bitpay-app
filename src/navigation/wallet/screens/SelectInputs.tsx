@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 55,
+    minHeight: 55,
   },
   selectInputsContainer: {
     flex: 1,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'nowrap',
-    height: 48,
+    minHeight: 48,
   },
   dropdownTitle: {
     flexDirection: 'row',

@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   nextButton: {
-    height: 50,
+    minHeight: 50,
     minWidth: 100,
     paddingHorizontal: 16,
     borderRadius: 8,

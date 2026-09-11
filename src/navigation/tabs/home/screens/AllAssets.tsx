@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
   },
   filtersRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
   },
   searchInputContainer: {
     flex: 1,
+    minWidth: 160,
     borderRadius: 50,
     flexDirection: 'row',
     alignItems: 'center',

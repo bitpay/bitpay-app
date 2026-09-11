@@ -10,6 +10,7 @@ import {
 } from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks/useFontScale';
 
 export interface WalletSettingsRowProps {
   img: string | ((props: any) => ReactElement);
@@ -25,6 +26,10 @@ export interface WalletSettingsRowProps {
 const styles = StyleSheet.create({
   hiddenColumn: {
     alignItems: 'flex-end',
+  },
+  walletSettingsContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   walletSettingsContainer: {
     flexDirection: 'row',
@@ -47,15 +52,19 @@ const WalletSettingsRow = ({
   onPress,
 }: WalletSettingsRowProps) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   return (
     <TouchableOpacity
-      style={styles.walletSettingsContainer}
+      style={[
+        styles.walletSettingsContainer,
+        stacked && styles.walletSettingsContainerStacked,
+      ]}
       onPress={() => onPress()}
       activeOpacity={ActiveOpacity}>
       <CurrencyImageContainer style={{height: 40, width: 40}}>
         <CurrencyImage img={img} badgeUri={badgeImg} size={40} />
       </CurrencyImageContainer>
-      <H5 ellipsizeMode="tail" numberOfLines={1}>
+      <H5 ellipsizeMode="tail" numberOfLines={stacked ? 3 : 1}>
         {walletName || currencyName} {isToken}
       </H5>
 

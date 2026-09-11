@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingLeft: 15,
     paddingRight: 10,
-    height: 37,
+    minHeight: 37,
   },
   areaCode: {
     paddingLeft: 8,

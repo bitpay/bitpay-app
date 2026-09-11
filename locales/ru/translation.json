@@ -2462,5 +2462,6 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Убедитесь, что вы правильно записали фразу восстановления: введите слова под номерами {{first}}, {{second}} и {{third}} из вашей фразы восстановления.",
   "Show balances": "Показать балансы",
   "Hide balances": "Скрыть балансы",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Не удалось проверить этот аккаунт на наличие ожидающих транзакций. Проверьте подключение и повторите попытку."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Не удалось проверить этот аккаунт на наличие ожидающих транзакций. Проверьте подключение и повторите попытку.",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Если вы удалите приложение BitPay или потеряете устройство, для получения доступа к вашим средствам вам потребуется ввести фразу восстановления."
 }

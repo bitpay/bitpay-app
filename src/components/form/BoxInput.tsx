@@ -61,10 +61,12 @@ const styles = StyleSheet.create({
   separator: {
     borderRightWidth: 1,
     borderStyle: 'solid',
-    height: SEPARATOR_HEIGHT,
+    alignSelf: 'stretch',
+    minHeight: SEPARATOR_HEIGHT,
+    marginVertical: 9,
   },
   input: {
-    height: INPUT_HEIGHT,
+    minHeight: INPUT_HEIGHT,
     padding: 10,
     flexGrow: 1,
     flexShrink: 1,
@@ -85,7 +87,7 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     alignItems: 'center',
-    height: INPUT_HEIGHT,
+    minHeight: INPUT_HEIGHT,
     minWidth: INPUT_HEIGHT,
     justifyContent: 'center',
   },

@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import type {ReactElement} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
 import {useTheme} from '../../../contexts';
 import {
   ImageContainer,
@@ -29,9 +29,13 @@ interface OnboardingSlideProps {
 const styles = StyleSheet.create({
   slideContainer: {
     backgroundColor: 'transparent',
+    marginTop: 20,
+  },
+  slideContent: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    flexGrow: 1,
+    paddingBottom: 20,
   },
 });
 
@@ -41,7 +45,10 @@ export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
   const themedText = {color: theme.colors.text};
 
   return (
-    <View style={styles.slideContainer}>
+    <ScrollView
+      style={styles.slideContainer}
+      contentContainerStyle={styles.slideContent}
+      showsVerticalScrollIndicator={false}>
       <ImageContainer justifyContent="flex-end">{img()}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'} style={themedText}>
@@ -60,7 +67,7 @@ export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
           </TextAlign>
         </SubTextContainer>
       )}
-    </View>
+    </ScrollView>
   );
 };
 

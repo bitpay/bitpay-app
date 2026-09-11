@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import {SafeAreaView, StyleSheet} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
@@ -59,7 +59,13 @@ export type BackupParamList = {
 const styles = StyleSheet.create({
   backupContainer: {
     flex: 1,
+  },
+  backupScroll: {
+    flex: 1,
+  },
+  backupScrollContent: {
     alignItems: 'center',
+    flexGrow: 1,
   },
 });
 
@@ -179,30 +185,34 @@ const BackupScreen = ({route}: BackupScreenProps) => {
 
   return (
     <SafeAreaView testID="backup-container" style={styles.backupContainer}>
-      <ImageContainer>{BackupImage[themeType]}</ImageContainer>
-      <TitleContainer>
-        <TextAlign align={'center'}>
-          <H3>{t('Would you like to backup your key?')}</H3>
-        </TextAlign>
-      </TitleContainer>
-      <TextContainer>
-        <TextAlign align={'center'}>
-          <Paragraph>
-            {t(
-              "If you delete the BitPay app or lose your device, you'll need your recovery phrase regain access to your funds.",
-            )}
-          </Paragraph>
-        </TextAlign>
-      </TextContainer>
-      <CtaContainer>
-        <Button
-          testID="go-to-backup-button"
-          accessibilityLabel={t('Backup your Recovery Phrase')}
-          buttonStyle={'primary'}
-          onPress={gotoBackup}>
-          {t('Backup your Recovery Phrase')}
-        </Button>
-      </CtaContainer>
+      <ScrollView
+        style={styles.backupScroll}
+        contentContainerStyle={styles.backupScrollContent}>
+        <ImageContainer>{BackupImage[themeType]}</ImageContainer>
+        <TitleContainer>
+          <TextAlign align={'center'}>
+            <H3>{t('Would you like to backup your key?')}</H3>
+          </TextAlign>
+        </TitleContainer>
+        <TextContainer>
+          <TextAlign align={'center'}>
+            <Paragraph>
+              {t(
+                "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.",
+              )}
+            </Paragraph>
+          </TextAlign>
+        </TextContainer>
+        <CtaContainer>
+          <Button
+            testID="go-to-backup-button"
+            accessibilityLabel={t('Backup your Recovery Phrase')}
+            buttonStyle={'primary'}
+            onPress={gotoBackup}>
+            {t('Backup your Recovery Phrase')}
+          </Button>
+        </CtaContainer>
+      </ScrollView>
     </SafeAreaView>
   );
 };

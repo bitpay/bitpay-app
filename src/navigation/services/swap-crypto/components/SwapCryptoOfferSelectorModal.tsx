@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalHeader: {
-    height: 50,
+    minHeight: 50,
     marginRight: 10,
     marginLeft: 10,
     display: 'flex',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
     width: 25,
-    height: 25,
+    minHeight: 25,
   },
   offerDataInfoLabel: {
     marginRight: 10,
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletSelector: {
-    height: 36,
+    minHeight: 36,
     borderRadius: 27.5,
     display: 'flex',
     flexDirection: 'row',

@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     borderRadius: 8,
     flexDirection: 'row',
-    height: 55,
+    minHeight: 55,
     paddingHorizontal: 15,
     marginTop: 10,
     paddingLeft: 2,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     marginLeft: 1,
   },
   addressPillContainer: {
-    height: 37,
+    minHeight: 37,
     marginRight: 20,
     width: 100,
   },
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   addButton: {
-    height: 30,
+    minHeight: 30,
     width: 30,
     borderRadius: 8,
     alignItems: 'center',

@@ -24,7 +24,7 @@ import {
   White,
 } from '../../../../styles/colors';
 import {getDifferenceColor} from '../../../../components/percentage/Percentage';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppSelector, useIsLargeFont} from '../../../../utils/hooks';
 import {maskIfHidden} from '../../../../utils/hideBalances';
 import ChevronRightSvg from './ChevronRightSvg';
 import {
@@ -49,16 +49,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
   },
+  rowStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
   iconContainer: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    marginBottom: 4,
   },
   assetInfo: {
     flex: 1,
+    minWidth: 90,
     justifyContent: 'center',
+  },
+  assetInfoStacked: {
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   assetName: {
     fontSize: 13,
@@ -74,7 +84,13 @@ const styles = StyleSheet.create({
   values: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+    flexShrink: 1,
     marginRight: 12,
+  },
+  valuesStacked: {
+    alignItems: 'flex-start',
+    marginRight: 0,
+    marginTop: 8,
   },
   deltaFiatSkeletonContainer: {
     alignItems: 'flex-end',
@@ -94,11 +110,17 @@ const styles = StyleSheet.create({
   },
   percentPill: {
     position: 'relative',
+    flexShrink: 1,
+    alignSelf: 'flex-start',
     borderRadius: 50,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderWidth: 1,
     marginRight: 14,
+  },
+  percentPillStacked: {
+    marginRight: 0,
+    marginTop: 8,
   },
   percentSkeletonOverlay: {
     position: 'absolute',
@@ -113,16 +135,23 @@ const styles = StyleSheet.create({
     width: 9,
     alignItems: 'flex-end',
   },
+  chevronContainerStacked: {
+    display: 'none',
+  },
 });
 
 const Row: React.FC<
-  React.ComponentProps<typeof TouchableOpacity> & {isLast: boolean}
-> = ({isLast, style, ...rest}) => {
+  React.ComponentProps<typeof TouchableOpacity> & {
+    isLast: boolean;
+    stacked?: boolean;
+  }
+> = ({isLast, stacked, style, ...rest}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
       style={[
         styles.row,
+        stacked && styles.rowStacked,
         {
           borderBottomWidth: isLast ? 0 : 1,
           borderBottomColor: theme.dark ? LightBlack : LightBlue,
@@ -138,8 +167,13 @@ const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <View style={styles.iconContainer}>{children}</View>
 );
 
-const AssetInfo: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <View style={styles.assetInfo}>{children}</View>
+const AssetInfo: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => (
+  <View style={[styles.assetInfo, stacked && styles.assetInfoStacked]}>
+    {children}
+  </View>
 );
 
 const AssetName: React.FC<React.ComponentProps<typeof BaseText>> = ({
@@ -172,8 +206,13 @@ const AssetAmount: React.FC<React.ComponentProps<typeof H7>> = ({
   );
 };
 
-const Values: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <View style={styles.values}>{children}</View>
+const Values: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => (
+  <View style={[styles.values, stacked && styles.valuesStacked]}>
+    {children}
+  </View>
 );
 
 const DeltaFiatSkeletonContainer: React.FC<{children?: React.ReactNode}> = ({
@@ -208,12 +247,16 @@ const DeltaFiat: React.FC<
   return <BaseText style={[styles.deltaFiat, {color}, style]} {...rest} />;
 };
 
-const PercentPill: React.FC<{children?: React.ReactNode}> = ({children}) => {
+const PercentPill: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => {
   const theme = useTheme();
   return (
     <View
       style={[
         styles.percentPill,
+        stacked && styles.percentPillStacked,
         {
           borderColor: theme.dark ? SlateDark : Slate30,
           backgroundColor: theme.dark ? 'transparent' : White,
@@ -251,9 +294,15 @@ const PercentSkeletonOverlay: React.FC<{children?: React.ReactNode}> = ({
 
 const ChevronContainer: React.FC<{
   visible: boolean;
+  stacked?: boolean;
   children?: React.ReactNode;
-}> = ({visible, children}) => (
-  <View style={[styles.chevronContainer, {opacity: visible ? 1 : 0}]}>
+}> = ({visible, stacked, children}) => (
+  <View
+    style={[
+      styles.chevronContainer,
+      stacked && styles.chevronContainerStacked,
+      {opacity: visible ? 1 : 0},
+    ]}>
     {children}
   </View>
 );
@@ -284,6 +333,7 @@ const AssetRow: React.FC<Props> = ({
   const {t} = useTranslation();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
+  const stacked = useIsLargeFont();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const rowLoading = !!(isPnlLoading || isPopulateLoading);
   const shouldForceSkeleton = !!forceSkeleton;
@@ -394,7 +444,7 @@ const AssetRow: React.FC<Props> = ({
 
   if (shouldForceSkeleton) {
     return (
-      <Row activeOpacity={1} isLast={isLast}>
+      <Row activeOpacity={1} isLast={isLast} stacked={stacked}>
         <IconContainer>
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
@@ -407,7 +457,7 @@ const AssetRow: React.FC<Props> = ({
           </SkeletonPlaceholder>
         </IconContainer>
 
-        <AssetInfo>
+        <AssetInfo stacked={stacked}>
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
             highlightColor={theme.dark ? LightBlack : GhostWhite}>
@@ -425,7 +475,7 @@ const AssetRow: React.FC<Props> = ({
           </SkeletonPlaceholder>
         </AssetInfo>
 
-        <Values>
+        <Values stacked={stacked}>
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
             highlightColor={theme.dark ? LightBlack : GhostWhite}>
@@ -440,7 +490,7 @@ const AssetRow: React.FC<Props> = ({
           </SkeletonPlaceholder>
         </Values>
 
-        <PercentPill>
+        <PercentPill stacked={stacked}>
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
             highlightColor={theme.dark ? LightBlack : GhostWhite}>
@@ -448,7 +498,7 @@ const AssetRow: React.FC<Props> = ({
           </SkeletonPlaceholder>
         </PercentPill>
 
-        <ChevronContainer visible={false}>
+        <ChevronContainer visible={false} stacked={stacked}>
           <ChevronRightSvg width={9} height={15} gray />
         </ChevronContainer>
       </Row>
@@ -459,6 +509,7 @@ const AssetRow: React.FC<Props> = ({
     <Row
       activeOpacity={canNavigate ? ActiveOpacity : 1}
       isLast={isLast}
+      stacked={stacked}
       testID={`home-asset-row-item-${displayItem.currencyAbbreviation}-${displayItem.chain}`}
       accessibilityLabel={t('{{name}} asset', {name: displayItem.name})}
       onPress={canNavigate ? handlePress : undefined}>
@@ -475,8 +526,8 @@ const AssetRow: React.FC<Props> = ({
         />
       </IconContainer>
 
-      <AssetInfo>
-        <AssetName numberOfLines={1} ellipsizeMode="tail">
+      <AssetInfo stacked={stacked}>
+        <AssetName numberOfLines={stacked ? 2 : 1} ellipsizeMode="tail">
           {displayItem.name}
         </AssetName>
         {hideAllBalances ? (
@@ -501,7 +552,7 @@ const AssetRow: React.FC<Props> = ({
 
       {shouldShowRightSide ? (
         <>
-          <Values>
+          <Values stacked={stacked}>
             {hideAllBalances ? (
               <>
                 <FiatAmount>
@@ -543,7 +594,7 @@ const AssetRow: React.FC<Props> = ({
             )}
           </Values>
 
-          <PercentPill>
+          <PercentPill stacked={stacked}>
             {shouldShowSkeleton ? (
               <>
                 <PercentSkeletonAnchor isPositive={false} hasPnl>
@@ -570,7 +621,7 @@ const AssetRow: React.FC<Props> = ({
         </>
       ) : null}
 
-      <ChevronContainer visible={canNavigate}>
+      <ChevronContainer visible={canNavigate} stacked={stacked}>
         <ChevronRightSvg width={9} height={15} gray />
       </ChevronContainer>
     </Row>

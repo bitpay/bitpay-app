@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   cardBalanceValueRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 39,
+    minHeight: 39,
     left: 0,
     maxWidth: '100%',
     paddingHorizontal: 20,

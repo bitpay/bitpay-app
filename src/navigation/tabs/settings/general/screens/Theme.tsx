@@ -1,6 +1,6 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Pressable, View, SafeAreaView} from 'react-native';
+import {Pressable, ScrollView, SafeAreaView} from 'react-native';
 import type {AppColorScheme} from '../../../../../store/app/app.models';
 import {TEST_MODE_NETWORK} from '@env';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
@@ -106,7 +106,7 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <View>
+      <ScrollView>
         <Setting onPress={() => onSetThemePress('light')}>
           <SettingTitle>{t('Light Mode')}</SettingTitle>
           <Checkbox
@@ -133,7 +133,7 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
             checked={!currentTheme || currentTheme === 'unspecified'}
           />
         </Setting>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };

@@ -39,11 +39,13 @@ const styles = StyleSheet.create({
   },
   searchFilterContainer: {
     minWidth: 60,
-    maxWidth: 130,
+    maxWidth: 150,
+    flexShrink: 1,
+    paddingVertical: 4,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    height: 32,
+    minHeight: 32,
     marginTop: 'auto' as any,
     marginRight: 8,
     marginBottom: 'auto' as any,
@@ -77,6 +79,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '400',
     minWidth: 70,
+    flexShrink: 1,
   },
   searchFilterIconContainer: {
     marginRight: 12,
@@ -131,6 +134,7 @@ export const SearchFilterLabel: React.FC<
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.4}
       style={[
         styles.searchFilterLabel,
         {color: theme.dark ? White : Action},
@@ -537,7 +541,7 @@ const SearchComponent = <T extends SearchableItem>({
             style={
               selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
             }>
-            <SearchFilterLabel numberOfLines={1} ellipsizeMode="tail">
+            <SearchFilterLabel numberOfLines={2} ellipsizeMode="tail">
               {selectedChainFilterOption && currencyInfo
                 ? currencyInfo.name
                 : t('All Networks')}

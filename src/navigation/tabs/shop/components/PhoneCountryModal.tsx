@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 0,
-    height: 55,
+    minHeight: 55,
     alignItems: 'center',
   },
   modalTitle: {

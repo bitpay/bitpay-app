@@ -238,8 +238,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   helpStepBubble: {
-    width: 18,
-    height: 18,
+    minWidth: 18,
+    minHeight: 18,
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1141,7 +1141,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
         <Content
           contentContainerStyle={{flex: 1, justifyContent: 'flex-start'}}>
           <TopSection>
-            <TopSectionContainer style={{height: 190}}>
+            <TopSectionContainer style={{minHeight: 190}}>
               <StatusContainer>
                 {isCeremonyComplete ? (
                   <>
