@@ -986,6 +986,46 @@ describe('startTSSCeremony', () => {
     expect(finalKey.tssSession!.status).toBe('complete');
   });
 
+  it('rejects with CEREMONY_TIMEOUT when BWS reports the session expired', async () => {
+    const keyId = 'ceremony-expired';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    lastKeyGen.emit(
+      'error',
+      new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+    );
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
+    expect(lastKeyGen.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('rejects with CEREMONY_VERSION_MISMATCH when BWS reports a TSS version mismatch', async () => {
+    const keyId = 'ceremony-version';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    lastKeyGen.emit(
+      'error',
+      new Error('TSS_MISMATCH_VERSION: TSS version does not match'),
+    );
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_VERSION_MISMATCH');
+    expect(lastKeyGen.unsubscribe).toHaveBeenCalled();
+  });
+
   it('rejects with the original error on a fatal (non-reconnection) error and cleans up', async () => {
     const keyId = 'ceremony-fatal';
     const store = configureTestStore({
@@ -1335,6 +1375,47 @@ describe('joinTSSWithCode — fresh join', () => {
 
     const finalKey = await resultPromise;
     expect(finalKey.tssSession!.status).toBe('complete');
+  });
+
+  it('rejects with CEREMONY_TIMEOUT when BWS reports the session expired', async () => {
+    const store = configureTestStore();
+
+    const resultPromise = store.dispatch(joinTSSWithCode(freshJoinOpts()));
+    await tick();
+
+    lastKeyGen.emit(
+      'error',
+      new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+    );
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
+    expect(lastKeyGen.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('rejects with CEREMONY_VERSION_MISMATCH when BWS reports a TSS version mismatch', async () => {
+    const store = configureTestStore();
+
+    const resultPromise = store.dispatch(joinTSSWithCode(freshJoinOpts()));
+    await tick();
+
+    lastKeyGen.emit(
+      'error',
+      new Error('TSS_MISMATCH_VERSION: TSS version does not match'),
+    );
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_VERSION_MISMATCH');
+    expect(lastKeyGen.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('maps an expired-session rejection from the awaited joinKey() call', async () => {
+    const store = configureTestStore();
+    lastKeyGen.joinKey.mockRejectedValueOnce(
+      new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+    );
+
+    await expect(
+      store.dispatch(joinTSSWithCode(freshJoinOpts())),
+    ).rejects.toThrow('CEREMONY_TIMEOUT');
   });
 
   it('rejects with the original error on a fatal error and cleans up the registry', async () => {
