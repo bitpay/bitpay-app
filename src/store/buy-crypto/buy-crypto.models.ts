@@ -277,7 +277,8 @@ export type MoonpayPaymentType =
   | 'apple_pay' // applePay embedded flow
   | 'mobile_wallet' // applePay
   | 'sepa_bank_transfer'
-  | 'credit_debit_card';
+  | 'credit_debit_card'
+  | 'card'; // creditCard/debitCard embedded flow
 
 export interface MoonpayGetSignedPaymentUrlReqData {
   env: 'sandbox' | 'production';
@@ -344,6 +345,9 @@ export interface MoonpayGetQuoteEmbeddedRequestData {
   baseCurrencyAmount: number;
   baseCurrencyCode: string;
   paymentMethod: MoonpayPaymentType | undefined;
+  // Identifies the specific saved card when paymentMethod is 'card'. Required
+  // to get an executable quote/signature for the Cards embedded flow.
+  paymentMethodId?: string;
   areFeesIncluded: boolean;
   env: string;
 }
@@ -363,7 +367,7 @@ export interface MoonpayQuoteEmbeddedData {
   source: MoonpayEmbeddedAmount;
   destination: MoonpayEmbeddedAmount;
   fees: MoonpayEmbeddedFees;
-  paymentMethod: 'apple_pay';
+  paymentMethod: {type: 'apple_pay' | 'card'; id?: string} | null;
   wallet: {
     address: string;
   };
@@ -371,8 +375,48 @@ export interface MoonpayQuoteEmbeddedData {
   expiresAt: string; // ISO date string
   exchangeRate: string; // numeric string
   signature: string; // long JWT
+  // Whether this quote's signature can actually be used to run a payment
+  // frame. A 'card' quote requested without paymentMethodId (e.g. the
+  // display-only quote fetched before a card is selected) is not executable.
   executable: boolean;
   paymentDisclosures?: MoonpayPaymentDisclosure[];
+}
+
+// GET /platform/v1/payment-methods
+export interface MoonpayGetPaymentMethodsEmbeddedRequestData {
+  accessToken: string;
+}
+
+export type MoonpayCardBrand =
+  | 'visa'
+  | 'mastercard'
+  | 'maestro'
+  | 'american_express'
+  | 'other';
+
+export type MoonpayCardType = 'credit' | 'debit' | 'unknown';
+
+export interface MoonpayPaymentMethodAvailability {
+  active: boolean;
+  reasons?: string[]; // e.g. 'card_expired' | 'card_declined' | 'card_blocked'
+}
+
+export interface MoonpayEmbeddedCardPaymentMethod {
+  id: string;
+  type: 'card';
+  cardType: MoonpayCardType;
+  brand: MoonpayCardBrand;
+  last4: string;
+  expirationMonth: string;
+  expirationYear: string;
+  availability: MoonpayPaymentMethodAvailability;
+}
+
+export interface MoonpayGetPaymentMethodsEmbeddedData {
+  // Only 'card' entries are modeled/used by the app today; other payment
+  // method types can also be returned by this endpoint.
+  paymentMethods?: MoonpayEmbeddedCardPaymentMethod[];
+  paymentMethodConfigs?: unknown[];
 }
 
 interface MoonpayEmbeddedAmount {
@@ -499,7 +543,7 @@ export interface MoonpayIncomingData {
   transactionId?: string;
   status?: string;
   cryptoAmount?: number; // embedded
-  fiatBaseAmount?: number; // embedded
+  fiatTotalAmount?: number; // embedded
 }
 
 export interface SardineGetAuthTokenRequestData {

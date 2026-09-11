@@ -200,6 +200,21 @@ const MoonpayBuyEmbeddedOnboarding = ({
     url: string | undefined;
   }>({open: false, url: undefined});
 
+  const isWebViewDebugEnabled = __DEV__;
+
+  const sanitizeUrlForLog = (url?: string) => {
+    if (!url) {
+      return 'unknown-url';
+    }
+    try {
+      const parsedUrl = new URL(url);
+      // Avoid logging sensitive query params (tokens, keys, channel ids).
+      return `${parsedUrl.origin}${parsedUrl.pathname}`;
+    } catch {
+      return url;
+    }
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '',
@@ -574,6 +589,80 @@ const MoonpayBuyEmbeddedOnboarding = ({
             }}
             source={{uri: connectModalWebView.url ?? ''}}
             scrollEnabled={true}
+            onLoadStart={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.debug(
+                `[MoonpayConnectFrame][WebView][Dev-only] loadStart: ${sanitizeUrlForLog(
+                  event?.nativeEvent?.url,
+                )}`,
+              );
+            }}
+            onLoadProgress={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.debug(
+                `[MoonpayConnectFrame][WebView][Dev-only] progress=${
+                  event?.nativeEvent?.progress ?? 0
+                }`,
+              );
+            }}
+            onNavigationStateChange={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.debug(
+                `[MoonpayConnectFrame][WebView][Dev-only] navState: url=${sanitizeUrlForLog(
+                  event.url,
+                )} loading=${event.loading} canGoBack=${event.canGoBack}`,
+              );
+            }}
+            onLoad={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.debug(
+                `[MoonpayConnectFrame][WebView][Dev-only] load: ${sanitizeUrlForLog(
+                  event?.nativeEvent?.url,
+                )}`,
+              );
+            }}
+            onLoadEnd={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.debug(
+                `[MoonpayConnectFrame][WebView][Dev-only] loadEnd: ${sanitizeUrlForLog(
+                  event?.nativeEvent?.url,
+                )}`,
+              );
+            }}
+            onHttpError={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.error(
+                `[MoonpayConnectFrame][WebView][Dev-only] httpError: status=${
+                  event?.nativeEvent?.statusCode
+                } description=${
+                  event?.nativeEvent?.description ?? 'no-description'
+                } url=${sanitizeUrlForLog(event?.nativeEvent?.url)}`,
+              );
+            }}
+            onError={event => {
+              if (!isWebViewDebugEnabled) {
+                return;
+              }
+              logger.error(
+                `[MoonpayConnectFrame][WebView][Dev-only] error: code=${
+                  event?.nativeEvent?.code
+                } description=${
+                  event?.nativeEvent?.description ?? 'no-description'
+                } url=${sanitizeUrlForLog(event?.nativeEvent?.url)}`,
+              );
+            }}
             onShouldStartLoadWithRequest={event => {
               // On iOS, window.open() triggers a navigation with
               // navigationType === 'other'. Allow those navigations to load

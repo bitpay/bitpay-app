@@ -3,6 +3,8 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   MoonpayGetCurrenciesRequestData,
   MoonpayGetCurrencyLimitsRequestData,
+  MoonpayGetPaymentMethodsEmbeddedData,
+  MoonpayGetPaymentMethodsEmbeddedRequestData,
   MoonpayGetQuoteEmbeddedRequestData,
   MoonpayGetTransactionDetailsEmbeddedRequestData,
   MoonpayQuoteEmbeddedData,
@@ -111,8 +113,8 @@ export const moonpayGetSellTransactionDetails = async (
 };
 
 export const moonpayGetPaymentMethodsEmbedded = async (
-  requestData: any,
-): Promise<any> => {
+  requestData: MoonpayGetPaymentMethodsEmbeddedRequestData,
+): Promise<MoonpayGetPaymentMethodsEmbeddedData> => {
   const URL_BASE = 'https://api.moonpay.com';
   const URL = URL_BASE + '/platform/v1/payment-methods';
 
@@ -122,10 +124,12 @@ export const moonpayGetPaymentMethodsEmbedded = async (
   };
   try {
     const {data} = await axios.get(URL, {headers});
-    return Promise.resolve(data);
+    return Promise.resolve(data?.data ?? data);
   } catch (err: any) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error('Error getting Moonpay quote embedded: ' + errStr);
+    logManager.error(
+      'Error getting Moonpay payment methods embedded: ' + errStr,
+    );
     return Promise.reject(err);
   }
 };
@@ -149,6 +153,7 @@ export const moonpayGetQuoteEmbedded = async (
     },
     paymentMethod: {
       type: requestData.paymentMethod,
+      ...(requestData.paymentMethodId && {id: requestData.paymentMethodId}),
     },
   };
 
