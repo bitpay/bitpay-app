@@ -42,7 +42,7 @@ const EmailContainer = styled.View`
     ${({theme}) => (theme.dark ? 0.35 : 0.05)}
   );
   align-items: center;
-  height: 48px;
+  min-height: 48px;
   padding: 0 14px 0 17px;
   border-radius: 48px;
   width: 100%;

@@ -78,8 +78,18 @@ const ImageContainer = styled.View`
   margin-right: 10px;
 `;
 
+// Title + message scroll together so the action buttons stay on screen when
+// the text is tall.
+const NotificationBody = styled.ScrollView`
+  flex-shrink: 1;
+`;
+
 const MessageContainer = styled.View`
   margin: 15px 0 20px 0;
+`;
+
+const NotificationTitle = styled(H4)`
+  flex-shrink: 1;
 `;
 
 export const BottomNotificationHr = styled.View`
@@ -90,6 +100,8 @@ export const BottomNotificationHr = styled.View`
 
 const CtaContainer = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: space-between;
   ${({platform}: {platform: string}) =>
     platform === 'ios' &&
@@ -213,16 +225,18 @@ const BottomNotification = React.memo(() => {
       isVisible={isVisible}
       onBackdropPress={handleBackdropPress}>
       <BottomNotificationContainer>
-        <Row>
-          <ImageContainer>{iconElement}</ImageContainer>
-          <H4>{title}</H4>
-        </Row>
-        {message ? (
-          <MessageContainer>
-            <Markdown style={markdownStyle}>{message}</Markdown>
-          </MessageContainer>
-        ) : null}
-        {message2 ? message2 : null}
+        <NotificationBody>
+          <Row>
+            <ImageContainer>{iconElement}</ImageContainer>
+            <NotificationTitle>{title}</NotificationTitle>
+          </Row>
+          {message ? (
+            <MessageContainer>
+              <Markdown style={markdownStyle}>{message}</Markdown>
+            </MessageContainer>
+          ) : null}
+          {message2 ? message2 : null}
+        </NotificationBody>
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>{actionButtons}</CtaContainer>
       </BottomNotificationContainer>

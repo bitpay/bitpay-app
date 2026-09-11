@@ -13,7 +13,7 @@ import {
 import {BaseText} from '../../../../components/styled/Text';
 import {HomeSectionTitle} from './Styled';
 import ChevronRightSvg from './ChevronRightSvg';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppSelector, useIsLargeFont} from '../../../../utils/hooks';
 import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   buildAllocationDataFromWalletRows,
@@ -79,9 +79,9 @@ const Card = styled.View`
   padding: 14px 14px;
 `;
 
-const ContentRow = styled.View`
-  flex-direction: row;
-  align-items: center;
+const ContentRow = styled.View<{stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
 `;
 
 const DonutContainer = styled.View`
@@ -92,20 +92,26 @@ const DonutContainer = styled.View`
   margin-right: 14px;
 `;
 
-const LegendGrid = styled.View`
+const LegendGrid = styled.View<{stacked?: boolean}>`
   flex: 1;
   flex-direction: row;
+  flex-wrap: wrap;
+  row-gap: 10px;
   justify-content: space-between;
+  ${({stacked}) => (stacked ? 'align-self: stretch; margin-top: 12px;' : '')}
 `;
 
-const LegendColumn = styled.View`
+// Stacked: one column per row so the labels get the full card width.
+const LegendColumn = styled.View<{stacked?: boolean}>`
   flex: 1;
+  min-width: ${({stacked}) => (stacked ? '100%' : '120px')};
   gap: 10px;
 `;
 
 const LegendItemRow = styled.View`
   flex-direction: row;
   align-items: center;
+  flex-shrink: 1;
 `;
 
 const LegendDot = styled.View<{
@@ -113,6 +119,7 @@ const LegendDot = styled.View<{
 }>`
   width: 9px;
   height: 9px;
+  flex-shrink: 0;
   border-radius: 8px;
   margin-right: 8px;
   background-color: ${({color}) => color};
@@ -121,6 +128,7 @@ const LegendDot = styled.View<{
 `;
 
 const LegendText = styled(BaseText)`
+  flex-shrink: 1;
   font-size: 13px;
   font-style: normal;
   font-weight: 400;
@@ -310,11 +318,12 @@ export const AllocationDonutLegendCard: React.FC<{
 }> = ({legendItems, slices, style, header, footer, isLoading}) => {
   const theme = useTheme();
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const leftColumn = legendItems.slice(0, 3);
   const rightColumn = legendItems.slice(3);
   const renderLegendColumn = (items: AllocationLegendItem[]) => {
     return (
-      <LegendColumn>
+      <LegendColumn stacked={stacked}>
         {items.map(item => {
           const dotColor = theme.dark ? item.color.dark : item.color.light;
 
@@ -423,12 +432,12 @@ export const AllocationDonutLegendCard: React.FC<{
   return (
     <Card style={style}>
       {header}
-      <ContentRow>
+      <ContentRow stacked={stacked}>
         <DonutContainer>
           <DonutChart size={80} strokeWidth={12} slices={slices} />
         </DonutContainer>
 
-        <LegendGrid>
+        <LegendGrid stacked={stacked}>
           {renderLegendColumn(leftColumn)}
           {renderLegendColumn(rightColumn)}
         </LegendGrid>

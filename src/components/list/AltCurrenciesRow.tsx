@@ -44,8 +44,8 @@ const AltCurrencyIsoCodeContainer = styled.View<{selected?: boolean}>`
     css`
       background: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
     `};
-  width: 60px;
-  height: 40px;
+  min-width: 60px;
+  min-height: 40px;
   border-radius: 27.5px;
   align-items: center;
   justify-content: center;

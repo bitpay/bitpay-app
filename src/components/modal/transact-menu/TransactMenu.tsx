@@ -87,7 +87,7 @@ const ScanButtonContainer = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  height: 60px;
+  min-height: 60px;
   padding-left: 11px;
   padding-right: 26px;
   margin-bottom: 30px;

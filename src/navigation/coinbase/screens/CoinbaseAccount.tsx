@@ -153,7 +153,7 @@ const SkeletonContainer = styled.View`
 const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
+  min-height: 55px;
   width: 100%;
   display: flex;
   flex-direction: row;

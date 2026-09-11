@@ -11,16 +11,19 @@ import {
   White,
 } from '../../styles/colors';
 import {BaseText} from '../styled/Text';
+import {WIDTH} from '../styled/Containers';
 
 const gutter = 5;
 const tabWidth = 150;
 
 const TabBarContainer = styled.View<{darkMode: boolean; totalWidth: number}>`
   flex-direction: row;
+  align-items: center;
   align-self: center;
   border-radius: 50px;
   width: ${({totalWidth}) => totalWidth}px;
-  height: 56px;
+  max-width: ${WIDTH - gutter * 4}px;
+  min-height: 56px;
   background-color: ${({darkMode}) => (darkMode ? LightBlack : NeutralSlate)};
 `;
 
@@ -34,7 +37,7 @@ const TabButton = styled(TouchableOpacity)<{
   justify-content: center;
   gap: 5px;
   width: ${({tabWidth}) => tabWidth}px;
-  height: 44px;
+  min-height: 44px;
   padding-vertical: 10px;
   border-radius: 50px;
   margin: ${gutter}px;
@@ -42,12 +45,19 @@ const TabButton = styled(TouchableOpacity)<{
   background-color: ${({isFocused}) => (isFocused ? Action : 'transparent')};
 `;
 
-const TabLabel = styled(BaseText)<{isFocused: boolean}>`
+// The pill is a fixed-width control, so the label is capped rather than left to
+// scale past the width it can occupy.
+const TabLabel = styled(BaseText).attrs(() => ({
+  numberOfLines: 2,
+  maxFontSizeMultiplier: 1.6,
+}))<{isFocused: boolean}>`
   color: ${({theme: {dark}, isFocused}) =>
     dark ? NeutralSlate : isFocused ? NeutralSlate : SlateDark};
   font-size: 16px;
   text-transform: none;
   font-weight: 500;
+  flex-shrink: 1;
+  text-align: center;
 `;
 
 const IconContainer = styled.View`

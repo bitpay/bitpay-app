@@ -7,11 +7,15 @@ import {GetContactName} from '../../store/wallet/effects/transactions/transactio
 import {ContactRowProps} from './ContactRow';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {Dimensions} from 'react-native';
+import {useIsLargeFont} from '../../utils/hooks';
 
 const {width} = Dimensions.get('window');
 
-const TransactionContainer = styled(TouchableOpacity)<{withCheckBox?: boolean}>`
-  flex-direction: row;
+const TransactionContainer = styled(TouchableOpacity)<{
+  withCheckBox?: boolean;
+  stacked?: boolean;
+}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
   padding: 10px ${ScreenGutter};
   justify-content: space-between;
   width: ${width - 50}px;
@@ -22,27 +26,28 @@ const IconContainer = styled.View`
   margin-right: 8px;
 `;
 
-const Description = styled(BaseText)`
+const Description = styled(BaseText)<{stacked?: boolean}>`
   overflow: hidden;
   font-size: 16px;
-  max-width: 150px;
+  max-width: ${({stacked}) => (stacked ? '100%' : '150px')};
 `;
 
-const Creator = styled(ListItemSubText)`
+const Creator = styled(ListItemSubText)<{stacked?: boolean}>`
   overflow: hidden;
-  max-width: 150px;
+  max-width: ${({stacked}) => (stacked ? '100%' : '150px')};
 `;
 
-const TailContainer = styled.View`
-  margin-left: auto;
+const TailContainer = styled.View<{stacked?: boolean}>`
+  ${({stacked}) =>
+    stacked ? 'align-self: stretch; margin-top: 6px;' : 'margin-left: auto;'}
   display: flex;
   justify-content: center;
 `;
 
 const HeadContainer = styled.View``;
 
-const Value = styled(BaseText)`
-  text-align: right;
+const Value = styled(BaseText)<{stacked?: boolean}>`
+  text-align: ${({stacked}) => (stacked ? 'left' : 'right')};
   font-weight: 700;
   font-size: 16px;
 `;
@@ -95,28 +100,38 @@ const TransactionProposalRow = ({
     }
   }
 
+  const stacked = useIsLargeFont();
   return (
     <TransactionContainer
       withCheckBox={withCheckBox}
+      stacked={stacked}
       onPress={onPressTransaction}>
       {icon && !hideIcon && <IconContainer>{icon}</IconContainer>}
 
       <HeadContainer>
         <Description
-          numberOfLines={message ? 2 : labelLines}
+          stacked={stacked}
+          numberOfLines={stacked ? undefined : message ? 2 : labelLines}
           ellipsizeMode={'tail'}>
           {message ? message : label}
         </Description>
         {creator && (
-          <Creator numberOfLines={1} ellipsizeMode={'tail'}>
+          <Creator
+            stacked={stacked}
+            numberOfLines={stacked ? 2 : 1}
+            ellipsizeMode={'tail'}>
             {t('Created by ', {creator})}
           </Creator>
         )}
       </HeadContainer>
 
-      <TailContainer>
-        {value && <Value>{value}</Value>}
-        {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}
+      <TailContainer stacked={stacked}>
+        {value && <Value stacked={stacked}>{value}</Value>}
+        {time && (
+          <ListItemSubText textAlign={stacked ? 'left' : 'right'}>
+            {time}
+          </ListItemSubText>
+        )}
       </TailContainer>
     </TransactionContainer>
   );

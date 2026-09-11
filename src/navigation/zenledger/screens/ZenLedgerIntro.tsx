@@ -30,7 +30,9 @@ const ZenledgerContainer = styled.SafeAreaView`
   justify-content: center;
 `;
 
-const ZenLedgerIntroContainer = styled.View`
+const ZenLedgerIntroContainer = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {paddingBottom: 220},
+}))`
   margin-top: 40px;
   border-radius: 10px;
   padding: ${ScreenGutter};

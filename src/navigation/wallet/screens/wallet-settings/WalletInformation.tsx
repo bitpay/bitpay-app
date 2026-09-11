@@ -49,7 +49,7 @@ const InfoSettingsRow = styled.View`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;
-  height: 58px;
+  min-height: 58px;
 `;
 
 const SettingsHeader = styled(InfoSettingsRow)`

@@ -55,7 +55,7 @@ const Detail = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  min-height: 60px;
 `;
 
 const Notes = styled.View`

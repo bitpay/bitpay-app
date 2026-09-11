@@ -23,7 +23,7 @@ const DisclosureRow = styled.View`
 `;
 
 const DisclosureBullet = styled(BaseText)`
-  width: 16px;
+  min-width: 16px;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

@@ -8,12 +8,13 @@ import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 export const TRANSACTION_ROW_HEIGHT = 75;
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks';
 
-const TransactionContainer = styled(TouchableOpacity)`
-  flex-direction: row;
+const TransactionContainer = styled(TouchableOpacity)<{stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
   padding: ${ScreenGutter};
-  align-items: center;
-  height: ${TRANSACTION_ROW_HEIGHT}px;
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
+  min-height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
 
 const IconContainer = styled.View`
@@ -36,11 +37,14 @@ const Description = styled(BaseText)`
   font-size: 16px;
 `;
 
-const TailContainer = styled.View``;
+const TailContainer = styled.View<{stacked?: boolean}>`
+  flex-shrink: 0;
+  ${({stacked}) => (stacked ? 'align-self: stretch; margin-top: 6px;' : '')}
+`;
 
-const Value = styled(BaseText)`
+const Value = styled(BaseText)<{stacked?: boolean}>`
   color: ${({theme}) => theme.colors.text};
-  text-align: right;
+  text-align: ${({stacked}) => (stacked ? 'left' : 'right')};
   font-weight: 700;
   font-size: 16px;
 `;
@@ -78,8 +82,9 @@ const TransactionRow = ({
   chain,
   onPressTransaction,
 }: Props) => {
+  const stacked = useIsLargeFont();
   return (
-    <TransactionContainer onPress={onPressTransaction}>
+    <TransactionContainer onPress={onPressTransaction} stacked={stacked}>
       {iconURI ? (
         <IconContainer>
           <RemoteImage
@@ -103,7 +108,9 @@ const TransactionRow = ({
       )}
       {!!description && (
         <DescriptionContainer>
-          <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
+          <Description
+            numberOfLines={stacked ? undefined : details ? 2 : 1}
+            ellipsizeMode={'tail'}>
             {description}
             {details && (
               <ListItemSubText>
@@ -114,10 +121,12 @@ const TransactionRow = ({
           </Description>
         </DescriptionContainer>
       )}
-      <TailContainer>
-        {value ? <Value>{value}</Value> : null}
+      <TailContainer stacked={stacked}>
+        {value ? <Value stacked={stacked}>{value}</Value> : null}
         {time ? (
-          <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>
+          <ListItemSubText textAlign={stacked ? 'left' : 'right'}>
+            {time}
+          </ListItemSubText>
         ) : null}
       </TailContainer>
     </TransactionContainer>

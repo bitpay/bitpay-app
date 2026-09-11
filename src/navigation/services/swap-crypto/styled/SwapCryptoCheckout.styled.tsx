@@ -54,7 +54,7 @@ export const SelectedOptionContainer = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 40px;
+  min-height: 40px;
   padding: 0px 14px;
   background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 19.5px;

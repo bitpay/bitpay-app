@@ -326,7 +326,7 @@ const AddingOptions: React.FC = () => {
         <OptionListContainer>
           {optionList.map(({cta, id, title, description}: Option) => (
             <OptionList
-              style={{height: 120}}
+              style={{minHeight: 120}}
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');

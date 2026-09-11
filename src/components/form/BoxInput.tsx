@@ -89,13 +89,15 @@ const Separator = styled.View`
   border-right-color: ${({theme}) => (theme.dark ? '#45484E' : LightBlue)};
   border-right-width: 1px;
   border-style: solid;
-  height: ${SEPARATOR_HEIGHT}px;
+  align-self: stretch;
+  min-height: ${SEPARATOR_HEIGHT}px;
+  margin: 9px 0;
 `;
 
 const Input = styled(TextInputMask)<InputProps>`
   background-color: transparent;
   color: ${({theme}) => theme.colors.text};
-  height: ${INPUT_HEIGHT}px;
+  min-height: ${INPUT_HEIGHT}px;
   padding: 10px;
   flex: 1 1 auto;
   font-weight: 500;
@@ -133,7 +135,7 @@ export const IconContainer = styled(TouchableOpacity).attrs(() => ({
   activeOpacity: ActiveOpacity,
 }))`
   align-items: center;
-  height: ${INPUT_HEIGHT}px;
+  min-height: ${INPUT_HEIGHT}px;
   min-width: ${INPUT_HEIGHT}px;
   justify-content: center;
 `;

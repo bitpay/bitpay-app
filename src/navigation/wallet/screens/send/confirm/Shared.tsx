@@ -88,7 +88,7 @@ export const DetailContainer = styled.View<DetailContainerParams>`
     minHeight ? `min-height: ${minHeight}px;` : 'min-height: 60px'}
   ${({minHeight}) => (minHeight ? 'padding: 0;' : 'padding: 20px 0;')}
   justify-content: center;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
+  ${({height}) => (height ? `min-height: ${height}px;` : '')}
 `;
 
 export const PressableDetailContainer = styled(
@@ -97,12 +97,13 @@ export const PressableDetailContainer = styled(
   min-height: 60px;
   padding: 20px 0;
   justify-content: center;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
+  ${({height}) => (height ? `min-height: ${height}px;` : '')}
 `;
 
 export const DetailRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 `;
 
 export const DetailColumn = styled(Column)`
@@ -122,7 +123,7 @@ export const ConfirmSubText = styled(H7)`
 `;
 
 export const SendToPillContainer = styled.View`
-  height: 37px;
+  min-height: 37px;
 `;
 
 // Row UI

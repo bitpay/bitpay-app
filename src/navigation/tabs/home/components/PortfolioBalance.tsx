@@ -92,16 +92,24 @@ const PortfolioBalanceHeader = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 1;
+  padding-right: 48px;
 `;
 
 const PortfolioBalanceTitle = styled(BaseText)`
   margin-right: 3px;
+  flex-shrink: 1;
   font-size: 13px;
   line-height: 18px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const PortfolioBalanceText = styled(BaseText)<{$isCompact?: boolean}>`
+const PortfolioBalanceText = styled(BaseText).attrs(() => ({
+  numberOfLines: 1,
+  adjustsFontSizeToFit: true,
+  minimumFontScale: 0.5,
+  maxFontSizeMultiplier: 1.5,
+}))<{$isCompact?: boolean}>`
   font-size: ${({$isCompact}) => ($isCompact ? '26px' : '39px')};
   font-weight: 700;
   line-height: ${({$isCompact}) => ($isCompact ? '38px' : '59px')};
@@ -109,7 +117,12 @@ const PortfolioBalanceText = styled(BaseText)<{$isCompact?: boolean}>`
   margin: 2px 0;
 `;
 
-const HiddenBalance = styled(H2)`
+const HiddenBalance = styled(H2).attrs(() => ({
+  numberOfLines: 1,
+  adjustsFontSizeToFit: true,
+  minimumFontScale: 0.5,
+  maxFontSizeMultiplier: 1.5,
+}))`
   line-height: 50px;
   margin: 6px 0;
 `;

@@ -79,7 +79,7 @@ const OfferSelectorClickableRow = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 48px;
+  min-height: 48px;
 `;
 
 export const OfferSelectorContainerLeft = styled.View`

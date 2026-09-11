@@ -41,7 +41,7 @@ const CardBalanceLabelRow = styled(BaseText)`
 const CardBalanceValueRow = styled.View`
   align-items: center;
   flex-direction: row;
-  height: 39px;
+  min-height: 39px;
   left: 0px;
   max-width: 100%;
   padding: 0 20px;
