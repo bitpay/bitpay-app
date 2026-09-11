@@ -29,6 +29,7 @@ import {IsERCToken, IsVMChain} from '../../store/wallet/utils/currency';
 import GasTokenSvg from '../../../assets/img/gas-token.svg';
 import {getCurrencyCodeFromCoinAndChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {SupportedTransactionCurrencies} from '../../store/wallet/effects/paypro/paypro';
+import {useIsLargeFont} from '../../utils/hooks';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -38,8 +39,9 @@ const SpinnerContainer = styled.View`
   padding-right: 10px;
 `;
 
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
+const BalanceColumn = styled(Column)<{stacked?: boolean}>`
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'flex-end')};
+  ${({stacked}) => (stacked ? 'align-self: stretch; margin-top: 6px;' : '')}
 `;
 
 const NestedArrowContainer = styled.View`
@@ -180,6 +182,7 @@ const WalletRow = ({
   supportedTransactionCurrencies,
 }: Props) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const {
     currencyName,
     currencyAbbreviation,
@@ -223,7 +226,8 @@ const WalletRow = ({
       isDisabled={
         supportedTransactionCurrencies && (isDisabled || !isAvailable)
       }
-      disabled={supportedTransactionCurrencies && (isDisabled || !isAvailable)}>
+      disabled={supportedTransactionCurrencies && (isDisabled || !isAvailable)}
+      stacked={stacked}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrowIcon />
@@ -236,7 +240,7 @@ const WalletRow = ({
       ) : null}
       <CurrencyColumn>
         <Row>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
+          <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
             {walletName || currencyName}
           </H5>
         </Row>
@@ -276,14 +280,14 @@ const WalletRow = ({
         </Row>
       </CurrencyColumn>
       {!isScanning ? (
-        <BalanceColumn>
+        <BalanceColumn stacked={stacked}>
           {!hideBalance ? (
             <>
-              <H5 numberOfLines={1} ellipsizeMode="tail">
+              <H5 numberOfLines={stacked ? 2 : 1} ellipsizeMode="tail">
                 {cryptoBalance}
               </H5>
               {showFiatBalance && (
-                <ListItemSubText textAlign={'right'}>
+                <ListItemSubText textAlign={stacked ? 'left' : 'right'}>
                   {network === 'testnet'
                     ? t('Test - No Value')
                     : fiatBalanceFormat}

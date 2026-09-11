@@ -18,7 +18,6 @@ import {
   Black,
   Success25,
   LinkBlue,
-  Midnight,
   Caution,
 } from '../../styles/colors';
 import {BaseText} from './Text';
@@ -33,7 +32,8 @@ export const CTA_RESERVED = 104;
 export const ScreenGutter = '12px';
 // Nav
 export const HeaderRightContainer = styled.View`
-  height: 40px;
+  min-height: 40px;
+  justify-content: center;
 `;
 
 export const ImageContainer = styled.View<{justifyContent?: string}>`
@@ -51,18 +51,23 @@ export const ScreenContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+// Sized for the default font; grows toward the screen edge instead of forcing
+// mid-word breaks once the text no longer fits.
 export const TitleContainer = styled.View`
-  width: ${WIDTH * 0.75}px;
+  min-width: ${WIDTH * 0.75}px;
+  max-width: 100%;
 `;
 
 export const TextContainer = styled.View`
   margin-top: 10px;
   padding: 10px;
-  width: ${WIDTH * 0.9}px;
+  min-width: ${WIDTH * 0.9}px;
+  max-width: 100%;
 `;
 
 export const SubTextContainer = styled.View`
-  width: ${WIDTH * 0.8}px;
+  min-width: ${WIDTH * 0.8}px;
+  max-width: 100%;
   margin-top: 10px;
 `;
 
@@ -131,11 +136,13 @@ interface RowContainerProps {
   isLast?: boolean;
   noBorder?: boolean;
   isDisabled?: boolean;
+  /** Stack the row's columns vertically — see useIsLargeFont. */
+  stacked?: boolean;
 }
 
 export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
-  flex-direction: row;
-  align-items: center;
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   padding: 10px 4px;
   margin: 0 6px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
@@ -171,7 +178,6 @@ export const CurrencyImageContainer = styled.View`
   width: 50px;
   display: flex;
   justify-content: center;
-  align-self: center;
   border-radius: 8px;
   margin-right: 3px;
 `;
@@ -209,10 +215,7 @@ export const Setting = styled(TouchableOpacity)`
   flex-direction: row;
   flex-wrap: nowrap;
   min-height: 58px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 15px;
-  padding-right: 15px;
+  padding: 12px 15px;
 `;
 
 export const SettingTitle = styled(BaseText)`
@@ -230,6 +233,7 @@ export const SettingTitle = styled(BaseText)`
 export const SettingDescription = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 14px;
+  flex-shrink: 1;
 `;
 
 interface SettingIconProps {
@@ -254,7 +258,8 @@ export const SettingView = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 58px;
+  min-height: 58px;
+  padding: 8px 0;
 `;
 
 export const ActionContainer = styled.View`
@@ -291,7 +296,7 @@ export const AdvancedOptionsContainer = styled.View`
 `;
 
 export const AdvancedOptionsButton = styled(TouchableOpacity)`
-  height: 60px;
+  min-height: 60px;
   background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   padding: 18px;
   flex-direction: row;
@@ -318,7 +323,7 @@ export const ImportContainer = styled.View`
 `;
 
 export const ImportTextInput = styled.TextInput`
-  height: 80px;
+  min-height: 80px;
   color: ${({theme}) => theme.colors.text};
   background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
@@ -352,7 +357,9 @@ export const OptionContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-export const OptionListContainer = styled.View`
+export const OptionListContainer = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {paddingBottom: 30},
+}))`
   flex: 1;
   padding: 0 ${ScreenGutter};
   margin-top: 30px;
@@ -390,7 +397,7 @@ export const SearchInput = styled.TextInput`
   padding: 0 10px;
   border-right-width: 1px;
   border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : LightBlue)};
-  height: 32px;
+  min-height: 32px;
   color: ${({theme}) => theme.colors.text};
   background-color: transparent;
 `;
@@ -403,7 +410,7 @@ export const SearchRoundContainer = styled.View`
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 100px;
   align-items: center;
-  height: 50px;
+  min-height: 50px;
 `;
 
 export const SearchRoundInput = styled.TextInput`
@@ -427,8 +434,8 @@ export const HiddenContainer = styled.View`
 export const CopyToClipboardContainer = styled(TouchableOpacity)`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
-  padding: 0 10px;
-  height: 55px;
+  padding: 8px 10px;
+  min-height: 55px;
   align-items: center;
   flex-direction: row;
 `;
@@ -437,7 +444,7 @@ export const CopyImgContainer = styled.View`
   border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : LightBlue)};
   border-right-width: 1px;
   padding-right: 10px;
-  height: 25px;
+  min-height: 25px;
   justify-content: center;
 `;
 
@@ -462,8 +469,9 @@ export const NoResultsDescription = styled(BaseText)`
 export const ProposalBadgeContainer = styled(TouchableOpacity)`
   background: ${Action};
   border-radius: 10px;
-  height: 30px;
-  width: 30px;
+  min-height: 30px;
+  min-width: 30px;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -477,7 +485,7 @@ export const BadgeContainer = styled.View`
   padding: 4px;
   border-radius: 2.4px;
   gap: 4px;
-  height: 22px;
+  min-height: 22px;
 `;
 
 export const BadgeContainerTouchable = styled(TouchableOpacity)`
@@ -488,7 +496,7 @@ export const BadgeContainerTouchable = styled(TouchableOpacity)`
   padding: 4px;
   border-radius: 2.4px;
   gap: 4px;
-  height: 20px;
+  min-height: 20px;
 `;
 
 export const EmptyListContainer = styled.View`

@@ -86,7 +86,7 @@ const AccountActions = styled.View`
 `;
 
 const PayButton = styled.View`
-  height: 32px;
+  min-height: 32px;
   background-color: ${Action};
   border-radius: 50px;
   max-width: 90px;

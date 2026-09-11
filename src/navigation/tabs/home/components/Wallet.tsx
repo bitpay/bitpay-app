@@ -35,6 +35,7 @@ import {maskIfHidden} from '../../../../utils/hideBalances';
 import {isUnitedKingdomCountry} from '../../../../store/location/location.effects';
 import ThresholdBadge from '../../../../components/threshold-badge/ThresholdBadge';
 import MultisigBadge from '../../../../components/multisig-badge/MultisigBadge';
+import {useIsLargeFont} from '../../../../utils/hooks';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -132,8 +133,11 @@ const RemainingAssetsContainer = styled.View`
   padding-bottom: 0px;
 `;
 
-const ListRow = styled(Row)`
-  align-items: center;
+// Not `styled(Row)`: Row is `flex: 1` (flex-basis 0) and would contribute no
+// intrinsic height to this column.
+const ListRow = styled.View<{stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   justify-content: space-between;
   width: 100%;
 `;
@@ -149,9 +153,12 @@ const FooterSupportedNetworkIconContainer = styled(
   margin-right: 12px;
 `;
 
-const FooterContainer = styled(Row)`
+const FooterContainer = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   width: 100%;
 `;
 
@@ -176,18 +183,18 @@ const ListLeftColumn = styled(Column)`
   flex: 1;
 `;
 
-const ListRightColumn = styled(Column)`
-  align-items: flex-end;
+const ListRightColumn = styled(Column)<{stacked?: boolean}>`
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'flex-end')};
   justify-content: flex-start;
-  margin-left: 12px;
+  ${({stacked}) => (stacked ? 'margin-top: 8px;' : 'margin-left: 12px;')}
 `;
 
-const ListBalance = styled(BaseText)`
+const ListBalance = styled(BaseText)<{stacked?: boolean}>`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  text-align: right;
+  text-align: ${({stacked}) => (stacked ? 'left' : 'right')};
 `;
 
 const ListPercentageRow = styled.View`
@@ -212,6 +219,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   isMultisig,
 }) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const isUkLocation = useAppSelector(({LOCATION}) => {
     return isUnitedKingdomCountry(LOCATION.locationData?.countryShortCode);
@@ -253,7 +261,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         accessibilityLabel={t('{{key}} wallet', {key: keyName})}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
-        <ListRow>
+        <ListRow stacked={stacked}>
           <ListLeftColumn>
             {needsBackup && !pendingTssSession ? (
               <NeedBackupRow>
@@ -277,8 +285,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             )}
             <KeyName>{keyName}</KeyName>
           </ListLeftColumn>
-          <ListRightColumn>
-            <ListBalance>{maskIfHidden(hideKeyBalance, amount)}</ListBalance>
+          <ListRightColumn stacked={stacked}>
+            <ListBalance stacked={stacked}>
+              {maskIfHidden(hideKeyBalance, amount)}
+            </ListBalance>
             {!hideKeyBalance && percentageDifference !== null ? (
               <ListPercentageRow>
                 <Percentage

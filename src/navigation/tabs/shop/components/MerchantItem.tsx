@@ -55,7 +55,7 @@ const MerchantDescription = styled(Paragraph)`
 
 const PromoFooter = styled.View`
   background-color: ${({theme}) => theme.colors.background};
-  height: 48px;
+  min-height: 48px;
   padding-left: 10px;
   padding-right: 20px;
   flex-direction: row;

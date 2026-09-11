@@ -39,6 +39,7 @@ import {BitpaySupportedCoins} from '../../constants/currencies';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {SupportedTransactionCurrencies} from '../../store/wallet/effects/paypro/paypro';
+import {useIsLargeFont} from '../../utils/hooks';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -104,9 +105,9 @@ const ChainAssetsContainer = styled(Row)`
   flex-direction: row;
 `;
 
-const AccountChainsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
+const AccountChainsContainer = styled(TouchableOpacity)<{stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   margin: 0px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   gap: 11px;
@@ -184,6 +185,7 @@ const KeyWalletsRow = ({
   supportedTransactionCurrencies,
 }: KeyWalletProps) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
@@ -229,6 +231,7 @@ const KeyWalletsRow = ({
                   key={account.id}
                   isLast={key?.mergedUtxoAndEvmAccounts.length === index + 1}>
                   <AccountChainsContainer
+                    stacked={stacked}
                     activeOpacity={ActiveOpacity}
                     testID={`key-wallets-evm-account-toggle-${evmAccount?.receiveAddress}`}
                     accessibilityLabel={t('{{account}} account', {
@@ -237,11 +240,15 @@ const KeyWalletsRow = ({
                     onPress={() => onHide(evmAccount?.receiveAddress)}>
                     <Blockie size={19} seed={evmAccount?.receiveAddress} />
                     <Column>
-                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                      <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
                         {evmAccount?.accountName}
                       </H5>
                     </Column>
-                    <Column style={{alignItems: 'flex-end'}}>
+                    <Column
+                      style={{
+                        alignItems: stacked ? 'flex-start' : 'flex-end',
+                        alignSelf: stacked ? 'stretch' : 'auto',
+                      }}>
                       <ChainAssetsContainer>
                         <BadgeContainer>
                           <Badge>
@@ -288,7 +295,9 @@ const KeyWalletsRow = ({
                               <CurrencyImageContainer>
                                 <CurrencyImage img={chainImg} size={20} />
                               </CurrencyImageContainer>
-                              <H5 ellipsizeMode="tail" numberOfLines={1}>
+                              <H5
+                                ellipsizeMode="tail"
+                                numberOfLines={stacked ? 2 : 1}>
                                 {chainName}
                               </H5>
                             </AccountChainTitleContainer>
@@ -345,6 +354,7 @@ const KeyWalletsRow = ({
                   {!prev ||
                     (prev.chain !== wallet.chain && (
                       <AccountChainsContainer
+                        stacked={stacked}
                         activeOpacity={ActiveOpacity}
                         testID={`key-wallets-utxo-chain-toggle-${wallet?.chain}-${key.key}`}
                         accessibilityLabel={t('{{chain}} chain', {
@@ -358,14 +368,20 @@ const KeyWalletsRow = ({
                         }>
                         <CurrencyImage img={wallet?.img} size={20} />
                         <Column>
-                          <H5 ellipsizeMode="tail" numberOfLines={1}>
+                          <H5
+                            ellipsizeMode="tail"
+                            numberOfLines={stacked ? 2 : 1}>
                             {BitpaySupportedCoins[
                               // @ts-ignore
                               wallet?.currencyAbbreviation?.toLowerCase()
                             ]?.name ?? ''}
                           </H5>
                         </Column>
-                        <Column style={{alignItems: 'flex-end'}}>
+                        <Column
+                          style={{
+                            alignItems: stacked ? 'flex-start' : 'flex-end',
+                            alignSelf: stacked ? 'stretch' : 'auto',
+                          }}>
                           <ChainAssetsContainer>
                             <ChevronContainer>
                               {theme.dark ? (

@@ -60,7 +60,7 @@ const SafeAreaView = styled.SafeAreaView`
 `;
 
 const ModalHeader = styled.View`
-  height: 50px;
+  min-height: 50px;
   margin-right: 10px;
   margin-left: 10px;
   display: flex;
@@ -114,7 +114,7 @@ const SectionTitle = styled(BaseText)`
 
 const PaymentMethodSelectorContainer = styled(TouchableOpacity)`
   border: 1px solid ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  height: 48px;
+  min-height: 48px;
   padding: 8px 12px;
   border-radius: 4px;
   display: flex;
@@ -223,7 +223,7 @@ const BestOfferTagContainer = styled.View`
 const BestOfferTag = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? '#2FCFA4' : '#cbf3e8')};
   border-radius: 50px;
-  height: 25px;
+  min-height: 25px;
   padding: 5px 10px;
 `;
 
@@ -251,7 +251,7 @@ const OfferDataInfoContainer = styled.View`
   align-items: center;
   margin-right: 10px;
   width: 25px;
-  height: 25px;
+  min-height: 25px;
 `;
 
 const OfferDataInfoLabel = styled(H7)`
@@ -309,7 +309,7 @@ export const OfferSelectorModalContainer = styled.View`
 
 export const WalletSelector = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: 36px;
+  min-height: 36px;
   border-radius: 27.5px;
   display: flex;
   flex-direction: row;

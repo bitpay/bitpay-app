@@ -152,9 +152,12 @@ export const ZeroHeightHeader = styled.View`
   height: ${StatusBar.currentHeight || 0}px;
 `;
 
+// Native stack headers have a fixed height, so the title is capped rather than
+// left to scale into an ellipsis.
 export const HeaderTitle = styled(H5).attrs(() => ({
   bold: true,
   numberOfLines: 1,
+  maxFontSizeMultiplier: 1.4,
 }))`
   max-width: ${Dimensions.get('window').width - 150}px;
 `;
@@ -187,7 +190,9 @@ export const UnderlineLink = styled(BaseText)`
 `;
 
 // WALLET
-export const Balance = styled(BaseText)<{scale: boolean}>`
+export const Balance = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.5,
+}))<{scale: boolean}>`
   font-size: ${({scale}) => (scale ? 26 : 36)}px;
   font-style: normal;
   font-weight: 700;

@@ -32,7 +32,7 @@ export const PillContainer = styled.Pressable<StyleProps>`
   align-items: center;
   justify-content: center;
   padding: 0 11px;
-  height: ${({height}) => (height ? height : '100%')};
+  min-height: ${({height}) => (height ? height : '37px')};
   max-width: 202px;
 `;
 

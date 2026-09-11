@@ -1,11 +1,9 @@
 import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
-import {useWindowDimensions} from 'react-native';
-import {ScrollView} from 'react-native-gesture-handler';
-import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {Platform, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
@@ -61,11 +59,11 @@ const notificationType = {
   wait: <WaitSvg {...svgProps} />,
 };
 
-const BottomNotificationContainer = styled(ScrollView)`
+const BottomNotificationContainer = styled.View`
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  padding: 25px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
-  flex-grow: 0;
 `;
 
 const Row = styled.View`
@@ -77,12 +75,18 @@ const ImageContainer = styled.View`
   margin-right: 10px;
 `;
 
-const Title = styled(H4)`
+// Title + message scroll together so the action buttons stay on screen when
+// the text is tall.
+const NotificationBody = styled.ScrollView`
   flex-shrink: 1;
 `;
 
 const MessageContainer = styled.View`
   margin: 15px 0 20px 0;
+`;
+
+const NotificationTitle = styled(H4)`
+  flex-shrink: 1;
 `;
 
 export const BottomNotificationHr = styled.View`
@@ -92,14 +96,20 @@ export const BottomNotificationHr = styled.View`
 `;
 
 const CtaContainer = styled.View`
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  ${({platform}: {platform: string}) =>
+    platform === 'ios' &&
+    css`
+      margin-bottom: 10px;
+    `}
 `;
 
 const ActionButton = styled(TouchableOpacity)`
-  min-height: 48px;
-  width: 100%;
-  justify-content: center;
-  padding: 10px 0;
+  min-height: 30px;
+  min-width: 60px;
 `;
 
 export const BottomNotificationCta = styled(BaseText)`
@@ -218,25 +228,21 @@ const BottomNotification = React.memo(() => {
       isVisible={isVisible}
       onBackdropPress={handleBackdropPress}>
       <BottomNotificationContainer
-        as={modalLibrary === 'modal' ? ScrollView : BottomSheetScrollView}
-        style={{maxHeight: height - insets.top - insets.bottom - 20}}
-        contentContainerStyle={{
-          padding: 25,
-          paddingBottom: Math.max(25, insets.bottom),
-        }}
-        keyboardShouldPersistTaps="handled">
-        <Row>
-          <ImageContainer>{iconElement}</ImageContainer>
-          <Title>{title}</Title>
-        </Row>
-        {message ? (
-          <MessageContainer>
-            <Markdown style={markdownStyle}>{message}</Markdown>
-          </MessageContainer>
-        ) : null}
-        {message2 ? message2 : null}
+        style={{maxHeight: height - insets.top - 100}}>
+        <NotificationBody>
+          <Row>
+            <ImageContainer>{iconElement}</ImageContainer>
+            <NotificationTitle>{title}</NotificationTitle>
+          </Row>
+          {message ? (
+            <MessageContainer>
+              <Markdown style={markdownStyle}>{message}</Markdown>
+            </MessageContainer>
+          ) : null}
+          {message2 ? message2 : null}
+        </NotificationBody>
         <BottomNotificationHr />
-        <CtaContainer>{actionButtons}</CtaContainer>
+        <CtaContainer platform={Platform.OS}>{actionButtons}</CtaContainer>
       </BottomNotificationContainer>
     </SheetModal>
   );

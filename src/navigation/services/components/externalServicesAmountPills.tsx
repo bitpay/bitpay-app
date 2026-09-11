@@ -38,7 +38,7 @@ const AmountPill = styled(TouchableOpacity)<{
     showMaxPill && !hideFiatPills ? '23%' : '31%'};
   max-width: ${({showMaxPill, hideFiatPills}) =>
     showMaxPill && !hideFiatPills ? '187px' : '250px'};
-  height: ${({isSmallScreen}) => (isSmallScreen ? 30 : 46)}px;
+  min-height: ${({isSmallScreen}) => (isSmallScreen ? 30 : 46)}px;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -47,7 +47,13 @@ const AmountPill = styled(TouchableOpacity)<{
   padding: 8px;
 `;
 
-const AmountPillText = styled(BaseText)<{
+// Three pills share one row at fixed percentage widths, so the label is capped.
+const AmountPillText = styled(BaseText).attrs(() => ({
+  numberOfLines: 1,
+  adjustsFontSizeToFit: true,
+  minimumFontScale: 0.6,
+  maxFontSizeMultiplier: 1.5,
+}))<{
   isSelected?: boolean;
   isSmallScreen?: boolean;
   disabled?: boolean;

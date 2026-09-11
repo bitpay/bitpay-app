@@ -45,7 +45,7 @@ interface PillParams {
 }
 
 const Pill = styled.View<PillParams>`
-  height: 40px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   border: ${({theme: {dark}}) => `2px solid ${dark ? LinkBlue : Action}`};

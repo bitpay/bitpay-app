@@ -207,7 +207,7 @@ const BalanceContainer = styled.View`
 const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
+  min-height: 55px;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -235,7 +235,7 @@ const LockedBalanceContainer = styled(TouchableOpacity)`
   padding: ${ScreenGutter};
   justify-content: center;
   align-items: center;
-  height: 75px;
+  min-height: 75px;
 `;
 
 const Description = styled(BaseText)`

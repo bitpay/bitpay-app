@@ -46,8 +46,8 @@ const ButtonText = styled(BaseText)<{isActive: string; label: string}>`
 `;
 
 const LinkButton = styled(TouchableOpacity)<{isActive: string; label: string}>`
-  height: 40px;
-  width: 50px;
+  min-height: 40px;
+  min-width: 50px;
   border-radius: 18px;
   align-items: center;
   justify-content: center;

@@ -24,7 +24,7 @@ import {
   White,
 } from '../../../../styles/colors';
 import {getDifferenceColor} from '../../../../components/percentage/Percentage';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppSelector, useIsLargeFont} from '../../../../utils/hooks';
 import {maskIfHidden} from '../../../../utils/hideBalances';
 import ChevronRightSvg from './ChevronRightSvg';
 import {
@@ -43,9 +43,9 @@ const supportedCurrencyOptionLookup = createSupportedCurrencyOptionLookup(
 const PRESERVED_ASSET_ROW_LOADING_DELAY_MS = 250;
 const PERCENT_PILL_SKELETON_FILL_VALUE = '-2.22%';
 
-const Row = styled(TouchableOpacity)<{isLast: boolean}>`
-  flex-direction: row;
-  align-items: center;
+const Row = styled(TouchableOpacity)<{isLast: boolean; stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   padding: 14px 0;
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
@@ -57,10 +57,12 @@ const IconContainer = styled.View`
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  margin-bottom: 4px;
 `;
 
-const AssetInfo = styled.View`
+const AssetInfo = styled.View<{stacked?: boolean}>`
   flex: 1;
+  ${({stacked}) => (stacked ? 'align-self: stretch;' : 'min-width: 90px;')}
   justify-content: center;
 `;
 
@@ -79,10 +81,11 @@ const AssetAmount = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
-const Values = styled.View`
-  align-items: flex-end;
+const Values = styled.View<{stacked?: boolean}>`
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'flex-end')};
   justify-content: center;
-  margin-right: 12px;
+  flex-shrink: 1;
+  ${({stacked}) => (stacked ? 'margin-top: 8px;' : 'margin-right: 12px;')}
 `;
 
 const DeltaFiatSkeletonContainer = styled.View`
@@ -107,13 +110,15 @@ const DeltaFiat = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
     hasPnl ? getDifferenceColor(isPositive, dark) : dark ? Slate30 : SlateDark};
 `;
 
-const PercentPill = styled.View`
+const PercentPill = styled.View<{stacked?: boolean}>`
   position: relative;
+  flex-shrink: 1;
   border-radius: 50px;
   padding: 8px 10px;
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   background-color: ${({theme: {dark}}) => (dark ? 'transparent' : White)};
-  margin-right: 14px;
+  ${({stacked}) => (stacked ? 'margin-top: 8px;' : 'margin-right: 14px;')}
+  align-self: flex-start;
 `;
 
 const PercentText = styled(BaseText)<{isPositive: boolean; hasPnl: boolean}>`
@@ -139,10 +144,11 @@ const PercentSkeletonOverlay = styled.View`
   justify-content: center;
 `;
 
-const ChevronContainer = styled.View<{visible: boolean}>`
+const ChevronContainer = styled.View<{visible: boolean; stacked?: boolean}>`
   width: 9px;
   align-items: flex-end;
   opacity: ${({visible}) => (visible ? 1 : 0)};
+  ${({stacked}) => (stacked ? 'display: none;' : '')}
 `;
 
 interface Props {
@@ -171,6 +177,7 @@ const AssetRow: React.FC<Props> = ({
   const {t} = useTranslation();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
+  const stacked = useIsLargeFont();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const rowLoading = !!(isPnlLoading || isPopulateLoading);
   const shouldForceSkeleton = !!forceSkeleton;
@@ -281,7 +288,7 @@ const AssetRow: React.FC<Props> = ({
 
   if (shouldForceSkeleton) {
     return (
-      <Row activeOpacity={1} isLast={isLast}>
+      <Row activeOpacity={1} isLast={isLast} stacked={stacked}>
         <IconContainer>
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
@@ -346,6 +353,7 @@ const AssetRow: React.FC<Props> = ({
     <Row
       activeOpacity={canNavigate ? ActiveOpacity : 1}
       isLast={isLast}
+      stacked={stacked}
       testID={`home-asset-row-item-${displayItem.currencyAbbreviation}-${displayItem.chain}`}
       accessibilityLabel={t('{{name}} asset', {name: displayItem.name})}
       onPress={canNavigate ? handlePress : undefined}>
@@ -362,8 +370,8 @@ const AssetRow: React.FC<Props> = ({
         />
       </IconContainer>
 
-      <AssetInfo>
-        <AssetName numberOfLines={1} ellipsizeMode="tail">
+      <AssetInfo stacked={stacked}>
+        <AssetName numberOfLines={stacked ? 2 : 1} ellipsizeMode="tail">
           {displayItem.name}
         </AssetName>
         {hideAllBalances ? (
@@ -388,7 +396,7 @@ const AssetRow: React.FC<Props> = ({
 
       {shouldShowRightSide ? (
         <>
-          <Values>
+          <Values stacked={stacked}>
             {hideAllBalances ? (
               <>
                 <FiatAmount>
@@ -430,7 +438,7 @@ const AssetRow: React.FC<Props> = ({
             )}
           </Values>
 
-          <PercentPill>
+          <PercentPill stacked={stacked}>
             {shouldShowSkeleton ? (
               <>
                 <PercentSkeletonAnchor isPositive={false} hasPnl>
@@ -457,7 +465,7 @@ const AssetRow: React.FC<Props> = ({
         </>
       ) : null}
 
-      <ChevronContainer visible={canNavigate}>
+      <ChevronContainer visible={canNavigate} stacked={stacked}>
         <ChevronRightSvg width={9} height={15} gray />
       </ChevronContainer>
     </Row>

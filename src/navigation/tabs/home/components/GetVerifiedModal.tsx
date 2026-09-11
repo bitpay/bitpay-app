@@ -21,10 +21,29 @@ import IconKycGetVerified from '../../../../../assets/img/kyc_get_verified.svg';
 import IconClose from '../../../../../assets/img/close-modal-icon.svg';
 
 // The sheet is fullscreen; this dims the screen and centers the card.
-const Backdrop = styled.Pressable`
+// The card keeps its natural height and stays centred while it fits; once it no
+// longer does, this scrolls instead of the card clipping its own content.
+// Centring lives on the content container, not on a `flex-grow` child: a
+// stretched child would centre its overflow out of both ends and put the top of
+// the card permanently out of reach.
+const BackdropScroll = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+  showsVerticalScrollIndicator: false,
+}))`
   flex: 1;
-  align-items: center;
-  justify-content: center;
+`;
+
+const Backdrop = styled.Pressable`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 `;
 
 const ModalCard = styled.View`
@@ -108,7 +127,8 @@ const GetVerifiedModal: React.FC = () => {
       backgroundColor={'rgba(0, 0, 0, 0.4)'}
       onBackdropPress={dismiss}
       onModalHide={handleModalHide}>
-      <Backdrop onPress={dismiss}>
+      <BackdropScroll>
+        <Backdrop onPress={dismiss} />
         {/* Absorb taps on the card. */}
         <Pressable onPress={() => {}}>
           <ModalCard>
@@ -133,7 +153,7 @@ const GetVerifiedModal: React.FC = () => {
             </Content>
           </ModalCard>
         </Pressable>
-      </Backdrop>
+      </BackdropScroll>
     </SheetModal>
   );
 };
