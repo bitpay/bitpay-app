@@ -32,17 +32,26 @@ async function ensureDir(): Promise<void> {
   }
 }
 
-export async function backupFileExists(): Promise<boolean> {
+async function checkBackupFileExists(): Promise<boolean> {
   if (cachedBackupExists) {
     return true;
   }
+
+  const exists = await RNFS.exists(FINAL_FILE);
+  cachedBackupExists = exists;
+  return exists;
+}
+
+export async function backupFileExists(): Promise<boolean> {
   try {
-    const exists = await RNFS.exists(FINAL_FILE);
-    cachedBackupExists = exists;
-    return exists;
-  } catch (_) {
+    return await checkBackupFileExists();
+  } catch {
     return false;
   }
+}
+
+export async function backupFileExistsStrict(): Promise<boolean> {
+  return checkBackupFileExists();
 }
 
 export function backupPersistRoot(rawJson: string): Promise<void> {
