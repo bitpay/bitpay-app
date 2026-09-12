@@ -434,7 +434,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     {
       title: t('Waiting for co-signers'),
       subtitle: wallet?.tssMetadata?.m
-        ? t('{{m}} signatures required', {m: wallet.tssMetadata.m})
+        ? t('{{count}} signature required', {count: wallet.tssMetadata.m})
         : undefined,
       showCopayers: true,
     },

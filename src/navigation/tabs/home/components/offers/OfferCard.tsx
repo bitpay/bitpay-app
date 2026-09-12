@@ -1,5 +1,6 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
@@ -29,6 +30,7 @@ interface OfferCardProps {
 }
 
 const OfferCard: React.FC<OfferCardProps> = props => {
+  const {t} = useTranslation();
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
@@ -118,7 +120,9 @@ const OfferCard: React.FC<OfferCardProps> = props => {
       onPress={_onPress}
       accessibilityRole="button"
       testID={`home-offer-card-button-${contentCard.id}`}
-      accessibilityLabel={title ? `${title} offer` : 'View offer'}>
+      accessibilityLabel={
+        title ? t('{{title}} offer', {title}) : t('View offer')
+      }>
       <CoverImageContainer>
         {coverImageSource ? (
           <CoverImage

@@ -21,6 +21,11 @@ const CreateOrImportLink = styled(Link)`
   font-weight: 500;
   font-size: 18px;
 `;
+
+const KeyStatusButton = styled(Button)`
+  flex-shrink: 0;
+`;
+
 const WalletsAndKeys = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -46,14 +51,17 @@ const WalletsAndKeys = () => {
               <Setting onPress={() => onPressKey(key)}>
                 <SettingTitle>{key.keyName}</SettingTitle>
                 {key.backupComplete ? (
-                  <Button buttonType={'pill'} onPress={() => onPressKey(key)}>
-                    {key.wallets.length}{' '}
-                    {key.wallets.length === 1 ? 'Wallet' : 'Wallets'}
-                  </Button>
+                  <KeyStatusButton
+                    buttonType={'pill'}
+                    onPress={() => onPressKey(key)}>
+                    {t('{{count}} wallet', {count: key.wallets.length})}
+                  </KeyStatusButton>
                 ) : (
-                  <Button buttonType={'pill'} onPress={() => onPressKey(key)}>
+                  <KeyStatusButton
+                    buttonType={'pill'}
+                    onPress={() => onPressKey(key)}>
                     {t('Needs Backup')}
-                  </Button>
+                  </KeyStatusButton>
                 )}
               </Setting>
               <Hr />

@@ -1,3 +1,4 @@
+import 'intl-pluralrules';
 import i18n from 'i18next';
 import {initReactI18next} from 'react-i18next';
 import * as RNLocalize from 'react-native-localize';
@@ -47,7 +48,8 @@ i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     resources,
-    compatibilityJSON: 'v3',
+    keySeparator: false,
+    nsSeparator: false,
     lng: detectedLanguage,
     fallbackLng: 'en',
     debug: false,

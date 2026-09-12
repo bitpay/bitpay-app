@@ -365,7 +365,7 @@ const AddWallet = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={`${currencyAbbreviation.toUpperCase()} Wallet`}
-                label={'WALLET NAME'}
+                label={t('WALLET NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.walletName?.message}
@@ -379,7 +379,7 @@ const AddWallet = ({
         <WalletAdvancedOptionsContainer>
           <AdvancedOptionsButton
             testID="add-wallet-advanced-options-toggle-button"
-            accessibilityLabel="Add wallet advanced options toggle button"
+            accessibilityLabel={t('Show Advanced Options')}
             onPress={() => {
               Haptic('impactLight');
               setShowOptions(!showOptions);
@@ -405,7 +405,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-segwit-toggle"
-                accessibilityLabel="Use native SegWit"
+                accessibilityLabel={t('Use native SegWit')}
                 onPress={() => toggleUseNativeSegwit()}>
                 <Column>
                   <OptionTitle>Segwit</OptionTitle>
@@ -424,7 +424,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-taproot-toggle"
-                accessibilityLabel="Use Taproot"
+                accessibilityLabel={t('Use Taproot')}
                 onPress={() => toggleUseTaproot()}>
                 <Column>
                   <OptionTitle>Taproot</OptionTitle>
@@ -443,7 +443,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-testnet-toggle"
-                accessibilityLabel="Use testnet"
+                accessibilityLabel={t('Use testnet')}
                 activeOpacity={1}
                 onPress={() => {
                   setIsTestnet(!isTestnet);
@@ -478,7 +478,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-single-address-toggle"
-                accessibilityLabel="Single address mode"
+                accessibilityLabel={t('Single address mode')}
                 activeOpacity={1}
                 onPress={() => {
                   setSingleAddress(!singleAddress);
@@ -516,7 +516,9 @@ const AddWallet = ({
                     <VerticalPadding>
                       <TouchableOpacity
                         testID="add-wallet-single-address-learn-more-button"
-                        accessibilityLabel="Add wallet single address learn more button"
+                        accessibilityLabel={t(
+                          'Learn more about single address mode',
+                        )}
                         onPress={() => {
                           Haptic('impactLight');
                           dispatch(
@@ -536,7 +538,7 @@ const AddWallet = ({
         <ButtonContainer>
           <Button
             testID="add-wallet-submit-button"
-            accessibilityLabel="Add wallet submit button"
+            accessibilityLabel={t('Add Wallet')}
             disabled={!walletNameValue || isSubmitting}
             onPress={add}
             buttonStyle={'primary'}>

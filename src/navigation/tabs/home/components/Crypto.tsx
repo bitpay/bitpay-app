@@ -1,5 +1,11 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {ReactElement, useEffect, useMemo, useState} from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
@@ -123,10 +129,6 @@ const CryptoHeaderActions = styled.View`
   flex-direction: row;
   gap: 8px;
 `;
-
-const _renderItem = ({item}: {item: {id: string; component: ReactElement}}) => {
-  return <CarouselItemContainer>{item.component}</CarouselItemContainer>;
-};
 
 export const keyBackupRequired = (
   key: Key,
@@ -403,6 +405,7 @@ export const createHomeCardList = ({
 };
 
 const Crypto = () => {
+  const [cardHeights, setCardHeights] = useState<Record<string, number>>({});
   const {t: translate} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -535,6 +538,32 @@ const Crypto = () => {
     visiblePortfolioPercentageDifferenceByKey,
   ]);
 
+  const renderCarouselItem = useCallback(
+    ({item}: {item: {id: string; component: ReactElement}}) => (
+      <CarouselItemContainer
+        onLayout={({nativeEvent}) => {
+          const height = Math.ceil(nativeEvent.layout.height);
+          setCardHeights(current =>
+            current[item.id] === height
+              ? current
+              : {...current, [item.id]: height},
+          );
+        }}>
+        {item.component}
+      </CarouselItemContainer>
+    ),
+    [],
+  );
+
+  const carouselHeight = useMemo(
+    () =>
+      cardsList.list.reduce(
+        (tallest, {id}) => Math.max(tallest, cardHeights[id] ?? 0),
+        HOME_CARD_HEIGHT,
+      ) + 20,
+    [cardsList.list, cardHeights],
+  );
+
   if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
@@ -594,7 +623,7 @@ const Crypto = () => {
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               testID="my-crypto-add-button"
-              accessibilityLabel="Add crypto wallet"
+              accessibilityLabel={translate('Add crypto wallet')}
               onPress={() => {
                 haptic('soft');
                 navigation.navigate('CreationOptions');
@@ -604,7 +633,7 @@ const Crypto = () => {
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               testID="my-crypto-customize-button"
-              accessibilityLabel="Customize home"
+              accessibilityLabel={translate('Customize Home')}
               onPress={() => {
                 haptic('soft');
                 // Apply SettingsDetails config so that the custom header is used
@@ -626,11 +655,11 @@ const Crypto = () => {
             vertical={false}
             style={{width: WIDTH}}
             width={HOME_CARD_WIDTH + 16}
-            height={HOME_CARD_HEIGHT + 20}
+            height={carouselHeight}
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
-            renderItem={_renderItem}
+            renderItem={renderCarouselItem}
             enabled={true}
           />
         </CarouselContainer>

@@ -1,9 +1,11 @@
 import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
-import {Platform} from 'react-native';
+import {useWindowDimensions} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
+import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
-import styled, {css} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
@@ -27,7 +29,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {Theme, useNavigation, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
 import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
-import {HEIGHT} from '../../styled/Containers';
 import {TouchableOpacity} from '../../base/TouchableOpacity';
 
 export interface BottomNotificationConfig {
@@ -60,22 +61,24 @@ const notificationType = {
   wait: <WaitSvg {...svgProps} />,
 };
 
-const BottomNotificationContainer = styled.View`
+const BottomNotificationContainer = styled(ScrollView)`
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  padding: 25px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
-  max-height: ${HEIGHT - 100}px;
+  flex-grow: 0;
 `;
 
 const Row = styled.View`
   flex-direction: row;
-  align-items: center;
-  padding-right: 25px;
+  align-items: flex-start;
 `;
 
 const ImageContainer = styled.View`
   margin-right: 10px;
+`;
+
+const Title = styled(H4)`
+  flex-shrink: 1;
 `;
 
 const MessageContainer = styled.View`
@@ -89,13 +92,14 @@ export const BottomNotificationHr = styled.View`
 `;
 
 const CtaContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  ${({platform}: {platform: string}) =>
-    platform === 'ios' &&
-    css`
-      margin-bottom: 10px;
-    `}
+  flex-direction: column;
+`;
+
+const ActionButton = styled(TouchableOpacity)`
+  min-height: 48px;
+  width: 100%;
+  justify-content: center;
+  padding: 10px 0;
 `;
 
 export const BottomNotificationCta = styled(BaseText)`
@@ -115,12 +119,14 @@ export const BottomNotificationCta = styled(BaseText)`
       : Black};
 `;
 
-export const ScrollableBottomNotificationMessageContainer = styled(ScrollView)`
+export const BottomNotificationMessageContainer = styled.View`
   padding-top: 15px;
 `;
 
 const BottomNotification = React.memo(() => {
   const theme = useTheme();
+  const {height} = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const rootState = useSelector((state: RootState) => state);
@@ -187,8 +193,7 @@ const BottomNotification = React.memo(() => {
         };
 
         return (
-          <TouchableOpacity
-            style={{minHeight: 30, minWidth: 60}}
+          <ActionButton
             key={index}
             testID={`bottom-notification-${
               primary ? 'primary' : 'secondary'
@@ -200,7 +205,7 @@ const BottomNotification = React.memo(() => {
               primary={primary}>
               {text?.toUpperCase()}
             </BottomNotificationCta>
-          </TouchableOpacity>
+          </ActionButton>
         );
       }),
     [actions, dispatch, rootState],
@@ -212,10 +217,17 @@ const BottomNotification = React.memo(() => {
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
       onBackdropPress={handleBackdropPress}>
-      <BottomNotificationContainer>
+      <BottomNotificationContainer
+        as={modalLibrary === 'modal' ? ScrollView : BottomSheetScrollView}
+        style={{maxHeight: height - insets.top - insets.bottom - 20}}
+        contentContainerStyle={{
+          padding: 25,
+          paddingBottom: Math.max(25, insets.bottom),
+        }}
+        keyboardShouldPersistTaps="handled">
         <Row>
           <ImageContainer>{iconElement}</ImageContainer>
-          <H4>{title}</H4>
+          <Title>{title}</Title>
         </Row>
         {message ? (
           <MessageContainer>
@@ -224,7 +236,7 @@ const BottomNotification = React.memo(() => {
         ) : null}
         {message2 ? message2 : null}
         <BottomNotificationHr />
-        <CtaContainer platform={Platform.OS}>{actionButtons}</CtaContainer>
+        <CtaContainer>{actionButtons}</CtaContainer>
       </BottomNotificationContainer>
     </SheetModal>
   );

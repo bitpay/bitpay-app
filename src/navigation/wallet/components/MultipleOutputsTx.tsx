@@ -326,7 +326,9 @@ const MultipleOutputsTx = ({
                         txOutputs[0].address ||
                         txOutputs[0].toAddress,
                     )}
-                    description={`${tx.recipientCount} Recipients`}
+                    description={t('{{count}} Recipients', {
+                      count: tx.recipientCount,
+                    })}
                     onPress={() => setShowMultiOptions(!showMultiOptions)}
                     dropDown={true}
                   />

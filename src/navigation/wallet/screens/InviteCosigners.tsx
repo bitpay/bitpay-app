@@ -942,7 +942,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
             <HeaderRightContainer style={{width: 80}}>
               <Button
                 testID="cancel-button"
-                accessibilityLabel="Cancel"
+                accessibilityLabel={t('Cancel')}
                 buttonType={'pill'}
                 onPress={() => {
                   haptic('impactLight');

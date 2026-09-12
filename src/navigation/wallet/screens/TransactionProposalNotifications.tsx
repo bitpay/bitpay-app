@@ -464,11 +464,14 @@ const TransactionProposalNotifications = () => {
               <ListItemSubText>
                 {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
                 {isTSS && tssMetadata
-                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.n}`
+                  ? t('- Threshold {{m}}/{{n}}', {
+                      m: tssMetadata.m,
+                      n: tssMetadata.n,
+                    })
                   : n > 1
-                  ? `- Multisig ${m}/${n}`
+                  ? t('- Multisig {{m}}/{{n}}', {m, n})
                   : null}
-                {keyId.includes('readonly') ? '- Read Only' : null}
+                {keyId.includes('readonly') ? t('- Read Only') : null}
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 && !isTSS ? (

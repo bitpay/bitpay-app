@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import {
@@ -61,6 +62,7 @@ const ExchangeRateItem = ({
   onPress: () => void;
   defaultAltCurrencyIsoCode: string;
 }) => {
+  const {t} = useTranslation();
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
   const {amount, code} = formatFiatAmountObj(
@@ -76,7 +78,9 @@ const ExchangeRateItem = ({
     <RowContainer
       activeOpacity={ActiveOpacity}
       testID={`home-exchange-rate-item-${item.id}`}
-      accessibilityLabel={`${currencyName} exchange rate`}
+      accessibilityLabel={t('{{currency}} exchange rate', {
+        currency: currencyName,
+      })}
       onPress={onPress}>
       <CurrencyImageContainer style={{width: 40, height: 40}}>
         <CurrencyImage img={img} size={40} />

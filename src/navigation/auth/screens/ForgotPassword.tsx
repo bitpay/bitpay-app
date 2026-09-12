@@ -131,7 +131,7 @@ const ForgotPasswordScreen: React.FC<
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="email-box-input"
-                accessibilityLabel="Email address"
+                accessibilityLabel={t('EMAIL ADDRESS')}
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
                 onBlur={onBlur}
@@ -151,7 +151,7 @@ const ForgotPasswordScreen: React.FC<
           <AuthActionRow>
             <Button
               testID="reset-password-button"
-              accessibilityLabel="Reset password"
+              accessibilityLabel={t('Reset Password')}
               onPress={onSubmit}>
               {t('Reset Password')}
             </Button>

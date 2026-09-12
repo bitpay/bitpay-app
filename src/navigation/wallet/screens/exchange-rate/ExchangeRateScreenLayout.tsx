@@ -1,5 +1,6 @@
 import {type NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {RefreshControl, ScrollView, View} from 'react-native';
 import {Path, Svg} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -234,6 +235,7 @@ const ExchangeRateScreenLayout = ({
   topValue,
   topValueIsLarge,
 }: ExchangeRateScreenLayoutProps) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
@@ -367,7 +369,11 @@ const ExchangeRateScreenLayout = ({
 
         {shared.walletsForAsset.length ? (
           <>
-            <SectionTitle>{`Your Wallets with ${shared.currencyAbbreviation}`}</SectionTitle>
+            <SectionTitle>
+              {t('Your Wallets with {{currency}}', {
+                currency: shared.currencyAbbreviation,
+              })}
+            </SectionTitle>
 
             {shared.walletsForAsset.map(({wallet, ui}) => (
               <WalletCard
@@ -393,7 +399,7 @@ const ExchangeRateScreenLayout = ({
                     {shared.hideAllBalances
                       ? '****'
                       : ui.network === Network.testnet
-                      ? 'Test - No Value'
+                      ? t('Test - No Value')
                       : ui.fiatBalanceFormat || '$0.00'}
                   </WalletAmount>
                   <RightChevron />
@@ -410,27 +416,33 @@ const ExchangeRateScreenLayout = ({
                 <View style={{width: 26, height: 26}}>
                   <CurrencyImage img={shared.currencyImageSource} size={26} />
                 </View>
-                <MarketTitle>{`${shared.currencyAbbreviation} Market Price`}</MarketTitle>
+                <MarketTitle>
+                  {t('{{currency}} Market Price', {
+                    currency: shared.currencyAbbreviation,
+                  })}
+                </MarketTitle>
               </MarketHeaderLeft>
               <MarketPrice>{marketPriceDisplay}</MarketPrice>
             </MarketHeader>
             <Divider />
             <MarketBody>
-              <SubSectionTitle>{`${shared.currencyName} Stats`}</SubSectionTitle>
+              <SubSectionTitle>
+                {t('{{currency}} Stats', {currency: shared.currencyName})}
+              </SubSectionTitle>
 
               <StatsGridRow>
                 <StatBlock style={{paddingRight: 8}}>
-                  <StatLabel>52wk high</StatLabel>
+                  <StatLabel>{t('52wk high')}</StatLabel>
                   <StatValue>{shared.marketHigh52wToDisplay}</StatValue>
                 </StatBlock>
                 <View>
                   <StatBlock>
-                    <StatLabel>52wk low</StatLabel>
+                    <StatLabel>{t('52wk low')}</StatLabel>
                     <StatValue>{shared.marketLow52wToDisplay}</StatValue>
                   </StatBlock>
                 </View>
                 <StatBlock style={{alignItems: 'flex-end'}}>
-                  <StatLabel>24h volume</StatLabel>
+                  <StatLabel>{t('24h volume')}</StatLabel>
                   <StatValue>{shared.marketVolume24hToDisplay}</StatValue>
                 </StatBlock>
               </StatsGridRow>
@@ -441,11 +453,11 @@ const ExchangeRateScreenLayout = ({
 
               <StatsGridRow>
                 <StatBlock style={{paddingRight: 8}}>
-                  <StatLabel>Circulating supply</StatLabel>
+                  <StatLabel>{t('Circulating supply')}</StatLabel>
                   <StatValue>{shared.circulatingSupplyToDisplay}</StatValue>
                 </StatBlock>
                 <StatBlock style={{alignItems: 'flex-end'}}>
-                  <StatLabel>Market cap</StatLabel>
+                  <StatLabel>{t('Market cap')}</StatLabel>
                   <StatValue>{shared.marketCapToDisplay}</StatValue>
                 </StatBlock>
               </StatsGridRow>
@@ -455,7 +467,7 @@ const ExchangeRateScreenLayout = ({
 
               <View style={{marginTop: 14}}>
                 <SubSectionTitle style={{fontWeight: '400', marginBottom: 6}}>
-                  About
+                  {t('About')}
                 </SubSectionTitle>
                 <AboutText
                   numberOfLines={isAboutExpanded ? undefined : 3}
@@ -469,7 +481,7 @@ const ExchangeRateScreenLayout = ({
                       hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                       onPress={() => setIsAboutExpanded(prev => !prev)}>
                       <Link style={{fontSize: 13}}>
-                        {isAboutExpanded ? 'Show less' : 'Show more'}
+                        {isAboutExpanded ? t('Show less') : t('Show more')}
                       </Link>
                     </TouchableOpacity>
                   ) : null}

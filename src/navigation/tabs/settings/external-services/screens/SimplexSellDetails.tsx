@@ -193,7 +193,7 @@ const SimplexSellDetails: React.FC = () => {
                   </LabelTipText>
                   <TouchableOpacity
                     testID="simplex-sell-support-link"
-                    accessibilityLabel="Contact support"
+                    accessibilityLabel={t('Contact Support')}
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -214,7 +214,7 @@ const SimplexSellDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="simplex-sell-copy-deposit-address-button"
-              accessibilityLabel="Simplex sell copy deposit address button"
+              accessibilityLabel={t('Copy deposit address')}
               onPress={() => {
                 copyText(sellOrder.address_to);
                 setCopiedDepositAddress(true);
@@ -235,7 +235,7 @@ const SimplexSellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="simplex-sell-copy-quote-id-button"
-                accessibilityLabel="Simplex sell copy quote id button"
+                accessibilityLabel={t('Copy quote ID')}
                 onPress={() => {
                   copyText(sellOrder.quote_id!);
                   setCopiedPaymentId(true);
@@ -257,7 +257,7 @@ const SimplexSellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="simplex-sell-copy-transaction-id-button"
-                accessibilityLabel="Simplex sell copy transaction id button"
+                accessibilityLabel={t('Copy transaction ID')}
                 onPress={() => {
                   copyText(sellOrder.tx_sent_id!);
                   setCopiedTransactionSentId(true);
@@ -277,7 +277,7 @@ const SimplexSellDetails: React.FC = () => {
 
           <RemoveCta
             testID="simplex-sell-remove-order-button"
-            accessibilityLabel="Simplex sell remove order button"
+            accessibilityLabel={t('Remove order')}
             onPress={async () => {
               haptic('impactLight');
               dispatch(

@@ -2,7 +2,6 @@ import React from 'react';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {FlatList} from 'react-native';
 import {t} from 'i18next';
 import {RootStacks, navigationRef} from '../../../Root';
 
@@ -102,16 +101,11 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
         primary: true,
       },
     ],
-    message2: (
-      <FlatList
-        data={wrongPasswordList}
-        renderItem={({item}) => (
-          <List>
-            {'\u2022'} {item.description}
-          </List>
-        )}
-      />
-    ),
+    message2: wrongPasswordList.map(item => (
+      <List key={item.key}>
+        {'\u2022'} {item.description}
+      </List>
+    )),
   };
 };
 

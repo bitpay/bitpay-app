@@ -638,7 +638,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [networkCardsList, setNetworkCardsList] = useState<any>();
   const [cryptoSelectContext, setCryptoSelectContext] = useState({
     status: 'key-selection',
-    title: 'Select Key to Deposit to',
+    title: t('Select Key to Deposit to'),
   });
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
@@ -1324,7 +1324,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }),
     );
     setCryptoSelectContext({
-      title: 'Select Key to Deposit to',
+      title: t('Select Key to Deposit to'),
       status: 'key-selection',
     });
   };
@@ -1422,7 +1422,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         key: selectedKey,
       });
       setCryptoSelectContext({
-        title: 'Select Wallet to Deposit to',
+        title: t('Select Wallet to Deposit to'),
         status: 'account-selection',
       });
     } else {
@@ -1488,7 +1488,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         key: selectedKey,
       });
       setCryptoSelectContext({
-        title: 'Select Account to Deposit to',
+        title: t('Select Account to Deposit to'),
         status: 'account-selection',
       });
       return;
@@ -1575,7 +1575,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       key: selectedKey,
     });
     setCryptoSelectContext({
-      title: 'Select Network',
+      title: t('Select Network'),
       status: 'network-selection',
     });
   };

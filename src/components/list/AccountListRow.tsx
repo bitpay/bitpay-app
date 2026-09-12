@@ -1,4 +1,5 @@
 import React, {memo, ReactElement, useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {
   Column,
   CurrencyImageContainer,
@@ -111,6 +112,7 @@ const AccountListRow = ({
   isLast,
   hideBalance,
 }: Props) => {
+  const {t} = useTranslation();
   const {
     accountName,
     fiatBalanceFormat,
@@ -235,7 +237,7 @@ const AccountListRow = ({
                   {showFiatBalance && (
                     <ListItemSubText textAlign={'right'}>
                       {network === 'testnet'
-                        ? 'Test - No Value'
+                        ? t('Test - No Value')
                         : fiatBalanceFormat}
                     </ListItemSubText>
                   )}

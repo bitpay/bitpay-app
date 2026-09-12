@@ -74,7 +74,7 @@ import {
 } from '../../../../../lib/gift-cards/gift-card';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import Markdown from 'react-native-markdown-display';
-import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import {BottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import GiftCardTerms from '../../components/GiftCardTerms';
 import GiftCardImage from '../../components/GiftCardImage';
 import {openExternalUrl} from '../../../../../store/app/app.effects';
@@ -298,8 +298,7 @@ const GiftCardDetails = ({
       modalLibrary: 'bottom-sheet',
       message: '',
       message2: (
-        <ScrollableBottomNotificationMessageContainer
-          contentContainerStyle={{paddingBottom: 10}}>
+        <BottomNotificationMessageContainer style={{paddingBottom: 10}}>
           {containsHtml ? (
             <RenderHtml
               baseStyle={redeemTextStyle}
@@ -316,7 +315,7 @@ const GiftCardDetails = ({
               {redeemInstructions}
             </Markdown>
           )}
-        </ScrollableBottomNotificationMessageContainer>
+        </BottomNotificationMessageContainer>
       ),
       enableBackdropDismiss: true,
       actions: [
@@ -510,7 +509,7 @@ const GiftCardDetails = ({
                       dispatch(openExternalUrl(giftCard.claimLink as string))
                     }
                     buttonStyle={'primary'}>
-                    {cardConfig.redeemButtonText || 'View Redemption Code'}
+                    {cardConfig.redeemButtonText || t('View Redemption Code')}
                   </Button>
                 ) : (
                   <Button

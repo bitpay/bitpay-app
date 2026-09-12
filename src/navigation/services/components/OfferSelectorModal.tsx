@@ -523,7 +523,9 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                         <OfferRowLeft>
                           <OfferDataInfoContainer
                             testID={offer.key}
-                            accessibilityLabel={'Provided By ' + offer.key}>
+                            accessibilityLabel={t('Provided by {{provider}}', {
+                              provider: offer.key,
+                            })}>
                             {offer.logo}
                           </OfferDataInfoContainer>
                           <OfferDataContainer>

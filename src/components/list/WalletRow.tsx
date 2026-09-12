@@ -1,4 +1,5 @@
 import React, {memo, ReactElement} from 'react';
+import {useTranslation} from 'react-i18next';
 import {
   Column,
   CurrencyImageContainer,
@@ -178,6 +179,7 @@ const WalletRow = ({
   noBorder,
   supportedTransactionCurrencies,
 }: Props) => {
+  const {t} = useTranslation();
   const {
     currencyName,
     currencyAbbreviation,
@@ -212,7 +214,9 @@ const WalletRow = ({
     <RowContainer
       activeOpacity={ActiveOpacity}
       testID={`wallet-row-${wallet.currencyAbbreviation}-${wallet.id}`}
-      accessibilityLabel={`${walletName || currencyName} wallet`}
+      accessibilityLabel={t('{{wallet}} wallet', {
+        wallet: walletName || currencyName,
+      })}
       onPress={onPress}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
       noBorder={noBorder}
@@ -239,11 +243,11 @@ const WalletRow = ({
         <Row style={{alignItems: 'center'}}>
           {supportedTransactionCurrencies && !isAvailable ? (
             <BadgeContainer>
-              <Badge>Not supported</Badge>
+              <Badge>{t('Not supported')}</Badge>
             </BadgeContainer>
           ) : supportedTransactionCurrencies && isDisabled ? (
             <BadgeContainer>
-              <Badge>Temporarily disabled</Badge>
+              <Badge>{t('Temporarily disabled')}</Badge>
             </BadgeContainer>
           ) : (
             <>
@@ -281,7 +285,7 @@ const WalletRow = ({
               {showFiatBalance && (
                 <ListItemSubText textAlign={'right'}>
                   {network === 'testnet'
-                    ? 'Test - No Value'
+                    ? t('Test - No Value')
                     : fiatBalanceFormat}
                 </ListItemSubText>
               )}

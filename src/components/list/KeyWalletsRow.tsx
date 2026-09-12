@@ -73,6 +73,7 @@ const KeyNameContainer = styled.View<KeyNameContainerProps>`
 const KeyName = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-left: 10px;
+  flex: 1;
 `;
 
 const NeedBackupText = styled(BaseText)`
@@ -83,6 +84,8 @@ const NeedBackupText = styled(BaseText)`
   border: 1px solid ${({theme: {dark}}) => (dark ? White : Slate30)};
   border-radius: 3px;
   margin-left: auto;
+  max-width: 50%;
+  flex-shrink: 1;
 `;
 
 const CurrencyImageContainer = styled.View`
@@ -209,7 +212,7 @@ const KeyWalletsRow = ({
             Object.values(key?.mergedUtxoAndEvmAccounts ?? {})?.length > 0) && (
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
-              <KeyName>{key.keyName || 'My Key'}</KeyName>
+              <KeyName>{key.keyName || t('My Key')}</KeyName>
               {!key.backupComplete && !key?.coinbaseAccounts && (
                 <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
               )}
@@ -228,7 +231,9 @@ const KeyWalletsRow = ({
                   <AccountChainsContainer
                     activeOpacity={ActiveOpacity}
                     testID={`key-wallets-evm-account-toggle-${evmAccount?.receiveAddress}`}
-                    accessibilityLabel={`${evmAccount?.accountName} account`}
+                    accessibilityLabel={t('{{account}} account', {
+                      account: evmAccount?.accountName,
+                    })}
                     onPress={() => onHide(evmAccount?.receiveAddress)}>
                     <Blockie size={19} seed={evmAccount?.receiveAddress} />
                     <Column>
@@ -342,11 +347,12 @@ const KeyWalletsRow = ({
                       <AccountChainsContainer
                         activeOpacity={ActiveOpacity}
                         testID={`key-wallets-utxo-chain-toggle-${wallet?.chain}-${key.key}`}
-                        accessibilityLabel={`${
-                          BitpaySupportedCoins[
-                            wallet?.currencyAbbreviation?.toLowerCase() as keyof typeof BitpaySupportedCoins
-                          ]?.name ?? wallet?.chain
-                        } chain`}
+                        accessibilityLabel={t('{{chain}} chain', {
+                          chain:
+                            BitpaySupportedCoins[
+                              wallet?.currencyAbbreviation?.toLowerCase() as keyof typeof BitpaySupportedCoins
+                            ]?.name ?? wallet?.chain,
+                        })}
                         onPress={() =>
                           wallet?.chain && onHide(`${wallet.chain}-${key.key}`)
                         }>

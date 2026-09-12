@@ -117,19 +117,19 @@ const AltCurrencySettings = () => {
 
     const list = [
       {
-        title: 'Currencies',
+        title: t('Currencies'),
         data: currenciesList,
       },
     ];
 
     if (recentDefaultAltCurrency.length) {
       list.unshift({
-        title: 'Recently Selected',
+        title: t('Recently Selected'),
         data: recentDefaultAltCurrency,
       });
     }
     return list;
-  }, [alternativeCurrencies, recentDefaultAltCurrency, selectedAltCurrency]);
+  }, [alternativeCurrencies, recentDefaultAltCurrency, selectedAltCurrency, t]);
 
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState(
@@ -230,7 +230,7 @@ const AltCurrencySettings = () => {
           <SearchInput
             placeholder={''}
             testID="alt-currency-search-input"
-            accessibilityLabel="Search currency"
+            accessibilityLabel={t('Search Currency')}
             onChangeText={(text: string) => {
               updateSearchResults(text);
             }}

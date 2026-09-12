@@ -449,7 +449,7 @@ const WalletConnectConfirm = () => {
   return (
     <ConfirmContainer>
       <DetailsList>
-        <Header>Summary</Header>
+        <Header>{t('Summary')}</Header>
         {wallet && isTSSWallet(wallet) && (
           <TSSProgressTracker
             status={tssStatus}

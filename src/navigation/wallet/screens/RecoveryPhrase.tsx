@@ -204,14 +204,14 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
       <TouchableOpacity
         touchableLibrary={'react-native-gesture-handler'}
         testID="cancel-button"
-        accessibilityLabel="Cancel"
+        accessibilityLabel={t('Cancel')}
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
         onPress={onPressHeaderCancelRef.current}>
         <Back opacity={1} />
       </TouchableOpacity>
     );
-  }, []);
+  }, [t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -252,7 +252,7 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
       <CtaContainerAbsolute testID="cta-container">
         <Button
           testID="next-button"
-          accessibilityLabel="Verify recovery phrase"
+          accessibilityLabel={t('Verify recovery phrase')}
           buttonStyle={'primary'}
           debounceTime={Platform.OS === 'android' ? 200 : 0}
           disabled={key.backupComplete}

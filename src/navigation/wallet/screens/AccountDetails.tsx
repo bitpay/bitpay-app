@@ -925,7 +925,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     <>
       <AddCustomTokenContainer
         testID="add-custom-token-button"
-        accessibilityLabel="Add custom token"
+        accessibilityLabel={t('Add Custom Token')}
         onPress={() => {
           haptic('soft');
           if (memorizedAssetsByChainList?.[0].chains?.[0]) {

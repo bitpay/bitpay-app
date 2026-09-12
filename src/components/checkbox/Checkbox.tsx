@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
 import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
@@ -13,6 +14,7 @@ interface Props {
   radioHeight?: number;
   checkHeight?: number;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 interface BorderProps {
@@ -57,7 +59,9 @@ const Checkbox: React.FC<Props> = ({
   radioHeight,
   checkHeight,
   testID,
+  accessibilityLabel,
 }) => {
+  const {t} = useTranslation();
   const radioStyles = radioHeight
     ? {height: radioHeight, width: radioHeight}
     : baseRadioStyles;
@@ -78,7 +82,7 @@ const Checkbox: React.FC<Props> = ({
       }}
       // @ts-ignore --> testing
       testID={testID || 'checkbox'}
-      accessibilityLabel="Checkbox"
+      accessibilityLabel={accessibilityLabel || t('Checkbox')}
       outerStyle={{
         ...baseStyles,
         borderColor: 'transparent',
