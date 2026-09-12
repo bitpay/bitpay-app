@@ -1,5 +1,6 @@
 import {BitPayIdActionType, BitPayIdActionTypes} from './bitpay-id.types';
 import {
+  LastLogin,
   ReceivingAddress,
   SecuritySettings,
   Session,
@@ -25,6 +26,7 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'doshToken',
   'fetchDoshTokenStatus',
   'forgotPasswordEmailStatus',
+  'lastLogin',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -66,6 +68,9 @@ export interface BitPayIdState {
   };
   securitySettings: {
     [key in Network]: SecuritySettings | null;
+  };
+  lastLogin: {
+    [key in Network]: LastLogin | null;
   };
   fetchSessionStatus: FetchSessionStatus;
   createAccountStatus: CreateAccountStatus;
@@ -114,6 +119,11 @@ const initialState: BitPayIdState = {
     [Network.regtest]: [],
   },
   securitySettings: {
+    [Network.mainnet]: null,
+    [Network.testnet]: null,
+    [Network.regtest]: null,
+  },
+  lastLogin: {
     [Network.mainnet]: null,
     [Network.testnet]: null,
     [Network.regtest]: null,
@@ -348,6 +358,10 @@ export const bitPayIdReducer = (
           ...state.doshToken,
           [action.payload.network]: null,
         },
+        lastLogin: {
+          ...state.lastLogin,
+          [action.payload.network]: null,
+        },
       };
 
     case BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN:
@@ -419,6 +433,16 @@ export const bitPayIdReducer = (
         securitySettings: {
           ...state.securitySettings,
           [action.payload.network]: action.payload.securitySettings,
+        },
+      };
+    }
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_LAST_LOGIN: {
+      return {
+        ...state,
+        lastLogin: {
+          ...state.lastLogin,
+          [action.payload.network]: action.payload.lastLogin,
         },
       };
     }

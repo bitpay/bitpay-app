@@ -41,6 +41,19 @@ export interface SecuritySettings {
   email: string;
 }
 
+/**
+ * Fields are optional until the backend method is finalized — render only what
+ * is actually returned.
+ */
+export interface LastLogin {
+  date?: string;
+  ipAddress?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  device?: string;
+}
+
 export interface User {
   email: string;
   eid: string;

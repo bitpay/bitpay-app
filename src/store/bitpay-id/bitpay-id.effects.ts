@@ -26,7 +26,12 @@ import {SumSubActions, SumSubEffects} from '../sumsub';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
-import {ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
+import {
+  LastLogin,
+  ReceivingAddress,
+  SecuritySettings,
+  Session,
+} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
@@ -814,6 +819,27 @@ export const startFetchSecuritySettings =
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(
           '[startFetchSecuritySettings] Failed to fetch security settings.',
+          errMsg,
+        );
+        throw err;
+      }
+    })();
+
+export const startFetchLastLogin =
+  (): Effect<Promise<LastLogin>> => async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const lastLogin = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'getLastLogin',
+        );
+        dispatch(BitPayIdActions.successFetchLastLogin(APP.network, lastLogin));
+        return lastLogin;
+      } catch (err: any) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.error(
+          '[startFetchLastLogin] Failed to fetch last login.',
           errMsg,
         );
         throw err;
