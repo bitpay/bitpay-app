@@ -46,7 +46,7 @@ export const RecipientRowContainer = styled.View`
   align-items: center;
   flex-direction: row;
   justify-content: space-between;
-  height: 55px;
+  min-height: 55px;
 `;
 
 export const RecipientContainer = styled.View`

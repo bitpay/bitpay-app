@@ -19,7 +19,7 @@ import {ActiveOpacity} from '../../../../components/styled/Containers';
 const ModalHeader = styled.View`
   flex-direction: row;
   padding: 20px;
-  height: 55px;
+  min-height: 55px;
   align-items: center;
   padding-bottom: 0;
   padding-top: 10px;

@@ -29,6 +29,10 @@ import ClockOutlineIcon from '../../../../assets/img/icon-clock-outline.svg';
 import AlertTriangleIcon from '../../../../assets/img/icon-alert-triangle.svg';
 import InfoIcon from '../../../components/icons/info/Info';
 
+const OptionsScroll = styled.ScrollView`
+  flex-grow: 0;
+`;
+
 const OptionsHeaderContainer = styled.View<{cardStyle?: boolean}>`
   flex-direction: row;
   align-items: center;
@@ -227,103 +231,109 @@ const OptionsSheet = ({
             <OptionsHeaderPlaceholder />
           </OptionsHeaderContainer>
         ) : null}
-        {options.map(
-          (
-            {
-              img,
-              imgSrc,
-              title: optionTitle,
-              description,
-              badge,
-              subDescriptionItems,
-              cardStyle,
-              onPress,
-              optionElement,
-              showChevron,
+        <OptionsScroll>
+          {options.map(
+            (
+              {
+                img,
+                imgSrc,
+                title: optionTitle,
+                description,
+                badge,
+                subDescriptionItems,
+                cardStyle,
+                onPress,
+                optionElement,
+                showChevron,
+              },
+              index,
+            ) => {
+              return (
+                <OptionContainer
+                  style={index === 0 && sheetPlacement === 'top' && topStyles}
+                  placement={sheetPlacement}
+                  cardStyle={cardStyle}
+                  key={index}
+                  activeOpacity={ActiveOpacity}
+                  onPress={async () => {
+                    closeModal();
+                    await sleep(500);
+                    onPress();
+                  }}>
+                  {optionElement ? (
+                    <>{optionElement()}</>
+                  ) : (
+                    <>
+                      {img && <OptionIconContainer>{img}</OptionIconContainer>}
+                      {imgSrc && (
+                        <OptionIconContainer>
+                          <Image source={imgSrc} />
+                        </OptionIconContainer>
+                      )}
+                      <OptionTextContainer cardStyle={cardStyle}>
+                        {badge ? (
+                          <OptionBadgeContainer>
+                            <OptionBadgeText>{badge}</OptionBadgeText>
+                          </OptionBadgeContainer>
+                        ) : null}
+                        {optionTitle ? (
+                          <OptionTitleText cardStyle={cardStyle}>
+                            {optionTitle}
+                          </OptionTitleText>
+                        ) : null}
+                        <OptionDescriptionText cardStyle={cardStyle}>
+                          {description}
+                        </OptionDescriptionText>
+                        {subDescriptionItems &&
+                          subDescriptionItems.length > 0 && (
+                            <SubDescriptionContainer>
+                              {subDescriptionItems.map((item, itemIndex) => {
+                                const ItemIcon = subDescriptionIcons[item.icon];
+                                return (
+                                  <React.Fragment key={itemIndex}>
+                                    {itemIndex > 0 && (
+                                      <SubDescriptionRowSpacer />
+                                    )}
+                                    <SubDescriptionRow>
+                                      <SubDescriptionIconContainer>
+                                        <ItemIcon
+                                          width={16}
+                                          height={16}
+                                          size={16}
+                                          bgColor={
+                                            theme.dark ? White : SlateDark
+                                          }
+                                          color={
+                                            item.icon === 'warning'
+                                              ? Caution
+                                              : theme.dark
+                                              ? White
+                                              : SlateDark
+                                          }
+                                        />
+                                      </SubDescriptionIconContainer>
+                                      <OptionSubDescriptionText>
+                                        {item.text}
+                                      </OptionSubDescriptionText>
+                                    </SubDescriptionRow>
+                                  </React.Fragment>
+                                );
+                              })}
+                            </SubDescriptionContainer>
+                          )}
+                      </OptionTextContainer>
+                      {showChevron && (
+                        <OptionIconContainer>
+                          <AngleRight />
+                        </OptionIconContainer>
+                      )}
+                    </>
+                  )}
+                </OptionContainer>
+              );
             },
-            index,
-          ) => {
-            return (
-              <OptionContainer
-                style={index === 0 && sheetPlacement === 'top' && topStyles}
-                placement={sheetPlacement}
-                cardStyle={cardStyle}
-                key={index}
-                activeOpacity={ActiveOpacity}
-                onPress={async () => {
-                  closeModal();
-                  await sleep(500);
-                  onPress();
-                }}>
-                {optionElement ? (
-                  <>{optionElement()}</>
-                ) : (
-                  <>
-                    {img && <OptionIconContainer>{img}</OptionIconContainer>}
-                    {imgSrc && (
-                      <OptionIconContainer>
-                        <Image source={imgSrc} />
-                      </OptionIconContainer>
-                    )}
-                    <OptionTextContainer cardStyle={cardStyle}>
-                      {badge ? (
-                        <OptionBadgeContainer>
-                          <OptionBadgeText>{badge}</OptionBadgeText>
-                        </OptionBadgeContainer>
-                      ) : null}
-                      {optionTitle ? (
-                        <OptionTitleText cardStyle={cardStyle}>
-                          {optionTitle}
-                        </OptionTitleText>
-                      ) : null}
-                      <OptionDescriptionText cardStyle={cardStyle}>
-                        {description}
-                      </OptionDescriptionText>
-                      {subDescriptionItems &&
-                        subDescriptionItems.length > 0 && (
-                          <SubDescriptionContainer>
-                            {subDescriptionItems.map((item, itemIndex) => {
-                              const ItemIcon = subDescriptionIcons[item.icon];
-                              return (
-                                <React.Fragment key={itemIndex}>
-                                  {itemIndex > 0 && <SubDescriptionRowSpacer />}
-                                  <SubDescriptionRow>
-                                    <SubDescriptionIconContainer>
-                                      <ItemIcon
-                                        width={16}
-                                        height={16}
-                                        size={16}
-                                        bgColor={theme.dark ? White : SlateDark}
-                                        color={
-                                          item.icon === 'warning'
-                                            ? Caution
-                                            : theme.dark
-                                            ? White
-                                            : SlateDark
-                                        }
-                                      />
-                                    </SubDescriptionIconContainer>
-                                    <OptionSubDescriptionText>
-                                      {item.text}
-                                    </OptionSubDescriptionText>
-                                  </SubDescriptionRow>
-                                </React.Fragment>
-                              );
-                            })}
-                          </SubDescriptionContainer>
-                        )}
-                    </OptionTextContainer>
-                    {showChevron && (
-                      <OptionIconContainer>
-                        <AngleRight />
-                      </OptionIconContainer>
-                    )}
-                  </>
-                )}
-              </OptionContainer>
-            );
-          },
-        )}
+          )}
+        </OptionsScroll>
       </SheetContainer>
     </SheetModal>
   );

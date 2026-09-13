@@ -39,11 +39,13 @@ export const SearchIconContainer = styled.View`
 
 export const SearchFilterContainer = styled(TouchableOpacity)`
   min-width: 60px;
-  max-width: 130px;
+  max-width: 150px;
+  flex-shrink: 1;
+  padding: 4px 0;
   justify-content: center;
   align-items: center;
   border-radius: 20px;
-  height: 32px;
+  min-height: 32px;
   margin: auto 8px auto 15px;
   border: 1px solid ${({theme: {dark}}) => (dark ? Action : 'transparent')};
   background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
@@ -69,13 +71,19 @@ export const SearchFilterLabelContainer = styled.View`
   margin-left: 15px;
   margin-right: 15px;
   flex: 1 1 auto;
+  flex-shrink: 1;
 `;
 
-export const SearchFilterLabel = styled(BaseText)`
+// Compact filter chip that shares a fixed-height row with the search input.
+export const SearchFilterLabel = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.4,
+  numberOfLines: 2,
+}))`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
   font-size: 12px;
   font-weight: 400;
   min-width: 70px;
+  flex-shrink: 1;
 `;
 
 export const SearchFilterIconContainer = styled.View`
@@ -462,7 +470,7 @@ const SearchComponent = <T extends SearchableItem>({
             style={
               selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
             }>
-            <SearchFilterLabel numberOfLines={1} ellipsizeMode="tail">
+            <SearchFilterLabel numberOfLines={2} ellipsizeMode="tail">
               {selectedChainFilterOption && currencyInfo
                 ? currencyInfo.name
                 : t('All Networks')}

@@ -158,7 +158,7 @@ const CurrencySelectorContainer = styled.View`
 const CurrencyContainer = styled(TouchableOpacity)`
   background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   padding: 0 20px;
-  height: 55px;
+  min-height: 55px;
   border: 1px solid ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;

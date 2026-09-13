@@ -21,6 +21,7 @@ import {SearchableItem} from '../chain-search/ChainSearch';
 import Animated, {FadeIn} from 'react-native-reanimated';
 import {IsSVMChain} from '../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
+import {useIsLargeFont} from '../../utils/hooks';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -30,8 +31,9 @@ const SpinnerContainer = styled.View`
   padding-right: 10px;
 `;
 
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
+const BalanceColumn = styled(Column)<{stacked?: boolean}>`
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'flex-end')};
+  ${({stacked}) => (stacked ? 'align-self: stretch; margin-top: 6px;' : '')}
 `;
 
 const ListContainer = styled(Animated.View)``;
@@ -111,6 +113,7 @@ const AccountListRow = ({
   isLast,
   hideBalance,
 }: Props) => {
+  const stacked = useIsLargeFont();
   const {
     accountName,
     fiatBalanceFormat,
@@ -150,6 +153,7 @@ const AccountListRow = ({
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={onPress}
+        stacked={stacked}
         style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
         {!hideIcon ? (
           <CurrencyImageContainer>
@@ -178,14 +182,14 @@ const AccountListRow = ({
         ) : null}
         {isMultiNetworkSupported ? (
           <Column>
-            <H5 ellipsizeMode={'tail'} numberOfLines={1}>
+            <H5 ellipsizeMode={'tail'} numberOfLines={stacked ? 2 : 1}>
               {accountName}
             </H5>
           </Column>
         ) : (
           <Column>
             <Row style={{alignItems: 'center'}}>
-              <H5 ellipsizeMode="tail" numberOfLines={1}>
+              <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
                 {accountName}
               </H5>
             </Row>
@@ -214,9 +218,9 @@ const AccountListRow = ({
         )}
         {isMultiNetworkSupported ? (
           fiatBalanceFormat && (
-            <BalanceColumn>
+            <BalanceColumn stacked={stacked}>
               {!hideBalance ? (
-                <H5 numberOfLines={1} ellipsizeMode="tail">
+                <H5 numberOfLines={stacked ? 2 : 1} ellipsizeMode="tail">
                   {fiatBalanceFormat}
                 </H5>
               ) : (
@@ -226,14 +230,14 @@ const AccountListRow = ({
           )
         ) : !isScanning ? (
           cryptoBalance && (
-            <BalanceColumn>
+            <BalanceColumn stacked={stacked}>
               {!hideBalance ? (
                 <>
-                  <H5 numberOfLines={1} ellipsizeMode="tail">
+                  <H5 numberOfLines={stacked ? 2 : 1} ellipsizeMode="tail">
                     {cryptoBalance}
                   </H5>
                   {showFiatBalance && (
-                    <ListItemSubText textAlign={'right'}>
+                    <ListItemSubText textAlign={stacked ? 'left' : 'right'}>
                       {network === 'testnet'
                         ? 'Test - No Value'
                         : fiatBalanceFormat}

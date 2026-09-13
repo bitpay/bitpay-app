@@ -23,6 +23,8 @@ const ButtonsRow = styled.View<{
   justify-content: ${({$compactSpacing}) =>
     $compactSpacing ? 'center' : 'space-between'};
   flex-direction: row;
+  flex-wrap: wrap;
+  row-gap: 12px;
   align-self: center;
   width: ${({$maxWidth = MAX_LINKING_BUTTON_ROW_WIDTH}) =>
     Math.min(WIDTH - 24, $maxWidth)}px;
@@ -31,12 +33,14 @@ const ButtonsRow = styled.View<{
 
 const ButtonContainer = styled.View<{$compactSpacing?: boolean}>`
   align-items: center;
+  flex-shrink: 1;
   margin: ${({$compactSpacing}) => ($compactSpacing ? '0 30px' : '0')};
 `;
 
 const ButtonText = styled(BaseText)`
   font-size: 13px;
   line-height: 18px;
+  text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : Midnight)};
   margin-top: 3px;
 `;

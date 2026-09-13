@@ -50,7 +50,7 @@ const ButtonContainer = styled.View`
 `;
 
 const ViewContainer = styled.View`
-  height: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -65,7 +65,11 @@ const Row = styled.View`
   flex-direction: row;
 `;
 
-const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
+// The entered amount is already display-sized; cap it so long values stay on
+// one line instead of overflowing the hero.
+const AmountText = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.3,
+}))<{bigAmount?: boolean}>`
   font-size: ${({bigAmount}) => (bigAmount ? '35px' : '50px')};
   font-weight: 500;
   text-align: center;
@@ -93,7 +97,9 @@ const CurrencySuperScript = styled.View`
   top: 10px;
   right: -20px;
 `;
-const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
+const CurrencyText = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.3,
+}))<{bigAmount?: boolean}>`
   font-size: ${({bigAmount}) => (bigAmount ? '12px' : '20px')};
   color: ${({theme}) => theme.colors.text};
   position: absolute;

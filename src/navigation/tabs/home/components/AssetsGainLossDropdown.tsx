@@ -21,17 +21,19 @@ import {
 import ChevronDown from './ChevronDown';
 import type {GainLossMode} from '../../../../utils/portfolio/assets';
 
-const Container = styled(TouchableOpacity)<{height?: number}>`
+const Container = styled(TouchableOpacity)<{$height?: number}>`
   flex-direction: row;
   align-items: center;
+  flex-shrink: 1;
   border-radius: 50px;
   padding: 10px 14px;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
+  ${({$height}) => ($height ? `min-height: ${$height}px;` : '')}
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   background-color: ${({theme: {dark}}) => (dark ? 'transparent' : White)};
 `;
 
 const Label = styled(BaseText)`
+  flex-shrink: 1;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -41,7 +43,8 @@ const Label = styled(BaseText)`
 `;
 
 const Menu = styled.View`
-  width: 190px;
+  min-width: 190px;
+  max-width: 90%;
   border-radius: 10px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   shadow-color: ${Black};
@@ -162,7 +165,10 @@ const AssetsGainLossDropdown: React.FC<Props> = ({value, onChange, height}) => {
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <Container height={height} activeOpacity={ActiveOpacity} onPress={open}>
+        <Container
+          $height={height}
+          activeOpacity={ActiveOpacity}
+          onPress={open}>
           <Label>{displayLabel}</Label>
           <ChevronDown />
         </Container>

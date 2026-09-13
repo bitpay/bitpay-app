@@ -84,7 +84,7 @@ const WalletCard = styled(TouchableOpacity)`
   align-items: center;
   justify-content: space-between;
   padding: 15px;
-  height: 75px;
+  min-height: 75px;
 `;
 
 const WalletLeft = styled.View`

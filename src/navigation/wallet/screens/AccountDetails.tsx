@@ -121,9 +121,7 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {CoinbaseScreens} from '../../coinbase/CoinbaseGroup';
 import DropdownOption from '../components/DropdownOption';
-import TransactionRow, {
-  TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/TransactionRow';
+import TransactionRow from '../../../components/list/TransactionRow';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
   TRANSACTION_ICON_SIZE,
@@ -235,12 +233,6 @@ interface AccountProposalsProps {
   [key: string]: TransactionProposal[];
 }
 
-const transactionItemLayout = (_data: any, index: number) => ({
-  length: TRANSACTION_ROW_HEIGHT,
-  offset: TRANSACTION_ROW_HEIGHT * index,
-  index,
-});
-
 const BorderBottom = styled.View`
   border-bottom-width: 1px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
@@ -268,7 +260,7 @@ const WalletListHeaderLabel = styled.View<{
 
 const CopyToClipboardContainer = styled.View`
   justify-content: center;
-  height: 20px;
+  min-height: 20px;
 `;
 
 const HeaderContainer = styled.View`
@@ -278,7 +270,7 @@ const HeaderContainer = styled.View`
 const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
+  min-height: 55px;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -295,7 +287,7 @@ const LockedBalanceContainer = styled(TouchableOpacity)`
   padding: ${ScreenGutter};
   justify-content: center;
   align-items: center;
-  height: 75px;
+  min-height: 75px;
 `;
 
 const Description = styled(BaseText)`
@@ -385,7 +377,7 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
     <BadgeContainerTouchable
       onPress={copyToClipboard}
       activeOpacity={ActiveOpacity}
-      style={{alignSelf: 'center', width: 'auto', height: 25}}>
+      style={{alignSelf: 'center', width: 'auto', minHeight: 25}}>
       <Badge>{formatCryptoAddress(address)}</Badge>
       <CopyToClipboardContainer>
         {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
@@ -1844,7 +1836,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           maxToRenderPerBatch: 15,
         })}
         ListEmptyComponent={listEmptyComponentForTab}
-        getItemLayout={transactionItemLayout}
       />
 
       <SheetModal

@@ -40,7 +40,6 @@ import {RefreshControl, SectionList, View} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
-import {TRANSACTION_ROW_HEIGHT} from '../../../components/list/TransactionRow';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -84,7 +83,7 @@ const ListHeaderPadding = styled.View`
 const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-  height: 55px;
+  min-height: 55px;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -538,15 +537,6 @@ const TransactionProposalNotifications = () => {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (data: any, index: number) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
-
   const listFooterComponent = () => {
     return (
       <>
@@ -673,7 +663,6 @@ const TransactionProposalNotifications = () => {
         ListFooterComponent={listFooterComponent}
         onEndReachedThreshold={0.5}
         maxToRenderPerBatch={15}
-        getItemLayout={getItemLayout}
       />
 
       {txpsToSign && Object.values(txpsToSign)[0] ? (
