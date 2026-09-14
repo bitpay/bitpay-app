@@ -46,6 +46,7 @@ import {
   GetExcludedUtxosMessage,
   parseAmountToStringIfBN,
   SatToUnit,
+  ToBaseUnits,
 } from '../../../../store/wallet/effects/amount/amount';
 import {
   formatCryptoAddress,
@@ -381,10 +382,7 @@ const RampSellCheckout: React.FC = () => {
         wallet.tokenAddress,
       ),
     );
-    // To Sat
-    const depositSat = Number(
-      (amountExpected * precision!.unitToSatoshi).toFixed(0),
-    );
+    const depositSat = ToBaseUnits(amountExpected, precision!.unitDecimals);
 
     if (
       wallet.currencyAbbreviation.toLowerCase() === 'bch' &&
@@ -438,7 +436,7 @@ const RampSellCheckout: React.FC = () => {
   const createTx = async (
     wallet: Wallet,
     toAddress: string,
-    depositSat: number,
+    depositSat: string,
     destTag?: string,
   ): Promise<TransactionProposal> => {
     try {

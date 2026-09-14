@@ -1032,7 +1032,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 dispatch(
                   _createProposalAndBuildTxDetails({
                     wallet,
-                    amount: Number(amount),
+                    amount,
                     sendTo,
                     setButtonState,
                     opts,

@@ -814,7 +814,7 @@ const CoinbaseAccount = ({
         chain={chain}
         tokenAddress={tokenAddress}
         onClose={() => setAmountModalVisible(false)}
-        onSubmit={amt => onEnteredAmount(amt)}
+        onSubmit={amt => onEnteredAmount(Number(amt))}
       />
     </AccountContainer>
   );

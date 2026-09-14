@@ -553,7 +553,7 @@ const goToConfirm =
       destinationTag?: number;
       network?: Network;
     };
-    amount: number;
+    amount: number | string;
     wallet?: Wallet;
     setButtonState?: (state: ButtonState) => void;
     opts?: {
@@ -691,7 +691,7 @@ export const goToAmount =
         dispatch(
           goToConfirm({
             recipient,
-            amount: Number(amount),
+            amount,
             wallet,
             setButtonState,
             opts: {...opts, ...amountOpts},

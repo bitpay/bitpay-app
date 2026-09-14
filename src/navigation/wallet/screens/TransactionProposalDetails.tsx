@@ -411,10 +411,10 @@ const TransactionProposalDetails = () => {
       const broadcastedTx = await broadcastTx(wallet, txp);
       logger.debug(`Transaction broadcasted: ${broadcastedTx.txid}`);
       const {fee, amount} = broadcastedTx as {
-        fee: number;
-        amount: number;
+        fee: number | string;
+        amount: number | string;
       };
-      const targetAmount = wallet.balance.sat - (fee + amount);
+      const targetAmount = wallet.balance.sat - (Number(fee) + Number(amount));
       setTimeout(() => {
         DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
         dispatch(
@@ -540,8 +540,11 @@ const TransactionProposalDetails = () => {
     );
 
     // Update wallet status
-    const {fee, amount} = result as {fee: number; amount: number};
-    const targetAmount = wallet.balance.sat - (fee + amount);
+    const {fee, amount} = result as {
+      fee: number | string;
+      amount: number | string;
+    };
+    const targetAmount = wallet.balance.sat - (Number(fee) + Number(amount));
     setTimeout(() => {
       DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
       dispatch(

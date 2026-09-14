@@ -18,6 +18,7 @@ import {useNavigation, StackActions} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BaseText} from '../../../components/styled/Text';
+import {ToBaseUnits} from '../../../store/wallet/effects/amount/amount';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import BanxaLogo from '../../../components/icons/external-services/banxa/banxa-logo';
 import MoonpayLogo from '../../../components/icons/external-services/moonpay/moonpay-logo';
@@ -2339,9 +2340,7 @@ const ExternalServicesOfferSelector: React.FC<
       GetPrecision(coin, chain, selectedWallet.tokenAddress),
     );
     if (precision) {
-      requestData.cryptoAmount = BigInt(
-        (amount * precision.unitToSatoshi).toFixed(0),
-      ).toString();
+      requestData.cryptoAmount = ToBaseUnits(amount, precision.unitDecimals);
     } else {
       logger.error(`Ramp error: Could not get precision for ${coin}`);
       const msg = t('An error occurred while calculating the quote.');

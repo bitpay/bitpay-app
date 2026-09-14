@@ -711,7 +711,12 @@ export const buildTxDetails =
                 ),
               )}`
             : dispatch(
-                FormatAmountStr(coin, chain, tokenAddress, amount + fee),
+                FormatAmountStr(
+                  coin,
+                  chain,
+                  tokenAddress,
+                  amount + Number(fee),
+                ),
               ),
           fiatAmount: formatFiatAmount(
             amountToFiat + feeToFiat,
@@ -1481,10 +1486,11 @@ export const publishAndSign =
           logManager.debug('success broadcast [publishAndSign]');
 
           const {fee, amount} = broadcastedTx as {
-            fee: number;
-            amount: number;
+            fee: number | string;
+            amount: number | string;
           };
-          const targetAmount = wallet.balance.sat - (fee + amount);
+          const targetAmount =
+            wallet.balance.sat - (Number(fee) + Number(amount));
 
           setTimeout(() => {
             // show refresing in wallet details view
@@ -2376,14 +2382,16 @@ const processInsufficientFunds = async (
   });
 
   const useConfirmedFunds = !getState().WALLET.useUnconfirmedFunds;
-  const amountSat = dispatch(
-    ParseAmount(
-      amount,
-      wallet.currencyAbbreviation,
-      wallet.chain,
-      wallet.tokenAddress,
-    ),
-  ).amountSat;
+  const amountSat = Number(
+    dispatch(
+      ParseAmount(
+        amount,
+        wallet.currencyAbbreviation,
+        wallet.chain,
+        wallet.tokenAddress,
+      ),
+    ).amountSat,
+  );
   if (useConfirmedFunds && wallet.balance.sat >= amountSat + feeRatePerKb) {
     return generateInsufficientConfirmedFundsError(onDismiss);
   } else {
@@ -2424,7 +2432,7 @@ const processInsufficientFundsForFee = (
   const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
     dispatch,
     linkedWallet ? linkedWallet : wallet,
-    toShowAmount,
+    Number(toShowAmount),
   );
 
   const title =
