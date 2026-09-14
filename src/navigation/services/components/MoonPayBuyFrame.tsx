@@ -12,8 +12,7 @@ import {
   FrameMessage,
 } from './MoonPayWebView';
 import {generateChannelId} from '../utils/moonpayFrameCrypto';
-
-const FRAME_ORIGIN = 'https://blocks.moonpay.com';
+import {MOONPAY_DEFAULT_FRAME_ORIGIN} from '../buy-crypto/utils/moonpay-utils';
 
 export interface BuyFrameCompletePayload {
   transaction: {
@@ -66,7 +65,7 @@ export const MoonPayBuyFrame = forwardRef<BuyFrameRef, MoonPayBuyFrameProps>(
 
     const [frameUrl] = useState(
       () =>
-        `${FRAME_ORIGIN}/platform/v1/buy?${new URLSearchParams({
+        `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/buy?${new URLSearchParams({
           clientToken,
           channelId,
           signature,

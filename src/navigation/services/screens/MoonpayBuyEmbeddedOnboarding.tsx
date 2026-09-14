@@ -45,6 +45,7 @@ import MoonpayConnectIcon from '../../../components/icons/external-services/moon
 import {FrameMessage} from '../components/MoonPayWebView';
 import {getErrorString} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {MOONPAY_DEFAULT_FRAME_ORIGIN} from '../buy-crypto/utils/moonpay-utils';
 
 const MOONPAY_TERMS_URL = 'https://www.moonpay.com/legal/terms_of_use_usa';
 const MOONPAY_PRIVACY_URL = 'https://www.moonpay.com/legal/privacy_policy';
@@ -252,7 +253,7 @@ const MoonpayBuyEmbeddedOnboarding = ({
         channelId: connectChannelId,
         theme: theme.dark ? 'dark' : 'light',
       });
-      const connectUrl = `https://blocks.moonpay.com/platform/v1/connect?${connectParams.toString()}`;
+      const connectUrl = `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/connect?${connectParams.toString()}`;
 
       setConnectModalWebView(current => ({
         open: true,

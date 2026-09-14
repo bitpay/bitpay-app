@@ -1,8 +1,7 @@
 import React, {useState, useCallback} from 'react';
 import {MoonPayWebView, FrameMessage} from './MoonPayWebView';
 import {generateChannelId} from '../utils/moonpayFrameCrypto';
-
-const FRAME_ORIGIN = 'https://blocks.moonpay.com';
+import {MOONPAY_DEFAULT_FRAME_ORIGIN} from '../buy-crypto/utils/moonpay-utils';
 
 interface MoonPayResetFrameProps {
   onComplete: () => void;
@@ -22,7 +21,7 @@ export function MoonPayResetFrame({
     params.theme = theme;
   }
 
-  const frameUrl = `${FRAME_ORIGIN}/platform/v1/reset?${new URLSearchParams(
+  const frameUrl = `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/reset?${new URLSearchParams(
     params,
   ).toString()}`;
 

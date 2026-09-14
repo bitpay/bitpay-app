@@ -11,6 +11,9 @@ import {BuyCryptoConfig} from '../../../../store/external-services/external-serv
 
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 
+// Origin the MoonPay embedded frames are loaded from.
+export const MOONPAY_DEFAULT_FRAME_ORIGIN = 'https://blocks.moonpay.com';
+
 export const moonpaySupportedFiatCurrencies = [
   'AUD',
   'BGN',

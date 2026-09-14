@@ -1,9 +1,8 @@
 import React, {useCallback} from 'react';
 import {MoonPayWebView, FrameMessage} from './MoonPayWebView';
 import {generateChannelId} from '../utils/moonpayFrameCrypto';
+import {MOONPAY_DEFAULT_FRAME_ORIGIN} from '../buy-crypto/utils/moonpay-utils';
 import {MoonpayEmbeddedCardPaymentMethod} from '../../../store/buy-crypto/buy-crypto.models';
-
-const FRAME_ORIGIN = 'https://blocks.moonpay.com';
 
 export interface AddCardErrorPayload {
   code: 'configurationError' | 'generic';
@@ -27,11 +26,13 @@ export function MoonPayAddCardFrame({
 }: MoonPayAddCardFrameProps) {
   const [channelId] = React.useState(generateChannelId);
 
-  const frameUrl = `${FRAME_ORIGIN}/platform/v1/add-card?${new URLSearchParams({
-    clientToken,
-    channelId,
-    ...(theme && {theme}),
-  }).toString()}`;
+  const frameUrl = `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/add-card?${new URLSearchParams(
+    {
+      clientToken,
+      channelId,
+      ...(theme && {theme}),
+    },
+  ).toString()}`;
 
   const handleMessage = useCallback(
     (data: FrameMessage) => {
