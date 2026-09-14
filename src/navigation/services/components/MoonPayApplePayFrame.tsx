@@ -32,11 +32,16 @@ export type ApplePayFrameRef = {
 interface MoonPayApplePayFrameProps {
   clientToken: string;
   signature: string;
+  externalTransactionId?: string;
+  theme?: 'dark' | 'light';
   onReady?: () => void;
   onComplete: (payload: ApplePayCompletePayload) => void;
   onChallenge: (url: string) => void;
   onError: (error: ApplePayErrorPayload) => void;
   onQuoteExpired?: () => void;
+  // Customer dismissed the Apple Pay sheet. The frame stays usable, so this is
+  // an abandonment signal rather than an error.
+  onCancelled?: (code?: string) => void;
 }
 
 export const MoonPayApplePayFrame = forwardRef<
@@ -47,11 +52,14 @@ export const MoonPayApplePayFrame = forwardRef<
     {
       clientToken,
       signature,
+      externalTransactionId,
+      theme,
       onReady,
       onComplete,
       onChallenge,
       onError,
       onQuoteExpired,
+      onCancelled,
     },
     ref,
   ) => {
@@ -63,6 +71,8 @@ export const MoonPayApplePayFrame = forwardRef<
         clientToken,
         channelId,
         signature,
+        ...(externalTransactionId && {externalTransactionId}),
+        ...(theme && {theme}),
       },
     ).toString()}`;
 
@@ -114,6 +124,11 @@ export const MoonPayApplePayFrame = forwardRef<
             onChallenge(challengePayload.url);
             break;
           }
+          case 'cancelled': {
+            const payload = data.payload as {code?: string} | undefined;
+            onCancelled?.(payload?.code);
+            break;
+          }
           case 'error': {
             const error = data.payload as ApplePayErrorPayload;
             if (error.code === 'quoteExpired') {
@@ -125,7 +140,7 @@ export const MoonPayApplePayFrame = forwardRef<
           }
         }
       },
-      [onReady, onComplete, onChallenge, onError, onQuoteExpired],
+      [onReady, onComplete, onChallenge, onError, onQuoteExpired, onCancelled],
     );
 
     return (
