@@ -317,6 +317,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   >(null);
   const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  // Generated once per checkout and handed to MoonPay when the payment frame
+  // mounts, so their transaction can be correlated with ours.
+  const externalTransactionIdRef = useRef<string>(`${wallet.id}-${Date.now()}`);
 
   // Cards embedded flow — only relevant when paymentMethod is a card.
   const isCardPaymentMethod =
@@ -765,7 +768,6 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       title: t('Transaction Submitted'),
     });
 
-    const externalTransactionId = `${wallet.id}-${Date.now()}`;
     const destinationChain = wallet.chain;
     const coin = cloneDeep(wallet.currencyAbbreviation).toLowerCase();
     const cryptoAmountReceiving = embeddedQuoteData?.destination?.amount
@@ -782,7 +784,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       fiat_base_amount: offer.buyAmount!,
       fiat_total_amount: offer.amountCost!,
       fiat_total_amount_currency: offer.fiatCurrency,
-      external_id: externalTransactionId,
+      external_id: externalTransactionIdRef.current,
       payment_method: paymentMethod?.method,
       status: 'embeddedPaymentRequestSent',
       user_id: wallet.id,
@@ -823,7 +825,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     await sleep(1200);
     const moonpaySettingsParams: MoonpaySettingsProps = {
       incomingPaymentRequest: {
-        externalId: externalTransactionId,
+        externalId: externalTransactionIdRef.current,
         transactionId: transaction.id,
         status: transaction.status ?? newData.status,
         flow: 'buy',
@@ -1206,6 +1208,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   ref={buyFrameRef}
                   clientToken={credentials.clientToken}
                   signature={cardQuoteSignature}
+                  externalTransactionId={externalTransactionIdRef.current}
                   onReady={() => {
                     logger.debug('MoonPay Buy frame ready');
                   }}
@@ -1310,6 +1313,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               ref={applePayFrameRef}
               clientToken={credentials.clientToken}
               signature={initialQuoteSignature}
+              externalTransactionId={externalTransactionIdRef.current}
+              theme={theme.dark ? 'dark' : 'light'}
               onReady={() => {
                 logger.debug('MoonPay Apple Pay frame ready');
               }}
@@ -1337,6 +1342,28 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 setChallengeUrl(url);
               }}
               onQuoteExpired={refreshQuote}
+              onCancelled={(code?: string) => {
+                // The sheet was dismissed but the frame is still usable, so we
+                // only record the abandonment and leave the screen as it is.
+                logger.debug(
+                  'MoonPay Apple Pay sheet dismissed by user' +
+                    (code ? ': ' + code : ''),
+                );
+                dispatch(
+                  Analytics.track('Failed Buy Crypto', {
+                    exchange: 'moonpay',
+                    context: 'MoonpayBuyEmbeddedCheckout',
+                    reason: 'Apple Pay sheet dismissed by user',
+                    paymentMethod: paymentMethod?.method || '',
+                    amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                    coin:
+                      cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
+                      '',
+                    chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                    fiatCurrency: offer?.fiatCurrency || '',
+                  }),
+                );
+              }}
               onError={(error: ApplePayErrorPayload) => {
                 cancelQuoteRefresh();
                 logger.error(
@@ -1389,6 +1416,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             {challengeUrl ? (
               <MoonPayChallengeFrame
                 challengeUrl={challengeUrl}
+                clientToken={credentials.clientToken}
+                theme={theme.dark ? 'dark' : 'light'}
                 onReady={() => {
                   logger.debug('MoonPay challenge frame ready');
                 }}
