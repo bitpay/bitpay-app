@@ -3,6 +3,7 @@ import {
   Dimensions,
   Text,
   Platform,
+  SafeAreaView,
   StyleSheet,
   View,
   TextInput,
@@ -498,10 +499,10 @@ export const HeaderTitleContainer = React.forwardRef<
 HeaderTitleContainer.displayName = 'HeaderTitleContainer';
 
 export const ScreenContainer = React.forwardRef<
-  View,
-  React.ComponentProps<typeof View>
+  React.ComponentRef<typeof SafeAreaView>,
+  React.ComponentProps<typeof SafeAreaView>
 >(({style, ...rest}, ref) => (
-  <View ref={ref} style={[styles.screenContainer, style]} {...rest} />
+  <SafeAreaView ref={ref} style={[styles.screenContainer, style]} {...rest} />
 ));
 ScreenContainer.displayName = 'ScreenContainer';
 
@@ -974,10 +975,10 @@ HeaderContainer.displayName = 'HeaderContainer';
 
 // creation and add wallet
 export const OptionContainer = React.forwardRef<
-  View,
-  React.ComponentProps<typeof View>
+  React.ComponentRef<typeof SafeAreaView>,
+  React.ComponentProps<typeof SafeAreaView>
 >(({style, ...rest}, ref) => (
-  <View ref={ref} style={[styles.optionContainer, style]} {...rest} />
+  <SafeAreaView ref={ref} style={[styles.optionContainer, style]} {...rest} />
 ));
 OptionContainer.displayName = 'OptionContainer';
 
