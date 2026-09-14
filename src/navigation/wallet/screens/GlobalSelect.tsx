@@ -1607,7 +1607,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 dispatch(
                   createProposalAndNavigate({
                     wallet,
-                    amount: Number(amount),
+                    amount,
                     sendTo,
                     setButtonState,
                     opts,
