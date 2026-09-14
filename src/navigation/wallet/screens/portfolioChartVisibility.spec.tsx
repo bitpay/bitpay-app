@@ -144,12 +144,6 @@ jest.mock('../../tabs/TabScreenErrorFallback', () => ({
   withErrorFallback: (Component: React.ComponentType<any>) => Component,
 }));
 
-jest.mock('../../coinbase/CoinbaseGroup', () => ({
-  CoinbaseScreens: {
-    ROOT: 'CoinbaseRoot',
-  },
-}));
-
 jest.mock('../../services/ExternalServicesGroup', () => ({
   ExternalServicesScreens: {
     ROOT_BUY_AND_SELL: 'RootBuyAndSell',
@@ -799,13 +793,6 @@ const resetState = (
       selectedChainFilterOption: undefined,
       showArchaxBanner: false,
       showPortfolioValue,
-    },
-    COINBASE: {
-      balance: {
-        production: 0,
-        sandbox: 0,
-      },
-      token: {},
     },
     CONTACT: {
       list: [],

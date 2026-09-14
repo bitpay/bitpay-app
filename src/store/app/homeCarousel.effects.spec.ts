@@ -9,12 +9,7 @@ jest.mock('../../utils/portfolio/assets', () => ({
     }) =>
       new Set(
         (homeCarouselConfig || [])
-          .filter(
-            item =>
-              item?.show === false &&
-              item?.id !== 'coinbaseBalanceCard' &&
-              !!keys?.[item?.id],
-          )
+          .filter(item => item?.show === false && !!keys?.[item?.id])
           .map(item => item.id),
       ),
   ),
@@ -225,10 +220,10 @@ describe('setHomeCarouselConfigAndPopulateNewlyVisibleKeys', () => {
     });
   });
 
-  it('ignores coinbaseBalanceCard visibility changes', async () => {
+  it('ignores non-key card visibility changes', async () => {
     const state = makeState({
       APP: {
-        homeCarouselConfig: [{id: 'coinbaseBalanceCard', show: false}],
+        homeCarouselConfig: [{id: 'createWallet', show: false}],
       },
       WALLET: {keys: {}},
     });
@@ -236,7 +231,7 @@ describe('setHomeCarouselConfigAndPopulateNewlyVisibleKeys', () => {
 
     await dispatch(
       setHomeCarouselConfigAndPopulateNewlyVisibleKeys([
-        {id: 'coinbaseBalanceCard', show: true},
+        {id: 'createWallet', show: true},
       ]),
     );
 

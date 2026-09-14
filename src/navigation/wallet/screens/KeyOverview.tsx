@@ -7,7 +7,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  CommonActions,
   RouteProp,
   useIsFocused,
   useNavigation,
@@ -101,12 +100,7 @@ import {
   buildWalletObj,
   checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
-import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {RootStacks} from '../../../Root';
-import {TabsScreens} from '../../../navigation/tabs/TabsStack';
-import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {
   IsEVMChain,
@@ -500,9 +494,6 @@ const KeyOverview = () => {
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
-  const linkedCoinbase = useAppSelector(
-    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
-  );
   const timeframeSelectorWidth = getTimeframeSelectorWidth(
     windowWidth,
     ScreenGutter,
@@ -580,7 +571,7 @@ const KeyOverview = () => {
         return (
           <KeyToggle
             activeOpacity={ActiveOpacity}
-            disabled={!hasMultipleKeys && !linkedCoinbase}
+            disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
             {checkPrivateKeyEncrypted(key) ? (
               theme.dark ? (
@@ -594,7 +585,7 @@ const KeyOverview = () => {
                 {key?.keyName}
               </HeaderTitle>
             </HeaderTitleContainer>
-            {(hasMultipleKeys || linkedCoinbase) && (
+            {hasMultipleKeys && (
               <ChevronContainer>
                 {!theme.dark ? (
                   <ChevronDownSvgLight width={8} height={8} />
@@ -647,7 +638,6 @@ const KeyOverview = () => {
     navigation,
     key,
     hasMultipleKeys,
-    linkedCoinbase,
     hasMissingEvmNetworks,
     onPressTxpBadge,
     pendingTxpCount,
@@ -1472,28 +1462,6 @@ const KeyOverview = () => {
                   hideKeyBalance={hideAllBalances}
                 />
               ))}
-            {linkedCoinbase ? (
-              <CoinbaseDropdownOption
-                onPress={() => {
-                  setShowKeyDropdown(false);
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 1,
-                      routes: [
-                        {
-                          name: RootStacks.TABS,
-                          params: {screen: TabsScreens.HOME},
-                        },
-                        {
-                          name: CoinbaseScreens.ROOT,
-                          params: {},
-                        },
-                      ],
-                    }),
-                  );
-                }}
-              />
-            ) : null}
           </KeyDropdownOptionsContainer>
         </KeyDropdown>
       </SheetModal>

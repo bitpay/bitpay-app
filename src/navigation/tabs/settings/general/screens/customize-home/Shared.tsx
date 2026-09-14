@@ -18,7 +18,6 @@ import {
 } from '../../../../home/components/Wallet';
 import {getRemainingWalletCount} from '../../../../../../store/wallet/utils/wallet';
 import {CurrencyImage} from '../../../../../../components/currency-image/CurrencyImage';
-import CoinbaseSvg from '../../../../../../../assets/img/logos/coinbase.svg';
 import {NeedBackupText} from '../../../../../../components/home-card/HomeCard';
 import {useTranslation} from 'react-i18next';
 import ObfuscationShow from '../../../../../../../assets/img/obfuscation-show.svg';
@@ -143,11 +142,9 @@ const NeedsBackupContainer = styled.View`
 
 export const createCustomizeCardList = ({
   keys,
-  hasCoinbase,
   homeCarouselConfig,
 }: {
   keys: Key[];
-  hasCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
 }) => {
   let list: CustomizeItem[] = [];
@@ -170,16 +167,6 @@ export const createCustomizeCardList = ({
     list.push(...walletCards);
   }
 
-  if (hasCoinbase) {
-    const {show} =
-      homeCarouselConfig?.find(item => item.id === 'coinbaseBalanceCard') || {};
-    list.push({
-      key: 'coinbaseBalanceCard',
-      name: 'Coinbase',
-      show: show!,
-    });
-  }
-
   const order = homeCarouselConfig.map(item => item.id);
   list = _.sortBy(list, item => _.indexOf(order, item.key));
 
@@ -195,7 +182,7 @@ export interface CustomizeItem {
 }
 
 export const CustomizeCard = ({
-  item: {wallets, name, show, key, needsBackup},
+  item: {wallets, name, show, needsBackup},
   toggle,
 }: {
   item: CustomizeItem;
@@ -240,13 +227,6 @@ export const CustomizeCard = ({
   return (
     <DraggableContentContainer>
       <Column>
-        {key === 'coinbaseBalanceCard' ? (
-          <Row>
-            <HeaderImg>
-              <CoinbaseSvg width="15" height="15" />
-            </HeaderImg>
-          </Row>
-        ) : null}
         {wallets ? <Row>{header()}</Row> : null}
         <OptionName numberOfLines={1} ellipsizeMode={'tail'}>
           {name}

@@ -552,7 +552,6 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
                   walletSelectorChain,
                 )
               ] || [],
-            coinbaseWallets: [],
           }}
           onWalletSelect={async wallet => {
             const key = keys[wallet.keyId];
@@ -577,7 +576,6 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
               });
             });
           }}
-          onCoinbaseAccountSelect={() => {}}
           onBackdropPress={async () => {
             setWalletSelectorVisible(false);
           }}

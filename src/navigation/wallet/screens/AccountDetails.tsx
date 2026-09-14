@@ -1,4 +1,4 @@
-import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import _ from 'lodash';
 import React, {
@@ -112,14 +112,9 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import Icons from '../components/WalletIcons';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
-import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
-import {RootStacks} from '../../../Root';
-import {TabsScreens} from '../../tabs/TabsStack';
-import {CoinbaseScreens} from '../../coinbase/CoinbaseGroup';
 import DropdownOption from '../components/DropdownOption';
 import TransactionRow, {
   TRANSACTION_ROW_HEIGHT,
@@ -465,9 +460,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [] as AssetsByChainListProps[],
   );
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const linkedCoinbase = useAppSelector(
-    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
-  );
 
   const keyFullWalletObjs = useMemo<Wallet[]>(
     () =>
@@ -954,7 +946,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         return (
           <AccountToogle
             activeOpacity={ActiveOpacity}
-            disabled={!hasMultipleAccounts && !linkedCoinbase}
+            disabled={!hasMultipleAccounts}
             onPress={() => setShowAccountDropdown(true)}>
             <View>
               <Row style={{alignItems: 'center'}}>
@@ -972,7 +964,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   </View>
                 ) : null}
                 <HeaderTitle>{accountItem?.accountName}</HeaderTitle>
-                {(hasMultipleAccounts || linkedCoinbase) && (
+                {hasMultipleAccounts && (
                   <ChevronContainer>
                     {!theme.dark ? (
                       <ChevronDownSvgLight width={8} height={8} />
@@ -1875,28 +1867,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 hideKeyBalance={hideAllBalances}
               />
             ))}
-            {linkedCoinbase ? (
-              <CoinbaseDropdownOption
-                onPress={() => {
-                  setShowAccountDropdown(false);
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 1,
-                      routes: [
-                        {
-                          name: RootStacks.TABS,
-                          params: {screen: TabsScreens.HOME},
-                        },
-                        {
-                          name: CoinbaseScreens.ROOT,
-                          params: {},
-                        },
-                      ],
-                    }),
-                  );
-                }}
-              />
-            ) : null}
           </AccountDropdownOptionsContainer>
         </AccountDropdown>
       </SheetModal>
