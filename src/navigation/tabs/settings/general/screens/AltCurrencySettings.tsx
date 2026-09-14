@@ -27,7 +27,6 @@ import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/stat
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
 import {cancelPopulatePortfolio} from '../../../../../store/portfolio';
 import {useTranslation} from 'react-i18next';
-import {coinbaseInitialize} from '../../../../../store/coinbase';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../../../contexts';
@@ -201,7 +200,6 @@ const AltCurrencySettings = () => {
               dispatch(setDefaultAltCurrency(item));
               dispatch(FormatKeyBalances());
               dispatch(updatePortfolioBalance());
-              await dispatch(coinbaseInitialize());
               await sleep(500);
               hideOngoingProcess();
               await sleep(500);

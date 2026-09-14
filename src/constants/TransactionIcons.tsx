@@ -5,7 +5,6 @@ import ShapeShiftSvg from '../../assets/img/wallet/transactions/shapeshift.svg';
 import SwapTxIconSvg from '../components/icons/transaction-history-icons/swapTxIcon';
 import OneInchSvg from '../../assets/img/wallet/transactions/1inch.svg';
 import MercadolivreSvg from '../../assets/img/wallet/transactions/mercadolivre.svg';
-import CoinbaseSvg from '../../assets/img/wallet/transactions/coinbase.svg';
 import BitPaySvg from '../../assets/img/wallet/transactions/bitpay.svg';
 import {useTheme} from 'styled-components/native';
 import {BitPayTheme} from '../themes/bitpay';
@@ -387,9 +386,6 @@ export const TransactionIcons: {[index in string]: ReactElement} = {
       width={TRANSACTION_ICON_SIZE}
       height={TRANSACTION_ICON_SIZE}
     />
-  ),
-  coinbase: (
-    <CoinbaseSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),
   debitcard: (
     <BitPaySvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />

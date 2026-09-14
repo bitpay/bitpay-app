@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp, StackActions} from '@react-navigation/core';
+import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../../../WalletGroup';
 import {
   useAppDispatch,
@@ -489,56 +489,51 @@ const Confirm = () => {
         onCloseModal,
       });
       await sleep(300);
-      if (recipient.type === 'coinbase') {
-        navigation.dispatch(StackActions.popToTop());
-        navigation.dispatch(StackActions.push('CoinbaseRoot'));
+      if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 2,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.ACCOUNT_DETAILS,
+                params: {
+                  keyId: wallet.keyId,
+                  selectedAccountAddress: wallet.receiveAddress,
+                },
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
+                  key,
+                },
+              },
+            ],
+          }),
+        );
       } else {
-        if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
+                  key,
                 },
-                {
-                  name: WalletScreens.ACCOUNT_DETAILS,
-                  params: {
-                    keyId: wallet.keyId,
-                    selectedAccountAddress: wallet.receiveAddress,
-                  },
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        } else {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        }
+              },
+            ],
+          }),
+        );
       }
     } catch (err) {
       if (isUsingHardwareWallet) {
@@ -668,10 +663,7 @@ const Confirm = () => {
     });
   }
 
-  if (
-    recipient.type &&
-    (recipient.type === 'coinbase' || recipient.type === 'contact')
-  ) {
+  if (recipient.type === 'contact') {
     recipientData = {
       recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
