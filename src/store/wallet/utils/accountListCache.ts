@@ -23,6 +23,7 @@ export type AccountListSnapshotStorage = {
 const SNAPSHOT_SCHEMA_VERSION = 1;
 const SNAPSHOT_STORAGE_PREFIX = 'accountListSnapshot:';
 const MAX_PERSISTED_SNAPSHOT_BYTES = 256 * 1024;
+const MAX_CACHED_ACCOUNT_LIST_SNAPSHOTS = 50;
 
 export const NON_PERSISTABLE_SNAPSHOT_FIELDS = [
   'mnemonic',
@@ -416,6 +417,12 @@ const storeSnapshotInMemory = <T>(
 ): void => {
   snapshots.delete(cacheKey);
   snapshots.set(cacheKey, {signature, value});
+  if (snapshots.size > MAX_CACHED_ACCOUNT_LIST_SNAPSHOTS) {
+    const oldestKey = snapshots.keys().next().value;
+    if (typeof oldestKey === 'string') {
+      snapshots.delete(oldestKey);
+    }
+  }
 };
 
 export const readAccountListSnapshot = <T>(
