@@ -354,6 +354,18 @@ describe('accountListCache', () => {
     it('returns undefined for an unknown key', () => {
       expect(readAccountListSnapshot('missing')).toBeUndefined();
     });
+
+    it('evicts the least recently written snapshot from memory once the cache is full', () => {
+      for (let index = 0; index < 50; index++) {
+        writeAccountListSnapshot(`key-${index}`, 'sig', [`row-${index}`]);
+      }
+      writeAccountListSnapshot('key-0', 'sig', ['refreshed row-0']);
+      writeAccountListSnapshot('key-50', 'sig', ['row-50']);
+
+      expect(readAccountListSnapshot('key-1')).toBeUndefined();
+      expect(readAccountListSnapshot('key-0')).toEqual(['refreshed row-0']);
+      expect(readAccountListSnapshot('key-50')).toEqual(['row-50']);
+    });
   });
 
   describe('persistence', () => {
