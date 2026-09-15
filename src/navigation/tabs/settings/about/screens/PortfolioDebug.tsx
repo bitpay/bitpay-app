@@ -6,12 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  InteractionManager,
-  Pressable,
-  ScrollView,
-  TextInput,
-} from 'react-native';
+import {Pressable, ScrollView, TextInput} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useTranslation} from 'react-i18next';
@@ -673,15 +668,25 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
       });
     }
 
-    InteractionManager.runAfterInteractions(() => {
+    const logAfterIdle = () => {
       if (populateStartProbeRef.current !== probe) {
         return;
       }
-      console.log('[portfolio-raw-populate-freeze] after interactions', {
+      console.log('[portfolio-raw-populate-freeze] after idle', {
         elapsedMs: roundMs(nowMs() - startedAtMs),
         walletCount,
       });
-    });
+    };
+    const requestIdle = (
+      globalThis as typeof globalThis & {
+        requestIdleCallback?: (callback: () => void) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof requestIdle === 'function') {
+      requestIdle(logAfterIdle);
+    } else {
+      setTimeout(logAfterIdle, 0);
+    }
 
     try {
       const dispatchStartedAt = nowMs();

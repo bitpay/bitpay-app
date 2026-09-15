@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h b/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
+index fcd07e6..5e95221 100644
+--- a/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
++++ b/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
+@@ -303,7 +303,7 @@ class SerializableInitializer : public Serializable {
+   std::unique_ptr<SerializableObject> initializer_;
+   std::unique_ptr<jsi::Value> remoteValue_;
+   mutable std::mutex initializationMutex_;
+-  jsi::Runtime *remoteRuntime_;
++  jsi::Runtime *remoteRuntime_{nullptr};
+
+  public:
+   SerializableInitializer(jsi::Runtime &rt, const jsi::Object &initializerObject)

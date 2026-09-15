@@ -12,3 +12,4 @@
 #import "BrazeReactBridge.h"
 #import "AppsFlyerAttribution.h"
 #import "SilentPushEvent.h"
+#import "BitPayFabricModalPresenter.h"
