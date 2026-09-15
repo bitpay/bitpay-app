@@ -1,0 +1,380 @@
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js b/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js
+index ee51e76..c6b9c28 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js
+@@ -69,6 +69,7 @@ function BottomSheetModalComponent(props, ref) {
+   const currentIndexRef = (0, _react.useRef)(!animateOnMount ? index : -1);
+   const nextIndexRef = (0, _react.useRef)(null);
+   const restoreIndexRef = (0, _react.useRef)(-1);
++  const restorePendingRef = (0, _react.useRef)(false);
+   //#endregion
+
+   //#region variables
+@@ -85,6 +86,7 @@ function BottomSheetModalComponent(props, ref) {
+     }
+     currentIndexRef.current = -1;
+     restoreIndexRef.current = -1;
++    restorePendingRef.current = false;
+     statusRef.current = _constants.MODAL_STATUS.INITIAL;
+   }, []);
+   const unmount = (0, _react.useCallback)(function unmount() {
+@@ -169,7 +171,7 @@ function BottomSheetModalComponent(props, ref) {
+       });
+     }
+     requestAnimationFrame(() => {
+-      if (mount && bottomSheetRef.current) {
++      if (mount && bottomSheetRef.current && ![_constants.MODAL_STATUS.MINIMIZING, _constants.MODAL_STATUS.MINIMIZED].includes(statusRef.current)) {
+         statusRef.current = _constants.MODAL_STATUS.ANIMATING;
+         bottomSheetRef.current.snapToIndex(index);
+       }
+@@ -181,6 +183,7 @@ function BottomSheetModalComponent(props, ref) {
+     });
+   }, [index, key, stackBehavior, mount, mountSheet]);
+   const handleDismiss = (0, _react.useCallback)(function handleDismiss(animationConfigs) {
++    restorePendingRef.current = false;
+     if (__DEV__) {
+       (0, _utilities.print)({
+         component: 'BottomSheetModal',
+@@ -205,6 +208,8 @@ function BottomSheetModalComponent(props, ref) {
+     bottomSheetRef.current?.forceClose(animationConfigs);
+   }, [willUnmountSheet, unmount, key]);
+   const handleMinimize = (0, _react.useCallback)(function handleMinimize() {
++    // A new top sheet supersedes a restore requested during minimization.
++    restorePendingRef.current = false;
+     if (__DEV__) {
+       (0, _utilities.print)({
+         component: 'BottomSheetModal',
+@@ -256,12 +261,21 @@ function BottomSheetModalComponent(props, ref) {
+     if (!minimizedOrGoingToBe) {
+       return;
+     }
++    // Keep the in-flight close intent until its onClose callback is consumed.
++    // Otherwise delayed minimization callbacks can unmount a restoring sheet.
++    if (statusRef.current === _constants.MODAL_STATUS.MINIMIZING) {
++      restorePendingRef.current = true;
++      return;
++    }
++    restorePendingRef.current = false;
++    statusRef.current = _constants.MODAL_STATUS.ANIMATING;
+     bottomSheetRef.current?.snapToIndex(restoreIndexRef.current);
+   }, []);
+   //#endregion
+
+   //#region callbacks
+   const handlePortalOnUnmount = (0, _react.useCallback)(function handlePortalOnUnmount() {
++    restorePendingRef.current = false;
+     if (__DEV__) {
+       (0, _utilities.print)({
+         component: 'BottomSheetModal',
+@@ -315,7 +329,16 @@ function BottomSheetModalComponent(props, ref) {
+     }
+     currentIndexRef.current = _index;
+     nextIndexRef.current = null;
+-    statusRef.current = _index === -1 ? _constants.MODAL_STATUS.MINIMIZED : _constants.MODAL_STATUS.PRESENTED;
++    // onClose follows onChange(-1) and must consume the original close intent.
++    // In particular, minimizing for a stacked sheet must not become dismissal.
++    const preserveCloseIntent = [_constants.MODAL_STATUS.MINIMIZING, _constants.MODAL_STATUS.MINIMIZED, _constants.MODAL_STATUS.DISMISSING, _constants.MODAL_STATUS.DISMISSED].includes(statusRef.current);
++    if (_index !== -1 && !preserveCloseIntent) {
++      statusRef.current = _constants.MODAL_STATUS.PRESENTED;
++    }
++    // Retry minimization if close() ran before native layout was ready.
++    if (_index !== -1 && statusRef.current === _constants.MODAL_STATUS.MINIMIZING) {
++      bottomSheetRef.current?.close();
++    }
+     if (_providedOnChange) {
+       _providedOnChange(_index, _position, _type);
+     }
+@@ -337,8 +360,8 @@ function BottomSheetModalComponent(props, ref) {
+      * we do not want to override the pre-set status for minimizing or dismissing,
+      * as they need to be set manually.
+      */
+-    const currentStatusIsDismissingOrMinimizing = [_constants.MODAL_STATUS.DISMISSING, _constants.MODAL_STATUS.MINIMIZING].includes(statusRef.current);
+-    if (!(currentStatusIsDismissingOrMinimizing && toIndex === -1)) {
++    const preserveCloseIntent = [_constants.MODAL_STATUS.DISMISSING, _constants.MODAL_STATUS.MINIMIZING, _constants.MODAL_STATUS.MINIMIZED, _constants.MODAL_STATUS.DISMISSED].includes(statusRef.current);
++    if (!preserveCloseIntent) {
+       statusRef.current = _constants.MODAL_STATUS.ANIMATING;
+     }
+     if (_providedOnAnimate) {
+@@ -358,8 +381,11 @@ function BottomSheetModalComponent(props, ref) {
+     }
+     if (statusRef.current === _constants.MODAL_STATUS.DISMISSING) {
+       statusRef.current = _constants.MODAL_STATUS.DISMISSED;
+-    } else if (statusRef.current === _constants.MODAL_STATUS.MINIMIZING) {
++    } else if (statusRef.current === _constants.MODAL_STATUS.MINIMIZING || statusRef.current === _constants.MODAL_STATUS.MINIMIZED) {
+       statusRef.current = _constants.MODAL_STATUS.MINIMIZED;
++      if (restorePendingRef.current) {
++        handleRestore();
++      }
+     } else {
+       statusRef.current = enableDismissOnClose ? _constants.MODAL_STATUS.DISMISSED : _constants.MODAL_STATUS.CLOSED;
+     }
+@@ -367,7 +393,7 @@ function BottomSheetModalComponent(props, ref) {
+       return;
+     }
+     unmount();
+-  }, [enableDismissOnClose, unmount]);
++  }, [enableDismissOnClose, handleRestore, unmount]);
+   //#endregion
+
+   //#region expose methods
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js b/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js
+index 94fabdb..7dd267d 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js
+@@ -62,6 +62,7 @@ function BottomSheetModalComponent(props, ref) {
+   const currentIndexRef = useRef(!animateOnMount ? index : -1);
+   const nextIndexRef = useRef(null);
+   const restoreIndexRef = useRef(-1);
++  const restorePendingRef = useRef(false);
+   //#endregion
+
+   //#region variables
+@@ -78,6 +79,7 @@ function BottomSheetModalComponent(props, ref) {
+     }
+     currentIndexRef.current = -1;
+     restoreIndexRef.current = -1;
++    restorePendingRef.current = false;
+     statusRef.current = MODAL_STATUS.INITIAL;
+   }, []);
+   const unmount = useCallback(function unmount() {
+@@ -162,7 +164,7 @@ function BottomSheetModalComponent(props, ref) {
+       });
+     }
+     requestAnimationFrame(() => {
+-      if (mount && bottomSheetRef.current) {
++      if (mount && bottomSheetRef.current && ![MODAL_STATUS.MINIMIZING, MODAL_STATUS.MINIMIZED].includes(statusRef.current)) {
+         statusRef.current = MODAL_STATUS.ANIMATING;
+         bottomSheetRef.current.snapToIndex(index);
+       }
+@@ -174,6 +176,7 @@ function BottomSheetModalComponent(props, ref) {
+     });
+   }, [index, key, stackBehavior, mount, mountSheet]);
+   const handleDismiss = useCallback(function handleDismiss(animationConfigs) {
++    restorePendingRef.current = false;
+     if (__DEV__) {
+       print({
+         component: 'BottomSheetModal',
+@@ -198,6 +201,8 @@ function BottomSheetModalComponent(props, ref) {
+     bottomSheetRef.current?.forceClose(animationConfigs);
+   }, [willUnmountSheet, unmount, key]);
+   const handleMinimize = useCallback(function handleMinimize() {
++    // A new top sheet supersedes a restore requested during minimization.
++    restorePendingRef.current = false;
+     if (__DEV__) {
+       print({
+         component: 'BottomSheetModal',
+@@ -249,12 +254,21 @@ function BottomSheetModalComponent(props, ref) {
+     if (!minimizedOrGoingToBe) {
+       return;
+     }
++    // Keep the in-flight close intent until its onClose callback is consumed.
++    // Otherwise delayed minimization callbacks can unmount a restoring sheet.
++    if (statusRef.current === MODAL_STATUS.MINIMIZING) {
++      restorePendingRef.current = true;
++      return;
++    }
++    restorePendingRef.current = false;
++    statusRef.current = MODAL_STATUS.ANIMATING;
+     bottomSheetRef.current?.snapToIndex(restoreIndexRef.current);
+   }, []);
+   //#endregion
+
+   //#region callbacks
+   const handlePortalOnUnmount = useCallback(function handlePortalOnUnmount() {
++    restorePendingRef.current = false;
+     if (__DEV__) {
+       print({
+         component: 'BottomSheetModal',
+@@ -308,7 +322,16 @@ function BottomSheetModalComponent(props, ref) {
+     }
+     currentIndexRef.current = _index;
+     nextIndexRef.current = null;
+-    statusRef.current = _index === -1 ? MODAL_STATUS.MINIMIZED : MODAL_STATUS.PRESENTED;
++    // onClose follows onChange(-1) and must consume the original close intent.
++    // In particular, minimizing for a stacked sheet must not become dismissal.
++    const preserveCloseIntent = [MODAL_STATUS.MINIMIZING, MODAL_STATUS.MINIMIZED, MODAL_STATUS.DISMISSING, MODAL_STATUS.DISMISSED].includes(statusRef.current);
++    if (_index !== -1 && !preserveCloseIntent) {
++      statusRef.current = MODAL_STATUS.PRESENTED;
++    }
++    // Retry minimization if close() ran before native layout was ready.
++    if (_index !== -1 && statusRef.current === MODAL_STATUS.MINIMIZING) {
++      bottomSheetRef.current?.close();
++    }
+     if (_providedOnChange) {
+       _providedOnChange(_index, _position, _type);
+     }
+@@ -330,8 +353,8 @@ function BottomSheetModalComponent(props, ref) {
+      * we do not want to override the pre-set status for minimizing or dismissing,
+      * as they need to be set manually.
+      */
+-    const currentStatusIsDismissingOrMinimizing = [MODAL_STATUS.DISMISSING, MODAL_STATUS.MINIMIZING].includes(statusRef.current);
+-    if (!(currentStatusIsDismissingOrMinimizing && toIndex === -1)) {
++    const preserveCloseIntent = [MODAL_STATUS.DISMISSING, MODAL_STATUS.MINIMIZING, MODAL_STATUS.MINIMIZED, MODAL_STATUS.DISMISSED].includes(statusRef.current);
++    if (!preserveCloseIntent) {
+       statusRef.current = MODAL_STATUS.ANIMATING;
+     }
+     if (_providedOnAnimate) {
+@@ -351,8 +374,11 @@ function BottomSheetModalComponent(props, ref) {
+     }
+     if (statusRef.current === MODAL_STATUS.DISMISSING) {
+       statusRef.current = MODAL_STATUS.DISMISSED;
+-    } else if (statusRef.current === MODAL_STATUS.MINIMIZING) {
++    } else if (statusRef.current === MODAL_STATUS.MINIMIZING || statusRef.current === MODAL_STATUS.MINIMIZED) {
+       statusRef.current = MODAL_STATUS.MINIMIZED;
++      if (restorePendingRef.current) {
++        handleRestore();
++      }
+     } else {
+       statusRef.current = enableDismissOnClose ? MODAL_STATUS.DISMISSED : MODAL_STATUS.CLOSED;
+     }
+@@ -360,7 +386,7 @@ function BottomSheetModalComponent(props, ref) {
+       return;
+     }
+     unmount();
+-  }, [enableDismissOnClose, unmount]);
++  }, [enableDismissOnClose, handleRestore, unmount]);
+   //#endregion
+
+   //#region expose methods
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
+index 2954b3f..05dd06f 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
+@@ -85,6 +85,7 @@ function BottomSheetModalComponent<T = never>(
+   const currentIndexRef = useRef(!animateOnMount ? index : -1);
+   const nextIndexRef = useRef<number | null>(null);
+   const restoreIndexRef = useRef(-1);
++  const restorePendingRef = useRef(false);
+   //#endregion
+
+   //#region variables
+@@ -101,6 +102,7 @@ function BottomSheetModalComponent<T = never>(
+     }
+     currentIndexRef.current = -1;
+     restoreIndexRef.current = -1;
++    restorePendingRef.current = false;
+     statusRef.current = MODAL_STATUS.INITIAL;
+   }, []);
+   const unmount = useCallback(
+@@ -241,7 +243,13 @@ function BottomSheetModalComponent<T = never>(
+       }
+
+       requestAnimationFrame(() => {
+-        if (mount && bottomSheetRef.current) {
++        if (
++          mount &&
++          bottomSheetRef.current &&
++          ![MODAL_STATUS.MINIMIZING, MODAL_STATUS.MINIMIZED].includes(
++            statusRef.current
++          )
++        ) {
+           statusRef.current = MODAL_STATUS.ANIMATING;
+           bottomSheetRef.current.snapToIndex(index);
+         }
+@@ -262,6 +270,7 @@ function BottomSheetModalComponent<T = never>(
+   );
+   const handleDismiss = useCallback<BottomSheetModalMethods['dismiss']>(
+     function handleDismiss(animationConfigs) {
++      restorePendingRef.current = false;
+       if (__DEV__) {
+         print({
+           component: 'BottomSheetModal',
+@@ -296,6 +305,8 @@ function BottomSheetModalComponent<T = never>(
+   );
+   const handleMinimize = useCallback(
+     function handleMinimize() {
++      // A new top sheet supersedes a restore requested during minimization.
++      restorePendingRef.current = false;
+       if (__DEV__) {
+         print({
+           component: 'BottomSheetModal',
+@@ -356,6 +367,14 @@ function BottomSheetModalComponent<T = never>(
+     if (!minimizedOrGoingToBe) {
+       return;
+     }
++    // Keep the in-flight close intent until its onClose callback is consumed.
++    // Otherwise delayed minimization callbacks can unmount a restoring sheet.
++    if (statusRef.current === MODAL_STATUS.MINIMIZING) {
++      restorePendingRef.current = true;
++      return;
++    }
++    restorePendingRef.current = false;
++    statusRef.current = MODAL_STATUS.ANIMATING;
+     bottomSheetRef.current?.snapToIndex(restoreIndexRef.current);
+   }, []);
+   //#endregion
+@@ -363,6 +382,7 @@ function BottomSheetModalComponent<T = never>(
+   //#region callbacks
+   const handlePortalOnUnmount = useCallback(
+     function handlePortalOnUnmount() {
++      restorePendingRef.current = false;
+       if (__DEV__) {
+         print({
+           component: 'BottomSheetModal',
+@@ -432,8 +452,23 @@ function BottomSheetModalComponent<T = never>(
+       currentIndexRef.current = _index;
+       nextIndexRef.current = null;
+
+-      statusRef.current =
+-        _index === -1 ? MODAL_STATUS.MINIMIZED : MODAL_STATUS.PRESENTED;
++      // onClose follows onChange(-1) and must consume the original close intent.
++      // In particular, minimizing for a stacked sheet must not become dismissal.
++      const preserveCloseIntent = [
++        MODAL_STATUS.MINIMIZING,
++        MODAL_STATUS.MINIMIZED,
++        MODAL_STATUS.DISMISSING,
++        MODAL_STATUS.DISMISSED,
++      ].includes(statusRef.current);
++      if (_index !== -1 && !preserveCloseIntent) {
++        statusRef.current = MODAL_STATUS.PRESENTED;
++      }
++
++      // close() may have been ignored before native layout was ready. A
++      // positive callback confirms readiness; close() deduplicates an in-flight close.
++      if (_index !== -1 && statusRef.current === MODAL_STATUS.MINIMIZING) {
++        bottomSheetRef.current?.close();
++      }
+
+       if (_providedOnChange) {
+         _providedOnChange(_index, _position, _type);
+@@ -465,12 +500,14 @@ function BottomSheetModalComponent<T = never>(
+        * we do not want to override the pre-set status for minimizing or dismissing,
+        * as they need to be set manually.
+        */
+-      const currentStatusIsDismissingOrMinimizing = [
++      const preserveCloseIntent = [
+         MODAL_STATUS.DISMISSING,
+         MODAL_STATUS.MINIMIZING,
++        MODAL_STATUS.MINIMIZED,
++        MODAL_STATUS.DISMISSED,
+       ].includes(statusRef.current);
+
+-      if (!(currentStatusIsDismissingOrMinimizing && toIndex === -1)) {
++      if (!preserveCloseIntent) {
+         statusRef.current = MODAL_STATUS.ANIMATING;
+       }
+
+@@ -495,8 +532,14 @@ function BottomSheetModalComponent<T = never>(
+
+       if (statusRef.current === MODAL_STATUS.DISMISSING) {
+         statusRef.current = MODAL_STATUS.DISMISSED;
+-      } else if (statusRef.current === MODAL_STATUS.MINIMIZING) {
++      } else if (
++        statusRef.current === MODAL_STATUS.MINIMIZING ||
++        statusRef.current === MODAL_STATUS.MINIMIZED
++      ) {
+         statusRef.current = MODAL_STATUS.MINIMIZED;
++        if (restorePendingRef.current) {
++          handleRestore();
++        }
+       } else {
+         statusRef.current = enableDismissOnClose
+           ? MODAL_STATUS.DISMISSED
+@@ -509,6 +552,6 @@ function BottomSheetModalComponent<T = never>(
+
+       unmount();
+     },
+-    [enableDismissOnClose, unmount]
++    [enableDismissOnClose, handleRestore, unmount]
+   );
+   //#endregion

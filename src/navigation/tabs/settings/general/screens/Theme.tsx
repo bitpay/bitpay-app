@@ -1,6 +1,7 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ColorSchemeName, Pressable, View, SafeAreaView} from 'react-native';
+import {Pressable, View, SafeAreaView} from 'react-native';
+import type {AppColorScheme} from '../../../../../store/app/app.models';
 import {TEST_MODE_NETWORK} from '@env';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
@@ -10,7 +11,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
-import {LogActions} from '../../../../../store/log';
 import {HeaderTitle} from '../../../../../components/styled/Text';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -89,7 +89,7 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
     });
   }, [navigation, t, onPressTitleRef]);
 
-  const onSetThemePress = (setScheme: ColorSchemeName) => {
+  const onSetThemePress = (setScheme: AppColorScheme) => {
     dispatch(AppActions.setColorScheme(setScheme));
     logManager.info(
       'Theme updated to ' +

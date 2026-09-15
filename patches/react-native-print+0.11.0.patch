@@ -1,0 +1,10 @@
+diff --git a/node_modules/react-native-print/android/build.gradle b/node_modules/react-native-print/android/build.gradle
+index 34e2591..d40a586 100644
+--- a/node_modules/react-native-print/android/build.gradle
++++ b/node_modules/react-native-print/android/build.gradle
+@@ -4 +4 @@ android {
+-    buildToolsVersion = "31.0.0"
++    buildToolsVersion = rootProject.ext.buildToolsVersion
+@@ -8 +8 @@ android {
+-        compileSdkVersion = 31
++        compileSdkVersion = rootProject.ext.compileSdkVersion

@@ -58,9 +58,7 @@ const BottomAmountModal: React.FC<BottomAmountModalProps> = props => {
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       backdropOpacity={0.2}
-      onBackdropPress={onBackdropPress}
-      // Use 'collapse' instead of 'close' to fire handleDismiss in SheetModal after backdrop press animation completes, preventing potential UI jank
-      backdropPressBehavior={'collapse'}>
+      onBackdropPress={onBackdropPress}>
       <AmountModalContainerHOC>
         <BottomAmount
           {...amountProps}
