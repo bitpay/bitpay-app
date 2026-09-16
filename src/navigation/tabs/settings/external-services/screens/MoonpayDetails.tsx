@@ -16,6 +16,7 @@ import MoonpayLogo from '../../../../../components/icons/external-services/moonp
 import {
   MoonpayPaymentData,
   MoonpayTransactionDetailsEmbeddedData,
+  MoonpayTransactionStage,
 } from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
   useAppDispatch,
@@ -51,8 +52,10 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {moonpayGetTransactionDetailsEmbedded} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
+  moonpayGetSepaStatusDetails,
   moonpayGetStatusColor,
   moonpayGetStatusDetails,
+  moonpaySepaIsWaitingForPayment,
   MoonpayStatus,
 } from '../../../../services/buy-crypto/utils/moonpay-utils';
 import {Br} from '../../../../../components/styled/Containers';
@@ -94,9 +97,49 @@ const MoonpayDetails: React.FC = () => {
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedExternalId, setCopiedExternalId] = useState(false);
   const [copiedTransactionId, setCopiedTransactionId] = useState(false);
+  const [copiedSepaField, setCopiedSepaField] = useState<string>();
 
-  const updateStatusDescription = () => {
-    setStatus(moonpayGetStatusDetails(paymentRequest.status));
+  const [sepaDetails, setSepaDetails] = useState(paymentRequest.sepa_details);
+  const [sepaStages, setSepaStages] = useState<MoonpayTransactionStage[]>();
+  const isEmbeddedSepa =
+    !!paymentRequest.is_embedded &&
+    paymentRequest.payment_method === 'sepaBankTransfer';
+  const sepaRows: {key: string; label: string; value: string}[] = sepaDetails
+    ? [
+        {key: 'reference', label: t('Reference'), value: sepaDetails.reference},
+        ...(sepaDetails.iban
+          ? [{key: 'iban', label: t('IBAN'), value: sepaDetails.iban}]
+          : []),
+        ...(sepaDetails.bic
+          ? [{key: 'bic', label: t('BIC'), value: sepaDetails.bic}]
+          : []),
+        ...(sepaDetails.recipientName
+          ? [
+              {
+                key: 'recipientName',
+                label: t('Recipient'),
+                value: sepaDetails.recipientName,
+              },
+            ]
+          : []),
+        ...(sepaDetails.bankName
+          ? [
+              {
+                key: 'bankName',
+                label: t('Bank name'),
+                value: sepaDetails.bankName,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  const updateStatusDescription = (stages?: MoonpayTransactionStage[]) => {
+    setStatus(
+      isEmbeddedSepa
+        ? moonpayGetSepaStatusDetails(paymentRequest.status, stages)
+        : moonpayGetStatusDetails(paymentRequest.status),
+    );
   };
 
   const getTransactionDetails = async (force?: boolean) => {
@@ -160,6 +203,32 @@ const MoonpayDetails: React.FC = () => {
             needUpdate = true;
           }
 
+          // The checkout stores these when the purchase is created, but the
+          // deposit details are generated asynchronously, so they can still be
+          // missing by then.
+          if (
+            !paymentRequest.sepa_details &&
+            txDetails?.bankTransferDepositInfo?.reference
+          ) {
+            const depositInfo = txDetails.bankTransferDepositInfo;
+            paymentRequest.sepa_details = {
+              reference: depositInfo.reference,
+              iban: depositInfo.iban,
+              bic: depositInfo.bic,
+              recipientName: depositInfo.recipientName,
+              bankName: depositInfo.bankName,
+            };
+            setSepaDetails(paymentRequest.sepa_details);
+            needUpdate = true;
+          }
+
+          // A bank transfer sits at 'pending' from creation until the money
+          // settles, so the stages are the only place the progress shows.
+          if (isEmbeddedSepa) {
+            setSepaStages(txDetails.stages);
+            updateStatusDescription(txDetails.stages);
+          }
+
           if (needUpdate || true) {
             const stateParams = {
               externalId: paymentRequest.external_id,
@@ -167,6 +236,7 @@ const MoonpayDetails: React.FC = () => {
               status: paymentRequest.status,
               cryptoAmount: paymentRequest.crypto_amount,
               fiatTotalAmount: paymentRequest.fiat_total_amount,
+              sepaDetails: paymentRequest.sepa_details,
             };
             dispatch(
               BuyCryptoActions.updatePaymentRequestMoonpay({
@@ -291,6 +361,13 @@ const MoonpayDetails: React.FC = () => {
     }, 3000);
     return () => clearTimeout(timer);
   }, [copiedTransactionId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedSepaField(undefined);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedSepaField]);
 
   // moonpayGetTransactionDetails
 
@@ -421,6 +498,46 @@ const MoonpayDetails: React.FC = () => {
                 </>
               ) : null}
             </LabelTip>
+          )}
+
+          {sepaRows.length > 0 && (
+            <>
+              <RowDataContainer>
+                <RowLabel>{t('Bank transfer details')}</RowLabel>
+              </RowDataContainer>
+              {sepaRows.map(row => (
+                <ColumnDataContainer key={row.key}>
+                  <TouchableOpacity
+                    testID={`moonpay-copy-sepa-${row.key}-button`}
+                    accessibilityLabel={`Copy ${row.label}`}
+                    onPress={() => {
+                      copyText(row.value);
+                      setCopiedSepaField(row.key);
+                    }}>
+                    <RowLabel>{row.label}</RowLabel>
+                    <CopiedContainer>
+                      <ColumnData style={{maxWidth: '90%'}}>
+                        {row.value}
+                      </ColumnData>
+                      <CopyImgContainerRight style={{minWidth: '10%'}}>
+                        {copiedSepaField === row.key ? (
+                          <CopiedSvg width={17} />
+                        ) : null}
+                      </CopyImgContainerRight>
+                    </CopiedContainer>
+                  </TouchableOpacity>
+                </ColumnDataContainer>
+              ))}
+              {moonpaySepaIsWaitingForPayment(sepaStages) && (
+                <LabelTip type="warn">
+                  <LabelTipText>
+                    {t(
+                      'Your transfer must include the reference above, or MoonPay will reject it.',
+                    )}
+                  </LabelTipText>
+                </LabelTip>
+              )}
+            </>
           )}
 
           <ColumnDataContainer>

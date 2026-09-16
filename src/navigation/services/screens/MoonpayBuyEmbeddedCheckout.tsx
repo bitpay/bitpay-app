@@ -60,6 +60,8 @@ import {
   moonpayEnv,
 } from '../buy-crypto/utils/moonpay-utils';
 import {
+  MoonpayBankTransferDepositInfo,
+  MoonpaySepaDetails,
   MoonpayEmbeddedCardPaymentMethod,
   MoonpayGetPaymentMethodsEmbeddedRequestData,
   MoonpayGetQuoteEmbeddedRequestData,
@@ -70,6 +72,7 @@ import {
 import {
   moonpayGetPaymentMethodsEmbedded,
   moonpayGetQuoteEmbedded,
+  moonpayGetTransactionDetailsEmbedded,
 } from '../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
   MoonPayApplePayFrame,
@@ -115,6 +118,8 @@ import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Button, {ButtonState} from '../../../components/button/Button';
+import Clipboard from '@react-native-clipboard/clipboard';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 // Styled
 export const MoonpayEmbeddedCheckoutContainer = styled.SafeAreaView`
@@ -317,6 +322,17 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   >(null);
   const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+
+  const isSepaPaymentMethod = paymentMethod?.method === 'sepaBankTransfer';
+  const [sepaPaymentStarted, setSepaPaymentStarted] = useState(false);
+  const [sepaButtonState, setSepaButtonState] = useState<ButtonState>();
+  const [depositInfo, setDepositInfo] = useState<
+    MoonpayBankTransferDepositInfo | undefined
+  >();
+  const [copiedField, setCopiedField] = useState<string | undefined>();
+  const [sepaTransaction, setSepaTransaction] = useState<
+    {id: string; status: string} | undefined
+  >();
   // Generated once per checkout and handed to MoonPay when the payment frame
   // mounts, so their transaction can be correlated with ours.
   const externalTransactionIdRef = useRef<string>(`${wallet.id}-${Date.now()}`);
@@ -754,20 +770,12 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     hidePaymentSent();
   };
 
-  const handleTransactionComplete = async (transaction: {
-    id: string;
-    status: string;
-  }) => {
-    cancelQuoteRefresh();
-    logger.debug(
-      'MoonPay transaction complete: ' + JSON.stringify(transaction),
-    );
-
-    showPaymentSent({
-      onCloseModal,
-      title: t('Transaction Submitted'),
-    });
-
+  // Stores the purchase and reports it.
+  const recordTransaction = (
+    transaction: {id: string; status: string},
+    sepaDetails?: MoonpaySepaDetails,
+  ) => {
+    const externalTransactionId = externalTransactionIdRef.current;
     const destinationChain = wallet.chain;
     const coin = cloneDeep(wallet.currencyAbbreviation).toLowerCase();
     const cryptoAmountReceiving = embeddedQuoteData?.destination?.amount
@@ -784,13 +792,14 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       fiat_base_amount: offer.buyAmount!,
       fiat_total_amount: offer.amountCost!,
       fiat_total_amount_currency: offer.fiatCurrency,
-      external_id: externalTransactionIdRef.current,
+      external_id: externalTransactionId,
       payment_method: paymentMethod?.method,
       status: 'embeddedPaymentRequestSent',
       user_id: wallet.id,
       user_eid: user?.eid,
       is_embedded: true,
       transaction_id: transaction.id,
+      ...(sepaDetails && {sepa_details: sepaDetails}),
     };
 
     dispatch(
@@ -822,12 +831,15 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
 
     dispatch(Analytics.track('Purchased Buy Crypto', analyticsData));
 
-    await sleep(1200);
+    return {externalTransactionId, status: newData.status};
+  };
+
+  const goToMoonpaySettings = (transaction: {id: string; status?: string}) => {
     const moonpaySettingsParams: MoonpaySettingsProps = {
       incomingPaymentRequest: {
         externalId: externalTransactionIdRef.current,
         transactionId: transaction.id,
-        status: transaction.status ?? newData.status,
+        status: transaction.status ?? 'embeddedPaymentRequestSent',
         flow: 'buy',
       },
     };
@@ -849,10 +861,119 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     );
   };
 
-  const handleChallengeCancel = async () => {
-    setChallengeUrl(null);
+  const handleTransactionComplete = async (transaction: {
+    id: string;
+    status: string;
+  }) => {
+    cancelQuoteRefresh();
+    logger.debug(
+      'MoonPay transaction complete: ' + JSON.stringify(transaction),
+    );
+
+    showPaymentSent({
+      onCloseModal,
+      title: t('Transaction Submitted'),
+    });
+
+    const {status} = recordTransaction(transaction);
+
+    await sleep(1200);
+    goToMoonpaySettings({
+      id: transaction.id,
+      status: transaction.status ?? status,
+    });
+  };
+
+  // SEPA: the buy frame only registers the purchase. The customer still has to
+  // send the transfer, so instead of leaving the screen we fetch the deposit
+  // details MoonPay generated for this transaction and render them.
+  const handleSepaTransactionComplete = async (transaction: {
+    id: string;
+    status: string;
+  }) => {
+    cancelQuoteRefresh();
+    if (countDown) {
+      clearInterval(countDown);
+    }
+    logger.debug(
+      'MoonPay SEPA transaction registered: ' + JSON.stringify(transaction),
+    );
+
+    // Fetched before recording so the deposit details are persisted with the
+    // purchase in one write, and stay available from the order details after
+    // leaving this screen.
+    let depositDetails: MoonpayBankTransferDepositInfo | undefined;
+    try {
+      const details = await moonpayGetTransactionDetailsEmbedded({
+        transactionId: transaction.id,
+        accessToken: credentials.accessToken,
+      });
+      depositDetails = details?.bankTransferDepositInfo;
+      if (!depositDetails) {
+        throw new Error('No bank transfer deposit info returned');
+      }
+    } catch (err) {
+      logger.error(
+        'Failed to get MoonPay bank transfer deposit info: ' +
+          (err instanceof Error ? err.message : JSON.stringify(err)),
+      );
+    }
+
+    recordTransaction(
+      transaction,
+      depositDetails && {
+        reference: depositDetails.reference,
+        iban: depositDetails.iban,
+        bic: depositDetails.bic,
+        recipientName: depositDetails.recipientName,
+        bankName: depositDetails.bankName,
+      },
+    );
+
+    if (!depositDetails) {
+      // The purchase exists either way, so send the customer to the order
+      // details rather than leaving them on a dead screen.
+      goToMoonpaySettings(transaction);
+      return;
+    }
+
+    setSepaTransaction(transaction);
+    setDepositInfo(depositDetails);
+  };
+
+  // Both payment flows mount their buy frame off a "started" flag, so a
+  // challenge that ends without a transaction has to clear whichever one is
+  // in play or the headless frame stays mounted and the button stuck.
+  const resetPaymentStartedState = () => {
     setCardPaymentStarted(false);
     setCardPaymentButtonState(undefined);
+    setSepaPaymentStarted(false);
+    setSepaButtonState(undefined);
+  };
+
+  const startSepaPayment = () => {
+    // The SEPA quote carries no payment instrument to pick, so init()'s quote
+    // is the one that gets charged — but only if MoonPay marked it executable.
+    if (!initialQuoteSignature || embeddedQuoteData?.executable === false) {
+      return;
+    }
+    stopQuoteRefreshTimer();
+    if (countDown) {
+      clearInterval(countDown);
+    }
+    setSepaButtonState('loading');
+    setSepaPaymentStarted(true);
+  };
+
+  const copyDepositField = (field: string, value: string) => {
+    haptic('impactLight');
+    Clipboard.setString(value);
+    setCopiedField(field);
+  };
+
+  const handleChallengeCancel = async () => {
+    setChallengeUrl(null);
+    resetPaymentStartedState();
     setExpiredAnalyticSent(false);
     logger.debug('MoonPay challenge cancelled by user.');
     dispatch(
@@ -929,6 +1050,105 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       setExpiredAnalyticSent(true);
     }
   }, [remainingTimeStr, expiredAnalyticSent, challengeUrl]);
+
+  // SEPA: once the purchase is registered the customer still has to send the
+  // money, so the screen turns into the deposit instructions.
+  if (isSepaPaymentMethod && embeddedQuoteData && depositInfo) {
+    const depositRows: {key: string; label: string; value?: string}[] = [
+      {key: 'reference', label: t('Reference'), value: depositInfo.reference},
+      {key: 'iban', label: 'IBAN', value: depositInfo.iban},
+      {key: 'bic', label: 'BIC', value: depositInfo.bic},
+      {
+        key: 'recipientName',
+        label: t('Recipient'),
+        value: depositInfo.recipientName,
+      },
+      {
+        key: 'bankName',
+        label: t('Bank name'),
+        value: depositInfo.bankName,
+      },
+    ].filter(row => !!row.value);
+
+    return (
+      <View style={styles.root}>
+        <MoonpayEmbeddedCheckoutContainer>
+          <ScrollView>
+            <HeaderContainer>
+              <Title>
+                {formatFiatAmount(Number(offer.fiatAmount), offer.fiatCurrency)}
+              </Title>
+              {isLoading || !embeddedQuoteData?.destination ? (
+                <MoonpayEmbeddedCheckoutSkeleton context="amount" />
+              ) : (
+                <Subtitle>
+                  {'≈ '}
+                  {embeddedQuoteData.destination.amount}{' '}
+                  {embeddedQuoteData.destination.asset.code}
+                </Subtitle>
+              )}
+              <Subtitle>{t('Complete your bank transfer')}</Subtitle>
+            </HeaderContainer>
+
+            <LegalText>
+              {t(
+                'Your transfer must include the reference below, or MoonPay will reject it.',
+              )}
+            </LegalText>
+
+            {depositRows.map(row => (
+              <View key={row.key}>
+                <TouchableOpacity
+                  onPress={() => copyDepositField(row.key, row.value!)}>
+                  <RowDataContainer>
+                    <RowLabel>{row.label}</RowLabel>
+                    <RowData
+                      numberOfLines={1}
+                      ellipsizeMode={'middle'}
+                      style={{
+                        maxWidth: '60%',
+                        color:
+                          copiedField === row.key
+                            ? Action
+                            : theme.dark
+                            ? White
+                            : Black,
+                      }}>
+                      {row.value}
+                    </RowData>
+                  </RowDataContainer>
+                </TouchableOpacity>
+                <ItemDivisor />
+              </View>
+            ))}
+          </ScrollView>
+
+          <BottomSection>
+            <Button
+              onPress={() =>
+                goToMoonpaySettings(
+                  sepaTransaction ?? {id: '', status: undefined},
+                )
+              }
+              borderRadius={100}
+              height={50}>
+              {t('Done')}
+            </Button>
+            <PoweredByContainer>
+              <PoweredByText>{t('Powered by')}</PoweredByText>
+              <MoonpayLogo
+                iconOnly={true}
+                widthIcon={13}
+                heightIcon={13}
+                fillColorIcon={theme.dark ? White : '#565656'}
+              />
+              <PoweredByPartner>MoonPay Rails</PoweredByPartner>
+            </PoweredByContainer>
+          </BottomSection>
+        </MoonpayEmbeddedCheckoutContainer>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -1049,7 +1269,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               ) : null}
               <RowDataContainer>
                 <RowLabel>{t('New quote in')}</RowLabel>
-                {cardPaymentStarted ? (
+                {cardPaymentStarted || sepaPaymentStarted ? (
                   <ActivityIndicator color={ProgressBlue} size={'small'} />
                 ) : (
                   !!remainingTimeStr && (
@@ -1130,6 +1350,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   {!!embeddedQuoteData?.destination && (
                     <TotalContainer>
                       <CryptoTotalText>
+                        {isSepaPaymentMethod ? '≈ ' : ''}
                         {embeddedQuoteData.destination.amount}{' '}
                         {embeddedQuoteData.destination.asset.code}
                       </CryptoTotalText>
@@ -1198,7 +1419,76 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               );
             }
           })()}
-          {isCardPaymentMethod ? (
+          {isSepaPaymentMethod ? (
+            sepaPaymentStarted && initialQuoteSignature ? (
+              <>
+                <SpinnerContainer>
+                  <ActivityIndicator color={ProgressBlue} />
+                </SpinnerContainer>
+                <MoonPayBuyFrame
+                  ref={buyFrameRef}
+                  clientToken={credentials.clientToken}
+                  signature={initialQuoteSignature}
+                  externalTransactionId={externalTransactionIdRef.current}
+                  onReady={() => {
+                    logger.debug('MoonPay Buy frame ready (SEPA)');
+                  }}
+                  onComplete={async (payload: BuyFrameCompletePayload) => {
+                    await handleSepaTransactionComplete(payload.transaction);
+                  }}
+                  onChallenge={(url: string) => {
+                    cancelQuoteRefresh();
+                    logger.debug(
+                      'MoonPay SEPA challenge required, opening challenge frame',
+                    );
+                    dispatch(
+                      Analytics.track('Buy Crypto Challenge Started', {
+                        exchange: 'moonpay',
+                        context: 'MoonpayBuyEmbeddedCheckout',
+                        paymentMethod: paymentMethod?.method || '',
+                        amount:
+                          Number((offer as CryptoOffer)?.fiatAmount) || '',
+                        coin:
+                          cloneDeep(
+                            wallet?.currencyAbbreviation,
+                          )?.toLowerCase() || '',
+                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        fiatCurrency: offer?.fiatCurrency || '',
+                      }),
+                    );
+                    setChallengeUrl(url);
+                  }}
+                  onQuoteExpired={refreshQuote}
+                  onError={(error: BuyFrameErrorPayload) => {
+                    setSepaPaymentStarted(false);
+                    setSepaButtonState(undefined);
+                    cancelQuoteRefresh();
+                    logger.error(
+                      'MoonPay Buy frame error (SEPA): [' +
+                        error.code +
+                        '] ' +
+                        error.message,
+                    );
+                    showError(error, error.code, error.message);
+                  }}
+                />
+              </>
+            ) : (
+              <Button
+                onPress={startSepaPayment}
+                disabled={
+                  isLoading ||
+                  paymentExpired ||
+                  !initialQuoteSignature ||
+                  embeddedQuoteData?.executable === false
+                }
+                state={sepaButtonState}
+                borderRadius={100}
+                height={50}>
+                {t('Continue')}
+              </Button>
+            )
+          ) : isCardPaymentMethod ? (
             cardPaymentStarted && cardQuoteSignature ? (
               <>
                 <SpinnerContainer>
@@ -1445,10 +1735,16 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                         transactionStatus: payload.transaction.status,
                       }),
                     );
-                    await handleTransactionComplete(payload.transaction);
+                    if (isSepaPaymentMethod) {
+                      // SEPA is not paid in-app: the customer still has to
+                      // send the transfer, so show the deposit details
+                      // instead of the "submitted" modal.
+                      await handleSepaTransactionComplete(payload.transaction);
+                    } else {
+                      await handleTransactionComplete(payload.transaction);
+                    }
                   } else {
-                    setCardPaymentStarted(false);
-                    setCardPaymentButtonState(undefined);
+                    resetPaymentStartedState();
                     logger.error(
                       'MoonPay challenge completed but no transaction data received',
                     );
@@ -1463,8 +1759,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 onCancelled={handleChallengeCancel}
                 onError={error => {
                   setChallengeUrl(null);
-                  setCardPaymentStarted(false);
-                  setCardPaymentButtonState(undefined);
+                  resetPaymentStartedState();
                   cancelQuoteRefresh();
                   logger.error(
                     'MoonPay ' +
