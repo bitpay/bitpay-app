@@ -73,6 +73,28 @@ describe('encrypted field values', () => {
     expect(() => decryptWalletStore(swapped, secretKey)).toThrow();
   });
 
+  it('binds gift card ciphertext to the card, not its array position', () => {
+    const state = {
+      giftCards: {
+        livenet: [
+          {invoiceId: 'invoice-a', claimCode: 'code-a', status: 'UNREDEEMED'},
+          {invoiceId: 'invoice-b', claimCode: 'code-b', status: 'SUCCESS'},
+        ],
+      },
+    };
+    const encrypted = encryptShopStore(state, secretKey);
+    const withUnsoldCardDeleted = {
+      giftCards: {
+        livenet: encrypted.giftCards.livenet.filter(
+          (card: any) => card.status !== 'UNREDEEMED',
+        ),
+      },
+    };
+
+    const decrypted = decryptShopStore(withUnsoldCardDeleted, secretKey);
+    expect(decrypted.giftCards.livenet[0].claimCode).toBe('code-b');
+  });
+
   type ProtectedStoreCase = {
     name: string;
     fields: string[];

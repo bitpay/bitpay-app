@@ -368,7 +368,7 @@ const transformShopStore = (
   ];
 
   // Transform each gift card in mainnet
-  const newGiftCards = giftCards.map((card: any, cardIndex: number) => {
+  const newGiftCards = giftCards.map((card: any) => {
     const updatedCard = {...card};
     fieldsToTransform.forEach(field => {
       const value = card[field];
@@ -376,7 +376,7 @@ const transformShopStore = (
         updatedCard[field] = transformer(
           value,
           secretKey,
-          `SHOP.giftCards.${Network.mainnet}.${cardIndex}.${field}`,
+          `SHOP.giftCards.${Network.mainnet}.${card.invoiceId}.${field}`,
         );
       }
     });
