@@ -434,6 +434,8 @@ export const readAccountListSnapshot = <T>(
     inMemory &&
     (signature === undefined || inMemory.signature === signature)
   ) {
+    snapshots.delete(cacheKey);
+    snapshots.set(cacheKey, inMemory);
     return inMemory.value as T;
   }
 

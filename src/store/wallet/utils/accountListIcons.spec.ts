@@ -8,6 +8,10 @@ jest.mock('../../../constants/SupportedCurrencyOptions', () => ({
   },
 }));
 
+jest.mock('./currency', () => ({
+  IsVMChain: jest.fn((chain: string) => chain === 'eth'),
+}));
+
 jest.mock('../../../utils/helper-methods', () => ({
   getBadgeImg: jest.fn((currencyAbbreviation: string, chain: string) =>
     currencyAbbreviation === chain ? '' : `${chain}-badge`,
@@ -94,6 +98,50 @@ describe('restoreAccountListIcons', () => {
     ]);
 
     expect(restored[0].wallets[0].img).toBe('https://logos.example/custom.png');
+  });
+
+  it('restores the icon of a global select row keyed by chains', () => {
+    const persisted = roundTripThroughStorage([
+      {
+        id: 'coin-btc',
+        currencyName: 'Bitcoin',
+        currencyAbbreviation: 'btc',
+        chains: ['btc'],
+        img: () => 'dropped',
+      },
+    ]);
+
+    expect(persisted[0].img).toBeUndefined();
+
+    const restored = restoreAccountListIcons(persisted);
+
+    expect(restored[0].img()).toBe('btc-icon');
+  });
+
+  it('restores chainsImg badges on a global select row', () => {
+    const restored = restoreAccountListIcons<any[]>([
+      {
+        id: 'coin-usdc',
+        currencyAbbreviation: 'USDC',
+        chains: ['eth'],
+        chainsImg: {eth: {priority: 2}},
+      },
+    ]);
+
+    expect(restored[0].chainsImg.eth.badgeUri).toBe('eth-badge');
+  });
+
+  it('badges a native coin on a vm chain with its own icon', () => {
+    const restored = restoreAccountListIcons<any[]>([
+      {
+        id: 'coin-eth',
+        currencyAbbreviation: 'eth',
+        chains: ['eth'],
+        chainsImg: {eth: {priority: 1}},
+      },
+    ]);
+
+    expect(restored[0].chainsImg.eth.badgeUri()).toBe('eth-icon');
   });
 
   it('leaves values without currency data untouched', () => {
