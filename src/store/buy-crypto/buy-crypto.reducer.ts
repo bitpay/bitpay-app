@@ -175,6 +175,10 @@ export const buyCryptoReducer = (
           state.moonpay[moonpayIncomingData.externalId].fiat_total_amount =
             moonpayIncomingData.fiatTotalAmount;
         }
+        if (moonpayIncomingData.sepaDetails) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_details =
+            moonpayIncomingData.sepaDetails;
+        }
 
         return {
           ...state,
