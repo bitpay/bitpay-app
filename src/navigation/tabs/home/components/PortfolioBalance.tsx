@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {BaseText, H2} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
@@ -22,11 +22,13 @@ import BalanceHistoryChart, {
   type BalanceHistoryChartProps,
 } from '../../../../components/charts/BalanceHistoryChart';
 import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../../components/charts/fiatTimeframes';
+import {useHasCachedBalanceHistoryChartSeries} from '../../../../components/charts/balanceHistoryChartSeriesCache';
 import Percentage from '../../../../components/percentage/Percentage';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
+  StyleSheet,
   View,
   type LayoutRectangle,
   type StyleProp,
@@ -42,7 +44,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {maskIfHidden} from '../../../../utils/hideBalances';
+import {
+  HIDDEN_BALANCE_MASK,
+  maskIfHidden,
+} from '../../../../utils/hideBalances';
 import {
   getVisibleKeysFromKeys,
   getVisibleWalletsFromKeys,
@@ -50,35 +55,67 @@ import {
 import {resolveActivePortfolioDisplayQuoteCurrency} from '../../../../portfolio/ui/common';
 import usePortfolioBalanceChartSurface from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
+import usePortfolioBalanceChartEligibleWallets from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
-import type {Wallet} from '../../../../store/wallet/wallet.models';
+import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
+import type {Rates} from '../../../../store/rate/rate.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
+import BalanceVisibilityButton from '../../../../components/balance/BalanceVisibilityButton';
 
-const PortfolioContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
+const portfolioStyles = StyleSheet.create({
+  portfolioContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  portfolioTopContent: {
+    width: '100%',
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  chartStage: {
+    width: '100%',
+    position: 'relative',
+    overflow: 'visible',
+  },
+  collapseButtonContainer: {
+    position: 'absolute',
+    right: 12,
+    top: 27,
+    zIndex: 30,
+  },
+});
 
-const PortfolioTopContent = styled.View<{$leftAligned?: boolean}>`
-  width: 100%;
-  padding: 0 ${ScreenGutter};
-  align-items: ${({$leftAligned}) => ($leftAligned ? 'flex-start' : 'center')};
-`;
+const PortfolioContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={portfolioStyles.portfolioContainer}>{children}</View>;
 
-const ChartStage = styled.View`
-  width: 100%;
-  position: relative;
-  overflow: visible;
-`;
+const PortfolioTopContent: React.FC<{
+  $leftAligned?: boolean;
+  children?: React.ReactNode;
+}> = ({$leftAligned, children}) => (
+  <View
+    style={[
+      portfolioStyles.portfolioTopContent,
+      {alignItems: $leftAligned ? 'flex-start' : 'center'},
+    ]}>
+    {children}
+  </View>
+);
 
-const CollapseButtonContainer = styled(Animated.View)`
-  position: absolute;
-  right: 12px;
-  top: 27px;
-  z-index: 30;
-`;
+const ChartStage: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[portfolioStyles.chartStage, style]} {...rest} />;
+
+const CollapseButtonContainer: React.FC<
+  React.ComponentProps<typeof Animated.View>
+> = ({style, ...rest}) => (
+  <Animated.View
+    style={[portfolioStyles.collapseButtonContainer, style]}
+    {...rest}
+  />
+);
 
 const HOME_BALANCE_LINE_CHART_HEIGHT = 220;
 const HOME_BALANCE_TIMEFRAME_SELECTOR_TOP_MARGIN = 5;
@@ -87,38 +124,91 @@ const HOME_BALANCE_EXPANDED_CHART_HEIGHT =
   HOME_BALANCE_LINE_CHART_HEIGHT +
   HOME_BALANCE_TIMEFRAME_SELECTOR_TOP_MARGIN +
   HOME_BALANCE_TIMEFRAME_SELECTOR_HEIGHT;
+const EMPTY_BACKGROUND_KEYS: Record<string, Key> = {};
+const EMPTY_BACKGROUND_RATES: Rates = {};
 
-const PortfolioBalanceHeader = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const headerStyles = StyleSheet.create({
+  portfolioBalanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  portfolioBalanceTitle: {
+    marginRight: 3,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  portfolioBalanceText: {
+    fontWeight: '700',
+    marginVertical: 2,
+  },
+  hiddenBalance: {
+    lineHeight: 50,
+    marginVertical: 6,
+  },
+  portfolioBalanceChangeRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
-const PortfolioBalanceTitle = styled(BaseText)`
-  margin-right: 3px;
-  font-size: 13px;
-  line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const PortfolioBalanceHeader: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity
+    style={[headerStyles.portfolioBalanceHeader, style]}
+    {...rest}
+  />
+);
 
-const PortfolioBalanceText = styled(BaseText)<{$isCompact?: boolean}>`
-  font-size: ${({$isCompact}) => ($isCompact ? '26px' : '39px')};
-  font-weight: 700;
-  line-height: ${({$isCompact}) => ($isCompact ? '38px' : '59px')};
-  color: ${({theme}) => theme.colors.text};
-  margin: 2px 0;
-`;
+const PortfolioBalanceTitle: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        headerStyles.portfolioBalanceTitle,
+        {color: theme.dark ? White : SlateDark},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const HiddenBalance = styled(H2)`
-  line-height: 50px;
-  margin: 6px 0;
-`;
+const PortfolioBalanceText: React.FC<{
+  $isCompact?: boolean;
+  children?: React.ReactNode;
+}> = ({$isCompact, children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        headerStyles.portfolioBalanceText,
+        {
+          fontSize: $isCompact ? 26 : 39,
+          lineHeight: $isCompact ? 38 : 59,
+          color: theme.colors.text,
+        },
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const PortfolioBalanceChangeRowContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <H2 style={headerStyles.hiddenBalance}>{children}</H2>
+);
+
+const PortfolioBalanceChangeRowContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View
+    style={[headerStyles.portfolioBalanceChangeRowContainer, style]}
+    {...rest}
+  />
+);
 
 type PortfolioBalanceChangeRowProps = {
   percent: number;
@@ -133,6 +223,12 @@ const PortfolioBalanceChangeRow = ({
   rangeLabel,
   style,
 }: PortfolioBalanceChangeRowProps): React.ReactElement => {
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const displayedDelta =
+    hideAllBalances && deltaFiatFormatted
+      ? HIDDEN_BALANCE_MASK
+      : deltaFiatFormatted;
+
   return (
     <PortfolioBalanceChangeRowContainer
       testID="portfolio-balance-change-row"
@@ -141,7 +237,7 @@ const PortfolioBalanceChangeRow = ({
         percentageDifference={percent}
         hideArrow
         hideSign
-        priceChange={deltaFiatFormatted}
+        priceChange={displayedDelta}
         rangeLabel={rangeLabel}
         fractionDigits={2}
       />
@@ -149,22 +245,40 @@ const PortfolioBalanceChangeRow = ({
   );
 };
 
-const PortfolioBalanceContent = () => {
+type PortfolioBalanceProps = {
+  active?: boolean;
+};
+
+const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const {t} = useTranslation();
   const coinbaseBalance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  const {rates} = useSelector(({RATE}: RootState) => RATE);
+  const subscribedKeys = useSelector(({WALLET}: RootState) =>
+    active ? WALLET.keys : EMPTY_BACKGROUND_KEYS,
+  ) as Record<string, Key>;
+  const subscribedRates = useSelector(({RATE}: RootState) =>
+    active ? RATE.rates : EMPTY_BACKGROUND_RATES,
+  ) as Rates;
+  const lastActiveKeysRef = React.useRef(subscribedKeys);
+  const lastActiveRatesRef = React.useRef(subscribedRates);
+  if (active) {
+    lastActiveKeysRef.current = subscribedKeys;
+    lastActiveRatesRef.current = subscribedRates;
+  }
+  const keys = lastActiveKeysRef.current;
+  const rates = lastActiveRatesRef.current;
 
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const {
-    homeChartCollapsed: persistedHomeChartCollapsed,
-    homeChartRemountNonce,
-  } = useAppSelector(({APP}) => APP);
+  const persistedHomeChartCollapsed = useAppSelector(
+    ({APP}) => APP.homeChartCollapsed,
+  );
+  const homeChartRemountNonce = useAppSelector(
+    ({APP}) => APP.homeChartRemountNonce,
+  );
 
   const [isChartCollapsed, setIsChartCollapsed] = useState(
     persistedHomeChartCollapsed,
@@ -207,28 +321,58 @@ const PortfolioBalanceContent = () => {
 
   const dispatch = useAppDispatch();
   const portfolioChartsRequested = showPortfolioValue === true;
-
-  const balanceChartReadiness = usePortfolioBalanceChartReadiness({
+  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  });
+  const cacheEligibleHomeWallets = usePortfolioBalanceChartEligibleWallets({
     wallets: walletsAcrossKeys,
     enabled: portfolioChartsRequested,
-    hideAllBalances,
   });
+  const homeChartWalletIds = useMemo(
+    () =>
+      cacheEligibleHomeWallets
+        .map(wallet => wallet.id)
+        .filter(Boolean)
+        .sort(),
+    [cacheEligibleHomeWallets],
+  );
+  const hasCachedHomeChart = useHasCachedBalanceHistoryChartSeries({
+    walletIds: homeChartWalletIds,
+    quoteCurrency,
+    timeframe: DEFAULT_BALANCE_CHART_TIMEFRAME,
+  });
+
+  const activeBalanceChartReadiness = usePortfolioBalanceChartReadiness({
+    wallets: cacheEligibleHomeWallets,
+    enabled: active && portfolioChartsRequested,
+  });
+  const lastActiveBalanceChartReadinessRef = React.useRef(
+    activeBalanceChartReadiness,
+  );
+  if (active) {
+    lastActiveBalanceChartReadinessRef.current = activeBalanceChartReadiness;
+  }
+  const balanceChartReadiness = active
+    ? activeBalanceChartReadiness
+    : lastActiveBalanceChartReadinessRef.current;
   const chartWalletsAcrossKeys = balanceChartReadiness.chartableWallets;
   const chartWalletIdsSig = chartWalletsAcrossKeys
     .map(wallet => String(wallet?.id || ''))
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b))
     .join(',');
-  const balanceChartsEnabled = balanceChartReadiness.shouldMountBalanceChart;
-  const shouldLeftAlignTopSection = balanceChartsEnabled && !hideAllBalances;
+  const balanceChartsEnabled =
+    balanceChartReadiness.shouldMountBalanceChart || hasCachedHomeChart;
+  const shouldLeftAlignTopSection = balanceChartsEnabled;
   const canCollapseChart = shouldLeftAlignTopSection;
   const shouldApplyChartCollapse =
     shouldLeftAlignTopSection && persistedHomeChartCollapsed;
   const showChartLoaderWhenNoSnapshots =
-    balanceChartReadiness.shouldShowChartLoader ||
-    (balanceChartsEnabled &&
-      !balanceChartReadiness.shouldPreserveStaleBalanceChart &&
-      !chartHasRenderableSeries);
+    !hasCachedHomeChart &&
+    (balanceChartReadiness.shouldShowChartLoader ||
+      (balanceChartsEnabled &&
+        !balanceChartReadiness.shouldPreserveStaleBalanceChart &&
+        !chartHasRenderableSeries));
   const collapsedScale = 0.26;
   const fullChartHeight =
     chartBlockHeight || HOME_BALANCE_EXPANDED_CHART_HEIGHT;
@@ -381,9 +525,6 @@ const PortfolioBalanceContent = () => {
     [],
   );
 
-  const quoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
-    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
-  });
   const collapseChartAccessibilityLabel = t('Collapse portfolio chart');
   const expandChartAccessibilityLabel = t('Expand portfolio chart');
   const chartLifecycleKey = `home-portfolio-charts:${homeChartRemountNonce}:${visibleKeyIdsSig}:${chartWalletIdsSig}`;
@@ -396,10 +537,12 @@ const PortfolioBalanceContent = () => {
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
     preserveChartDrivenStateWhileNotReady:
-      balanceChartReadiness.shouldPreserveStaleBalanceChart,
+      balanceChartReadiness.shouldPreserveStaleBalanceChart ||
+      hasCachedHomeChart,
     resetKey: chartLifecycleKey,
   });
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
+    enabled: active,
     wallets: chartWalletsAcrossKeys,
     quoteCurrency,
     initialSelectedTimeframe: selectedChartTimeframeRef.current,
@@ -411,7 +554,8 @@ const PortfolioBalanceContent = () => {
     isBalanceChartDataReadyToQuery:
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
     preserveVisibleSeriesWhileNotReady:
-      balanceChartReadiness.shouldPreserveStaleBalanceChart,
+      balanceChartReadiness.shouldPreserveStaleBalanceChart ||
+      hasCachedHomeChart,
     // NOTE: Coinbase balance is intentionally excluded from the balance chart
     // (Option B per product requirements) because we do not have historized
     // Coinbase balance snapshots.
@@ -453,12 +597,19 @@ const PortfolioBalanceContent = () => {
   const shouldUseCompactPortfolioBalanceText = useMemo(() => {
     return shouldUseCompactFiatAmountText(formattedPortfolioBalance);
   }, [formattedPortfolioBalance]);
-  const lastDayChangeRowData = useLegacyLastDayChangeRowData({
+  const activeLastDayChangeRowData = useLegacyLastDayChangeRowData({
     wallets: walletsAcrossKeys,
     currentFiatBalance: visibleCurrentBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
-    enabled: !portfolioChartsRequested && !hideAllBalances,
+    enabled: active && !portfolioChartsRequested,
   });
+  const lastDayChangeRowDataRef = React.useRef(activeLastDayChangeRowData);
+  if (active) {
+    lastDayChangeRowDataRef.current = activeLastDayChangeRowData;
+  }
+  const lastDayChangeRowData = active
+    ? activeLastDayChangeRowData
+    : lastDayChangeRowDataRef.current;
   const displayedChangeRowData =
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData
@@ -530,10 +681,10 @@ const PortfolioBalanceContent = () => {
           </PortfolioBalanceTitle>
           <InfoSvg width={16} height={16} />
         </PortfolioBalanceHeader>
-        <TouchableOpacity
+        <BalanceVisibilityButton
           testID="portfolio-balance-toggle"
-          accessibilityLabel="Toggle balance visibility"
-          onLongPress={() => {
+          hidden={hideAllBalances}
+          onToggle={() => {
             dispatch(toggleHideAllBalances());
           }}>
           {!hideAllBalances ? (
@@ -548,10 +699,10 @@ const PortfolioBalanceContent = () => {
               {maskIfHidden(true, totalBalanceIncludingCoinbase)}
             </HiddenBalance>
           )}
-        </TouchableOpacity>
+        </BalanceVisibilityButton>
       </PortfolioTopContent>
 
-      {!hideAllBalances && (displayedChangeRowData || balanceChartsEnabled) ? (
+      {displayedChangeRowData || balanceChartsEnabled ? (
         <PortfolioBalanceChangeRow
           percent={displayedChangeRowData?.percent ?? 0}
           deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
@@ -569,7 +720,7 @@ const PortfolioBalanceContent = () => {
         />
       ) : null}
 
-      {!hideAllBalances && balanceChartsEnabled ? (
+      {balanceChartsEnabled ? (
         <ChartStage
           onLayout={e => {
             const {width, y} = e.nativeEvent.layout;

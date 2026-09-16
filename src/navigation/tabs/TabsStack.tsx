@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, TouchableOpacity} from 'react-native';
+import {StyleSheet, View, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
@@ -26,7 +26,6 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 
 import BillStack from './shop/bill/BillStack';
-import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {Analytics} from '../../store/analytics/analytics.effects';
 
@@ -44,18 +43,28 @@ const Icons: Record<string, React.FC<SvgProps>> = {
   TransactButton: TransactButtonIcon,
 };
 
-const IconContainer = styled.View``;
+const styles = StyleSheet.create({
+  untappedIconDot: {
+    height: 5,
+    width: 5,
+    backgroundColor: '#ff647c',
+    position: 'absolute',
+    zIndex: 2,
+    right: -7,
+    top: -4,
+    borderRadius: 5,
+  },
+});
 
-const UntappedIconDot = styled.View`
-  height: 5px;
-  width: 5px;
-  background-color: #ff647c;
-  position: absolute;
-  z-index: 2;
-  right: -7px;
-  top: -4px;
-  border-radius: 5px;
-`;
+const TransactionButton = () => null;
+
+const DefaultTabBarButton = (props: any) => (
+  <TouchableOpacity {...props} activeOpacity={1} />
+);
+
+const TransactTabBarIcon = () => <TransactModal />;
+
+const TransactTabBarButton = (props: any) => <View {...props} />;
 
 export enum TabsScreens {
   HOME = 'Home',
@@ -89,21 +98,20 @@ const TabsStack = () => {
   const insets = useSafeAreaInsets();
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
-  const TransactionButton = () => null;
+
   return (
     <Tab.Navigator
       initialRouteName={TabsScreens.HOME}
       screenOptions={({route}) => ({
         headerShown: false,
+        freezeOnBlur: true,
         tabBarStyle: {
           backgroundColor: theme.colors.background,
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 8,
         },
-        tabBarButton: props => (
-          <TouchableOpacity {...(props as any)} activeOpacity={1} />
-        ),
+        tabBarButton: DefaultTabBarButton,
         tabBarShowLabel: false,
         tabBarIcon: ({focused}) => {
           let {name: icon} = route;
@@ -113,12 +121,12 @@ const TabsStack = () => {
           const Icon = Icons[icon];
 
           return (
-            <IconContainer>
+            <View>
               {icon === 'Bills' && !hasViewedBillsTab ? (
-                <UntappedIconDot />
+                <View style={styles.untappedIconDot} />
               ) : null}
               <Icon />
-            </IconContainer>
+            </View>
           );
         },
       })}>
@@ -140,8 +148,8 @@ const TabsStack = () => {
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
         options={{
-          tabBarIcon: () => <TransactModal />,
-          tabBarButton: props => <View {...props} />,
+          tabBarIcon: TransactTabBarIcon,
+          tabBarButton: TransactTabBarButton,
         }}
       />
       <Tab.Screen

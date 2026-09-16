@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {StyleSheet, Text, View, ViewProps} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {orderBy} from 'lodash';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -51,57 +51,125 @@ import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {HomeCarouselConfig} from '../../../store/app/app.models';
 import ExternalServicesLoadingWalletSkeleton from './ExternalServicesLoadingWalletSkeleton';
+import usePreloadedCustomGlobalSelectList from '../../wallet/screens/usePreloadedCustomGlobalSelectList';
 
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const EMPTY_CUSTOM_CURRENCIES: ToWalletSelectorCustomCurrency[] = [];
 
-const ArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+const styles = StyleSheet.create({
+  globalSelectContainer: {
+    flex: 1,
+  },
+  arrowContainer: {
+    marginLeft: 10,
+  },
+  externalServicesWalletSelectorContainer: {
+    marginVertical: 8,
+    marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletSelector: {
+    height: 36,
+    borderRadius: 27.5,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    minWidth: 146,
+  },
+  walletSelectorLeft: {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorRight: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorName: {
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: 0,
+    marginLeft: 8,
+  },
+});
 
-export const ExternalServicesWalletSelectorContainer = styled.View`
-  margin: 8px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const GlobalSelectContainer: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.globalSelectContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const WalletSelector = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: 36px;
-  border-radius: 27.5px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  min-width: 146px;
-`;
+const ArrowContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.arrowContainer, style]} {...rest} />
+);
 
-export const WalletSelectorLeft = styled.View`
-  display: flex;
-  justify-content: left;
-  flex-direction: row;
-  align-items: center;
-`;
+export const ExternalServicesWalletSelectorContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => (
+  <View
+    style={[styles.externalServicesWalletSelectorContainer, style]}
+    {...rest}
+  />
+);
 
-export const WalletSelectorRight = styled.View`
-  display: flex;
-  justify-content: right;
-  flex-direction: row;
-  align-items: center;
-`;
+export const WalletSelector: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.walletSelector,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const WalletSelectorName = styled.Text`
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 8px;
-`;
+export const WalletSelectorLeft: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorLeft, style]} {...rest} />
+);
+
+export const WalletSelectorRight: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorRight, style]} {...rest} />
+);
+
+export const WalletSelectorName = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof Text>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[
+        styles.walletSelectorName,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WalletSelectorName.displayName = 'WalletSelectorName';
 
 interface ExternalServicesWalletSelectorScreenProps {
   navigation: any;
@@ -151,6 +219,9 @@ const ExternalServicesWalletSelector: React.FC<
   const homeCarouselConfig: HomeCarouselConfig[] = useAppSelector(
     ({APP}) => APP.homeCarouselConfig,
   );
+  const selectedGlobalSelectChainFilter = useAppSelector(
+    ({APP}) => APP.selectedLocalChainFilterOption,
+  );
 
   const preSetWallet = fromWallet;
   const fromCurrencyAbbreviation = currencyAbbreviation?.toLowerCase();
@@ -159,6 +230,26 @@ const ExternalServicesWalletSelector: React.FC<
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
   const autoSelectAttemptedRef = useRef(false);
+  const pendingWalletSelectionRef = useRef<
+    | {
+        newWallet?: Wallet;
+        createNewWalletData?: AddWalletData;
+      }
+    | undefined
+  >(undefined);
+  const {
+    preloadedListRef: buyGlobalSelectCacheRef,
+    preload: preloadBuyGlobalSelect,
+  } = usePreloadedCustomGlobalSelectList({
+    navigation,
+    keys: allKeys,
+    customToSelectCurrencies:
+      context === 'buyCrypto'
+        ? buyCryptoSupportedCoinsFullObj
+        : EMPTY_CUSTOM_CURRENCIES,
+    selectedChainFilterOption: selectedGlobalSelectChainFilter,
+    livenetOnly: !__DEV__,
+  });
 
   const globalSelectRoute =
     fromCurrencyAbbreviation && fromChain
@@ -543,11 +634,10 @@ const ExternalServicesWalletSelector: React.FC<
     sellCryptoSupportedCoinsFullObj?.length,
   ]);
 
-  const onDismiss = async (
+  const applyWalletSelection = async (
     newWallet?: Wallet,
     createNewWalletData?: AddWalletData | undefined,
   ) => {
-    setWalletSelectorModalVisible(false);
     if (newWallet?.currencyAbbreviation) {
       setWallet(newWallet);
       dispatch(
@@ -654,6 +744,29 @@ const ExternalServicesWalletSelector: React.FC<
     }
   };
 
+  const onDismiss = (
+    newWallet?: Wallet,
+    createNewWalletData?: AddWalletData,
+  ) => {
+    pendingWalletSelectionRef.current =
+      newWallet || createNewWalletData
+        ? {newWallet, createNewWalletData}
+        : undefined;
+    setWalletSelectorModalVisible(false);
+  };
+
+  const handleWalletSelectorModalHide = () => {
+    const pendingSelection = pendingWalletSelectionRef.current;
+    pendingWalletSelectionRef.current = undefined;
+
+    if (pendingSelection) {
+      applyWalletSelection(
+        pendingSelection.newWallet,
+        pendingSelection.createNewWalletData,
+      );
+    }
+  };
+
   return (
     <ExternalServicesWalletSelectorContainer>
       {loading ? (
@@ -665,6 +778,9 @@ const ExternalServicesWalletSelector: React.FC<
       ) : (
         <WalletSelector
           style={selectedWallet ? {} : {backgroundColor: Action}}
+          onPressIn={
+            context === 'buyCrypto' ? preloadBuyGlobalSelect : undefined
+          }
           onPress={() => {
             setWalletSelectorModalVisible(true);
           }}>
@@ -719,6 +835,7 @@ const ExternalServicesWalletSelector: React.FC<
         modalLibrary="bottom-sheet"
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
+        onModalHide={handleWalletSelectorModalHide}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect
@@ -737,6 +854,11 @@ const ExternalServicesWalletSelector: React.FC<
             customToSelectCurrencies={
               context === 'buyCrypto'
                 ? buyCryptoSupportedCoinsFullObj
+                : undefined
+            }
+            preloadedCustomToSelectCurrenciesList={
+              context === 'buyCrypto'
+                ? buyGlobalSelectCacheRef.current
                 : undefined
             }
             customSupportedCurrencies={

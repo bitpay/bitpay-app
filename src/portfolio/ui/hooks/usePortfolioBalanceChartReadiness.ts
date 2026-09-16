@@ -1,3 +1,4 @@
+import {shallowEqual} from 'react-redux';
 import {selectHasCompletedFullPortfolioPopulate} from '../../../store/portfolio/portfolio.selectors';
 import type {Wallet} from '../../../store/wallet/wallet.models';
 import {useAppSelector} from '../../../utils/hooks';
@@ -27,44 +28,51 @@ export type PortfolioBalanceChartReadiness = {
 
 export default function usePortfolioBalanceChartReadiness(args: {
   enabled?: boolean;
-  hideAllBalances?: boolean;
   renderZeroBalanceChartWhenNoSnapshots?: boolean;
   wallets: Wallet[];
 }): PortfolioBalanceChartReadiness {
   const enabled = args.enabled !== false;
-  const populateStatus = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.populateStatus,
-  );
-  const hasCompletedFullPortfolioPopulate = useAppSelector(
-    selectHasCompletedFullPortfolioPopulate,
+  const hasCompletedFullPortfolioPopulate = useAppSelector(state =>
+    enabled ? selectHasCompletedFullPortfolioPopulate(state) : false,
   );
   const chartableWallets = usePortfolioChartableWallets({
     wallets: args.wallets,
     enabled,
   });
   const hasChartableWallets = chartableWallets.length > 0;
-  const baseEnabled = enabled && !args.hideAllBalances && hasChartableWallets;
+  const baseEnabled = enabled && hasChartableWallets;
 
-  const hasCompletedScopePopulate =
-    baseEnabled &&
-    (hasCompletedFullPortfolioPopulate ||
-      hasCompletedPopulateForWallets({
-        populateStatus,
-        wallets: chartableWallets,
-        requireAllWalletsInScope: true,
-      }));
+  const {hasCompletedScopePopulate, isScopePopulateLoading} = useAppSelector(
+    ({PORTFOLIO}) => {
+      if (!baseEnabled) {
+        return {
+          hasCompletedScopePopulate: false,
+          isScopePopulateLoading: false,
+        };
+      }
+
+      const populateStatus = PORTFOLIO.populateStatus;
+      return {
+        hasCompletedScopePopulate:
+          hasCompletedFullPortfolioPopulate ||
+          hasCompletedPopulateForWallets({
+            populateStatus,
+            wallets: chartableWallets,
+            requireAllWalletsInScope: true,
+          }),
+        isScopePopulateLoading: isPopulateLoadingForWallets({
+          populateStatus,
+          wallets: chartableWallets,
+        }),
+      };
+    },
+    shallowEqual,
+  );
   const canCheckSnapshotPresence = baseEnabled && hasCompletedScopePopulate;
   const snapshotPresence = usePortfolioWalletSnapshotPresence({
     wallets: chartableWallets,
     enabled: canCheckSnapshotPresence,
   });
-
-  const isScopePopulateLoading =
-    baseEnabled &&
-    isPopulateLoadingForWallets({
-      populateStatus,
-      wallets: chartableWallets,
-    });
 
   const isSnapshotPresenceLoading =
     canCheckSnapshotPresence &&

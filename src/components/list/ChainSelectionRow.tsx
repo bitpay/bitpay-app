@@ -1,39 +1,39 @@
 import React, {memo} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {Slate30, SlateDark} from '../../styles/colors';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {ScreenGutter} from '../styled/Containers';
 import {H7} from '../styled/Text';
 import {CurrencyOpts} from '../../constants/currencies';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const ChainSelectionRowContainer = styled.View`
-  border: 1px solid ${({theme}) => (theme.dark ? SlateDark : Slate30)};
-  border-radius: 12px;
-  flex-direction: column;
-  margin: 0 ${ScreenGutter} ${ScreenGutter};
-  padding: 16px;
-`;
-
-const FlexRow = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
-
-const CurrencyColumn = styled.View`
-  justify-content: center;
-  margin-right: 8px;
-`;
-
-const CurrencyTitleColumn = styled(CurrencyColumn)`
-  flex: 1 1 auto;
-`;
-
-const CurrencyTitle = styled(H7).attrs(() => ({
-  medium: true,
-}))`
-  margin: 0;
-  padding: 0;
-`;
+const styles = StyleSheet.create({
+  chainSelectionRowContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    flexDirection: 'column',
+    marginTop: 0,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 16,
+  },
+  flexRow: {
+    flexDirection: 'row',
+  },
+  currencyColumn: {
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  currencyTitleColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+  },
+  currencyTitle: {
+    margin: 0,
+    padding: 0,
+  },
+});
 
 interface ChainSelectionRowProps {
   chainObj: CurrencyOpts;
@@ -44,23 +44,31 @@ export const ChainSelectionRow: React.FC<ChainSelectionRowProps> = memo(
   props => {
     const {onToggle, chainObj} = props;
     const {coin: currencyAbbreviation, chain, img, name} = chainObj;
+    const theme = useTheme();
 
     return (
-      <ChainSelectionRowContainer
+      <View
+        style={[
+          styles.chainSelectionRowContainer,
+          {borderColor: theme.dark ? SlateDark : Slate30},
+        ]}
         testID={`currency-selection-container-${chain}`}>
-        <FlexRow
+        <TouchableOpacity
+          style={styles.flexRow}
           testID={`chain-selection-row-${currencyAbbreviation}-${chain}`}
           accessibilityLabel={`${name} chain selection`}
           onPress={() => onToggle(currencyAbbreviation, chain)}>
-          <CurrencyColumn>
+          <View style={styles.currencyColumn}>
             <CurrencyImage img={img!} />
-          </CurrencyColumn>
+          </View>
 
-          <CurrencyTitleColumn style={{flexGrow: 1}}>
-            <CurrencyTitle>{name}</CurrencyTitle>
-          </CurrencyTitleColumn>
-        </FlexRow>
-      </ChainSelectionRowContainer>
+          <View style={[styles.currencyTitleColumn, {flexGrow: 1}]}>
+            <H7 medium style={styles.currencyTitle}>
+              {name}
+            </H7>
+          </View>
+        </TouchableOpacity>
+      </View>
     );
   },
 );

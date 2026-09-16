@@ -1,5 +1,6 @@
 import React, {ReactNode} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {Action, Midnight, White} from '../../../../styles/colors';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
@@ -16,41 +17,96 @@ import {ExternalServicesScreens} from '../../../services/ExternalServicesGroup';
 
 const MAX_LINKING_BUTTON_ROW_WIDTH = 450;
 
-const ButtonsRow = styled.View<{
+const styles = StyleSheet.create({
+  buttonsRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+  },
+  buttonContainer: {
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 3,
+  },
+  linkButton: {
+    height: 40,
+    width: 40,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 11,
+    marginBottom: 8,
+  },
+});
+
+const ButtonsRow: React.FC<{
   $maxWidth?: number;
   $compactSpacing?: boolean;
-}>`
-  justify-content: ${({$compactSpacing}) =>
-    $compactSpacing ? 'center' : 'space-between'};
-  flex-direction: row;
-  align-self: center;
-  width: ${({$maxWidth = MAX_LINKING_BUTTON_ROW_WIDTH}) =>
-    Math.min(WIDTH - 24, $maxWidth)}px;
-  max-width: ${({$maxWidth = MAX_LINKING_BUTTON_ROW_WIDTH}) => $maxWidth}px;
-`;
+  children?: React.ReactNode;
+}> = ({
+  $maxWidth = MAX_LINKING_BUTTON_ROW_WIDTH,
+  $compactSpacing,
+  children,
+}) => (
+  <View
+    style={[
+      styles.buttonsRow,
+      {
+        justifyContent: $compactSpacing ? 'center' : 'space-between',
+        width: Math.min(WIDTH - 24, $maxWidth),
+        maxWidth: $maxWidth,
+      },
+    ]}>
+    {children}
+  </View>
+);
 
-const ButtonContainer = styled.View<{$compactSpacing?: boolean}>`
-  align-items: center;
-  margin: ${({$compactSpacing}) => ($compactSpacing ? '0 30px' : '0')};
-`;
+const ButtonContainer: React.FC<{
+  $compactSpacing?: boolean;
+  children?: React.ReactNode;
+}> = ({$compactSpacing, children}) => (
+  <View
+    style={[
+      styles.buttonContainer,
+      $compactSpacing ? {marginHorizontal: 30} : {margin: 0},
+    ]}>
+    {children}
+  </View>
+);
 
-const ButtonText = styled(BaseText)`
-  font-size: 13px;
-  line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? White : Midnight)};
-  margin-top: 3px;
-`;
+const ButtonText: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.buttonText, {color: theme.dark ? White : Midnight}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const LinkButton = styled(TouchableOpacity)`
-  height: 40px;
-  width: 40px;
-  border-radius: 30px;
-  align-items: center;
-  justify-content: center;
-  background: ${({theme: {dark}, disabled}) =>
-    disabled ? (dark ? '#223358' : '#546acb') : dark ? Midnight : Action};
-  margin: 11px 0 8px;
-`;
+const LinkButton: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  disabled,
+  ...rest
+}) => {
+  const theme = useTheme();
+  const backgroundColor = disabled
+    ? theme.dark
+      ? '#223358'
+      : '#546acb'
+    : theme.dark
+    ? Midnight
+    : Action;
+  return (
+    <TouchableOpacity
+      style={[styles.linkButton, {backgroundColor}, style]}
+      disabled={disabled}
+      {...rest}
+    />
+  );
+};
 
 const BuySvg = () => {
   return (
@@ -106,6 +162,7 @@ interface ButtonListProps {
   label: string;
   img: ReactNode;
   cta: () => void;
+  onPressIn?: () => void;
   hide: boolean;
 }
 
@@ -114,11 +171,13 @@ interface Props {
     label?: string;
     hide?: boolean;
     cta: () => void;
+    onPressIn?: () => void;
   };
   receive: {
     label?: string;
     hide?: boolean;
     cta: () => void;
+    onPressIn?: () => void;
   };
   buy?: {
     hide?: boolean;
@@ -209,6 +268,7 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
       label: receive.label || t('receive'),
       img: <ReceiveSvg />,
       cta: receive.cta,
+      onPressIn: receive.onPressIn,
       hide: !!receive?.hide,
     },
     {
@@ -216,6 +276,7 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
       label: send.label || t('send'),
       img: <SendSvg />,
       cta: send.cta,
+      onPressIn: send.onPressIn,
       hide: !!send?.hide,
     },
   ];
@@ -224,30 +285,33 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
 
   return (
     <ButtonsRow $maxWidth={maxWidth} $compactSpacing={compactSpacing}>
-      {visibleButtons.map(({key, label, cta, img}: ButtonListProps) => {
-        const isDisabled =
-          ['buy', 'sell', 'swap'].includes(key) &&
-          (!appWasInit || !tokensDataLoaded);
+      {visibleButtons.map(
+        ({key, label, cta, onPressIn, img}: ButtonListProps) => {
+          const isDisabled =
+            ['buy', 'sell', 'swap'].includes(key) &&
+            (!appWasInit || !tokensDataLoaded);
 
-        return (
-          <ButtonContainer key={key} $compactSpacing={compactSpacing}>
-            <LinkButton
-              activeOpacity={ActiveOpacity}
-              testID={`${key}-button`}
-              accessibilityLabel={titleCasing(label)}
-              touchableLibrary="react-native"
-              disabled={isDisabled}
-              accessibilityState={{disabled: isDisabled}}
-              onPress={() => {
-                Haptic('impactLight');
-                cta();
-              }}>
-              {img}
-            </LinkButton>
-            <ButtonText>{titleCasing(label)}</ButtonText>
-          </ButtonContainer>
-        );
-      })}
+          return (
+            <ButtonContainer key={key} $compactSpacing={compactSpacing}>
+              <LinkButton
+                activeOpacity={ActiveOpacity}
+                testID={`${key}-button`}
+                accessibilityLabel={titleCasing(label)}
+                touchableLibrary="react-native"
+                disabled={isDisabled}
+                accessibilityState={{disabled: isDisabled}}
+                onPressIn={onPressIn}
+                onPress={() => {
+                  Haptic('impactLight');
+                  cta();
+                }}>
+                {img}
+              </LinkButton>
+              <ButtonText>{titleCasing(label)}</ButtonText>
+            </ButtonContainer>
+          );
+        },
+      )}
     </ButtonsRow>
   );
 };

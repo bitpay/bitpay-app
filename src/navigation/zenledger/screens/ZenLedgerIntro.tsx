@@ -1,5 +1,4 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -8,7 +7,7 @@ import {Black, LightBlack, SlateDark, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
 import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {Platform, View} from 'react-native';
+import {Platform, View, SafeAreaView, StyleSheet} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
@@ -18,61 +17,105 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import LinearGradient from 'react-native-linear-gradient';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import ZenLedgerLogo from '../components/ZenLedgerLogo';
 import Back from '../../../components/back/Back';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {useTheme} from 'styled-components/native';
 import LinkIcon from '../../../components/icons/link-icon/LinkIcon';
 
-const ZenledgerContainer = styled.SafeAreaView`
-  flex: 1;
-  justify-content: center;
-`;
+const screenGutter = parseInt(ScreenGutter, 10);
 
-const ZenLedgerIntroContainer = styled.View`
-  margin-top: 40px;
-  border-radius: 10px;
-  padding: ${ScreenGutter};
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  zenledgerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  zenLedgerIntroContainer: {
+    marginTop: 40,
+    borderRadius: 10,
+    padding: screenGutter,
+    flex: 1,
+  },
+  zenLedgerBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: screenGutter,
+  },
+  zenLedgerDescription: {
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  zenLedgerLogoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 16,
+  },
+  zenLedgerBackground: {
+    flex: 1,
+  },
+  linkCointainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
-const ZenLedgerBottomContainer = styled.View`
-  background-color: ${({theme}) => (theme?.dark ? LightBlack : White)};
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  padding: ${ScreenGutter};
-`;
+const ZenLedgerBottomContainer = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.zenLedgerBottomContainer,
+        {backgroundColor: theme?.dark ? LightBlack : White},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const ZenLedgerDescription = styled(Paragraph)`
-  color: ${({theme}) => (theme?.dark ? White : SlateDark)};
-  margin: 10px 0;
-  text-align: center;
-`;
+const ZenLedgerDescription = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.zenLedgerDescription,
+        {color: theme?.dark ? White : SlateDark},
+      ]}>
+      {children}
+    </Paragraph>
+  );
+};
 
-const ZenLedgerLogoContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin: 16px 0;
-`;
+const ZenLedgerBackground = ({children}: {children: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <LinearGradient
+      colors={
+        theme.dark ? [Black, Black] : ['#FFFFFF', 'rgba(0, 133, 102, 0.05)']
+      }
+      start={{x: 0, y: 0}}
+      end={{x: 0, y: 0}}
+      style={styles.zenLedgerBackground}>
+      {children}
+    </LinearGradient>
+  );
+};
 
-const ZenLedgerBackground = styled(LinearGradient).attrs(({theme}) => ({
-  colors: theme.dark ? [Black, Black] : ['#FFFFFF', 'rgba(0, 133, 102, 0.05)'],
-  start: {x: 0, y: 0},
-  end: {x: 0, y: 0},
-}))`
-  flex: 1;
-`;
-
-const LinkCointainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+const LinkCointainer = ({
+  onPress,
+  children,
+}: {
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => (
+  <TouchableOpacity onPress={onPress} style={styles.linkCointainer}>
+    {children}
+  </TouchableOpacity>
+);
 const ZenLedgerIntro: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -129,12 +172,12 @@ const ZenLedgerIntro: React.FC = () => {
   }, [navigation, t, theme.dark]);
 
   return (
-    <ZenledgerContainer>
+    <SafeAreaView style={styles.zenledgerContainer}>
       <ZenLedgerBackground>
-        <ZenLedgerIntroContainer>
-          <ZenLedgerLogoContainer>
+        <View style={styles.zenLedgerIntroContainer}>
+          <View style={styles.zenLedgerLogoContainer}>
             <ZenLedgerLogo />
-          </ZenLedgerLogoContainer>
+          </View>
           <View>
             <TextAlign align={'center'}>
               <H4>{t('Be Prepared for Tax Season')}</H4>
@@ -152,7 +195,7 @@ const ZenLedgerIntro: React.FC = () => {
               />
             </View>
           </View>
-        </ZenLedgerIntroContainer>
+        </View>
         <ZenLedgerBottomContainer>
           <TextAlign align={'center'}>
             <H4>{t('Already imported?')}</H4>
@@ -176,7 +219,7 @@ const ZenLedgerIntro: React.FC = () => {
           </LinkCointainer>
         </ZenLedgerBottomContainer>
       </ZenLedgerBackground>
-    </ZenledgerContainer>
+    </SafeAreaView>
   );
 };
 

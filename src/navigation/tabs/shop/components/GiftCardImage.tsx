@@ -1,14 +1,22 @@
 import React, {useEffect, useState} from 'react';
-import {Image} from 'react-native';
-import styled from 'styled-components/native';
+import {Image, StyleSheet, View} from 'react-native';
 import RemoteImage from './RemoteImage';
 
 const cardImageHeight = 169;
 const defaultCardImageWidth = 270;
-const ImagePlaceholder = styled.View`
-  height: ${cardImageHeight}px;
-  width: ${defaultCardImageWidth}px;
-`;
+const styles = StyleSheet.create({
+  imagePlaceholder: {
+    height: cardImageHeight,
+    width: defaultCardImageWidth,
+  },
+});
+
+const ImagePlaceholder = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.imagePlaceholder, style]} {...rest} />
+);
 
 export default ({uri}: {uri: string}) => {
   const [sizingComplete, setSizingComplete] = useState(false);

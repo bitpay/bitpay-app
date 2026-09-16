@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
@@ -26,47 +27,33 @@ type Props<T extends string> = {
   horizontalInset?: string;
 };
 
-const TimeframeContainer = styled.View<{$horizontalInset?: string}>`
-  margin-top: 5px;
-  width: 100%;
-  padding: 0 ${({$horizontalInset = '0'}) => $horizontalInset};
-`;
-
-const TimeframeRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-self: center;
-  width: 100%;
-`;
+const styles = StyleSheet.create({
+  timeframeContainer: {
+    marginTop: 5,
+    width: '100%',
+  },
+  timeframeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignSelf: 'center',
+    width: '100%',
+  },
+  timeframePill: {
+    height: 34,
+    minWidth: 44,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeframeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+});
 
 const TimeframeHitSlop = {top: 10, bottom: 10, left: 10, right: 10} as const;
-
-type TimeframeSelectorStyledProps = {$active: boolean};
-
-const TimeframePill = styled(TouchableOpacity)<TimeframeSelectorStyledProps>`
-  height: 34px;
-  min-width: 44px;
-  padding: 0 12px;
-  border-radius: 18px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme, $active}) =>
-    $active ? (theme.dark ? Midnight : LightBlue) : 'transparent'};
-`;
-
-const TimeframeText = styled(BaseText)<TimeframeSelectorStyledProps>`
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${({theme, $active}) =>
-    $active
-      ? theme.dark
-        ? LinkBlue
-        : Action
-      : theme.dark
-      ? Slate30
-      : SlateDark};
-`;
 
 export const TimeframeSelector = <T extends string>({
   options,
@@ -75,29 +62,59 @@ export const TimeframeSelector = <T extends string>({
   width,
   horizontalInset,
 }: Props<T>): React.ReactElement => {
+  const theme = useTheme();
   return (
-    <TimeframeContainer
+    <View
       testID="timeframe-selector-container"
-      $horizontalInset={horizontalInset}>
-      <TimeframeRow
+      style={[
+        styles.timeframeContainer,
+        {paddingHorizontal: horizontalInset ? parseFloat(horizontalInset) : 0},
+      ]}>
+      <View
         testID="timeframe-selector-row"
-        style={typeof width === 'number' ? {width} : undefined}>
+        style={[
+          styles.timeframeRow,
+          typeof width === 'number' ? {width} : undefined,
+        ]}>
         {options.map(opt => {
           const active = opt.value === selected;
           return (
-            <TimeframePill
+            <TouchableOpacity
               key={opt.value}
-              $active={active}
+              style={[
+                styles.timeframePill,
+                {
+                  backgroundColor: active
+                    ? theme.dark
+                      ? Midnight
+                      : LightBlue
+                    : 'transparent',
+                },
+              ]}
               hitSlop={TimeframeHitSlop}
               activeOpacity={ActiveOpacity}
               onPress={() => onSelect(opt.value)}
               testID={opt.testID}>
-              <TimeframeText $active={active}>{opt.label}</TimeframeText>
-            </TimeframePill>
+              <BaseText
+                style={[
+                  styles.timeframeText,
+                  {
+                    color: active
+                      ? theme.dark
+                        ? LinkBlue
+                        : Action
+                      : theme.dark
+                      ? Slate30
+                      : SlateDark,
+                  },
+                ]}>
+                {opt.label}
+              </BaseText>
+            </TouchableOpacity>
           );
         })}
-      </TimeframeRow>
-    </TimeframeContainer>
+      </View>
+    </View>
   );
 };
 

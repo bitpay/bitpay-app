@@ -1,5 +1,5 @@
-import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components/native';
+import React, {useCallback, useMemo, useRef} from 'react';
+import {StyleSheet, View} from 'react-native';
 import {Action, Black, LightBlack, White} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
@@ -15,51 +15,46 @@ import {useNavigation} from '@react-navigation/native';
 import {getGasWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../contexts';
 import {ViewStyle} from 'react-native';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
 
-const InAppContainer = styled(TouchableOpacity)`
-  justify-content: center;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  inAppContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  row: {
+    borderRadius: 10,
+    flexDirection: 'row',
+    padding: 15,
+    width: WIDTH * 0.9,
+  },
+  walletConnectIconContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    transform: [{scale: 1.1}],
+  },
+  message: {
+    fontWeight: '700',
+    flexWrap: 'wrap',
+    color: 'white',
+    marginRight: 15,
+  },
+  closeModalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+  },
+  messageContainer: {
+    flexDirection: 'row',
+  },
+});
 
-const Row = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Action)};
-  border-radius: 10px;
-  flex-direction: row;
-  padding: 15px;
-  width: ${WIDTH * 0.9}px;
-`;
-
-const WalletConnectIconContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin-right: 15px;
-  transform: scale(1.1);
-`;
-
-const Message = styled(BaseText)`
-  font-weight: 700;
-  flex-wrap: wrap;
-  color: white;
-  margin-right: 15px;
-`;
-
-const CloseModalContainer = styled.View`
-  flex: 1;
-  justify-content: flex-end;
-  align-items: flex-end;
-`;
-const CloseModalButton = styled(TouchableOpacity)``;
-
-const MessageContainer = styled.View`
-  flex-direction: row;
-`;
-
-const InAppNotification: React.FC = React.memo(() => {
+const InAppNotificationContent: React.FC = React.memo(() => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -123,9 +118,9 @@ const InAppNotification: React.FC = React.memo(() => {
   const walletConnectIcon = useMemo(
     () =>
       context === 'notification' ? (
-        <WalletConnectIconContainer>
+        <View style={styles.walletConnectIconContainer}>
           <WalletConnectIcon width={20} height={20} />
-        </WalletConnectIconContainer>
+        </View>
       ) : null,
     [context],
   );
@@ -143,22 +138,40 @@ const InAppNotification: React.FC = React.memo(() => {
       useNativeDriver={true}
       style={modalStyle}
       onBackdropPress={onBackdropPress}>
-      <InAppContainer onPress={goToNextView} activeOpacity={1}>
-        <Row>
-          <MessageContainer>
+      <TouchableOpacity
+        style={styles.inAppContainer}
+        onPress={goToNextView}
+        activeOpacity={1}>
+        <View
+          style={[
+            styles.row,
+            {backgroundColor: theme.dark ? LightBlack : Action},
+          ]}>
+          <View style={styles.messageContainer}>
             {walletConnectIcon}
-            <Message>{message}</Message>
-          </MessageContainer>
-          <CloseModalContainer>
-            <CloseModalButton onPress={onBackdropPress}>
+            <BaseText style={styles.message}>{message}</BaseText>
+          </View>
+          <View style={styles.closeModalContainer}>
+            <TouchableOpacity onPress={onBackdropPress}>
               <CloseModal {...closeModalIconProps} />
-            </CloseModalButton>
-          </CloseModalContainer>
+            </TouchableOpacity>
+          </View>
           <BlurContainer />
-        </Row>
-      </InAppContainer>
+        </View>
+      </TouchableOpacity>
     </BaseModal>
   );
+});
+
+const InAppNotification: React.FC = React.memo(() => {
+  const isVisible = useAppSelector(({APP}) => APP.showInAppNotification);
+  const hasMountedRef = useRef(false);
+
+  if (isVisible) {
+    hasMountedRef.current = true;
+  }
+
+  return hasMountedRef.current ? <InAppNotificationContent /> : null;
 });
 
 export default InAppNotification;

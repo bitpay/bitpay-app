@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, Text, TextProps, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {BaseText, Paragraph} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -37,89 +38,225 @@ import {IsSVMChain} from '../../../store/wallet/utils/currency';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
-const CloseButtonText = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-`;
+const styles = StyleSheet.create({
+  sendingInfoContainer: {
+    borderRadius: 4,
+    marginBottom: 20,
+  },
+  sendingToHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  contractHeaderContainer: {
+    justifyContent: 'space-between',
+    display: 'flex',
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  titleContainer: {
+    fontWeight: 'bold',
+  },
+  contractLink: {
+    fontSize: 14,
+    marginLeft: 5,
+  },
+  contractAddressText: {
+    fontSize: 14,
+    fontWeight: '500',
+    borderWidth: 1,
+    borderRadius: 19.5,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+  },
+  sendingToNetworkBadgeContainer: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  sendingToNetworkBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 19.5,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+  },
+  sendingToNetwork: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 10,
+  },
+  sendingToDescription: {
+    fontSize: 16,
+    marginTop: 10,
+    marginRight: 0,
+    marginBottom: 28,
+    marginLeft: 0,
+    borderBottomWidth: 1,
+    lineHeight: 24,
+  },
+  linkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+  },
+});
 
-const SendingInfoContainer = styled.View`
-  border-radius: 4px;
-  margin-bottom: 20px;
-`;
+const CloseButtonText = ({style, ...rest}: TextProps) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[{color: theme.dark ? White : Action}, style]}
+      {...rest}
+    />
+  );
+};
 
-const SendingToHeader = styled.View`
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-`;
+const SendingInfoContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.sendingInfoContainer, style]} {...rest} />
+);
 
-export const ContractHeaderContainer = styled.View`
-  justify-content: space-between;
-  display: flex;
-  flex-direction: row;
-  padding: 10px 0px 10px 0px;
-`;
+const SendingToHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.sendingToHeader, style]} {...rest} />
+);
 
-export const TitleContainer = styled(BaseText)<{
+export const ContractHeaderContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.contractHeaderContainer, style]} {...rest} />
+);
+
+interface TitleContainerProps {
   size?: number;
   marginLeft?: number;
-}>`
-  font-size: ${({size = 14}) => size}px;
-  color: ${({theme}) => theme.colors.text};
-  font-weight: bold;
-  margin-left: ${({marginLeft = 0}) => marginLeft}px;
-`;
+}
 
-export const ContractLink = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme}) => theme.colors.link};
-  margin-left: 5px;
-`;
+export const TitleContainer = React.forwardRef<
+  Text,
+  TitleContainerProps & TextProps
+>(({size = 14, marginLeft = 0, style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.titleContainer,
+        {fontSize: size, color: theme.colors.text, marginLeft},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+TitleContainer.displayName = 'TitleContainer';
 
-export const ContractAddressText = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: 500;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  border-radius: 19.5px;
-  padding: 9px 11px;
-`;
+export const ContractLink = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[styles.contractLink, {color: theme.colors.link}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+ContractLink.displayName = 'ContractLink';
 
-const SendingToNetworkBadgeContainer = styled.View`
-  flex-direction: row;
-  padding: 10px 0px 10px 0px;
-`;
+export const ContractAddressText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.contractAddressText,
+          {
+            color: theme.dark ? White : SlateDark,
+            borderColor: theme.dark ? SlateDark : Slate30,
+          },
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+ContractAddressText.displayName = 'ContractAddressText';
 
-const SendingToNetworkBadge = styled.View`
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  justify-content: flex-start;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  border-radius: 19.5px;
-  padding: 9px 11px;
-`;
+const SendingToNetworkBadgeContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.sendingToNetworkBadgeContainer, style]} {...rest} />
+);
 
-const SendingToNetwork = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: 500;
-  margin-left: 10px;
-`;
+const SendingToNetworkBadge = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.sendingToNetworkBadge,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SendingToDescription = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin: 10px 0px 28px 0px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  line-height: 24px;
-`;
+const SendingToNetwork = ({style, ...rest}: TextProps) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.sendingToNetwork,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const LinkContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-`;
+const SendingToDescription = ({style, ...rest}: TextProps) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.sendingToDescription,
+        {
+          color: theme.dark ? White : Black,
+          borderBottomColor: theme.dark ? LightBlack : LightBlue,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+export const LinkContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.linkContainer, style]} {...rest} />
+);
 
 interface Props {
   isVisible: boolean;

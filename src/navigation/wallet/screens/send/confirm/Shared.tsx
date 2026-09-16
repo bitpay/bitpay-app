@@ -15,8 +15,14 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import React, {ReactNode, useCallback, useEffect, useState} from 'react';
-import styled from 'styled-components/native';
-import {Pressable, ScrollView, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
@@ -63,67 +69,148 @@ import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinba
 import {SupportedTransactionCurrencies} from '../../../../../store/wallet/effects/paypro/paypro';
 
 // Styled
-export const ConfirmContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-`;
+const sharedStyles = StyleSheet.create({
+  confirmContainer: {
+    flex: 1,
+  },
+  confirmScrollView: {
+    marginTop: 20,
+  },
+  headerTitle: {
+    marginTop: 20,
+    marginBottom: 15,
+    justifyContent: 'center',
+    textTransform: 'uppercase',
+  },
+  detailContainerDefault: {
+    minHeight: 60,
+    paddingVertical: 20,
+    paddingHorizontal: 0,
+    justifyContent: 'center',
+  },
+  detailContainerWithMinHeight: {
+    padding: 0,
+    justifyContent: 'center',
+  },
+  pressableDetailContainer: {
+    minHeight: 60,
+    paddingVertical: 20,
+    paddingHorizontal: 0,
+    justifyContent: 'center',
+  },
+  detailRow: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  detailColumn: {
+    alignItems: 'flex-end',
+  },
+  detailsList: {
+    paddingHorizontal: gutter,
+  },
+  detailsListNoScroll: {
+    paddingHorizontal: gutter,
+  },
+  sendToPillContainer: {
+    height: 37,
+  },
+});
 
-export const HeaderTitle = styled(H6)`
-  margin-top: 20px;
-  margin-bottom: 15px;
-  justify-content: center;
-  text-transform: uppercase;
-`;
+export const ConfirmContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[sharedStyles.confirmContainer, style]} {...rest} />
+);
+
+export const ConfirmScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView
+    style={[sharedStyles.confirmScrollView, style]}
+    {...rest}
+  />
+);
+
+export const HeaderTitle: React.FC<React.ComponentProps<typeof H6>> = ({
+  style,
+  ...rest
+}) => <H6 style={[sharedStyles.headerTitle, style]} {...rest} />;
 
 export interface DetailContainerParams {
   height?: number;
   minHeight?: number;
 }
 
-export const DetailContainer = styled.View<DetailContainerParams>`
-  ${({minHeight}) =>
-    minHeight ? `min-height: ${minHeight}px;` : 'min-height: 60px'}
-  ${({minHeight}) => (minHeight ? 'padding: 0;' : 'padding: 20px 0;')}
-  justify-content: center;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
-`;
+export const DetailContainer: React.FC<
+  React.ComponentProps<typeof View> & DetailContainerParams
+> = ({height, minHeight, style, ...rest}) => (
+  <View
+    style={[
+      minHeight
+        ? sharedStyles.detailContainerWithMinHeight
+        : sharedStyles.detailContainerDefault,
+      minHeight ? {minHeight} : null,
+      height ? {height} : null,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const PressableDetailContainer = styled(
-  TouchableOpacity,
-)<DetailContainerParams>`
-  min-height: 60px;
-  padding: 20px 0;
-  justify-content: center;
-  ${({height}) => (height ? `height: ${height}px;` : '')}
-`;
+export const PressableDetailContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & DetailContainerParams
+> = ({height, minHeight: _minHeight, style, ...rest}) => (
+  <TouchableOpacity
+    style={[
+      sharedStyles.pressableDetailContainer,
+      height ? {height} : null,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const DetailRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-`;
+export const DetailRow: React.FC<React.ComponentProps<typeof Row>> = ({
+  style,
+  ...rest
+}) => <Row style={[sharedStyles.detailRow, style]} {...rest} />;
 
-export const DetailColumn = styled(Column)`
-  align-items: flex-end;
-`;
+export const DetailColumn: React.FC<React.ComponentProps<typeof Column>> = ({
+  style,
+  ...rest
+}) => <Column style={[sharedStyles.detailColumn, style]} {...rest} />;
 
-export const DetailsList = styled(ScrollView)`
-  padding: 0 ${ScreenGutter};
-`;
+export const DetailsList: React.FC<React.ComponentProps<typeof ScrollView>> = ({
+  style,
+  ...rest
+}) => <ScrollView style={[sharedStyles.detailsList, style]} {...rest} />;
 
-export const DetailsListNoScroll = styled.View`
-  padding: 0 ${ScreenGutter};
-`;
+export const DetailsListNoScroll: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[sharedStyles.detailsListNoScroll, style]} {...rest} />
+);
 
-export const ConfirmSubText = styled(H7)`
-  color: ${({theme}) => (theme.dark ? LuckySevens : theme.colors.text)};
-`;
+export const ConfirmSubText: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H7
+      style={[{color: theme.dark ? LuckySevens : theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-export const SendToPillContainer = styled.View`
-  height: 37px;
-`;
+export const SendToPillContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[sharedStyles.sendToPillContainer, style]} {...rest} />
+);
 
 // Row UI
 export const Header = ({
@@ -543,8 +630,8 @@ export const WalletSelector = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {hideAllBalances} = useAppSelector(({APP}) => APP);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
@@ -568,6 +655,11 @@ export const WalletSelector = ({
   const showSelector = useCallback(
     async (autoSelect: boolean) => {
       const {keyWallets, coinbaseWallets} = walletsAndAccounts;
+      const soleCoinbaseAccount =
+        coinbaseWallets.length === 1 &&
+        coinbaseWallets[0].coinbaseAccounts?.length === 1
+          ? coinbaseWallets[0].coinbaseAccounts[0]
+          : undefined;
       if (keyWallets.length || coinbaseWallets.length) {
         if (autoSelect) {
           if (
@@ -582,13 +674,9 @@ export const WalletSelector = ({
               wallet.id,
             ) as Wallet;
             return selectOption(() => onWalletSelect(fullWalletObj));
-          } else if (
-            coinbaseWallets.length === 1 &&
-            coinbaseWallets[0]?.coinbaseAccounts?.length === 1 &&
-            keyWallets.length === 0
-          ) {
+          } else if (soleCoinbaseAccount && keyWallets.length === 0) {
             return selectOption(() =>
-              onCoinbaseAccountSelect(coinbaseWallets[0].coinbaseAccounts[0]),
+              onCoinbaseAccountSelect(soleCoinbaseAccount),
             );
           }
         }
@@ -680,11 +768,21 @@ export const WalletSelector = ({
   );
 };
 
-const CurrencyImageAndBadgeContainer = styled.View<{height: number}>`
-  height: ${({height}) => height}px;
-  margin-left: 13px;
-  margin-right: 12px;
-`;
+const currencyImageAndBadgeStyles = StyleSheet.create({
+  container: {
+    marginLeft: 13,
+    marginRight: 12,
+  },
+});
+
+const CurrencyImageAndBadgeContainer: React.FC<
+  React.ComponentProps<typeof View> & {height: number}
+> = ({height, style, ...rest}) => (
+  <View
+    style={[currencyImageAndBadgeStyles.container, {height}, style]}
+    {...rest}
+  />
+);
 
 export const CurrencyIconAndBadge = ({
   coin,

@@ -1,10 +1,10 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {Black, SlateDark, White, Slate} from '../../../../styles/colors';
 import {BaseText, H7} from '../../../../components/styled/Text';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../contexts';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
@@ -13,54 +13,114 @@ import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const ChangellyPoliciesContainer = styled.SafeAreaView`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const styles = StyleSheet.create({
+  changellyPoliciesContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    height: 50,
+    marginRight: 10,
+  },
+  closeModalButton: {
+    margin: 15,
+    padding: 5,
+    height: 41,
+    width: 41,
+    borderRadius: 50,
+    backgroundColor: '#9ba3ae33',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  policiesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 15,
+  },
+  arrowContainer: {
+    marginLeft: 10,
+  },
+  providerContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  providerLabel: {
+    marginRight: 10,
+  },
+});
 
-const ModalHeader = styled.View`
-  height: 50px;
-  margin-right: 10px;
-`;
+const ChangellyPoliciesContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SafeAreaView
+      style={[
+        styles.changellyPoliciesContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CloseModalButton = styled(TouchableOpacity)`
-  margin: 15px;
-  padding: 5px;
-  height: 41px;
-  width: 41px;
-  border-radius: 50px;
-  background-color: #9ba3ae33;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+const ModalHeader: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.modalHeader, style]} {...rest} />;
 
-const PoliciesContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  justify-content: space-between;
-  margin: 15px;
-`;
+const CloseModalButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.closeModalButton, style]} {...rest} />
+);
 
-const PoliciesText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
+const PoliciesContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.policiesContainer, style]} {...rest} />
+);
 
-const ArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+const PoliciesText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[{color: theme.dark ? White : Black}, style]} {...rest} />
+  );
+};
 
-const ProviderContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
-`;
+const ArrowContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.arrowContainer, style]} {...rest} />;
 
-const ProviderLabel = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-right: 10px;
-`;
+const ProviderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.providerContainer, style]} {...rest} />;
+
+const ProviderLabel: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H7
+      style={[
+        styles.providerLabel,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 interface ChangellyPoliciesModalProps {
   isVisible: boolean;

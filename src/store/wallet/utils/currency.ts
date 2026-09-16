@@ -40,6 +40,10 @@ export const GetPrecision =
     | undefined
   > =>
   (_dispatch, getState) => {
+    if (!tokenAddress) {
+      return BitpaySupportedCoins[chain]?.unitInfo;
+    }
+
     const {
       WALLET: {customTokenDataByAddress},
     } = getState();
@@ -50,15 +54,8 @@ export const GetPrecision =
       ...customTokenDataByAddress,
       ...BitpaySupportedTokens,
     };
-    if (tokenAddress) {
-      const currencyName = getCurrencyAbbreviation(
-        tokenAddress ? tokenAddress : currencyAbbreviation,
-        chain,
-      );
-      return tokens[currencyName]?.unitInfo;
-    } else {
-      return BitpaySupportedCoins[chain]?.unitInfo;
-    }
+    const currencyName = getCurrencyAbbreviation(tokenAddress, chain);
+    return tokens[currencyName]?.unitInfo;
   };
 
 export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {

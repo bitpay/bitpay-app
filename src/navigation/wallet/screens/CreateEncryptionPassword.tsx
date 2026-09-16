@@ -3,7 +3,8 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {Caution, SlateDark, White} from '../../../styles/colors';
 import yup from '../../../lib/yup';
@@ -12,7 +13,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {WalletActions} from '../../../store/wallet/index';
-import {useLogger, useAppDispatch} from '../../../utils/hooks';
+import {useLogger, useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   dismissBottomNotificationModal,
@@ -25,40 +26,70 @@ import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 
 const Constants = BwcProvider.getInstance().getConstants();
 
-const EncryptPasswordContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  encryptPasswordContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  paragraph: {
+    fontWeight: 'normal',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  passwordFormContainer: {
+    marginVertical: 15,
+  },
+  passwordInputContainer: {
+    marginVertical: 15,
+  },
+  passwordActionContainer: {
+    marginTop: 20,
+  },
+  errorText: {
+    color: Caution,
+    fontSize: 12,
+    fontWeight: '500',
+    marginVertical: 5,
+    marginHorizontal: 'auto' as any,
+  },
+});
 
-const Paragraph = styled(BaseText)`
-  font-weight: normal;
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  line-height: 22px;
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const PasswordFormContainer = styled.View`
-  margin: 15px 0;
-`;
+const Paragraph: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.paragraph, {color: theme.dark ? White : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const PasswordInputContainer = styled.View`
-  margin: 15px 0;
-`;
+const PasswordFormContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.passwordFormContainer}>{children}</View>;
 
-const PasswordActionContainer = styled.View`
-  margin-top: 20px;
-`;
+const PasswordInputContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.passwordInputContainer}>{children}</View>;
 
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  margin: 5px auto;
-`;
+const PasswordActionContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.passwordActionContainer}>{children}</View>;
+
+const ErrorText: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <BaseText style={styles.errorText}>{children}</BaseText>
+);
 
 interface EncryptPasswordFieldValues {
   password: string;
@@ -69,8 +100,9 @@ const CreateEncryptionPassword = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const {
-    params: {key},
+    params: {keyId},
   } = useRoute<RouteProp<WalletGroupParamList, 'CreateEncryptPassword'>>();
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
 
   const schema = yup.object().shape({
     password: yup.string().required(),
@@ -149,10 +181,10 @@ const CreateEncryptionPassword = () => {
         <HeaderTitle>{t('Create Encryption Password')}</HeaderTitle>
       ),
     });
-  });
+  }, [navigation, t]);
 
   return (
-    <EncryptPasswordContainer>
+    <SafeAreaView style={styles.encryptPasswordContainer}>
       <ScrollView>
         <Paragraph>
           {t(
@@ -212,7 +244,7 @@ const CreateEncryptionPassword = () => {
           </PasswordActionContainer>
         </PasswordFormContainer>
       </ScrollView>
-    </EncryptPasswordContainer>
+    </SafeAreaView>
   );
 };
 

@@ -2,7 +2,8 @@ import React from 'react';
 import {Theme} from '@react-navigation/native';
 import SessionLogs from './screens/SessionLog';
 import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import StorageUsage from './screens/StorageUsage';
 import PortfolioDebug from './screens/PortfolioDebug';
 import PortfolioWalletDebug from './screens/PortfolioWalletDebug';
@@ -32,7 +33,6 @@ export enum AboutScreens {
 
 const AboutGroup = ({About, theme}: AboutProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <About.Group screenOptions={commonOptions}>
       <About.Screen

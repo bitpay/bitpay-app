@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
@@ -56,10 +56,12 @@ export type BackupParamList = {
   key: Key;
 };
 
-const BackupContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  backupContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+});
 
 type BackupNavigation = {
   navigate: (...args: any[]) => void;
@@ -80,9 +82,9 @@ export const backupRedirect = ({
   if (context === 'onboarding') {
     navigation.navigate('TermsOfUse');
   } else if (context === 'keySettings') {
-    navigation.navigate('KeySettings', {key});
+    navigation.navigate('KeySettings', {keyId: key?.id});
   } else if (context === 'settings') {
-    navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
+    navigation.navigate('Tabs', {screen: 'Settings'});
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
   } else if (!walletTermsAccepted) {
@@ -176,7 +178,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
   useAndroidBackHandler(() => true);
 
   return (
-    <BackupContainer testID="backup-container">
+    <SafeAreaView testID="backup-container" style={styles.backupContainer}>
       <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
@@ -201,7 +203,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
           {t('Backup your Recovery Phrase')}
         </Button>
       </CtaContainer>
-    </BackupContainer>
+    </SafeAreaView>
   );
 };
 

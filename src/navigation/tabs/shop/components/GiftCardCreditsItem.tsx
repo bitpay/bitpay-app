@@ -1,5 +1,7 @@
 import React, {useState} from 'react';
-import styled, {css, DefaultTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
+import {BitPayTheme} from '../../../../themes/bitpay';
+import {Image, StyleSheet, View} from 'react-native';
 import ErrorBoundary from 'react-native-error-boundary';
 import {SvgUri} from 'react-native-svg';
 import {CardConfig} from '../../../../store/shop/shop.models';
@@ -18,7 +20,7 @@ const hasWhiteBg = (logoBackgroundColor: string) =>
 const hasBlackBg = (logoBackgroundColor: string) =>
   logoBackgroundColor.toLowerCase() === '#000000';
 
-const getBorderColor = (logoBackgroundColor: string, theme: DefaultTheme) => {
+const getBorderColor = (logoBackgroundColor: string, theme: BitPayTheme) => {
   if (theme.dark && hasBlackBg(logoBackgroundColor)) {
     return LightBlack;
   }
@@ -28,53 +30,90 @@ const getBorderColor = (logoBackgroundColor: string, theme: DefaultTheme) => {
   return 'transparent';
 };
 
-const GiftCardItem = styled(LinearGradient)<GiftCardCreditsItemProps>`
-  ${({logoBackgroundColor, theme}) =>
-    css`
-      overflow: hidden;
-      border-radius: 30px;
-      border-width: 0.4px;
-      margin-top: 10px;
-      margin-bottom: 0px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      background-color: ${logoBackgroundColor};
-      border-color: ${getBorderColor(logoBackgroundColor, theme)};
-    `}
-`;
-
 const logoHeight = 55;
 
-const LogoContainer = styled.View`
-  height: ${logoHeight}px;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
-`;
+const styles = StyleSheet.create({
+  giftCardItem: {
+    overflow: 'hidden',
+    borderRadius: 30,
+    borderWidth: 0.4,
+    marginTop: 10,
+    marginBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoContainer: {
+    height: logoHeight,
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 1,
+  },
+  logo: {
+    height: logoHeight,
+    marginLeft: 10,
+  },
+  giftCardAmount: {
+    fontSize: 18,
+    fontWeight: '700',
+    flexGrow: 1,
+    marginRight: 20,
+    textAlign: 'right',
+  },
+  placeholderText: {
+    color: White,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+  },
+});
 
-const Logo = styled.Image`
-  height: ${logoHeight}px;
-  margin-left: 10px;
-`;
+const GiftCardItem = ({
+  logoBackgroundColor,
+  style,
+  ...rest
+}: GiftCardCreditsItemProps & React.ComponentProps<typeof LinearGradient>) => {
+  const theme = useTheme();
+  return (
+    <LinearGradient
+      style={[
+        styles.giftCardItem,
+        {
+          backgroundColor: logoBackgroundColor,
+          borderColor: getBorderColor(logoBackgroundColor, theme),
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
-  ${({logoBackgroundColor}) =>
-    css`
-      font-size: 18px;
-      font-weight: 700;
-      flex-grow: 1;
-      margin-right: 20px;
-      text-align: right;
-      color: ${hasWhiteBg(logoBackgroundColor) ? Black : White};
-    `}
-`;
+const LogoContainer = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.logoContainer, style]} {...rest} />
+);
 
-const PlaceholderText = styled(H4)`
-  color: ${White};
-  padding: 12px 30px;
-`;
+const Logo = ({style, ...rest}: React.ComponentProps<typeof Image>) => (
+  <Image style={[styles.logo, style]} {...rest} />
+);
+
+const GiftCardAmount = ({
+  logoBackgroundColor,
+  style,
+  ...rest
+}: GiftCardCreditsItemProps & React.ComponentProps<typeof BaseText>) => (
+  <BaseText
+    style={[
+      styles.giftCardAmount,
+      {color: hasWhiteBg(logoBackgroundColor) ? Black : White},
+      style,
+    ]}
+    {...rest}
+  />
+);
+
+const PlaceholderText = ({style, ...rest}: React.ComponentProps<typeof H4>) => (
+  <H4 style={[styles.placeholderText, style]} {...rest} />
+);
 
 const convertCssGradientToReactNativeGradient = (
   logoBackgroundColor: string,

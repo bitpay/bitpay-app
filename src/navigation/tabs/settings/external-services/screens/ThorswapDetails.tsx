@@ -3,7 +3,7 @@ import {RefreshControl, Text} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../../contexts';
 import moment from 'moment';
 import {Br} from '../../../../../components/styled/Containers';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';

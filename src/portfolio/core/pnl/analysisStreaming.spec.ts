@@ -760,6 +760,22 @@ describe('analysisStreaming preload helpers', () => {
     const chart = await buildPnlAnalysisChartSeriesFromStreamed(buildArgs());
 
     expect(chart).toEqual(compactPnlAnalysisResultForChart(full));
+    expect(chart.walletFiatBalanceByWalletId?.w1).toEqual(
+      full.points.map(point => point.byWalletId.w1?.fiatBalance ?? 0),
+    );
+    expect(chart.walletRemainingCostBasisFiatByWalletId?.w1).toEqual(
+      full.points.map(
+        point => point.byWalletId.w1?.remainingCostBasisFiat ?? 0,
+      ),
+    );
+    expect(chart.walletFiatBalanceByWalletId?.w2).toEqual(
+      full.points.map(point => point.byWalletId.w2?.fiatBalance ?? 0),
+    );
+    expect(chart.walletRemainingCostBasisFiatByWalletId?.w2).toEqual(
+      full.points.map(
+        point => point.byWalletId.w2?.remainingCostBasisFiat ?? 0,
+      ),
+    );
     expect(chart.singleAsset).toBe(true);
     expect(counters).toEqual({
       pnlAnalysisPointConstruction: 0,
@@ -862,6 +878,68 @@ describe('analysisStreaming preload helpers', () => {
 
     expect(chart.timestamps).toEqual([]);
     expect(chart.totalFiatBalance).toEqual([]);
+  });
+
+  it('keeps child wallet series when an aggregate filters down to one analyzable wallet', async () => {
+    const t0 = Date.parse('2024-01-01T00:00:00Z');
+    const t1 = Date.parse('2024-01-02T00:00:00Z');
+    const analyzableWallet = mkWallet({walletId: 'analyzable-wallet'});
+    const tokenAddress = 'soltokenmint111111111111111111111111111111';
+    const unresolvedTokenWallet = mkWallet({
+      walletId: 'unresolved-token-wallet',
+      walletName: 'Unresolved SOL Token Wallet',
+      chain: 'sol',
+      currencyAbbreviation: 'weird',
+      tokenAddress,
+      credentials: {
+        chain: 'sol',
+        coin: 'sol',
+        network: 'livenet',
+        token: {
+          address: tokenAddress,
+          symbol: 'WEIRD',
+        },
+      } as WalletCredentials,
+    });
+
+    const chart = await buildPnlAnalysisChartSeriesFromStreamed({
+      cfg: {quoteCurrency: 'USD'},
+      timeframe: '1D',
+      nowMs: t1,
+      maxPoints: 2,
+      startTs: t0,
+      endTs: t1,
+      ratePointsByAssetId: {
+        [analyzableWallet.assetId]: [
+          {ts: t0, rate: 1000},
+          {ts: t1, rate: 1000},
+        ],
+      },
+      wallets: [
+        {
+          wallet: analyzableWallet,
+          basePoint: mkPoint(t0, '1000000000000000000'),
+          points: emitPoints([]),
+        },
+        {
+          wallet: unresolvedTokenWallet,
+          basePoint: mkPoint(t0, '1000000000000'),
+          points: emitPoints([]),
+        },
+      ],
+    });
+
+    expect(chart.totalFiatBalance).toEqual([1000, 1000]);
+    expect(chart.walletFiatBalanceByWalletId).toEqual({
+      'analyzable-wallet': [1000, 1000],
+    });
+    expect(chart.walletRemainingCostBasisFiatByWalletId).toEqual({
+      'analyzable-wallet': [1000, 1000],
+    });
+    expect(chart.walletFiatBalanceByWalletId).not.toHaveProperty(
+      'unresolved-token-wallet',
+    );
+    expect(JSON.parse(JSON.stringify(chart))).toEqual(chart);
   });
 
   it('matches compacted full streamed analysis for a mixed-portfolio chart fixture', async () => {

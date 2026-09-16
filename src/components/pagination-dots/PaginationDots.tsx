@@ -1,15 +1,17 @@
+import React, {memo} from 'react';
 import {View} from 'react-native';
 import Animated, {
   Extrapolate,
   interpolate,
   useAnimatedStyle,
 } from 'react-native-reanimated';
+import type {SharedValue} from 'react-native-reanimated';
 import {Action, LuckySevens} from '../../styles/colors';
 
 const PaginationItem: React.FC<{
   index: number;
   length: number;
-  animValue: Animated.SharedValue<number>;
+  animValue: SharedValue<number>;
   isRotate?: boolean;
 }> = props => {
   const {animValue, index, length, isRotate} = props;
@@ -68,4 +70,4 @@ const PaginationItem: React.FC<{
   );
 };
 
-export default PaginationItem;
+export default memo(PaginationItem);

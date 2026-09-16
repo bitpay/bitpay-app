@@ -1,6 +1,7 @@
 import Modal from 'react-native-modal';
 import React from 'react';
-import styled from 'styled-components/native';
+import {Linking, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {H5, Paragraph, TextAlign} from '../../../../components/styled/Text';
 import {
   ActionContainer,
@@ -16,26 +17,51 @@ import {setShowKeyMigrationFailureModal} from '../../../../store/app/app.actions
 import {useTranslation} from 'react-i18next';
 import {openExternalUrl} from '../../../../store/app/app.effects';
 
-const KeyMigrationFailureModalContainer = styled.View`
-  justify-content: center;
-  width: ${WIDTH - 16}px;
-  padding: 20px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 10px;
-`;
+const styles = StyleSheet.create({
+  keyMigrationFailureModalContainer: {
+    justifyContent: 'center',
+    width: WIDTH - 16,
+    padding: 20,
+    borderRadius: 10,
+  },
+  title: {
+    fontWeight: '700',
+    marginLeft: 10,
+  },
+  titleRow: {
+    flexDirection: 'row',
+  },
+  ctaContainer: {
+    marginTop: 20,
+  },
+});
 
-const Title = styled(H5)`
-  font-weight: 700;
-  margin-left: 10px;
-`;
+const KeyMigrationFailureModalContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.keyMigrationFailureModalContainer,
+        {backgroundColor: theme.dark ? LightBlack : White},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const TitleRow = styled.View`
-  flex-direction: row;
-`;
+const Title: React.FC<React.ComponentProps<typeof H5>> = ({style, ...rest}) => (
+  <H5 style={[styles.title, style]} {...rest} />
+);
 
-const CtaContainer = styled.View`
-  margin-top: 20px;
-`;
+const TitleRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.titleRow}>{children}</View>
+);
+
+const CtaContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.ctaContainer}>{children}</View>
+);
 
 const KeyMigrationFailureModal: React.FC = () => {
   const {t} = useTranslation();

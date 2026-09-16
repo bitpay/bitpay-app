@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import {IconRow} from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import {SvgProps} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import RadiatingCircleWhite from '../../../../../assets/img/radiating-circle-white.svg';
 import RadiatingCircleBlack from '../../../../../assets/img/radiating-circle-black.svg';
 

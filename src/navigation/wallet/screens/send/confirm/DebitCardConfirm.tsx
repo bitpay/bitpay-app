@@ -46,7 +46,7 @@ import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {CardEffects} from '../../../../../store/card';
 import {Card} from '../../../../../store/card/card.models';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {Br} from '../../../../../components/styled/Containers';
 import MasterCardSvg from '../../../../../../assets/img/card/bitpay-card-mc.svg';
 import VisaCardSvg from '../../../../../../assets/img/card/bitpay-card-visa.svg';
@@ -72,23 +72,48 @@ export interface DebitCardConfirmParamList {
   txDetails?: TxDetails;
 }
 
-const CardTermsContainer = styled.View`
-  margin: 40px 0 20px;
-`;
+const styles = StyleSheet.create({
+  cardTermsContainer: {
+    marginTop: 40,
+    marginRight: 0,
+    marginBottom: 20,
+    marginLeft: 0,
+  },
+  cardDetailsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginRight: 0,
+    marginBottom: 10,
+    marginLeft: 0,
+  },
+  rightMargin: {
+    marginRight: 10,
+  },
+  balanceContainer: {
+    marginBottom: 10,
+  },
+});
 
-const CardDetailsContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin: 20px 0 10px;
-`;
+const CardTermsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.cardTermsContainer, style]} {...rest} />;
 
-const RightMargin = styled.View`
-  margin-right: 10px;
-`;
+const CardDetailsContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.cardDetailsContainer, style]} {...rest} />;
 
-const BalanceContainer = styled.View`
-  margin-bottom: 10px;
-`;
+const RightMargin: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.rightMargin, style]} {...rest} />;
+
+const BalanceContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.balanceContainer, style]} {...rest} />;
 
 const Confirm = () => {
   const {t} = useTranslation();

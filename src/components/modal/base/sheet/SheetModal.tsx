@@ -7,7 +7,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
@@ -32,6 +32,7 @@ interface Props extends SheetParams {
   paddingTop?: number;
   snapPoints?: string[];
   stackBehavior?: 'push' | 'replace';
+  unmountContentWhenHidden?: boolean;
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
@@ -54,16 +55,28 @@ const SheetModal: React.FC<SheetModalProps> = ({
   paddingTop,
   snapPoints,
   stackBehavior,
+  unmountContentWhenHidden = false,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   const theme = useTheme();
 
-  const [isModalVisible, setModalVisible] = useState(isVisible);
-  // Track transitional states to allow immediate re-open after dismiss
+  const [isModalVisible, setModalVisible] = useState(
+    modalLibrary === 'bottom-sheet' ? false : isVisible,
+  );
+  const [shouldRenderBottomSheetContent, setShouldRenderBottomSheetContent] =
+    useState(modalLibrary === 'bottom-sheet' ? isVisible : true);
+  const [shouldRenderModalContent, setShouldRenderModalContent] = useState(
+    modalLibrary !== 'modal' || !unmountContentWhenHidden || isVisible,
+  );
+  const isVisibleRef = useRef(isVisible);
+  const isBottomSheetPresentedRef = useRef(false);
+  const isBottomSheetReadyRef = useRef(false);
   const isDismissingRef = useRef(false);
   const pendingOpenRef = useRef(false);
+  const pendingDismissRef = useRef(false);
+  isVisibleRef.current = isVisible;
 
   const onAppStateChange = useCallback(
     (status: AppStateStatus) => {
@@ -77,28 +90,66 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
   useEffect(() => {
     setModalVisible(isVisible);
-    // Imperatively control bottom sheet to avoid race conditions between dismiss and present
-    if (modalLibrary === 'bottom-sheet') {
-      if (isVisible && !isModalVisible) {
-        // If a dismiss animation is in progress, queue the open until onDismiss fires
-        if (isDismissingRef.current) {
-          pendingOpenRef.current = true;
-        } else {
-          bottomSheetModalRef.current?.present();
-        }
-      } else if (!isVisible && isModalVisible) {
-        isDismissingRef.current = true;
-        bottomSheetModalRef.current?.dismiss();
+
+    if (modalLibrary !== 'bottom-sheet') {
+      if (!unmountContentWhenHidden || isVisible) {
+        setShouldRenderModalContent(true);
       }
+      return;
     }
 
+    if (isVisible) {
+      setShouldRenderBottomSheetContent(true);
+      pendingDismissRef.current = false;
+
+      if (isDismissingRef.current) {
+        pendingOpenRef.current = true;
+      }
+    } else if (isBottomSheetPresentedRef.current && !isDismissingRef.current) {
+      pendingOpenRef.current = false;
+
+      if (isBottomSheetReadyRef.current) {
+        isDismissingRef.current = true;
+        bottomSheetModalRef.current?.dismiss();
+      } else {
+        pendingDismissRef.current = true;
+      }
+    } else if (!isDismissingRef.current) {
+      pendingOpenRef.current = false;
+      setShouldRenderBottomSheetContent(false);
+    }
+  }, [isVisible, modalLibrary, unmountContentWhenHidden]);
+
+  useEffect(() => {
+    if (
+      modalLibrary !== 'bottom-sheet' ||
+      !isVisible ||
+      !shouldRenderBottomSheetContent ||
+      isDismissingRef.current ||
+      isBottomSheetPresentedRef.current
+    ) {
+      return;
+    }
+
+    const bottomSheetModal = bottomSheetModalRef.current;
+    if (!bottomSheetModal) {
+      return;
+    }
+
+    isBottomSheetPresentedRef.current = true;
+    isBottomSheetReadyRef.current = false;
+    pendingDismissRef.current = false;
+    bottomSheetModal.present();
+  }, [isVisible, modalLibrary, shouldRenderBottomSheetContent]);
+
+  useEffect(() => {
     const subscriptionAppStateChange = AppState.addEventListener(
       'change',
       onAppStateChange,
     );
 
     return () => subscriptionAppStateChange.remove();
-  }, [isVisible, isModalVisible, modalLibrary, onAppStateChange]);
+  }, [onAppStateChange]);
 
   const defaultBorderRadius = Platform.OS === 'ios' ? 12 : 0;
   const sheetBackgroundColor = useMemo(
@@ -140,18 +191,70 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
 
   const handleDismiss = useCallback(() => {
-    // Mark dismiss finished and flush any pending open request immediately
+    isBottomSheetPresentedRef.current = false;
+    isBottomSheetReadyRef.current = false;
     isDismissingRef.current = false;
-    if (pendingOpenRef.current) {
-      pendingOpenRef.current = false;
-      // Schedule on next frame to ensure internal state is fully reset
+    pendingDismissRef.current = false;
+
+    const shouldReopen =
+      pendingOpenRef.current && isVisibleRef.current === true;
+    pendingOpenRef.current = false;
+
+    if (shouldReopen) {
       requestAnimationFrame(() => {
-        bottomSheetModalRef.current?.present();
+        if (isVisibleRef.current) {
+          isBottomSheetPresentedRef.current = true;
+          isBottomSheetReadyRef.current = false;
+          bottomSheetModalRef.current?.present();
+        } else {
+          setShouldRenderBottomSheetContent(false);
+        }
       });
+    } else {
+      setShouldRenderBottomSheetContent(false);
     }
-    // Maintain parity with BaseModal's onModalHide if provided
+
     onModalHide?.();
   }, [onModalHide]);
+
+  const handleBottomSheetReady = useCallback(() => {
+    isBottomSheetReadyRef.current = true;
+
+    if (
+      pendingDismissRef.current &&
+      !isVisibleRef.current &&
+      !isDismissingRef.current
+    ) {
+      pendingDismissRef.current = false;
+      isDismissingRef.current = true;
+      bottomSheetModalRef.current?.dismiss();
+    }
+  }, []);
+
+  const handleBottomSheetAnimate = useCallback(
+    (_fromIndex: number, toIndex: number) => {
+      if (toIndex >= 0) {
+        handleBottomSheetReady();
+      }
+    },
+    [handleBottomSheetReady],
+  );
+
+  const handleBottomSheetChange = useCallback(
+    (index: number) => {
+      if (index >= 0) {
+        handleBottomSheetReady();
+      }
+    },
+    [handleBottomSheetReady],
+  );
+
+  const handleModalHide = useCallback(() => {
+    if (unmountContentWhenHidden && !isVisibleRef.current) {
+      setShouldRenderModalContent(false);
+    }
+    onModalHide?.();
+  }, [onModalHide, unmountContentWhenHidden]);
 
   const fullscreenStyles = useMemo(
     () =>
@@ -183,11 +286,17 @@ const SheetModal: React.FC<SheetModalProps> = ({
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
         accessibilityLabel={'modalBackdrop'}
+        onAnimate={handleBottomSheetAnimate}
+        onChange={handleBottomSheetChange}
         onDismiss={handleDismiss}
         ref={bottomSheetModalRef}>
-        <NavigationThemeContext.Provider value={themeValue}>
-          <BottomSheetView style={fullscreenStyles}>{children}</BottomSheetView>
-        </NavigationThemeContext.Provider>
+        {shouldRenderBottomSheetContent ? (
+          <NavigationThemeContext.Provider value={themeValue}>
+            <BottomSheetView style={fullscreenStyles}>
+              {children}
+            </BottomSheetView>
+          </NavigationThemeContext.Provider>
+        ) : null}
       </BottomSheetModal>
     </View>
   ) : (
@@ -203,7 +312,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
       onBackdropPress={onBackdropPress}
       animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
       animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
-      onModalHide={onModalHide}
+      onModalHide={handleModalHide}
       // swipeDirection={'down'}
       // onSwipeComplete={hideModal}
       style={{
@@ -211,10 +320,12 @@ const SheetModal: React.FC<SheetModalProps> = ({
         justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
         margin: 0,
       }}>
-      <>
-        {children}
-        <BlurContainer />
-      </>
+      {shouldRenderModalContent ? (
+        <>
+          {children}
+          <BlurContainer />
+        </>
+      ) : null}
     </BaseModal>
   );
 };

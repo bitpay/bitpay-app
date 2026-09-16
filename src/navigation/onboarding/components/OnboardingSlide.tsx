@@ -1,5 +1,7 @@
-import React, {ReactElement} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import React, {memo} from 'react';
+import type {ReactElement} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   ImageContainer,
   SubTextContainer,
@@ -13,7 +15,7 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 
-interface OnboardingSlide {
+export interface OnboardingSlideItem {
   title: string;
   text: string;
   subText?: string;
@@ -21,15 +23,17 @@ interface OnboardingSlide {
 }
 
 interface OnboardingSlideProps {
-  item: OnboardingSlide;
+  item: OnboardingSlideItem;
 }
 
-const SlideContainer = styled.View`
-  background: transparent;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  slideContainer: {
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+});
 
 export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
   const {title, text, subText, img} = item;
@@ -37,7 +41,7 @@ export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
   const themedText = {color: theme.colors.text};
 
   return (
-    <SlideContainer>
+    <View style={styles.slideContainer}>
       <ImageContainer justifyContent="flex-end">{img()}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'} style={themedText}>
@@ -56,8 +60,8 @@ export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
           </TextAlign>
         </SubTextContainer>
       )}
-    </SlideContainer>
+    </View>
   );
 };
 
-export default OnboardingSlide;
+export default memo(OnboardingSlide);
