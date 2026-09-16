@@ -355,7 +355,21 @@ describe('accountListCache', () => {
       expect(readAccountListSnapshot('missing')).toBeUndefined();
     });
 
-    it('evicts the least recently written snapshot from memory once the cache is full', () => {
+    it('keeps a snapshot that was only read alive once the cache is full', () => {
+      writeAccountListSnapshot('key-read', 'sig', ['read row']);
+      for (let index = 0; index < 49; index++) {
+        writeAccountListSnapshot(`key-${index}`, 'sig', [`row-${index}`]);
+      }
+
+      expect(readAccountListSnapshot('key-read')).toEqual(['read row']);
+
+      writeAccountListSnapshot('key-49', 'sig', ['row-49']);
+
+      expect(readAccountListSnapshot('key-read')).toEqual(['read row']);
+      expect(readAccountListSnapshot('key-0')).toBeUndefined();
+    });
+
+    it('evicts the least recently used snapshot from memory once the cache is full', () => {
       for (let index = 0; index < 50; index++) {
         writeAccountListSnapshot(`key-${index}`, 'sig', [`row-${index}`]);
       }
