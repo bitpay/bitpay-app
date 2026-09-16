@@ -3,6 +3,7 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
+import {IsVMChain} from './currency';
 
 const MAX_RESTORE_DEPTH = 10;
 
@@ -22,8 +23,36 @@ const getCurrencyIcon = (
   return CurrencyListIcons[iconKey];
 };
 
+const restoreChainsImgIcons = (row: Record<string, any>): void => {
+  const {chainsImg, currencyAbbreviation} = row;
+
+  if (!currencyAbbreviation || !chainsImg || typeof chainsImg !== 'object') {
+    return;
+  }
+
+  Object.keys(chainsImg).forEach(chain => {
+    const entry = chainsImg[chain];
+    if (!entry || entry.badgeUri || entry.badgeImg) {
+      return;
+    }
+
+    const badgeImg = getBadgeImg(
+      getCurrencyAbbreviation(
+        currencyAbbreviation.toLowerCase(),
+        chain.toLowerCase(),
+      ),
+      chain,
+    );
+
+    entry.badgeUri =
+      IsVMChain(chain) && !badgeImg
+        ? getCurrencyIcon(currencyAbbreviation, chain)
+        : badgeImg;
+  });
+};
+
 const restoreRowIcons = (row: Record<string, any>): void => {
-  const {chain} = row;
+  const {chain, chains} = row;
 
   if (row.currencyAbbreviation && chain) {
     const icon = getCurrencyIcon(row.currencyAbbreviation, chain);
@@ -39,6 +68,19 @@ const restoreRowIcons = (row: Record<string, any>): void => {
       chain,
     );
   }
+
+  if (!chain && !row.img && row.currencyAbbreviation && Array.isArray(chains)) {
+    const icon = chains
+      .map((rowChain: string) =>
+        getCurrencyIcon(row.currencyAbbreviation, rowChain),
+      )
+      .find(Boolean);
+    if (icon) {
+      row.img = icon;
+    }
+  }
+
+  restoreChainsImgIcons(row);
 
   if (chain && !row.chainImg) {
     const chainIcon = CurrencyListIcons[chain.toLowerCase()];
