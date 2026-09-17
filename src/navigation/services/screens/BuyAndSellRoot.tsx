@@ -51,6 +51,7 @@ import {
   calculateUsdToAltFiat,
   getBuyCryptoFiatLimits,
   getMoonpayEmbeddedAnonymousCredentials,
+  getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedEnabled,
   getMoonpayEmbeddedStatus,
@@ -141,6 +142,7 @@ import {BuyCryptoActions} from '../../../store/buy-crypto';
 import {
   getMoonpayFixedCurrencyAbbreviation,
   getMoonpayPaymentMethodFormat,
+  isMoonpayEmbeddedPaymentMethodEnabled,
   moonpayEnv,
 } from '../buy-crypto/utils/moonpay-utils';
 import {
@@ -2488,11 +2490,17 @@ const BuyAndSellRoot = ({
     const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
     const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
 
-    if (
-      !skipEmbedded &&
-      !buyCryptoConfig?.moonpay?.config?.embeddedBuyDisabled
-    ) {
-      if (moonpayEmbeddedEnabled && paymentMethod?.method === 'applePay') {
+    if (!skipEmbedded) {
+      // Embedded only works through MoonPay's connect flow.
+      // If the user isn't connected, the checks below fall through to
+      // the standard MoonPay (Kayak) flow.
+      const isMoonpayEmbeddedPaymentMethod =
+        isMoonpayEmbeddedPaymentMethodEnabled(
+          paymentMethod?.method,
+          buyCryptoConfig,
+          getMoonpayEmbeddedApplePaySupported(),
+        );
+      if (moonpayEmbeddedEnabled && isMoonpayEmbeddedPaymentMethod) {
         const embeddedStatus = getMoonpayEmbeddedStatus();
         const cachedCredentials = getMoonpayEmbeddedCredentials();
         logger.debug(
@@ -2733,7 +2741,7 @@ const BuyAndSellRoot = ({
         destinationChain,
       ),
       paymentMethodMoonpayFormat:
-        getMoonpayPaymentMethodFormat(paymentMethod.method) ?? undefined,
+        getMoonpayPaymentMethodFormat(paymentMethod.method, true) ?? undefined,
     };
 
     const checkoutParams = {

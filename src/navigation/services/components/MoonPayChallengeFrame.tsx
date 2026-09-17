@@ -16,6 +16,8 @@ export interface ChallengeErrorPayload {
 
 interface MoonPayChallengeFrameProps {
   challengeUrl: string;
+  clientToken: string;
+  theme?: 'dark' | 'light';
   onReady?: () => void;
   onComplete: (payload: ChallengeCompletePayload) => void;
   onCancelled: () => void;
@@ -24,6 +26,8 @@ interface MoonPayChallengeFrameProps {
 
 export function MoonPayChallengeFrame({
   challengeUrl,
+  clientToken,
+  theme,
   onReady,
   onComplete,
   onCancelled,
@@ -34,8 +38,14 @@ export function MoonPayChallengeFrame({
   const frameUrl = useMemo(() => {
     const url = new URL(challengeUrl);
     url.searchParams.set('channelId', channelId);
+    // Required for manual integrations: the same clientToken used for the
+    // other frames has to be appended to the challenge URL.
+    url.searchParams.set('clientToken', clientToken);
+    if (theme) {
+      url.searchParams.set('theme', theme);
+    }
     return url.toString();
-  }, [challengeUrl, channelId]);
+  }, [challengeUrl, channelId, clientToken, theme]);
 
   const handleMessage = useCallback(
     (data: FrameMessage) => {

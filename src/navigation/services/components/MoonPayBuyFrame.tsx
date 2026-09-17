@@ -1,8 +1,9 @@
 import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
   useRef,
   useState,
-  useCallback,
-  useImperativeHandle,
   forwardRef,
 } from 'react';
 import {
@@ -13,68 +14,64 @@ import {
 import {generateChannelId} from '../utils/moonpayFrameCrypto';
 import {MOONPAY_DEFAULT_FRAME_ORIGIN} from '../buy-crypto/utils/moonpay-utils';
 
-export interface ApplePayCompletePayload {
+export interface BuyFrameCompletePayload {
   transaction: {
     id: string;
     status: string;
   };
 }
 
-export interface ApplePayErrorPayload {
+export interface BuyFrameErrorPayload {
   code: string;
   message: string;
 }
 
-export type ApplePayFrameRef = {
+export type BuyFrameRef = {
   updateQuote: (signature: string) => void;
 };
 
-interface MoonPayApplePayFrameProps {
+interface MoonPayBuyFrameProps {
   clientToken: string;
   signature: string;
   externalTransactionId?: string;
-  theme?: 'dark' | 'light';
   onReady?: () => void;
-  onComplete: (payload: ApplePayCompletePayload) => void;
+  onComplete: (payload: BuyFrameCompletePayload) => void;
   onChallenge: (url: string) => void;
-  onError: (error: ApplePayErrorPayload) => void;
+  onError: (error: BuyFrameErrorPayload) => void;
   onQuoteExpired?: () => void;
-  // Customer dismissed the Apple Pay sheet. The frame stays usable, so this is
-  // an abandonment signal rather than an error.
-  onCancelled?: (code?: string) => void;
 }
 
-export const MoonPayApplePayFrame = forwardRef<
-  ApplePayFrameRef,
-  MoonPayApplePayFrameProps
->(
+// Headless "buy" frame used to execute a purchase from a quote signature that
+// already carries the payment method (e.g. a saved card). Used by the Cards
+// embedded flow the same way MoonPayApplePayFrame is used for Apple Pay,
+// except it has no visible button of its own: the app renders its own "Pay"
+// button and mounts this frame once the user taps it.
+export const MoonPayBuyFrame = forwardRef<BuyFrameRef, MoonPayBuyFrameProps>(
   (
     {
       clientToken,
       signature,
       externalTransactionId,
-      theme,
       onReady,
       onComplete,
       onChallenge,
       onError,
       onQuoteExpired,
-      onCancelled,
     },
     ref,
   ) => {
     const [channelId] = useState(generateChannelId);
     const webViewRef = useRef<MoonPayWebViewRef>(null);
 
-    const frameUrl = `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/apple-pay?${new URLSearchParams(
-      {
-        clientToken,
-        channelId,
-        signature,
-        ...(externalTransactionId && {externalTransactionId}),
-        ...(theme && {theme}),
-      },
-    ).toString()}`;
+    const [frameUrl] = useState(
+      () =>
+        `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/buy?${new URLSearchParams({
+          clientToken,
+          channelId,
+          signature,
+          ...(externalTransactionId && {externalTransactionId}),
+        }).toString()}`,
+    );
 
     useImperativeHandle(
       ref,
@@ -95,25 +92,8 @@ export const MoonPayApplePayFrame = forwardRef<
             onReady?.();
             break;
           case 'complete': {
-            const payload = data.payload as {
-              transaction:
-                | {id: string; status: string}
-                | {status: 'failed'; failureReason: string};
-            };
-            if (payload.transaction.status === 'failed') {
-              onError({
-                code: 'transactionFailed',
-                message: (payload.transaction as {failureReason: string})
-                  .failureReason,
-              });
-            } else {
-              onComplete({
-                transaction: payload.transaction as {
-                  id: string;
-                  status: string;
-                },
-              });
-            }
+            const payload = data.payload as BuyFrameCompletePayload;
+            onComplete(payload);
             break;
           }
           case 'challenge': {
@@ -124,13 +104,8 @@ export const MoonPayApplePayFrame = forwardRef<
             onChallenge(challengePayload.url);
             break;
           }
-          case 'cancelled': {
-            const payload = data.payload as {code?: string} | undefined;
-            onCancelled?.(payload?.code);
-            break;
-          }
           case 'error': {
-            const error = data.payload as ApplePayErrorPayload;
+            const error = data.payload as BuyFrameErrorPayload;
             if (error.code === 'quoteExpired') {
               onQuoteExpired?.();
             } else {
@@ -140,7 +115,7 @@ export const MoonPayApplePayFrame = forwardRef<
           }
         }
       },
-      [onReady, onComplete, onChallenge, onError, onQuoteExpired, onCancelled],
+      [onReady, onComplete, onChallenge, onError, onQuoteExpired],
     );
 
     return (
@@ -150,7 +125,7 @@ export const MoonPayApplePayFrame = forwardRef<
         channelId={channelId}
         onMessage={handleMessage}
         onHandshake={() => {}}
-        style={{height: __DEV__ ? 44 : 56, flex: undefined}}
+        style={{width: 0, height: 0, position: 'absolute'}}
       />
     );
   },

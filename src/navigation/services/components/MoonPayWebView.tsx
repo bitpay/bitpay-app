@@ -80,6 +80,7 @@ export const MoonPayWebView = forwardRef<
         automaticallyAdjustContentInsets
         mediaPlaybackRequiresUserAction={false}
         originWhitelist={['*']}
+        setSupportMultipleWindows={false}
         style={styles.webview}
       />
     </View>
