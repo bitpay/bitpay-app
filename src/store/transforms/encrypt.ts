@@ -38,6 +38,47 @@ export const decryptValue = (value: any, secretKey: string): any => {
   }
 };
 
+const bufferToBase64 = (value: any): any => {
+  if (Buffer.isBuffer(value)) {
+    return value.toString('base64');
+  }
+  if (Array.isArray(value?.data)) {
+    return Buffer.from(value.data).toString('base64');
+  }
+  return value;
+};
+
+const transformKeychain = (
+  keychain: any,
+  secretKey: string,
+  transformer: (value: any, secretKey: string) => any,
+  checkCondition: (value: string) => boolean,
+): any => {
+  const updatedKeychain = {...keychain};
+  const commonKeyChain = keychain.commonKeyChain;
+
+  if (
+    commonKeyChain &&
+    typeof commonKeyChain === 'string' &&
+    checkCondition(commonKeyChain)
+  ) {
+    updatedKeychain.commonKeyChain = transformer(commonKeyChain, secretKey);
+  }
+
+  ['privateKeyShare', 'reducedPrivateKeyShare'].forEach(field => {
+    const serialized = bufferToBase64(keychain[field]);
+    if (typeof serialized !== 'string' || !checkCondition(serialized)) {
+      return;
+    }
+    const result = transformer(serialized, secretKey);
+    updatedKeychain[field] = result.startsWith(encryptedPrefix)
+      ? result
+      : {type: 'Buffer', data: Array.from(Buffer.from(result, 'base64'))};
+  });
+
+  return updatedKeychain;
+};
+
 // Generic function to transform wallet store (encrypt or decrypt)
 const transformWalletStore = (
   state: any,
@@ -76,11 +117,33 @@ const transformWalletStore = (
       },
       {...properties},
     );
+    if (properties.keychain) {
+      updatedProperties.keychain = transformKeychain(
+        properties.keychain,
+        secretKey,
+        transformer,
+        checkCondition,
+      );
+    }
+    const methods = state.keys[keyId]?.methods;
+    const updatedMethods = methods?.keychain
+      ? {
+          ...methods,
+          keychain: transformKeychain(
+            methods.keychain,
+            secretKey,
+            transformer,
+            checkCondition,
+          ),
+        }
+      : methods;
+
     newState.keys = {
       ...newState.keys,
       [keyId]: {
         ...newState.keys[keyId],
         properties: updatedProperties,
+        methods: updatedMethods,
       },
     };
   });
