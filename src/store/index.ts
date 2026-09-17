@@ -512,8 +512,8 @@ const getStore = async () => {
           'RATE',
           'SHOP',
           'SHOP_CATALOG',
-          'WALLET',
         ],
+        plaintextFallbackStores: ['WALLET'],
       }),
     ],
   };

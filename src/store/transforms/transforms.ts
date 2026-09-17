@@ -20,7 +20,6 @@ import {
   decryptAppStore,
   encryptShopStore,
   decryptShopStore,
-  encryptWalletStore,
   decryptWalletStore,
 } from './encrypt';
 import {logManager} from '../../managers/LogManager';
@@ -138,6 +137,37 @@ export const bootstrapKey = (key: Key, id: string) => {
   }
 };
 
+const bwcClientFields = [
+  'request',
+  'bulkClient',
+  'timeout',
+  'logLevel',
+  'bp_partner',
+  'bp_partner_version',
+  'doNotVerifyPayPro',
+  'supportStaffWalletId',
+  '_events',
+  '_eventsCount',
+  '_maxListeners',
+];
+
+const rebuiltOnRehydrateFields = [
+  'balance',
+  'pendingTxps',
+  'isScanning',
+  'chainName',
+  'badgeImg',
+];
+
+// bootstrapWallets merges the BWC client into the wallet on every rehydrate.
+const toPersistedWallet = (wallet: Wallet): Wallet => {
+  const persistedWallet = {...wallet} as any;
+  [...bwcClientFields, ...rebuiltOnRehydrateFields].forEach(
+    field => delete persistedWallet[field],
+  );
+  return persistedWallet;
+};
+
 export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
@@ -150,6 +180,19 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
           ...key,
         };
       }
+      return {
+        ...inboundState,
+        keys: Object.entries(inboundState.keys).reduce(
+          (persistedKeys, [id, key]) => {
+            persistedKeys[id] = {
+              ...key,
+              wallets: (key.wallets || []).map(toPersistedWallet),
+            };
+            return persistedKeys;
+          },
+          {} as WalletState['keys'],
+        ),
+      };
     }
     return inboundState;
   },
@@ -161,9 +204,9 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
         const bootstrappedKey = bootstrapKey(key, id);
         const wallets = bootstrapWallets(key.wallets);
 
-        if (bootstrappedKey) {
-          outboundState.keys[id] = {...bootstrappedKey, wallets};
-        }
+        // Assigned even when the key fails to bootstrap: buildWalletObj is
+        // what restores the balance and pendingTxps defaults.
+        outboundState.keys[id] = {...(bootstrappedKey || key), wallets};
       }
     }
     return outboundState;
@@ -238,13 +281,8 @@ export const encryptSpecificFields = (secretKey: string) => {
   return createTransform(
     // Encrypt specified fields on inbound (saving to storage)
     (inboundState, key) => {
-      if (key === 'WALLET') {
-        try {
-          return encryptWalletStore(inboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('encrypt', 'Wallet', error);
-        }
-      }
+      // WALLET is covered by encryptTransform as a whole store; the outbound
+      // half below stays to read state written before that change.
       if (key === 'APP') {
         try {
           return encryptAppStore(inboundState, secretKey);

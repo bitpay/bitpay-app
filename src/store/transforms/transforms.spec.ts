@@ -349,6 +349,106 @@ describe('bindWalletKeys', () => {
 
 // ─── transformContacts ────────────────────────────────────────────────────────
 
+describe('bindWalletKeys inbound — bwc client fields', () => {
+  const makeState = () => ({
+    keys: {
+      key1: {
+        id: 'key1',
+        wallets: [
+          {
+            id: 'w1',
+            credentials: {walletId: 'w1'},
+            balance: {sat: 10},
+            request: {r: {}, baseUrl: 'https://bws'},
+            bulkClient: {baseUrl: 'https://bws'},
+            timeout: 50000,
+            logLevel: 'silent',
+            bp_partner: 'bitpay',
+            bp_partner_version: '1.0',
+            _events: {},
+            _eventsCount: 0,
+            _maxListeners: 10,
+            doNotVerifyPayPro: true,
+            supportStaffWalletId: 'staff-id',
+          },
+        ],
+      },
+    },
+  });
+
+  it('strips the bwc client transport config from the persisted payload', () => {
+    const persisted: any = bindWalletKeys.in!(makeState() as any, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    [
+      'request',
+      'bulkClient',
+      'timeout',
+      'logLevel',
+      'bp_partner',
+      'bp_partner_version',
+      '_events',
+      '_eventsCount',
+      '_maxListeners',
+      'doNotVerifyPayPro',
+      'supportStaffWalletId',
+    ].forEach(field => expect(wallet).not.toHaveProperty(field));
+  });
+
+  it('strips the fields buildWalletObj rebuilds on rehydrate', () => {
+    const state: any = makeState();
+    state.keys.key1.wallets[0].chainName = 'Bitcoin';
+    state.keys.key1.wallets[0].badgeImg = 'badge';
+    state.keys.key1.wallets[0].isScanning = true;
+    state.keys.key1.wallets[0].pendingTxps = [];
+
+    const persisted: any = bindWalletKeys.in!(state, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    ['balance', 'pendingTxps', 'isScanning', 'chainName', 'badgeImg'].forEach(
+      field => expect(wallet).not.toHaveProperty(field),
+    );
+  });
+
+  it('keeps wallet data', () => {
+    const persisted: any = bindWalletKeys.in!(makeState() as any, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    expect(wallet.id).toBe('w1');
+    expect(wallet.credentials).toEqual({walletId: 'w1'});
+  });
+
+  it('does not strip the live client off the in-memory state', () => {
+    const state = makeState();
+    bindWalletKeys.in!(state as any, 'WALLET', {});
+
+    expect(state.keys.key1.wallets[0].request).toBeDefined();
+    expect(state.keys.key1.wallets[0].bulkClient).toBeDefined();
+  });
+});
+
+describe('bindWalletKeys outbound — key that fails to bootstrap', () => {
+  it('still bootstraps its wallets so buildWalletObj restores the defaults', () => {
+    const {BwcProvider} = require('../../lib/bwc');
+    BwcProvider.getInstance().createKey.mockImplementationOnce(() => {
+      throw new Error('createKey failed');
+    });
+    const state: any = {
+      keys: {
+        key1: {
+          id: 'key1',
+          properties: {mnemonic: 'words'},
+          wallets: [makeWallet({id: 'w1'})],
+        },
+      },
+    };
+
+    const rehydrated: any = bindWalletKeys.out!(state, 'WALLET', {});
+
+    expect(rehydrated.keys.key1.wallets[0].id).toBe('mock-wallet');
+  });
+});
+
 describe('transformContacts', () => {
   const getOutbound = () => (transformContacts as any).out;
 
@@ -526,11 +626,10 @@ describe('encryptSpecificFields', () => {
     return {inFn: capturedIn, outFn: capturedOut};
   };
 
-  it('encrypts WALLET store on inbound', () => {
+  it('does not encrypt WALLET fields on inbound (encryptTransform covers it)', () => {
     const {inFn} = getTransform();
     const state: any = {keys: {}};
-    inFn(state, 'WALLET');
-    expect(encryptWalletStore).toHaveBeenCalledWith(state, secretKey);
+    expect(inFn(state, 'WALLET')).toBe(state);
   });
 
   it('encrypts APP store on inbound', () => {
@@ -580,16 +679,6 @@ describe('encryptSpecificFields', () => {
     const state: any = {foo: 'baz'};
     const result = outFn(state, 'RATE');
     expect(result).toBe(state);
-  });
-
-  it('inbound: handles encrypt error by calling logTransformFailure', () => {
-    (encryptWalletStore as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('encrypt failed');
-    });
-    const {inFn} = getTransform();
-    const state: any = {keys: {}};
-    // Should not throw — the try/catch inside swallows it
-    expect(() => inFn(state, 'WALLET')).not.toThrow();
   });
 
   it('outbound: handles decrypt error by calling logTransformFailure', () => {
