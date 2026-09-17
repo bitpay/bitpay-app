@@ -1092,7 +1092,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('does not mount the Home portfolio balance chart while its initial populate scope is still running', async () => {
+  it('mounts the Home portfolio balance chart with a loader while its initial populate scope is still running', async () => {
     resetState(true, {
       completedFullPopulate: false,
       populateStatus: makePopulateStatus(),
@@ -1111,11 +1111,13 @@ describe('portfolio chart visibility guards', () => {
     expect(
       view!.root.findAllByProps({testID: 'portfolio-balance-toggle'}).length,
     ).toBeGreaterThan(0);
-    expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
-    expect(
-      view!.root.findAllByProps({testID: 'portfolio-balance-change-row'})
-        .length,
-    ).toBe(0);
+    expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showLoaderWhenNoSnapshots: true,
+        isBalanceChartDataReadyToQuery: false,
+      }),
+      undefined,
+    );
   });
 
   it('renders the Home portfolio balance chart when a full-populate timestamp exists', async () => {
@@ -1207,7 +1209,7 @@ describe('portfolio chart visibility guards', () => {
   });
 
   it.each(chartSurfaceCases)(
-    'does not mount the %s balance chart while its initial populate scope is still running',
+    'mounts the %s balance chart with a loader while its initial populate scope is still running',
     async (_screen, makeScreen) => {
       resetState(true, {
         completedFullPopulate: false,
@@ -1218,7 +1220,13 @@ describe('portfolio chart visibility guards', () => {
         renderWithTheme(makeScreen());
       });
 
-      expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
+      expect(mockBalanceHistoryChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          showLoaderWhenNoSnapshots: true,
+          isBalanceChartDataReadyToQuery: false,
+        }),
+        undefined,
+      );
     },
   );
 

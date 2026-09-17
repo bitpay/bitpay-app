@@ -7,13 +7,20 @@ import configureTestStore from '@test/store';
 
 // Mock the app effect so we can verify dispatch calls without real side effects
 jest.mock('../../store/app/app.effects', () => ({
+  openExternalUrl: jest.fn((href: string) => ({
+    type: 'APP/OPEN_EXTERNAL_URL',
+    payload: href,
+  })),
   openUrlWithInAppBrowser: jest.fn((href: string) => ({
     type: 'APP/OPEN_URL_WITH_IN_APP_BROWSER',
     payload: href,
   })),
 }));
 
-import {openUrlWithInAppBrowser} from '../../store/app/app.effects';
+import {
+  openExternalUrl,
+  openUrlWithInAppBrowser,
+} from '../../store/app/app.effects';
 
 const renderWithStore = (ui: React.ReactElement, initialState = {}) => {
   const store = configureTestStore(initialState);
@@ -57,11 +64,8 @@ describe('Anchor', () => {
     expect(openUrlWithInAppBrowser).toHaveBeenCalledWith('https://bitpay.com');
   });
 
-  it('calls Linking.openURL when download=true and URL can be opened', async () => {
+  it('opens externally when download=true and URL can be opened', async () => {
     (Linking.canOpenURL as jest.Mock) = jest.fn(() => Promise.resolve(true));
-    const openURLSpy = jest
-      .spyOn(Linking, 'openURL')
-      .mockResolvedValue(undefined);
 
     const {getByText} = renderWithStore(
       <Anchor href="https://bitpay.com/file.pdf" download>
@@ -72,14 +76,15 @@ describe('Anchor', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(openURLSpy).toHaveBeenCalledWith('https://bitpay.com/file.pdf');
+    expect(openExternalUrl).toHaveBeenCalledWith(
+      'https://bitpay.com/file.pdf',
+      false,
+    );
     expect(openUrlWithInAppBrowser).not.toHaveBeenCalled();
-    openURLSpy.mockRestore();
   });
 
   it('falls back to in-app browser when download=true but URL cannot be opened', async () => {
     (Linking.canOpenURL as jest.Mock) = jest.fn(() => Promise.resolve(false));
-    const openURLSpy = jest.spyOn(Linking, 'openURL');
 
     const {getByText} = renderWithStore(
       <Anchor href="https://bitpay.com/file.pdf" download>
@@ -90,11 +95,10 @@ describe('Anchor', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(openURLSpy).not.toHaveBeenCalled();
+    expect(openExternalUrl).not.toHaveBeenCalled();
     expect(openUrlWithInAppBrowser).toHaveBeenCalledWith(
       'https://bitpay.com/file.pdf',
     );
-    openURLSpy.mockRestore();
   });
 
   it('dispatches in-app browser when Linking.canOpenURL throws', async () => {

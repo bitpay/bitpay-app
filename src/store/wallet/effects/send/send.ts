@@ -57,6 +57,7 @@ import {
   SolanaTokenData,
   toggleTSSModal,
 } from '../../../../utils/helper-methods';
+import {assertDeviceIntegrityForSensitiveAction} from '../../../../utils/deviceIntegrity';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
 import {startUpdateWalletStatus} from '../status/status';
@@ -1300,6 +1301,12 @@ export const publishAndSign =
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      try {
+        assertDeviceIntegrityForSensitiveAction('crypto-sign');
+      } catch (error) {
+        return reject(error);
+      }
+
       const {APP} = getState();
 
       if (APP.biometricLockActive && !signingMultipleProposals) {
@@ -1596,6 +1603,8 @@ export const publishAndSignMultipleProposals =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
+        assertDeviceIntegrityForSensitiveAction('crypto-sign');
+
         const signingMultipleProposals = true;
         let password: string | undefined;
         const {

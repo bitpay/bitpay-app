@@ -34,7 +34,7 @@ import {
 } from '../utils/moonpayFrameCrypto';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
-import {Linking, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   ExternalServicesGroupParamList,
@@ -460,7 +460,7 @@ const MoonpayBuyEmbeddedOnboarding = ({
     const {url} = event;
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       setConnectModalWebView({open: false, url: undefined});
-      Linking.openURL(url);
+      dispatch(AppEffects.openExternalUrl(url, false));
       navigation.goBack();
       return false;
     }

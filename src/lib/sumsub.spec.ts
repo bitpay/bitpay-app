@@ -36,6 +36,44 @@ describe('launchSumSubSdk', () => {
     expect(defaultBuilder.withLocale).toHaveBeenCalledWith('en');
   });
 
+  it('seeds the applicant with the account email and phone', async () => {
+    await launchSumSubSdk(ACCESS_TOKEN, jest.fn(), 'en', {
+      email: 'user@bitpay.com',
+      phone: '+15550001111',
+    });
+
+    const builder = (SNSMobileSDK.init as jest.Mock).mock.results[0].value;
+    expect(builder.withApplicantConf).toHaveBeenCalledWith({
+      email: 'user@bitpay.com',
+      phone: '+15550001111',
+    });
+  });
+
+  it('omits applicant fields the account does not have', async () => {
+    await launchSumSubSdk(ACCESS_TOKEN, jest.fn(), 'en', {
+      email: 'user@bitpay.com',
+    });
+
+    const builder = (SNSMobileSDK.init as jest.Mock).mock.results[0].value;
+    expect(builder.withApplicantConf).toHaveBeenCalledWith({
+      email: 'user@bitpay.com',
+    });
+  });
+
+  it('does not set an applicant conf when no account data is available', async () => {
+    await launchSumSubSdk(ACCESS_TOKEN, jest.fn(), 'en', {});
+
+    const builder = (SNSMobileSDK.init as jest.Mock).mock.results[0].value;
+    expect(builder.withApplicantConf).not.toHaveBeenCalled();
+  });
+
+  it('never sets a document country — the SDK cannot fix it client-side (RN-2904)', async () => {
+    await launchSumSubSdk(ACCESS_TOKEN, jest.fn());
+
+    const builder = (SNSMobileSDK.init as jest.Mock).mock.results[0].value;
+    expect(builder.withPreferredDocumentDefinitions).not.toHaveBeenCalled();
+  });
+
   it('resolves with the result returned by sdk.launch()', async () => {
     const result = await launchSumSubSdk(ACCESS_TOKEN, jest.fn());
 

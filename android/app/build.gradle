@@ -104,8 +104,8 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionName "14.46.3"
-        versionCode 91212441
+        versionCode 91212433
+        versionName "14.46.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
         testInstrumentationRunner "io.qameta.allure.android.runners.AllureAndroidJUnitRunner"
         ndk {

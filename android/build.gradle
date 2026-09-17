@@ -54,7 +54,24 @@ allprojects {
     }
 }
 
-gradle.afterProject { proj ->
+// Strip absolute build-machine paths (home dir + developer username)
+subprojects { subproject ->
+    def injectPrefixMap = {
+        def androidExt = subproject.extensions.findByName('android')
+        if (androidExt == null) return
+        def release = androidExt.buildTypes.findByName('release')
+        if (release == null) return
+        def prefixMap = "-ffile-prefix-map=${rootDir.parentFile.absolutePath}/=./".toString()
+        release.externalNativeBuild.cmake.cppFlags.add(prefixMap)
+        release.externalNativeBuild.cmake.cFlags.add(prefixMap)
+    }
+    if (subproject.state.executed) {
+        injectPrefixMap()
+    } else {
+        subproject.afterEvaluate { injectPrefixMap() }
+    }
+
+    gradle.afterProject { proj ->
     if (proj != rootProject && proj.hasProperty('android')) {
         proj.android {
             if (defaultConfig.minSdkVersion == null || defaultConfig.minSdkVersion.apiLevel < 24) {
@@ -95,4 +112,5 @@ gradle.afterProject { proj ->
             }
         }
     }
+}
 }

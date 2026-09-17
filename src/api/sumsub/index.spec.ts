@@ -1,11 +1,12 @@
 /**
- * Tests for src/api/sumsub/index.ts (SumSubApi.fetchAccessToken)
+ * Tests for src/api/sumsub/index.ts (the signed /api/v2 RPC wrappers)
  */
 
 import {
   SumSubApi,
   GET_KYC_ACCESS_TOKEN_METHOD,
   GET_KYC_STATUS_METHOD,
+  START_KYC_ATTEMPT_METHOD,
 } from './index';
 import BitPayIdApi from '../bitpay';
 
@@ -81,5 +82,28 @@ describe('SumSubApi.fetchKycStatus', () => {
       {},
     );
     expect(result).toEqual(payload);
+  });
+});
+
+describe('SumSubApi.startKycAttempt', () => {
+  it('marks the attempt as started via the signed /api/v2 RPC', async () => {
+    mockApiCall.mockResolvedValue({success: true});
+
+    await expect(SumSubApi.startKycAttempt(API_TOKEN)).resolves.toBeUndefined();
+
+    expect(mockApiCall).toHaveBeenCalledTimes(1);
+    expect(mockApiCall).toHaveBeenCalledWith(
+      API_TOKEN,
+      START_KYC_ATTEMPT_METHOD,
+      {platform: 'mobile'},
+    );
+  });
+
+  it('does not swallow errors from the RPC', async () => {
+    mockApiCall.mockRejectedValue(new Error('attempt endpoint down'));
+
+    await expect(SumSubApi.startKycAttempt(API_TOKEN)).rejects.toThrow(
+      'attempt endpoint down',
+    );
   });
 });

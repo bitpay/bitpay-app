@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.46.3",
+  "version": "14.46.0",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -105,6 +105,7 @@
     "https-browserify": "1.0.0",
     "i18next": "21.6.4",
     "intl": "1.2.5",
+    "jail-monkey": "3.0.0",
     "lodash.clonedeep": "4.5.0",
     "lodash.debounce": "4.0.8",
     "lodash.isequal": "4.5.0",

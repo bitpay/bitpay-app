@@ -80,7 +80,10 @@ import {
   ExternalServicesGroupParamList,
   ExternalServicesScreens,
 } from '../ExternalServicesGroup';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  openExternalUrl,
+  openUrlWithInAppBrowser,
+} from '../../../store/app/app.effects';
 import {
   getExternalServicesConfig,
   getCachedExternalServicesConfig,
@@ -227,7 +230,7 @@ import {SellCryptoActions} from '../../../store/sell-crypto';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
 import Modal from 'react-native-modal';
-import {ActivityIndicator, Linking, View} from 'react-native';
+import {ActivityIndicator, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import WebView, {
   WebViewMessageEvent,
@@ -2246,6 +2249,37 @@ const BuyAndSellRoot = ({
     }
   }, [selectedWallet, navigation, allRates, fiatCurrency, context]);
 
+  const openCheckoutWithInAppBrowser = async (
+    url: string,
+    errorTitle: string,
+    errorReason: string,
+  ): Promise<void> => {
+    const didOpenCheckout = await dispatch(openUrlWithInAppBrowser(url));
+
+    if (!navigation.isFocused()) {
+      return;
+    }
+
+    if (!didOpenCheckout) {
+      showError(
+        errorTitle,
+        t('Something went wrong. Please try again later.'),
+        errorReason,
+      );
+      setOpeningBrowser(false);
+      return;
+    }
+
+    await sleep(500);
+
+    if (!navigation.isFocused()) {
+      return;
+    }
+
+    setOpeningBrowser(false);
+    navigation.goBack();
+  };
+
   const goToBuyCheckout = (
     offer: CryptoOffer,
     paymentMethod: PaymentMethod,
@@ -2410,10 +2444,11 @@ const BuyAndSellRoot = ({
       }),
     );
 
-    dispatch(openUrlWithInAppBrowser(banxaOrderData.checkout_url));
-    await sleep(500);
-    setOpeningBrowser(false);
-    navigation.goBack();
+    await openCheckoutWithInAppBrowser(
+      banxaOrderData.checkout_url,
+      t('Banxa Error'),
+      'Unable to open Banxa checkout URL',
+    );
   };
 
   const goToMoonpayBuyPage = (
@@ -2750,7 +2785,7 @@ const BuyAndSellRoot = ({
     const {url} = event;
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       setWebViewModal({open: false, url: undefined});
-      Linking.openURL(url);
+      dispatch(openExternalUrl(url, false));
       navigation.goBack();
       return false;
     }
@@ -2875,10 +2910,11 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
-    await sleep(500);
-    setOpeningBrowser(false);
-    navigation.goBack();
+    await openCheckoutWithInAppBrowser(
+      data.urlWithSignature,
+      t('Ramp Network Error'),
+      'Unable to open Ramp checkout URL',
+    );
   };
 
   const goToSardineBuyPage = (
@@ -3023,10 +3059,11 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    dispatch(openUrlWithInAppBrowser(checkoutUrl));
-    await sleep(500);
-    setOpeningBrowser(false);
-    navigation.goBack();
+    await openCheckoutWithInAppBrowser(
+      checkoutUrl,
+      t('Sardine Error'),
+      'Unable to open Sardine checkout URL',
+    );
   };
 
   const goToSimplexBuyPage = (
@@ -3135,10 +3172,11 @@ const BuyAndSellRoot = ({
           destinationChain,
         );
 
-        dispatch(openUrlWithInAppBrowser(paymentUrl));
-        await sleep(500);
-        setOpeningBrowser(false);
-        navigation.goBack();
+        await openCheckoutWithInAppBrowser(
+          paymentUrl,
+          t('Simplex Error'),
+          'Unable to open Simplex checkout URL',
+        );
       })
       .catch(err => {
         const title = t('Simplex Error');
@@ -3321,7 +3359,18 @@ const BuyAndSellRoot = ({
     // This offer is opened in an external browser.
     // Apparently, Transak placed certain restrictions on opening its widgetUrl,
     // which causes it not to display correctly in the inappBrowser.
-    await Linking.openURL(data.urlWithSignature);
+    const didOpenCheckout = await dispatch(
+      openExternalUrl(data.urlWithSignature, false),
+    );
+    if (!didOpenCheckout) {
+      showError(
+        t('Transak Error'),
+        t('Something went wrong. Please try again later.'),
+        'Unable to open Transak checkout URL',
+      );
+      setOpeningBrowser(false);
+      return;
+    }
 
     await sleep(500);
     setOpeningBrowser(false);
@@ -3964,7 +4013,19 @@ const BuyAndSellRoot = ({
 
         // This offer is opened in an external browser as Simplex does not provide the deposit address in advance.
         // The user would have to go back and forth between the web and the app.
-        await Linking.openURL(paymentUrl);
+        const didOpenCheckout = await dispatch(
+          openExternalUrl(paymentUrl, false),
+        );
+        if (!didOpenCheckout) {
+          showError(
+            t('Simplex Error'),
+            t('Something went wrong. Please try again later.'),
+            'Unable to open Simplex checkout URL',
+          );
+          setOpeningBrowser(false);
+          return;
+        }
+
         await sleep(500);
 
         navigation.goBack();

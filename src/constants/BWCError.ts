@@ -43,7 +43,9 @@ export enum BWCErrorName {
   MISSING_PARAMETER = 'MISSING_PARAMETER',
   MISSING_PRIVATE_KEY = 'MISSING_PRIVATE_KEY',
   NO_PASSWORD = 'NO_PASSWORD',
+  /** @deprecated Typo fixed in BWC 11.10.10. Use NO_TRANSACTION instead */
   NO_TRASACTION = 'NO_TRASACTION',
+  NO_TRANSACTION = 'NO_TRANSACTION',
   NOT_AUTHORIZED = 'NOT_AUTHORIZED',
   NOT_ENOUGH_FEE = 'NOT_ENOUGH_FEE',
   NOT_FOUND = 'NOT_FOUND',
@@ -198,6 +200,7 @@ const _getErrorMessage = (err: Error) => {
     case BWCErrorName.NO_PASSWORD:
       return t('No password');
     case BWCErrorName.NO_TRASACTION:
+    case BWCErrorName.NO_TRANSACTION:
       return t(
         'Your request did not include a transaction. Please try again or contact your wallet provider',
       );

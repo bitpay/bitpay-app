@@ -1,6 +1,21 @@
 import mockRNDeviceInfo from 'react-native-device-info/jest/react-native-device-info-mock';
 jest.mock('react-native-device-info', () => mockRNDeviceInfo);
 
+jest.mock('jail-monkey', () => ({
+  __esModule: true,
+  default: {
+    isJailBroken: () => false,
+    hookDetected: () => false,
+    canMockLocation: () => false,
+    trustFall: () => false,
+    isOnExternalStorage: () => false,
+    AdbEnabled: () => false,
+    isDebuggedMode: () => Promise.resolve(false),
+    isDevelopmentSettingsMode: () => Promise.resolve(false),
+    jailBrokenMessage: () => '',
+  },
+}));
+
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 

@@ -1,7 +1,6 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   ScrollView,
-  Linking,
   RefreshControl,
   Image,
   DeviceEventEmitter,
@@ -78,6 +77,7 @@ import Markdown from 'react-native-markdown-display';
 import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import GiftCardTerms from '../../components/GiftCardTerms';
 import GiftCardImage from '../../components/GiftCardImage';
+import {openExternalUrl} from '../../../../../store/app/app.effects';
 
 const maxWidth = 320;
 
@@ -339,8 +339,10 @@ const GiftCardDetails = ({
       img: <InvoiceSvg theme={theme} />,
       description: t('View Invoice'),
       onPress: () =>
-        Linking.openURL(
-          `${BASE_BITPAY_URLS[appNetwork]}/invoice?id=${giftCard.invoiceId}`,
+        dispatch(
+          openExternalUrl(
+            `${BASE_BITPAY_URLS[appNetwork]}/invoice?id=${giftCard.invoiceId}`,
+          ),
         ),
     },
     {
@@ -484,10 +486,12 @@ const GiftCardDetails = ({
                 {cardConfig.redeemUrl ? (
                   <Button
                     onPress={() => {
-                      Linking.openURL(
-                        `${cardConfig.redeemUrl as string}${
-                          giftCard.claimCode
-                        }`,
+                      dispatch(
+                        openExternalUrl(
+                          `${cardConfig.redeemUrl as string}${
+                            giftCard.claimCode
+                          }`,
+                        ),
                       );
                       dispatch(
                         Analytics.track('Redeemed Gift Card', {
@@ -503,7 +507,7 @@ const GiftCardDetails = ({
                 ) : defaultClaimCodeType === 'link' ? (
                   <Button
                     onPress={() =>
-                      Linking.openURL(giftCard.claimLink as string)
+                      dispatch(openExternalUrl(giftCard.claimLink as string))
                     }
                     buttonStyle={'primary'}>
                     {cardConfig.redeemButtonText || 'View Redemption Code'}
@@ -555,8 +559,10 @@ const GiftCardDetails = ({
                     &nbsp;
                     <Link
                       onPress={() =>
-                        Linking.openURL(
-                          'https://bitpay.com/request-help/wizard',
+                        dispatch(
+                          openExternalUrl(
+                            'https://bitpay.com/request-help/wizard',
+                          ),
                         )
                       }>
                       {t('contact BitPay Support')}
