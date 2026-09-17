@@ -349,6 +349,64 @@ describe('bindWalletKeys', () => {
 
 // ─── transformContacts ────────────────────────────────────────────────────────
 
+describe('bindWalletKeys inbound — bwc client fields', () => {
+  const makeState = () => ({
+    keys: {
+      key1: {
+        id: 'key1',
+        wallets: [
+          {
+            id: 'w1',
+            credentials: {walletId: 'w1'},
+            balance: {sat: 10},
+            request: {r: {}, baseUrl: 'https://bws'},
+            bulkClient: {baseUrl: 'https://bws'},
+            timeout: 50000,
+            logLevel: 'silent',
+            bp_partner: 'bitpay',
+            bp_partner_version: '1.0',
+            _events: {},
+            _eventsCount: 0,
+          },
+        ],
+      },
+    },
+  });
+
+  it('strips the bwc client transport config from the persisted payload', () => {
+    const persisted: any = bindWalletKeys.in!(makeState() as any, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    [
+      'request',
+      'bulkClient',
+      'timeout',
+      'logLevel',
+      'bp_partner',
+      'bp_partner_version',
+      '_events',
+      '_eventsCount',
+    ].forEach(field => expect(wallet).not.toHaveProperty(field));
+  });
+
+  it('keeps wallet data', () => {
+    const persisted: any = bindWalletKeys.in!(makeState() as any, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    expect(wallet.id).toBe('w1');
+    expect(wallet.credentials).toEqual({walletId: 'w1'});
+    expect(wallet.balance).toEqual({sat: 10});
+  });
+
+  it('does not strip the live client off the in-memory state', () => {
+    const state = makeState();
+    bindWalletKeys.in!(state as any, 'WALLET', {});
+
+    expect(state.keys.key1.wallets[0].request).toBeDefined();
+    expect(state.keys.key1.wallets[0].bulkClient).toBeDefined();
+  });
+});
+
 describe('transformContacts', () => {
   const getOutbound = () => (transformContacts as any).out;
 

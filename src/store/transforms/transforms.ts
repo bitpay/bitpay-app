@@ -138,6 +138,29 @@ export const bootstrapKey = (key: Key, id: string) => {
   }
 };
 
+const bwcClientFields = [
+  'request',
+  'bulkClient',
+  'timeout',
+  'logLevel',
+  'bp_partner',
+  'bp_partner_version',
+  'doNotVerifyPayPro',
+  'supportStaffWalletId',
+  '_events',
+  '_eventsCount',
+  '_maxListeners',
+];
+
+// The wallet object is a merge of the BWC client instance, so persisting it
+// carries the client's transport config. bootstrapWallets rebuilds the client
+// on every rehydrate, so none of it survives anyway.
+const omitBwcClientFields = (wallet: Wallet): Wallet => {
+  const persistedWallet = {...wallet} as any;
+  bwcClientFields.forEach(field => delete persistedWallet[field]);
+  return persistedWallet;
+};
+
 export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
@@ -150,6 +173,19 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
           ...key,
         };
       }
+      return {
+        ...inboundState,
+        keys: Object.entries(inboundState.keys).reduce(
+          (persistedKeys, [id, key]) => {
+            persistedKeys[id] = {
+              ...key,
+              wallets: (key.wallets || []).map(omitBwcClientFields),
+            };
+            return persistedKeys;
+          },
+          {} as WalletState['keys'],
+        ),
+      };
     }
     return inboundState;
   },
