@@ -198,8 +198,15 @@ jest.mock('react-native-reanimated', () => {
       View: ({children, ...props}: any) =>
         ReactLib.createElement(View, props, children),
     },
-    useAnimatedStyle: (factory: () => any) => factory(),
-    useDerivedValue: (factory: () => number) => ({value: factory()}),
+    // Match the native hook contract, not the web-only dependency argument.
+    useAnimatedStyle: (factory: () => any, ...dependencies: unknown[]) => {
+      expect(dependencies).toHaveLength(0);
+      return factory();
+    },
+    useDerivedValue: (factory: () => number, ...dependencies: unknown[]) => {
+      expect(dependencies).toHaveLength(0);
+      return {value: factory()};
+    },
     withTiming: (value: number) => value,
   };
 });

@@ -211,8 +211,9 @@ const BottomNotification = React.memo(() => {
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
-      onBackdropPress={handleBackdropPress}>
-      <BottomNotificationContainer>
+      onBackdropPress={handleBackdropPress}
+      backgroundColor={theme.dark ? LightBlack : White}>
+      <BottomNotificationContainer testID="bottom-notification-content">
         <Row>
           <ImageContainer>{iconElement}</ImageContainer>
           <H4>{title}</H4>

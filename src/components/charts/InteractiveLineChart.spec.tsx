@@ -2,6 +2,7 @@ import React from 'react';
 import TestRenderer, {act} from 'react-test-renderer';
 import {View} from 'react-native';
 import {ThemeProvider} from 'styled-components/native';
+import type {DefaultTheme} from 'styled-components/native';
 import InteractiveLineChart from './InteractiveLineChart';
 import {SlateDark} from '../../styles/colors';
 import {withTiming} from 'react-native-reanimated';
@@ -32,9 +33,19 @@ jest.mock('react-native-reanimated', () => {
       cubic: jest.fn(),
       out: (value: unknown) => value,
     },
-    useAnimatedProps: (fn: () => unknown) => fn(),
-    useAnimatedStyle: (fn: () => unknown) => fn(),
-    useDerivedValue: (fn: () => unknown) => ({value: fn()}),
+    // Fail tests on arguments that Reanimated 4.6 warns about on native.
+    useAnimatedProps: (fn: () => unknown, ...dependencies: unknown[]) => {
+      expect(dependencies).toHaveLength(0);
+      return fn();
+    },
+    useAnimatedStyle: (fn: () => unknown, ...dependencies: unknown[]) => {
+      expect(dependencies).toHaveLength(0);
+      return fn();
+    },
+    useDerivedValue: (fn: () => unknown, ...dependencies: unknown[]) => {
+      expect(dependencies).toHaveLength(0);
+      return {value: fn()};
+    },
     useSharedValue: (value: unknown) => ReactLib.useRef({value}).current,
     withTiming: jest.fn((value: unknown) => value),
   };
@@ -159,6 +170,62 @@ describe('InteractiveLineChart', () => {
         value: expect.any(Number),
       }),
     );
+  });
+
+  it('updates captured scale, thickness and opacity without dependency arrays', () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+    const renderChart = (
+      scale: number | {value: number},
+      thickness: number,
+      opacity: number,
+    ) => (
+      <ThemeProvider theme={theme as DefaultTheme}>
+        <InteractiveLineChart
+          points={points}
+          color="#000000"
+          gradientFillColors={['#ffffff', '#ffffff']}
+          animated
+          lineThickness={thickness}
+          strokeScale={scale as any}
+          showFirstPointGuideLine
+          firstPointGuideLineOpacity={opacity}
+        />
+      </ThemeProvider>
+    );
+
+    act(() => {
+      renderer = TestRenderer.create(renderChart(0.5, 4, 0.25));
+    });
+    act(() => {
+      renderer.root
+        .findByType('LineGraph' as React.ElementType)
+        .props.onLayout({
+          nativeEvent: {layout: {x: 0, y: 10, width: 300, height: 200}},
+        });
+    });
+    expect(mockLatestLineGraphProps.lineThickness).toBe(8);
+
+    act(() => renderer.update(renderChart(0.25, 3, 0.8)));
+    expect(mockLatestLineGraphProps.lineThickness).toBe(12);
+    expect(findFirstPointGuideLineContainer(renderer).props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({opacity: 0.8})]),
+    );
+    const guideLine = renderer.root.findAll(
+      node => node.props.stroke === SlateDark && node.props.animatedProps,
+    )[0];
+    expect(guideLine.props.animatedProps.strokeWidth).toBe(4);
+
+    const sharedScale = {value: 0.5};
+    act(() => renderer.update(renderChart(sharedScale, 3, 0.8)));
+    expect(mockLatestLineGraphProps.lineThickness.value).toBeCloseTo(
+      3 / Math.pow(0.5, 0.9),
+    );
+    sharedScale.value = 0.25;
+    act(() => renderer.update(renderChart(sharedScale, 3, 0.8)));
+    expect(mockLatestLineGraphProps.lineThickness.value).toBeCloseTo(
+      3 / Math.pow(0.25, 0.9),
+    );
+    act(() => renderer.unmount());
   });
 
   it('passes an explicit y range for flat zero series without changing point values', () => {

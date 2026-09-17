@@ -1,0 +1,87 @@
+diff --git a/node_modules/react-native-reorderable-list/lib/commonjs/components/ReorderableListCore.js b/node_modules/react-native-reorderable-list/lib/commonjs/components/ReorderableListCore.js
+index b5e9cc3..003f77e 100644
+--- a/node_modules/react-native-reorderable-list/lib/commonjs/components/ReorderableListCore.js
++++ b/node_modules/react-native-reorderable-list/lib/commonjs/components/ReorderableListCore.js
+@@ -124,8 +124,8 @@ const ReorderableListCore = ({
+       return;
+     }
+
+-    // Can be heavy to loop through all items, defer the task to run after interactions.
+-    const task = _reactNative.InteractionManager.runAfterInteractions(() => {
++    // Defer cache cleanup until the JS thread is idle (RN 0.87+).
++    const task = requestIdleCallback(() => {
+       if (!markedCellsRef.current) {
+         return;
+       }
+@@ -140,7 +140,7 @@ const ReorderableListCore = ({
+       markedCellsRef.current = map;
+     });
+     return () => {
+-      task.cancel();
++      cancelIdleCallback(task);
+     };
+   }, [data]);
+   const createCellKey = (0, _react.useCallback)(cellKey => {
+diff --git a/node_modules/react-native-reorderable-list/lib/module/components/ReorderableListCore.js b/node_modules/react-native-reorderable-list/lib/module/components/ReorderableListCore.js
+index 2a050be..2b276a0 100644
+--- a/node_modules/react-native-reorderable-list/lib/module/components/ReorderableListCore.js
++++ b/node_modules/react-native-reorderable-list/lib/module/components/ReorderableListCore.js
+@@ -1,6 +1,6 @@
+ function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+-import { FlatList, InteractionManager, Platform } from 'react-native';
++import { FlatList, Platform } from 'react-native';
+ import { Gesture, GestureDetector, State } from 'react-native-gesture-handler';
+ import Animated, { Easing, measure, runOnJS, runOnUI, scrollTo, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useComposedEventHandler, useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+ import { ReorderableListContext } from '../contexts';
+@@ -116,8 +116,8 @@ const ReorderableListCore = ({
+       return;
+     }
+
+-    // Can be heavy to loop through all items, defer the task to run after interactions.
+-    const task = InteractionManager.runAfterInteractions(() => {
++    // Defer cache cleanup until the JS thread is idle (RN 0.87+).
++    const task = requestIdleCallback(() => {
+       if (!markedCellsRef.current) {
+         return;
+       }
+@@ -132,7 +132,7 @@ const ReorderableListCore = ({
+       markedCellsRef.current = map;
+     });
+     return () => {
+-      task.cancel();
++      cancelIdleCallback(task);
+     };
+   }, [data]);
+   const createCellKey = useCallback(cellKey => {
+diff --git a/node_modules/react-native-reorderable-list/src/components/ReorderableListCore.tsx b/node_modules/react-native-reorderable-list/src/components/ReorderableListCore.tsx
+index b5f9860..bcf6e71 100644
+--- a/node_modules/react-native-reorderable-list/src/components/ReorderableListCore.tsx
++++ b/node_modules/react-native-reorderable-list/src/components/ReorderableListCore.tsx
+@@ -12,7 +12,6 @@ import {
+   CellRendererProps,
+   FlatList,
+   FlatListProps,
+-  InteractionManager,
+   LayoutChangeEvent,
+   Platform,
+   ScrollView,
+@@ -201,8 +200,8 @@ const ReorderableListCore = <T,>(
+       return;
+     }
+
+-    // Can be heavy to loop through all items, defer the task to run after interactions.
+-    const task = InteractionManager.runAfterInteractions(() => {
++    // Defer cache cleanup until the JS thread is idle (RN 0.87+).
++    const task = requestIdleCallback(() => {
+       if (!markedCellsRef.current) {
+         return;
+       }
+@@ -219,6 +218,6 @@ const ReorderableListCore = <T,>(
+     });
+
+     return () => {
+-      task.cancel();
++      cancelIdleCallback(task);
+     };
+   }, [data]);
