@@ -793,7 +793,7 @@ export const startTSSCeremony =
 
                     if (
                       status.wallet?.id === walletFromBWS.id &&
-                      status.wallet?.copayers?.length >= key.tssSession.n
+                      status.wallet?.copayers?.length >= key.tssSession!.n
                     ) {
                       walletFromBWS = status.wallet;
                       if (status.wallet?.publicKeyRing) {
@@ -816,21 +816,27 @@ export const startTSSCeremony =
             const currentCopayersCount =
               finalWalletClient.credentials?.publicKeyRing?.length || 0;
 
-            if (currentCopayersCount >= key.tssSession.n) {
+            if (currentCopayersCount >= key.tssSession!.n) {
               logManager.debug(
-                `[TSS Ceremony] All ${key.tssSession.n} copayers found after ${attempt} attempt(s)`,
+                `[TSS Ceremony] All ${
+                  key.tssSession!.n
+                } copayers found after ${attempt} attempt(s)`,
               );
               break;
             }
 
             if (attempt < maxRetries) {
               logManager.debug(
-                `[TSS Ceremony] Only ${currentCopayersCount}/${key.tssSession.n} copayers found, retrying in ${delayMs}ms...`,
+                `[TSS Ceremony] Only ${currentCopayersCount}/${
+                  key.tssSession!.n
+                } copayers found, retrying in ${delayMs}ms...`,
               );
               await new Promise(resolve => setTimeout(resolve, delayMs));
             } else {
               logManager.warn(
-                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${key.tssSession.n} copayers found. Continuing anyway...`,
+                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
+                  key.tssSession!.n
+                } copayers found. Continuing anyway...`,
               );
             }
           }

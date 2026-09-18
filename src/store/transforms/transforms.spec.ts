@@ -1,3 +1,15 @@
+jest.mock('../../constants/config', () => ({
+  BASE_BWS_URL: 'https://example.invalid',
+  BLOCKCHAIN_EXPLORERS: Object.fromEntries(
+    ['eth', 'matic', 'arb', 'base', 'op', 'sol'].map(chain => [
+      chain,
+      {livenet: '', testnet: ''},
+    ]),
+  ),
+}));
+
+jest.mock('../../utils/helper-methods', () => ({getErrorString: String}));
+
 /**
  * Tests for src/store/transforms/transforms.ts
  *
@@ -105,6 +117,8 @@ import {
   transformPortfolioPopulateStatus,
   encryptSpecificFields,
 } from './transforms';
+
+import {rehydrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
 
 import {
   encryptWalletStore,
@@ -271,15 +285,20 @@ describe('bootstrapWallets', () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('filters out wallets that threw during bootstrapping', () => {
+  it('keeps a wallet that fails to bootstrap, and renderable', () => {
     const {BwcProvider} = require('../../lib/bwc');
     const instance = BwcProvider.getInstance();
     instance.getClient.mockImplementationOnce(() => {
       throw new Error('bad wallet');
     });
     const badWallet = makeWallet({id: 'bad', credentials: {walletId: 'bad'}});
-    const result = bootstrapWallets([badWallet]);
-    expect(result).toHaveLength(0);
+
+    const [result] = bootstrapWallets([badWallet]) as any[];
+
+    expect(result.id).toBe('bad');
+    expect(result.credentials.walletId).toBe('bad');
+    expect(result.isComplete()).toBe(false);
+    expect(result.credentials.isComplete()).toBe(false);
   });
 
   it('resets transactionHistory for each wallet', () => {
@@ -345,9 +364,111 @@ describe('bindWalletKeys', () => {
     const result = getOutbound()(state);
     expect(Array.isArray(result.keys['key-1'].wallets)).toBe(true);
   });
+
+  it.each([
+    ['readonly', {}],
+    ['hardware', {hardwareSource: 'ledger'}],
+  ])(
+    'outbound: bootstraps wallets for a %s key without properties',
+    (id, keyOverrides) => {
+      const {BwcProvider} = require('../../lib/bwc');
+      const instance = BwcProvider.getInstance();
+      instance.getClient.mockClear();
+      instance.createKey.mockClear();
+      const wallet = makeWallet();
+      const key = makeKey({
+        ...keyOverrides,
+        wallets: [wallet],
+        properties: undefined,
+      });
+      const state: any = {keys: {[id]: key}};
+
+      const result = getOutbound()(state);
+
+      expect(instance.getClient).toHaveBeenCalledWith(
+        JSON.stringify(wallet.credentials),
+      );
+      expect(result.keys[id].wallets).toHaveLength(1);
+      expect(instance.createKey).not.toHaveBeenCalled();
+    },
+  );
+
+  it('outbound: leaves migrated wallets for the secrets rehydration effect', () => {
+    const {BwcProvider} = require('../../lib/bwc');
+    const instance = BwcProvider.getInstance();
+    instance.getClient.mockClear();
+    const wallet = makeWallet({credentials: {xPubKey: 'xpub-public'}});
+    const state: any = {
+      secretsMigrated: true,
+      keys: {key1: makeKey({properties: undefined, wallets: [wallet]})},
+    };
+
+    const result = getOutbound()(state);
+
+    expect(instance.getClient).not.toHaveBeenCalled();
+    expect(result.keys.key1.wallets).toEqual([wallet]);
+  });
 });
 
 // ─── transformContacts ────────────────────────────────────────────────────────
+
+describe('bindWalletKeys inbound — bwc client fields', () => {
+  const makeState = () => ({
+    keys: {
+      key1: {
+        id: 'key1',
+        wallets: [
+          {
+            id: 'w1',
+            credentials: {walletId: 'w1'},
+            balance: {sat: 10},
+            request: {r: {}, baseUrl: 'https://bws'},
+            bulkClient: {baseUrl: 'https://bws'},
+            timeout: 50000,
+            logLevel: 'silent',
+            bp_partner: 'bitpay',
+            bp_partner_version: '1.0',
+            _events: {},
+            _eventsCount: 0,
+          },
+        ],
+      },
+    },
+  });
+
+  it('strips the bwc client transport config from the persisted payload', () => {
+    const persisted: any = bindWalletKeys.in!(makeState() as any, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    [
+      'request',
+      'bulkClient',
+      'timeout',
+      'logLevel',
+      'bp_partner',
+      'bp_partner_version',
+      '_events',
+      '_eventsCount',
+    ].forEach(field => expect(wallet).not.toHaveProperty(field));
+  });
+
+  it('keeps wallet data', () => {
+    const persisted: any = bindWalletKeys.in!(makeState() as any, 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    expect(wallet.id).toBe('w1');
+    expect(wallet.credentials).toEqual({walletId: 'w1'});
+    expect(wallet.balance).toEqual({sat: 10});
+  });
+
+  it('does not strip the live client off the in-memory state', () => {
+    const state = makeState();
+    bindWalletKeys.in!(state as any, 'WALLET', {});
+
+    expect(state.keys.key1.wallets[0].request).toBeDefined();
+    expect(state.keys.key1.wallets[0].bulkClient).toBeDefined();
+  });
+});
 
 describe('transformContacts', () => {
   const getOutbound = () => (transformContacts as any).out;
@@ -599,5 +720,153 @@ describe('encryptSpecificFields', () => {
     const {outFn} = getTransform();
     const state: any = {keys: {}};
     expect(() => outFn(state, 'WALLET')).not.toThrow();
+  });
+});
+
+describe('bindWalletKeys inbound — wallet secrets', () => {
+  const makeState = (secretsMigrated: boolean) =>
+    ({
+      secretsMigrated,
+      pendingJoinerSession: {
+        sessionId: 'joiner-session',
+        partyKey: {xPrivKey: 'joiner-private-key'},
+      },
+      keys: {
+        key1: {
+          id: 'key1',
+          properties: {mnemonic: 'abandon abandon about'},
+          methods: {keychain: {commonKeyChain: 'ckc'}},
+          tssSession: {
+            id: 'tss-session',
+            partyKey: {xPrivKey: 'party-private-key'},
+            sessionExport: 'session-export',
+            password: 'ceremony-password',
+            status: 'ceremony_in_progress',
+          },
+          wallets: [
+            {
+              id: 'w1',
+              credentials: {
+                xPubKey: 'xpub-public',
+                xPrivKey: 'legacy-xpriv',
+                xPrivKeyEncrypted: 'legacy-encrypted-xpriv',
+                requestPrivKey: 'request-priv-key',
+                walletPrivKey: 'wallet-priv-key',
+                personalEncryptingKey: 'personal-encrypting-key',
+                sharedEncryptingKey: 'shared-encrypting-key',
+                mnemonic: 'legacy mnemonic',
+                mnemonicEncrypted: 'legacy-encrypted-mnemonic',
+                entropySource: 'legacy-entropy',
+              },
+            },
+          ],
+        },
+      },
+    } as any);
+
+  it('drops them once the migration completed', () => {
+    const persisted: any = bindWalletKeys.in!(makeState(true), 'WALLET', {});
+    const wallet = persisted.keys.key1.wallets[0];
+
+    expect(persisted.keys.key1.properties).toBeUndefined();
+    expect(persisted.keys.key1.methods).toBeUndefined();
+    [
+      'xPrivKey',
+      'xPrivKeyEncrypted',
+      'requestPrivKey',
+      'walletPrivKey',
+      'personalEncryptingKey',
+      'sharedEncryptingKey',
+      'mnemonic',
+      'mnemonicEncrypted',
+      'entropySource',
+    ].forEach(field => expect(wallet.credentials[field]).toBeUndefined());
+    expect(wallet.credentials.xPubKey).toBe('xpub-public');
+    expect(persisted.keys.key1.tssSession).toBeUndefined();
+    expect(persisted.pendingJoinerSession).toBeNull();
+  });
+
+  it('strips a pending joiner secret even when there are no keys yet', () => {
+    const persisted: any = bindWalletKeys.in!(
+      {
+        keys: {},
+        secretsMigrated: true,
+        pendingJoinerSession: {
+          sessionId: 'joiner-session',
+          partyKey: {xPrivKey: 'joiner-private-key'},
+        },
+      } as any,
+      'WALLET',
+      {},
+    );
+
+    expect(persisted.pendingJoinerSession).toBeNull();
+  });
+});
+
+describe('rehydrateWalletSecrets — bwc binding', () => {
+  const getInstance = () => require('../../lib/bwc').BwcProvider.getInstance();
+
+  const makeState = (secrets: any) => () =>
+    ({
+      WALLET: {
+        secretsMigrated: true,
+        pendingJoinerSession: null,
+        keys: {
+          key1: {
+            id: 'key1',
+            wallets: [{id: 'w1', credentials: {xPubKey: 'xpub-public'}}],
+          },
+        },
+      },
+      WALLET_SECRETS: {
+        byKeyId: {},
+        byKeyIdAndWalletId: {},
+        tssSessionByKeyId: {},
+        pendingJoinerSession: null,
+        ...secrets,
+      },
+    } as any);
+
+  it('hands the restored secrets to the bwc client and the key', () => {
+    const instance = getInstance();
+    instance.getClient.mockClear();
+    instance.createKey.mockClear();
+    const dispatch = jest.fn();
+
+    rehydrateWalletSecrets()(
+      dispatch as any,
+      makeState({
+        byKeyId: {key1: {mnemonic: 'abandon abandon about'}},
+        byKeyIdAndWalletId: {key1: {w1: {requestPrivKey: 'request-priv-key'}}},
+      }) as any,
+      undefined,
+    );
+
+    expect(JSON.parse(instance.getClient.mock.calls[0][0])).toEqual({
+      xPubKey: 'xpub-public',
+      requestPrivKey: 'request-priv-key',
+    });
+    expect(instance.createKey).toHaveBeenCalledWith({
+      seedType: 'object',
+      seedData: {mnemonic: 'abandon abandon about'},
+    });
+  });
+
+  it('still returns renderable wallets when the secrets are unreadable', () => {
+    const instance = getInstance();
+    instance.getClient.mockClear();
+    instance.getClient.mockImplementationOnce(() => {
+      throw new Error('missing credentials');
+    });
+    const dispatch = jest.fn();
+
+    rehydrateWalletSecrets()(dispatch as any, makeState({}) as any, undefined);
+
+    const [action] = dispatch.mock.calls[0];
+    const wallet = action.payload.keys.key1.wallets[0];
+    expect(wallet.id).toBe('w1');
+    expect(wallet.isComplete()).toBe(false);
+    expect(wallet.credentials.isComplete()).toBe(false);
   });
 });

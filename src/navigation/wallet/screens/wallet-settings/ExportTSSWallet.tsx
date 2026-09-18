@@ -216,11 +216,11 @@ const ExportTSSWallet = () => {
     if (!decryptPassword && checkPrivateKeyEncrypted(key)) {
       throw new Error('Key is encrypted, decryptPassword is required');
     } else if (decryptPassword && checkPrivateKeyEncrypted(key)) {
-      const tempKey = new TssKey(key.methods.toObj());
+      const tempKey = new TssKey(key.methods!.toObj());
       tempKey.decrypt(decryptPassword);
       keyData = tempKey.toObj();
     } else {
-      keyData = key.methods.toObj();
+      keyData = key.methods!.toObj();
     }
     const backup: {
       isTSS: boolean;

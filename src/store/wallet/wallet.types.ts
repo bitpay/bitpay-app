@@ -1,6 +1,7 @@
 import {CurrencyOpts} from '../../constants/currencies';
 import {
   Key,
+  KeyProperties,
   Token,
   Wallet,
   TransactionProposal,
@@ -61,6 +62,9 @@ export enum WalletActionTypes {
   SET_PENDING_JOINER_SESSION = 'WALLET/SET_PENDING_JOINER_SESSION',
   REMOVE_PENDING_JOINER_SESSION = 'WALLET/REMOVE_PENDING_JOINER_SESSION',
   SET_TSS_ENABLED = 'WALLET/SET_TSS_ENABLED',
+  SET_SECRETS_MIGRATED = 'WALLET/SET_SECRETS_MIGRATED',
+  SUCCESS_MIGRATE_WALLET_SECRETS = 'WALLET/SUCCESS_MIGRATE_WALLET_SECRETS',
+  SUCCESS_REHYDRATE_WALLET_SECRETS = 'WALLET/SUCCESS_REHYDRATE_WALLET_SECRETS',
 }
 
 interface successWalletStoreInit {
@@ -343,7 +347,6 @@ interface successUpdateWalletBalancesAndStatus {
 
 interface removePendingJoinerSession {
   type: typeof WalletActionTypes.REMOVE_PENDING_JOINER_SESSION;
-  payload: string;
 }
 
 interface setPendingJoinerSession {
@@ -356,7 +359,35 @@ interface setTssEnabled {
   payload: boolean;
 }
 
+interface SetSecretsMigrated {
+  type: typeof WalletActionTypes.SET_SECRETS_MIGRATED;
+  payload: boolean;
+}
+
+interface SuccessMigrateWalletSecrets {
+  type: typeof WalletActionTypes.SUCCESS_MIGRATE_WALLET_SECRETS;
+  payload: {
+    byKeyId: {[keyId: string]: KeyProperties};
+    byKeyIdAndWalletId: {
+      [keyId: string]: {[walletId: string]: any};
+    };
+    tssSessionByKeyId: {[keyId: string]: NonNullable<Key['tssSession']>};
+    pendingJoinerSession: PendingJoinerSession | null;
+  };
+}
+
+interface SuccessRehydrateWalletSecrets {
+  type: typeof WalletActionTypes.SUCCESS_REHYDRATE_WALLET_SECRETS;
+  payload: {
+    keys: {[keyId: string]: Key};
+    pendingJoinerSession: PendingJoinerSession | null;
+  };
+}
+
 export type WalletActionType =
+  | SetSecretsMigrated
+  | SuccessMigrateWalletSecrets
+  | SuccessRehydrateWalletSecrets
   | successWalletStoreInit
   | failedWalletStoreInit
   | successCreateKey

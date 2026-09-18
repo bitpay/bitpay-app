@@ -13,6 +13,22 @@
 
 import configureTestStore from '@test/store';
 import {Network} from '../../../../constants';
+import {applyMiddleware, combineReducers, createStore, Middleware} from 'redux';
+import thunk from 'redux-thunk';
+import {walletReducer} from '../../wallet.reducer';
+import {walletSecretsReducer} from '../../../wallet-secrets/wallet-secrets.reducer';
+import {successCreateKey} from '../../wallet.actions';
+import {WalletActionTypes} from '../../wallet.types';
+
+jest.mock('../../../../constants/config', () => ({
+  BASE_BWS_URL: 'https://example.invalid',
+  BLOCKCHAIN_EXPLORERS: Object.fromEntries(
+    ['eth', 'matic', 'arb', 'base', 'op', 'sol'].map(chain => [
+      chain,
+      {livenet: '', testnet: ''},
+    ]),
+  ),
+}));
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -882,6 +898,78 @@ describe('startUpdateAllKeyAndWalletStatus', () => {
 });
 
 describe('updateWalletStatus', () => {
+  it.each(['individual', 'bulk'])(
+    'persists credentials recovered by %s status without repeating key updates',
+    async path => {
+      const wallet = makeWallet();
+      const key = makeKey([wallet]);
+      const actions: any[] = [];
+      const recordActions: Middleware = () => next => action => {
+        actions.push(action);
+        return next(action);
+      };
+      const store = createStore(
+        combineReducers({
+          WALLET: walletReducer,
+          WALLET_SECRETS: walletSecretsReducer,
+          APP: () => ({defaultAltCurrency: {isoCode: 'USD'}}),
+          RATE: () => ({rates: {}, lastDayRates: {}}),
+        }),
+        applyMiddleware(thunk, recordActions),
+      );
+      store.dispatch(successCreateKey({key}));
+      const recoverSecrets = (credentials: any) => {
+        credentials.walletPrivKey = 'recovered-wallet-private-key';
+        credentials.sharedEncryptingKey = 'recovered-shared-encryption-key';
+      };
+      wallet.getStatus.mockImplementation((_opts: any, cb: any) => {
+        recoverSecrets(wallet.credentials);
+        cb(null, makeStatus());
+      });
+      (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+        getClient: () => ({
+          bulkClient: {
+            getStatusAll: (credentials: any[], _opts: any, cb: any) => {
+              recoverSecrets(credentials[0]);
+              cb(null, [makeBulkStatus()]);
+            },
+          },
+        }),
+      });
+      const refresh = () =>
+        path === 'bulk'
+          ? updateKeyStatus({key, force: true, dataOnly: true})
+          : updateWalletStatus({
+              wallet,
+              defaultAltCurrencyIsoCode: 'USD',
+              rates: {},
+              lastDayRates: {},
+            });
+      const cachedBalance = wallet.balance;
+
+      await store.dispatch<any>(refresh());
+
+      expect(
+        store.getState().WALLET_SECRETS.byKeyIdAndWalletId[key.id][wallet.id],
+      ).toEqual({
+        walletPrivKey: 'recovered-wallet-private-key',
+        sharedEncryptingKey: 'recovered-shared-encryption-key',
+      });
+      expect(store.getState().WALLET.keys[key.id].wallets[0].balance).toBe(
+        cachedBalance,
+      );
+      expect(
+        actions.filter(
+          action => action.type === WalletActionTypes.SUCCESS_UPDATE_KEY,
+        ),
+      ).toHaveLength(1);
+
+      actions.length = 0;
+      await store.dispatch<any>(refresh());
+      expect(actions).toEqual([]);
+    },
+  );
+
   it('resolves with cached balance when getStatus returns an error', async () => {
     const store = configureTestStore({WALLET: {useUnconfirmedFunds: false}});
 
