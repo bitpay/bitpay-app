@@ -127,6 +127,9 @@ const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
 ]);
 
 let backupTriggerAction: string | null = null;
+// Bounds the retry below: persist:root is written with throttle 0, so an
+// unrecoverable filesystem keeps re-arming on every slice change
+let backupFailures = 0;
 
 let storeDispatch: ((action: AnyAction) => void) | null = null;
 // Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
@@ -215,15 +218,21 @@ export const reduxStorage: Storage = {
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
         const hasBackup = await backupFileExists();
-        if (backupTriggerAction || !hasBackup) {
+        if ((backupTriggerAction || !hasBackup) && backupFailures < 3) {
           const triggerLabel = backupTriggerAction ?? 'no existing backup';
           backupPersistRoot(valueToStore)
-            .then(() =>
+            .then(() => {
+              backupFailures = 0;
               logManager.debug(
                 `Backed up store to filesystem, triggered by ${triggerLabel}.`,
-              ),
-            )
-            .catch(() => {});
+              );
+            })
+            // Retry on the next persist:root write rather than waiting for
+            // another trigger action, which may never come
+            .catch(() => {
+              backupFailures++;
+              backupTriggerAction = triggerLabel;
+            });
           backupTriggerAction = null;
         }
       }
@@ -445,6 +454,7 @@ const getStore = async () => {
         if (action && typeof action.type === 'string') {
           if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
             backupTriggerAction = action.type;
+            backupFailures = 0;
           }
         }
       } catch (_) {}
