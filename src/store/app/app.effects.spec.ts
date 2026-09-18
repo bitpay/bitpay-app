@@ -188,9 +188,6 @@ jest.mock('../card', () => ({CardActions: {}, CardEffects: {}}));
 jest.mock('../sumsub', () => ({
   SumSubEffects: {startGetKycStatus: jest.fn(() => ({type: 'GET_KYC_STATUS'}))},
 }));
-jest.mock('../coinbase', () => ({
-  coinbaseInitialize: jest.fn(() => ({type: 'COINBASE_INITIALIZE'})),
-}));
 jest.mock('../zenledger', () => ({
   zenledgerInitialize: jest.fn(() => ({type: 'ZENLEDGER_INITIALIZE'})),
 }));

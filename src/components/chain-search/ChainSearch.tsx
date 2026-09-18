@@ -320,9 +320,7 @@ const SearchComponent = <T extends SearchableItem>({
         }
         setChainsOptions(chains);
       } else if (
-        ['sell', 'send', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
-          context,
-        )
+        ['sell', 'send', 'swapFrom', 'contact', 'scanner'].includes(context)
       ) {
         const hasChainAssetsList = searchFullList[0]?.chainAssetsList;
         const isFilterActive = selectedChainFilterOption || normalizedText;

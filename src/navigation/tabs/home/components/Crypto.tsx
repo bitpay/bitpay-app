@@ -8,7 +8,6 @@ import {
   WIDTH,
 } from '../../../../components/styled/Containers';
 import {Key} from '../../../../store/wallet/wallet.models';
-import ConnectCoinbase from './cards/ConnectCoinbase';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
@@ -46,7 +45,6 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import Button from '../../../../components/button/Button';
-import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
 import {
   HOME_CARD_HEIGHT,
   HOME_CARD_WIDTH,
@@ -62,7 +60,6 @@ import {
 import usePortfolioKeyPercentages from '../../../../portfolio/ui/hooks/usePortfolioKeyPercentages';
 import useRuntimeFiatRateSeriesCache from '../../../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
@@ -231,7 +228,6 @@ export const createHomeCardList = ({
   navigation,
   keys,
   dispatch,
-  linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
   hideKeyBalance,
@@ -245,7 +241,6 @@ export const createHomeCardList = ({
   navigation: any;
   keys: Key[];
   dispatch: AppDispatch;
-  linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
@@ -263,7 +258,6 @@ export const createHomeCardList = ({
   const defaults: {id: string; component: ReactElement}[] = [];
   const hasKeys = keys.length;
   const hasGiftCards = false;
-  const hasCoinbase = linkedCoinbase;
 
   if (hasKeys) {
     const walletCards = keys.map(key => {
@@ -376,15 +370,6 @@ export const createHomeCardList = ({
 
   // defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
 
-  if (hasCoinbase) {
-    list.push({
-      id: 'coinbaseBalanceCard',
-      component: <CoinbaseBalanceCard layout={homeCarouselLayoutType} />,
-    });
-  } else {
-    defaults.push({id: 'connectToCoinbase', component: <ConnectCoinbase />});
-  }
-
   if (hasGiftCards) {
     // TODO
   }
@@ -408,9 +393,6 @@ const Crypto = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const linkedCoinbase = useAppSelector(
-    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
-  );
   const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
@@ -495,7 +477,6 @@ const Crypto = () => {
       navigation,
       keys: keyList,
       dispatch,
-      linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
       hideKeyBalance: hideAllBalances,
@@ -512,7 +493,6 @@ const Crypto = () => {
         navigation,
         keys: keyList,
         dispatch,
-        linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
@@ -526,7 +506,6 @@ const Crypto = () => {
     navigation,
     keyList,
     dispatch,
-    linkedCoinbase,
     homeCarouselConfig,
     homeCarouselLayoutType,
     hideAllBalances,
@@ -535,7 +514,7 @@ const Crypto = () => {
     visiblePortfolioPercentageDifferenceByKey,
   ]);
 
-  if (!hasKeys && !linkedCoinbase) {
+  if (!hasKeys) {
     return (
       <CryptoContainer>
         <NoKeysSectionHeaderContainer>
@@ -553,22 +532,6 @@ const Crypto = () => {
                     navigation.navigate('CreationOptions');
                   }}>
                   {translate('Create, import or join a shared wallet')}
-                </Button>
-              </NoKeysButtonWrapper>
-              <NoKeysButtonWrapper>
-                <Button
-                  buttonStyle={'secondary'}
-                  onPress={() => {
-                    dispatch(
-                      Analytics.track('Clicked Connect Coinbase', {
-                        context: 'NoKeysCryptoContainer',
-                      }),
-                    );
-                    navigation.navigate('CoinbaseRoot');
-                  }}>
-                  {linkedCoinbase
-                    ? 'Coinbase'
-                    : translate('Connect your Coinbase account')}
                 </Button>
               </NoKeysButtonWrapper>
               {/*<Button

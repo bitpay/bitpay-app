@@ -64,7 +64,7 @@ describe('getHiddenKeyIdsFromHomeCarouselConfig', () => {
         {id: 'k1', show: false},
         {id: 'k2', show: true},
         {id: 'missing-key', show: false},
-        {id: 'coinbaseBalanceCard', show: false},
+        {id: 'createWallet', show: false},
       ] as any,
     });
 

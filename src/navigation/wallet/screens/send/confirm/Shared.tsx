@@ -31,10 +31,7 @@ import {
   findWalletById,
   WalletsAndAccounts,
 } from '../../../../../store/wallet/utils/wallet';
-import {
-  buildTestBadge,
-  WalletRowProps,
-} from '../../../../../components/list/WalletRow';
+import {buildTestBadge} from '../../../../../components/list/WalletRow';
 import KeyWalletsRow, {
   KeyWallet,
 } from '../../../../../components/list/KeyWalletsRow';
@@ -45,7 +42,6 @@ import {
   WalletSelectMenuHeaderContainer,
   WalletSelectMenuHeaderIconContainer,
 } from '../../GlobalSelect';
-import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
@@ -59,7 +55,6 @@ import {LuckySevens} from '../../../../../styles/colors';
 import {IsERCToken} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
-import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
 import {SupportedTransactionCurrencies} from '../../../../../store/wallet/effects/paypro/paypro';
 
 // Styled
@@ -236,9 +231,6 @@ export const SendingTo: React.FC<SendingToProps> = ({
                 <CopiedSvg width={18} />
               ) : recipientType === 'contact' || recipientEmail ? (
                 <ContactIcon name={description} size={20} />
-              ) : recipientType === 'coinbase' ||
-                recipientType === 'coinbaseDeposit' ? (
-                <CoinbaseSvg width={18} height={18} />
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
               )
@@ -520,7 +512,6 @@ export const RemainingTime = ({
 export const WalletSelector = ({
   walletsAndAccounts,
   onWalletSelect,
-  onCoinbaseAccountSelect,
   onBackdropPress,
   isVisible,
   setWalletSelectorVisible,
@@ -531,7 +522,6 @@ export const WalletSelector = ({
 }: {
   walletsAndAccounts: WalletsAndAccounts;
   onWalletSelect: (wallet: Wallet) => void;
-  onCoinbaseAccountSelect: (account: WalletRowProps) => void;
   onBackdropPress: () => void;
   isVisible: boolean;
   setWalletSelectorVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -567,14 +557,13 @@ export const WalletSelector = ({
 
   const showSelector = useCallback(
     async (autoSelect: boolean) => {
-      const {keyWallets, coinbaseWallets} = walletsAndAccounts;
-      if (keyWallets.length || coinbaseWallets.length) {
+      const {keyWallets} = walletsAndAccounts;
+      if (keyWallets.length) {
         if (autoSelect) {
           if (
             keyWallets.length === 1 &&
             keyWallets[0].accounts.length === 1 &&
-            keyWallets[0].accounts[0].wallets.length === 1 &&
-            coinbaseWallets.length === 0
+            keyWallets[0].accounts[0].wallets.length === 1
           ) {
             const wallet = keyWallets[0].accounts[0].wallets[0];
             const fullWalletObj = findWalletById(
@@ -582,14 +571,6 @@ export const WalletSelector = ({
               wallet.id,
             ) as Wallet;
             return selectOption(() => onWalletSelect(fullWalletObj));
-          } else if (
-            coinbaseWallets.length === 1 &&
-            coinbaseWallets[0]?.coinbaseAccounts?.length === 1 &&
-            keyWallets.length === 0
-          ) {
-            return selectOption(() =>
-              onCoinbaseAccountSelect(coinbaseWallets[0].coinbaseAccounts[0]),
-            );
           }
         }
         await sleep(10);
@@ -598,46 +579,25 @@ export const WalletSelector = ({
         dispatch(showNoWalletsModal({navigation}));
       }
     },
-    [
-      dispatch,
-      navigation,
-      onCoinbaseAccountSelect,
-      onWalletSelect,
-      selectOption,
-      walletsAndAccounts,
-    ],
+    [dispatch, navigation, onWalletSelect, selectOption, walletsAndAccounts],
   );
 
   const hasWallets = (wa: WalletsAndAccounts) => {
-    let hasWallets: boolean = false;
-    let hasCoinbase: boolean = false;
-
-    const {keyWallets, coinbaseWallets} = wa;
-    for (const keyWallet of keyWallets) {
+    for (const keyWallet of wa.keyWallets) {
       const accountWallets = keyWallet.accounts.map(account => account.wallets);
       const utxoAndEvmWallets = Object.values(
         keyWallet.mergedUtxoAndEvmAccounts,
       );
       if (accountWallets.length > 0 || utxoAndEvmWallets.length > 0) {
-        hasWallets = true;
-        break;
+        return true;
       }
     }
-    if (
-      coinbaseWallets.length > 0 &&
-      coinbaseWallets[0].coinbaseAccounts &&
-      coinbaseWallets[0].coinbaseAccounts.length > 0
-    ) {
-      hasCoinbase = true;
-    }
-
-    return hasWallets || hasCoinbase;
+    return false;
   };
 
   useEffect(() => {
-    const noWalletsOrCoinbase = !hasWallets(walletsAndAccounts);
     isVisible
-      ? noWalletsOrCoinbase
+      ? !hasWallets(walletsAndAccounts)
         ? dispatch(showNoWalletsModal({navigation}))
         : showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
@@ -665,14 +625,6 @@ export const WalletSelector = ({
             hideBalance={hideAllBalances}
             supportedTransactionCurrencies={supportedTransactionCurrencies}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
-          />
-          <KeyWalletsRow<WalletRowProps>
-            keyAccounts={walletsAndAccounts.coinbaseWallets}
-            keySvg={CoinbaseSmall}
-            hideBalance={hideAllBalances}
-            onPress={account =>
-              selectOption(() => onCoinbaseAccountSelect(account), true)
-            }
           />
         </WalletSelectMenuBodyContainer>
       </WalletSelectMenuContainer>

@@ -13,7 +13,6 @@ import {
 import {Wallet} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
-import {SvgProps} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
 import {
   ActiveOpacity,
@@ -135,10 +134,6 @@ const UtxoAccountContainer = styled.View<AccountContainerProps>`
   margin-top: ${({isSameChain}) => (isSameChain ? -24 : 0)}px;
 `;
 
-const CoinbaseAccountContainer = styled.View`
-  margin: -10px 0 -15px -10px;
-`;
-
 type WalletRowType = KeyWallet | WalletRowProps;
 
 export interface KeyWallet extends Wallet {
@@ -160,12 +155,10 @@ export interface KeyWalletsRowProps extends SearchableItem {
   keyName: string;
   accounts: KeyWalletsAccountRow[];
   mergedUtxoAndEvmAccounts: KeyWalletsMergedAccountRow[];
-  coinbaseAccounts: WalletRowProps[];
 }
 
 interface KeyWalletProps {
   keyAccounts: KeyWalletsRowProps[];
-  keySvg?: React.FC<SvgProps>;
   onPress: (wallet: Wallet | WalletRowProps) => void;
   currency?: string;
   hideBalance: boolean;
@@ -174,7 +167,6 @@ interface KeyWalletProps {
 
 const KeyWalletsRow = ({
   keyAccounts,
-  keySvg = KeySvg,
   onPress,
   currency,
   hideBalance,
@@ -205,12 +197,11 @@ const KeyWalletsRow = ({
           key={key.key}
           isLast={keyIndex === keyAccounts.length - 1}>
           {(key.accounts?.length > 0 ||
-            key.coinbaseAccounts?.length > 0 ||
             Object.values(key?.mergedUtxoAndEvmAccounts ?? {})?.length > 0) && (
             <KeyNameContainer noBorder={!!currency}>
-              {keySvg({})}
+              <KeySvg />
               <KeyName>{key.keyName || 'My Key'}</KeyName>
-              {!key.backupComplete && !key?.coinbaseAccounts && (
+              {!key.backupComplete && (
                 <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
               )}
             </KeyNameContainer>
@@ -407,18 +398,6 @@ const KeyWalletsRow = ({
               );
             }
           })}
-
-          {key?.coinbaseAccounts?.map((wallet, index) => (
-            <CoinbaseAccountContainer key={index}>
-              <WalletRow
-                id={wallet.id}
-                hideBalance={hideBalance}
-                noBorder={true}
-                onPress={() => onPress(wallet)}
-                wallet={wallet}
-              />
-            </CoinbaseAccountContainer>
-          ))}
         </KeyWalletsRowContainer>
       ))}
     </OuterContainer>
