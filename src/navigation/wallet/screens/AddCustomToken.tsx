@@ -113,7 +113,7 @@ const AssociatedAccountContainer = styled.View`
 
 const AssociatedWallet = styled(TouchableOpacity)`
   padding: 0 20px;
-  height: 55px;
+  min-height: 55px;
   border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
@@ -121,7 +121,7 @@ const AssociatedWallet = styled(TouchableOpacity)`
 
 const AssociatedAccountNoTouchable = styled.View`
   padding: 0 10px;
-  height: 64px;
+  min-height: 64px;
   border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;

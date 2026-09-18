@@ -111,7 +111,7 @@ export const FeeLevelStep = styled.View<{isLast?: boolean}>`
   flex-direction: row;
   align-items: center;
   display: flex;
-  height: 40px;
+  min-height: 40px;
 `;
 
 export const FeeLevelStepCircle = styled.Pressable<{

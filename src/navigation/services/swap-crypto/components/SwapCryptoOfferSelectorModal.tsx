@@ -36,7 +36,7 @@ const SafeAreaView = styled.SafeAreaView`
 `;
 
 const ModalHeader = styled.View`
-  height: 50px;
+  min-height: 50px;
   margin-right: 10px;
   margin-left: 10px;
   display: flex;
@@ -182,7 +182,7 @@ const OfferDataInfoContainer = styled.View`
   align-items: center;
   margin-right: 10px;
   width: 25px;
-  height: 25px;
+  min-height: 25px;
 `;
 
 const OfferDataInfoLabel = styled(H7)`
@@ -224,7 +224,7 @@ export const SwapCryptoOfferSelectorModalContainer = styled.View`
 
 export const WalletSelector = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: 36px;
+  min-height: 36px;
   border-radius: 27.5px;
   display: flex;
   flex-direction: row;

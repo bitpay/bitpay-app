@@ -58,7 +58,12 @@ export type BackupParamList = {
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
-  align-items: center;
+`;
+
+const BackupScroll = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {alignItems: 'center', flexGrow: 1},
+}))`
+  flex: 1;
 `;
 
 type BackupNavigation = {
@@ -177,30 +182,32 @@ const BackupScreen = ({route}: BackupScreenProps) => {
 
   return (
     <BackupContainer testID="backup-container">
-      <ImageContainer>{BackupImage[themeType]}</ImageContainer>
-      <TitleContainer>
-        <TextAlign align={'center'}>
-          <H3>{t('Would you like to backup your key?')}</H3>
-        </TextAlign>
-      </TitleContainer>
-      <TextContainer>
-        <TextAlign align={'center'}>
-          <Paragraph>
-            {t(
-              "If you delete the BitPay app or lose your device, you'll need your recovery phrase regain access to your funds.",
-            )}
-          </Paragraph>
-        </TextAlign>
-      </TextContainer>
-      <CtaContainer>
-        <Button
-          testID="go-to-backup-button"
-          accessibilityLabel="Backup your recovery phrase"
-          buttonStyle={'primary'}
-          onPress={gotoBackup}>
-          {t('Backup your Recovery Phrase')}
-        </Button>
-      </CtaContainer>
+      <BackupScroll>
+        <ImageContainer>{BackupImage[themeType]}</ImageContainer>
+        <TitleContainer>
+          <TextAlign align={'center'}>
+            <H3>{t('Would you like to backup your key?')}</H3>
+          </TextAlign>
+        </TitleContainer>
+        <TextContainer>
+          <TextAlign align={'center'}>
+            <Paragraph>
+              {t(
+                "If you delete the BitPay app or lose your device, you'll need your recovery phrase regain access to your funds.",
+              )}
+            </Paragraph>
+          </TextAlign>
+        </TextContainer>
+        <CtaContainer>
+          <Button
+            testID="go-to-backup-button"
+            accessibilityLabel="Backup your recovery phrase"
+            buttonStyle={'primary'}
+            onPress={gotoBackup}>
+            {t('Backup your Recovery Phrase')}
+          </Button>
+        </CtaContainer>
+      </BackupScroll>
     </BackupContainer>
   );
 };

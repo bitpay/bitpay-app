@@ -71,7 +71,7 @@ export const ExternalServicesWalletSelectorContainer = styled.View`
 
 export const WalletSelector = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: 36px;
+  min-height: 36px;
   border-radius: 27.5px;
   display: flex;
   flex-direction: row;

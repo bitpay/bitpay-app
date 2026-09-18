@@ -138,8 +138,8 @@ const RoundButton = styled.View`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
   margin: 10px;
   border-radius: 30px;
   border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};

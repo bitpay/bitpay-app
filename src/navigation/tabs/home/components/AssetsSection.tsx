@@ -43,8 +43,10 @@ const Container = styled.View`
 
 const Header = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin: 0 ${ScreenGutter} 0 16px;
 `;
 
