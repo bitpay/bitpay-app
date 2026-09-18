@@ -122,7 +122,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
           {t('I have read, understood and accepted the')}{' '}
           <StatementLink
             testID="terms-of-use-wallet-link"
-            accessibilityLabel="Wallet terms of use"
+            accessibilityLabel={t('Wallet terms of use')}
             onPress={() => dispatch(openExternalUrl(URL.TOU_WALLET))}>
             {t('Wallet Terms of Use.')}
           </StatementLink>
@@ -175,7 +175,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
       <CtaContainerAbsolute testID="cta-container">
         <Button
           testID="agree-and-continue-button"
-          accessibilityLabel="Agree and continue"
+          accessibilityLabel={t('Agree and Continue')}
           onPress={async () => {
             if (agreed.length >= 2) {
               dispatch(setWalletTermsAccepted());

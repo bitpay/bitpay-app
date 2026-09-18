@@ -1,4 +1,5 @@
 import React, {memo, useCallback} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ImageRequireSource} from 'react-native';
 import styled from 'styled-components/native';
 import {IS_ANDROID} from '../../constants';
@@ -78,6 +79,7 @@ const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
   currency,
   onToggle,
 }) => {
+  const {t} = useTranslation();
   const {
     currencyAbbreviation,
     currencyName,
@@ -100,7 +102,9 @@ const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
     <RowContainer
       style={{borderWidth: 0, marginBottom: 0}}
       testID={`currency-selection-row-${currencyAbbreviation}-${chain}`}
-      accessibilityLabel={`${currencyName} currency selection`}
+      accessibilityLabel={t('{{currency}} currency selection', {
+        currency: currencyName,
+      })}
       onPress={onPress}>
       <CurrencyColumn>
         <CurrencyImage img={img} imgSrc={imgSrc} badgeUri={badgeUri} />

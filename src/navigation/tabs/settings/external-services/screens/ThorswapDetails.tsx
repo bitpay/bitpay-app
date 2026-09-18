@@ -322,7 +322,7 @@ const ThorswapDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="thorswap-copy-deposit-address-button"
-              accessibilityLabel="Thorswap copy deposit address button"
+              accessibilityLabel={t('Copy deposit address')}
               onPress={() => {
                 copyText(swapTx.addressTo);
                 setCopiedDepositAddress(true);
@@ -394,7 +394,7 @@ const ThorswapDetails: React.FC = () => {
                 <CopiedContainer>
                   <TouchableOpacity
                     testID="thorswap-copy-support-email-button"
-                    accessibilityLabel="Thorswap copy support email button"
+                    accessibilityLabel={t('Copy support email')}
                     style={{maxWidth: '90%'}}
                     onPress={() => {
                       copyText('security@thorswap.com');
@@ -418,7 +418,7 @@ const ThorswapDetails: React.FC = () => {
                 <CopiedContainer>
                   <TouchableOpacity
                     testID="thorswap-copy-tx-hash-tip-button"
-                    accessibilityLabel="Thorswap copy tx hash tip button"
+                    accessibilityLabel={t('Copy transaction hash')}
                     style={{maxWidth: '90%'}}
                     onPress={() => {
                       copyText(swapTx.txHash);
@@ -443,7 +443,7 @@ const ThorswapDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="thorswap-copy-payin-address-button"
-              accessibilityLabel="Thorswap copy payin address button"
+              accessibilityLabel={t('Copy pay-in address')}
               onPress={() => {
                 copyText(swapTx.payinAddress);
                 setCopiedPayinAddress(true);
@@ -464,7 +464,7 @@ const ThorswapDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="thorswap-copy-payin-extra-id-button"
-                accessibilityLabel="Thorswap copy payin extra id button"
+                accessibilityLabel={t('Copy pay-in extra ID')}
                 onPress={() => {
                   copyText(swapTx.payinExtraId!);
                   setCopiedPayinExtraId(true);
@@ -503,7 +503,7 @@ const ThorswapDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="thorswap-copy-transaction-hash-button"
-              accessibilityLabel="Thorswap copy transaction hash button"
+              accessibilityLabel={t('Copy transaction hash')}
               onPress={() => {
                 copyText(swapTx.txHash);
                 setCopiedTxHash(true);
@@ -522,7 +522,7 @@ const ThorswapDetails: React.FC = () => {
 
           <RemoveCta
             testID="thorswap-remove-swap-button"
-            accessibilityLabel="Thorswap remove swap button"
+            accessibilityLabel={t('Remove swap')}
             onPress={async () => {
               haptic('impactLight');
               dispatch(

@@ -268,7 +268,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="first-name-box-input"
-                accessibilityLabel="First name"
+                accessibilityLabel={t('FIRST NAME')}
                 placeholder={'Satoshi'}
                 label={t('FIRST NAME')}
                 onBlur={onBlur}
@@ -291,7 +291,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="last-name-box-input"
-                accessibilityLabel="Last name"
+                accessibilityLabel={t('LAST NAME')}
                 ref={familyNameRef}
                 placeholder={'Nakamoto'}
                 label={t('LAST NAME')}
@@ -315,7 +315,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="email-box-input"
-                accessibilityLabel="Email address"
+                accessibilityLabel={t('EMAIL ADDRESS')}
                 ref={emailRef}
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
@@ -339,7 +339,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="password-box-input"
-                accessibilityLabel="Password"
+                accessibilityLabel={t('PASSWORD')}
                 ref={passwordRef}
                 type="password"
                 placeholder={'strongPassword123'}
@@ -363,7 +363,9 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
                 <CheckboxControl testID="agreed-terms-of-use-checkbox">
                   <Checkbox
                     testID="create-account-agree-terms-checkbox"
-                    accessibilityLabel="Agree to terms of use and privacy policy"
+                    accessibilityLabel={t(
+                      'Agree to terms of use and privacy policy',
+                    )}
                     onPress={() =>
                       setValue('agreedToTOSandPP', !field.value, {
                         shouldValidate: true,
@@ -409,7 +411,9 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
                 <CheckboxControl testID="agreed-marketing-checkbox">
                   <Checkbox
                     testID="create-account-agree-marketing-checkbox"
-                    accessibilityLabel="Agree to receive promotional emails"
+                    accessibilityLabel={t(
+                      'Agree to receive promotional emails',
+                    )}
                     onPress={() =>
                       setValue('agreedToMarketingCommunications', !field.value)
                     }
@@ -433,7 +437,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
           <AuthActionRow>
             <Button
               testID="create-account-button"
-              accessibilityLabel="Create account"
+              accessibilityLabel={t('Create Account')}
               onPress={onSubmit}>
               {t('Create Account')}
             </Button>
@@ -444,7 +448,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
               {t('Already have an account?')}{' '}
               <Link
                 testID="login-button"
-                accessibilityLabel="Log in"
+                accessibilityLabel={t('Log In')}
                 onPress={() => {
                   navigation.navigate('Login');
                 }}>

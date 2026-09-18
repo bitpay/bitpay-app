@@ -193,7 +193,7 @@ const CloudflareChallengeModal: React.FC = () => {
             <Title>{t('Verifying your browser')}</Title>
             <CancelButton
               onPress={() => finish(false)}
-              accessibilityLabel="Cancel verification">
+              accessibilityLabel={t('Cancel verification')}>
               <CancelText>{t('Cancel')}</CancelText>
             </CancelButton>
           </Header>

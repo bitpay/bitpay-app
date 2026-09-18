@@ -123,7 +123,7 @@ const AccountWCV2RowModal = ({
               <React.Fragment key={k.key}>
                 <KeyNameContainer>
                   {KeySvg({})}
-                  <KeyName>{k.keyName || 'My Key'}</KeyName>
+                  <KeyName>{k.keyName || t('My Key')}</KeyName>
                 </KeyNameContainer>
                 {k.accounts.map(account => {
                   const handlePress = () => {

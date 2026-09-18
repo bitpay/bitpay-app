@@ -177,7 +177,7 @@ const Payment = ({
           </Paragraph>
         </LineItem>
         <LineItem>
-          <LineItemLabel>Status</LineItemLabel>
+          <LineItemLabel>{t('Status')}</LineItemLabel>
           <BillStatus account={account} payment={payment} />
         </LineItem>
         {payment.estimatedCompletionDate ? (

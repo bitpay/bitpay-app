@@ -31,6 +31,7 @@ export const CategoryHeading = styled(H4)`
 
 interface SettingsRowBaseProps {
   Icon: React.FC<SvgProps>;
+  children?: React.ReactNode;
 }
 
 interface SettingsLinkProps extends SettingsRowBaseProps {

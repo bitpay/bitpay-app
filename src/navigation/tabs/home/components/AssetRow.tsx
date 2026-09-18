@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ImageRequireSource} from 'react-native';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
@@ -167,6 +168,7 @@ const AssetRow: React.FC<Props> = ({
   img,
   imgSrc,
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
@@ -345,7 +347,7 @@ const AssetRow: React.FC<Props> = ({
       activeOpacity={canNavigate ? ActiveOpacity : 1}
       isLast={isLast}
       testID={`home-asset-row-item-${displayItem.currencyAbbreviation}-${displayItem.chain}`}
-      accessibilityLabel={`${displayItem.name} asset`}
+      accessibilityLabel={t('{{name}} asset', {name: displayItem.name})}
       onPress={canNavigate ? handlePress : undefined}>
       <IconContainer>
         <CurrencyImage

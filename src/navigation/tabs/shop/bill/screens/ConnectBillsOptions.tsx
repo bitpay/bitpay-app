@@ -190,11 +190,12 @@ const ConnectBillsOptions = ({
           alignItems: 'center',
         }}>
         <AddSvg theme={theme} />
-        <TitleText>Connect More Bills</TitleText>
+        <TitleText>{t('Connect More Bills')}</TitleText>
         <TextAlign align="center">
           <DescriptionText>
-            Let us check to see what bills you have or add bills manually in a
-            few simple steps.
+            {t(
+              'Let us check to see what bills you have or add bills manually in a few simple steps.',
+            )}
           </DescriptionText>
         </TextAlign>
         <ConnectOptions>
@@ -207,16 +208,20 @@ const ConnectBillsOptions = ({
               </ConnectOptionIcon>
               <ConnectOptionTextContainer>
                 <ConnectOptionHeaderContainer>
-                  <ConnectOptionHeader>Auto Connect Bills</ConnectOptionHeader>
+                  <ConnectOptionHeader>
+                    {t('Auto Connect Bills')}
+                  </ConnectOptionHeader>
                   <ConnectOptionLabelContainer>
-                    <ConnectOptionLabelText>Fastest</ConnectOptionLabelText>
+                    <ConnectOptionLabelText>
+                      {t('Fastest')}
+                    </ConnectOptionLabelText>
                   </ConnectOptionLabelContainer>
                 </ConnectOptionHeaderContainer>
 
                 <DescriptionText>
-                  Automatically search for your outstanding liabilities. Bills
-                  like mortgages, car loans, credit card bills, personal loans &
-                  more.
+                  {t(
+                    'Automatically search for your outstanding liabilities. Bills like mortgages, car loans, credit card bills, personal loans & more.',
+                  )}
                 </DescriptionText>
               </ConnectOptionTextContainer>
             </ConnectOption>
@@ -229,10 +234,11 @@ const ConnectBillsOptions = ({
                 <SearchSvg theme={theme} active={selectedOption === 'manual'} />
               </ConnectOptionIcon>
               <ConnectOptionTextContainer>
-                <ConnectOptionHeader>Search Bills</ConnectOptionHeader>
+                <ConnectOptionHeader>{t('Search Bills')}</ConnectOptionHeader>
                 <DescriptionText>
-                  Search through thousands of billers to find and connect your
-                  bill.
+                  {t(
+                    'Search through thousands of billers to find and connect your bill.',
+                  )}
                 </DescriptionText>
               </ConnectOptionTextContainer>
             </ConnectOption>

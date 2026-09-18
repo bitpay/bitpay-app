@@ -201,7 +201,7 @@ export const PaymentList = ({
         <ScrollView refreshControl={Refresher}>
           <ZeroStateContainer>
             <NoPaymentsIcon />
-            <Paragraph>No payments yet</Paragraph>
+            <Paragraph>{t('No payments yet')}</Paragraph>
           </ZeroStateContainer>
         </ScrollView>
       )}

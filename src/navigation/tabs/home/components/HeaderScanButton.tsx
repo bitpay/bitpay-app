@@ -1,5 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import * as Svg from 'react-native-svg';
 import {HeaderButtonContainer} from './Styled';
@@ -26,6 +27,7 @@ const ScanIcon = () => {
 };
 
 const ScanButton: React.FC = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
@@ -33,7 +35,7 @@ const ScanButton: React.FC = () => {
     <HeaderButtonContainer>
       <TouchableOpacity
         testID="scan-button"
-        accessibilityLabel="Scan QR code"
+        accessibilityLabel={t('Scan QR code')}
         onPress={() => {
           dispatch(
             Analytics.track('Open Scanner', {

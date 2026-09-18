@@ -184,7 +184,7 @@ export const SecureAccountScreen = () => {
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip"
+            accessibilityLabel={t('Skip')}
             buttonType={'pill'}
             onPress={onSkipPressRef.current}>
             {t('Skip')}
@@ -291,7 +291,7 @@ export const SecureAccountScreen = () => {
         </HeaderTextContainer>
         <CardPressable
           testID="secure-account-setup-passkey-button"
-          accessibilityLabel="Set up a passkey"
+          accessibilityLabel={t('Set up a passkey')}
           onPress={goToPasskeySetup}>
           <CardTitleContainer>
             <IconBadge>
@@ -303,7 +303,7 @@ export const SecureAccountScreen = () => {
             </IconBadge>
             <TitleContainer>
               <TitleText numberOfLines={2}>
-                Set Up a Passkey (Recommended)
+                {t('Set Up a Passkey (Recommended)')}
               </TitleText>
             </TitleContainer>
           </CardTitleContainer>
@@ -313,13 +313,13 @@ export const SecureAccountScreen = () => {
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  Sign in with Face ID, Touch ID, or a security key
+                  {t('Sign in with Face ID, Touch ID, or a security key')}
                 </BulletText>
               </BulletRow>
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  No passwords needed for a faster, safer login
+                  {t('No passwords needed for a faster, safer login')}
                 </BulletText>
               </BulletRow>
             </Bullets>
@@ -331,7 +331,7 @@ export const SecureAccountScreen = () => {
 
         <CardPressable
           testID="secure-account-setup-two-factor-button"
-          accessibilityLabel="Set up two-factor authentication"
+          accessibilityLabel={t('Set Up Two-Factor Authentication')}
           onPress={goToTwoFactorSetup}>
           <CardTitleContainer>
             <IconBadge>
@@ -343,7 +343,7 @@ export const SecureAccountScreen = () => {
             </IconBadge>
             <TitleContainer>
               <TitleText numberOfLines={2}>
-                Set Up 2-Factor Authentication
+                {t('Set Up 2-Factor Authentication')}
               </TitleText>
             </TitleContainer>
           </CardTitleContainer>
@@ -353,13 +353,13 @@ export const SecureAccountScreen = () => {
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  Use an Authenticator app or SMS verification
+                  {t('Use an Authenticator app or SMS verification')}
                 </BulletText>
               </BulletRow>
               <BulletRow>
                 <Dot />
                 <BulletText>
-                  Adds an extra layer of security to your password
+                  {t('Adds an extra layer of security to your password')}
                 </BulletText>
               </BulletRow>
             </Bullets>

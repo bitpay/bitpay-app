@@ -471,9 +471,11 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
                         <AddressItemText
                           ellipsizeMode={'tail'}
                           numberOfLines={1}>
-                          Select a{' '}
+                          {t('Select a')}{' '}
                           <WalletName>
-                            {coin.toUpperCase()} Wallet
+                            {t('{{coin}} Wallet', {
+                              coin: coin.toUpperCase(),
+                            })}
                             {IsVMChain(chain) ? ` (${chainName})` : ''}
                           </WalletName>
                         </AddressItemText>

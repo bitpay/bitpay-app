@@ -177,7 +177,7 @@ const RampSellDetails: React.FC = () => {
               </LabelTipText>
               <TouchableOpacity
                 testID="ramp-sell-order-status-link"
-                accessibilityLabel="Check order status"
+                accessibilityLabel={t('Check order status')}
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(
@@ -210,7 +210,7 @@ const RampSellDetails: React.FC = () => {
                   </LabelTipText>
                   <TouchableOpacity
                     testID="ramp-sell-support-link"
-                    accessibilityLabel="Contact support"
+                    accessibilityLabel={t('Contact Support')}
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -235,7 +235,7 @@ const RampSellDetails: React.FC = () => {
                   </LabelTipText>
                   <TouchableOpacity
                     testID="ramp-sell-transaction-faq-link"
-                    accessibilityLabel="View transaction FAQ"
+                    accessibilityLabel={t('View transaction FAQ')}
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -254,7 +254,7 @@ const RampSellDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="ramp-sell-copy-deposit-address-button"
-              accessibilityLabel="Ramp sell copy deposit address button"
+              accessibilityLabel={t('Copy deposit address')}
               onPress={() => {
                 copyText(sellOrder.address_to);
                 setCopiedDepositAddress(true);
@@ -275,7 +275,7 @@ const RampSellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="ramp-sell-copy-order-id-button"
-                accessibilityLabel="Ramp sell copy order id button"
+                accessibilityLabel={t('Copy order ID')}
                 onPress={() => {
                   copyText(sellOrder.quote_id!);
                   setCopiedPaymentId(true);
@@ -297,7 +297,7 @@ const RampSellDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="ramp-sell-copy-transaction-id-button"
-                accessibilityLabel="Ramp sell copy transaction id button"
+                accessibilityLabel={t('Copy transaction ID')}
                 onPress={() => {
                   copyText(sellOrder.tx_sent_id!);
                   setCopiedTransactionSentId(true);
@@ -317,7 +317,7 @@ const RampSellDetails: React.FC = () => {
 
           <RemoveCta
             testID="ramp-sell-remove-order-button"
-            accessibilityLabel="Ramp sell remove order button"
+            accessibilityLabel={t('Remove order')}
             onPress={async () => {
               haptic('impactLight');
               dispatch(

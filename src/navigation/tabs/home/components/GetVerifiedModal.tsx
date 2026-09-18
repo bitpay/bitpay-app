@@ -116,7 +116,7 @@ const GetVerifiedModal: React.FC = () => {
               <IconKycGetVerified width={200} height={203} />
               <CloseButton
                 onPress={dismiss}
-                accessibilityLabel="Dismiss identity verification">
+                accessibilityLabel={t('Dismiss identity verification')}>
                 <IconClose width={32} height={32} />
               </CloseButton>
             </IllustrationContainer>

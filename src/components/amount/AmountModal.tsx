@@ -10,6 +10,7 @@ import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps, LimitsOpts} from './Amount';
 import {Platform} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useTranslation} from 'react-i18next';
 import {useAppSelector} from '../../utils/hooks';
 import ArchaxBanner from '../archax/archax-banner';
 import {isNarrowHeight} from '../styled/Containers';
@@ -71,6 +72,7 @@ const AmountModal: React.FC<AmountModalProps> = props => {
     limitsOpts,
     ...amountProps
   } = props;
+  const {t} = useTranslation();
   const theme = useTheme();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
@@ -104,7 +106,7 @@ const AmountModal: React.FC<AmountModalProps> = props => {
                 buttonType="pill"
                 buttonStyle="cancel"
                 onPress={() => onSendMaxPressed()}>
-                Send Max
+                {t('Send Max')}
               </Button>
             </ModalHeaderRight>
           ) : null}
