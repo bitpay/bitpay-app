@@ -83,6 +83,29 @@ describe('backupFileExists', () => {
   });
 });
 
+describe('backupFileExistsStrict', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns true when the file exists', async () => {
+    const {backupFileExistsStrict} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(true);
+    expect(await backupFileExistsStrict()).toBe(true);
+  });
+
+  it('returns false when the file does not exist', async () => {
+    const {backupFileExistsStrict} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(false);
+    expect(await backupFileExistsStrict()).toBe(false);
+  });
+
+  it('rejects when RNFS.exists throws', async () => {
+    const {backupFileExistsStrict} = getFreshModule();
+    const error = new Error('fs error');
+    (mockedRNFS.exists as jest.Mock).mockRejectedValueOnce(error);
+    await expect(backupFileExistsStrict()).rejects.toBe(error);
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // backupPersistRoot
 // ─────────────────────────────────────────────────────────────────────────────
