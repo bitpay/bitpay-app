@@ -49,6 +49,11 @@ import {
   dismissBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {
+  CopiedContainer,
+  CopyImgContainerRight,
+} from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
 import {
   PaymentMethod,
   PaymentMethodKey,
@@ -247,7 +252,8 @@ const WebViewModalHeader = styled.View<{topInset: number}>`
   background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
   justify-content: center;
   align-items: flex-start;
-  padding-horizontal: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
   border-bottom-width: 1px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
 `;
@@ -434,6 +440,10 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const scheduleQuoteRefresh = (expiresAt: string): void => {
     if (quoteRefreshTimerRef.current) {
       clearTimeout(quoteRefreshTimerRef.current);
+      quoteRefreshTimerRef.current = undefined;
+    }
+    if (!quoteReqDataRef.current) {
+      return;
     }
     const refreshIn = new Date(expiresAt).getTime() - Date.now() - 1000;
     if (refreshIn <= 0) {
@@ -451,18 +461,27 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     try {
       const newQuoteData: MoonpayQuoteEmbeddedData =
         await moonpayGetQuoteEmbedded(reqData);
+      // Dropping the stale response keeps this from re-arming the
+      // loop, and from moving amounts or restarting the countdown afterwards.
+      if (quoteReqDataRef.current !== reqData) {
+        return;
+      }
       if (newQuoteData?.signature) {
         applePayFrameRef.current?.updateQuote(newQuoteData.signature);
+        const executableSignature = newQuoteData.executable
+          ? newQuoteData.signature
+          : null;
+
+        // Only the card flow re-renders off this signature: it gates the pay
+        // button and is the quote the frame is mounted with.
         if (reqData.paymentMethodId) {
-          const executableSignature = newQuoteData.executable
-            ? newQuoteData.signature
-            : null;
           setCardQuoteSignature(executableSignature);
-          if (executableSignature) {
-            // Pushes the quote into an already-mounted buy frame instead of
-            // remounting it (the signature is part of the frame URL).
-            buyFrameRef.current?.updateQuote(executableSignature);
-          }
+        }
+
+        if (executableSignature) {
+          // Pushes the quote into an already-mounted buy frame (card or SEPA)
+          // instead of remounting it: the signature is part of the frame URL.
+          buyFrameRef.current?.updateQuote(executableSignature);
         }
       }
       setEmbeddedQuoteData(newQuoteData);
@@ -965,6 +984,16 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     setSepaPaymentStarted(true);
   };
 
+  useEffect(() => {
+    if (!copiedField) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopiedField(undefined);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedField]);
+
   const copyDepositField = (field: string, value: string) => {
     haptic('impactLight');
     Clipboard.setString(value);
@@ -1087,35 +1116,38 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   {embeddedQuoteData.destination.asset.code}
                 </Subtitle>
               )}
-              <Subtitle>{t('Complete your bank transfer')}</Subtitle>
             </HeaderContainer>
 
-            <LegalText>
+            <LegalText style={{textAlign: 'left'}}>
               {t(
-                'Your transfer must include the reference below, or MoonPay will reject it.',
-              )}
+                'Important: Send the bank transfer using the details below, including the reference (or MoonPay will reject it).',
+              ) + '\n'}
+              {t('The crypto amount is an estimate until the money arrives.')}
             </LegalText>
 
             {depositRows.map(row => (
               <View key={row.key}>
                 <TouchableOpacity
                   onPress={() => copyDepositField(row.key, row.value!)}>
-                  <RowDataContainer>
+                  <RowDataContainer style={{height: 50}}>
                     <RowLabel>{row.label}</RowLabel>
-                    <RowData
-                      numberOfLines={1}
-                      ellipsizeMode={'middle'}
-                      style={{
-                        maxWidth: '60%',
-                        color:
-                          copiedField === row.key
-                            ? Action
-                            : theme.dark
-                            ? White
-                            : Black,
-                      }}>
-                      {row.value}
-                    </RowData>
+                    <CopiedContainer style={{maxWidth: '60%'}}>
+                      <RowData
+                        numberOfLines={1}
+                        ellipsizeMode={'middle'}
+                        style={{
+                          flexShrink: 1,
+                          color: theme.dark ? White : Black,
+                        }}>
+                        {row.value}
+                      </RowData>
+                      <CopyImgContainerRight
+                        style={{paddingTop: 0, minWidth: 17}}>
+                        {copiedField === row.key ? (
+                          <CopiedSvg width={17} />
+                        ) : null}
+                      </CopyImgContainerRight>
+                    </CopiedContainer>
                   </RowDataContainer>
                 </TouchableOpacity>
                 <ItemDivisor />
@@ -1176,6 +1208,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
               <MoonpayEmbeddedCheckoutSkeleton context="amount" />
             ) : (
               <Subtitle>
+                {isSepaPaymentMethod ? '≈ ' : ''}
                 {embeddedQuoteData.destination.amount}{' '}
                 {embeddedQuoteData.destination.asset.code}
               </Subtitle>
