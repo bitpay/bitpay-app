@@ -138,6 +138,51 @@ export const bootstrapKey = (key: Key, id: string) => {
   }
 };
 
+const bwcClientFields = [
+  'request',
+  'bulkClient',
+  'timeout',
+  'logLevel',
+  'bp_partner',
+  'bp_partner_version',
+  'doNotVerifyPayPro',
+  'supportStaffWalletId',
+  '_events',
+  '_eventsCount',
+  '_maxListeners',
+];
+
+const credentialSecretFields = [
+  'requestPrivKey',
+  'walletPrivKey',
+  'personalEncryptingKey',
+  'sharedEncryptingKey',
+];
+
+// bootstrapWallets merges the BWC client into the wallet on every rehydrate.
+const omitBwcClientFields = (wallet: Wallet): Wallet => {
+  const persistedWallet = {...wallet} as any;
+  bwcClientFields.forEach(field => delete persistedWallet[field]);
+  return persistedWallet;
+};
+
+// Only safe once WALLET_SECRETS reached disk, which secretsMigrated reports.
+const withoutSecrets = (key: Key): Key => {
+  const stripped = {...key} as any;
+  delete stripped.properties;
+  delete stripped.methods;
+  stripped.wallets = (key.wallets || []).map(wallet => {
+    const credentials = (wallet as any).credentials;
+    if (!credentials) {
+      return wallet;
+    }
+    const clean = {...wallet, credentials: {...credentials}} as any;
+    credentialSecretFields.forEach(field => delete clean.credentials[field]);
+    return clean;
+  });
+  return stripped;
+};
+
 export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
@@ -150,6 +195,22 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
           ...key,
         };
       }
+      return {
+        ...inboundState,
+        keys: Object.entries(inboundState.keys).reduce(
+          (persisted, [id, key]) => {
+            const trimmed = {
+              ...key,
+              wallets: (key.wallets || []).map(omitBwcClientFields),
+            };
+            persisted[id] = inboundState.secretsMigrated
+              ? withoutSecrets(trimmed)
+              : trimmed;
+            return persisted;
+          },
+          {} as WalletState['keys'],
+        ),
+      };
     }
     return inboundState;
   },
@@ -158,12 +219,15 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
     const keys = outboundState.keys || {};
     if (Object.keys(keys).length > 0) {
       for (const [id, key] of Object.entries(keys)) {
+        // Without properties there is nothing to bootstrap from;
+        // rehydrateWalletSecrets does it at startup, where both slices exist.
+        if (!key.properties) {
+          continue;
+        }
         const bootstrappedKey = bootstrapKey(key, id);
         const wallets = bootstrapWallets(key.wallets);
 
-        if (bootstrappedKey) {
-          outboundState.keys[id] = {...bootstrappedKey, wallets};
-        }
+        outboundState.keys[id] = {...(bootstrappedKey || key), wallets};
       }
     }
     return outboundState;
