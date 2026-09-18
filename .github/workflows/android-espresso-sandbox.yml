@@ -1,4 +1,4 @@
-name: Android Espresso E2E
+name: Android Espresso E2E Sandbox
 
 on:
   workflow_dispatch:
@@ -198,14 +198,6 @@ jobs:
             find allure-results -name '*.json'
           fi
 
-      - name: Upload device logcat
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: device-logcat
-          path: /home/runner/work/_temp/device-logcat.txt
-          retention-days: 7
-
       - name: Upload raw Espresso test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -259,13 +251,12 @@ jobs:
       - name: Upload Results to Testlio
         if: always()
         env:
-          TESTLIO_DEVICE_ID: 363a5ce7-6cef-436c-8531-6c07195c8fe8
+          TESTLIO_DEVICE_ID: ${{ secrets.TESTLIO_ANDROID_DEVICE_ID }}
+          RUN_API_TOKEN: ${{ inputs.environment == 'Sandbox' && secrets.TESTLIO_RUN_TOKEN || secrets.TESTLIO_RUN_TOKEN_BITPAY }}
         run: |
           if [ "${{ inputs.environment }}" = "Sandbox" ]; then
-            export RUN_API_TOKEN="${{ secrets.TESTLIO_RUN_TOKEN }}"
             export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config-sandbox.json"
           else
-            export RUN_API_TOKEN="${{ secrets.TESTLIO_RUN_TOKEN_BITPAY }}"
             export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config.json"
           fi
           testlio create-run \

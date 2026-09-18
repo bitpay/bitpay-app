@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Force HTTPS for GitHub git dependencies
         run: |
@@ -192,14 +194,6 @@ jobs:
             find allure-results -name '*.json'
           fi
 
-      - name: Upload device logcat
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: device-logcat
-          path: /home/runner/work/_temp/device-logcat.txt
-          retention-days: 7
-
       - name: Upload raw Espresso test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -254,7 +248,7 @@ jobs:
         if: always()
         env:
           RUN_API_TOKEN: ${{ secrets.TESTLIO_RUN_TOKEN_BITPAY }}
-          TESTLIO_DEVICE_ID: 363a5ce7-6cef-436c-8531-6c07195c8fe8
+          TESTLIO_DEVICE_ID: ${{ secrets.TESTLIO_ANDROID_DEVICE_ID }}
         run: |
           testlio create-run \
             --testConfig testlio-cli/test-config.json \

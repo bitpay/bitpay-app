@@ -6,6 +6,9 @@ import io.qameta.allure.kotlin.Allure
 import java.io.File
 
 fun allureScreenshot(name: String = "Screenshot") {
+    if (System.getenv("GITHUB_ACTIONS") == "true") {
+        return
+    }
     val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     val file = File(context.cacheDir, "screenshot_${System.currentTimeMillis()}.png")

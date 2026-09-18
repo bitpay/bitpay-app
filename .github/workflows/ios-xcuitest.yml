@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          ref: develop
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -182,14 +184,6 @@ jobs:
           fi
           exit $TEST_EXIT
 
-      - name: Upload test log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-log
-          path: test-output.log
-          retention-days: 7
-
       - name: Upload XCUITest Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -252,18 +246,19 @@ jobs:
         if: always()
         env:
           RUN_API_TOKEN: ${{ secrets.TESTLIO_RUN_TOKEN_BITPAY }}
+          TESTLIO_DEVICE_ID: ${{ secrets.TESTLIO_IOS_DEVICE_ID }}
         run: |
           testlio create-run \
             --testConfig testlio-cli/test-config.json \
             --projectConfig testlio-cli/project-config.json \
             --externalResults true \
             --resultProvider local \
-            --automatedDeviceIds 363a5ce7-6cef-436c-8531-6c07195c8fe8
+            --automatedDeviceIds "$TESTLIO_DEVICE_ID"
 
           testlio parse-run-results \
             --projectConfig testlio-cli/project-config.json \
             --path allure-results.zip \
-            --automatedDeviceId 363a5ce7-6cef-436c-8531-6c07195c8fe8
+            --automatedDeviceId "$TESTLIO_DEVICE_ID"
 
           testlio finalize-results \
             --projectConfig testlio-cli/project-config.json
