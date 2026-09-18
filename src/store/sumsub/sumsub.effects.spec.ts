@@ -4,14 +4,14 @@
 
 import configureTestStore from '@test/store';
 import {Network} from '../../constants';
-import {startKycVerification, startGetKycStatus} from './sumsub.effects';
+import {
+  startKycVerification,
+  startGetKycStatus,
+  MODAL_HANDOFF_DELAY,
+} from './sumsub.effects';
 import {SumSubApi} from '../../api/sumsub';
 import {launchSumSubSdk} from '../../lib/sumsub';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
-
-// ---------------------------------------------------------------------------
-// Mocks
-// ---------------------------------------------------------------------------
 
 jest.mock('../../managers/LogManager', () => ({
   logManager: {
@@ -35,24 +35,16 @@ jest.mock('../../lib/sumsub', () => ({
 }));
 
 jest.mock('../../managers/OngoingProcessManager', () => ({
-  ongoingProcessManager: {
-    show: jest.fn(),
-    hide: jest.fn(),
-  },
+  ongoingProcessManager: {show: jest.fn(), hide: jest.fn()},
 }));
 
 const mockFetchAccessToken = SumSubApi.fetchAccessToken as jest.Mock;
 const mockFetchKycStatus = SumSubApi.fetchKycStatus as jest.Mock;
 const mockStartKycAttempt = SumSubApi.startKycAttempt as jest.Mock;
 const mockLaunchSumSubSdk = launchSumSubSdk as jest.Mock;
-const mockOngoingProcess = ongoingProcessManager as unknown as {
-  show: jest.Mock;
-  hide: jest.Mock;
-};
+const mockShowOngoingProcess = ongoingProcessManager.show as jest.Mock;
 
-// ---------------------------------------------------------------------------
-// Helper: build a store seeded with a logged-in user
-// ---------------------------------------------------------------------------
+const NET = Network.mainnet;
 const EID = 'user-eid-123';
 const API_TOKEN = 'api-token-xyz';
 const ACCESS_TOKEN = 'sumsub-access-token';
@@ -67,14 +59,18 @@ const NOT_STARTED = {
   activeAttempt: null,
 };
 
-const makeLoggedInStore = () =>
+const makeStore = (overrides: Record<string, any> = {}) =>
   configureTestStore({
-    APP: {network: Network.mainnet},
+    APP: {network: NET},
     BITPAY_ID: {
-      user: {[Network.mainnet]: {eid: EID, email: EMAIL, phone: PHONE}},
-      apiToken: {[Network.mainnet]: API_TOKEN},
+      user: {[NET]: {eid: EID, email: EMAIL, phone: PHONE}},
+      apiToken: {[NET]: API_TOKEN},
     },
+    ...overrides,
   });
+
+const makeLoggedOutStore = () =>
+  makeStore({BITPAY_ID: {user: {}, apiToken: {}}});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -84,27 +80,22 @@ beforeEach(() => {
   mockLaunchSumSubSdk.mockResolvedValue({success: true, status: 'Approved'});
 });
 
-// ---------------------------------------------------------------------------
-// Auth guard
-// ---------------------------------------------------------------------------
 describe('startKycVerification — auth guard', () => {
   it('returns early without launching the SDK when there is no user', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {user: {}, apiToken: {[Network.mainnet]: API_TOKEN}},
+    const store = makeStore({
+      BITPAY_ID: {user: {}, apiToken: {[NET]: API_TOKEN}},
     });
 
     await store.dispatch(startKycVerification());
 
     expect(mockFetchAccessToken).not.toHaveBeenCalled();
     expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.kyc[NET]).toBeNull();
   });
 
   it('returns early without launching the SDK when there is no apiToken', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {user: {[Network.mainnet]: {eid: EID}}, apiToken: {}},
+    const store = makeStore({
+      BITPAY_ID: {user: {[NET]: {eid: EID}}, apiToken: {}},
     });
 
     await store.dispatch(startKycVerification());
@@ -114,10 +105,7 @@ describe('startKycVerification — auth guard', () => {
   });
 
   it('tells the user to log in instead of failing silently', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {user: {}, apiToken: {[Network.mainnet]: API_TOKEN}},
-    });
+    const store = makeLoggedOutStore();
 
     await store.dispatch(startKycVerification());
 
@@ -125,12 +113,9 @@ describe('startKycVerification — auth guard', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Happy path
-// ---------------------------------------------------------------------------
 describe('startKycVerification — happy path', () => {
   it('fetches an access token for the current network/user and launches the SDK', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
 
     await store.dispatch(startKycVerification());
 
@@ -144,12 +129,9 @@ describe('startKycVerification — happy path', () => {
   });
 
   it('launches the SDK with the app language from APP.defaultLanguage', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet, defaultLanguage: 'es'},
-      BITPAY_ID: {
-        user: {[Network.mainnet]: {eid: EID}},
-        apiToken: {[Network.mainnet]: API_TOKEN},
-      },
+    const store = makeStore({
+      APP: {network: NET, defaultLanguage: 'es'},
+      BITPAY_ID: {user: {[NET]: {eid: EID}}, apiToken: {[NET]: API_TOKEN}},
     });
 
     await store.dispatch(startKycVerification());
@@ -163,18 +145,18 @@ describe('startKycVerification — happy path', () => {
   });
 
   it('re-fetches the authoritative KYC object from the backend after the SDK closes', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     const approved = {path: 'sumsub', tier: 0, status: 'approved'};
     mockFetchKycStatus.mockResolvedValue(approved);
 
     await store.dispatch(startKycVerification());
 
     expect(mockFetchKycStatus).toHaveBeenCalledWith(API_TOKEN);
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toEqual(approved);
+    expect(store.getState().SUMSUB.kyc[NET]).toEqual(approved);
   });
 
   it('passes a token-refresh callback that re-fetches the access token', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
 
     await store.dispatch(startKycVerification());
 
@@ -186,14 +168,20 @@ describe('startKycVerification — happy path', () => {
     expect(refreshed).toBe(ACCESS_TOKEN);
     expect(mockFetchAccessToken).toHaveBeenCalledWith(API_TOKEN);
   });
+
+  it('never shows the ongoing process modal — a dismissing RN modal is the view controller iOS presents the SDK from', async () => {
+    const store = makeStore();
+
+    await store.dispatch(startKycVerification());
+
+    expect(mockLaunchSumSubSdk).toHaveBeenCalled();
+    expect(mockShowOngoingProcess).not.toHaveBeenCalled();
+  });
 });
 
-// ---------------------------------------------------------------------------
-// Server-side attempt
-// ---------------------------------------------------------------------------
 describe('startKycVerification — startKycAttempt', () => {
   it('opens the attempt before launching the SDK', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
 
     await store.dispatch(startKycVerification());
 
@@ -203,18 +191,8 @@ describe('startKycVerification — startKycAttempt', () => {
     );
   });
 
-  it('never opens an attempt when the user is not eligible for a token', async () => {
-    const store = makeLoggedInStore();
-    mockFetchAccessToken.mockResolvedValue(null);
-
-    await store.dispatch(startKycVerification());
-
-    expect(mockStartKycAttempt).not.toHaveBeenCalled();
-    expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
-  });
-
   it('still launches the SDK when opening the attempt fails', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockStartKycAttempt.mockRejectedValue(new Error('boom'));
 
     await store.dispatch(startKycVerification());
@@ -224,12 +202,9 @@ describe('startKycVerification — startKycAttempt', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// SDK-status fallback while the backend lags behind a just-finished session
-// ---------------------------------------------------------------------------
 describe('startKycVerification — sdkStatus fallback', () => {
   it('remembers the raw SDK status when the backend still reports notStarted', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockFetchKycStatus.mockResolvedValue(NOT_STARTED); // backend lags
     mockLaunchSumSubSdk.mockResolvedValue({
       success: true,
@@ -239,17 +214,13 @@ describe('startKycVerification — sdkStatus fallback', () => {
     await store.dispatch(startKycVerification());
 
     // The backend object is stored untouched (no synthetic status)…
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]?.status).toBe(
-      'notStarted',
-    );
+    expect(store.getState().SUMSUB.kyc[NET]?.status).toBe('notStarted');
     // …and the SDK's own status is kept separately as the fallback signal.
-    expect(store.getState().SUMSUB.sdkStatus[Network.mainnet]).toBe(
-      'Incomplete',
-    );
+    expect(store.getState().SUMSUB.sdkStatus[NET]).toBe('Incomplete');
   });
 
   it('does not keep an sdkStatus once the backend has caught up', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     const approved = {path: 'sumsub', tier: 0, status: 'approved'};
     mockFetchKycStatus.mockResolvedValue(approved);
     mockLaunchSumSubSdk.mockResolvedValue({
@@ -259,17 +230,14 @@ describe('startKycVerification — sdkStatus fallback', () => {
 
     await store.dispatch(startKycVerification());
 
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toEqual(approved);
-    expect(store.getState().SUMSUB.sdkStatus[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.kyc[NET]).toEqual(approved);
+    expect(store.getState().SUMSUB.sdkStatus[NET]).toBeNull();
   });
 });
 
-// ---------------------------------------------------------------------------
-// Failure / edge cases
-// ---------------------------------------------------------------------------
 describe('startKycVerification — failure handling', () => {
   it('shows an error modal and does not re-fetch when the SDK returns "Failed"', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockLaunchSumSubSdk.mockResolvedValue({
       success: false,
       status: 'Failed',
@@ -281,51 +249,70 @@ describe('startKycVerification — failure handling', () => {
 
     expect(store.getState().APP.showBottomNotificationModal).toBe(true);
     expect(mockFetchKycStatus).not.toHaveBeenCalled();
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.kyc[NET]).toBeNull();
+  });
+
+  it('waits out the SumSub view controller dismissal before the error modal', async () => {
+    const store = makeStore();
+    mockLaunchSumSubSdk.mockResolvedValue({
+      success: false,
+      status: 'Failed',
+      errorMsg: 'boom',
+    });
+
+    const startedAt = Date.now();
+    let shownAfter: number | null = null;
+    const unsubscribe = store.subscribe(() => {
+      if (
+        shownAfter === null &&
+        store.getState().APP.showBottomNotificationModal
+      ) {
+        shownAfter = Date.now() - startedAt;
+      }
+    });
+
+    await store.dispatch(startKycVerification());
+    unsubscribe();
+
+    // Fails if the await is dropped or moved below the dispatch.
+    expect(shownAfter).toBeGreaterThanOrEqual(MODAL_HANDOFF_DELAY - 50);
   });
 
   it('resolves (does not reject) when the SDK throws', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockLaunchSumSubSdk.mockRejectedValue(new Error('SDK exploded'));
 
     await expect(
       store.dispatch(startKycVerification()),
     ).resolves.toBeUndefined();
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.kyc[NET]).toBeNull();
   });
 
-  it('does not launch the SDK when the token is null (user not eligible)', async () => {
-    const store = makeLoggedInStore();
+  it('surfaces a message and opens no attempt when the user is not eligible for a token', async () => {
+    const store = makeStore();
     mockFetchAccessToken.mockResolvedValue(null);
 
     await store.dispatch(startKycVerification());
 
+    expect(mockStartKycAttempt).not.toHaveBeenCalled();
     expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
-  });
-
-  it('surfaces a message when the backend returns no token', async () => {
-    const store = makeLoggedInStore();
-    mockFetchAccessToken.mockResolvedValue(null);
-
-    await store.dispatch(startKycVerification());
-
     expect(store.getState().APP.showBottomNotificationModal).toBe(true);
+    expect(store.getState().SUMSUB.kyc[NET]).toBeNull();
   });
 
   it('resolves when fetching the access token fails', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockFetchAccessToken.mockRejectedValue(new Error('token endpoint down'));
 
     await expect(
       store.dispatch(startKycVerification()),
     ).resolves.toBeUndefined();
     expect(mockLaunchSumSubSdk).not.toHaveBeenCalled();
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.kyc[NET]).toBeNull();
   });
 
   it('never leaks the raw server error into the modal', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockFetchAccessToken.mockRejectedValue(
       new Error('Region not supported for identity verification'),
     );
@@ -339,47 +326,9 @@ describe('startKycVerification — failure handling', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Loading indicator around the token mint
-// ---------------------------------------------------------------------------
-describe('startKycVerification — spinner', () => {
-  it('shows and hides the spinner around the token mint', async () => {
-    const store = makeLoggedInStore();
-
-    await store.dispatch(startKycVerification());
-
-    expect(mockOngoingProcess.show).toHaveBeenCalledWith('GENERAL_AWAITING');
-    expect(mockOngoingProcess.hide).toHaveBeenCalledTimes(1);
-  });
-
-  it('hides the spinner even when the token mint throws', async () => {
-    const store = makeLoggedInStore();
-    mockFetchAccessToken.mockRejectedValue(new Error('token endpoint down'));
-
-    await store.dispatch(startKycVerification());
-
-    expect(mockOngoingProcess.hide).toHaveBeenCalledTimes(1);
-  });
-
-  it('hides the spinner before the SDK is launched', async () => {
-    const store = makeLoggedInStore();
-    mockLaunchSumSubSdk.mockImplementation(async () => {
-      expect(mockOngoingProcess.hide).toHaveBeenCalledTimes(1);
-      return {success: true, status: 'Approved'};
-    });
-
-    await store.dispatch(startKycVerification());
-
-    expect(mockLaunchSumSubSdk).toHaveBeenCalled();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// startGetKycStatus
-// ---------------------------------------------------------------------------
 describe('startGetKycStatus', () => {
   it('fetches and stores the whole backend object', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     const approved = {path: 'sumsub', tier: 0, status: 'approved'};
     mockFetchKycStatus.mockResolvedValue(approved);
 
@@ -387,29 +336,22 @@ describe('startGetKycStatus', () => {
 
     expect(mockFetchKycStatus).toHaveBeenCalledWith(API_TOKEN);
     expect(result).toEqual(approved);
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toEqual(approved);
+    expect(store.getState().SUMSUB.kyc[NET]).toEqual(approved);
   });
 
   it('stores the tier and status together as one object', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockFetchKycStatus.mockResolvedValue(NOT_STARTED);
 
     await store.dispatch(startGetKycStatus());
 
-    const kyc = store.getState().SUMSUB.kyc[Network.mainnet];
+    const kyc = store.getState().SUMSUB.kyc[NET];
     expect(kyc?.status).toBe('notStarted');
     expect(kyc?.tier).toBe(-1);
   });
 
   it('clears a stale sdkStatus once the backend advances past notStarted', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {
-        user: {[Network.mainnet]: {eid: EID}},
-        apiToken: {[Network.mainnet]: API_TOKEN},
-      },
-      SUMSUB: {sdkStatus: {[Network.mainnet]: 'Incomplete'}},
-    });
+    const store = makeStore({SUMSUB: {sdkStatus: {[NET]: 'Incomplete'}}});
     mockFetchKycStatus.mockResolvedValue({
       path: 'sumsub',
       tier: 0,
@@ -418,32 +360,20 @@ describe('startGetKycStatus', () => {
 
     await store.dispatch(startGetKycStatus());
 
-    expect(store.getState().SUMSUB.sdkStatus[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.sdkStatus[NET]).toBeNull();
   });
 
   it('keeps the sdkStatus while the backend still reports notStarted', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {
-        user: {[Network.mainnet]: {eid: EID}},
-        apiToken: {[Network.mainnet]: API_TOKEN},
-      },
-      SUMSUB: {sdkStatus: {[Network.mainnet]: 'Incomplete'}},
-    });
+    const store = makeStore({SUMSUB: {sdkStatus: {[NET]: 'Incomplete'}}});
     mockFetchKycStatus.mockResolvedValue(NOT_STARTED);
 
     await store.dispatch(startGetKycStatus());
 
-    expect(store.getState().SUMSUB.sdkStatus[Network.mainnet]).toBe(
-      'Incomplete',
-    );
+    expect(store.getState().SUMSUB.sdkStatus[NET]).toBe('Incomplete');
   });
 
   it('does nothing when there is no logged-in user', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {user: {}, apiToken: {[Network.mainnet]: API_TOKEN}},
-    });
+    const store = makeLoggedOutStore();
 
     await store.dispatch(startGetKycStatus());
 
@@ -451,66 +381,50 @@ describe('startGetKycStatus', () => {
   });
 
   it('resolves without throwing when the status request fails', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockFetchKycStatus.mockRejectedValue(new Error('status endpoint down'));
 
     await expect(store.dispatch(startGetKycStatus())).resolves.toBeNull();
-    expect(store.getState().SUMSUB.kyc[Network.mainnet]).toBeNull();
+    expect(store.getState().SUMSUB.kyc[NET]).toBeNull();
   });
 });
 
 describe('startGetKycStatus — home banner baseline', () => {
   it('records the first status seen for an account as its baseline', async () => {
-    const store = makeLoggedInStore();
+    const store = makeStore();
     mockFetchKycStatus.mockResolvedValue({...NOT_STARTED, status: 'approved'});
 
     await store.dispatch(startGetKycStatus());
 
-    expect(store.getState().SUMSUB.bannerAck[Network.mainnet]).toEqual({
+    expect(store.getState().SUMSUB.bannerAck[NET]).toEqual({
       eid: EID,
       state: 'success',
     });
   });
 
   it('does not overwrite an existing baseline, so transitions stay visible', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {
-        user: {[Network.mainnet]: {eid: EID}},
-        apiToken: {[Network.mainnet]: API_TOKEN},
-      },
-      SUMSUB: {
-        bannerAck: {[Network.mainnet]: {eid: EID, state: 'notStarted'}},
-      },
+    const store = makeStore({
+      SUMSUB: {bannerAck: {[NET]: {eid: EID, state: 'notStarted'}}},
     });
     mockFetchKycStatus.mockResolvedValue({...NOT_STARTED, status: 'approved'});
 
     await store.dispatch(startGetKycStatus());
 
-    expect(store.getState().SUMSUB.bannerAck[Network.mainnet]).toEqual({
+    expect(store.getState().SUMSUB.bannerAck[NET]).toEqual({
       eid: EID,
       state: 'notStarted',
     });
   });
 
   it('reseeds when the baseline belongs to a different account', async () => {
-    const store = configureTestStore({
-      APP: {network: Network.mainnet},
-      BITPAY_ID: {
-        user: {[Network.mainnet]: {eid: EID}},
-        apiToken: {[Network.mainnet]: API_TOKEN},
-      },
-      SUMSUB: {
-        bannerAck: {
-          [Network.mainnet]: {eid: 'someone-else', state: 'notStarted'},
-        },
-      },
+    const store = makeStore({
+      SUMSUB: {bannerAck: {[NET]: {eid: 'someone-else', state: 'notStarted'}}},
     });
     mockFetchKycStatus.mockResolvedValue({...NOT_STARTED, status: 'approved'});
 
     await store.dispatch(startGetKycStatus());
 
-    expect(store.getState().SUMSUB.bannerAck[Network.mainnet]).toEqual({
+    expect(store.getState().SUMSUB.bannerAck[NET]).toEqual({
       eid: EID,
       state: 'success',
     });
