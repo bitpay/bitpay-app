@@ -3,6 +3,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {
   MoonpayCardBrand,
   MoonpayPaymentType,
+  MoonpayTransactionStage,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
@@ -288,7 +289,7 @@ export const getMoonpayPaymentMethodFormat = (
         moonpayPaymentMethod = isEmbeddedFlow ? 'card' : 'credit_debit_card';
         break;
       case 'sepaBankTransfer':
-        moonpayPaymentMethod = 'sepa_bank_transfer';
+        moonpayPaymentMethod = isEmbeddedFlow ? 'sepa' : 'sepa_bank_transfer';
         break;
       case 'applePay':
         moonpayPaymentMethod = isEmbeddedFlow ? 'apple_pay' : 'mobile_wallet';
@@ -309,15 +310,12 @@ export const getMoonpayPaymentMethodFormat = (
   }
   return moonpayPaymentMethod;
 };
-// Whether MoonPay's embedded flow is allowed, for a given payment method, by
-// the remote config and (for Apple Pay) device support. embeddedBuyDisabled
-// is a global kill switch: if set, every embedded payment method is disabled
-// regardless of the per-method flags below it. Otherwise, each embedded
-// payment method has its own flag.
-export const isMoonpayEmbeddedPaymentMethodEnabled = (
+// Whether the remote config allows a given payment method in MoonPay's
+// embedded flow. embeddedBuyDisabled is a global kill switch: if set, every
+// embedded payment method is disabled regardless of the per-method flags.
+const isMoonpayEmbeddedPaymentMethodEnabledByConfig = (
   method: PaymentMethodKey | undefined,
   buyCryptoConfig: BuyCryptoConfig | undefined,
-  applePaySupported?: boolean,
 ): boolean => {
   const moonpayConfig = buyCryptoConfig?.moonpay?.config;
   if (moonpayConfig?.embeddedBuyDisabled === true) {
@@ -326,29 +324,60 @@ export const isMoonpayEmbeddedPaymentMethodEnabled = (
   const moonpayPaymentMethods = moonpayConfig?.paymentMethods;
   switch (method) {
     case 'applePay':
-      return (
-        !!applePaySupported &&
-        !moonpayPaymentMethods?.applePayEmbedded?.disabled
-      );
+      return !moonpayPaymentMethods?.applePayEmbedded?.disabled;
     case 'creditCard':
     case 'debitCard':
       return !moonpayPaymentMethods?.cardEmbedded?.disabled;
+    case 'sepaBankTransfer':
+      return !moonpayPaymentMethods?.sepaEmbedded?.disabled;
     default:
       return false;
   }
 };
 
-// Whether at least one embedded payment method is still usable — used to
-// decide if it's worth connecting to MoonPay's embedded flow at all.
+// Whether MoonPay's embedded flow can actually be used for a payment method:
+// allowed by config, and supported at runtime. Apple Pay additionally needs
+// native wallet support on the device, and SEPA needs MoonPay to report it as
+// headless-capable (capabilities.requiresWidget === false).
+export const isMoonpayEmbeddedPaymentMethodEnabled = (
+  method: PaymentMethodKey | undefined,
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+  applePaySupported?: boolean,
+  sepaHeadlessSupported?: boolean,
+): boolean => {
+  if (!isMoonpayEmbeddedPaymentMethodEnabledByConfig(method, buyCryptoConfig)) {
+    return false;
+  }
+  switch (method) {
+    case 'applePay':
+      return !!applePaySupported;
+    case 'sepaBankTransfer':
+      return !!sepaHeadlessSupported;
+    default:
+      return true;
+  }
+};
+
+// Whether it's worth connecting to MoonPay's embedded flow at all. SEPA's
+// runtime capability is only known after connecting, so only its config flag
+// can be taken into account here.
 export const isAnyMoonpayEmbeddedPaymentMethodEnabled = (
   buyCryptoConfig: BuyCryptoConfig | undefined,
-  applePaySupported: boolean,
+  applePaySupported?: boolean,
 ): boolean =>
   isMoonpayEmbeddedPaymentMethodEnabled(
     'applePay',
     buyCryptoConfig,
     applePaySupported,
-  ) || isMoonpayEmbeddedPaymentMethodEnabled('creditCard', buyCryptoConfig);
+  ) ||
+  isMoonpayEmbeddedPaymentMethodEnabledByConfig(
+    'creditCard',
+    buyCryptoConfig,
+  ) ||
+  isMoonpayEmbeddedPaymentMethodEnabledByConfig(
+    'sepaBankTransfer',
+    buyCryptoConfig,
+  );
 
 export const getMoonpayCardBrandLabel = (brand: MoonpayCardBrand): string => {
   switch (brand) {
@@ -446,6 +475,91 @@ export const moonpayGetStatusDetails = (status: string): MoonpayStatus => {
     statusDescription,
   };
 };
+
+// Bank transfers stay 'pending' from the moment the purchase is created until
+// the money settles, which can take days, so the top-level status says very
+// little on its own. MoonPay's guide points to the stages array for the real
+// progress: once waiting_payment succeeds the deposit has arrived.
+// https://dev.moonpay.com/platform/guides/pay-with-bank-transfer
+export const moonpayGetSepaStatusDetails = (
+  status: string,
+  stages?: MoonpayTransactionStage[],
+): MoonpayStatus => {
+  if (status === 'completed' || status === 'failed') {
+    return moonpayGetStatusDetails(status);
+  }
+
+  const waitingForPayment = {
+    statusTitle: t('Waiting for your transfer'),
+    statusDescription: t(
+      'Send the bank transfer using the details below, including the reference. Your crypto amount is an estimate until the money arrives.',
+    ),
+  };
+
+  // Without the stages there is no way to tell how far along it is, and the
+  // generic pending copy ('Moonpay is purchasing your crypto') is wrong here:
+  // nothing happens until the customer sends the money.
+  if (!stages?.length) {
+    return waitingForPayment;
+  }
+
+  const failedStage = stages.find(stage => stage.status === 'failed');
+  if (failedStage) {
+    return {
+      statusTitle: t('Failed'),
+      statusDescription:
+        failedStage.failureReason ||
+        moonpayGetStatusDetails('failed').statusDescription,
+    };
+  }
+
+  const currentStage =
+    stages.find(stage => stage.status === 'in_progress') ??
+    stages.find(stage => stage.status === 'not_started');
+
+  switch (currentStage?.kind) {
+    case 'waiting_payment':
+      return waitingForPayment;
+    case 'verification':
+      return {
+        statusTitle: t('Verification'),
+        statusDescription: t(
+          'Your transfer arrived and Moonpay is reviewing it. Nothing else is needed from you for now.',
+        ),
+      };
+    case 'processing':
+      return {
+        statusTitle: t('Processing'),
+        statusDescription: t(
+          'Your transfer arrived and Moonpay is purchasing your crypto.',
+        ),
+      };
+    case 'delivery':
+      return {
+        statusTitle: t('Delivery'),
+        statusDescription: t(
+          'Moonpay is sending your crypto to the recipient address.',
+        ),
+      };
+    default:
+      // Any other stage MoonPay adds: their own name for it beats a wrong
+      // guess, and the description stays neutral about where the money is.
+      return currentStage
+        ? {
+            statusTitle: currentStage.name,
+            statusDescription: t('Moonpay is working on your purchase.'),
+          }
+        : moonpayGetStatusDetails(status);
+  }
+};
+
+export const moonpaySepaIsWaitingForPayment = (
+  stages?: MoonpayTransactionStage[],
+): boolean =>
+  !stages?.length ||
+  stages.some(
+    stage => stage.kind === 'waiting_payment' && stage.status !== 'success',
+  );
 
 export const moonpayGetStatusColor = (status: string): string => {
   switch (status) {
