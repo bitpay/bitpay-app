@@ -59,6 +59,11 @@ import {
 } from '../wallet/effects';
 import {startWalletStoreInit} from '../wallet/effects/init/init';
 import {
+  migrateWalletSecrets,
+  rehydrateWalletSecrets,
+} from '../wallet-secrets/wallet-secrets.effects';
+import {flushPersistor} from '../persistor';
+import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
   setAppFirstOpenEventDate,
@@ -242,6 +247,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(initAnalytics());
 
     dispatch(reportDeviceIntegrity());
+
+    dispatch(rehydrateWalletSecrets());
+    await dispatch(migrateWalletSecrets(flushPersistor));
 
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());

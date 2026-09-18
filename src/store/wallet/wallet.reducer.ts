@@ -43,6 +43,8 @@ export interface WalletState {
   svmAddressFixComplete: boolean;
   pendingJoinerSession: PendingJoinerSession | null;
   tssEnabled: boolean;
+  // Set only once WALLET_SECRETS reached disk.
+  secretsMigrated: boolean;
 }
 
 export const initialState: WalletState = {
@@ -79,6 +81,7 @@ export const initialState: WalletState = {
   svmAddressFixComplete: false,
   pendingJoinerSession: null,
   tssEnabled: false,
+  secretsMigrated: false,
 };
 
 const cloneWalletWithStatus = (
@@ -648,6 +651,18 @@ export const walletReducer = (
       return {
         ...state,
         pendingJoinerSession: null,
+      };
+
+    case WalletActionTypes.SUCCESS_REHYDRATE_WALLET_SECRETS:
+      return {
+        ...state,
+        keys: {...state.keys, ...action.payload.keys},
+      };
+
+    case WalletActionTypes.SET_SECRETS_MIGRATED:
+      return {
+        ...state,
+        secretsMigrated: true,
       };
 
     case WalletActionTypes.SET_TSS_ENABLED:

@@ -28,6 +28,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {logManager} from '../../../../managers/LogManager';
+import {tokenManager} from '../../../../managers/TokenManager';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
@@ -284,9 +285,7 @@ export const startCreateTSSKey =
         myName,
       } = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
-      const {
-        WALLET: {tokenOptionsByAddress},
-      } = getState();
+      const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
       const partyKey = BWC.createKey({seedType: 'new'});
       logManager.debug('[TSS] Created party key for creator');
@@ -500,8 +499,9 @@ export const startTSSCeremony =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress, keys},
+          WALLET: {keys},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const key = keys[keyId];
         if (!key?.tssSession) {
@@ -793,7 +793,7 @@ export const startTSSCeremony =
 
                     if (
                       status.wallet?.id === walletFromBWS.id &&
-                      status.wallet?.copayers?.length >= key.tssSession.n
+                      status.wallet?.copayers?.length >= key.tssSession!.n
                     ) {
                       walletFromBWS = status.wallet;
                       if (status.wallet?.publicKeyRing) {
@@ -816,21 +816,27 @@ export const startTSSCeremony =
             const currentCopayersCount =
               finalWalletClient.credentials?.publicKeyRing?.length || 0;
 
-            if (currentCopayersCount >= key.tssSession.n) {
+            if (currentCopayersCount >= key.tssSession!.n) {
               logManager.debug(
-                `[TSS Ceremony] All ${key.tssSession.n} copayers found after ${attempt} attempt(s)`,
+                `[TSS Ceremony] All ${
+                  key.tssSession!.n
+                } copayers found after ${attempt} attempt(s)`,
               );
               break;
             }
 
             if (attempt < maxRetries) {
               logManager.debug(
-                `[TSS Ceremony] Only ${currentCopayersCount}/${key.tssSession.n} copayers found, retrying in ${delayMs}ms...`,
+                `[TSS Ceremony] Only ${currentCopayersCount}/${
+                  key.tssSession!.n
+                } copayers found, retrying in ${delayMs}ms...`,
               );
               await new Promise(resolve => setTimeout(resolve, delayMs));
             } else {
               logManager.warn(
-                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${key.tssSession.n} copayers found. Continuing anyway...`,
+                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
+                  key.tssSession!.n
+                } copayers found. Continuing anyway...`,
               );
             }
           }
@@ -975,8 +981,9 @@ export const joinTSSWithCode =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress, keys},
+          WALLET: {keys},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const isResume = !!opts.keyId;
         let key: Key;

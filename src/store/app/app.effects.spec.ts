@@ -23,6 +23,10 @@ jest.mock('@braze/react-native-sdk', () => ({
 }));
 
 jest.mock('react-native-bootsplash', () => ({hide: jest.fn()}));
+jest.mock('../wallet-secrets/wallet-secrets.effects', () => ({
+  migrateWalletSecrets: jest.fn(() => async () => {}),
+  rehydrateWalletSecrets: jest.fn(() => () => {}),
+}));
 jest.mock('react-native-in-app-review', () => ({}));
 jest.mock('react-native-inappbrowser-reborn', () => ({
   __esModule: true,

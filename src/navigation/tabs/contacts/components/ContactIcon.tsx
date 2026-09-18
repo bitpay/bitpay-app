@@ -59,7 +59,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
+      ..._tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   }) as {[key in string]: Token};

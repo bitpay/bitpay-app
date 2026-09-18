@@ -67,6 +67,10 @@ import {
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
 import {
+  walletSecretsReducer,
+  walletSecretsReduxPersistBlackList,
+} from './wallet-secrets/wallet-secrets.reducer';
+import {
   contactReducer,
   ContactReduxPersistBlackList,
 } from './contact/contact.reducer';
@@ -96,6 +100,7 @@ import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
 
 import {Storage} from 'redux-persist';
+import {setActivePersistor} from './persistor';
 import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
@@ -305,6 +310,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   SHOP_CATALOG: [],
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
+  WALLET_SECRETS: walletSecretsReduxPersistBlackList,
   RATE: rateReduxPersistBlackList,
   CONTACT: ContactReduxPersistBlackList,
   COINBASE: CoinbaseReduxPersistBlackList,
@@ -333,6 +339,7 @@ const reducers = {
   SHOP_CATALOG: shopCatalogReducer,
   SWAP_CRYPTO: swapCryptoReducer,
   WALLET: walletReducer,
+  WALLET_SECRETS: walletSecretsReducer,
   RATE: rateReducer,
   CONTACT: contactReducer,
   COINBASE: coinbaseReducer,
@@ -347,7 +354,12 @@ const reducers = {
 const combinedReducer = combineReducers(reducers);
 
 // Guarded root reducer that logs reducer crashes and returns previous state
-const rootReducer = (state: any, action: AnyAction) => {
+type CombinedState = ReturnType<typeof combinedReducer>;
+
+const rootReducer = (
+  state: CombinedState | undefined,
+  action: AnyAction,
+): CombinedState => {
   try {
     return combinedReducer(state, action);
   } catch (err: any) {
@@ -584,6 +596,7 @@ const getStore = async () => {
   initLogs.drainAndDispatch(storeDispatch);
 
   const persistor = persistStore(store);
+  setActivePersistor(persistor);
 
   if (__DEV__) {
     // persistor.purge().then(() => console.log('purged persistence'));
@@ -595,7 +608,7 @@ const getStore = async () => {
   };
 };
 
-export type RootState = ReturnType<typeof rootReducer>;
+export type RootState = CombinedState;
 
 export type AppSelector<T = any> = Selector<RootState, T>;
 
