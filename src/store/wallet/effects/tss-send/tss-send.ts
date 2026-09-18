@@ -27,27 +27,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TSS_SESSION_PREFIX = 'TSS_SIGN_SESSION_';
 
-// exportSession() returns "<sessionId>:<base64SignData>".
-// If sessionId contains colons (e.g. "uuid:m-0-0-input1"), BWC's restoreSession
-// does split(':') and takes only the first two parts, losing the sign data.
-// To avoid this, we strip the sessionId prefix before saving and reconstruct
-// with a colon-free placeholder on load so split(':') always yields [id, signData].
-const extractSignData = (exported: string, sessionId: string): string => {
-  const prefix = sessionId + ':';
-  if (exported.startsWith(prefix)) {
-    return exported.slice(prefix.length);
-  }
-  return exported;
-};
-
-// BWC's restoreSession does split(':') expecting "<id>:<base64SignData>".
-// We pass a colon-free placeholder as id so the split always yields exactly
-// [placeholder, signData]. After restore we override tssSign.id with the real
-// sessionId so subscribe() contacts the correct BWS session.
-const buildSessionForRestore = (signData: string): string => {
-  return `placeholder:${signData}`;
-};
-
 const saveSigningSession = async (
   sessionId: string,
   exported: string,
@@ -55,10 +34,9 @@ const saveSigningSession = async (
 ): Promise<void> => {
   try {
     const key = TSS_SESSION_PREFIX + sessionId;
-    const signData = extractSignData(exported, sessionId);
     await AsyncStorage.setItem(
       key,
-      JSON.stringify({signData, round, savedAt: Date.now()}),
+      JSON.stringify({exported, round, savedAt: Date.now()}),
     );
     logManager.debug(
       `[TSS Persist] Session saved — sessionId: ${sessionId}, round: ${round}`,
@@ -84,13 +62,30 @@ const loadSigningSession = async (
       }, savedAt: ${new Date(parsed.savedAt).toISOString()}`,
     );
     return {
-      exported: buildSessionForRestore(parsed.signData),
+      exported: parsed.exported,
       round: parsed.round,
     };
   } catch (e: any) {
     logManager.warn(`[TSS Persist] Failed to load session: ${e?.message}`);
     return null;
   }
+};
+
+// BWS expires signing sessions and rejects participants whose TSS scheme
+// version does not match the one the session was started with.
+const toSignError = (error: Error): Error => {
+  const errorMsg = error?.message || '';
+  if (errorMsg.startsWith('TSS_SESSION_EXPIRED')) {
+    return new Error(
+      'This signing session expired. Delete this proposal and create a new one.',
+    );
+  }
+  if (errorMsg.startsWith('TSS_MISMATCH_VERSION')) {
+    return new Error(
+      'A co-signer is running an incompatible app version. Everyone must update to the same version.',
+    );
+  }
+  return error;
 };
 
 const clearSigningSession = async (sessionId: string): Promise<void> => {
@@ -223,8 +218,10 @@ const signInput = async (params: {
           `[TSS Sign] Restoring saved session — sessionId: ${sessionId}, lastRound: ${savedSession.round}`,
         );
         try {
-          await tssSign.restoreSession({session: savedSession.exported});
-          tssSign.id = sessionId;
+          await tssSign.restoreSession({
+            session: savedSession.exported,
+            password,
+          });
           logManager.debug(
             `[TSS Sign] Session restored successfully — resuming from round ${savedSession.round}`,
           );
@@ -342,8 +339,10 @@ const signInput = async (params: {
             const savedForRetry = await loadSigningSession(sessionId);
             if (savedForRetry) {
               try {
-                await tssSign.restoreSession({session: savedForRetry.exported});
-                tssSign.id = sessionId;
+                await tssSign.restoreSession({
+                  session: savedForRetry.exported,
+                  password,
+                });
                 logManager.debug(
                   `[TSS Sign] Session restored, re-registering listeners and subscribing`,
                 );
@@ -368,7 +367,7 @@ const signInput = async (params: {
               return;
             }
           } else {
-            rejectSign(startError);
+            rejectSign(toSignError(startError));
             return;
           }
         }
@@ -539,7 +538,7 @@ const signInput = async (params: {
           }
           tssSign.unsubscribe();
           clearSigningSession(sessionId);
-          rejectSign(error);
+          rejectSign(toSignError(error));
         });
 
       tssSign.subscribe();
