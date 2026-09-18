@@ -1,6 +1,7 @@
 import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import {
+  LastLogin,
   PasskeyCredential,
   ReceivingAddress,
   SecuritySettings,
@@ -253,6 +254,14 @@ export const successFetchSecuritySettings = (
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_FETCH_SECURITY_SETTINGS,
   payload: {network, securitySettings},
+});
+
+export const successFetchLastLogin = (
+  network: Network,
+  lastLogin: LastLogin,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_LAST_LOGIN,
+  payload: {network, lastLogin},
 });
 
 export const setPasskeyStatus = (passkey: boolean): BitPayIdActionType => ({
