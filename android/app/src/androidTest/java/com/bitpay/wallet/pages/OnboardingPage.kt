@@ -90,7 +90,7 @@ class OnboardingPage {
     fun waitForPageToLoad() {
         WaitUtils.waitForView(
             continueWithoutAccountButton,
-            timeoutMs = 600000
+            timeoutMs = 120000
         )
     }
 
@@ -101,7 +101,7 @@ class OnboardingPage {
 
     fun isContinueWithoutAccountDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(continueWithoutAccountButton, timeoutMs = 600000)
+            WaitUtils.waitForView(continueWithoutAccountButton, timeoutMs = 120000)
             true
         } catch (e: Throwable) {
             android.util.Log.e("OnboardingPage", "isContinueWithoutAccountDisplayed failed", e)
@@ -159,7 +159,7 @@ class OnboardingPage {
 
     fun verifyBackupKeyPromptIsDisplayed(): Boolean {
         return try {
-            WaitUtils.waitForView(backupKeyPromptText, timeoutMs = 600000)
+            WaitUtils.waitForView(backupKeyPromptText, timeoutMs = 120000)
             onView(backupKeyPromptText).check(matches(isDisplayed()))
             true
         } catch (e: Throwable) {
@@ -193,35 +193,35 @@ class OnboardingPage {
 
     fun verifyIUnderstandCheckbox1Displayed(): Boolean {
         prepareTermsScreen()
-        if (isPostOnboardingStateVisible(timeoutMs = 2000)) {
-            return true
+        if (skipTermsIfAlreadyOnboarded()) {
+            return false
         }
-        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 420000)
+        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 120000)
     }
 
     fun clickIUnderstandCheckbox1() {
-        if (isPostOnboardingStateVisible(timeoutMs = 1500)) {
+        if (skipTermsIfAlreadyOnboarded()) {
             return
         }
         clickTermsCheckbox(iUnderstandCheckBox1Matchers(), "first-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox2() {
-        if (isPostOnboardingStateVisible(timeoutMs = 1500)) {
+        if (skipTermsIfAlreadyOnboarded()) {
             return
         }
         clickTermsCheckbox(iUnderstandCheckBox2Matchers(), "second-term-checkbox")
     }
 
     fun clickIUnderstandCheckbox3() {
-        if (isPostOnboardingStateVisible(timeoutMs = 1500)) {
+        if (skipTermsIfAlreadyOnboarded()) {
             return
         }
         clickTermsCheckbox(iUnderstandCheckBox3Matchers(), "third-term-checkbox")
     }
 
     fun clickAgreeAndContinue() {
-        if (isPostOnboardingStateVisible(timeoutMs = 2000)) {
+        if (skipTermsIfAlreadyOnboarded()) {
             return
         }
 
@@ -271,7 +271,7 @@ class OnboardingPage {
         var lastImportRetryAt = 0L
 
         while (System.currentTimeMillis() < end) {
-            if (isPostOnboardingStateVisible(timeoutMs = 1000)) {
+            if (skipTermsIfAlreadyOnboarded()) {
                 return
             }
 
@@ -319,6 +319,9 @@ class OnboardingPage {
             }
         }
     }
+
+    private fun skipTermsIfAlreadyOnboarded(): Boolean =
+        isPostOnboardingStateVisible(timeoutMs = 1500)
 
     private fun isPostOnboardingStateVisible(timeoutMs: Long): Boolean {
         return isMatcherVisible(portfolioBalanceText, timeoutMs) ||

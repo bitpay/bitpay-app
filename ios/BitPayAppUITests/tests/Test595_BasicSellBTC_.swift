@@ -22,14 +22,14 @@ final class Test595_BasicSellBTC: XCTestCase {
   func test595_BasicSellBTC() throws {
     
     AllureXCTestSupport.setDisplayName(
-      "Basic Sell BTC"
+      "Basic Sell BTC - Select Bitcoin"
     )
     AllureXCTestSupport.addLabel(
       "testlioManualTestID",
       value: "dfc4301a-fad9-4d7f-a13a-91ca1f1d54a7"
     )
     AllureXCTestSupport.addDescription(
-      "Basic Sell BTC (Continue With Opens Browser)"
+      "Basic Sell BTC (Select Bitcoin and reach the sell amount flow)"
     )
     
     let portfolioBalancePage = PortfolioBalancePage(app: app)
@@ -46,7 +46,7 @@ final class Test595_BasicSellBTC: XCTestCase {
     }
     
     AllureXCTestSupport.step("(6) Enter $30 as the sell amount.") {
-      enterAmountPage.enterAmount(amount: "0.007")
+      enterAmountPage.enterAmount(amount: "30")
     }
     
     AllureXCTestSupport.step("(7) Tap Choose Crypto.") {

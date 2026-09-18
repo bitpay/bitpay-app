@@ -22,14 +22,14 @@ final class Test596_BasicBuyBTC: XCTestCase {
   func test596_BasicBuyBTC() throws {
     
     AllureXCTestSupport.setDisplayName(
-      "Basic Buy BTC"
+      "Basic Buy BTC - Select tap My Key with funds"
     )
     AllureXCTestSupport.addLabel(
       "testlioManualTestID",
       value: "3c9c0271-76ba-4da3-88ad-8a5d6ea60211"
     )
     AllureXCTestSupport.addDescription(
-      "Basic Buy BTC (Best Offer → Continue With Opens Browser)"
+      "Basic Buy BTC (Select tap My Key with funds)"
     )
     
     let portfolioBalancePage = PortfolioBalancePage(app: app)
@@ -64,13 +64,5 @@ final class Test596_BasicBuyBTC: XCTestCase {
       selectKeyToDepositPage.tapMyKeyWallet()
     }
     
-    AllureXCTestSupport.step("(10) Wait until best-offer search completes and at least one offer is displayed.") {
-    }
-    
-    AllureXCTestSupport.step("(11) Tap Continue with {ProviderName}.") {
-    }
-    
-    AllureXCTestSupport.step("(12) Wait for the browser / in-app webview to open.") {
-    }
   }
 }

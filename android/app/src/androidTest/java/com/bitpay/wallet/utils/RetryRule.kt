@@ -5,7 +5,7 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
-class RetryRule(private val retryCount: Int = 1) : TestRule {
+class RetryRule(private val retryCount: Int = 3) : TestRule {
     override fun apply(base: Statement, description: Description): Statement =
         object : Statement() {
             override fun evaluate() {

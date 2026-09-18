@@ -53,7 +53,10 @@ final class Test593_BTCConfirmPaymentScreen: XCTestCase {
     }
     
     AllureXCTestSupport.step("(7) Wait until the Send To screen is displayed.") {
-      selectCurrencyPage.isSendToTitleDisplayed()
+      XCTAssertTrue(
+        selectCurrencyPage.isSendToTitleDisplayed(),
+        "Send To page not displayed"
+      )
     }
     
     AllureXCTestSupport.step("(8 & 9) Tap the Search contact or enter address field & Paste the receiver address.") {

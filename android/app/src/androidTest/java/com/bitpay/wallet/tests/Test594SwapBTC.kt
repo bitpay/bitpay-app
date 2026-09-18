@@ -125,7 +125,6 @@ class Test594SwapBTC : BaseTest() {
         }
 
         allureStep("Select second My Key wallet and EVM account") {
-            // selectCurrencyPage.clickSecondMyKeyWallet()
             selectCurrencyPage.clickEVMAccount()
         }
 
