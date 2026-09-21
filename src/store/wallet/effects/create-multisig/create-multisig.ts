@@ -28,6 +28,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {logManager} from '../../../../managers/LogManager';
+import {tokenManager} from '../../../../managers/TokenManager';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
@@ -271,7 +272,7 @@ export const startCreateTSSKey =
     myName: string;
     walletName: string;
   }): Effect<Promise<{key: Key}>> =>
-  async (dispatch, getState): Promise<{key: Key}> => {
+  async (dispatch): Promise<{key: Key}> => {
     try {
       const {
         coin,
@@ -284,9 +285,7 @@ export const startCreateTSSKey =
         myName,
       } = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
-      const {
-        WALLET: {tokenOptionsByAddress},
-      } = getState();
+      const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
       const partyKey = BWC.createKey({seedType: 'new'});
       logManager.debug('[TSS] Created party key for creator');
@@ -500,8 +499,9 @@ export const startTSSCeremony =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress, keys},
+          WALLET: {keys},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const key = keys[keyId];
         if (!key?.tssSession) {
@@ -975,8 +975,9 @@ export const joinTSSWithCode =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress, keys},
+          WALLET: {keys},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const isResume = !!opts.keyId;
         let key: Key;

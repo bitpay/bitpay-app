@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   BaseText,
   H4,
@@ -196,13 +202,19 @@ const AddCustomToken = ({
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
   const {key: _key, selectedAccountAddress, selectedChain} = route.params;
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const tokenOptionsByAddress = useMemo(
+    () =>
+      ({
+        ...BitpaySupportedTokenOptsByAddress,
+        ..._tokenOptionsByAddress,
+        ...customTokenOptionsByAddress,
+      } as {[key in string]: Token}),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const key = keys[_key.id];
   const [isTestnet, setIsTestnet] = useState(false);
