@@ -142,23 +142,26 @@ const CreateOrImportKey = ({
 
   useAndroidBackHandler(() => true);
 
-  const showErrorModal = (e: string) => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: t('Something went wrong'),
-        message: e,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+  const showErrorModal = useCallback(
+    (e: string) => {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t('Something went wrong'),
+          message: e,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+    },
+    [dispatch, t],
+  );
 
   const onCreateKeyPress = useCallback(async () => {
     try {
