@@ -24,6 +24,7 @@ import {
   decryptWalletStore,
 } from './encrypt';
 import {logManager} from '../../managers/LogManager';
+import {credentialSecretFields} from '../wallet-secrets/wallet-secrets.reducer';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -46,38 +47,40 @@ const logTransformFailure = (
 };
 
 export const bootstrapWallets = (wallets: Wallet[]) => {
-  return wallets
-    .map(wallet => {
-      try {
-        // reset transaction history
-        wallet.transactionHistory = {
-          transactions: [],
-          loadMore: true,
-          hasConfirmingTxs: false,
-        };
-        const walletClient = BWCProvider.getClient(
-          JSON.stringify(wallet.credentials),
-        );
-        const successLog = `bindWalletClient - ${wallet.id}`;
-        logManager.info(successLog);
-        // build wallet obj with bwc client credentials
-        return merge(
-          walletClient,
-          wallet,
-          buildWalletObj({
-            ...walletClient.credentials,
-            ...wallet,
-          } as any),
-        );
-      } catch (err: unknown) {
-        const errorLog = `Failed to bindWalletClient - ${
-          wallet.id
-        } - ${getErrorString(err)}`;
-        initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
-        Sentry.captureException(err, {level: 'error'});
-      }
-    })
-    .filter((w): w is NonNullable<typeof w> => w !== undefined);
+  return wallets.map(wallet => {
+    try {
+      // reset transaction history
+      wallet.transactionHistory = {
+        transactions: [],
+        loadMore: true,
+        hasConfirmingTxs: false,
+      };
+      const walletClient = BWCProvider.getClient(
+        JSON.stringify(wallet.credentials),
+      );
+      const successLog = `bindWalletClient - ${wallet.id}`;
+      logManager.info(successLog);
+      // build wallet obj with bwc client credentials
+      return merge(
+        walletClient,
+        wallet,
+        buildWalletObj({
+          ...walletClient.credentials,
+          ...wallet,
+        } as any),
+      );
+    } catch (err: unknown) {
+      const errorLog = `Failed to bindWalletClient - ${
+        wallet.id
+      } - ${getErrorString(err)}`;
+      initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
+      Sentry.captureException(err, {level: 'error'});
+      return Object.assign({}, wallet, {
+        isComplete: () => false,
+        credentials: {...wallet.credentials, isComplete: () => false},
+      });
+    }
+  });
 };
 
 export const bootstrapKey = (key: Key, id: string) => {
@@ -138,10 +141,55 @@ export const bootstrapKey = (key: Key, id: string) => {
   }
 };
 
+const bwcClientFields = [
+  'request',
+  'bulkClient',
+  'timeout',
+  'logLevel',
+  'bp_partner',
+  'bp_partner_version',
+  'doNotVerifyPayPro',
+  'supportStaffWalletId',
+  '_events',
+  '_eventsCount',
+  '_maxListeners',
+];
+
+const omitBwcClientFields = (wallet: Wallet): Wallet => {
+  const persistedWallet = {...wallet} as any;
+  bwcClientFields.forEach(field => delete persistedWallet[field]);
+  return persistedWallet;
+};
+
+// Only safe once WALLET_SECRETS reached disk, which secretsMigrated reports.
+const withoutSecrets = (key: Key): Key => {
+  const stripped = {...key} as any;
+  delete stripped.properties;
+  delete stripped.methods;
+  delete stripped.tssSession;
+  stripped.wallets = (key.wallets || []).map(wallet => {
+    const credentials = (wallet as any).credentials;
+    if (!credentials) {
+      return wallet;
+    }
+    const clean = {...wallet, credentials: {...credentials}} as any;
+    credentialSecretFields.forEach(field => delete clean.credentials[field]);
+    return clean;
+  });
+  return stripped;
+};
+
 export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
     const keys = inboundState.keys || {};
+    if (
+      !Object.keys(keys).length &&
+      !(inboundState.secretsMigrated && inboundState.pendingJoinerSession)
+    ) {
+      return inboundState;
+    }
+    const persistedState = {...inboundState} as WalletState;
     if (Object.keys(keys).length > 0) {
       for (const [id, key] of Object.entries(keys)) {
         key.wallets.forEach(wallet => delete wallet.transactionHistory);
@@ -150,20 +198,37 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
           ...key,
         };
       }
+      persistedState.keys = Object.entries(inboundState.keys).reduce(
+        (persisted, [id, key]) => {
+          const trimmed = {
+            ...key,
+            wallets: (key.wallets || []).map(omitBwcClientFields),
+          };
+          persisted[id] = inboundState.secretsMigrated
+            ? withoutSecrets(trimmed)
+            : trimmed;
+          return persisted;
+        },
+        {} as WalletState['keys'],
+      );
     }
-    return inboundState;
+    if (inboundState.secretsMigrated && persistedState.pendingJoinerSession) {
+      persistedState.pendingJoinerSession = null;
+    }
+    return persistedState;
   },
   // transform state being rehydrated
   outboundState => {
+    if (outboundState.secretsMigrated) {
+      return outboundState;
+    }
     const keys = outboundState.keys || {};
     if (Object.keys(keys).length > 0) {
       for (const [id, key] of Object.entries(keys)) {
-        const bootstrappedKey = bootstrapKey(key, id);
+        const bootstrappedKey = key.properties ? bootstrapKey(key, id) : key;
         const wallets = bootstrapWallets(key.wallets);
 
-        if (bootstrappedKey) {
-          outboundState.keys[id] = {...bootstrappedKey, wallets};
-        }
+        outboundState.keys[id] = {...(bootstrappedKey || key), wallets};
       }
     }
     return outboundState;

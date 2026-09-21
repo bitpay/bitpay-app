@@ -23,6 +23,14 @@ jest.mock('@braze/react-native-sdk', () => ({
 }));
 
 jest.mock('react-native-bootsplash', () => ({hide: jest.fn()}));
+jest.mock('../wallet-secrets/wallet-secrets.effects', () => ({
+  migrateWalletSecrets: jest.fn(() => async () => {}),
+}));
+jest.mock('../persistor', () => ({flushPersistor: jest.fn()}));
+jest.mock('../backup/fs-backup', () => ({
+  removePersistRootBackups: jest.fn(() => Promise.resolve()),
+  resumePersistRootBackups: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('react-native-in-app-review', () => ({}));
 jest.mock('react-native-inappbrowser-reborn', () => ({
   __esModule: true,
@@ -320,6 +328,12 @@ import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {navigationRef} from '../../Root';
 import {findWalletByIdHashed} from '../wallet/utils/wallet';
+import {migrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
+import {flushPersistor} from '../persistor';
+import {
+  removePersistRootBackups,
+  resumePersistRootBackups,
+} from '../backup/fs-backup';
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -394,6 +408,39 @@ describe('startAppInit', () => {
     expect(mockStartWalletStoreInit).toHaveBeenCalledTimes(1);
     expect(actions).toContainEqual({type: 'SUCCESS_APP_INIT'});
     expect(actions).toContainEqual({type: 'APP_INIT_COMPLETED'});
+
+    walletInit.resolve({walletInitSuccess: true});
+    locationData.resolve();
+    await initPromise;
+  });
+
+  it('migrates the wallet secrets before starting the wallet store', async () => {
+    const migration = deferred<void>();
+    const walletInit = deferred<{walletInitSuccess: boolean}>();
+    const locationData = deferred<void>();
+    mockStartWalletStoreInit.mockReturnValue(walletInit.promise);
+    mockGetLocationData.mockReturnValue(locationData.promise);
+    (migrateWalletSecrets as jest.Mock).mockReturnValueOnce(migration.promise);
+
+    const initPromise = startAppInit()(
+      jest.fn(action => action) as any,
+      jest.fn(makeState),
+      undefined as any,
+    );
+    await flushMicrotasks();
+
+    expect(mockStartWalletStoreInit).not.toHaveBeenCalled();
+    migration.resolve();
+    await flushMicrotasks();
+    expect(mockStartWalletStoreInit).toHaveBeenCalledTimes(1);
+    expect(migrateWalletSecrets).toHaveBeenCalledWith(
+      flushPersistor,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    );
+    expect(
+      (migrateWalletSecrets as jest.Mock).mock.invocationCallOrder[0],
+    ).toBeLessThan(mockStartWalletStoreInit.mock.invocationCallOrder[0]);
 
     walletInit.resolve({walletInitSuccess: true});
     locationData.resolve();
