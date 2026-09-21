@@ -1,4 +1,4 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, useMemo} from 'react';
 import styled from 'styled-components/native';
 
 import Avatar from '../../../../components/avatar/Avatar';
@@ -56,13 +56,19 @@ const ContactIcon: React.FC<ContactIconProps> = ({
 }) => {
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const tokenOptionsByAddress = useMemo(
+    () =>
+      ({
+        ...BitpaySupportedTokenOptsByAddress,
+        ..._tokenOptionsByAddress,
+        ...customTokenOptionsByAddress,
+      } as {[key in string]: Token}),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
   const foundToken =
     tokenAddress &&
     chain &&
