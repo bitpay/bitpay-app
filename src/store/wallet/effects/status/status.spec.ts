@@ -786,6 +786,86 @@ describe('startUpdateAllWalletStatusForKeys', () => {
       ),
     ).rejects.toThrow();
   });
+  it('publishes successful key updates even when another key fails', async () => {
+    (isCacheKeyStale as jest.Mock).mockReturnValue(true);
+
+    const error = new Error('network down');
+    const mockGetStatusAll = jest.fn((creds, _opts, cb) =>
+      creds[0].copayerId === 'copayer-2'
+        ? cb(error, null)
+        : cb(null, [
+            makeBulkStatus('wallet-1', {
+              status: makeStatus({pendingTxps: [{id: 'txp-1'}]}),
+            }),
+          ]),
+    );
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: jest.fn(() => ({
+        bulkClient: {getStatusAll: mockGetStatusAll},
+      })),
+    });
+
+    const okKey = makeKey([makeWallet()]);
+    const failingKey = makeKey(
+      [
+        makeWallet({
+          id: 'wallet-2',
+          keyId: 'key-2',
+          credentials: {
+            copayerId: 'copayer-2',
+            token: null,
+            multisigEthInfo: null,
+            isComplete: () => true,
+          },
+        }),
+      ],
+      {id: 'key-2'},
+    );
+
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': okKey, 'key-2': failingKey},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await expect(
+      store.dispatch(
+        startUpdateAllWalletStatusForKeys({
+          keys: [okKey, failingKey],
+          force: true,
+        }),
+      ),
+    ).rejects.toThrow('network down');
+
+    const combinedActions = store
+      .getActions()
+      .filter(
+        action =>
+          action.type === 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
+      );
+
+    expect(combinedActions).toHaveLength(1);
+    expect(combinedActions[0].payload.keyBalances).toHaveLength(1);
+    expect(combinedActions[0].payload.keyBalances[0].keyId).toBe('key-1');
+    expect(combinedActions[0].payload.walletBalances).toHaveLength(1);
+    expect(combinedActions[0].payload.walletBalances[0].walletId).toBe(
+      'wallet-1',
+    );
+    expect(
+      combinedActions[0].payload.walletBalances[0].status.pendingTxps,
+    ).toEqual([{id: 'txp-1'}]);
+    expect(
+      store
+        .getActions()
+        .some(
+          action => action.type === 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
+        ),
+    ).toBe(true);
+  });
 });
 
 describe('updateKeyStatus', () => {
