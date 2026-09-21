@@ -2,17 +2,17 @@ import {Effect} from '../..';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   BitpaySupportedCoins,
-  BitpaySupportedEvmCoins,
-  BitpaySupportedSvmCoins,
   BitpaySupportedTokens,
-  BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
+  SUPPORTED_EVM_COINS,
+  SUPPORTED_SVM_COINS,
+  SUPPORTED_UTXO_COINS,
+  SUPPORTED_VM_TOKENS,
 } from '../../../constants/currencies';
 import {
   getCurrencyAbbreviation,
   isL2NoSideChainNetwork,
 } from '../../../utils/helper-methods';
-import cloneDeep from 'lodash.clonedeep';
 import {tokenManager} from '../../../managers/TokenManager';
 
 export const GetProtocolPrefix = (
@@ -67,27 +67,20 @@ export const IsTaprootCoin = (currencyAbbreviation: string = ''): boolean => {
 };
 
 export const IsUtxoChain = (chain: string): boolean => {
-  const _chain = cloneDeep(chain).toLowerCase();
-
-  return Object.keys(BitpaySupportedUtxoCoins).includes(_chain);
+  return SUPPORTED_UTXO_COINS.includes(chain.toLowerCase());
 };
 
 export const IsOtherChain = (chain: string): boolean => {
-  const _chain = cloneDeep(chain).toLowerCase();
-
-  return Object.keys(OtherBitpaySupportedCoins).includes(_chain);
+  return Object.keys(OtherBitpaySupportedCoins).includes(chain.toLowerCase());
 };
 
 export const IsVMChain = (chain: string): boolean => {
-  const _chain = cloneDeep(chain).toLowerCase();
-  return Object.keys(BitpaySupportedEvmCoins)
-    .concat(Object.keys(BitpaySupportedSvmCoins))
-    .includes(_chain); // TODO: review all IsEVMChain and see if we should use IsVMChain
+  // TODO: review all IsEVMChain and see if we should use IsVMChain
+  return SUPPORTED_VM_TOKENS.includes(chain.toLowerCase());
 };
 
 export const IsEVMChain = (chain: string): boolean => {
-  const _chain = cloneDeep(chain).toLowerCase();
-  return Object.keys(BitpaySupportedEvmCoins).includes(_chain);
+  return SUPPORTED_EVM_COINS.includes(chain.toLowerCase());
 };
 
 export const IsNonceChain = (chain: string): boolean => {
@@ -95,9 +88,7 @@ export const IsNonceChain = (chain: string): boolean => {
 };
 
 export const IsSVMChain = (chain: string): boolean => {
-  const _chain = cloneDeep(chain).toLowerCase();
-
-  return Object.keys(BitpaySupportedSvmCoins).includes(_chain);
+  return SUPPORTED_SVM_COINS.includes(chain.toLowerCase());
 };
 
 export const IsCustomERCToken = (
@@ -116,7 +107,7 @@ export const IsERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ): boolean => {
-  const _currencyAbbreviation = cloneDeep(currencyAbbreviation)?.toLowerCase();
+  const _currencyAbbreviation = currencyAbbreviation?.toLowerCase();
   const _chain = chain.toLowerCase();
 
   if (_currencyAbbreviation === 'pol' && _chain === 'matic') {
