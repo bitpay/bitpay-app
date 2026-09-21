@@ -100,10 +100,6 @@ export const dismissBottomNotificationModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL,
 });
 
-export const resetBottomNotificationModalConfig = (): AppActionType => ({
-  type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
-});
-
 export const dismissChainSelectorModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL,
 });
