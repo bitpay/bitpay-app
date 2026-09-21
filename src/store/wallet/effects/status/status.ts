@@ -473,8 +473,9 @@ export const startUpdateAllWalletStatusForKeys =
             }),
           ),
         );
-        const keyUpdates = (await Promise.all(keyUpdatesPromises)).filter(
-          Boolean,
+        const settledKeyUpdates = await Promise.allSettled(keyUpdatesPromises);
+        const keyUpdates = settledKeyUpdates.flatMap(result =>
+          result.status === 'fulfilled' && result.value ? [result.value] : [],
         ) as Array<{
           keyId: string;
           cacheKey: string;
@@ -513,6 +514,13 @@ export const startUpdateAllWalletStatusForKeys =
               ),
             }),
           );
+        }
+        const firstRejection = settledKeyUpdates.find(
+          (result): result is PromiseRejectedResult =>
+            result.status === 'rejected',
+        );
+        if (firstRejection) {
+          throw firstRejection.reason;
         }
         logManager.info('success [startUpdateAllWalletStatusForKeys]');
         resolve();
