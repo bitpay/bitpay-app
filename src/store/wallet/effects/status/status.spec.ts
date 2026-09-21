@@ -701,6 +701,54 @@ describe('startUpdateAllWalletStatusForKeys', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('publishes wallet and key balances in one combined action', async () => {
+    (isCacheKeyStale as jest.Mock).mockReturnValue(true);
+
+    const mockGetStatusAll = jest.fn((_creds, _opts, cb) =>
+      cb(null, [makeBulkStatus()]),
+    );
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: jest.fn(() => ({
+        bulkClient: {getStatusAll: mockGetStatusAll},
+      })),
+    });
+
+    const wallet = makeWallet();
+    const key = makeKey([wallet]);
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await store.dispatch(
+      startUpdateAllWalletStatusForKeys({keys: [key], force: true}),
+    );
+
+    const actions = store.getActions();
+    const combinedActions = actions.filter(
+      action =>
+        action.type === 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
+    );
+
+    expect(combinedActions).toHaveLength(1);
+    expect(combinedActions[0].payload.keyBalances).toHaveLength(1);
+    expect(combinedActions[0].payload.keyBalances[0].cacheKey).toBe('key-1');
+    expect(combinedActions[0].payload.walletBalances).toHaveLength(1);
+    expect(
+      actions.some(action => action.type === 'WALLET/SUCCESS_UPDATE_KEY'),
+    ).toBe(false);
+    expect(
+      actions.some(
+        action => action.type === 'WALLET/SUCCESS_UPDATE_KEYS_TOTAL_BALANCE',
+      ),
+    ).toBe(false);
+  });
+
   it('dispatches failedUpdateKeyTotalBalance when getBulkStatus fails', async () => {
     (isCacheKeyStale as jest.Mock).mockReturnValue(true);
 
@@ -738,6 +786,86 @@ describe('startUpdateAllWalletStatusForKeys', () => {
       ),
     ).rejects.toThrow();
   });
+  it('publishes successful key updates even when another key fails', async () => {
+    (isCacheKeyStale as jest.Mock).mockReturnValue(true);
+
+    const error = new Error('network down');
+    const mockGetStatusAll = jest.fn((creds, _opts, cb) =>
+      creds[0].copayerId === 'copayer-2'
+        ? cb(error, null)
+        : cb(null, [
+            makeBulkStatus('wallet-1', {
+              status: makeStatus({pendingTxps: [{id: 'txp-1'}]}),
+            }),
+          ]),
+    );
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: jest.fn(() => ({
+        bulkClient: {getStatusAll: mockGetStatusAll},
+      })),
+    });
+
+    const okKey = makeKey([makeWallet()]);
+    const failingKey = makeKey(
+      [
+        makeWallet({
+          id: 'wallet-2',
+          keyId: 'key-2',
+          credentials: {
+            copayerId: 'copayer-2',
+            token: null,
+            multisigEthInfo: null,
+            isComplete: () => true,
+          },
+        }),
+      ],
+      {id: 'key-2'},
+    );
+
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': okKey, 'key-2': failingKey},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await expect(
+      store.dispatch(
+        startUpdateAllWalletStatusForKeys({
+          keys: [okKey, failingKey],
+          force: true,
+        }),
+      ),
+    ).rejects.toThrow('network down');
+
+    const combinedActions = store
+      .getActions()
+      .filter(
+        action =>
+          action.type === 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
+      );
+
+    expect(combinedActions).toHaveLength(1);
+    expect(combinedActions[0].payload.keyBalances).toHaveLength(1);
+    expect(combinedActions[0].payload.keyBalances[0].keyId).toBe('key-1');
+    expect(combinedActions[0].payload.walletBalances).toHaveLength(1);
+    expect(combinedActions[0].payload.walletBalances[0].walletId).toBe(
+      'wallet-1',
+    );
+    expect(
+      combinedActions[0].payload.walletBalances[0].status.pendingTxps,
+    ).toEqual([{id: 'txp-1'}]);
+    expect(
+      store
+        .getActions()
+        .some(
+          action => action.type === 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
+        ),
+    ).toBe(true);
+  });
 });
 
 describe('updateKeyStatus', () => {
@@ -762,6 +890,72 @@ describe('updateKeyStatus', () => {
       store.dispatch(updateKeyStatus({key, force: false})),
     ).resolves.toBeUndefined();
     expect(mockGetClient).not.toHaveBeenCalled();
+  });
+
+  it('uses a fresh whole-key cache for an account-scoped refresh', async () => {
+    (isCacheKeyStale as jest.Mock).mockImplementation(
+      (timestamp: number | undefined) => !timestamp,
+    );
+    const mockGetClient = jest.fn();
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: mockGetClient,
+    });
+    const key = makeKey([makeWallet()]);
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {'key-1': Date.now()},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await expect(
+      store.dispatch(
+        updateKeyStatus({
+          key,
+          accountAddress: 'address-1',
+          force: false,
+        }),
+      ),
+    ).resolves.toBeUndefined();
+    expect(mockGetClient).not.toHaveBeenCalled();
+  });
+
+  it('does not use another account scoped cache for the selected account', async () => {
+    (isCacheKeyStale as jest.Mock).mockImplementation(
+      (timestamp: number | undefined) => !timestamp,
+    );
+    const mockGetStatusAll = jest.fn((_creds, _opts, cb) => cb(null, []));
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: jest.fn(() => ({
+        bulkClient: {getStatusAll: mockGetStatusAll},
+      })),
+    });
+    const wallet = makeWallet({receiveAddress: 'address-2'});
+    const key = makeKey([wallet]);
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {'key-1:address-1': Date.now()},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    const result = await store.dispatch(
+      updateKeyStatus({
+        key,
+        accountAddress: 'address-2',
+        force: false,
+        dataOnly: true,
+      }),
+    );
+
+    expect(mockGetStatusAll).toHaveBeenCalledTimes(1);
+    expect(result?.cacheKey).toBe('key-1:address-2');
   });
 
   it('resolves undefined when there are no eligible non-token complete wallet credentials', async () => {

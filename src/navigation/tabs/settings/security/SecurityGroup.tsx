@@ -1,6 +1,7 @@
 import React from 'react';
 import {Theme} from '@react-navigation/native';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import PasskeyScreen from './screens/Passkeys';
 import {Root} from '../../../../Root';
 import {useStackScreenOptions} from '../../../utils/headerHelpers';
@@ -26,7 +27,6 @@ export enum SecurityScreens {
 
 const SecurityGroup = ({Security, theme}: SecurityProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <Security.Group screenOptions={commonOptions}>
       <Security.Screen

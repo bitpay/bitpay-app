@@ -1,5 +1,6 @@
 import React, {memo} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   Action,
   DisabledTextDark,
@@ -14,57 +15,120 @@ import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 
-const AmountPillsContainer = styled.View<{
+const screenGutter = Number.parseInt(ScreenGutter, 10);
+
+const styles = StyleSheet.create({
+  amountPillsContainer: {
+    marginVertical: 0,
+    marginHorizontal: screenGutter,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  amountPill: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 27.5,
+    padding: 8,
+  },
+  amountPillText: {
+    fontWeight: '400',
+    letterSpacing: 0,
+  },
+});
+
+interface AmountPillsContainerProps {
   isSmallScreen?: boolean;
   hideFiatPills?: boolean;
-}>`
-  margin: 0px ${ScreenGutter};
-  display: flex;
-  flex-direction: row;
-  justify-content: ${({hideFiatPills}) =>
-    hideFiatPills ? 'flex-end' : 'space-between'};
-  align-items: center;
-`;
+}
 
-const AmountPill = styled(TouchableOpacity)<{
+const AmountPillsContainer: React.FC<
+  AmountPillsContainerProps & React.ComponentProps<typeof View>
+> = ({isSmallScreen: _isSmallScreen, hideFiatPills, style, ...rest}) => (
+  <View
+    style={[
+      styles.amountPillsContainer,
+      {justifyContent: hideFiatPills ? 'flex-end' : 'space-between'},
+      style,
+    ]}
+    {...rest}
+  />
+);
+
+interface AmountPillProps {
   isSmallScreen?: boolean;
   isSelected?: boolean;
   showMaxPill?: boolean;
   hideFiatPills?: boolean;
-}>`
-  background-color: ${({theme: {dark}, isSelected, disabled}) =>
-    isSelected ? Action : dark ? LightBlack : NeutralSlate};
-  min-width: ${({showMaxPill, hideFiatPills}) =>
-    showMaxPill && !hideFiatPills ? '23%' : '31%'};
-  max-width: ${({showMaxPill, hideFiatPills}) =>
-    showMaxPill && !hideFiatPills ? '187px' : '250px'};
-  height: ${({isSmallScreen}) => (isSmallScreen ? 30 : 46)}px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  border-radius: 27.5px;
-  padding: 8px;
-`;
+}
 
-const AmountPillText = styled(BaseText)<{
+const AmountPill: React.FC<
+  AmountPillProps & React.ComponentProps<typeof TouchableOpacity>
+> = ({
+  isSmallScreen,
+  isSelected,
+  showMaxPill,
+  hideFiatPills,
+  disabled,
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      style={[
+        styles.amountPill,
+        {
+          backgroundColor: isSelected
+            ? Action
+            : theme.dark
+            ? LightBlack
+            : NeutralSlate,
+          minWidth: showMaxPill && !hideFiatPills ? '23%' : '31%',
+          maxWidth: showMaxPill && !hideFiatPills ? 187 : 250,
+          height: isSmallScreen ? 30 : 46,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+interface AmountPillTextProps {
   isSelected?: boolean;
   isSmallScreen?: boolean;
   disabled?: boolean;
-}>`
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? 14 : 20)}px;
-  font-weight: 400;
-  line-height: ${({isSmallScreen}) => (isSmallScreen ? 18 : 30)}px;
-  letter-spacing: 0px;
-  color: ${({theme: {dark}, isSelected, disabled}) =>
-    disabled
-      ? DisabledTextDark
-      : isSelected
-      ? White
-      : dark
-      ? White
-      : SlateDark};
-`;
+}
+
+const AmountPillText: React.FC<
+  AmountPillTextProps & React.ComponentProps<typeof BaseText>
+> = ({isSelected, isSmallScreen, disabled, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.amountPillText,
+        {
+          fontSize: isSmallScreen ? 14 : 20,
+          lineHeight: isSmallScreen ? 18 : 30,
+          color: disabled
+            ? DisabledTextDark
+            : isSelected
+            ? White
+            : theme.dark
+            ? White
+            : SlateDark,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const defaultPills = [
   {

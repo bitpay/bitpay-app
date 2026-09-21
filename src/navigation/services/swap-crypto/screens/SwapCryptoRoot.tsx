@@ -1,6 +1,14 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {ActivityIndicator, ScrollView, View} from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  View,
+  SafeAreaView,
+  StyleSheet,
+  ViewProps,
+} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
+import {useTheme as useStyledTheme} from '../../../../contexts';
 import {CommonActions, RouteProp} from '@react-navigation/core';
 import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
@@ -145,10 +153,10 @@ import {
 } from '../../../../store/external-services/external-services.effects';
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import usePreloadedCustomGlobalSelectList from '../../../wallet/screens/usePreloadedCustomGlobalSelectList';
 import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
@@ -302,31 +310,72 @@ const swapCryptoExchangesDefault: PreLoadPartnersData = {
   },
 };
 
-const SwapCryptoContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  swapCryptoContainer: {
+    flex: 1,
+  },
+  globalSelectContainer: {
+    flex: 1,
+  },
+  offerSelectorItemRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 48,
+  },
+  offerSelectorContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 0,
+    marginRight: 15,
+    marginBottom: 15,
+    marginLeft: 15,
+    paddingVertical: 0,
+    paddingHorizontal: 16,
+  },
+});
 
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const SwapCryptoContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.swapCryptoContainer, style]} {...rest} />
+);
 
-const OfferSelectorItemRow = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 48px;
-`;
+const GlobalSelectContainer: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.globalSelectContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const OfferSelectorContainer = styled.View<{isSmallScreen?: boolean}>`
-  /* min-height: ${({isSmallScreen}) => (isSmallScreen ? 140 : 165)}px; */
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
-  border-radius: 12px;
-  margin: 0px 15px 15px 15px;
-  padding: 0 16px;
-`;
+const OfferSelectorItemRow: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.offerSelectorItemRow, style]} {...rest} />
+);
+
+const OfferSelectorContainer: React.FC<
+  ViewProps & {isSmallScreen?: boolean}
+> = ({style, isSmallScreen, ...rest}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.offerSelectorContainer,
+        {
+          borderColor: theme.dark ? LightBlack : '#eaeaea',
+          backgroundColor: theme.dark ? LightBlack : Slate10,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 let swapCryptoConfig: SwapCryptoConfig | undefined;
 
@@ -343,6 +392,9 @@ const SwapCryptoRoot: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys: {[key: string]: Key} = useAppSelector(({WALLET}) => WALLET.keys);
+  const selectedSwapToChainFilter = useAppSelector(
+    ({APP}) => APP.selectedLocalChainFilterOption,
+  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -381,6 +433,13 @@ const SwapCryptoRoot: React.FC = () => {
   const [swapCryptoSupportedCoinsTo, setSwapCryptoSupportedCoinsTo] = useState<
     SwapCryptoCoin[]
   >([]);
+  const pendingToWalletSelectionRef = useRef<
+    | {
+        toWallet?: Wallet;
+        createToWalletData?: AddWalletData;
+      }
+    | undefined
+  >(undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
     useState<boolean>(false);
@@ -542,6 +601,17 @@ const SwapCryptoRoot: React.FC = () => {
         break;
     }
   };
+
+  const {
+    preloadedListRef: swapToGlobalSelectCacheRef,
+    preload: preloadSwapToGlobalSelect,
+  } = usePreloadedCustomGlobalSelectList({
+    navigation,
+    keys,
+    customToSelectCurrencies: swapCryptoSupportedCoinsTo,
+    selectedChainFilterOption: selectedSwapToChainFilter,
+    livenetOnly: true,
+  });
 
   const checkAmount = useCallback(
     (amountFrom: number) => {
@@ -1772,11 +1842,10 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
-  const onDismiss = async (
+  const applyToWalletSelection = async (
     toWallet?: Wallet,
     createToWalletData?: AddWalletData,
   ) => {
-    hideModal('toWalletSelector');
     if (toWallet?.currencyAbbreviation) {
       setToWallet(toWallet);
     } else if (createToWalletData && isTSSKey(createToWalletData.key)) {
@@ -1839,6 +1908,26 @@ const SwapCryptoRoot: React.FC = () => {
           showError({msg: err.message});
         }
       }
+    }
+  };
+
+  const onDismiss = (toWallet?: Wallet, createToWalletData?: AddWalletData) => {
+    pendingToWalletSelectionRef.current =
+      toWallet || createToWalletData
+        ? {toWallet, createToWalletData}
+        : undefined;
+    hideModal('toWalletSelector');
+  };
+
+  const handleToWalletSelectorModalHide = () => {
+    const pendingSelection = pendingToWalletSelectionRef.current;
+    pendingToWalletSelectionRef.current = undefined;
+
+    if (pendingSelection) {
+      applyToWalletSelection(
+        pendingSelection.toWallet,
+        pendingSelection.createToWalletData,
+      );
     }
   };
 
@@ -3164,6 +3253,7 @@ const SwapCryptoRoot: React.FC = () => {
                 }
                 isBigScreen={WIDTH > 500}
                 key={fromWalletSelected ? 'swapToEnabled' : 'swapToDisabled'}
+                onPressIn={preloadSwapToGlobalSelect}
                 onPress={() => {
                   if (useDefaultToWallet || !fromWalletSelected) {
                     return;
@@ -3627,6 +3717,7 @@ const SwapCryptoRoot: React.FC = () => {
         modalLibrary="bottom-sheet"
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
+        onModalHide={handleToWalletSelectorModalHide}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect
@@ -3637,6 +3728,9 @@ const SwapCryptoRoot: React.FC = () => {
             useAsModal={true}
             modalTitle={t('Swap To')}
             customToSelectCurrencies={swapCryptoSupportedCoinsTo}
+            preloadedCustomToSelectCurrenciesList={
+              swapToGlobalSelectCacheRef.current
+            }
             globalSelectOnDismiss={onDismiss}
           />
         </GlobalSelectContainer>

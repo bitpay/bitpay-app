@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Modal from 'react-native-modal';
-import {View} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {View, ViewProps, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {
   ActionContainer,
@@ -33,66 +33,149 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {CurrencyIconAndBadge} from '../../wallet/screens/send/confirm/Shared';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const ModalContainer = styled.View`
-  justify-content: center;
-  width: ${WIDTH - 30}px;
-  max-width: 400px;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  border-radius: 10px;
-  padding: 22px 24px;
-  overflow: hidden;
-`;
+const styles = StyleSheet.create({
+  modalContainer: {
+    justifyContent: 'center',
+    width: WIDTH - 30,
+    maxWidth: 400,
+    borderRadius: 10,
+    paddingVertical: 22,
+    paddingHorizontal: 24,
+    overflow: 'hidden',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 11,
+    marginLeft: -9,
+  },
+  addressContainer: {
+    borderRadius: 8,
+    margin: 0,
+    flexDirection: 'row',
+    padding: 12,
+    paddingRight: 1,
+  },
+  addressTextContainer: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    borderRightWidth: 1,
+    paddingRight: 12,
+    minHeight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addressText: {
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: -0.5,
+  },
+  copyContainer: {
+    width: 50,
+    height: '100%',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: 1,
+    marginTop: 24,
+    marginBottom: 19,
+    marginHorizontal: -24,
+  },
+  confirmText: {
+    marginBottom: 24,
+  },
+});
 
-const HeaderContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 11px;
-  margin-left: -9px;
-`;
+const ModalContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AddressContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
-  border-radius: 8px;
-  margin: 0;
-  flex-direction: row;
-  padding: 12px;
-  padding-right: 1px;
-`;
+const HeaderContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.headerContainer, style]} {...rest} />
+);
 
-const AddressTextContainer = styled.View`
-  flex: 1 1 auto;
-  border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(73, 137, 255, 0.25)' : 'rgba(34, 64, 196, 0.25)'};
-  padding-right: 12px;
-  min-height: 20px;
-  flex-direction: row;
-  align-items: center;
-`;
-const AddressText = styled(Paragraph)`
-  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: -0.5px;
-`;
+const AddressContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.addressContainer,
+        {backgroundColor: theme.dark ? Midnight : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CopyContainer = styled.View`
-  width: 50px;
-  height: 100%;
-  align-items: center;
-  flex-direction: row;
-  justify-content: center;
-`;
+const AddressTextContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addressTextContainer,
+        {
+          borderRightColor: theme.dark
+            ? 'rgba(73, 137, 255, 0.25)'
+            : 'rgba(34, 64, 196, 0.25)',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const Divider = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  height: 1px;
-  margin: 24px -24px 19px;
-`;
+const AddressText = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[styles.addressText, {color: theme.dark ? White : BitPay}, style]}
+      {...rest}
+    />
+  );
+});
 
-const ConfirmText = styled.View`
-  margin-bottom: 24px;
-`;
+const CopyContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.copyContainer, style]} {...rest} />
+);
+
+const Divider = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.divider,
+        {backgroundColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const ConfirmText = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.confirmText, style]} {...rest} />
+);
 
 const AddressModal = ({
   onClose,

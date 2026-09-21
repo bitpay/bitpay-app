@@ -12,6 +12,7 @@ import {
   setQuarantinesByWalletIdUpdates,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   startPopulatePortfolio,
+  updatePopulateProgress,
 } from './portfolio.actions';
 import {selectCanRenderPortfolioBalanceCharts} from './portfolio.selectors';
 
@@ -178,6 +179,78 @@ describe('portfolioReducer', () => {
       'wallet-1': 'missing_index',
     });
     expect(result.populateStatus.decisionSource).toBe('app_launch_staleness');
+  });
+
+  it('preserves state identity for unchanged populate progress', () => {
+    const state = makeState();
+
+    expect(
+      portfolioReducer(
+        state,
+        updatePopulateProgress({
+          currentWalletId: 'wallet-1',
+          walletsTotal: 1,
+          walletsCompleted: 0,
+          txRequestsMade: 0,
+          txsProcessed: 0,
+          walletStatusByIdUpdates: {'wallet-1': 'in_progress'},
+        }),
+      ),
+    ).toBe(state);
+  });
+
+  it('updates populate progress when a wallet status changes', () => {
+    const state = makeState();
+    const result = portfolioReducer(
+      state,
+      updatePopulateProgress({
+        walletsCompleted: 1,
+        walletStatusByIdUpdates: {'wallet-1': 'done'},
+      }),
+    );
+
+    expect(result).not.toBe(state);
+    expect(result.populateStatus.walletsCompleted).toBe(1);
+    expect(result.populateStatus.walletStatusById?.['wallet-1']).toBe('done');
+  });
+
+  it('updates populate progress when a new wallet id is reported', () => {
+    const state = makeState();
+    const result = portfolioReducer(
+      state,
+      updatePopulateProgress({
+        walletStatusByIdUpdates: {'wallet-2': 'in_progress'},
+      }),
+    );
+
+    expect(result).not.toBe(state);
+    expect(result.populateStatus.walletStatusById).toEqual({
+      'wallet-1': 'in_progress',
+      'wallet-2': 'in_progress',
+    });
+  });
+
+  it('appends populate progress errors', () => {
+    const state = makeState();
+    const result = portfolioReducer(
+      state,
+      updatePopulateProgress({
+        errorsToAdd: [{walletId: 'wallet-1', message: 'boom'}],
+      }),
+    );
+
+    expect(result).not.toBe(state);
+    expect(result.populateStatus.errors).toEqual([
+      {walletId: 'wallet-1', message: 'boom'},
+    ]);
+  });
+
+  it('preserves state identity for an empty populate progress error list', () => {
+    const state = makeState();
+
+    expect(
+      portfolioReducer(state, updatePopulateProgress({errorsToAdd: []})),
+    ).toBe(state);
   });
 
   it('stores and clears atomic snapshot balance mismatches by wallet id', () => {

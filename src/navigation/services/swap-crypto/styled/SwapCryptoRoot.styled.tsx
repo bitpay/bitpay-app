@@ -1,5 +1,10 @@
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, Text, View, ViewProps, TextProps} from 'react-native';
+import {useTheme} from '../../../../contexts';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, H7} from '../../../../components/styled/Text';
 import {
@@ -17,328 +22,752 @@ import {
 const SMALL_SCREEN_WIDTH_THRESHOLD = 420;
 
 // Helper function to calculate font size based on text length
-const getAmountFontSize = (textLength?: number): string => {
+const getAmountFontSize = (textLength?: number): number => {
   if (WIDTH >= SMALL_SCREEN_WIDTH_THRESHOLD) {
-    return '32px';
+    return 32;
   }
   // Dynamic font size for small screens
-  if (!textLength || textLength <= 8) return '32px';
-  if (textLength <= 10) return '26px';
-  if (textLength <= 14) return '22px';
-  if (textLength <= 18) return '18px';
-  return '16px';
+  if (!textLength || textLength <= 8) {
+    return 32;
+  }
+  if (textLength <= 10) {
+    return 26;
+  }
+  if (textLength <= 14) {
+    return 22;
+  }
+  if (textLength <= 18) {
+    return 18;
+  }
+  return 16;
 };
 
-export const CtaContainer = styled.View`
-  margin: 20px 15px;
-`;
+const parsePx = (value: string): number => parseFloat(value);
 
-export const SwapCryptoCard = styled.View`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
-  border-radius: 12px;
-  margin: 15px;
-  padding: 16px;
-`;
+const parsePaddingShorthand = (
+  value: string,
+): {
+  paddingTop: number;
+  paddingRight: number;
+  paddingBottom: number;
+  paddingLeft: number;
+} => {
+  const parts = value.trim().split(/\s+/).map(parsePx);
+  const [top, right = top, bottom = top, left = right] = parts;
+  return {
+    paddingTop: top,
+    paddingRight: right,
+    paddingBottom: bottom,
+    paddingLeft: left,
+  };
+};
 
-export const OfferContainer = styled.View<{isModal?: boolean}>`
-  margin-bottom: 15px;
-  width: 100%;
-`;
+const styles = StyleSheet.create({
+  ctaContainer: {
+    marginVertical: 20,
+    marginHorizontal: 15,
+  },
+  swapCryptoCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    margin: 15,
+    padding: 16,
+  },
+  offerContainer: {
+    marginBottom: 15,
+    width: '100%',
+  },
+  itemDivisor: {
+    borderBottomWidth: 1,
+  },
+  amountCryptoCard: {
+    borderWidth: 1,
+    borderRadius: 9,
+    marginVertical: 0,
+    marginHorizontal: 15,
+    padding: 14,
+  },
+  summaryTitle: {
+    fontSize: 14,
+    marginBottom: 15,
+  },
+  walletBalanceContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  arrowContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  arrowBoxContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    height: 0,
+  },
+  arrowBox: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -26,
+    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderWidth: 2.5,
+    zIndex: 999,
+  },
+  selectorArrowContainer: {
+    marginLeft: 10,
+  },
+  actionsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  swapCardHeaderTitle: {
+    lineHeight: 18,
+  },
+  swapCardAccountChainsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexShrink: 1,
+    height: 23,
+    borderRadius: 27.5,
+  },
+  swapCardAccountText: {
+    fontSize: 13,
+    lineHeight: 15,
+    fontWeight: '500',
+    letterSpacing: 0,
+    marginLeft: 6,
+    flexShrink: 1,
+    fontStyle: 'normal',
+  },
+  swapCardHeaderContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    alignContent: 'center',
+  },
+  swapCardAmountAndWalletContainer: {
+    width: '100%',
+    marginVertical: 20,
+    marginHorizontal: 0,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  swapCardBottomRowContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  limitAmountBtn: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginLeft: 5,
+    marginRight: 5,
+  },
+  limitAmountBtnText: {
+    fontSize: 13,
+  },
+  amountClickableContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    minWidth: 80,
+  },
+  selectedOptionContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    height: 36,
+    padding: 8,
+    minWidth: 146,
+    borderRadius: 27.5,
+  },
+  swapCryptoWalletSelectorContainer: {
+    marginVertical: 8,
+    marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletSelector: {
+    height: 40,
+    borderRadius: 27.5,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    minWidth: 146,
+  },
+  walletSelectorLeft: {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorRight: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletSelectorName: {
+    fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0,
+    marginLeft: 8,
+    marginRight: 5,
+  },
+  selectedOptionText: {
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: 0,
+    maxWidth: 120,
+  },
+  selectedOptionCol: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  swapCurrenciesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 100,
+  },
+  coinIconContainer: {
+    width: 30,
+    height: 25,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dataText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  amountText: {
+    fontWeight: '700',
+    letterSpacing: 0,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
+  bottomDataText: {
+    fontSize: 13,
+  },
+  providerContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  providerLabel: {
+    marginRight: 10,
+  },
+  spinnerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  walletTextContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    marginLeft: 10,
+  },
+  balanceContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+});
 
-export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  border-bottom-width: 1px;
-`;
+export const CtaContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.ctaContainer, style]} {...rest} />
+);
 
-export const AmountCryptoCard = styled.View`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
-  border-radius: 9px;
-  margin: 0px 15px;
-  padding: 14px;
-`;
+export const SwapCryptoCard: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.swapCryptoCard,
+        {
+          borderColor: theme.dark ? LightBlack : '#eaeaea',
+          backgroundColor: theme.dark ? LightBlack : Slate10,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const SummaryTitle = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 14px;
-  margin-bottom: 15px;
-`;
+export const OfferContainer: React.FC<ViewProps & {isModal?: boolean}> = ({
+  style,
+  ...rest
+}) => <View style={[styles.offerContainer, style]} {...rest} />;
 
-export const WalletBalanceContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-right: 10px;
-`;
+export const ItemDivisor: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.itemDivisor,
+        {borderBottomColor: theme.dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const ArrowContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-`;
+export const AmountCryptoCard: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.amountCryptoCard,
+        {borderColor: theme.dark ? LightBlack : '#eaeaea'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const ArrowBoxContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  height: 0px;
-`;
+export const SummaryTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.summaryTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SummaryTitle.displayName = 'SummaryTitle';
 
-export const ArrowBox = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin-top: -26px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 10px;
-  width: 40px;
-  height: 40px;
-  border: 2.5px solid ${({theme: {dark}}) => (dark ? Black : White)};
-  z-index: 999;
-`;
+export const WalletBalanceContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletBalanceContainer, style]} {...rest} />;
 
-export const SelectorArrowContainer = styled.View`
-  margin-left: 10px;
-`;
+export const ArrowContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.arrowContainer, style]} {...rest} />
+);
 
-export const ActionsContainer = styled.View<{alignEnd?: boolean}>`
-  display: flex;
-  justify-content: ${({alignEnd}) => (alignEnd ? 'flex-end' : 'space-between')};
-  flex-direction: row;
-  align-items: center;
-`;
+export const ArrowBoxContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.arrowBoxContainer, style]} {...rest} />
+);
 
-export const SwapCardHeaderTitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
-  line-height: 18px;
-`;
+export const ArrowBox: React.FC<ViewProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.arrowBox,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          borderColor: theme.dark ? Black : White,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const SwapCardAccountChainsContainer = styled.View<{
-  padding?: string;
-  maxWidth?: string;
-}>`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 1;
-  height: 23px;
-  border-radius: 27.5px;
-  max-width: ${({maxWidth}) => (maxWidth ? `${maxWidth}` : '250px')};
-  padding: ${({padding}) => padding ?? '4px 8px'};
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+export const SelectorArrowContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => <View style={[styles.selectorArrowContainer, style]} {...rest} />;
 
-export const SwapCardAccountText = styled(BaseText)`
-  font-size: 13px;
-  line-height: 15px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 6px;
-  flex-shrink: 1;
-  font-style: normal;
-`;
+export const ActionsContainer: React.FC<ViewProps & {alignEnd?: boolean}> = ({
+  style,
+  alignEnd,
+  ...rest
+}) => (
+  <View
+    style={[
+      styles.actionsContainer,
+      {justifyContent: alignEnd ? 'flex-end' : 'space-between'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const SwapCardHeaderContainer = styled.View<{noMargin?: boolean}>`
-  flex: 1;
-  flex-direction: row;
-  /* margin-bottom: ${({noMargin}) => (noMargin ? '0' : '20px')}; */
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  align-content: center;
-`;
+export const SwapCardHeaderTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <Text
+        ref={ref}
+        style={[
+          styles.swapCardHeaderTitle,
+          {color: theme.dark ? White : '#434d5a'},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+SwapCardHeaderTitle.displayName = 'SwapCardHeaderTitle';
 
-export const SwapCardAmountAndWalletContainer = styled.View<{
-  alignEnd?: boolean;
-}>`
-  width: 100%;
-  margin: 20px 0px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: ${({alignEnd}) => (alignEnd ? 'flex-end' : 'space-between')};
-`;
+export const SwapCardAccountChainsContainer: React.FC<
+  ViewProps & {padding?: string; maxWidth?: string}
+> = ({style, padding, maxWidth, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.swapCardAccountChainsContainer,
+        {
+          maxWidth: parsePx(maxWidth ? maxWidth : '250px'),
+          ...parsePaddingShorthand(padding ?? '4px 8px'),
+          backgroundColor: theme.dark ? Black : White,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const SwapCardBottomRowContainer = styled.View<{alignEnd?: boolean}>`
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: ${({alignEnd}) => (alignEnd ? 'flex-end' : 'space-between')};
-`;
+export const SwapCardAccountText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.swapCardAccountText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SwapCardAccountText.displayName = 'SwapCardAccountText';
 
-export const LimitAmountBtn = styled(TouchableOpacity)<{
-  noBackground?: boolean;
-}>`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  align-self: flex-end;
-  margin-left: 5px;
-  margin-right: 5px;
-`;
+export const SwapCardHeaderContainer: React.FC<
+  ViewProps & {noMargin?: boolean}
+> = ({style, ...rest}) => (
+  <View style={[styles.swapCardHeaderContainer, style]} {...rest} />
+);
 
-export const LimitAmountBtnText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-  font-size: 13px;
-`;
+export const SwapCardAmountAndWalletContainer: React.FC<
+  ViewProps & {alignEnd?: boolean}
+> = ({style, alignEnd, ...rest}) => (
+  <View
+    style={[
+      styles.swapCardAmountAndWalletContainer,
+      {justifyContent: alignEnd ? 'flex-end' : 'space-between'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const AmountClickableContainer = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
-  min-width: 80px;
-`;
+export const SwapCardBottomRowContainer: React.FC<
+  ViewProps & {alignEnd?: boolean}
+> = ({style, alignEnd, ...rest}) => (
+  <View
+    style={[
+      styles.swapCardBottomRowContainer,
+      {justifyContent: alignEnd ? 'flex-end' : 'space-between'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const SelectedOptionContainer = styled(TouchableOpacity)<{
-  noBackground?: boolean;
-}>`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  align-self: flex-end;
-  height: 36px;
-  padding: 8px;
-  min-width: 146px;
-  background: ${({theme: {dark}, noBackground}) =>
-    noBackground ? 'transparent' : dark ? LightBlack : NeutralSlate};
-  border-radius: 27.5px;
-  opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
-`;
+export const LimitAmountBtn: React.FC<
+  TouchableOpacityProps & {noBackground?: boolean}
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.limitAmountBtn, style]} {...rest} />
+);
 
-export const SwapCryptoWalletSelectorContainer = styled.View`
-  margin: 8px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
+export const LimitAmountBtnText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.limitAmountBtnText,
+        {color: theme.dark ? LinkBlue : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+LimitAmountBtnText.displayName = 'LimitAmountBtnText';
 
-export const WalletSelector = styled(TouchableOpacity)<{
-  disabled?: boolean;
-  isBigScreen?: boolean;
-}>`
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  height: 40px;
-  border-radius: 27.5px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  min-width: 146px;
-  max-width: ${({isBigScreen}) => (isBigScreen ? '220px' : '185px')};
-  opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
-`;
+export const AmountClickableContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...rest
+}) => (
+  <TouchableOpacity
+    style={[styles.amountClickableContainer, style]}
+    {...rest}
+  />
+);
 
-export const WalletSelectorLeft = styled.View`
-  display: flex;
-  justify-content: left;
-  flex-direction: row;
-  align-items: center;
-`;
+export const SelectedOptionContainer: React.FC<
+  TouchableOpacityProps & {noBackground?: boolean}
+> = ({style, noBackground, disabled, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      style={[
+        styles.selectedOptionContainer,
+        {
+          backgroundColor: noBackground
+            ? 'transparent'
+            : theme.dark
+            ? LightBlack
+            : NeutralSlate,
+          opacity: disabled ? 0.2 : 1,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const WalletSelectorRight = styled.View`
-  display: flex;
-  justify-content: right;
-  flex-direction: row;
-  align-items: center;
-`;
+export const SwapCryptoWalletSelectorContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => (
+  <View style={[styles.swapCryptoWalletSelectorContainer, style]} {...rest} />
+);
 
-export const WalletSelectorName = styled.Text`
-  font-size: 16px;
-  font-weight: 400;
-  letter-spacing: 0px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-left: 8px;
-  margin-right: 5px;
-`;
+export const WalletSelector: React.FC<
+  TouchableOpacityProps & {disabled?: boolean; isBigScreen?: boolean}
+> = ({style, disabled, isBigScreen, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      style={[
+        styles.walletSelector,
+        {
+          backgroundColor: theme.dark ? Black : White,
+          maxWidth: isBigScreen ? 220 : 185,
+          opacity: disabled ? 0.2 : 1,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const SelectedOptionText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0px;
-  max-width: 120px;
-`;
+export const WalletSelectorLeft: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorLeft, style]} {...rest} />
+);
 
-export const SelectedOptionCol = styled.View<{justifyContent?: string}>`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: ${({justifyContent}) => justifyContent ?? 'center'};
-`;
+export const WalletSelectorRight: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletSelectorRight, style]} {...rest} />
+);
 
-export const SwapCurrenciesButton = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  border-radius: 100px;
-`;
+export const WalletSelectorName = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <Text
+        ref={ref}
+        style={[
+          styles.walletSelectorName,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+WalletSelectorName.displayName = 'WalletSelectorName';
 
-export const CoinIconContainer = styled.View`
-  width: 30px;
-  height: 25px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+export const SelectedOptionText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.selectedOptionText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SelectedOptionText.displayName = 'SelectedOptionText';
 
-export const DataText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 13px;
-  text-align: center;
-`;
+export const SelectedOptionCol: React.FC<
+  ViewProps & {justifyContent?: string}
+> = ({style, justifyContent, ...rest}) => (
+  <View
+    style={[
+      styles.selectedOptionCol,
+      {justifyContent: (justifyContent ?? 'center') as any},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-export const AmountText = styled(BaseText)<{textLength?: number}>`
-  font-size: ${({textLength}) => getAmountFontSize(textLength)};
-  font-weight: 700;
-  letter-spacing: 0px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  flex-shrink: 1;
-`;
+export const SwapCurrenciesButton: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.swapCurrenciesButton,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const BottomDataText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 13px;
-`;
+export const CoinIconContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.coinIconContainer, style]} {...rest} />
+);
 
-export const ProviderContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
-`;
+export const DataText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.dataText, {color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+});
+DataText.displayName = 'DataText';
 
-export const ProviderLabel = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-right: 10px;
-`;
+export const AmountText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText> & {textLength?: number}
+>(({style, textLength, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.amountText,
+        {
+          fontSize: getAmountFontSize(textLength),
+          color: theme.dark ? White : SlateDark,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+AmountText.displayName = 'AmountText';
 
-export const SpinnerContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
+export const BottomDataText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.bottomDataText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+BottomDataText.displayName = 'BottomDataText';
 
-export const WalletTextContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  margin-left: 10px;
-`;
+export const ProviderContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.providerContainer, style]} {...rest} />
+);
 
-export const BalanceContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-`;
+export const ProviderLabel = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H7>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <H7
+      ref={ref}
+      style={[
+        styles.providerLabel,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ProviderLabel.displayName = 'ProviderLabel';
+
+export const SpinnerContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.spinnerContainer, style]} {...rest} />
+);
+
+export const WalletTextContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.walletTextContainer, style]} {...rest} />
+);
+
+export const BalanceContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.balanceContainer, style]} {...rest} />
+);

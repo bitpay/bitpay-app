@@ -48,6 +48,8 @@ export type BalanceChartViewModel = {
   latestDisplayedTotalFiatBalance?: number;
   totalPnlChange?: number;
   totalPnlPercent?: number;
+  walletFiatBalanceByWalletId?: Record<string, number[]>;
+  walletRemainingCostBasisFiatByWalletId?: Record<string, number[]>;
   minMax?: BalanceChartViewModelExtrema;
   changeRow?: BalanceChartViewModelChangeRow;
 };
@@ -219,6 +221,9 @@ export function buildBalanceChartViewModelFromAnalysisChart(args: {
         : undefined,
     totalPnlChange: latestPoint?.totalPnlChange,
     totalPnlPercent: latestPoint?.totalPnlPercent,
+    walletFiatBalanceByWalletId: chart.walletFiatBalanceByWalletId,
+    walletRemainingCostBasisFiatByWalletId:
+      chart.walletRemainingCostBasisFiatByWalletId,
     minMax: computeGraphPointExtrema(graphPoints),
     changeRow: latestPoint
       ? {

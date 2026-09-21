@@ -1,20 +1,40 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {LightBlack, Slate30, White} from '../../../../../styles/colors';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {BoxShadow} from '../Styled';
 
-const ListCard = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 12px;
-  margin: 10px ${ScreenGutter};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px;
-  height: 75px;
-`;
+const styles = StyleSheet.create({
+  listCard: {
+    borderRadius: 12,
+    marginVertical: 10,
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    height: 75,
+  },
+});
+
+const ListCard: React.FC<{style?: any; children?: React.ReactNode}> = ({
+  style,
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.listCard,
+        {backgroundColor: theme.dark ? LightBlack : White},
+        style,
+      ]}>
+      {children}
+    </View>
+  );
+};
 
 const ListKeySkeleton = () => {
   const theme = useTheme();

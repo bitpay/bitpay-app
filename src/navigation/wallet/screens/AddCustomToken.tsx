@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   BaseText,
   H4,
@@ -6,7 +12,7 @@ import {
   TextAlign,
   Badge,
 } from '../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActiveOpacity,
@@ -42,7 +48,7 @@ import {
   SupportedSvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList, Keyboard, View} from 'react-native';
+import {FlatList, Keyboard, SafeAreaView, StyleSheet, View} from 'react-native';
 import {
   formatCryptoAddress,
   getAccount,
@@ -78,9 +84,11 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
-import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import cloneDeep from 'lodash.clonedeep';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
@@ -93,87 +101,169 @@ export type AddCustomTokenParamList = {
   selectedChain: string;
 };
 
-const CreateWalletContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  createWalletContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  buttonContainer: {
+    marginTop: 40,
+  },
+  associatedAccountContainer: {
+    marginTop: 20,
+    position: 'relative',
+  },
+  associatedWallet: {
+    paddingHorizontal: 20,
+    height: 55,
+    borderWidth: 0.75,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  associatedAccountNoTouchable: {
+    paddingHorizontal: 10,
+    height: 64,
+    borderWidth: 0.75,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
+    opacity: 0.75,
+    marginBottom: 6,
+  },
+  associateWalletName: {
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  addressRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 10,
+  },
+  accountLabel: {
+    fontSize: 16,
+  },
+  associatedAccountSelectionModalContainer: {
+    padding: 15,
+    minHeight: 200,
+  },
+  addPillContainer: {
+    flexDirection: 'row',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    height: '100%',
+    maxWidth: 200,
+  },
+  badgeContainer: {
+    alignItems: 'flex-start',
+  },
+});
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...props}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...props} />
+);
 
-const ButtonContainer = styled.View`
-  margin-top: 40px;
-`;
+const AssociatedWallet: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...props
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.associatedWallet,
+        {borderColor: theme.dark ? LuckySevens : Slate},
+        style,
+      ]}
+      {...props}
+    />
+  );
+};
 
-const AssociatedAccountContainer = styled.View`
-  margin-top: 20px;
-  position: relative;
-`;
+const AssociatedAccountNoTouchable: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.associatedAccountNoTouchable,
+        {borderColor: theme.dark ? LuckySevens : Slate},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const AssociatedWallet = styled(TouchableOpacity)`
-  padding: 0 20px;
-  height: 55px;
-  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-`;
+const Label: React.FC<React.ComponentProps<typeof BaseText>> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[
+        styles.label,
+        {color: theme.dark ? White : LightBlack},
+        props.style,
+      ]}
+    />
+  );
+};
 
-const AssociatedAccountNoTouchable = styled.View`
-  padding: 0 10px;
-  height: 64px;
-  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-`;
+const AssociateWalletName: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = props => (
+  <BaseText {...props} style={[styles.associateWalletName, props.style]} />
+);
 
-const Label = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : LightBlack)};
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.75;
-  margin-bottom: 6px;
-`;
+const AddressRow: React.FC<React.ComponentProps<typeof Row>> = ({
+  style,
+  ...props
+}) => <Row style={[styles.addressRow, style]} {...props} />;
 
-const AssociateWalletName = styled(BaseText)`
-  margin-left: 10px;
-  font-size: 16px;
-`;
+const AccountLabel: React.FC<React.ComponentProps<typeof BaseText>> = props => (
+  <BaseText {...props} style={[styles.accountLabel, props.style]} />
+);
 
-const AddressRow = styled(Row)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin: 10px;
-`;
-
-const AccountLabel = styled(BaseText)`
-  font-size: 16px;
-`;
-
-const AssociatedAccountSelectionModalContainer = styled(SheetContainer)`
-  padding: 15px;
-  min-height: 200px;
-`;
+const AssociatedAccountSelectionModalContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => (
+  <SheetContainer style={styles.associatedAccountSelectionModalContainer}>
+    {children}
+  </SheetContainer>
+);
 
 const schema = yup.object().shape({
   walletName: yup.string().required('Wallet name is required').trim(),
 });
 
-export const AddPillContainer = styled(View)`
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
-  flex-direction: row;
-  border-radius: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 11px;
-  height: 100%;
-  max-width: 200px;
-`;
+export const AddPillContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addPillContainer,
+        {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const BadgeContainer = styled.View`
-  align-items: flex-start;
-`;
+const BadgeContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.badgeContainer}>{children}</View>
+);
 
 const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
@@ -196,14 +286,18 @@ const AddCustomToken = ({
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
   const {key: _key, selectedAccountAddress, selectedChain} = route.params;
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
+  const tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  }) as {[key in string]: Token};
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+      ...customTokenOptionsByAddress,
+    }),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  ) as {[key in string]: Token};
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = keys[_key.id];
   const [isTestnet, setIsTestnet] = useState(false);
   const [isRegtest, setIsRegtest] = useState(false);
@@ -417,7 +511,6 @@ const AddCustomToken = ({
           name: WalletScreens.WALLET_DETAILS,
           params: {
             walletId: wallet.id,
-            key,
             skipInitializeHistory: false,
           },
         };
@@ -562,7 +655,7 @@ const AddCustomToken = ({
   };
 
   return (
-    <CreateWalletContainer>
+    <SafeAreaView style={styles.createWalletContainer}>
       <ScrollView>
         {currencyAbbreviation && currencyName ? (
           <Controller
@@ -582,7 +675,7 @@ const AddCustomToken = ({
           />
         ) : null}
 
-        <AssociatedAccountContainer>
+        <View style={styles.associatedAccountContainer}>
           <Label>{t('CHAIN')}</Label>
           <AssociatedWallet
             activeOpacity={ActiveOpacity}
@@ -604,10 +697,10 @@ const AddCustomToken = ({
               <Icons.DownToggle />
             </Row>
           </AssociatedWallet>
-        </AssociatedAccountContainer>
+        </View>
 
         {associatedWallet && associatedWallet.receiveAddress ? (
-          <AssociatedAccountContainer>
+          <View style={styles.associatedAccountContainer}>
             <Label>{t('ACCOUNT')}</Label>
             <AssociatedAccountNoTouchable>
               <Row
@@ -643,7 +736,7 @@ const AddCustomToken = ({
                 </View>
               </Row>
             </AssociatedAccountNoTouchable>
-          </AssociatedAccountContainer>
+          </View>
         ) : null}
 
         <View style={{marginTop: 20}}>
@@ -675,7 +768,7 @@ const AddCustomToken = ({
           </AssociatedAccountSelectionModalContainer>
         </SheetModal>
 
-        <ButtonContainer>
+        <View style={styles.buttonContainer}>
           <Button
             testID="add-custom-token-button"
             accessibilityLabel="Add custom token"
@@ -684,9 +777,9 @@ const AddCustomToken = ({
             buttonStyle={'primary'}>
             {t('Add Custom Token')}
           </Button>
-        </ButtonContainer>
+        </View>
       </ScrollView>
-    </CreateWalletContainer>
+    </SafeAreaView>
   );
 };
 

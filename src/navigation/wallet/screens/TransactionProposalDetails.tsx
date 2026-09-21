@@ -7,10 +7,23 @@ import {
   H4,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLatestCallback,
+  useLogger,
+} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   getDetailsTitle,
@@ -22,8 +35,8 @@ import {
   RejectTxProposal,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import styled from 'styled-components/native';
-import {Hr, ScreenGutter} from '../../../components/styled/Containers';
+import {useTheme} from '../../../contexts';
+import {Hr} from '../../../components/styled/Containers';
 import {IsCustomERCToken} from '../../../store/wallet/utils/currency';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
@@ -47,8 +60,6 @@ import {
 } from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
-import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SecureLockIcon from '../../../../assets/img/secure-lock.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
@@ -94,70 +105,171 @@ import {
 import TSSProgressTracker from '../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
-const TxpDetailsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  txpDetailsContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  subTitle: {
+    fontSize: 14,
+    fontWeight: '300',
+  },
+  timelineContainer: {
+    paddingVertical: 15,
+  },
+  timelineItem: {
+    paddingVertical: 10,
+  },
+  timelineDescription: {
+    marginHorizontal: 10,
+  },
+  timelineBorderLeft: {
+    position: 'absolute',
+    left: 18,
+    width: 1,
+    zIndex: -1,
+  },
+  iconBackground: {
+    height: 35,
+    width: 35,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  txDescriptionMsgContainer: {
+    marginVertical: 20,
+    justifyContent: 'flex-start',
+  },
+  txDescriptionMsgText: {
+    fontSize: 16,
+    color: '#9b9bab',
+    marginTop: 10,
+    justifyContent: 'flex-start',
+  },
+  secureLockIcon: {
+    marginTop: -2,
+  },
+});
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const TransactionProposalHeaderTitle = ({children}: {children: string}) => (
+  <HeaderTitle>{children}</HeaderTitle>
+);
 
-const SubTitle = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 300;
-`;
+const PayProSecureIcon = () => (
+  <SecureLockIcon height={18} width={18} style={styles.secureLockIcon} />
+);
 
-const TimelineContainer = styled.View`
-  padding: 15px 0;
-`;
+const TxpDetailsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.txpDetailsContainer, style]} {...rest} />
+);
 
-const TimelineItem = styled.View`
-  padding: 10px 0;
-`;
+const ScrollView = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof KeyboardAwareScrollView>) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const TimelineDescription = styled.View`
-  margin: 0 10px;
-`;
+const SubTitle = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.subTitle, style]} {...rest} />
+));
 
-const TimelineBorderLeft = styled.View<{isFirst: boolean; isLast: boolean}>`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  position: absolute;
-  top: ${({isFirst}) => (isFirst ? '45px' : 0)};
-  bottom: ${({isLast}) => (isLast ? '15px' : 0)};
-  left: 18px;
-  width: 1px;
-  z-index: -1;
-`;
+const TimelineContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineContainer, style]} {...rest} />
+);
 
-const TimelineTime = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const TimelineItem = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineItem, style]} {...rest} />
+);
 
-const IconBackground = styled.View`
-  height: 35px;
-  width: 35px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
+const TimelineDescription = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.timelineDescription, style]} {...rest} />
+);
 
-const NumberIcon = styled(IconBackground)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
+const TimelineBorderLeft = ({
+  isFirst,
+  isLast,
+}: {
+  isFirst: boolean;
+  isLast: boolean;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.timelineBorderLeft,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          top: isFirst ? 45 : 0,
+          bottom: isLast ? 15 : 0,
+        },
+      ]}
+    />
+  );
+};
 
-const TxDescriptionMsgContainer = styled.View`
-  margin: 20px 0;
-  justify-content: flex-start;
-`;
+const TimelineTime = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <H7
+        ref={ref}
+        style={[{color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const TxDescriptionMsgText = styled(BaseText)`
-  font-size: 16px;
-  color: #9b9bab;
-  margin-top: 10px;
-  justify-content: flex-start;
-`;
+const IconBackground = ({
+  style,
+  children,
+}: {
+  style?: React.ComponentProps<typeof View>['style'];
+  children?: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.iconBackground,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}>
+      {children}
+    </View>
+  );
+};
+
+const NumberIcon = ({children}: {children?: React.ReactNode}) => {
+  const theme = useTheme();
+  return (
+    <IconBackground
+      style={{backgroundColor: theme.dark ? LightBlack : NeutralSlate}}>
+      {children}
+    </IconBackground>
+  );
+};
+
+const TxDescriptionMsgContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.txDescriptionMsgContainer, style]} {...rest} />
+);
+
+const TxDescriptionMsgText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText
+      ref={ref}
+      style={[styles.txDescriptionMsgText, style]}
+      {...rest}
+    />
+  ),
+);
 
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
   return (
@@ -275,11 +387,12 @@ const TransactionProposalDetails = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>{title}</HeaderTitle>,
+      title,
+      headerTitle: TransactionProposalHeaderTitle,
     });
   }, [navigation, title]);
 
-  const init = async () => {
+  const init = useLatestCallback(async () => {
     try {
       if (!transaction) {
         navigation.goBack();
@@ -306,23 +419,20 @@ const TransactionProposalDetails = () => {
             wallet.currencyAbbreviation,
             transaction.coin,
             transaction.chain,
-            transaction.amount,
+            Number(transaction.amount),
           ),
       );
-      await sleep(500);
       setIsLoading(false);
     } catch (err) {
-      await sleep(500);
       setIsLoading(false);
       const e = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error('[TransactionProposalDetails] ', e);
     }
-  };
+  });
 
-  const checkPayPro = async () => {
+  const checkPayPro = useLatestCallback(async () => {
     try {
       setPayproIsLoading(true);
-      await sleep(400);
       showOngoingProcess('FETCHING_PAYMENT_INFO');
       const address = (await dispatch<Promise<string>>(
         createWalletAddress({wallet: wallet, newAddress: false}),
@@ -340,7 +450,6 @@ const TransactionProposalDetails = () => {
       );
       paymentTimeControl(_payProDetails.expires);
       setPayProDetails(_payProDetails);
-      await sleep(500);
       setPayproIsLoading(false);
       hideOngoingProcess();
     } catch (err) {
@@ -358,7 +467,7 @@ const TransactionProposalDetails = () => {
         ),
       );
     }
-  };
+  });
 
   const paymentTimeControl = (expires: string): void => {
     const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
@@ -372,15 +481,15 @@ const TransactionProposalDetails = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    interval?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr(t('Expired'));
-      if (countDown) {
-        clearInterval(countDown);
+      if (interval) {
+        clearInterval(interval);
       }
       return;
     }
@@ -390,25 +499,12 @@ const TransactionProposalDetails = () => {
     setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
   };
 
-  const getIcon = () => {
-    const _currencyAbbreviation = getCurrencyAbbreviation(
-      wallet.currencyAbbreviation,
-      wallet.chain,
-    );
-
-    return CurrencyListIcons[_currencyAbbreviation] ? (
-      CurrencyListIcons[_currencyAbbreviation]({width: 18, height: 18})
-    ) : (
-      <DefaultSvg width={18} height={18} />
-    );
-  };
-
-  const broadcastTxp = async (txp: TransactionProposal) => {
+  const broadcastTxp = async (proposal: TransactionProposal) => {
     showOngoingProcess('BROADCASTING_TXP');
 
     try {
       logger.debug('Trying to broadcast Txp');
-      const broadcastedTx = await broadcastTx(wallet, txp);
+      const broadcastedTx = await broadcastTx(wallet, proposal);
       logger.debug(`Transaction broadcasted: ${broadcastedTx.txid}`);
       const {fee, amount} = broadcastedTx as {
         fee: number;
@@ -435,7 +531,7 @@ const TransactionProposalDetails = () => {
       navigation.goBack();
     } catch (err: any) {
       logger.error(
-        `Could not broadcast Txp. Coin: ${txp.coin} - Chain: ${txp.chain} - Network: ${wallet.network} - Raw: ${txp.raw}`,
+        `Could not broadcast Txp. Coin: ${proposal.coin} - Chain: ${proposal.chain} - Network: ${wallet.network} - Raw: ${proposal.raw}`,
       );
       let msg: string = t('Could not broadcast payment');
       if (typeof err?.message === 'string') {
@@ -620,13 +716,13 @@ const TransactionProposalDetails = () => {
 
   useEffect(() => {
     init();
-  }, [transaction, wallet]);
+  }, [init, transaction, wallet]);
 
   useEffect(() => {
     if (txp?.payProUrl) {
       checkPayPro();
     }
-  }, [txp]);
+  }, [checkPayPro, txp]);
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -852,13 +948,7 @@ const TransactionProposalDetails = () => {
                 recipientName: txp.payProUrl
                   .replace('https://', '')
                   .split('/')[0],
-                img: () => (
-                  <SecureLockIcon
-                    height={18}
-                    width={18}
-                    style={{marginTop: -2}}
-                  />
-                ),
+                img: PayProSecureIcon,
               }}
               hr
             />

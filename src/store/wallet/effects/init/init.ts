@@ -106,6 +106,10 @@ export const clearWalletStoreInitPromiseForTests = (): void => {
   walletStoreInitStartListeners = [];
 };
 
+export const getActiveWalletStoreInitPromise = ():
+  | Promise<WalletStoreInitResult>
+  | undefined => activeWalletStoreInitPromise;
+
 export const startWalletStoreInit =
   (): Effect<Promise<WalletStoreInitResult>> =>
   async (dispatch, getState: () => RootState) => {

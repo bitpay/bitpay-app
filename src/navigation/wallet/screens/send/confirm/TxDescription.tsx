@@ -1,9 +1,8 @@
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../../contexts';
 import React, {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {TextInput} from 'react-native';
+import {StyleSheet, TextInput, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
 import {Hr, ImportTextInput} from '../../../../../components/styled/Containers';
 import {H7} from '../../../../../components/styled/Text';
 import {
@@ -101,90 +100,47 @@ export interface TxDescriptionInputContainerParams {
   isEditMode?: boolean;
 }
 
-const TxDescriptionRow = styled.View`
-  margin: 10px 0 20px;
-`;
-
-const TxDescriptionContainer = styled.View`
-  flex-direction: row;
-  margin-top: 9px;
-`;
-
-const TxDescriptionInput = styled(
-  ImportTextInput,
-)<TxDescriptionInputContainerParams>`
-  flex: 1;
-  background-color: ${({isEditMode, hasFocus, isEmpty, theme}) =>
-    getTxDescriptionInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
-  border: 0;
-  border-top-right-radius: 0;
-  border-top-left-radius: ${txDescriptionBorderRadius}px;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 12px;
-  color: ${({isEditMode, theme}) =>
-    isEditMode
-      ? getTxDescriptionColor('inputEditModeFont', theme.dark)
-      : getTxDescriptionColor('inputNonEditModeFont', theme.dark)};
-  height: ${({hasFocus, isEmpty}) =>
-    !hasFocus && isEmpty ? 40 : txDescriptionInputHeight}px;
-`;
-
-const TxDescriptionInputContainer = styled.View<TxDescriptionInputContainerParams>`
-  flex-grow: 1;
-  border-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    getTxDescriptionBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
-  border-width: ${txDescriptionBorderWidth}px;
-  border-top-left-radius: ${txDescriptionBorderRadius}px;
-  border-top-right-radius: ${({isEditMode, isEmpty}) =>
-    isEditMode || !isEmpty ? 0 : txDescriptionBorderRadius}px;
-  border-bottom-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    hasFocus
-      ? Action
-      : getTxDescriptionBorderColor(
-          {hasFocus, isEditMode, isEmpty},
-          theme.dark,
-        )};
-  border-right-width: ${({isEmpty, isEditMode}) =>
-    isEmpty && !isEditMode ? txDescriptionBorderWidth : 0}px;
-  flex-direction: row;
-`;
-
 const txDescriptionOuterButtonHeight =
   txDescriptionInputHeight + txDescriptionBorderWidth * 2;
-const TxDescriptionOuterButtonContainer = styled.View<TxDescriptionInputContainerParams>`
-  background-color: ${({isEditMode, theme}) =>
-    isEditMode || theme.dark ? Action : White};
-  border-color: ${({isEditMode, hasFocus, isEmpty, theme}) =>
-    isEditMode
-      ? Action
-      : getTxDescriptionBorderColor(
-          {hasFocus, isEditMode, isEmpty},
-          theme.dark,
-        )};
-  border-width: ${txDescriptionBorderWidth}px;
-  border-left-width: 0;
-  border-top-right-radius: ${txDescriptionBorderRadius}px;
-  height: ${txDescriptionOuterButtonHeight}px;
-  width: 39px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const TxDescriptionOuterButton = styled(TouchableOpacity)`
-  height: ${txDescriptionOuterButtonHeight}px;
-  width: 39px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const TxDescriptionClearButtonContainer = styled.View<TxDescriptionInputContainerParams>`
-  height: ${txDescriptionInputHeight}px;
-  width: 33px;
-  background-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    getTxDescriptionInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)}
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  row: {marginTop: 10, marginBottom: 20},
+  container: {flexDirection: 'row', marginTop: 9},
+  input: {
+    flex: 1,
+    borderWidth: 0,
+    borderTopRightRadius: 0,
+    borderTopLeftRadius: txDescriptionBorderRadius,
+    fontSize: 12,
+    fontWeight: '500',
+    padding: 12,
+  },
+  inputContainer: {
+    flexGrow: 1,
+    borderWidth: txDescriptionBorderWidth,
+    borderTopLeftRadius: txDescriptionBorderRadius,
+    flexDirection: 'row',
+  },
+  outerButtonContainer: {
+    borderWidth: txDescriptionBorderWidth,
+    borderLeftWidth: 0,
+    borderTopRightRadius: txDescriptionBorderRadius,
+    height: txDescriptionOuterButtonHeight,
+    width: 39,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  outerButton: {
+    height: txDescriptionOuterButtonHeight,
+    width: 39,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButtonContainer: {
+    height: txDescriptionInputHeight,
+    width: 33,
+    justifyContent: 'center',
+  },
+});
 
 export const TxDescription = ({
   txDescription,
@@ -198,6 +154,16 @@ export const TxDescription = ({
   const [hasFocus, setHasFocus] = useState(false);
   const [draftTxDescription, setDraftTxDescription] = useState(txDescription);
   const theme = useTheme();
+  const inputParams = {
+    hasFocus,
+    isEmpty: !draftTxDescription,
+    isEditMode,
+  };
+  const inputBackgroundColor = getTxDescriptionInputColor(
+    inputParams,
+    theme.dark,
+  );
+  const borderColor = getTxDescriptionBorderColor(inputParams, theme.dark);
   const inputRef = useRef<TextInput>(null);
   const save = () => {
     setIsEditMode(false);
@@ -206,17 +172,40 @@ export const TxDescription = ({
   };
   return (
     <>
-      <TxDescriptionRow>
+      <View style={styles.row}>
         <H7>{t('Tx Description')}</H7>
-        <TxDescriptionContainer>
-          <TxDescriptionInputContainer
-            hasFocus={hasFocus}
-            isEmpty={!draftTxDescription}
-            isEditMode={isEditMode}>
-            <TxDescriptionInput
-              hasFocus={hasFocus}
-              isEditMode={isEditMode}
-              isEmpty={!draftTxDescription}
+        <View style={styles.container}>
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                borderColor,
+                borderBottomColor: hasFocus ? Action : borderColor,
+                borderTopRightRadius:
+                  isEditMode || draftTxDescription
+                    ? 0
+                    : txDescriptionBorderRadius,
+                borderRightWidth:
+                  !draftTxDescription && !isEditMode
+                    ? txDescriptionBorderWidth
+                    : 0,
+              },
+            ]}>
+            <ImportTextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: inputBackgroundColor,
+                  color: getTxDescriptionColor(
+                    isEditMode ? 'inputEditModeFont' : 'inputNonEditModeFont',
+                    theme.dark,
+                  ),
+                  height:
+                    !hasFocus && !draftTxDescription
+                      ? 40
+                      : txDescriptionInputHeight,
+                },
+              ]}
               editable={isEditMode || !draftTxDescription}
               multiline
               numberOfLines={3}
@@ -239,10 +228,11 @@ export const TxDescription = ({
               }}
             />
             {draftTxDescription && isEditMode ? (
-              <TxDescriptionClearButtonContainer
-                hasFocus={hasFocus}
-                isEditMode={isEditMode}
-                isEmpty={!draftTxDescription}>
+              <View
+                style={[
+                  styles.clearButtonContainer,
+                  {backgroundColor: inputBackgroundColor},
+                ]}>
                 <TouchableOpacity
                   onPress={() => {
                     setDraftTxDescription('');
@@ -251,13 +241,21 @@ export const TxDescription = ({
                   }}>
                   {theme.dark ? <ClearDarkSvg /> : <ClearSvg />}
                 </TouchableOpacity>
-              </TxDescriptionClearButtonContainer>
+              </View>
             ) : null}
-          </TxDescriptionInputContainer>
+          </View>
           {draftTxDescription || isEditMode ? (
-            <TxDescriptionOuterButtonContainer isEditMode={isEditMode}>
+            <View
+              style={[
+                styles.outerButtonContainer,
+                {
+                  backgroundColor: isEditMode || theme.dark ? Action : White,
+                  borderColor: isEditMode ? Action : borderColor,
+                },
+              ]}>
               {isEditMode ? (
-                <TxDescriptionOuterButton
+                <TouchableOpacity
+                  style={styles.outerButton}
                   onPress={async () => {
                     save();
                     // Prevent refocus after delayed autocorrect
@@ -265,21 +263,22 @@ export const TxDescription = ({
                     save();
                   }}>
                   <CheckSvg width={14} />
-                </TxDescriptionOuterButton>
+                </TouchableOpacity>
               ) : (
-                <TxDescriptionOuterButton
+                <TouchableOpacity
+                  style={styles.outerButton}
                   onPress={async () => {
                     setIsEditMode(true);
                     await sleep(0);
                     inputRef.current?.focus();
                   }}>
                   {theme.dark ? <PencilDarkSvg /> : <PencilSvg />}
-                </TxDescriptionOuterButton>
+                </TouchableOpacity>
               )}
-            </TxDescriptionOuterButtonContainer>
+            </View>
           ) : null}
-        </TxDescriptionContainer>
-      </TxDescriptionRow>
+        </View>
+      </View>
       <Hr />
     </>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import ConnectBills from './screens/ConnectBills';
 import Payments from './screens/Payments';
@@ -54,7 +55,6 @@ export enum BillScreens {
 
 const BillGroup = ({Bill, theme}: BillProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <Bill.Group screenOptions={commonOptions}>
       <Bill.Screen

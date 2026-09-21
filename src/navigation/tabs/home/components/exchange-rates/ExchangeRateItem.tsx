@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import {
   ActiveOpacity,
@@ -14,43 +14,87 @@ import {
 } from '../../../../../utils/helper-methods';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
 import {NeutralSlate, Slate30, SlateDark} from '../../../../../styles/colors';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Percentage from '../../../../../components/percentage/Percentage';
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  margin: 10px 0;
-`;
+const styles = StyleSheet.create({
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  noteContainer: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  subTextContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  exchangeRateText: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  exchangeRateCode: {
+    fontWeight: '500',
+    fontSize: 10,
+    paddingLeft: 2,
+  },
+  exchangeRateSubText: {
+    lineHeight: 20,
+    fontSize: 13,
+  },
+});
 
-const NoteContainer = styled(Column)`
-  align-items: flex-end;
-  gap: 4px;
-`;
+const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
 
-const SubTextContainer = styled.View`
-  align-items: center;
-  flex-direction: row;
-`;
+const NoteContainer: React.FC<React.ComponentProps<typeof Column>> = ({
+  style,
+  ...rest
+}) => <Column style={[styles.noteContainer, style]} {...rest} />;
 
-const ExchangeRateText = styled(H7)`
-  font-size: 16px;
-  font-weight: 400;
-`;
+const SubTextContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.subTextContainer}>{children}</View>;
 
-const ExchangeRateCode = styled(BaseText)`
-  font-weight: 500;
-  font-size: 10px;
-  padding-left: 2px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-`;
+const ExchangeRateText: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => <H7 style={[styles.exchangeRateText, style]} {...rest} />;
 
-const ExchangeRateSubText = styled(Smallest)`
-  line-height: 20px;
-  font-size: 13px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
-`;
+const ExchangeRateCode: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.exchangeRateCode,
+        {color: theme.dark ? NeutralSlate : SlateDark},
+      ]}>
+      {children}
+    </BaseText>
+  );
+};
+
+const ExchangeRateSubText: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <Smallest
+      style={[
+        styles.exchangeRateSubText,
+        {color: theme.dark ? Slate30 : SlateDark},
+      ]}>
+      {children}
+    </Smallest>
+  );
+};
 
 const ExchangeRateItem = ({
   item,

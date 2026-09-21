@@ -1,6 +1,6 @@
 import React from 'react';
 import Svg, {Path} from 'react-native-svg';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../contexts';
 import {Slate, SlateDark} from '../../../../styles/colors';
 
 interface MarketingCloseIconProps {

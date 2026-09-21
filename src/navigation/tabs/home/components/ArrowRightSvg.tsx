@@ -1,6 +1,6 @@
 import React from 'react';
 import {Ellipse, G, Path, Svg} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {LinkBlue, Midnight, Action, LightBlue} from '../../../../styles/colors';
 
 const ArrowRightSvg: React.FC<{

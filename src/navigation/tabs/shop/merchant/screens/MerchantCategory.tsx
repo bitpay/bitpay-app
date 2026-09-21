@@ -1,24 +1,37 @@
 import React, {useLayoutEffect} from 'react';
-import {ScrollView} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import styled from 'styled-components/native';
 import {MerchantScreens, MerchantGroupParamList} from '../MerchantGroup';
 import MerchantItem from './../../components/MerchantItem';
 import {horizontalPadding} from './../../components/styled/ShopTabComponents';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import HeaderBackButton from '../../../../../components/back/HeaderBackButton';
 
-const MerchantCategoryScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  merchantCategoryScreenContainer: {
+    flex: 1,
+  },
+  searchResults: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: horizontalPadding,
+  },
+});
 
-const SearchResults = styled.View`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  padding: ${horizontalPadding}px;
-`;
+const MerchantCategoryScreenContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView
+    style={[styles.merchantCategoryScreenContainer, style]}
+    {...rest}
+  />
+);
+
+const SearchResults = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.searchResults, style]} {...rest} />
+);
 
 const MerchantCategory = ({
   route,

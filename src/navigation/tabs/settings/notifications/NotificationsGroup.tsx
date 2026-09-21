@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import EmailNotifications from './screens/EmailNotifications';
 import {HeaderTitle} from '../../../../components/styled/Text';
@@ -27,7 +28,6 @@ const NotificationsSettingsGroup = ({
   theme,
 }: NotificationsProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
 
   return (
     <Notifications.Group screenOptions={commonOptions}>

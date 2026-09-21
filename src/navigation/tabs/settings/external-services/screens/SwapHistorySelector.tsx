@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
@@ -18,26 +17,42 @@ import ThorswapLogo from '../../../../../components/icons/external-services/thor
 import {useAppSelector} from '../../../../../utils/hooks';
 import {SwapCryptoExchangeKey} from '../../../../services/swap-crypto/utils/swap-crypto-utils';
 import {ExternalServicesSettingsScreens} from '../ExternalServicesGroup';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 
-const ExternalServicesItemContainer = styled.View`
-  justify-content: flex-start;
-  align-items: center;
-  flex-direction: row;
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  externalServicesItemContainer: {
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+  },
+  externalServicesIconContainer: {
+    marginRight: 5,
+  },
+});
 
-const ExternalServicesIconContainer = styled.View`
-  margin-right: 5px;
-`;
+const ExternalServicesItemContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.externalServicesItemContainer, style]} {...rest} />
+);
+
+const ExternalServicesIconContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.externalServicesIconContainer, style]} {...rest} />
+);
 
 const SwapHistorySelector = () => {
   const navigation = useNavigation();
-  const {changelly: changellyHistory, thorswap: thorswapHistory} =
-    useAppSelector(({SWAP_CRYPTO: {changelly, thorswap}}) => ({
-      changelly,
-      thorswap,
-    }));
+  const changellyHistory = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
+  );
+  const thorswapHistory = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
+  );
 
   type ExchangeData = {
     key: SwapCryptoExchangeKey;

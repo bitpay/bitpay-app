@@ -2,9 +2,9 @@ import {useNavigation} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import {
@@ -31,12 +31,17 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 
-const SearchResults = styled.View`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  padding: 0 ${horizontalPadding}px;
-`;
+const styles = StyleSheet.create({
+  searchResults: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: horizontalPadding,
+  },
+});
+
+const SearchResults = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.searchResults, style]} {...rest} />
+);
 
 interface CategoryWithIntegrations extends Category {
   integrations: DirectIntegrationApiObject[];

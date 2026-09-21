@@ -1,7 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {View} from 'react-native';
-import styled from 'styled-components/native';
-import {ScreenGutter} from '../styled/Containers';
+import {StyleSheet, View} from 'react-native';
 import TabButton from './TabButton';
 import {useAppSelector} from '../../utils/hooks/useAppSelector';
 
@@ -12,12 +10,14 @@ interface TabsProps {
   }[];
 }
 
-const TabsHeader = styled.View`
-  flex-direction: row;
-  flex-wrap: nowrap;
-  padding-left: ${ScreenGutter};
-  padding-right: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  tabsHeader: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    paddingLeft: 12,
+    paddingRight: 12,
+  },
+});
 
 const Tabs: React.FC<TabsProps> = props => {
   const {tabs} = props;
@@ -49,7 +49,7 @@ const Tabs: React.FC<TabsProps> = props => {
 
   return (
     <View>
-      <TabsHeader>{TabButtons}</TabsHeader>
+      <View style={styles.tabsHeader}>{TabButtons}</View>
 
       <View>{memoizedTabs[activeTabIdx].content}</View>
     </View>
