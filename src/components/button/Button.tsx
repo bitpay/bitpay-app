@@ -75,7 +75,12 @@ interface ButtonOptionProps {
   danger?: boolean;
   disabled?: boolean;
   action?: boolean;
-  height?: number;
+  /**
+   * Transient: RN declares `height` as a valid native View prop, so a plain
+   * `height` would be forwarded and applied as a hard height, beating the
+   * min-height below and clipping the label at large font sizes.
+   */
+  $height?: number;
   children?: React.ReactNode;
 }
 
@@ -161,8 +166,9 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       return Action;
     }};
   border-radius: ${({borderRadius}) => borderRadius ?? BUTTON_RADIUS}px;
-  height: ${({height}) => height || BUTTON_HEIGHT}px;
+  min-height: ${({$height}) => $height || BUTTON_HEIGHT}px;
   justify-content: center;
+  padding: 8px 12px;
 `;
 
 const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
@@ -199,9 +205,12 @@ const ButtonContainerFlex = styled.View<{hasIcon: boolean}>`
   justify-content: ${({hasIcon}) => (hasIcon ? 'space-between' : 'center')};
   padding-left: ${({hasIcon}) => (hasIcon ? 10 : 0)}px;
   align-items: center;
+  flex-shrink: 1;
 `;
 
-const ButtonTextContainer = styled.View``;
+const ButtonTextContainer = styled.View`
+  flex-shrink: 1;
+`;
 
 const PillContent = styled.View<ButtonOptionProps>`
   background: ${({
@@ -270,9 +279,14 @@ const PillContent = styled.View<ButtonOptionProps>`
   }};
   border-radius: ${PILL_RADIUS}px;
   padding: 8px 15px;
+  flex-shrink: 1;
 `;
 
-const PillText = styled(BaseText)<ButtonOptionProps>`
+// Pills are compact chips (often in fixed-height nav headers), so their label
+// is capped rather than left to scale unbounded.
+const PillText = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.4,
+}))<ButtonOptionProps>`
   font-size: 15px;
   font-weight: 400;
   line-height: 22.03px;
@@ -427,7 +441,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       activeOpacity={disabled ? 1 : ActiveOpacity}
       testID={testID || 'button'}>
       <ButtonTypeContainer
-        height={height}
+        $height={height}
         danger={danger}
         secondary={secondary}
         outline={outline}

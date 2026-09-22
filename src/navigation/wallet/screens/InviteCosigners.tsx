@@ -274,8 +274,8 @@ const HelpStepRow = styled.View`
 `;
 
 const HelpStepBubble = styled.View`
-  width: 18px;
-  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
   border-radius: 9px;
   align-items: center;
   justify-content: center;
@@ -817,7 +817,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
         <Content
           contentContainerStyle={{flex: 1, justifyContent: 'flex-start'}}>
           <TopSection>
-            <TopSectionContainer style={{height: 190}}>
+            <TopSectionContainer style={{minHeight: 190}}>
               <StatusContainer>
                 {isCeremonyComplete ? (
                   <>

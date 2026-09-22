@@ -34,7 +34,7 @@ const NoGiftCards = styled.View`
   border-radius: 30px;
   align-items: center;
   justify-content: center;
-  height: 50px;
+  min-height: 50px;
   margin: 10px ${horizontalPadding}px;
 `;
 

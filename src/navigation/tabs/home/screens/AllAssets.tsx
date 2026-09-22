@@ -61,6 +61,7 @@ const ScreenContainer = styled.SafeAreaView`
 
 const FiltersRow = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: 12px 0 12px;
@@ -69,6 +70,7 @@ const FiltersRow = styled.View`
 
 const SearchInputContainer = styled.View`
   flex: 1;
+  min-width: 160px;
   border-radius: 50px;
   flex-direction: row;
   align-items: center;

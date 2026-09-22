@@ -123,7 +123,7 @@ export const SwapCardAccountChainsContainer = styled.View<{
   align-items: center;
   justify-content: space-between;
   flex-shrink: 1;
-  height: 23px;
+  min-height: 23px;
   border-radius: 27.5px;
   max-width: ${({maxWidth}) => (maxWidth ? `${maxWidth}` : '250px')};
   padding: ${({padding}) => padding ?? '4px 8px'};
@@ -202,7 +202,7 @@ export const SelectedOptionContainer = styled(TouchableOpacity)<{
   justify-content: space-between;
   align-items: center;
   align-self: flex-end;
-  height: 36px;
+  min-height: 36px;
   padding: 8px;
   min-width: 146px;
   background: ${({theme: {dark}, noBackground}) =>
@@ -224,7 +224,7 @@ export const WalletSelector = styled(TouchableOpacity)<{
   isBigScreen?: boolean;
 }>`
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  height: 40px;
+  min-height: 40px;
   border-radius: 27.5px;
   display: flex;
   flex-direction: row;
@@ -250,7 +250,12 @@ export const WalletSelectorRight = styled.View`
   align-items: center;
 `;
 
-export const WalletSelectorName = styled.Text`
+// Width-bounded chip that shares its row with the amount: the name is capped
+// and allowed to wrap instead of being ellipsized away.
+export const WalletSelectorName = styled.Text.attrs(() => ({
+  maxFontSizeMultiplier: 1.5,
+}))`
+  flex-shrink: 1;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: 0px;
@@ -295,7 +300,14 @@ export const DataText = styled(BaseText)`
   text-align: center;
 `;
 
-export const AmountText = styled(BaseText)<{textLength?: number}>`
+// Display-sized figure in a fixed card row: it shrinks to fit rather than
+// running past the card edge.
+export const AmountText = styled(BaseText).attrs(() => ({
+  numberOfLines: 1,
+  adjustsFontSizeToFit: true,
+  minimumFontScale: 0.5,
+  maxFontSizeMultiplier: 1.5,
+}))<{textLength?: number}>`
   font-size: ${({textLength}) => getAmountFontSize(textLength)};
   font-weight: 700;
   letter-spacing: 0px;

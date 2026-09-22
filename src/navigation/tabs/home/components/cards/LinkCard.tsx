@@ -24,7 +24,7 @@ const LinkCardContainer = styled(TouchableOpacity)`
   border-radius: 12px;
   padding: 15px;
   max-width: 215px;
-  height: 72px;
+  min-height: 72px;
   margin-right: 20px;
   position: relative;
   left: ${ScreenGutter};

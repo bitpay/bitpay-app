@@ -197,6 +197,9 @@ const ChartAxisLabel = ({
           });
         }}>
         <AnimatedBaseText
+          // The chart's axis geometry and the label width estimate above are
+          // both hardcoded to this size, so the annotation does not scale.
+          allowFontScaling={false}
           style={[
             {
               color: labelColor,

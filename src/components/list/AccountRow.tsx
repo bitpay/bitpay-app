@@ -12,15 +12,19 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {AddPillContainer} from '../../navigation/wallet/screens/AddCustomToken';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks';
 
-const AddressView = styled(View)`
-  align-items: flex-end;
+const AddressView = styled(View)<{stacked?: boolean}>`
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'flex-end')};
   margin: 10px;
 `;
 
-const RowContainer = styled(TouchableOpacity)<{selected: boolean}>`
-  flex-direction: row;
-  align-items: center;
+const RowContainer = styled(TouchableOpacity)<{
+  selected: boolean;
+  stacked?: boolean;
+}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   padding: 10px 4px;
   margin: 0 6px;
   justify-content: space-around;
@@ -53,13 +57,15 @@ interface Props {
 }
 
 const AccountRow = ({account, chain, selected, onPress}: Props) => {
+  const stacked = useIsLargeFont();
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
+      stacked={stacked}
       selected={selected}>
       <CurrencyColumn>
-        <H5 ellipsizeMode="tail" numberOfLines={1}>
+        <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
           Account {account.accountNumber}
         </H5>
         {account.network !== 'livenet' && (
@@ -69,7 +75,7 @@ const AccountRow = ({account, chain, selected, onPress}: Props) => {
         )}
       </CurrencyColumn>
       <CurrencyColumn>
-        <AddressView>
+        <AddressView stacked={stacked}>
           <SendToPillContainer>
             <AddPillContainer>
               <CurrencyImage img={CurrencyListIcons[chain]} size={20} />

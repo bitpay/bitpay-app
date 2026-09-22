@@ -24,6 +24,7 @@ const RowContainer = styled.View<{isSmallScreen?: boolean}>`
 
 const CellContainer = styled.View`
   width: 33.333333%;
+  min-height: 45px;
   justify-content: center;
   align-items: center;
 `;
@@ -86,7 +87,11 @@ export const getKeyboardSizes = (
   return sizes;
 };
 
-const CellValue = styled(BaseText)<{
+// Keypad digits are already oversized and live in a fixed 3-column grid, so
+// they get a capped multiplier instead of the full accessibility range.
+const CellValue = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.3,
+}))<{
   darkModeOnly?: boolean;
   isSmallScreen?: boolean;
   context?: KeyboardSizesContext;
@@ -100,7 +105,9 @@ const CellValue = styled(BaseText)<{
     getKeyboardSizes(isSmallScreen, context).cellValuelineHeight}px;
 `;
 
-const CellLetter = styled(BaseText)`
+const CellLetter = styled(BaseText).attrs(() => ({
+  maxFontSizeMultiplier: 1.3,
+}))`
   font-size: 10px;
   letter-spacing: 3px;
   color: ${SlateDark};
@@ -287,7 +294,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       <RowContainer isSmallScreen={_isSmallScreen}>
         <CellContainer
           style={{
-            height: getKeyboardSizes(_isSmallScreen, context)
+            minHeight: getKeyboardSizes(_isSmallScreen, context)
               .cellContainerHeight,
           }}>
           {showDot ? (
@@ -316,7 +323,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
 
         <CellContainer
           style={{
-            height: getKeyboardSizes(_isSmallScreen, context)
+            minHeight: getKeyboardSizes(_isSmallScreen, context)
               .cellContainerHeight,
           }}>
           <VirtualKeyboardButtonAnimation
