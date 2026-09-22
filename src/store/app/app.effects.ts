@@ -43,7 +43,6 @@ import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
 import {SumSubEffects} from '../sumsub';
 import {Card} from '../card/card.models';
-import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {
@@ -327,9 +326,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (getState().WALLET_CONNECT_V2?.sessions?.length > 0) {
       dispatch(walletConnectV2Init());
     }
-
-    // Update Coinbase
-    dispatch(coinbaseInitialize());
 
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
@@ -1161,7 +1157,6 @@ export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
     );
     dispatch(FormatKeyBalances());
     await dispatch(updatePortfolioBalance());
-    await dispatch(coinbaseInitialize());
     // Reset Default Language
     await dispatch(AppActions.setDefaultLanguage('en'));
     await dispatch(WalletActions.setUseUnconfirmedFunds(false));

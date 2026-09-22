@@ -93,9 +93,6 @@ import MerchantGroup, {
   MerchantGroupParamList,
 } from './navigation/tabs/shop/merchant/MerchantGroup';
 import PinModal from './components/modal/pin/PinModal';
-import CoinbaseGroup, {
-  CoinbaseGroupParamList,
-} from './navigation/coinbase/CoinbaseGroup';
 import {APP_ANALYTICS_ENABLED} from './constants/config';
 import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {
@@ -190,7 +187,6 @@ export type RootStackParamList = {
   MerchantGroupParamList &
   BitpayIdGroupParamList &
   ScanGroupParamList &
-  CoinbaseGroupParamList &
   ExternalServicesGroupParamList &
   SwapCryptoGroupParamList &
   CardActivationGroupParamList &
@@ -230,7 +226,6 @@ export type NavScreenParams = NavigatorScreenParams<
     ContactsGroupParamList &
     ExternalServicesSettingsGroupParamList &
     AboutGroupParamList &
-    CoinbaseGroupParamList &
     ExternalServicesGroupParamList &
     SwapCryptoGroupParamList &
     ScanGroupParamList &
@@ -1099,7 +1094,6 @@ export default () => {
               theme,
             })}
             {AboutGroup({About: Root, theme})}
-            {CoinbaseGroup({Coinbase: Root, theme})}
             {ExternalServicesGroup({ExternalServices: Root, theme})}
             {SwapCryptoGroup({SwapCrypto: Root, theme})}
             {WalletConnectGroup({WalletConnect: Root, theme})}

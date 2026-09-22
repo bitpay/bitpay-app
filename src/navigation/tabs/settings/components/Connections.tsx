@@ -3,10 +3,8 @@ import React, {useCallback, useEffect} from 'react';
 import {Image} from 'react-native';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
-import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {
   Hr,
@@ -68,21 +66,6 @@ const Connections = () => {
       navigation.navigate('WalletConnectRoot', {});
     }
   }, [dispatch, sessions, navigation]);
-
-  const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
-  const goToCoinbase = () => {
-    haptic('impactLight');
-    dispatch(
-      Analytics.track('Clicked Connect Coinbase', {
-        context: 'Settings Connections',
-      }),
-    );
-    if (token && token.access_token) {
-      navigation.navigate('CoinbaseSettings', {fromScreen: 'Settings'});
-    } else {
-      navigation.navigate('CoinbaseRoot');
-    }
-  };
 
   const goToMethod = () => {
     haptic('impactLight');
@@ -158,19 +141,6 @@ const Connections = () => {
 
   return (
     <SettingsComponent>
-      <Setting
-        testID="settings-connections-coinbase-row"
-        accessibilityLabel="Coinbase"
-        onPress={() => goToCoinbase()}>
-        <ConnectionItemContainer>
-          <ConnectionIconContainer>
-            <CoinbaseSvg width={30} height={25} />
-          </ConnectionIconContainer>
-          <SettingTitle>Coinbase</SettingTitle>
-        </ConnectionItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
       <Setting
         testID="settings-connections-method-row"
         accessibilityLabel="Method bill pay"

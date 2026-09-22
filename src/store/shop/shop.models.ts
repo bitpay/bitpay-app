@@ -181,12 +181,6 @@ export interface Invoice {
   expirationTime: number;
   merchantName: string;
   currency: string;
-  oauth?: {
-    coinbase?: {
-      enabled: boolean;
-      threshold: number;
-    };
-  };
   usdAmount: number;
   supportedTransactionCurrencies: SupportedTransactionCurrencies;
 }

@@ -266,8 +266,6 @@ const AddAccountBtnText = styled(BaseText)`
 export type GlobalSelectModalContext =
   | 'send'
   | 'receive'
-  | 'coinbase'
-  | 'coinbaseDeposit'
   | 'contact'
   | 'scanner'
   | 'sell'
@@ -690,16 +688,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   // only show wallets with funds
   // only show selected account address wallets if selectedAccountAddress is provided
-  if (
-    [
-      'send',
-      'sell',
-      'swapFrom',
-      'coinbaseDeposit',
-      'contact',
-      'scanner',
-    ].includes(context)
-  ) {
+  if (['send', 'sell', 'swapFrom', 'contact', 'scanner'].includes(context)) {
     wallets = wallets.filter(
       wallet =>
         wallet.balance.sat > 0 &&
@@ -717,10 +706,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     );
   }
 
-  if (
-    recipient &&
-    ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
-  ) {
+  if (recipient && ['contact', 'scanner'].includes(context)) {
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
@@ -768,19 +754,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     });
   }
 
-  if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
-    const supportedCurrencies = [
-      ...new Set(
-        customSupportedCurrencies.map(item =>
-          item.currencyAbbreviation.toLowerCase(),
-        ),
-      ),
-    ];
-    wallets = wallets.filter(wallet =>
-      supportedCurrencies.includes(wallet.currencyAbbreviation),
-    );
-  }
-
   const currenciesSupportedList = useMemo(() => {
     const coins = customSupportedCurrencies
       ? customSupportedCurrencies
@@ -794,17 +767,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       c => c,
     );
     let allCurrencyData = {} as KeyWalletsRowProps[] | GlobalSelectObjByKey;
-    if (
-      [
-        'send',
-        'sell',
-        'swapFrom',
-        'coinbase',
-        'coinbaseDeposit',
-        'contact',
-        'scanner',
-      ].includes(context)
-    ) {
+    if (['send', 'sell', 'swapFrom', 'contact', 'scanner'].includes(context)) {
       const getFilterByCustomWallets = (key: Key): Wallet[] => {
         let _filterByCustomWallets: Wallet[] = [];
         if (['sell', 'swapFrom'].includes(context)) {
@@ -817,13 +780,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           );
         } else {
           _filterByCustomWallets = wallets.filter(w => {
-            const isContextValid =
-              !['coinbaseDeposit'].includes(context) ||
-              allCurrencies.includes(
-                getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
-              );
-
-            return isContextValid && w.keyId === key.id;
+            return w.keyId === key.id;
           });
         }
         return _filterByCustomWallets;
@@ -1003,9 +960,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       if (!wallet) {
         return;
       }
-      if (
-        ['coinbase', 'coinbaseDeposit', 'contact', 'scanner'].includes(context)
-      ) {
+      if (['contact', 'scanner'].includes(context)) {
         const {name, address, type, destinationTag, opts} = recipient!;
         if (!address) {
           return;
@@ -1164,15 +1119,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const renderItem = useCallback(
     ({item}: {item: GlobalSelectObj | KeyWalletsRowProps}) => {
       if (
-        [
-          'sell',
-          'swapFrom',
-          'send',
-          'coinbase',
-          'coinbaseDeposit',
-          'contact',
-          'scanner',
-        ].includes(context)
+        ['sell', 'swapFrom', 'send', 'contact', 'scanner'].includes(context)
       ) {
         const keyWallets = item as KeyWalletsRowProps;
         return (
@@ -1314,7 +1261,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         navigation,
         keys: Object.values(keys),
         dispatch,
-        linkedCoinbase: false,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType: 'listView',
         hideKeyBalance: hideAllBalances,
@@ -1476,12 +1422,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         accounts: [...evmAccounts, ...svmAccounts],
         currency: selectedCurrency,
         showAddSvmAccount:
-          ['buy', 'swapTo', 'coinbase', 'coinbaseDeposit'].includes(context) &&
+          ['buy', 'swapTo'].includes(context) &&
           selectedCurrencyHasBothVmTypes &&
           evmAccounts.length > 0 &&
           svmAccounts.length === 0,
         showAddEvmAccount:
-          ['buy', 'swapTo', 'coinbase', 'coinbaseDeposit'].includes(context) &&
+          ['buy', 'swapTo'].includes(context) &&
           selectedCurrencyHasBothVmTypes &&
           svmAccounts.length > 0 &&
           evmAccounts.length === 0,

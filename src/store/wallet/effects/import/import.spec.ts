@@ -107,16 +107,6 @@ jest.mock('../../../app/app.effects', () => ({
   subscribeEmailNotifications: jest.fn(() => () => Promise.resolve()),
 }));
 
-// Coinbase effects
-jest.mock('../../../coinbase', () => ({
-  accessTokenSuccess: jest.fn(() => ({type: 'COINBASE/ACCESS_TOKEN_SUCCESS'})),
-  coinbaseGetAccountsAndBalance: jest.fn(() => () => Promise.resolve()),
-  coinbaseGetUser: jest.fn(() => () => Promise.resolve()),
-}));
-jest.mock('../../../coinbase/coinbase.effects', () => ({
-  coinbaseUpdateExchangeRate: jest.fn(() => () => Promise.resolve()),
-}));
-
 // Wallet utils – fully mocked to avoid deep transitive imports
 jest.mock('../../utils/wallet', () => ({
   buildKeyObj: jest.fn(({key, wallets}) => ({
