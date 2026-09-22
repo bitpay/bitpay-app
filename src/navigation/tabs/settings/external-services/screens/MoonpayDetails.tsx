@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {RefreshControl, Text} from 'react-native';
+import {ActivityIndicator, RefreshControl, Text} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -60,7 +60,12 @@ import {
 } from '../../../../services/buy-crypto/utils/moonpay-utils';
 import {Br} from '../../../../../components/styled/Containers';
 import {sleep} from '../../../../../utils/helper-methods';
-import {Slate, SlateDark, White} from '../../../../../styles/colors';
+import {
+  ProgressBlue,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 import {
   getMoonpayEmbeddedAnonymousCredentials,
   getMoonpayEmbeddedCredentials,
@@ -119,6 +124,9 @@ const MoonpayDetails: React.FC = () => {
   const isEmbeddedSepa =
     !!paymentRequest.is_embedded &&
     paymentRequest.payment_method === 'sepaBankTransfer';
+  const [statusLoading, setStatusLoading] = useState(
+    () => paymentRequest.status !== 'completed',
+  );
   const sepaRows: {
     key: string;
     label: string;
@@ -231,8 +239,10 @@ const MoonpayDetails: React.FC = () => {
 
   const getTransactionDetails = async (force?: boolean) => {
     if (paymentRequest.status === 'completed' && !force) {
+      setStatusLoading(false);
       return;
     }
+    setStatusLoading(true);
 
     if (paymentRequest.is_embedded && paymentRequest.transaction_id) {
       const cachedCredentials = getMoonpayEmbeddedCredentials();
@@ -342,12 +352,15 @@ const MoonpayDetails: React.FC = () => {
           logger.error(
             'Moonpay getTransactionDetailsEmbedded Error: ' + errStr,
           );
+        } finally {
+          setStatusLoading(false);
         }
       } else {
         logger.warn(
           'Moonpay getTransactionDetailsEmbedded Error: User disconnected or credentials expired',
         );
         setEmbeddedDisconnected(true);
+        setStatusLoading(false);
         showDisconnectedNotification();
       }
     } else {
@@ -416,6 +429,8 @@ const MoonpayDetails: React.FC = () => {
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         logger.error('Moonpay getTransactionDetails Error: ' + errStr);
+      } finally {
+        setStatusLoading(false);
       }
     }
   };
@@ -573,8 +588,12 @@ const MoonpayDetails: React.FC = () => {
                   <Br />
                 </>
               ) : null}
-              <LabelTipText>{status.statusDescription}</LabelTipText>
-              {['failed'].includes(paymentRequest.status) ? (
+              {statusLoading ? (
+                <ActivityIndicator color={ProgressBlue} size={'small'} />
+              ) : (
+                <LabelTipText>{status.statusDescription}</LabelTipText>
+              )}
+              {!statusLoading && ['failed'].includes(paymentRequest.status) ? (
                 <>
                   <Br />
                   <LabelTipText>
@@ -600,7 +619,9 @@ const MoonpayDetails: React.FC = () => {
             </LabelTip>
           )}
 
-          {sepaRows.length > 0 && (
+          {sepaRows.length > 0 &&
+          !statusLoading &&
+          moonpaySepaIsWaitingForPayment(paymentRequest.status, sepaStages) ? (
             <>
               <RowDataContainer style={{marginTop: 0, marginBottom: 0}}>
                 <RowLabel>{t('Bank transfer details')}</RowLabel>
@@ -628,23 +649,22 @@ const MoonpayDetails: React.FC = () => {
                       </CopyImgContainerRight>
                     </CopiedContainer>
                   </TouchableOpacity>
-                  {moonpaySepaIsWaitingForPayment(sepaStages) &&
-                    row.key === 'reference' && (
-                      <LabelTip
-                        type="warn"
-                        style={{marginTop: 10, marginBottom: 0}}>
-                        <LabelTipText>
-                          {t(
-                            'Your transfer must include the reference above, or MoonPay will reject it.',
-                          )}
-                        </LabelTipText>
-                      </LabelTip>
-                    )}
+                  {row.key === 'reference' && (
+                    <LabelTip
+                      type="warn"
+                      style={{marginTop: 10, marginBottom: 0}}>
+                      <LabelTipText>
+                        {t(
+                          'Your transfer must include the reference above, or MoonPay will reject it.',
+                        )}
+                      </LabelTipText>
+                    </LabelTip>
+                  )}
                 </ColumnDataContainer>
               ))}
               <BankTransferSeparator />
             </>
-          )}
+          ) : null}
 
           <ColumnDataContainer>
             <TouchableOpacity

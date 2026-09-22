@@ -573,12 +573,25 @@ export const moonpayGetSepaStatusDetails = (
 };
 
 export const moonpaySepaIsWaitingForPayment = (
+  status?: string,
   stages?: MoonpayTransactionStage[],
-): boolean =>
-  !stages?.length ||
-  stages.some(
-    stage => stage.kind === 'waiting_payment' && stage.status !== 'success',
+): boolean => {
+  if (status === 'completed' || status === 'failed') {
+    return false;
+  }
+  const waitingStage = stages?.find(stage => stage.kind === 'waiting_payment');
+  if (!waitingStage) {
+    // Stages unknown (not read yet, or the read failed): a purchase that has
+    // not reached a terminal state is most likely still waiting for the money.
+    return true;
+  }
+  // Explicitly not 'failed': a timed-out transfer is over, and asking for the
+  // money again would be worse than showing nothing.
+  return (
+    waitingStage.status === 'in_progress' ||
+    waitingStage.status === 'not_started'
   );
+};
 
 export const moonpayGetStatusColor = (status: string): string => {
   switch (status) {
