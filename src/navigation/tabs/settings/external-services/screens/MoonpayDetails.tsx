@@ -60,17 +60,28 @@ import {
 } from '../../../../services/buy-crypto/utils/moonpay-utils';
 import {Br} from '../../../../../components/styled/Containers';
 import {sleep} from '../../../../../utils/helper-methods';
-import {SlateDark, White} from '../../../../../styles/colors';
+import {Slate, SlateDark, White} from '../../../../../styles/colors';
 import {
+  getMoonpayEmbeddedAnonymousCredentials,
   getMoonpayEmbeddedCredentials,
   isMoonpayEmbeddedCredentialsValid,
+  setMoonpayEmbeddedCredentials,
+  setMoonpayEmbeddedStatus,
 } from '../../../../../store/buy-crypto/buy-crypto.effects';
+import {MoonpayClientCredentials} from '../../../../services/utils/moonpayFrameCrypto';
+import {ExternalServicesScreens} from '../../../../services/ExternalServicesGroup';
 import {moonpaySellEnv} from '../../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {RootState} from '../../../../../store';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
+import styled from 'styled-components/native';
 export interface MoonpayDetailsProps {
   paymentRequest: MoonpayPaymentData;
 }
+
+const BankTransferSeparator = styled.View`
+  margin: 15px 15px 0px 15px;
+  border: solid 0.5px ${({theme: {dark}}) => (dark ? SlateDark : Slate)};
+`;
 
 const copyText = (text: string) => {
   haptic('impactLight');
@@ -89,6 +100,9 @@ const MoonpayDetails: React.FC = () => {
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}: RootState) => BITPAY_ID.user[APP.network],
+  );
   const [status, setStatus] = useState<MoonpayStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -98,17 +112,32 @@ const MoonpayDetails: React.FC = () => {
   const [copiedExternalId, setCopiedExternalId] = useState(false);
   const [copiedTransactionId, setCopiedTransactionId] = useState(false);
   const [copiedSepaField, setCopiedSepaField] = useState<string>();
+  const [embeddedDisconnected, setEmbeddedDisconnected] = useState(false);
 
   const [sepaDetails, setSepaDetails] = useState(paymentRequest.sepa_details);
   const [sepaStages, setSepaStages] = useState<MoonpayTransactionStage[]>();
   const isEmbeddedSepa =
     !!paymentRequest.is_embedded &&
     paymentRequest.payment_method === 'sepaBankTransfer';
-  const sepaRows: {key: string; label: string; value: string}[] = sepaDetails
+  const sepaRows: {
+    key: string;
+    label: string;
+    value: string;
+    copyValue?: string;
+  }[] = sepaDetails
     ? [
         {key: 'reference', label: t('Reference'), value: sepaDetails.reference},
         ...(sepaDetails.iban
-          ? [{key: 'iban', label: t('IBAN'), value: sepaDetails.iban}]
+          ? [
+              {
+                key: 'iban',
+                label: t('IBAN'),
+                value: sepaDetails.iban,
+                // Displayed grouped in fours, as MoonPay returns it, but copied
+                // in the machine format that banking apps expect.
+                copyValue: sepaDetails.iban.replace(/\s/g, ''),
+              },
+            ]
           : []),
         ...(sepaDetails.bic
           ? [{key: 'bic', label: t('BIC'), value: sepaDetails.bic}]
@@ -142,6 +171,64 @@ const MoonpayDetails: React.FC = () => {
     );
   };
 
+  // The embedded status comes from MoonPay's API, so without valid credentials
+  // the screen can only show the status as of the last successful fetch.
+  const goToMoonpayOnboarding = () => {
+    const anonymousCredentials = getMoonpayEmbeddedAnonymousCredentials();
+    if (!anonymousCredentials) {
+      // Anonymous credentials are not ready yet: the connection settings screen
+      // requests them and offers the Connect button.
+      (navigation as any).navigate('MoonpayConnectionSettings');
+      return;
+    }
+    (navigation as any).navigate(
+      ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
+      {
+        context: 'moonpayDetails',
+        user,
+        anonymousCredentials,
+        onConnectAccount: async (newCredentials: MoonpayClientCredentials) => {
+          setMoonpayEmbeddedCredentials(newCredentials);
+          setMoonpayEmbeddedStatus('active');
+          navigation.goBack();
+          getTransactionDetails(true);
+        },
+        onSkipConnection: async () => {
+          navigation.goBack();
+        },
+      },
+    );
+  };
+
+  const showDisconnectedNotification = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Disconnected from MoonPay'),
+        message: t(
+          'This purchase was made through your MoonPay account, and the status shown may be out of date. Connect again to see its latest status.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Connect MoonPay'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+              goToMoonpayOnboarding();
+            },
+            primary: true,
+          },
+          {
+            text: t('Skip'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+          },
+        ],
+      }),
+    );
+  };
+
   const getTransactionDetails = async (force?: boolean) => {
     if (paymentRequest.status === 'completed' && !force) {
       return;
@@ -150,6 +237,7 @@ const MoonpayDetails: React.FC = () => {
     if (paymentRequest.is_embedded && paymentRequest.transaction_id) {
       const cachedCredentials = getMoonpayEmbeddedCredentials();
       if (isMoonpayEmbeddedCredentialsValid() && cachedCredentials) {
+        setEmbeddedDisconnected(false);
         try {
           const txDetails: MoonpayTransactionDetailsEmbeddedData =
             await moonpayGetTransactionDetailsEmbedded({
@@ -259,6 +347,8 @@ const MoonpayDetails: React.FC = () => {
         logger.warn(
           'Moonpay getTransactionDetailsEmbedded Error: User disconnected or credentials expired',
         );
+        setEmbeddedDisconnected(true);
+        showDisconnectedNotification();
       }
     } else {
       try {
@@ -472,7 +562,17 @@ const MoonpayDetails: React.FC = () => {
           )}
 
           {!!paymentRequest.status && (
-            <LabelTip type="info">
+            <LabelTip type={embeddedDisconnected ? 'warn' : 'info'}>
+              {embeddedDisconnected ? (
+                <>
+                  <LabelTipText>
+                    {t(
+                      'Warning: You are disconnected from MoonPay, so this status may be out of date. Please connect again to see its latest status.',
+                    )}
+                  </LabelTipText>
+                  <Br />
+                </>
+              ) : null}
               <LabelTipText>{status.statusDescription}</LabelTipText>
               {['failed'].includes(paymentRequest.status) ? (
                 <>
@@ -502,16 +602,18 @@ const MoonpayDetails: React.FC = () => {
 
           {sepaRows.length > 0 && (
             <>
-              <RowDataContainer>
+              <RowDataContainer style={{marginTop: 0, marginBottom: 0}}>
                 <RowLabel>{t('Bank transfer details')}</RowLabel>
               </RowDataContainer>
               {sepaRows.map(row => (
-                <ColumnDataContainer key={row.key}>
+                <ColumnDataContainer
+                  key={row.key}
+                  style={{paddingHorizontal: 15}}>
                   <TouchableOpacity
                     testID={`moonpay-copy-sepa-${row.key}-button`}
                     accessibilityLabel={`Copy ${row.label}`}
                     onPress={() => {
-                      copyText(row.value);
+                      copyText(row.copyValue ?? row.value);
                       setCopiedSepaField(row.key);
                     }}>
                     <RowLabel>{row.label}</RowLabel>
@@ -526,17 +628,21 @@ const MoonpayDetails: React.FC = () => {
                       </CopyImgContainerRight>
                     </CopiedContainer>
                   </TouchableOpacity>
+                  {moonpaySepaIsWaitingForPayment(sepaStages) &&
+                    row.key === 'reference' && (
+                      <LabelTip
+                        type="warn"
+                        style={{marginTop: 10, marginBottom: 0}}>
+                        <LabelTipText>
+                          {t(
+                            'Your transfer must include the reference above, or MoonPay will reject it.',
+                          )}
+                        </LabelTipText>
+                      </LabelTip>
+                    )}
                 </ColumnDataContainer>
               ))}
-              {moonpaySepaIsWaitingForPayment(sepaStages) && (
-                <LabelTip type="warn">
-                  <LabelTipText>
-                    {t(
-                      'Your transfer must include the reference above, or MoonPay will reject it.',
-                    )}
-                  </LabelTipText>
-                </LabelTip>
-              )}
+              <BankTransferSeparator />
             </>
           )}
 

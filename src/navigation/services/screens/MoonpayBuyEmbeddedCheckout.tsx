@@ -1083,9 +1083,21 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   // SEPA: once the purchase is registered the customer still has to send the
   // money, so the screen turns into the deposit instructions.
   if (isSepaPaymentMethod && embeddedQuoteData && depositInfo) {
-    const depositRows: {key: string; label: string; value?: string}[] = [
+    const depositRows: {
+      key: string;
+      label: string;
+      value?: string;
+      copyValue?: string;
+    }[] = [
       {key: 'reference', label: t('Reference'), value: depositInfo.reference},
-      {key: 'iban', label: 'IBAN', value: depositInfo.iban},
+      {
+        key: 'iban',
+        label: 'IBAN',
+        value: depositInfo.iban,
+        // Displayed grouped in fours, as MoonPay returns it, but copied in the
+        // machine format that banking apps expect.
+        copyValue: depositInfo.iban?.replace(/\s/g, ''),
+      },
       {key: 'bic', label: 'BIC', value: depositInfo.bic},
       {
         key: 'recipientName',
@@ -1128,7 +1140,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             {depositRows.map(row => (
               <View key={row.key}>
                 <TouchableOpacity
-                  onPress={() => copyDepositField(row.key, row.value!)}>
+                  onPress={() =>
+                    copyDepositField(row.key, row.copyValue ?? row.value!)
+                  }>
                   <RowDataContainer style={{height: 50}}>
                     <RowLabel>{row.label}</RowLabel>
                     <CopiedContainer style={{maxWidth: '60%'}}>
