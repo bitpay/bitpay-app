@@ -21,6 +21,7 @@ import {
   isMatchedWallet,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
+import {getBaseWalletIdFromTokenWalletId} from '../../utils/token-wallet-id';
 import {LogActions} from '../../../../store/log';
 import {
   deleteKey,
@@ -1727,10 +1728,20 @@ export const serverAssistedImport = async (
   });
 };
 
-const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
+export const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
   tokens.forEach(token => {
-    // find the associated wallet to add tokens too
-    const associatedWalletId = token.credentials.walletId.split('-0x')[0];
+    const tokenAddress = token.credentials.token?.address;
+    const associatedWalletId = tokenAddress
+      ? getBaseWalletIdFromTokenWalletId(
+          token.credentials.walletId,
+          tokenAddress,
+        )
+      : undefined;
+
+    if (!associatedWalletId) {
+      return;
+    }
+
     wallets = wallets.map((wallet: Wallet) => {
       if (wallet.credentials.walletId === associatedWalletId) {
         // push token walletId as reference - this is used later to build out nested overview lists

@@ -13,6 +13,7 @@
 import configureTestStore from '@test/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  linkTokenToWallet,
   normalizeMnemonic,
   startMigrationMMKVStorage,
   startMigration,
@@ -250,6 +251,54 @@ describe('normalizeMnemonic', () => {
 // ---------------------------------------------------------------------------
 // startMigrationMMKVStorage – AsyncStorage-backed thunk
 // ---------------------------------------------------------------------------
+describe('linkTokenToWallet', () => {
+  const makeWallet = (walletId: string, tokenAddress?: string): any => ({
+    credentials: {
+      walletId,
+      ...(tokenAddress ? {token: {address: tokenAddress}} : {}),
+    },
+  });
+
+  it('links an EVM token wallet to the wallet it belongs to', () => {
+    const baseWallet = makeWallet('wallet-1');
+    const tokenWallet = makeWallet('wallet-1-0xtoken', '0xtoken');
+
+    linkTokenToWallet([tokenWallet], [baseWallet, tokenWallet]);
+
+    expect(baseWallet.tokens).toEqual(['wallet-1-0xtoken']);
+  });
+
+  it('links an SVM token wallet, whose mint is not 0x prefixed', () => {
+    const mint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const baseWallet = makeWallet('wallet-1');
+    const tokenWallet = makeWallet(`wallet-1-${mint}`, mint);
+
+    linkTokenToWallet([tokenWallet], [baseWallet, tokenWallet]);
+
+    expect(baseWallet.tokens).toEqual([`wallet-1-${mint}`]);
+  });
+
+  it('links a token of a multisig wallet to the multisig wallet, not to the wallet it derives from', () => {
+    const baseWallet = makeWallet('wallet-1');
+    const multisigWallet = makeWallet('wallet-1-0xmultisig');
+    const tokenWallet = makeWallet('wallet-1-0xmultisig-0xtoken', '0xtoken');
+
+    linkTokenToWallet([tokenWallet], [baseWallet, multisigWallet, tokenWallet]);
+
+    expect(multisigWallet.tokens).toEqual(['wallet-1-0xmultisig-0xtoken']);
+    expect(baseWallet.tokens).toBeUndefined();
+  });
+
+  it('leaves wallets untouched when the token carries no address', () => {
+    const baseWallet = makeWallet('wallet-1');
+    const tokenWallet = makeWallet('wallet-1-0xtoken');
+
+    linkTokenToWallet([tokenWallet], [baseWallet, tokenWallet]);
+
+    expect(baseWallet.tokens).toBeUndefined();
+  });
+});
+
 describe('startMigrationMMKVStorage', () => {
   const {storage} = require('../../../index');
   const RNRestart = require('react-native-restart');
