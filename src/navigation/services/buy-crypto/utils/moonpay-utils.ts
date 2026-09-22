@@ -481,11 +481,40 @@ export const moonpayGetStatusDetails = (status: string): MoonpayStatus => {
 // little on its own. MoonPay's guide points to the stages array for the real
 // progress: once waiting_payment succeeds the deposit has arrived.
 // https://dev.moonpay.com/platform/guides/pay-with-bank-transfer
+const getMoonpaySepaFailureDescription = (
+  failureReason?: string | null,
+): string | undefined => {
+  switch (failureReason) {
+    case 'timeout_bank_transfer':
+      return t(
+        'Moonpay did not receive your bank transfer in time, so this purchase was cancelled. You can start a new one whenever you are ready.',
+      );
+    default:
+      return typeof failureReason === 'string'
+        ? t('Failure Reason: ') + failureReason
+        : undefined;
+  }
+};
+
 export const moonpayGetSepaStatusDetails = (
   status: string,
   stages?: MoonpayTransactionStage[],
 ): MoonpayStatus => {
-  if (status === 'completed' || status === 'failed') {
+  if (status === 'completed') {
+    return moonpayGetStatusDetails(status);
+  }
+
+  const failedStage = stages?.find(stage => stage.status === 'failed');
+  if (failedStage) {
+    return {
+      statusTitle: t('Failed'),
+      statusDescription:
+        getMoonpaySepaFailureDescription(failedStage.failureReason) ??
+        moonpayGetStatusDetails('failed').statusDescription,
+    };
+  }
+
+  if (status === 'failed') {
     return moonpayGetStatusDetails(status);
   }
 
@@ -501,16 +530,6 @@ export const moonpayGetSepaStatusDetails = (
   // nothing happens until the customer sends the money.
   if (!stages?.length) {
     return waitingForPayment;
-  }
-
-  const failedStage = stages.find(stage => stage.status === 'failed');
-  if (failedStage) {
-    return {
-      statusTitle: t('Failed'),
-      statusDescription:
-        failedStage.failureReason ||
-        moonpayGetStatusDetails('failed').statusDescription,
-    };
   }
 
   const currentStage =
