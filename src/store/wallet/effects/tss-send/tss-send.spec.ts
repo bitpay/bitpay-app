@@ -113,7 +113,12 @@ function makeTssSignCtor() {
       start: jest.fn(async () => {
         instance.emit('copayerReady', _opts?.credentials?.copayerId);
       }),
-      restoreSession: jest.fn(() => Promise.resolve()),
+      // Real BWC restoreSession() takes the session id from everything before
+      // the last colon of the exported string.
+      restoreSession: jest.fn(({session}: {session: string}) => {
+        instance.id = session.slice(0, session.lastIndexOf(':'));
+        return Promise.resolve();
+      }),
       exportSession: jest.fn(() => 'exported-sign-session'),
       getSignature: jest.fn(() => ({r: 'r', s: 's'})),
       getSignatureFromServer: jest.fn(() => Promise.resolve(null)),
@@ -377,7 +382,11 @@ const seedSavedSession = async (
 ) => {
   await AsyncStorage.setItem(
     TSS_SESSION_PREFIX + sessionId,
-    JSON.stringify({signData, round, savedAt: Date.now()}),
+    JSON.stringify({
+      exported: `${sessionId}:${signData}`,
+      round,
+      savedAt: Date.now(),
+    }),
   );
 };
 
@@ -521,7 +530,7 @@ describe('startTSSSigning', () => {
 
     const tssSign = tssSignInstances[0];
     expect(tssSign.restoreSession).toHaveBeenCalledWith({
-      session: 'placeholder:saved-sign-data',
+      session: 'txp-1:input0:saved-sign-data',
     });
     expect(tssSign.id).toBe('txp-1:input0');
     expect(wallet.request.get).toHaveBeenCalledWith(
@@ -529,6 +538,35 @@ describe('startTSSSigning', () => {
     );
 
     driveToComplete(tssSign, 3);
+    await resultPromise;
+  });
+
+  it('forwards the decrypt password to restoreSession so an encrypted key share can be read back', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    await seedSavedSession('txp-1:input0', 'saved-sign-data', 1);
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({
+        key,
+        wallet,
+        txp,
+        callbacks: noopCallbacks(),
+        password: 'my-password',
+      }),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    expect(tssSign.restoreSession).toHaveBeenCalledWith({
+      session: 'txp-1:input0:saved-sign-data',
+      password: 'my-password',
+    });
+
+    driveToComplete(tssSign, 2);
     await resultPromise;
   });
 
@@ -691,9 +729,46 @@ describe('startTSSSigning', () => {
     const tssSign = tssSignInstances[0];
     expect(tssSign.start).toHaveBeenCalled();
     expect(tssSign.restoreSession).toHaveBeenCalledWith({
-      session: 'placeholder:retry-sign-data',
+      session: 'txp-1:input0:retry-sign-data',
     });
     expect(tssSign.id).toBe('txp-1:input0');
+
+    driveToComplete(tssSign);
+    await resultPromise;
+  });
+
+  it('forwards the decrypt password to the retry-recovery restoreSession too', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    await seedSavedSession('txp-1:input0', 'retry-sign-data', 1);
+    jest.spyOn(AsyncStorage, 'getItem').mockResolvedValueOnce(null);
+
+    configureNextTssSign(instance => {
+      instance.start.mockRejectedValueOnce(
+        new Error('TSS_ROUND_MESSAGE_EXISTS: dup'),
+      );
+      instance.getSignatureFromServer.mockResolvedValueOnce(null);
+    });
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({
+        key,
+        wallet,
+        txp,
+        callbacks: noopCallbacks(),
+        password: 'my-password',
+      }),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    expect(tssSign.restoreSession).toHaveBeenCalledWith({
+      session: 'txp-1:input0:retry-sign-data',
+      password: 'my-password',
+    });
 
     driveToComplete(tssSign);
     await resultPromise;
@@ -795,6 +870,27 @@ describe('startTSSSigning', () => {
     ).rejects.toThrow('network unreachable');
   });
 
+  it('rejects with an actionable message when start() fails because the signing session expired', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    configureNextTssSign(instance => {
+      instance.start.mockRejectedValue(
+        new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+      );
+    });
+
+    await expect(
+      store.dispatch(
+        startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+      ),
+    ).rejects.toThrow(
+      'This signing session expired. Delete this proposal and create a new one.',
+    );
+  });
+
   it('recovers from a mid-session TSS_ROUND_ALREADY_DONE error event via getSignatureFromServer', async () => {
     const store = configureTestStore();
     const wallet = makeTssWallet();
@@ -880,6 +976,52 @@ describe('startTSSSigning', () => {
       TSS_SESSION_PREFIX + 'txp-1:input0',
     );
     expect(saved).toBeNull();
+  });
+
+  it('rejects with an actionable message when BWS reports the signing session expired', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    tssSign.emit(
+      'error',
+      new Error('TSS_SESSION_EXPIRED: TSS session has expired'),
+    );
+
+    await expect(resultPromise).rejects.toThrow(
+      'This signing session expired. Delete this proposal and create a new one.',
+    );
+    expect(tssSign.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('rejects with an actionable message when BWS reports a TSS version mismatch', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+    );
+    await tick(20);
+
+    const tssSign = tssSignInstances[0];
+    tssSign.emit(
+      'error',
+      new Error('TSS_MISMATCH_VERSION: TSS version does not match'),
+    );
+
+    await expect(resultPromise).rejects.toThrow(
+      'A co-signer is running an incompatible app version. Everyone must update to the same version.',
+    );
+    expect(tssSign.unsubscribe).toHaveBeenCalled();
   });
 
   it('rejects with a stall error if no round progress happens for 30s', async () => {
@@ -1129,13 +1271,12 @@ describe('startTSSSigning', () => {
     await resultPromise;
   });
 
-  it('strips the sessionId prefix from exported session data before persisting it', async () => {
+  it('persists the exported session verbatim, sessionId prefix included', async () => {
     const store = configureTestStore();
     const wallet = makeTssWallet();
     const key = makeTssKeyObj({wallets: [wallet]});
     const txp = makeTxp();
 
-    // Real exportSession() returns "<sessionId>:<data>"; the prefix is stripped.
     configureNextTssSign(instance => {
       instance.exportSession.mockReturnValue('txp-1:input0:the-real-data');
     });
@@ -1148,7 +1289,7 @@ describe('startTSSSigning', () => {
     const saved = await AsyncStorage.getItem(
       TSS_SESSION_PREFIX + 'txp-1:input0',
     );
-    expect(JSON.parse(saved!).signData).toBe('the-real-data');
+    expect(JSON.parse(saved!).exported).toBe('txp-1:input0:the-real-data');
 
     driveToComplete(tssSignInstances[0]);
     await resultPromise;
