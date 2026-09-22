@@ -37,7 +37,11 @@ import {
 } from '../styled/WalletConnectContainers';
 import {FlatList, Platform} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import {isSameAddress, sleep} from '../../../utils/helper-methods';
+import {
+  isSameAddress,
+  matchesRequestToken,
+  sleep,
+} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -140,10 +144,12 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
       wallet =>
         isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === swapFromChain &&
-        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+        matchesRequestToken(wallet, request),
     );
 
   let _swapFromCurrencyAbbreviation = swapFromCurrencyAbbreviation;
+  let summary = {};
 
   if (!wallet) {
     wallet = Object.values(keys)
@@ -153,12 +159,20 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
     _swapFromCurrencyAbbreviation =
       // @ts-ignore
       BitpaySupportedCoins[swapFromChain]?.coin?.toLowerCase();
+
+    summary = {
+      recipientAddress: undefined,
+      senderContractAddress: undefined,
+      swapFormatAmount: undefined,
+      swapFiatAmount: undefined,
+    };
   }
 
   const {img, badgeImg} = wallet || {};
 
   return {
     ...request,
+    ...summary,
     swapFromCurrencyAbbreviation: _swapFromCurrencyAbbreviation,
     currencyImg: img,
     badgeImg,
@@ -329,10 +343,16 @@ const WalletConnectHome = () => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
+      const {method} = request.params.request;
+      const isSvmRequest = Object.values(SOLANA_SIGNING_METHODS).includes(
+        method,
+      );
       const {to: toAddress} = request?.params?.request?.params?.[0] ?? {};
 
       const recipient = {
-        address: toAddress || request.recipientAddress,
+        address: isSvmRequest
+          ? request.recipientAddress
+          : toAddress || request.recipientAddress,
       };
 
       if (!recipient.address) {
@@ -439,7 +459,8 @@ const WalletConnectHome = () => {
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === chain &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(wallet, requestV2),
       );
       if (!wallet) {
         showErrorMessage(
@@ -509,7 +530,8 @@ const WalletConnectHome = () => {
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === swapFromChain &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(wallet, item),
       );
       if (!wallet) {
         return <></>;

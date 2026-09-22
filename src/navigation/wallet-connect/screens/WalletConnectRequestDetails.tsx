@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {
@@ -29,7 +29,10 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  getUnrecognizedSolanaInstructions,
+  sleep,
+} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
@@ -44,6 +47,7 @@ import {
 import {getMessageView, getRequestSummary} from './walletConnectRequestSummary';
 import {View} from 'react-native';
 import Blockie from '../../../components/blockie/Blockie';
+import Banner from '../../../components/banner/Banner';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type WalletConnectRequestDetailsParamList = {
@@ -113,6 +117,11 @@ const WalletConnectRequestDetails = () => {
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
   const request = _request.params.request;
+  const decodedInstructions = _request.decodedInstructions;
+  const unrecognizedInstructions = useMemo(
+    () => getUnrecognizedSolanaInstructions(decodedInstructions),
+    [decodedInstructions],
+  );
 
   useEffect(() => {
     if (!request) {
@@ -344,16 +353,30 @@ const WalletConnectRequestDetails = () => {
                   <Hr />
                 </>
               ) : null}
+              {unrecognizedInstructions.length > 0 ? (
+                <Banner
+                  height={100}
+                  type={'warning'}
+                  title={t('Unrecognized instructions')}
+                  description={t(
+                    'This transaction contains instructions we cannot decode. Approve it only if you fully trust this site.',
+                  )}
+                />
+              ) : null}
               <MessageTitleContainer>
                 <ItemTitleContainer>
-                  <H7>{t('Message')}</H7>
+                  <H7>
+                    {decodedInstructions ? t('Instructions') : t('Message')}
+                  </H7>
                   <View style={{paddingLeft: 10}}>
                     {clipboardObj.copied && clipboardObj.type === 'message' ? (
                       <CopiedSvg width={17} />
                     ) : null}
                   </View>
                 </ItemTitleContainer>
-                {renderMessage(message)}
+                {decodedInstructions
+                  ? parseAndDisplayMessage(decodedInstructions)
+                  : renderMessage(message)}
               </MessageTitleContainer>
             </>
           ) : (
