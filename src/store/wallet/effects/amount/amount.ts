@@ -1,3 +1,4 @@
+import {ethers} from 'ethers';
 import {Effect} from '../../..';
 import {logManager} from '../../../../managers/LogManager';
 import {GetPrecision} from '../../utils/currency';
@@ -14,7 +15,7 @@ import {GetUtxos} from '../transactions/transactions';
 export interface FormattedAmountObj {
   amount: string;
   currency: string;
-  amountSat: number;
+  amountSat: string;
   amountUnitStr: string;
 }
 
@@ -28,9 +29,30 @@ export const parseAmountToStringIfBN = (amount: number | string) => {
   });
 };
 
+export const ToBaseUnits = (
+  amount: number | string,
+  unitDecimals: number,
+): string => {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) {
+    return String(value);
+  }
+  const asString = String(amount);
+  const isExactDecimal =
+    /^-?\d+(\.\d+)?$/.test(asString) &&
+    (asString.split('.')[1]?.length ?? 0) <= unitDecimals;
+  const decimal = isExactDecimal
+    ? asString
+    : value.toLocaleString('fullwide', {
+        useGrouping: false,
+        maximumFractionDigits: unitDecimals,
+      });
+  return ethers.utils.parseUnits(decimal, unitDecimals).toString();
+};
+
 export const ParseAmount =
   (
-    amount: number,
+    amount: number | string,
     currencyAbbreviation: string,
     chain: string,
     tokenAddress: string | undefined,
@@ -47,30 +69,28 @@ export const ParseAmount =
       return {
         amount: '0',
         currency: currencyAbbreviation,
-        amountSat: 0,
+        amountSat: '0',
         amountUnitStr: '',
       };
     }
-    const {unitToSatoshi, unitDecimals} = precision;
-    const satToUnit = 1 / unitToSatoshi;
+    const {unitDecimals} = precision;
     let amountUnitStr;
     let amountSat;
     let _amount;
-    amountSat = Number((amount * unitToSatoshi).toFixed(0));
+    amountSat = ToBaseUnits(amount, unitDecimals);
     amountUnitStr =
       dispatch(
         FormatAmountStr(
           currencyAbbreviation,
           chain,
           tokenAddress,
-          amountSat,
+          Number(amountSat),
           fullPrecision,
         ),
       ) || '';
 
-    // workaround to prevent miscalculations with decimal numbers that javascript can't handle with precision
     const amountDecimals = countDecimals(amount);
-    _amount = (amountSat * satToUnit).toFixed(
+    _amount = Number(ethers.utils.formatUnits(amountSat, unitDecimals)).toFixed(
       amountDecimals < unitDecimals ? amountDecimals : unitDecimals,
     );
 
@@ -84,11 +104,11 @@ export const ParseAmount =
     };
   };
 
-const countDecimals = (num: number): number => {
+const countDecimals = (num: number | string): number => {
   if (!num) {
     return 0;
   }
-  const strNum = num.toString();
+  const strNum = String(num);
   // verify if number 0.000005 is represented as "5e-6"
   if (strNum.indexOf('e-') > -1) {
     const [base, trail] = strNum.split('e-');
@@ -96,8 +116,8 @@ const countDecimals = (num: number): number => {
     return deg;
   }
   // count decimals for number in representation like "0.123456"
-  if (Math.floor(num) !== num) {
-    return num.toString().split('.')?.[1]?.length || 0;
+  if (Math.floor(Number(num)) !== Number(num)) {
+    return strNum.split('.')?.[1]?.length || 0;
   }
   return 0;
 };

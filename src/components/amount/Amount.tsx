@@ -128,7 +128,7 @@ export interface AmountProps {
   /**
    * @param amount crypto amount
    */
-  onSubmit: (amount: number) => void;
+  onSubmit: (amount: number | string) => void;
 }
 
 const Amount: React.FC<AmountProps> = ({
@@ -215,17 +215,18 @@ const Amount: React.FC<AmountProps> = ({
       return;
     }
 
-    const cryptoAmount =
-      val === 0 || !cryptoCurrencyAbbreviation
-        ? '0'
-        : dispatch(
-            ParseAmount(
-              primaryIsFiat ? val / rate : val,
-              cryptoCurrencyAbbreviation.toLowerCase(),
-              chain,
-              tokenAddress,
-            ),
-          ).amount;
+    const cryptoAmount = !primaryIsFiat
+      ? _val
+      : val === 0
+      ? '0'
+      : dispatch(
+          ParseAmount(
+            val / rate,
+            cryptoCurrencyAbbreviation.toLowerCase(),
+            chain,
+            tokenAddress,
+          ),
+        ).amount;
 
     const fiatAmount = formatFiatAmount(val * rate, fiatCurrency, {
       currencyDisplay: 'symbol',
@@ -484,7 +485,7 @@ const Amount: React.FC<AmountProps> = ({
               onPress={() =>
                 useSendMax && onSendMaxPressed
                   ? onSendMaxPressed()
-                  : onSubmit?.(+amount)
+                  : onSubmit?.(amount)
               }>
               {t('Continue')}
             </Button>
