@@ -1030,6 +1030,78 @@ const parseStandardTokenTransactionData = (data?: string) => {
   return {};
 };
 
+const SOLANA_TRANSFER_SOL = 'transferSol';
+const SOLANA_TRANSFER_CHECKED_TOKEN = 'transferCheckedToken';
+
+const SOLANA_TRANSFER_INSTRUCTIONS = [
+  SOLANA_TRANSFER_SOL,
+  SOLANA_TRANSFER_CHECKED_TOKEN,
+  'transferToken',
+];
+
+const SOLANA_NON_TRANSFER_INSTRUCTIONS = [
+  'advanceNonceAccount',
+  'memo',
+  'setComputeUnitLimit',
+  'setComputeUnitPrice',
+];
+
+// Instruction keys are defined by the bitcore decode endpoint, which emits
+// unparsed<Program>Instruction_<n> for every instruction it cannot decode.
+export const getUnrecognizedSolanaInstructions = (
+  instructions?: Record<string, unknown[]>,
+): string[] =>
+  Object.keys(instructions ?? {}).filter(
+    key =>
+      !SOLANA_TRANSFER_INSTRUCTIONS.includes(key) &&
+      !SOLANA_NON_TRANSFER_INSTRUCTIONS.includes(key),
+  );
+
+export const matchesRequestToken = (
+  wallet: Wallet,
+  request: {swapFromChain?: string; senderContractAddress?: string},
+): boolean => {
+  const {swapFromChain, senderContractAddress} = request;
+  if (!IsSVMChain(swapFromChain!) || !senderContractAddress) {
+    return true;
+  }
+  return wallet.tokenAddress === senderContractAddress;
+};
+
+// Legacy and v0 transactions begin with the compact-u16 length of their
+// signature array; anything else, including the 0x81 v1 prefix, stays undecided.
+export const getSolanaSignerCount = (base64Tx?: string): number | undefined => {
+  if (!base64Tx) {
+    return undefined;
+  }
+  const signatureCount = Buffer.from(base64Tx, 'base64')[0];
+  return signatureCount > 0 && signatureCount < 0x80
+    ? signatureCount
+    : undefined;
+};
+
+export const canSummarizeSolanaTx = (
+  instructions: Record<string, unknown[]> | undefined,
+  signerCount: number | undefined,
+): boolean => {
+  if (!instructions) {
+    return false;
+  }
+  if (getUnrecognizedSolanaInstructions(instructions).length > 0) {
+    return false;
+  }
+  // The displayed fee comes from the BWS proposal, which bills one base
+  // signature and ignores the priority price the network does charge.
+  if (signerCount !== 1 || instructions.setComputeUnitPrice?.length) {
+    return false;
+  }
+  const transferCount = SOLANA_TRANSFER_INSTRUCTIONS.reduce(
+    (count, key) => count + (instructions[key]?.length ?? 0),
+    0,
+  );
+  return transferCount === 1;
+};
+
 export const processSolanaSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -1051,41 +1123,37 @@ export const processSolanaSwapRequest =
     let currency = null;
     let tokenAddress: string | undefined;
 
-    const instructionKeys = {
-      TRANSFER_SOL: 'transferSol',
-      TRANSFER_CHECKED_TOKEN: 'transferCheckedToken',
-      TRANSFER_TOKEN: 'transferToken',
-      ADVANCE_NONCE_ACCOUNT: 'advanceNonceAccount',
-      MEMO: 'memo',
-      SET_COMPUTE_UNIT_LIMIT: 'setComputeUnitLimit',
-      SET_COMPUTE_UNIT_PRICE: 'setComputeUnitPrice',
-      UNKNOWN: 'unknownInstruction',
-    };
-
     logManager.debug(`Decoded instructions: ${JSON.stringify(instructions)}`);
 
-    if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
+    if (
+      !canSummarizeSolanaTx(
+        instructions,
+        getSolanaSignerCount(request?.params?.transaction),
+      )
+    ) {
+      logManager.debug(
+        'Solana transaction cannot be fully summarized. Falling back to sign request',
+      );
+      return {
+        ...(await dispatch(processOtherMethodsRequest(event))),
+        decodedInstructions: instructions,
+      };
+    }
+
+    if (instructions?.[SOLANA_TRANSFER_SOL]?.length > 0) {
       const solTransfers = instructions[
-        instructionKeys.TRANSFER_SOL
+        SOLANA_TRANSFER_SOL
       ] as TransferSolInstruction[];
       mainToAddress = solTransfers[0].destination;
-      amount = solTransfers.reduce(
-        (sum, transfer) => sum + Number(transfer.amount),
-        0,
-      );
+      amount = Number(solTransfers[0].amount);
       currency = 'sol';
-    } else if (
-      instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0
-    ) {
+    } else if (instructions?.[SOLANA_TRANSFER_CHECKED_TOKEN]?.length > 0) {
       const checkedTokenTransfer = instructions[
-        instructionKeys.TRANSFER_CHECKED_TOKEN
-      ] as TransferSolInstruction[];
+        SOLANA_TRANSFER_CHECKED_TOKEN
+      ] as TransferCheckedTokenInstruction[];
       mainToAddress = checkedTokenTransfer[0].destination;
-      amount = checkedTokenTransfer.reduce(
-        (sum, transfer) => sum + Number(transfer.amount),
-        0,
-      );
-      tokenAddress = checkedTokenTransfer[0].mint!;
+      amount = Number(checkedTokenTransfer[0].amount);
+      tokenAddress = checkedTokenTransfer[0].mint;
       currency = (await getSolanaTokenInfo(tokenAddress)).symbol?.toLowerCase();
     }
 
@@ -1095,7 +1163,10 @@ export const processSolanaSwapRequest =
 
     if (!mainToAddress || !currency) {
       // not supported PROGRAM ID found.
-      return dispatch(processOtherMethodsRequest(event));
+      return {
+        ...(await dispatch(processOtherMethodsRequest(event))),
+        decodedInstructions: instructions,
+      };
     }
     const swapFromCurrencyAbbreviation = currency.toLowerCase();
     const swapAmount = amount.toString();
@@ -1132,6 +1203,7 @@ export const processSolanaSwapRequest =
         swapFormatAmount,
         swapFromChain,
         senderAddress,
+        senderContractAddress: tokenAddress,
         swapFromCurrencyAbbreviation,
         recipientAddress: mainToAddress,
         decodedInstructions: instructions,
