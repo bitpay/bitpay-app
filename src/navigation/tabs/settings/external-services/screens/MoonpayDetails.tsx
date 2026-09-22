@@ -52,6 +52,7 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {moonpayGetTransactionDetailsEmbedded} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
+  MOONPAY_SUPPORT_URL,
   moonpayGetSepaStatusDetails,
   moonpayGetStatusColor,
   moonpayGetStatusDetails,
@@ -604,11 +605,7 @@ const MoonpayDetails: React.FC = () => {
                     accessibilityLabel="Contact Moonpay support"
                     onPress={() => {
                       haptic('impactLight');
-                      dispatch(
-                        openUrlWithInAppBrowser(
-                          'https://support.moonpay.com/hc/en-gb/requests/new',
-                        ),
-                      );
+                      dispatch(openUrlWithInAppBrowser(MOONPAY_SUPPORT_URL));
                     }}>
                     <Link style={{marginTop: 15}}>
                       {t('Contact the Moonpay support team.')}

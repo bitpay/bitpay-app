@@ -15,6 +15,7 @@ import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {MoonpayPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {MOONPAY_SUPPORT_URL} from '../../../../services/buy-crypto/utils/moonpay-utils';
 import {
   NoPrMsg,
   PrTitle,
@@ -284,11 +285,7 @@ const MoonpaySettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.moonpay.com/hc/en-gb/requests/new',
-              ),
-            );
+            dispatch(openUrlWithInAppBrowser(MOONPAY_SUPPORT_URL));
           }}>
           <Link>{t('Contact the Moonpay support team.')}</Link>
         </TouchableOpacity>

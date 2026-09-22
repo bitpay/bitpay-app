@@ -15,6 +15,9 @@ export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 // Origin the MoonPay embedded frames are loaded from.
 export const MOONPAY_DEFAULT_FRAME_ORIGIN = 'https://blocks.moonpay.com';
 
+// Where customers are sent for help with a MoonPay order (buy and sell).
+export const MOONPAY_SUPPORT_URL = 'https://support.moonpay.com';
+
 export const moonpaySupportedFiatCurrencies = [
   'AUD',
   'BGN',
