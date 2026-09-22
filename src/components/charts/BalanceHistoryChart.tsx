@@ -145,25 +145,17 @@ const BalanceHistoryChart = ({
     quoteCurrency: displayModel.visibleQuoteCurrency,
   });
   const shouldHideAxisLabels = isZeroBalanceSeries(displayModel.visibleSeries);
-  const zeroBalanceAxisLabelOpacity = useDerivedValue(
-    () =>
-      withTiming(shouldHideAxisLabels ? 0 : 1, {
-        duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS,
-      }),
-    [shouldHideAxisLabels],
-  );
-  const maxAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(
-    () => ({
-      opacity: zeroBalanceAxisLabelOpacity.value,
+  const zeroBalanceAxisLabelOpacity = useDerivedValue(() =>
+    withTiming(shouldHideAxisLabels ? 0 : 1, {
+      duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS,
     }),
-    [zeroBalanceAxisLabelOpacity],
   );
-  const minAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(
-    () => ({
-      opacity: zeroBalanceAxisLabelOpacity.value,
-    }),
-    [zeroBalanceAxisLabelOpacity],
-  );
+  const maxAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: zeroBalanceAxisLabelOpacity.value,
+  }));
+  const minAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: zeroBalanceAxisLabelOpacity.value,
+  }));
   const FadingMaxAxisLabel = React.useCallback(
     (props: InteractiveLineChartAxisLabelProps) => (
       <Animated.View
@@ -206,7 +198,7 @@ const BalanceHistoryChart = ({
           ? sharedOpacity
           : timeframeSelectorOpacityNumber,
     };
-  }, [sharedTimeframeSelectorOpacity, timeframeSelectorOpacityNumber]);
+  });
 
   if (
     !preChartContent &&

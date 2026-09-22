@@ -57,17 +57,14 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
       )
     : withTiming(1, {duration: DURATION, easing: Easing.linear});
 
-  const overlayStyle = [
-    StyleSheet.absoluteFillObject,
-    useAnimatedStyle(() => ({
-      opacity: overlayOpacity.value,
-      borderWidth: 2,
-      borderStyle: 'solid',
-      borderRadius: buttonType === 'pill' ? PILL_RADIUS : BUTTON_RADIUS,
-      borderColor: backgroundColor || 'transparent',
-      backgroundColor: (isPrimary && backgroundColor) || 'transparent',
-    })),
-  ];
+  const overlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+    borderWidth: 2,
+    borderStyle: 'solid',
+    borderRadius: buttonType === 'pill' ? PILL_RADIUS : BUTTON_RADIUS,
+    borderColor: backgroundColor || 'transparent',
+    backgroundColor: (isPrimary && backgroundColor) || 'transparent',
+  }));
 
   const iconStyle = [
     useAnimatedStyle(() => ({
@@ -81,7 +78,10 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
   ];
 
   return (
-    <Animated.View style={overlayStyle}>
+    <Animated.View
+      testID="button-overlay"
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, overlayAnimatedStyle]}>
       <Animated.View style={iconStyle}>{children}</Animated.View>
     </Animated.View>
   );

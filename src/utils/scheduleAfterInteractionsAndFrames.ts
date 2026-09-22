@@ -1,4 +1,3 @@
-import {InteractionManager} from 'react-native';
 import {isAbortError} from './abort';
 
 const DEFAULT_SCHEDULE_AFTER_INTERACTIONS_FALLBACK_MS = 700;
@@ -17,7 +16,9 @@ export const scheduleAfterInteractionsAndFrames = (args: {
   const controller = new AbortController();
   let didRun = false;
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let idleFallbackTimeout: ReturnType<typeof setTimeout> | undefined;
   let fallbackTimeout: ReturnType<typeof setTimeout> | undefined;
+  let idleCallback: number | undefined;
   let firstFrame: number | undefined;
   let secondFrame: number | undefined;
   let resolveDone: (() => void) | undefined;
@@ -43,6 +44,10 @@ export const scheduleAfterInteractionsAndFrames = (args: {
     if (timeout) {
       clearTimeout(timeout);
       timeout = undefined;
+    }
+    if (idleFallbackTimeout) {
+      clearTimeout(idleFallbackTimeout);
+      idleFallbackTimeout = undefined;
     }
   };
 
@@ -113,7 +118,10 @@ export const scheduleAfterInteractionsAndFrames = (args: {
     timeout = setTimeout(executeCallback, 0);
   };
 
-  const task = InteractionManager.runAfterInteractions(() => {
+  const scheduleAfterIdle = () => {
+    idleCallback = undefined;
+    idleFallbackTimeout = undefined;
+
     if (shouldSkipScheduling()) {
       return;
     }
@@ -135,7 +143,18 @@ export const scheduleAfterInteractionsAndFrames = (args: {
     }
 
     runCallback();
-  });
+  };
+
+  const idleCallbacks = globalThis as typeof globalThis & {
+    requestIdleCallback?: (callback: () => void) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
+  if (typeof idleCallbacks.requestIdleCallback === 'function') {
+    idleCallback = idleCallbacks.requestIdleCallback(scheduleAfterIdle);
+  } else {
+    idleFallbackTimeout = setTimeout(scheduleAfterIdle, 0);
+  }
 
   if (!controller.signal.aborted && !didRun) {
     fallbackTimeout = setTimeout(
@@ -156,7 +175,13 @@ export const scheduleAfterInteractionsAndFrames = (args: {
       }
 
       controller.abort();
-      task.cancel();
+      if (
+        typeof idleCallback === 'number' &&
+        typeof idleCallbacks.cancelIdleCallback === 'function'
+      ) {
+        idleCallbacks.cancelIdleCallback(idleCallback);
+        idleCallback = undefined;
+      }
       clearScheduledTimers();
       clearScheduledFrames();
       finish();

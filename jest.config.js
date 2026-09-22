@@ -1,6 +1,6 @@
 module.exports = {
-  preset: 'react-native',
-  resolver: 'react-native-worklets/jest/resolver',
+  preset: '@react-native/jest-preset',
+  resolver: '<rootDir>/test/reanimatedResolver.js',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: [
     '<rootDir>/node_modules/react-native-gesture-handler/jestSetup.js',
@@ -11,7 +11,6 @@ module.exports = {
     'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|@sentry|uuid|victory|(victory(-.*))|lodash-es))',
   ],
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest',
     '^.+\\.svg$': 'jest-transform-stub',
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
