@@ -1,6 +1,7 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {LogEntry, LogLevel} from '../store/log/log.models';
 import * as Sentry from '@sentry/react-native';
+import {isSessionLogsEnabled} from '../utils/sessionLogs';
 
 export type LogData = {
   logs: LogEntry[];
@@ -23,6 +24,10 @@ class LogManager {
   }
 
   addLog(log: LogEntry) {
+    if (!isSessionLogsEnabled()) {
+      return;
+    }
+
     this.logs.push(log);
 
     if (this.logs.length > this.maxLogs) {
