@@ -76,6 +76,10 @@ import {
   getVMGasWallets,
   getEvmGasWallets,
   getSvmGasWallets,
+  canSummarizeSolanaTx,
+  getUnrecognizedSolanaInstructions,
+  matchesRequestToken,
+  getSolanaSignerCount,
 } from './helper-methods';
 import {Network} from '../constants';
 
@@ -1413,5 +1417,204 @@ describe('getSignificantDigits (additional coverage)', () => {
   it('returns undefined for empty string', () => {
     // empty string: toLowerCase() still gives '' which is not in the list
     expect(getSignificantDigits('')).toBeUndefined();
+  });
+});
+
+describe('canSummarizeSolanaTx', () => {
+  const solTransfer = {amount: 1000000, destination: 'merchant'};
+  const tokenTransfer = {
+    amount: 100000000,
+    destination: 'attacker',
+    mint: 'usdc',
+  };
+
+  it('accepts a single SOL transfer alongside a compute unit limit', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          setComputeUnitLimit: [{computeUnitLimit: 60000}],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(true);
+  });
+
+  it('accepts a single token transfer', () => {
+    expect(
+      canSummarizeSolanaTx({transferCheckedToken: [tokenTransfer]}, 1),
+    ).toBe(true);
+  });
+
+  it('rejects account creations, whose rent the summary does not show', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          createAssociatedToken: [{}],
+          transferCheckedToken: [tokenTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects a priority price, whose fee the summary understates', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          setComputeUnitPrice: [{priority: true, microLamports: 1000000000}],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+    expect(
+      canSummarizeSolanaTx(
+        {
+          setComputeUnitLimit: [{computeUnitLimit: 60000}],
+          setComputeUnitPrice: [{priority: true, microLamports: 1000000000}],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects transactions that need more than one signature', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {memo: [{memo: 'hi'}], transferSol: [solTransfer]},
+        2,
+      ),
+    ).toBe(false);
+    expect(canSummarizeSolanaTx({transferSol: [solTransfer]}, undefined)).toBe(
+      false,
+    );
+  });
+
+  it('rejects a SOL transfer bundled with a token transfer', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          transferCheckedToken: [tokenTransfer],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects multiple SOL transfers', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          transferSol: [
+            solTransfer,
+            {amount: 5000000000, destination: 'attacker'},
+          ],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects unparsed token instructions such as approve', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          transferSol: [solTransfer],
+          unparsedTokenInstruction_4: [{programAddress: 'Tokenkeg'}],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects unknown instructions', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {transferSol: [solTransfer], unknownInstruction: [{}]},
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects transactions with no transfer at all', () => {
+    expect(canSummarizeSolanaTx({memo: [{memo: 'hi'}]}, 1)).toBe(false);
+    expect(canSummarizeSolanaTx({}, 1)).toBe(false);
+    expect(canSummarizeSolanaTx(undefined, 1)).toBe(false);
+  });
+});
+
+describe('getUnrecognizedSolanaInstructions', () => {
+  it('lists only the keys outside the known set', () => {
+    expect(
+      getUnrecognizedSolanaInstructions({
+        setComputeUnitLimit: [{computeUnitLimit: 60000}],
+        transferSol: [{amount: 1000000, destination: 'merchant'}],
+        unknownInstruction: [{}],
+        unparsedTokenInstruction_4: [{programAddress: 'Tokenkeg'}],
+      }),
+    ).toEqual(['unknownInstruction', 'unparsedTokenInstruction_4']);
+  });
+
+  it('returns an empty list for fully recognized transactions', () => {
+    expect(
+      getUnrecognizedSolanaInstructions({
+        memo: [{memo: 'invoice 42'}],
+        transferCheckedToken: [{amount: 1, destination: 'x', mint: 'usdc'}],
+      }),
+    ).toEqual([]);
+    expect(getUnrecognizedSolanaInstructions(undefined)).toEqual([]);
+  });
+});
+
+describe('matchesRequestToken', () => {
+  const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+  const usdcWallet = {tokenAddress: usdcMint} as any;
+  const solWallet = {} as any;
+
+  it('requires the wallet mint to equal the decoded mint', () => {
+    expect(
+      matchesRequestToken(usdcWallet, {
+        swapFromChain: 'sol',
+        senderContractAddress: usdcMint,
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects a look-alike mint that resolves to the same symbol', () => {
+    expect(
+      matchesRequestToken(usdcWallet, {
+        swapFromChain: 'sol',
+        senderContractAddress: 'FakeUSDCMint1111111111111111111111111111111',
+      }),
+    ).toBe(false);
+  });
+
+  it('does not filter native SOL transfers or other chains', () => {
+    expect(matchesRequestToken(solWallet, {swapFromChain: 'sol'})).toBe(true);
+    expect(
+      matchesRequestToken(usdcWallet, {
+        swapFromChain: 'eth',
+        senderContractAddress: '0xA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('getSolanaSignerCount', () => {
+  const oneSigner =
+    'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQABA97Cik3vOLUe0FRM+w8LgW2AAUrvuztS0+hmDzo1emwj3BV8oQtBdNDweTQCTDoZ11oYr90bSxOlhKIS4nhhsroAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQICAAEMAgAAAICEHgAAAAAAAA==';
+
+  it('reads the signature count from the serialized transaction', () => {
+    expect(getSolanaSignerCount(oneSigner)).toBe(1);
+    expect(getSolanaSignerCount('Ag' + oneSigner.slice(2))).toBe(2);
+  });
+
+  it('returns undefined when the count cannot be trusted', () => {
+    expect(getSolanaSignerCount('')).toBeUndefined();
+    expect(getSolanaSignerCount(undefined)).toBeUndefined();
+    expect(getSolanaSignerCount('AA' + oneSigner.slice(2))).toBeUndefined();
   });
 });

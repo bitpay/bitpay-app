@@ -586,6 +586,7 @@ const WalletConnectConfirm = () => {
       </DetailsList>
       <SwipeButton
         title={t('Slide to approve')}
+        disabled={!txDetails}
         onSwipeComplete={approveCallRequest}
         forceReset={resetSwipeButton}
       />
