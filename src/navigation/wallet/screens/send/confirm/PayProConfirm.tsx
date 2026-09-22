@@ -709,7 +709,7 @@ const PayProConfirm = () => {
                 />
               ) : null}
               <Amount
-                description={'SubTotal'}
+                description={t('SubTotal')}
                 amount={subTotal}
                 height={83}
                 hr
@@ -751,7 +751,7 @@ const PayProConfirm = () => {
               ) : null}
               {wallet ? (
                 <Amount
-                  description={'Total'}
+                  description={t('Total')}
                   amount={total}
                   height={
                     IsERCToken(wallet.currencyAbbreviation, wallet.chain)
@@ -805,7 +805,7 @@ const PayProConfirm = () => {
         <>
           <SwipeButton
             disabled={disableSwipeSendButton}
-            title={'Slide to send'}
+            title={t('Slide to send')}
             forceReset={resetSwipeButton}
             onSwipeComplete={onSwipeComplete}
           />

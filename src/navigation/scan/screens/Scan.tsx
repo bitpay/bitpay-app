@@ -65,7 +65,8 @@ const NoPermissionCameraDeviceError = ({
         <ScanContainer>
           <ScanGuide>
             <BaseText onPress={() => openSettings()}>
-              Grant Camera Permission on <Link>App Settings.</Link>
+              {t('Grant Camera Permission on')}{' '}
+              <Link>{t('App Settings.')}</Link>
             </BaseText>
           </ScanGuide>
         </ScanContainer>
@@ -104,7 +105,7 @@ const NoCameraDeviceError = () => {
       <ScanContainer>
         <ScanGuide>
           <BaseText onPress={() => openSettings()}>
-            Camera not found. Please make sure your device has a camera.
+            {t('Camera not found. Please make sure your device has a camera.')}
           </BaseText>
         </ScanGuide>
       </ScanContainer>

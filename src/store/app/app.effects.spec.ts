@@ -81,7 +81,7 @@ jest.mock('../../constants/device-emitter-events', () => ({
     APP_READY_FOR_DEEPLINKS: 'APP_READY_FOR_DEEPLINKS',
   },
 }));
-jest.mock('../../constants/shortcuts', () => ({ShortcutList: []}));
+jest.mock('../../constants/shortcuts', () => ({getShortcutList: () => []}));
 jest.mock('../../constants/currencies', () => ({
   getBaseEVMAccountCreationCoinsAndTokens: jest.fn(() => []),
   getBaseSVMAccountCreationCoinsAndTokens: jest.fn(() => []),

@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import moment from 'moment';
 import {useAppSelector} from '../../../../utils/hooks';
 import {formatUSPhone} from '../bill/utils';
@@ -8,43 +9,43 @@ import {
   FieldLabel,
   FieldValue,
 } from './styled/ShopTabComponents';
-import {ScrollableBottomNotificationMessageContainer} from '../../../../components/modal/bottom-notification/BottomNotification';
+import {BottomNotificationMessageContainer} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 const UserInfo = () => {
+  const {t} = useTranslation();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   return (
-    <ScrollableBottomNotificationMessageContainer
-      contentContainerStyle={{paddingBottom: 10}}>
+    <BottomNotificationMessageContainer style={{paddingBottom: 10}}>
       <FieldGroup>
-        <FieldLabel>First Name</FieldLabel>
+        <FieldLabel>{t('First Name')}</FieldLabel>
         <Field disabled>
           <FieldValue>{user?.legalGivenName}</FieldValue>
         </Field>
       </FieldGroup>
       <FieldGroup>
-        <FieldLabel>Last Name</FieldLabel>
+        <FieldLabel>{t('Last Name')}</FieldLabel>
         <Field disabled>
           <FieldValue>{user?.legalFamilyName}</FieldValue>
         </Field>
       </FieldGroup>
       <FieldGroup>
-        <FieldLabel>Phone Number</FieldLabel>
+        <FieldLabel>{t('Phone Number')}</FieldLabel>
         <Field disabled>
           <FieldValue>
-            {user?.phone ? formatUSPhone(user.phone) : 'Not Provided'}
+            {user?.phone ? formatUSPhone(user.phone) : t('Not Provided')}
           </FieldValue>
         </Field>
       </FieldGroup>
       <FieldGroup>
-        <FieldLabel>Email</FieldLabel>
+        <FieldLabel>{t('Email')}</FieldLabel>
         <Field disabled>
           <FieldValue>{user?.email}</FieldValue>
         </Field>
       </FieldGroup>
       <FieldGroup>
-        <FieldLabel>Date of Birth</FieldLabel>
+        <FieldLabel>{t('Date of Birth')}</FieldLabel>
         <Field disabled>
           <FieldValue>
             {user?.dateOfBirth
@@ -54,12 +55,12 @@ const UserInfo = () => {
         </Field>
       </FieldGroup>
       <FieldGroup>
-        <FieldLabel>Address</FieldLabel>
+        <FieldLabel>{t('Address')}</FieldLabel>
         <Field disabled>
           <FieldValue>{user?.address}</FieldValue>
         </Field>
       </FieldGroup>
-    </ScrollableBottomNotificationMessageContainer>
+    </BottomNotificationMessageContainer>
   );
 };
 

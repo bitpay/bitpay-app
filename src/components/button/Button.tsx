@@ -91,6 +91,7 @@ const ButtonBaseText = styled(BaseText)`
 `;
 
 const ButtonContainer = styled(TouchableOpacity)<ButtonProps>`
+  max-width: 100%;
   border-radius: ${({borderRadius, buttonType}) =>
     borderRadius ??
     (buttonType === 'link'
@@ -161,7 +162,8 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       return Action;
     }};
   border-radius: ${({borderRadius}) => borderRadius ?? BUTTON_RADIUS}px;
-  height: ${({height}) => height || BUTTON_HEIGHT}px;
+  min-height: ${({height}) => height || BUTTON_HEIGHT}px;
+  padding: 4px 12px;
   justify-content: center;
 `;
 
@@ -192,6 +194,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 
 const ButtonIconContainer = styled.View`
   margin-right: 10px;
+  flex-shrink: 0;
 `;
 
 const ButtonContainerFlex = styled.View<{hasIcon: boolean}>`
@@ -201,7 +204,9 @@ const ButtonContainerFlex = styled.View<{hasIcon: boolean}>`
   align-items: center;
 `;
 
-const ButtonTextContainer = styled.View``;
+const ButtonTextContainer = styled.View`
+  flex-shrink: 1;
+`;
 
 const PillContent = styled.View<ButtonOptionProps>`
   background: ${({

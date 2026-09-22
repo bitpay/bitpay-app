@@ -102,7 +102,7 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
               openUrlWithInAppBrowser('https://changelly.com/privacy-policy'),
             );
           }}>
-          <PoliciesText>Privacy Policy</PoliciesText>
+          <PoliciesText>{t('Privacy Policy')}</PoliciesText>
           <ArrowContainer>
             <SelectorArrowRight
               {...{

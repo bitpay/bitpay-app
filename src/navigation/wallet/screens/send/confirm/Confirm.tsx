@@ -721,7 +721,7 @@ const Confirm = () => {
             {solanaPayOpts ? (
               <>
                 <Hr style={{marginBottom: 15}} />
-                <H6>{'SolanaPay Data'}</H6>
+                <H6>{t('SolanaPay Data')}</H6>
                 {solanaPayOpts?.label ? (
                   <SharedDetailRow
                     height={40}
@@ -849,7 +849,7 @@ const Confirm = () => {
                   <VerticalPadding>
                     <TouchableOpacity
                       testID="confirm-destination-tag-learn-more-button"
-                      accessibilityLabel="Confirm destination tag learn more button"
+                      accessibilityLabel={t('Learn more about destination tag')}
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
                         haptic('impactLight');

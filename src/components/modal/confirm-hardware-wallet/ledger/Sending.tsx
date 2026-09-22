@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import BluetoothIconSvg from '../../../../../assets/img/icon-bluetooth.svg';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
@@ -22,6 +23,8 @@ const IconWrapper = styled.View`
 `;
 
 export const ConfirmLedgerSending: React.FC<Props> = props => {
+  const {t} = useTranslation();
+
   return (
     <Wrapper>
       <Header
@@ -30,7 +33,7 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           justifyContent: 'flex-end',
           display: 'flex',
         }}>
-        <H3>Approving...</H3>
+        <H3>{t('Approving...')}</H3>
       </Header>
 
       <DescriptionRow
@@ -41,8 +44,9 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           style={{
             textAlign: 'center',
           }}>
-          Approve the transaction from your ledger device. Ensure it's unlocked
-          and set to the appropriate currency application.
+          {t(
+            "Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.",
+          )}
         </Paragraph>
       </DescriptionRow>
 
@@ -59,7 +63,7 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
       </IconRow>
 
       <ActionsRow>
-        <Button state={'loading'}>Sending...</Button>
+        <Button state={'loading'}>{t('Sending...')}</Button>
       </ActionsRow>
     </Wrapper>
   );

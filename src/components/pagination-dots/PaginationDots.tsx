@@ -40,7 +40,6 @@ const PaginationItem: React.FC<{
   return (
     <View
       testID={`pagination-button-${index}`}
-      accessibilityLabel="Pagination button"
       style={{
         backgroundColor: LuckySevens,
         width,

@@ -721,7 +721,7 @@ const CoinbaseAccount = ({
                       ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
                       : '0'}
                   </H5>
-                  {account?.primary ? <Type>Primary</Type> : null}
+                  {account?.primary ? <Type>{t('Primary')}</Type> : null}
                   {protocolName ? (
                     <TypeContainer>
                       <IconContainer>

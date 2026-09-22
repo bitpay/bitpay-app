@@ -2,6 +2,7 @@ import Transport from '@ledgerhq/hw-transport';
 import TransportHID from '@ledgerhq/react-native-hid';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {useState} from 'react';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useAppDispatch} from '../../../../utils/hooks';
@@ -25,6 +26,7 @@ const isError = (e: any): e is Error => {
 };
 
 export const PairDevice: React.FC<Props> = props => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const [isSearching, setIsSearching] = useState(false);
   const [transportType, setTransportType] = useState<'ble' | 'hid' | null>(
@@ -41,9 +43,10 @@ export const PairDevice: React.FC<Props> = props => {
     setIsSearching(true);
     setStatus({
       status: 'searching',
-      message:
+      message: t(
         'Double-check that Bluetooth is enabled and your hardware wallet is unlocked to proceed.',
-      title: 'Searching for Devices',
+      ),
+      title: t('Searching for Devices'),
     });
 
     let openedTransport: Transport | null = null;
@@ -54,8 +57,8 @@ export const PairDevice: React.FC<Props> = props => {
     if (!isAuthorized) {
       setStatus({
         status: 'failed',
-        message: 'App is not authorized to use Bluetooth.',
-        title: 'Connection Failed',
+        message: t('App is not authorized to use Bluetooth.'),
+        title: t('Connection Failed'),
       });
       await sleep(7000);
       return;
@@ -82,17 +85,18 @@ export const PairDevice: React.FC<Props> = props => {
     if (openedTransport) {
       setStatus({
         status: 'success',
-        message: 'Your Ledger device was successfully connected.',
-        title: 'Successful Connection',
+        message: t('Your Ledger device was successfully connected.'),
+        title: t('Successful Connection'),
       });
       await sleep(7000);
       props.onPaired(openedTransport);
     } else {
       setStatus({
         status: 'failed',
-        message:
+        message: t(
           'Ledger device not found. Please restart your Bluetooth and check the device is in range.',
-        title: 'Connection Failed',
+        ),
+        title: t('Connection Failed'),
       });
       await sleep(7000);
     }
@@ -105,9 +109,10 @@ export const PairDevice: React.FC<Props> = props => {
     setIsSearching(true);
     setStatus({
       status: 'searching',
-      message:
+      message: t(
         'Double-check that the USB cable is securely connected and your hardware wallet is unlocked to proceed.',
-      title: 'Searching for Devices',
+      ),
+      title: t('Searching for Devices'),
     });
 
     let openedTransport: Transport | null = null;
@@ -134,8 +139,8 @@ export const PairDevice: React.FC<Props> = props => {
     if (openedTransport) {
       setStatus({
         status: 'success',
-        message: 'Your Ledger device was successfully connected.',
-        title: 'Successful Connection',
+        message: t('Your Ledger device was successfully connected.'),
+        title: t('Successful Connection'),
       });
       await sleep(7000);
       props.onPaired(openedTransport);
@@ -143,7 +148,7 @@ export const PairDevice: React.FC<Props> = props => {
       setStatus({
         status: 'failed',
         message: `Unable to connect via USB: ${errorMsg}`,
-        title: 'Connection Failed',
+        title: t('Connection Failed'),
       });
       await sleep(7000);
     }

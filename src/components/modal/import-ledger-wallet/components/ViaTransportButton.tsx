@@ -1,4 +1,5 @@
 import styled, {useTheme} from 'styled-components/native';
+import {useTranslation} from 'react-i18next';
 import {TouchableOpacityProps} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {BaseButtonProps} from 'react-native-gesture-handler';
@@ -41,6 +42,7 @@ const ConnectButton = styled(TouchableOpacity)<CombinedButtonProps>`
 type ViaTransportButtonProps = TouchableOpacityProps & CombinedButtonProps;
 
 export const ViaBluetoothButton: React.FC<ViaTransportButtonProps> = props => {
+  const {t} = useTranslation();
   const {children, secondary, ...rest} = props;
   const logoFill = secondary ? Action : White;
 
@@ -48,7 +50,7 @@ export const ViaBluetoothButton: React.FC<ViaTransportButtonProps> = props => {
     <ConnectButton
       activeOpacity={ActiveOpacity}
       testID="ledger-connect-bluetooth-button"
-      accessibilityLabel="Connect via Bluetooth"
+      accessibilityLabel={t('Connect via Bluetooth')}
       secondary={secondary}
       {...rest}>
       <ButtonIcon>
@@ -61,6 +63,7 @@ export const ViaBluetoothButton: React.FC<ViaTransportButtonProps> = props => {
 };
 
 export const ViaUsbButton: React.FC<ViaTransportButtonProps> = props => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const {children, secondary, ...rest} = props;
   const logoFill = theme.dark || !secondary ? White : Action;
@@ -69,7 +72,7 @@ export const ViaUsbButton: React.FC<ViaTransportButtonProps> = props => {
     <ConnectButton
       activeOpacity={ActiveOpacity}
       testID="ledger-connect-usb-button"
-      accessibilityLabel="Connect via USB"
+      accessibilityLabel={t('Connect via USB')}
       secondary={secondary}
       {...rest}>
       <ButtonIcon>

@@ -81,7 +81,7 @@ const ExportKey = () => {
             <QRCode value={code} size={200} />
           </QRBackground>
 
-          <KeyName>{keyName || 'My Key'}</KeyName>
+          <KeyName>{keyName || t('My Key')}</KeyName>
         </QRCodeContainer>
       </ScrollView>
     </ExportKeyContainer>

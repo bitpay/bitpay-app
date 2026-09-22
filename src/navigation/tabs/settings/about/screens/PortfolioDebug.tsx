@@ -923,7 +923,7 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
             autoCapitalize="none"
             autoCorrect={false}
             onChangeText={setQuery}
-            accessibilityLabel="Search portfolio raw wallets"
+            accessibilityLabel={t('Search wallets')}
             testID="portfolio-debug-search-input"
           />
         </SearchInputContainer>
