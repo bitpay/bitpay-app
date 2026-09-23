@@ -17,6 +17,18 @@ jest.mock('../store/moralis/moralis.effects', () => ({
   getERC20TokenPrice: jest.fn(),
 }));
 jest.mock('../api/etherscan', () => ({default: {}}));
+// test/setup.js stubs isAddress as always true; these tests need the real predicate
+jest.mock('ethers', () => {
+  const isAddress = (value: unknown) =>
+    typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value);
+  const utils = {getAddress: jest.fn((value: string) => value), isAddress};
+
+  return {
+    BigNumber: {from: jest.fn()},
+    ethers: {BigNumber: {from: jest.fn()}, utils},
+    utils,
+  };
+});
 jest.mock('../managers/TokenManager', () => ({tokenManager: {}}));
 jest.mock('../managers/LogManager', () => ({
   logManager: {
@@ -76,6 +88,7 @@ import {
   getVMGasWallets,
   getEvmGasWallets,
   getSvmGasWallets,
+  processOtherMethodsRequest,
 } from './helper-methods';
 import {Network} from '../constants';
 
@@ -1413,5 +1426,103 @@ describe('getSignificantDigits (additional coverage)', () => {
   it('returns undefined for empty string', () => {
     // empty string: toLowerCase() still gives '' which is not in the list
     expect(getSignificantDigits('')).toBeUndefined();
+  });
+});
+
+describe('processOtherMethodsRequest', () => {
+  const ACCOUNT_A = '0x1111111111111111111111111111111111111111';
+  const ACCOUNT_B = '0x2222222222222222222222222222222222222222';
+  const TYPED_DATA = '{"primaryType":"Permit"}';
+
+  const makeDispatch = (keys: any = {}) => {
+    const getState = () => ({WALLET: {keys}} as any);
+    const dispatch = (action: any): any =>
+      typeof action === 'function' ? action(dispatch, getState) : action;
+
+    return dispatch;
+  };
+
+  const buildEvent = (method: string, params: any, chainId = 'eip155:1') =>
+    ({
+      id: 1,
+      params: {chainId, request: {method, params}},
+      topic: 'topic-1',
+    } as any);
+
+  const keysWith = (receiveAddress: string, currencyAbbreviation = 'eth') => ({
+    'key-1': {
+      wallets: [{chain: 'eth', currencyAbbreviation, receiveAddress}],
+    },
+  });
+
+  it('binds eth_signTypedData_v3 to the account named by the request', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData_v3', [ACCOUNT_A, TYPED_DATA]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+    expect(result.swapFromChain).toBe('eth');
+  });
+
+  it('binds typed data regardless of parameter order', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData', [TYPED_DATA, ACCOUNT_A]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('reads personal_sign as [message, account]', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('personal_sign', ['0x6869', ACCOUNT_A]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('reads eth_signTransaction from the transaction sender', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTransaction', [{from: ACCOUNT_A}]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('reads solana_signAndSendTransaction from the fee payer', async () => {
+    const result = await makeDispatch()(
+      processOtherMethodsRequest(
+        buildEvent('solana_signAndSendTransaction', {feePayer: 'sol-payer'}),
+      ),
+    );
+
+    expect(result.senderAddress).toBe('sol-payer');
+  });
+
+  it('takes the currency from the wallet that owns the account', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A, 'usdc'))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData_v3', [ACCOUNT_A, TYPED_DATA]),
+      ),
+    );
+
+    expect(result.swapFromCurrencyAbbreviation).toBe('usdc');
+  });
+
+  it('falls back to the chain when no local wallet owns the account', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_B))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData_v3', [ACCOUNT_A, TYPED_DATA]),
+      ),
+    );
+
+    expect(result.swapFromCurrencyAbbreviation).toBe('eth');
   });
 });
