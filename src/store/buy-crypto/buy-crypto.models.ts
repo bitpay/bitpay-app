@@ -546,7 +546,9 @@ export interface MoonpaySepaDetails {
   iban?: string;
   bic?: string;
   recipientName?: string;
+  recipientAddress?: string;
   bankName?: string;
+  bankAddress?: string;
 }
 
 export interface MoonpayBankTransferDepositInfo {
@@ -579,6 +581,13 @@ export interface MoonpayPaymentData {
   user_eid?: string; // user id
   is_embedded?: boolean; // whether the transaction was made through the embedded flow or not
   sepa_details?: MoonpaySepaDetails; // Bank transfer (SEPA) deposit details, when the purchase is paid that way
+  // Last known stages of a bank transfer purchase. Its top-level status stays
+  // 'pending' from creation until the money settles, so the stages are the only
+  // record of whether the customer's transfer already arrived.
+  sepa_stages?: MoonpayTransactionStage[];
+  // Bank transfers are reported as purchased when the deposit arrives, not when
+  // the purchase is created. Kept so the event is only ever sent once.
+  sepa_purchase_reported?: boolean;
 }
 
 export interface MoonpayIncomingData {
@@ -588,6 +597,8 @@ export interface MoonpayIncomingData {
   cryptoAmount?: number; // embedded
   fiatTotalAmount?: number; // embedded
   sepaDetails?: MoonpaySepaDetails; // embedded
+  sepaStages?: MoonpayTransactionStage[]; // embedded
+  sepaPurchaseReported?: boolean; // embedded
 }
 
 export interface SardineGetAuthTokenRequestData {
