@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import Aes from 'crypto-js/aes.js';
 import {
   decryptAppStore,
   decryptPersistValue,
@@ -197,6 +198,63 @@ describe('encrypted field values', () => {
       const state = storeCase.buildState(firstField, value);
       expect(storeCase.read(storeCase.decrypt(state), firstField)).toBe(value);
     });
+
+    it('upgrades a whole-store encrypted save with plaintext fields', () => {
+      const plaintext = `${storeCase.name}-legacy-secret`;
+      const wholeStoreEncrypted = Aes.encrypt(
+        JSON.stringify(storeCase.buildState(firstField, plaintext)),
+        secretKey,
+      ).toString();
+
+      const upgraded = deserializePersistValue(
+        wholeStoreEncrypted,
+        secretKey,
+        storeCase.name,
+        true,
+      );
+
+      expect(storeCase.read(upgraded, firstField)).toMatch(/^field-aesgcm-v1:/);
+      expect(storeCase.read(storeCase.decrypt(upgraded), firstField)).toBe(
+        plaintext,
+      );
+      expect(storeCase.readPublic(upgraded)).toBe('public-value');
+    });
+
+    it('still rejects plaintext in a per-field encrypted save', () => {
+      const perFieldEncrypted = JSON.stringify(
+        storeCase.buildState(firstField, 'attacker-controlled'),
+      );
+
+      expect(() =>
+        storeCase.decrypt(
+          deserializePersistValue(
+            perFieldEncrypted,
+            secretKey,
+            storeCase.name,
+            true,
+          ),
+        ),
+      ).toThrow(firstField);
+    });
+
+    it('still rejects plaintext in an authenticated whole-store save', () => {
+      const wholeStoreAuthenticated = encryptPersistValue(
+        storeCase.buildState(firstField, 'attacker-controlled'),
+        secretKey,
+        `persist:${storeCase.name}`,
+      );
+
+      expect(() =>
+        storeCase.decrypt(
+          deserializePersistValue(
+            wholeStoreAuthenticated,
+            secretKey,
+            storeCase.name,
+            true,
+          ),
+        ),
+      ).toThrow(firstField);
+    });
   });
 
   it('does not include rejected plaintext in the error', () => {
@@ -274,7 +332,7 @@ describe('persisted reducer values', () => {
         deserializePersistValue(
           {token: 'injected'},
           secretKey,
-          context,
+          'BITPAY_ID',
           allowPlainJson,
         ),
       ).toThrow('to be a string');
@@ -283,7 +341,12 @@ describe('persisted reducer values', () => {
 
   it('reads production JSON only for reducers configured as plaintext', () => {
     expect(
-      deserializePersistValue(JSON.stringify(state), secretKey, context, true),
+      deserializePersistValue(
+        JSON.stringify(state),
+        secretKey,
+        'BITPAY_ID',
+        true,
+      ),
     ).toEqual(state);
   });
 });

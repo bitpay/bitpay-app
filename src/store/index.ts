@@ -531,7 +531,7 @@ const getStore = async () => {
             return deserializePersistValue(
               outboundState,
               secretKey,
-              `persist:${String(key)}`,
+              String(key),
               typeof key === 'string' && unencryptedPersistStores.has(key),
             );
           } catch (err) {

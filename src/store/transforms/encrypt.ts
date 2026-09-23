@@ -210,7 +210,7 @@ export const decryptPersistValue = (
 export const deserializePersistValue = (
   value: unknown,
   secretKey: string,
-  context: string,
+  key: string,
   allowPlainJson: boolean,
 ): any => {
   if (typeof value !== 'string') {
@@ -223,7 +223,13 @@ export const deserializePersistValue = (
     } catch {}
   }
 
-  return decryptPersistValue(value, secretKey, context);
+  const state = decryptPersistValue(value, secretKey, `persist:${key}`);
+
+  if (value.startsWith(persistEncryptedPrefix)) {
+    return state;
+  }
+
+  return legacyStoreFieldEncryptors[key]?.(state, secretKey) ?? state;
 };
 
 // Generic function to transform wallet store (encrypt or decrypt)
@@ -405,4 +411,13 @@ export const encryptShopStore = (state: any, secretKey: string): any => {
 
 export const decryptShopStore = (state: any, secretKey: string): any => {
   return transformShopStore(state, secretKey, decryptValue, () => true);
+};
+
+const legacyStoreFieldEncryptors: Record<
+  string,
+  (state: any, secretKey: string) => any
+> = {
+  APP: encryptAppStore,
+  SHOP: encryptShopStore,
+  WALLET: encryptWalletStore,
 };
