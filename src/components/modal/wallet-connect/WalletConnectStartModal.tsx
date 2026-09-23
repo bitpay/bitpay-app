@@ -355,14 +355,10 @@ export const WalletConnectStartModal = memo(() => {
 
       if ('authPayload' in params) {
         const authPromises: Promise<AuthTypes.Cacao | null>[] = [];
-        const accounts: string[] = [];
-        const chains: string[] = [];
 
         for (const selectedWallet of selectedWallets) {
           for (const chain of selectedWallet.supportedChain) {
             const iss = `${chain}:${selectedWallet.address}`;
-            accounts.push(iss);
-            chains.push(chain);
             authPromises.push(
               (async () => {
                 try {
@@ -409,15 +405,12 @@ export const WalletConnectStartModal = memo(() => {
         const auths = (await Promise.all(authPromises)).filter(
           (a): a is AuthTypes.Cacao => a !== null,
         );
-        const uniqueChains = [...new Set(chains)];
         dispatch(
           walletConnectV2approveSessionAuthenticateProposal(
             id,
             pairingTopic,
             params,
             auths,
-            accounts,
-            uniqueChains,
             verifyContext,
           ),
         );
@@ -461,8 +454,6 @@ export const WalletConnectStartModal = memo(() => {
               namespaces,
               pairingTopic!,
               params,
-              accounts,
-              uniqueChains,
               verifyContext,
             ),
           );

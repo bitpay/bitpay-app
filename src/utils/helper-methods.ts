@@ -942,6 +942,11 @@ export const processOtherMethodsRequest =
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        senderAddress =
+          (request.params as string[])?.find(param =>
+            ethers.utils.isAddress(param),
+          ) || '';
+        break;
       case EIP155_SIGNING_METHODS.ETH_SIGN:
         senderAddress = request.params?.[0];
         break;

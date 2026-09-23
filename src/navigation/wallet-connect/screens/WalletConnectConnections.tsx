@@ -34,10 +34,11 @@ import {sleep} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {walletConnectV2OnDeleteSession} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {
-  getAddressFrom,
-  walletConnectV2OnDeleteSession,
-} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+  getSessionAddresses,
+  matchesAccountRoute,
+} from '../walletConnectRouting';
 import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {SearchIconContainer} from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
@@ -228,11 +229,7 @@ const WalletConnectConnections = () => {
       <>
         {sessions.map((session, index) => {
           const {peer} = session;
-          const sessionsAddresses = session.accounts.map(account => {
-            const index = account.indexOf(':', account.indexOf(':') + 1);
-            const address = account.substring(index + 1);
-            return address;
-          });
+          const sessionsAddresses = getSessionAddresses(session);
           return (
             <View style={{marginVertical: 15}} key={index.toString()}>
               <ConnectionItem
@@ -253,14 +250,12 @@ const WalletConnectConnections = () => {
                       return;
                     }
 
-                    const filteredRequests = requests.filter(request => {
-                      const requestAddress =
-                        getAddressFrom(request)?.toLowerCase();
-                      return (
-                        request.topic === session.topic &&
-                        requestAddress === account.receiveAddress.toLowerCase()
-                      );
-                    });
+                    const filteredRequests = requests.filter(request =>
+                      matchesAccountRoute(request, {
+                        selectedAccountAddress: account.receiveAddress,
+                        topic: session.topic,
+                      }),
+                    );
                     return (
                       <AccountSettingsContainer
                         key={account.receiveAddress}
@@ -292,15 +287,7 @@ const WalletConnectConnections = () => {
   };
 
   const _setAllKeysAndSelectedWallets = () => {
-    const sessionsAddresses = sessions
-      .map(session =>
-        session.accounts.map(account => {
-          const index = account.indexOf(':', account.indexOf(':') + 1);
-          const address = account.substring(index + 1);
-          return address;
-        }),
-      )
-      .flat();
+    const sessionsAddresses = sessions.map(getSessionAddresses).flat();
 
     const formattedKeys = Object.values(keys)
       .map(key => {
