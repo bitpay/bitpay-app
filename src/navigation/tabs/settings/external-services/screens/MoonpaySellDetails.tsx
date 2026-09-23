@@ -52,6 +52,7 @@ import {
   moonpaySellGetStatusDetails,
   MoonpaySellStatus,
 } from '../../../../services/sell-crypto/utils/moonpay-sell-utils';
+import {MOONPAY_SUPPORT_URL} from '../../../../services/buy-crypto/utils/moonpay-utils';
 import {Br} from '../../../../../components/styled/Containers';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
@@ -388,11 +389,7 @@ const MoonpaySellDetails: React.FC = () => {
                     accessibilityLabel="Contact support"
                     onPress={() => {
                       haptic('impactLight');
-                      dispatch(
-                        openUrlWithInAppBrowser(
-                          'https://support.moonpay.com/hc/en-gb/requests/new',
-                        ),
-                      );
+                      dispatch(openUrlWithInAppBrowser(MOONPAY_SUPPORT_URL));
                     }}>
                     <Link style={{marginTop: 15}}>
                       {t('Contact the Moonpay support team.')}

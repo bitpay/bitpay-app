@@ -10,9 +10,11 @@ import {BuyCryptoLimits, MoonpayEmbeddedCredentials} from './buy-crypto.models';
 import {Analytics} from '../analytics/analytics.effects';
 import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {logManager} from '../../managers/LogManager';
+import {moonpayGetPaymentMethodsEmbedded} from './effects/moonpay/moonpay';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {MoonpayClientCredentials} from '../../navigation/services/utils/moonpayFrameCrypto';
 import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
+import {Rates} from '../rate/rate.models';
 
 // ---------------------------------------------------------------------------
 // MoonPay Embedded — module-level cache
@@ -102,6 +104,49 @@ export const setMoonpayEmbeddedApplePaySupported = (
   _moonpayEmbeddedApplePaySupported = supported;
 };
 
+// Whether MoonPay allows SEPA to run headless for this customer.
+// MoonPay reports it per account in the payment methods endpoint (capabilities.requiresWidget).
+let _moonpayEmbeddedSepaSupported: boolean = false;
+
+export const getMoonpayEmbeddedSepaSupported = (): boolean =>
+  _moonpayEmbeddedSepaSupported;
+
+export const setMoonpayEmbeddedSepaSupported = (supported: boolean): void => {
+  _moonpayEmbeddedSepaSupported = supported;
+};
+
+/**
+ * Asks MoonPay whether SEPA can run headless for this customer and caches the
+ * answer. It needs credentials, so it can only run once they exist.
+ */
+export const resolveMoonpayEmbeddedSepaSupport = async (
+  accessToken: string,
+): Promise<boolean> => {
+  try {
+    const data = await moonpayGetPaymentMethodsEmbedded({accessToken});
+    const sepaConfig = data?.paymentMethodConfigs?.find(
+      config => config.type === 'sepa',
+    );
+    const supported =
+      !!sepaConfig?.availability?.active &&
+      sepaConfig?.capabilities?.requiresWidget === false;
+
+    setMoonpayEmbeddedSepaSupported(supported);
+    logManager.debug(
+      `[MoonpayEmbedded]: SEPA headless supported: ${supported}`,
+    );
+    return supported;
+  } catch (err) {
+    setMoonpayEmbeddedSepaSupported(false);
+    logManager.debug(
+      `[MoonpayEmbedded]: could not resolve SEPA support. ${
+        err instanceof Error ? err.message : JSON.stringify(err)
+      }`,
+    );
+    return false;
+  }
+};
+
 // Listener registered by MoonpayEmbeddedCredentialManager to trigger a recheck
 // from anywhere in the app (e.g. after an unlink reset completes).
 let _moonpayEmbeddedRecheckListener: (() => void) | undefined;
@@ -128,7 +173,7 @@ export const calculateAltFiatToUsd =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.RATE.rates;
+    const allRates: Rates = state.RATE.rates;
 
     if (altFiatCurrency.toUpperCase() === 'USD') {
       return altFiatAmount;
@@ -162,7 +207,7 @@ export const calculateUsdToAltFiat =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.RATE.rates;
+    const allRates: Rates = state.RATE.rates;
 
     const rateBtcUsd = allRates.btc.find(r => {
       return r.code === 'USD';
@@ -196,7 +241,7 @@ export const calculateAnyFiatToAltFiat =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.RATE.rates;
+    const allRates: Rates = state.RATE.rates;
 
     if (fromFiatCurrency.toUpperCase() === toFiatCurrency.toUpperCase()) {
       return fromFiatAmount;

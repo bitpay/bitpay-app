@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {RefreshControl, Text} from 'react-native';
+import {ActivityIndicator, RefreshControl, Text} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -16,6 +16,7 @@ import MoonpayLogo from '../../../../../components/icons/external-services/moonp
 import {
   MoonpayPaymentData,
   MoonpayTransactionDetailsEmbeddedData,
+  MoonpayTransactionStage,
 } from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
   useAppDispatch,
@@ -28,6 +29,7 @@ import {
 } from '../../../../../store/app/app.actions';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {
   RowDataContainer,
   CryptoAmountContainer,
@@ -51,23 +53,42 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {moonpayGetTransactionDetailsEmbedded} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
+  MOONPAY_SUPPORT_URL,
+  moonpayGetSepaStatusDetails,
   moonpayGetStatusColor,
   moonpayGetStatusDetails,
+  moonpaySepaIsWaitingForPayment,
   MoonpayStatus,
 } from '../../../../services/buy-crypto/utils/moonpay-utils';
 import {Br} from '../../../../../components/styled/Containers';
 import {sleep} from '../../../../../utils/helper-methods';
-import {SlateDark, White} from '../../../../../styles/colors';
 import {
+  ProgressBlue,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
+import {
+  getMoonpayEmbeddedAnonymousCredentials,
   getMoonpayEmbeddedCredentials,
   isMoonpayEmbeddedCredentialsValid,
+  setMoonpayEmbeddedCredentials,
+  setMoonpayEmbeddedStatus,
 } from '../../../../../store/buy-crypto/buy-crypto.effects';
+import {MoonpayClientCredentials} from '../../../../services/utils/moonpayFrameCrypto';
+import {ExternalServicesScreens} from '../../../../services/ExternalServicesGroup';
 import {moonpaySellEnv} from '../../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {RootState} from '../../../../../store';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
+import styled from 'styled-components/native';
 export interface MoonpayDetailsProps {
   paymentRequest: MoonpayPaymentData;
 }
+
+const BankTransferSeparator = styled.View`
+  margin: 15px 15px 0px 15px;
+  border: solid 0.5px ${({theme: {dark}}) => (dark ? SlateDark : Slate)};
+`;
 
 const copyText = (text: string) => {
   haptic('impactLight');
@@ -86,6 +107,9 @@ const MoonpayDetails: React.FC = () => {
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}: RootState) => BITPAY_ID.user[APP.network],
+  );
   const [status, setStatus] = useState<MoonpayStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -94,19 +118,158 @@ const MoonpayDetails: React.FC = () => {
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedExternalId, setCopiedExternalId] = useState(false);
   const [copiedTransactionId, setCopiedTransactionId] = useState(false);
+  const [copiedSepaField, setCopiedSepaField] = useState<string>();
+  const [embeddedDisconnected, setEmbeddedDisconnected] = useState(false);
 
-  const updateStatusDescription = () => {
-    setStatus(moonpayGetStatusDetails(paymentRequest.status));
+  const [sepaDetails, setSepaDetails] = useState(paymentRequest.sepa_details);
+  const [sepaStages, setSepaStages] = useState<
+    MoonpayTransactionStage[] | undefined
+  >(paymentRequest.sepa_stages);
+  const isEmbeddedSepa =
+    !!paymentRequest.is_embedded &&
+    paymentRequest.payment_method === 'sepaBankTransfer';
+  const [statusLoading, setStatusLoading] = useState(
+    () => paymentRequest.status !== 'completed',
+  );
+  const sepaRows: {
+    key: string;
+    label: string;
+    value: string;
+    copyValue?: string;
+  }[] = sepaDetails
+    ? [
+        {key: 'reference', label: t('Reference'), value: sepaDetails.reference},
+        ...(sepaDetails.iban
+          ? [
+              {
+                key: 'iban',
+                label: t('IBAN'),
+                value: sepaDetails.iban,
+                // Displayed grouped in fours, as MoonPay returns it, but copied
+                // in the machine format that banking apps expect.
+                copyValue: sepaDetails.iban.replace(/\s/g, ''),
+              },
+            ]
+          : []),
+        ...(sepaDetails.bic
+          ? [{key: 'bic', label: t('BIC'), value: sepaDetails.bic}]
+          : []),
+        ...(sepaDetails.recipientName
+          ? [
+              {
+                key: 'recipientName',
+                label: t('Recipient'),
+                value: sepaDetails.recipientName,
+              },
+            ]
+          : []),
+        ...(sepaDetails.recipientAddress
+          ? [
+              {
+                key: 'recipientAddress',
+                label: t('Recipient address'),
+                value: sepaDetails.recipientAddress,
+              },
+            ]
+          : []),
+        ...(sepaDetails.bankName
+          ? [
+              {
+                key: 'bankName',
+                label: t('Bank name'),
+                value: sepaDetails.bankName,
+              },
+            ]
+          : []),
+        ...(sepaDetails.bankAddress
+          ? [
+              {
+                key: 'bankAddress',
+                label: t('Bank address'),
+                value: sepaDetails.bankAddress,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  const updateStatusDescription = (stages?: MoonpayTransactionStage[]) => {
+    setStatus(
+      isEmbeddedSepa
+        ? moonpayGetSepaStatusDetails(paymentRequest.status, stages)
+        : moonpayGetStatusDetails(paymentRequest.status),
+    );
+  };
+
+  // The embedded status comes from MoonPay's API, so without valid credentials
+  // the screen can only show the status as of the last successful fetch.
+  const goToMoonpayOnboarding = () => {
+    const anonymousCredentials = getMoonpayEmbeddedAnonymousCredentials();
+    if (!anonymousCredentials) {
+      // Anonymous credentials are not ready yet: the connection settings screen
+      // requests them and offers the Connect button.
+      (navigation as any).navigate('MoonpayConnectionSettings');
+      return;
+    }
+    (navigation as any).navigate(
+      ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING,
+      {
+        context: 'moonpayDetails',
+        user,
+        anonymousCredentials,
+        onConnectAccount: async (newCredentials: MoonpayClientCredentials) => {
+          setMoonpayEmbeddedCredentials(newCredentials);
+          setMoonpayEmbeddedStatus('active');
+          navigation.goBack();
+          getTransactionDetails(true);
+        },
+        onSkipConnection: async () => {
+          navigation.goBack();
+        },
+      },
+    );
+  };
+
+  const showDisconnectedNotification = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Disconnected from MoonPay'),
+        message: t(
+          'This purchase was made through your MoonPay account, and the status shown may be out of date. Connect again to see its latest status.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Connect MoonPay'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+              goToMoonpayOnboarding();
+            },
+            primary: true,
+          },
+          {
+            text: t('Skip'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+          },
+        ],
+      }),
+    );
   };
 
   const getTransactionDetails = async (force?: boolean) => {
     if (paymentRequest.status === 'completed' && !force) {
+      setStatusLoading(false);
       return;
     }
+    setStatusLoading(true);
 
     if (paymentRequest.is_embedded && paymentRequest.transaction_id) {
       const cachedCredentials = getMoonpayEmbeddedCredentials();
       if (isMoonpayEmbeddedCredentialsValid() && cachedCredentials) {
+        setEmbeddedDisconnected(false);
         try {
           const txDetails: MoonpayTransactionDetailsEmbeddedData =
             await moonpayGetTransactionDetailsEmbedded({
@@ -160,6 +323,79 @@ const MoonpayDetails: React.FC = () => {
             needUpdate = true;
           }
 
+          // The checkout stores these when the purchase is created, but the
+          // deposit details are generated asynchronously, so they can still be
+          // missing by then.
+          if (
+            !paymentRequest.sepa_details &&
+            txDetails?.bankTransferDepositInfo?.reference
+          ) {
+            const depositInfo = txDetails.bankTransferDepositInfo;
+            paymentRequest.sepa_details = {
+              reference: depositInfo.reference,
+              iban: depositInfo.iban,
+              bic: depositInfo.bic,
+              recipientName: depositInfo.recipientName,
+              recipientAddress: depositInfo.recipientAddress,
+              bankName: depositInfo.bankName,
+              bankAddress: depositInfo.bankAddress,
+            };
+            setSepaDetails(paymentRequest.sepa_details);
+            needUpdate = true;
+          }
+
+          // A bank transfer sits at 'pending' from creation until the money
+          // settles, so the stages are the only place the progress shows. They
+          // are stored with the purchase so the list can tell whether the
+          // customer still has to send the money.
+          if (isEmbeddedSepa) {
+            setSepaStages(txDetails.stages);
+            updateStatusDescription(txDetails.stages);
+            if (txDetails.stages) {
+              paymentRequest.sepa_stages = txDetails.stages;
+              needUpdate = true;
+            }
+
+            // The checkout cannot report the purchase: at that point nothing
+            // has been paid and the transfer may still time out. It is reported
+            // here, once, when MoonPay confirms the deposit arrived.
+            const depositArrived =
+              txDetails.status === 'completed' ||
+              !!txDetails.stages?.some(
+                stage =>
+                  stage.kind === 'waiting_payment' &&
+                  stage.status === 'success',
+              );
+            if (depositArrived && !paymentRequest.sepa_purchase_reported) {
+              dispatch(
+                Analytics.track('Purchased Buy Crypto', {
+                  exchange: 'moonpay',
+                  fiatAmount: paymentRequest.fiat_total_amount || '',
+                  feeAmount:
+                    (paymentRequest.fiat_total_amount &&
+                      paymentRequest.fiat_base_amount &&
+                      Number(paymentRequest.fiat_total_amount) -
+                        Number(paymentRequest.fiat_base_amount)) ||
+                    '',
+                  fiatCurrency: paymentRequest.fiat_total_amount_currency || '',
+                  coin: paymentRequest.coin?.toLowerCase() || '',
+                  chain: paymentRequest.chain?.toLowerCase() || '',
+                  cryptoAmount: paymentRequest.crypto_amount || '',
+                  paymentMethod: paymentRequest.payment_method || '',
+                  exchangeRate:
+                    (paymentRequest.crypto_amount &&
+                      paymentRequest.fiat_base_amount &&
+                      Number(paymentRequest.fiat_base_amount) /
+                        paymentRequest.crypto_amount) ||
+                    '',
+                  isEmbedded: true,
+                }),
+              );
+              paymentRequest.sepa_purchase_reported = true;
+              needUpdate = true;
+            }
+          }
+
           if (needUpdate || true) {
             const stateParams = {
               externalId: paymentRequest.external_id,
@@ -167,6 +403,9 @@ const MoonpayDetails: React.FC = () => {
               status: paymentRequest.status,
               cryptoAmount: paymentRequest.crypto_amount,
               fiatTotalAmount: paymentRequest.fiat_total_amount,
+              sepaDetails: paymentRequest.sepa_details,
+              sepaStages: paymentRequest.sepa_stages,
+              sepaPurchaseReported: paymentRequest.sepa_purchase_reported,
             };
             dispatch(
               BuyCryptoActions.updatePaymentRequestMoonpay({
@@ -184,11 +423,16 @@ const MoonpayDetails: React.FC = () => {
           logger.error(
             'Moonpay getTransactionDetailsEmbedded Error: ' + errStr,
           );
+        } finally {
+          setStatusLoading(false);
         }
       } else {
         logger.warn(
           'Moonpay getTransactionDetailsEmbedded Error: User disconnected or credentials expired',
         );
+        setEmbeddedDisconnected(true);
+        setStatusLoading(false);
+        showDisconnectedNotification();
       }
     } else {
       try {
@@ -256,6 +500,8 @@ const MoonpayDetails: React.FC = () => {
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         logger.error('Moonpay getTransactionDetails Error: ' + errStr);
+      } finally {
+        setStatusLoading(false);
       }
     }
   };
@@ -291,6 +537,13 @@ const MoonpayDetails: React.FC = () => {
     }, 3000);
     return () => clearTimeout(timer);
   }, [copiedTransactionId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedSepaField(undefined);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedSepaField]);
 
   // moonpayGetTransactionDetails
 
@@ -395,9 +648,23 @@ const MoonpayDetails: React.FC = () => {
           )}
 
           {!!paymentRequest.status && (
-            <LabelTip type="info">
-              <LabelTipText>{status.statusDescription}</LabelTipText>
-              {['failed'].includes(paymentRequest.status) ? (
+            <LabelTip type={embeddedDisconnected ? 'warn' : 'info'}>
+              {embeddedDisconnected ? (
+                <>
+                  <LabelTipText>
+                    {t(
+                      'Warning: You are disconnected from MoonPay, so this status may be out of date. Please connect again to see its latest status.',
+                    )}
+                  </LabelTipText>
+                  <Br />
+                </>
+              ) : null}
+              {statusLoading ? (
+                <ActivityIndicator color={ProgressBlue} size={'small'} />
+              ) : (
+                <LabelTipText>{status.statusDescription}</LabelTipText>
+              )}
+              {!statusLoading && ['failed'].includes(paymentRequest.status) ? (
                 <>
                   <Br />
                   <LabelTipText>
@@ -408,11 +675,7 @@ const MoonpayDetails: React.FC = () => {
                     accessibilityLabel="Contact Moonpay support"
                     onPress={() => {
                       haptic('impactLight');
-                      dispatch(
-                        openUrlWithInAppBrowser(
-                          'https://support.moonpay.com/hc/en-gb/requests/new',
-                        ),
-                      );
+                      dispatch(openUrlWithInAppBrowser(MOONPAY_SUPPORT_URL));
                     }}>
                     <Link style={{marginTop: 15}}>
                       {t('Contact the Moonpay support team.')}
@@ -422,6 +685,53 @@ const MoonpayDetails: React.FC = () => {
               ) : null}
             </LabelTip>
           )}
+
+          {sepaRows.length > 0 &&
+          !statusLoading &&
+          moonpaySepaIsWaitingForPayment(paymentRequest.status, sepaStages) ? (
+            <>
+              <RowDataContainer style={{marginTop: 0, marginBottom: 0}}>
+                <RowLabel>{t('Bank transfer details')}</RowLabel>
+              </RowDataContainer>
+              {sepaRows.map(row => (
+                <ColumnDataContainer
+                  key={row.key}
+                  style={{paddingHorizontal: 15}}>
+                  <TouchableOpacity
+                    testID={`moonpay-copy-sepa-${row.key}-button`}
+                    accessibilityLabel={`Copy ${row.label}`}
+                    onPress={() => {
+                      copyText(row.copyValue ?? row.value);
+                      setCopiedSepaField(row.key);
+                    }}>
+                    <RowLabel>{row.label}</RowLabel>
+                    <CopiedContainer>
+                      <ColumnData style={{maxWidth: '90%'}}>
+                        {row.value}
+                      </ColumnData>
+                      <CopyImgContainerRight style={{minWidth: '10%'}}>
+                        {copiedSepaField === row.key ? (
+                          <CopiedSvg width={17} />
+                        ) : null}
+                      </CopyImgContainerRight>
+                    </CopiedContainer>
+                  </TouchableOpacity>
+                  {row.key === 'reference' && (
+                    <LabelTip
+                      type="warn"
+                      style={{marginTop: 10, marginBottom: 0}}>
+                      <LabelTipText>
+                        {t(
+                          'Your transfer must include the reference above, or MoonPay will reject it.',
+                        )}
+                      </LabelTipText>
+                    </LabelTip>
+                  )}
+                </ColumnDataContainer>
+              ))}
+              <BankTransferSeparator />
+            </>
+          ) : null}
 
           <ColumnDataContainer>
             <TouchableOpacity

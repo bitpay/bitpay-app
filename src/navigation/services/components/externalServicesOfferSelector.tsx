@@ -50,6 +50,7 @@ import {
   getBuyCryptoFiatLimits,
   getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedSepaSupported,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
 } from '../../../store/buy-crypto/buy-crypto.effects';
@@ -1037,7 +1038,7 @@ const ExternalServicesOfferSelector: React.FC<
     let _paymentMethod: MoonpayPaymentType | undefined =
       getMoonpayPaymentMethodFormat(paymentMethod?.method);
 
-    if (_paymentMethod === 'sepa_bank_transfer') {
+    if (_paymentMethod === 'sepa_bank_transfer' || _paymentMethod === 'sepa') {
       // Moonpay only accepts EUR as a base currency for SEPA payments
       offers.moonpay.fiatCurrency = 'EUR';
     } else if (_paymentMethod === 'cash_app') {
@@ -1105,12 +1106,13 @@ const ExternalServicesOfferSelector: React.FC<
       );
     }
 
-    // MoonPay embedded flow (Apple Pay | Cards)
+    // MoonPay embedded flow (Apple Pay | Cards | SEPA)
     const isMoonpayEmbeddedPaymentMethod =
       isMoonpayEmbeddedPaymentMethodEnabled(
         paymentMethod?.method,
         buyCryptoConfig,
         getMoonpayEmbeddedApplePaySupported(),
+        getMoonpayEmbeddedSepaSupported(),
       );
     if (
       preferMoonpayApplePay &&

@@ -60,7 +60,8 @@ export type ConfigPaymentMethodKey =
   // MoonPay embedded flow only — independent from the general 'applePay' /
   // 'creditCard' / 'debitCard' keys above, which also cover the Kayak flow.
   | 'applePayEmbedded'
-  | 'cardEmbedded';
+  | 'cardEmbedded'
+  | 'sepaEmbedded';
 
 export type PaymentMethodConfig = {
   disabled?: boolean;
