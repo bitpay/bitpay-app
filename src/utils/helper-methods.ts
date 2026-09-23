@@ -900,6 +900,23 @@ export const splitInputsToChunks = (inputsArray: any[]) => {
   return chunksArray;
 };
 
+const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+
+export const isSameAddress = (a?: string, b?: string): boolean => {
+  if (!a || !b) {
+    return false;
+  }
+  if (a === b) {
+    return true;
+  }
+  // base58 (Solana) is case sensitive; only EVM addresses may be compared case insensitively
+  return (
+    EVM_ADDRESS.test(a) &&
+    EVM_ADDRESS.test(b) &&
+    a.toLowerCase() === b.toLowerCase()
+  );
+};
+
 export const extractAddresses = (hex: string) => {
   const senderContractAddress = '0x' + hex.slice(0, 40);
   const recipientAddress = '0x' + hex.slice(46, 86);
@@ -942,6 +959,11 @@ export const processOtherMethodsRequest =
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        senderAddress =
+          (request.params as string[])?.find(param =>
+            ethers.utils.isAddress(param),
+          ) || '';
+        break;
       case EIP155_SIGNING_METHODS.ETH_SIGN:
         senderAddress = request.params?.[0];
         break;
@@ -963,8 +985,8 @@ export const processOtherMethodsRequest =
       const wallet = Object.values(keys as Keys).flatMap(key =>
         key.wallets.filter(
           wallet =>
-            wallet.receiveAddress?.toLowerCase() ===
-              senderAddress?.toLowerCase() && wallet.chain === swapFromChain,
+            isSameAddress(wallet.receiveAddress, senderAddress) &&
+            wallet.chain === swapFromChain,
         ),
       )[0];
 
@@ -1301,7 +1323,7 @@ const handleDefaultTransaction = async (
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
       wallet =>
-        wallet.receiveAddress?.toLowerCase() === senderAddress.toLowerCase() &&
+        isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === chain,
     ),
   )[0];

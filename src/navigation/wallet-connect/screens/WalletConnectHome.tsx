@@ -37,7 +37,7 @@ import {
 } from '../styled/WalletConnectContainers';
 import {FlatList, Platform} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import {sleep} from '../../../utils/helper-methods';
+import {isSameAddress, sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -47,8 +47,8 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
+import {matchesAccountRoute} from '../walletConnectRouting';
 import {
-  getAddressFrom,
   walletConnectV2OnDeleteSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
@@ -138,7 +138,7 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
     .flatMap(key => key.wallets)
     .find(
       wallet =>
-        wallet.receiveAddress?.toLowerCase() === senderAddress!.toLowerCase() &&
+        isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === swapFromChain &&
         wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
     );
@@ -198,13 +198,9 @@ const WalletConnectHome = () => {
   );
   let requestsV2: WCV2RequestType[] = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
-      .filter((request: WCV2RequestType) => {
-        const addressFrom = getAddressFrom(request)?.toLowerCase();
-        const filterWithAddress = addressFrom
-          ? addressFrom === selectedAccountAddress?.toLowerCase()
-          : true; // if address exist in request check if it matches with connected wallets addresses
-        return request.topic === topic && filterWithAddress;
-      })
+      .filter((request: WCV2RequestType) =>
+        matchesAccountRoute(request, {selectedAccountAddress, topic}),
+      )
       .reverse(),
   );
 

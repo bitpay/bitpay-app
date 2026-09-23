@@ -242,22 +242,21 @@ const WalletConnectConfirm = () => {
         requestProps.method === EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION &&
         txp
       ) {
-        const broadcastedTx = await dispatch(
-          startSendPayment({
-            txp,
-            key,
-            wallet,
-            recipient,
-            ...(isTSSWallet(wallet) && {tssCallbacks}),
-            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-          }),
-        );
         await dispatch(
-          walletConnectV2ApproveCallRequest(
-            request,
-            wallet,
-            formatJsonRpcResult(id, broadcastedTx.txid),
-          ),
+          walletConnectV2ApproveCallRequest(request, wallet, async () => {
+            const broadcastedTx = await dispatch(
+              startSendPayment({
+                txp,
+                key,
+                wallet,
+                recipient,
+                ...(isTSSWallet(wallet) && {tssCallbacks}),
+                ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
+              }),
+            );
+
+            return formatJsonRpcResult(id, broadcastedTx.txid);
+          }),
         );
       } else {
         await dispatch(walletConnectV2ApproveCallRequest(request, wallet));

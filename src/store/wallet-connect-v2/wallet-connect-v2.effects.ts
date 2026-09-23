@@ -18,6 +18,7 @@ import {
 } from '@walletconnect/types';
 import {
   checkEncryptedKeysForEddsaMigration,
+  isSameAddress,
   processOtherMethodsRequest,
   processSolanaSwapRequest,
   processSwapRequest,
@@ -116,8 +117,6 @@ export const walletConnectV2approveSessionAuthenticateProposal =
     pairingTopic: string,
     proposalParams: AuthTypes.AuthRequestEventArgs,
     auths: AuthTypes.Cacao[],
-    accounts: string[],
-    chains: string[],
     verifyContext: Verify.Context | undefined,
   ): Effect<Promise<void>> =>
   dispatch => {
@@ -138,8 +137,8 @@ export const walletConnectV2approveSessionAuthenticateProposal =
             ...session,
             pairingTopic,
             proposalParams,
-            accounts,
-            chains,
+            accounts: getNamespacesAccounts(session.namespaces),
+            chains: getNamespacesChains(session.namespaces),
             verifyContext,
           }),
         );
@@ -191,12 +190,24 @@ export const walletConnectV2Init =
         getState().WALLET_CONNECT_V2.sessions;
 
       Object.values(activeSessions).forEach(activeSession => {
-        if (
-          sessions?.length &&
-          !sessions.some(s => s.topic === activeSession.topic)
-        ) {
-          dispatch(walletConnectV2OnDeleteSession(activeSession.topic));
+        if (!sessions?.length) {
+          return;
         }
+        const storedSession = sessions.find(
+          s => s.topic === activeSession.topic,
+        );
+        if (!storedSession) {
+          dispatch(walletConnectV2OnDeleteSession(activeSession.topic));
+          return;
+        }
+        dispatch(
+          WalletConnectV2UpdateSession({
+            ...storedSession,
+            namespaces: activeSession.namespaces,
+            accounts: getNamespacesAccounts(activeSession.namespaces),
+            chains: getNamespacesChains(activeSession.namespaces),
+          }),
+        );
       });
 
       logManager.info(
@@ -233,8 +244,6 @@ export const walletConnectV2ApproveSessionProposal =
     namespaces: SessionTypes.Namespaces,
     pairingTopic: string,
     proposalParams: ProposalTypes.Struct,
-    accounts: string[],
-    chains: string[],
     verifyContext: Verify.Context | undefined,
   ): Effect<Promise<void>> =>
   dispatch => {
@@ -255,8 +264,8 @@ export const walletConnectV2ApproveSessionProposal =
             ...session,
             pairingTopic,
             proposalParams,
-            accounts,
-            chains,
+            accounts: getNamespacesAccounts(session.namespaces),
+            chains: getNamespacesChains(session.namespaces),
             verifyContext,
           }),
         );
@@ -337,6 +346,23 @@ export const walletConnectV2SubscribeToEvents =
         }).includes(event.params.request.method);
 
         if (!isChainSupported || !isMethodSupported) {
+          try {
+            await web3wallet.respondSessionRequest({
+              topic: event.topic,
+              response: formatJsonRpcError(
+                event.id,
+                getSdkError(
+                  isChainSupported ? 'INVALID_METHOD' : 'UNSUPPORTED_CHAINS',
+                ).message,
+              ),
+            });
+          } catch (err) {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logManager.warn(
+              `[WC-V2/walletConnectV2SubscribeToEvents]: could not reject unsupported request: ${errMsg}`,
+            );
+          }
           return;
         }
 
@@ -467,44 +493,51 @@ export const walletConnectV2SubscribeToEvents =
           (session: WCV2SessionType) => session.topic === event.topic,
         );
 
-      const address = session?.accounts[0].split(':')[2];
-      const accountsChanged = {
+      const address = getNamespacesAccounts(session?.namespaces)
+        .find(account => account.startsWith(`${eip155ChainId}:`))
+        ?.split(':')[2];
+
+      await web3wallet.emitSessionEvent(chainChanged);
+
+      if (!address) {
+        return;
+      }
+
+      await web3wallet.emitSessionEvent({
         topic: event.topic,
         event: {name: 'accountsChanged', data: [`${eip155ChainId}:${address}`]},
         chainId: eip155ChainId,
-      };
-
-      await web3wallet.emitSessionEvent(chainChanged);
-      await web3wallet.emitSessionEvent(accountsChanged);
+      });
     };
 
     web3wallet.on(
       'session_delete',
       async (data: WalletKitTypes.EventArguments['session_delete']) => {
-        try {
-          const {topic} = data;
-          const session: WCV2SessionType | undefined =
-            getState().WALLET_CONNECT_V2.sessions.find(
-              (session: WCV2SessionType) => session.topic === topic,
+        const {topic} = data;
+        const session: WCV2SessionType | undefined =
+          getState().WALLET_CONNECT_V2.sessions.find(
+            (storedSession: WCV2SessionType) => storedSession.topic === topic,
+          );
+        const {pairingTopic} = session || {};
+
+        dispatch(WalletConnectV2DeleteSessions(topic));
+        dispatch(WalletConnectV2UpdateRequests({topic}));
+
+        if (pairingTopic) {
+          try {
+            await web3wallet.core.pairing.disconnect({topic: pairingTopic});
+          } catch (err) {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logManager.warn(
+              `[WC-V2/walletConnectV2SubscribeToEvents]: could not disconnect pairing: ${errMsg}`,
             );
-          const {pairingTopic} = session || {};
-          if (pairingTopic) {
-            await web3wallet.core.pairing.disconnect({
-              topic: pairingTopic,
-            });
           }
-          dispatch(WalletConnectV2DeleteSessions(topic));
-          dispatch(WalletConnectV2UpdateRequests({topic}));
-          logManager.info(
-            `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${topic}`,
-          );
-        } catch (err) {
-          const errMsg =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logManager.error(
-            `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${errMsg}`,
-          );
         }
+
+        logManager.info(
+          `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${topic}`,
+        );
       },
     );
     web3wallet.on(
@@ -545,27 +578,98 @@ export const walletConnectV2SubscribeToEvents =
     );
   };
 
+const getNamespacesAccounts = (
+  namespaces: SessionTypes.Namespaces | undefined,
+): string[] => [
+  ...new Set(
+    Object.values(namespaces || {}).flatMap(
+      namespace => namespace.accounts || [],
+    ),
+  ),
+];
+
+const getNamespacesChains = (
+  namespaces: SessionTypes.Namespaces | undefined,
+): string[] => [
+  ...new Set(
+    Object.values(namespaces || {}).flatMap(
+      namespace => namespace.chains || [],
+    ),
+  ),
+];
+
+export const getAccountAddress = (account: string): string =>
+  account.substring(account.indexOf(':', account.indexOf(':') + 1) + 1);
+
+const getAccountsChains = (accounts: string[]): string[] => [
+  ...new Set(accounts.map(account => account.split(':').slice(0, 2).join(':'))),
+];
+
+const assertAuthorizedSigner =
+  (request: WCV2RequestType, wallet: Wallet): Effect<void> =>
+  (_dispatch, getState) => {
+    const {chainId} = request.params;
+    const walletAddress = wallet.receiveAddress;
+    const requestAddress = getAddressFrom(request);
+    const supportedChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId];
+    const sessionV2: WCV2SessionType | undefined =
+      getState().WALLET_CONNECT_V2.sessions.find(
+        (session: WCV2SessionType) => session.topic === request.topic,
+      );
+    const isAuthorized = getNamespacesAccounts(sessionV2?.namespaces).some(
+      account =>
+        account.startsWith(`${chainId}:`) &&
+        isSameAddress(getAccountAddress(account), walletAddress),
+    );
+    const matchesRequestedChain =
+      !!supportedChain &&
+      wallet.chain === supportedChain.chain &&
+      wallet.network === supportedChain.network;
+
+    if (
+      !walletAddress ||
+      !isAuthorized ||
+      !matchesRequestedChain ||
+      !isSameAddress(requestAddress, walletAddress)
+    ) {
+      throw new Error(
+        'This request cannot be signed with the selected account. Reconnect the account and try again.',
+      );
+    }
+  };
+
 export const walletConnectV2ApproveCallRequest =
   (
     request: WCV2RequestType,
     wallet: Wallet,
-    response?: JsonRpcResult<string>,
+    response?: JsonRpcResult<string> | (() => Promise<JsonRpcResult<string>>),
   ): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
       const {topic, id} = request;
+      let approved: JsonRpcResult<string> | undefined;
       try {
-        if (!response) {
-          response = await dispatch(approveWCRequest(request, wallet));
+        dispatch(assertAuthorizedSigner(request, wallet));
+        approved = typeof response === 'function' ? await response() : response;
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.error(
+          `[WC-V2/walletConnectV2ApproveCallRequest]: request not approved: ${errMsg}`,
+        );
+        return reject(err);
+      }
+      try {
+        if (!approved) {
+          approved = await dispatch(approveWCRequest(request, wallet));
           logManager.info(
             `[WC-V2/walletConnectV2ApproveCallRequest]: approve response: ${JSON.stringify(
-              response,
+              approved,
             )}`,
           );
         }
         await web3wallet.respondSessionRequest({
           topic,
-          response,
+          response: approved,
         });
         dispatch(WalletConnectV2UpdateRequests({id}));
         logManager.info(
@@ -640,6 +744,7 @@ export const walletConnectV2OnDeleteSession =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2DeleteSessions(topic));
+        dispatch(WalletConnectV2UpdateRequests({topic}));
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logManager.warn(
           `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${errMsg}`,
@@ -666,48 +771,40 @@ export const walletConnectV2OnUpdateSession =
     }[];
     action: string;
   }): Effect<Promise<void>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     try {
       if (!web3wallet) {
         await dispatch(walletConnectV2Init());
       }
 
+      const currentSession: WCV2SessionType | undefined =
+        getState().WALLET_CONNECT_V2.sessions.find(
+          (storedSession: WCV2SessionType) =>
+            storedSession.topic === session.topic,
+        );
+
+      if (!currentSession) {
+        throw new Error('This connection is no longer available.');
+      }
+
+      session = currentSession;
+
       let namespaces: SessionTypes.Namespaces = {};
-      const {
-        namespaces: _namespaces,
-        topic,
-        pairingTopic,
-        requiredNamespaces,
-        optionalNamespaces,
-      } = session;
-      let {accounts: _accounts = [], chains: _chains} = session;
+      const {namespaces: _namespaces, topic, pairingTopic} = session;
+      const _accounts = getNamespacesAccounts(_namespaces);
       let hasAccounts: boolean = false;
 
       if (action === 'disconnect' && address) {
-        if (_accounts.length === 0 || _chains.length === 0) {
-          Object.keys(requiredNamespaces || {})
-            .concat(Object.keys(optionalNamespaces || {}))
-            .forEach(key => {
-              _accounts = [
-                ...new Set([..._namespaces[key].accounts, ..._accounts]),
-              ];
-              _chains = [
-                ...new Set([...(_namespaces[key].chains || []), ..._chains]),
-              ];
-            });
-        }
-
         const accounts: string[] = _accounts.filter(
           account => !account.includes(address),
         );
-        let chains = accounts.length > 0 ? _chains : []; // reset chains if no accounts
         hasAccounts = accounts.length > 0;
 
         namespaces = buildApprovedNamespaces({
           proposal: session.proposalParams,
           supportedNamespaces: {
             eip155: {
-              chains,
+              chains: getAccountsChains(accounts),
               methods: Object.values(EIP155_SIGNING_METHODS),
               events: WC_EVENTS,
               accounts,
@@ -716,34 +813,23 @@ export const walletConnectV2OnUpdateSession =
         } as BuildApprovedNamespacesParams);
       } else if (action === 'add_accounts' && session) {
         hasAccounts = true;
-        if (_accounts.length === 0 || _chains.length === 0) {
-          Object.keys(requiredNamespaces || {})
-            .concat(Object.keys(optionalNamespaces || {}))
-            .forEach(key => {
-              _accounts = [
-                ...new Set([..._namespaces[key].accounts, ..._accounts]),
-              ];
-              _chains = [
-                ...new Set([...(_namespaces[key].chains || []), ..._chains]),
-              ];
-            });
-        }
-        const accounts: string[] = [];
-        const chains: string[] = [];
-        (selectedWallets || []).forEach(selectedWallet => {
-          accounts.push(
-            `${selectedWallet.supportedChain}:${selectedWallet.address}`,
-          );
-          chains.push(selectedWallet.supportedChain);
-        });
+        const accounts: string[] = [
+          ...new Set([
+            ..._accounts,
+            ...(selectedWallets || []).map(
+              selectedWallet =>
+                `${selectedWallet.supportedChain}:${selectedWallet.address}`,
+            ),
+          ]),
+        ];
         namespaces = buildApprovedNamespaces({
           proposal: session.proposalParams,
           supportedNamespaces: {
             eip155: {
-              chains: [...new Set([..._chains, ...chains])],
+              chains: getAccountsChains(accounts),
               methods: Object.values(EIP155_SIGNING_METHODS),
               events: WC_EVENTS,
-              accounts: [...new Set([..._accounts, ...accounts])],
+              accounts,
             },
           },
         } as BuildApprovedNamespacesParams);
@@ -763,7 +849,14 @@ export const walletConnectV2OnUpdateSession =
         logManager.info(
           '[WC-V2/walletConnectV2OnUpdateSession]: session updated',
         );
-        dispatch(WalletConnectV2UpdateSession({...session, ...{namespaces}}));
+        dispatch(
+          WalletConnectV2UpdateSession({
+            ...session,
+            namespaces,
+            accounts: getNamespacesAccounts(namespaces),
+            chains: getNamespacesChains(namespaces),
+          }),
+        );
         Promise.resolve();
       }
     } catch (err) {
@@ -776,7 +869,7 @@ export const walletConnectV2OnUpdateSession =
         errMsg.includes('Non conforming namespaces')
       ) {
         throw new Error(
-          "Removing this account will invalidate the session's required namespaces. Please disconnect the entire session and reconnect.",
+          "This change no longer satisfies the session's required namespaces. Please disconnect the entire session and reconnect.",
         );
       }
       throw err;
@@ -802,7 +895,7 @@ const approveWCRequest =
         switch (request.method) {
           case EIP155_SIGNING_METHODS.PERSONAL_SIGN:
           case EIP155_SIGNING_METHODS.ETH_SIGN:
-            const eth_message = getSignParamsMessage(request.params);
+            const eth_message = getSignedMessage(requestEvent);
             const eth_signedMessage = await signer.signMessage(eth_message);
             resolve(formatJsonRpcResult(id, eth_signedMessage));
           case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
@@ -810,11 +903,9 @@ const approveWCRequest =
           case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
             const {
               domain,
-              types,
               message: data,
-            } = getSignTypedDataParamsData(request.params);
-            // https://github.com/ethers-io/ethers.js/issues/687#issuecomment-714069471
-            delete types.EIP712Domain;
+              types,
+            } = getSignedTypedData(requestEvent);
             const signedData = await signer._signTypedData(domain, types, data);
             resolve(formatJsonRpcResult(id, signedData));
             break;
@@ -958,15 +1049,16 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
         addressFrom = params[0];
         break;
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
-        addressFrom = params[0];
-        break;
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
-        addressFrom = params[0];
+        addressFrom =
+          (params as string[]).find(param => utils.isAddress(param)) || '';
         break;
       case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
         addressFrom = params?.pubkey;
         break;
       case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+      case SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION:
         addressFrom = params?.feePayer || params?.pubkey;
         break;
       default:
@@ -1077,14 +1169,57 @@ const convertHexToUtf8 = (value: string) => {
   return value;
 };
 
-const getSignParamsMessage = (params: string[]) => {
-  const message = params.filter(p => !utils.isAddress(p))[0];
+// ethers infers the primary type from `types` and rejects EIP712Domain being present
+// https://github.com/ethers-io/ethers.js/issues/687#issuecomment-714069471
+export const getSignedTypes = (types: any) => {
+  const signedTypes: {[key: string]: {name: string; type: string}[]} = {};
+
+  Object.keys(types || {}).forEach(typeName => {
+    if (typeName === 'EIP712Domain') {
+      return;
+    }
+    signedTypes[typeName] = types[typeName].map(
+      ({name, type}: {name: string; type: string}) => ({name, type}),
+    );
+  });
+
+  return signedTypes;
+};
+
+// the only entry point to what gets typed-data signed: the unfiltered types never
+// reach the caller, so the domain type cannot be left in by mistake
+export const getSignedTypedData = (request: WCV2RequestType) => {
+  const {domain, message, types} =
+    getSignTypedDataParamsData(request.params.request.params) || {};
+
+  return {domain: domain || {}, message, types: getSignedTypes(types)};
+};
+
+// the exact EIP-712 payload that gets hashed: ethers drops message fields the
+// primary type does not declare, and infers the primary type from `types`
+export const getTypedDataPayload = (request: WCV2RequestType) => {
+  const {domain, message, types} = getSignedTypedData(request);
+
+  return utils._TypedDataEncoder.getPayload(domain, types, message);
+};
+
+export const getSignParamsData = (params: string[]): any =>
+  params.find(param => !utils.isAddress(param));
+
+export const getSignedMessage = (request: WCV2RequestType) => {
+  const {method, params} = request.params.request;
+  const message =
+    method === EIP155_SIGNING_METHODS.PERSONAL_SIGN ? params[0] : params[1];
+
+  if (typeof message !== 'string') {
+    throw new Error('Unsupported message parameter');
+  }
 
   return convertHexToUtf8(message);
 };
 
 const getSignTypedDataParamsData = (params: string[]) => {
-  const data = params.filter(p => !utils.isAddress(p))[0];
+  const data = getSignParamsData(params);
 
   if (typeof data === 'string') {
     return JSON.parse(data);
@@ -1135,29 +1270,23 @@ export const getGasWalletByRequest =
       getState().WALLET_CONNECT_V2.sessions.find(
         session => session.topic === request?.topic,
       );
-    const {namespaces} = sessionV2 || {};
     const keys = getState().WALLET.keys;
+    const chain =
+      request?.params.chainId &&
+      WC_SUPPORTED_CHAINS[request.params.chainId]?.chainName;
+    const network =
+      request?.params.chainId &&
+      WC_SUPPORTED_CHAINS[request.params.chainId]?.network;
+    const requestAddress = getAddressFrom(request as WCV2RequestType);
 
-    let wallet: Wallet | undefined;
-
-    for (const key in namespaces) {
-      if (namespaces.hasOwnProperty(key)) {
-        const {accounts} = namespaces[key];
-        accounts.forEach(account => {
-          const index = account.indexOf(':', account.indexOf(':') + 1);
-          const address = account.substring(index + 1);
-          const chain =
-            request?.params.chainId &&
-            WC_SUPPORTED_CHAINS[request.params.chainId]?.chainName;
-          const network =
-            request?.params.chainId &&
-            WC_SUPPORTED_CHAINS[request.params.chainId]?.network;
-          wallet = findWalletByAddress(address, chain, network, keys);
-          if (wallet) {
-            return wallet;
-          }
-        });
+    for (const account of getNamespacesAccounts(sessionV2?.namespaces)) {
+      const address = getAccountAddress(account);
+      if (requestAddress && !isSameAddress(address, requestAddress)) {
+        continue;
+      }
+      const wallet = findWalletByAddress(address, chain, network, keys);
+      if (wallet) {
+        return wallet;
       }
     }
-    return wallet;
   };
