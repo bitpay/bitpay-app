@@ -29,6 +29,7 @@ import {
 } from '../../../../../store/app/app.actions';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {
   RowDataContainer,
   CryptoAmountContainer,
@@ -121,7 +122,9 @@ const MoonpayDetails: React.FC = () => {
   const [embeddedDisconnected, setEmbeddedDisconnected] = useState(false);
 
   const [sepaDetails, setSepaDetails] = useState(paymentRequest.sepa_details);
-  const [sepaStages, setSepaStages] = useState<MoonpayTransactionStage[]>();
+  const [sepaStages, setSepaStages] = useState<
+    MoonpayTransactionStage[] | undefined
+  >(paymentRequest.sepa_stages);
   const isEmbeddedSepa =
     !!paymentRequest.is_embedded &&
     paymentRequest.payment_method === 'sepaBankTransfer';
@@ -160,12 +163,30 @@ const MoonpayDetails: React.FC = () => {
               },
             ]
           : []),
+        ...(sepaDetails.recipientAddress
+          ? [
+              {
+                key: 'recipientAddress',
+                label: t('Recipient address'),
+                value: sepaDetails.recipientAddress,
+              },
+            ]
+          : []),
         ...(sepaDetails.bankName
           ? [
               {
                 key: 'bankName',
                 label: t('Bank name'),
                 value: sepaDetails.bankName,
+              },
+            ]
+          : []),
+        ...(sepaDetails.bankAddress
+          ? [
+              {
+                key: 'bankAddress',
+                label: t('Bank address'),
+                value: sepaDetails.bankAddress,
               },
             ]
           : []),
@@ -315,17 +336,64 @@ const MoonpayDetails: React.FC = () => {
               iban: depositInfo.iban,
               bic: depositInfo.bic,
               recipientName: depositInfo.recipientName,
+              recipientAddress: depositInfo.recipientAddress,
               bankName: depositInfo.bankName,
+              bankAddress: depositInfo.bankAddress,
             };
             setSepaDetails(paymentRequest.sepa_details);
             needUpdate = true;
           }
 
           // A bank transfer sits at 'pending' from creation until the money
-          // settles, so the stages are the only place the progress shows.
+          // settles, so the stages are the only place the progress shows. They
+          // are stored with the purchase so the list can tell whether the
+          // customer still has to send the money.
           if (isEmbeddedSepa) {
             setSepaStages(txDetails.stages);
             updateStatusDescription(txDetails.stages);
+            if (txDetails.stages) {
+              paymentRequest.sepa_stages = txDetails.stages;
+              needUpdate = true;
+            }
+
+            // The checkout cannot report the purchase: at that point nothing
+            // has been paid and the transfer may still time out. It is reported
+            // here, once, when MoonPay confirms the deposit arrived.
+            const depositArrived =
+              txDetails.status === 'completed' ||
+              !!txDetails.stages?.some(
+                stage =>
+                  stage.kind === 'waiting_payment' &&
+                  stage.status === 'success',
+              );
+            if (depositArrived && !paymentRequest.sepa_purchase_reported) {
+              dispatch(
+                Analytics.track('Purchased Buy Crypto', {
+                  exchange: 'moonpay',
+                  fiatAmount: paymentRequest.fiat_total_amount || '',
+                  feeAmount:
+                    (paymentRequest.fiat_total_amount &&
+                      paymentRequest.fiat_base_amount &&
+                      Number(paymentRequest.fiat_total_amount) -
+                        Number(paymentRequest.fiat_base_amount)) ||
+                    '',
+                  fiatCurrency: paymentRequest.fiat_total_amount_currency || '',
+                  coin: paymentRequest.coin?.toLowerCase() || '',
+                  chain: paymentRequest.chain?.toLowerCase() || '',
+                  cryptoAmount: paymentRequest.crypto_amount || '',
+                  paymentMethod: paymentRequest.payment_method || '',
+                  exchangeRate:
+                    (paymentRequest.crypto_amount &&
+                      paymentRequest.fiat_base_amount &&
+                      Number(paymentRequest.fiat_base_amount) /
+                        paymentRequest.crypto_amount) ||
+                    '',
+                  isEmbedded: true,
+                }),
+              );
+              paymentRequest.sepa_purchase_reported = true;
+              needUpdate = true;
+            }
           }
 
           if (needUpdate || true) {
@@ -336,6 +404,8 @@ const MoonpayDetails: React.FC = () => {
               cryptoAmount: paymentRequest.crypto_amount,
               fiatTotalAmount: paymentRequest.fiat_total_amount,
               sepaDetails: paymentRequest.sepa_details,
+              sepaStages: paymentRequest.sepa_stages,
+              sepaPurchaseReported: paymentRequest.sepa_purchase_reported,
             };
             dispatch(
               BuyCryptoActions.updatePaymentRequestMoonpay({

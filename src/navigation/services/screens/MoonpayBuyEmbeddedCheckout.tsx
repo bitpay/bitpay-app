@@ -330,6 +330,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
 
   const isSepaPaymentMethod = paymentMethod?.method === 'sepaBankTransfer';
+  const [sepaQuoteSignature, setSepaQuoteSignature] = useState<string | null>(
+    null,
+  );
   const [sepaPaymentStarted, setSepaPaymentStarted] = useState(false);
   const [sepaButtonState, setSepaButtonState] = useState<ButtonState>();
   const [depositInfo, setDepositInfo] = useState<
@@ -468,20 +471,29 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       }
       if (newQuoteData?.signature) {
         applePayFrameRef.current?.updateQuote(newQuoteData.signature);
-        const executableSignature = newQuoteData.executable
+        // A card quote is only usable when MoonPay marks it executable, since
+        // it is bound to a stored instrument. A SEPA quote has none to
+        // validate, so only an explicit false rules it out.
+        const usableSignature = reqData.paymentMethodId
+          ? newQuoteData.executable
+            ? newQuoteData.signature
+            : null
+          : newQuoteData.executable !== false
           ? newQuoteData.signature
           : null;
 
-        // Only the card flow re-renders off this signature: it gates the pay
-        // button and is the quote the frame is mounted with.
+        // Both flows re-render off their signature: it gates the pay button
+        // and is the quote their frame is mounted with.
         if (reqData.paymentMethodId) {
-          setCardQuoteSignature(executableSignature);
+          setCardQuoteSignature(usableSignature);
+        } else if (isSepaPaymentMethod) {
+          setSepaQuoteSignature(usableSignature);
         }
 
-        if (executableSignature) {
+        if (usableSignature) {
           // Pushes the quote into an already-mounted buy frame (card or SEPA)
           // instead of remounting it: the signature is part of the frame URL.
-          buyFrameRef.current?.updateQuote(executableSignature);
+          buyFrameRef.current?.updateQuote(usableSignature);
         }
       }
       setEmbeddedQuoteData(newQuoteData);
@@ -560,6 +572,11 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     setEmbeddedQuoteData(quoteData);
     if (quoteData?.signature) {
       setInitialQuoteSignature(quoteData.signature);
+      if (isSepaPaymentMethod) {
+        setSepaQuoteSignature(
+          quoteData.executable !== false ? quoteData.signature : null,
+        );
+      }
     }
     if (quoteData?.expiresAt) {
       scheduleQuoteRefresh(quoteData.expiresAt);
@@ -848,7 +865,12 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       isEmbedded: true,
     };
 
-    dispatch(Analytics.track('Purchased Buy Crypto', analyticsData));
+    // A bank transfer is not paid yet at this point: the customer still has to
+    // send the money, and it can time out. MoonpayDetails reports it once the
+    // deposit actually arrives.
+    if (!isSepaPaymentMethod) {
+      dispatch(Analytics.track('Purchased Buy Crypto', analyticsData));
+    }
 
     return {externalTransactionId, status: newData.status};
   };
@@ -945,7 +967,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         iban: depositDetails.iban,
         bic: depositDetails.bic,
         recipientName: depositDetails.recipientName,
+        recipientAddress: depositDetails.recipientAddress,
         bankName: depositDetails.bankName,
+        bankAddress: depositDetails.bankAddress,
       },
     );
 
@@ -971,9 +995,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   };
 
   const startSepaPayment = () => {
-    // The SEPA quote carries no payment instrument to pick, so init()'s quote
-    // is the one that gets charged — but only if MoonPay marked it executable.
-    if (!initialQuoteSignature || embeddedQuoteData?.executable === false) {
+    // Only an executable quote can be charged, and the signature is cleared
+    // whenever MoonPay returns one that is not.
+    if (!sepaQuoteSignature) {
       return;
     }
     stopQuoteRefreshTimer();
@@ -1089,6 +1113,19 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       value?: string;
       copyValue?: string;
     }[] = [
+      {
+        key: 'amount',
+        // What MoonPay expects to receive, fees included. Taken from the quote
+        // MoonPay executed, not from the requested amount.
+        label: t('Amount to transfer'),
+        value: embeddedQuoteData.source?.amount
+          ? formatFiatAmount(
+              Number(embeddedQuoteData.source.amount),
+              embeddedQuoteData.source.asset.code,
+            )
+          : undefined,
+        copyValue: embeddedQuoteData.source?.amount,
+      },
       {key: 'reference', label: t('Reference'), value: depositInfo.reference},
       {
         key: 'iban',
@@ -1105,9 +1142,19 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         value: depositInfo.recipientName,
       },
       {
+        key: 'recipientAddress',
+        label: t('Recipient address'),
+        value: depositInfo.recipientAddress,
+      },
+      {
         key: 'bankName',
         label: t('Bank name'),
         value: depositInfo.bankName,
+      },
+      {
+        key: 'bankAddress',
+        label: t('Bank address'),
+        value: depositInfo.bankAddress,
       },
     ].filter(row => !!row.value);
 
@@ -1467,7 +1514,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             }
           })()}
           {isSepaPaymentMethod ? (
-            sepaPaymentStarted && initialQuoteSignature ? (
+            sepaPaymentStarted && sepaQuoteSignature ? (
               <>
                 <SpinnerContainer>
                   <ActivityIndicator color={ProgressBlue} />
@@ -1475,7 +1522,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 <MoonPayBuyFrame
                   ref={buyFrameRef}
                   clientToken={credentials.clientToken}
-                  signature={initialQuoteSignature}
+                  signature={sepaQuoteSignature}
                   externalTransactionId={externalTransactionIdRef.current}
                   onReady={() => {
                     logger.debug('MoonPay Buy frame ready (SEPA)');
@@ -1523,12 +1570,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
             ) : (
               <Button
                 onPress={startSepaPayment}
-                disabled={
-                  isLoading ||
-                  paymentExpired ||
-                  !initialQuoteSignature ||
-                  embeddedQuoteData?.executable === false
-                }
+                disabled={isLoading || paymentExpired || !sepaQuoteSignature}
                 state={sepaButtonState}
                 borderRadius={100}
                 height={50}>
