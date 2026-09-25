@@ -1,6 +1,8 @@
 #!/bin/bash
 
 OVERALL_EXIT=0
+ALLURE_RESULTS_DIR="${ALLURE_RESULTS_DIR:-$PWD/.tmp/allure-results}"
+mkdir -p "$ALLURE_RESULTS_DIR"
 
 for TEST_CLASS in \
   "Test591OnboardingCreateWallet" \
@@ -27,8 +29,7 @@ do
   # Pull allure results immediately after each test
   # so a timeout or crash on a later test doesn't lose earlier results
   echo "=== Pulling allure results after $TEST_CLASS ==="
-  mkdir -p /home/runner/work/_temp/allure-results
-  adb pull /sdcard/googletest/test_outputfiles/allure-results/. /home/runner/work/_temp/allure-results/ || true
+  adb pull /sdcard/googletest/test_outputfiles/allure-results/. "$ALLURE_RESULTS_DIR/" || true
 done
 
 exit $OVERALL_EXIT

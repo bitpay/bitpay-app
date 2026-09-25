@@ -21,6 +21,8 @@ jobs:
     name: Android Espresso UI Tests
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      ALLURE_RESULTS_DIR: ${{ github.workspace }}/allure-results-raw
 
     steps:
       - name: Checkout
@@ -185,14 +187,15 @@ jobs:
         if: always()
         run: |
           mkdir -p allure-results
-          cp -r /home/runner/work/_temp/allure-results/. allure-results/ || true
+          cp -r "$ALLURE_RESULTS_DIR/." allure-results/ || true
           find allure-results -type f || echo "nothing"
 
       - name: Check Allure results were produced
         if: always()
         run: |
           if [ -z "$(find allure-results -name '*.json' 2>/dev/null)" ]; then
-            echo "::warning::No Allure result JSON files found under allure-results/"
+            echo "::error::No Allure result JSON files found under allure-results/ — failing the job instead of uploading an empty archive to Testlio."
+            exit 1
           else
             echo "Allure results found:"
             find allure-results -name '*.json'

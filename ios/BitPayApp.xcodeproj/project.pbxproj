@@ -46,7 +46,6 @@
 		CD1958002FB37AD40072A9AE /* SelectKeyToDepositPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957E02FB37AD40072A9AE /* SelectKeyToDepositPage.swift */; };
 		CD1958012FB37AD40072A9AE /* SelectCurrencyPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957DF2FB37AD40072A9AE /* SelectCurrencyPage.swift */; };
 		CD1958022FB37AD40072A9AE /* HomePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1957D92FB37AD40072A9AE /* HomePage.swift */; };
-		CD1958032FB37AD40072A9AE /* TestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = CD1957EB2FB37AD40072A9AE /* TestPlan.xctestplan */; };
 		CD9683A82FB70CCC00192CFF /* AppFlows.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD9683A72FB70CC700192CFF /* AppFlows.swift */; };
 		D34892F44CAB44409EC335A9 /* Archivo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Archivo-Black.ttf */; };
 		D9739196BA804EA29143DA96 /* Archivo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Archivo-Bold.ttf */; };
@@ -117,7 +116,6 @@
 		CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test594_BasicSwapBTC.swift; sourceTree = "<group>"; };
 		CD1957E92FB37AD40072A9AE /* Test595_BasicSellBTC_.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test595_BasicSellBTC_.swift; sourceTree = "<group>"; };
 		CD1957EA2FB37AD40072A9AE /* Test596_BasicBuyBTC_.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test596_BasicBuyBTC_.swift; sourceTree = "<group>"; };
-		CD1957EB2FB37AD40072A9AE /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
 		CD9683A72FB70CC700192CFF /* AppFlows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlows.swift; sourceTree = "<group>"; };
 		CDF085072FACD8A500CA4C1B /* BitPayAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BitPayAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BitPayApp/BundleHash.swift; sourceTree = "<group>"; };
@@ -284,7 +282,6 @@
 				CD1957E82FB37AD40072A9AE /* Test594_BasicSwapBTC.swift */,
 				CD1957E92FB37AD40072A9AE /* Test595_BasicSellBTC_.swift */,
 				CD1957EA2FB37AD40072A9AE /* Test596_BasicBuyBTC_.swift */,
-				CD1957EB2FB37AD40072A9AE /* TestPlan.xctestplan */,
 			);
 			path = tests;
 			sourceTree = "<group>";
@@ -420,7 +417,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CD1958032FB37AD40072A9AE /* TestPlan.xctestplan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
