@@ -1,0 +1,278 @@
+name: Android Espresso E2E Sandbox
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select the environment (Sandbox or Automation)"
+        required: true
+        default: "Sandbox"
+        type: choice
+        options:
+          - Sandbox
+          - Main_Workspace
+
+concurrency:
+  group: e2e-android-espresso-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-espresso-tests:
+    name: Android Espresso UI Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ALLURE_RESULTS_DIR: ${{ github.workspace }}/allure-results-raw
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Force HTTPS for GitHub git dependencies
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+          git config --global url."https://github.com/".insteadOf "git://github.com/"
+
+      - name: Rewrite yarn.lock git+ssh URLs to HTTPS
+        run: |
+          if [ -f yarn.lock ]; then
+            sed -i 's#ssh://git@github.com/#https://github.com/#g' yarn.lock
+            sed -i 's#git+ssh://git@github.com/#https://github.com/#g' yarn.lock
+            sed -i 's#git@github.com:#https://github.com/#g' yarn.lock
+          fi
+
+      - name: Free disk space
+        run: |
+          echo "=== Disk before cleanup ==="
+          df -h
+
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/2[0-6]*
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /opt/az
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/share/miniconda
+
+          # Docker preloads several GB of images on GitHub-hosted runners
+          # that this workflow never uses.
+          docker image prune -af 2>/dev/null || true
+          docker system prune -af --volumes 2>/dev/null || true
+
+          echo "=== Disk after cleanup ==="
+          df -h
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'yarn'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Check disk space after dependency install
+        run: |
+          echo "=== Disk after yarn install ==="
+          df -h
+          echo "=== Largest node_modules subdirs ==="
+          du -sh node_modules/* 2>/dev/null | sort -rh | head -15
+
+      - name: Create env file
+        env:
+          ENV_FILE: ${{ secrets.ENV_DEVELOPMENT }}
+        run: |
+          echo "$ENV_FILE" > .env.development
+          # E2E stability: redux-logger serializes the ENTIRE Redux state tree
+          # to logcat on every dispatched action. A recovery-phrase import fires
+          # hundreds of actions (per wallet, per chain, per token) and the
+          # serialization pins the JS thread long enough to blow past the
+          # Espresso wait budgets, so force dev logging off for the automated
+          # run regardless of what the secret carries.
+          sed -i '/^DISABLE_DEVELOPMENT_LOGGING=/d' .env.development
+          echo "DISABLE_DEVELOPMENT_LOGGING=true" >> .env.development
+          # E2E stability: index.js only calls LogBox.ignoreAllLogs() when
+          # IS_MAESTRO === 'true'. Without it, any console.error during bootstrap
+          # (e.g. "zenledgerInitialize: credentials not found" when the secret
+          # carries no ZenLedger creds) throws up the RN LogBox "Console Error"
+          # overlay, which covers the onboarding screen and makes every test
+          # fail on a missing skip-button. Force the flag on for the automated run.
+          sed -i '/^IS_MAESTRO=/d' .env.development
+          echo "IS_MAESTRO=true" >> .env.development
+
+      - name: Create Sentry properties
+        run: |
+          echo "${{ secrets.SENTRY_PROPERTIES }}" > sentry.properties
+          echo "${{ secrets.SENTRY_PROPERTIES }}" > android/sentry.properties
+
+      - name: Set native config values
+        run: yarn set:dev
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Enable KVM for emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Start Metro bundler
+        run: |
+          npx react-native start &
+          echo $! > /tmp/metro.pid
+          npx wait-on http://localhost:8081/status --timeout 60000
+
+      - name: Build debug APK and test APK
+        run: |
+          cd android
+          ./gradlew assembleDebug assembleDebugAndroidTest \
+            -PreactNativeArchitectures=x86_64 \
+            --no-daemon
+
+      - name: Check disk space before emulator start
+        run: |
+          echo "=== Disk after APK build, before emulator ==="
+          df -h
+          echo "=== Gradle cache size ==="
+          du -sh ~/.gradle/caches 2>/dev/null || true
+          echo "=== Android build outputs size ==="
+          du -sh android/app/build 2>/dev/null || true
+
+      - name: Start Android emulator and run Espresso tests
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 75
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          avd-name: e2e-emulator
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -memory 4096
+          disable-animations: true
+          script: |
+            adb logcat -c
+            adb logcat > /home/runner/work/_temp/device-logcat.txt &
+            echo $! > /tmp/logcat.pid
+            adb reverse tcp:8081 tcp:8081
+            bash scripts/run-tests.sh
+            kill $(cat /tmp/logcat.pid) || true
+
+      - name: Stop Metro bundler
+        if: always()
+        run: kill $(cat /tmp/metro.pid) || true
+
+      - name: Copy Allure results to workspace
+        if: always()
+        run: |
+          mkdir -p allure-results
+          cp -r "$ALLURE_RESULTS_DIR/." allure-results/ || true
+          find allure-results -type f || echo "nothing"
+
+      - name: Check Allure results were produced
+        if: always()
+        run: |
+          if [ -z "$(find allure-results -name '*.json' 2>/dev/null)" ]; then
+            echo "::error::No Allure result JSON files found under allure-results/ — failing the job instead of uploading an empty archive to Testlio."
+            exit 1
+          else
+            echo "Allure results found:"
+            find allure-results -name '*.json'
+          fi
+
+      - name: Upload raw Espresso test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: espresso-android-results
+          path: android/app/build/outputs/androidTest-results/connected/
+          retention-days: 7
+
+      - name: Install Allure CLI
+        if: always()
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q default-jre-headless
+          curl -fLo allure.tgz https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz
+          tar -xzf allure.tgz
+          sudo mv allure-2.29.0 /opt/allure
+          sudo ln -sf /opt/allure/bin/allure /usr/local/bin/allure
+
+      - name: Zip Allure Results
+        if: always()
+        run: |
+          rm -f allure-results.zip
+          zip -r allure-results.zip allure-results/
+          echo "=== Zip contents ==="
+          unzip -l allure-results.zip | head -30
+
+      - name: Upload Allure Results Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results.zip
+          retention-days: 7
+
+      - name: Generate Allure HTML Report
+        if: always()
+        run: allure generate allure-results --clean -o allure-report
+
+      - name: Upload Allure HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-html-report
+          path: allure-report
+          retention-days: 7
+
+      - name: Install Testlio CLI
+        if: always()
+        run: npm install -g @testlio/cli
+
+      - name: Upload Results to Testlio
+        if: always()
+        env:
+          TESTLIO_DEVICE_ID: ${{ secrets.TESTLIO_ANDROID_DEVICE_ID }}
+          RUN_API_TOKEN: ${{ inputs.environment == 'Sandbox' && secrets.TESTLIO_RUN_TOKEN || secrets.TESTLIO_RUN_TOKEN_BITPAY }}
+        run: |
+          if [ "${{ inputs.environment }}" = "Sandbox" ]; then
+            export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config-sandbox.json"
+          else
+            export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config.json"
+          fi
+          testlio create-run \
+            --testConfig testlio-cli/test-config.json \
+            --projectConfig "$TESTLIO_PROJECT_CONFIG" \
+            --externalResults true \
+            --resultProvider local \
+            --automatedDeviceIds "$TESTLIO_DEVICE_ID"
+
+          testlio parse-run-results \
+            --projectConfig "$TESTLIO_PROJECT_CONFIG" \
+            --path allure-results.zip \
+            --automatedDeviceId "$TESTLIO_DEVICE_ID"
+
+          testlio finalize-results \
+            --projectConfig "$TESTLIO_PROJECT_CONFIG"
