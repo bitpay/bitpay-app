@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 import {View, ViewStyle, StyleSheet} from 'react-native';
 import {WebView, WebViewMessageEvent} from 'react-native-webview';
+import {logManager} from '../../../managers/LogManager';
 
 type MoonPayWebViewProps = {
   url: string;
@@ -57,18 +58,46 @@ export const MoonPayWebView = forwardRef<
 
     const handleMessage = useCallback(
       (event: WebViewMessageEvent) => {
-        try {
-          const data: FrameMessage = JSON.parse(event.nativeEvent.data);
-          if (data.meta?.channelId !== channelId) return;
+        const raw = event.nativeEvent.data;
 
+        let data: FrameMessage;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          // Anything running in the frame can post to this bridge, so a message
+          // that is not the frames protocol is expected rather than a failure.
+          logManager.debug(
+            `[MoonPayWebView]: ignored a non-JSON message: ${String(raw).slice(
+              0,
+              100,
+            )}`,
+          );
+          return;
+        }
+
+        if (data.meta?.channelId !== channelId) {
+          logManager.debug(
+            `[MoonPayWebView]: ignored '${data.kind}' from another channel (${data.meta?.channelId})`,
+          );
+          return;
+        }
+
+        // Kept separate from the parsing above: a handler throwing is a bug on
+        // our side, not a malformed message, and swallowing it silently is what
+        // made those failures invisible.
+        try {
           if (data.kind === 'handshake') {
             sendMessage('ack');
             onHandshake();
           }
 
           onMessage(data);
-        } catch {
-          // Ignore malformed messages
+        } catch (err) {
+          logManager.error(
+            `[MoonPayWebView]: handler for '${data.kind}' threw: ${
+              err instanceof Error ? err.message : JSON.stringify(err)
+            }`,
+          );
         }
       },
       [channelId, sendMessage, onMessage, onHandshake],
