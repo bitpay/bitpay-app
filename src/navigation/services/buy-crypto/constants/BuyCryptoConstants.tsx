@@ -209,13 +209,13 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     ),
     supportedExchanges: {
       banxa: false,
-      moonpay: false,
+      moonpay: true,
       ramp: false,
       sardine: false,
       simplex: false,
       transak: false,
     },
-    enabled: false,
+    enabled: Platform.OS === 'android',
   },
   sepaBankTransfer: {
     order: 7,

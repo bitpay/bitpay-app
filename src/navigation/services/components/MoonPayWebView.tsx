@@ -13,6 +13,9 @@ type MoonPayWebViewProps = {
   onMessage: (data: FrameMessage) => void;
   onHandshake: () => void;
   style?: ViewStyle;
+  // Google Pay runs on the Payment Request API, which Android WebViews keep
+  // disabled by default. Opt-in per frame so the other frames are untouched.
+  paymentRequestEnabled?: boolean;
 };
 
 export type MoonPayWebViewRef = {
@@ -29,63 +32,69 @@ export type FrameMessage = {
 export const MoonPayWebView = forwardRef<
   MoonPayWebViewRef,
   MoonPayWebViewProps
->(({url, channelId, onMessage, onHandshake, style}, ref) => {
-  const webViewRef = useRef<WebView>(null);
+>(
+  (
+    {url, channelId, onMessage, onHandshake, style, paymentRequestEnabled},
+    ref,
+  ) => {
+    const webViewRef = useRef<WebView>(null);
 
-  const sendMessage = useCallback(
-    (kind: string, payload?: object) => {
-      const message = {
-        version: 2,
-        meta: {channelId},
-        kind,
-        ...(payload && {payload}),
-      };
+    const sendMessage = useCallback(
+      (kind: string, payload?: object) => {
+        const message = {
+          version: 2,
+          meta: {channelId},
+          kind,
+          ...(payload && {payload}),
+        };
 
-      webViewRef.current?.postMessage(JSON.stringify(message));
-    },
-    [channelId],
-  );
+        webViewRef.current?.postMessage(JSON.stringify(message));
+      },
+      [channelId],
+    );
 
-  useImperativeHandle(ref, () => ({sendMessage}), [sendMessage]);
+    useImperativeHandle(ref, () => ({sendMessage}), [sendMessage]);
 
-  const handleMessage = useCallback(
-    (event: WebViewMessageEvent) => {
-      try {
-        const data: FrameMessage = JSON.parse(event.nativeEvent.data);
-        if (data.meta?.channelId !== channelId) return;
+    const handleMessage = useCallback(
+      (event: WebViewMessageEvent) => {
+        try {
+          const data: FrameMessage = JSON.parse(event.nativeEvent.data);
+          if (data.meta?.channelId !== channelId) return;
 
-        if (data.kind === 'handshake') {
-          sendMessage('ack');
-          onHandshake();
+          if (data.kind === 'handshake') {
+            sendMessage('ack');
+            onHandshake();
+          }
+
+          onMessage(data);
+        } catch {
+          // Ignore malformed messages
         }
+      },
+      [channelId, sendMessage, onMessage, onHandshake],
+    );
 
-        onMessage(data);
-      } catch {
-        // Ignore malformed messages
-      }
-    },
-    [channelId, sendMessage, onMessage, onHandshake],
-  );
-
-  return (
-    <View style={[styles.container, style]}>
-      <WebView
-        ref={webViewRef}
-        key={'frame-' + url}
-        source={{uri: url}}
-        onMessage={handleMessage}
-        javaScriptEnabled
-        domStorageEnabled
-        allowsInlineMediaPlayback
-        automaticallyAdjustContentInsets
-        mediaPlaybackRequiresUserAction={false}
-        originWhitelist={['*']}
-        setSupportMultipleWindows={false}
-        style={styles.webview}
-      />
-    </View>
-  );
-});
+    return (
+      <View style={[styles.container, style]}>
+        <WebView
+          ref={webViewRef}
+          key={'frame-' + url}
+          source={{uri: url}}
+          onMessage={handleMessage}
+          javaScriptEnabled
+          domStorageEnabled
+          allowsInlineMediaPlayback
+          automaticallyAdjustContentInsets
+          mediaPlaybackRequiresUserAction={false}
+          originWhitelist={['*']}
+          setSupportMultipleWindows={false}
+          paymentRequestEnabled={paymentRequestEnabled}
+          style={styles.webview}
+        />
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {flex: 1},

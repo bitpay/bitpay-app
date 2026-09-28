@@ -53,6 +53,7 @@ import {
   getMoonpayEmbeddedAnonymousCredentials,
   getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedGooglePaySupported,
   getMoonpayEmbeddedSepaSupported,
   resolveMoonpayEmbeddedSepaSupport,
   getMoonpayEmbeddedEnabled,
@@ -2505,8 +2506,11 @@ const BuyAndSellRoot = ({
         isMoonpayEmbeddedPaymentMethodEnabled(
           paymentMethod?.method,
           buyCryptoConfig,
-          getMoonpayEmbeddedApplePaySupported(),
-          true,
+          {
+            applePaySupported: getMoonpayEmbeddedApplePaySupported(),
+            googlePaySupported: getMoonpayEmbeddedGooglePaySupported(),
+            sepaHeadlessSupported: true,
+          },
         );
 
       // Whether it can actually run embedded, runtime capabilities included.
@@ -2514,8 +2518,11 @@ const BuyAndSellRoot = ({
         isMoonpayEmbeddedPaymentMethodEnabled(
           paymentMethod?.method,
           buyCryptoConfig,
-          getMoonpayEmbeddedApplePaySupported(),
-          getMoonpayEmbeddedSepaSupported(),
+          {
+            applePaySupported: getMoonpayEmbeddedApplePaySupported(),
+            googlePaySupported: getMoonpayEmbeddedGooglePaySupported(),
+            sepaHeadlessSupported: getMoonpayEmbeddedSepaSupported(),
+          },
         );
       if (moonpayEmbeddedEnabled && isMoonpayEmbeddedPaymentMethod) {
         const embeddedStatus = getMoonpayEmbeddedStatus();

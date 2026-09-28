@@ -80,6 +80,12 @@ import {
   moonpayGetTransactionDetailsEmbedded,
 } from '../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
+  MoonPayGooglePayFrame,
+  GooglePayFrameRef,
+  GooglePayCompletePayload,
+  GooglePayErrorPayload,
+} from '../components/MoonPayGooglePayFrame';
+import {
   MoonPayApplePayFrame,
   ApplePayCompletePayload,
   ApplePayErrorPayload,
@@ -309,6 +315,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   );
   const scrollViewRef = useRef<ScrollView>(null);
   const applePayFrameRef = useRef<ApplePayFrameRef>(null);
+  const googlePayFrameRef = useRef<GooglePayFrameRef>(null);
   const buyFrameRef = useRef<BuyFrameRef>(null);
   const quoteRefreshTimerRef = useRef<
     ReturnType<typeof setTimeout> | undefined
@@ -328,6 +335,11 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   >(null);
   const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+
+  const isGooglePayPaymentMethod = paymentMethod?.method === 'googlePay';
+  // Google Pay runs on the Payment Request API. When the WebView cannot provide
+  // it the frame says so, and there is nothing to show but a way out.
+  const [googlePayUnsupported, setGooglePayUnsupported] = useState(false);
 
   const isSepaPaymentMethod = paymentMethod?.method === 'sepaBankTransfer';
   const [sepaQuoteSignature, setSepaQuoteSignature] = useState<string | null>(
@@ -471,6 +483,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       }
       if (newQuoteData?.signature) {
         applePayFrameRef.current?.updateQuote(newQuoteData.signature);
+        googlePayFrameRef.current?.updateQuote(newQuoteData.signature);
         // A card quote is only usable when MoonPay marks it executable, since
         // it is bound to a stored instrument. A SEPA quote has none to
         // validate, so only an explicit false rules it out.
@@ -1686,6 +1699,107 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   </TouchableOpacity>
                 ) : null}
               </>
+            )
+          ) : isGooglePayPaymentMethod ? (
+            googlePayUnsupported ? (
+              <DisclosureText>
+                {t(
+                  'Google Pay is not available on this device. Please go back and choose another payment method.',
+                )}
+              </DisclosureText>
+            ) : !isLoading && !paymentExpired && initialQuoteSignature ? (
+              <MoonPayGooglePayFrame
+                ref={googlePayFrameRef}
+                clientToken={credentials.clientToken}
+                signature={initialQuoteSignature}
+                externalTransactionId={externalTransactionIdRef.current}
+                theme={theme.dark ? 'dark' : 'light'}
+                onReady={() => {
+                  logger.debug('MoonPay Google Pay frame ready');
+                }}
+                onComplete={async (payload: GooglePayCompletePayload) => {
+                  await handleTransactionComplete(payload.transaction);
+                }}
+                onChallenge={(url: string) => {
+                  cancelQuoteRefresh();
+                  logger.debug(
+                    'MoonPay Google Pay challenge required, opening challenge frame',
+                  );
+                  dispatch(
+                    Analytics.track('Buy Crypto Challenge Started', {
+                      exchange: 'moonpay',
+                      context: 'MoonpayBuyEmbeddedCheckout',
+                      paymentMethod: paymentMethod?.method || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      coin:
+                        cloneDeep(
+                          wallet?.currencyAbbreviation,
+                        )?.toLowerCase() || '',
+                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      fiatCurrency: offer?.fiatCurrency || '',
+                    }),
+                  );
+                  setChallengeUrl(url);
+                }}
+                onQuoteExpired={refreshQuote}
+                onCancelled={(code?: string) => {
+                  logger.debug(
+                    'MoonPay Google Pay sheet dismissed by user' +
+                      (code ? ': ' + code : ''),
+                  );
+                  dispatch(
+                    Analytics.track('Failed Buy Crypto', {
+                      exchange: 'moonpay',
+                      context: 'MoonpayBuyEmbeddedCheckout',
+                      reason: 'Google Pay sheet dismissed by user',
+                      paymentMethod: paymentMethod?.method || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      coin:
+                        cloneDeep(
+                          wallet?.currencyAbbreviation,
+                        )?.toLowerCase() || '',
+                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      fiatCurrency: offer?.fiatCurrency || '',
+                    }),
+                  );
+                }}
+                onUnsupported={() => {
+                  cancelQuoteRefresh();
+                  setGooglePayUnsupported(true);
+                  logger.warn(
+                    'MoonPay Google Pay unavailable on this device: the environment cannot run the Payment Request API / Google Pay',
+                  );
+                  dispatch(
+                    Analytics.track('Failed Buy Crypto', {
+                      exchange: 'moonpay',
+                      context: 'MoonpayBuyEmbeddedCheckout',
+                      reason: 'Google Pay unsupported on this device',
+                      paymentMethod: paymentMethod?.method || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      coin:
+                        cloneDeep(
+                          wallet?.currencyAbbreviation,
+                        )?.toLowerCase() || '',
+                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      fiatCurrency: offer?.fiatCurrency || '',
+                    }),
+                  );
+                }}
+                onError={(error: GooglePayErrorPayload) => {
+                  cancelQuoteRefresh();
+                  logger.error(
+                    'MoonPay Google Pay frame error: [' +
+                      error.code +
+                      '] ' +
+                      error.message,
+                  );
+                  showError(error, error.code, error.message);
+                }}
+              />
+            ) : (
+              <SpinnerContainer>
+                <ActivityIndicator color={ProgressBlue} />
+              </SpinnerContainer>
             )
           ) : !isLoading && !paymentExpired && initialQuoteSignature ? (
             <MoonPayApplePayFrame
