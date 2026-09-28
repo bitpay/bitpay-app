@@ -425,8 +425,10 @@ export const walletConnectV2SubscribeToEvents =
         let processedRequestData = {};
 
         if (
-          event.params.request.method ===
-          EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION
+          [
+            EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION,
+            EIP155_SIGNING_METHODS.ETH_SIGN_TRANSACTION,
+          ].includes(event.params.request.method)
         ) {
           processedRequestData = await dispatch(processSwapRequest(event));
         } else if (
@@ -466,13 +468,6 @@ export const walletConnectV2SubscribeToEvents =
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`Error processing request ID ${event.id}: ${errMsg}`);
       }
-    };
-
-    const parseAndFormatChainId = (chainId: string) => {
-      const parsedChainId = chainId.startsWith('0x')
-        ? parseInt(chainId, 16)
-        : parseInt(chainId, 10);
-      return `eip155:${parsedChainId}`;
     };
 
     const emitSessionEvents = async (
@@ -578,6 +573,14 @@ export const walletConnectV2SubscribeToEvents =
     );
   };
 
+const parseAndFormatChainId = (chainId: string) => {
+  const parsedChainId = chainId.startsWith('0x')
+    ? parseInt(chainId, 16)
+    : parseInt(chainId, 10);
+
+  return `eip155:${parsedChainId}`;
+};
+
 const getNamespacesAccounts = (
   namespaces: SessionTypes.Namespaces | undefined,
 ): string[] => [
@@ -611,6 +614,7 @@ const assertAuthorizedSigner =
     const {chainId} = request.params;
     const walletAddress = wallet.receiveAddress;
     const requestAddress = getAddressFrom(request);
+    const declaredChainId = request.params.request.params?.[0]?.chainId;
     const supportedChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId];
     const sessionV2: WCV2SessionType | undefined =
       getState().WALLET_CONNECT_V2.sessions.find(
@@ -624,7 +628,9 @@ const assertAuthorizedSigner =
     const matchesRequestedChain =
       !!supportedChain &&
       wallet.chain === supportedChain.chain &&
-      wallet.network === supportedChain.network;
+      wallet.network === supportedChain.network &&
+      (declaredChainId === undefined ||
+        parseAndFormatChainId(String(declaredChainId)) === chainId);
 
     if (
       !walletAddress ||
@@ -969,8 +975,9 @@ const approveWCRequest =
             break;
 
           case EIP155_SIGNING_METHODS.ETH_SIGN_TRANSACTION:
-            const signTransaction = request.params[0];
-            const signature = await signer.signTransaction(signTransaction);
+            const signature = await signer.signTransaction(
+              getSignedTransaction(requestEvent),
+            );
             resolve(formatJsonRpcResult(id, signature));
             break;
 
@@ -1205,6 +1212,17 @@ export const getTypedDataPayload = (request: WCV2RequestType) => {
 
 export const getSignParamsData = (params: string[]): any =>
   params.find(param => !utils.isAddress(param));
+
+// a transaction without chainId is signed pre-EIP-155 and replays on any chain, so
+// the authorized chain is always the one that ends up in the signature
+export const getSignedTransaction = (request: WCV2RequestType) => {
+  const {chainId} = request.params;
+
+  return {
+    ...request.params.request.params[0],
+    chainId: WC_SUPPORTED_CHAINS[chainId as WcSupportedChain]?.chainId,
+  };
+};
 
 export const getSignedMessage = (request: WCV2RequestType) => {
   const {method, params} = request.params.request;

@@ -1,12 +1,9 @@
 jest.mock('ethers', () => {
-  // test/setup.js stubs isAddress as always true; these tests need the real predicates
-  const {utils} = jest.requireActual('ethers');
+  // test/setup.js stubs isAddress as always true and BigNumber as a spy; these tests
+  // need the real predicates and the real numeric parsing
+  const {BigNumber, utils} = jest.requireActual('ethers');
 
-  return {
-    BigNumber: {from: jest.fn()},
-    ethers: {BigNumber: {from: jest.fn()}, utils},
-    utils,
-  };
+  return {BigNumber, ethers: {BigNumber, utils}, utils};
 });
 
 import {getMessageView, getRequestSummary} from './walletConnectRequestSummary';

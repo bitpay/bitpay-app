@@ -1257,7 +1257,7 @@ export const processSwapRequest =
     const {chainId} = params;
     const {method} = params.request;
 
-    const {to, data, from} = params.request.params[0];
+    const {to, data, from, value} = params.request.params[0];
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
 
     if (data === '0x') {
@@ -1267,6 +1267,7 @@ export const processSwapRequest =
         from,
         method,
         dispatch,
+        value,
       );
     }
 
@@ -1280,6 +1281,7 @@ export const processSwapRequest =
           from,
           method,
           dispatch,
+          value,
         );
         // logManager.debug(
         //     'No standard token data - fetching contract ABI from Etherscan',
@@ -1325,6 +1327,7 @@ export const processSwapRequest =
         from,
         transactionDataName,
         dispatch,
+        value,
       );
     } catch (error) {
       logManager.error(`Error processing swap request: ${error}`);
@@ -1335,6 +1338,7 @@ export const processSwapRequest =
         from,
         method,
         dispatch,
+        value,
       );
     }
   };
@@ -1384,13 +1388,28 @@ const fetchContractAbi = async (
   return parsedAbi;
 };
 
+// ethers reads hex strings, decimal strings and numbers; parseInt would read a
+// decimal string as hexadecimal and report an amount the signer never sees
+export const getTransactionValue = (value?: unknown): string | undefined => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  try {
+    return ethers.BigNumber.from(value).toString();
+  } catch {
+    return undefined;
+  }
+};
+
 const handleDefaultTransaction = async (
   keys: Keys,
   chain: string,
   senderAddress: string,
   transactionDataName: string,
   dispatch: any,
+  value?: unknown,
 ) => {
+  const swapAmount = getTransactionValue(value);
   logManager.debug(`processing ${transactionDataName} transaction`);
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
@@ -1405,6 +1424,7 @@ const handleDefaultTransaction = async (
     swapFromChain: chain,
     senderAddress,
     swapFromCurrencyAbbreviation: currencyAbbreviation,
+    ...(swapAmount ? {swapAmount} : {}),
   };
 };
 

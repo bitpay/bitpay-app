@@ -138,12 +138,16 @@ const VerifyIconContainer = styled(TouchableOpacity)`
 const processRequest = (request: WCV2RequestType, keys: Keys) => {
   const {senderAddress, swapFromCurrencyAbbreviation, swapFromChain} = request;
 
+  const {network} =
+    WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId] || {};
+
   let wallet = Object.values(keys)
     .flatMap(key => key.wallets)
     .find(
       wallet =>
         isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === swapFromChain &&
+        wallet.network === network &&
         wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
         matchesRequestToken(wallet, request),
     );
@@ -454,11 +458,12 @@ const WalletConnectHome = () => {
       }
       const {swapFromCurrencyAbbreviation} = requestV2;
       const {chainId} = requestV2.params;
-      const chain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+      const {chain, network} = WALLET_CONNECT_SUPPORTED_CHAINS[chainId] || {};
       const wallet = keyFullWalletObjs.find(
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === chain &&
+          wallet.network === network &&
           wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
           matchesRequestToken(wallet, requestV2),
       );
@@ -526,10 +531,13 @@ const WalletConnectHome = () => {
         createdOn,
       } = item;
 
+      const {network} =
+        WALLET_CONNECT_SUPPORTED_CHAINS[item.params.chainId] || {};
       const wallet = keyFullWalletObjs.find(
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === swapFromChain &&
+          wallet.network === network &&
           wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
           matchesRequestToken(wallet, item),
       );

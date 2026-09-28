@@ -31,14 +31,11 @@ jest.mock('@reown/walletkit', () => ({
 }));
 
 jest.mock('ethers', () => {
-  // test/setup.js stubs isAddress as always true; these tests need the real predicates
-  const {utils} = jest.requireActual('ethers');
+  // test/setup.js stubs isAddress as always true and BigNumber as a spy; these tests
+  // need the real predicates and the real numeric parsing
+  const {BigNumber, utils} = jest.requireActual('ethers');
 
-  return {
-    BigNumber: {from: jest.fn()},
-    ethers: {BigNumber: {from: jest.fn()}, utils},
-    utils,
-  };
+  return {BigNumber, ethers: {BigNumber, utils}, utils};
 });
 
 jest.mock('@walletconnect/utils', () => ({
@@ -58,6 +55,7 @@ import {
   getGasWalletByRequest,
   getSignParamsData,
   getSignedMessage,
+  getSignedTransaction,
   getSignedTypedData,
   getSignedTypes,
   walletConnectV2ApproveCallRequest,
@@ -113,7 +111,9 @@ const buildSession = (namespaceAccounts: string[], accounts?: string[]) =>
 
 const makeStore = (sessions: any[] = [], keys: any = {}) => {
   const state = {
-    WALLET: {keys},
+    APP: {defaultAltCurrency: {isoCode: 'USD'}},
+    RATE: {rates: {}},
+    WALLET: {customTokenOptionsByAddress: {}, keys},
     WALLET_CONNECT_V2: {requests: [], sessions},
   };
   const dispatched: any[] = [];
@@ -192,6 +192,39 @@ describe('getSignedMessage', () => {
         buildRequest('eth_sign', [badChecksum, 'approve 1 ETH']),
       ),
     ).toBe('approve 1 ETH');
+  });
+});
+
+describe('getSignedTransaction', () => {
+  const buildTx = (tx: any, chainId = 'eip155:1') =>
+    buildRequest('eth_signTransaction', [tx], chainId);
+
+  it('binds a transaction that declares no chain to the authorized one', () => {
+    expect(
+      getSignedTransaction(buildTx({from: ACCOUNT_A, to: ACCOUNT_B})).chainId,
+    ).toBe(1);
+  });
+
+  it('normalizes a hexadecimal chain to the number ethers expects', () => {
+    expect(
+      getSignedTransaction(
+        buildTx({chainId: '0x1', from: ACCOUNT_A, to: ACCOUNT_B}),
+      ).chainId,
+    ).toBe(1);
+  });
+
+  it('uses the chain of the session, not the one the request declares', () => {
+    expect(
+      getSignedTransaction(
+        buildTx({chainId: 1, from: ACCOUNT_A, to: ACCOUNT_B}, 'eip155:137'),
+      ).chainId,
+    ).toBe(137);
+  });
+
+  it('keeps the rest of the transaction untouched', () => {
+    const tx = {from: ACCOUNT_A, to: ACCOUNT_B, value: '0xde0b6b3a7640000'};
+
+    expect(getSignedTransaction(buildTx(tx))).toEqual({...tx, chainId: 1});
   });
 });
 
@@ -547,6 +580,33 @@ describe('walletConnectV2ApproveCallRequest', () => {
     ).toBe(false);
   });
 
+  it('refuses to sign a transaction declaring another chain', async () => {
+    const {dispatch} = makeStore([buildSession([`eip155:1:${ACCOUNT_A}`])]);
+    const request = buildRequest('eth_signTransaction', [
+      {chainId: '0x89', from: ACCOUNT_A, to: ACCOUNT_B},
+    ]);
+
+    await expect(
+      dispatch(walletConnectV2ApproveCallRequest(request, wallet(ACCOUNT_A))),
+    ).rejects.toThrow('cannot be signed with the selected account');
+  });
+
+  it('signs a transaction that declares the authorized chain', async () => {
+    const {dispatch} = makeStore([buildSession([`eip155:1:${ACCOUNT_A}`])]);
+    const request = buildRequest('eth_signTransaction', [
+      {chainId: '0x1', from: ACCOUNT_A, to: ACCOUNT_B},
+    ]);
+    const send = jest.fn(() =>
+      Promise.resolve({id: 1, jsonrpc: '2.0', result: '0xsig'} as any),
+    );
+
+    await dispatch(
+      walletConnectV2ApproveCallRequest(request, wallet(ACCOUNT_A), send),
+    );
+
+    expect(send).toHaveBeenCalled();
+  });
+
   it('refuses to sign with an account the request does not name', async () => {
     const {dispatch} = makeStore([
       buildSession([`eip155:1:${ACCOUNT_A}`, `eip155:1:${ACCOUNT_B}`]),
@@ -828,6 +888,43 @@ describe('session_request listener', () => {
   beforeEach(() => {
     mockRespondSessionRequest.mockClear();
     mockEmitSessionEvent.mockClear();
+  });
+
+  it('summarizes eth_signTransaction from the transaction itself', async () => {
+    const {dispatch, dispatched} = makeStore(
+      [buildSession([`eip155:1:${ACCOUNT_A}`])],
+      {
+        'key-1': {
+          wallets: [
+            {
+              chain: 'eth',
+              currencyAbbreviation: 'eth',
+              network: 'livenet',
+              receiveAddress: ACCOUNT_A,
+            },
+          ],
+        },
+      },
+    );
+    await dispatch(walletConnectV2Init());
+    await eventHandlers.session_request(
+      buildRequest('eth_signTransaction', [
+        {
+          data: '0x',
+          from: ACCOUNT_A,
+          to: ACCOUNT_B,
+          value: '0xde0b6b3a7640000',
+        },
+      ]),
+    );
+
+    const sessionRequest = dispatched.find(
+      ({type}) => type === WalletConnectV2ActionTypes.SESSION_REQUEST,
+    );
+
+    expect(sessionRequest.payload.request.swapAmount).toBe(
+      '1000000000000000000',
+    );
   });
 
   it('answers an unsupported method instead of dropping it silently', async () => {

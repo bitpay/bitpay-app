@@ -18,16 +18,15 @@ jest.mock('../store/moralis/moralis.effects', () => ({
 }));
 jest.mock('../api/etherscan', () => ({default: {}}));
 jest.mock('ethers', () => {
-  // test/setup.js stubs isAddress as always true; these tests need the real predicates
-  const {utils} = jest.requireActual('ethers');
+  // test/setup.js stubs isAddress as always true and BigNumber as a spy; these tests
+  // need the real predicates and the real numeric parsing
+  const {BigNumber, utils} = jest.requireActual('ethers');
 
-  return {
-    BigNumber: {from: jest.fn()},
-    ethers: {BigNumber: {from: jest.fn()}, utils},
-    utils,
-  };
+  return {BigNumber, ethers: {BigNumber, utils}, utils};
 });
-jest.mock('../managers/TokenManager', () => ({tokenManager: {}}));
+jest.mock('../managers/TokenManager', () => ({
+  tokenManager: {getTokenOptions: () => ({tokenOptionsByAddress: {}})},
+}));
 jest.mock('../managers/LogManager', () => ({
   logManager: {
     log: jest.fn(),
@@ -91,7 +90,9 @@ import {
   getUnrecognizedSolanaInstructions,
   isSameAddress,
   matchesRequestToken,
+  getTransactionValue,
   processOtherMethodsRequest,
+  processSwapRequest,
 } from './helper-methods';
 import {Network} from '../constants';
 
@@ -1779,5 +1780,132 @@ describe('getSolanaSignerCount', () => {
     expect(getSolanaSignerCount('')).toBeUndefined();
     expect(getSolanaSignerCount(undefined)).toBeUndefined();
     expect(getSolanaSignerCount('AA' + oneSigner.slice(2))).toBeUndefined();
+  });
+});
+
+describe('processSwapRequest', () => {
+  const ACCOUNT_A = '0x1111111111111111111111111111111111111111';
+
+  const makeDispatch = () => {
+    const getState = () =>
+      ({
+        APP: {defaultAltCurrency: {isoCode: 'USD'}},
+        RATE: {rates: {}},
+        WALLET: {
+          customTokenOptionsByAddress: {},
+          keys: {
+            'key-1': {
+              wallets: [
+                {
+                  chain: 'eth',
+                  currencyAbbreviation: 'eth',
+                  network: 'livenet',
+                  receiveAddress: ACCOUNT_A,
+                },
+              ],
+            },
+          },
+        },
+      } as any);
+    const dispatch = (action: any): any =>
+      typeof action === 'function' ? action(dispatch, getState) : action;
+
+    return dispatch;
+  };
+
+  const buildTxEvent = (method: string, tx: any) =>
+    ({
+      id: 1,
+      params: {chainId: 'eip155:1', request: {method, params: [tx]}},
+      topic: 'topic-1',
+    } as any);
+
+  it('takes the amount of a plain transfer from the transaction value', async () => {
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_signTransaction', {
+          data: '0x',
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0xde0b6b3a7640000',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBe('1000000000000000000');
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('keeps the native amount of a transaction that also carries calldata', async () => {
+    // transfer(address,uint256) to 0x33..33 for 1 unit
+    const transferData =
+      '0xa9059cbb' + '3'.repeat(40).padStart(64, '0') + '1'.padStart(64, '0');
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_signTransaction', {
+          data: transferData,
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0xde0b6b3a7640000',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBe('1000000000000000000');
+  });
+
+  it('keeps the native amount when the summary cannot be built', async () => {
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_signTransaction', {
+          data: '0xdeadbeef',
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0xde0b6b3a7640000',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBe('1000000000000000000');
+  });
+
+  it('leaves the amount out when the transaction carries no value', async () => {
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_sendTransaction', {
+          data: '0x',
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBeUndefined();
+  });
+});
+
+describe('getTransactionValue', () => {
+  it('reads a hexadecimal amount', () => {
+    expect(getTransactionValue('0xde0b6b3a7640000')).toBe(
+      '1000000000000000000',
+    );
+  });
+
+  it('reads a decimal string as decimal, not as hexadecimal', () => {
+    expect(getTransactionValue('1000000000000000')).toBe('1000000000000000');
+  });
+
+  it('reads a number as decimal, not as hexadecimal', () => {
+    expect(getTransactionValue(1000000)).toBe('1000000');
+  });
+
+  it('has no amount when the transaction carries none', () => {
+    expect(getTransactionValue(undefined)).toBeUndefined();
+    expect(getTransactionValue('')).toBeUndefined();
+    expect(getTransactionValue(null)).toBeUndefined();
+  });
+
+  it('has no amount when the value cannot be parsed', () => {
+    expect(getTransactionValue('not-a-number')).toBeUndefined();
   });
 });
