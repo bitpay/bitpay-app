@@ -35,7 +35,7 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {FlatList, Platform} from 'react-native';
+import {Platform, View} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {
   isSameAddress,
@@ -685,12 +685,13 @@ const WalletConnectHome = () => {
           <HeaderTitle>{t('Pending Request')}</HeaderTitle>
           <Hr />
           {requestsV2 && requestsV2.length > 0 ? (
-            <FlatList
-              contentContainerStyle={{paddingTop: 20, paddingBottom: 100}}
-              data={requestsV2}
-              keyExtractor={(_item, index) => index.toString()}
-              renderItem={renderItem}
-            />
+            <View style={{paddingBottom: 100, paddingTop: 20}}>
+              {requestsV2.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {renderItem({index, item})}
+                </React.Fragment>
+              ))}
+            </View>
           ) : (
             <ItemContainer>
               <ItemTitleContainer>
