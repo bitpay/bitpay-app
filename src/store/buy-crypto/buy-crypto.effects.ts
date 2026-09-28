@@ -104,6 +104,21 @@ export const setMoonpayEmbeddedApplePaySupported = (
   _moonpayEmbeddedApplePaySupported = supported;
 };
 
+// Whether Google Pay can run in the embedded flow on this device. Unlike Apple
+// Pay there is no native availability check: Google Pay runs on the Payment
+// Request API inside the WebView, and the frame itself reports 'unsupported'
+// when the WebView cannot provide it.
+let _moonpayEmbeddedGooglePaySupported: boolean = false;
+
+export const getMoonpayEmbeddedGooglePaySupported = (): boolean =>
+  _moonpayEmbeddedGooglePaySupported;
+
+export const setMoonpayEmbeddedGooglePaySupported = (
+  supported: boolean,
+): void => {
+  _moonpayEmbeddedGooglePaySupported = supported;
+};
+
 // Whether MoonPay allows SEPA to run headless for this customer.
 // MoonPay reports it per account in the payment methods endpoint (capabilities.requiresWidget).
 let _moonpayEmbeddedSepaSupported: boolean = false;
