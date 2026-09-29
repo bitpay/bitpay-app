@@ -148,10 +148,27 @@ export const startBitPayIdStoreInit =
 export const startFetchSession =
   (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
-      const {APP} = getState();
+      const {APP, BITPAY_ID} = getState();
       dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
 
-      const session = await AuthApi.fetchSession(APP.network);
+      let session = await AuthApi.fetchSession(APP.network);
+
+      // A paired user with a dead web session leaves only stale cookies on
+      // disk. Drop them, then re-fetch: the csrfToken just read is bound to the
+      // cookie being cleared, so storing it would orphan every consumer.
+      if (!session.isAuthenticated && BITPAY_ID.apiToken[APP.network]) {
+        try {
+          await clearAllCookiesEverywhere();
+        } catch (err: any) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logManager.debug(
+            '[startFetchSession] An error occurred while clearing cookies.',
+            errMsg,
+          );
+        }
+        session = await AuthApi.fetchSession(APP.network);
+      }
 
       dispatch(BitPayIdActions.successFetchSession(session));
     } catch {
