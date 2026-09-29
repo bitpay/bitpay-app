@@ -211,6 +211,9 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   }, [copied]);
 
   const onBchAddressTypeChange = (type: string) => {
+    if (type === bchAddressType) {
+      return;
+    }
     haptic('impactLight');
     setBchAddressType(type);
     if (type === 'Legacy') {
