@@ -10,9 +10,9 @@ jest.mock('../../../../managers/LogManager', () => ({
 
 jest.mock('ethers', () => {
   // test/setup.js stubs BigNumber as a spy; this test needs the real numeric parsing
-  const {BigNumber, utils} = jest.requireActual('ethers');
+  const {BigNumber, constants, utils} = jest.requireActual('ethers');
 
-  return {BigNumber, ethers: {BigNumber, utils}, utils};
+  return {BigNumber, constants, ethers: {BigNumber, constants, utils}, utils};
 });
 
 jest.mock('../../../../managers/TokenManager', () => ({
@@ -22,6 +22,8 @@ jest.mock('../../../../managers/TokenManager', () => ({
 import configureTestStore from '@test/store';
 import {processSwapRequest} from '../../../../utils/helper-methods';
 import {buildTransactionProposal, createTxProposal} from './send';
+import {ethers} from 'ethers';
+import {abiERC20} from '../../../../navigation/wallet-connect/constants/abis/abi-erc20';
 
 const ACCOUNT_A = '0x1111111111111111111111111111111111111111';
 const ACCOUNT_B = '0x2222222222222222222222222222222222222222';
@@ -64,7 +66,7 @@ const buildProposal = (swapAmount?: string) =>
     } as any),
   );
 
-describe('a plain transfer requested over walletConnect', () => {
+describe('a transaction requested over walletConnect', () => {
   const walletState = () =>
     ({
       APP: {defaultAltCurrency: {isoCode: 'USD'}},
@@ -124,6 +126,54 @@ describe('a plain transfer requested over walletConnect', () => {
 
     expect(txp.amount).toBe(Number(ONE_ETH_WEI));
   });
+
+  it.each(['approve', 'approveAndCall'])(
+    'preserves an unlimited %s summary and the original transaction proposal',
+    async functionName => {
+      const spender = '0x3333333333333333333333333333333333333333';
+      const maxAllowance = ethers.BigNumber.from(
+        '0x' + 'f'.repeat(64),
+      ).toString();
+      const args = [spender, maxAllowance];
+      if (functionName === 'approveAndCall') {
+        args.push('0x1234');
+      }
+      const data = new ethers.utils.Interface(abiERC20).encodeFunctionData(
+        functionName,
+        args,
+      );
+      const event = {...buildRequest(), id: 1, topic: 'topic-1'};
+      event.params.request.params[0].data = data;
+
+      const summary = await walletDispatch(processSwapRequest(event));
+      const request = {...event, ...summary};
+      const txp: any = await dispatch(
+        buildTransactionProposal({
+          chain: 'eth',
+          context: 'walletConnect',
+          currency: 'eth',
+          request,
+          toAddress: ACCOUNT_B,
+        } as any),
+      );
+
+      expect(request.tokenApproval).toEqual({
+        functionName,
+        spender,
+        amount: maxAllowance,
+        isUnlimited: true,
+      });
+      expect(summary.swapAmount).toBe(ONE_ETH_WEI);
+      expect(txp.amount).toBe(Number(ONE_ETH_WEI));
+      expect(txp.outputs).toEqual([
+        expect.objectContaining({
+          toAddress: ACCOUNT_B,
+          amount: Number(ONE_ETH_WEI),
+          data,
+        }),
+      ]);
+    },
+  );
 });
 
 describe('buildTransactionProposal for walletConnect', () => {

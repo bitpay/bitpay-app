@@ -55,6 +55,7 @@ import {BwcProvider} from '../lib/bwc';
 import {findAssociatedTokenPda} from '@solana-program/token-2022';
 import {tokenManager} from '../managers/TokenManager';
 import {logManager} from '../managers/LogManager';
+import {TokenApproval} from '../store/wallet-connect-v2/wallet-connect-v2.models';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -941,6 +942,8 @@ interface RequestUiValues {
   recipientAddress?: string;
   senderTokenPrice?: number;
   decodedInstructions?: any;
+  tokenApproval?: TokenApproval;
+  tokenApprovalDecodeError?: boolean;
 }
 
 export const processOtherMethodsRequest =
@@ -1236,6 +1239,41 @@ export const processSolanaSwapRequest =
     }
   };
 
+const isTokenApprovalFunction = (
+  name: string,
+): name is TokenApproval['functionName'] =>
+  name === 'approve' ||
+  name === 'approveAndCall' ||
+  name === 'increaseAllowance' ||
+  name === 'setApprovalForAll' ||
+  name === 'permit';
+
+export const getTokenApproval = (
+  transactionData: ethers.utils.TransactionDescription,
+): TokenApproval | undefined => {
+  const {name, args} = transactionData;
+  if (!isTokenApprovalFunction(name)) {
+    return undefined;
+  }
+  if (name === 'setApprovalForAll') {
+    return {
+      functionName: name,
+      spender: args[0],
+      approved: args[1],
+      isUnlimited: args[1] === true,
+    };
+  }
+  const isPermit = name === 'permit';
+  const amount = args[isPermit ? 2 : 1];
+  return {
+    functionName: name,
+    spender: args[isPermit ? 1 : 0],
+    amount: amount.toString(),
+    isUnlimited: amount.eq(ethers.constants.MaxUint256),
+    ...(isPermit ? {owner: args[0], deadline: args[3].toString()} : {}),
+  };
+};
+
 export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -1271,6 +1309,7 @@ export const processSwapRequest =
       );
     }
 
+    let isTokenApprovalRequest = false;
     try {
       let {transactionData, abi} = parseStandardTokenTransactionData(data);
       if (!transactionData && !abi) {
@@ -1292,10 +1331,11 @@ export const processSwapRequest =
         // const contractInterface = new ethers.utils.Interface(abi!);
         // transactionData = contractInterface.parseTransaction({data});
       }
+      const transactionDataName = transactionData!.name;
+      isTokenApprovalRequest = isTokenApprovalFunction(transactionDataName);
       logManager.debug(
         'Decoded transaction data: ' + JSON.stringify(transactionData),
       );
-      const transactionDataName = transactionData!.name;
       if (transactionDataName === 'execute') {
         const transaction = await handleExecuteTransaction(
           dispatch,
@@ -1321,7 +1361,7 @@ export const processSwapRequest =
         );
         return transaction;
       }
-      return handleDefaultTransaction(
+      const transaction = await handleDefaultTransaction(
         keys,
         swapFromChain,
         from,
@@ -1329,10 +1369,12 @@ export const processSwapRequest =
         dispatch,
         value,
       );
+      const tokenApproval = getTokenApproval(transactionData!);
+      return {...transaction, ...(tokenApproval ? {tokenApproval} : {})};
     } catch (error) {
       logManager.error(`Error processing swap request: ${error}`);
       logManager.debug('Continue anyway building a default transaction');
-      return handleDefaultTransaction(
+      const transaction = await handleDefaultTransaction(
         keys,
         swapFromChain,
         from,
@@ -1340,6 +1382,10 @@ export const processSwapRequest =
         dispatch,
         value,
       );
+      return {
+        ...transaction,
+        ...(isTokenApprovalRequest ? {tokenApprovalDecodeError: true} : {}),
+      };
     }
   };
 

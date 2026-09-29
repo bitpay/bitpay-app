@@ -1,9 +1,9 @@
 jest.mock('ethers', () => {
   // test/setup.js stubs isAddress as always true and BigNumber as a spy; these tests
   // need the real predicates and the real numeric parsing
-  const {BigNumber, utils} = jest.requireActual('ethers');
+  const {BigNumber, constants, utils} = jest.requireActual('ethers');
 
-  return {BigNumber, ethers: {BigNumber, utils}, utils};
+  return {BigNumber, constants, ethers: {BigNumber, constants, utils}, utils};
 });
 
 import {getSessionAddresses, matchesAccountRoute} from './walletConnectRouting';
