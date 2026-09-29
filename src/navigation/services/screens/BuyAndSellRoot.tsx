@@ -55,7 +55,7 @@ import {
   getMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedGooglePaySupported,
   getMoonpayEmbeddedSepaSupported,
-  resolveMoonpayEmbeddedSepaSupport,
+  resolveMoonpayEmbeddedCapabilities,
   getMoonpayEmbeddedEnabled,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -2581,8 +2581,11 @@ const BuyAndSellRoot = ({
                   // whether SEPA may run headless. Until this resolves the
                   // capability is unknown, so it has to be awaited before
                   // deciding embedded vs Kayak.
-                  if (paymentMethod.method === 'sepaBankTransfer') {
-                    await resolveMoonpayEmbeddedSepaSupport(
+                  if (
+                    paymentMethod.method === 'sepaBankTransfer' ||
+                    paymentMethod.method === 'googlePay'
+                  ) {
+                    await resolveMoonpayEmbeddedCapabilities(
                       newCredentials.accessToken,
                     );
                   }

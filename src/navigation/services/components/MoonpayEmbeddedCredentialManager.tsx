@@ -29,7 +29,7 @@ import {
   registerMoonpayEmbeddedRecheckListener,
   setMoonpayEmbeddedAnonymousCredentials,
   setMoonpayEmbeddedCredentials,
-  resolveMoonpayEmbeddedSepaSupport,
+  resolveMoonpayEmbeddedCapabilities,
   setMoonpayEmbeddedApplePaySupported,
   setMoonpayEmbeddedGooglePaySupported,
   setMoonpayEmbeddedEnabled,
@@ -365,7 +365,7 @@ export function MoonpayEmbeddedCredentialManager() {
         setMoonpayEmbeddedCredentials(credentials);
         setMoonpayEmbeddedStatus('active');
         scheduleRefresh(credentials);
-        resolveMoonpayEmbeddedSepaSupport(credentials.accessToken);
+        resolveMoonpayEmbeddedCapabilities(credentials.accessToken);
       }}
       onConnectionRequired={anonymousCredentials => {
         logManager.debug(
