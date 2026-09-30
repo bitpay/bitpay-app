@@ -1,6 +1,6 @@
 import React from 'react';
 import {Alert} from 'react-native';
-import {fireEvent, render} from '@testing-library/react-native';
+import {fireEvent, render} from '@test/render';
 import About from './About';
 import * as LogActions from '../../../../store/log/log.actions';
 
@@ -10,6 +10,7 @@ const SESSION_LOGS_EASTER_EGG_TAP_COUNT = 5;
 let mockSessionLogsProdEnabled = false;
 
 jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => ({
     navigate: mockNavigate,
   }),

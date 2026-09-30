@@ -49,6 +49,9 @@ describe('SheetModal', () => {
     act(() => {
       utils.rerender(tree(true));
     });
+    act(() => {
+      utils.UNSAFE_getByType(BottomSheetModal).props.onAnimate(-1, 0, 0, 100);
+    });
 
     return {...utils, tree};
   };
