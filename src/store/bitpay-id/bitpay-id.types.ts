@@ -1,5 +1,6 @@
 import {Network} from '../../constants';
 import {
+  LastLogin,
   ReceivingAddress,
   SecuritySettings,
   Session,
@@ -56,6 +57,7 @@ export enum BitPayIdActionTypes {
   RESET_FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/RESET_FORGOT_PASSWORD_EMAIL_STATUS',
   SUCCESS_FETCH_RECEIVING_ADDRESSES = 'BitPayId/SUCCESS_FETCH_RECEIVING_ADDRESSES',
   SUCCESS_FETCH_SECURITY_SETTINGS = 'BitPayId/SUCCESS_FETCH_SECURITY_SETTINGS',
+  SUCCESS_FETCH_LAST_LOGIN = 'BitPayId/SUCCESS_FETCH_LAST_LOGIN',
   SUCCESS_RESET_METHOD_USER = 'BitPayId/SUCCESS_RESET_METHOD_USER',
   PASSKEY_STATUS = 'BitPayId/PASSKEY_STATUS',
   PASSKEY_CREDENTIALS = 'BitPayId/PASSKEY_CREDENTIALS',
@@ -244,6 +246,14 @@ interface SuccessFetchSecuritySettings {
   };
 }
 
+interface SuccessFetchLastLogin {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_LAST_LOGIN;
+  payload: {
+    network: Network;
+    lastLogin: LastLogin;
+  };
+}
+
 interface PasskeyStatus {
   type: typeof BitPayIdActionTypes.PASSKEY_STATUS;
   payload: {
@@ -305,6 +315,7 @@ export type BitPayIdActionType =
   | UpdateFetchDoshTokenStatus
   | SuccessFetchReceivingAddresses
   | SuccessFetchSecuritySettings
+  | SuccessFetchLastLogin
   | SuccessResetMethodUser
   // Reset Password
   | ForgotPasswordEmailStatus
