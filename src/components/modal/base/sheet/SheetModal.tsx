@@ -182,7 +182,6 @@ const SheetModal: React.FC<SheetModalProps> = ({
         handleComponent={null}
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
-        accessibilityLabel={'modalBackdrop'}
         onDismiss={handleDismiss}
         ref={bottomSheetModalRef}>
         <NavigationThemeContext.Provider value={themeValue}>

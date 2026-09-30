@@ -703,7 +703,7 @@ const TransactionProposalDetails = () => {
               />
               <Button
                 testID="txp-details-broadcast-payment-button"
-                accessibilityLabel="Txp details broadcast payment button"
+                accessibilityLabel={t('Broadcast Payment')}
                 onPress={() => {
                   broadcastTxp(txp);
                 }}
@@ -738,7 +738,7 @@ const TransactionProposalDetails = () => {
               ) : null}
               <Button
                 testID="txp-details-delete-proposal-button"
-                accessibilityLabel="Txp details delete proposal button"
+                accessibilityLabel={t('Delete proposal')}
                 style={{marginTop: 10}}
                 onPress={removePaymentProposal}
                 buttonType={'link'}
@@ -755,7 +755,7 @@ const TransactionProposalDetails = () => {
                 !key.isReadOnly && (
                   <Button
                     testID="txp-details-tss-delete-proposal-button"
-                    accessibilityLabel="Txp details tss delete proposal button"
+                    accessibilityLabel={t('Delete proposal')}
                     style={{marginTop: 10}}
                     onPress={removePaymentProposal}
                     buttonType={'link'}
@@ -773,7 +773,7 @@ const TransactionProposalDetails = () => {
           wallet.credentials.n > 1 ? (
             <Button
               testID="txp-details-reject-proposal-button"
-              accessibilityLabel="Txp details reject proposal button"
+              accessibilityLabel={t('Reject proposal')}
               onPress={rejectPaymentProposal}
               buttonType={'link'}
               buttonStyle={'danger'}>

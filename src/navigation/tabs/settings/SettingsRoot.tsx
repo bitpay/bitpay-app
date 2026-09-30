@@ -163,7 +163,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
     <BitPayIdSettingsLink
       style={{paddingHorizontal: 15}}
       testID="settings-bitpay-id-profile-row"
-      accessibilityLabel="BitPay ID profile"
+      accessibilityLabel={t('BitPay ID profile')}
       onPress={() => {
         if (user) {
           navigation.navigate('BitPayIdProfile');

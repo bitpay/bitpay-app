@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import styled, {css, DefaultTheme} from 'styled-components/native';
 import ErrorBoundary from 'react-native-error-boundary';
 import {SvgUri} from 'react-native-svg';
@@ -98,6 +99,7 @@ const convertCssGradientToReactNativeGradient = (
 };
 
 export default (props: {cardConfig: CardConfig; amount: number}) => {
+  const {t} = useTranslation();
   const {cardConfig, amount} = props;
   const logoBackgroundColor = cardConfig?.logoBackgroundColor || Black;
   const {angle, colors, locations} =
@@ -140,7 +142,7 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
             )}
           </>
         ) : (
-          <PlaceholderText>Gift Card</PlaceholderText>
+          <PlaceholderText>{t('Gift Card')}</PlaceholderText>
         )}
       </LogoContainer>
       <GiftCardAmount logoBackgroundColor={logoBackgroundColor}>

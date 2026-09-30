@@ -257,7 +257,7 @@ export default ({
             !account.isPayable &&
             account.paymentStatus !== 'activating' ? (
               <AccountFooter variation={variation}>
-                <AccountFooterText>Unable to pay bill</AccountFooterText>
+                <AccountFooterText>{t('Unable to pay bill')}</AccountFooterText>
                 <TouchableOpacity
                   activeOpacity={ActiveOpacity}
                   onPress={() => {
@@ -305,7 +305,9 @@ export default ({
                       ),
                     );
                   }}>
-                  <AccountFooterActionText>Learn More</AccountFooterActionText>
+                  <AccountFooterActionText>
+                    {t('Learn More')}
+                  </AccountFooterActionText>
                 </TouchableOpacity>
               </AccountFooter>
             ) : null}

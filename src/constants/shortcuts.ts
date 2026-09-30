@@ -1,10 +1,11 @@
 import {Platform} from 'react-native';
+import {t} from 'i18next';
 import {ShortcutItem} from 'react-native-quick-actions';
 
-export const ShortcutList: Array<ShortcutItem> = [
+export const getShortcutList = (): Array<ShortcutItem> => [
   {
     type: 'buy',
-    title: 'Buy Crypto',
+    title: t('Buy Crypto'),
     icon: Platform.OS === 'ios' ? 'BuyCrypto' : 'ic_shortcut_buy_crypto',
     userInfo: {url: ''},
   },
@@ -16,20 +17,20 @@ export const ShortcutList: Array<ShortcutItem> = [
   },
   {
     type: 'receive',
-    title: 'Receive',
+    title: t('Receive'),
     icon:
       Platform.OS === 'ios' ? 'ReceiveCrypto' : 'ic_shortcut_receive_crypto',
     userInfo: {url: ''},
   },
   {
     type: 'send',
-    title: 'Send',
+    title: t('Send'),
     icon: Platform.OS === 'ios' ? 'SendCrypto' : 'ic_shortcut_send_crypto',
     userInfo: {url: ''},
   },
   {
     type: 'share',
-    title: 'Share App',
+    title: t('Share App'),
     icon: Platform.OS === 'ios' ? 'Share' : 'ic_shortcut_share_app',
     userInfo: {url: ''},
   },

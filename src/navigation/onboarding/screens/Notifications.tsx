@@ -80,7 +80,7 @@ const NotificationsScreen = ({
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip"
+            accessibilityLabel={t('Skip')}
             buttonType={'pill'}
             touchableLibrary={'react-native'}
             onPress={onSkipPressRef.current}>
@@ -150,7 +150,7 @@ const NotificationsScreen = ({
           <ActionContainer>
             <Button
               testID="allow-button"
-              accessibilityLabel="Allow notifications"
+              accessibilityLabel={t('Allow notifications')}
               buttonStyle={'primary'}
               onPress={() => onSetNotificationsPress(true)}>
               {t('Allow')}
@@ -159,7 +159,7 @@ const NotificationsScreen = ({
           <ActionContainer>
             <Button
               testID="deny-button"
-              accessibilityLabel="Deny notifications"
+              accessibilityLabel={t('Deny notifications')}
               buttonStyle={'secondary'}
               onPress={() => onSetNotificationsPress(false)}>
               {t('Deny')}

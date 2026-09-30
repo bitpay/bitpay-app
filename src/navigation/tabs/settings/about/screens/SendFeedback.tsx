@@ -216,7 +216,7 @@ const SendFeedback = ({
             <SendFeedbackTitle>
               {rateApp && rateApp === 'love' ? t('Thanks!') : null}
               {rateApp && rateApp === 'ok' ? t('How can we improve?') : null}
-              {rateApp && rateApp === 'disappointed' ? 'Ouch!' : null}
+              {rateApp && rateApp === 'disappointed' ? t('Ouch!') : null}
             </SendFeedbackTitle>
             <SendFeedbackParagraph>
               {rateApp && rateApp === 'love'

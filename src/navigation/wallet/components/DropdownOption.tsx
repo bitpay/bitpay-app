@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
 import {Feather} from '../../../styles/colors';
@@ -73,6 +74,7 @@ const DropdownOption = ({
   hideKeyBalance,
   onPress,
 }: Props) => {
+  const {t} = useTranslation();
   const _wallets = wallets.filter(
     wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
   );
@@ -106,7 +108,7 @@ const DropdownOption = ({
               {remainingWalletCount ? (
                 <RemainingAssetsLabel>
                   {' '}
-                  + {remainingWalletCount} more{' '}
+                  {t('+ {{count}} more', {count: remainingWalletCount})}{' '}
                 </RemainingAssetsLabel>
               ) : null}
             </HeaderImg>

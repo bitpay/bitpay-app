@@ -163,7 +163,7 @@ const TransakSettings: React.FC = () => {
         </SettingsComponent>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Transak?</SupportTxt>
+        <SupportTxt>{t('Having problems with Transak?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');

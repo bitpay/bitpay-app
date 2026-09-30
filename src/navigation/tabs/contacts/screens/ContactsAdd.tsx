@@ -284,7 +284,7 @@ const ContactsAdd = ({
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  placeholder={'Crypto address'}
+                  placeholder={t('Crypto address')}
                   label={t('ADDRESS')}
                   onBlur={onBlur}
                   onChangeText={(newValue: string) => {
@@ -301,7 +301,7 @@ const ContactsAdd = ({
                     ) : (
                       <ScanButtonContainer
                         testID="contacts-add-scan-address-button"
-                        accessibilityLabel="Scan address QR code"
+                        accessibilityLabel={t('Scan address QR code')}
                         onPress={goToScan}>
                         <ScanSvg />
                       </ScanButtonContainer>
@@ -331,7 +331,7 @@ const ContactsAdd = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                placeholder={'Tag'}
+                placeholder={t('Tag')}
                 label={t('TAG')}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -349,7 +349,7 @@ const ContactsAdd = ({
         <ActionContainer>
           <Button
             testID="contacts-add-submit-button"
-            accessibilityLabel={contact ? 'Save contact' : 'Add contact'}
+            accessibilityLabel={contact ? t('Save contact') : t('Add Contact')}
             onPress={onSubmit}>
             {contact ? t('Save Contact') : t('Add Contact')}
           </Button>

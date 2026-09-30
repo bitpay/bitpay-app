@@ -879,7 +879,10 @@ const handleSolanaPay =
               showBottomNotificationModal({
                 type: 'warning',
                 title: t('SolanaPay Error'),
-                message: `It was not possible to obtain the necessary data for the SPL Token: ${splTokenAddress}`,
+                message: t(
+                  'It was not possible to obtain the necessary data for the SPL Token: {{token}}',
+                  {token: splTokenAddress},
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
@@ -911,7 +914,10 @@ const handleSolanaPay =
             showBottomNotificationModal({
               type: 'warning',
               title: t('SolanaPay Error'),
-              message: `It was not possible to obtain the necessary data for the SPL Token: ${splTokenAddress}`,
+              message: t(
+                'It was not possible to obtain the necessary data for the SPL Token: {{token}}',
+                {token: splTokenAddress},
+              ),
               enableBackdropDismiss: true,
               actions: [
                 {

@@ -536,7 +536,6 @@ const FileOrText = () => {
   return (
     <ScrollViewContainer
       testID="file-or-text-view"
-      accessibilityLabel="File or text view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
@@ -609,7 +608,7 @@ const FileOrText = () => {
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="password-box-input"
-                accessibilityLabel="Password"
+                accessibilityLabel={t('PASSWORD')}
                 label={t('PASSWORD')}
                 placeholder={'strongPassword123'}
                 type={'password'}
@@ -626,7 +625,7 @@ const FileOrText = () => {
 
         <Button
           testID="import-wallet-button"
-          accessibilityLabel="Import wallet"
+          accessibilityLabel={t('Import Wallet')}
           buttonStyle={'primary'}
           state={importButtonState}
           onPress={onSubmit}>

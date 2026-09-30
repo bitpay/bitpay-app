@@ -121,7 +121,7 @@ const BackupOnboarding: React.FC = () => {
 
     try {
       const opts: ShareOptions = {
-        title: 'BitPay Backup Template',
+        title: t('BitPay Backup Template'),
         url: `file://${sourceFilePath}`,
         type: 'application/pdf',
         subject: 'BitPay Backup Template',
@@ -192,7 +192,7 @@ const BackupOnboarding: React.FC = () => {
         <ActionContainer>
           <Button
             testID="write-down-backup-button"
-            accessibilityLabel="Write down recovery phrase"
+            accessibilityLabel={t('Write Down Recovery Phrase')}
             buttonStyle={'primary'}
             onPress={async () => {
               haptic('impactLight');
@@ -231,7 +231,7 @@ const BackupOnboarding: React.FC = () => {
         <ActionContainer>
           <Button
             testID="print-backup-button"
-            accessibilityLabel="Print recovery template"
+            accessibilityLabel={t('Print Recovery Template')}
             buttonStyle={'secondary'}
             onPress={() => {
               printBackupTemplate();

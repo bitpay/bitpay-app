@@ -148,20 +148,17 @@ const ActivateScreen: React.FC<
   };
 
   const fieldKeys = getFieldKeys(card);
-  const descriptionKey =
+  const descriptionArgs = Object.fromEntries(
+    fieldKeys.map((key, idx) => [idx, key]),
+  );
+  const description =
     fieldKeys.length === 3
-      ? t('EnterArgArgArgToActivateYourCard')
+      ? t('EnterArgArgArgToActivateYourCard', descriptionArgs)
       : fieldKeys.length === 2
-      ? t('EnterArgArgToActivateYourCard')
+      ? t('EnterArgArgToActivateYourCard', descriptionArgs)
       : fieldKeys.length === 1
-      ? t('EnterArgToActivateYourCard')
+      ? t('EnterArgToActivateYourCard', descriptionArgs)
       : t('EnterYourInformationToActivateYourCard');
-  const descriptionArgs = fieldKeys.reduce((accum, key, idx) => {
-    accum[idx] = key;
-
-    return accum;
-  }, {} as Record<string, string>);
-  const description = descriptionArgs[descriptionKey];
 
   const init = () => {
     if (!isActivationRequired(card)) {

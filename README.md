@@ -4,6 +4,12 @@ Welcome to BitPay App v2!
 ## Get Started
 Install dependencies with `yarn` >= 14.15.0
 
+## Translations
+
+Translations are maintained in this repository with AI assistance. See
+[the translation guide](locales/README.md) for language conventions, the glossary,
+and the review workflow. Run `yarn translation:check` before submitting changes.
+
 ### IOS
 
 1. Install Pods `cd ios && pod install && cd ..`

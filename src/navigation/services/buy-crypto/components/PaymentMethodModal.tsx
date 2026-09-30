@@ -335,7 +335,7 @@ const PaymentMethodsModal = ({
                       </PaymentMethodImgContainer>
                       <PaymentMethodCheckboxTexts>
                         <PaymentMethodLabel>
-                          {paymentMethod.label}
+                          {t(paymentMethod.label)}
                         </PaymentMethodLabel>
 
                         <PaymentMethodProvider>

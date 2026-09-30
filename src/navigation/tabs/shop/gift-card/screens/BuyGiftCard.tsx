@@ -243,7 +243,7 @@ const BuyGiftCard = ({
                   customPrecision: 'minimal',
                 },
               )}{' '}
-              with <GiftCardDiscountText cardConfig={cardConfig} />
+              {t('with')} <GiftCardDiscountText cardConfig={cardConfig} />
             </AmountSublabelText>
           </AmountSublabelText>
         </AmountSublabel>

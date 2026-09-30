@@ -177,7 +177,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           {isPaired ? (
             <Button
               testID="log-out-button"
-              accessibilityLabel="Log out"
+              accessibilityLabel={t('Log Out')}
               buttonType="pill"
               onPress={onLogoutPressRef.current}>
               {t('Log Out')}
@@ -185,7 +185,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           ) : (
             <Button
               testID="log-in-button"
-              accessibilityLabel="Log in"
+              accessibilityLabel={t('Log In')}
               buttonType={'pill'}
               onPress={onLoginPressRef.current}>
               {t('Log In')}
@@ -293,7 +293,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
             {!isPaired ? (
               <Button
                 testID="get-started-button"
-                accessibilityLabel="Get started"
+                accessibilityLabel={t('Get Started')}
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
@@ -311,7 +311,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
             ) : (
               <Button
                 testID="continue-button"
-                accessibilityLabel="Continue"
+                accessibilityLabel={t('Continue')}
                 buttonStyle={'primary'}
                 onPress={() => {
                   dispatch(
@@ -331,7 +331,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
             <ActionContainer>
               <Button
                 testID="continue-without-an-account-button"
-                accessibilityLabel="Continue without an account"
+                accessibilityLabel={t('Continue without an account')}
                 buttonType={'link'}
                 onPress={() => {
                   dispatch(

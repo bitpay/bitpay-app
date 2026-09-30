@@ -570,7 +570,7 @@ const AddCustomToken = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={`${currencyAbbreviation.toUpperCase()} Wallet`}
-                label={'WALLET NAME'}
+                label={t('WALLET NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.walletName?.message}
@@ -678,7 +678,7 @@ const AddCustomToken = ({
         <ButtonContainer>
           <Button
             testID="add-custom-token-button"
-            accessibilityLabel="Add custom token"
+            accessibilityLabel={t('Add Custom Token')}
             disabled={!walletNameValue || invalidTokenAddress}
             onPress={add}
             buttonStyle={'primary'}>

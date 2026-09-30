@@ -208,7 +208,9 @@ export const Setting = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;
-  height: 58px;
+  min-height: 58px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   padding-left: 15px;
   padding-right: 15px;
 `;

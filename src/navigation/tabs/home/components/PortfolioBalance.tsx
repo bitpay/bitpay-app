@@ -523,7 +523,7 @@ const PortfolioBalanceContent = () => {
         <PortfolioBalanceHeader
           activeOpacity={ActiveOpacity}
           testID="portfolio-balance-info-button"
-          accessibilityLabel="Portfolio balance info"
+          accessibilityLabel={t('Portfolio balance info')}
           onPress={showPortfolioBalanceInfoModal}>
           <PortfolioBalanceTitle>
             {t('Portfolio Balance')}
@@ -532,7 +532,7 @@ const PortfolioBalanceContent = () => {
         </PortfolioBalanceHeader>
         <TouchableOpacity
           testID="portfolio-balance-toggle"
-          accessibilityLabel="Toggle balance visibility"
+          accessibilityLabel={t('Toggle balance visibility')}
           onLongPress={() => {
             dispatch(toggleHideAllBalances());
           }}>

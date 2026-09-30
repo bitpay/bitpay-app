@@ -134,7 +134,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip backup"
+            accessibilityLabel={t('Skip backup')}
             buttonType={'pill'}
             onPress={async () => {
               haptic('impactLight');
@@ -195,7 +195,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
       <CtaContainer>
         <Button
           testID="go-to-backup-button"
-          accessibilityLabel="Backup your recovery phrase"
+          accessibilityLabel={t('Backup your Recovery Phrase')}
           buttonStyle={'primary'}
           onPress={gotoBackup}>
           {t('Backup your Recovery Phrase')}
