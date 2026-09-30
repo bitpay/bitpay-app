@@ -656,6 +656,53 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
   });
 });
 
+describe('detectAndCreateTokensForEachEvmWallet – SVM token wallet lookup', () => {
+  beforeEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    const {IsSVMChain} = require('../../utils/currency');
+    IsSVMChain.mockReturnValue(false);
+  });
+
+  it('links an already created SVM token wallet whose mint is not lowercased', async () => {
+    const {IsVMChain, IsERCToken, IsSVMChain} = require('../../utils/currency');
+    IsVMChain.mockReturnValue(true);
+    IsSVMChain.mockReturnValue(true);
+    IsERCToken.mockImplementation(
+      (currencyAbbreviation: string) => currencyAbbreviation === 'usdc',
+    );
+
+    const mint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+    const {
+      getSVMTokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
+    getSVMTokenBalanceByWallet.mockReturnValue(() =>
+      Promise.resolve([{mint, amount: '1000000', decimals: 6}]),
+    );
+
+    const wallet = makeMockWallet({
+      id: 'wallet-1',
+      chain: 'sol',
+      currencyAbbreviation: 'sol',
+      tokens: [],
+    });
+    const tokenWallet = makeMockWallet({
+      id: `wallet-1-${mint}`,
+      chain: 'sol',
+      currencyAbbreviation: 'usdc',
+    });
+    const key: any = {id: 'key-1', wallets: [wallet, tokenWallet]};
+
+    const store = configureTestStore(baseState);
+    await store.dispatch(detectAndCreateTokensForEachEvmWallet({key}));
+
+    expect(wallet.tokens).toEqual([`wallet-1-${mint}`]);
+
+    const {startUpdateWalletStatus} = require('../status/status');
+    expect(startUpdateWalletStatus).not.toHaveBeenCalled();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // addWallet – token wallet path (isToken=true)
 // ---------------------------------------------------------------------------

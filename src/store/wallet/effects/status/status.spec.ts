@@ -738,6 +738,64 @@ describe('startUpdateAllWalletStatusForKeys', () => {
       ),
     ).rejects.toThrow();
   });
+
+  it('matches a token wallet whose status reports the token address in a different casing', async () => {
+    (isCacheKeyStale as jest.Mock).mockReturnValue(true);
+
+    const tokenAddress = '0xabcdef';
+    const baseWallet = makeWallet({
+      id: 'wallet-1',
+      chain: 'eth',
+      currencyAbbreviation: 'eth',
+      credentials: {
+        copayerId: 'copayer-1',
+        token: null,
+        multisigEthInfo: null,
+        isComplete: () => true,
+      },
+    });
+    const tokenWallet = makeWallet({
+      id: `wallet-1-${tokenAddress}`,
+      chain: 'eth',
+      currencyAbbreviation: 'usdc',
+      tokenAddress,
+      credentials: {
+        copayerId: 'copayer-1',
+        token: {address: tokenAddress},
+        multisigEthInfo: null,
+        isComplete: () => true,
+      },
+    });
+    const key = makeKey([baseWallet, tokenWallet]);
+
+    const mockGetStatusAll = jest.fn((_creds, _opts, cb) =>
+      cb(null, [
+        makeBulkStatus('wallet-1'),
+        makeBulkStatus('wallet-1', {tokenAddress: '0xAbCdEf'}),
+      ]),
+    );
+    (BwcProvider.getInstance as jest.Mock).mockReturnValue({
+      getClient: jest.fn(() => ({
+        bulkClient: {getStatusAll: mockGetStatusAll},
+      })),
+    });
+
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    await store.dispatch(
+      startUpdateAllWalletStatusForKeys({keys: [key], force: true}),
+    );
+
+    expect(tokenWallet.balance.sat).toBe(2_000_000);
+  });
 });
 
 describe('updateKeyStatus', () => {
