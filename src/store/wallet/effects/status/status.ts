@@ -782,14 +782,17 @@ export const buildBalance =
       lockedConfirmedAmount,
       availableAmount,
       availableConfirmedAmount,
+      reserve,
     } = status.balance;
 
     let satTotalAmount = totalAmount;
     let satLockedAmount = lockedAmount;
+    let satConfirmedLockedAmount = lockedConfirmedAmount;
 
     if (['xrp', 'sol'].includes(chain)) {
-      satLockedAmount = lockedAmount - lockedConfirmedAmount;
-      satTotalAmount = totalAmount - lockedConfirmedAmount;
+      satConfirmedLockedAmount = Math.min(totalAmount, reserve ?? 0);
+      satLockedAmount = lockedAmount - (reserve ?? 0);
+      satTotalAmount = totalAmount - satConfirmedLockedAmount;
     }
 
     const spendableAmount = useUnconfirmedFunds
@@ -805,7 +808,7 @@ export const buildBalance =
       sat: satTotalAmount,
       satConfirmed: totalConfirmedAmount,
       satLocked: satLockedAmount,
-      satConfirmedLocked: lockedConfirmedAmount,
+      satConfirmedLocked: satConfirmedLockedAmount,
       satAvailable: availableAmount,
       satConfirmedAvailable: availableConfirmedAmount,
       satSpendable: spendableAmount,
@@ -831,7 +834,7 @@ export const buildBalance =
           currencyAbbreviation,
           chain,
           tokenAddress,
-          Number(lockedConfirmedAmount),
+          Number(satConfirmedLockedAmount),
         ),
       ),
       cryptoSpendable: dispatch(
