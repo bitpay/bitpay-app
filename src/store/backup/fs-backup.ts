@@ -24,16 +24,20 @@ async function ensureDir(): Promise<void> {
   }
 }
 
+// NSFileWriteFileExistsError, as RNFS formats it (E<DOMAIN><code>)
+const IOS_DEST_EXISTS = 'ENSCOCOAERRORDOMAIN516';
+
 // iOS moveFile (NSFileManager moveItemAtPath) throws instead of overwriting an
-// existing destination; Android renameTo replaces it atomically, so only clear
-// the destination once a move has actually failed
+// existing destination; Android renameTo replaces it. Only clear the
+// destination for that error — on any other failure it may be the last good copy
 async function moveOverwriting(src: string, dest: string): Promise<void> {
   try {
     await RNFS.moveFile(src, dest);
-  } catch {
-    try {
-      await RNFS.unlink(dest);
-    } catch {}
+  } catch (err: any) {
+    if (err?.code !== IOS_DEST_EXISTS) {
+      throw err;
+    }
+    await RNFS.unlink(dest);
     await RNFS.moveFile(src, dest);
   }
 }
@@ -85,15 +89,17 @@ async function _backupPersistRoot(rawJson: string): Promise<void> {
         try {
           await moveOverwriting(FINAL_FILE, BACKUP_FILE);
         } catch (err) {
-          initLogs.add(
-            LogActions.persistLog(
-              LogActions.error(`Backup rotate failed - ${getErrorString(err)}`),
-            ),
-          );
           // Once per session: a permanently frozen .bak must not be silent, but
-          // rotation runs on every backup and is best-effort
+          // rotation runs on every backup and initLogs is only drained at startup
           if (!rotateReported) {
             rotateReported = true;
+            initLogs.add(
+              LogActions.persistLog(
+                LogActions.error(
+                  `Backup rotate failed - ${getErrorString(err)}`,
+                ),
+              ),
+            );
             Sentry.captureException(err, {level: 'error'});
           }
         }
