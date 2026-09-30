@@ -810,13 +810,18 @@ const KeyOverview = () => {
     [maybeActivateAllocationGainLoss],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const _tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+      ...customTokenOptionsByAddress,
+    }),
+    [tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
 
   const startSyncWallets = async (mnemonic: string) => {
     if (key.isPrivKeyEncrypted) {
