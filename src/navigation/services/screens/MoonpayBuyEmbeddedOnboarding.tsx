@@ -156,7 +156,7 @@ const WebViewCloseText = styled(BaseText)`
 
 export interface MoonpayBuyEmbeddedOnboardingProps {
   route?: any;
-  context: 'buyAndSellRoot' | 'connections';
+  context: 'buyAndSellRoot' | 'connections' | 'moonpayDetails';
   user: User | undefined;
   anonymousCredentials: MoonpayClientCredentials;
   onConnectAccount: (newCredentials: MoonpayClientCredentials) => void;

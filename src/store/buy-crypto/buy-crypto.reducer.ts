@@ -175,6 +175,18 @@ export const buyCryptoReducer = (
           state.moonpay[moonpayIncomingData.externalId].fiat_total_amount =
             moonpayIncomingData.fiatTotalAmount;
         }
+        if (moonpayIncomingData.sepaDetails) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_details =
+            moonpayIncomingData.sepaDetails;
+        }
+        if (moonpayIncomingData.sepaStages) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_stages =
+            moonpayIncomingData.sepaStages;
+        }
+        if (moonpayIncomingData.sepaPurchaseReported) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_purchase_reported =
+            moonpayIncomingData.sepaPurchaseReported;
+        }
 
         return {
           ...state,
