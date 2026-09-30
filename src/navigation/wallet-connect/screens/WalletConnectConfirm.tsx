@@ -1,6 +1,6 @@
 import React, {useCallback, useLayoutEffect, useState, useEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {View, StyleSheet, StyleProp, ViewStyle} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
@@ -82,12 +82,28 @@ import {isTSSWallet} from '../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../wallet/components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
-const HeaderRightContainer = styled.View``;
+const styles = StyleSheet.create({
+  verifyIconContainer: {
+    padding: 10,
+    borderRadius: 50,
+  },
+});
 
-const VerifyIconContainer = styled(TouchableOpacity)`
-  padding: 10px;
-  border-radius: 50px;
-`;
+const VerifyIconContainer = ({
+  style,
+  onPress,
+  children,
+}: {
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => (
+  <TouchableOpacity
+    style={[styles.verifyIconContainer, style]}
+    onPress={onPress}>
+    {children}
+  </TouchableOpacity>
+);
 
 export interface WalletConnectConfirmParamList {
   wallet: Wallet;
@@ -316,7 +332,7 @@ const WalletConnectConfirm = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <HeaderRightContainer>
+        <View>
           <Button
             onPress={rejectCallRequest}
             buttonStyle="danger"
@@ -324,7 +340,7 @@ const WalletConnectConfirm = () => {
             buttonOutline={true}>
             {t('Reject')}
           </Button>
-        </HeaderRightContainer>
+        </View>
       ),
     });
   }, [navigation, rejectCallRequest, t]);

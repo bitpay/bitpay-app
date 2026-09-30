@@ -1,17 +1,27 @@
 import React, {useState} from 'react';
 import {SvgProps} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import QuestionMarkIcon from '../../../../assets/img/card/icons/intro-question-mark.svg';
 import {SettingIcon} from '../../../components/styled/Containers';
 import {H5, UnderlineLink, Paragraph} from '../../../components/styled/Text';
 import {LightBlack, Slate10, Slate30} from '../../../styles/colors';
 import {t} from 'i18next';
-import {LayoutAnimation, View} from 'react-native';
+import {
+  LayoutAnimation,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 
 interface CardHighlight {
   icon: React.FC<SvgProps>;
@@ -19,46 +29,101 @@ interface CardHighlight {
   description: JSX.Element;
 }
 
-const HighlightContainer = styled.View`
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-bottom-width: 0px;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  margin-top: 16px;
-`;
+const styles = StyleSheet.create({
+  highlightContainer: {
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginTop: 16,
+  },
+  highlight: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    borderBottomWidth: 1,
+  },
+  highlightDescriptionContainer: {
+    borderBottomWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+  },
+  highlightIconContainer: {
+    justifyContent: 'center',
+    flexShrink: 0,
+    margin: 16,
+  },
+  highlightContentContainer: {
+    flexGrow: 1,
+    flexShrink: 1,
+    justifyContent: 'center',
+  },
+});
 
-const Highlight = styled(TouchableOpacity)`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-bottom-width: 1px;
-`;
+const HighlightContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.highlightContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HighlightDescriptionContainer = styled.View`
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-bottom-width: 1px;
-  padding: 16px 32px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const Highlight: React.FC<TouchableOpacityProps> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.highlight,
+        {borderBottomColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HighlightIconContainer = styled.View`
-  justify-content: center;
-  flex-shrink: 0;
-  margin: 16px;
-`;
+const HighlightDescriptionContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.highlightDescriptionContainer,
+        {borderBottomColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HighlightContentContainer = styled.View`
-  flex-grow: 1;
-  flex-shrink: 1;
-  justify-content: center;
-`;
+const HighlightIconContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.highlightIconContainer, style]} {...rest} />
+);
 
-const HighlightTitle = styled(H5)``;
+const HighlightContentContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.highlightContentContainer, style]} {...rest} />
+);
 
-const SubText = styled(Paragraph)`
-  color: ${({theme}) => theme.colors.text};
-`;
+const HighlightTitle = React.forwardRef<Text, TextProps>((props, ref) => (
+  <H5 ref={ref} {...props} />
+));
+
+const SubText = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[{color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+});
 
 const CARD_HIGHLIGHTS = (): CardHighlight[] => {
   const dispatch = useAppDispatch();

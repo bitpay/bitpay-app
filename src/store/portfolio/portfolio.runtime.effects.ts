@@ -1419,6 +1419,7 @@ export const clearWalletPortfolioDataWithRuntime =
       });
     });
 
+    clearAssetPnlSummaryCache();
     dispatch(clearWalletPortfolioState({walletIds}));
   };
 

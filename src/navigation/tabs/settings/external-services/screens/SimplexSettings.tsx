@@ -46,6 +46,8 @@ export interface SimplexSettingsProps {
   };
 }
 
+const Tab = createMaterialTopTabNavigator();
+
 const SimplexSettings: React.FC = () => {
   const {t} = useTranslation();
   const simplexHistory = useSelector(
@@ -63,7 +65,6 @@ const SimplexSettings: React.FC = () => {
   );
   const [sellOrders, setSellOrders] = useState([] as SimplexSellOrderData[]);
 
-  const Tab = createMaterialTopTabNavigator();
   const TabTitle = {
     buy: t('Buy History'),
     sell: t('Sell History'),

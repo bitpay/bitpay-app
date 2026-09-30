@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {useTranslation} from 'react-i18next';
 import {FlashList} from '@shopify/flash-list';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
@@ -18,25 +17,50 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import {RefreshControl, ScrollView} from 'react-native';
+import {RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {ShopEffects} from '../../../../../store/shop';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 
-const ZeroStateContainer = styled.View`
-  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
-  border-radius: 8px;
-  padding: 26px;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row;
-`;
+const styles = StyleSheet.create({
+  zeroStateContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  noPaymentsIcon: {
+    marginRight: 8,
+  },
+});
 
-const NoPaymentsIcon = styled(NoPaymentsSvg)`
-  margin-right: 8px;
-`;
+const ZeroStateContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.zeroStateContainer,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const NoPaymentsIcon = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof NoPaymentsSvg>) => (
+  <NoPaymentsSvg style={[styles.noPaymentsIcon, style]} {...rest} />
+);
 
 function sortByDescendingDate(a: BillPayPayment, b: BillPayPayment) {
   return new Date(b.createdOn).getTime() - new Date(a.createdOn).getTime();
@@ -193,7 +217,6 @@ export const PaymentList = ({
           data={displayablePayments}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          estimatedItemSize={88}
           onEndReachedThreshold={0.3}
           onEndReached={() => fetchMore()}
         />

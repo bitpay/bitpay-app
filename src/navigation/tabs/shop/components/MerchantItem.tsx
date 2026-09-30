@@ -1,6 +1,7 @@
 import React, {useCallback, useState} from 'react';
 import TagSvg from '../../../../../assets/img/tag.svg';
-import styled, {css} from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
 import {
   LightBlack,
@@ -19,54 +20,112 @@ interface MerchantBoxProps {
   width?: number;
 }
 
-const MerchantBox = styled.View<MerchantBoxProps>`
-  ${({height, marginLeft, width}) =>
-    css`
-      background-color: ${({theme}) =>
-        theme.dark ? LightBlack : NeutralSlate};
-      border-radius: 21px;
-      border-width: 1px;
-      border-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-      height: ${height}px;
-      margin: 6px;
-      ${marginLeft && `margin-left: ${marginLeft}px;`};
-      overflow: hidden;
-      width: ${width || (WIDTH - horizontalPadding * 2 - 24) / 2}px;
-    `}
-`;
+const styles = StyleSheet.create({
+  merchantBox: {
+    borderRadius: 21,
+    borderWidth: 1,
+    margin: 6,
+    overflow: 'hidden',
+  },
+  merchantBoxBody: {
+    padding: 16,
+    paddingBottom: 16,
+    flexGrow: 1,
+  },
+  merchantName: {
+    marginTop: 16,
+    lineHeight: 20,
+  },
+  merchantDescription: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 8,
+  },
+  promoFooter: {
+    height: 48,
+    paddingLeft: 10,
+    paddingRight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  promoText: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+});
 
-const MerchantBoxBody = styled.View`
-  padding: 16px;
-  padding-bottom: 16px;
-  flex-grow: 1;
-`;
+const MerchantBox = ({
+  height,
+  marginLeft,
+  width,
+  style,
+  ...rest
+}: MerchantBoxProps & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.merchantBox,
+        {
+          backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+          borderColor: theme.dark ? LightBlack : NeutralSlate,
+          height,
+          width: width || (WIDTH - horizontalPadding * 2 - 24) / 2,
+        },
+        marginLeft ? {marginLeft} : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const MerchantName = styled(H6)`
-  margin-top: 16px;
-  line-height: 20px;
-`;
+const MerchantBoxBody = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.merchantBoxBody, style]} {...rest} />
+);
 
-const MerchantDescription = styled(Paragraph)`
-  color: ${({theme}) => (theme.dark ? Slate30 : LuckySevens)};
-  font-size: 12px;
-  line-height: 16px;
-  margin-top: 8px;
-`;
+const MerchantName = ({style, ...rest}: React.ComponentProps<typeof H6>) => (
+  <H6 style={[styles.merchantName, style]} {...rest} />
+);
 
-const PromoFooter = styled.View`
-  background-color: ${({theme}) => theme.colors.background};
-  height: 48px;
-  padding-left: 10px;
-  padding-right: 20px;
-  flex-direction: row;
-  align-items: center;
-`;
+const MerchantDescription = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.merchantDescription,
+        {color: theme.dark ? Slate30 : LuckySevens},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PromoText = styled(BaseText)`
-  font-size: 10px;
-  font-weight: 500;
-  margin-left: 8px;
-`;
+const PromoFooter = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.promoFooter,
+        {backgroundColor: theme.colors.background},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const PromoText = ({style, ...rest}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.promoText, style]} {...rest} />
+);
 
 interface MerchantItemProps extends MerchantBoxProps {
   merchant: DirectIntegrationApiObject;

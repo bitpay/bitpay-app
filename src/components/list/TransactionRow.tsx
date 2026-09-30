@@ -1,7 +1,7 @@
-import React, {ReactElement, memo} from 'react';
+import React, {ReactElement, memo, useCallback} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {BaseText, ListItemSubText} from '../styled/Text';
-import styled from 'styled-components/native';
-import {ScreenGutter} from '../styled/Containers';
 import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
@@ -9,53 +9,45 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 export const TRANSACTION_ROW_HEIGHT = 75;
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const TransactionContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding: ${ScreenGutter};
-  align-items: center;
-  height: ${TRANSACTION_ROW_HEIGHT}px;
-`;
-
-const IconContainer = styled.View`
-  margin-right: 8px;
-  height: 50px;
-  width: 50px;
-  display: flex;
-  justify-content: center;
-`;
-
-const DescriptionContainer = styled.View`
-  flex-grow: 1;
-  flex-shrink: 1;
-  margin-right: 10px;
-`;
-
-const Description = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-  overflow: hidden;
-  font-size: 16px;
-`;
-
-const TailContainer = styled.View``;
-
-const Value = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-  text-align: right;
-  font-weight: 700;
-  font-size: 16px;
-`;
-
-const BadgeContainer = styled.View<{size?: number}>`
-  height: ${({size = 54}) => size}%;
-  width: ${({size = 54}) => size}%;
-  position: absolute;
-  right: -2px;
-  bottom: 0;
-`;
-
-const IconSubContainer = styled.View`
-  position: relative;
-`;
+const styles = StyleSheet.create({
+  transactionContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    alignItems: 'center',
+    height: TRANSACTION_ROW_HEIGHT,
+  },
+  iconContainer: {
+    marginRight: 8,
+    height: 50,
+    width: 50,
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  descriptionContainer: {
+    flexGrow: 1,
+    flexShrink: 1,
+    marginRight: 10,
+  },
+  description: {
+    overflow: 'hidden',
+    fontSize: 16,
+  },
+  value: {
+    textAlign: 'right',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  badgeContainer: {
+    height: '54%',
+    width: '54%',
+    position: 'absolute',
+    right: -2,
+    bottom: 0,
+  },
+  iconSubContainer: {
+    position: 'relative',
+  },
+});
 
 interface Props {
   icon?: ReactElement;
@@ -65,7 +57,9 @@ interface Props {
   value?: string;
   time?: string;
   chain?: string;
-  onPressTransaction?: () => void;
+  testID?: string;
+  transaction?: unknown;
+  onPressTransaction?: (transaction?: unknown) => void;
 }
 
 const TransactionRow = ({
@@ -76,34 +70,48 @@ const TransactionRow = ({
   value,
   time,
   chain,
+  testID,
+  transaction,
   onPressTransaction,
 }: Props) => {
+  const theme = useTheme();
+  const onPress = useCallback(
+    () => onPressTransaction?.(transaction),
+    [onPressTransaction, transaction],
+  );
+
   return (
-    <TransactionContainer onPress={onPressTransaction}>
+    <TouchableOpacity
+      style={styles.transactionContainer}
+      testID={testID}
+      onPress={onPressTransaction ? onPress : undefined}>
       {iconURI ? (
-        <IconContainer>
+        <View style={styles.iconContainer}>
           <RemoteImage
             borderRadius={50}
             fallbackComponent={() => icon as React.JSX.Element}
             height={TRANSACTION_ICON_SIZE}
             uri={iconURI}
           />
-        </IconContainer>
+        </View>
       ) : icon && chain ? (
-        <IconContainer>
-          <IconSubContainer>
+        <View style={styles.iconContainer}>
+          <View style={styles.iconSubContainer}>
             {icon}
-            <BadgeContainer>
+            <View style={styles.badgeContainer}>
               <CurrencyImage img={CurrencyListIcons[chain]} size={20} />
-            </BadgeContainer>
-          </IconSubContainer>
-        </IconContainer>
+            </View>
+          </View>
+        </View>
       ) : (
-        icon && <IconContainer>{icon}</IconContainer>
+        icon && <View style={styles.iconContainer}>{icon}</View>
       )}
       {!!description && (
-        <DescriptionContainer>
-          <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
+        <View style={styles.descriptionContainer}>
+          <BaseText
+            style={[styles.description, {color: theme.colors.text}]}
+            numberOfLines={details ? 2 : 1}
+            ellipsizeMode={'tail'}>
             {description}
             {details && (
               <ListItemSubText>
@@ -111,16 +119,20 @@ const TransactionRow = ({
                 {details}
               </ListItemSubText>
             )}
-          </Description>
-        </DescriptionContainer>
+          </BaseText>
+        </View>
       )}
-      <TailContainer>
-        {value ? <Value>{value}</Value> : null}
+      <View>
+        {value ? (
+          <BaseText style={[styles.value, {color: theme.colors.text}]}>
+            {value}
+          </BaseText>
+        ) : null}
         {time ? (
           <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>
         ) : null}
-      </TailContainer>
-    </TransactionContainer>
+      </View>
+    </TouchableOpacity>
   );
 };
 

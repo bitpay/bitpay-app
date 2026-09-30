@@ -1,7 +1,12 @@
 import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import styled from 'styled-components/native';
-import {Keyboard, RefreshControl, ScrollView} from 'react-native';
+import {
+  Keyboard,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getGiftCardConfigList,
@@ -27,7 +32,7 @@ import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {HEIGHT} from '../../../components/styled/Containers';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {withErrorFallback} from '../TabScreenErrorFallback';
@@ -46,22 +51,49 @@ export type ShopHomeParamList = {
 
 const Tab = createMaterialTopTabNavigator();
 
-const ShopInnerContainer = styled.View`
-  margin-top: 15px;
-`;
+const styles = StyleSheet.create({
+  shopInnerContainer: {
+    marginTop: 15,
+  },
+  geoBlockedContainer: {
+    minHeight: HEIGHT / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 30,
+  },
+  geoBlockedText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});
 
-const GeoBlockedContainer = styled.View`
-  min-height: ${HEIGHT / 2}px;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 30px;
-`;
+const ShopInnerContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.shopInnerContainer, style]} {...rest} />
+);
 
-const GeoBlockedText = styled(BaseText)`
-  font-size: 16px;
-  text-align: center;
-  color: ${({theme}) => theme.colors.description};
-`;
+const GeoBlockedContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.geoBlockedContainer, style]} {...rest} />
+);
+
+const GeoBlockedText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.geoBlockedText, {color: theme.colors.description}, style]}
+      {...rest}
+    />
+  );
+};
 
 const GeoBlockedMessage = () => {
   const {t} = useTranslation();

@@ -278,7 +278,7 @@ describe('AssetBalanceHistoryScreen', () => {
     );
   });
 
-  it('hides the PnL row when balances are hidden', async () => {
+  it('keeps the chart and the PnL row mounted when balances are hidden', async () => {
     const shared = sharedFactory();
     shared.hideAllBalances = true;
 
@@ -286,11 +286,18 @@ describe('AssetBalanceHistoryScreen', () => {
       TestRenderer.create(<AssetBalanceHistoryScreen shared={shared} />);
     });
 
-    expect(latestBalanceHistoryChartProps).toBeUndefined();
-    expect(latestExchangeRateScreenLayoutProps.changeRow).toBeUndefined();
+    expect(latestBalanceHistoryChartProps).toBeDefined();
+    expect(latestExchangeRateScreenLayoutProps.changeRow).toEqual({
+      percent: 10,
+      deltaFiatFormatted: '$10.00',
+      rangeLabel: '1D',
+    });
+    expect(
+      latestExchangeRateScreenLayoutProps.maskChangeRowDeltaWhenBalancesHidden,
+    ).toBe(true);
     expect(latestExchangeRateScreenLayoutProps.topValue).toBe('****');
     expect(latestExchangeRateScreenLayoutProps.reserveChangeRowSpace).toBe(
-      false,
+      true,
     );
   });
 

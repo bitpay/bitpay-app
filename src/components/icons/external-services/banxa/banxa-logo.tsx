@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg, G, Image} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 
 const BanxaLogoSvg: React.FC<{
   isDark: boolean;

@@ -45,16 +45,26 @@ const logTransformFailure = (
   } catch {}
 };
 
+export const PERSISTED_TX_HISTORY_LIMIT = 10;
+
 export const bootstrapWallets = (wallets: Wallet[]) => {
   return wallets
     .map(wallet => {
       try {
-        // reset transaction history
-        wallet.transactionHistory = {
-          transactions: [],
-          loadMore: true,
-          hasConfirmingTxs: false,
-        };
+        const persistedTransactions =
+          wallet.transactionHistory?.transactions ?? [];
+        wallet.transactionHistory = persistedTransactions.length
+          ? {
+              transactions: persistedTransactions,
+              loadMore: wallet.transactionHistory?.loadMore ?? true,
+              hasConfirmingTxs:
+                wallet.transactionHistory?.hasConfirmingTxs ?? false,
+            }
+          : {
+              transactions: [],
+              loadMore: true,
+              hasConfirmingTxs: false,
+            };
         const walletClient = BWCProvider.getClient(
           JSON.stringify(wallet.credentials),
         );
@@ -142,16 +152,49 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
   inboundState => {
     const keys = inboundState.keys || {};
-    if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys)) {
-        key.wallets.forEach(wallet => delete wallet.transactionHistory);
+    let persistedKeys: WalletState['keys'] | undefined;
 
-        inboundState.keys[id] = {
+    for (const [id, key] of Object.entries(keys)) {
+      let persistedWallets: Wallet[] | undefined;
+
+      key.wallets.forEach((wallet, walletIndex) => {
+        if (
+          !Object.prototype.hasOwnProperty.call(wallet, 'transactionHistory')
+        ) {
+          return;
+        }
+
+        const transactions = wallet.transactionHistory?.transactions ?? [];
+        if (transactions.length <= PERSISTED_TX_HISTORY_LIMIT) {
+          return;
+        }
+
+        const persistedWallet = {
+          ...wallet,
+          transactionHistory: {
+            ...wallet.transactionHistory,
+            transactions: transactions.slice(0, PERSISTED_TX_HISTORY_LIMIT),
+          },
+        };
+        persistedWallets ??= [...key.wallets];
+        persistedWallets[walletIndex] = persistedWallet;
+      });
+
+      if (persistedWallets) {
+        persistedKeys ??= {...keys};
+        persistedKeys[id] = {
           ...key,
+          wallets: persistedWallets,
         };
       }
     }
-    return inboundState;
+
+    return persistedKeys
+      ? {
+          ...inboundState,
+          keys: persistedKeys,
+        }
+      : inboundState;
   },
   // transform state being rehydrated
   outboundState => {

@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../components/styled/Text';
 import ZenLedgerImport from './screens/ZenLedgerImport';
@@ -24,7 +25,6 @@ export enum ZenLedgerScreens {
 
 const ZenLedgerGroup = ({ZenLedger, theme}: ZenLedgerProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <ZenLedger.Group screenOptions={commonOptions}>
       <ZenLedger.Screen

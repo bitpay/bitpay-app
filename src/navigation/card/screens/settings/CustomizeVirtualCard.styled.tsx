@@ -1,45 +1,103 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, View, ViewProps} from 'react-native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import {Disclaimer, H3, Paragraph} from '../../../../components/styled/Text';
 
-export const ContentContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const SCREEN_GUTTER = parseInt(ScreenGutter, 10);
 
-export const CustomizeVirtualCardHeading = styled(H3)`
-  margin-bottom: 24px;
-`;
+const styles = StyleSheet.create({
+  contentContainer: {
+    padding: SCREEN_GUTTER,
+  },
+  customizeVirtualCardHeading: {
+    marginBottom: 24,
+  },
+  customizeVirtualCardDescription: {
+    marginBottom: 24,
+  },
+  customizeVirtualCardDisclaimer: {
+    marginBottom: 24,
+  },
+  previewContainer: {
+    alignItems: 'center',
+  },
+  currencyListContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  ctaContainer: {
+    marginBottom: 64,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 25,
+    display: 'flex',
+    height: 50,
+    justifyContent: 'center',
+    width: 50,
+  },
+});
 
-export const CustomizeVirtualCardDescription = styled(Paragraph)`
-  margin-bottom: 24px;
-`;
+export const ContentContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.contentContainer, style]} {...rest} />
+  ),
+);
 
-export const CustomizeVirtualCardDisclaimer = styled(Disclaimer)`
-  margin-bottom: 24px;
-`;
+export const CustomizeVirtualCardHeading = React.forwardRef<
+  React.ElementRef<typeof H3>,
+  React.ComponentProps<typeof H3>
+>(({style, ...rest}, ref) => (
+  <H3 ref={ref} style={[styles.customizeVirtualCardHeading, style]} {...rest} />
+));
 
-export const PreviewContainer = styled.View`
-  align-items: center;
-`;
+export const CustomizeVirtualCardDescription = React.forwardRef<
+  React.ElementRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => (
+  <Paragraph
+    ref={ref}
+    style={[styles.customizeVirtualCardDescription, style]}
+    {...rest}
+  />
+));
 
-export const CurrencyListContainer = styled.View`
-  flex-direction: column;
-  align-items: center;
-  margin-top: 24px;
-  margin-bottom: 24px;
-`;
+export const CustomizeVirtualCardDisclaimer = React.forwardRef<
+  React.ElementRef<typeof Disclaimer>,
+  React.ComponentProps<typeof Disclaimer>
+>(({style, ...rest}, ref) => (
+  <Disclaimer
+    ref={ref}
+    style={[styles.customizeVirtualCardDisclaimer, style]}
+    {...rest}
+  />
+));
 
-export const CtaContainer = styled.View`
-  margin-bottom: 64px;
-`;
+export const PreviewContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.previewContainer, style]} {...rest} />
+  ),
+);
 
-export const IconContainer = styled.View`
-  align-items: center;
-  background-color: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 25px;
-  display: flex;
-  height: 50px;
-  justify-content: center;
-  width: 50px;
-`;
+export const CurrencyListContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.currencyListContainer, style]} {...rest} />
+  ),
+);
+
+export const CtaContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.ctaContainer, style]} {...rest} />
+  ),
+);
+
+export const IconContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <View ref={ref} style={[styles.iconContainer, style]} {...rest} />
+  ),
+);

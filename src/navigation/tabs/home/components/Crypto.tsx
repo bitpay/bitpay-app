@@ -1,13 +1,17 @@
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {
+  NavigationProp,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import React, {
   ReactElement,
   useCallback,
-  useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import Carousel from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   Column,
@@ -42,12 +46,13 @@ import {
   HomeCarouselLayoutType,
 } from '../../../../store/app/app.models';
 import type {PortfolioPopulateStatus} from '../../../../store/portfolio/portfolio.models';
+import type {Rates} from '../../../../store/rate/rate.models';
 import {
   CarouselItemContainer,
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -78,57 +83,129 @@ import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {IsShared} from '../../../../store/wallet/effects/transactions/transactions';
 import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
-import {IsVMChain} from '../../../../store/wallet/utils/currency';
+import {IsSVMChain, IsVMChain} from '../../../../store/wallet/utils/currency';
+import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInteractionsAndFrames';
+import {performanceLog} from '../../../../utils/performanceDebug';
+import {getSinglePreloadCandidate} from '../../../../utils/navigationPreload';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
-const CryptoContainer = styled.View`
-  background: ${({theme}) => theme.colors.background};
-  padding: 5px 0 0px;
-`;
+const styles = StyleSheet.create({
+  cryptoContainer: {
+    paddingTop: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+  },
+  carouselContainer: {
+    marginTop: 28,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  listViewContainer: {
+    paddingTop: 20,
+    paddingRight: 0,
+    paddingBottom: 12,
+    paddingLeft: 0,
+  },
+  buttonContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 0,
+  },
+  noKeysSectionHeaderContainer: {
+    marginBottom: 0,
+  },
+  noKeysButtonWrapper: {
+    marginBottom: 15,
+  },
+  cryptoSectionHeaderContainer: {
+    marginBottom: -15,
+    marginTop: 0,
+  },
+  cryptoHeaderRow: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 0,
+  },
+  cryptoHeaderTitle: {
+    flexGrow: 1,
+  },
+  cryptoHeaderActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+});
 
-const CarouselContainer = styled.View`
-  margin-top: 28px;
-`;
+const EMPTY_BACKGROUND_RATES: Rates = {};
+const EMPTY_BACKGROUND_KEYS: Record<string, Key> = {};
 
-const Row = styled.View`
-  flex-direction: row;
-`;
+const canPreloadWalletDestination = (key: Key): boolean =>
+  !!key.backupComplete &&
+  !!key.wallets?.[0] &&
+  !key.wallets[0].pendingTssSession;
 
-const ListViewContainer = styled.View`
-  padding: 20px 0 12px 0;
-`;
+const CryptoContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.cryptoContainer,
+        {backgroundColor: theme.colors.background},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const ButtonContainer = styled.View`
-  padding: 20px 0;
-`;
+const CarouselContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.carouselContainer}>{children}</View>;
 
-const NoKeysSectionHeaderContainer = styled(SectionHeaderContainer)`
-  margin-bottom: 0px;
-`;
+const ListViewContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.listViewContainer}>{children}</View>;
 
-const NoKeysButtonWrapper = styled.View`
-  margin-bottom: 15px;
-`;
+const ButtonContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.buttonContainer}>{children}</View>;
 
-const CryptoSectionHeaderContainer = styled(SectionHeaderContainer)`
-  margin-bottom: -15px;
-  margin-top: 0px;
-`;
+const NoKeysSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof SectionHeaderContainer>
+> = ({style, ...rest}) => (
+  <SectionHeaderContainer
+    style={[styles.noKeysSectionHeaderContainer, style]}
+    {...rest}
+  />
+);
 
-const CryptoHeaderRow = styled(Row)`
-  align-items: center;
-  width: 100%;
-  margin-bottom: 0px;
-`;
+const NoKeysButtonWrapper: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.noKeysButtonWrapper}>{children}</View>;
 
-const CryptoHeaderTitle = styled(HomeSectionTitle)`
-  flex-grow: 1;
-`;
+const CryptoSectionHeaderContainer: React.FC<
+  React.ComponentProps<typeof SectionHeaderContainer>
+> = ({style, ...rest}) => (
+  <SectionHeaderContainer
+    style={[styles.cryptoSectionHeaderContainer, style]}
+    {...rest}
+  />
+);
 
-const CryptoHeaderActions = styled.View`
-  flex-direction: row;
-  gap: 8px;
-`;
+const CryptoHeaderRow: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={[styles.row, styles.cryptoHeaderRow]}>{children}</View>;
+
+const CryptoHeaderTitle: React.FC<
+  React.ComponentProps<typeof HomeSectionTitle>
+> = ({style, ...rest}) => (
+  <HomeSectionTitle style={[styles.cryptoHeaderTitle, style]} {...rest} />
+);
+
+const CryptoHeaderActions: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.cryptoHeaderActions}>{children}</View>;
 
 export const keyBackupRequired = (
   key: Key,
@@ -242,6 +319,7 @@ export const createHomeCardList = ({
   populateStatus,
   context,
   onPress,
+  onDestinationPress,
   currency,
 }: {
   navigation: any;
@@ -259,6 +337,7 @@ export const createHomeCardList = ({
   populateStatus?: PortfolioPopulateStatus;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
+  onDestinationPress?: (key: Key) => void;
   currency?: any;
 }) => {
   let list: {id: string; component: ReactElement}[] = [];
@@ -326,6 +405,7 @@ export const createHomeCardList = ({
                   }
                 : () => {
                     haptic('soft');
+                    onDestinationPress?.(key);
                     if (backupComplete || hasPendingTssSession) {
                       if (hasPendingTssSession && key?.tssSession) {
                         const {isCreator} = key.tssSession;
@@ -344,10 +424,12 @@ export const createHomeCardList = ({
                             keyId: key.id,
                             selectedAccountAddress:
                               fullWalletObj.receiveAddress,
+                            isSvmAccount: IsSVMChain(
+                              fullWalletObj.credentials.chain,
+                            ),
                           });
                         } else {
                           navigation.navigate(WalletScreens.WALLET_DETAILS, {
-                            key,
                             walletId: fullWalletObj.credentials.walletId,
                             copayerId: fullWalletObj.credentials.copayerId,
                           });
@@ -404,34 +486,68 @@ export const createHomeCardList = ({
   };
 };
 
-const Crypto = () => {
+type CryptoProps = {
+  active?: boolean;
+};
+
+const Crypto = ({active = true}: CryptoProps) => {
   const [cardHeights, setCardHeights] = useState<Record<string, number>>({});
   const {t: translate} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const subscribedKeys = useAppSelector(({WALLET}) =>
+    active ? WALLET.keys : EMPTY_BACKGROUND_KEYS,
+  ) as Record<string, Key>;
+  const lastActiveKeysRef = useRef(subscribedKeys);
+  if (active) {
+    lastActiveKeysRef.current = subscribedKeys;
+  }
+  const keys = lastActiveKeysRef.current;
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const subscribedPopulateStatus = useAppSelector(({PORTFOLIO}) =>
+    active ? PORTFOLIO.populateStatus : undefined,
+  );
+  const lastActivePopulateStatusRef = useRef(subscribedPopulateStatus);
+  if (active) {
+    lastActivePopulateStatusRef.current = subscribedPopulateStatus;
+  }
+  const populateStatus = lastActivePopulateStatusRef.current;
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
-  const rates = useAppSelector(({RATE}) => RATE.rates);
-  const hasCompletedFullPortfolioPopulate = useAppSelector(
-    selectHasCompletedFullPortfolioPopulate,
+  const subscribedRates = useAppSelector(({RATE}) =>
+    active ? RATE.rates : EMPTY_BACKGROUND_RATES,
   );
+  const lastActiveRatesRef = useRef<Rates>(subscribedRates);
+  if (active) {
+    lastActiveRatesRef.current = subscribedRates;
+  }
+  const rates = lastActiveRatesRef.current;
+  const subscribedHasCompletedFullPortfolioPopulate = useAppSelector(state =>
+    active ? selectHasCompletedFullPortfolioPopulate(state) : false,
+  );
+  const lastActiveHasCompletedFullPortfolioPopulateRef = useRef(
+    subscribedHasCompletedFullPortfolioPopulate,
+  );
+  if (active) {
+    lastActiveHasCompletedFullPortfolioPopulateRef.current =
+      subscribedHasCompletedFullPortfolioPopulate;
+  }
+  const hasCompletedFullPortfolioPopulate =
+    lastActiveHasCompletedFullPortfolioPopulateRef.current;
   const portfolioChartsRequested = showPortfolioValue === true;
   const portfolioChartsEnabled =
-    portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
+    active && portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
   const keyList = useMemo(() => Object.values(keys), [keys]);
   const hasKeys = keyList.length;
   const legacyKeyPercentagesEnabled =
-    !portfolioChartsRequested && !hideAllBalances;
+    active && !portfolioChartsRequested && !hideAllBalances;
   const legacyKeyRateRequests = useMemo(() => {
     if (!legacyKeyPercentagesEnabled) {
       return [];
@@ -441,10 +557,21 @@ const Crypto = () => {
       wallets: keyList.flatMap(key => getVisibleWalletsForKey(key)),
     });
   }, [keyList, legacyKeyPercentagesEnabled]);
-  const legacyKeyBaselineTimestampMs = useMemo(
-    () => getLastDayTimestampStartOfHourMs(),
-    [defaultAltCurrency.isoCode],
-  );
+  const legacyKeyBaselineTimestampRef = useRef({
+    quoteCurrency: '',
+    timestampMs: 0,
+  });
+  if (
+    legacyKeyBaselineTimestampRef.current.quoteCurrency !==
+    defaultAltCurrency.isoCode
+  ) {
+    legacyKeyBaselineTimestampRef.current = {
+      quoteCurrency: defaultAltCurrency.isoCode,
+      timestampMs: getLastDayTimestampStartOfHourMs(),
+    };
+  }
+  const legacyKeyBaselineTimestampMs =
+    legacyKeyBaselineTimestampRef.current.timestampMs;
   const {cache: legacyKeyFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
     quoteCurrency: defaultAltCurrency.isoCode,
     requests: legacyKeyRateRequests,
@@ -487,30 +614,149 @@ const Crypto = () => {
     keys: keyList,
     enabled: portfolioChartsEnabled,
   });
-  const visiblePortfolioPercentageDifferenceByKey = portfolioChartsEnabled
-    ? portfolioPercentageDifferenceByKey
+  const lastLegacyPercentageDifferenceByKeyRef = useRef(
+    legacyPercentageDifferenceByKey,
+  );
+  const lastPortfolioPercentageDifferenceByKeyRef = useRef(
+    portfolioPercentageDifferenceByKey,
+  );
+  if (active) {
+    lastLegacyPercentageDifferenceByKeyRef.current =
+      legacyPercentageDifferenceByKey;
+    lastPortfolioPercentageDifferenceByKeyRef.current =
+      portfolioPercentageDifferenceByKey;
+  }
+  const visibleLegacyPercentageDifferenceByKey = active
+    ? legacyPercentageDifferenceByKey
+    : lastLegacyPercentageDifferenceByKeyRef.current;
+  const visiblePortfolioPercentageDifferenceByKey = portfolioChartsRequested
+    ? active
+      ? portfolioPercentageDifferenceByKey
+      : lastPortfolioPercentageDifferenceByKeyRef.current
     : undefined;
-  const portfolioPopulateStatus = portfolioChartsEnabled
-    ? portfolio?.populateStatus
-    : undefined;
-  const [cardsList, setCardsList] = useState(
-    createHomeCardList({
-      navigation,
-      keys: keyList,
-      dispatch,
-      linkedCoinbase: false,
-      homeCarouselConfig: homeCarouselConfig || [],
-      homeCarouselLayoutType,
-      hideKeyBalance: hideAllBalances,
-      legacyPercentageDifferenceByKey,
-      portfolioPercentageDifferenceByKey:
-        visiblePortfolioPercentageDifferenceByKey,
-      populateStatus: portfolioPopulateStatus,
-    }),
+  const portfolioPopulateStatus =
+    portfolioChartsRequested && hasCompletedFullPortfolioPopulate
+      ? populateStatus
+      : undefined;
+  const preloadedDestinationRef = useRef<string | undefined>(undefined);
+  const destinationPreloadTaskRef = useRef<
+    ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
+  >(undefined);
+  const cancelDestinationPreload = useCallback(() => {
+    destinationPreloadTaskRef.current?.cancel();
+    destinationPreloadTaskRef.current = undefined;
+  }, []);
+  const preloadWalletDestination = useCallback(
+    (key: Key) => {
+      if (typeof (navigation as any).preload !== 'function') {
+        return;
+      }
+
+      const fullWalletObj = key.wallets?.[0];
+      if (!canPreloadWalletDestination(key) || !fullWalletObj) {
+        return;
+      }
+
+      if (isTSSKey(key)) {
+        if (IsVMChain(fullWalletObj.credentials.chain)) {
+          if (!fullWalletObj.receiveAddress) {
+            return;
+          }
+
+          const preloadIdentity = `account:${key.id}:${fullWalletObj.receiveAddress}`;
+          if (preloadedDestinationRef.current === preloadIdentity) {
+            return;
+          }
+
+          preloadedDestinationRef.current = preloadIdentity;
+          performanceLog('[PERF-PRELOAD] AccountDetails start source:Home');
+          (navigation as NavigationProp<any>).preload(
+            WalletScreens.ACCOUNT_DETAILS,
+            {
+              keyId: key.id,
+              selectedAccountAddress: fullWalletObj.receiveAddress,
+              isSvmAccount: IsSVMChain(fullWalletObj.credentials.chain),
+              _preloadContent: true,
+            },
+          );
+          return;
+        }
+
+        const walletId = fullWalletObj.credentials.walletId;
+        const copayerId = fullWalletObj.credentials.copayerId;
+        const preloadIdentity = `wallet:${walletId}:${copayerId || ''}`;
+        if (preloadedDestinationRef.current === preloadIdentity) {
+          return;
+        }
+
+        preloadedDestinationRef.current = preloadIdentity;
+        performanceLog('[PERF-PRELOAD] WalletDetails start source:Home');
+        (navigation as NavigationProp<any>).preload(
+          WalletScreens.WALLET_DETAILS,
+          {
+            walletId,
+            copayerId,
+            _preloadContent: true,
+          },
+        );
+        return;
+      }
+
+      const preloadIdentity = `key:${key.id}`;
+      if (preloadedDestinationRef.current === preloadIdentity) {
+        return;
+      }
+
+      preloadedDestinationRef.current = preloadIdentity;
+      performanceLog('[PERF-PRELOAD] KeyOverview start source:Home');
+      (navigation as NavigationProp<any>).preload(WalletScreens.KEY_OVERVIEW, {
+        id: key.id,
+        _preloadContent: true,
+      });
+    },
+    [navigation],
+  );
+  const keyListRef = useRef(keyList);
+  keyListRef.current = keyList;
+  const singlePreloadableKeyId = useMemo(
+    () => getSinglePreloadCandidate(keyList, canPreloadWalletDestination)?.id,
+    [keyList],
   );
 
-  useEffect(() => {
-    setCardsList(
+  useFocusEffect(
+    useCallback(() => {
+      preloadedDestinationRef.current = undefined;
+
+      if (!active || !singlePreloadableKeyId) {
+        return;
+      }
+
+      const preloadTask = scheduleAfterTransitionAndIdle({
+        navigation: navigation as any,
+        transitionFallbackMs: 800,
+        idleTimeoutMs: 1200,
+        callback: signal => {
+          const keyToPreload = keyListRef.current.find(
+            key => key.id === singlePreloadableKeyId,
+          );
+          if (!signal.aborted && keyToPreload) {
+            preloadWalletDestination(keyToPreload);
+          }
+        },
+      });
+      destinationPreloadTaskRef.current = preloadTask;
+
+      return () => {
+        preloadTask.cancel();
+        if (destinationPreloadTaskRef.current === preloadTask) {
+          destinationPreloadTaskRef.current = undefined;
+        }
+      };
+    }, [active, navigation, preloadWalletDestination, singlePreloadableKeyId]),
+  );
+
+  const cardsList = useMemo(
+    () =>
       createHomeCardList({
         navigation,
         keys: keyList,
@@ -519,24 +765,26 @@ const Crypto = () => {
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
-        legacyPercentageDifferenceByKey,
+        legacyPercentageDifferenceByKey: visibleLegacyPercentageDifferenceByKey,
         portfolioPercentageDifferenceByKey:
           visiblePortfolioPercentageDifferenceByKey,
         populateStatus: portfolioPopulateStatus,
+        onDestinationPress: cancelDestinationPreload,
       }),
-    );
-  }, [
-    navigation,
-    keyList,
-    dispatch,
-    linkedCoinbase,
-    homeCarouselConfig,
-    homeCarouselLayoutType,
-    hideAllBalances,
-    legacyPercentageDifferenceByKey,
-    portfolioPopulateStatus,
-    visiblePortfolioPercentageDifferenceByKey,
-  ]);
+    [
+      navigation,
+      dispatch,
+      linkedCoinbase,
+      homeCarouselConfig,
+      homeCarouselLayoutType,
+      hideAllBalances,
+      keyList,
+      cancelDestinationPreload,
+      visibleLegacyPercentageDifferenceByKey,
+      portfolioPopulateStatus,
+      visiblePortfolioPercentageDifferenceByKey,
+    ],
+  );
 
   const renderCarouselItem = useCallback(
     ({item}: {item: {id: string; component: ReactElement}}) => (
@@ -674,4 +922,4 @@ const Crypto = () => {
   );
 };
 
-export default Crypto;
+export default React.memo(Crypto);

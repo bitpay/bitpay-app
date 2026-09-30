@@ -1,4 +1,4 @@
-import React, {memo, ReactElement, useEffect, useState} from 'react';
+import React, {memo, ReactElement} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   Column,
@@ -9,13 +9,12 @@ import {
   BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
-import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {ActivityIndicator, Platform, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {WalletRowProps} from './WalletRow';
 import {SearchableItem} from '../chain-search/ChainSearch';
@@ -23,19 +22,18 @@ import Animated, {FadeIn} from 'react-native-reanimated';
 import {IsSVMChain} from '../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 
-const SpinnerContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding-right: 10px;
-`;
-
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const ListContainer = styled(Animated.View)``;
+const styles = StyleSheet.create({
+  spinnerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  balanceColumn: {
+    alignItems: 'flex-end',
+  },
+});
 
 export interface AccountRowListBase extends SearchableItem {}
 
@@ -68,7 +66,9 @@ interface Props {
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: () => void;
+  onPressIn?: () => void;
   hideBalance: boolean;
+  animateEntrance?: boolean;
 }
 
 export const buildTestBadge = (
@@ -109,8 +109,10 @@ const AccountListRow = ({
   accountItem,
   hideIcon,
   onPress,
+  onPressIn,
   isLast,
   hideBalance,
+  animateEntrance = true,
 }: Props) => {
   const {t} = useTranslation();
   const {
@@ -137,38 +139,26 @@ const AccountListRow = ({
 
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
 
-  const [isBlockieReady, setIsBlockieReady] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsBlockieReady(true);
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
-    <ListContainer entering={FadeIn.duration(800)}>
+    <Animated.View
+      entering={animateEntrance ? FadeIn.duration(800) : undefined}>
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={onPress}
+        onPressIn={onPressIn}
         style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
         {!hideIcon ? (
           <CurrencyImageContainer>
             {isMultiNetworkSupported ? (
-              isBlockieReady ? (
-                <CurrencyImage
-                  blockie={{
-                    seed: receiveAddress,
-                  }}
-                  badgeUri={
-                    IsSVMChain(chain) ? CurrencyListIcons[chain] : undefined
-                  }
-                  size={40}
-                />
-              ) : (
-                <></>
-              )
+              <CurrencyImage
+                blockie={{
+                  seed: receiveAddress,
+                }}
+                badgeUri={
+                  IsSVMChain(chain) ? CurrencyListIcons[chain] : undefined
+                }
+                size={40}
+              />
             ) : (
               <CurrencyImage
                 img={wallets[0].img}
@@ -216,7 +206,7 @@ const AccountListRow = ({
         )}
         {isMultiNetworkSupported ? (
           fiatBalanceFormat && (
-            <BalanceColumn>
+            <Column style={styles.balanceColumn}>
               {!hideBalance ? (
                 <H5 numberOfLines={1} ellipsizeMode="tail">
                   {fiatBalanceFormat}
@@ -224,11 +214,11 @@ const AccountListRow = ({
               ) : (
                 <H5 style={{marginTop: 8}}>****</H5>
               )}
-            </BalanceColumn>
+            </Column>
           )
         ) : !isScanning ? (
           cryptoBalance && (
-            <BalanceColumn>
+            <Column style={styles.balanceColumn}>
               {!hideBalance ? (
                 <>
                   <H5 numberOfLines={1} ellipsizeMode="tail">
@@ -245,15 +235,15 @@ const AccountListRow = ({
               ) : (
                 <H5 style={{marginTop: 8}}>****</H5>
               )}
-            </BalanceColumn>
+            </Column>
           )
         ) : (
-          <SpinnerContainer>
+          <View style={styles.spinnerContainer}>
             <ActivityIndicator color={ProgressBlue} />
-          </SpinnerContainer>
+          </View>
         )}
       </RowContainer>
-    </ListContainer>
+    </Animated.View>
   );
 };
 

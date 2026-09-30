@@ -1,10 +1,11 @@
 import React from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root} from '../../../Root';
 import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
-import SettingsHome, {SettingsHomeProps} from './SettingsRoot';
+import SettingsHome from './SettingsRoot';
 import SettingsDetails, {SettingsDetailsParamList} from './SettingsDetails';
 
 interface SettingsProps {
@@ -27,8 +28,6 @@ export enum SettingsScreens {
 }
 
 const SettingsGroup = ({Settings}: SettingsProps) => {
-  const {t} = useTranslation();
-
   return (
     <Settings.Group
       screenOptions={() => ({

@@ -12,7 +12,7 @@ import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {Slate30, SlateDark} from '../../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';

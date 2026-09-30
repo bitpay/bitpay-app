@@ -7,7 +7,7 @@ import {
 import React, {useCallback, useState} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import styled from 'styled-components/native';
+import {View, StyleSheet} from 'react-native';
 import {Link, Paragraph} from '../../../components/styled/Text';
 import {
   ScrollView,
@@ -37,10 +37,12 @@ export type WalletConnectIntroParamList = {
   uri?: string;
 };
 
-const LinkContainer = styled.View`
-  padding-top: 5px;
-  padding-bottom: 30px;
-`;
+const styles = StyleSheet.create({
+  linkContainer: {
+    paddingTop: 5,
+    paddingBottom: 30,
+  },
+});
 
 const WalletConnectIntro = () => {
   const {t} = useTranslation();
@@ -51,7 +53,9 @@ const WalletConnectIntro = () => {
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
   // version 2
-  const {proposal} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
+  const proposal = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.proposal,
+  );
   const {
     params: {uri: _uri},
   } = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
@@ -120,7 +124,7 @@ const WalletConnectIntro = () => {
             'WalletConnect is an open source protocol for connecting decentralized applications to mobile wallets with QR code scanning or deep linking.',
           )}
         </Paragraph>
-        <LinkContainer>
+        <View style={styles.linkContainer}>
           <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
@@ -128,7 +132,7 @@ const WalletConnectIntro = () => {
             }}>
             <Link>{t('Learn More')}</Link>
           </TouchableOpacity>
-        </LinkContainer>
+        </View>
         <SearchContainer>
           <SearchInput
             placeholder={t('WalletConnect URI')}

@@ -1,7 +1,7 @@
 import React from 'react';
 import TestRenderer, {act} from 'react-test-renderer';
 import {View} from 'react-native';
-import {ThemeProvider} from 'styled-components/native';
+import {ThemeProvider} from '../../contexts';
 import InteractiveLineChart from './InteractiveLineChart';
 import {SlateDark} from '../../styles/colors';
 import {withTiming} from 'react-native-reanimated';
