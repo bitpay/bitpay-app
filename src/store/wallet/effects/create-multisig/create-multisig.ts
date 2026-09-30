@@ -42,6 +42,19 @@ const activeCeremonies = new Map<string, any>();
 
 const getCeremonyTimeoutMs = (n: number): number => n * 60_000;
 
+// BWS expires keygen sessions and rejects participants whose TSS scheme
+// version does not match the one the session was started with.
+const toCeremonyError = (e: Error): Error => {
+  const message = e?.message || '';
+  if (message.includes('TSS_SESSION_EXPIRED')) {
+    return new Error('CEREMONY_TIMEOUT');
+  }
+  if (message.includes('TSS_MISMATCH_VERSION')) {
+    return new Error('CEREMONY_VERSION_MISMATCH');
+  }
+  return e;
+};
+
 interface CeremonyStats {
   sessionId: string;
   startedAt: number;
@@ -678,7 +691,7 @@ export const startTSSCeremony =
                 activeCeremonies.delete(keyId);
                 clearCeremonyStats(keyId);
                 tssKeyGen.unsubscribe();
-                reject(e);
+                reject(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Ceremony complete]`);
@@ -1306,7 +1319,7 @@ export const joinTSSWithCode =
                 activeCeremonies.delete(key.id);
                 clearCeremonyStats(key.id);
                 tssKeyGen.unsubscribe();
-                reject(e);
+                reject(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Join complete]`);
@@ -1521,7 +1534,7 @@ export const joinTSSWithCode =
         logManager.error(
           `[TSS Join] Caught error, cleaning up: ${errorStr} | activeKeyId=${_activeKeyId}`,
         );
-        reject(err);
+        reject(toCeremonyError(err as Error));
       }
     });
   };
