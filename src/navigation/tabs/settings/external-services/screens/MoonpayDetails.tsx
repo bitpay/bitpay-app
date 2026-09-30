@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, RefreshControl, Text} from 'react-native';
+import {
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -80,15 +86,18 @@ import {ExternalServicesScreens} from '../../../../services/ExternalServicesGrou
 import {moonpaySellEnv} from '../../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {RootState} from '../../../../../store';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
-import styled from 'styled-components/native';
 export interface MoonpayDetailsProps {
   paymentRequest: MoonpayPaymentData;
 }
 
-const BankTransferSeparator = styled.View`
-  margin: 15px 15px 0px 15px;
-  border: solid 0.5px ${({theme: {dark}}) => (dark ? SlateDark : Slate)};
-`;
+const styles = StyleSheet.create({
+  bankTransferSeparator: {
+    marginTop: 15,
+    marginHorizontal: 15,
+    borderStyle: 'solid',
+    borderWidth: 0.5,
+  },
+});
 
 const copyText = (text: string) => {
   haptic('impactLight');
@@ -729,7 +738,12 @@ const MoonpayDetails: React.FC = () => {
                   )}
                 </ColumnDataContainer>
               ))}
-              <BankTransferSeparator />
+              <View
+                style={[
+                  styles.bankTransferSeparator,
+                  {borderColor: theme.dark ? SlateDark : Slate},
+                ]}
+              />
             </>
           ) : null}
 
