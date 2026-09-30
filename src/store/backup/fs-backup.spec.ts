@@ -88,8 +88,11 @@ function mockFs(initial: Entry[] = []): Map<Entry, string> {
       }
       if (fs.has(entryOf(dest))) {
         return Promise.reject(
-          new Error(
-            `"${src}" couldn't be moved: an item with the same name already exists`,
+          Object.assign(
+            new Error(
+              `"${src}" couldn't be moved: an item with the same name already exists`,
+            ),
+            {code: 'ENSCOCOAERRORDOMAIN516'},
           ),
         );
       }
@@ -290,21 +293,19 @@ describe('backupPersistRoot', () => {
     expect(Sentry.captureException).toHaveBeenCalledTimes(1);
   });
 
-  it('recovers the rotation when the first final→backup move throws', async () => {
+  it('never clears the destination when a move fails for another reason', async () => {
     const {backupPersistRoot} = getFreshModule();
-    const fs = mockFs(['dir', 'final']);
+    const fs = mockFs(['dir', 'final', 'bak']);
     const move = realMove();
-    let calls = 0;
     (mockedRNFS.moveFile as jest.Mock).mockImplementation((src, dest) =>
-      ++calls === 1
-        ? Promise.reject(new Error('rotate failed'))
+      dest.endsWith('.bak')
+        ? Promise.reject(new Error('I/O error'))
         : move(src, dest),
     );
 
     await expect(backupPersistRoot('{"new":true}')).resolves.toBeUndefined();
+    expect(fs.get('bak')).toBe('stale-bak'); // last good copy kept
     expect(fs.get('final')).toBe('{"new":true}');
-    expect(fs.get('bak')).toBe('stale-final');
-    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
   // `ENOENT: open failed: ENOENT (No such file or directory), open
