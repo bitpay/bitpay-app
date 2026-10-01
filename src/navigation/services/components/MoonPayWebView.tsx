@@ -17,6 +17,8 @@ type MoonPayWebViewProps = {
   // Google Pay runs on the Payment Request API, which Android WebViews keep
   // disabled by default. Opt-in per frame so the other frames are untouched.
   paymentRequestEnabled?: boolean;
+  // Appended to the WebView's default user agent. Opt-in per frame
+  userAgentSuffix?: string;
 };
 
 export type MoonPayWebViewRef = {
@@ -35,7 +37,15 @@ export const MoonPayWebView = forwardRef<
   MoonPayWebViewProps
 >(
   (
-    {url, channelId, onMessage, onHandshake, style, paymentRequestEnabled},
+    {
+      url,
+      channelId,
+      onMessage,
+      onHandshake,
+      style,
+      paymentRequestEnabled,
+      userAgentSuffix,
+    },
     ref,
   ) => {
     const webViewRef = useRef<WebView>(null);
@@ -118,6 +128,7 @@ export const MoonPayWebView = forwardRef<
           originWhitelist={['*']}
           setSupportMultipleWindows={false}
           paymentRequestEnabled={paymentRequestEnabled}
+          applicationNameForUserAgent={userAgentSuffix}
           style={styles.webview}
         />
       </View>

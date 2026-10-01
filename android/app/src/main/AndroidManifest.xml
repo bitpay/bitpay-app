@@ -20,6 +20,22 @@
         android:protectionLevel="signature" />
     <uses-permission android:name="com.bitpay.wallet.permission.C2D_MESSAGE" />
 
+    <!-- Payment Request API inside WebViews (MoonPay embedded Google Pay).
+         Since Android 11 an app only sees the packages it declares, so without
+         these the WebView cannot discover Google Pay and reports it unavailable.
+         https://developers.google.com/pay/api/android/guides/recipes/using-android-webview -->
+    <queries>
+        <intent>
+            <action android:name="org.chromium.intent.action.PAY" />
+        </intent>
+        <intent>
+            <action android:name="org.chromium.intent.action.IS_READY_TO_PAY" />
+        </intent>
+        <intent>
+            <action android:name="org.chromium.intent.action.UPDATE_PAYMENT_DETAILS" />
+        </intent>
+    </queries>
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
