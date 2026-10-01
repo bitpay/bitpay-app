@@ -771,13 +771,6 @@ export const startTSSCeremony =
           );
         }
 
-        const walletAddress = (await dispatch<any>(
-          createWalletAddress({wallet: finalWalletClient, newAddress: true}),
-        )) as string;
-        logManager.info(
-          `[TSS Ceremony] New address generated: ${walletAddress}`,
-        );
-
         const refreshWalletWithRetry = async (
           maxRetries: number = 5,
           delayMs: number = 1000,
@@ -856,6 +849,13 @@ export const startTSSCeremony =
         };
 
         await refreshWalletWithRetry(5, 1000);
+
+        const walletAddress = (await dispatch<any>(
+          createWalletAddress({wallet: finalWalletClient, newAddress: true}),
+        )) as string;
+        logManager.info(
+          `[TSS Ceremony] New address generated: ${walletAddress}`,
+        );
 
         const finalWallet = merge(
           finalWalletClient,
