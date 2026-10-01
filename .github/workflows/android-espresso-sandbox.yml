@@ -116,6 +116,11 @@ jobs:
           sed -i '/^IS_MAESTRO=/d' .env.development
           echo "IS_MAESTRO=true" >> .env.development
 
+      - name: Set Wallet phrase 
+        env:
+          WALLET_PHRASE: ${{ secrets.WALLET_PHRASE }}        
+        run: yarn set:WalletPhrase
+
       - name: Create Sentry properties
         run: |
           echo "${{ secrets.SENTRY_PROPERTIES }}" > sentry.properties

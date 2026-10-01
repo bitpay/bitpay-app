@@ -34,6 +34,7 @@ final class Test592_ImportWalletRecoveryPhrase: XCTestCase {
     let selectAnOptionPage = AddCryptoOptionPage(app: app)
     let importRecoveryPhasePage = ImportRecoveryPhrasePage(app: app)
     let myKeyPage = MyKeyPage(app: app)
+    let walletPhrase = TestConfig.walletPhrase
     
     AllureXCTestSupport.step(
       "(1 to 3) On the Home screen, tap the Plus (+) control near the “Your Crypto” section to open wallet/key options."
@@ -57,9 +58,7 @@ final class Test592_ImportWalletRecoveryPhrase: XCTestCase {
     AllureXCTestSupport.step(
       "(6 to 7) On the “Import” screen, tap the Recovery Phrase input field & Enter a valid Recovery Phrase. "
     ) {
-      importRecoveryPhasePage.enterRecoveryPhrase(
-        "hobby short divert lady spare quit act settle body town license alone"
-      )
+      importRecoveryPhasePage.enterRecoveryPhrase(walletPhrase)
     }
     
     AllureXCTestSupport.step("(8) Tap Import Wallet") {

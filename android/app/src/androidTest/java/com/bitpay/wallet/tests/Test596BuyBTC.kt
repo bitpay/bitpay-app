@@ -15,6 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.bitpay.wallet.TestConfig
 
 @RunWith(AndroidJUnit4::class)
 class Test596BuyBTC : BaseTest() {
@@ -26,6 +27,7 @@ class Test596BuyBTC : BaseTest() {
     private val myKeyPage = MyKeyPage()
     private val selectCurrencyPage = SelectCurrencyPage()
     private val keyboardPage = KeyboardPage()
+    private val walletPhrase = TestConfig.WALLET_PHRASE
 
     @Test
     fun testBTCBuy() {
@@ -34,7 +36,7 @@ class Test596BuyBTC : BaseTest() {
         }
 
         allureStep("Enter recovery phrase and import wallet") {
-            importWalletPage.enterRecoveryPhrase("hobby short divert lady spare quit act settle body town license alone")
+            importWalletPage.enterRecoveryPhrase(walletPhrase)
             allureScreenshot("Recovery phrase entered")
             importWalletPage.clickImportWallet()
         }

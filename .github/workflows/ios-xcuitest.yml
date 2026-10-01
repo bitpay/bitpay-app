@@ -47,6 +47,11 @@ jobs:
           cp .env.template .env.development
           echo "DISABLE_DEVELOPMENT_LOGGING=true" >> .env.development
           echo "IS_MAESTRO=true" >> .env.development
+      
+      - name: Set Wallet phrase   
+        env:
+          WALLET_PHRASE: ${{ secrets.WALLET_PHRASE }}     
+        run: yarn set:WalletPhrase
 
       - name: Create local Sentry properties
         run: |
