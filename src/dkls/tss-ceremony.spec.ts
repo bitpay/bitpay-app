@@ -1,30 +1,16 @@
 /**
  * @jest-environment-options {"customExportConditions": ["node", "require"]}
  */
-import React from 'react';
-import TestRenderer, {act} from 'react-test-renderer';
 import {Buffer as RNBuffer} from '@craftzdog/react-native-buffer';
-import {createDklsWebViewHost} from '@test/dklsWebView';
-import {DklsWorkerHost} from './DklsWorker';
-
-function mockRestrictBufferApi<T extends object>(
-  nodeBuffer: T,
-  api: object,
-): T {
-  return new Proxy(nodeBuffer, {
-    get: (target, prop, receiver) =>
-      typeof prop === 'string' && !(prop in api)
-        ? undefined
-        : Reflect.get(target, prop, receiver),
-  });
-}
+import {mountDklsWorkerHost} from '@test/dklsWebView';
+import {restrictBufferApi} from '@test/rnBuffer';
 
 jest.unmock('@bitpay-labs/bitcore-tss');
 jest.mock('buffer', () => {
   const actual = jest.requireActual('buffer');
   return {
     ...actual,
-    Buffer: mockRestrictBufferApi(
+    Buffer: require('@test/rnBuffer').restrictBufferApi(
       actual.Buffer,
       jest.requireActual('buffer/').Buffer,
     ),
@@ -32,7 +18,7 @@ jest.mock('buffer', () => {
 });
 
 const nodeBuffer = global.Buffer;
-global.Buffer = mockRestrictBufferApi(nodeBuffer, RNBuffer);
+global.Buffer = restrictBufferApi(nodeBuffer, RNBuffer);
 
 const {ECDSA, ECIES} = require('@bitpay-labs/bitcore-tss');
 const bitcoreLib = require('@bitpay-labs/bitcore-lib');
@@ -60,25 +46,15 @@ describe('TSS ceremony under the React Native runtime', () => {
   const n = 2;
   const m = 2;
   const authKeys = [new bitcoreLib.PrivateKey(), new bitcoreLib.PrivateKey()];
-  let renderer: TestRenderer.ReactTestRenderer;
+  let unmountDklsWorker: () => void;
   let keychains: any[];
 
   beforeAll(async () => {
-    let host: ReturnType<typeof createDklsWebViewHost>;
-    await act(async () => {
-      renderer = TestRenderer.create(<DklsWorkerHost />, {
-        createNodeMock: () => ({
-          postMessage: (data: string) => host.postMessage(data),
-        }),
-      });
-    });
-    const {onMessage} = renderer.root.findByType('WebView' as any).props;
-    host = createDklsWebViewHost(data => onMessage({nativeEvent: {data}}));
-    host.boot();
+    unmountDklsWorker = await mountDklsWorkerHost();
   });
 
   afterAll(() => {
-    act(() => renderer.unmount());
+    unmountDklsWorker();
     global.Buffer = nodeBuffer;
   });
 

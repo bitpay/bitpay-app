@@ -1,3 +1,6 @@
+import React from 'react';
+import TestRenderer, {act} from 'react-test-renderer';
+
 const dkls = require('../node_modules/@silencelaboratories/dkls-wasm-ll-node/dkls-wasm-ll-node.js');
 
 type WorkerReply = {id: number; ok: boolean; result: unknown};
@@ -101,4 +104,21 @@ export const createDklsWebViewHost = (reply: (data: string) => void) => {
       }
     },
   };
+};
+
+export const mountDklsWorkerHost = async () => {
+  const {DklsWorkerHost} = require('../src/dkls/DklsWorker');
+  let host: ReturnType<typeof createDklsWebViewHost>;
+  let renderer!: TestRenderer.ReactTestRenderer;
+  await act(async () => {
+    renderer = TestRenderer.create(React.createElement(DklsWorkerHost), {
+      createNodeMock: () => ({
+        postMessage: (data: string) => host.postMessage(data),
+      }),
+    });
+  });
+  const {onMessage} = renderer.root.findByType('WebView' as any).props;
+  host = createDklsWebViewHost(data => onMessage({nativeEvent: {data}}));
+  host.boot();
+  return () => act(() => renderer.unmount());
 };
