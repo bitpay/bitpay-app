@@ -84,6 +84,7 @@ import {
   GooglePayFrameRef,
   GooglePayCompletePayload,
   GooglePayErrorPayload,
+  GooglePayUnsupportedDetails,
 } from '../components/MoonPayGooglePayFrame';
 import {
   MoonPayApplePayFrame,
@@ -1742,6 +1743,9 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                   setChallengeUrl(url);
                 }}
                 onQuoteExpired={refreshQuote}
+                onButtonPressed={() => {
+                  logger.debug('MoonPay Google Pay button pressed');
+                }}
                 onCancelled={(code?: string) => {
                   logger.debug(
                     'MoonPay Google Pay sheet dismissed by user' +
@@ -1763,26 +1767,35 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                     }),
                   );
                 }}
-                onUnsupported={() => {
+                onUnsupported={(details: GooglePayUnsupportedDetails) => {
                   cancelQuoteRefresh();
+                  // Unmounts the frame, so no dead Google Pay button is left
+                  // behind the modal.
                   setGooglePayUnsupported(true);
-                  logger.warn(
-                    'MoonPay Google Pay unavailable on this device: the environment cannot run the Payment Request API / Google Pay',
+
+                  const reportedBy =
+                    details.source === 'unsupportedEvent'
+                      ? "the 'unsupported' event"
+                      : `an 'error' message with code '${details.code}'`;
+                  logger.error(
+                    '[MoonPay Google Pay] unavailable on this device.' +
+                      ` Reported by: ${reportedBy}.` +
+                      ` MoonPay message: ${details.message ?? '(none)'}.` +
+                      ` Raw payload: ${JSON.stringify(
+                        details.payload ?? null,
+                      )}.` +
+                      ' Device requirements: Android System WebView 137+,' +
+                      ' Google Play services 25.18.30+, and a Google account' +
+                      ' with a usable payment method.',
                   );
-                  dispatch(
-                    Analytics.track('Failed Buy Crypto', {
-                      exchange: 'moonpay',
-                      context: 'MoonpayBuyEmbeddedCheckout',
-                      reason: 'Google Pay unsupported on this device',
-                      paymentMethod: paymentMethod?.method || '',
-                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                      coin:
-                        cloneDeep(
-                          wallet?.currencyAbbreviation,
-                        )?.toLowerCase() || '',
-                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
-                      fiatCurrency: offer?.fiatCurrency || '',
-                    }),
+
+                  showError(
+                    t(
+                      'Google Pay is not available on this device. Please go back and choose another payment method.',
+                    ),
+                    `googlePayUnsupported:${details.source}`,
+                    undefined,
+                    t('Google Pay not available'),
                   );
                 }}
                 onError={(error: GooglePayErrorPayload) => {
