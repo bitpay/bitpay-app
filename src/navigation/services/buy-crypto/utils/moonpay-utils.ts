@@ -297,6 +297,9 @@ export const getMoonpayPaymentMethodFormat = (
       case 'applePay':
         moonpayPaymentMethod = isEmbeddedFlow ? 'apple_pay' : 'mobile_wallet';
         break;
+      case 'googlePay':
+        moonpayPaymentMethod = isEmbeddedFlow ? 'google_pay' : 'google_pay';
+        break;
       case 'paypal':
         moonpayPaymentMethod = 'paypal';
         break;
@@ -328,6 +331,8 @@ const isMoonpayEmbeddedPaymentMethodEnabledByConfig = (
   switch (method) {
     case 'applePay':
       return !moonpayPaymentMethods?.applePayEmbedded?.disabled;
+    case 'googlePay':
+      return !moonpayPaymentMethods?.googlePayEmbedded?.disabled;
     case 'creditCard':
     case 'debitCard':
       return !moonpayPaymentMethods?.cardEmbedded?.disabled;
@@ -342,20 +347,27 @@ const isMoonpayEmbeddedPaymentMethodEnabledByConfig = (
 // allowed by config, and supported at runtime. Apple Pay additionally needs
 // native wallet support on the device, and SEPA needs MoonPay to report it as
 // headless-capable (capabilities.requiresWidget === false).
+export interface MoonpayEmbeddedSupport {
+  applePaySupported?: boolean;
+  googlePaySupported?: boolean;
+  sepaHeadlessSupported?: boolean;
+}
+
 export const isMoonpayEmbeddedPaymentMethodEnabled = (
   method: PaymentMethodKey | undefined,
   buyCryptoConfig: BuyCryptoConfig | undefined,
-  applePaySupported?: boolean,
-  sepaHeadlessSupported?: boolean,
+  support: MoonpayEmbeddedSupport = {},
 ): boolean => {
   if (!isMoonpayEmbeddedPaymentMethodEnabledByConfig(method, buyCryptoConfig)) {
     return false;
   }
   switch (method) {
     case 'applePay':
-      return !!applePaySupported;
+      return !!support.applePaySupported;
+    case 'googlePay':
+      return !!support.googlePaySupported;
     case 'sepaBankTransfer':
-      return !!sepaHeadlessSupported;
+      return !!support.sepaHeadlessSupported;
     default:
       return true;
   }
@@ -366,12 +378,13 @@ export const isMoonpayEmbeddedPaymentMethodEnabled = (
 // can be taken into account here.
 export const isAnyMoonpayEmbeddedPaymentMethodEnabled = (
   buyCryptoConfig: BuyCryptoConfig | undefined,
-  applePaySupported?: boolean,
+  support: MoonpayEmbeddedSupport = {},
 ): boolean =>
+  isMoonpayEmbeddedPaymentMethodEnabled('applePay', buyCryptoConfig, support) ||
   isMoonpayEmbeddedPaymentMethodEnabled(
-    'applePay',
+    'googlePay',
     buyCryptoConfig,
-    applePaySupported,
+    support,
   ) ||
   isMoonpayEmbeddedPaymentMethodEnabledByConfig(
     'creditCard',
