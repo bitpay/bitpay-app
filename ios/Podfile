@@ -59,9 +59,14 @@ target 'BitPayApp' do
     bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
     def strip_bitcode_from_framework(bitcode_strip_path, framework_relative_path)
       framework_path = File.join(Dir.pwd, framework_relative_path)
+      unless File.exist?(framework_path)
+        puts "Skipping bitcode strip; framework binary not present: #{framework_path}"
+        return
+      end
+
       command = "#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}"
       puts "Stripping bitcode: #{command}"
-      system(command)
+      raise "Failed to strip bitcode from #{framework_path}" unless system(command)
     end
 
     framework_paths = [
@@ -146,7 +151,13 @@ target 'BitPayApp' do
     add_bundle_hash_build_phase(project)
 
     # Patch fmt FMT_CONSTEVAL to constexpr for Xcode 26 / Clang compatibility
-    system("sed -i '' 's/#  define FMT_CONSTEVAL consteval/#  define FMT_CONSTEVAL constexpr/' #{installer.sandbox.root}/fmt/include/fmt/base.h")
+    fmt_header_path = "#{installer.sandbox.root}/fmt/include/fmt/base.h"
+    if File.exist?(fmt_header_path)
+      command = "sed -i '' 's/#  define FMT_CONSTEVAL consteval/#  define FMT_CONSTEVAL constexpr/' #{fmt_header_path}"
+      raise "Failed to patch #{fmt_header_path}" unless system(command)
+    else
+      puts "Skipping fmt compatibility patch; source pod not present: #{fmt_header_path}"
+    end
   end
 end
 

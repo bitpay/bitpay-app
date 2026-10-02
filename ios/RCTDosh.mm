@@ -6,7 +6,6 @@
 //
 
 #import "RCTDosh.h"
-#import "BitPayApp-Swift.h"
 #import <React/RCTLog.h>
 
 @implementation RCTDosh

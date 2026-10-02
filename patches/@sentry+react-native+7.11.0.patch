@@ -1,0 +1,6 @@
+diff --git a/node_modules/@sentry/react-native/ios/RNSentryReplay.mm b/node_modules/@sentry/react-native/ios/RNSentryReplay.mm
+index 40575a9..e051770 100644
+--- a/node_modules/@sentry/react-native/ios/RNSentryReplay.mm
++++ b/node_modules/@sentry/react-native/ios/RNSentryReplay.mm
+@@ -5 +4,0 @@
+-#import "React/RCTTextView.h"

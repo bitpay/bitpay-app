@@ -216,8 +216,10 @@ const BottomNotification = React.memo(() => {
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
-      onBackdropPress={handleBackdropPress}>
+      onBackdropPress={handleBackdropPress}
+      backgroundColor={theme.dark ? LightBlack : White}>
       <BottomNotificationContainer
+        testID="bottom-notification-content"
         as={modalLibrary === 'modal' ? ScrollView : BottomSheetScrollView}
         style={{maxHeight: height - insets.top - insets.bottom - 20}}
         contentContainerStyle={{

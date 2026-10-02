@@ -1,5 +1,5 @@
 diff --git a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js
-index cb9eccb..9f33573 100644
+index 7300ebe..469a0c5 100644
 --- a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js
 +++ b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js
 @@ -137,6 +137,7 @@ class KeyGen {
@@ -10,8 +10,7 @@ index cb9eccb..9f33573 100644
      const serializedMsg = DklsTypes.serializeBroadcastMessage(unsignedMessageR1);
      const signedMessage = await DklsComms.encryptAndAuthOutgoingMessages(
        { broadcastMessages: [serializedMsg], p2pMessages: [] },
-@@ -153,7 +154,7 @@ class KeyGen {
-    * @param {Array<object>} prevRoundMessages
+@@ -154,6 +155,6 @@ class KeyGen {
     * @returns {{ round: number, partyId: number, publicKey: string, p2pMessages: object[], broadcastMessage: object[] }}
     */
 -  nextRound(prevRoundMessages) {
@@ -72,7 +71,7 @@ index cb9eccb..9f33573 100644
 
    /**
 diff --git a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js
-index a7d48d1..68c7c9f 100644
+index fc748d1..5619faa 100644
 --- a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js
 +++ b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js
 @@ -156,7 +156,6 @@ class Sign {
@@ -83,8 +82,7 @@ index a7d48d1..68c7c9f 100644
      return this._formatMessage(signedMessage);
    }
 
-@@ -166,23 +165,24 @@ class Sign {
-    * @param {Array<Object>} prevRoundMessages
+@@ -167,22 +166,23 @@ class Sign {
     * @returns {{ round: number, partyId: number, publicKey: string, p2pMessages: Object[], broadcastMessages: Object[] }}
     */
 -  nextRound(prevRoundMessages) {
@@ -120,29 +118,22 @@ index a7d48d1..68c7c9f 100644
        this.#authKey
      );
 diff --git a/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js b/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js
-index 120b696..346e386 100644
+index 96f38f1..977ca79 100644
 --- a/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js
 +++ b/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js
-@@ -16,10 +16,11 @@ function KDF(privateKey, publicKey) {
+@@ -17,7 +17,7 @@ function KDF(privateKey, publicKey, isDecrypt) {
    const KB = publicKey.point;
    const P = KB.mul(r);
    const S = P.getX();
 -  const Sbuf = S.toBuffer({ size: 32 });
--  const kEkM = Hash.sha512(Sbuf);
--  const kE = kEkM.subarray(0, 32);
--  const kM = kEkM.subarray(32, 64);
 +  const Sbuf = Buffer.from(S.toBuffer({ size: 32 }));
-+  const kEkM = Buffer.from(Hash.sha512(Sbuf));
-+   // In RN, subarray may return Uint8Array; force real Buffers:
-+   const kE = Buffer.from(kEkM.subarray(0, 32));
-+   const kM = Buffer.from(kEkM.subarray(32, 64));
-   return [kE, kM];
- };
-
-@@ -127,13 +128,13 @@ function decrypt({ payload, privateKey, publicKey, opts = {} }) {
-     offset += pub.length;
+   // Ensure that the public keys are in compressed format so the salt is consistent
+   const pubA = PublicKey.fromPoint(publicKey.point, true).toBuffer();
+   const pubB = PublicKey.fromPoint(privateKey.publicKey.point, true).toBuffer();
+@@ -127,13 +127,13 @@ function decrypt({ payload, privateKey, publicKey }) {
    }
 
+   const tagLength = 32;
 -  const ivbuf = payload.subarray(offset, offset + 16);
 -  const cipherText = payload.subarray(offset + 16, payload.length - tagLength);
 -  const tag = payload.subarray(payload.length - tagLength, payload.length);
@@ -150,10 +141,10 @@ index 120b696..346e386 100644
 +  const cipherText = Buffer.from(payload.subarray(offset + 16, payload.length - tagLength));
 +  const tag = Buffer.from(payload.subarray(payload.length - tagLength, payload.length));
 
-   const [kE, kM] = KDF(privateKey, publicKey);
+   const [kE, kM] = KDF(privateKey, publicKey, true);
 
--  const tag2 = Hash.sha256hmac(cipherText, kM).subarray(0, tagLength);
-+  const tag2 = Buffer.from(Hash.sha256hmac(cipherText, kM)).slice(0, tagLength);
-   if (tag2.compare(tag) !== 0) {
+-  const tag2 = Hash.sha256hmac(Buffer.concat([ivbuf, cipherText]), kM).subarray(0, tagLength);
++  const tag2 = Buffer.from(Hash.sha256hmac(Buffer.concat([ivbuf, cipherText]), kM)).slice(0, tagLength);
+   if (tag.length !== tag2.length || !crypto.timingSafeEqual(tag2, tag)) {
      throw new Error('Invalid checksum');
    }

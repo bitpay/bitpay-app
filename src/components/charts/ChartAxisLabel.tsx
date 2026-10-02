@@ -157,7 +157,7 @@ const ChartAxisLabel = ({
           ? sharedOpacity
           : contentOpacityNumber,
     };
-  }, [contentOpacityNumber, sharedContentOpacity]);
+  });
 
   return (
     <Animated.View

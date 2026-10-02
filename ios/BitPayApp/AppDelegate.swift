@@ -155,6 +155,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         }
         #endif
 
+        // Apply the compiled Fabric presenter override before starting React Native.
+        BitPayInstallFabricModalPresenter()
+
         // 1. React Native setup using factory
         let rnDelegate = ReactNativeDelegate()
         let factory = RCTReactNativeFactory(delegate: rnDelegate)

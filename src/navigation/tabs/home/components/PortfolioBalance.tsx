@@ -245,25 +245,25 @@ const PortfolioBalanceContent = () => {
         interpolate(collapseProgress.value, [0, 1], [1, 0]) *
         collapseButtonPressOpacity.value,
     };
-  }, []);
+  });
 
   const chartScale = useDerivedValue(() => {
     return interpolate(collapseProgress.value, [0, 1], [1, collapsedScale]);
-  }, [collapsedScale]);
+  });
 
   const chartSpacerAnimatedStyle = useAnimatedStyle(() => {
     return {
       height: interpolate(collapseProgress.value, [0, 1], [fullChartHeight, 0]),
     };
-  }, [fullChartHeight]);
+  });
 
   const axisLabelOpacity = useDerivedValue(() => {
     return interpolate(collapseProgress.value, [0, 0.08, 1], [1, 0, 0]);
-  }, []);
+  });
 
   const timeframeSelectorOpacity = useDerivedValue(() => {
     return interpolate(collapseProgress.value, [0, 0.28, 1], [1, 0, 0]);
-  }, []);
+  });
 
   // Fine-tune the final collapsed Y alignment so the mini chart sits perfectly
   // next to the large portfolio balance number (without looking slightly low).
@@ -308,7 +308,7 @@ const PortfolioBalanceContent = () => {
         {scale: chartScale.value},
       ],
     };
-  }, [collapsedTranslateX, collapsedTranslateY]);
+  });
 
   const persistHomeChartCollapsePreference = useCallback(
     (collapsed: boolean) => {
