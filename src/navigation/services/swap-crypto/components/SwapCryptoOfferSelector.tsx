@@ -14,6 +14,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {BaseText} from '../../../../components/styled/Text';
 import {useLogger} from '../../../../utils/hooks/useLogger';
+import {ToBaseUnits} from '../../../../store/wallet/effects/amount/amount';
 import {
   GetPrecision,
   IsERCToken,
@@ -1041,7 +1042,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         ),
       );
       const depositSat = BigInt(
-        (amountFrom * precision!.unitToSatoshi).toFixed(0),
+        ToBaseUnits(amountFrom, precision!.unitDecimals),
       );
       const allowance = BigInt(tokenAllowance.allowance);
 

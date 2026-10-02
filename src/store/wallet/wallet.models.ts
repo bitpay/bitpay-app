@@ -250,7 +250,7 @@ export interface Recipient {
   walletId?: string;
   keyId?: string;
   address: string;
-  amount?: number;
+  amount?: number | string;
   destinationTag?: number;
   chain?: string;
   tokenAddress?: string;
@@ -283,7 +283,7 @@ export type TransactionOptionsContext =
 export interface TransactionOptions {
   wallet: Wallet;
   recipient: Recipient;
-  amount: number;
+  amount: number | string;
   invoice?: Invoice;
   context?: TransactionOptionsContext;
   currency?: string;

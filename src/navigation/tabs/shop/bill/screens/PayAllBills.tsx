@@ -559,7 +559,7 @@ const PayAllBills = ({
         )}
         fiatCurrencyAbbreviation={'USD'}
         onClose={() => setAmountModalVisible(false)}
-        onSubmit={amt => onEnteredAmount(amt)}
+        onSubmit={amt => onEnteredAmount(Number(amt))}
       />
     </>
   );

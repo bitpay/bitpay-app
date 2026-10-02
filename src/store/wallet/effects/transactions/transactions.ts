@@ -414,7 +414,7 @@ const ProcessNewTxs =
 
         // Scam transactions
         const isERCToken = IsERCToken(tx.coin, tx.chain);
-        if (isERCToken && tx.amount === 0) {
+        if (isERCToken && Number(tx.amount) === 0) {
           continue;
         }
 
@@ -1011,8 +1011,11 @@ export const IsInvalid = (action: string | undefined): boolean => {
   return action === 'invalid';
 };
 
-export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
-  return amount === 0 && SUPPORTED_VM_TOKENS.includes(chain);
+export const IsZeroAmountEVM = (
+  amount: number | string,
+  chain: string,
+): boolean => {
+  return Number(amount) === 0 && SUPPORTED_VM_TOKENS.includes(chain);
 };
 
 export const TxForPaymentFeeEVM = (

@@ -327,12 +327,21 @@ jest.mock('@solana/web3.js', () => ({
 jest.mock('@solana/kit', () => ({}));
 jest.mock('@solana-program/token-2022', () => ({findAssociatedTokenPda: jest.fn()}));
 
-// Ethers — large lib, mock for unit tests
-jest.mock('ethers', () => ({
-  ethers: {utils: {isAddress: jest.fn(() => true), getAddress: jest.fn(a => a)}, BigNumber: {from: jest.fn()}},
-  utils: {isAddress: jest.fn(() => true), getAddress: jest.fn(a => a)},
-  BigNumber: {from: jest.fn()},
-}));
+// Ethers — large lib, mock for unit tests. Unit conversion is kept real: it is money arithmetic.
+jest.mock('ethers', () => {
+  const {utils: actual} = jest.requireActual('ethers');
+  const utils = {
+    isAddress: jest.fn(() => true),
+    getAddress: jest.fn(a => a),
+    parseUnits: actual.parseUnits,
+    formatUnits: actual.formatUnits,
+  };
+  return {
+    ethers: {utils, BigNumber: {from: jest.fn()}},
+    utils,
+    BigNumber: {from: jest.fn()},
+  };
+});
 
 // @gorhom/bottom-sheet — requires BottomSheetModalProvider context; minimal mock
 jest.mock('@gorhom/bottom-sheet', () => {
