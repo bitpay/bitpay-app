@@ -6,8 +6,7 @@ import {
   generateKeyPair,
   MoonpayClientCredentials,
 } from '../utils/moonpayFrameCrypto';
-
-const FRAME_ORIGIN = 'https://blocks.moonpay.com';
+import {MOONPAY_DEFAULT_FRAME_ORIGIN} from '../buy-crypto/utils/moonpay-utils';
 
 interface CheckFrameProps {
   sessionToken: string;
@@ -29,7 +28,7 @@ export function MoonPayCheckFrame({
   const [channelId] = useState(generateChannelId);
   const [keyPair] = useState(generateKeyPair);
 
-  const frameUrl = `${FRAME_ORIGIN}/platform/v1/check-connection?${new URLSearchParams(
+  const frameUrl = `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/check-connection?${new URLSearchParams(
     {
       sessionToken,
       publicKey: keyPair.publicKeyHex,

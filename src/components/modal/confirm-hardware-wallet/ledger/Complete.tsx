@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Check} from '../../../../components/icons/check/Check';
 import {H3} from '../../../../components/styled/Text';
@@ -15,6 +16,8 @@ const IconWrapper = styled.View`
 `;
 
 export const ConfirmLedgerComplete: React.FC = () => {
+  const {t} = useTranslation();
+
   return (
     <Wrapper
       style={{
@@ -28,7 +31,7 @@ export const ConfirmLedgerComplete: React.FC = () => {
         style={{
           marginBottom: 24,
         }}>
-        <H3>Approved!</H3>
+        <H3>{t('Approved!')}</H3>
       </Header>
     </Wrapper>
   );

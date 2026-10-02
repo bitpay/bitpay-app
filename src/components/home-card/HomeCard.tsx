@@ -96,7 +96,8 @@ export const NeedBackupText = styled(BaseText)`
   padding: 2px 4px;
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 3px;
-  position: absolute;
+  align-self: flex-start;
+  max-width: 100%;
   margin-top: 5px;
 `;
 
@@ -174,7 +175,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
           backgroundColor: theme.dark ? CharcoalBlack : White,
           borderColor: theme.dark ? LightBlack : Slate30,
           borderWidth: 1,
-          height: HOME_CARD_HEIGHT,
+          minHeight: HOME_CARD_HEIGHT,
           width: HOME_CARD_WIDTH,
         }}
       />

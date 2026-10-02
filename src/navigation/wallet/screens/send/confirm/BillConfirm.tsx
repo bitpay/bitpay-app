@@ -207,7 +207,7 @@ const BillConfirm: React.FC<
         <HeaderRightContainer>
           <Button
             testID="cancel-button"
-            accessibilityLabel="Cancel"
+            accessibilityLabel={t('Cancel')}
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
@@ -717,7 +717,7 @@ const BillConfirm: React.FC<
               <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
             ) : null}
             <Amount
-              description={'Convenience fee'}
+              description={t('Convenience fee')}
               amount={{
                 fiatAmount: convenienceFee
                   ? formatFiatAmount(convenienceFee, 'USD')

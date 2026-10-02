@@ -307,7 +307,7 @@ const AssetsSection: React.FC<AssetsSectionProps> = ({enabled = true}) => {
           height={50}
           buttonOutline
           testID="home-see-all-assets-button"
-          accessibilityLabel="See all assets"
+          accessibilityLabel={t('See All Assets')}
           onPress={() => navigation.navigate('AllAssets')}>
           {t('See All Assets')}
         </Button>

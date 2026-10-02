@@ -4,6 +4,7 @@ import AppEth from '@ledgerhq/hw-app-eth';
 import Xrp from '@ledgerhq/hw-app-xrp';
 import Transport from '@ledgerhq/hw-transport';
 import React, {useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {
   CurrencyColumn,
@@ -334,6 +335,7 @@ const TESTNET_SUPPORT_MAP = CHAINS.reduce<Record<string, boolean>>((acc, c) => {
 }, {});
 
 export const SelectLedgerCurrency: React.FC<Props> = props => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -947,13 +949,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           {isLoading ? (
             <>
               {isPromptOpenApp ? (
-                <H4>Approve BitPay</H4>
+                <H4>{t('Approve BitPay')}</H4>
               ) : (
-                <H4>Scanning addresses</H4>
+                <H4>{t('Scanning addresses')}</H4>
               )}
             </>
           ) : (
-            <H4>Choose Crypto to Import</H4>
+            <H4>{t('Choose Crypto to Import')}</H4>
           )}
         </Header>
 
@@ -966,11 +968,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             <DescriptionRow>
               {isPromptOpenApp ? (
                 <Paragraph style={{textAlign: 'center'}}>
-                  Approve the app BitPay so wallets can be added to your device.
+                  {t(
+                    'Approve the app BitPay so wallets can be added to your device.',
+                  )}
                 </Paragraph>
               ) : (
                 <Paragraph style={{textAlign: 'center'}}>
-                  Please wait...
+                  {t('Please wait...')}
                 </Paragraph>
               )}
             </DescriptionRow>
@@ -989,7 +993,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
                 <RowContainerWithoutBorders
                   onPress={() => onContinue(c.chain)}
                   testID={`ledger-select-currency-${c.chain}-button`}
-                  accessibilityLabel={`${c.label} currency`}
+                  accessibilityLabel={t('{{currency}} currency', {
+                    currency: c.label,
+                  })}
                   key={index}>
                   <CurrencyImageContainer>
                     <CurrencyImage img={c.img} />
@@ -1018,9 +1024,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             <Button
               buttonType={'link'}
               testID="ledger-add-by-derivation-path-button"
-              accessibilityLabel="Add by derivation path"
+              accessibilityLabel={t('Add By Derivation Path')}
               onPress={props.onAddByDerivationPathSelected}>
-              Add by Derivation Path
+              {t('Add by Derivation Path')}
             </Button>
           </>
         )}

@@ -2456,7 +2456,7 @@ const SwapCryptoRoot: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Miner Fee Notice',
+        title: t('Miner Fee Notice'),
         message: msg,
         enableBackdropDismiss: true,
         actions: [
@@ -2866,7 +2866,7 @@ const SwapCryptoRoot: React.FC = () => {
             <SwapCardAmountAndWalletContainer>
               <WalletSelector
                 testID="swap-crypto-from-wallet-selector"
-                accessibilityLabel="Select wallet to swap from"
+                accessibilityLabel={t('Select wallet to swap from')}
                 style={
                   !fromWalletSelected && !loadingWalletFromStatus
                     ? {backgroundColor: Action}
@@ -2952,7 +2952,7 @@ const SwapCryptoRoot: React.FC = () => {
                       {!loadingWalletFromStatus ? (
                         <AmountClickableContainer
                           testID="swap-crypto-enter-amount-button"
-                          accessibilityLabel="Swap crypto enter amount button"
+                          accessibilityLabel={t('Enter amount')}
                           onPress={() => {
                             if (!fromWalletSelected || !toWalletSelected) {
                               return;
@@ -3038,7 +3038,7 @@ const SwapCryptoRoot: React.FC = () => {
                             fromWalletSelected.balance.crypto ? (
                               <TouchableOpacity
                                 testID="swap-crypto-balance-info-button"
-                                accessibilityLabel="Swap crypto balance info button"
+                                accessibilityLabel={t('Wallet balance info')}
                                 onPress={() => {
                                   logger.debug('Balance info clicked');
                                   openWalletBalanceModal();
@@ -3093,7 +3093,7 @@ const SwapCryptoRoot: React.FC = () => {
                     toWalletSelected ? (
                       <SwapCurrenciesButton
                         testID="swap-crypto-toggle-fiat-display-button"
-                        accessibilityLabel="Swap crypto toggle fiat display button"
+                        accessibilityLabel={t('Toggle fiat display')}
                         onPress={() => {
                           setDisplayAmount(undefined);
                           setDisplayInFiat(!displayInFiat);
@@ -3150,7 +3150,7 @@ const SwapCryptoRoot: React.FC = () => {
             <SwapCardAmountAndWalletContainer>
               <WalletSelector
                 testID="swap-crypto-to-wallet-selector"
-                accessibilityLabel="Select wallet to swap to"
+                accessibilityLabel={t('Select wallet to swap to')}
                 style={
                   !toWalletSelected
                     ? {
@@ -3506,7 +3506,7 @@ const SwapCryptoRoot: React.FC = () => {
                 <Checkbox
                   testID="swap-crypto-changelly-terms-checkbox"
                   // @ts-ignore
-                  accessibilityLabel="Accept Changelly terms"
+                  accessibilityLabel={t('Accept Changelly terms')}
                   radio={false}
                   onPress={() => {
                     setTermsAccepted(prevTermsAccepted => {
@@ -3524,7 +3524,7 @@ const SwapCryptoRoot: React.FC = () => {
                     )}
                     <PoliciesText
                       testID="swap-crypto-changelly-policies-link"
-                      accessibilityLabel="View Changelly policies"
+                      accessibilityLabel={t('View Changelly policies')}
                       onPress={() => setChangellyPoliciesModalVisible(true)}>
                       {t('here')}
                     </PoliciesText>
@@ -3558,20 +3558,20 @@ const SwapCryptoRoot: React.FC = () => {
             {!canContinue ? (
               <TouchableOpacity
                 testID="swap-crypto-slide-to-swap-button"
-                accessibilityLabel="Swap crypto slide to swap button"
+                accessibilityLabel={t('Slide to swap')}
                 onPress={() => {
                   scrollViewRef?.current?.scrollToEnd({animated: true});
                   setShowCheckTermsMsg(true);
                 }}>
                 <SwipeButton
-                  title={'Slide to swap'}
+                  title={t('Slide to swap')}
                   disabled={true}
                   onSwipeComplete={() => {}}
                 />
               </TouchableOpacity>
             ) : (
               <SwipeButton
-                title={'Slide to swap'}
+                title={t('Slide to swap')}
                 disabled={false}
                 onSwipeComplete={onSwipeComplete}
                 forceReset={resetSwipeButton}

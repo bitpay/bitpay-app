@@ -582,13 +582,18 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
   );
 
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const _tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+      ...customTokenOptionsByAddress,
+    }),
+    [tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
 
   const startSyncWallets = async (mnemonic: string) => {
     if (key.isPrivKeyEncrypted) {
@@ -925,7 +930,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     <>
       <AddCustomTokenContainer
         testID="add-custom-token-button"
-        accessibilityLabel="Add custom token"
+        accessibilityLabel={t('Add Custom Token')}
         onPress={() => {
           haptic('soft');
           if (memorizedAssetsByChainList?.[0].chains?.[0]) {

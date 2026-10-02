@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {DirectoryDiscount} from '../../../../store/shop/shop.models';
@@ -38,6 +39,8 @@ const ShopDiscountText = ({
   fontSize?: number;
   fontWeight?: number;
 }) => {
+  const {t} = useTranslation();
+
   return (
     <DiscountText color={color} fontSize={fontSize} fontWeight={fontWeight}>
       {discount.type === 'custom' ? (
@@ -45,7 +48,9 @@ const ShopDiscountText = ({
       ) : (
         <>
           {applied ? <>+</> : null}
-          {!short && discount.displayType === 'discount' ? <>Save </> : null}
+          {!short && discount.displayType === 'discount' ? (
+            <>{t('Save')} </>
+          ) : null}
           {discount.type === 'percentage' ? (
             <>
               {discount.displayType === 'boost'
@@ -61,9 +66,11 @@ const ShopDiscountText = ({
             </>
           )}{' '}
           {discount.displayType === 'discount' ? (
-            <>off every purchase</>
+            <>{t('off every purchase')}</>
           ) : discount.displayType === 'boost' ? (
-            <>boost {applied ? <>applied</> : null}</>
+            <>
+              {t('boost')} {applied ? <>{t('applied')}</> : null}
+            </>
           ) : null}
         </>
       )}

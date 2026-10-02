@@ -68,11 +68,15 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const onAppStateChange = useCallback(
     (status: AppStateStatus) => {
       if (isVisible && !fullscreen && status === 'background') {
-        setModalVisible(false);
+        // For bottom-sheet, isModalVisible guards the imperative dismiss below —
+        // clearing it here would skip that guard and leave the sheet presented.
+        if (modalLibrary !== 'bottom-sheet') {
+          setModalVisible(false);
+        }
         onBackdropPress();
       }
     },
-    [isVisible, fullscreen, onBackdropPress],
+    [isVisible, fullscreen, onBackdropPress, modalLibrary],
   );
 
   useEffect(() => {
@@ -182,7 +186,6 @@ const SheetModal: React.FC<SheetModalProps> = ({
         handleComponent={null}
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
-        accessibilityLabel={'modalBackdrop'}
         onDismiss={handleDismiss}
         ref={bottomSheetModalRef}>
         <NavigationThemeContext.Provider value={themeValue}>

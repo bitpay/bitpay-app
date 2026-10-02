@@ -32,7 +32,7 @@ const ShippingStatus: React.FC<ShippingStatusProps> = props => {
     return card.brand ? <ShippingStatusCardIcon brand={card.brand} /> : null;
   }, [card.brand]);
 
-  const header = <StyledHeading>Ordered</StyledHeading>;
+  const header = <StyledHeading>{t('Ordered')}</StyledHeading>;
 
   const body = (
     <>

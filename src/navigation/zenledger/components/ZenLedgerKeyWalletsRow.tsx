@@ -1,4 +1,5 @@
 import React, {useCallback} from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {FlatList, LayoutAnimation, View} from 'react-native';
 import KeySvg from '../../../../assets/img/key.svg';
@@ -110,6 +111,7 @@ const ZenLedgerKeyWalletsRow = ({
   onDropdownPress,
   hideBalance,
 }: ZenLedgerKeyWalletProps) => {
+  const {t} = useTranslation();
   const renderItem = useCallback(
     ({item, keyId, isLast}) => {
       return item ? (
@@ -144,7 +146,7 @@ const ZenLedgerKeyWalletsRow = ({
               <KeyNameContainer>
                 <KeyBox keyId={keyId} onPress={onPress} checked={checked} />
                 <KeySvg />
-                <KeyName>{keyName || 'My Key'}</KeyName>
+                <KeyName>{keyName || t('My Key')}</KeyName>
               </KeyNameContainer>
               <View style={{justifyContent: 'flex-end', display: 'flex'}}>
                 <DropdownButton
@@ -179,7 +181,7 @@ const ZenLedgerKeyWalletsRow = ({
         </KeyWalletsRowContainer>
       ) : null;
     },
-    [onPress, onDropdownPress],
+    [onPress, onDropdownPress, t],
   );
 
   return (

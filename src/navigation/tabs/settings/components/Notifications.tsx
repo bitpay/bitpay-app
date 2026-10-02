@@ -77,7 +77,7 @@ const Notifications = () => {
       <Setting
         activeOpacity={ActiveOpacity}
         testID="settings-push-notifications-row"
-        accessibilityLabel="Push notifications"
+        accessibilityLabel={t('Push Notifications')}
         onPress={() => navigation.navigate('PushNotifications')}>
         <SettingTitle>{t('Push Notifications')}</SettingTitle>
         <AngleRight />
@@ -89,7 +89,7 @@ const Notifications = () => {
       <Setting
         activeOpacity={ActiveOpacity}
         testID="settings-email-notifications-row"
-        accessibilityLabel="Email notifications"
+        accessibilityLabel={t('Email Notifications')}
         onPress={() => navigation.navigate('EmailNotifications')}>
         <SettingTitle>{t('Email Notifications')}</SettingTitle>
         <AngleRight />

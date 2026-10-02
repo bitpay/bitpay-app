@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {Alert, Platform, Button} from 'react-native';
 import Mailer from 'react-native-mail';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -14,6 +15,7 @@ import RNFS from 'react-native-fs';
 import {ShareOptions} from 'react-native-share';
 import {shareFile as shareFileUtil} from '../utils/share';
 import DeviceInfo from 'react-native-device-info';
+import {withTemporarySessionLogFile} from '../utils/sessionLogs';
 const IS_DESKTOP = DeviceInfo.getDeviceType();
 
 export enum DebugScreens {
@@ -59,6 +61,7 @@ const LogError = styled(BaseText)`
 const DebugScreen: React.FC<
   NativeStackScreenProps<RootStackParamList, 'Debug'>
 > = ({route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logs = useAppSelector(({LOG}: RootState) => LOG.logs);
   const {name} = route.params || {name: ''};
@@ -88,30 +91,32 @@ const DebugScreen: React.FC<
           ? RNFS.LibraryDirectoryPath
           : RNFS.TemporaryDirectoryPath;
       const txtFilename = 'App-logs';
-      let filePath = `${rootPath}/${txtFilename}`;
 
-      await RNFS.mkdir(filePath);
+      await withTemporarySessionLogFile(
+        rootPath,
+        txtFilename,
+        data,
+        async filePath => {
+          const opts: ShareOptions = {
+            title: txtFilename,
+            url: `file://${filePath}`,
+            subject: 'App Logs',
+          };
 
-      filePath += '.txt';
-      const opts: ShareOptions = {
-        title: txtFilename,
-        url: `file://${filePath}`,
-        subject: 'App Logs',
-      };
-
-      await RNFS.writeFile(filePath, data, 'utf8');
-      await dispatch(shareFileUtil(opts));
+          await dispatch(shareFileUtil(opts));
+        },
+      );
     } catch (error: any) {
       Alert.alert(
-        'Error',
+        t('Error'),
         error.message,
         [
           {
-            text: 'Ok',
+            text: t('Ok'),
             onPress: () => console.log('OK: Email Error Response'),
           },
           {
-            text: 'Cancel',
+            text: t('Cancel'),
             onPress: () => console.log('CANCEL: Email Error Response'),
           },
         ],
@@ -133,11 +138,11 @@ const DebugScreen: React.FC<
           event,
           [
             {
-              text: 'Ok',
+              text: t('Ok'),
               onPress: () => console.log('OK: Email Error Response'),
             },
             {
-              text: 'Cancel',
+              text: t('Cancel'),
               onPress: () => console.log('CANCEL: Email Error Response'),
             },
           ],
@@ -149,11 +154,11 @@ const DebugScreen: React.FC<
 
   const showDisclaimer = (data: string, option: 'email' | 'share') => {
     Alert.alert(
-      'Warning',
-      'Be careful, this could contain sensitive private data.',
+      t('Warning'),
+      t('Be careful, this could contain sensitive private data.'),
       [
         {
-          text: 'Continue',
+          text: t('Continue'),
           onPress: () => {
             switch (option) {
               case 'share':
@@ -165,7 +170,7 @@ const DebugScreen: React.FC<
             }
           },
         },
-        {text: 'Cancel'},
+        {text: t('Cancel')},
       ],
       {cancelable: true},
     );
@@ -173,21 +178,21 @@ const DebugScreen: React.FC<
 
   return (
     <DebugContainer>
-      <TitleError>Oops, something went wrong.</TitleError>
+      <TitleError>{t('Oops, something went wrong.')}</TitleError>
       <DescriptionError>{name}</DescriptionError>
       <ScrollView>
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
         <Button
-          title="Share Logs"
+          title={t('Share Logs')}
           onPress={() => showDisclaimer(logStr, 'share')}
         />
       </ButtonContainer>
       {!IS_DESKTOP && (
         <ButtonContainer>
           <Button
-            title="Send Logs By Email"
+            title={t('Send Logs By Email')}
             onPress={() => showDisclaimer(logStr, 'email')}
           />
         </ButtonContainer>

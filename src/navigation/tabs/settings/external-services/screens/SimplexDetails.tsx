@@ -159,7 +159,7 @@ const SimplexDetails: React.FC = () => {
             </LabelTipText>
             <TouchableOpacity
               testID="simplex-payment-status-link"
-              accessibilityLabel="Check payment status"
+              accessibilityLabel={t('Check payment status')}
               onPress={() => {
                 haptic('impactLight');
                 dispatch(
@@ -177,7 +177,7 @@ const SimplexDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="simplex-copy-deposit-address-button"
-              accessibilityLabel="Simplex copy deposit address button"
+              accessibilityLabel={t('Copy deposit address')}
               onPress={() => {
                 copyText(paymentRequest.address || '');
                 setCopiedDepositAddress(true);
@@ -197,7 +197,7 @@ const SimplexDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="simplex-copy-payment-id-button"
-              accessibilityLabel="Simplex copy payment id button"
+              accessibilityLabel={t('Copy payment ID')}
               onPress={() => {
                 copyText(paymentRequest.payment_id);
                 setCopiedPaymentId(true);
@@ -217,7 +217,7 @@ const SimplexDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="simplex-copy-order-id-button"
-              accessibilityLabel="Simplex copy order id button"
+              accessibilityLabel={t('Copy order ID')}
               onPress={() => {
                 copyText(paymentRequest.order_id);
                 setCopiedOrderId(true);
@@ -236,7 +236,7 @@ const SimplexDetails: React.FC = () => {
 
           <RemoveCta
             testID="simplex-remove-payment-request-button"
-            accessibilityLabel="Simplex remove payment request button"
+            accessibilityLabel={t('Remove payment request')}
             onPress={async () => {
               haptic('impactLight');
               dispatch(

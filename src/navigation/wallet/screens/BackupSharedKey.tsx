@@ -130,7 +130,7 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
           <HeaderRightContainer>
             <Button
               testID="skip-button"
-              accessibilityLabel="Skip backup"
+              accessibilityLabel={t('Skip backup')}
               buttonType={'pill'}
               onPress={async () => {
                 haptic('impactLight');
@@ -201,7 +201,7 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
         <CtaContainer>
           <Button
             testID="backup-shared-wallet-button"
-            accessibilityLabel="Backup shared wallet"
+            accessibilityLabel={t('Backup Shared Wallet')}
             buttonStyle={'primary'}
             onPress={gotoBackup}>
             {t('Backup Shared Wallet')}

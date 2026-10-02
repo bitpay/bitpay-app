@@ -22,6 +22,11 @@ import {
   updatePortfolioBalance,
 } from '../../wallet.actions';
 import {isCacheKeyStale, toFiat} from '../../utils/wallet';
+import {
+  buildTokenWalletId,
+  findByTokenWalletId,
+  getTokenAddressFromTokenWalletId,
+} from '../../utils/token-wallet-id';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
 import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
@@ -250,19 +255,8 @@ export const updateKeyStatus =
         const tokens: string[] | undefined = wallet.tokens;
         if (!tokens?.length) return undefined;
 
-        const chain = wallet.chain || wallet.credentials?.chain;
-
-        if (chain === 'sol') {
-          return tokens
-            .map(t => t.split('-').pop())
-            .filter((t): t is string => !!t && t.length > 0);
-        }
-
         return tokens
-          .map(address => {
-            const [, rest] = address.split('0x');
-            return rest ? '0x' + rest : undefined;
-          })
+          .map(t => getTokenAddressFromTokenWalletId(wallet.id, t))
           .filter((t): t is string => !!t);
       };
 
@@ -332,16 +326,11 @@ export const updateKeyStatus =
           }
 
           const {status, success} =
-            bulkStatus.find(bStatus => {
-              if (typeof bStatus.tokenAddress === 'string') {
-                return (
-                  bStatus.tokenAddress === wallet.credentials.token?.address &&
-                  `${bStatus.walletId}-${bStatus.tokenAddress}` === wallet.id
-                );
-              }
-
-              return bStatus.walletId === wallet.id;
-            }) || {};
+            findByTokenWalletId(bulkStatus, wallet.id, bStatus =>
+              typeof bStatus.tokenAddress === 'string'
+                ? buildTokenWalletId(bStatus.walletId, bStatus.tokenAddress)
+                : bStatus.walletId,
+            ) || {};
 
           const amountHasChanged =
             status?.balance?.availableAmount !== cachedBalance?.satAvailable;

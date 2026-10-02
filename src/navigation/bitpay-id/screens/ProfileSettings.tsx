@@ -14,11 +14,12 @@ import {
   LightBlue,
   NeutralSlate,
   Slate,
+  Slate30,
   SlateDark,
 } from '../../../styles/colors';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import ChevronRight from '../components/ChevronRight';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -77,7 +78,7 @@ const StatusPillText = styled(BaseText)`
   font-size: 13px;
   line-height: 20px;
   font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? SlateDark : Action)};
+  color: ${({theme: {dark}}) => (dark ? Slate30 : Action)};
 `;
 
 type StatusPillConfig = {
@@ -177,6 +178,7 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const theme = useTheme();
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const apiToken = useAppSelector(
@@ -239,7 +241,12 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
                   <IconHomeIdentityVerified width={16} />
                 ) : null}
                 <StatusPillText>{pillConfig.label}</StatusPillText>
-                {pillConfig.navigable ? <AngleRight width={20} /> : null}
+                {pillConfig.navigable ? (
+                  <AngleRight
+                    width={20}
+                    color={theme.dark ? Slate30 : Action}
+                  />
+                ) : null}
               </StatusPill>
             );
           })()}

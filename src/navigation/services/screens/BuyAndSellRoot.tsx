@@ -51,7 +51,10 @@ import {
   calculateUsdToAltFiat,
   getBuyCryptoFiatLimits,
   getMoonpayEmbeddedAnonymousCredentials,
+  getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedSepaSupported,
+  resolveMoonpayEmbeddedSepaSupport,
   getMoonpayEmbeddedEnabled,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -141,6 +144,7 @@ import {BuyCryptoActions} from '../../../store/buy-crypto';
 import {
   getMoonpayFixedCurrencyAbbreviation,
   getMoonpayPaymentMethodFormat,
+  isMoonpayEmbeddedPaymentMethodEnabled,
   moonpayEnv,
 } from '../buy-crypto/utils/moonpay-utils';
 import {
@@ -2488,11 +2492,32 @@ const BuyAndSellRoot = ({
     const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
     const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
 
-    if (
-      !skipEmbedded &&
-      !buyCryptoConfig?.moonpay?.config?.embeddedBuyDisabled
-    ) {
-      if (moonpayEmbeddedEnabled && paymentMethod?.method === 'applePay') {
+    if (!skipEmbedded) {
+      // Embedded only works through MoonPay's connect flow.
+      // If the user isn't connected, the checks below fall through to
+      // the standard MoonPay (Kayak) flow.
+      // Whether the embedded flow is offered at all for this method. Apple Pay's
+      // device support is known locally so it is honoured here, but SEPA's
+      // capability can only be read from MoonPay once there are credentials —
+      // requiring it here would make it impossible to ever reach the connect
+      // screen. It is assumed possible and enforced below instead.
+      const isMoonpayEmbeddedPaymentMethod =
+        isMoonpayEmbeddedPaymentMethodEnabled(
+          paymentMethod?.method,
+          buyCryptoConfig,
+          getMoonpayEmbeddedApplePaySupported(),
+          true,
+        );
+
+      // Whether it can actually run embedded, runtime capabilities included.
+      const canRunEmbedded = () =>
+        isMoonpayEmbeddedPaymentMethodEnabled(
+          paymentMethod?.method,
+          buyCryptoConfig,
+          getMoonpayEmbeddedApplePaySupported(),
+          getMoonpayEmbeddedSepaSupported(),
+        );
+      if (moonpayEmbeddedEnabled && isMoonpayEmbeddedPaymentMethod) {
         const embeddedStatus = getMoonpayEmbeddedStatus();
         const cachedCredentials = getMoonpayEmbeddedCredentials();
         logger.debug(
@@ -2502,7 +2527,8 @@ const BuyAndSellRoot = ({
         if (
           embeddedStatus === 'active' &&
           isMoonpayEmbeddedCredentialsValid() &&
-          cachedCredentials
+          cachedCredentials &&
+          canRunEmbedded()
         ) {
           dispatch(
             Analytics.track('Requested Crypto Purchase', {
@@ -2543,6 +2569,26 @@ const BuyAndSellRoot = ({
                   logger.debug(
                     '[MoonpayEmbeddedBuy] Account connected, received new credentials and set status to active.',
                   );
+
+                  // Now that there are credentials, MoonPay can be asked
+                  // whether SEPA may run headless. Until this resolves the
+                  // capability is unknown, so it has to be awaited before
+                  // deciding embedded vs Kayak.
+                  if (paymentMethod.method === 'sepaBankTransfer') {
+                    await resolveMoonpayEmbeddedSepaSupport(
+                      newCredentials.accessToken,
+                    );
+                  }
+
+                  if (!canRunEmbedded()) {
+                    logger.debug(
+                      '[MoonpayEmbeddedBuy] Connected, but the payment method cannot run embedded. Falling back to standard Moonpay flow.',
+                    );
+                    navigation.goBack();
+                    await sleep(1000);
+                    continueToMoonpay(offer, paymentMethod, true);
+                    return;
+                  }
 
                   dispatch(
                     Analytics.track('Requested Crypto Purchase', {
@@ -2733,7 +2779,7 @@ const BuyAndSellRoot = ({
         destinationChain,
       ),
       paymentMethodMoonpayFormat:
-        getMoonpayPaymentMethodFormat(paymentMethod.method) ?? undefined,
+        getMoonpayPaymentMethodFormat(paymentMethod.method, true) ?? undefined,
     };
 
     const checkoutParams = {

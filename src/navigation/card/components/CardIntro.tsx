@@ -167,7 +167,7 @@ const CardIntro: React.FC = () => {
                     control={control}
                     render={({field: {onChange, onBlur, value}}) => (
                       <BoxInput
-                        placeholder={'Enter Email'}
+                        placeholder={t('Enter Email')}
                         onBlur={onBlur}
                         onChangeText={(text: string) => onChange(text)}
                         error={errors.email?.message}

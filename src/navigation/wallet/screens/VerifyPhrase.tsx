@@ -214,13 +214,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         if (word.toLowerCase() !== randomWords[index].word.toLowerCase()) {
           switch (index) {
             case 0:
-              setError('word1', {type: 'manual', message: 'Incorrect word'});
+              setError('word1', {type: 'manual', message: t('Incorrect word')});
               break;
             case 1:
-              setError('word2', {type: 'manual', message: 'Incorrect word'});
+              setError('word2', {type: 'manual', message: t('Incorrect word')});
               break;
             case 2:
-              setError('word3', {type: 'manual', message: 'Incorrect word'});
+              setError('word3', {type: 'manual', message: t('Incorrect word')});
               break;
           }
         }
@@ -297,7 +297,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       <HeaderRightContainer>
         <Button
           testID="cancel-button"
-          accessibilityLabel="Cancel"
+          accessibilityLabel={t('Cancel')}
           buttonType={'pill'}
           onPress={onPressHeaderCancelRef.current}>
           {t('Cancel')}
@@ -437,7 +437,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
-          Confirm
+          {t('Confirm')}
         </Button>
       </CtaContainerAbsolute>
     </KeyboardAvoidingView>
@@ -557,7 +557,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
-          Confirm
+          {t('Confirm')}
         </Button>
       </CtaContainerAbsolute>
     </VerifyPhraseContainer>

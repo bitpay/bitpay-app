@@ -16,6 +16,10 @@ import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {MoonpayPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
+  MOONPAY_SUPPORT_URL,
+  moonpaySepaIsWaitingForPayment,
+} from '../../../../services/buy-crypto/utils/moonpay-utils';
+import {
   NoPrMsg,
   PrTitle,
   PrRow,
@@ -117,7 +121,14 @@ const MoonpaySettings: React.FC = () => {
                           'waitingAuthorization',
                         ].includes(pr.status) && (
                           <PrTxtStatus>
-                            {t('Processing payment request')}
+                            {pr.is_embedded &&
+                            pr.payment_method === 'sepaBankTransfer' &&
+                            moonpaySepaIsWaitingForPayment(
+                              pr.status,
+                              pr.sepa_stages,
+                            )
+                              ? t('Waiting for your transfer')
+                              : t('Processing payment request')}
                           </PrTxtStatus>
                         )}
                     </PrRowLeft>
@@ -284,11 +295,7 @@ const MoonpaySettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.moonpay.com/hc/en-gb/requests/new',
-              ),
-            );
+            dispatch(openUrlWithInAppBrowser(MOONPAY_SUPPORT_URL));
           }}>
           <Link>{t('Contact the Moonpay support team.')}</Link>
         </TouchableOpacity>

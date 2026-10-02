@@ -277,7 +277,9 @@ export type MoonpayPaymentType =
   | 'apple_pay' // applePay embedded flow
   | 'mobile_wallet' // applePay
   | 'sepa_bank_transfer'
-  | 'credit_debit_card';
+  | 'credit_debit_card'
+  | 'card' // creditCard/debitCard embedded flow
+  | 'sepa'; // sepaBankTransfer embedded flow
 
 export interface MoonpayGetSignedPaymentUrlReqData {
   env: 'sandbox' | 'production';
@@ -344,6 +346,9 @@ export interface MoonpayGetQuoteEmbeddedRequestData {
   baseCurrencyAmount: number;
   baseCurrencyCode: string;
   paymentMethod: MoonpayPaymentType | undefined;
+  // Identifies the specific saved card when paymentMethod is 'card'. Required
+  // to get an executable quote/signature for the Cards embedded flow.
+  paymentMethodId?: string;
   areFeesIncluded: boolean;
   env: string;
 }
@@ -363,7 +368,7 @@ export interface MoonpayQuoteEmbeddedData {
   source: MoonpayEmbeddedAmount;
   destination: MoonpayEmbeddedAmount;
   fees: MoonpayEmbeddedFees;
-  paymentMethod: 'apple_pay';
+  paymentMethod: {type: 'apple_pay' | 'card' | 'sepa'; id?: string} | null;
   wallet: {
     address: string;
   };
@@ -371,8 +376,64 @@ export interface MoonpayQuoteEmbeddedData {
   expiresAt: string; // ISO date string
   exchangeRate: string; // numeric string
   signature: string; // long JWT
+  // Whether this quote's signature can actually be used to run a payment
+  // frame. A 'card' quote requested without paymentMethodId (e.g. the
+  // display-only quote fetched before a card is selected) is not executable.
   executable: boolean;
   paymentDisclosures?: MoonpayPaymentDisclosure[];
+}
+
+// GET /platform/v1/payment-methods
+export interface MoonpayGetPaymentMethodsEmbeddedRequestData {
+  accessToken: string;
+}
+
+export type MoonpayCardBrand =
+  | 'visa'
+  | 'mastercard'
+  | 'maestro'
+  | 'american_express'
+  | 'other';
+
+export type MoonpayCardType = 'credit' | 'debit' | 'unknown';
+
+export interface MoonpayPaymentMethodAvailability {
+  active: boolean;
+  reasons?: string[]; // e.g. 'card_expired' | 'card_declined' | 'card_blocked'
+}
+
+export interface MoonpayEmbeddedCardPaymentMethod {
+  id: string;
+  type: 'card';
+  cardType: MoonpayCardType;
+  brand: MoonpayCardBrand;
+  last4: string;
+  expirationMonth: string;
+  expirationYear: string;
+  availability: MoonpayPaymentMethodAvailability;
+}
+
+export interface MoonpayPaymentMethodCapabilities {
+  supportedCurrencies?: string[];
+  supportedTransactionTypes?: string[];
+  allowsDeletion?: boolean;
+  // When true the payment method can only be completed in MoonPay's widget,
+  // so the embedded (headless) flow must not be used for it.
+  requiresWidget?: boolean;
+}
+
+export interface MoonpayEmbeddedPaymentMethodConfig {
+  // Raw MoonPay platform payment method type ('sepa', 'card', 'apple_pay'...)
+  type: string;
+  capabilities?: MoonpayPaymentMethodCapabilities;
+  availability?: MoonpayPaymentMethodAvailability;
+}
+
+export interface MoonpayGetPaymentMethodsEmbeddedData {
+  // Only 'card' entries are modeled/used by the app today; other payment
+  // method types can also be returned by this endpoint.
+  paymentMethods?: MoonpayEmbeddedCardPaymentMethod[];
+  paymentMethodConfigs?: MoonpayEmbeddedPaymentMethodConfig[];
 }
 
 interface MoonpayEmbeddedAmount {
@@ -437,7 +498,7 @@ export type MoonpayTransactionStageKind =
   | 'delivery'
   | 'crypto_hold';
 
-interface MoonpayTransactionStage {
+export interface MoonpayTransactionStage {
   kind: MoonpayTransactionStageKind;
   name: string;
   status: MoonpayTransactionStageStatus;
@@ -472,7 +533,34 @@ export interface MoonpayTransactionDetailsEmbeddedData {
   paymentMethod: {
     type: MoonpayPaymentType;
   };
+  // Present for bank transfers (e.g. SEPA): where the customer has to send
+  // the money. The reference must be included or the transfer is rejected.
+  bankTransferDepositInfo?: MoonpayBankTransferDepositInfo;
   stages: MoonpayTransactionStage[];
+}
+
+// Subset of the bank transfer deposit details kept with the local payment
+// request, so the customer can look them up again after leaving the checkout.
+export interface MoonpaySepaDetails {
+  reference: string;
+  iban?: string;
+  bic?: string;
+  recipientName?: string;
+  recipientAddress?: string;
+  bankName?: string;
+  bankAddress?: string;
+}
+
+export interface MoonpayBankTransferDepositInfo {
+  reference: string;
+  recipientName: string;
+  recipientAddress: string;
+  accountNumber?: string;
+  bankAddress?: string;
+  bankName?: string;
+  bic?: string;
+  iban?: string;
+  sortCode?: string;
 }
 
 export interface MoonpayPaymentData {
@@ -492,6 +580,14 @@ export interface MoonpayPaymentData {
   transaction_id?: string; // id form moonpay
   user_eid?: string; // user id
   is_embedded?: boolean; // whether the transaction was made through the embedded flow or not
+  sepa_details?: MoonpaySepaDetails; // Bank transfer (SEPA) deposit details, when the purchase is paid that way
+  // Last known stages of a bank transfer purchase. Its top-level status stays
+  // 'pending' from creation until the money settles, so the stages are the only
+  // record of whether the customer's transfer already arrived.
+  sepa_stages?: MoonpayTransactionStage[];
+  // Bank transfers are reported as purchased when the deposit arrives, not when
+  // the purchase is created. Kept so the event is only ever sent once.
+  sepa_purchase_reported?: boolean;
 }
 
 export interface MoonpayIncomingData {
@@ -499,7 +595,10 @@ export interface MoonpayIncomingData {
   transactionId?: string;
   status?: string;
   cryptoAmount?: number; // embedded
-  fiatBaseAmount?: number; // embedded
+  fiatTotalAmount?: number; // embedded
+  sepaDetails?: MoonpaySepaDetails; // embedded
+  sepaStages?: MoonpayTransactionStage[]; // embedded
+  sepaPurchaseReported?: boolean; // embedded
 }
 
 export interface SardineGetAuthTokenRequestData {

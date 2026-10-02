@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {TextInput} from 'react-native';
 import SearchSvg from '../../../../../assets/img/search.svg';
@@ -39,6 +40,7 @@ const AssetsSearchPill: React.FC<Props> = ({
   placeholder = 'Search',
   height,
 }) => {
+  const {t} = useTranslation();
   return (
     <Container height={height}>
       <IconContainer>
@@ -50,7 +52,7 @@ const AssetsSearchPill: React.FC<Props> = ({
         placeholder={placeholder}
         placeholderTextColor={'#6F7782'}
         testID="assets-search-input"
-        accessibilityLabel="Search assets"
+        accessibilityLabel={t('Search assets')}
       />
     </Container>
   );

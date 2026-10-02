@@ -163,7 +163,7 @@ const KycBannerGate: React.FC = () => {
         {config.dismissible ? (
           <DismissButton
             onPress={() => setDismissed(displayState)}
-            accessibilityLabel="Dismiss KYC notification">
+            accessibilityLabel={t('Dismiss KYC notification')}>
             <IconClose width={16} height={16} />
           </DismissButton>
         ) : (

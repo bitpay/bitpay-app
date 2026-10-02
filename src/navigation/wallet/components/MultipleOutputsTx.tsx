@@ -99,13 +99,18 @@ const MultipleOutputsTx = ({
 
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
 
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const tokenOptionsByAddress = useMemo(
+    () => ({
       ...BitpaySupportedTokenOptsByAddress,
       ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
+      ...customTokenOptionsByAddress,
+    }),
+    [_tokenOptionsByAddress, customTokenOptionsByAddress],
+  );
   const foundToken =
     tokenAddress &&
     tokenOptionsByAddress[
@@ -326,7 +331,9 @@ const MultipleOutputsTx = ({
                         txOutputs[0].address ||
                         txOutputs[0].toAddress,
                     )}
-                    description={`${tx.recipientCount} Recipients`}
+                    description={t('{{count}} Recipients', {
+                      count: tx.recipientCount,
+                    })}
                     onPress={() => setShowMultiOptions(!showMultiOptions)}
                     dropDown={true}
                   />

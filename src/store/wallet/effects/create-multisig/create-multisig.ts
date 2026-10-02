@@ -28,6 +28,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {logManager} from '../../../../managers/LogManager';
+import {tokenManager} from '../../../../managers/TokenManager';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
@@ -41,6 +42,19 @@ const BWC = BwcProvider.getInstance();
 const activeCeremonies = new Map<string, any>();
 
 const getCeremonyTimeoutMs = (n: number): number => n * 60_000;
+
+// BWS expires keygen sessions and rejects participants whose TSS scheme
+// version does not match the one the session was started with.
+const toCeremonyError = (e: Error): Error => {
+  const message = e?.message || '';
+  if (message.includes('TSS_SESSION_EXPIRED')) {
+    return new Error('CEREMONY_TIMEOUT');
+  }
+  if (message.includes('TSS_MISMATCH_VERSION')) {
+    return new Error('CEREMONY_VERSION_MISMATCH');
+  }
+  return e;
+};
 
 interface CeremonyStats {
   sessionId: string;
@@ -271,7 +285,7 @@ export const startCreateTSSKey =
     myName: string;
     walletName: string;
   }): Effect<Promise<{key: Key}>> =>
-  async (dispatch, getState): Promise<{key: Key}> => {
+  async (dispatch): Promise<{key: Key}> => {
     try {
       const {
         coin,
@@ -284,9 +298,7 @@ export const startCreateTSSKey =
         myName,
       } = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
-      const {
-        WALLET: {tokenOptionsByAddress},
-      } = getState();
+      const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
       const partyKey = BWC.createKey({seedType: 'new'});
       logManager.debug('[TSS] Created party key for creator');
@@ -500,8 +512,9 @@ export const startTSSCeremony =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress, keys},
+          WALLET: {keys},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const key = keys[keyId];
         if (!key?.tssSession) {
@@ -678,7 +691,7 @@ export const startTSSCeremony =
                 activeCeremonies.delete(keyId);
                 clearCeremonyStats(keyId);
                 tssKeyGen.unsubscribe();
-                reject(e);
+                reject(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Ceremony complete]`);
@@ -975,8 +988,9 @@ export const joinTSSWithCode =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress, keys},
+          WALLET: {keys},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const isResume = !!opts.keyId;
         let key: Key;
@@ -1306,7 +1320,7 @@ export const joinTSSWithCode =
                 activeCeremonies.delete(key.id);
                 clearCeremonyStats(key.id);
                 tssKeyGen.unsubscribe();
-                reject(e);
+                reject(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Join complete]`);
@@ -1521,7 +1535,7 @@ export const joinTSSWithCode =
         logManager.error(
           `[TSS Join] Caught error, cleaning up: ${errorStr} | activeKeyId=${_activeKeyId}`,
         );
-        reject(err);
+        reject(toCeremonyError(err as Error));
       }
     });
   };

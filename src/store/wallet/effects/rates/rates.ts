@@ -4,6 +4,7 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 import {HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
+import {getTokenAddressFromTokenWalletId} from '../../utils/token-wallet-id';
 import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
 import {
@@ -151,10 +152,9 @@ export const getContractAddresses =
           !IsERCToken(wallet.currencyAbbreviation, wallet.chain) &&
           wallet.tokens
         ) {
-          // workaround to get linked wallets
-          const tokenAddresses = wallet.tokens.map((t: string) =>
-            t.replace(`${wallet.id}-`, ''),
-          );
+          const tokenAddresses = wallet.tokens
+            .map((t: string) => getTokenAddressFromTokenWalletId(wallet.id, t))
+            .filter((t): t is string => !!t);
           allTokenAddresses.push(...tokenAddresses);
         }
       });

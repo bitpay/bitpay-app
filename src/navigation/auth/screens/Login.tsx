@@ -252,7 +252,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="email-box-input"
-                accessibilityLabel="Email address"
+                accessibilityLabel={t('EMAIL ADDRESS')}
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
                 onBlur={onBlur}
@@ -277,7 +277,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 testID="password-box-input"
-                accessibilityLabel="Password"
+                accessibilityLabel={t('PASSWORD')}
                 ref={passwordRef}
                 placeholder={'strongPassword123'}
                 label={t('PASSWORD')}
@@ -300,7 +300,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
             <Button
               buttonStyle={'secondary'}
               testID="login-button"
-              accessibilityLabel="Log in"
+              accessibilityLabel={t('Log In')}
               onPress={onSubmit}
               disabled={!isDirty}>
               {t('Log In')}
@@ -317,7 +317,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
             <Button
               buttonStyle={'secondary'}
               testID="login-passkey-button"
-              accessibilityLabel="Log in with passkey"
+              accessibilityLabel={t('Log In with Passkey')}
               onPress={loginWithPasskey}
               disabled={loginStatus === 'loading'}
               icon={<PasskeyPersonSetup width={28} height={28} />}>
@@ -328,7 +328,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
             <Button
               buttonStyle={'secondary'}
               testID="create-account-button"
-              accessibilityLabel="Create an account"
+              accessibilityLabel={t('Create an Account')}
               onPress={() => {
                 navigation.navigate('CreateAccount', {context: 'login'});
               }}
@@ -351,7 +351,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       <FooterContainer>
         <FooterLink
           testID="trouble-logging-in-button"
-          accessibilityLabel="Trouble logging in"
+          accessibilityLabel={t('Trouble logging in')}
           onPress={() => onTroubleLoggingIn()}>
           {t('Trouble logging in?')}
         </FooterLink>

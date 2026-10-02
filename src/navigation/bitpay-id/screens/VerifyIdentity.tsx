@@ -1,10 +1,10 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {SvgProps} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {H2, H3, Paragraph} from '../../../components/styled/Text';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   Caution25,
@@ -144,8 +144,18 @@ export const VerifyIdentityScreen: React.FC = () => {
     }
   }, [dispatch, user]);
 
-  const handleResume = () => {
-    dispatch(SumSubEffects.startKycVerification());
+  // Without the ongoing process modal there is nothing suppressing input while
+  // the token is minted; a loading state keeps a second tap from opening a
+  // second attempt (RN-2906).
+  const [buttonState, setButtonState] = useState<ButtonState>(null);
+
+  const handleResume = async () => {
+    setButtonState('loading');
+    try {
+      await dispatch(SumSubEffects.startKycVerification());
+    } finally {
+      setButtonState(null);
+    }
   };
 
   if (state === 'notStarted') {
@@ -163,7 +173,9 @@ export const VerifyIdentityScreen: React.FC = () => {
           </Body>
 
           <ButtonContainer>
-            <Button onPress={handleResume}>{t('Verify My Identity')}</Button>
+            <Button state={buttonState} onPress={handleResume}>
+              {t('Verify My Identity')}
+            </Button>
           </ButtonContainer>
         </ScrollContainer>
       </Container>
@@ -183,9 +195,13 @@ export const VerifyIdentityScreen: React.FC = () => {
 
         <ButtonContainer>
           {state === 'inProgress' ? (
-            <Button onPress={handleResume}>{t('Continue Verification')}</Button>
+            <Button state={buttonState} onPress={handleResume}>
+              {t('Continue Verification')}
+            </Button>
           ) : state === 'actionRequired' ? (
-            <Button onPress={handleResume}>{t('Resume Application')}</Button>
+            <Button state={buttonState} onPress={handleResume}>
+              {t('Resume Application')}
+            </Button>
           ) : (
             <Button onPress={goHome}>{t('Go Home')}</Button>
           )}

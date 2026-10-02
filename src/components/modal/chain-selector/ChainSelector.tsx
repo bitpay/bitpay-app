@@ -370,7 +370,7 @@ const ChainSelectorModal = () => {
               <SearchSvg {...searchIconSize} />
             </SearchIconContainer>
             <SearchRoundInput
-              placeholder={'Search Networks'}
+              placeholder={t('Search Networks')}
               placeholderTextColor={theme.dark ? Slate : Slate}
               onChangeText={updateSearchResults}
             />
