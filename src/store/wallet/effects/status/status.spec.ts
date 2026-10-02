@@ -373,7 +373,8 @@ describe('buildBalance', () => {
         totalAmount: 10_000_000,
         totalConfirmedAmount: 10_000_000,
         lockedAmount: 2_000_000,
-        lockedConfirmedAmount: 1_000_000,
+        lockedConfirmedAmount: 2_000_000,
+        reserve: 1_000_000,
         availableAmount: 8_000_000,
         availableConfirmedAmount: 8_000_000,
       },
@@ -381,10 +382,9 @@ describe('buildBalance', () => {
 
     const result = store.dispatch(buildBalance({wallet, status}));
 
-    // satLockedAmount = lockedAmount - lockedConfirmedAmount
     expect(result.satLocked).toBe(1_000_000);
-    // satTotalAmount = totalAmount - lockedConfirmedAmount
     expect(result.sat).toBe(9_000_000);
+    expect(result.satConfirmedLocked).toBe(1_000_000);
   });
 
   it('adjusts sat values for sol chain', () => {
@@ -395,7 +395,8 @@ describe('buildBalance', () => {
         totalAmount: 5_000_000,
         totalConfirmedAmount: 5_000_000,
         lockedAmount: 1_000_000,
-        lockedConfirmedAmount: 500_000,
+        lockedConfirmedAmount: 1_000_000,
+        reserve: 500_000,
         availableAmount: 4_000_000,
         availableConfirmedAmount: 4_000_000,
       },
@@ -404,7 +405,44 @@ describe('buildBalance', () => {
     const result = store.dispatch(buildBalance({wallet, status}));
     expect(result.satLocked).toBe(500_000);
     expect(result.sat).toBe(4_500_000);
+    expect(result.satConfirmedLocked).toBe(500_000);
   });
+
+  it.each([
+    {chain: 'sol', totalAmount: 1_000_000_000, reserve: 1_002_240},
+    {chain: 'xrp', totalAmount: 2_000_000, reserve: 1_000_000},
+    {chain: 'sol', totalAmount: 10_000, reserve: 1_002_240},
+    {chain: 'sol', totalAmount: 1_000_000, reserve: 0, tokenAddress: 'mint'},
+  ])(
+    'subtracts only reserve for $chain with totalAmount=$totalAmount and reserve=$reserve',
+    ({chain, totalAmount, reserve, tokenAddress}) => {
+      const store = configureTestStore({});
+      const wallet = makeWallet({
+        chain,
+        currencyAbbreviation: chain,
+        tokenAddress,
+      });
+      const lockedAmount = 165_882_959_000;
+      const status = makeStatus({
+        balance: {
+          totalAmount,
+          totalConfirmedAmount: totalAmount,
+          lockedAmount,
+          lockedConfirmedAmount: lockedAmount,
+          reserve,
+          availableAmount: totalAmount - lockedAmount,
+          availableConfirmedAmount: totalAmount - lockedAmount,
+        },
+      });
+
+      const result = store.dispatch(buildBalance({wallet, status}));
+
+      expect(result.sat).toBe(Math.max(0, totalAmount - reserve));
+      expect(result.satLocked).toBe(lockedAmount - reserve);
+      expect(result.satConfirmedLocked).toBe(Math.min(totalAmount, reserve));
+      expect(result.sat + result.satConfirmedLocked).toBe(totalAmount);
+    },
+  );
 
   it('uses unconfirmed funds for spendable amount when useUnconfirmedFunds is true', () => {
     const store = configureTestStore({WALLET: {useUnconfirmedFunds: true}});

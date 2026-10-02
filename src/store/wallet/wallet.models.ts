@@ -218,6 +218,7 @@ export interface Balance {
   byAddress: {address: string; path: string; amount: number}[];
   lockedAmount: number;
   lockedConfirmedAmount: number;
+  reserve?: number;
   totalAmount: number;
   totalConfirmedAmount: number;
 }
