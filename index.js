@@ -146,6 +146,7 @@ const ReduxProvider = () => {
   }, [isPrimary]);
 
   const [storeReady, setStoreReady] = useState(false);
+  const [startupAttempt, setStartupAttempt] = useState(0);
   const [{store: reduxStore, persistor: reduxPersistor}, setStore] = useState({
     store: null,
     persistor: null,
@@ -158,22 +159,45 @@ const ReduxProvider = () => {
 
     let cancelled = false;
 
-    getStore().then(({store, persistor}) => {
-      if (cancelled) {
-        return;
-      }
+    getStore()
+      .then(({store, persistor}) => {
+        if (cancelled) {
+          persistor.pause();
+          return;
+        }
 
-      setStore({store, persistor});
-      setStoreReady(true);
-      setJSExceptionHandler(makeErrorHandler(store), true);
-      // executeDefaultHandler=true chains to Sentry's UncaughtExceptionHandler so native crashes are captured
-      setNativeExceptionHandler(makeNativeExceptionHandler(store), true, true);
-    });
+        setStore({store, persistor});
+        setStoreReady(true);
+        setJSExceptionHandler(makeErrorHandler(store), true);
+        // executeDefaultHandler=true chains to Sentry's UncaughtExceptionHandler so native crashes are captured
+        setNativeExceptionHandler(
+          makeNativeExceptionHandler(store),
+          true,
+          true,
+        );
+      })
+      .catch(error => {
+        if (cancelled) {
+          return;
+        }
+        Sentry.captureException(error, {level: 'error'});
+        Alert.alert(
+          'Wallet data could not be opened',
+          'Your local data was preserved. Please try again.',
+          [
+            {
+              text: 'Retry',
+              onPress: () => setStartupAttempt(attempt => attempt + 1),
+            },
+          ],
+          {cancelable: false},
+        );
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [isPrimary]);
+  }, [isPrimary, startupAttempt]);
 
   if (!isPrimary || !storeReady) {
     return null;

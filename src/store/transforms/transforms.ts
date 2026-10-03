@@ -243,6 +243,7 @@ export const encryptSpecificFields = (secretKey: string) => {
           return encryptWalletStore(inboundState, secretKey);
         } catch (error) {
           logTransformFailure('encrypt', 'Wallet', error);
+          throw error;
         }
       }
       if (key === 'APP') {
@@ -250,6 +251,7 @@ export const encryptSpecificFields = (secretKey: string) => {
           return encryptAppStore(inboundState, secretKey);
         } catch (error) {
           logTransformFailure('encrypt', 'App', error);
+          throw error;
         }
       }
       if (key === 'SHOP') {
@@ -257,6 +259,7 @@ export const encryptSpecificFields = (secretKey: string) => {
           return encryptShopStore(inboundState, secretKey);
         } catch (error) {
           logTransformFailure('encrypt', 'Shop', error);
+          throw error;
         }
       }
       return inboundState;
@@ -268,6 +271,7 @@ export const encryptSpecificFields = (secretKey: string) => {
           return decryptWalletStore(outboundState, secretKey);
         } catch (error) {
           logTransformFailure('decrypt', 'Wallet', error);
+          throw error;
         }
       }
       if (key === 'APP') {
@@ -275,6 +279,7 @@ export const encryptSpecificFields = (secretKey: string) => {
           return decryptAppStore(outboundState, secretKey);
         } catch (error) {
           logTransformFailure('decrypt', 'App', error);
+          throw error;
         }
       }
       if (key === 'SHOP') {
@@ -282,6 +287,7 @@ export const encryptSpecificFields = (secretKey: string) => {
           return decryptShopStore(outboundState, secretKey);
         } catch (error) {
           logTransformFailure('decrypt', 'Shop', error);
+          throw error;
         }
       }
       return outboundState;
