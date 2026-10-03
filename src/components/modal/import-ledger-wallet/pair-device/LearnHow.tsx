@@ -39,8 +39,8 @@ const InstructionNumberColumn = styled.View`
 const InstructionNumberIcon = styled.View`
   background-color: ${LightBlue};
   border-radius: 40px;
-  height: 25px;
-  width: 25px;
+  min-height: 25px;
+  min-width: 25px;
   display: flex;
   align-items: center;
   justify-content: center;

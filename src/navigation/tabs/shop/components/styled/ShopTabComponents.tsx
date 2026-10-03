@@ -56,13 +56,16 @@ export const SectionSpacer = styled.View<{height?: number}>`
 export const SectionHeaderContainer = styled.View`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 8px;
 `;
 
 export const SectionHeaderButton = styled(Link)`
   margin-top: 38px;
   margin-bottom: 12px;
   font-weight: 500;
+  flex-shrink: 1;
 `;
 
 export const SectionHeader = styled(BaseText)`
@@ -72,6 +75,7 @@ export const SectionHeader = styled(BaseText)`
   margin-bottom: 16px;
   margin-top: 40px;
   flex-grow: 1;
+  flex-shrink: 1;
   font-weight: 500;
 `;
 

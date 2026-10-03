@@ -19,7 +19,7 @@ const ChangellyPoliciesContainer = styled.SafeAreaView`
 `;
 
 const ModalHeader = styled.View`
-  height: 50px;
+  min-height: 50px;
   margin-right: 10px;
 `;
 

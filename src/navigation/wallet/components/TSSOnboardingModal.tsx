@@ -205,7 +205,7 @@ const PaginationText = styled(BaseText)`
 `;
 
 const NextButton = styled(TouchableOpacity)`
-  height: 50px;
+  min-height: 50px;
   min-width: 100px;
   padding: 0 16px;
   border-radius: 8px;

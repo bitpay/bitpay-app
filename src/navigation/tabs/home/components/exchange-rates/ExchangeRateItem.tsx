@@ -18,15 +18,17 @@ import {NeutralSlate, Slate30, SlateDark} from '../../../../../styles/colors';
 import {View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Percentage from '../../../../../components/percentage/Percentage';
+import {useIsLargeFont} from '../../../../../utils/hooks';
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
+const RowContainer = styled(TouchableOpacity)<{stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   margin: 10px 0;
 `;
 
-const NoteContainer = styled(Column)`
-  align-items: flex-end;
+const NoteContainer = styled(Column)<{stacked?: boolean}>`
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'flex-end')};
+  ${({stacked}) => (stacked ? 'align-self: stretch; margin-top: 6px;' : '')}
   gap: 4px;
 `;
 
@@ -63,6 +65,7 @@ const ExchangeRateItem = ({
   defaultAltCurrencyIsoCode: string;
 }) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
   const {amount, code} = formatFiatAmountObj(
@@ -76,6 +79,7 @@ const ExchangeRateItem = ({
 
   return (
     <RowContainer
+      stacked={stacked}
       activeOpacity={ActiveOpacity}
       testID={`home-exchange-rate-item-${item.id}`}
       accessibilityLabel={t('{{currency}} exchange rate', {
@@ -86,7 +90,7 @@ const ExchangeRateItem = ({
         <CurrencyImage img={img} size={40} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <ExchangeRateText ellipsizeMode="tail" numberOfLines={1}>
+        <ExchangeRateText ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
           {currencyName}
         </ExchangeRateText>
         {currencyAbbreviation ? (
@@ -95,7 +99,7 @@ const ExchangeRateItem = ({
           </ExchangeRateSubText>
         ) : null}
       </CurrencyColumn>
-      <NoteContainer>
+      <NoteContainer stacked={stacked}>
         {currentPrice ? (
           <>
             <ExchangeRateText>

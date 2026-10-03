@@ -66,7 +66,7 @@ const CopyToClipboard = styled(TouchableOpacity)`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
-  height: 55px;
+  min-height: 55px;
   align-items: center;
   flex-direction: row;
 `;

@@ -34,6 +34,8 @@ const TimeframeContainer = styled.View<{$horizontalInset?: string}>`
 
 const TimeframeRow = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
+  row-gap: 8px;
   justify-content: space-between;
   align-self: center;
   width: 100%;
@@ -44,7 +46,7 @@ const TimeframeHitSlop = {top: 10, bottom: 10, left: 10, right: 10} as const;
 type TimeframeSelectorStyledProps = {$active: boolean};
 
 const TimeframePill = styled(TouchableOpacity)<TimeframeSelectorStyledProps>`
-  height: 34px;
+  min-height: 34px;
   min-width: 44px;
   padding: 0 12px;
   border-radius: 18px;

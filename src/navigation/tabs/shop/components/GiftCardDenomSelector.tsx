@@ -17,7 +17,7 @@ const Selector = styled.View`
 `;
 
 const ChangeDenomButton = styled.View`
-  height: 39px;
+  min-height: 39px;
   width: 39px;
   border: 1px solid black;
   display: flex;

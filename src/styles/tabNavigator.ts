@@ -6,12 +6,20 @@ import {
   SlateDark,
   White,
 } from './colors';
-import {Platform} from 'react-native';
+import {Platform, useWindowDimensions} from 'react-native';
 import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
 import {useTheme} from 'styled-components/native';
 import {useAppSelector} from '../utils/hooks';
 
 const gutter = 5;
+
+/**
+ * This bar's width, height and indicator are all fixed pixel values, so the
+ * label can only grow as far as the pill can. `tabBarAllowFontScaling` is a
+ * boolean (no max multiplier), so the cap is applied by scaling the geometry
+ * and the label size together and turning OS scaling off.
+ */
+const MAX_TAB_FONT_SCALE = 1.4;
 
 export const ScreenOptions = (
   {fontSize, numTabs, marginHorizontal, tabWidth, langAdjustments} = {
@@ -22,9 +30,16 @@ export const ScreenOptions = (
     langAdjustments: false,
   },
 ): MaterialTopTabNavigationOptions => {
-  const totalWidth = tabWidth * numTabs + gutter * 4;
   const {dark} = useTheme();
   const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  const {fontScale, width: screenWidth} = useWindowDimensions();
+  const baseWidth = tabWidth * numTabs + gutter * 4;
+  const scale = Math.min(
+    fontScale,
+    MAX_TAB_FONT_SCALE,
+    Math.max(1, (screenWidth - 24) / baseWidth),
+  );
+  const totalWidth = baseWidth * scale;
 
   const getLangAdjustments = (
     lang: string,
@@ -65,21 +80,23 @@ export const ScreenOptions = (
 
   return {
     swipeEnabled: false,
+    tabBarAllowFontScaling: false,
     tabBarIndicatorStyle: {
-      height: langAdjustments
-        ? getLangAdjustments(defaultLanguage).tabBarIndicatorHeight
-        : 46,
+      height:
+        (langAdjustments
+          ? getLangAdjustments(defaultLanguage).tabBarIndicatorHeight
+          : 46) * scale,
       borderRadius: 50,
       backgroundColor: Action,
-      width: tabWidth,
+      width: tabWidth * scale,
       margin: gutter,
-      marginHorizontal,
+      marginHorizontal: marginHorizontal * scale,
     },
     tabBarActiveTintColor: White,
     tabBarInactiveTintColor: dark ? White : SlateDark,
     tabBarPressColor: dark ? Black : NeutralSlate,
     tabBarLabelStyle: {
-      fontSize,
+      fontSize: fontSize * scale,
       textTransform: 'none',
       fontWeight: '500',
       paddingVertical: Platform.select({
@@ -97,9 +114,10 @@ export const ScreenOptions = (
       borderRadius: 50,
       backgroundColor: dark ? LightBlack : NeutralSlate,
       elevation: 0,
-      height: langAdjustments
-        ? getLangAdjustments(defaultLanguage).tabBarHeight
-        : 56,
+      height:
+        (langAdjustments
+          ? getLangAdjustments(defaultLanguage).tabBarHeight
+          : 56) * scale,
     },
   };
 };

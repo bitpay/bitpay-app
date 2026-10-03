@@ -24,10 +24,16 @@ interface OnboardingSlideProps {
   item: OnboardingSlide;
 }
 
-const SlideContainer = styled.View`
+const SlideContainer = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  showsVerticalScrollIndicator: false,
+}))`
   background: transparent;
-  justify-content: center;
-  align-items: center;
   margin-top: 20px;
 `;
 

@@ -115,7 +115,7 @@ import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 
 const ModalHeader = styled.View`
-  height: 50px;
+  min-height: 50px;
   margin-right: 10px;
   margin-left: 10px;
   display: flex;

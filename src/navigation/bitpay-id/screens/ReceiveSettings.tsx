@@ -75,7 +75,7 @@ const AddressItem = styled.View`
   border-color: ${({theme: {dark}}) => (dark ? Slate : Slate30)};
   border-radius: 8px;
   flex-direction: row;
-  height: 55px;
+  min-height: 55px;
   padding: 0 15px;
   margin-top: 10px;
   padding-left: 2px;
@@ -88,7 +88,7 @@ const AddressItemText = styled(Paragraph)`
 `;
 
 const AddressPillContainer = styled.View`
-  height: 37px;
+  min-height: 37px;
   margin-right: 20px;
   width: 100px;
 `;
@@ -98,7 +98,7 @@ const WalletName = styled(BaseText)`
 `;
 
 const AddButton = styled.View`
-  height: 30px;
+  min-height: 30px;
   width: 30px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
   border-radius: 8px;

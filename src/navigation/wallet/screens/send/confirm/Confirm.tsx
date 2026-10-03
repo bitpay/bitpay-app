@@ -146,7 +146,7 @@ export const Setting = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;
-  height: 58px;
+  min-height: 58px;
 `;
 
 export const SettingTitle = styled(BaseText)`

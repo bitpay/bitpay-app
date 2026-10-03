@@ -96,7 +96,7 @@ export const RemoveCta = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  height: 60px;
+  min-height: 60px;
   margin-top: 30px;
 `;
 

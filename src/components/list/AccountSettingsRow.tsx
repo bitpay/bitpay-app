@@ -13,6 +13,7 @@ import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
 import {IsVMChain} from '../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks';
 
 interface Props {
   id: string;
@@ -25,9 +26,9 @@ const HiddenColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const AccountSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
+const AccountSettingsContainer = styled(TouchableOpacity)<{stacked?: boolean}>`
+  flex-direction: ${({stacked}) => (stacked ? 'column' : 'row')};
+  align-items: ${({stacked}) => (stacked ? 'flex-start' : 'center')};
   display: flex;
   padding: 8px 0px;
   gap: 8px;
@@ -37,6 +38,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
   const {accountName, receiveAddress, wallets, isMultiNetworkSupported} =
     accountItem;
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
 
   const hideAccount = accountInfo?.[accountItem.receiveAddress]?.hideAccount;
   const isHidden = IsVMChain(wallets[0].chain)
@@ -46,6 +48,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
   return (
     <AccountSettingsContainer
       activeOpacity={ActiveOpacity}
+      stacked={stacked}
       onPress={() => onPress()}>
       <CurrencyImageContainer style={{height: 40, width: 40}}>
         {isMultiNetworkSupported ? (
@@ -59,7 +62,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
         )}
       </CurrencyImageContainer>
       <Column>
-        <H5 ellipsizeMode="tail" numberOfLines={1}>
+        <H5 ellipsizeMode="tail" numberOfLines={stacked ? 3 : 1}>
           {accountName || t('[Account Name]')}
         </H5>
       </Column>
