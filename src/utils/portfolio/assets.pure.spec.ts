@@ -659,10 +659,10 @@ describe('getVisibleKeysFromKeys', () => {
     expect(result).toHaveLength(1);
   });
 
-  it('ignores coinbaseBalanceCard id in carousel config', () => {
+  it('ignores non-key ids in carousel config', () => {
     const keys = {k1: makeKey('k1')};
     const config = [
-      {id: 'coinbaseBalanceCard', show: false},
+      {id: 'createWallet', show: false},
       {id: 'k1', show: true},
     ] as any[];
     const result = getVisibleKeysFromKeys(keys, config);

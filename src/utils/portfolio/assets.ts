@@ -969,7 +969,7 @@ export const getHiddenKeyIdsFromHomeCarouselConfig = (args: {
     : [];
   for (const item of cfg) {
     const id = item?.id;
-    if (!id || id === 'coinbaseBalanceCard') {
+    if (!id) {
       continue;
     }
     if (item?.show === false && !!args.keys?.[id]) {
