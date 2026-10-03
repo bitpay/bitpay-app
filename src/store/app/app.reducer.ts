@@ -394,12 +394,6 @@ export const appReducer = (
         bottomNotificationModalConfig: undefined,
       };
 
-    case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
-      return {
-        ...state,
-        bottomNotificationModalConfig: undefined,
-      };
-
     case AppActionTypes.SHOW_CHAIN_SELECTOR_MODAL:
       return {
         ...state,

@@ -278,19 +278,6 @@ describe('DISMISS_BOTTOM_NOTIFICATION_MODAL', () => {
   });
 });
 
-describe('RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG', () => {
-  it('clears the modal config', () => {
-    const base: AppState = {
-      ...freshState(),
-      bottomNotificationModalConfig: {title: 'Test'} as any,
-    };
-    const state = appReducer(base, {
-      type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
-    });
-    expect(state.bottomNotificationModalConfig).toBeUndefined();
-  });
-});
-
 // ---------------------------------------------------------------------------
 // SHOW/DISMISS CHAIN SELECTOR MODAL
 // ---------------------------------------------------------------------------
