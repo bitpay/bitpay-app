@@ -127,6 +127,14 @@ const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
 ]);
 
 let backupTriggerAction: string | null = null;
+let backupRetryLabel: string | null = null;
+// Bounds retries and the missing-backup path: persist:root is written with
+// throttle 0, so a broken filesystem would otherwise retry on every slice change
+let backupFailures = 0;
+let backupInFlight = false;
+// Latest persist:root not yet handed to a backup; writes arriving while one is
+// in flight coalesce here instead of queueing attempts past the failure limit
+let pendingPersistRoot: string | null = null;
 
 let storeDispatch: ((action: AnyAction) => void) | null = null;
 // Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
@@ -189,6 +197,44 @@ const removePortfolioChartsPersistRoot = (
   }
 };
 
+const runFsBackup = async (): Promise<void> => {
+  const value = pendingPersistRoot;
+  if (backupInFlight || value === null) {
+    return;
+  }
+  backupInFlight = true;
+  pendingPersistRoot = null;
+  let label = backupTriggerAction;
+  backupTriggerAction = null;
+  try {
+    // A fresh trigger action always gets one attempt, as before retries existed
+    if (!label && backupFailures < 3) {
+      label =
+        backupRetryLabel ??
+        ((await backupFileExists()) ? null : 'no existing backup');
+    }
+    if (!label) {
+      return;
+    }
+    try {
+      await backupPersistRoot(value);
+      backupFailures = 0;
+      backupRetryLabel = null;
+      logManager.debug(`Backed up store to filesystem, triggered by ${label}.`);
+    } catch {
+      // Retry on the next persist:root write rather than waiting for another
+      // trigger action, which may never come
+      backupFailures++;
+      backupRetryLabel = label;
+    }
+  } finally {
+    backupInFlight = false;
+    if (pendingPersistRoot !== null) {
+      runFsBackup();
+    }
+  }
+};
+
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
     const valueToStore =
@@ -214,18 +260,8 @@ export const reduxStorage: Storage = {
     }
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
-        const hasBackup = await backupFileExists();
-        if (backupTriggerAction || !hasBackup) {
-          const triggerLabel = backupTriggerAction ?? 'no existing backup';
-          backupPersistRoot(valueToStore)
-            .then(() =>
-              logManager.debug(
-                `Backed up store to filesystem, triggered by ${triggerLabel}.`,
-              ),
-            )
-            .catch(() => {});
-          backupTriggerAction = null;
-        }
+        pendingPersistRoot = valueToStore;
+        runFsBackup();
       }
     } catch (_) {}
   },
