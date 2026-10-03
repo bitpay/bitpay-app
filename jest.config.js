@@ -36,6 +36,10 @@ module.exports = {
     '^@env$': '<rootDir>/test/mock.js',
     '^@sumsub/react-native-mobilesdk-module$':
       '<rootDir>/test/mocks/sumsubSdkMock.js',
+    '^@silencelaboratories/dkls-wasm-ll-web$':
+      '<rootDir>/shims/silence-dkls-web.js',
+    '^@silencelaboratories/dkls-wasm-ll-node$':
+      '<rootDir>/test/mocks/dklsWasmNodeMock.js',
   },
   roots: ['<rootDir>/src/'],
   collectCoverageFrom: [

@@ -1,5 +1,5 @@
 #!/bin/bash
-npx patch-package
+npx patch-package --error-on-fail || exit 1
 rn-nodeify --yarn --install buffer,react-native-randombytes,stream,http,https,os,url,fs,path,events --hack &&
 node ./scripts/mute-require-cycle-warnings.js
 node ./scripts/multi-modal-patch.js
