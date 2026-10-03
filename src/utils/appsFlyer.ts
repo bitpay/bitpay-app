@@ -14,6 +14,11 @@ export const AppsFlyerWrapper = (() => {
   let status: AppsFlyerStatus = 'idle';
   let initPromise: Promise<void> | null = null;
   let loggedNotReadyWarning = false;
+  let lastInitFailureAt = 0;
+
+  // A device that genuinely cannot reach AppsFlyer should not re-attempt initSdk
+  // once per conversion, so retries are throttled rather than unbounded.
+  const INIT_RETRY_COOLDOWN_MS = 5 * 60 * 1000;
 
   const isReady = () => status === 'ready';
 
@@ -60,60 +65,101 @@ export const AppsFlyerWrapper = (() => {
     });
   };
 
+  const doInit = (): Promise<void> => {
+    if (status === 'ready') {
+      return Promise.resolve();
+    }
+
+    if (initPromise) {
+      return initPromise;
+    }
+
+    status = 'initializing';
+    resetNotReadyWarning();
+
+    initPromise = (async () => {
+      try {
+        await AppsFlyer.initSdk({
+          devKey,
+          isDebug: !!__DEV__,
+          appId,
+          onInstallConversionDataListener: true,
+          onDeepLinkListener: true,
+        });
+
+        try {
+          await configureResolvedDeepLinks();
+        } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+
+          logManager.error(
+            `[AppsFlyer] configureResolvedDeepLinks failed: ${errMsg}`,
+          );
+        }
+
+        status = 'ready';
+        resetNotReadyWarning();
+        logManager.debug('[AppsFlyer] init completed successfully');
+      } catch (err) {
+        status = 'failed';
+        lastInitFailureAt = Date.now();
+
+        const errMsg =
+          err instanceof Error ? err.message : JSON.stringify(err);
+
+        // captureError, not error: logManager.error only writes a local line and a
+        // Sentry breadcrumb, so this failure was invisible -- no issue, no metric --
+        // while it silently dropped every conversion event that followed.
+        logManager.captureError(
+          err instanceof Error ? err : new Error(errMsg),
+          `[AppsFlyer] init failed: ${errMsg}`,
+        );
+      } finally {
+        initPromise = null;
+      }
+    })();
+
+    return initPromise;
+  };
+
+  // Resolve the SDK to a usable state, retrying a previously failed init instead
+  // of dropping the event. Without this a single init failure was permanent for
+  // the process and every later track() returned early.
+  const ensureReady = async (methodName: string): Promise<boolean> => {
+    if (status === 'ready') {
+      return true;
+    }
+
+    if (initPromise) {
+      await initPromise;
+      return isReady();
+    }
+
+    if (
+      status === 'failed' &&
+      Date.now() - lastInitFailureAt < INIT_RETRY_COOLDOWN_MS
+    ) {
+      logNotReadyOnce(methodName);
+      return false;
+    }
+
+    await doInit();
+
+    if (!isReady()) {
+      logNotReadyOnce(methodName);
+    }
+
+    return isReady();
+  };
+
   return {
     getStatus(): AppsFlyerStatus {
       return status;
     },
 
-    async init(): Promise<void> {
-      if (status === 'ready') {
-        return;
-      }
-
-      if (initPromise) {
-        return initPromise;
-      }
-
-      status = 'initializing';
-      resetNotReadyWarning();
-
-      initPromise = (async () => {
-        try {
-          await AppsFlyer.initSdk({
-            devKey,
-            isDebug: !!__DEV__,
-            appId,
-            onInstallConversionDataListener: true,
-            onDeepLinkListener: true,
-          });
-
-          try {
-            await configureResolvedDeepLinks();
-          } catch (err) {
-            const errMsg =
-              err instanceof Error ? err.message : JSON.stringify(err);
-
-            logManager.error(
-              `[AppsFlyer] configureResolvedDeepLinks failed: ${errMsg}`,
-            );
-          }
-
-          status = 'ready';
-          resetNotReadyWarning();
-          logManager.debug('[AppsFlyer] init completed successfully');
-        } catch (err) {
-          status = 'failed';
-
-          const errMsg =
-            err instanceof Error ? err.message : JSON.stringify(err);
-
-          logManager.error(`[AppsFlyer] init failed: ${errMsg}`);
-        } finally {
-          initPromise = null;
-        }
-      })();
-
-      return initPromise;
+    init(): Promise<void> {
+      return doInit();
     },
 
     async getId(): Promise<string | undefined> {
@@ -147,8 +193,7 @@ export const AppsFlyerWrapper = (() => {
     },
 
     async track(eventName: string, eventValues?: EventValues): Promise<void> {
-      if (!isReady()) {
-        logNotReadyOnce(`track(${eventName})`);
+      if (!(await ensureReady(`track(${eventName})`))) {
         return;
       }
 
