@@ -66,6 +66,7 @@ import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
+import {walletSecretsReducer} from './wallet-secrets/wallet-secrets.reducer';
 import {
   contactReducer,
   ContactReduxPersistBlackList,
@@ -92,6 +93,12 @@ import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
 
 import {Storage} from 'redux-persist';
+import {
+  pausePersistor,
+  reportPersistWriteError,
+  setActivePersistor,
+} from './persistor';
+import {rehydrateWalletSecrets} from './wallet-secrets/wallet-secrets.effects';
 import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
@@ -192,6 +199,7 @@ export const reduxStorage: Storage = {
         ? removePortfolioChartsPersistRoot(value).value
         : value;
 
+    let writeError: unknown;
     try {
       storage.set(key, valueToStore);
     } catch (err) {
@@ -207,6 +215,7 @@ export const reduxStorage: Storage = {
       Sentry.captureException(err, {
         level: 'error',
       });
+      writeError = err;
     }
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
@@ -224,6 +233,9 @@ export const reduxStorage: Storage = {
         }
       }
     } catch (_) {}
+    if (writeError !== undefined) {
+      throw writeError;
+    }
   },
   getItem: key => {
     try {
@@ -260,7 +272,12 @@ export const reduxStorage: Storage = {
       });
       if (key === 'persist:root') {
         // Try backup on MMKV get failure as well
-        return restoreFromBackup('getItem error');
+        return restoreFromBackup('getItem error').then(restored => {
+          if (restored === null) {
+            throw err;
+          }
+          return restored;
+        });
       }
       return Promise.resolve(null);
     }
@@ -287,6 +304,7 @@ export const reduxStorage: Storage = {
 const basePersistConfig = {
   storage: reduxStorage,
   stateReconciler: autoMergeLevel2,
+  writeFailHandler: reportPersistWriteError,
 };
 
 const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
@@ -301,6 +319,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   SHOP_CATALOG: [],
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
+  WALLET_SECRETS: [],
   RATE: rateReduxPersistBlackList,
   CONTACT: ContactReduxPersistBlackList,
   ZENLEDGER: ZenledgerReduxPersistBlackList,
@@ -328,6 +347,7 @@ const reducers = {
   SHOP_CATALOG: shopCatalogReducer,
   SWAP_CRYPTO: swapCryptoReducer,
   WALLET: walletReducer,
+  WALLET_SECRETS: walletSecretsReducer,
   RATE: rateReducer,
   CONTACT: contactReducer,
   ZENLEDGER: zenledgerReducer,
@@ -341,7 +361,12 @@ const reducers = {
 const combinedReducer = combineReducers(reducers);
 
 // Guarded root reducer that logs reducer crashes and returns previous state
-const rootReducer = (state: any, action: AnyAction) => {
+type CombinedState = ReturnType<typeof combinedReducer>;
+
+const rootReducer = (
+  state: CombinedState | undefined,
+  action: AnyAction,
+): CombinedState => {
   try {
     return combinedReducer(state, action);
   } catch (err: any) {
@@ -487,6 +512,7 @@ const getStore = async () => {
       encryptTransform({
         secretKey,
         onError: err => {
+          pausePersistor(err);
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
 
@@ -519,6 +545,16 @@ const getStore = async () => {
     let persistStartTs: number | null = null;
     let firstRehydrateLogged = false;
     return _store => next => (action: AnyAction) => {
+      if (action.type === 'persist/REHYDRATE') {
+        if (action.err) {
+          pausePersistor(action.err);
+        } else if (
+          action.payload?.WALLET?.secretsMigrated &&
+          !action.payload.WALLET_SECRETS
+        ) {
+          pausePersistor(new Error('Persisted wallet secrets are missing'));
+        }
+      }
       if (action && typeof action.type === 'string') {
         if (action.type === 'persist/PERSIST') {
           persistStartTs = Date.now();
@@ -577,7 +613,10 @@ const getStore = async () => {
   storeDispatch(LogActions.clear());
   initLogs.drainAndDispatch(storeDispatch);
 
-  const persistor = persistStore(store);
+  const persistor = persistStore(store, null, () => {
+    (store.dispatch as AppDispatch)(rehydrateWalletSecrets());
+  });
+  setActivePersistor(persistor);
 
   if (__DEV__) {
     // persistor.purge().then(() => console.log('purged persistence'));
@@ -589,7 +628,7 @@ const getStore = async () => {
   };
 };
 
-export type RootState = ReturnType<typeof rootReducer>;
+export type RootState = CombinedState;
 
 export type AppSelector<T = any> = Selector<RootState, T>;
 
@@ -638,6 +677,7 @@ export async function getEncryptionKey(): Promise<string> {
     Sentry.captureException(err, {
       level: 'error',
     });
+    throw err;
   }
 
   logManager.warn('getEncryptionKey: generating new key (no existing key)');

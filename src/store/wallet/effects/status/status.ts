@@ -271,6 +271,9 @@ export const updateKeyStatus =
       }
 
       const {bulkClient} = BwcProvider.getInstance().getClient();
+      const credentialsWithoutWalletKey = dataOnly
+        ? credentials.filter(credential => !credential.walletPrivKey)
+        : [];
 
       try {
         const bulkStatus = (await getBulkStatus(
@@ -278,6 +281,17 @@ export const updateKeyStatus =
           credentials,
           walletOptions,
         )) as BulkStatus[];
+
+        if (
+          credentialsWithoutWalletKey.some(
+            credential => credential.walletPrivKey,
+          )
+        ) {
+          const currentKey = getState().WALLET.keys[key.id];
+          if (currentKey) {
+            dispatch(successUpdateKey({key: currentKey}));
+          }
+        }
 
         const walletUpdates: Array<{
           walletId: string;
@@ -661,7 +675,7 @@ export const updateWalletStatus =
     defaultAltCurrencyIsoCode: string;
     lastDayRates: Rates;
   }): Effect<Promise<WalletStatus>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
         balance: cachedBalance,
@@ -670,6 +684,7 @@ export const updateWalletStatus =
         singleAddress: cachedSingleAddress,
         receiveAddress,
       } = wallet;
+      const walletPrivKey = wallet.credentials.walletPrivKey;
 
       if (!receiveAddress) {
         try {
@@ -715,6 +730,12 @@ export const updateWalletStatus =
             });
           }
           try {
+            if (!walletPrivKey && wallet.credentials.walletPrivKey) {
+              const currentKey = getState().WALLET.keys[wallet.keyId];
+              if (currentKey) {
+                dispatch(successUpdateKey({key: currentKey}));
+              }
+            }
             const cryptoBalance = dispatch(
               buildBalance({
                 wallet,
