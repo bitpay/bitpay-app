@@ -677,6 +677,8 @@ export async function getEncryptionKey(): Promise<string> {
     Sentry.captureException(err, {
       level: 'error',
     });
+    // Must not fall through: overwriting the stored key after a transient
+    // Keystore failure loses it if it differs from the current device ID.
     throw err;
   }
 
