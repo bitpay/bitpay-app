@@ -1,11 +1,7 @@
 package com.bitpay.wallet
 
-import android.app.Activity
 import android.content.Intent
-import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.view.WindowManager
 import com.braze.reactbridge.BrazeReactUtils
 import com.braze.ui.inappmessage.BrazeInAppMessageManager
@@ -52,32 +48,7 @@ class MainActivity : ReactActivity() {
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE
             )
-
-            if (Build.VERSION.SDK_INT in 19..20) {
-                setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true)
-            }
-
-            if (Build.VERSION.SDK_INT >= 19) {
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            }
-
-            // make fully Android Transparent Status bar
-            if (Build.VERSION.SDK_INT >= 21) {
-                setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false)
-                statusBarColor = Color.TRANSPARENT
-            }
         }
-    }
-
-    private fun setWindowFlag(bits: Int, on: Boolean) {
-        val win = window
-        val winParams = win.attributes
-        if (on) {
-            winParams.flags = winParams.flags or bits
-        } else {
-            winParams.flags = winParams.flags and bits.inv()
-        }
-        win.attributes = winParams
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -104,18 +75,5 @@ class MainActivity : ReactActivity() {
     override fun onDestroy() {
         super.onDestroy()
         (application as MainApplication).removeActivityFromStack(this.javaClass)
-    }
-
-    companion object {
-        private fun setWindowFlag(activity: Activity, bits: Int, on: Boolean) {
-            val win = activity.window
-            val winParams = win.attributes
-            if (on) {
-                winParams.flags = winParams.flags or bits
-            } else {
-                winParams.flags = winParams.flags and bits.inv()
-            }
-            win.attributes = winParams
-        }
     }
 }
