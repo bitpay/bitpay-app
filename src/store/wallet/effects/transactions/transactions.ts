@@ -20,7 +20,6 @@ import {
   IsDateInCurrentMonth,
   WithinPastDay,
   WithinSameMonth,
-  WithinSameMonthTimestamp,
 } from '../../utils/time';
 import moment, {MomentInput} from 'moment';
 import 'moment/min/locales';
@@ -579,15 +578,6 @@ const IsFirstInGroup = (index: number, history: any[]) => {
   return !WithinSameMonth(curTx.time * 1000, prevTx.time * 1000);
 };
 
-const IsFirstInCoinbaseGroup = (index: number, history: any[]) => {
-  if (index === 0) {
-    return true;
-  }
-  const curTx = history[index];
-  const prevTx = history[index - 1];
-  return !WithinSameMonthTimestamp(curTx.created_at, prevTx.created_at);
-};
-
 const getMomentLocale = (language?: string): string => {
   const lang = (language || '').toLowerCase();
   const candidate = lang.startsWith('zh')
@@ -604,35 +594,6 @@ const getMonthName = (time: MomentInput): string => {
     logManager.warn('Error formatting date:', error);
     return moment(time).locale('en').format('MMMM');
   }
-};
-
-export const GroupCoinbaseTransactions = (txs: any[]) => {
-  const [_pendingTransactions, _confirmedTransactions] = partition(txs, t => {
-    return t.status === 'pending';
-  });
-  const pendingTransactionsGroup =
-    _pendingTransactions.length > 0
-      ? [
-          {
-            title: t('Pending Transactions'),
-            data: _pendingTransactions,
-          },
-        ]
-      : [];
-  const confirmedTransactionsGroup = _confirmedTransactions
-    .reduce((groups, tx, txInd) => {
-      IsFirstInCoinbaseGroup(txInd, _confirmedTransactions)
-        ? groups.push([tx])
-        : groups[groups.length - 1].push(tx);
-      return groups;
-    }, [])
-    .map((group: any[]) => {
-      const time = Date.parse(group[0].created_at);
-      const month = getMonthName(time);
-      const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
-      return {title, data: group};
-    });
-  return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
 };
 
 export const GroupTransactionHistory = (history: any[]) => {

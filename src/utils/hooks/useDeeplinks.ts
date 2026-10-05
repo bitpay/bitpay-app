@@ -15,7 +15,6 @@ import {
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
-import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseGroup';
 import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
 import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
@@ -55,7 +54,6 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
     [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
     [ExternalServicesScreens.ROOT_BUY_AND_SELL]: {path: 'buy/:amount?'},
     [SwapCryptoScreens.SWAP_CRYPTO_ROOT]: 'swap',
-    [CoinbaseScreens.ROOT]: 'coinbase',
   },
 });
 

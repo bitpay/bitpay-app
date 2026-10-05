@@ -5,7 +5,6 @@ import {ImageRequireSource} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import styled from 'styled-components/native';
 import DefaultImage from '../../../assets/img/currencies/default.svg';
-import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 import ProfileIcon from '../avatar/ProfileIcon';
 import Blockie from '../blockie/Blockie';
 
@@ -101,9 +100,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
           onError={() => setImageError(true)}
         />
       ) : typeof img === 'string' ? (
-        img === 'coinbase' ? (
-          <CoinbaseSvg width="20" height="20" />
-        ) : img === 'contact' ? (
+        img === 'contact' ? (
           <ProfileIcon size={20} />
         ) : (
           <FastImage

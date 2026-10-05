@@ -25,7 +25,6 @@ import {
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
-  buildTxDetails,
   createPayProTxProposal,
   handleCreateTxProposalError,
   handleSendError,
@@ -51,16 +50,8 @@ import {
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
-import {BillPayAccount, Invoice} from '../../../../../store/shop/shop.models';
-import {WalletRowProps} from '../../../../../components/list/WalletRow';
-import {
-  CoinbaseAccountProps,
-  CoinbaseErrorMessages,
-} from '../../../../../api/coinbase/coinbase.types';
-import {startGetRates} from '../../../../../store/wallet/effects';
-import {coinbasePayInvoice} from '../../../../../store/coinbase';
+import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {useTranslation} from 'react-i18next';
-import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {
   BillScreens,
   BillGroupParamList,
@@ -77,7 +68,6 @@ import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
 } from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 import {
   getLedgerErrorMessage,
   prepareLedgerApp,
@@ -131,9 +121,6 @@ const BillConfirm: React.FC<
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [wallet, setWallet] = useState(_wallet);
-  const [coinbaseAccount, setCoinbaseAccount] =
-    useState<CoinbaseAccountProps>();
-  const [invoice, setInvoice] = useState<Invoice>();
   const [convenienceFee, setConvenienceFee] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
   const [recipient, setRecipient] = useState(_recipient);
@@ -181,9 +168,9 @@ const BillConfirm: React.FC<
       billPayments.length === 1
         ? billPayments[0].amountType
         : billPayments.map(({amountType}) => amountType),
-    ...((wallet || coinbaseAccount) && {
-      coin: wallet ? wallet.currencyAbbreviation : coinbaseAccount?.currency,
-      walletOrExchange: wallet ? 'BitPay Wallet' : 'Coinbase Account',
+    ...(wallet && {
+      coin: wallet.currencyAbbreviation,
+      walletOrExchange: 'BitPay Wallet',
     }),
   };
 
@@ -193,11 +180,9 @@ const BillConfirm: React.FC<
         BuildPayProWalletSelectorList({
           keys,
           network: appNetwork,
-          invoice,
-          skipThreshold: true,
         }),
       ),
-    [appNetwork, dispatch, invoice, keys],
+    [appNetwork, dispatch, keys],
   );
 
   useLayoutEffect(() => {
@@ -320,50 +305,6 @@ const BillConfirm: React.FC<
     );
   };
 
-  const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
-    const transactionCurrency = dispatch(
-      getTransactionCurrencyForPayInvoice(
-        selectedCoinbaseAccount.currency.code,
-      ),
-    );
-    try {
-      const {invoice: newInvoice, payments} = await createBillPayInvoice({
-        clientId: selectedCoinbaseAccount.id,
-        transactionCurrency,
-      });
-      const {totalBillAmount, serviceFee} = payments.reduce(
-        (totals, payment) => {
-          return {
-            totalBillAmount: totals.totalBillAmount + payment.amount,
-            serviceFee: totals.serviceFee + payment.convenienceFee,
-          };
-        },
-        {totalBillAmount: 0, serviceFee: 0},
-      );
-      const rates = await dispatch(startGetRates({}));
-      const newTxDetails = await dispatch(
-        buildTxDetails({
-          invoice: newInvoice,
-          wallet: walletRowProps,
-          rates,
-          defaultAltCurrencyIsoCode: 'USD',
-        }),
-      );
-      updateTxDetails(newTxDetails);
-      setInvoice(newInvoice);
-      setCoinbaseAccount(selectedCoinbaseAccount);
-      setWallet(undefined);
-      setConvenienceFee(serviceFee);
-      setSubtotal(totalBillAmount);
-      hideOngoingProcess();
-      await sleep(1000);
-      dispatch(Analytics.track('Bill Pay - Selected Wallet', baseEventParams));
-    } catch (err) {
-      handleBillPayInvoiceOrTxpError(err);
-    }
-  };
-
   const onWalletSelect = async (selectedWallet: Wallet) => {
     try {
       const {
@@ -412,7 +353,6 @@ const BillConfirm: React.FC<
         }),
       );
       setWallet(selectedWallet);
-      setCoinbaseAccount(undefined);
       setKey(keys[selectedWallet.keyId]);
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
@@ -429,25 +369,19 @@ const BillConfirm: React.FC<
     }
   };
 
-  const sendPayment = async (twoFactorCode?: string) => {
-    return txp && wallet && recipient
-      ? await dispatch(
-          startSendPayment({
-            txp,
-            key,
-            wallet,
-            recipient,
-            ...(isTSSWallet(wallet) && {tssCallbacks}),
-            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-          }),
-        )
-      : await dispatch(
-          coinbasePayInvoice(
-            invoice!.id,
-            coinbaseAccount!.currency.code,
-            twoFactorCode,
-          ),
-        );
+  const sendPayment = async () => {
+    if (txp && wallet && recipient) {
+      await dispatch(
+        startSendPayment({
+          txp,
+          key,
+          wallet,
+          recipient,
+          ...(isTSSWallet(wallet) && {tssCallbacks}),
+          ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
+        }),
+      );
+    }
   };
 
   const handlePaymentSuccess = async () => {
@@ -513,31 +447,9 @@ const BillConfirm: React.FC<
       updateTxDetails(undefined);
       updateTxp(undefined);
       setWallet(undefined);
-      setInvoice(undefined);
-      setCoinbaseAccount(undefined);
     }
     toggleThenUntoggle(setResetSwipeButton);
     dispatch(Analytics.track('Bill Pay - Failed Bill Paid', baseEventParams));
-  };
-
-  const request2FA = async () => {
-    navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
-      onSubmit: async twoFactorCode => {
-        try {
-          await sendPayment(twoFactorCode);
-          navigation.dispatch(StackActions.pop());
-          await handlePaymentSuccess();
-        } catch (error: any) {
-          hideOngoingProcess();
-          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-          error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
-            ? showError({defaultErrorMessage: invalid2faMessage})
-            : handlePaymentFailure(error);
-          throw error;
-        }
-      },
-    });
-    toggleThenUntoggle(setResetSwipeButton);
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -616,10 +528,7 @@ const BillConfirm: React.FC<
         err = getLedgerErrorMessage(err);
       }
       await sleep(400);
-      const twoFactorRequired =
-        coinbaseAccount &&
-        err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
-      twoFactorRequired ? await request2FA() : await handlePaymentFailure(err);
+      await handlePaymentFailure(err);
     }
   };
 
@@ -691,7 +600,7 @@ const BillConfirm: React.FC<
             hr
           />
         </>
-        {wallet || coinbaseAccount ? (
+        {wallet ? (
           <>
             <SendingFrom
               sender={sendingFrom!}
@@ -732,7 +641,7 @@ const BillConfirm: React.FC<
           </>
         ) : null}
       </DetailsList>
-      {wallet || coinbaseAccount ? (
+      {wallet ? (
         <>
           <SwipeButton
             title={t('Slide to send')}
@@ -747,10 +656,9 @@ const BillConfirm: React.FC<
         setWalletSelectorVisible={setWalletSelectorVisible}
         walletsAndAccounts={memoizedKeysAndWalletsList}
         onWalletSelect={onWalletSelect}
-        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
         onBackdropPress={async () => {
           setWalletSelectorVisible(false);
-          if (!wallet && !coinbaseAccount) {
+          if (!wallet) {
             await sleep(100);
             navigation.goBack();
           }

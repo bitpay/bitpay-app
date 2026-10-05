@@ -548,7 +548,7 @@ export const buildTxDetails =
         coin = proposal.coin;
         chain = proposal.chain;
         amount = proposal.amount;
-        fee = proposal.fee || 0; // proposal fee is zero for coinbase
+        fee = proposal.fee || 0;
         memo = proposal.memo;
       }
 
@@ -811,10 +811,6 @@ const buildTransactionProposal =
           if (tx.recipient?.type === 'wallet') {
             customData = {
               toWalletName: tx.recipient.name || null,
-            };
-          } else if (tx.recipient?.type === 'coinbase') {
-            customData = {
-              service: 'coinbase',
             };
           } else if (tx.recipient?.email) {
             customData = {

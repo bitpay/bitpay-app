@@ -168,9 +168,9 @@ const CARD_HIGHLIGHTS = (): CardHighlight[] => {
                 dispatch(openUrlWithInAppBrowser('https://bitpay.com/wallet/'))
               }>
               <>{t('BitPay Wallet app')}</>
-            </UnderlineLink>{' '}
+            </UnderlineLink>
             {t(
-              'or your Coinbase account. After funding your card, you are ready to use it practically anywhere. Use the BitPay crypto debit card in-store or online. Need cash instead? Use it at any compatible ATM. Add funds, freeze your card, and track transactions all from the BitPay app.',
+              '. After funding your card, you are ready to use it practically anywhere. Use the BitPay crypto debit card in-store or online. Need cash instead? Use it at any compatible ATM. Add funds, freeze your card, and track transactions all from the BitPay app.',
             )}
           </>
         </SubText>
@@ -260,7 +260,7 @@ const CARD_HIGHLIGHTS = (): CardHighlight[] => {
         <SubText>
           <>
             {t(
-              'Funds can be added to the BitPay Card through the BitPay app or BitPay website. The BitPay Card can be loaded with crypto from the BitPay Wallet or your Coinbase account.',
+              'Funds can be added to the BitPay Card through the BitPay app or BitPay website. The BitPay Card can be loaded with crypto from the BitPay Wallet.',
             )}{' '}
             <UnderlineLink
               onPress={() =>
