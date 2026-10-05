@@ -51,6 +51,7 @@ import {
   asCloudflareChallenge,
   challengeOriginFor,
   isCloudflareChallengeError,
+  looksLikeHtml,
   safeErrorMessage,
 } from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
@@ -487,7 +488,7 @@ export const startTwoFactorAuth =
 
       if (isAxiosError<string>(err)) {
         errMsg = upperFirst(
-          err.response?.data ||
+          safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
@@ -526,7 +527,7 @@ export const startTwoFactorPairing =
 
       if (isAxiosError<any>(err)) {
         errMsg = upperFirst(
-          err.response?.data ||
+          safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
@@ -593,7 +594,10 @@ export const startDeeplinkPairing =
       let errMsg;
 
       if (isAxiosError(err)) {
-        errMsg = JSON.stringify(err.response?.data || err.message);
+        errMsg = JSON.stringify(
+          (!looksLikeHtml(err.response?.data) && err.response?.data) ||
+            err.message,
+        );
       } else if (err instanceof Error) {
         errMsg = err.message;
       } else {
