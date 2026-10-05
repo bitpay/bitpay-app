@@ -1,4 +1,4 @@
-import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
+import React, {ReactNode, useMemo, useCallback} from 'react';
 import {useWindowDimensions} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
@@ -26,9 +26,8 @@ import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import WaitSvg from '../../../../assets/img/wait.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {Theme, useNavigation, useTheme} from '@react-navigation/native';
+import {Theme, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
-import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
 import {TouchableOpacity} from '../../base/TouchableOpacity';
 
 export interface BottomNotificationConfig {
@@ -128,7 +127,6 @@ const BottomNotification = React.memo(() => {
   const {height} = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
-  const navigation = useNavigation();
   const rootState = useSelector((state: RootState) => state);
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
@@ -136,12 +134,6 @@ const BottomNotification = React.memo(() => {
   const config = useSelector(
     ({APP}: RootState) => APP.bottomNotificationModalConfig,
   );
-
-  useEffect(() => {
-    return navigation.addListener('blur', () =>
-      dispatch(resetBottomNotificationModalConfig()),
-    );
-  }, [navigation, dispatch]);
 
   const {
     type,

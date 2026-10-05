@@ -38,7 +38,6 @@ export enum AppActionTypes {
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
-  RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
   SHOW_CHAIN_SELECTOR_MODAL = 'APP/SHOW_CHAIN_SELECTOR_MODAL',
   DISMISS_CHAIN_SELECTOR_MODAL = 'APP/DISMISS_CHAIN_SELECTOR_MODAL',
   CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS = 'APP/CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS',
@@ -180,10 +179,6 @@ interface ShowBottomNotificationModal {
 
 interface DismissBottomNotificationModal {
   type: typeof AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL;
-}
-
-interface ResetBottomNotificationModalConfig {
-  type: typeof AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG;
 }
 
 interface ShowChainSelectorModal {
@@ -487,7 +482,6 @@ export type AppActionType =
   | DismissInAppNotification
   | ShowBottomNotificationModal
   | DismissBottomNotificationModal
-  | ResetBottomNotificationModalConfig
   | SetColorScheme
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity
