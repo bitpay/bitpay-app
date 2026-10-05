@@ -33,6 +33,7 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   getRateByCurrencyName,
+  isSameAddress,
 } from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
@@ -406,7 +407,7 @@ export const findWalletByAddress = (
   for (let key of Object.values(keys)) {
     wallet = key.wallets.find(
       w =>
-        w.receiveAddress?.toLowerCase() === address.toLowerCase() &&
+        isSameAddress(w.receiveAddress, address) &&
         w.chain === chain &&
         w.network === network,
     );

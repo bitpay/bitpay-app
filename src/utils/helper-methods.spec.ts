@@ -17,7 +17,16 @@ jest.mock('../store/moralis/moralis.effects', () => ({
   getERC20TokenPrice: jest.fn(),
 }));
 jest.mock('../api/etherscan', () => ({default: {}}));
-jest.mock('../managers/TokenManager', () => ({tokenManager: {}}));
+jest.mock('ethers', () => {
+  // test/setup.js stubs isAddress as always true and BigNumber as a spy; these tests
+  // need the real predicates and the real numeric parsing
+  const {BigNumber, constants, utils} = jest.requireActual('ethers');
+
+  return {BigNumber, constants, ethers: {BigNumber, constants, utils}, utils};
+});
+jest.mock('../managers/TokenManager', () => ({
+  tokenManager: {getTokenOptions: () => ({tokenOptionsByAddress: {}})},
+}));
 jest.mock('../managers/LogManager', () => ({
   logManager: {
     log: jest.fn(),
@@ -76,8 +85,22 @@ import {
   getVMGasWallets,
   getEvmGasWallets,
   getSvmGasWallets,
+  canSummarizeSolanaTx,
+  getSolanaSignerCount,
+  getUnrecognizedSolanaInstructions,
+  isSameAddress,
+  matchesRequestToken,
+  getTransactionValue,
+  getTokenApproval,
+  processOtherMethodsRequest,
+  processSwapRequest,
 } from './helper-methods';
 import {Network} from '../constants';
+import {ethers} from 'ethers';
+import {abiERC20} from '../navigation/wallet-connect/constants/abis/abi-erc20';
+import {abiERC721} from '../navigation/wallet-connect/constants/abis/abi-erc721';
+import {abiERC1155} from '../navigation/wallet-connect/constants/abis/abi-erc1155';
+import {abiFiatTokenV2} from '../navigation/wallet-connect/constants/abis/abi-fiat-tokenV2';
 
 describe('titleCasing', () => {
   it('capitalizes the first letter', () => {
@@ -1413,5 +1436,1164 @@ describe('getSignificantDigits (additional coverage)', () => {
   it('returns undefined for empty string', () => {
     // empty string: toLowerCase() still gives '' which is not in the list
     expect(getSignificantDigits('')).toBeUndefined();
+  });
+});
+
+describe('processOtherMethodsRequest', () => {
+  const ACCOUNT_A = '0x1111111111111111111111111111111111111111';
+  const ACCOUNT_B = '0x2222222222222222222222222222222222222222';
+  const TYPED_DATA = '{"primaryType":"Permit"}';
+
+  const makeDispatch = (keys: any = {}) => {
+    const getState = () => ({WALLET: {keys}} as any);
+    const dispatch = (action: any): any =>
+      typeof action === 'function' ? action(dispatch, getState) : action;
+
+    return dispatch;
+  };
+
+  const buildEvent = (method: string, params: any, chainId = 'eip155:1') =>
+    ({
+      id: 1,
+      params: {chainId, request: {method, params}},
+      topic: 'topic-1',
+    } as any);
+
+  const keysWith = (receiveAddress: string, currencyAbbreviation = 'eth') => ({
+    'key-1': {
+      wallets: [{chain: 'eth', currencyAbbreviation, receiveAddress}],
+    },
+  });
+
+  it('binds eth_signTypedData_v3 to the account named by the request', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData_v3', [ACCOUNT_A, TYPED_DATA]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+    expect(result.swapFromChain).toBe('eth');
+  });
+
+  it('binds typed data regardless of parameter order', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData', [TYPED_DATA, ACCOUNT_A]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('reads personal_sign as [message, account]', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('personal_sign', ['0x6869', ACCOUNT_A]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('reads eth_signTransaction from the transaction sender', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTransaction', [{from: ACCOUNT_A}]),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('reads solana_signAndSendTransaction from the fee payer', async () => {
+    const result = await makeDispatch()(
+      processOtherMethodsRequest(
+        buildEvent('solana_signAndSendTransaction', {feePayer: 'sol-payer'}),
+      ),
+    );
+
+    expect(result.senderAddress).toBe('sol-payer');
+  });
+
+  it('takes the currency from the wallet that owns the account', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_A, 'usdc'))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData_v3', [ACCOUNT_A, TYPED_DATA]),
+      ),
+    );
+
+    expect(result.swapFromCurrencyAbbreviation).toBe('usdc');
+  });
+
+  it('does not match a solana wallet that only differs in case', async () => {
+    const SOL_A = 'AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9';
+    const SOL_B = 'AknL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9';
+    const result = await makeDispatch({
+      'key-1': {
+        wallets: [
+          {
+            chain: 'sol',
+            currencyAbbreviation: 'usdc',
+            receiveAddress: SOL_B,
+          },
+        ],
+      },
+    })(
+      processOtherMethodsRequest(
+        buildEvent(
+          'solana_signMessage',
+          {message: 'aGk=', pubkey: SOL_A},
+          'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+        ),
+      ),
+    );
+
+    expect(result.senderAddress).toBe(SOL_A);
+    expect(result.swapFromCurrencyAbbreviation).toBe('sol');
+  });
+
+  it('falls back to the chain when no local wallet owns the account', async () => {
+    const result = await makeDispatch(keysWith(ACCOUNT_B))(
+      processOtherMethodsRequest(
+        buildEvent('eth_signTypedData_v3', [ACCOUNT_A, TYPED_DATA]),
+      ),
+    );
+
+    expect(result.swapFromCurrencyAbbreviation).toBe('eth');
+  });
+});
+
+describe('isSameAddress', () => {
+  const EVM_LOWER = '0xabcdef0123456789abcdef0123456789abcdef01';
+  const EVM_UPPER = '0xABCDEF0123456789ABCDEF0123456789ABCDEF01';
+  const EVM_BAD_CHECKSUM = '0xAbCdEf0123456789abcdef0123456789abcdef01';
+  const SOL_A = 'AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9';
+  const SOL_B = 'AknL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9';
+
+  it('ignores case between evm addresses', () => {
+    expect(isSameAddress(EVM_LOWER, EVM_UPPER)).toBe(true);
+  });
+
+  it('matches an evm address whose eip-55 checksum does not validate', () => {
+    expect(isSameAddress(EVM_LOWER, EVM_BAD_CHECKSUM)).toBe(true);
+  });
+
+  it('keeps base58 addresses case sensitive', () => {
+    expect(isSameAddress(SOL_A, SOL_B)).toBe(false);
+    expect(isSameAddress(SOL_A, SOL_A)).toBe(true);
+  });
+
+  it('never matches a missing address', () => {
+    expect(isSameAddress(undefined, EVM_LOWER)).toBe(false);
+    expect(isSameAddress(EVM_LOWER, undefined)).toBe(false);
+  });
+});
+
+describe('canSummarizeSolanaTx', () => {
+  const solTransfer = {amount: 1000000, destination: 'merchant'};
+  const tokenTransfer = {
+    amount: 100000000,
+    destination: 'attacker',
+    mint: 'usdc',
+  };
+
+  it('accepts a single SOL transfer alongside a compute unit limit', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          setComputeUnitLimit: [{computeUnitLimit: 60000}],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(true);
+  });
+
+  it('accepts a single token transfer', () => {
+    expect(
+      canSummarizeSolanaTx({transferCheckedToken: [tokenTransfer]}, 1),
+    ).toBe(true);
+  });
+
+  it('rejects account creations, whose rent the summary does not show', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          createAssociatedToken: [{}],
+          transferCheckedToken: [tokenTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects a priority price, whose fee the summary understates', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          setComputeUnitPrice: [{priority: true, microLamports: 1000000000}],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+    expect(
+      canSummarizeSolanaTx(
+        {
+          setComputeUnitLimit: [{computeUnitLimit: 60000}],
+          setComputeUnitPrice: [{priority: true, microLamports: 1000000000}],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects transactions that need more than one signature', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {memo: [{memo: 'hi'}], transferSol: [solTransfer]},
+        2,
+      ),
+    ).toBe(false);
+    expect(canSummarizeSolanaTx({transferSol: [solTransfer]}, undefined)).toBe(
+      false,
+    );
+  });
+
+  it('rejects a SOL transfer bundled with a token transfer', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          transferCheckedToken: [tokenTransfer],
+          transferSol: [solTransfer],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects multiple SOL transfers', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          transferSol: [
+            solTransfer,
+            {amount: 5000000000, destination: 'attacker'},
+          ],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects unparsed token instructions such as approve', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {
+          transferSol: [solTransfer],
+          unparsedTokenInstruction_4: [{programAddress: 'Tokenkeg'}],
+        },
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects unknown instructions', () => {
+    expect(
+      canSummarizeSolanaTx(
+        {transferSol: [solTransfer], unknownInstruction: [{}]},
+        1,
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects transactions with no transfer at all', () => {
+    expect(canSummarizeSolanaTx({memo: [{memo: 'hi'}]}, 1)).toBe(false);
+    expect(canSummarizeSolanaTx({}, 1)).toBe(false);
+    expect(canSummarizeSolanaTx(undefined, 1)).toBe(false);
+  });
+});
+
+describe('getUnrecognizedSolanaInstructions', () => {
+  it('lists only the keys outside the known set', () => {
+    expect(
+      getUnrecognizedSolanaInstructions({
+        setComputeUnitLimit: [{computeUnitLimit: 60000}],
+        transferSol: [{amount: 1000000, destination: 'merchant'}],
+        unknownInstruction: [{}],
+        unparsedTokenInstruction_4: [{programAddress: 'Tokenkeg'}],
+      }),
+    ).toEqual(['unknownInstruction', 'unparsedTokenInstruction_4']);
+  });
+
+  it('returns an empty list for fully recognized transactions', () => {
+    expect(
+      getUnrecognizedSolanaInstructions({
+        memo: [{memo: 'invoice 42'}],
+        transferCheckedToken: [{amount: 1, destination: 'x', mint: 'usdc'}],
+      }),
+    ).toEqual([]);
+    expect(getUnrecognizedSolanaInstructions(undefined)).toEqual([]);
+  });
+});
+
+describe('matchesRequestToken', () => {
+  const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+  const usdcWallet = {tokenAddress: usdcMint} as any;
+  const solWallet = {} as any;
+
+  it('requires the wallet mint to equal the decoded mint', () => {
+    expect(
+      matchesRequestToken(usdcWallet, {
+        swapFromChain: 'sol',
+        senderContractAddress: usdcMint,
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects a look-alike mint that resolves to the same symbol', () => {
+    expect(
+      matchesRequestToken(usdcWallet, {
+        swapFromChain: 'sol',
+        senderContractAddress: 'FakeUSDCMint1111111111111111111111111111111',
+      }),
+    ).toBe(false);
+  });
+
+  it('does not filter native SOL transfers or other chains', () => {
+    expect(matchesRequestToken(solWallet, {swapFromChain: 'sol'})).toBe(true);
+    expect(
+      matchesRequestToken(usdcWallet, {
+        swapFromChain: 'eth',
+        senderContractAddress: '0xA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('getSolanaSignerCount', () => {
+  const oneSigner =
+    'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQABA97Cik3vOLUe0FRM+w8LgW2AAUrvuztS0+hmDzo1emwj3BV8oQtBdNDweTQCTDoZ11oYr90bSxOlhKIS4nhhsroAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQICAAEMAgAAAICEHgAAAAAAAA==';
+
+  it('reads the signature count from the serialized transaction', () => {
+    expect(getSolanaSignerCount(oneSigner)).toBe(1);
+    expect(getSolanaSignerCount('Ag' + oneSigner.slice(2))).toBe(2);
+  });
+
+  it('returns undefined when the count cannot be trusted', () => {
+    expect(getSolanaSignerCount('')).toBeUndefined();
+    expect(getSolanaSignerCount(undefined)).toBeUndefined();
+    expect(getSolanaSignerCount('AA' + oneSigner.slice(2))).toBeUndefined();
+  });
+});
+
+describe('getTokenApproval', () => {
+  const spender = '0x2222222222222222222222222222222222222222';
+  const owner = '0x3333333333333333333333333333333333333333';
+  const checksummedAddress = ethers.utils.getAddress(
+    '0x5aeda56215b167893e80b4fe645ba6d5bab767de',
+  );
+  const deadline = '1900000000';
+  const erc20 = new ethers.utils.Interface(abiERC20);
+  const fiatToken = new ethers.utils.Interface(abiFiatTokenV2);
+  const amounts = [
+    ['zero', '0', false],
+    ['bounded', '123456', false],
+    ['above safe integer', '9007199254740993', false],
+    ['maximum minus one', ethers.constants.MaxUint256.sub(1).toString(), false],
+    ['maximum', ethers.constants.MaxUint256.toString(), true],
+  ] as const;
+
+  it.each(amounts)(
+    'preserves an approve %s amount exactly',
+    (_, amount, isUnlimited) => {
+      const data = erc20.encodeFunctionData('approve', [spender, amount]);
+
+      expect(getTokenApproval(erc20.parseTransaction({data}))).toEqual({
+        functionName: 'approve',
+        spender,
+        amount,
+        isUnlimited,
+      });
+    },
+  );
+
+  it('preserves the ERC721 approve token ID without numeric conversion', () => {
+    const erc721 = new ethers.utils.Interface(abiERC721);
+    const data = erc721.encodeFunctionData('approve', [
+      spender,
+      '9007199254740993',
+    ]);
+
+    expect(getTokenApproval(erc721.parseTransaction({data}))).toEqual({
+      functionName: 'approve',
+      spender,
+      amount: '9007199254740993',
+      isUnlimited: false,
+    });
+  });
+
+  describe.each(['0x', '0x1234'])(
+    'approveAndCall with callback data %s',
+    extraData => {
+      it.each(amounts)(
+        'preserves the %s allowance and spender',
+        (_, amount, isUnlimited) => {
+          const data = erc20.encodeFunctionData('approveAndCall', [
+            checksummedAddress,
+            amount,
+            extraData,
+          ]);
+
+          expect(getTokenApproval(erc20.parseTransaction({data}))).toEqual({
+            functionName: 'approveAndCall',
+            spender: checksummedAddress,
+            amount,
+            isUnlimited,
+          });
+        },
+      );
+    },
+  );
+
+  it.each(['1', '9007199254740991'])(
+    'preserves FiatTokenV2 approve amount %s with differently named ABI arguments',
+    amount => {
+      const data = fiatToken.encodeFunctionData('approve', [
+        checksummedAddress,
+        amount,
+      ]);
+
+      expect(getTokenApproval(fiatToken.parseTransaction({data}))).toEqual({
+        functionName: 'approve',
+        spender: checksummedAddress,
+        amount,
+        isUnlimited: false,
+      });
+    },
+  );
+
+  it('preserves the zero address when clearing an approval', () => {
+    const data = erc20.encodeFunctionData('approve', [
+      ethers.constants.AddressZero,
+      '0',
+    ]);
+
+    expect(getTokenApproval(erc20.parseTransaction({data}))).toEqual({
+      functionName: 'approve',
+      spender: ethers.constants.AddressZero,
+      amount: '0',
+      isUnlimited: false,
+    });
+  });
+
+  it.each(amounts)(
+    'preserves an increaseAllowance %s increment exactly',
+    (_, amount, isUnlimited) => {
+      const data = fiatToken.encodeFunctionData('increaseAllowance', [
+        spender,
+        amount,
+      ]);
+
+      expect(getTokenApproval(fiatToken.parseTransaction({data}))).toEqual({
+        functionName: 'increaseAllowance',
+        spender,
+        amount,
+        isUnlimited,
+      });
+    },
+  );
+
+  describe.each([
+    ['permit(address,address,uint256,uint256,bytes)', ['0x1234']],
+    [
+      'permit(address,address,uint256,uint256,uint8,bytes32,bytes32)',
+      [27, ethers.constants.HashZero, ethers.constants.HashZero],
+    ],
+  ] as const)('%s', (signature, signatureArgs) => {
+    it.each(amounts)(
+      'preserves the %s amount, owner and submission deadline',
+      (_, amount, isUnlimited) => {
+        const data = fiatToken.encodeFunctionData(signature, [
+          owner,
+          spender,
+          amount,
+          deadline,
+          ...signatureArgs,
+        ]);
+
+        expect(getTokenApproval(fiatToken.parseTransaction({data}))).toEqual({
+          functionName: 'permit',
+          spender,
+          amount,
+          owner,
+          deadline,
+          isUnlimited,
+        });
+      },
+    );
+
+    it.each([
+      '0',
+      '1',
+      '9007199254740993',
+      ethers.constants.MaxUint256.toString(),
+    ])(
+      'preserves deadline %s without treating it as the allowance',
+      permitDeadline => {
+        const data = fiatToken.encodeFunctionData(signature, [
+          checksummedAddress,
+          spender,
+          '7',
+          permitDeadline,
+          ...signatureArgs,
+        ]);
+
+        expect(getTokenApproval(fiatToken.parseTransaction({data}))).toEqual({
+          functionName: 'permit',
+          spender,
+          amount: '7',
+          owner: checksummedAddress,
+          deadline: permitDeadline,
+          isUnlimited: false,
+        });
+      },
+    );
+  });
+
+  describe.each([
+    ['ERC721', abiERC721],
+    ['ERC1155', abiERC1155],
+  ] as const)('%s setApprovalForAll', (_, abi) => {
+    it.each([true, false])(
+      'preserves approved=%s and warns only when enabled',
+      approved => {
+        const token = new ethers.utils.Interface(abi);
+        const data = token.encodeFunctionData('setApprovalForAll', [
+          spender,
+          approved,
+        ]);
+
+        expect(getTokenApproval(token.parseTransaction({data}))).toEqual({
+          functionName: 'setApprovalForAll',
+          spender,
+          approved,
+          isUnlimited: approved,
+        });
+      },
+    );
+
+    it.each([ethers.constants.AddressZero, checksummedAddress])(
+      'preserves operator %s when revoking permission',
+      operator => {
+        const token = new ethers.utils.Interface(abi);
+        const data = token.encodeFunctionData('setApprovalForAll', [
+          operator,
+          false,
+        ]);
+
+        expect(getTokenApproval(token.parseTransaction({data}))).toEqual({
+          functionName: 'setApprovalForAll',
+          spender: operator,
+          approved: false,
+          isUnlimited: false,
+        });
+      },
+    );
+  });
+
+  it('does not classify other token calls as approvals', () => {
+    const data = erc20.encodeFunctionData('transfer', [spender, '123']);
+
+    expect(getTokenApproval(erc20.parseTransaction({data}))).toBeUndefined();
+  });
+
+  it.each([
+    {
+      name: 'decreaseAllowance',
+      abi: abiFiatTokenV2,
+      args: [spender, ethers.constants.MaxUint256],
+    },
+    {name: 'allowance', abi: abiERC20, args: [owner, spender]},
+    {name: 'isApprovedForAll', abi: abiERC721, args: [owner, spender]},
+    {
+      name: 'transferFrom',
+      abi: abiERC20,
+      args: [owner, spender, ethers.constants.MaxUint256],
+    },
+  ])('does not classify $name as a supported approval', ({name, abi, args}) => {
+    const token = new ethers.utils.Interface(abi);
+    const data = token.encodeFunctionData(name, args);
+
+    expect(getTokenApproval(token.parseTransaction({data}))).toBeUndefined();
+  });
+});
+
+describe('processSwapRequest', () => {
+  const ACCOUNT_A = '0x1111111111111111111111111111111111111111';
+  const SPENDER = '0x3333333333333333333333333333333333333333';
+  const OWNER = '0x4444444444444444444444444444444444444444';
+  const DEADLINE = '1900000000';
+
+  const makeDispatch = (
+    wallets = [
+      {
+        chain: 'eth',
+        currencyAbbreviation: 'eth',
+        network: 'livenet',
+        receiveAddress: ACCOUNT_A,
+      },
+    ],
+  ) => {
+    const getState = () =>
+      ({
+        APP: {defaultAltCurrency: {isoCode: 'USD'}},
+        RATE: {rates: {}},
+        WALLET: {
+          customTokenOptionsByAddress: {},
+          keys: {
+            'key-1': {
+              wallets,
+            },
+          },
+        },
+      } as any);
+    const dispatch = (action: any): any =>
+      typeof action === 'function' ? action(dispatch, getState) : action;
+
+    return dispatch;
+  };
+
+  const buildTxEvent = (method: string, tx: any, chainId = 'eip155:1') =>
+    ({
+      id: 1,
+      params: {chainId, request: {method, params: [tx]}},
+      topic: 'topic-1',
+    } as any);
+
+  const approvalCases = [
+    {
+      name: 'bounded approveAndCall with callback data',
+      abi: abiERC20,
+      signature: 'approveAndCall',
+      args: [SPENDER, '123456', '0x1234'],
+      transactionDataName: 'APPROVE AND CALL',
+      tokenApproval: {
+        functionName: 'approveAndCall',
+        spender: SPENDER,
+        amount: '123456',
+        isUnlimited: false,
+      },
+    },
+    {
+      name: 'unlimited approveAndCall with empty callback data',
+      abi: abiERC20,
+      signature: 'approveAndCall',
+      args: [SPENDER, ethers.constants.MaxUint256, '0x'],
+      transactionDataName: 'APPROVE AND CALL',
+      tokenApproval: {
+        functionName: 'approveAndCall',
+        spender: SPENDER,
+        amount: ethers.constants.MaxUint256.toString(),
+        isUnlimited: true,
+      },
+    },
+    {
+      name: 'bounded approve',
+      abi: abiERC20,
+      signature: 'approve',
+      args: [SPENDER, '123456'],
+      transactionDataName: 'APPROVE',
+      tokenApproval: {
+        functionName: 'approve',
+        spender: SPENDER,
+        amount: '123456',
+        isUnlimited: false,
+      },
+    },
+    {
+      name: 'unlimited approve',
+      abi: abiERC20,
+      signature: 'approve',
+      args: [SPENDER, ethers.constants.MaxUint256],
+      transactionDataName: 'APPROVE',
+      tokenApproval: {
+        functionName: 'approve',
+        spender: SPENDER,
+        amount: ethers.constants.MaxUint256.toString(),
+        isUnlimited: true,
+      },
+    },
+    {
+      name: 'setApprovalForAll enabled',
+      abi: abiERC721,
+      signature: 'setApprovalForAll',
+      args: [SPENDER, true],
+      transactionDataName: 'SET APPROVAL FOR ALL',
+      tokenApproval: {
+        functionName: 'setApprovalForAll',
+        spender: SPENDER,
+        approved: true,
+        isUnlimited: true,
+      },
+    },
+    {
+      name: 'setApprovalForAll revoked',
+      abi: abiERC1155,
+      signature: 'setApprovalForAll',
+      args: [SPENDER, false],
+      transactionDataName: 'SET APPROVAL FOR ALL',
+      tokenApproval: {
+        functionName: 'setApprovalForAll',
+        spender: SPENDER,
+        approved: false,
+        isUnlimited: false,
+      },
+    },
+    {
+      name: 'increaseAllowance',
+      abi: abiFiatTokenV2,
+      signature: 'increaseAllowance',
+      args: [SPENDER, '9007199254740993'],
+      transactionDataName: 'INCREASE ALLOWANCE',
+      tokenApproval: {
+        functionName: 'increaseAllowance',
+        spender: SPENDER,
+        amount: '9007199254740993',
+        isUnlimited: false,
+      },
+    },
+    {
+      name: 'permit with bytes signature',
+      abi: abiFiatTokenV2,
+      signature: 'permit(address,address,uint256,uint256,bytes)',
+      args: [OWNER, SPENDER, '123456', DEADLINE, '0x1234'],
+      transactionDataName: 'PERMIT',
+      tokenApproval: {
+        functionName: 'permit',
+        spender: SPENDER,
+        amount: '123456',
+        owner: OWNER,
+        deadline: DEADLINE,
+        isUnlimited: false,
+      },
+    },
+    {
+      name: 'unlimited permit with v/r/s signature',
+      abi: abiFiatTokenV2,
+      signature:
+        'permit(address,address,uint256,uint256,uint8,bytes32,bytes32)',
+      args: [
+        OWNER,
+        SPENDER,
+        ethers.constants.MaxUint256,
+        DEADLINE,
+        27,
+        ethers.constants.HashZero,
+        ethers.constants.HashZero,
+      ],
+      transactionDataName: 'PERMIT',
+      tokenApproval: {
+        functionName: 'permit',
+        spender: SPENDER,
+        amount: ethers.constants.MaxUint256.toString(),
+        owner: OWNER,
+        deadline: DEADLINE,
+        isUnlimited: true,
+      },
+    },
+  ];
+
+  describe.each(['eth_sendTransaction', 'eth_signTransaction'])(
+    '%s approvals',
+    method => {
+      it.each(approvalCases)(
+        'summarizes $name while preserving the native transaction value',
+        async ({abi, signature, args, transactionDataName, tokenApproval}) => {
+          const token = new ethers.utils.Interface(abi);
+          const result = await makeDispatch()(
+            processSwapRequest(
+              buildTxEvent(method, {
+                data: token.encodeFunctionData(signature, args),
+                from: ACCOUNT_A,
+                to: '0x2222222222222222222222222222222222222222',
+                value: '0xde0b6b3a7640000',
+              }),
+            ),
+          );
+
+          expect(result).toEqual({
+            transactionDataName,
+            senderAddress: ACCOUNT_A,
+            swapFromChain: 'eth',
+            swapFromCurrencyAbbreviation: 'eth',
+            swapAmount: '1000000000000000000',
+            tokenApproval,
+          });
+        },
+      );
+    },
+  );
+
+  it.each([
+    [undefined, undefined],
+    ['0x0', '0'],
+    ['9007199254740993', '9007199254740993'],
+    ['invalid', undefined],
+  ])(
+    'keeps native value %s separate from the allowance',
+    async (value, swapAmount) => {
+      const token = new ethers.utils.Interface(abiERC20);
+      const result = await makeDispatch()(
+        processSwapRequest(
+          buildTxEvent('eth_sendTransaction', {
+            data: token.encodeFunctionData('approve', [
+              SPENDER,
+              ethers.constants.MaxUint256,
+            ]),
+            from: ACCOUNT_A,
+            to: '0x2222222222222222222222222222222222222222',
+            value,
+          }),
+        ),
+      );
+
+      expect(result).toEqual({
+        transactionDataName: 'APPROVE',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: 'eth',
+        swapFromCurrencyAbbreviation: 'eth',
+        ...(swapAmount === undefined ? {} : {swapAmount}),
+        tokenApproval: {
+          functionName: 'approve',
+          spender: SPENDER,
+          amount: ethers.constants.MaxUint256.toString(),
+          isUnlimited: true,
+        },
+      });
+    },
+  );
+
+  it.each([
+    ['eip155:137', 'matic', 'pol'],
+    ['eip155:10', 'op', 'eth'],
+    ['eip155:42161', 'arb', 'eth'],
+    ['eip155:8453', 'base', 'eth'],
+    ['eip155:80002', 'matic', 'pol'],
+  ])(
+    'uses the requested chain and gas currency for %s',
+    async (chainId, chain, currencyAbbreviation) => {
+      const token = new ethers.utils.Interface(abiERC20);
+      const result = await makeDispatch([
+        {
+          chain: 'eth',
+          currencyAbbreviation: 'eth',
+          network: 'livenet',
+          receiveAddress: ACCOUNT_A,
+        },
+        {
+          chain,
+          currencyAbbreviation,
+          network: chainId === 'eip155:80002' ? 'testnet' : 'livenet',
+          receiveAddress: ACCOUNT_A,
+        },
+      ])(
+        processSwapRequest(
+          buildTxEvent(
+            'eth_signTransaction',
+            {
+              data: token.encodeFunctionData('approve', [SPENDER, '0']),
+              from: ACCOUNT_A,
+              to: '0x2222222222222222222222222222222222222222',
+              value: '0x0',
+            },
+            chainId,
+          ),
+        ),
+      );
+
+      expect(result).toEqual({
+        transactionDataName: 'APPROVE',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: chain,
+        swapFromCurrencyAbbreviation: currencyAbbreviation,
+        swapAmount: '0',
+        tokenApproval: {
+          functionName: 'approve',
+          spender: SPENDER,
+          amount: '0',
+          isUnlimited: false,
+        },
+      });
+    },
+  );
+
+  it.each([undefined, null, '', '0x', '0xdeadbeef', '0x123', '0xzzzzzzzz'])(
+    'does not invent an approval for calldata %s',
+    async data => {
+      const result = await makeDispatch()(
+        processSwapRequest(
+          buildTxEvent('eth_sendTransaction', {
+            data,
+            from: ACCOUNT_A,
+            to: '0x2222222222222222222222222222222222222222',
+            value: '0x7',
+          }),
+        ),
+      );
+
+      expect(result).toEqual({
+        transactionDataName: 'ETH SEND TRANSACTION',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: 'eth',
+        swapFromCurrencyAbbreviation: 'eth',
+        swapAmount: '7',
+      });
+    },
+  );
+
+  it.each(approvalCases)(
+    'does not summarize truncated $name calldata',
+    async ({abi, signature, args}) => {
+      const token = new ethers.utils.Interface(abi);
+      const result = await makeDispatch()(
+        processSwapRequest(
+          buildTxEvent('eth_sendTransaction', {
+            data: token.encodeFunctionData(signature, args).slice(0, -64),
+            from: ACCOUNT_A,
+            to: '0x2222222222222222222222222222222222222222',
+            value: '0x7',
+          }),
+        ),
+      );
+
+      expect(result).toEqual({
+        transactionDataName: 'ETH SEND TRANSACTION',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: 'eth',
+        swapFromCurrencyAbbreviation: 'eth',
+        swapAmount: '7',
+      });
+    },
+  );
+
+  describe.each(['eth_sendTransaction', 'eth_signTransaction'])(
+    '%s with invalid address padding',
+    method => {
+      const corruptAddressPadding = (data: string, addressIndex: number) => {
+        const offset = 10 + addressIndex * 64;
+        return data.slice(0, offset) + 'f'.repeat(24) + data.slice(offset + 24);
+      };
+      const expectedFallback = {
+        transactionDataName:
+          method === 'eth_sendTransaction'
+            ? 'ETH SEND TRANSACTION'
+            : 'ETH SIGN TRANSACTION',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: 'eth',
+        swapFromCurrencyAbbreviation: 'eth',
+        swapAmount: '7',
+      };
+      const makeEvent = (data: string) =>
+        buildTxEvent(method, {
+          data,
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0x7',
+        });
+
+      it.each(
+        approvalCases.flatMap(approvalCase =>
+          (approvalCase.tokenApproval.functionName === 'permit'
+            ? [0, 1]
+            : [0]
+          ).map(addressIndex => ({...approvalCase, addressIndex})),
+        ),
+      )(
+        'marks $name with corrupt address argument $addressIndex as undecodable',
+        async ({abi, signature, args, tokenApproval, addressIndex}) => {
+          const errorLog = jest.requireMock('../managers/LogManager').logManager
+            .error;
+          errorLog.mockClear();
+          const token = new ethers.utils.Interface(abi);
+          const data = corruptAddressPadding(
+            token.encodeFunctionData(signature, args),
+            addressIndex,
+          );
+          const decoded = token.parseTransaction({data});
+
+          expect(decoded.name).toBe(tokenApproval.functionName);
+          expect(() => decoded.args[addressIndex]).toThrow();
+          expect(() => JSON.stringify(decoded)).toThrow();
+
+          const result = await makeDispatch()(
+            processSwapRequest(makeEvent(data)),
+          );
+
+          expect(result).toEqual({
+            ...expectedFallback,
+            tokenApprovalDecodeError: true,
+          });
+          expect(errorLog).toHaveBeenCalledTimes(1);
+          expect(errorLog).toHaveBeenCalledWith(
+            expect.stringContaining('Error processing swap request:'),
+          );
+        },
+      );
+
+      it.each([
+        {name: 'transfer', abi: abiERC20, args: [SPENDER, '123']},
+        {name: 'isApprovedForAll', abi: abiERC721, args: [OWNER, SPENDER]},
+      ])(
+        'keeps corrupt $name outside the approval error warning',
+        async ({name, abi, args}) => {
+          const errorLog = jest.requireMock('../managers/LogManager').logManager
+            .error;
+          errorLog.mockClear();
+          const token = new ethers.utils.Interface(abi);
+          const data = corruptAddressPadding(
+            token.encodeFunctionData(name, args),
+            0,
+          );
+          const decoded = token.parseTransaction({data});
+
+          expect(decoded.name).toBe(name);
+          expect(() => JSON.stringify(decoded)).toThrow();
+
+          const result = await makeDispatch()(
+            processSwapRequest(makeEvent(data)),
+          );
+
+          expect(result).toEqual(expectedFallback);
+          expect(errorLog).toHaveBeenCalledTimes(1);
+          expect(errorLog).toHaveBeenCalledWith(
+            expect.stringContaining('Error processing swap request:'),
+          );
+        },
+      );
+
+      it('does not retain the decode error on the next valid approval', async () => {
+        const token = new ethers.utils.Interface(abiERC20);
+        const data = token.encodeFunctionData('approve', [SPENDER, '123']);
+        const dispatch = makeDispatch();
+
+        const invalid = await dispatch(
+          processSwapRequest(makeEvent(corruptAddressPadding(data, 0))),
+        );
+        const valid = await dispatch(processSwapRequest(makeEvent(data)));
+
+        expect(invalid).toEqual({
+          ...expectedFallback,
+          tokenApprovalDecodeError: true,
+        });
+        expect(valid).toEqual({
+          ...expectedFallback,
+          transactionDataName: 'APPROVE',
+          tokenApproval: {
+            functionName: 'approve',
+            spender: SPENDER,
+            amount: '123',
+            isUnlimited: false,
+          },
+        });
+      });
+    },
+  );
+
+  it('takes the amount of a plain transfer from the transaction value', async () => {
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_signTransaction', {
+          data: '0x',
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0xde0b6b3a7640000',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBe('1000000000000000000');
+    expect(result.senderAddress).toBe(ACCOUNT_A);
+  });
+
+  it('keeps the native amount of a transaction that also carries calldata', async () => {
+    // transfer(address,uint256) to 0x33..33 for 1 unit
+    const transferData =
+      '0xa9059cbb' + '3'.repeat(40).padStart(64, '0') + '1'.padStart(64, '0');
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_signTransaction', {
+          data: transferData,
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0xde0b6b3a7640000',
+        }),
+      ),
+    );
+
+    expect(result).toEqual({
+      transactionDataName: 'TRANSFER',
+      senderAddress: ACCOUNT_A,
+      swapFromChain: 'eth',
+      swapFromCurrencyAbbreviation: 'eth',
+      swapAmount: '1000000000000000000',
+    });
+  });
+
+  it('keeps the native amount when the summary cannot be built', async () => {
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_signTransaction', {
+          data: '0xdeadbeef',
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+          value: '0xde0b6b3a7640000',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBe('1000000000000000000');
+  });
+
+  it('leaves the amount out when the transaction carries no value', async () => {
+    const result = await makeDispatch()(
+      processSwapRequest(
+        buildTxEvent('eth_sendTransaction', {
+          data: '0x',
+          from: ACCOUNT_A,
+          to: '0x2222222222222222222222222222222222222222',
+        }),
+      ),
+    );
+
+    expect(result.swapAmount).toBeUndefined();
+  });
+});
+
+describe('getTransactionValue', () => {
+  it('reads a hexadecimal amount', () => {
+    expect(getTransactionValue('0xde0b6b3a7640000')).toBe(
+      '1000000000000000000',
+    );
+  });
+
+  it('reads a decimal string as decimal, not as hexadecimal', () => {
+    expect(getTransactionValue('1000000000000000')).toBe('1000000000000000');
+  });
+
+  it('reads a number as decimal, not as hexadecimal', () => {
+    expect(getTransactionValue(1000000)).toBe('1000000');
+  });
+
+  it('has no amount when the transaction carries none', () => {
+    expect(getTransactionValue(undefined)).toBeUndefined();
+    expect(getTransactionValue('')).toBeUndefined();
+    expect(getTransactionValue(null)).toBeUndefined();
+  });
+
+  it('has no amount when the value cannot be parsed', () => {
+    expect(getTransactionValue('not-a-number')).toBeUndefined();
   });
 });

@@ -784,7 +784,7 @@ const getRateStr =
 /*
  * txp options object for wallet.createTxProposal
  * */
-const buildTransactionProposal =
+export const buildTransactionProposal =
   (tx: Partial<TransactionOptions>): Effect<Promise<object>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {

@@ -246,14 +246,36 @@ describe('findWalletByAddress', () => {
 
   it('performs case-insensitive address comparison', () => {
     const wallet = makeWallet({
-      receiveAddress: '0xabc',
+      receiveAddress: '0xabcdef0123456789abcdef0123456789abcdef01',
       chain: 'eth',
       network: Network.mainnet,
     });
     const keys: any = {'key-1': {wallets: [wallet]}};
-    expect(findWalletByAddress('0xABC', 'eth', Network.mainnet, keys)).toBe(
-      wallet,
-    );
+    expect(
+      findWalletByAddress(
+        '0xABCDEF0123456789ABCDEF0123456789ABCDEF01',
+        'eth',
+        Network.mainnet,
+        keys,
+      ),
+    ).toBe(wallet);
+  });
+
+  it('keeps base58 addresses case sensitive', () => {
+    const wallet = makeWallet({
+      receiveAddress: 'AknL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9',
+      chain: 'sol',
+      network: Network.mainnet,
+    });
+    const keys: any = {'key-1': {wallets: [wallet]}};
+    expect(
+      findWalletByAddress(
+        'AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9',
+        'sol',
+        Network.mainnet,
+        keys,
+      ),
+    ).toBeUndefined();
   });
 
   it('returns undefined when keys object is empty', () => {

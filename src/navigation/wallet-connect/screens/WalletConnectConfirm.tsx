@@ -66,6 +66,7 @@ import {SvgProps} from 'react-native-svg';
 import {
   WCV2RequestType,
   WCV2SessionType,
+  TokenApproval,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
@@ -118,6 +119,7 @@ const WalletConnectConfirm = () => {
     topic,
     selectedAccountAddress,
   } = route.params;
+  const tokenApproval: TokenApproval | undefined = request.tokenApproval;
   const peerIcon = icons && icons[0];
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
@@ -242,22 +244,21 @@ const WalletConnectConfirm = () => {
         requestProps.method === EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION &&
         txp
       ) {
-        const broadcastedTx = await dispatch(
-          startSendPayment({
-            txp,
-            key,
-            wallet,
-            recipient,
-            ...(isTSSWallet(wallet) && {tssCallbacks}),
-            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-          }),
-        );
         await dispatch(
-          walletConnectV2ApproveCallRequest(
-            request,
-            wallet,
-            formatJsonRpcResult(id, broadcastedTx.txid),
-          ),
+          walletConnectV2ApproveCallRequest(request, wallet, async () => {
+            const broadcastedTx = await dispatch(
+              startSendPayment({
+                txp,
+                key,
+                wallet,
+                recipient,
+                ...(isTSSWallet(wallet) && {tssCallbacks}),
+                ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
+              }),
+            );
+
+            return formatJsonRpcResult(id, broadcastedTx.txid);
+          }),
         );
       } else {
         await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
@@ -554,6 +555,121 @@ const WalletConnectConfirm = () => {
             hr
           />
         ) : null}
+        {request.tokenApprovalDecodeError ? (
+          <Banner
+            height={100}
+            type={'warning'}
+            title={t('Unable to read token approval')}
+            description={t(
+              'We cannot decode the permission details of this transaction. Approve it only if you fully trust this site.',
+            )}
+          />
+        ) : null}
+        {tokenApproval ? (
+          <>
+            <SharedDetailRow
+              description={t('Approval function')}
+              value={tokenApproval.functionName}
+              secondary
+              hr
+            />
+            {[
+              {
+                label: t('Token contract'),
+                value: request.params.request.params[0].to,
+                type: 'approvalContract',
+              },
+              {
+                label:
+                  tokenApproval.functionName === 'setApprovalForAll'
+                    ? t('Operator')
+                    : t('Spender'),
+                value: tokenApproval.spender,
+                type: 'approvalSpender',
+              },
+              ...(tokenApproval.owner
+                ? [
+                    {
+                      label: t('Token owner'),
+                      value: tokenApproval.owner,
+                      type: 'approvalOwner',
+                    },
+                  ]
+                : []),
+            ].map(({label, value, type}) => (
+              <TouchableOpacity
+                key={type}
+                accessibilityRole="button"
+                accessibilityLabel={t('Copy {{label}}: {{address}}', {
+                  label,
+                  address: value,
+                })}
+                disabled={clipboardObj.copied}
+                onPress={() => copyToClipboard(value, type)}>
+                <SharedDetailRow
+                  description={
+                    clipboardObj.copied && clipboardObj.type === type
+                      ? t('{{label}} (copied)', {label})
+                      : t('{{label}} (tap to copy)', {label})
+                  }
+                  value={value}
+                  secondary
+                  hr
+                />
+              </TouchableOpacity>
+            ))}
+            {tokenApproval.amount !== undefined ? (
+              <SharedDetailRow
+                description={
+                  tokenApproval.functionName === 'increaseAllowance'
+                    ? t('Allowance increase (base units)')
+                    : tokenApproval.functionName === 'approve'
+                    ? t('Amount (base units) / NFT token ID')
+                    : t('Allowance (base units)')
+                }
+                value={tokenApproval.amount}
+                secondary
+                hr
+              />
+            ) : null}
+            {tokenApproval.approved !== undefined ? (
+              <SharedDetailRow
+                description={t('Permission')}
+                value={
+                  tokenApproval.approved
+                    ? t('Grant access to all NFTs in this contract')
+                    : t('Revoke access to all NFTs in this contract')
+                }
+                secondary
+                hr
+              />
+            ) : null}
+            {tokenApproval.deadline !== undefined ? (
+              <SharedDetailRow
+                description={t('Permit submission deadline (Unix seconds)')}
+                value={tokenApproval.deadline}
+                secondary
+                hr
+              />
+            ) : null}
+            {tokenApproval.isUnlimited ? (
+              <Banner
+                height={100}
+                type={'warning'}
+                title={t('Unlimited token approval')}
+                description={
+                  tokenApproval.functionName === 'setApprovalForAll'
+                    ? t(
+                        'This operator can transfer all your NFTs in this contract. Approve only if you fully trust this operator.',
+                      )
+                    : t(
+                        'This value grants unlimited spending for fungible tokens. Approve only if you fully trust this spender.',
+                      )
+                }
+              />
+            ) : null}
+          </>
+        ) : null}
         {txDetails?.data ? (
           <>
             <ItemContainer>
@@ -586,6 +702,7 @@ const WalletConnectConfirm = () => {
       </DetailsList>
       <SwipeButton
         title={t('Slide to approve')}
+        disabled={!txDetails}
         onSwipeComplete={approveCallRequest}
         forceReset={resetSwipeButton}
       />
