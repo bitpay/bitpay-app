@@ -683,6 +683,23 @@ describe('startTwoFactorAuth', () => {
     // upperFirst('Bad two-factor code') = 'Bad two-factor code'
     expect(errMsg).toBe('Bad two-factor code');
   });
+
+  it('never surfaces an HTML response body as the error message', async () => {
+    const axiosErr: any = {
+      isAxiosError: true,
+      response: {
+        status: 403,
+        data: '<!DOCTYPE html><html><head><title>Just a moment...</title>',
+      },
+      message: 'Request failed with status code 403',
+    };
+    (MockAuthApi.submitTwoFactor as jest.Mock).mockRejectedValueOnce(axiosErr);
+    const store = baseStore();
+    await store.dispatch(startTwoFactorAuth('000000'));
+    expect(store.getState().BITPAY_ID.twoFactorAuthError).toBe(
+      'Request failed with status code 403',
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
