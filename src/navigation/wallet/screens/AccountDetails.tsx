@@ -1387,7 +1387,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     isFocused,
     isSvmAccount,
     key,
-    linkedCoinbase,
     navigation,
     onPressTxpBadge,
     pendingProposalsCount,
