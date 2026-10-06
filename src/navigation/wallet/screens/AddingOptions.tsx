@@ -272,7 +272,6 @@ const AddingOptions: React.FC = () => {
                   name: WalletScreens.WALLET_DETAILS,
                   params: {
                     walletId: wallets[0]?.id,
-                    key,
                     skipInitializeHistory: false,
                   },
                 },

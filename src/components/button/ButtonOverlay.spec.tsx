@@ -152,20 +152,21 @@ describe('ButtonOverlay', () => {
     });
   });
 
-  it('keeps every shared Button overlay out of flex layout', () => {
-    const {getAllByTestId} = render(<Button>Continue</Button>);
-    const overlays = getAllByTestId('button-overlay');
+  it.each(['loading', 'success', 'failed'] as const)(
+    'keeps the shared Button %s overlay out of flex layout',
+    state => {
+      const {getAllByTestId} = render(<Button state={state}>Continue</Button>);
+      const overlays = getAllByTestId('button-overlay');
 
-    expect(overlays).toHaveLength(3);
-    overlays.forEach(overlay => {
-      expect(overlay.props.pointerEvents).toBe('none');
-      expect(getFlattenedOverlayStyle(overlay)).toMatchObject({
+      expect(overlays).toHaveLength(1);
+      expect(overlays[0].props.pointerEvents).toBe('none');
+      expect(getFlattenedOverlayStyle(overlays[0])).toMatchObject({
         position: 'absolute',
         left: 0,
         right: 0,
         top: 0,
         bottom: 0,
       });
-    });
-  });
+    },
+  );
 });

@@ -6,8 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {useTheme} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import throttle from 'lodash.throttle';
 import {useTranslation} from 'react-i18next';
@@ -33,6 +32,7 @@ import {
 } from '../../../styles/colors';
 import {useAppDispatch} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useTheme} from '../../../contexts';
 
 export type TSSOnboardingFlow = 'create' | 'join';
 
@@ -58,169 +58,140 @@ const CARD_WIDTH = WIDTH - 32;
 const CONTENT_WIDTH = CARD_WIDTH - 32;
 const CAROUSEL_HEIGHT = 410;
 
-const ModalBackdropContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalCard = styled.View`
-  width: ${CARD_WIDTH}px;
-  min-height: 540px;
-  border-radius: 16px;
-  padding: 16px;
-  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : GhostWhite)};
-`;
-
-const HeaderRow = styled.View`
-  flex-direction: row;
-  justify-content: flex-end;
-`;
-
-const CloseButton = styled(TouchableOpacity)`
-  width: 40px;
-  height: 40px;
-  border-radius: 100px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
-
-const CardBody = styled.View`
-  flex: 1;
-  justify-content: space-between;
-  width: 100%;
-`;
-
-const TopSection = styled.View`
-  width: ${CONTENT_WIDTH}px;
-`;
-
-const TitleText = styled(BaseText)`
-  font-size: 51px;
-  line-height: 48px;
-  font-weight: 400;
-  letter-spacing: -0.34px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 32px;
-`;
-
-const AccentText = styled(BaseText)`
-  font-size: 51px;
-  line-height: 48px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-`;
-
-const Subheading = styled(BaseText)`
-  font-size: 20px;
-  line-height: 30px;
-  font-weight: 600;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
-
-const Description = styled(BaseText)`
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-top: 8px;
-`;
-
-const InfoBox = styled.View`
-  margin-top: 16px;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background-color: ${({theme: {dark}}) => (dark ? `${Action}40` : LightBlue)};
-`;
-
-const InfoBoxText = styled(BaseText)`
-  font-size: 13px;
-  line-height: 20px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const ImportantText = styled(BaseText)`
-  font-size: 15px;
-  line-height: 22px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const ImportantBoldSpan = styled(BaseText)`
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 22px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const NoteText = styled(InfoBoxText)``;
-
-const NoteBoldSpan = styled(InfoBoxText)`
-  font-weight: 700;
-`;
-
-const BulletRow = styled.View`
-  flex-direction: row;
-`;
-
-const BulletDot = styled(InfoBoxText)`
-  margin-right: 6px;
-`;
-
-const RuleRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 8px;
-`;
-
-const RuleText = styled(BaseText)`
-  flex: 1;
-  font-size: 16px;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const RuleBoldSpan = styled(BaseText)`
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const FooterRow = styled.View`
-  flex-direction: row;
-  align-items: flex-end;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 16px;
-`;
-
-const PaginationText = styled(BaseText)`
-  font-size: 16px;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const NextButton = styled(TouchableOpacity)`
-  height: 50px;
-  min-width: 100px;
-  padding: 0 16px;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${Action};
-`;
-
-const NextButtonText = styled(BaseText)`
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
-  color: ${White};
-  text-align: center;
-`;
+const styles = StyleSheet.create({
+  modal: {
+    margin: 0,
+  },
+  modalBackdropContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCard: {
+    width: CARD_WIDTH,
+    minHeight: 540,
+    borderRadius: 16,
+    padding: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardBody: {
+    flex: 1,
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  topSection: {
+    width: CONTENT_WIDTH,
+  },
+  titleText: {
+    fontSize: 51,
+    lineHeight: 48,
+    fontWeight: '400',
+    letterSpacing: -0.34,
+    marginBottom: 32,
+  },
+  accentText: {
+    fontSize: 51,
+    lineHeight: 48,
+    fontWeight: '400',
+  },
+  subheading: {
+    fontSize: 20,
+    lineHeight: 30,
+    fontWeight: '600',
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+    marginTop: 8,
+  },
+  infoBox: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+  },
+  infoBoxText: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '400',
+  },
+  supportedNetworksLabel: {
+    marginBottom: 8,
+  },
+  importantText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '400',
+  },
+  importantBoldSpan: {
+    fontWeight: '700',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  noteBoldSpan: {
+    fontWeight: '700',
+  },
+  bulletRow: {
+    flexDirection: 'row',
+  },
+  bulletDot: {
+    marginRight: 6,
+  },
+  ruleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 8,
+  },
+  ruleText: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  ruleBoldSpan: {
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 16,
+  },
+  paginationText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  nextButton: {
+    height: 50,
+    minWidth: 100,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Action,
+  },
+  nextButtonText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500',
+    color: White,
+    textAlign: 'center',
+  },
+});
 
 const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
   isVisible,
@@ -246,19 +217,56 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
           'This wallet protects your assets by dividing the private key into secure keyshares across multiple co-signers.',
         ),
         renderExtra: () => (
-          <InfoBox>
-            <InfoBoxText style={{marginBottom: 8}}>
+          <View
+            style={[
+              styles.infoBox,
+              {
+                backgroundColor: theme.dark ? `${Action}40` : LightBlue,
+              },
+            ]}>
+            <BaseText
+              style={[
+                styles.infoBoxText,
+                styles.supportedNetworksLabel,
+                {color: theme.dark ? Slate30 : SlateDark},
+              ]}>
               {t('Supported networks:')}
-            </InfoBoxText>
-            <BulletRow>
-              <BulletDot>{'•'}</BulletDot>
-              <InfoBoxText>{t('BTC, BCH, LTC, DOGE, XRP')}</InfoBoxText>
-            </BulletRow>
-            <BulletRow>
-              <BulletDot>{'•'}</BulletDot>
-              <InfoBoxText>{t('ETH & ERC-20 tokens')}</InfoBoxText>
-            </BulletRow>
-          </InfoBox>
+            </BaseText>
+            <View style={styles.bulletRow}>
+              <BaseText
+                style={[
+                  styles.infoBoxText,
+                  styles.bulletDot,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                {'•'}
+              </BaseText>
+              <BaseText
+                style={[
+                  styles.infoBoxText,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                {t('BTC, BCH, LTC, DOGE, XRP')}
+              </BaseText>
+            </View>
+            <View style={styles.bulletRow}>
+              <BaseText
+                style={[
+                  styles.infoBoxText,
+                  styles.bulletDot,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                {'•'}
+              </BaseText>
+              <BaseText
+                style={[
+                  styles.infoBoxText,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                {t('ETH & ERC-20 tokens')}
+              </BaseText>
+            </View>
+          </View>
         ),
       },
       {
@@ -276,28 +284,48 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
         subheading: t('Timing and compatibility.'),
         renderExtra: () => (
           <>
-            <RuleRow>
+            <View style={styles.ruleRow}>
               <ScheduleClockIcon width={24} height={24} color={ruleIconColor} />
-              <RuleText>
-                <RuleBoldSpan>{t('Stay In Sync: ')}</RuleBoldSpan>
+              <BaseText
+                style={[
+                  styles.ruleText,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                <BaseText
+                  style={[
+                    styles.ruleBoldSpan,
+                    {color: theme.dark ? Slate30 : SlateDark},
+                  ]}>
+                  {t('Stay In Sync: ')}
+                </BaseText>
                 {t(
                   'All co-signers must be online at the exact same time to create the wallet and sign transactions.',
                 )}
-              </RuleText>
-            </RuleRow>
-            <RuleRow>
+              </BaseText>
+            </View>
+            <View style={styles.ruleRow}>
               <ArchiveDownloadIcon
                 width={24}
                 height={24}
                 color={ruleIconColor}
               />
-              <RuleText>
-                <RuleBoldSpan>{t('No External Imports: ')}</RuleBoldSpan>
+              <BaseText
+                style={[
+                  styles.ruleText,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                <BaseText
+                  style={[
+                    styles.ruleBoldSpan,
+                    {color: theme.dark ? Slate30 : SlateDark},
+                  ]}>
+                  {t('No External Imports: ')}
+                </BaseText>
                 {t(
                   'This unique structure means this wallet cannot be imported into other crypto platforms.',
                 )}
-              </RuleText>
-            </RuleRow>
+              </BaseText>
+            </View>
           </>
         ),
       },
@@ -309,14 +337,30 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
           'This wallet relies on a multi-approval setup (e.g., 2 of 3 co-signers). Because it is completely self-custodial, BitPay does not hold your keys or backups.',
         ),
         renderExtra: () => (
-          <InfoBox>
-            <ImportantText>
-              <ImportantBoldSpan>{t('Important: ')}</ImportantBoldSpan>
+          <View
+            style={[
+              styles.infoBox,
+              {
+                backgroundColor: theme.dark ? `${Action}40` : LightBlue,
+              },
+            ]}>
+            <BaseText
+              style={[
+                styles.importantText,
+                {color: theme.dark ? Slate30 : SlateDark},
+              ]}>
+              <BaseText
+                style={[
+                  styles.importantBoldSpan,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                {t('Important: ')}
+              </BaseText>
               {t(
                 'Please back up your wallet securely. If you lose your backup or your co-signers are unavailable, BitPay cannot recover your assets.',
               )}
-            </ImportantText>
-          </InfoBox>
+            </BaseText>
+          </View>
         ),
       },
       {
@@ -327,17 +371,34 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
           'TSS Wallet is currently in beta. You may experience bugs, unexpected behavior, or failed actions as we continue improving the feature.',
         ),
         renderExtra: () => (
-          <InfoBox>
-            <NoteText>
-              <NoteBoldSpan>{t('Note: ')}</NoteBoldSpan>
+          <View
+            style={[
+              styles.infoBox,
+              {
+                backgroundColor: theme.dark ? `${Action}40` : LightBlue,
+              },
+            ]}>
+            <BaseText
+              style={[
+                styles.infoBoxText,
+                {color: theme.dark ? Slate30 : SlateDark},
+              ]}>
+              <BaseText
+                style={[
+                  styles.infoBoxText,
+                  styles.noteBoldSpan,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
+                {t('Note: ')}
+              </BaseText>
               {t('Please report any issues you encounter.')}
-            </NoteText>
-          </InfoBox>
+            </BaseText>
+          </View>
         ),
         buttonLabel: t('I understand & accept'),
       },
     ],
-    [t, ruleIconColor],
+    [t, ruleIconColor, theme.dark],
   );
 
   useEffect(() => {
@@ -398,20 +459,33 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}
-      style={{margin: 0}}
+      style={styles.modal}
       onBackdropPress={handleDismiss}>
-      <ModalBackdropContainer>
-        <ModalCard>
-          <HeaderRow>
-            <CloseButton onPress={handleDismiss}>
+      <View style={styles.modalBackdropContainer}>
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: theme.dark ? CharcoalBlack : GhostWhite,
+            },
+          ]}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: theme.dark ? LightBlack : NeutralSlate,
+                },
+              ]}
+              onPress={handleDismiss}>
               <CloseModal
                 width={24}
                 height={24}
                 color={theme.dark ? 'white' : 'black'}
               />
-            </CloseButton>
-          </HeaderRow>
-          <CardBody>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.cardBody}>
             <Carousel
               loop={false}
               vertical={false}
@@ -429,26 +503,53 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
                 }
               }}
               renderItem={({item}) => (
-                <TopSection>
-                  <TitleText>
+                <View style={styles.topSection}>
+                  <BaseText
+                    style={[
+                      styles.titleText,
+                      {color: theme.dark ? White : Black},
+                    ]}>
                     {item.titleLine1}
                     {'\n'}
                     {item.titleLine2Prefix}
-                    <AccentText>{item.titleAccent}</AccentText>
-                  </TitleText>
-                  <Subheading>{item.subheading}</Subheading>
+                    <BaseText
+                      style={[
+                        styles.accentText,
+                        {color: theme.dark ? LinkBlue : Action},
+                      ]}>
+                      {item.titleAccent}
+                    </BaseText>
+                  </BaseText>
+                  <BaseText
+                    style={[
+                      styles.subheading,
+                      {color: theme.dark ? White : Black},
+                    ]}>
+                    {item.subheading}
+                  </BaseText>
                   {item.description ? (
-                    <Description>{item.description}</Description>
+                    <BaseText
+                      style={[
+                        styles.description,
+                        {color: theme.dark ? Slate30 : SlateDark},
+                      ]}>
+                      {item.description}
+                    </BaseText>
                   ) : null}
                   {item.renderExtra ? item.renderExtra() : null}
-                </TopSection>
+                </View>
               )}
             />
-            <FooterRow>
-              <PaginationText>
+            <View style={styles.footerRow}>
+              <BaseText
+                style={[
+                  styles.paginationText,
+                  {color: theme.dark ? Slate30 : SlateDark},
+                ]}>
                 {activeSlideIndex + 1}/{steps.length}
-              </PaginationText>
-              <NextButton
+              </BaseText>
+              <TouchableOpacity
+                style={styles.nextButton}
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
                   if (isLastSlide) {
@@ -457,16 +558,16 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
                     ref.current?.next();
                   }
                 }}>
-                <NextButtonText>
+                <BaseText style={styles.nextButtonText}>
                   {isLastSlide
                     ? currentStep.buttonLabel ?? t('I Understand')
                     : t('Next')}
-                </NextButtonText>
-              </NextButton>
-            </FooterRow>
-          </CardBody>
-        </ModalCard>
-      </ModalBackdropContainer>
+                </BaseText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
     </BaseModal>
   );
 };

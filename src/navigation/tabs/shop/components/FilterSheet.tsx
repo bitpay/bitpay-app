@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import {Platform} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native-gesture-handler';
-import styled, {css} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {BaseText, H4, TextAlign} from '../../../../components/styled/Text';
 import {
@@ -17,51 +17,118 @@ import {
   BottomNotificationHr,
 } from '../../../../components/modal/bottom-notification/BottomNotification';
 
-const SheetTitleContainer = styled.View`
-  margin-bottom: 25px;
-`;
+const styles = StyleSheet.create({
+  sheetTitleContainer: {
+    marginBottom: 25,
+  },
+  ctaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  pillSheetContainer: {
+    padding: horizontalPadding,
+  },
+  pills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  pill: {
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderRadius: 50,
+    marginRight: 10,
+    marginBottom: 12,
+  },
+  pillText: {
+    fontWeight: '500',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+});
 
-const CtaContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  ${({platform}: {platform: string}) =>
-    platform === 'ios' &&
-    css`
-      margin-bottom: 10px;
-    `}
-`;
+const SheetTitleContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.sheetTitleContainer, style]} {...rest} />
+);
 
-const PillSheetContainer = styled(SheetContainer)`
-  padding: ${horizontalPadding}px;
-`;
+const CtaContainer = ({
+  platform,
+  style,
+  ...rest
+}: {platform: string} & React.ComponentProps<typeof View>) => (
+  <View
+    style={[
+      styles.ctaContainer,
+      platform === 'ios' ? {marginBottom: 10} : null,
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const Pills = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-`;
+const PillSheetContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SheetContainer>) => (
+  <SheetContainer style={[styles.pillSheetContainer, style]} {...rest} />
+);
+
+const Pills = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.pills, style]} {...rest} />
+);
 
 interface PillParams {
   selected?: boolean;
 }
 
-const Pill = styled.View<PillParams>`
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  border: ${({theme: {dark}}) => `2px solid ${dark ? LinkBlue : Action}`};
-  border-radius: 50px;
-  margin-right: 10px;
-  margin-bottom: 12px;
-  ${({selected, theme: {dark}}) =>
-    selected ? `background-color: ${dark ? LinkBlue : Action};` : ''};
-`;
+const Pill = ({
+  selected,
+  style,
+  ...rest
+}: PillParams & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.pill,
+        {borderColor: theme.dark ? LinkBlue : Action},
+        selected ? {backgroundColor: theme.dark ? LinkBlue : Action} : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const PillText = styled(BaseText)<PillParams>`
-  color: ${({selected, theme}) =>
-    selected ? (theme.dark ? LightBlack : White) : theme.dark ? White : Action};
-  font-weight: 500;
-  padding: 8px 12px;
-`;
+const PillText = ({
+  selected,
+  style,
+  ...rest
+}: PillParams & React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.pillText,
+        {
+          color: selected
+            ? theme.dark
+              ? LightBlack
+              : White
+            : theme.dark
+            ? White
+            : Action,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 export type CategoryMap = {[category: string]: boolean};
 interface Props extends SheetParams {

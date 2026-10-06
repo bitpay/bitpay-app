@@ -1,11 +1,13 @@
 import React from 'react';
 import {
   StyleProp,
+  StyleSheet,
   TouchableWithoutFeedbackProps,
+  View,
   ViewStyle,
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -31,62 +33,143 @@ interface HomeRowProps {
   children: React.ReactNode;
 }
 
-const HomeRowContainer = styled.View`
-  margin-bottom: 10px;
-`;
+const styles = StyleSheet.create({
+  homeRowContainer: {
+    marginBottom: 10,
+  },
+  header: {
+    display: 'flex',
+    flexDirection: 'row',
+    marginTop: 0,
+    marginRight: parseInt(ScreenGutter, 10),
+    marginBottom: 0,
+    marginLeft: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+  },
+  homeSectionTitleContainer: {
+    marginRight: 8,
+    flexShrink: 1,
+  },
+  headerLinkContainer: {
+    marginLeft: 'auto',
+    paddingTop: 4,
+    paddingRight: 10,
+    paddingBottom: 4,
+    paddingLeft: 12,
+    borderRadius: 50,
+  },
+  headerLink: {
+    fontWeight: '400',
+    fontSize: 12,
+    lineHeight: 16,
+    textTransform: 'capitalize',
+  },
+  headerLabel: {
+    fontWeight: '400',
+    fontSize: 12,
+  },
+  headerLabelContainer: {
+    borderWidth: 1,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 50,
+    marginLeft: 0,
+  },
+  headerLinkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+});
 
-const Header = styled.View`
-  display: flex;
-  flex-direction: row;
-  margin: 0 ${ScreenGutter} 0 16px;
-  justify-content: space-between;
-  align-items: center;
-`;
+const HomeRowContainer: React.FC<{
+  style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode;
+}> = ({style, children}) => (
+  <View style={[styles.homeRowContainer, style]}>{children}</View>
+);
 
-const HeaderLeft = styled.View`
-  flex-direction: row;
-  align-items: center;
-  flex-shrink: 1;
-`;
+const Header: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.header}>{children}</View>
+);
 
-const HomeSectionTitleContainer = styled.View`
-  margin-right: 8px;
-  flex-shrink: 1;
-`;
+const HeaderLeft: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.headerLeft}>{children}</View>
+);
 
-const HeaderLinkContainer = styled.View`
-  margin-left: auto;
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
-  padding: 4px 10px 4px 12px;
-  border-radius: 50px;
-`;
+const HomeSectionTitleContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.homeSectionTitleContainer}>{children}</View>;
 
-const HeaderLink = styled(Link)`
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  text-transform: capitalize;
-`;
+const HeaderLinkContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.headerLinkContainer,
+        {backgroundColor: theme.dark ? Midnight : LightBlue},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const HeaderLabel = styled(BaseText)`
-  font-weight: 400;
-  font-size: 12px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
-`;
+const HeaderLink: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <Link
+      style={[styles.headerLink, {color: theme.dark ? White : Action}, style]}
+      {...rest}
+    />
+  );
+};
 
-const HeaderLabelContainer = styled.View`
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  padding: 2px 8px;
-  border-radius: 50px;
-  margin-left: 0px;
-`;
+const HeaderLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.headerLabel,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const HeaderLinkContent = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 7px;
-`;
+const HeaderLabelContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.headerLabelContainer,
+        {borderColor: theme.dark ? SlateDark : Slate30},
+      ]}>
+      {children}
+    </View>
+  );
+};
+
+const HeaderLinkContent: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.headerLinkContent}>{children}</View>;
 
 const HomeSection: React.FC<HomeRowProps> = props => {
   const {title, action, onActionPress, children, style, label} = props;

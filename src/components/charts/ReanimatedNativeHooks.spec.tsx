@@ -99,8 +99,12 @@ jest.mock('react-native-gesture-handler', () => ({
 jest.mock('react-native-graph/src/hooks/usePanGesture', () => ({
   usePanGesture: () => mockPan,
 }));
-jest.mock('styled-components/native', () => ({
+jest.mock('../../contexts', () => ({
   useTheme: () => ({dark: false}),
+}));
+jest.mock('../../utils/hooks', () => ({
+  useAppSelector: (selector: (state: any) => any) =>
+    selector({APP: {hideAllBalances: false}}),
 }));
 jest.mock('../styled/Text', () => ({BaseText: require('react-native').Text}));
 jest.mock('../../utils/helper-methods', () => ({
@@ -174,10 +178,10 @@ describe('native Reanimated hook contract', () => {
   });
 
   it('updates pagination positioning including wraparound', () => {
-    const animValue = {value: 0} as any;
-    const view = render(
-      <PaginationItem index={0} length={3} animValue={animValue} />,
+    const renderItem = (value: number) => (
+      <PaginationItem index={0} length={3} animValue={{value} as any} />
     );
+    const view = render(renderItem(0));
     const position = () => {
       const animatedView = view
         .UNSAFE_getAllByType(View)
@@ -186,15 +190,9 @@ describe('native Reanimated hook contract', () => {
         .translateX;
     };
     expect(position()).toBe(0);
-    animValue.value = 0.5;
-    view.rerender(
-      <PaginationItem index={0} length={3} animValue={animValue} />,
-    );
+    view.rerender(renderItem(0.5));
     expect(position()).toBe(5);
-    animValue.value = 2.5;
-    view.rerender(
-      <PaginationItem index={0} length={3} animValue={animValue} />,
-    );
+    view.rerender(renderItem(2.5));
     expect(position()).toBe(-5);
   });
 

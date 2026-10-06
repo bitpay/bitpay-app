@@ -1,21 +1,20 @@
 import React, {useCallback} from 'react';
-import styled from 'styled-components/native';
+import {FlatList, SafeAreaView, StyleSheet, View} from 'react-native';
 import {useAppSelector} from '../../../utils/hooks';
 import {Key} from '../../../store/wallet/wallet.models';
 import KeyGlobalSelectRow from '../../../components/list/KeyGlobalSelectRow';
-import {ScreenGutter} from '../../../components/styled/Containers';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {keyExtractor} from '../../../utils/helper-methods';
-import {FlatList} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-const SafeAreaView = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const GlobalSelectContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  safeAreaView: {
+    flex: 1,
+  },
+  globalSelectContainer: {
+    padding: 12,
+  },
+});
 
 export type KeyGlobalSelectParamList = {
   onKeySelect: (selectedKey: Key) => void;
@@ -46,8 +45,8 @@ const KeyGlobalSelect: React.FC<KeyGlobalSelectScreenProps> = ({route}) => {
   );
 
   return (
-    <SafeAreaView>
-      <GlobalSelectContainer>
+    <SafeAreaView style={styles.safeAreaView}>
+      <View style={styles.globalSelectContainer}>
         {keys.length > 0 && (
           <FlatList
             contentContainerStyle={{paddingBottom: 100}}
@@ -56,7 +55,7 @@ const KeyGlobalSelect: React.FC<KeyGlobalSelectScreenProps> = ({route}) => {
             renderItem={renderItem}
           />
         )}
-      </GlobalSelectContainer>
+      </View>
     </SafeAreaView>
   );
 };

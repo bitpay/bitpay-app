@@ -1,7 +1,7 @@
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
-import {ImageRequireSource, View} from 'react-native';
+import {ImageRequireSource, SafeAreaView, StyleSheet, View} from 'react-native';
 import {FlashList, ListRenderItemInfo} from '@shopify/flash-list';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {RootStackParamList} from '../../../../Root';
@@ -31,100 +31,174 @@ import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Allocation'>;
 
-const ScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+  },
+  row: {
+    marginHorizontal: 16,
+    paddingVertical: 14,
+  },
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rowLabels: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  assetName: {
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  assetSymbol: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  rowRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  fiatAmount: {
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  percent: {
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  progressTrack: {
+    marginTop: 10,
+    height: 10,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 10,
+    borderRadius: 50,
+    borderWidth: 1,
+  },
+});
 
-const Row = styled.View`
-  margin: 0 16px;
-  padding: 14px 0;
-`;
+const ScreenContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <SafeAreaView style={styles.screenContainer}>{children}</SafeAreaView>;
 
-const RowTop = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 5px;
-`;
+const Row: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.row}>{children}</View>
+);
 
-const RowLeft = styled.View`
-  flex-direction: row;
-  align-items: center;
-  flex: 1;
-`;
+const RowTop: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.rowTop}>{children}</View>
+);
 
-const IconContainer = styled.View`
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-`;
+const RowLeft: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.rowLeft}>{children}</View>
+);
 
-const RowLabels = styled.View`
-  flex: 1;
-  justify-content: center;
-`;
+const IconContainer: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.iconContainer}>{children}</View>
+);
 
-const AssetName = styled(BaseText)`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const RowLabels: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.rowLabels}>{children}</View>
+);
 
-const AssetSymbol = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const AssetName: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.assetName, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const RowRight = styled.View`
-  align-items: flex-end;
-  justify-content: center;
-  margin-left: 12px;
-`;
+const AssetSymbol: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.assetSymbol, {color: theme.dark ? Slate30 : SlateDark}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const FiatAmount = styled(BaseText)`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const RowRight: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.rowRight}>{children}</View>
+);
 
-const Percent = styled(BaseText)`
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const FiatAmount: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.fiatAmount, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const ProgressTrack = styled.View`
-  margin-top: 10px;
-  height: 10px;
-  border-radius: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  overflow: hidden;
-`;
+const Percent: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <BaseText style={[styles.percent, {color: theme.colors.text}]}>
+      {children}
+    </BaseText>
+  );
+};
 
-const ProgressFill = styled.View<{
-  progress: number;
-  color: string;
-}>`
-  height: 10px;
-  width: ${({progress}) => `${Math.min(100, Math.max(0, progress))}%`};
-  border-radius: 50px;
-  background-color: ${({color}) => color};
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
+const ProgressTrack: React.FC<{children?: React.ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.progressTrack,
+        {backgroundColor: theme.dark ? LightBlack : Slate30},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const ALLOCATION_ROW_ESTIMATED_ITEM_SIZE = 94;
+const ProgressFill: React.FC<{progress: number; color: string}> = ({
+  progress,
+  color,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.progressFill,
+        {
+          width: `${Math.min(100, Math.max(0, progress))}%`,
+          backgroundColor: color,
+          borderColor: theme.dark ? SlateDark : Slate30,
+        },
+      ]}
+    />
+  );
+};
 
 const AllocationRow: React.FC<{
   item: AllocationRowItem;
@@ -217,7 +291,6 @@ export const AllocationRowsList: React.FC<{
       keyExtractor={keyExtractor}
       ListHeaderComponent={ListHeaderComponent}
       contentContainerStyle={[{paddingBottom: 24}, style]}
-      estimatedItemSize={ALLOCATION_ROW_ESTIMATED_ITEM_SIZE}
       maintainVisibleContentPosition={{disabled: true}}
       scrollEnabled={scrollEnabled}
     />
@@ -230,8 +303,8 @@ const Allocation: React.FC<Props> = ({navigation, route}) => {
   const commonOptions = useStackScreenOptions(theme);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   useLayoutEffect(() => {

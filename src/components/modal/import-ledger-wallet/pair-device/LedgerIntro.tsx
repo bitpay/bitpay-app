@@ -2,7 +2,7 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import ConnectToLedgerSvg from '../../../../../assets/img/connect-to-ledger.svg';
 import {H4, Paragraph} from '../../../styled/Text';
 import {useMount} from '../../../../utils/hooks';
@@ -21,9 +21,11 @@ interface Props {
   onConnectHid: () => void;
 }
 
-const HeaderImageWrapper = styled.View`
-  margin-bottom: 32px;
-`;
+const styles = StyleSheet.create({
+  headerImageWrapper: {
+    marginBottom: 32,
+  },
+});
 
 export const LedgerIntro: React.FC<Props> = props => {
   const {t} = useTranslation();
@@ -48,9 +50,9 @@ export const LedgerIntro: React.FC<Props> = props => {
   return (
     <>
       <Header>
-        <HeaderImageWrapper>
+        <View style={styles.headerImageWrapper}>
           <ConnectToLedgerSvg />
-        </HeaderImageWrapper>
+        </View>
 
         <H4 style={{fontWeight: '500'}}>{t('Connect to Ledger Wallet')}</H4>
       </Header>

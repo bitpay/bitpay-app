@@ -3,7 +3,7 @@ import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {CommonActions, RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
@@ -26,22 +26,46 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {useOngoingProcess} from '../../../contexts';
 
-const DeleteKeyContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  deleteKeyContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: gutter,
+  },
+  title: {
+    color: '#ce334b',
+  },
+  deleteKeyParagraph: {
+    marginTop: 15,
+    marginHorizontal: 0,
+    marginBottom: 20,
+  },
+});
 
-const Title = styled(H5)`
-  color: #ce334b;
-`;
+const DeleteKeyContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.deleteKeyContainer, style]} {...rest} />
+);
 
-const DeleteKeyParagraph = styled(Paragraph)`
-  margin: 15px 0 20px;
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...rest}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...rest} />
+);
+
+const Title: React.FC<React.ComponentProps<typeof H5>> = ({style, ...rest}) => (
+  <H5 style={[styles.title, style]} {...rest} />
+);
+
+const DeleteKeyParagraph: React.FC<React.ComponentProps<typeof Paragraph>> = ({
+  style,
+  ...rest
+}) => <Paragraph style={[styles.deleteKeyParagraph, style]} {...rest} />;
 
 const DeleteKey = () => {
   const {t} = useTranslation();
@@ -55,7 +79,7 @@ const DeleteKey = () => {
   );
   const emailNotifications = useAppSelector(({APP}) => APP.emailNotifications);
   const brazeEid = useAppSelector(({APP}) => APP.brazeEid);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const {
     params: {keyId},

@@ -5,9 +5,9 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {TextInput} from 'react-native';
+import {SafeAreaView, StyleSheet, TextInput, View} from 'react-native';
 import {FlashList, ListRenderItemInfo} from '@shopify/flash-list';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 
@@ -55,58 +55,111 @@ import {getLastDayTimestampStartOfHourMs} from '../../../../utils/helper-methods
 type Props = NativeStackScreenProps<RootStackParamList, 'AllAssets'>;
 const LIST_HORIZONTAL_GUTTER = Number.parseInt(ScreenGutter, 10);
 
-const ScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  searchInputContainer: {
+    flex: 1,
+    borderRadius: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  styledTextInput: {
+    flex: 1,
+    fontSize: 12,
+    padding: 0,
+    margin: 0,
+  },
+  searchIconContainer: {
+    marginRight: 8,
+  },
+  emptyListContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+  },
+  emptySubtext: {
+    marginTop: 8,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+});
 
-const FiltersRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0 12px;
-  gap: 12px;
-`;
+const ScreenContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <SafeAreaView style={styles.screenContainer}>{children}</SafeAreaView>;
 
-const SearchInputContainer = styled.View`
-  flex: 1;
-  border-radius: 50px;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 14px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? '#2C2F34' : '#E4E9EF')};
-  background-color: ${({theme: {dark}}) => (dark ? 'transparent' : '#FFFFFF')};
-`;
+const FiltersRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <View style={styles.filtersRow}>{children}</View>
+);
 
-const StyledTextInput = styled(TextInput)`
-  flex: 1;
-  font-size: 12px;
-  color: ${({theme}) => theme.colors.text};
-  padding: 0;
-  margin: 0;
-`;
+const SearchInputContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.searchInputContainer,
+        {
+          borderColor: theme.dark ? '#2C2F34' : '#E4E9EF',
+          backgroundColor: theme.dark ? 'transparent' : '#FFFFFF',
+        },
+      ]}>
+      {children}
+    </View>
+  );
+};
 
-const SearchIconContainer = styled.View`
-  margin-right: 8px;
-`;
+const StyledTextInput: React.FC<React.ComponentProps<typeof TextInput>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <TextInput
+      style={[styles.styledTextInput, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const EmptyListContainer = styled.View`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 0;
-`;
+const SearchIconContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.searchIconContainer}>{children}</View>;
 
-const EmptySubtext = styled(BaseText)`
-  margin-top: 8px;
-  text-align: center;
-  opacity: 0.8;
-`;
+const EmptyListContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.emptyListContainer}>{children}</View>;
+
+const EmptySubtext: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => <BaseText style={[styles.emptySubtext, style]} {...rest} />;
 
 const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const commonOptions = useStackScreenOptions(theme);
-  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const portfolioQuoteCurrency = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quoteCurrency,
+  );
+  const portfolioPopulateInProgress = useAppSelector(
+    ({PORTFOLIO}) => !!PORTFOLIO.populateStatus?.inProgress,
+  );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const showPortfolioValue = useAppSelector(selectShowPortfolioValue);
@@ -114,7 +167,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const portfolioChartsEnabled = showPortfolioValue === true;
   const populateInProgress =
-    portfolioChartsEnabled && !!portfolio.populateStatus?.inProgress;
+    portfolioChartsEnabled && portfolioPopulateInProgress;
   const {getAssetIconData, getSupportedOption} = useAssetIconResolver();
   const focusRefreshToken = useScreenFocusRefreshToken();
   const keyId = route.params?.keyId;
@@ -131,7 +184,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keyId, keys]);
   const quoteCurrency = getQuoteCurrency({
-    portfolioQuoteCurrency: portfolio.quoteCurrency,
+    portfolioQuoteCurrency,
     defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
   }).toUpperCase();
   const legacyAssetRowsEnabled = !portfolioChartsEnabled;
@@ -384,7 +437,6 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={{paddingHorizontal: LIST_HORIZONTAL_GUTTER}}
-        estimatedItemSize={74}
         maintainVisibleContentPosition={{disabled: true}}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"

@@ -1,10 +1,14 @@
-import React, {useCallback, useMemo, memo, useState} from 'react';
+import React, {useCallback, useMemo, memo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {DeviceEventEmitter, Platform} from 'react-native';
+import {DeviceEventEmitter, Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTheme} from '@react-navigation/native';
-import {BottomSheetFlashList as FlashList} from '@gorhom/bottom-sheet';
-import styled, {css} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
+import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
+import {
+  FlashList,
+  type FlashListProps,
+  type ListRenderItemInfo,
+} from '@shopify/flash-list';
 import {useDispatch, useSelector} from 'react-redux';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
@@ -47,9 +51,9 @@ import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
-import {sleep} from '../../../utils/helper-methods';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import SheetModal from '../base/sheet/SheetModal';
+import useModalContentLifecycle from '../base/useModalContentLifecycle';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -68,74 +72,140 @@ export interface ChainSelectorConfig {
   customChains?: SupportedChains[];
 }
 
-const Header = styled.View`
-  padding: 10px 16px;
-`;
+const styles = StyleSheet.create({
+  header: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  listHeader: {
+    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 20,
+    padding: 16,
+  },
+  networkChainContainer: {
+    marginLeft: 16,
+    marginRight: 16,
+  },
+  networkChainContainerSelected: {
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  networkName: {
+    fontWeight: '500',
+    fontSize: 16,
+  },
+  networkRowContainer: {
+    flexDirection: 'row',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: 16,
+  },
+  imageContainer: {
+    marginRight: 3,
+  },
+  chainSelectorContainer: {
+    flex: 1,
+  },
+});
 
 interface HideableViewProps {
   show: boolean;
 }
 
-const HideableView = styled.View<HideableViewProps>`
-  display: ${({show}) => (show ? 'flex' : 'none')};
-  flex: 1;
-`;
+const HideableView: React.FC<
+  HideableViewProps & React.PropsWithChildren<{}>
+> = ({show, children}) => (
+  <View style={{display: show ? 'flex' : 'none', flex: 1}}>{children}</View>
+);
 
-const ListHeader = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  padding: 16px;
-`;
+const ListHeader: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.listHeader,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const NetworkChainContainer = styled(TouchableOpacity)<{selected?: boolean}>`
-  margin-left: 16px;
-  margin-right: 16px;
-  ${({selected}) =>
-    selected &&
-    css`
-      background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
-      border-color: ${({theme: {dark}}) => (dark ? Action : Action)};
-      border-width: 1px;
-      border-radius: 12px;
-    `};
-`;
+const NetworkChainContainer: React.FC<
+  {selected?: boolean} & React.ComponentProps<typeof TouchableOpacity>
+> = ({selected, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.networkChainContainer,
+        selected
+          ? [
+              {backgroundColor: theme.dark ? '#2240C440' : LightBlue},
+              styles.networkChainContainerSelected,
+              {borderColor: Action},
+            ]
+          : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const NetworkName = styled(BaseText)<{selected?: boolean}>`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-weight: 500;
-  font-size: 16px;
-`;
-
-const NetworkRowContainer = styled.View`
-  flex-direction: row;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 16px;
-`;
-
-const ImageContainer = styled.View`
-  margin-right: 3px;
-`;
-
-const ChainSelectorContainer = styled.View`
-  flex: 1;
-`;
+export const NetworkName: React.FC<
+  {selected?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({selected: _selected, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.networkName, {color: theme.dark ? White : Black}, style]}
+      {...rest}
+    />
+  );
+};
 
 const contentContainerStyle = {paddingBottom: 80};
 const searchIconSize = {height: 16, width: 16};
 const ghostSvgStyle = {marginTop: 20};
 const allNetworkSvgStyle = {width: 20, height: 20};
 
-const ChainSelectorModal = () => {
+type ChainSelectorFlashListProps<T> = FlashListProps<T>;
+
+type ChainSelectorListItem = string | {title: string};
+
+const isSectionHeader = (
+  item: ChainSelectorListItem,
+): item is {title: string} => typeof item !== 'string';
+
+export const ChainSelectorFlashList = <T,>(
+  props: ChainSelectorFlashListProps<T>,
+) => {
+  const BottomSheetScrollable = useBottomSheetScrollableCreator();
+
+  return <FlashList {...props} renderScrollComponent={BottomSheetScrollable} />;
+};
+
+const ChainSelectorModalContent = ({
+  onModalHide,
+}: {
+  onModalHide: () => void;
+}) => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showChainSelectorModal,
   );
+  const isVisibleRef = useRef(isVisible);
+  const pendingModalHideActionRef = useRef<(() => void) | null>(null);
+  isVisibleRef.current = isVisible;
   const config = useSelector(
     ({APP}: RootState) => APP.chainSelectorModalConfig,
   );
@@ -171,7 +241,7 @@ const ChainSelectorModal = () => {
         : SUPPORTED_CURRENCIES_CHAINS;
     let _recentSelectedChainFilterOption =
       chainsOptions && chainsOptions.length > 0
-        ? recentSelectedChainFilterOption.filter(chain =>
+        ? recentSelectedChainFilterOption.filter((chain: string) =>
             chainsOptions.includes(chain),
           )
         : recentSelectedChainFilterOption;
@@ -214,37 +284,34 @@ const ChainSelectorModal = () => {
       ],
       [] as any[],
     );
-    return flattenedList;
+    return flattenedList as ChainSelectorListItem[];
   }, [
     customChains,
     sectionHeaders.all,
     sectionHeaders.recentlySelected,
     recentSelectedChainFilterOption,
     selectedChainFilterOption,
-    context,
     chainsOptions,
   ]);
 
   const handleChainSelect = useCallback(
-    async (supportedChain: any) => {
-      dispatch(AppActions.dismissChainSelectorModal());
-      await sleep(1000);
-      dispatch(AppActions.clearChainSelectorModalOptions());
-      const option = supportedChain?.chain as SupportedChains | undefined;
+    (supportedChain: any) => {
+      pendingModalHideActionRef.current = () => {
+        const option = supportedChain?.chain as SupportedChains | undefined;
 
-      // Check if the context is one of 'sell', 'swapFrom', 'swapTo', 'buy', 'walletconnect'
-      if (ignoreGlobalListContextList.includes(context as string)) {
-        dispatch(setLocalDefaultChainFilterOption(option));
-      } else {
-        dispatch(setDefaultChainFilterOption(option));
-      }
-      if (context === 'accounthistoryview') {
-        DeviceEventEmitter.emit(
-          DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-          option || '',
-        );
-      }
-      setSearchVal('');
+        if (ignoreGlobalListContextList.includes(context as string)) {
+          dispatch(setLocalDefaultChainFilterOption(option));
+        } else {
+          dispatch(setDefaultChainFilterOption(option));
+        }
+        if (context === 'accounthistoryview') {
+          DeviceEventEmitter.emit(
+            DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+            option || '',
+          );
+        }
+      };
+      dispatch(AppActions.dismissChainSelectorModal());
     },
     [dispatch, context],
   );
@@ -264,16 +331,16 @@ const ChainSelectorModal = () => {
             activeOpacity={ActiveOpacity}
             selected={selected}
             onPress={() => handleChainSelect(supportedChain)}>
-            <NetworkRowContainer>
-              <ImageContainer>
+            <View style={styles.networkRowContainer}>
+              <View style={styles.imageContainer}>
                 {supportedChain?.img ? (
                   <CurrencyImage img={supportedChain?.img} size={32} />
                 ) : (
                   <AllNetworkSvg style={allNetworkSvgStyle} />
                 )}
-              </ImageContainer>
+              </View>
               <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-            </NetworkRowContainer>
+            </View>
           </NetworkChainContainer>
           {!selected && !isLastItem ? <Hr /> : null}
         </>
@@ -306,16 +373,23 @@ const ChainSelectorModal = () => {
     [],
   );
 
-  const handleBackdropPress = useCallback(async () => {
-    dispatch(AppActions.dismissChainSelectorModal());
-    await sleep(1000);
-    dispatch(AppActions.clearChainSelectorModalOptions());
-    setSearchVal('');
+  const handleBackdropPress = useCallback(() => {
     haptic('impactLight');
-    if (onBackdropDismiss) {
-      onBackdropDismiss();
-    }
+    pendingModalHideActionRef.current = onBackdropDismiss || null;
+    dispatch(AppActions.dismissChainSelectorModal());
   }, [dispatch, onBackdropDismiss]);
+
+  const handleContentModalHide = useCallback(() => {
+    const pendingAction = pendingModalHideActionRef.current;
+    pendingModalHideActionRef.current = null;
+    setSearchVal('');
+    pendingAction?.();
+
+    if (!isVisibleRef.current) {
+      dispatch(AppActions.clearChainSelectorModalOptions());
+    }
+    onModalHide();
+  }, [dispatch, onModalHide]);
 
   const modalHeight = useMemo(() => Math.min(600, HEIGHT - 150), []);
   const modalHeightPercentage = useMemo(
@@ -328,16 +402,20 @@ const ChainSelectorModal = () => {
     [modalHeightPercentage],
   );
 
-  const keyExtractor = useCallback((item, index) => index.toString(), []);
+  const keyExtractor = useCallback(
+    (_item: ChainSelectorListItem, index: number) => index.toString(),
+    [],
+  );
 
   const getItemType = useCallback(
-    item => (item.title ? 'sectionHeader' : 'row'),
+    (item: ChainSelectorListItem) =>
+      isSectionHeader(item) ? 'sectionHeader' : 'row',
     [],
   );
 
   const renderItem = useCallback(
-    ({item, index}) => {
-      if (item.title) {
+    ({item, index}: ListRenderItemInfo<ChainSelectorListItem>) => {
+      if (isSectionHeader(item)) {
         return <ListHeader>{item.title}</ListHeader>;
       } else {
         return renderChainItem({item, index});
@@ -357,14 +435,15 @@ const ChainSelectorModal = () => {
       isVisible={isVisible}
       borderRadius={borderRadius}
       backdropOpacity={0.4}
+      onModalHide={handleContentModalHide}
       onBackdropPress={handleBackdropPress}>
-      <ChainSelectorContainer>
+      <View style={styles.chainSelectorContainer}>
         <WalletSelectMenuHeaderContainer>
           <TextAlign align={'left'}>
             <H4>{t('Select Network')}</H4>
           </TextAlign>
         </WalletSelectMenuHeaderContainer>
-        <Header>
+        <View style={styles.header}>
           <SearchRoundContainer>
             <SearchIconContainer>
               <SearchSvg {...searchIconSize} />
@@ -375,14 +454,12 @@ const ChainSelectorModal = () => {
               onChangeText={updateSearchResults}
             />
           </SearchRoundContainer>
-        </Header>
+        </View>
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
-            <FlashList
+            <ChainSelectorFlashList
               contentContainerStyle={contentContainerStyle}
               data={searchResults}
-              estimatedItemSize={65}
-              // @ts-ignore
               renderItem={renderChainItem}
               keyExtractor={keyExtractor}
             />
@@ -400,18 +477,29 @@ const ChainSelectorModal = () => {
         </HideableView>
 
         <HideableView show={!searchVal}>
-          <FlashList
+          <ChainSelectorFlashList
             contentContainerStyle={contentContainerStyle}
             data={chainList}
             renderItem={renderItem}
-            estimatedItemSize={65}
             keyExtractor={keyExtractor}
             getItemType={getItemType}
           />
         </HideableView>
-      </ChainSelectorContainer>
+      </View>
     </SheetModal>
   );
 };
 
-export default memo(ChainSelectorModal);
+const ChainSelectorModal = memo(() => {
+  const isVisible = useSelector(
+    ({APP}: RootState) => APP.showChainSelectorModal,
+  );
+  const {shouldRenderModal, handleModalHide} =
+    useModalContentLifecycle(isVisible);
+
+  return shouldRenderModal ? (
+    <ChainSelectorModalContent onModalHide={handleModalHide} />
+  ) : null;
+});
+
+export default ChainSelectorModal;

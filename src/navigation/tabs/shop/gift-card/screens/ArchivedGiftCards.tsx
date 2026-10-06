@@ -64,7 +64,6 @@ const ArchivedGiftCards = ({
         <FlashList
           data={giftCards}
           renderItem={renderItem}
-          estimatedItemSize={65}
           keyExtractor={item => item.invoiceId}
         />
       </SectionContainer>

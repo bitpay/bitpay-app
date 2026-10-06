@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
-import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {StyleSheet, TouchableHighlight, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import {Column} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
 import {Black, GhostWhite, SlateDark, White} from '../../styles/colors';
@@ -8,28 +8,28 @@ import AngleRight from '../../../assets/img/angle-right.svg';
 import ContactIcon from '../../navigation/tabs/contacts/components/ContactIcon';
 import {getCurrencyAbbreviation} from '../../utils/helper-methods';
 
-const ContactContainer = styled.TouchableHighlight`
-  padding: 10px 0px;
-`;
-
-const ContactColumn = styled(Column)`
-  margin-left: 24px;
-  margin-right: 8px;
-`;
-
-const ContactImageContainer = styled.View`
-  height: 35px;
-  width: 35px;
-  display: flex;
-  justify-content: center;
-  align-self: center;
-  border-radius: 8px;
-`;
-
-const RowContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  contactContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  contactColumn: {
+    marginLeft: 24,
+    marginRight: 8,
+  },
+  contactImageContainer: {
+    height: 35,
+    width: 35,
+    display: 'flex',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius: 8,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
 
 export interface ContactRowProps {
   address: string;
@@ -55,9 +55,12 @@ const ContactRow = ({contact, onPress}: Props) => {
   const {coin: _coin, name, email, address, chain, tokenAddress} = contact;
   const coin = getCurrencyAbbreviation(_coin, chain);
   return (
-    <ContactContainer underlayColor={underlayColor} onPress={onPress}>
-      <RowContainer>
-        <ContactImageContainer>
+    <TouchableHighlight
+      style={styles.contactContainer}
+      underlayColor={underlayColor}
+      onPress={onPress}>
+      <View style={styles.rowContainer}>
+        <View style={styles.contactImageContainer}>
           <ContactIcon
             name={name}
             coin={coin}
@@ -66,18 +69,18 @@ const ContactRow = ({contact, onPress}: Props) => {
             address={address}
             tokenAddress={tokenAddress}
           />
-        </ContactImageContainer>
-        <ContactColumn>
+        </View>
+        <Column style={styles.contactColumn}>
           <H5 numberOfLines={2} ellipsizeMode={'tail'}>
             {name}
           </H5>
           <ListItemSubText numberOfLines={1} ellipsizeMode={'tail'}>
             {email ? email : address}
           </ListItemSubText>
-        </ContactColumn>
+        </Column>
         <AngleRight />
-      </RowContainer>
-    </ContactContainer>
+      </View>
+    </TouchableHighlight>
   );
 };
 
