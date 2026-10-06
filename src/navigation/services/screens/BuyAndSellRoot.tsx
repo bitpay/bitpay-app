@@ -52,8 +52,9 @@ import {
   getMoonpayEmbeddedAnonymousCredentials,
   getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedGooglePaySupported,
   getMoonpayEmbeddedSepaSupported,
-  resolveMoonpayEmbeddedSepaSupport,
+  resolveMoonpayEmbeddedCapabilities,
   getMoonpayEmbeddedEnabled,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -2681,8 +2682,11 @@ const BuyAndSellRoot = ({
         isMoonpayEmbeddedPaymentMethodEnabled(
           paymentMethod?.method,
           buyCryptoConfig,
-          getMoonpayEmbeddedApplePaySupported(),
-          true,
+          {
+            applePaySupported: getMoonpayEmbeddedApplePaySupported(),
+            googlePaySupported: getMoonpayEmbeddedGooglePaySupported(),
+            sepaHeadlessSupported: true,
+          },
         );
 
       // Whether it can actually run embedded, runtime capabilities included.
@@ -2690,8 +2694,11 @@ const BuyAndSellRoot = ({
         isMoonpayEmbeddedPaymentMethodEnabled(
           paymentMethod?.method,
           buyCryptoConfig,
-          getMoonpayEmbeddedApplePaySupported(),
-          getMoonpayEmbeddedSepaSupported(),
+          {
+            applePaySupported: getMoonpayEmbeddedApplePaySupported(),
+            googlePaySupported: getMoonpayEmbeddedGooglePaySupported(),
+            sepaHeadlessSupported: getMoonpayEmbeddedSepaSupported(),
+          },
         );
       if (moonpayEmbeddedEnabled && isMoonpayEmbeddedPaymentMethod) {
         const embeddedStatus = getMoonpayEmbeddedStatus();
@@ -2750,8 +2757,11 @@ const BuyAndSellRoot = ({
                   // whether SEPA may run headless. Until this resolves the
                   // capability is unknown, so it has to be awaited before
                   // deciding embedded vs Kayak.
-                  if (paymentMethod.method === 'sepaBankTransfer') {
-                    await resolveMoonpayEmbeddedSepaSupport(
+                  if (
+                    paymentMethod.method === 'sepaBankTransfer' ||
+                    paymentMethod.method === 'googlePay'
+                  ) {
+                    await resolveMoonpayEmbeddedCapabilities(
                       newCredentials.accessToken,
                     );
                   }

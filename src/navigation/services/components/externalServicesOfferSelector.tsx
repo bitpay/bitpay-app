@@ -57,6 +57,7 @@ import {
   getBuyCryptoFiatLimits,
   getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
+  getMoonpayEmbeddedGooglePaySupported,
   getMoonpayEmbeddedSepaSupported,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -1167,13 +1168,16 @@ const ExternalServicesOfferSelector: React.FC<
       );
     }
 
-    // MoonPay embedded flow (Apple Pay | Cards | SEPA)
+    // MoonPay embedded flow (Apple Pay | Google Pay | Cards | SEPA)
     const isMoonpayEmbeddedPaymentMethod =
       isMoonpayEmbeddedPaymentMethodEnabled(
         paymentMethod?.method,
         buyCryptoConfig,
-        getMoonpayEmbeddedApplePaySupported(),
-        getMoonpayEmbeddedSepaSupported(),
+        {
+          applePaySupported: getMoonpayEmbeddedApplePaySupported(),
+          googlePaySupported: getMoonpayEmbeddedGooglePaySupported(),
+          sepaHeadlessSupported: getMoonpayEmbeddedSepaSupported(),
+        },
       );
     if (
       preferMoonpayApplePay &&
