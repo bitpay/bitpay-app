@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   hiddenChart: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0,
   },
   allocationRow: {

@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   hiddenChart: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0,
   },
   transactionSectionHeaderContainer: {
