@@ -1,7 +1,7 @@
 <network-security-config>
   <!-- Set cleartextTrafficPermitted = true for development -->
-  <base-config cleartextTrafficPermitted="true" />
-  <domain-config cleartextTrafficPermitted="true">
+  <base-config cleartextTrafficPermitted="false" />
+  <domain-config cleartextTrafficPermitted="false">
     <domain includeSubdomains="true">localhost</domain>
     <!-- Add your local IP here. -->
     <!--<domain includeSubdomains="true">127.0.0.1</domain>-->
