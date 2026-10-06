@@ -15,7 +15,7 @@ import AuthFormContainer, {
 } from '../../../../auth/components/AuthFormContainer';
 import {WalletGroupParamList} from '../../../WalletGroup';
 
-const COINBASE_SMS_2FA_CODE_LENGTH = 7;
+const SMS_2FA_CODE_LENGTH = 7;
 
 const PrimaryActionContainer = styled.View`
   margin-bottom: 20px;
@@ -78,8 +78,7 @@ const PayProConfirmTwoFactor = ({
                 onBlur={onBlur}
                 onChangeText={(text: string) => {
                   onChange(text);
-                  const codeLength =
-                    twoFactorCodeLength || COINBASE_SMS_2FA_CODE_LENGTH;
+                  const codeLength = twoFactorCodeLength || SMS_2FA_CODE_LENGTH;
                   if (text.length === codeLength) {
                     submitForm(text);
                   }

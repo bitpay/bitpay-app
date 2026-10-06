@@ -48,7 +48,6 @@ import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
 import {SumSubEffects} from '../sumsub';
 import {Card} from '../card/card.models';
-import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {
@@ -63,6 +62,12 @@ import {
   startGetRates,
 } from '../wallet/effects';
 import {startWalletStoreInit} from '../wallet/effects/init/init';
+import {migrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
+import {flushPersistor} from '../persistor';
+import {
+  removePersistRootBackups,
+  resumePersistRootBackups,
+} from '../backup/fs-backup';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -252,6 +257,14 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(reportDeviceIntegrity());
 
+    await dispatch(
+      migrateWalletSecrets(
+        flushPersistor,
+        removePersistRootBackups,
+        resumePersistRootBackups,
+      ),
+    );
+
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());
       void Promise.resolve(walletStoreInitResult).catch(error => {
@@ -340,9 +353,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (getState().WALLET_CONNECT_V2?.sessions?.length > 0) {
       dispatch(walletConnectV2Init());
     }
-
-    // Update Coinbase
-    dispatch(coinbaseInitialize());
 
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
@@ -1174,7 +1184,6 @@ export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
     );
     dispatch(FormatKeyBalances());
     await dispatch(updatePortfolioBalance());
-    await dispatch(coinbaseInitialize());
     // Reset Default Language
     await dispatch(AppActions.setDefaultLanguage('en'));
     await dispatch(WalletActions.setUseUnconfirmedFunds(false));

@@ -15,7 +15,6 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Network} from '../../constants';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
-import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {
   formatCryptoAddress,
@@ -82,7 +81,6 @@ export interface WalletRowProps extends SearchableItem {
   hideWalletByAccount?: boolean;
   hideBalance?: boolean;
   pendingTxps: TransactionProposal[];
-  coinbaseAccount?: CoinbaseAccountProps;
   multisig?: string;
   threshold?: string;
   isComplete?: boolean;

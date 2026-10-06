@@ -34,7 +34,6 @@ import {
   ListViewSvg,
 } from './Shared';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../../store/analytics/analytics.effects';
 import CustomTabBar from '../../../../../../components/custom-tab-bar/CustomTabBar';
@@ -53,16 +52,12 @@ const CustomizeHomeSettings = () => {
   const defaultLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
-  const hasCoinbase = useAppSelector(
-    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
-  );
   const [initialLayoutType] = useState(defaultLayoutType);
   const [layoutType, setLayoutType] = useState(defaultLayoutType);
   const navigation = useNavigation();
   const theme = useTheme();
   const [_visible, _hidden] = createCustomizeCardList({
     keys: Object.values(keys),
-    hasCoinbase,
     homeCarouselConfig,
   });
   const [visibleList, setVisibleList] = useState(_visible);

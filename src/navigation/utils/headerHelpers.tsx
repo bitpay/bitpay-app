@@ -5,11 +5,12 @@ import {
   initialWindowMetrics,
   EdgeInsets,
 } from 'react-native-safe-area-context';
-import {useAppSelector} from '../../utils/hooks';
-import CustomHeader, {
-  headerHeight,
-} from '../../components/navigation/CustomHeader';
+import CustomHeader from '../../components/navigation/CustomHeader';
 import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+
+type HeaderTheme = {
+  colors: {background: string; text: string};
+};
 
 const useSafeInsets = (): EdgeInsets => {
   const contextInsets = React.useContext(SafeAreaInsetsContext);
@@ -19,33 +20,29 @@ const useSafeInsets = (): EdgeInsets => {
   );
 };
 
-export const useContentPaddingTop = (): number => {
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const insets = useSafeInsets();
-
-  return !showArchaxBanner ? headerHeight + (insets.top ?? 0) : headerHeight;
-};
-
 export const useContentPaddingBottom = (): number => {
   const insets = useSafeInsets();
 
   return Platform.OS === 'android' ? insets.bottom : 0;
 };
 
-export const useStackScreenOptions = (theme: {
-  colors: {background: string; text: string};
-}) => {
-  const paddingBottom = useContentPaddingBottom();
-  const paddingTop = useContentPaddingTop();
-
-  return {
+export const createStackScreenOptions = (
+  theme: HeaderTheme,
+  paddingBottom: number,
+) =>
+  ({
     ...baseNavigatorOptions,
-    headerTransparent: true,
+    headerTransparent: false,
     headerStyle: {backgroundColor: theme.colors.background},
     headerShadowVisible: false,
     headerTintColor: theme.colors.text,
     headerTitleAlign: 'center' as const,
-    contentStyle: {paddingBottom, paddingTop},
+    contentStyle: {paddingBottom},
     header: (props: any) => <CustomHeader {...props} />,
-  };
+  } as const);
+
+export const useStackScreenOptions = (theme: HeaderTheme) => {
+  const paddingBottom = useContentPaddingBottom();
+
+  return createStackScreenOptions(theme, paddingBottom);
 };

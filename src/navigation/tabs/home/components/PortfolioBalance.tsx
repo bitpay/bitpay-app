@@ -23,7 +23,6 @@ import BalanceHistoryChart, {
 } from '../../../../components/charts/BalanceHistoryChart';
 import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../../components/charts/fiatTimeframes';
 import Percentage from '../../../../components/percentage/Percentage';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
@@ -151,8 +150,6 @@ const PortfolioBalanceChangeRow = ({
 
 const PortfolioBalanceContent = () => {
   const {t} = useTranslation();
-  const coinbaseBalance =
-    useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const {rates} = useSelector(({RATE}: RootState) => RATE);
@@ -202,8 +199,6 @@ const PortfolioBalanceContent = () => {
     (total, wallet) => total + (Number(wallet?.balance?.fiat) || 0),
     0,
   );
-  const totalBalanceIncludingCoinbase: number =
-    visibleCurrentBalance + coinbaseBalance;
 
   const dispatch = useAppDispatch();
   const portfolioChartsRequested = showPortfolioValue === true;
@@ -245,25 +240,25 @@ const PortfolioBalanceContent = () => {
         interpolate(collapseProgress.value, [0, 1], [1, 0]) *
         collapseButtonPressOpacity.value,
     };
-  }, []);
+  });
 
   const chartScale = useDerivedValue(() => {
     return interpolate(collapseProgress.value, [0, 1], [1, collapsedScale]);
-  }, [collapsedScale]);
+  });
 
   const chartSpacerAnimatedStyle = useAnimatedStyle(() => {
     return {
       height: interpolate(collapseProgress.value, [0, 1], [fullChartHeight, 0]),
     };
-  }, [fullChartHeight]);
+  });
 
   const axisLabelOpacity = useDerivedValue(() => {
     return interpolate(collapseProgress.value, [0, 0.08, 1], [1, 0, 0]);
-  }, []);
+  });
 
   const timeframeSelectorOpacity = useDerivedValue(() => {
     return interpolate(collapseProgress.value, [0, 0.28, 1], [1, 0, 0]);
-  }, []);
+  });
 
   // Fine-tune the final collapsed Y alignment so the mini chart sits perfectly
   // next to the large portfolio balance number (without looking slightly low).
@@ -308,7 +303,7 @@ const PortfolioBalanceContent = () => {
         {scale: chartScale.value},
       ],
     };
-  }, [collapsedTranslateX, collapsedTranslateY]);
+  });
 
   const persistHomeChartCollapsePreference = useCallback(
     (collapsed: boolean) => {
@@ -390,7 +385,7 @@ const PortfolioBalanceContent = () => {
   const balanceChartSurface = usePortfolioBalanceChartSurface({
     wallets: chartWalletsAcrossKeys,
     quoteCurrency,
-    fallbackBalance: totalBalanceIncludingCoinbase,
+    fallbackBalance: visibleCurrentBalance,
     fallbackCurrency: defaultAltCurrency.isoCode,
     enabled: balanceChartsEnabled,
     isBalanceChartDataReadyToQuery:
@@ -412,9 +407,6 @@ const PortfolioBalanceContent = () => {
       balanceChartReadiness.isBalanceChartDataReadyToQuery,
     preserveVisibleSeriesWhileNotReady:
       balanceChartReadiness.shouldPreserveStaleBalanceChart,
-    // NOTE: Coinbase balance is intentionally excluded from the balance chart
-    // (Option B per product requirements) because we do not have historized
-    // Coinbase balance snapshots.
     onSelectedBalanceChange:
       balanceChartSurface.chartCallbacks.onSelectedBalanceChange,
     onDisplayedAnalysisPointChange:
@@ -443,7 +435,7 @@ const PortfolioBalanceContent = () => {
   const displayedPortfolioBalance =
     typeof balanceChartSurface.selectedBalance === 'number'
       ? balanceChartSurface.selectedBalance
-      : totalBalanceIncludingCoinbase;
+      : visibleCurrentBalance;
   const displayedPortfolioBalanceCurrency = defaultAltCurrency.isoCode;
   const formattedPortfolioBalance = formatFiatAmount(
     displayedPortfolioBalance,
@@ -545,7 +537,7 @@ const PortfolioBalanceContent = () => {
             </>
           ) : (
             <HiddenBalance>
-              {maskIfHidden(true, totalBalanceIncludingCoinbase)}
+              {maskIfHidden(true, visibleCurrentBalance)}
             </HiddenBalance>
           )}
         </TouchableOpacity>

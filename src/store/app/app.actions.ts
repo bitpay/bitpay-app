@@ -1,4 +1,4 @@
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {EventSubscription} from 'react-native';
 import {ContentCard} from '@braze/react-native-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
@@ -8,6 +8,7 @@ import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
+  AppColorScheme,
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -100,10 +101,6 @@ export const dismissBottomNotificationModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL,
 });
 
-export const resetBottomNotificationModalConfig = (): AppActionType => ({
-  type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
-});
-
 export const dismissChainSelectorModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL,
 });
@@ -119,7 +116,7 @@ export const showChainSelectorModal = (
   payload: config,
 });
 
-export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
+export const setColorScheme = (scheme: AppColorScheme): AppActionType => ({
   type: AppActionTypes.SET_COLOR_SCHEME,
   payload: scheme,
 });

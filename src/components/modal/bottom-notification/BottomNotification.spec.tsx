@@ -1,8 +1,16 @@
 import React from 'react';
+import {StyleSheet} from 'react-native';
 import {fireEvent, cleanup, render} from '@test/render';
 import {Provider} from 'react-redux';
 import BottomNotification from './BottomNotification';
+import SheetModal from '../base/sheet/SheetModal';
 import configureTestStore from '@test/store';
+import {ThemeProvider} from 'styled-components/native';
+import {BitPayDarkTheme} from '../../../themes/bitpay';
+import {LightBlack} from '../../../styles/colors';
+
+// Preserve ScrollView props now that notifications use a sheet-aware scrollable.
+jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 const mockFn = jest.fn();
 
@@ -27,7 +35,10 @@ const initialState = {
 const store = configureTestStore(initialState);
 
 describe('Bottom Notification Modal', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    jest.restoreAllMocks();
+  });
   it('should render correctly', async () => {
     render(
       <Provider store={store}>
@@ -62,6 +73,38 @@ describe('Bottom Notification Modal', () => {
     const backdrop = await getByTestId('modalBackdrop');
     expect(backdrop).toBeTruthy();
     fireEvent.press(backdrop);
+  });
+
+  it('uses the content color for the sheet wrapper and Android bottom inset', () => {
+    const DarkThemeProvider = ({children}: {children: React.ReactNode}) => (
+      <ThemeProvider theme={BitPayDarkTheme}>{children}</ThemeProvider>
+    );
+    jest
+      .spyOn(require('@react-navigation/native'), 'useTheme')
+      .mockReturnValue(BitPayDarkTheme);
+
+    const {getByTestId, UNSAFE_getByType} = render(
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
+      {wrapper: DarkThemeProvider},
+    );
+
+    const contentStyle = StyleSheet.flatten(
+      getByTestId('bottom-notification-content').props.style,
+    );
+    expect(contentStyle.backgroundColor).toBe(LightBlack);
+    expect(contentStyle.maxHeight).toBeGreaterThan(0);
+    expect(
+      getByTestId('bottom-notification-content').props.contentContainerStyle,
+    ).toEqual(expect.objectContaining({padding: 25}));
+    expect(
+      getByTestId('bottom-notification-content').props
+        .keyboardShouldPersistTaps,
+    ).toBe('handled');
+    expect(
+      UNSAFE_getByType((SheetModal as any).type).props.backgroundColor,
+    ).toBe(LightBlack);
   });
 
   it('should close modal on cta press', async () => {

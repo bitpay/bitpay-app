@@ -45,6 +45,12 @@ function getFreshModule(): typeof import('./fs-backup') {
   return mod!;
 }
 
+const safeRoot = (extra: {[key: string]: any} = {}) =>
+  JSON.stringify({
+    ...extra,
+    WALLET: {keys: {}, secretsMigrated: true},
+  });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // backupFileExists
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,7 +110,10 @@ describe('backupPersistRoot', () => {
       PORTFOLIO: {b: 2},
       RATE: {c: 3},
       SHOP_CATALOG: {d: 4},
-      WALLET: {keys: {}},
+      WALLET: {
+        keys: {},
+        secretsMigrated: true,
+      },
     });
     (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
     await backupPersistRoot(raw);
@@ -117,17 +126,55 @@ describe('backupPersistRoot', () => {
     expect(written.PORTFOLIO).toBeUndefined();
     expect(written.RATE).toBeUndefined();
     expect(written.SHOP_CATALOG).toBeUndefined();
-    expect(written.WALLET).toEqual({keys: {}});
+    expect(written.WALLET).toEqual({
+      keys: {},
+      secretsMigrated: true,
+    });
   });
 
-  it('writes raw JSON unchanged when JSON.parse fails', async () => {
+  it('preserves malformed payload backup behavior before migration cleanup', async () => {
     const {backupPersistRoot} = getFreshModule();
     const rawJson = 'not valid json {{{}}}';
-    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
     await backupPersistRoot(rawJson);
 
-    expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(1);
-    expect((mockedRNFS.writeFile as jest.Mock).mock.calls[0][1]).toBe(rawJson);
+    expect(mockedRNFS.writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      rawJson,
+      'utf8',
+    );
+  });
+
+  it('preserves legacy backups before migration cleanup', async () => {
+    const {backupPersistRoot} = getFreshModule();
+    const rawJson = JSON.stringify({
+      WALLET: JSON.stringify({
+        secretsMigrated: true,
+        properties: {mnemonic: 'legacy plaintext'},
+      }),
+    });
+
+    await backupPersistRoot(rawJson);
+
+    expect(mockedRNFS.writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      rawJson,
+      'utf8',
+    );
+  });
+
+  it('accepts a redux-persist wallet slice once migrated', async () => {
+    const {backupPersistRoot} = getFreshModule();
+    const rawJson = JSON.stringify({
+      WALLET: JSON.stringify({secretsMigrated: true}),
+    });
+
+    await backupPersistRoot(rawJson);
+
+    expect(mockedRNFS.writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      rawJson,
+      'utf8',
+    );
   });
 
   it('creates the directory when it does not exist', async () => {
@@ -135,7 +182,7 @@ describe('backupPersistRoot', () => {
     (mockedRNFS.exists as jest.Mock)
       .mockResolvedValueOnce(false) // ensureDir: BASE_DIR not exists → mkdir
       .mockResolvedValue(false); // final file does not exist
-    await backupPersistRoot('{}');
+    await backupPersistRoot(safeRoot());
     expect(mockedRNFS.mkdir).toHaveBeenCalledTimes(1);
   });
 
@@ -144,7 +191,7 @@ describe('backupPersistRoot', () => {
     (mockedRNFS.exists as jest.Mock)
       .mockResolvedValueOnce(true) // ensureDir: dir exists
       .mockResolvedValue(false); // no final file
-    await backupPersistRoot('{}');
+    await backupPersistRoot(safeRoot());
     expect(mockedRNFS.mkdir).not.toHaveBeenCalled();
   });
 
@@ -154,7 +201,7 @@ describe('backupPersistRoot', () => {
       .mockResolvedValueOnce(true) // ensureDir: dir exists
       .mockResolvedValueOnce(true) // finalExists = true
       .mockResolvedValueOnce(false); // bakExists = false → no unlink
-    await backupPersistRoot('{}');
+    await backupPersistRoot(safeRoot());
     expect(mockedRNFS.unlink).not.toHaveBeenCalled();
     expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2); // FINAL→BAK, TEMP→FINAL
   });
@@ -165,7 +212,7 @@ describe('backupPersistRoot', () => {
       .mockResolvedValueOnce(true) // ensureDir: dir exists
       .mockResolvedValueOnce(true) // finalExists = true
       .mockResolvedValueOnce(true); // bakExists = true → unlink
-    await backupPersistRoot('{}');
+    await backupPersistRoot(safeRoot());
     expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
     expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2);
   });
@@ -179,7 +226,7 @@ describe('backupPersistRoot', () => {
     (mockedRNFS.moveFile as jest.Mock)
       .mockRejectedValueOnce(new Error('rotate failed'))
       .mockResolvedValueOnce(undefined);
-    await backupPersistRoot('{}');
+    await backupPersistRoot(safeRoot());
     expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2);
   });
 
@@ -191,7 +238,7 @@ describe('backupPersistRoot', () => {
     (mockedRNFS.exists as jest.Mock)
       .mockResolvedValueOnce(true) // ensureDir: dir exists
       .mockResolvedValueOnce(true); // tmpExists = true → unlink temp
-    await backupPersistRoot('{}');
+    await backupPersistRoot(safeRoot());
     expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
   });
 
@@ -206,7 +253,256 @@ describe('backupPersistRoot', () => {
     (mockedRNFS.unlink as jest.Mock).mockRejectedValueOnce(
       new Error('unlink error'),
     );
-    await expect(backupPersistRoot('{}')).resolves.toBeUndefined();
+    await expect(backupPersistRoot(safeRoot())).resolves.toBeUndefined();
+  });
+});
+
+describe('removePersistRootBackups', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (mockedRNFS.unlink as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  it('removes the final, rolling, and temporary backups', async () => {
+    const {removePersistRootBackups} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(true);
+
+    await removePersistRootBackups();
+
+    expect(mockedRNFS.unlink).toHaveBeenCalledTimes(3);
+  });
+
+  it('rejects when a legacy backup cannot be removed', async () => {
+    const {removePersistRootBackups} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(true);
+    (mockedRNFS.unlink as jest.Mock).mockRejectedValueOnce(
+      new Error('unlink failed'),
+    );
+
+    await expect(removePersistRootBackups()).rejects.toThrow('unlink failed');
+    expect(mockedRNFS.unlink).toHaveBeenCalledTimes(3);
+  });
+
+  it('invalidates the cached existence result after cleanup', async () => {
+    const {
+      backupFileExists,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(true);
+    await backupFileExists();
+    await removePersistRootBackups();
+    await resumePersistRootBackups();
+
+    jest.clearAllMocks();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(false);
+
+    expect(await backupFileExists()).toBe(false);
+    expect(mockedRNFS.exists).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores an existence check that started before cleanup', async () => {
+    const {
+      backupFileExists,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    let resolveStaleCheck!: (exists: boolean) => void;
+    (mockedRNFS.exists as jest.Mock)
+      .mockImplementationOnce(
+        () =>
+          new Promise<boolean>(resolve => {
+            resolveStaleCheck = resolve;
+          }),
+      )
+      .mockResolvedValue(false);
+
+    const staleCheck = backupFileExists();
+    const cleanup = removePersistRootBackups();
+    resolveStaleCheck(true);
+
+    expect(await staleCheck).toBe(false);
+
+    await cleanup;
+    await resumePersistRootBackups();
+
+    jest.clearAllMocks();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(false);
+    expect(await backupFileExists()).toBe(false);
+    expect(mockedRNFS.exists).toHaveBeenCalledTimes(1);
+  });
+
+  it('invalidates cache set by a backup that was already in flight', async () => {
+    const {
+      backupFileExists,
+      backupPersistRoot,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    let releaseWrite!: () => void;
+    let markWriteStarted!: () => void;
+    const writeStarted = new Promise<void>(resolve => {
+      markWriteStarted = resolve;
+    });
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+    (mockedRNFS.writeFile as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          releaseWrite = resolve;
+          markWriteStarted();
+        }),
+    );
+    (mockedRNFS.moveFile as jest.Mock).mockResolvedValue(undefined);
+
+    const pendingBackup = backupPersistRoot(safeRoot());
+    await writeStarted;
+    const cleanup = removePersistRootBackups();
+    releaseWrite();
+    await pendingBackup;
+    await cleanup;
+    await resumePersistRootBackups();
+
+    jest.clearAllMocks();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(false);
+    expect(await backupFileExists()).toBe(false);
+    expect(mockedRNFS.exists).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not consult the filesystem while backups are suspended', async () => {
+    const {
+      backupFileExists,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+
+    await removePersistRootBackups();
+    jest.clearAllMocks();
+
+    expect(await backupFileExists()).toBe(false);
+    expect(mockedRNFS.exists).not.toHaveBeenCalled();
+
+    await resumePersistRootBackups();
+  });
+
+  it('defers new backups until cleanup is resumed', async () => {
+    const {
+      backupPersistRoot,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+    (mockedRNFS.mkdir as jest.Mock).mockResolvedValue(undefined);
+    (mockedRNFS.writeFile as jest.Mock).mockResolvedValue(undefined);
+    (mockedRNFS.moveFile as jest.Mock).mockResolvedValue(undefined);
+
+    const rawJson = safeRoot();
+    const cleanup = removePersistRootBackups();
+    await backupPersistRoot(rawJson);
+    await backupPersistRoot(
+      JSON.stringify({WALLET: JSON.stringify({secretsMigrated: false})}),
+    );
+    await cleanup;
+
+    expect(mockedRNFS.writeFile).not.toHaveBeenCalled();
+
+    await resumePersistRootBackups();
+
+    expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(1);
+    expect(mockedRNFS.writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      rawJson,
+      'utf8',
+    );
+  });
+
+  it('rejects a late legacy payload after a migrated backup was written', async () => {
+    const {
+      backupPersistRoot,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+    (mockedRNFS.mkdir as jest.Mock).mockResolvedValue(undefined);
+    (mockedRNFS.writeFile as jest.Mock).mockResolvedValue(undefined);
+    (mockedRNFS.moveFile as jest.Mock).mockResolvedValue(undefined);
+
+    await removePersistRootBackups();
+    await resumePersistRootBackups();
+    const migrated = safeRoot();
+    await backupPersistRoot(migrated);
+    await backupPersistRoot(
+      JSON.stringify({
+        WALLET: JSON.stringify({
+          secretsMigrated: false,
+          keys: {key1: {properties: {mnemonic: 'legacy plaintext'}}},
+        }),
+      }),
+    );
+
+    expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(1);
+    expect(mockedRNFS.writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      migrated,
+      'utf8',
+    );
+  });
+
+  it('can discard a deferred backup after a failed migration', async () => {
+    const {
+      backupPersistRoot,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+
+    const cleanup = removePersistRootBackups();
+    await backupPersistRoot(safeRoot());
+    await cleanup;
+    await resumePersistRootBackups(true);
+
+    expect(mockedRNFS.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects a late legacy write after cleanup has resumed', async () => {
+    const {
+      backupPersistRoot,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+
+    await removePersistRootBackups();
+    await resumePersistRootBackups();
+    await backupPersistRoot(
+      JSON.stringify({
+        WALLET: JSON.stringify({secretsMigrated: false}),
+      }),
+    );
+
+    expect(mockedRNFS.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('backs up an unmigrated payload again after a discarded migration', async () => {
+    const {
+      backupPersistRoot,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    } = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(false);
+    const unmigrated = JSON.stringify({
+      WALLET: JSON.stringify({secretsMigrated: false}),
+    });
+
+    await removePersistRootBackups();
+    await resumePersistRootBackups(true);
+    await backupPersistRoot(unmigrated);
+
+    expect(mockedRNFS.writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      unmigrated,
+      'utf8',
+    );
   });
 });
 

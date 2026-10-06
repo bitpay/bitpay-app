@@ -55,6 +55,7 @@ import {BwcProvider} from '../lib/bwc';
 import {findAssociatedTokenPda} from '@solana-program/token-2022';
 import {tokenManager} from '../managers/TokenManager';
 import {logManager} from '../managers/LogManager';
+import {TokenApproval} from '../store/wallet-connect-v2/wallet-connect-v2.models';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -900,6 +901,23 @@ export const splitInputsToChunks = (inputsArray: any[]) => {
   return chunksArray;
 };
 
+const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+
+export const isSameAddress = (a?: string, b?: string): boolean => {
+  if (!a || !b) {
+    return false;
+  }
+  if (a === b) {
+    return true;
+  }
+  // base58 (Solana) is case sensitive; only EVM addresses may be compared case insensitively
+  return (
+    EVM_ADDRESS.test(a) &&
+    EVM_ADDRESS.test(b) &&
+    a.toLowerCase() === b.toLowerCase()
+  );
+};
+
 export const extractAddresses = (hex: string) => {
   const senderContractAddress = '0x' + hex.slice(0, 40);
   const recipientAddress = '0x' + hex.slice(46, 86);
@@ -924,6 +942,8 @@ interface RequestUiValues {
   recipientAddress?: string;
   senderTokenPrice?: number;
   decodedInstructions?: any;
+  tokenApproval?: TokenApproval;
+  tokenApprovalDecodeError?: boolean;
 }
 
 export const processOtherMethodsRequest =
@@ -942,6 +962,11 @@ export const processOtherMethodsRequest =
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        senderAddress =
+          (request.params as string[])?.find(param =>
+            ethers.utils.isAddress(param),
+          ) || '';
+        break;
       case EIP155_SIGNING_METHODS.ETH_SIGN:
         senderAddress = request.params?.[0];
         break;
@@ -963,8 +988,8 @@ export const processOtherMethodsRequest =
       const wallet = Object.values(keys as Keys).flatMap(key =>
         key.wallets.filter(
           wallet =>
-            wallet.receiveAddress?.toLowerCase() ===
-              senderAddress?.toLowerCase() && wallet.chain === swapFromChain,
+            isSameAddress(wallet.receiveAddress, senderAddress) &&
+            wallet.chain === swapFromChain,
         ),
       )[0];
 
@@ -1030,6 +1055,78 @@ const parseStandardTokenTransactionData = (data?: string) => {
   return {};
 };
 
+const SOLANA_TRANSFER_SOL = 'transferSol';
+const SOLANA_TRANSFER_CHECKED_TOKEN = 'transferCheckedToken';
+
+const SOLANA_TRANSFER_INSTRUCTIONS = [
+  SOLANA_TRANSFER_SOL,
+  SOLANA_TRANSFER_CHECKED_TOKEN,
+  'transferToken',
+];
+
+const SOLANA_NON_TRANSFER_INSTRUCTIONS = [
+  'advanceNonceAccount',
+  'memo',
+  'setComputeUnitLimit',
+  'setComputeUnitPrice',
+];
+
+// Instruction keys are defined by the bitcore decode endpoint, which emits
+// unparsed<Program>Instruction_<n> for every instruction it cannot decode.
+export const getUnrecognizedSolanaInstructions = (
+  instructions?: Record<string, unknown[]>,
+): string[] =>
+  Object.keys(instructions ?? {}).filter(
+    key =>
+      !SOLANA_TRANSFER_INSTRUCTIONS.includes(key) &&
+      !SOLANA_NON_TRANSFER_INSTRUCTIONS.includes(key),
+  );
+
+export const matchesRequestToken = (
+  wallet: Wallet,
+  request: {swapFromChain?: string; senderContractAddress?: string},
+): boolean => {
+  const {swapFromChain, senderContractAddress} = request;
+  if (!IsSVMChain(swapFromChain!) || !senderContractAddress) {
+    return true;
+  }
+  return wallet.tokenAddress === senderContractAddress;
+};
+
+// Legacy and v0 transactions begin with the compact-u16 length of their
+// signature array; anything else, including the 0x81 v1 prefix, stays undecided.
+export const getSolanaSignerCount = (base64Tx?: string): number | undefined => {
+  if (!base64Tx) {
+    return undefined;
+  }
+  const signatureCount = Buffer.from(base64Tx, 'base64')[0];
+  return signatureCount > 0 && signatureCount < 0x80
+    ? signatureCount
+    : undefined;
+};
+
+export const canSummarizeSolanaTx = (
+  instructions: Record<string, unknown[]> | undefined,
+  signerCount: number | undefined,
+): boolean => {
+  if (!instructions) {
+    return false;
+  }
+  if (getUnrecognizedSolanaInstructions(instructions).length > 0) {
+    return false;
+  }
+  // The displayed fee comes from the BWS proposal, which bills one base
+  // signature and ignores the priority price the network does charge.
+  if (signerCount !== 1 || instructions.setComputeUnitPrice?.length) {
+    return false;
+  }
+  const transferCount = SOLANA_TRANSFER_INSTRUCTIONS.reduce(
+    (count, key) => count + (instructions[key]?.length ?? 0),
+    0,
+  );
+  return transferCount === 1;
+};
+
 export const processSolanaSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -1051,41 +1148,37 @@ export const processSolanaSwapRequest =
     let currency = null;
     let tokenAddress: string | undefined;
 
-    const instructionKeys = {
-      TRANSFER_SOL: 'transferSol',
-      TRANSFER_CHECKED_TOKEN: 'transferCheckedToken',
-      TRANSFER_TOKEN: 'transferToken',
-      ADVANCE_NONCE_ACCOUNT: 'advanceNonceAccount',
-      MEMO: 'memo',
-      SET_COMPUTE_UNIT_LIMIT: 'setComputeUnitLimit',
-      SET_COMPUTE_UNIT_PRICE: 'setComputeUnitPrice',
-      UNKNOWN: 'unknownInstruction',
-    };
-
     logManager.debug(`Decoded instructions: ${JSON.stringify(instructions)}`);
 
-    if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
+    if (
+      !canSummarizeSolanaTx(
+        instructions,
+        getSolanaSignerCount(request?.params?.transaction),
+      )
+    ) {
+      logManager.debug(
+        'Solana transaction cannot be fully summarized. Falling back to sign request',
+      );
+      return {
+        ...(await dispatch(processOtherMethodsRequest(event))),
+        decodedInstructions: instructions,
+      };
+    }
+
+    if (instructions?.[SOLANA_TRANSFER_SOL]?.length > 0) {
       const solTransfers = instructions[
-        instructionKeys.TRANSFER_SOL
+        SOLANA_TRANSFER_SOL
       ] as TransferSolInstruction[];
       mainToAddress = solTransfers[0].destination;
-      amount = solTransfers.reduce(
-        (sum, transfer) => sum + Number(transfer.amount),
-        0,
-      );
+      amount = Number(solTransfers[0].amount);
       currency = 'sol';
-    } else if (
-      instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0
-    ) {
+    } else if (instructions?.[SOLANA_TRANSFER_CHECKED_TOKEN]?.length > 0) {
       const checkedTokenTransfer = instructions[
-        instructionKeys.TRANSFER_CHECKED_TOKEN
-      ] as TransferSolInstruction[];
+        SOLANA_TRANSFER_CHECKED_TOKEN
+      ] as TransferCheckedTokenInstruction[];
       mainToAddress = checkedTokenTransfer[0].destination;
-      amount = checkedTokenTransfer.reduce(
-        (sum, transfer) => sum + Number(transfer.amount),
-        0,
-      );
-      tokenAddress = checkedTokenTransfer[0].mint!;
+      amount = Number(checkedTokenTransfer[0].amount);
+      tokenAddress = checkedTokenTransfer[0].mint;
       currency = (await getSolanaTokenInfo(tokenAddress)).symbol?.toLowerCase();
     }
 
@@ -1095,7 +1188,10 @@ export const processSolanaSwapRequest =
 
     if (!mainToAddress || !currency) {
       // not supported PROGRAM ID found.
-      return dispatch(processOtherMethodsRequest(event));
+      return {
+        ...(await dispatch(processOtherMethodsRequest(event))),
+        decodedInstructions: instructions,
+      };
     }
     const swapFromCurrencyAbbreviation = currency.toLowerCase();
     const swapAmount = amount.toString();
@@ -1132,6 +1228,7 @@ export const processSolanaSwapRequest =
         swapFormatAmount,
         swapFromChain,
         senderAddress,
+        senderContractAddress: tokenAddress,
         swapFromCurrencyAbbreviation,
         recipientAddress: mainToAddress,
         decodedInstructions: instructions,
@@ -1141,6 +1238,41 @@ export const processSolanaSwapRequest =
       throw error;
     }
   };
+
+const isTokenApprovalFunction = (
+  name: string,
+): name is TokenApproval['functionName'] =>
+  name === 'approve' ||
+  name === 'approveAndCall' ||
+  name === 'increaseAllowance' ||
+  name === 'setApprovalForAll' ||
+  name === 'permit';
+
+export const getTokenApproval = (
+  transactionData: ethers.utils.TransactionDescription,
+): TokenApproval | undefined => {
+  const {name, args} = transactionData;
+  if (!isTokenApprovalFunction(name)) {
+    return undefined;
+  }
+  if (name === 'setApprovalForAll') {
+    return {
+      functionName: name,
+      spender: args[0],
+      approved: args[1],
+      isUnlimited: args[1] === true,
+    };
+  }
+  const isPermit = name === 'permit';
+  const amount = args[isPermit ? 2 : 1];
+  return {
+    functionName: name,
+    spender: args[isPermit ? 1 : 0],
+    amount: amount.toString(),
+    isUnlimited: amount.eq(ethers.constants.MaxUint256),
+    ...(isPermit ? {owner: args[0], deadline: args[3].toString()} : {}),
+  };
+};
 
 export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
@@ -1163,7 +1295,7 @@ export const processSwapRequest =
     const {chainId} = params;
     const {method} = params.request;
 
-    const {to, data, from} = params.request.params[0];
+    const {to, data, from, value} = params.request.params[0];
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
 
     if (data === '0x') {
@@ -1173,9 +1305,11 @@ export const processSwapRequest =
         from,
         method,
         dispatch,
+        value,
       );
     }
 
+    let isTokenApprovalRequest = false;
     try {
       let {transactionData, abi} = parseStandardTokenTransactionData(data);
       if (!transactionData && !abi) {
@@ -1186,6 +1320,7 @@ export const processSwapRequest =
           from,
           method,
           dispatch,
+          value,
         );
         // logManager.debug(
         //     'No standard token data - fetching contract ABI from Etherscan',
@@ -1196,10 +1331,11 @@ export const processSwapRequest =
         // const contractInterface = new ethers.utils.Interface(abi!);
         // transactionData = contractInterface.parseTransaction({data});
       }
+      const transactionDataName = transactionData!.name;
+      isTokenApprovalRequest = isTokenApprovalFunction(transactionDataName);
       logManager.debug(
         'Decoded transaction data: ' + JSON.stringify(transactionData),
       );
-      const transactionDataName = transactionData!.name;
       if (transactionDataName === 'execute') {
         const transaction = await handleExecuteTransaction(
           dispatch,
@@ -1225,23 +1361,31 @@ export const processSwapRequest =
         );
         return transaction;
       }
-      return handleDefaultTransaction(
+      const transaction = await handleDefaultTransaction(
         keys,
         swapFromChain,
         from,
         transactionDataName,
         dispatch,
+        value,
       );
+      const tokenApproval = getTokenApproval(transactionData!);
+      return {...transaction, ...(tokenApproval ? {tokenApproval} : {})};
     } catch (error) {
       logManager.error(`Error processing swap request: ${error}`);
       logManager.debug('Continue anyway building a default transaction');
-      return handleDefaultTransaction(
+      const transaction = await handleDefaultTransaction(
         keys,
         swapFromChain,
         from,
         method,
         dispatch,
+        value,
       );
+      return {
+        ...transaction,
+        ...(isTokenApprovalRequest ? {tokenApprovalDecodeError: true} : {}),
+      };
     }
   };
 
@@ -1290,18 +1434,33 @@ const fetchContractAbi = async (
   return parsedAbi;
 };
 
+// ethers reads hex strings, decimal strings and numbers; parseInt would read a
+// decimal string as hexadecimal and report an amount the signer never sees
+export const getTransactionValue = (value?: unknown): string | undefined => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  try {
+    return ethers.BigNumber.from(value).toString();
+  } catch {
+    return undefined;
+  }
+};
+
 const handleDefaultTransaction = async (
   keys: Keys,
   chain: string,
   senderAddress: string,
   transactionDataName: string,
   dispatch: any,
+  value?: unknown,
 ) => {
+  const swapAmount = getTransactionValue(value);
   logManager.debug(`processing ${transactionDataName} transaction`);
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
       wallet =>
-        wallet.receiveAddress?.toLowerCase() === senderAddress.toLowerCase() &&
+        isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === chain,
     ),
   )[0];
@@ -1311,6 +1470,7 @@ const handleDefaultTransaction = async (
     swapFromChain: chain,
     senderAddress,
     swapFromCurrencyAbbreviation: currencyAbbreviation,
+    ...(swapAmount ? {swapAmount} : {}),
   };
 };
 

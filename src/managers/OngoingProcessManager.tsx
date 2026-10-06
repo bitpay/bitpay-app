@@ -30,8 +30,6 @@ export type BaseOnGoingProcessMessages =
   | 'SAVING_ADDRESSES'
   | 'EXCHANGE_GETTING_DATA'
   | 'CALCULATING_FEE'
-  | 'CONNECTING_COINBASE'
-  | 'FETCHING_COINBASE_DATA'
   | 'UPDATING_TXP'
   | 'CREATING_TXP'
   | 'SENDING_EMAIL'
@@ -145,8 +143,6 @@ const translations: Record<
   SAVING_ADDRESSES: () => i18n.t('Saving Addresses'),
   EXCHANGE_GETTING_DATA: () => i18n.t('Getting data from the exchange...'),
   CALCULATING_FEE: () => i18n.t('Calculating Fee'),
-  CONNECTING_COINBASE: () => i18n.t('Connecting with Coinbase...'),
-  FETCHING_COINBASE_DATA: () => i18n.t('Fetching data from Coinbase...'),
   UPDATING_TXP: () => i18n.t('Updating Transaction'),
   CREATING_TXP: () => i18n.t('Creating Transaction'),
   SENDING_EMAIL: () => i18n.t('Sending Email'),

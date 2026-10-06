@@ -1,10 +1,11 @@
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {EventSubscription} from 'react-native';
 import {ContentCard} from '@braze/react-native-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
+  AppColorScheme,
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -37,7 +38,6 @@ export enum AppActionTypes {
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
-  RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
   SHOW_CHAIN_SELECTOR_MODAL = 'APP/SHOW_CHAIN_SELECTOR_MODAL',
   DISMISS_CHAIN_SELECTOR_MODAL = 'APP/DISMISS_CHAIN_SELECTOR_MODAL',
   CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS = 'APP/CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS',
@@ -181,10 +181,6 @@ interface DismissBottomNotificationModal {
   type: typeof AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL;
 }
 
-interface ResetBottomNotificationModalConfig {
-  type: typeof AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG;
-}
-
 interface ShowChainSelectorModal {
   type: typeof AppActionTypes.SHOW_CHAIN_SELECTOR_MODAL;
   payload: ChainSelectorConfig;
@@ -200,7 +196,7 @@ interface ClearChainSelectorModalOptions {
 
 interface SetColorScheme {
   type: typeof AppActionTypes.SET_COLOR_SCHEME;
-  payload: ColorSchemeName;
+  payload: AppColorScheme;
 }
 
 interface SuccessGenerateAppIdentity {
@@ -486,7 +482,6 @@ export type AppActionType =
   | DismissInAppNotification
   | ShowBottomNotificationModal
   | DismissBottomNotificationModal
-  | ResetBottomNotificationModalConfig
   | SetColorScheme
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity

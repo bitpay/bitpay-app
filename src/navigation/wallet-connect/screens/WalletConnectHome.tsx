@@ -35,9 +35,13 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {FlatList, Platform} from 'react-native';
+import {Platform, View} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  isSameAddress,
+  matchesRequestToken,
+  sleep,
+} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -47,8 +51,8 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
+import {matchesAccountRoute} from '../walletConnectRouting';
 import {
-  getAddressFrom,
   walletConnectV2OnDeleteSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
@@ -134,16 +138,22 @@ const VerifyIconContainer = styled(TouchableOpacity)`
 const processRequest = (request: WCV2RequestType, keys: Keys) => {
   const {senderAddress, swapFromCurrencyAbbreviation, swapFromChain} = request;
 
+  const {network} =
+    WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId] || {};
+
   let wallet = Object.values(keys)
     .flatMap(key => key.wallets)
     .find(
       wallet =>
-        wallet.receiveAddress?.toLowerCase() === senderAddress!.toLowerCase() &&
+        isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === swapFromChain &&
-        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+        wallet.network === network &&
+        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+        matchesRequestToken(wallet, request),
     );
 
   let _swapFromCurrencyAbbreviation = swapFromCurrencyAbbreviation;
+  let summary = {};
 
   if (!wallet) {
     wallet = Object.values(keys)
@@ -153,12 +163,20 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
     _swapFromCurrencyAbbreviation =
       // @ts-ignore
       BitpaySupportedCoins[swapFromChain]?.coin?.toLowerCase();
+
+    summary = {
+      recipientAddress: undefined,
+      senderContractAddress: undefined,
+      swapFormatAmount: undefined,
+      swapFiatAmount: undefined,
+    };
   }
 
   const {img, badgeImg} = wallet || {};
 
   return {
     ...request,
+    ...summary,
     swapFromCurrencyAbbreviation: _swapFromCurrencyAbbreviation,
     currencyImg: img,
     badgeImg,
@@ -198,13 +216,9 @@ const WalletConnectHome = () => {
   );
   let requestsV2: WCV2RequestType[] = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
-      .filter((request: WCV2RequestType) => {
-        const addressFrom = getAddressFrom(request)?.toLowerCase();
-        const filterWithAddress = addressFrom
-          ? addressFrom === selectedAccountAddress?.toLowerCase()
-          : true; // if address exist in request check if it matches with connected wallets addresses
-        return request.topic === topic && filterWithAddress;
-      })
+      .filter((request: WCV2RequestType) =>
+        matchesAccountRoute(request, {selectedAccountAddress, topic}),
+      )
       .reverse(),
   );
 
@@ -333,10 +347,16 @@ const WalletConnectHome = () => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
+      const {method} = request.params.request;
+      const isSvmRequest = Object.values(SOLANA_SIGNING_METHODS).includes(
+        method,
+      );
       const {to: toAddress} = request?.params?.request?.params?.[0] ?? {};
 
       const recipient = {
-        address: toAddress || request.recipientAddress,
+        address: isSvmRequest
+          ? request.recipientAddress
+          : toAddress || request.recipientAddress,
       };
 
       if (!recipient.address) {
@@ -438,12 +458,14 @@ const WalletConnectHome = () => {
       }
       const {swapFromCurrencyAbbreviation} = requestV2;
       const {chainId} = requestV2.params;
-      const chain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+      const {chain, network} = WALLET_CONNECT_SUPPORTED_CHAINS[chainId] || {};
       const wallet = keyFullWalletObjs.find(
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === chain &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+          wallet.network === network &&
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(wallet, requestV2),
       );
       if (!wallet) {
         showErrorMessage(
@@ -509,11 +531,15 @@ const WalletConnectHome = () => {
         createdOn,
       } = item;
 
+      const {network} =
+        WALLET_CONNECT_SUPPORTED_CHAINS[item.params.chainId] || {};
       const wallet = keyFullWalletObjs.find(
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === swapFromChain &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+          wallet.network === network &&
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(wallet, item),
       );
       if (!wallet) {
         return <></>;
@@ -659,12 +685,13 @@ const WalletConnectHome = () => {
           <HeaderTitle>{t('Pending Request')}</HeaderTitle>
           <Hr />
           {requestsV2 && requestsV2.length > 0 ? (
-            <FlatList
-              contentContainerStyle={{paddingTop: 20, paddingBottom: 100}}
-              data={requestsV2}
-              keyExtractor={(_item, index) => index.toString()}
-              renderItem={renderItem}
-            />
+            <View style={{paddingBottom: 100, paddingTop: 20}}>
+              {requestsV2.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {renderItem({index, item})}
+                </React.Fragment>
+              ))}
+            </View>
           ) : (
             <ItemContainer>
               <ItemTitleContainer>

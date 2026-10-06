@@ -237,7 +237,7 @@ const InteractiveLineChart = ({
     // Support callers passing either a number or a Reanimated shared/derived value.
     const scale = sharedStrokeScale?.value ?? strokeScaleNumber;
     return Number.isFinite(scale) ? scale : 1;
-  }, [sharedStrokeScale, strokeScaleNumber]);
+  });
   const firstPointGuideLineOpacityValue = useDerivedValue(() => {
     'worklet';
 
@@ -245,7 +245,7 @@ const InteractiveLineChart = ({
       sharedFirstPointGuideLineOpacity?.value ??
       firstPointGuideLineOpacityNumber;
     return Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1;
-  }, [sharedFirstPointGuideLineOpacity, firstPointGuideLineOpacityNumber]);
+  });
 
   // IMPORTANT: react-native-graph's LineGraph is implemented as a composite
   // component that renders Skia primitives. Reanimated's `animatedProps`
@@ -264,11 +264,7 @@ const InteractiveLineChart = ({
       effectiveLineThickness /
       Math.pow(safeScale, lineThicknessCompensationExponent)
     );
-  }, [
-    effectiveLineThickness,
-    lineThicknessCompensationExponent,
-    strokeScaleValue,
-  ]);
+  });
 
   // Prefer a plain number when we don't need dynamic compensation. This keeps
   // behavior compatible with non-animated graph implementations.
@@ -298,7 +294,7 @@ const InteractiveLineChart = ({
           FIRST_POINT_GUIDE_LINE_GAP_LENGTH / safeScale,
         ],
       };
-    }, [strokeScaleValue]);
+    });
 
   /**
    * THEME SWITCH BEHAVIOR (important)
