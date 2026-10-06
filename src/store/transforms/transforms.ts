@@ -207,11 +207,14 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
             ...key,
             wallets: (key.wallets || []).map(wallet => {
               const persistedWallet = omitBwcClientFields(wallet);
-              const transactions =
-                persistedWallet.transactionHistory?.transactions ?? [];
-              if (transactions.length > PERSISTED_TX_HISTORY_LIMIT) {
+              const {transactionHistory} = persistedWallet;
+              const transactions = transactionHistory?.transactions ?? [];
+              if (
+                transactionHistory &&
+                transactions.length > PERSISTED_TX_HISTORY_LIMIT
+              ) {
                 persistedWallet.transactionHistory = {
-                  ...persistedWallet.transactionHistory,
+                  ...transactionHistory,
                   transactions: transactions.slice(
                     0,
                     PERSISTED_TX_HISTORY_LIMIT,
