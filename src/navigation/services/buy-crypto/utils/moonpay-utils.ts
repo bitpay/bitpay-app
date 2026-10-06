@@ -503,7 +503,7 @@ const getMoonpaySepaFailureDescription = (
   switch (failureReason) {
     case 'timeout_bank_transfer':
       return t(
-        'Moonpay did not receive your bank transfer in time, so this purchase was cancelled. You can start a new one whenever you are ready.',
+        'MoonPay did not receive your bank transfer in time, so this purchase was cancelled. You can start a new one whenever you are ready.',
       );
     default:
       return typeof failureReason === 'string'
@@ -559,21 +559,21 @@ export const moonpayGetSepaStatusDetails = (
       return {
         statusTitle: t('Verification'),
         statusDescription: t(
-          'Your transfer arrived and Moonpay is reviewing it. Nothing else is needed from you for now.',
+          'Your transfer arrived and MoonPay is reviewing it. Nothing else is needed from you for now.',
         ),
       };
     case 'processing':
       return {
         statusTitle: t('Processing'),
         statusDescription: t(
-          'Your transfer arrived and Moonpay is purchasing your crypto.',
+          'Your transfer arrived and MoonPay is purchasing your crypto.',
         ),
       };
     case 'delivery':
       return {
         statusTitle: t('Delivery'),
         statusDescription: t(
-          'Moonpay is sending your crypto to the recipient address.',
+          'MoonPay is sending your crypto to the recipient address.',
         ),
       };
     default:
@@ -582,7 +582,7 @@ export const moonpayGetSepaStatusDetails = (
       return currentStage
         ? {
             statusTitle: currentStage.name,
-            statusDescription: t('Moonpay is working on your purchase.'),
+            statusDescription: t('MoonPay is working on your purchase.'),
           }
         : moonpayGetStatusDetails(status);
   }
