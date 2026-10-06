@@ -18,7 +18,7 @@ class ImportRecoveryPhrasePage {
 
   var importWalletButton: XCUIElement {
     app.descendants(matching: .any)
-      .matching(NSPredicate(format: "label == 'Import wallet'"))
+      .matching(NSPredicate(format: "label == 'Import Wallet'"))
       .firstMatch
   }
 

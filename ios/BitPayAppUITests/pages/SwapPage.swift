@@ -95,7 +95,7 @@ class SwapPage {
   var enterAmount: XCUIElement {
     app.descendants(matching: .any).matching(
       NSPredicate(
-        format: "label == 'Swap crypto enter amount button'"
+        format: "label == 'Enter amount'"
       )
     ).firstMatch
   }
