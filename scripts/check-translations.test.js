@@ -1,6 +1,12 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const {test} = require('node:test');
-const {checkTranslations} = require('./check-translations');
+const {
+  checkTranslations,
+  checkSourceTranslations,
+} = require('./check-translations');
 
 function catalogs() {
   return {
@@ -96,4 +102,107 @@ test('preserves literal backup braces and reports long text without rejecting it
   const result = await checkTranslations(input);
   assert.deepEqual(result.errors, []);
   assert(result.warnings.some(w => w.kind === 'length'));
+});
+
+async function checkSource(code, translations = {}) {
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'bitpay-i18n-check-'),
+  );
+  try {
+    const source = path.join(directory, 'source.tsx');
+    const catalog = path.join(directory, 'locales/en/translation.json');
+    fs.mkdirSync(path.dirname(catalog), {recursive: true});
+    const original = JSON.stringify(translations, null, 2) + '\n';
+    fs.writeFileSync(source, code);
+    fs.writeFileSync(catalog, original);
+    const errors = await checkSourceTranslations({
+      locales: ['en'],
+      extract: {
+        input: source,
+        output: path.join(directory, 'locales/{{language}}/{{namespace}}.json'),
+        defaultNS: 'translation',
+        keySeparator: false,
+        nsSeparator: false,
+        functions: ['t', '*.t'],
+        transComponents: ['Trans'],
+        removeUnusedKeys: false,
+        extractFromComments: false,
+        sort: false,
+      },
+    });
+    assert.equal(fs.readFileSync(catalog, 'utf8'), original);
+    return errors;
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+}
+
+test('rejects literal source keys missing from English without writing catalogs', async () => {
+  const errors = await checkSource("t('Missing key');");
+  assert(
+    errors.some(error =>
+      error.includes('"Missing key": used in code but missing'),
+    ),
+  );
+});
+
+test('checks plural variants, Trans keys and literal newlines against English', async () => {
+  const errors = await checkSource(
+    "t('Wallets', {count: 2}); <Trans i18nKey='SendTo'/>; t('Line\\nbreak');",
+    {
+      Wallets_one: 'One wallet',
+      Wallets_other: 'Many wallets',
+      SendTo: 'Send to <0>{{email}}</0>',
+      'Line\nbreak': 'Line\nbreak',
+    },
+  );
+  assert.deepEqual(errors, []);
+  const missing = await checkSource(
+    "t('Wallets', {count: 2}); <Trans i18nKey='SendTo'/>;",
+    {
+      Wallets_one: 'One wallet',
+    },
+  );
+  assert(missing.some(error => error.includes('"Wallets_other"')));
+  assert(missing.some(error => error.includes('"SendTo"')));
+});
+
+test('allows keys built entirely from literal concatenations and branches', async () => {
+  const errors = await checkSource(
+    "t('Hello ' + 'world'); t(flag ? 'One' : 'Two'); t(`Key-${flag ? 'one' : 'two'}`);",
+    {
+      'Hello world': 'Hello world',
+      One: 'One',
+      Two: 'Two',
+      'Key-one': 'one',
+      'Key-two': 'two',
+    },
+  );
+  assert.deepEqual(errors, []);
+});
+
+test('rejects dynamic keys even when another branch is extractable', async () => {
+  const errors = await checkSource(
+    "t(variable); t(`Key-${variable}`); t(flag ? 'Known' : variable);",
+    {Known: 'Known'},
+  );
+  assert.equal(
+    errors.filter(error => error.includes('dynamic keys cannot be checked'))
+      .length,
+    3,
+  );
+});
+
+test('checks translation aliases from useTranslation', async () => {
+  const errors = await checkSource(
+    'const {t: translate} = useTranslation(); translate(variable);',
+  );
+  assert(
+    errors.some(error => error.includes('dynamic keys cannot be checked')),
+  );
+});
+
+test('fails when extraction skips a source file with a parse error', async () => {
+  const errors = await checkSource("t('Missing'); const = ;");
+  assert(errors.some(error => error.includes('translation extraction failed')));
 });

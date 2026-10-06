@@ -23,6 +23,7 @@ import {BottomNotificationConfig} from '../bottom-notification/BottomNotificatio
 import {CustomErrorMessage} from '../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {
   ActionContainer,
@@ -309,12 +310,16 @@ const transformErrorMessage = (error: string) => {
     let parts = error.split('Required: ')[1].split('Approved: ');
     let requiredPart = parts[0].replace(/,/g, ', ');
     let approvedPart = parts[1].replace(/,/g, ', ');
-    const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
+    const transformedMessage = i18next.t(
+      'Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n{{required}}\n\nSupported Networks:\n{{supported}}',
+      {required: requiredPart, supported: approvedPart},
+    );
     return transformedMessage;
   }
   if (error.includes(EVENTS_ERROR_PREFIX)) {
-    const transformedMessage =
-      'Events compatibility issue. The current supported events are insufficient to fulfill the requirements of the DApp.';
+    const transformedMessage = i18next.t(
+      'Events compatibility issue. The current supported events are insufficient to fulfill the requirements of the DApp.',
+    );
     return transformedMessage;
   } else {
     return error;

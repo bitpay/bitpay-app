@@ -347,14 +347,15 @@ const PayAllBills = ({
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
             title: t('Below Minimum Amount'),
-            errMsg: `The payment amount must be at least ${formatFiatAmount(
-              minAmount,
-              'USD',
+            errMsg: t(
+              'The payment amount must be at least {{amount}}. Please modify your amount.',
               {
-                customPrecision: 'minimal',
-                currencyDisplay: 'symbol',
+                amount: formatFiatAmount(minAmount, 'USD', {
+                  customPrecision: 'minimal',
+                  currencyDisplay: 'symbol',
+                }),
               },
-            )}. Please modify your amount.`,
+            ),
           }),
         ),
       );

@@ -811,10 +811,15 @@ const SimplexSellCheckout: React.FC = () => {
     const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
     const msg =
-      `Because you are sending the maximum amount contained in this wallet, the ${
-        dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase()
-      } miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
-      `\n${warningMsg}`;
+      t(
+        'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
+        {
+          chain:
+            dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
+          fee,
+          coin: coin.toUpperCase(),
+        },
+      ) + `\n${warningMsg}`;
 
     await sleep(400);
     dispatch(

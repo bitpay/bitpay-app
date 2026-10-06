@@ -103,7 +103,7 @@ const schema = yup.object().shape({
 });
 
 const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
@@ -135,21 +135,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const [word2Validation, setWord2Validation] = useState(false);
   const [word3Validation, setWord3Validation] = useState(false);
 
-  const ordinalNumbers: string[] = [
-    'first',
-    'second',
-    'third',
-    'fourth',
-    'fifth',
-    'sixth',
-    'seventh',
-    'eighth',
-    'ninth',
-    'tenth',
-    'eleventh',
-    'twelfth',
-  ];
-
   const getOrdinalSuffixStr = (index: number): string => {
     const suffixes = ['st', 'nd', 'rd', 'th']; // Handles up to 10th
     return index > 3 && index < 12
@@ -161,7 +146,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     word: string;
     index: number;
     indexStr: string;
-    ordinalSrt: string;
   }[] => {
     const randomIndices: number[] = [];
     while (randomIndices.length < 3) {
@@ -174,9 +158,11 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       word: words[index],
       index,
       indexStr: getOrdinalSuffixStr(index),
-      ordinalSrt: ordinalNumbers[index],
     }));
   };
+
+  const getWordPosition = (word: {index: number; indexStr: string}) =>
+    i18n.resolvedLanguage === 'en' ? word.indexStr : word.index + 1;
 
   const [randomWords, setRandomWords] = useState(generateRandomWords());
 
@@ -340,16 +326,11 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <View style={styles.headerContainer}>
           <HeaderText>
             {t(
-              'Verify you saved your recovery phrase correctly by writing in ' +
-                'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
-                'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
+              'Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.',
               {
-                first: randomWords[0].ordinalSrt,
-                firstNumber: randomWords[0].indexStr,
-                second: randomWords[1].ordinalSrt,
-                secondNumber: randomWords[1].indexStr,
-                third: randomWords[2].ordinalSrt,
-                thirdNumber: randomWords[2].indexStr,
+                first: randomWords[0].index + 1,
+                second: randomWords[1].index + 1,
+                third: randomWords[2].index + 1,
               },
             )}
           </HeaderText>
@@ -361,7 +342,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               control={control}
               render={({field}) => (
                 <BoxInput
-                  label={randomWords[0].indexStr + ' Word'}
+                  label={t('{{position}} Word', {
+                    position: getWordPosition(randomWords[0]),
+                  })}
                   onBlur={field.onBlur}
                   error={errors.word1?.message}
                   disabled={word1Validation}
@@ -390,7 +373,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               control={control}
               render={({field}) => (
                 <BoxInput
-                  label={randomWords[1].indexStr + ' Word'}
+                  label={t('{{position}} Word', {
+                    position: getWordPosition(randomWords[1]),
+                  })}
                   onBlur={field.onBlur}
                   error={errors.word2?.message}
                   disabled={word2Validation}
@@ -419,7 +404,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               control={control}
               render={({field}) => (
                 <BoxInput
-                  label={randomWords[2].indexStr + ' Word'}
+                  label={t('{{position}} Word', {
+                    position: getWordPosition(randomWords[2]),
+                  })}
                   onBlur={field.onBlur}
                   error={errors.word3?.message}
                   disabled={word3Validation}
@@ -459,16 +446,11 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       <View style={styles.headerContainerLargeMargin}>
         <HeaderText>
           {t(
-            'Verify you saved your recovery phrase correctly by writing in ' +
-              'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
-              'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
+            'Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.',
             {
-              first: randomWords[0].ordinalSrt,
-              firstNumber: randomWords[0].indexStr,
-              second: randomWords[1].ordinalSrt,
-              secondNumber: randomWords[1].indexStr,
-              third: randomWords[2].ordinalSrt,
-              thirdNumber: randomWords[2].indexStr,
+              first: randomWords[0].index + 1,
+              second: randomWords[1].index + 1,
+              third: randomWords[2].index + 1,
             },
           )}
         </HeaderText>
@@ -481,7 +463,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             control={control}
             render={({field}) => (
               <BoxInput
-                label={randomWords[0].indexStr + ' Word'}
+                label={t('{{position}} Word', {
+                  position: getWordPosition(randomWords[0]),
+                })}
                 onBlur={field.onBlur}
                 error={errors.word1?.message}
                 disabled={word1Validation}
@@ -511,7 +495,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             control={control}
             render={({field}) => (
               <BoxInput
-                label={randomWords[1].indexStr + ' Word'}
+                label={t('{{position}} Word', {
+                  position: getWordPosition(randomWords[1]),
+                })}
                 onBlur={field.onBlur}
                 error={errors.word2?.message}
                 disabled={word2Validation}
@@ -541,7 +527,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             control={control}
             render={({field}) => (
               <BoxInput
-                label={randomWords[2].indexStr + ' Word'}
+                label={t('{{position}} Word', {
+                  position: getWordPosition(randomWords[2]),
+                })}
                 onBlur={field.onBlur}
                 error={errors.word3?.message}
                 disabled={word3Validation}

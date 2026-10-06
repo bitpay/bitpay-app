@@ -165,7 +165,7 @@ const Connections = () => {
           <ConnectionIconContainer style={{marginLeft: 6, marginRight: 9}}>
             <Image source={MethodIcon} />
           </ConnectionIconContainer>
-          <SettingTitle>Method (Bill Pay)</SettingTitle>
+          <SettingTitle>{t('Method (Bill Pay)')}</SettingTitle>
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>

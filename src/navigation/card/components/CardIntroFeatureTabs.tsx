@@ -110,7 +110,7 @@ const FEES = (): CardTableData[] => {
       description: t('$2.50'),
     },
     {
-      title: 'Card Load',
+      title: t('Card Load'),
       description: (
         <>
           <TextAlign align="right">{t('No conversion fee') + '\n'}</TextAlign>

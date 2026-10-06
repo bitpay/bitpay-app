@@ -396,25 +396,27 @@ const SwapCryptoApproveErc20: React.FC = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
+  const exchangeName =
+    spenderData.spenderKey && ThorswapProviderNames[spenderData.spenderKey]
+      ? ThorswapProviderNames[spenderData.spenderKey]
+      : spenderData.spenderKey;
+  const coinName = wallet.currencyAbbreviation.toUpperCase();
+
   return (
     <SwapCryptoApproveErc20Container>
       {context === 'swapCrypto' && (
         <ViewContainer>
           <TextAlign align={'left'}>
             <SubText>
-              {`To complete the swap, you will need to allow the exchange (${
-                spenderData.spenderKey &&
-                ThorswapProviderNames[spenderData.spenderKey]
-                  ? ThorswapProviderNames[spenderData.spenderKey]
-                  : spenderData.spenderKey
-              }) to spend your ${wallet.currencyAbbreviation.toUpperCase()}.` +
+              {t(
+                'To complete the swap, you will need to allow the exchange ({{exchange}}) to spend your {{coin}}.',
+                {exchange: exchangeName, coin: coinName},
+              ) +
                 '\n' +
-                `By granting this permission, ${
-                  spenderData.spenderKey &&
-                  ThorswapProviderNames[spenderData.spenderKey]
-                    ? ThorswapProviderNames[spenderData.spenderKey]
-                    : spenderData.spenderKey
-                } will be able to withdraw your ${wallet.currencyAbbreviation.toUpperCase()} and complete transactions for you.`}
+                t(
+                  'By granting this permission, {{exchange}} will be able to withdraw your {{coin}} and complete transactions for you.',
+                  {exchange: exchangeName, coin: coinName},
+                )}
             </SubText>
           </TextAlign>
         </ViewContainer>

@@ -206,7 +206,7 @@ const ShopHome: React.FC<
         categoriesAndCurations,
         purchasedGiftCards,
       ),
-    [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
+    [availableGiftCards, categoriesAndCurations, purchasedGiftCards, t],
   );
 
   const integrations = useAppSelector(selectIntegrations);

@@ -887,7 +887,14 @@ const MoonpaySellCheckout: React.FC = () => {
         const amountBelowMoonpayMinUnit = Number(
           (realMaxAmount - amountExpected).toFixed(precision?.unitDecimals),
         );
-        const message = `A total of ${amountBelowMoonpayMinUnit} ${coin.toUpperCase()} were excluded. These funds are not enough to cover the minimum Moonpay purchase unit.`;
+        const message = t(
+          'A total of {{amount}} {{coin}} were excluded. These funds are not enough to cover the minimum {{exchange}} purchase unit.',
+          {
+            amount: amountBelowMoonpayMinUnit,
+            coin: coin.toUpperCase(),
+            exchange: 'Moonpay',
+          },
+        );
         warningMsg = warningMsg + `\n${message}`;
       } catch (err) {
         // continue without message
@@ -895,10 +902,15 @@ const MoonpaySellCheckout: React.FC = () => {
     }
 
     const msg =
-      `Because you are sending the maximum amount contained in this wallet, the ${
-        dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase()
-      } miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
-      `\n${warningMsg}`;
+      t(
+        'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
+        {
+          chain:
+            dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
+          fee,
+          coin: coin.toUpperCase(),
+        },
+      ) + `\n${warningMsg}`;
 
     await sleep(400);
     dispatch(

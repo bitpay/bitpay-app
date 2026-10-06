@@ -708,7 +708,7 @@ const MoonpayDetails: React.FC = () => {
                   style={{paddingHorizontal: 15}}>
                   <TouchableOpacity
                     testID={`moonpay-copy-sepa-${row.key}-button`}
-                    accessibilityLabel={`Copy ${row.label}`}
+                    accessibilityLabel={t('Copy {{label}}', {label: row.label})}
                     onPress={() => {
                       copyText(row.copyValue ?? row.value);
                       setCopiedSepaField(row.key);

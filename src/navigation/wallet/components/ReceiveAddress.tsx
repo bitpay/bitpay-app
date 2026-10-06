@@ -219,7 +219,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
 
   const createAddress = async (newAddress: boolean = false) => {
     let {currencyAbbreviation, network, chain} = wallet;
-    const prefix = 'Could not create address';
+    const prefix = t('Could not create address');
 
     try {
       const walletAddress = (await dispatch<any>(
