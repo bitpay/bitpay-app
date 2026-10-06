@@ -19,7 +19,7 @@ import {
   White,
 } from '../../../../../styles/colors';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import CloseModal from '../../../../../../assets/img/close-modal-icon.svg';
 
 const CARD_WIDTH = 343;
@@ -129,11 +129,12 @@ const EnableLockWarningModal: React.FC<EnableLockWarningModalProps> = ({
             <View style={styles.topSection}>
               <BaseText
                 style={[styles.title, {color: dark ? White : CharcoalBlack}]}>
-                {t('Enable')}
-                {'\n'}
-                <BaseText style={[styles.title, {color: Action}]}>
-                  {t('biometrics')}
-                </BaseText>
+                <Trans
+                  i18nKey="EnableBiometricsTitle"
+                  components={[
+                    <BaseText style={[styles.title, {color: Action}]} />,
+                  ]}
+                />
               </BaseText>
               <View style={styles.contentSection}>
                 <BaseText

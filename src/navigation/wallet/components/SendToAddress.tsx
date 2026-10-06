@@ -206,7 +206,7 @@ const SendToAddress = () => {
             });
       }
     } else {
-      setErrorMessage(text.length > 15 ? 'Invalid Address' : '');
+      setErrorMessage(text.length > 15 ? t('Invalid address') : '');
     }
   };
 

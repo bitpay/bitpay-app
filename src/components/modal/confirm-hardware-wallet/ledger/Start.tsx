@@ -67,7 +67,10 @@ export const ConfirmLedgerStart: React.FC<
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         setStatus({
           status: 'failed',
-          message: `An error occurred while checking hardware wallet connection support: ${errMsg}`,
+          message: t(
+            'An error occurred while checking hardware wallet connection support: {{errMsg}}',
+            {errMsg},
+          ),
           title: t('Connection Failed'),
         });
         logManager.error(
@@ -170,7 +173,7 @@ export const ConfirmLedgerStart: React.FC<
     } else {
       setStatus({
         status: 'failed',
-        message: `Unable to connect via USB: ${errorMsg}`,
+        message: t('Unable to connect via USB: {{errorMsg}}', {errorMsg}),
         title: t('Connection Failed'),
       });
       await sleep(7000);

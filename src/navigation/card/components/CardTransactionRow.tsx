@@ -1,3 +1,4 @@
+import {t} from 'i18next';
 import moment from 'moment';
 import React, {memo} from 'react';
 import {View, ViewProps, Text, TextProps, StyleSheet} from 'react-native';
@@ -173,7 +174,7 @@ const getTxTitle = (tx: UiTransaction) => {
 
 const getTxSubtitle = (tx: UiTransaction) => {
   if (!tx.settled && isTopUp(tx)) {
-    return 'Waiting for confirmation';
+    return t('Waiting for confirmation');
   }
 
   const {merchantCity, merchantState} = tx.merchant || {};

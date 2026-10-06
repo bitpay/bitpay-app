@@ -83,7 +83,7 @@ import {
   IsSVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
@@ -775,10 +775,15 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
                       message2: (
                         <View style={styles.infoSheetMessage}>
                           <Paragraph>
-                            <Paragraph style={styles.emailText}>
-                              {email}
-                            </Paragraph>{' '}
-                            is not yet able to receive crypto to their email.
+                            <Trans
+                              i18nKey="EmailUnableToReceiveCrypto"
+                              values={{email}}
+                              components={[
+                                <Paragraph style={styles.emailText} />,
+                              ]}
+                              tOptions={{interpolation: {escapeValue: true}}}
+                              shouldUnescape
+                            />
                           </Paragraph>
                         </View>
                       ),
@@ -805,10 +810,13 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
               </View>
               <View style={styles.emailTextContainer}>
                 <Paragraph>
-                  Send to{' '}
-                  <Paragraph style={styles.emailText}>
-                    {searchInput.toLowerCase()}
-                  </Paragraph>
+                  <Trans
+                    i18nKey="SendToEmail"
+                    values={{email: searchInput.toLowerCase()}}
+                    components={[<Paragraph style={styles.emailText} />]}
+                    tOptions={{interpolation: {escapeValue: true}}}
+                    shouldUnescape
+                  />
                 </Paragraph>
               </View>
             </View>

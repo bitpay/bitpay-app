@@ -439,7 +439,9 @@ const PaymentMethodsModal = ({
                       </PaymentMethodImgContainer>
                       <PaymentMethodCheckboxTexts>
                         <PaymentMethodLabel>
-                          {t(paymentMethod.label)}
+                          {paymentMethod.label === 'Other'
+                            ? t('Other')
+                            : paymentMethod.label}
                         </PaymentMethodLabel>
 
                         <PaymentMethodProvider>

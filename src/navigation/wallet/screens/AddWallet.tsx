@@ -52,6 +52,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {
   IsSegwitCoin,
@@ -122,7 +123,10 @@ const ScrollView: React.FC<
 );
 
 const schema = yup.object().shape({
-  walletName: yup.string().required('Wallet name is required').trim(),
+  walletName: yup
+    .string()
+    .required(() => i18next.t('Wallet name is required'))
+    .trim(),
 });
 
 const CheckBoxContainer: React.FC<{children?: React.ReactNode}> = ({
@@ -532,7 +536,7 @@ const AddWallet = ({
                   setSingleAddress(!singleAddress);
                 }}>
                 <Column>
-                  <OptionTitle>Single Address</OptionTitle>
+                  <OptionTitle>{t('Single Address')}</OptionTitle>
                 </Column>
                 <CheckBoxContainer>
                   <Checkbox
@@ -554,11 +558,12 @@ const AddWallet = ({
                         <InfoSvg />
                       </InfoImageContainer>
 
-                      <InfoTitle>Single Address Wallet</InfoTitle>
+                      <InfoTitle>{t('Single Address Wallet')}</InfoTitle>
                     </InfoHeader>
                     <InfoDescription>
-                      The single address feature will force the wallet to only
-                      use one address rather than generating new addresses.
+                      {t(
+                        'The single address feature will force the wallet to only use one address rather than generating new addresses.',
+                      )}
                     </InfoDescription>
 
                     <VerticalPadding>
@@ -573,7 +578,7 @@ const AddWallet = ({
                             openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
                           );
                         }}>
-                        <Link>Learn More</Link>
+                        <Link>{t('Learn More')}</Link>
                       </TouchableOpacity>
                     </VerticalPadding>
                   </Info>

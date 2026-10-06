@@ -72,6 +72,7 @@ import {
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
 import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {IsERCToken, IsSVMChain} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
@@ -243,7 +244,10 @@ const AssociatedAccountSelectionModalContainer: React.FC<{
 );
 
 const schema = yup.object().shape({
-  walletName: yup.string().required('Wallet name is required').trim(),
+  walletName: yup
+    .string()
+    .required(() => i18next.t('Wallet name is required'))
+    .trim(),
 });
 
 export const AddPillContainer: React.FC<{children?: React.ReactNode}> = ({

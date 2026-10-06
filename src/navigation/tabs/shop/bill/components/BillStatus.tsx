@@ -35,17 +35,17 @@ const statusFields = {
   dueNow: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Due in 1 day',
+    text: () => t('Due in 1 day'),
   },
   dueSoon: {
     backgroundColor: '#FEECD4',
     color: '#A05708',
-    text: 'Due in 1 day',
+    text: () => t('Due in 1 day'),
   },
   dueLater: {
     backgroundColor: '#ffffff',
     color: SlateDark,
-    text: 'Due in 15 days',
+    text: () => t('Due in 15 days'),
     darkTheme: {
       color: Slate30,
       backgroundColor: 'transparent',
@@ -54,32 +54,32 @@ const statusFields = {
   failed: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   canceled: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Canceled',
+    text: () => t('Canceled'),
   },
   reversed: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   reversalRequired: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   reversalProcessing: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   complete: {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
-    text: 'Completed',
+    text: () => t('Completed'),
     darkTheme: {
       backgroundColor: '#076A46',
       color: '#4FEFC4',
@@ -88,7 +88,7 @@ const statusFields = {
   sent: {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
-    text: 'Sent',
+    text: () => t('Sent'),
     darkTheme: {
       backgroundColor: '#076A46',
       color: '#4FEFC4',
@@ -97,7 +97,7 @@ const statusFields = {
   refunded: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Refunded',
+    text: () => t('Refunded'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -106,7 +106,7 @@ const statusFields = {
   refundCreated: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Refunding',
+    text: () => t('Refunding'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -115,7 +115,7 @@ const statusFields = {
   processing: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Processing',
+    text: () => t('Processing'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -124,7 +124,7 @@ const statusFields = {
   pending: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Processing',
+    text: () => t('Processing'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -133,7 +133,7 @@ const statusFields = {
   connecting: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Connecting',
+    text: () => t('Connecting'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -243,9 +243,10 @@ export default ({account, payment}: BillStatusProps) => {
     payment && statusFields[payment.status]
       ? payment.status || 'processing'
       : 'processing';
-  const paymentStatusText = statusFields[payment && payment.status]
-    ? t(statusFields[paymentStatusStyle].text)
-    : payment?.status || t('Processing');
+  const paymentStatusText =
+    statusFields[payment && payment.status]?.text?.() ||
+    payment?.status ||
+    t('Processing');
   const statusStyle = payment
     ? paymentStatusStyle
     : getBillStatus(account).status;

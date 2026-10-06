@@ -179,6 +179,137 @@ async function checkTranslations(catalogs) {
   };
 }
 
+function isStaticTranslationKey(node) {
+  if (node.type === 'StringLiteral') {
+    return true;
+  }
+  if (node.type === 'TemplateLiteral') {
+    return node.expressions.every(isStaticTranslationKey);
+  }
+  if (node.type === 'BinaryExpression' && node.operator === '+') {
+    return (
+      isStaticTranslationKey(node.left) && isStaticTranslationKey(node.right)
+    );
+  }
+  if (node.type === 'ConditionalExpression') {
+    return (
+      isStaticTranslationKey(node.consequent) &&
+      isStaticTranslationKey(node.alternate)
+    );
+  }
+  if (node.type === 'ArrayExpression') {
+    return node.elements.every(
+      element =>
+        element &&
+        !element.spread &&
+        isStaticTranslationKey(element.expression),
+    );
+  }
+  return false;
+}
+
+function getFunctionName(node) {
+  if (node.type === 'Identifier') {
+    return node.value;
+  }
+  if (node.type === 'MemberExpression' && node.property.type === 'Identifier') {
+    const parent = getFunctionName(node.object);
+    return parent && `${parent}.${node.property.value}`;
+  }
+}
+
+async function checkSourceTranslations(inputConfig) {
+  const cli = require.resolve('i18next-cli');
+  // i18next-cli does not export its config loader; it reads the TS config with its own jiti dependency.
+  const {createJiti} = require(require.resolve('jiti', {paths: [cli]}));
+  const {findKeys, getTranslations} = require(cli);
+  const config =
+    inputConfig ||
+    (await createJiti(__dirname).import(
+      path.join(__dirname, '../i18next.config.ts'),
+      {default: true},
+    ));
+  const errors = [];
+  const fileErrors = [];
+  let currentFile;
+  let currentCode;
+  const functions = config.extract.functions || ['t', '*.t'];
+  const {allKeys, objectKeys} = await findKeys(
+    {
+      ...config,
+      extract: {
+        ...config.extract,
+        ignore: [
+          ...(Array.isArray(config.extract.ignore)
+            ? config.extract.ignore
+            : config.extract.ignore
+            ? [config.extract.ignore]
+            : []),
+          '**/config.ts',
+          '**/.env*',
+        ],
+      },
+      plugins: [
+        ...(config.plugins || []),
+        {
+          name: 'check-static-translation-keys',
+          onLoad(code, file) {
+            currentFile = file;
+            currentCode = code;
+          },
+          onVisitNode(node, context) {
+            if (node.type !== 'CallExpression' || !node.arguments.length) {
+              return;
+            }
+            const name = getFunctionName(node.callee);
+            if (
+              !name ||
+              !(
+                context.getVarFromScope(name) ||
+                functions.some(pattern =>
+                  pattern.startsWith('*.')
+                    ? name.endsWith(pattern.slice(1))
+                    : name === pattern,
+                )
+              )
+            ) {
+              return;
+            }
+            const argument = node.arguments[0].expression;
+            if (!isStaticTranslationKey(argument)) {
+              const line = currentCode
+                .slice(0, argument.span.start)
+                .split('\n').length;
+              errors.push(
+                `${currentFile}:${line}: translation key must use literals; dynamic keys cannot be checked`,
+              );
+            }
+          },
+        },
+      ],
+    },
+    undefined,
+    fileErrors,
+  );
+  errors.push(
+    ...fileErrors.map(file => `${file}: translation extraction failed`),
+  );
+  const results = await getTranslations(allKeys, objectKeys, config);
+  errors.push(
+    ...results.flatMap(({newTranslations, existingTranslations}) =>
+      Object.keys(newTranslations)
+        .filter(key => !Object.hasOwn(existingTranslations, key))
+        .map(
+          key =>
+            `en: ${JSON.stringify(
+              key,
+            )}: used in code but missing; run yarn translation:extract`,
+        ),
+    ),
+  );
+  return errors;
+}
+
 async function main() {
   const catalogs = {};
   const formatErrors = [];
@@ -193,7 +324,7 @@ async function main() {
     }
   }
   const result = await checkTranslations(catalogs);
-  result.errors.unshift(...formatErrors);
+  result.errors.unshift(...formatErrors, ...(await checkSourceTranslations()));
   if (process.argv.includes('--report')) {
     console.log(JSON.stringify(result, null, 2));
   } else {
@@ -217,7 +348,7 @@ async function main() {
   process.exitCode = result.errors.length ? 1 : 0;
 }
 
-module.exports = {checkTranslations};
+module.exports = {checkTranslations, checkSourceTranslations};
 if (require.main === module) {
   main().catch(error => {
     console.error(error.message);

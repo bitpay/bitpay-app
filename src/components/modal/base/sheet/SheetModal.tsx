@@ -10,6 +10,7 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {useTheme} from '../../../../contexts';
+import {useTranslation} from 'react-i18next';
 import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
@@ -51,6 +52,7 @@ const ControlledBottomSheetBackdrop: React.FC<ControlledBackdropProps> = ({
   onBackdropPress,
   ...backdropProps
 }) => {
+  const {t} = useTranslation();
   const tapGesture = useMemo(
     () =>
       Gesture.Tap()
@@ -73,9 +75,11 @@ const ControlledBottomSheetBackdrop: React.FC<ControlledBackdropProps> = ({
         opacity={backdropOpacity}
         accessible={enableBackdropDismiss}
         accessibilityRole={enableBackdropDismiss ? 'button' : undefined}
-        accessibilityLabel={enableBackdropDismiss ? 'Dismiss modal' : undefined}
+        accessibilityLabel={
+          enableBackdropDismiss ? t('Dismiss modal') : undefined
+        }
         accessibilityHint={
-          enableBackdropDismiss ? 'Closes the modal' : undefined
+          enableBackdropDismiss ? t('Closes the modal') : undefined
         }
       />
     </GestureDetector>

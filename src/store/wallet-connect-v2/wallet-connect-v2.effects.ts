@@ -408,7 +408,12 @@ export const walletConnectV2SubscribeToEvents =
         );
         const bottomNotificationConfig: BottomNotificationConfig =
           CustomErrorMessage({
-            errMsg: `An error occurred while emiting session event: ${errMsg}`,
+            errMsg: t(
+              'An error occurred while emitting session event: {{errMsg}}',
+              {
+                errMsg,
+              },
+            ),
             title: t('Uh oh, something went wrong'),
           });
         dispatch(showBottomNotificationModal(bottomNotificationConfig));

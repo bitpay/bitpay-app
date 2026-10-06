@@ -918,7 +918,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
   const importLedgerAccount = async (chain: string, network: Network) => {
     const configFn = currencyConfigs[chain];
     if (!configFn) {
-      setError(`Unsupported chain: ${chain.toUpperCase()}`);
+      setError(t('Unsupported chain: {{chain}}', {chain: chain.toUpperCase()}));
       return;
     }
     const params = configFn(network);

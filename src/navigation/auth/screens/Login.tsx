@@ -355,7 +355,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
           <DividerContainer>
             <DividerLine />
-            <DividerText>or</DividerText>
+            <DividerText>{t('or')}</DividerText>
             <DividerLine />
           </DividerContainer>
 

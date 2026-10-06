@@ -592,7 +592,7 @@ const Confirm = () => {
     } else {
       showErrorMessage(
         CustomErrorMessage({
-          errMsg: 'Unsupported hardware wallet',
+          errMsg: t('Unsupported hardware wallet'),
           title: t('Uh oh, something went wrong'),
         }),
       );

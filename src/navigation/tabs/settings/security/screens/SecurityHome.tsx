@@ -190,8 +190,9 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
         dispatch(
           showBottomNotificationModal(
             BiometricErrorNotification(
-              'Biometric method is not available on this device: ' +
-                biometryType,
+              t('Biometric method is not available on this device: {{type}}', {
+                type: biometryType,
+              }),
             ),
           ),
         );

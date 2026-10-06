@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {SvgProps} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
+import type {TFunction} from 'i18next';
 import {
   ScrollView as RNScrollView,
   ScrollViewProps,
@@ -151,8 +152,8 @@ const IllustrationContainer = ({style, ...rest}: ViewProps) => {
 type KycStateConfig = {
   icon: React.FC<SvgProps>;
   iconBg: string;
-  titleKey: string;
-  bodyKey: string;
+  getTitle: (t: TFunction) => string;
+  getBody: (t: TFunction) => string;
 };
 
 const STATE_CONFIG: Record<
@@ -162,36 +163,44 @@ const STATE_CONFIG: Record<
   inProgress: {
     icon: IconKycStatusPending,
     iconBg: Warning25,
-    titleKey: 'Finish verifying your identity',
-    bodyKey:
-      'You have a verification in progress. Click the button below to pick up where you left off.',
+    getTitle: t => t('Finish verifying your identity'),
+    getBody: t =>
+      t(
+        'You have a verification in progress. Click the button below to pick up where you left off.',
+      ),
   },
   actionRequired: {
     icon: IconKycStatusDenied,
     iconBg: Caution25,
-    titleKey: 'Action required on your application',
-    bodyKey: 'Click the button below to resume your application.',
+    getTitle: t => t('Action required on your application'),
+    getBody: t => t('Click the button below to resume your application.'),
   },
   denied: {
     icon: IconKycStatusDenied,
     iconBg: Caution25,
-    titleKey: 'Application Denied',
-    bodyKey:
-      'Your account was denied. You will not be able to use BitPay products or services.',
+    getTitle: t => t('Application Denied'),
+    getBody: t =>
+      t(
+        'Your account was denied. You will not be able to use BitPay products or services.',
+      ),
   },
   inReview: {
     icon: IconKycStatusPending,
     iconBg: Warning25,
-    titleKey: 'Application in Review',
-    bodyKey:
-      'Your application is in review, please wait for an email to get your updated status.',
+    getTitle: t => t('Application in Review'),
+    getBody: t =>
+      t(
+        'Your application is in review, please wait for an email to get your updated status.',
+      ),
   },
   success: {
     icon: IconKycStatusVerified,
     iconBg: Success25,
-    titleKey: 'Application Success',
-    bodyKey:
-      'Your account was approved! You may now continue to use BitPay products and services.',
+    getTitle: t => t('Application Success'),
+    getBody: t =>
+      t(
+        'Your account was approved! You may now continue to use BitPay products and services.',
+      ),
   },
 };
 
@@ -252,15 +261,15 @@ export const VerifyIdentityScreen: React.FC = () => {
     );
   }
 
-  const {icon: Icon, titleKey, bodyKey} = STATE_CONFIG[state];
+  const {icon: Icon, getTitle, getBody} = STATE_CONFIG[state];
 
   return (
     <Container>
       <ScrollContainer>
         <Content>
           <IconStatus>{Icon && <Icon />}</IconStatus>
-          <Title>{t(titleKey)}</Title>
-          <Body>{t(bodyKey)}</Body>
+          <Title>{getTitle(t)}</Title>
+          <Body>{getBody(t)}</Body>
         </Content>
 
         <ButtonContainer>

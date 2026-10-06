@@ -644,7 +644,10 @@ const TransactionProposalNotifications = () => {
                 const count = countSuccessAndFailed(data);
                 if (count.failed > 0) {
                   const errMsgs = [
-                    `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`,
+                    t(
+                      'There was a problem while trying to sign {{failed}} of your transaction proposals. Please try again.',
+                      {failed: count.failed},
+                    ),
                   ];
                   data.forEach((element, index) => {
                     if (element instanceof Error) {

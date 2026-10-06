@@ -662,7 +662,7 @@ const Confirm = () => {
         <MemoizedGiftCardHeader amount={amount} cardConfig={cardConfig} />
         {wallet ? (
           <>
-            <Header hr>Summary</Header>
+            <Header hr>{t('Summary')}</Header>
             {wallet && isTSSWallet(wallet) && (
               <TSSProgressTracker
                 status={tssStatus}
