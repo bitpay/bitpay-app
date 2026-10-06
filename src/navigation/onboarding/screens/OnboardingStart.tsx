@@ -202,21 +202,18 @@ const OnboardingPagination = memo(
     progressValue: SharedValue<number>;
     length: number;
   }) => {
-    const activeDotStyle = useAnimatedStyle(
-      () => ({
-        transform: [
-          {
-            translateX: interpolate(
-              progressValue.value,
-              [0, length - 1],
-              [0, PAGINATION_DOT_STEP * (length - 1)],
-              Extrapolate.CLAMP,
-            ),
-          },
-        ],
-      }),
-      [length, progressValue],
-    );
+    const activeDotStyle = useAnimatedStyle(() => ({
+      transform: [
+        {
+          translateX: interpolate(
+            progressValue.value,
+            [0, length - 1],
+            [0, PAGINATION_DOT_STEP * (length - 1)],
+            Extrapolate.CLAMP,
+          ),
+        },
+      ],
+    }));
 
     return (
       <View style={styles.pagination}>
