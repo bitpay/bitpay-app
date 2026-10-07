@@ -191,8 +191,11 @@ async function _backupPersistRoot(rawJson: string): Promise<void> {
       return;
     } catch (err) {
       try {
+        // Without a final file (e.g. a 516 fallback unlinked it), TEMP may hold
+        // the only copy; readBackupPersistRoot falls back to it
+        const finalExists = await RNFS.exists(FINAL_FILE);
         const tmpExists = await RNFS.exists(TEMP_FILE);
-        if (tmpExists) {
+        if (finalExists && tmpExists) {
           await RNFS.unlink(TEMP_FILE);
         }
       } catch {}
@@ -210,46 +213,33 @@ async function _backupPersistRoot(rawJson: string): Promise<void> {
   }
 }
 
+// A valid TEMP only survives when FINAL is missing, and is then newer than .bak
+const READ_ORDER: [string, string][] = [
+  [FINAL_FILE, 'final'],
+  [TEMP_FILE, 'tmp'],
+  [BACKUP_FILE, 'bak'],
+];
+
 export async function readBackupPersistRoot(): Promise<string | null> {
-  try {
-    const finalExists = await RNFS.exists(FINAL_FILE);
-    if (finalExists) {
-      const data = await RNFS.readFile(FINAL_FILE, 'utf8');
-      try {
-        JSON.parse(data);
-        return data;
-      } catch {
-        // Fall through to backup
+  for (const [path, label] of READ_ORDER) {
+    try {
+      if (await RNFS.exists(path)) {
+        const data = await RNFS.readFile(path, 'utf8');
+        try {
+          JSON.parse(data);
+          return data;
+        } catch {}
       }
+    } catch (err) {
+      initLogs.add(
+        LogActions.persistLog(
+          LogActions.error(
+            `Backup read ${label} failed - ${getErrorString(err)}`,
+          ),
+        ),
+      );
+      Sentry.captureException(err, {level: 'error'});
     }
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(`Backup read final failed - ${getErrorString(err)}`),
-      ),
-    );
-    Sentry.captureException(err, {level: 'error'});
   }
-
-  try {
-    const bakExists = await RNFS.exists(BACKUP_FILE);
-    if (bakExists) {
-      const data = await RNFS.readFile(BACKUP_FILE, 'utf8');
-      try {
-        JSON.parse(data);
-        return data;
-      } catch {
-        return null;
-      }
-    }
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(`Backup read bak failed - ${getErrorString(err)}`),
-      ),
-    );
-    Sentry.captureException(err, {level: 'error'});
-  }
-
   return null;
 }
