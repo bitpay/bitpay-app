@@ -50,6 +50,7 @@ jest.mock('../managers/LogManager', () => ({
 
 import {backupFileExists, backupPersistRoot} from './backup/fs-backup';
 import {reduxStorage} from './index';
+import {activateVaultStorage} from './vault-storage';
 
 jest.mock('./backup/fs-backup', () => ({
   backupFileExists: jest.fn(),
@@ -60,6 +61,8 @@ jest.mock('./backup/fs-backup', () => ({
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 describe('persist:root filesystem backup scheduling', () => {
+  beforeAll(() => activateVaultStorage());
+
   it('coalesces writes during an in-flight backup and stops after 3 failures', async () => {
     (backupFileExists as jest.Mock).mockResolvedValue(false);
     let fail: (e: Error) => void = () => {};
