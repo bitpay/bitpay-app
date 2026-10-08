@@ -13,6 +13,7 @@ import {
   WIDTH,
 } from '../../components/styled/Containers';
 import TabContainer from './TabContainer';
+import useFloatingTabBarInset from './useFloatingTabBarInset';
 import {ShopScreens, ShopStackParamList} from './shop/ShopStack';
 import {BillGroupParamList, BillScreens} from './shop/bill/BillGroup';
 import {
@@ -82,6 +83,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
   const theme = useTheme();
+  const tabBarInset = useFloatingTabBarInset();
   return (
     <TabContainer>
       {options?.includeHeader ? (
@@ -94,7 +96,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
           </HeaderLeftContainer>
         </HeaderContainer>
       ) : null}
-      <ScrollView contentContainerStyle={{flex: 1}}>
+      <ScrollView contentContainerStyle={{flex: 1, paddingBottom: tabBarInset}}>
         <ScreenContainer style={styles.tabScreenContainer}>
           <View style={styles.tabScreenErrorBody}>
             <WarningSvg height={50} width={50} />
