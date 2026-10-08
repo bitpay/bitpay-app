@@ -59,6 +59,7 @@ import {SumSubSelectors} from '../../../store/sumsub';
 import GetVerifiedModal from './components/GetVerifiedModal';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import useFloatingTabBarInset from '../useFloatingTabBarInset';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -561,6 +562,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   }, [dispatch, canStartKyc, isHomeFocused, appLocked, kycModalShown]);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const tabBarInset = useFloatingTabBarInset();
   useScrollToTop(scrollViewRef);
   const homeViewportHeightRef = useRef(0);
   const homeScrollOffsetYRef = useRef(0);
@@ -811,6 +813,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               // Prevent iOS from injecting automatic top insets which creates a gap
               // between the Archax banner and the Home header when the scene is edge-to-edge
               contentInsetAdjustmentBehavior="never"
+              contentContainerStyle={{paddingBottom: tabBarInset}}
+              scrollIndicatorInsets={{bottom: tabBarInset}}
               refreshControl={
                 <RefreshControl
                   tintColor={theme.dark ? White : SlateDark}
