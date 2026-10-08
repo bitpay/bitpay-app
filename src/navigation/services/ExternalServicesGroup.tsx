@@ -127,6 +127,7 @@ const ExternalServicesGroup = ({
         name={ExternalServicesScreens.MOONPAY_SELL_CHECKOUT}
         component={MoonpaySellCheckout}
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
         }}
       />
@@ -134,6 +135,7 @@ const ExternalServicesGroup = ({
         name={ExternalServicesScreens.RAMP_SELL_CHECKOUT}
         component={RampSellCheckout}
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
         }}
       />
@@ -141,6 +143,7 @@ const ExternalServicesGroup = ({
         name={ExternalServicesScreens.SIMPLEX_SELL_CHECKOUT}
         component={SimplexSellCheckout}
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
         }}
       />
