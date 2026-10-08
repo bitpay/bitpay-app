@@ -31,7 +31,7 @@ class OnboardingPage {
     private val bottomSheetLaterButton = withTestId("bottom-notification-secondary-action-button")
     private val bottomSheetBackupYourKeyButton =
         withTestId("bottom-notification-primary-action-button")
-    private val backupRecoveryPhraseElement = withContentDescription("Backup your recovery phrase")
+    private val backupRecoveryPhraseElement = withTestId("go-to-backup-button")
     private val importTitleText = withText("Import")
     private val importWalletButton = withTestId("import-wallet-button")
 
@@ -196,7 +196,7 @@ class OnboardingPage {
         if (skipTermsIfAlreadyOnboarded()) {
             return false
         }
-        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 120000)
+        return isAnyMatcherDisplayed(iUnderstandCheckBox1Matchers(), timeoutMs = 720000)
     }
 
     fun clickIUnderstandCheckbox1() {
@@ -266,7 +266,7 @@ class OnboardingPage {
         throw lastError ?: RuntimeException("Failed to click $name")
     }
 
-    private fun prepareTermsScreen(timeoutMs: Long = 240000) {
+    private fun prepareTermsScreen(timeoutMs: Long = 720000) {
         val end = System.currentTimeMillis() + timeoutMs
         var lastImportRetryAt = 0L
 

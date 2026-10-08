@@ -60,6 +60,7 @@ class Test595SellBTC : BaseTest() {
 
         allureStep("Wait for Home page to load") {
             homePage.waitForPageToLoad()
+            homePage.waitForFundedBalance()
             allureScreenshot("Home page loaded")
         }
 

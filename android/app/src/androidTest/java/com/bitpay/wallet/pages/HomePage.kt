@@ -8,6 +8,10 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import java.util.regex.Pattern
 
 class HomePage {
 
@@ -71,4 +75,21 @@ class HomePage {
         onView(sendButton).perform(click())
     }
 
+
+    fun waitForFundedBalance(timeoutMs: Long = 180000, intervalMs: Long = 1000) {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val amount = Pattern.compile("^\\$[\\d,]+(\\.\\d+)?$")
+        val end = System.currentTimeMillis() + timeoutMs
+
+        while (System.currentTimeMillis() < end) {
+            // The portfolio balance is the top-most dollar amount on Home.
+            val balance = device.findObjects(By.text(amount))
+                .minByOrNull { it.visibleBounds.top }
+                ?.text
+            if (balance != null && balance.any { it in '1'..'9' }) {
+                return
+            }
+            Thread.sleep(intervalMs)
+        }
+    }
 }
