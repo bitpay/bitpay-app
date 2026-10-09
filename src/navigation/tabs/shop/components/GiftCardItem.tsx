@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   giftCardItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 55,
+    minHeight: 55,
     marginTop: 16,
     marginRight: 0,
     marginBottom: 16,

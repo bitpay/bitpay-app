@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   webViewModalHeader: {
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    height: 50,
+    minHeight: 50,
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 15,
@@ -1528,7 +1528,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           <ItemDivisor />
           <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
             <RowLabel>{t('Destination')}</RowLabel>
-            <SelectedOptionContainer style={{height: 30}}>
+            <SelectedOptionContainer style={{minHeight: 30}}>
               <SelectedOptionCol>
                 <CurrencyImage
                   img={wallet.img}

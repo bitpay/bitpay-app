@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   webViewModalHeader: {
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    height: 50,
+    minHeight: 50,
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 15,

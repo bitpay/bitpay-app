@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    height: 58,
+    minHeight: 58,
   },
   settingTitle: {
     flexGrow: 1,

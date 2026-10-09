@@ -96,6 +96,7 @@ const sharedStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailRow: {
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -109,7 +110,7 @@ const sharedStyles = StyleSheet.create({
     paddingHorizontal: gutter,
   },
   sendToPillContainer: {
-    height: 37,
+    minHeight: 37,
   },
 });
 
@@ -147,7 +148,7 @@ export const DetailContainer: React.FC<
         ? sharedStyles.detailContainerWithMinHeight
         : sharedStyles.detailContainerDefault,
       minHeight ? {minHeight} : null,
-      height ? {height} : null,
+      height ? {minHeight: height} : null,
       style,
     ]}
     {...rest}
@@ -160,7 +161,7 @@ export const PressableDetailContainer: React.FC<
   <TouchableOpacity
     style={[
       sharedStyles.pressableDetailContainer,
-      height ? {height} : null,
+      height ? {minHeight: height} : null,
       style,
     ]}
     {...rest}

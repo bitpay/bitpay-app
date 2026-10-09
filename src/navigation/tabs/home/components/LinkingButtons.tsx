@@ -20,14 +20,18 @@ const MAX_LINKING_BUTTON_ROW_WIDTH = 450;
 const styles = StyleSheet.create({
   buttonsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 12,
     alignSelf: 'center',
   },
   buttonContainer: {
     alignItems: 'center',
+    flexShrink: 1,
   },
   buttonText: {
     fontSize: 13,
     lineHeight: 18,
+    textAlign: 'center',
     marginTop: 3,
   },
   linkButton: {

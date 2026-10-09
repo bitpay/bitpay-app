@@ -47,10 +47,12 @@ const styles = StyleSheet.create({
   pinMessagesContainer: {
     alignItems: 'center',
     marginTop: 32,
+    paddingHorizontal: 24,
   },
   pinMessage: {
     color: White,
     lineHeight: 25,
+    textAlign: 'center',
   },
   pinMessagesErrorContainer: {
     alignItems: 'center',

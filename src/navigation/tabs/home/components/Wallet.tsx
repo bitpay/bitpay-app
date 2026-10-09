@@ -27,7 +27,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import Percentage from '../../../../components/percentage/Percentage';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppSelector, useIsLargeFont} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -114,6 +114,7 @@ const walletStyles = StyleSheet.create({
     paddingBottom: 0,
   },
   listRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
@@ -126,8 +127,11 @@ const walletStyles = StyleSheet.create({
     marginRight: 12,
   },
   footerContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     width: '100%',
   },
   keyName: {
@@ -290,8 +294,17 @@ const RemainingAssetsContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
 }) => <View style={walletStyles.remainingAssetsContainer}>{children}</View>;
 
-const ListRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <Row style={walletStyles.listRow}>{children}</Row>
+const ListRow: React.FC<{stacked?: boolean; children?: React.ReactNode}> = ({
+  stacked,
+  children,
+}) => (
+  <View
+    style={[
+      walletStyles.listRow,
+      stacked && {flexDirection: 'column', alignItems: 'flex-start'},
+    ]}>
+    {children}
+  </View>
 );
 
 const NeedBackupRow: React.FC<{children?: React.ReactNode}> = ({children}) => (
@@ -309,7 +322,7 @@ const FooterSupportedNetworkIconContainer: React.FC<{
 
 const FooterContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
-}) => <Row style={walletStyles.footerContainer}>{children}</Row>;
+}) => <View style={walletStyles.footerContainer}>{children}</View>;
 
 const KeyName: React.FC<{children?: React.ReactNode}> = ({children}) => {
   const theme = useTheme();
@@ -334,15 +347,31 @@ const ListLeftColumn: React.FC<{children?: React.ReactNode}> = ({children}) => (
   <Column style={walletStyles.listLeftColumn}>{children}</Column>
 );
 
-const ListRightColumn: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => <Column style={walletStyles.listRightColumn}>{children}</Column>;
+const ListRightColumn: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => (
+  <Column
+    style={[
+      walletStyles.listRightColumn,
+      stacked && {alignItems: 'flex-start', marginLeft: 0, marginTop: 8},
+    ]}>
+    {children}
+  </Column>
+);
 
-const ListBalance: React.FC<{children?: React.ReactNode}> = ({children}) => {
+const ListBalance: React.FC<{
+  stacked?: boolean;
+  children?: React.ReactNode;
+}> = ({stacked, children}) => {
   const theme = useTheme();
   return (
     <BaseText
-      style={[walletStyles.listBalance, {color: theme.dark ? White : Black}]}>
+      style={[
+        walletStyles.listBalance,
+        {color: theme.dark ? White : Black},
+        stacked && {textAlign: 'left'},
+      ]}>
       {children}
     </BaseText>
   );
@@ -371,6 +400,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   isMultisig,
 }) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const isUkLocation = useAppSelector(({LOCATION}) => {
     return isUnitedKingdomCountry(LOCATION.locationData?.countryShortCode);
@@ -413,7 +443,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         onPressIn={onPressIn}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
-        <ListRow>
+        <ListRow stacked={stacked}>
           <ListLeftColumn>
             {needsBackup && !pendingTssSession ? (
               <NeedBackupRow>
@@ -437,8 +467,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             )}
             <KeyName>{keyName}</KeyName>
           </ListLeftColumn>
-          <ListRightColumn>
-            <ListBalance>{maskIfHidden(hideKeyBalance, amount)}</ListBalance>
+          <ListRightColumn stacked={stacked}>
+            <ListBalance stacked={stacked}>
+              {maskIfHidden(hideKeyBalance, amount)}
+            </ListBalance>
             {!hideKeyBalance && percentageDifference !== null ? (
               <ListPercentageRow>
                 <Percentage

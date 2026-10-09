@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
   instructionNumberIcon: {
     backgroundColor: LightBlue,
     borderRadius: 40,
-    height: 25,
-    width: 25,
+    minHeight: 25,
+    minWidth: 25,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

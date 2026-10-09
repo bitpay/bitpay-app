@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletSelector: {
-    height: 36,
+    minHeight: 36,
     borderRadius: 27.5,
     display: 'flex',
     flexDirection: 'row',

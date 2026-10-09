@@ -119,14 +119,14 @@ const styles = StyleSheet.create({
   },
   associatedWallet: {
     paddingHorizontal: 20,
-    height: 55,
+    minHeight: 55,
     borderWidth: 0.75,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
   },
   associatedAccountNoTouchable: {
     paddingHorizontal: 10,
-    height: 64,
+    minHeight: 64,
     borderWidth: 0.75,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,

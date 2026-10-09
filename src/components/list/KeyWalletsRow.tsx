@@ -32,7 +32,7 @@ import {formatCryptoAddress} from '../../utils/helper-methods';
 import Blockie from '../blockie/Blockie';
 import {IsVMChain} from '../../store/wallet/utils/currency';
 import {findWalletById} from '../../store/wallet/utils/wallet';
-import {useAppSelector} from '../../utils/hooks';
+import {useAppSelector, useIsLargeFont} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -86,6 +86,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 0,
     gap: 11,
+  },
+  accountChainsContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   accountChainTitleContainer: {
     display: 'flex',
@@ -158,13 +162,14 @@ const NeedBackupText: React.FC<React.ComponentProps<typeof BaseText>> = ({
 };
 
 const AccountChainsContainer: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => {
+  React.ComponentProps<typeof TouchableOpacity> & {stacked?: boolean}
+> = ({stacked, style, ...rest}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
       style={[
         styles.accountChainsContainer,
+        stacked && styles.accountChainsContainerStacked,
         {borderBottomColor: theme.dark ? LightBlack : LightBlue},
         style,
       ]}
@@ -254,6 +259,7 @@ const KeyWalletsRow = ({
   supportedTransactionCurrencies,
 }: KeyWalletProps) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
@@ -296,6 +302,7 @@ const KeyWalletsRow = ({
                   key={account.id}
                   isLast={key?.mergedUtxoAndEvmAccounts.length === index + 1}>
                   <AccountChainsContainer
+                    stacked={stacked}
                     activeOpacity={ActiveOpacity}
                     testID={`key-wallets-evm-account-toggle-${evmAccount?.receiveAddress}`}
                     accessibilityLabel={t('{{account}} account', {
@@ -304,11 +311,15 @@ const KeyWalletsRow = ({
                     onPress={() => onHide(evmAccount?.receiveAddress)}>
                     <Blockie size={19} seed={evmAccount?.receiveAddress} />
                     <Column>
-                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                      <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
                         {evmAccount?.accountName}
                       </H5>
                     </Column>
-                    <Column style={{alignItems: 'flex-end'}}>
+                    <Column
+                      style={{
+                        alignItems: stacked ? 'flex-start' : 'flex-end',
+                        alignSelf: stacked ? 'stretch' : 'auto',
+                      }}>
                       <Row style={styles.chainAssetsContainer}>
                         <BadgeContainer>
                           <Badge>
@@ -355,7 +366,9 @@ const KeyWalletsRow = ({
                               <View style={styles.currencyImageContainer}>
                                 <CurrencyImage img={chainImg} size={20} />
                               </View>
-                              <H5 ellipsizeMode="tail" numberOfLines={1}>
+                              <H5
+                                ellipsizeMode="tail"
+                                numberOfLines={stacked ? 2 : 1}>
                                 {chainName}
                               </H5>
                             </View>
@@ -412,6 +425,7 @@ const KeyWalletsRow = ({
                   {!prev ||
                     (prev.chain !== wallet.chain && (
                       <AccountChainsContainer
+                        stacked={stacked}
                         activeOpacity={ActiveOpacity}
                         testID={`key-wallets-utxo-chain-toggle-${wallet?.chain}-${key.key}`}
                         accessibilityLabel={t('{{chain}} chain', {
@@ -425,14 +439,20 @@ const KeyWalletsRow = ({
                         }>
                         <CurrencyImage img={wallet?.img} size={20} />
                         <Column>
-                          <H5 ellipsizeMode="tail" numberOfLines={1}>
+                          <H5
+                            ellipsizeMode="tail"
+                            numberOfLines={stacked ? 2 : 1}>
                             {BitpaySupportedCoins[
                               // @ts-ignore
                               wallet?.currencyAbbreviation?.toLowerCase()
                             ]?.name ?? ''}
                           </H5>
                         </Column>
-                        <Column style={{alignItems: 'flex-end'}}>
+                        <Column
+                          style={{
+                            alignItems: stacked ? 'flex-start' : 'flex-end',
+                            alignSelf: stacked ? 'stretch' : 'auto',
+                          }}>
                           <Row style={styles.chainAssetsContainer}>
                             <ChevronContainer>
                               {theme.dark ? (

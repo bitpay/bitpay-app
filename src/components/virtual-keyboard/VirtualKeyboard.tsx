@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
   },
   cellContainer: {
     width: '33.333333%',
+    minHeight: 45,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -103,6 +104,7 @@ const CellValue: React.FC<
   const sizes = getKeyboardSizes(isSmallScreen, context);
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         {
           fontSize: sizes.cellValueFontSize,
@@ -120,7 +122,13 @@ const CellValue: React.FC<
 const CellLetter: React.FC<React.ComponentProps<typeof BaseText>> = ({
   style,
   ...rest
-}) => <BaseText style={[styles.cellLetter, style]} {...rest} />;
+}) => (
+  <BaseText
+    maxFontSizeMultiplier={1.3}
+    style={[styles.cellLetter, style]}
+    {...rest}
+  />
+);
 
 const SymbolContainer: React.FC<
   SymbolContainerProps & React.ComponentProps<typeof View>
@@ -319,7 +327,7 @@ const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
           style={[
             styles.cellContainer,
             {
-              height: getKeyboardSizes(_isSmallScreen, context)
+              minHeight: getKeyboardSizes(_isSmallScreen, context)
                 .cellContainerHeight,
             },
           ]}>
@@ -352,7 +360,7 @@ const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
           style={[
             styles.cellContainer,
             {
-              height: getKeyboardSizes(_isSmallScreen, context)
+              minHeight: getKeyboardSizes(_isSmallScreen, context)
                 .cellContainerHeight,
             },
           ]}>
