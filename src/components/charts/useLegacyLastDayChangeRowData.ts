@@ -20,6 +20,7 @@ import {
 import {getRangeLabelForFiatTimeframe} from './fiatTimeframes';
 import useRuntimeFiatRateSeriesCache from '../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {getLastDayTimestampStartOfHourMs} from '../../utils/helper-methods';
+import {buildRuntimeFiatRateCacheRequestKey} from '../../portfolio/ui/fiatRateSeries';
 
 const EMPTY_DISABLED_RATES = {};
 
@@ -134,14 +135,18 @@ export const useLegacyLastDayChangeRowDataState = (
     clearOnRequestChange: true,
   });
 
-  const hasStartedLoadingRef = useRef(false);
+  const requestKey = buildRuntimeFiatRateCacheRequestKey({
+    quoteCurrency,
+    requests: rateRequests,
+  });
+  const startedLoadingKeyRef = useRef<string | undefined>(undefined);
   if (loading) {
-    hasStartedLoadingRef.current = true;
+    startedLoadingKeyRef.current = requestKey;
   }
   const isLoading =
     enabled &&
     rateRequests.length > 0 &&
-    (loading || !hasStartedLoadingRef.current);
+    (loading || startedLoadingKeyRef.current !== requestKey);
 
   const data = useMemo(() => {
     if (!enabled) {
