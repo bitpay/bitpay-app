@@ -670,11 +670,11 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     navigation.setOptions({
       gestureEnabled: !isCeremonyStarted,
       headerLeft: isCeremonyStarted ? () => null : undefined,
-      headerRight: isCeremonyStarted
+      headerRight: isCeremonyComplete
         ? () => null
         : () => <Settings onPress={() => setShowKeyOptions(true)} />,
     });
-  }, [isCeremonyStarted, navigation]);
+  }, [isCeremonyStarted, isCeremonyComplete, navigation]);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
@@ -1142,6 +1142,22 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     });
   };
 
+  const keyOptionsSheet = (
+    <OptionsSheet
+      isVisible={showKeyOptions}
+      title={t('Key Options')}
+      options={[
+        {
+          img: <Icons.Delete />,
+          title: t('Delete'),
+          description: t('Permanently deletes all wallets using this key.'),
+          onPress: () => navigation.navigate('DeleteKey', {keyId}),
+        },
+      ]}
+      closeModal={() => setShowKeyOptions(false)}
+    />
+  );
+
   if (isCeremonyStarted) {
     return (
       <Container>
@@ -1190,6 +1206,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
             </ButtonContainer>
           )}
         </Content>
+        {keyOptionsSheet}
       </Container>
     );
   }
@@ -1292,19 +1309,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
         </ModalContainer>
       </Modal>
 
-      <OptionsSheet
-        isVisible={showKeyOptions}
-        title={t('Key Options')}
-        options={[
-          {
-            img: <Icons.Delete />,
-            title: t('Delete'),
-            description: t('Permanently deletes all wallets using this key.'),
-            onPress: () => navigation.navigate('DeleteKey', {keyId}),
-          },
-        ]}
-        closeModal={() => setShowKeyOptions(false)}
-      />
+      {keyOptionsSheet}
     </Container>
   );
 };
