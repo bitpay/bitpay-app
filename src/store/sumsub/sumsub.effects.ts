@@ -1,3 +1,4 @@
+import {t} from 'i18next';
 import {Effect} from '../index';
 import {SumSubApi} from '../../api/sumsub';
 import {launchSumSubSdk} from '../../lib/sumsub';
@@ -7,6 +8,9 @@ import {KycInfo} from './sumsub.reducer';
 import {showBottomNotificationModal} from '../app/app.actions';
 import {CustomErrorMessage} from '../../navigation/wallet/components/ErrorMessages';
 import {deriveKycUiState} from './sumsub.selectors';
+import {sleep} from '../../utils/helper-methods';
+
+export const MODAL_HANDOFF_DELAY = 600;
 
 // Fetches the backend KYC object and stores it verbatim. No-op when logged out.
 export const startGetKycStatus =
@@ -57,6 +61,15 @@ export const startKycVerification =
       dispatch(
         LogActions.error('[SumSub] Cannot start KYC — user not logged in'),
       );
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t(
+              'Please log in to your BitPay account to verify your identity.',
+            ),
+          }),
+        ),
+      );
       return;
     }
 
@@ -66,11 +79,20 @@ export const startKycVerification =
     try {
       const accessToken = await getAccessToken();
 
-      // Null token → not eligible; not an error, just don't launch the SDK.
       if (!accessToken) {
         dispatch(
           LogActions.info(
             '[SumSub] No access token returned — KYC not available for this user.',
+          ),
+        );
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              title: t('Verification unavailable'),
+              errMsg: t(
+                "Identity verification isn't available for your account at this time. Please contact support if you need help.",
+              ),
+            }),
           ),
         );
         return;
@@ -82,7 +104,22 @@ export const startKycVerification =
 
       const locale = (APP.defaultLanguage || 'en').split('-')[0];
 
-      const result = await launchSumSubSdk(accessToken, onTokenExpired, locale);
+      try {
+        await SumSubApi.startKycAttempt(apiToken);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`[SumSub] startKycAttempt failed: ${msg}`));
+      }
+
+      const result = await launchSumSubSdk(
+        accessToken,
+        onTokenExpired,
+        locale,
+        {
+          email: user.email,
+          phone: user.phone,
+        },
+      );
 
       dispatch(
         LogActions.debug(`[SumSub] SDK closed — status: ${result.status}`),
@@ -96,6 +133,7 @@ export const startKycVerification =
             `[SumSub] SDK failed — errorType: ${result.errorType}, errorMsg: ${result.errorMsg}`,
           ),
         );
+        await sleep(MODAL_HANDOFF_DELAY);
         dispatch(showBottomNotificationModal(CustomErrorMessage({errMsg})));
         return;
       }
@@ -114,5 +152,13 @@ export const startKycVerification =
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(LogActions.error(`[SumSub] SDK error: ${msg}`));
+      await sleep(MODAL_HANDOFF_DELAY);
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t('The verification process encountered an error.'),
+          }),
+        ),
+      );
     }
   };

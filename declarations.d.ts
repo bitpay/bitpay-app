@@ -11,6 +11,8 @@ declare module '@env' {
   export const BRAZE_API_KEY_ANDROID: string;
   export const BRAZE_API_KEY_IOS: string;
   export const BRAZE_EXPORT_API_KEY: string;
+  export const BRAZE_MERGE_AND_DELETE_API_KEY: string;
+  export const BRAZE_REST_API_ENDPOINT: string;
   export const COINBASE_CLIENT_ID: string;
   export const COINBASE_CLIENT_SECRET: string;
   export const DISABLE_DEVELOPMENT_LOGGING: string;
@@ -62,13 +64,22 @@ declare module '@sumsub/react-native-mobilesdk-module' {
     onEvent?: (event: SumSubEventPayload) => void;
   }
 
+  interface SumSubDocumentDefinition {
+    idDocType?: string;
+    country?: string;
+  }
+
   interface SumSubSdkBuilder {
     withHandlers(handlers: SumSubHandlers): SumSubSdkBuilder;
     withLocale(locale: string): SumSubSdkBuilder;
     withDebug(debug: boolean): SumSubSdkBuilder;
+    withTheme(theme: object): SumSubSdkBuilder;
     withAutoCloseOnApprove(delayMs: number): SumSubSdkBuilder;
     withAnalyticsEnabled(enabled: boolean): SumSubSdkBuilder;
     withApplicantConf(conf: {email?: string; phone?: string}): SumSubSdkBuilder;
+    withPreferredDocumentDefinitions(
+      definitions: Record<string, SumSubDocumentDefinition>,
+    ): SumSubSdkBuilder;
     build(): {
       launch(): Promise<SumSubSdkResult>;
       dismiss(): void;

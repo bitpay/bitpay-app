@@ -319,8 +319,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const {height: screenHeight} = useWindowDimensions();
   const isSmallScreen = screenHeight < 700;
 
-  useAndroidBackHandler(() => true);
-
   const {keyId} = route.params;
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
   const tssSession = key?.tssSession;

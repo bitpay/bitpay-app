@@ -22,6 +22,7 @@ import {
   isCloudflareChallenge,
   safeErrorMessage,
 } from './cloudflare';
+import {assertDeviceIntegrityForSensitiveAction} from './deviceIntegrity';
 
 type Json = Record<string, any>;
 
@@ -115,6 +116,8 @@ export async function registerPasskey(
   network: Network,
   token: string,
 ): Promise<boolean> {
+  assertDeviceIntegrityForSensitiveAction('passkey-register');
+
   const creationOptions: PasskeyCreateRequest = await post(
     BASE_BITPAY_URLS[network] + PASSKEY_API_REGISTER_CHALLENGE,
     {email},

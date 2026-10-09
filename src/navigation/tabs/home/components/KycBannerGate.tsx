@@ -84,6 +84,14 @@ function getHomeBannerConfig(
       icon: IconPersonIdentifyVerification,
     };
   }
+  if (kycUiState === 'inProgress') {
+    return {
+      message: t('Continue your identity verification.'),
+      showDot: true,
+      dismissible: false,
+      icon: IconPersonIdentifyVerification,
+    };
+  }
   if (kycUiState === 'actionRequired') {
     return {
       message: t('Action required on your application.'),

@@ -48,6 +48,7 @@ import {
 import {
   calculateAnyFiatToAltFiat,
   getBuyCryptoFiatLimits,
+  getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -74,6 +75,7 @@ import {
 import {
   getMoonpayFixedCurrencyAbbreviation,
   getMoonpayPaymentMethodFormat,
+  isMoonpayEmbeddedPaymentMethodEnabled,
   moonpayEnv,
 } from '../buy-crypto/utils/moonpay-utils';
 import {
@@ -1103,10 +1105,16 @@ const ExternalServicesOfferSelector: React.FC<
       );
     }
 
-    // MoonPay embedded flow
+    // MoonPay embedded flow (Apple Pay | Cards)
+    const isMoonpayEmbeddedPaymentMethod =
+      isMoonpayEmbeddedPaymentMethodEnabled(
+        paymentMethod?.method,
+        buyCryptoConfig,
+        getMoonpayEmbeddedApplePaySupported(),
+      );
     if (
       preferMoonpayApplePay &&
-      paymentMethod?.method === 'applePay' &&
+      isMoonpayEmbeddedPaymentMethod &&
       selectedWallet
     ) {
       const embeddedStatus = getMoonpayEmbeddedStatus();
@@ -2299,6 +2307,7 @@ const ExternalServicesOfferSelector: React.FC<
     sellOffers.moonpay.amountReceivingAltFiatCurrency = undefined;
     sellOffers.moonpay.fiatMoney = undefined;
     sellOffers.moonpay.expanded = false;
+    setFinishedMoonpay(true);
     setUpdateViewSell(Math.random());
   };
 
@@ -2547,6 +2556,7 @@ const ExternalServicesOfferSelector: React.FC<
     sellOffers.ramp.amountReceivingAltFiatCurrency = undefined;
     sellOffers.ramp.fiatMoney = undefined;
     sellOffers.ramp.expanded = false;
+    setFinishedRamp(true);
     setUpdateViewSell(Math.random());
   };
 
@@ -2717,6 +2727,7 @@ const ExternalServicesOfferSelector: React.FC<
     sellOffers.simplex.amountReceivingAltFiatCurrency = undefined;
     sellOffers.simplex.fiatMoney = undefined;
     sellOffers.simplex.expanded = false;
+    setFinishedSimplex(true);
     setUpdateViewSell(Math.random());
   };
 
@@ -2994,15 +3005,17 @@ const ExternalServicesOfferSelector: React.FC<
           offer.amountReceiving !== '0' &&
           Number(offer.amountReceiving) > 0,
       );
-      if (filteredOffers.length === 0 && allExchangesFinished) {
-        setOfferWarnMsg(
-          t(
-            'There are currently no offers that satisfy your request. Please try again later.',
-          ),
-        );
-        setSelectedOffer(undefined);
-        onSelectOffer?.(undefined);
-        setSelectedOfferLoading(false);
+      if (filteredOffers.length === 0) {
+        if (allExchangesFinished) {
+          setOfferWarnMsg(
+            t(
+              'There are currently no offers that satisfy your request. Please try again later.',
+            ),
+          );
+          setSelectedOffer(undefined);
+          onSelectOffer?.(undefined);
+          setSelectedOfferLoading(false);
+        }
         return;
       }
       const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
@@ -3077,6 +3090,21 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     const offersTimeout = setTimeout(() => {
+      const moonpayReady = finishedMoonpay === null || finishedMoonpay === true;
+      const rampReady = finishedRamp === null || finishedRamp === true;
+      const simplexReady = finishedSimplex === null || finishedSimplex === true;
+      const allSellExchangesFinished =
+        moonpayReady && rampReady && simplexReady;
+
+      const hasParticipatingExchange =
+        finishedMoonpay !== null ||
+        finishedRamp !== null ||
+        finishedSimplex !== null;
+
+      if (!hasParticipatingExchange) {
+        return;
+      }
+
       const offersArray = Object.values(sellOffers);
       const filteredOffers = offersArray.filter(
         offer =>
@@ -3085,14 +3113,16 @@ const ExternalServicesOfferSelector: React.FC<
           offer.amountReceiving !== '0',
       );
       if (filteredOffers.length === 0) {
-        setOfferWarnMsg(
-          t(
-            'There are currently no offers that satisfy your request. Please try again later.',
-          ),
-        );
-        setSelectedOffer(undefined);
-        onSelectOffer?.(undefined);
-        setSelectedOfferLoading(false);
+        if (allSellExchangesFinished) {
+          setOfferWarnMsg(
+            t(
+              'There are currently no offers that satisfy your request. Please try again later.',
+            ),
+          );
+          setSelectedOffer(undefined);
+          onSelectOffer?.(undefined);
+          setSelectedOfferLoading(false);
+        }
         return;
       }
       const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>

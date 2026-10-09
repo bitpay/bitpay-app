@@ -89,6 +89,19 @@ export const setMoonpayEmbeddedEnabled = (enabled: boolean): void => {
   _moonpayEmbeddedEnabled = enabled;
 };
 
+// Whether this device can use Apple Pay for the embedded flow. Set by
+// MoonpayEmbeddedCredentialManager, which runs the native check.
+let _moonpayEmbeddedApplePaySupported: boolean = false;
+
+export const getMoonpayEmbeddedApplePaySupported = (): boolean =>
+  _moonpayEmbeddedApplePaySupported;
+
+export const setMoonpayEmbeddedApplePaySupported = (
+  supported: boolean,
+): void => {
+  _moonpayEmbeddedApplePaySupported = supported;
+};
+
 // Listener registered by MoonpayEmbeddedCredentialManager to trigger a recheck
 // from anywhere in the app (e.g. after an unlink reset completes).
 let _moonpayEmbeddedRecheckListener: (() => void) | undefined;

@@ -5,6 +5,8 @@ export type ExchangeConfig = {
   disabledMessage?: string;
   config?: {
     paymentMethods?: PaymentMethodsConfig;
+    // MoonPay embedded flow kill switch.
+    embeddedBuyDisabled?: boolean;
     [key: string]: any; // Other partner-specific configuration properties can be added here
   };
 };
@@ -54,7 +56,11 @@ export type ConfigPaymentMethodKey =
   | 'paypal'
   | 'pisp'
   | 'pix'
-  | 'venmo';
+  | 'venmo'
+  // MoonPay embedded flow only — independent from the general 'applePay' /
+  // 'creditCard' / 'debitCard' keys above, which also cover the Kayak flow.
+  | 'applePayEmbedded'
+  | 'cardEmbedded';
 
 export type PaymentMethodConfig = {
   disabled?: boolean;

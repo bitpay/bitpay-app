@@ -62,7 +62,7 @@ index d97ed29..ec93a41 100644
  };
  
 diff --git a/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h b/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
-index 1c20158..a7009f6 100644
+index 1c20158..4c5770c 100644
 --- a/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
 +++ b/node_modules/react-native-worklets/Common/cpp/worklets/SharedItems/Serializable.h
 @@ -6,6 +6,7 @@
@@ -133,7 +133,7 @@ index 1c20158..a7009f6 100644
    std::unique_ptr<jsi::Value> secondaryValue_;
  
   public:
-@@ -62,20 +65,55 @@ class RetainingSerializable : virtual public BaseClass {
+@@ -62,20 +65,67 @@ class RetainingSerializable : virtual public BaseClass {
        // shared value is created and then accessed on the same runtime
        return BaseClass::toJSValue(rt);
      }
@@ -143,19 +143,31 @@ index 1c20158..a7009f6 100644
 -      secondaryRuntime_ = &rt;
 +
 +    bool hasDifferentRuntimeCache = false;
++    jsi::Value *cachedValue = nullptr;
 +    {
 +      // The same retained graph can be materialized concurrently by multiple
 +      // Worklet Runtimes, so all secondary-cache access is synchronized.
 +      std::lock_guard<std::mutex> lock(secondaryCacheMutex_);
 +      if (secondaryValue_ != nullptr) {
 +        if (&rt == secondaryRuntime_) {
-+          return jsi::Value(rt, *secondaryValue_);
++          // Reading the pointer is enough: the cache is published once and
++          // only released in the destructor, which cannot run while a caller
++          // still holds this serializable alive.
++          cachedValue = secondaryValue_.get();
++        } else {
++          // The first secondary runtime remains the cache owner. A different
++          // runtime must materialize an uncached, runtime-affine
++          // representation.
++          hasDifferentRuntimeCache = true;
 +        }
-+
-+        // The first secondary runtime remains the cache owner. A different
-+        // runtime must materialize an uncached, runtime-affine representation.
-+        hasDifferentRuntimeCache = true;
 +      }
++    }
++
++    if (cachedValue != nullptr) {
++      // Cloning locks the runtime, and a thread that already holds the runtime
++      // lock can be materializing this same graph. Holding the cache mutex here
++      // inverts that lock order and deadlocks the UI and JS threads.
++      return jsi::Value(rt, *cachedValue);
 +    }
 +
 +    // Materialization can recursively visit nested serializables and perform
@@ -197,7 +209,7 @@ index 1c20158..a7009f6 100644
    }
  };
  
-@@ -246,7 +284,7 @@ class SerializableRemoteFunction : public Serializable,
+@@ -246,7 +296,7 @@ class SerializableRemoteFunction : public Serializable,
    }
  
    ~SerializableRemoteFunction() override {
@@ -206,7 +218,7 @@ index 1c20158..a7009f6 100644
    }
  
    jsi::Value toJSValue(jsi::Runtime &rt) override;
-@@ -261,7 +299,7 @@ class SerializableInitializer : public Serializable {
+@@ -261,7 +311,7 @@ class SerializableInitializer : public Serializable {
    std::unique_ptr<SerializableObject> initializer_;
    std::unique_ptr<jsi::Value> remoteValue_;
    mutable std::mutex initializationMutex_;
@@ -215,7 +227,7 @@ index 1c20158..a7009f6 100644
  
   public:
    SerializableInitializer(jsi::Runtime &rt, const jsi::Object &initializerObject)
-@@ -269,7 +307,7 @@ class SerializableInitializer : public Serializable {
+@@ -269,7 +319,7 @@ class SerializableInitializer : public Serializable {
          initializer_(std::make_unique<SerializableObject>(rt, initializerObject)) {}
  
    ~SerializableInitializer() override {
