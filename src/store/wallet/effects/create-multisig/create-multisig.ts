@@ -33,7 +33,11 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
 import {createWalletAddress} from '../address/address';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedEvmCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 
@@ -499,6 +503,112 @@ export const addCoSignerToTSS =
     }
   };
 
+const buildTSSChainWallets =
+  ({
+    tssKey,
+    walletsFromBWS,
+    copayerName,
+    n,
+  }: {
+    tssKey: any;
+    walletsFromBWS: any[];
+    copayerName: string;
+    n: number;
+  }): Effect<Promise<Wallet[]>> =>
+  async (dispatch, getState) => {
+    const {
+      APP: {
+        notificationsAccepted,
+        emailNotifications,
+        brazeEid,
+        defaultLanguage,
+      },
+    } = getState();
+    const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+    const deadline = Date.now() + getCeremonyTimeoutMs(n);
+    const wallets: Wallet[] = [];
+    for (const chainWallet of walletsFromBWS) {
+      let walletFromBWS = chainWallet;
+      const credentials = tssKey.createCredentials(null, {
+        coin: walletFromBWS.coin,
+        chain: walletFromBWS.chain,
+        network: walletFromBWS.network,
+        account: 0,
+      });
+      credentials.addWalletInfo(
+        walletFromBWS.id,
+        walletFromBWS.name,
+        walletFromBWS.m,
+        walletFromBWS.n,
+        copayerName,
+        {tssKeyId: walletFromBWS.tssKeyId, allowOverwrite: true},
+      );
+      const client = BWC.getClient();
+      client.fromObj(credentials.toObj());
+      while (true) {
+        try {
+          walletFromBWS = (await client.openWallet({forceOpen: true})).wallet;
+        } catch (err) {
+          logManager.warn(
+            `[TSS] Could not open ${walletFromBWS.chain} wallet: ${
+              err instanceof Error ? err.message : JSON.stringify(err)
+            }`,
+          );
+        }
+        if (
+          (client.credentials?.publicKeyRing?.length || 0) >= n ||
+          Date.now() >= deadline
+        ) {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      if (!client.isComplete()) {
+        logManager.warn(
+          `[TSS] Skipping ${walletFromBWS.chain} wallet: no co-signer joined it`,
+        );
+        continue;
+      }
+
+      if (notificationsAccepted) {
+        dispatch(subscribePushNotifications(client, brazeEid!));
+      }
+      if (emailNotifications?.accepted && emailNotifications?.email) {
+        dispatch(
+          subscribeEmailNotifications(client, {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc',
+          }),
+        );
+      }
+
+      const {currencyAbbreviation, currencyName} = dispatch(
+        mapAbbreviationAndName(
+          walletFromBWS.coin,
+          walletFromBWS.chain,
+          undefined,
+        ),
+      );
+      const wallet = merge(
+        client,
+        walletFromBWS,
+        buildWalletObj(
+          {
+            ...client.credentials.toObj(),
+            currencyAbbreviation,
+            currencyName,
+            tssMetadata: tssKey.metadata,
+          } as any,
+          tokenOptionsByAddress,
+        ),
+      ) as Wallet;
+      await dispatch(createWalletAddress({wallet, newAddress: false}));
+      wallets.push(wallet);
+    }
+    return wallets;
+  };
+
 export const startTSSCeremony =
   (keyId: string, onRoundReady?: () => void): Effect<Promise<Key>> =>
   async (dispatch, getState): Promise<Key> => {
@@ -586,8 +696,17 @@ export const startTSSCeremony =
         );
 
         let walletFromBWS: any;
+        let chainWalletsFromBWS: any[] = [];
         const Bitcore = BWC.getBitcore();
         const walletPrivKey = new Bitcore.PrivateKey().toString();
+        const chains = SUPPORTED_EVM_COINS.includes(chain)
+          ? Object.values(BitpaySupportedEvmCoins)
+              .filter(currency => currency.chain !== chain)
+              .map(currency => ({
+                chain: currency.chain,
+                coin: currency.coin === 'pol' ? 'matic' : currency.coin,
+              }))
+          : [];
 
         await Promise.race([
           new Promise<void>((resolve, reject) => {
@@ -652,9 +771,10 @@ export const startTSSCeremony =
                   );
                 } catch (e) {}
               })
-              .on('wallet', (w: any) => {
+              .on('wallet', (w: any, chainWallets: any[] = []) => {
                 logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
                 walletFromBWS = w;
+                chainWalletsFromBWS = chainWallets;
               })
               .on('error', (e: Error) => {
                 if (
@@ -710,6 +830,7 @@ export const startTSSCeremony =
                 chain,
                 walletPrivKey,
               },
+              chains,
             });
           }),
         ]);
@@ -873,9 +994,18 @@ export const startTSSCeremony =
 
         delete finalWallet.pendingTssSession;
 
+        const chainWallets = await dispatch(
+          buildTSSChainWallets({
+            tssKey: _tssKey,
+            walletsFromBWS: chainWalletsFromBWS,
+            copayerName: myName,
+            n: key.tssSession!.n,
+          }),
+        );
+
         const finalKey = buildTssKeyObj({
           tssKey: _tssKey,
-          wallets: [finalWallet],
+          wallets: [finalWallet, ...chainWallets],
           keyName: 'My TSSKey',
         });
 
@@ -1209,6 +1339,7 @@ export const joinTSSWithCode =
         );
 
         let walletFromBWS: any;
+        let chainWalletsFromBWS: any[] = [];
 
         await Promise.race([
           new Promise<void>((resolve, reject) => {
@@ -1277,9 +1408,10 @@ export const joinTSSWithCode =
                   }
                 } catch (e) {}
               })
-              .on('wallet', (w: any) => {
+              .on('wallet', (w: any, chainWallets: any[] = []) => {
                 logManager.debug(`[TSS Join wallet] ${w?.id}`);
                 walletFromBWS = w;
+                chainWalletsFromBWS = chainWallets;
               })
               .on('error', (e: Error) => {
                 const stats = ceremonyStats.get(key.id);
@@ -1501,9 +1633,18 @@ export const joinTSSWithCode =
 
         delete finalWallet.pendingTssSession;
 
+        const chainWallets = await dispatch(
+          buildTSSChainWallets({
+            tssKey: _tssKey,
+            walletsFromBWS: chainWalletsFromBWS,
+            copayerName,
+            n: tssSession.n,
+          }),
+        );
+
         const finalKey = buildTssKeyObj({
           tssKey: _tssKey,
-          wallets: [finalWallet],
+          wallets: [finalWallet, ...chainWallets],
           keyName: 'My TSSKey',
         });
 
