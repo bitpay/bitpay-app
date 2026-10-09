@@ -142,7 +142,7 @@ import FullWidthBalanceChartContainer from '../../../components/charts/FullWidth
 import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../components/charts/fiatTimeframes';
 import {useHasCachedBalanceHistoryChartSeries} from '../../../components/charts/balanceHistoryChartSeriesCache';
-import useLegacyLastDayChangeRowData from '../../../components/charts/useLegacyLastDayChangeRowData';
+import {useLegacyLastDayChangeRowDataState} from '../../../components/charts/useLegacyLastDayChangeRowData';
 import usePortfolioBalanceChartSurface from '../../../portfolio/ui/hooks/usePortfolioBalanceChartSurface';
 import usePortfolioBalanceChartReadiness from '../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import usePortfolioBalanceChartEligibleWallets from '../../../portfolio/ui/hooks/usePortfolioBalanceChartEligibleWallets';
@@ -561,6 +561,23 @@ const AllocationMetricSkeleton: React.FC<{
             ? 'center'
             : 'flex-start'
         }
+      />
+    </SkeletonPlaceholder>
+  );
+};
+
+const ChangeRowSkeleton: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <SkeletonPlaceholder
+      backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
+      highlightColor={theme.dark ? LightBlack : GhostWhite}>
+      <SkeletonPlaceholder.Item
+        width={150}
+        height={14}
+        borderRadius={2}
+        marginVertical={2}
+        alignSelf="center"
       />
     </SkeletonPlaceholder>
   );
@@ -1108,12 +1125,19 @@ const KeyOverview = () => {
       shouldPreserveStaleKeyBalanceChart || hasCachedKeyChart,
     resetKey: id,
   });
-  const legacyLastDayChangeRowData = useLegacyLastDayChangeRowData({
+  const {
+    data: legacyLastDayChangeRowData,
+    isLoading: isLegacyLastDayChangeRowLoading,
+  } = useLegacyLastDayChangeRowDataState({
     wallets: renderableKeyWallets,
     currentFiatBalance: totalBalance,
     quoteCurrency: defaultAltCurrency.isoCode,
     enabled: contentReady && showPortfolioValue !== true,
   });
+  const shouldShowLegacyChangeRowSkeleton =
+    showPortfolioValue !== true &&
+    !legacyLastDayChangeRowData &&
+    (!contentReady || isLegacyLastDayChangeRowLoading);
   const keyHeaderChangeRowData =
     showPortfolioValue === true
       ? balanceChartSurface.changeRowData
@@ -1778,8 +1802,10 @@ const KeyOverview = () => {
 
           {keyHeaderChangeRowData ||
           shouldRenderKeyBalanceChart ||
-          shouldShowKeyChartPlaceholder ? (
+          shouldShowKeyChartPlaceholder ||
+          shouldShowLegacyChangeRowSkeleton ? (
             <FullWidthBalanceChartContainer>
+              {shouldShowLegacyChangeRowSkeleton ? <ChangeRowSkeleton /> : null}
               <BalanceHeaderSupplement
                 changeRowData={keyHeaderChangeRowData}
                 reserveChangeRowSpace={
