@@ -68,6 +68,7 @@ open class BaseTest {
     @Before
     fun setup() {
         if (!skipRelaunch) launchApp()
+        dismissNearbyDevicesPrompt(allow = true)
         dismissLogboxIfPresent()
         dismissDebuggerNotificationIfPresent()
         if (!skipOnboardingHandling) handleOnboardingIfPresent()
@@ -177,5 +178,18 @@ open class BaseTest {
             onboardingPage.verifyProtectYourWalletIsDisplayed()
         )
         onboardingPage.clickSkip()
+    }
+
+    private fun dismissNearbyDevicesPrompt(allow: Boolean) {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val buttonId = if (allow) "permission_allow_button" else "permission_deny_button"
+        val button = listOf(
+            "com.android.permissioncontroller",
+            "com.google.android.permissioncontroller",
+        ).firstNotNullOfOrNull { pkg ->
+            device.wait(Until.findObject(By.res(pkg, buttonId)), 2000)
+        } ?: return
+        button.click()
+        device.waitForIdle()
     }
 }
