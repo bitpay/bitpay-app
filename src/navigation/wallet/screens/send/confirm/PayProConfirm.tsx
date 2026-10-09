@@ -485,7 +485,7 @@ const PayProConfirm = () => {
     }
     setShowHighFeeWarningMessage(
       feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[wallet.chain] &&
-        txp.amount !== 0,
+        Number(txp.amount) !== 0,
     );
   };
 

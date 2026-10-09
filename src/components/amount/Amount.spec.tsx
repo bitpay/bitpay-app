@@ -110,6 +110,6 @@ describe('Amount performance boundaries', () => {
 
     expect(getByText('Continue')).toBeTruthy();
     fireEvent.press(getByTestId('amount-continue'));
-    expect(mockOnSubmit).toHaveBeenCalledWith(11);
+    expect(mockOnSubmit).toHaveBeenCalledWith('11');
   });
 });
