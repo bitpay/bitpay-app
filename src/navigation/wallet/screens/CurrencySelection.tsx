@@ -32,6 +32,7 @@ import {
   SupportedCoinsOptions,
   SupportedCurrencyOption,
   SupportedCurrencyOptions,
+  SupportedEvmCurrencyOptions,
   SupportedUtxoCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -49,7 +50,8 @@ import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {SlateDark, White} from '../../../styles/colors';
-import {IsUtxoChain} from '../../../store/wallet/utils/currency';
+import {IsEVMChain, IsUtxoChain} from '../../../store/wallet/utils/currency';
+import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 
 type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -141,6 +143,14 @@ const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
 const SupportedTSSCurrencyOptions: SupportedCurrencyOption[] =
   SupportedCoinsOptions;
 
+const TSSEvmAccountOption = {
+  ...SupportedEvmCurrencyOptions.find(currency => currency.chain === 'eth')!,
+  description: SupportedEvmCurrencyOptions.map(({chainName}) => chainName).join(
+    ', ',
+  ),
+  img: (props: any) => <AllNetworkSvg {...props} />,
+};
+
 const keyExtractor = (item: CurrencySelectionListItem, index: number) =>
   item.isHeader
     ? `header-${item.headerTitle}`
@@ -222,11 +232,15 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         const walletCurrencies = SupportedTSSCurrencyOptions.filter(currency =>
           IsUtxoChain(currency.currencyAbbreviation.toLowerCase()),
         );
-        const accountCurrencies = SupportedTSSCurrencyOptions.filter(
-          currency =>
-            !IsUtxoChain(currency.currencyAbbreviation.toLowerCase()) &&
-            currency.currencyAbbreviation.toLowerCase() !== 'sol', // TODO: need to add EDDSA support to bitcore-tss
-        );
+        const accountCurrencies = [
+          {...TSSEvmAccountOption, currencyName: t('EVM-Compatible Wallet')},
+          ...SupportedTSSCurrencyOptions.filter(
+            currency =>
+              !IsUtxoChain(currency.currencyAbbreviation.toLowerCase()) &&
+              !IsEVMChain(currency.chain) &&
+              currency.currencyAbbreviation.toLowerCase() !== 'sol', // TODO: need to add EDDSA support to bitcore-tss
+          ),
+        ];
 
         const tssItems: CurrencySelectionListItem[] = [];
 
