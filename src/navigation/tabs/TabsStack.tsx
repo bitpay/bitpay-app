@@ -1,8 +1,14 @@
 import React from 'react';
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
+import {NavigatorScreenParams} from '@react-navigation/native';
+import {useTheme} from '../../contexts';
 
 import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
@@ -28,6 +34,12 @@ import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 import BillStack from './shop/bill/BillStack';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {Analytics} from '../../store/analytics/analytics.effects';
+import FloatingTabBarBackground from './FloatingTabBarBackground';
+import {
+  FLOATING_TAB_BAR_HEIGHT,
+  getFloatingTabBarBottomOffset,
+  getFloatingTabBarWidth,
+} from './floatingTabBar';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -44,6 +56,9 @@ const Icons: Record<string, React.FC<SvgProps>> = {
 };
 
 const styles = StyleSheet.create({
+  tabButtonCentered: {
+    justifyContent: 'center',
+  },
   untappedIconDot: {
     height: 5,
     width: 5,
@@ -58,13 +73,19 @@ const styles = StyleSheet.create({
 
 const TransactionButton = () => null;
 
-const DefaultTabBarButton = (props: any) => (
-  <TouchableOpacity {...props} activeOpacity={1} />
+const DefaultTabBarButton = ({style, ...props}: any) => (
+  <TouchableOpacity
+    {...props}
+    style={[style, styles.tabButtonCentered]}
+    activeOpacity={1}
+  />
 );
 
 const TransactTabBarIcon = () => <TransactModal />;
 
-const TransactTabBarButton = (props: any) => <View {...props} />;
+const TransactTabBarButton = ({style, ...props}: any) => (
+  <View {...props} style={[style, styles.tabButtonCentered]} />
+);
 
 export enum TabsScreens {
   HOME = 'Home',
@@ -94,8 +115,10 @@ export const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const {dark} = useTheme();
   const insets = useSafeAreaInsets();
+  const {width: windowWidth} = useWindowDimensions();
+  const barSideInset = (windowWidth - getFloatingTabBarWidth(windowWidth)) / 2;
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
 
@@ -105,11 +128,22 @@ const TabsStack = () => {
       screenOptions={({route}) => ({
         headerShown: false,
         freezeOnBlur: true,
+        tabBarBackground: () => <FloatingTabBarBackground />,
         tabBarStyle: {
-          backgroundColor: theme.colors.background,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 8,
+          position: 'absolute',
+          start: barSideInset,
+          end: barSideInset,
+          bottom: getFloatingTabBarBottomOffset(insets.bottom),
+          height: FLOATING_TAB_BAR_HEIGHT,
+          paddingBottom: 0,
+          paddingTop: 0,
+          borderRadius: FLOATING_TAB_BAR_HEIGHT / 2,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: dark
+            ? 'rgba(255, 255, 255, 0.14)'
+            : 'rgba(0, 0, 0, 0.08)',
+          overflow: 'hidden',
+          backgroundColor: 'transparent',
         },
         tabBarButton: DefaultTabBarButton,
         tabBarShowLabel: false,

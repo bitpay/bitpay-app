@@ -18,6 +18,7 @@ import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../components/styled/Text';
 import TabContainer from '../../tabs/TabContainer';
+import useFloatingTabBarInset from '../useFloatingTabBarInset';
 import {useAppSelector} from '../../../utils/hooks';
 
 export type SettingsListType =
@@ -47,9 +48,6 @@ const styles = StyleSheet.create({
   settingsHomeContainer: {
     flex: 1,
     paddingVertical: 10,
-  },
-  settingsHomeContent: {
-    paddingBottom: 100,
   },
   bitPayIdSettingsLink: {
     height: 'auto',
@@ -142,6 +140,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const listRef = useRef<ScrollView>(null);
+  const tabBarInset = useFloatingTabBarInset();
   useScrollToTop(listRef);
 
   const memoizedSettingsConfigs = useMemo<
@@ -254,7 +253,8 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
       <SettingsHomeContainer>
         <ScrollView
           ref={listRef}
-          contentContainerStyle={styles.settingsHomeContent}>
+          contentContainerStyle={{paddingBottom: tabBarInset + 16}}
+          scrollIndicatorInsets={{bottom: tabBarInset}}>
           {listHeader}
           {memoizedSettingsConfigs.map(renderSettingItem)}
         </ScrollView>
