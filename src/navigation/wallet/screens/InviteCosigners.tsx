@@ -82,6 +82,9 @@ import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import Settings from '../../../components/settings/Settings';
+import OptionsSheet from '../components/OptionsSheet';
+import Icons from '../components/WalletIcons';
 
 const styles = StyleSheet.create({
   container: {
@@ -659,6 +662,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
   const [addCoSignerError, setAddCoSignerError] = useState<string | null>(null);
+  const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   useAndroidBackHandler(() => isCeremonyStarted);
 
@@ -666,6 +670,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     navigation.setOptions({
       gestureEnabled: !isCeremonyStarted,
       headerLeft: isCeremonyStarted ? () => null : undefined,
+      headerRight: isCeremonyStarted
+        ? () => null
+        : () => <Settings onPress={() => setShowKeyOptions(true)} />,
     });
   }, [isCeremonyStarted, navigation]);
 
@@ -1284,6 +1291,20 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           </ModalContent>
         </ModalContainer>
       </Modal>
+
+      <OptionsSheet
+        isVisible={showKeyOptions}
+        title={t('Key Options')}
+        options={[
+          {
+            img: <Icons.Delete />,
+            title: t('Delete'),
+            description: t('Permanently deletes all wallets using this key.'),
+            onPress: () => navigation.navigate('DeleteKey', {keyId}),
+          },
+        ]}
+        closeModal={() => setShowKeyOptions(false)}
+      />
     </Container>
   );
 };

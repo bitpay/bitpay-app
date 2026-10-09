@@ -60,7 +60,7 @@ const WalletsAndKeys = () => {
   };
 
   const onPressKey = (key: Key) => {
-    if (key.backupComplete) {
+    if (key.backupComplete || key.wallets[0]?.pendingTssSession) {
       warmKeySettingsAccountList(key);
       navigation.navigate('KeySettings', {keyId: key.id});
       return;
