@@ -590,12 +590,10 @@ const IsFirstInCoinbaseGroup = (index: number, history: any[]) => {
 
 const getMomentLocale = (language?: string): string => {
   const lang = (language || '').toLowerCase();
-
-  if (lang.startsWith('zh')) return 'zh-cn';
-
-  const base = lang.split('-')[0];
-
-  return base || 'en';
+  const candidate = lang.startsWith('zh')
+    ? 'zh-cn'
+    : lang.split('-')[0] || 'en';
+  return moment.locales().includes(candidate) ? candidate : 'en';
 };
 
 const getMonthName = (time: MomentInput): string => {

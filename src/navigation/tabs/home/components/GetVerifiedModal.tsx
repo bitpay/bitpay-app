@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {Pressable, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
@@ -14,6 +14,7 @@ import {
 } from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {setShowKycGetVerifiedModal} from '../../../../store/app/app.actions';
+import {SumSubSelectors} from '../../../../store/sumsub';
 import {BitpayIdScreens} from '../../../bitpay-id/BitpayIdGroup';
 import {navigationRef} from '../../../../Root';
 import IconKycGetVerified from '../../../../../assets/img/kyc_get_verified.svg';
@@ -72,12 +73,19 @@ const GetVerifiedModal: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const isVisible = useAppSelector(({APP}) => APP.showKycGetVerifiedModal);
+  const canStartKyc = useAppSelector(SumSubSelectors.selectCanStartKyc);
 
   // Navigate after the sheet dismisses, via navigationRef (VerifyIdentity is a
   // root-navigator screen).
   const pendingVerifyRef = useRef(false);
 
   const dismiss = () => dispatch(setShowKycGetVerifiedModal(false));
+
+  useEffect(() => {
+    if (isVisible && !canStartKyc) {
+      dispatch(setShowKycGetVerifiedModal(false));
+    }
+  }, [dispatch, isVisible, canStartKyc]);
 
   const onVerify = () => {
     pendingVerifyRef.current = true;

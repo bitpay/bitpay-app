@@ -1,6 +1,5 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
-import {Linking} from 'react-native';
 import styled from 'styled-components/native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
@@ -103,7 +102,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));
     } else {
-      Linking.openURL(url);
+      dispatch(AppEffects.openExternalUrl(url));
     }
   };
 

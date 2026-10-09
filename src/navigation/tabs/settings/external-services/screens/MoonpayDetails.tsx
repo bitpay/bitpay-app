@@ -147,12 +147,15 @@ const MoonpayDetails: React.FC = () => {
             if (
               txDetails?.source?.amount &&
               Number(txDetails.source.amount) > 0 &&
-              Number(txDetails.source.amount) != paymentRequest.fiat_base_amount
+              Number(txDetails.source.amount) !=
+                paymentRequest.fiat_total_amount
             ) {
               logger.debug(
-                'Updating fiat base amount to: ' + txDetails.source.amount,
+                'Updating fiat total amount to: ' + txDetails.source.amount,
               );
-              paymentRequest.fiat_base_amount = Number(txDetails.source.amount);
+              paymentRequest.fiat_total_amount = Number(
+                txDetails.source.amount,
+              );
             }
             needUpdate = true;
           }
@@ -163,7 +166,7 @@ const MoonpayDetails: React.FC = () => {
               transactionId: paymentRequest.transaction_id,
               status: paymentRequest.status,
               cryptoAmount: paymentRequest.crypto_amount,
-              fiatBaseAmount: paymentRequest.fiat_base_amount,
+              fiatTotalAmount: paymentRequest.fiat_total_amount,
             };
             dispatch(
               BuyCryptoActions.updatePaymentRequestMoonpay({

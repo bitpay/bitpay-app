@@ -111,6 +111,12 @@ function getStatusPillConfig(
       navigable: true,
     };
   }
+  if (kycUiState === 'inProgress') {
+    return {
+      label: t('Continue Verification'),
+      navigable: true,
+    };
+  }
   if (kycUiState === 'actionRequired') {
     return {
       label: t('Action Required'),

@@ -34,6 +34,10 @@ import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
+import {
+  getDeviceIntegrity,
+  reportDeviceIntegrityToSentry,
+} from '../../utils/deviceIntegrity';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
@@ -170,6 +174,32 @@ const SSL_PINS = {
   GOOGLE_WE1: 'kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=',
 };
 
+// Silent-tier root/jailbreak telemetry: tag Sentry + analytics on detection.
+export const reportDeviceIntegrity = (): Effect => dispatch => {
+  try {
+    const result = getDeviceIntegrity();
+    reportDeviceIntegrityToSentry(result);
+
+    if (result.isCompromised) {
+      logManager.warn(
+        `[deviceIntegrity] compromised device detected (reason: ${result.reason})`,
+      );
+      dispatch(
+        Analytics.track('Device Integrity Compromised', {
+          hookDetected: result.hookDetected,
+          mockLocationEnabled: result.mockLocationEnabled,
+          reason: result.reason ?? 'unknown',
+        }),
+      );
+    }
+  } catch (err) {
+    logManager.error(
+      '[deviceIntegrity] failed to report: ' +
+        (err instanceof Error ? err.message : JSON.stringify(err)),
+    );
+  }
+};
+
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     logManager.info(
@@ -210,6 +240,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
+
+    dispatch(reportDeviceIntegrity());
 
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());
@@ -655,15 +687,25 @@ export const dismissInAppBrowserIfOpen =
     }
   };
 
+const getUrlProtocolForLogs = (url: string): string => {
+  try {
+    return new URL(url).protocol.replace(':', '');
+  } catch {
+    return 'unknown';
+  }
+};
+
 /**
  * Open a URL with the InAppBrowser if available, else lets the device handle the URL.
  * @param url
  * @param options
- * @returns
+ * @returns True after the InAppBrowser session ends without error or an
+ * external handler accepts the URL. False when all available handlers fail.
  */
 export const openUrlWithInAppBrowser =
-  (url: string, options: InAppBrowserOptions = {}): Effect =>
+  (url: string, options: InAppBrowserOptions = {}): Effect<Promise<boolean>> =>
   async dispatch => {
+    const urlProtocol = getUrlProtocolForLogs(url);
     let isIabAvailable = false;
 
     try {
@@ -676,7 +718,7 @@ export const openUrlWithInAppBrowser =
     const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
 
     try {
-      logManager.info(`Opening URL ${url} with ${handler}`);
+      logManager.info(`Opening ${urlProtocol} URL with ${handler}`);
 
       if (isIabAvailable) {
         try {
@@ -698,10 +740,8 @@ export const openUrlWithInAppBrowser =
 
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.info(`InAppBrowser closed with type: ${result.type}`);
-        } catch (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${errStr}`;
+        } catch {
+          const logMsg = `Error opening ${urlProtocol} URL with ${handler}. Trying external browser.`;
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.error(logMsg);
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
@@ -713,12 +753,32 @@ export const openUrlWithInAppBrowser =
         dispatch(AppActions.setInAppBrowserOpen(false));
         await Linking.openURL(url);
       }
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const logMsg = `Error opening URL ${url} with ${handler}.\n${errStr}`;
+
+      return true;
+    } catch {
+      const logMsg = `Error opening ${urlProtocol} URL with ${handler}.`;
 
       dispatch(AppActions.setInAppBrowserOpen(false));
       logManager.error(logMsg);
+      return false;
+    }
+  };
+
+/** Returns true only when Linking.openURL succeeds. */
+export const openExternalUrl =
+  (url: string, fallbackToInAppBrowser = true): Effect<Promise<boolean>> =>
+  async dispatch => {
+    try {
+      await Linking.openURL(url);
+      return true;
+    } catch {
+      logManager.error(`Error opening ${getUrlProtocolForLogs(url)} URL.`);
+
+      if (fallbackToInAppBrowser) {
+        dispatch(openUrlWithInAppBrowser(url));
+      }
+
+      return false;
     }
   };
 
@@ -1256,6 +1316,45 @@ export const incomingLink =
       if (pathSegments[1] === 'create') {
         handler = () => {
           navigationRef.navigate(WalletScreens.CREATION_OPTIONS, params);
+        };
+      } else if (params.walletId) {
+        handler = async () => {
+          const {
+            WALLET: {keys},
+          } = getState();
+          const {wallet, keyId} = await findWalletByIdHashed(
+            keys,
+            params.walletId,
+            null,
+          );
+
+          if (!wallet || !keyId) {
+            return;
+          }
+
+          const key = keys[keyId];
+          const tokenAddress =
+            params.tokenAddress && params.tokenAddress !== 'null'
+              ? params.tokenAddress
+              : undefined;
+          const txid =
+            params.txid && params.txid !== 'null' ? params.txid : undefined;
+          const tokenWalletId =
+            `${wallet.credentials.walletId}-${tokenAddress}`.toLowerCase();
+          const targetWallet =
+            (tokenAddress &&
+              key.wallets.find(
+                (w: Wallet) =>
+                  w.credentials.walletId.toLowerCase() === tokenWalletId,
+              )) ||
+            wallet;
+
+          navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
+            key,
+            walletId: targetWallet.credentials.walletId,
+            copayerId: targetWallet.credentials.copayerId,
+            txid,
+          });
         };
       }
     } else if (pathSegments[0] === 'card') {

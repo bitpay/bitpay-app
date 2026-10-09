@@ -14,6 +14,7 @@ node_require('react-native-permissions/scripts/setup.rb')
 #######
 # Read min iOS version from Xcode project and set as min iOS version for Podfile
 require 'xcodeproj'
+require 'shellwords'
 
 project_path = './BitPayApp.xcodeproj'
 project = Xcodeproj::Project.open(project_path)
@@ -103,6 +104,35 @@ target 'BitPayApp' do
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
+      end
+    end
+
+    # Remove absolute build-machine paths (home dir + developer username)
+    def append_build_flag(config, key, flag_tokens)
+      existing = config.build_settings[key]
+      current =
+        if existing.is_a?(Array)
+          existing
+        elsif existing.is_a?(String) && !existing.empty?
+          [existing]
+        else
+          ['$(inherited)']
+        end
+      config.build_settings[key] = current + Array(flag_tokens)
+    end
+
+    # shellescape: Xcode splits build-setting strings on whitespace, so a checkout
+    # path containing a space would otherwise produce two malformed flags.
+    repo_root = File.expand_path('..', Pod::Config.instance.installation_root.to_s).shellescape
+    clang_prefix_map = "-ffile-prefix-map=#{repo_root}/=./"
+    swift_prefix_map = ['-file-prefix-map', "#{repo_root}/=./"]
+
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        next unless config.name == 'Release'
+        append_build_flag(config, 'OTHER_CFLAGS', clang_prefix_map)
+        append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', clang_prefix_map)
+        append_build_flag(config, 'OTHER_SWIFT_FLAGS', swift_prefix_map)
       end
     end
 

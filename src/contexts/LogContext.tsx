@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from 'react';
 import {logManager, LogData} from '../managers/LogManager';
@@ -12,12 +13,26 @@ const LogContext = createContext<LogData | null>(null);
 
 export const LogProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [logData, setLogData] = useState<LogData>(logManager.getLogData());
+  const frameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(
+    null,
+  );
 
   useEffect(() => {
-    const unsubscribe = logManager.subscribe(data => {
-      setLogData(data);
+    const unsubscribe = logManager.subscribe(() => {
+      if (frameRef.current != null) {
+        return;
+      }
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = null;
+        setLogData(logManager.getLogData());
+      });
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (frameRef.current != null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
   }, []);
 
   return <LogContext.Provider value={logData}>{children}</LogContext.Provider>;

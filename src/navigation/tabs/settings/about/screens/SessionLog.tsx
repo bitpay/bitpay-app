@@ -168,10 +168,13 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   const currentSessionStartTime = logs.length
     ? new Date(logs[0].timestamp)
     : new Date();
-  const [filteredPersistedLogs, setFilteredPersistedLogs] = useState(
-    [] as LogEntry[],
-  );
+  // persist:logs also holds this session's entries (fs-backup/transforms write
+  // there directly), so split by timestamp — not by source — to keep them out
+  // of the "Previous Sessions" section and out of the export's previous block
   const [persistedLogs, setPersistedLogs] = useState([] as LogEntry[]);
+  const filteredPersistedLogs = persistedLogs.filter(
+    log => log.level <= filterLevel,
+  );
 
   const printLogs = (logsToPrint: LogEntry[]) =>
     logsToPrint
@@ -283,13 +286,11 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   useEffect(() => {
     const value = storage.getString('persist:logs');
     if (value) {
-      const _filteredPersistedLogs = JSON.parse(value).filter(
-        (log: LogEntry) =>
-          log.level <= filterLevel &&
-          new Date(log.timestamp) < currentSessionStartTime,
+      setPersistedLogs(
+        JSON.parse(value).filter(
+          (log: LogEntry) => new Date(log.timestamp) < currentSessionStartTime,
+        ),
       );
-      setPersistedLogs(JSON.parse(value));
-      setFilteredPersistedLogs(_filteredPersistedLogs);
     }
   }, []);
 

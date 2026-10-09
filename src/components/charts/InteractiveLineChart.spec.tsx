@@ -10,6 +10,7 @@ import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 let mockLatestLineGraphProps: any;
+let mockLineGraphRenderCount = 0;
 
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
@@ -44,6 +45,7 @@ jest.mock('react-native-graph', () => {
   return {
     LineGraph: (props: any) => {
       mockLatestLineGraphProps = props;
+      mockLineGraphRenderCount += 1;
       return ReactLib.createElement('LineGraph', props);
     },
   };
@@ -108,6 +110,7 @@ const findFirstPointGuideLineContainer = (
 describe('InteractiveLineChart', () => {
   beforeEach(() => {
     mockLatestLineGraphProps = undefined;
+    mockLineGraphRenderCount = 0;
     (withTiming as jest.Mock).mockClear();
   });
 
@@ -403,5 +406,150 @@ describe('InteractiveLineChart', () => {
     expect(guideLineContainer?.props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({top: 204})]),
     );
+  });
+
+  // ANR regression guard: LineGraph's Canvas must not re-render on point selection.
+  describe('Skia canvas re-render isolation', () => {
+    const renderWithFreshCallbacks = (
+      chartPoints: typeof points,
+      color = '#000000',
+      gradientFillColors: [string, string] = ['#ffffff', '#ffffff'],
+    ) => (
+      <ThemeProvider theme={theme}>
+        <View>
+          <InteractiveLineChart
+            points={chartPoints}
+            color={color}
+            gradientFillColors={gradientFillColors}
+            onGestureStart={() => {}}
+            onGestureEnd={() => {}}
+            onPointSelected={() => {}}
+          />
+        </View>
+      </ThemeProvider>
+    );
+
+    it('does not re-render the graph when only callback and array props change identity', () => {
+      let renderer!: TestRenderer.ReactTestRenderer;
+
+      act(() => {
+        renderer = TestRenderer.create(renderWithFreshCallbacks(points));
+      });
+
+      const rendersAfterMount = mockLineGraphRenderCount;
+      expect(rendersAfterMount).toBeGreaterThan(0);
+
+      act(() => {
+        renderer.update(renderWithFreshCallbacks(points));
+      });
+      act(() => {
+        renderer.update(renderWithFreshCallbacks(points));
+      });
+
+      expect(mockLineGraphRenderCount).toBe(rendersAfterMount);
+    });
+
+    it('still re-renders the graph when the data actually changes', () => {
+      let renderer!: TestRenderer.ReactTestRenderer;
+
+      act(() => {
+        renderer = TestRenderer.create(renderWithFreshCallbacks(points));
+      });
+
+      const rendersAfterMount = mockLineGraphRenderCount;
+
+      act(() => {
+        renderer.update(renderWithFreshCallbacks(invertedPoints));
+      });
+
+      expect(mockLineGraphRenderCount).toBeGreaterThan(rendersAfterMount);
+    });
+
+    it('still re-renders the graph when the theme colour changes', () => {
+      let renderer!: TestRenderer.ReactTestRenderer;
+
+      act(() => {
+        renderer = TestRenderer.create(renderWithFreshCallbacks(points));
+      });
+
+      const rendersAfterMount = mockLineGraphRenderCount;
+
+      act(() => {
+        renderer.update(renderWithFreshCallbacks(points, '#ff0000'));
+      });
+
+      expect(mockLineGraphRenderCount).toBeGreaterThan(rendersAfterMount);
+    });
+
+    it('still re-renders the graph when the gradient colours actually change', () => {
+      let renderer!: TestRenderer.ReactTestRenderer;
+
+      act(() => {
+        renderer = TestRenderer.create(renderWithFreshCallbacks(points));
+      });
+
+      const rendersAfterMount = mockLineGraphRenderCount;
+
+      act(() => {
+        renderer.update(
+          renderWithFreshCallbacks(points, '#000000', ['#ffffff', '#000000']),
+        );
+      });
+
+      expect(mockLineGraphRenderCount).toBeGreaterThan(rendersAfterMount);
+    });
+
+    it('invokes the latest callbacks even though their identity is memoized away', () => {
+      const firstOnPointSelected = jest.fn();
+      const latestOnPointSelected = jest.fn();
+      const latestOnGestureStart = jest.fn();
+      const latestOnGestureEnd = jest.fn();
+
+      const renderWith = (
+        onPointSelected: jest.Mock,
+        onGestureStart?: jest.Mock,
+        onGestureEnd?: jest.Mock,
+      ) => (
+        <ThemeProvider theme={theme}>
+          <View>
+            <InteractiveLineChart
+              points={points}
+              color="#000000"
+              gradientFillColors={['#ffffff', '#ffffff']}
+              onGestureStart={onGestureStart}
+              onGestureEnd={onGestureEnd}
+              onPointSelected={onPointSelected}
+            />
+          </View>
+        </ThemeProvider>
+      );
+
+      let renderer!: TestRenderer.ReactTestRenderer;
+
+      act(() => {
+        renderer = TestRenderer.create(renderWith(firstOnPointSelected));
+      });
+
+      act(() => {
+        renderer.update(
+          renderWith(
+            latestOnPointSelected,
+            latestOnGestureStart,
+            latestOnGestureEnd,
+          ),
+        );
+      });
+
+      act(() => {
+        mockLatestLineGraphProps.onPointSelected(points[0]);
+        mockLatestLineGraphProps.onGestureStart();
+        mockLatestLineGraphProps.onGestureEnd();
+      });
+
+      expect(firstOnPointSelected).not.toHaveBeenCalled();
+      expect(latestOnPointSelected).toHaveBeenCalledWith(points[0]);
+      expect(latestOnGestureStart).toHaveBeenCalledTimes(1);
+      expect(latestOnGestureEnd).toHaveBeenCalledTimes(1);
+    });
   });
 });

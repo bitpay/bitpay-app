@@ -10,11 +10,11 @@ import {
 import Button from '../../../../components/button/Button';
 import {LightBlack, White} from '../../../../styles/colors';
 import ErrorSvg from '../../../../../assets/img/error.svg';
-import {Linking} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {setShowKeyMigrationFailureModal} from '../../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
+import {openExternalUrl} from '../../../../store/app/app.effects';
 
 const KeyMigrationFailureModalContainer = styled.View`
   justify-content: center;
@@ -47,7 +47,7 @@ const KeyMigrationFailureModal: React.FC = () => {
 
   const getHelp = () => {
     dispatch(setShowKeyMigrationFailureModal(false));
-    Linking.openURL('https://bitpay.com/support');
+    dispatch(openExternalUrl('https://bitpay.com/support'));
   };
 
   const gotoImport = () => {
