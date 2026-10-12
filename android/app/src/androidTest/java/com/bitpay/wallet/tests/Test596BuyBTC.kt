@@ -97,15 +97,23 @@ class Test596BuyBTC : BaseTest() {
             allureScreenshot("Bitcoin selected for buy")
         }
 
+        // Select Key screen is shown only when more than one key holds Bitcoin;
+        // with a single key the app skips it and goes straight to the Buy page.
+        val selectKeyScreenShown = selectCurrencyPage.isSelectKeyToDepositToDisplayed()
+
         allureStep("Verify Select Key To Deposit To option is displayed") {
-            assertTrue(
-                "Select Key To Deposit To option not displayed",
-                selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
-            )
+            if (selectKeyScreenShown) {
+                assertTrue(
+                    "Select Key To Deposit To option not displayed",
+                    selectCurrencyPage.verifySelectKeyToDepositToDisplayed()
+                )
+            }
         }
 
         allureStep("Select My Key wallet") {
-            selectCurrencyPage.clickSecondMyKeyWallet()
+            if (selectKeyScreenShown) {
+                selectCurrencyPage.clickSecondMyKeyWallet()
+            }
         }
 
         allureStep("Verify Continue button is enabled") {

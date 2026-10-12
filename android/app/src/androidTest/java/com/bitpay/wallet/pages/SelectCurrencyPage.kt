@@ -14,14 +14,16 @@ import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import com.bitpay.wallet.utils.WaitUtils.withIndex
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.not
 
 class SelectCurrencyPage {
 
     // ---- Locators ----
     private val selectCurrencyText = withText("Select a Currency")
-    private val bitcoinText = withSubstring("Bitcoin")
+    private val bitcoinText = allOf(withSubstring("Bitcoin"), not(withSubstring("Wrapped")))
     private val btcBitcoinText = allOf(
         withSubstring("Bitcoin"),
+        not(withSubstring("Wrapped")),
         hasSibling(withText(containsString("BTC")))
     )
     private val ethereumText = withSubstring("Ethereum")
@@ -217,6 +219,16 @@ class SelectCurrencyPage {
         }
     }
 
+    // The Select Key screen only appears when several keys hold the selected crypto.
+    fun isSelectKeyToDepositToDisplayed(timeoutMs: Long = 8000): Boolean {
+        return try {
+            WaitUtils.waitForView(selectKeyToDepositToText, timeoutMs = timeoutMs)
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
     fun verifySelectAccountToDepositToDisplayed(): Boolean {
         return try {
             WaitUtils.waitForView(selectAccountToDepositToText)
@@ -233,9 +245,42 @@ class SelectCurrencyPage {
     }
 
     fun clickMinSwapAmount() {
-        WaitUtils.waitForView(minButton)
+    // Ensure the amount screen is open, retrying if the initial tap was dropped.
+    repeat(3) { attempt ->
+        try {
+            WaitUtils.waitForView(minButton, timeoutMs = 8_000)
+            return@repeat
+        } catch (_: Throwable) {
+            if (attempt < 2) {
+                clickEnterSwapAmount()
+            } else {
+                throw AssertionError(
+                    "MIN button did not appear after 3 attempts"
+                )
+            }
+        }
+    }
+
+    // Wait for the button before tapping MIN.
+    WaitUtils.waitForView(minButton)
+    onView(minButton).perform(click())
+
+    // Retry MIN if the amount sheet remains visible.
+    repeat(2) {
+        val sheetClosed = try {
+            onView(minButton).check(matches(isDisplayed()))
+            false
+        } catch (_: NoMatchingViewException) {
+            true
+        } catch (_: AssertionError) {
+            true
+        }
+
+        if (sheetClosed) return
+
         onView(minButton).perform(click())
     }
+}
 
     fun clickSecondMyKeyWallet() {
         WaitUtils.waitForView(myKeyWallet)
