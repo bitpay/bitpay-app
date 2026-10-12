@@ -1,15 +1,15 @@
 import RNFS from 'react-native-fs';
+import {requireVaultActive} from '../vault-storage';
 import {LogActions} from '../../store/log';
 import * as initLogs from '../../store/log/initLogs';
 import {getErrorString} from '../../utils/helper-methods';
 import * as Sentry from '@sentry/react-native';
+import {
+  modernBackupDirectory as BASE_DIR,
+  modernFiles,
+} from '../vault-backup-paths';
 
-// Use cache directories (CachesDirectoryPath) so backups are NOT included in iCloud/Android Auto Backup
-const BASE_CACHE_DIR = RNFS.CachesDirectoryPath;
-const BASE_DIR = BASE_CACHE_DIR + '/bitpay/redux';
-const FINAL_FILE = BASE_DIR + '/persist-root.json';
-const BACKUP_FILE = BASE_DIR + '/persist-root.json.bak';
-const TEMP_FILE = BASE_DIR + '/persist-root.json.tmp';
+const {main: FINAL_FILE, bak: BACKUP_FILE, temp: TEMP_FILE} = modernFiles;
 
 let cachedBackupExists: boolean = false;
 let backupCacheGeneration = 0;
@@ -23,8 +23,9 @@ let requireEncryptedWalletSecrets = false;
 function hasEncryptedWalletSecrets(rawJson: string): boolean {
   try {
     const root = JSON.parse(rawJson);
-    const wallet =
+    let wallet =
       typeof root.WALLET === 'string' ? JSON.parse(root.WALLET) : root.WALLET;
+    if (typeof wallet === 'string') wallet = JSON.parse(wallet);
     return wallet?.secretsMigrated === true;
   } catch {
     return false;
@@ -47,36 +48,38 @@ async function ensureDir(): Promise<void> {
   }
 }
 
-async function checkBackupFileExists(): Promise<boolean> {
-  if (backupsSuspended) {
-    return false;
-  }
-  if (cachedBackupExists) {
-    return true;
-  }
-
-  const generation = backupCacheGeneration;
-  const exists = await RNFS.exists(FINAL_FILE);
-  if (backupsSuspended || generation !== backupCacheGeneration) {
-    return false;
-  }
-  cachedBackupExists = exists;
-  return exists;
-}
-
 export async function backupFileExists(): Promise<boolean> {
   try {
-    return await checkBackupFileExists();
+    if (backupsSuspended) {
+      return false;
+    }
+    if (cachedBackupExists) {
+      return true;
+    }
+    const generation = backupCacheGeneration;
+    const exists = await RNFS.exists(FINAL_FILE);
+    if (backupsSuspended || generation !== backupCacheGeneration) {
+      return false;
+    }
+    cachedBackupExists = exists;
+    return exists;
   } catch {
     return false;
   }
 }
 
-export async function backupFileExistsStrict(): Promise<boolean> {
-  return checkBackupFileExists();
+export async function backupFileSize(): Promise<number> {
+  for (const path of [FINAL_FILE, BACKUP_FILE]) {
+    if (await RNFS.exists(path)) {
+      const stat = await RNFS.stat(path);
+      return Number(stat.size) || 0;
+    }
+  }
+  return 0;
 }
 
 export function backupPersistRoot(rawJson: string): Promise<void> {
+  requireVaultActive();
   if (requireEncryptedWalletSecrets && !hasEncryptedWalletSecrets(rawJson)) {
     return Promise.resolve();
   }
@@ -93,6 +96,7 @@ export function backupPersistRoot(rawJson: string): Promise<void> {
 }
 
 export function removePersistRootBackups(): Promise<void> {
+  requireVaultActive();
   backupsSuspended = true;
   requireEncryptedWalletSecrets = true;
   backupCacheGeneration += 1;
@@ -129,6 +133,7 @@ export function removePersistRootBackups(): Promise<void> {
 export function resumePersistRootBackups(
   discardDeferred = false,
 ): Promise<void> {
+  requireVaultActive();
   backupsSuspended = false;
   if (discardDeferred) {
     requireEncryptedWalletSecrets = false;
@@ -202,6 +207,7 @@ async function _backupPersistRoot(rawJson: string): Promise<void> {
 }
 
 export async function readBackupPersistRoot(): Promise<string | null> {
+  requireVaultActive();
   try {
     const finalExists = await RNFS.exists(FINAL_FILE);
     if (finalExists) {

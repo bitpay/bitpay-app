@@ -319,63 +319,50 @@ export const transformPortfolioPopulateStatus = createTransform<
   {whitelist: ['PORTFOLIO']},
 );
 
+const fieldTransforms = new Map<
+  string,
+  {
+    label: 'Wallet' | 'App' | 'Shop';
+    encrypt: typeof encryptWalletStore;
+    decrypt: typeof decryptWalletStore;
+  }
+>([
+  [
+    'WALLET',
+    {label: 'Wallet', encrypt: encryptWalletStore, decrypt: decryptWalletStore},
+  ],
+  ['APP', {label: 'App', encrypt: encryptAppStore, decrypt: decryptAppStore}],
+  [
+    'SHOP',
+    {label: 'Shop', encrypt: encryptShopStore, decrypt: decryptShopStore},
+  ],
+]);
+
 export const encryptSpecificFields = (secretKey: string) => {
   return createTransform(
     // Encrypt specified fields on inbound (saving to storage)
     (inboundState, key) => {
-      if (key === 'WALLET') {
-        try {
-          return encryptWalletStore(inboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('encrypt', 'Wallet', error);
-          throw error;
-        }
+      const transform =
+        typeof key === 'string' ? fieldTransforms.get(key) : undefined;
+      if (!transform) return inboundState;
+      try {
+        return transform.encrypt(inboundState, secretKey);
+      } catch (error) {
+        logTransformFailure('encrypt', transform.label, error);
+        throw error;
       }
-      if (key === 'APP') {
-        try {
-          return encryptAppStore(inboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('encrypt', 'App', error);
-          throw error;
-        }
-      }
-      if (key === 'SHOP') {
-        try {
-          return encryptShopStore(inboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('encrypt', 'Shop', error);
-          throw error;
-        }
-      }
-      return inboundState;
     },
     // Decrypt specified fields on outbound (loading from storage)
     (outboundState, key) => {
-      if (key === 'WALLET') {
-        try {
-          return decryptWalletStore(outboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('decrypt', 'Wallet', error);
-          throw error;
-        }
+      const transform =
+        typeof key === 'string' ? fieldTransforms.get(key) : undefined;
+      if (!transform) return outboundState;
+      try {
+        return transform.decrypt(outboundState, secretKey, true);
+      } catch (error) {
+        logTransformFailure('decrypt', transform.label, error);
+        throw error;
       }
-      if (key === 'APP') {
-        try {
-          return decryptAppStore(outboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('decrypt', 'App', error);
-          throw error;
-        }
-      }
-      if (key === 'SHOP') {
-        try {
-          return decryptShopStore(outboundState, secretKey);
-        } catch (error) {
-          logTransformFailure('decrypt', 'Shop', error);
-          throw error;
-        }
-      }
-      return outboundState;
     },
   );
 };

@@ -1,5 +1,4 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
-import crypto from 'crypto';
 import {AppState} from 'react-native';
 import {
   Action,
@@ -12,19 +11,15 @@ import {
 } from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
-import {getUniqueId} from 'react-native-device-info';
-import * as Keychain from 'react-native-keychain';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
 import {
   backupFileExists,
-  backupFileExistsStrict,
   backupPersistRoot,
   readBackupPersistRoot,
 } from './backup/fs-backup';
-import {selectNewEncryptionKey, storeEncryptionKey} from './encryption-key';
 import {
   bindWalletKeys,
   transformContacts,
@@ -32,7 +27,7 @@ import {
   encryptSpecificFields,
 } from './transforms/transforms';
 import {
-  deserializePersistValue,
+  deserializeModernPersistValue,
   encryptPersistValue,
 } from './transforms/encrypt';
 import {createRehydrationFailureMiddleware} from './persistence-guard';
@@ -108,7 +103,6 @@ import {
   setActivePersistor,
 } from './persistor';
 import {rehydrateWalletSecrets} from './wallet-secrets/wallet-secrets.effects';
-import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {logManager} from '../managers/LogManager';
@@ -122,17 +116,10 @@ import {
 } from './performanceDiagnostics';
 import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
 
-export const storage = new MMKV();
-
-const unencryptedPersistStores = new Set([
-  'APP',
-  'MARKET_STATS',
-  'PORTFOLIO',
-  'RATE',
-  'SHOP',
-  'SHOP_CATALOG',
-  'WALLET',
-]);
+import {modernStorage as storage, requireVaultActive} from './vault-storage';
+import {prepareModernVault} from './vault-runtime';
+import {unencryptedPersistStores} from './transforms/persist-encryption';
+export {storage};
 
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
@@ -221,6 +208,7 @@ const removePortfolioChartsPersistRoot = (
 
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
+    requireVaultActive();
     const setItemStartedAt = PERF_DEBUG ? performance.now() : 0;
     const valueToStore =
       key === 'persist:root' && typeof value === 'string'
@@ -280,6 +268,7 @@ export const reduxStorage: Storage = {
     }
   },
   getItem: key => {
+    requireVaultActive();
     try {
       const value = storage.getString(key);
       if (value == null && key === 'persist:root') {
@@ -325,6 +314,7 @@ export const reduxStorage: Storage = {
     }
   },
   removeItem: key => {
+    requireVaultActive();
     try {
       storage.delete(key);
     } catch (err) {
@@ -527,14 +517,13 @@ const logger = createLogger({
   },
 });
 
-const getStore = async () => {
+const initializeStore = async () => {
   let rehydrationFailure: Error | null = null;
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
 
   middlewares.push(
     createRehydrationFailureMiddleware(error => {
       rehydrationFailure ??= error;
-      pausePersistor(error);
     }),
   );
   const reduxPerformanceMiddleware: Middleware =
@@ -701,7 +690,7 @@ const getStore = async () => {
           },
           (outboundState, key) => {
             try {
-              return deserializePersistValue(
+              return deserializeModernPersistValue(
                 outboundState,
                 secretKey,
                 String(key),
@@ -850,6 +839,14 @@ export type Effect<ReturnType = void> = ThunkAction<
   Action<string>
 >;
 
+let storeInitialization: ReturnType<typeof initializeStore> | undefined;
+const getStore = () => {
+  storeInitialization ??= initializeStore().catch(error => {
+    storeInitialization = undefined;
+    throw error;
+  });
+  return storeInitialization;
+};
 export default getStore;
 
 export function configureTestStore(initialState: any) {
@@ -866,81 +863,4 @@ export function configureTestStore(initialState: any) {
   };
 }
 
-export async function getEncryptionKey(): Promise<string> {
-  const encryptionKeyId = 'bitpay-app-encryption-key';
-
-  try {
-    logManager.info('getEncryptionKey: attempting to retrieve from Keychain');
-    const existingKey = await Keychain.getGenericPassword({
-      service: encryptionKeyId,
-    });
-
-    if (existingKey && existingKey.password) {
-      logManager.info('getEncryptionKey: found existing key in Keychain');
-      return existingKey.password;
-    }
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: Keychain get failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-    throw err;
-  }
-
-  let selectedKey: {key: string; legacyCompatible: boolean};
-  try {
-    selectedKey = await selectNewEncryptionKey({
-      hasPersistedRoot: () => storage.contains('persist:root'),
-      hasBackup: backupFileExistsStrict,
-      getLegacyKey: getUniqueId,
-      getRandomKey: () => crypto.randomBytes(32).toString('base64'),
-    });
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: key selection failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-    throw err;
-  }
-
-  logManager.warn(
-    `getEncryptionKey: generating ${
-      selectedKey.legacyCompatible ? 'legacy-compatible' : 'random'
-    } key (no existing key)`,
-  );
-
-  try {
-    await storeEncryptionKey(
-      encryptionKeyId,
-      selectedKey.key,
-      Keychain.setGenericPassword,
-    );
-    logManager.info('getEncryptionKey: stored new key in Keychain');
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: Keychain set failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-    throw err;
-  }
-
-  return selectedKey.key;
-}
+export const getEncryptionKey = prepareModernVault;

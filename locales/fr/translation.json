@@ -2305,5 +2305,8 @@
   "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Si activé, les portefeuilles testnet sont affichés dans toute l’application et vous pouvez créer des portefeuilles et des jetons testnet. Les cryptomonnaies testnet n’ont aucune valeur. Si désactivé, les portefeuilles testnet sont masqués mais pas supprimés.",
   "NETWORK": "RÉSEAU",
   "Select a Network": "Sélectionner un réseau",
-  "Add Testnet Wallets": "Ajouter des portefeuilles testnet"
+  "Add Testnet Wallets": "Ajouter des portefeuilles testnet",
+  "Wallet data could not be opened": "Impossible d'ouvrir les données du portefeuille",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Vos données locales ont été conservées. Réessayez ou contactez l'assistance. Ne désinstallez pas l'application et n'effacez pas ses données. Référence : {{id}}.",
+  "Retry": "Réessayer"
 }

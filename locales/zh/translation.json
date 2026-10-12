@@ -2278,5 +2278,8 @@
   "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "启用后，测试网钱包会在整个应用中显示，您可以创建测试网钱包和代币。测试网币没有价值。停用后，测试网钱包会被隐藏，但不会被删除。",
   "NETWORK": "网络",
   "Select a Network": "选择网络",
-  "Add Testnet Wallets": "添加测试网钱包"
+  "Add Testnet Wallets": "添加测试网钱包",
+  "Wallet data could not be opened": "无法打开钱包数据",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "您的本地数据已保留。请重试或联系支持团队。请勿卸载应用或清除其数据。参考代码：{{id}}。",
+  "Retry": "重试"
 }

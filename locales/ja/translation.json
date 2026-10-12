@@ -2278,5 +2278,8 @@
   "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "有効にすると、テストネットウォレットがアプリ全体に表示され、テストネットのウォレットとトークンを作成できます。テストネットのコインには価値がありません。無効にすると、テストネットウォレットは非表示になりますが、削除はされません。",
   "NETWORK": "ネットワーク",
   "Select a Network": "ネットワークを選択",
-  "Add Testnet Wallets": "テストネットウォレットを追加"
+  "Add Testnet Wallets": "テストネットウォレットを追加",
+  "Wallet data could not be opened": "ウォレットのデータを開けませんでした",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "ローカルデータは保持されています。再試行するか、サポートにお問い合わせください。アプリをアンインストールしたり、アプリのデータを消去したりしないでください。参照コード：{{id}}。",
+  "Retry": "再試行"
 }

@@ -2296,5 +2296,8 @@
   "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Indien ingeschakeld, worden testnet-wallets overal in de app weergegeven en kunt u testnet-wallets en -tokens aanmaken. Testnetmunten hebben geen waarde. Indien uitgeschakeld, worden testnet-wallets verborgen maar niet verwijderd.",
   "NETWORK": "NETWERK",
   "Select a Network": "Selecteer een netwerk",
-  "Add Testnet Wallets": "Testnet-wallets toevoegen"
+  "Add Testnet Wallets": "Testnet-wallets toevoegen",
+  "Wallet data could not be opened": "De walletgegevens konden niet worden geopend",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Uw lokale gegevens zijn behouden. Probeer het opnieuw of neem contact op met de ondersteuning. De-installeer de app niet en wis de gegevens ervan niet. Referentie: {{id}}.",
+  "Retry": "Opnieuw proberen"
 }

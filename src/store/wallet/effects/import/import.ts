@@ -5,7 +5,8 @@ import {
   KeyProperties,
   Wallet,
 } from '../../wallet.models';
-import {Effect, storage} from '../../../index';
+import {Effect} from '../../../index';
+import {requireVaultActive} from '../../../vault-storage';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
@@ -76,8 +77,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
 import {getBaseVMAccountCreationCoinsAndTokens} from '../../../../constants/currencies';
 import {BASE_BWS_URL} from '../../../../constants/config';
@@ -138,39 +137,12 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
   return wordList.join(isJA ? '\u3000' : ' ');
 };
 
+// Transfer is committed before Redux starts. This legacy UI gate cannot copy
+// rows, touch the old instance, or restart the application anymore.
 export const startMigrationMMKVStorage =
-  (): Effect<Promise<void>> =>
-  async (dispatch): Promise<void> => {
-    logManager.info('[startMigrationMMKVStorage] - starting...');
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      if (!keys.includes('persist:root')) {
-        dispatch(setMigrationMMKVStorageComplete());
-        logManager.info('[MMKVStorage] nothing to migrate');
-        if (storage.getString('persist:root')) {
-          dispatch(
-            LogActions.persistLog(
-              LogActions.info('success [setMigrationMMKVStorageComplete]'),
-            ),
-          );
-        }
-        return Promise.resolve();
-      }
-      const value = await AsyncStorage.getItem('persist:root');
-      if (value != null) {
-        storage.set('persist:root', value);
-      }
-      await AsyncStorage.multiRemove(keys);
-      RNRestart.restart();
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.persistLog(
-          LogActions.error('[migrationMMKVStorage] failed - ', errStr),
-        ),
-      );
-      Sentry.captureException(err, {level: 'error'});
-    }
+  (): Effect<Promise<void>> => async dispatch => {
+    requireVaultActive();
+    dispatch(setMigrationMMKVStorageComplete());
   };
 
 export const startMigration =

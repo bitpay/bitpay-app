@@ -56,6 +56,13 @@ export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
   payload: date,
 });
 
+export const setVaultMigrationStatusReported = (
+  signature: string,
+): AppActionType => ({
+  type: AppActionTypes.SET_VAULT_MIGRATION_STATUS_REPORTED,
+  payload: signature,
+});
+
 export const setAppInstalled = (): AppActionType => ({
   type: AppActionTypes.SET_APP_INSTALLED,
 });

@@ -19,6 +19,8 @@ import {
 } from 'react-native-exception-handler';
 import {name as appName} from './app.json';
 import getStore from './src/store';
+import {reportVaultStartupFailure} from './src/store/vault-diagnostics';
+import {vaultStartupAlert} from './src/store/vault-startup-alert';
 import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import 'react-native-url-polyfill/auto'; // https://github.com/facebook/react-native/issues/23922#issuecomment-648096619
@@ -158,11 +160,13 @@ const ReduxProvider = () => {
     }
 
     let cancelled = false;
+    let disposeAlert;
 
     getStore()
       .then(({store, persistor}) => {
         if (cancelled) {
-          persistor.pause();
+          // Store initialization is shared across Activity/provider remounts.
+          // A departing subscriber must not pause that shared persistor.
           return;
         }
 
@@ -180,22 +184,15 @@ const ReduxProvider = () => {
         if (cancelled) {
           return;
         }
-        Sentry.captureException(error, {level: 'error'});
-        Alert.alert(
-          'Wallet data could not be opened',
-          'Your local data was preserved. Please try again.',
-          [
-            {
-              text: 'Retry',
-              onPress: () => setStartupAttempt(attempt => attempt + 1),
-            },
-          ],
-          {cancelable: false},
+        reportVaultStartupFailure(error);
+        disposeAlert = vaultStartupAlert(error, () =>
+          setStartupAttempt(attempt => attempt + 1),
         );
       });
 
     return () => {
       cancelled = true;
+      disposeAlert?.();
     };
   }, [isPrimary, startupAttempt]);
 
