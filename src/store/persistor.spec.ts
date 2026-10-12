@@ -95,14 +95,33 @@ describe('encrypted persistence lifecycle', () => {
     ['unreadable pending session without keys', false, true],
   ])('%s', async (_name, readable, pendingOnly) => {
     const {createStore, combineReducers} = jest.requireActual('redux');
-    const {createTransform, persistReducer, persistStore} =
-      jest.requireActual('redux-persist');
+    const {persistReducer, persistStore} = jest.requireActual('redux-persist');
     const autoMergeLevel2 = jest.requireActual(
       'redux-persist/lib/stateReconciler/autoMergeLevel2',
     ).default;
-    const {encryptPersistValue, deserializePersistValue} = jest.requireActual(
-      './transforms/encrypt',
-    );
+    const {createTransform} = jest.requireActual('redux-persist');
+    const {encryptPersistValue, deserializeModernPersistValue} =
+      jest.requireActual('./transforms/encrypt');
+    const encryptTransform = ({secretKey, onError}: any) =>
+      createTransform(
+        (value: any, key: string) =>
+          key === 'WALLET'
+            ? JSON.stringify(value)
+            : encryptPersistValue(value, secretKey, `persist:${key}`),
+        (value: any, key: string) => {
+          try {
+            return deserializeModernPersistValue(
+              value,
+              secretKey,
+              key,
+              key === 'WALLET',
+            );
+          } catch (error) {
+            onError?.(error);
+            throw error;
+          }
+        },
+      );
     const {flushPersistor, pausePersistor, setActivePersistor} =
       getFreshPersistor();
     const initialSecrets = {
@@ -118,30 +137,10 @@ describe('encrypted persistence lifecycle', () => {
         ? {sessionId: 'session1', partyKey: {xPrivKey: 'fixture private key'}}
         : null,
     };
-    const encryptionTransform = (
-      secretKey: string,
-      onError?: (error: Error) => void,
-    ) =>
-      createTransform(
-        (value: unknown, key: string) =>
-          key === 'WALLET'
-            ? JSON.stringify(value)
-            : encryptPersistValue(value, secretKey, `persist:${key}`),
-        (value: unknown, key: string) => {
-          try {
-            return deserializePersistValue(
-              value,
-              secretKey,
-              key,
-              key === 'WALLET',
-            );
-          } catch (error) {
-            onError?.(error as Error);
-            throw error;
-          }
-        },
-      );
-    const originalTransform = encryptionTransform('original-key');
+    const originalTransform = encryptTransform({
+      secretKey: 'original-key',
+      unencryptedStores: ['WALLET'],
+    });
     const original = JSON.stringify({
       WALLET: JSON.stringify(
         originalTransform.in(
@@ -172,10 +171,11 @@ describe('encrypted persistence lifecycle', () => {
           timeout: 0,
           stateReconciler: autoMergeLevel2,
           transforms: [
-            encryptionTransform(
-              readable ? 'original-key' : 'wrong-key',
+            encryptTransform({
+              secretKey: readable ? 'original-key' : 'wrong-key',
+              unencryptedStores: ['WALLET'],
               onError,
-            ),
+            }),
           ],
         },
         combineReducers({

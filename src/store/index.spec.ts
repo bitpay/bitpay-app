@@ -1,215 +1,199 @@
-jest.mock('@env', () => ({DISABLE_DEVELOPMENT_LOGGING: 'true'}));
-jest.mock('react-native-mmkv', () => ({
-  MMKV: jest.fn(() => {
-    const values = new Map();
-    return {
-      getString: jest.fn(key => values.get(key)),
-      getAllKeys: jest.fn(() => [...values.keys()]),
-      set: jest.fn((key, value) => values.set(key, value)),
-      delete: jest.fn(key => values.delete(key)),
-    };
-  }),
-}));
-jest.mock('react-native-keychain', () => ({
-  getGenericPassword: jest.fn(),
-  setGenericPassword: jest.fn(),
-}));
-jest.mock('../constants/config', () => ({
-  APP_NETWORK: 'livenet',
-  APP_VERSION: 'test',
-  BASE_BITPAY_URLS: {livenet: 'https://example.test'},
-  BASE_BWS_URL: 'https://example.test',
-  BLOCKCHAIN_EXPLORERS: Object.fromEntries(
-    ['eth', 'matic', 'arb', 'base', 'op', 'sol'].map(chain => [
-      chain,
-      {livenet: {}, testnet: {}},
-    ]),
-  ),
-}));
-jest.mock('../utils/helper-methods', () => ({
-  getErrorString: (error: unknown) => String(error),
-}));
-jest.mock('../lib/bwc', () => ({
-  BwcProvider: {getInstance: () => ({})},
-}));
-jest.mock('./wallet/utils/wallet', () => ({
-  checkPrivateKeyEncrypted: () => false,
-}));
-jest.mock('./portfolio', () => ({
-  clearWalletPortfolioDataWithRuntime: jest.fn(),
-}));
-jest.mock('../managers/LogManager', () => ({
-  logManager: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    addLog: jest.fn(),
-  },
-}));
+import {createStoreModel} from '../../test/vault/store-model';
 
-import * as Keychain from 'react-native-keychain';
-import RNFS from 'react-native-fs';
-import {encryptPersistValue} from './transforms/encrypt';
-import getStore, {getEncryptionKey, storage} from './index';
-import * as backups from './backup/fs-backup';
-import {flushPersistor} from './persistor';
-import {initialWalletSecretsState} from './wallet-secrets/wallet-secrets.reducer';
-
-const readStored = (storage.getString as jest.Mock).getMockImplementation()!;
-
-const getRehydratedStore = async () => {
-  const result = await getStore();
-  await new Promise<void>(resolve => {
-    if (result.persistor.getState().bootstrapped) {
-      resolve();
-      return;
-    }
-    const unsubscribe = result.persistor.subscribe(() => {
-      if (result.persistor.getState().bootstrapped) {
-        unsubscribe();
-        resolve();
-      }
-    });
-  });
-  return result;
-};
-
-const persistedRoot = (pendingOnly: boolean) => {
-  const secrets = pendingOnly
-    ? {
-        ...initialWalletSecretsState,
-        pendingJoinerSession: {
-          sessionId: 'pending-session',
-          partyKey: {xPrivKey: 'private-party-key'},
-          createdAt: 1,
-        },
-      }
-    : {
-        ...initialWalletSecretsState,
-        byKeyId: {key1: {mnemonic: 'private-mnemonic'}},
-      };
-  const encrypted = encryptPersistValue(
-    secrets,
-    'original-key',
-    'persist:WALLET_SECRETS',
-  );
-  return JSON.stringify({
-    WALLET: JSON.stringify(
-      JSON.stringify({
-        secretsMigrated: true,
-        keys: pendingOnly ? {} : {key1: {id: 'key1', wallets: []}},
-      }),
-    ),
-    WALLET_SECRETS: JSON.stringify(encrypted),
-  });
-};
-
+let h: ReturnType<typeof createStoreModel>;
+let key: string;
 beforeEach(() => {
   jest.useFakeTimers();
-  jest.clearAllMocks();
-  (storage.getString as jest.Mock).mockImplementation(readStored);
-  (Keychain.getGenericPassword as jest.Mock).mockResolvedValue({
-    password: 'wrong-key',
-  });
+  h = createStoreModel();
+  key = h.active();
 });
-
 afterEach(() => {
+  h.stop();
   jest.restoreAllMocks();
   jest.clearAllTimers();
   jest.useRealTimers();
 });
+const root = (pendingOnly: boolean) => {
+  const {encodeSnapshot} = require('./vault-codec');
+  return encodeSnapshot(
+    {
+      WALLET: {
+        secretsMigrated: true,
+        keys: pendingOnly ? {} : {fixture: {id: 'fixture', wallets: []}},
+      },
+      WALLET_SECRETS: {
+        byKeyId: pendingOnly ? {} : {fixture: {mnemonic: 'synthetic mnemonic'}},
+        byKeyIdAndWalletId: {},
+        tssSessionByKeyId: {},
+        pendingJoinerSession: pendingOnly
+          ? {
+              sessionId: 'pending',
+              partyKey: {xPrivKey: 'synthetic-party-key'},
+              createdAt: 1,
+            }
+          : null,
+      },
+      _persist: {version: -1, rehydrated: true},
+    },
+    key,
+  );
+};
 
-it('does not replace the encryption key when Keychain retrieval fails', async () => {
-  const error = new Error('Keychain unavailable');
-  (Keychain.getGenericPassword as jest.Mock).mockRejectedValueOnce(error);
-
-  await expect(getEncryptionKey()).rejects.toBe(error);
-
-  expect(Keychain.setGenericPassword).not.toHaveBeenCalled();
+it('does not replace the modern key or use a device ID when Keychain retrieval fails', async () => {
+  h.keychain.getGenericPassword.mockRejectedValueOnce(
+    new Error('Keychain unavailable'),
+  );
+  await expect(h.api.getEncryptionKey()).rejects.toThrow('MODERN_KEY_FAILURE');
+  expect(h.keychain.setGenericPassword).not.toHaveBeenCalled();
+  expect(h.getUniqueId).not.toHaveBeenCalled();
 });
 
 it.each([
-  ['wrong key with wallets', (): string => persistedRoot(false)],
-  ['wrong key with only a pending session', () => persistedRoot(true)],
-  [
-    'missing encrypted secrets',
-    () => {
-      const root = JSON.parse(persistedRoot(true));
-      delete root.WALLET_SECRETS;
-      return JSON.stringify(root);
-    },
-  ],
-  ['invalid persisted JSON', (): string => '{invalid-json'],
-  ['MMKV read failure without a backup', () => new Error('MMKV read failed')],
-] as const)('preserves persisted data after %s', async (_name, buildRoot) => {
-  const input = buildRoot();
-  const raw = input instanceof Error ? persistedRoot(true) : input;
-  storage.set('persist:root', raw);
-  (storage.set as jest.Mock).mockClear();
-  if (input instanceof Error) {
-    (storage.getString as jest.Mock).mockImplementation((key: string) => {
-      if (key === 'persist:root') {
-        throw input;
-      }
-      return readStored(key);
-    });
-    (RNFS.exists as jest.Mock).mockResolvedValue(false);
+  'wrong key with wallets',
+  'wrong key with only a pending session',
+  'missing encrypted secrets',
+  'invalid persisted JSON',
+  'MMKV read failure without a backup',
+])('preserves persisted data and pauses after %s', async name => {
+  let raw = root(name !== 'wrong key with wallets');
+  if (name.startsWith('wrong key'))
+    h.active(Buffer.alloc(32, 72).toString('base64'));
+  if (name === 'missing encrypted secrets') {
+    const parsed = JSON.parse(raw);
+    delete parsed.WALLET_SECRETS;
+    raw = JSON.stringify(parsed);
   }
-  const removeBackups = jest.spyOn(backups, 'removePersistRootBackups');
-  await expect(getRehydratedStore()).rejects.toBeInstanceOf(Error);
-  // Native crypto errors can originate in a different VM realm.
-  await expect(flushPersistor()).rejects.toThrow();
-
-  expect(readStored('persist:root')).toBe(raw);
-  expect(
-    (storage.set as jest.Mock).mock.calls.filter(
-      ([key]) => key === 'persist:root',
-    ),
-  ).toEqual([]);
-  expect(storage.delete).not.toHaveBeenCalled();
-  expect(RNFS.writeFile).not.toHaveBeenCalled();
-  expect(RNFS.unlink).not.toHaveBeenCalled();
-  expect(removeBackups).not.toHaveBeenCalled();
+  if (name === 'invalid persisted JSON') raw = '{invalid-json';
+  h.data('bitpay.wallet.v2').set('persist:root', raw);
+  if (name === 'MMKV read failure without a backup')
+    h.instance('bitpay.wallet.v2').getString.mockImplementation(() => {
+      throw new Error('synthetic read failure');
+    });
+  await expect(h.api.default()).rejects.toBeInstanceOf(Error);
+  // Native crypto errors can belong to Node's realm rather than Jest's realm.
+  await expect(require('./persistor').flushPersistor()).rejects.toHaveProperty(
+    'message',
+  );
+  expect(h.data('bitpay.wallet.v2').get('persist:root')).toBe(raw);
+  expect(h.instance('bitpay.wallet.v2').set).not.toHaveBeenCalled();
+  expect(h.instance('bitpay.wallet.v2').delete).not.toHaveBeenCalled();
+  expect(h.fs.writeFile).not.toHaveBeenCalled();
+  expect(h.fs.unlink).not.toHaveBeenCalled();
+  expect(h.getUniqueId).not.toHaveBeenCalled();
 });
 
 it('drops the removed CARD slice from persisted state', async () => {
-  (Keychain.getGenericPassword as jest.Mock).mockResolvedValue({
-    password: 'original-key',
-  });
-  const root = JSON.parse(persistedRoot(true));
-  root.CARD = JSON.stringify(
-    encryptPersistValue(
-      {cards: {livenet: [{id: 'c1'}]}},
-      'original-key',
-      'persist:CARD',
-    ),
+  const {encryptPersistValue} = require('./transforms/encrypt');
+  const persisted = JSON.parse(root(true));
+  persisted.CARD = JSON.stringify(
+    encryptPersistValue({cards: {livenet: [{id: 'c1'}]}}, key, 'persist:CARD'),
   );
-  storage.set('persist:root', JSON.stringify(root));
+  h.data('bitpay.wallet.v2').set('persist:root', JSON.stringify(persisted));
   const consoleError = jest.spyOn(console, 'error').mockImplementation();
-  const {store, persistor} = await getRehydratedStore();
+  const {store} = await h.api.default();
 
   expect(store.getState()).not.toHaveProperty('CARD');
-  await flushPersistor();
-  expect(JSON.parse(readStored('persist:root'))).not.toHaveProperty('CARD');
+  await require('./persistor').flushPersistor();
+  expect(
+    JSON.parse(h.data('bitpay.wallet.v2').get('persist:root')),
+  ).not.toHaveProperty('CARD');
   expect(consoleError).not.toHaveBeenCalledWith(
     expect.stringContaining('Unexpected key'),
   );
-  persistor.pause();
 });
 
 it('rehydrates and persists the same encrypted state with the correct key', async () => {
-  (Keychain.getGenericPassword as jest.Mock).mockResolvedValue({
-    password: 'original-key',
-  });
-  storage.set('persist:root', persistedRoot(true));
-  (storage.set as jest.Mock).mockClear();
-  const {store, persistor} = await getRehydratedStore();
-
+  h.data('bitpay.wallet.v2').set('persist:root', root(true));
+  const {store} = await h.api.default();
   expect(store.getState().WALLET.pendingJoinerSession?.partyKey.xPrivKey).toBe(
-    'private-party-key',
+    'synthetic-party-key',
   );
-  await flushPersistor();
-  expect(storage.set).toHaveBeenCalledWith('persist:root', expect.any(String));
-  persistor.pause();
+  await require('./persistor').flushPersistor();
+  expect(h.instance('bitpay.wallet.v2').set).toHaveBeenCalledWith(
+    'persist:root',
+    expect.any(String),
+  );
+  expect(h.rehydrates).toHaveLength(1);
+  expect(h.rehydrates[0].err).toBeUndefined();
+});
+
+it('reports a primary write failure and makes flushPersistor reject', async () => {
+  h.data('bitpay.wallet.v2').set('persist:root', root(true));
+  const {store} = await h.api.default();
+  const error = new Error('synthetic write failure');
+  h.instance('bitpay.wallet.v2').set.mockImplementation(() => {
+    throw error;
+  });
+  store.dispatch({type: 'APP/SET_CURRENT_ROUTE', payload: 'test'} as any);
+  await expect(require('./persistor').flushPersistor()).rejects.toBe(error);
+  expect(require('@sentry/react-native').captureException).toHaveBeenCalledWith(
+    error,
+    {level: 'error'},
+  );
+});
+
+it('rejects with the read error when no backup restores, but a clean absence stays empty', async () => {
+  await h.api.getEncryptionKey();
+  const error = new Error('synthetic primary read failure');
+  h.instance('bitpay.wallet.v2').getString.mockImplementationOnce(() => {
+    throw error;
+  });
+  await expect(h.api.reduxStorage.getItem('persist:root')).rejects.toBe(error);
+  await expect(h.api.reduxStorage.getItem('persist:root')).resolves.toBeNull();
+});
+
+it('restores a readable modern backup after a primary read failure', async () => {
+  await h.api.getEncryptionKey();
+  const raw = root(true);
+  h.files.set('/cache/bitpay/redux-v2/persist-root.json', raw);
+  h.instance('bitpay.wallet.v2').getString.mockImplementationOnce(() => {
+    throw new Error('read failure');
+  });
+  await expect(h.api.reduxStorage.getItem('persist:root')).resolves.toBe(raw);
+  expect(h.data('bitpay.wallet.v2').get('persist:root')).toBe(raw);
+});
+
+it('gates ordinary reads, writes, restore and backup operations before activation', async () => {
+  const backup = require('./backup/fs-backup');
+  const raw = root(true);
+  h.files.set('/cache/bitpay/redux-v2/persist-root.json', raw);
+  expect(() => h.api.reduxStorage.getItem('persist:root')).toThrow(
+    'not active',
+  );
+  await expect(h.api.reduxStorage.setItem('persist:root', raw)).rejects.toThrow(
+    'not active',
+  );
+  expect(() => h.api.reduxStorage.removeItem('persist:root')).toThrow(
+    'not active',
+  );
+  expect(() => backup.backupPersistRoot(raw)).toThrow('not active');
+  expect(() => backup.removePersistRootBackups()).toThrow('not active');
+  expect(() => backup.resumePersistRootBackups()).toThrow('not active');
+  await expect(backup.readBackupPersistRoot()).rejects.toThrow('not active');
+  expect(h.instance('bitpay.wallet.v2').set).not.toHaveBeenCalled();
+  expect(h.fs.readFile).not.toHaveBeenCalled();
+  expect(h.fs.writeFile).not.toHaveBeenCalled();
+  expect(h.fs.unlink).not.toHaveBeenCalled();
+});
+
+it('rejects legacy CBC on the ordinary active reader even with the same valid key', async () => {
+  const Aes = require('crypto-js/aes.js');
+  const payload = {
+    WALLET: {keys: {}},
+    _persist: {version: -1, rehydrated: true},
+  };
+  const raw = JSON.stringify(
+    Object.fromEntries(
+      Object.entries(payload).map(([name, value]) => [
+        name,
+        JSON.stringify(Aes.encrypt(JSON.stringify(value), key).toString()),
+      ]),
+    ),
+  );
+  h.data('bitpay.wallet.v2').set('persist:root', raw);
+  await expect(h.api.default()).rejects.toBeInstanceOf(Error);
+  expect(h.data('bitpay.wallet.v2').get('persist:root')).toBe(raw);
+  expect(h.instance('bitpay.wallet.v2').set).not.toHaveBeenCalled();
+  expect(h.getUniqueId).not.toHaveBeenCalled();
+  expect(h.keychain.setGenericPassword).not.toHaveBeenCalled();
 });

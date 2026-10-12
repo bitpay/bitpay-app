@@ -284,61 +284,21 @@ describe('linkTokenToWallet', () => {
 describe('startMigrationMMKVStorage', () => {
   const {storage} = require('../../../index');
   const RNRestart = require('react-native-restart');
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([]);
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-    (AsyncStorage.multiRemove as jest.Mock).mockResolvedValue(undefined);
+    require('../../../vault-storage').activateVaultStorage();
   });
-
-  it('does not restart when persist:root key is absent from AsyncStorage', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-      'some-other-key',
-    ]);
+  it('satisfies the existing UI gate from committed activation without touching old sources', async () => {
     const store = configureTestStore({});
     await store.dispatch(startMigrationMMKVStorage());
-    expect(RNRestart.restart).not.toHaveBeenCalled();
-  });
-
-  it('sets migrationMMKVStorageComplete=true in state when persist:root is not in AsyncStorage', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([]);
-    const store = configureTestStore({});
-    await store.dispatch(startMigrationMMKVStorage());
-    // The action should be reflected in the APP state
-    const appState = (store.getState() as any).APP;
-    expect(appState.migrationMMKVStorageComplete).toBe(true);
-  });
-
-  it('calls storage.set and RNRestart.restart when persist:root exists', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-      'persist:root',
-      'other',
-    ]);
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue('{"APP":{}}');
-    const store = configureTestStore({});
-    await store.dispatch(startMigrationMMKVStorage());
-    expect(storage.set).toHaveBeenCalledWith('persist:root', '{"APP":{}}');
-    expect(RNRestart.restart).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not call storage.set when persist:root value is null', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue(['persist:root']);
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-    const store = configureTestStore({});
-    await store.dispatch(startMigrationMMKVStorage());
-    expect(storage.set).not.toHaveBeenCalled();
-  });
-
-  it('handles AsyncStorage.getAllKeys rejection gracefully (no throw)', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockRejectedValueOnce(
-      new Error('storage error'),
+    expect((store.getState() as any).APP.migrationMMKVStorageComplete).toBe(
+      true,
     );
-    const store = configureTestStore({});
-    // Should not throw
-    await expect(
-      store.dispatch(startMigrationMMKVStorage()),
-    ).resolves.not.toThrow();
+    expect(AsyncStorage.getItem).not.toHaveBeenCalled();
+    expect(AsyncStorage.getAllKeys).not.toHaveBeenCalled();
+    expect(AsyncStorage.multiRemove).not.toHaveBeenCalled();
+    expect(storage.set).not.toHaveBeenCalled();
+    expect(RNRestart.restart).not.toHaveBeenCalled();
   });
 });
 

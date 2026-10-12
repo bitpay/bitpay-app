@@ -1,0 +1,15 @@
+{
+  "appTag": "v.14.32.0",
+  "appCommit": "cd3af945fe00c704ad500918ff85f5e8ada040cc",
+  "walletClient": "10.10.0",
+  "fieldSourceSha256": "8e6d7bb95a83c99a38b9b7b0aedbab3e05732278c1bbcea39311ba83728596ed",
+  "patchedTransformSha256": "331f9175f041109ce80600b1dba1e01222fa99a865a7de8791443a60b0bb4f2b",
+  "harnessLockSha256": "d62b0848fba15c86f36ad1d945bbc3885ac4f8decccb8ddbfc312ddee14e2ba4",
+  "fixtureSha256": "af174c468a2aab667586b39c314d8400aceea59dbf57e542b13883a710de380b",
+  "cases": {
+    "plain": "Library-generated app-path-style state before encrypt(password)",
+    "passwordOperation": "Same throwaway key after the historical encrypt(password) operation; EDDSA remains unwrapped",
+    "constructorPassword": "Library-supported constructor-password defensive fixture; not claimed as a shipped-app creation flow",
+    "whole": "Defensive historical whole-reducer CBC layout using the patched serializer; not claimed as a 14.32.0 creation flow"
+  }
+}

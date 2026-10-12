@@ -37,9 +37,10 @@ const mockedRNFS = RNFS as jest.Mocked<typeof RNFS>;
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: get a fresh module instance (resets module-level cachedBackupExists)
 // ─────────────────────────────────────────────────────────────────────────────
-function getFreshModule(): typeof import('./fs-backup') {
+function getFreshModule(active = true): typeof import('./fs-backup') {
   let mod: typeof import('./fs-backup');
   jest.isolateModules(() => {
+    if (active) require('../vault-storage').activateVaultStorage();
     mod = require('./fs-backup');
   });
   return mod!;
@@ -86,29 +87,6 @@ describe('backupFileExists', () => {
     const result = await backupFileExists(); // should short-circuit via cache
     expect(result).toBe(true);
     expect(mockedRNFS.exists).not.toHaveBeenCalled();
-  });
-});
-
-describe('backupFileExistsStrict', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('returns true when the file exists', async () => {
-    const {backupFileExistsStrict} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(true);
-    expect(await backupFileExistsStrict()).toBe(true);
-  });
-
-  it('returns false when the file does not exist', async () => {
-    const {backupFileExistsStrict} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock).mockResolvedValueOnce(false);
-    expect(await backupFileExistsStrict()).toBe(false);
-  });
-
-  it('rejects when RNFS.exists throws', async () => {
-    const {backupFileExistsStrict} = getFreshModule();
-    const error = new Error('fs error');
-    (mockedRNFS.exists as jest.Mock).mockRejectedValueOnce(error);
-    await expect(backupFileExistsStrict()).rejects.toBe(error);
   });
 });
 
@@ -408,6 +386,33 @@ describe('removePersistRootBackups', () => {
     await resumePersistRootBackups();
   });
 
+  it.each([false, true])(
+    'does not cache an existence read overtaken by cleanup (resumed: %s)',
+    async resumed => {
+      const {
+        backupFileExists,
+        removePersistRootBackups,
+        resumePersistRootBackups,
+      } = getFreshModule();
+      let resolveExists!: (exists: boolean) => void;
+      mockedRNFS.exists.mockResolvedValue(false).mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveExists = resolve;
+          }),
+      );
+      const pending = backupFileExists();
+      await removePersistRootBackups();
+      if (resumed) await resumePersistRootBackups();
+      resolveExists(true);
+      expect(await pending).toBe(false);
+      if (!resumed) await resumePersistRootBackups();
+      jest.clearAllMocks();
+      expect(await backupFileExists()).toBe(false);
+      expect(mockedRNFS.exists).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it('defers new backups until cleanup is resumed', async () => {
     const {
       backupPersistRoot,
@@ -608,5 +613,113 @@ describe('readBackupPersistRoot', () => {
       .mockResolvedValueOnce(true); // bak exists
     (mockedRNFS.readFile as jest.Mock).mockResolvedValueOnce(bakJson);
     expect(await readBackupPersistRoot()).toBe(bakJson);
+  });
+});
+
+describe('backupFileSize', () => {
+  const main = RNFS.CachesDirectoryPath + '/bitpay/redux-v2/persist-root.json';
+  const bak = main + '.bak';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedRNFS.exists.mockReset().mockResolvedValue(false);
+    mockedRNFS.stat.mockReset();
+    mockedRNFS.writeFile.mockReset().mockResolvedValue(undefined);
+    mockedRNFS.moveFile.mockReset().mockResolvedValue(undefined);
+    mockedRNFS.mkdir.mockReset().mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    expect(mockedRNFS.readFile).not.toHaveBeenCalled();
+    expect(mockedRNFS.read).not.toHaveBeenCalled();
+  });
+
+  it('stats the final move destination of a successful backup writer', async () => {
+    const {backupPersistRoot, backupFileSize} = getFreshModule();
+    const files = new Map<string, number>([
+      [main, 123],
+      [bak, 456],
+    ]);
+    mockedRNFS.exists.mockImplementation(async path => files.has(path));
+    mockedRNFS.writeFile.mockImplementation(async (path, contents) => {
+      files.set(path, Buffer.byteLength(contents));
+    });
+    mockedRNFS.moveFile.mockImplementation(async (source, destination) => {
+      if (!files.has(source)) throw new Error('missing source');
+      files.set(destination, files.get(source)!);
+      files.delete(source);
+    });
+    (mockedRNFS.stat as jest.Mock).mockImplementation(async path => ({
+      size: files.get(path),
+    }));
+    await backupPersistRoot('{"WALLET":{"keys":{}}}');
+    expect(mockedRNFS.moveFile).toHaveBeenCalledTimes(2);
+    const finalMove = mockedRNFS.moveFile.mock.calls[1];
+    expect(finalMove).toEqual([main + '.tmp', main]);
+    expect(files.has(finalMove[0])).toBe(false);
+    const expectedSize = files.get(finalMove[1]);
+    expect(expectedSize).toBeGreaterThan(0);
+    jest.clearAllMocks();
+    expect(await backupFileSize()).toBe(expectedSize);
+    expect(mockedRNFS.stat.mock.calls).toEqual([[finalMove[1]]]);
+    expect(mockedRNFS.writeFile).not.toHaveBeenCalled();
+    expect(mockedRNFS.moveFile).not.toHaveBeenCalled();
+  });
+
+  it('measures bak when only bak exists', async () => {
+    const {backupFileSize} = getFreshModule();
+    mockedRNFS.exists.mockImplementation(async path => path === bak);
+    (mockedRNFS.stat as jest.Mock).mockResolvedValue({size: '456'});
+    expect(await backupFileSize()).toBe(456);
+    expect(mockedRNFS.exists.mock.calls).toEqual([[main], [bak]]);
+    expect(mockedRNFS.stat.mock.calls).toEqual([[bak]]);
+  });
+
+  it('returns zero without querying retained old backups when modern files are absent', async () => {
+    const {backupFileSize} = getFreshModule();
+    const old = RNFS.CachesDirectoryPath + '/bitpay/redux/persist-root.json';
+    const files = new Set([old, old + '.bak']);
+    mockedRNFS.exists.mockImplementation(async path => files.has(path));
+    expect(await backupFileSize()).toBe(0);
+    expect(mockedRNFS.exists.mock.calls).toEqual([[main], [bak]]);
+    expect(mockedRNFS.stat).not.toHaveBeenCalled();
+  });
+
+  it('returns zero for a nonnumeric file size', async () => {
+    const {backupFileSize} = getFreshModule();
+    mockedRNFS.exists.mockResolvedValue(true);
+    (mockedRNFS.stat as jest.Mock).mockResolvedValue({size: 'invalid'});
+    expect(await backupFileSize()).toBe(0);
+  });
+
+  it.each([
+    ['exists', main],
+    ['stat', main],
+  ] as const)('propagates a rejected %s for %s', async (operation, path) => {
+    const {backupFileSize} = getFreshModule();
+    const error = new Error('synthetic filesystem failure');
+    mockedRNFS.exists.mockImplementation(async candidate => candidate === path);
+    if (operation === 'exists') {
+      mockedRNFS.exists.mockImplementation(async candidate => {
+        if (candidate === path) throw error;
+        return false;
+      });
+    } else {
+      mockedRNFS.stat.mockRejectedValueOnce(error);
+    }
+    await expect(backupFileSize()).rejects.toBe(error);
+  });
+
+  it('works before activation without setting the cached existence flag', async () => {
+    const {backupFileSize, backupFileExists} = getFreshModule(false);
+    mockedRNFS.exists.mockResolvedValueOnce(true);
+    (mockedRNFS.stat as jest.Mock).mockResolvedValueOnce({size: 123});
+    expect(await backupFileSize()).toBe(123);
+    jest.clearAllMocks();
+    expect(await backupFileExists()).toBe(false);
+    expect(mockedRNFS.exists.mock.calls).toEqual([[main]]);
+    expect(mockedRNFS.writeFile).not.toHaveBeenCalled();
+    expect(mockedRNFS.moveFile).not.toHaveBeenCalled();
+    expect(mockedRNFS.unlink).not.toHaveBeenCalled();
   });
 });

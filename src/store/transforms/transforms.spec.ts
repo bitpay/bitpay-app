@@ -746,21 +746,21 @@ describe('encryptSpecificFields', () => {
     const {outFn} = getTransform();
     const state: any = {keys: {}};
     outFn(state, 'WALLET');
-    expect(decryptWalletStore).toHaveBeenCalledWith(state, secretKey);
+    expect(decryptWalletStore).toHaveBeenCalledWith(state, secretKey, true);
   });
 
   it('decrypts APP store on outbound', () => {
     const {outFn} = getTransform();
     const state: any = {};
     outFn(state, 'APP');
-    expect(decryptAppStore).toHaveBeenCalledWith(state, secretKey);
+    expect(decryptAppStore).toHaveBeenCalledWith(state, secretKey, true);
   });
 
   it('decrypts SHOP store on outbound', () => {
     const {outFn} = getTransform();
     const state: any = {};
     outFn(state, 'SHOP');
-    expect(decryptShopStore).toHaveBeenCalledWith(state, secretKey);
+    expect(decryptShopStore).toHaveBeenCalledWith(state, secretKey, true);
   });
 
   it('returns state unchanged for unrecognised key on outbound', () => {
@@ -787,6 +787,77 @@ describe('encryptSpecificFields', () => {
     const state: any = {keys: {}};
     expect(() => outFn(state, 'WALLET')).toThrow('decrypt failed');
   });
+
+  it('matches only exact string keys without inherited names or coercion', () => {
+    const {inFn, outFn} = getTransform();
+    const state = {};
+    const coercion = jest.fn(() => 'WALLET');
+    for (const key of [
+      'constructor',
+      'toString',
+      '__proto__',
+      'WALLET_SECRETS',
+      'wallet',
+      0,
+      null,
+      undefined,
+      Symbol('WALLET'),
+      {toString: coercion},
+    ]) {
+      expect(inFn(state, key)).toBe(state);
+      expect(outFn(state, key)).toBe(state);
+    }
+    expect(coercion).not.toHaveBeenCalled();
+    for (const fn of [
+      encryptWalletStore,
+      decryptWalletStore,
+      encryptAppStore,
+      decryptAppStore,
+      encryptShopStore,
+      decryptShopStore,
+    ]) {
+      expect(fn).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each([
+    [
+      'WALLET',
+      'inFn',
+      encryptWalletStore,
+      'encryptWalletStore failed - synthetic',
+    ],
+    ['APP', 'inFn', encryptAppStore, 'encryptAppStore failed - synthetic'],
+    ['SHOP', 'inFn', encryptShopStore, 'encryptShopStore failed - synthetic'],
+    [
+      'WALLET',
+      'outFn',
+      decryptWalletStore,
+      'decryptWalletStore failed - synthetic',
+    ],
+    ['APP', 'outFn', decryptAppStore, 'decryptAppStore failed - synthetic'],
+    ['SHOP', 'outFn', decryptShopStore, 'decryptShopStore failed - synthetic'],
+  ] as const)(
+    'keeps the exact %s %s error label and thrown value',
+    (key, direction, fn, label) => {
+      const thrown = {toString: () => 'synthetic'};
+      (fn as jest.Mock).mockImplementationOnce(() => {
+        throw thrown;
+      });
+      const transform = getTransform();
+      let caught: unknown;
+      try {
+        transform[direction]({}, key);
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught).toBe(thrown);
+      expect(require('../log').LogActions.error).toHaveBeenCalledWith(label);
+      expect(
+        require('@sentry/react-native').captureException,
+      ).toHaveBeenCalledWith(thrown, {level: 'error'});
+    },
+  );
 });
 
 describe('bindWalletKeys inbound — wallet secrets', () => {

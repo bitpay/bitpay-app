@@ -3,7 +3,7 @@ import Aes from 'crypto-js/aes.js';
 import {
   decryptAppStore,
   decryptPersistValue,
-  deserializePersistValue,
+  deserializeModernPersistValue,
   decryptShopStore,
   decryptValue,
   decryptWalletStore,
@@ -13,6 +13,8 @@ import {
   encryptValue,
   encryptWalletStore,
 } from './encrypt';
+import {reencryptSnapshot} from '../vault-codec';
+import {unencryptedPersistStores} from './persist-encryption';
 
 const secretKey = 'test-device-secret';
 const cryptoJs319FieldFixture =
@@ -206,11 +208,23 @@ describe('encrypted field values', () => {
         secretKey,
       ).toString();
 
-      const upgraded = deserializePersistValue(
-        wholeStoreEncrypted,
+      const snapshot = JSON.stringify({
+        [storeCase.name]: JSON.stringify(wholeStoreEncrypted),
+        _persist: JSON.stringify(
+          Aes.encrypt(
+            JSON.stringify({version: -1, rehydrated: true}),
+            secretKey,
+          ).toString(),
+        ),
+      });
+      const converted = JSON.parse(
+        reencryptSnapshot(snapshot, secretKey, secretKey),
+      );
+      const upgraded = deserializeModernPersistValue(
+        JSON.parse(converted[storeCase.name]),
         secretKey,
         storeCase.name,
-        true,
+        unencryptedPersistStores.has(storeCase.name),
       );
 
       expect(storeCase.read(upgraded, firstField)).toMatch(/^field-aesgcm-v1:/);
@@ -227,11 +241,11 @@ describe('encrypted field values', () => {
 
       expect(() =>
         storeCase.decrypt(
-          deserializePersistValue(
+          deserializeModernPersistValue(
             perFieldEncrypted,
             secretKey,
             storeCase.name,
-            true,
+            unencryptedPersistStores.has(storeCase.name),
           ),
         ),
       ).toThrow(firstField);
@@ -246,11 +260,11 @@ describe('encrypted field values', () => {
 
       expect(() =>
         storeCase.decrypt(
-          deserializePersistValue(
+          deserializeModernPersistValue(
             wholeStoreAuthenticated,
             secretKey,
             storeCase.name,
-            true,
+            unencryptedPersistStores.has(storeCase.name),
           ),
         ),
       ).toThrow(firstField);
@@ -325,28 +339,36 @@ describe('persisted reducer values', () => {
     randomBytes.mockRestore();
   });
 
-  it.each([false, true])(
-    'rejects non-string reducers instead of bypassing decryption (plain JSON: %s)',
-    allowPlainJson => {
+  it.each(['APP', 'BITPAY_ID'])(
+    'rejects non-string reducers instead of bypassing decryption (%s)',
+    key => {
       expect(() =>
-        deserializePersistValue(
+        deserializeModernPersistValue(
           {token: 'injected'},
           secretKey,
-          'BITPAY_ID',
-          allowPlainJson,
+          key,
+          unencryptedPersistStores.has(key),
         ),
-      ).toThrow('to be a string');
+      ).toThrow('Expected serialized reducer');
     },
   );
 
   it('reads production JSON only for reducers configured as plaintext', () => {
     expect(
-      deserializePersistValue(
+      deserializeModernPersistValue(
+        JSON.stringify(state),
+        secretKey,
+        'APP',
+        unencryptedPersistStores.has('APP'),
+      ),
+    ).toEqual(state);
+    expect(() =>
+      deserializeModernPersistValue(
         JSON.stringify(state),
         secretKey,
         'BITPAY_ID',
-        true,
+        unencryptedPersistStores.has('BITPAY_ID'),
       ),
-    ).toEqual(state);
+    ).toThrow('Expected authenticated reducer');
   });
 });

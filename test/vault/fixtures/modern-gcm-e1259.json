@@ -1,0 +1,59 @@
+{
+  "sourceCommit": "e1259f38b824528ecbc8f41b1b72b638da3bdd61",
+  "key": "a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s=",
+  "payload": {
+    "WALLET": {
+      "keys": {
+        "keyA": {
+          "properties": {
+            "mnemonic": "synthetic mnemonic",
+            "mnemonicEncrypted": "synthetic password mnemonic",
+            "xPrivKey": "synthetic private key",
+            "xPrivKeyEncrypted": "synthetic password private key",
+            "xPrivKeyEDDSA": "synthetic EDDSA key",
+            "xPrivKeyEDDSAEncrypted": "synthetic password EDDSA key",
+            "publicValue": "untouched wallet value"
+          }
+        }
+      }
+    },
+    "APP": {
+      "identity": {
+        "livenet": {
+          "priv": "synthetic identity secret",
+          "pub": "public identity"
+        }
+      }
+    },
+    "SHOP": {
+      "giftCards": {
+        "livenet": [
+          {
+            "accessKey": "synthetic access",
+            "barcodeData": "synthetic barcode",
+            "barcodeImage": "synthetic image",
+            "claimCode": "synthetic claim",
+            "claimLink": "https://example.invalid/claim",
+            "pin": "synthetic pin",
+            "publicValue": "untouched card value",
+            "invoiceId": "invoice-a"
+          },
+          {
+            "accessKey": "synthetic access",
+            "barcodeData": "synthetic barcode",
+            "barcodeImage": "synthetic image",
+            "claimCode": "synthetic claim",
+            "claimLink": "https://example.invalid/claim",
+            "pin": "synthetic pin",
+            "publicValue": "untouched card value"
+          }
+        ]
+      }
+    },
+    "_persist": {
+      "version": -1,
+      "rehydrated": true
+    }
+  },
+  "raw": "{\"WALLET\":\"\\\"{\\\\\\\"keys\\\\\\\":{\\\\\\\"keyA\\\\\\\":{\\\\\\\"properties\\\\\\\":{\\\\\\\"mnemonic\\\\\\\":\\\\\\\"field-aesgcm-v1:xyAYwbh/qEsp6hPm.8D4s5w9ROWsbqvnh6arlxA==.bkjsLwvyBkbtIJ94Foqe97wh\\\\\\\",\\\\\\\"mnemonicEncrypted\\\\\\\":\\\\\\\"field-aesgcm-v1:ov7FR/2bDTB80iw7.e9PAGyswnfXTStC9lOZJpg==.AressPaKI44M/M+cp5QsDH/bg+VQ3jijaLDE\\\\\\\",\\\\\\\"xPrivKey\\\\\\\":\\\\\\\"field-aesgcm-v1:AE2Go+8PQXIIzrxf.z+KYCYo3YneD+EojWGMX/w==.yyIGfqeRuMRWhv9Oa5i8Oy8tHcVx\\\\\\\",\\\\\\\"xPrivKeyEncrypted\\\\\\\":\\\\\\\"field-aesgcm-v1:Z/J2WX8IzB8pOktQ.1CqGyekuPTKXoQaZTC/TWw==.OOG5efd+2EFWl9PZlFycUdYTRs4bz+4SjgzOdUp2\\\\\\\",\\\\\\\"xPrivKeyEDDSA\\\\\\\":\\\\\\\"field-aesgcm-v1:yLFSWef4SFGNNu3b.DN+fpLqemm9c2IWUSS/9tA==.4XQ8LI+4M1nuNZ6dU7VSP5Lnkg==\\\\\\\",\\\\\\\"xPrivKeyEDDSAEncrypted\\\\\\\":\\\\\\\"field-aesgcm-v1:iq1rztUiLd4No/2t.Nvr0G/szjTIJfcIYObakhg==.hHly8IcfC+92ASNFDGzsQ+XMO8a5JoVw9VYEuA==\\\\\\\",\\\\\\\"publicValue\\\\\\\":\\\\\\\"untouched wallet value\\\\\\\"}}}}\\\"\",\"APP\":\"\\\"{\\\\\\\"identity\\\\\\\":{\\\\\\\"livenet\\\\\\\":{\\\\\\\"priv\\\\\\\":\\\\\\\"field-aesgcm-v1:UPzoX1a1IsoPj7tg.Ti5vPE4MuomXn7II5sF/Bw==.MY4Lges6yB2n7ILsBNooAEn+bJ+CP3b//A==\\\\\\\",\\\\\\\"pub\\\\\\\":\\\\\\\"public identity\\\\\\\"}}}\\\"\",\"SHOP\":\"\\\"{\\\\\\\"giftCards\\\\\\\":{\\\\\\\"livenet\\\\\\\":[{\\\\\\\"accessKey\\\\\\\":\\\\\\\"field-aesgcm-v1:IYk8RSXw4d4Xai0m.R77uOZ8yFlq/y9DQ1bUtDg==.vw1EaDLVuZbfa84twL3c7Q==\\\\\\\",\\\\\\\"barcodeData\\\\\\\":\\\\\\\"field-aesgcm-v1:uHxanJsokPQnXkfY.3qcUkUY0Bi4/sNPT5IHdjg==.4J8hKld4MuZOftsDCw/0Ab4=\\\\\\\",\\\\\\\"barcodeImage\\\\\\\":\\\\\\\"field-aesgcm-v1:lDruQhtDdL+jCpFT.ehz7D5V7Kb/9wWFjAjt/yg==.dOW9qExso82WajQDBDdQ\\\\\\\",\\\\\\\"claimCode\\\\\\\":\\\\\\\"field-aesgcm-v1:tg7PtkafVzdX2ejG.Dy8a1T5qWcAz0qS3RoRXZg==./wCmrkyuZXqHtiRFQMYR\\\\\\\",\\\\\\\"claimLink\\\\\\\":\\\\\\\"field-aesgcm-v1:c2LvMDlVTVW/VzFI.2ephasVqOJg9PtPb5c2WPg==.ztmnLTqiPNzj5aNgZAUo5W5trwp2NOfZFbp2r2o=\\\\\\\",\\\\\\\"pin\\\\\\\":\\\\\\\"field-aesgcm-v1:qyk2/Eh8QG0vJdU5.iJw2P7xBt8EFia3uXltWsg==.ELNpA44TBEcIeMn0bg==\\\\\\\",\\\\\\\"publicValue\\\\\\\":\\\\\\\"untouched card value\\\\\\\",\\\\\\\"invoiceId\\\\\\\":\\\\\\\"invoice-a\\\\\\\"},{\\\\\\\"accessKey\\\\\\\":\\\\\\\"field-aesgcm-v1:bzfNjKBO27V1NI/O.OvP4AQ6EDSFNgjK5LN/4Iw==.OPME7oMv/YF9thfMynapkw==\\\\\\\",\\\\\\\"barcodeData\\\\\\\":\\\\\\\"field-aesgcm-v1:GrZoGlFdvOtEck5H.oZAFAoYHB7XgiHdHBocGig==.LDveU5uZ8OxvjTPn+u0+0KM=\\\\\\\",\\\\\\\"barcodeImage\\\\\\\":\\\\\\\"field-aesgcm-v1:KyUYm+uZcqXcKQQW.mVgyxRmcMr3VUD5MODrd9w==.RaenhE9XVbz+ehwFYmQr\\\\\\\",\\\\\\\"claimCode\\\\\\\":\\\\\\\"field-aesgcm-v1:oIo5/q0gQabJhdqs.PyC6KWzo7qax04VXRB2v5A==.kTt6MEJ7aL2hlg9JpjcI\\\\\\\",\\\\\\\"claimLink\\\\\\\":\\\\\\\"field-aesgcm-v1:qWG9Wp4zL5YYEH9c.g+FLtPs7JR9NQXG7fkW1bw==.5pvlEcLphgqNPSJUNh5UEX6f+KmA6jpMyqhUxrI=\\\\\\\",\\\\\\\"pin\\\\\\\":\\\\\\\"field-aesgcm-v1:S4Rp2Kn5A8QeuDXD.TJN/DIRMm8vFbPh+Hy0LWA==.h89of0IAHlBZ817NxQ==\\\\\\\",\\\\\\\"publicValue\\\\\\\":\\\\\\\"untouched card value\\\\\\\"}]}}\\\"\",\"_persist\":\"\\\"persist-aesgcm-v1:TV7LmTExnf2aB9La.P+gAPsnmpA6Mu13qHW0dKA==.V86GQFoMCU+c8vjoQBM4NjydAn/bKWOIprncTwXsbq4=\\\"\"}"
+}
