@@ -1,6 +1,11 @@
 import isEqual from 'lodash.isequal';
 import {decodeSnapshot, reencryptSnapshot, verifySnapshot} from './vault-codec';
-import {safeVaultError, vaultError} from './vault-diagnostics';
+import {
+  safeVaultError,
+  vaultDiagnostic,
+  vaultError,
+  VaultDetail,
+} from './vault-diagnostics';
 import {LEGACY_RETIREMENT_ENABLED} from './vault-retirement-policy';
 import {object} from './transforms/persist-encryption';
 
@@ -143,12 +148,21 @@ const jsonReadable = (raw: string | null | undefined) => {
   }
 };
 const decodeWithCandidate = (raw: string, candidates: string[]) => {
+  const details: VaultDetail[] = [];
   for (const key of [...new Set(candidates)]) {
     try {
       return {key, snapshot: decodeSnapshot(raw, key)};
-    } catch {}
+    } catch (error) {
+      details.push(vaultDiagnostic(error as Error)?.detail ?? 'D00');
+    }
   }
-  throw vaultError('INVALID_LEGACY_INPUT', 'classify', 'SOURCE_INVALID');
+  throw vaultError(
+    'INVALID_LEGACY_INPUT',
+    'classify',
+    'SOURCE_INVALID',
+    undefined,
+    details.find(detail => detail !== 'D00') ?? details[0],
+  );
 };
 
 function plan(inventory: Inventory, candidates: string[]): TransferRecord {

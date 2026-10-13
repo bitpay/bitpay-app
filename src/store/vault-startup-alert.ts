@@ -7,7 +7,9 @@ import {safeVaultError, vaultDiagnostic} from './vault-diagnostics';
 // foreground return: openURL can resolve before Android pauses the Activity.
 export const vaultStartupAlert = (error: unknown, retry: () => void) => {
   const diagnostic = vaultDiagnostic(safeVaultError(error))!;
-  const id = `${diagnostic.code}/${diagnostic.phase}`;
+  const id = `${diagnostic.code}/${diagnostic.phase}${
+    diagnostic.detail ? '/' + diagnostic.detail : ''
+  }`;
   let disposed = false;
   let visible = false;
   let waitingForSupport = false;

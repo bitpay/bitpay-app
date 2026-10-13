@@ -1381,3 +1381,83 @@ it.each(['wallet', 'log-only'] as const)(
     expect(h.events.includes('legacy-key:remove')).toBe(false);
   },
 );
+
+it('D16: a failed first candidate does not prevent the second candidate succeeding', async () => {
+  const h = harness();
+  h.state.sources.mmkv = encodeSnapshot(fixture.state, oldKey);
+  h.io.legacyKeys = async () => ['synthetic other candidate', oldKey];
+  await transferVault(h.io);
+  equal(decodeSnapshot(h.destinations.root!, newKey).payload, fixture.state);
+  expect(h.record()?.copies.root).toBe('mmkv');
+  expect(h.record()?.phase).toBe('active');
+});
+
+it.each(['unlabelled', 'label first', 'label second', 'no candidates'])(
+  'D16: selects the registered candidate detail for %s',
+  async scenario => {
+    const h = harness();
+    const outer = JSON.parse(encodeSnapshot(fixture.state, oldKey));
+    outer.CONTACT = JSON.stringify(
+      JSON.stringify({name: 'synthetic saved name'}),
+    );
+    h.state.sources.mmkv = JSON.stringify(outer);
+    const other = 'synthetic other candidate';
+    const candidates =
+      scenario === 'no candidates'
+        ? []
+        : scenario === 'unlabelled'
+        ? [other, 'synthetic third candidate']
+        : scenario === 'label first'
+        ? [oldKey, other]
+        : [other, oldKey];
+    h.io.legacyKeys = async () => candidates;
+    const run = loadTransfer(false);
+    const {vaultDiagnostic} = require('./vault-diagnostics');
+    // Establish each failure using the real codec in this same module graph.
+    const {decodeSnapshot: decode} = require('./vault-codec');
+    const details = candidates.map(key => {
+      try {
+        decode(h.state.sources.mmkv, key);
+      } catch (error) {
+        return vaultDiagnostic(error)?.detail ?? 'D00';
+      }
+      throw new Error('expected candidate rejection');
+    });
+    expect(details).toEqual(
+      scenario === 'no candidates'
+        ? []
+        : scenario === 'unlabelled'
+        ? ['D00', 'D00']
+        : scenario === 'label first'
+        ? ['D13', 'D00']
+        : ['D00', 'D13'],
+    );
+    const failure = await run(h.io).then(
+      () => null,
+      error => error,
+    );
+    expect(vaultDiagnostic(failure)).toEqual({
+      code: 'INVALID_LEGACY_INPUT',
+      phase: 'classify',
+      reason: 'SOURCE_INVALID',
+      ...(scenario === 'no candidates'
+        ? {}
+        : {detail: scenario === 'unlabelled' ? 'D00' : 'D13'}),
+    });
+    expect(h.controlRaw()).toBeNull();
+    expect(h.keyValue()).toBeNull();
+    expect(h.destinations).toEqual({root: null, main: null, bak: null});
+  },
+);
+
+it('D16: a labelled optional backup rejection stays optional and grants no release', async () => {
+  const h = harness();
+  h.state.sources.main = JSON.stringify({
+    CONTACT: JSON.stringify(JSON.stringify({})),
+  });
+  await transferVault(h.io);
+  expect(h.record()?.phase).toBe('active');
+  expect(h.record()?.copies.main).toBeNull();
+  expect(h.record()?.release.main).toBe(false);
+  equal(decodeSnapshot(h.destinations.root!, newKey).payload, fixture.state);
+});

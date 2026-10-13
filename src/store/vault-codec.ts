@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import bs58 from 'bs58';
 import isEqual from 'lodash.isequal';
 import {Network} from '../constants';
-import {vaultError} from './vault-diagnostics';
+import {decodeDetails, vaultDiagnostic, vaultError} from './vault-diagnostics';
 import {
   decryptPersistValue,
   decryptValue,
@@ -23,9 +23,15 @@ import {
 } from './transforms/persist-encryption';
 type Payload = Record<string, any>;
 type Snapshot = {raw: string; payload: Payload; format: 'cbc' | 'gcm'};
-function fail(_message: string): never {
+function fail(label: keyof typeof decodeDetails): never {
   // Parser checks are fixed classification sites, never native-message inference.
-  throw vaultError('INVALID_LEGACY_INPUT', 'classify', 'SOURCE_INVALID');
+  throw vaultError(
+    'INVALID_LEGACY_INPUT',
+    'classify',
+    'SOURCE_INVALID',
+    undefined,
+    decodeDetails[label],
+  );
 }
 
 // Read-only syntax checks for the two historically unwrapped fields. These do
@@ -245,8 +251,14 @@ export const reencryptSnapshot = (
     const output = encodeSnapshot(source.payload, newKey);
     verifySnapshot(output, output, source.payload, newKey);
     return output;
-  } catch {
-    throw vaultError('INVALID_LEGACY_INPUT', 'conversion', 'SOURCE_INVALID');
+  } catch (error) {
+    throw vaultError(
+      'INVALID_LEGACY_INPUT',
+      'conversion',
+      'SOURCE_INVALID',
+      undefined,
+      vaultDiagnostic(error as Error)?.detail,
+    );
   }
 };
 export const verifySnapshot = (

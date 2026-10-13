@@ -1056,3 +1056,59 @@ it('D14: same-process Retry may retire after active-record read-back failed', as
     spy.mockRestore();
   }
 });
+
+it('D16: reports a labelled rejection through the real runtime, transfer and codec', async () => {
+  shippingPolicy();
+  seed();
+  const raw = JSON.stringify({
+    ...JSON.parse(fixture.raw),
+    CONTACT: JSON.stringify(JSON.stringify({name: 'synthetic saved name'})),
+  });
+  mockStores.get('mmkv.default')!.set('persist:root', raw);
+  const {
+    vaultDiagnostic,
+    reportVaultStartupFailure,
+  } = require('./vault-diagnostics');
+  const {captureException} = require('@sentry/react-native');
+  captureException.mockClear();
+  const failure = await start().catch((error: unknown) => error);
+  expect(failure).toBeInstanceOf(Error);
+  Object.assign(failure, {
+    message: 'synthetic raw message',
+    stack: 'synthetic raw stack',
+    cause: new Error('synthetic raw cause'),
+    extra: 'synthetic attached value',
+    detail: 'synthetic forged detail',
+  });
+  reportVaultStartupFailure(failure);
+  expect(captureException).toHaveBeenCalledTimes(1);
+  const [reported, options] = captureException.mock.calls[0];
+  expect(options).toEqual({
+    level: 'error',
+    tags: {
+      vaultCode: 'INVALID_LEGACY_INPUT',
+      vaultPhase: 'classify',
+      vaultReason: 'SOURCE_INVALID',
+      vaultDetail: 'D13',
+    },
+  });
+  expect(vaultDiagnostic(failure)).toEqual({
+    code: 'INVALID_LEGACY_INPUT',
+    phase: 'classify',
+    reason: 'SOURCE_INVALID',
+    detail: 'D13',
+  });
+  expect(reported).not.toBe(failure);
+  expect(reported.message).toBe(
+    'Vault migration failed: INVALID_LEGACY_INPUT (classify)',
+  );
+  expect(reported.stack).toBeUndefined();
+  expect(reported).not.toHaveProperty('cause');
+  expect(reported).not.toHaveProperty('extra');
+  expect(reported).not.toHaveProperty('detail');
+  expect(modernRoot()).toBeUndefined();
+  expect(mockEvents.some(event => event.startsWith('control:'))).toBe(false);
+  expect(mockStores.get('mmkv.default')!.get('persist:root') === raw).toBe(
+    true,
+  );
+});

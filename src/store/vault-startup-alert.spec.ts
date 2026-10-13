@@ -244,3 +244,45 @@ it('invalidates a fallback on delayed departure and presents one usable alert on
   buttons()[0].onPress!();
   expect(retry).toHaveBeenCalledTimes(1);
 });
+
+it.each([
+  ['D13', '/D13'],
+  ['D00', '/D00'],
+  [undefined, ''],
+  ['D18', ''],
+  [13, ''],
+])('D16: uses validated detail %p in the reference', (detail, suffix) => {
+  const error = vaultError(
+    'INVALID_LEGACY_INPUT',
+    'classify',
+    'SOURCE_INVALID',
+    undefined,
+    detail as any,
+  );
+  Object.assign(error, {
+    detail: 'synthetic public detail',
+    message: 'synthetic private message',
+    stack: 'synthetic private stack',
+    cause: 'synthetic private cause',
+  });
+  controllers.push(vaultStartupAlert(error, retry));
+  expect(Alert.alert).toHaveBeenCalledWith(
+    'Wallet data could not be opened',
+    `Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: INVALID_LEGACY_INPUT/classify${suffix}.`,
+    expect.any(Array),
+    {cancelable: false},
+  );
+});
+
+it('D16: an unclassified failure cannot supply an on-screen detail or raw contents', () => {
+  const error = Object.assign(new Error('synthetic private message'), {
+    detail: 'D13',
+  });
+  controllers.push(vaultStartupAlert(error, retry));
+  expect(Alert.alert).toHaveBeenCalledWith(
+    'Wallet data could not be opened',
+    'Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: STARTUP_FAILURE/startup.',
+    expect.any(Array),
+    {cancelable: false},
+  );
+});

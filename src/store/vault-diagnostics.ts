@@ -1,5 +1,28 @@
 import * as Sentry from '@sentry/react-native';
 
+// Permanent codes: never renumber or reuse them after shipping.
+export const decodeDetails = Object.freeze({
+  'invalid protected-field container': 'D01',
+  'invalid protected-field value': 'D02',
+  'invalid wallet key map': 'D03',
+  'invalid wallet key': 'D04',
+  'invalid identity map': 'D05',
+  'invalid gift card map': 'D06',
+  'invalid gift card list': 'D07',
+  'invalid gift card': 'D08',
+  'expected Redux Persist JSON': 'D09',
+  'invalid serialized reducer': 'D10',
+  'expected transform output to be a string': 'D11',
+  'invalid or mixed-format snapshot': 'D12',
+  'unexpected plaintext reducer': 'D13',
+  'invalid reducer payload': 'D14',
+  'invalid protected-field envelope': 'D15',
+  'unexpected plaintext protected field': 'D16',
+  'invalid decrypted field': 'D17',
+} as const);
+export type VaultDetail =
+  | 'D00'
+  | (typeof decodeDetails)[keyof typeof decodeDetails];
 export type VaultCode =
   | 'MODERN_KEY_FAILURE'
   | 'NEW_KEY_VERIFICATION'
@@ -36,6 +59,7 @@ type Diagnostic = {
   phase: VaultPhase;
   reason?: VaultReason;
   source?: VaultSource;
+  detail?: VaultDetail;
 };
 // Identity lookup never touches native messages, getters, causes or prototypes.
 const diagnostics = new WeakMap<Error, Readonly<Diagnostic>>();
@@ -44,6 +68,7 @@ export const vaultError = (
   phase: VaultPhase,
   reason?: VaultReason,
   source?: VaultSource,
+  detail?: VaultDetail,
 ): Error => {
   const error = new Error(`Vault migration failed: ${code} (${phase})`);
   error.stack = undefined;
@@ -54,6 +79,10 @@ export const vaultError = (
       phase,
       ...(reason ? {reason} : {}),
       ...(source ? {source} : {}),
+      ...(typeof detail === 'string' &&
+      ['D00', ...Object.values(decodeDetails)].includes(detail)
+        ? {detail}
+        : {}),
     }),
   );
   return error;
@@ -84,6 +113,7 @@ export const reportVaultStartupFailure = (error: unknown): void => {
       known.phase,
       known.reason,
       known.source,
+      known.detail,
     );
     const diagnostic = diagnostics.get(safe)!;
     Sentry.captureException(safe, {
@@ -93,6 +123,7 @@ export const reportVaultStartupFailure = (error: unknown): void => {
         vaultPhase: diagnostic.phase,
         ...(diagnostic.reason ? {vaultReason: diagnostic.reason} : {}),
         ...(diagnostic.source ? {vaultSource: diagnostic.source} : {}),
+        ...(diagnostic.detail ? {vaultDetail: diagnostic.detail} : {}),
       },
     });
   } catch {}

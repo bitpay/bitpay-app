@@ -1,5 +1,7 @@
 import Aes from 'crypto-js/aes.js';
 import isEqual from 'lodash.isequal';
+import {decodeDetails, vaultDiagnostic} from './vault-diagnostics';
+import * as encryption from './transforms/encrypt';
 import {createTransform} from 'redux-persist';
 import getStoredState from 'redux-persist/lib/getStoredState';
 import {decodeSnapshot, reencryptSnapshot, verifySnapshot} from './vault-codec';
@@ -267,3 +269,186 @@ it.each(['whole', 'fields'])(
     safeEqual(loaded, expected);
   },
 );
+
+const caughtDecode = (run: () => unknown): Error => {
+  try {
+    run();
+  } catch (error) {
+    return error as Error;
+  }
+  throw new Error('expected synthetic input to be rejected');
+};
+
+it('D16: fixes the complete label inventory and its distinct permanent codes', () => {
+  expect(decodeDetails).toEqual({
+    'invalid protected-field container': 'D01',
+    'invalid protected-field value': 'D02',
+    'invalid wallet key map': 'D03',
+    'invalid wallet key': 'D04',
+    'invalid identity map': 'D05',
+    'invalid gift card map': 'D06',
+    'invalid gift card list': 'D07',
+    'invalid gift card': 'D08',
+    'expected Redux Persist JSON': 'D09',
+    'invalid serialized reducer': 'D10',
+    'expected transform output to be a string': 'D11',
+    'invalid or mixed-format snapshot': 'D12',
+    'unexpected plaintext reducer': 'D13',
+    'invalid reducer payload': 'D14',
+    'invalid protected-field envelope': 'D15',
+    'unexpected plaintext protected field': 'D16',
+    'invalid decrypted field': 'D17',
+  });
+  expect(new Set(Object.values(decodeDetails)).size).toBe(17);
+});
+
+it.each([
+  ['D01', {WALLET: {keys: {synthetic: {properties: []}}}}],
+  ['D02', {WALLET: {keys: {synthetic: {properties: {mnemonic: false}}}}}],
+  ['D03', {WALLET: {keys: []}}],
+  ['D04', {WALLET: {keys: {synthetic: false}}}],
+  ['D05', {APP: {identity: []}}],
+  ['D06', {SHOP: {giftCards: []}}],
+  ['D07', {SHOP: {giftCards: {livenet: {}}}}],
+  ['D08', {SHOP: {giftCards: {livenet: [null]}}}],
+  ['D13', {CONTACT: {name: 'synthetic saved name'}}],
+  ['D14', {APP: []}],
+  [
+    'D15',
+    {
+      WALLET: {
+        keys: {
+          synthetic: {properties: {mnemonic: 'persist-aesgcm-v1:synthetic'}},
+        },
+      },
+    },
+  ],
+  [
+    'D16',
+    {
+      WALLET: {
+        keys: {synthetic: {properties: {mnemonic: 'synthetic plaintext'}}},
+      },
+    },
+  ],
+])(
+  'D16: labels the %s rejection in an otherwise valid saved snapshot',
+  (detail, reducers) => {
+    const outer = JSON.parse(fixtures.plain.raw);
+    for (const [name, state] of Object.entries(reducers))
+      outer[name] = JSON.stringify(JSON.stringify(state));
+    const failure = caughtDecode(() =>
+      decodeSnapshot(JSON.stringify(outer), oldKey),
+    );
+    expect(vaultDiagnostic(failure)).toEqual({
+      code: 'INVALID_LEGACY_INPUT',
+      phase: 'classify',
+      reason: 'SOURCE_INVALID',
+      detail,
+    });
+  },
+);
+
+it.each([
+  ['D09', '[]'],
+  ['D10', JSON.stringify({APP: {}})],
+  ['D11', JSON.stringify({APP: JSON.stringify({})})],
+  ['D12', '{}'],
+])('D16: labels the %s snapshot syntax rejection', (detail, raw) => {
+  expect(
+    vaultDiagnostic(caughtDecode(() => decodeSnapshot(raw, oldKey))),
+  ).toEqual({
+    code: 'INVALID_LEGACY_INPUT',
+    phase: 'classify',
+    reason: 'SOURCE_INVALID',
+    detail,
+  });
+});
+
+it('D16: labels mixed formats and an empty authenticated protected field', () => {
+  const mixed = JSON.parse(fixtures.plain.raw);
+  mixed.CONTACT = JSON.stringify(
+    encryptPersistValue({}, oldKey, 'persist:CONTACT'),
+  );
+  expect(
+    vaultDiagnostic(
+      caughtDecode(() => decodeSnapshot(JSON.stringify(mixed), oldKey)),
+    )?.detail,
+  ).toBe('D12');
+  const empty = {
+    WALLET: JSON.stringify(
+      JSON.stringify({
+        keys: {
+          synthetic: {
+            properties: {
+              mnemonic: encryption.encryptValue(
+                '',
+                oldKey,
+                'WALLET.keys.synthetic.properties.mnemonic',
+              ),
+            },
+          },
+        },
+      }),
+    ),
+    _persist: JSON.stringify(JSON.stringify({version: -1, rehydrated: true})),
+  };
+  expect(
+    vaultDiagnostic(
+      caughtDecode(() => decodeSnapshot(JSON.stringify(empty), oldKey)),
+    )?.detail,
+  ).toBe('D17');
+});
+
+it('D16: a raw decryption failure keeps its identity and supplies no registered detail', () => {
+  const raw = Object.assign(new Error('synthetic raw failure'), {
+    detail: 'D13',
+  });
+  const decrypt = jest
+    .spyOn(encryption, 'decryptPersistValue')
+    .mockImplementationOnce(() => {
+      throw raw;
+    });
+  try {
+    const outer = {
+      CONTACT: JSON.stringify(
+        encryptPersistValue({}, oldKey, 'persist:CONTACT'),
+      ),
+    };
+    const failure = caughtDecode(() =>
+      decodeSnapshot(JSON.stringify(outer), oldKey),
+    );
+    expect(failure).toBe(raw);
+    expect(vaultDiagnostic(failure)).toBeUndefined();
+  } finally {
+    decrypt.mockRestore();
+  }
+});
+
+it.each([true, false])(
+  'D16: conversion preserves its phase with a labelled=%s failure',
+  labelled => {
+    const raw = labelled
+      ? JSON.stringify({
+          ...JSON.parse(fixtures.plain.raw),
+          CONTACT: JSON.stringify(JSON.stringify({})),
+        })
+      : 'synthetic invalid JSON';
+    const failure = caughtDecode(() => reencryptSnapshot(raw, oldKey, newKey));
+    expect(vaultDiagnostic(failure)).toEqual({
+      code: 'INVALID_LEGACY_INPUT',
+      phase: 'conversion',
+      reason: 'SOURCE_INVALID',
+      ...(labelled ? {detail: 'D13'} : {}),
+    });
+  },
+);
+
+it('D16: verification continues to discard underlying decode details', () => {
+  const failure = caughtDecode(() => verifySnapshot('{}', '{}', {}, newKey));
+  expect(vaultDiagnostic(failure)).toEqual({
+    code: 'REQUIRED_COPY_FAILURE',
+    phase: 'required-copy',
+    reason: 'COPY_VERIFICATION',
+  });
+});

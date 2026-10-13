@@ -130,3 +130,144 @@ it('classifies a raw migration failure at the real entry point before reporting'
     tags: {vaultCode: 'STARTUP_FAILURE', vaultPhase: 'startup'},
   });
 });
+
+it('D16: reports only the registered detail on a fresh classified error', () => {
+  const error = vaultError(
+    'INVALID_LEGACY_INPUT',
+    'classify',
+    'SOURCE_INVALID',
+    undefined,
+    'D13',
+  );
+  Object.assign(error, {
+    message: 'synthetic saved message',
+    stack: 'synthetic saved stack',
+    cause: new Error('synthetic saved cause'),
+    extra: 'synthetic saved property',
+    detail: 'D01',
+  });
+  reportVaultStartupFailure(error);
+  const [reported, options] = capture.mock.calls[0];
+  expect(reported).not.toBe(error);
+  expect(reported).toHaveProperty(
+    'message',
+    'Vault migration failed: INVALID_LEGACY_INPUT (classify)',
+  );
+  expect(reported).toHaveProperty('stack', undefined);
+  expect(reported).not.toHaveProperty('cause');
+  expect(reported).not.toHaveProperty('extra');
+  expect(reported).not.toHaveProperty('detail');
+  expect(options).toEqual({
+    level: 'error',
+    tags: {
+      vaultCode: 'INVALID_LEGACY_INPUT',
+      vaultPhase: 'classify',
+      vaultReason: 'SOURCE_INVALID',
+      vaultDetail: 'D13',
+    },
+  });
+  expect(vaultDiagnostic(error)).toEqual({
+    code: 'INVALID_LEGACY_INPUT',
+    phase: 'classify',
+    reason: 'SOURCE_INVALID',
+    detail: 'D13',
+  });
+  expect(Object.isFrozen(vaultDiagnostic(error))).toBe(true);
+});
+
+it.each([
+  'D18',
+  'D1',
+  'd13',
+  ' D13',
+  'D13/synthetic',
+  13,
+  null,
+  {toString: () => 'D13'},
+])(
+  'D16: omits an invalid supplied detail without changing classification: %p',
+  detail => {
+    const error = vaultError(
+      'INVALID_LEGACY_INPUT',
+      'classify',
+      'SOURCE_INVALID',
+      'mmkv',
+      detail as any,
+    );
+    Object.defineProperty(error, 'detail', {
+      get: () => {
+        throw new Error('public detail must not be read');
+      },
+    });
+    reportVaultStartupFailure(error);
+    expect(vaultDiagnostic(error)).toEqual({
+      code: 'INVALID_LEGACY_INPUT',
+      phase: 'classify',
+      reason: 'SOURCE_INVALID',
+      source: 'mmkv',
+    });
+    expect(capture.mock.calls[0][1]).toEqual({
+      level: 'error',
+      tags: {
+        vaultCode: 'INVALID_LEGACY_INPUT',
+        vaultPhase: 'classify',
+        vaultReason: 'SOURCE_INVALID',
+        vaultSource: 'mmkv',
+      },
+    });
+  },
+);
+
+it('D16: a public detail cannot add metadata to a classified or unclassified error', () => {
+  const classified = Object.assign(
+    vaultError('SOURCE_CONFLICT', 'inventory', 'SOURCE_READ'),
+    {detail: 'D13'},
+  );
+  reportVaultStartupFailure(classified);
+  expect(capture.mock.calls[0][1]).toEqual({
+    level: 'error',
+    tags: {
+      vaultCode: 'SOURCE_CONFLICT',
+      vaultPhase: 'inventory',
+      vaultReason: 'SOURCE_READ',
+    },
+  });
+  const raw = Object.assign(new Error('synthetic unclassified error'), {
+    detail: 'D13',
+  });
+  reportVaultStartupFailure(raw);
+  expect(capture.mock.calls[1]).toEqual([raw, {level: 'error'}]);
+  expect(vaultDiagnostic(raw)).toBeUndefined();
+});
+
+it.each([
+  'D00',
+  'D01',
+  'D02',
+  'D03',
+  'D04',
+  'D05',
+  'D06',
+  'D07',
+  'D08',
+  'D09',
+  'D10',
+  'D11',
+  'D12',
+  'D13',
+  'D14',
+  'D15',
+  'D16',
+  'D17',
+] as const)('D16: validates the permanent code %s', detail => {
+  const error = vaultError(
+    'INVALID_LEGACY_INPUT',
+    'classify',
+    'SOURCE_INVALID',
+    undefined,
+    detail,
+  );
+  reportVaultStartupFailure(error);
+  expect(vaultDiagnostic(error)?.detail).toBe(detail);
+  expect(capture.mock.calls[0][1]).toHaveProperty('tags.vaultDetail', detail);
+});
