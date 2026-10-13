@@ -964,6 +964,158 @@ describe('startTSSCeremony', () => {
 
     expect(finalKey.wallets.map((w: any) => w.chain)).toEqual(['eth', 'arb']);
     expect(slowClient.openWallet).toHaveBeenCalledTimes(11);
+    expect(unjoinedClient.openWallet.mock.calls.length).toBeLessThan(180);
+  });
+
+  it('creates the chain wallets on the ceremony network', async () => {
+    const keyId = 'ceremony-chain-network';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: makeKeyWithSession(keyId, {
+            status: 'ready_to_start',
+            coin: 'eth',
+            chain: 'eth',
+            network: 'testnet',
+          }),
+        },
+      },
+    });
+    const chainClient = createFakeWalletClient({
+      openWallet: jest.fn(() => {
+        chainClient.credentials.publicKeyRing = [{}, {}, {}];
+        return Promise.resolve({wallet: {}});
+      }),
+      isComplete: jest.fn(() => true),
+    });
+    chainClient.fromObj = jest.fn((obj: any) => {
+      chainClient.credentials = {...obj, toObj: () => obj};
+    });
+    mockBwcInstance.getClient
+      .mockImplementationOnce(() => lastWalletClient)
+      .mockImplementationOnce(() => chainClient);
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    lastKeyGen.emit(
+      'wallet',
+      {
+        id: DEFAULT_BWS_WALLET_ID,
+        m: 2,
+        n: 3,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+      },
+      [{id: 'arb-wallet', chain: 'arb', coin: 'eth', network: 'sepolia'}],
+    );
+    lastKeyGen.emit('complete');
+
+    const finalKey = await resultPromise;
+
+    expect(finalKey.wallets.map((w: any) => [w.chain, w.network])).toEqual([
+      ['eth', 'testnet'],
+      ['arb', 'testnet'],
+    ]);
+  });
+
+  it('retries a chain wallet that fails to open before the deadline', async () => {
+    jest.useFakeTimers();
+    const keyId = 'ceremony-chain-open-retry';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: makeKeyWithSession(keyId, {
+            status: 'ready_to_start',
+            coin: 'eth',
+            chain: 'eth',
+          }),
+        },
+      },
+    });
+    const chainClient = createFakeWalletClient({
+      openWallet: jest.fn(() => {
+        if (chainClient.openWallet.mock.calls.length === 1) {
+          return Promise.reject(new Error('CONNECTION_ERROR'));
+        }
+        chainClient.credentials.publicKeyRing = [{}, {}, {}];
+        return Promise.resolve({wallet: {}});
+      }),
+      isComplete: jest.fn(
+        () => chainClient.credentials.publicKeyRing.length > 1,
+      ),
+    });
+    chainClient.fromObj = jest.fn((obj: any) => {
+      chainClient.credentials = {...obj, toObj: () => obj};
+    });
+    mockBwcInstance.getClient
+      .mockImplementationOnce(() => lastWalletClient)
+      .mockImplementationOnce(() => chainClient);
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    lastKeyGen.emit(
+      'wallet',
+      {
+        id: DEFAULT_BWS_WALLET_ID,
+        m: 2,
+        n: 3,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+      },
+      [{id: 'arb-wallet', chain: 'arb', coin: 'eth', network: 'livenet'}],
+    );
+    lastKeyGen.emit('complete');
+    for (let i = 0; i < 5; i++) {
+      await advanceAndFlush(1000);
+    }
+
+    const finalKey = await resultPromise;
+
+    expect(finalKey.wallets.map((w: any) => w.chain)).toEqual(['eth', 'arb']);
+    expect(chainClient.openWallet).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails when a chain wallet cannot be opened after the deadline', async () => {
+    jest.useFakeTimers();
+    const keyId = 'ceremony-chain-open-error';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: makeKeyWithSession(keyId, {
+            status: 'ready_to_start',
+            coin: 'eth',
+            chain: 'eth',
+          }),
+        },
+      },
+    });
+    const chainClient = createFakeWalletClient({
+      openWallet: jest.fn(() => Promise.reject(new Error('CONNECTION_ERROR'))),
+      isComplete: jest.fn(() => false),
+    });
+    mockBwcInstance.getClient
+      .mockImplementationOnce(() => lastWalletClient)
+      .mockImplementationOnce(() => chainClient);
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    lastKeyGen.emit(
+      'wallet',
+      {
+        id: DEFAULT_BWS_WALLET_ID,
+        m: 2,
+        n: 3,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+      },
+      [{id: 'arb-wallet', chain: 'arb', coin: 'eth', network: 'livenet'}],
+    );
+    lastKeyGen.emit('complete');
+    for (let i = 0; i < 200; i++) {
+      await advanceAndFlush(1000);
+    }
+
+    await expect(resultPromise).rejects.toThrow('CONNECTION_ERROR');
   });
 
   it('creates the first address only after the refresh brings every co-signer into the publicKeyRing', async () => {

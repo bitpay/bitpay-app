@@ -508,11 +508,13 @@ const buildTSSChainWallets =
     tssKey,
     walletsFromBWS,
     copayerName,
+    network,
     n,
   }: {
     tssKey: any;
     walletsFromBWS: any[];
     copayerName: string;
+    network: string;
     n: number;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
@@ -532,7 +534,7 @@ const buildTSSChainWallets =
       const credentials = tssKey.createCredentials(null, {
         coin: walletFromBWS.coin,
         chain: walletFromBWS.chain,
-        network: walletFromBWS.network,
+        network,
         account: 0,
       });
       credentials.addWalletInfo(
@@ -554,6 +556,9 @@ const buildTSSChainWallets =
               err instanceof Error ? err.message : JSON.stringify(err)
             }`,
           );
+          if (Date.now() >= deadline && !client.isComplete()) {
+            throw err;
+          }
         }
         if (
           (client.credentials?.publicKeyRing?.length || 0) >= n ||
@@ -999,6 +1004,7 @@ export const startTSSCeremony =
             tssKey: _tssKey,
             walletsFromBWS: chainWalletsFromBWS,
             copayerName: myName,
+            network,
             n: key.tssSession!.n,
           }),
         );
@@ -1638,6 +1644,7 @@ export const joinTSSWithCode =
             tssKey: _tssKey,
             walletsFromBWS: chainWalletsFromBWS,
             copayerName,
+            network,
             n: tssSession.n,
           }),
         );
