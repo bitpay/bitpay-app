@@ -126,16 +126,38 @@ it.each(['xPrivKeyEDDSA', 'xPrivKeyEDDSAEncrypted'])(
   },
 );
 
-it('rejects a mixed-key snapshot even when each candidate could decrypt some fields', () => {
+it('rejects this fixed mixed-key snapshot without combining key candidates', () => {
   const outer = JSON.parse(fixtures.plain.raw);
   const wallet = JSON.parse(JSON.parse(outer.WALLET));
+  // CryptoJS 4.2.0, 'synthetic fixture' / 'another-key', salt 0000000000000000.
   wallet.keys.fixture.properties.mnemonic =
-    'encrypted:' + Aes.encrypt('synthetic fixture', 'another-key').toString();
+    'encrypted:U2FsdGVkX18AAAAAAAAAAPHnO9YuESCqG0d1R2Dvr2FCnoe+kYOrA2iCu5wEahC3';
   outer.WALLET = JSON.stringify(JSON.stringify(wallet));
   for (const key of [oldKey, 'another-key'])
     expect(() =>
       reencryptSnapshot(JSON.stringify(outer), key, newKey),
     ).toThrow();
+});
+
+it('documents that legacy mixed-key rejection is best-effort', () => {
+  // Characterises the pinned decoder, not a requirement that a future,
+  // separately authorised decoder must continue accepting this input.
+  const ciphertext =
+    'encrypted:U2FsdGVkX18AAAAAAAABTY9m00iKjEuHmybKA3MjuhavQmI5emKIIvgj1AuOCtht';
+  const original = 'synthetic fixture';
+  // Produced once with 'another-key' and fixed salt 000000000000014d.
+  expect(decryptValue(ciphertext, 'another-key') === original).toBe(true);
+  const outer = JSON.parse(fixtures.plain.raw);
+  const wallet = JSON.parse(JSON.parse(outer.WALLET));
+  wallet.keys.fixture.properties.mnemonic = ciphertext;
+  outer.WALLET = JSON.stringify(JSON.stringify(wallet));
+  const output = reencryptSnapshot(JSON.stringify(outer), oldKey, newKey);
+  const converted = decodeSnapshot(output, newKey).payload.WALLET.keys.fixture
+    .properties.mnemonic;
+  // Boolean assertions avoid printing the converted value on a failure.
+  expect(typeof converted === 'string').toBe(true);
+  expect(converted.length > 0).toBe(true);
+  expect(converted !== original).toBe(true);
 });
 
 it('checks exact output bytes and full payload independently', () => {
