@@ -130,7 +130,7 @@ const inventory = async (): Promise<Inventory> => {
     }
     const sources: Inventory['sources'] = {
       mmkv: raw,
-      async: await AsyncStorage.getItem(ROOT),
+      async: await AsyncStorage.getItem(ROOT).catch(() => undefined),
       main: null,
       bak: null,
     };

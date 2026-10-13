@@ -486,6 +486,62 @@ it.each(['main', 'bak', 'none'])(
   },
 );
 
+it('D15 A2: an unreadable AsyncStorage row permits an established primary wallet', async () => {
+  shippingPolicy();
+  seed();
+  mockRows.set('persist:root', 'retained unreadable row');
+  mockAsyncReadFailure = true;
+  const key = await start();
+  const {decodeSnapshot} = require('./vault-codec');
+  expect(
+    isEqual(decodeSnapshot(modernRoot(), key).payload, fixture.state),
+  ).toBe(true);
+  expect(transferRecord().phase).toBe('active');
+  expect(transferRecord().copies.root).toBe('mmkv');
+  expect(transferRecord().release.async).toBe(false);
+  expect(mockEvents.filter(event => event === 'async:read')).toHaveLength(1);
+  expect(mockEvents).not.toContain('async:remove');
+  expect(mockRows.get('persist:root')).toBe('retained unreadable row');
+  expect(
+    mockStores.get('mmkv.default')!.get('persist:root') === fixture.raw,
+  ).toBe(true);
+});
+
+it.each([false, undefined])(
+  'D15 A2: an unreadable row still stops a primary with import flag %s',
+  async flag => {
+    shippingPolicy();
+    seed();
+    const {encodeSnapshot, decodeSnapshot} = require('./vault-codec');
+    const payload = {
+      ...fixture.state,
+      APP: flag === undefined ? {} : {migrationMMKVStorageComplete: flag},
+    };
+    const raw = encodeSnapshot(payload, legacyKey);
+    expect(isEqual(decodeSnapshot(raw, legacyKey).payload, payload)).toBe(true);
+    mockStores.get('mmkv.default')!.set('persist:root', raw);
+    mockAsyncReadFailure = true;
+    const diagnostic = await start().then(
+      () => null,
+      (error: unknown) => require('./vault-diagnostics').vaultDiagnostic(error),
+    );
+    expect(diagnostic).toEqual({
+      code: 'SOURCE_CONFLICT',
+      phase: 'inventory',
+      reason: 'SOURCE_READ',
+    });
+    expect(modernRoot()).toBeUndefined();
+    expect(mockStores.get('bitpay.wallet.transfer.v2')!.size).toBe(0);
+    expect(mockEvents.some(event => event.startsWith('key:write'))).toBe(false);
+    expect(mockEvents).not.toContain('file:write');
+    expect(mockEvents).not.toContain('async:remove');
+    expect(mockEvents.filter(event => event === 'async:read')).toHaveLength(1);
+    expect(mockStores.get('mmkv.default')!.get('persist:root') === raw).toBe(
+      true,
+    );
+  },
+);
+
 it('C: fallback does not swallow a separate required AsyncStorage failure', async () => {
   seed();
   mockPrimaryFailures = 2;

@@ -153,9 +153,6 @@ const decodeWithCandidate = (raw: string, candidates: string[]) => {
 
 function plan(inventory: Inventory, candidates: string[]): TransferRecord {
   const {sources, keys, files} = inventory;
-  if (sources.async === undefined) {
-    throw vaultError('SOURCE_CONFLICT', 'inventory', 'SOURCE_READ');
-  }
   // Released main-before-bak JSON selection, with no decryption-based search.
   const selectedMMKV: Source | null =
     typeof sources.mmkv === 'string'
@@ -165,6 +162,17 @@ function plan(inventory: Inventory, candidates: string[]): TransferRecord {
       : jsonReadable(sources.bak)
       ? 'bak'
       : null;
+  if (sources.async === undefined) {
+    let established = false;
+    try {
+      established =
+        selectedMMKV === 'mmkv' &&
+        decodeWithCandidate(sources.mmkv!, candidates).snapshot.payload.APP
+          ?.migrationMMKVStorageComplete === true;
+    } catch {}
+    if (!established)
+      throw vaultError('SOURCE_CONFLICT', 'inventory', 'SOURCE_READ');
+  }
   let selected: Source | null = selectedMMKV;
   if (selectedMMKV) {
     const raw = sources[selectedMMKV]!;
@@ -187,7 +195,7 @@ function plan(inventory: Inventory, candidates: string[]): TransferRecord {
     ) {
       throw vaultError('SOURCE_CONFLICT', 'classify', 'SOURCE_INVALID');
     }
-    const historical = decodeWithCandidate(sources.async, candidates).snapshot;
+    const historical = decodeWithCandidate(sources.async!, candidates).snapshot;
     if (historical.payload.APP?.migrationMMKVStorageComplete === true) {
       throw vaultError('SOURCE_CONFLICT', 'classify', 'SOURCE_INVALID');
     }

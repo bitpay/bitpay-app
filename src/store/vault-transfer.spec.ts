@@ -219,6 +219,84 @@ it('established MMKV preserves an unresolved leftover row', async () => {
   expect(h.record()!.release.async === false).toBe(true);
 });
 
+it('D15 A2: an unknown row stays protected after an established primary activates', async () => {
+  const h = harness();
+  h.state.sources.async = undefined;
+  await loadTransfer(false)(h.io);
+  expect(h.record()!.phase).toBe('active');
+  expect(h.record()!.copies.root).toBe('mmkv');
+  expect(h.record()!.release.async).toBe(false);
+  expect(h.state.sources.async).toBeUndefined();
+  equal(decodeSnapshot(h.destinations.root!, newKey).payload, fixture.state);
+  expectNoRetirement(h);
+  const saved = h.controlRaw();
+
+  // The later existence check succeeds; this row is the only retirement blocker.
+  h.state.sources.async = 'retained row';
+  h.cold();
+  h.io.inventory = jest.fn(async () => {
+    throw new Error('source reread forbidden');
+  });
+  h.io.legacyKeys = jest.fn(async () => {
+    throw new Error('replanning forbidden');
+  });
+  await loadTransfer(true)(h.io);
+  expect(h.events).toContain('retirement:read:async');
+  expect(h.events).not.toContain('retirement:before:async');
+  expect(h.state.sources.async).toBe('retained row');
+  expect(h.state.files).toEqual({data: false, crc: false});
+  expect(h.events).toContain('pending');
+  expect(h.events).not.toContain('legacy-key:remove');
+  expect(h.controlRaw() === saved).toBe(true);
+  expect(h.io.inventory).not.toHaveBeenCalled();
+  expect(h.io.legacyKeys).not.toHaveBeenCalled();
+});
+
+it.each([
+  'false flag',
+  'missing flag',
+  'main backup',
+  'bak backup',
+  'undecodable primary',
+  'unreadable primary',
+  'no selected source',
+])('D15 A2: an unknown row retains SOURCE_READ for %s', async condition => {
+  const h = harness('fresh');
+  h.state.sources.async = undefined;
+  if (condition === 'false flag' || condition === 'missing flag') {
+    const payload = {
+      ...fixture.state,
+      APP:
+        condition === 'missing flag'
+          ? {}
+          : {migrationMMKVStorageComplete: false},
+    };
+    h.state.sources.mmkv = encodeSnapshot(payload, oldKey);
+    equal(decodeSnapshot(h.state.sources.mmkv, oldKey).payload, payload);
+  } else if (condition === 'main backup') h.state.sources.main = fixture.raw;
+  else if (condition === 'bak backup') h.state.sources.bak = fixture.raw;
+  else if (condition === 'undecodable primary') {
+    h.state.sources.mmkv = 'invalid primary';
+    h.state.sources.main = fixture.raw;
+  } else if (condition === 'unreadable primary')
+    h.state.sources.mmkv = undefined;
+  const run = loadTransfer(false);
+  const diagnostic = await run(h.io).then(
+    () => null,
+    error => require('./vault-diagnostics').vaultDiagnostic(error),
+  );
+  expect(diagnostic).toEqual({
+    code: 'SOURCE_CONFLICT',
+    phase: 'inventory',
+    reason: 'SOURCE_READ',
+  });
+  expect(h.state.sources.async).toBeUndefined();
+  expect(h.destinations).toEqual({root: null, main: null, bak: null});
+  expect(h.record()).toBeNull();
+  expect(h.keyValue()).toBeNull();
+  expectNoRetirement(h);
+});
+
 it('rejects competing history without authority, with no output or deletion', async () => {
   const h = harness();
   h.state.sources.mmkv = encodeSnapshot(
