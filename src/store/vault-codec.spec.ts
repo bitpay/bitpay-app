@@ -452,3 +452,146 @@ it('D16: verification continues to discard underlying decode details', () => {
     reason: 'COPY_VERIFICATION',
   });
 });
+
+const retainedCacheSections = {
+  SHOP_CATALOG: {
+    supportedCardMap: {
+      retiredSyntheticBrand: {name: 'Retained purchased brand'},
+    },
+    availableCardMap: {},
+    shopMigrationComplete: true,
+  },
+  PORTFOLIO: {lastFullPopulateCompletedAt: 123, quoteCurrency: 'USD'},
+};
+const omittedCacheSections = {
+  RATE: {rates: {btc: [{code: 'USD', rate: 123}]}},
+  MARKET_STATS: {itemsByKey: {btc: {price: 123}}},
+  PORTFOLIO_CHARTS: {series: [[1, 123]]},
+};
+const savedStateWithCaches = (
+  layout: 'plain' | 'whole',
+  cacheForm: 'plaintext' | 'compatible' | 'unavailable',
+) => {
+  const payload = {
+    ...fixtures[layout].state,
+    ...retainedCacheSections,
+    ...omittedCacheSections,
+  };
+  const outer = layout === 'plain' ? JSON.parse(fixtures.plain.raw) : {};
+  for (const [name, state] of Object.entries(payload)) {
+    if (
+      layout === 'plain' &&
+      !(name in retainedCacheSections) &&
+      !(name in omittedCacheSections)
+    )
+      continue;
+    const encrypted =
+      layout === 'whole' ||
+      (name === 'PORTFOLIO_CHARTS' && cacheForm === 'compatible');
+    const key =
+      cacheForm === 'unavailable' && name in omittedCacheSections
+        ? 'synthetic-unprovided-cache-key'
+        : oldKey;
+    outer[name] = JSON.stringify(
+      encrypted
+        ? Aes.encrypt(JSON.stringify(state), key).toString()
+        : JSON.stringify(state),
+    );
+  }
+  return JSON.stringify(outer);
+};
+
+it.each([
+  ['plain', 'plaintext'],
+  ['plain', 'compatible'],
+  ['whole', 'unavailable'],
+  ['whole', 'compatible'],
+] as const)(
+  'D17: converted %s store with %s caches omits only the three sections',
+  async (layout, cacheForm) => {
+    // Compatible controls also let the base reach the raw-output assertions.
+    // Plaintext PORTFOLIO_CHARTS and unavailable-key contents were rejected there.
+    const raw = savedStateWithCaches(layout, cacheForm);
+    const source = JSON.parse(raw);
+    for (const name of [
+      'RATE',
+      'MARKET_STATS',
+      'PORTFOLIO_CHARTS',
+      'SHOP_CATALOG',
+      'PORTFOLIO',
+    ])
+      expect(Object.prototype.hasOwnProperty.call(source, name)).toBe(true);
+    const converted = reencryptSnapshot(raw, oldKey, newKey);
+    const output = JSON.parse(converted);
+    for (const name of ['RATE', 'MARKET_STATS', 'PORTFOLIO_CHARTS'])
+      expect(Object.prototype.hasOwnProperty.call(output, name)).toBe(false);
+    for (const name of ['SHOP_CATALOG', 'PORTFOLIO'])
+      expect(Object.prototype.hasOwnProperty.call(output, name)).toBe(true);
+    const retained = {...fixtures[layout].state, ...retainedCacheSections};
+    safeEqual(decodeSnapshot(converted, newKey).payload, retained);
+    const loaded = await getStoredState({
+      key: 'root',
+      storage: {getItem: async () => converted},
+      transforms: [
+        encryptSpecificFields(newKey),
+        createTransform(undefined, (value, key) =>
+          deserializeModernPersistValue(
+            value,
+            newKey,
+            String(key),
+            unencryptedPersistStores.has(String(key)),
+          ),
+        ),
+      ],
+    } as any);
+    safeEqual(loaded, retained);
+  },
+);
+
+it.each(['RATE', 'MARKET_STATS', 'PORTFOLIO_CHARTS'])(
+  'D17: skips invalid per-section JSON in %s',
+  name => {
+    const outer = JSON.parse(savedStateWithCaches('plain', 'compatible'));
+    outer[name] = 'synthetic string that is not JSON';
+    const raw = JSON.stringify(outer);
+    expect(Object.prototype.hasOwnProperty.call(JSON.parse(raw), name)).toBe(
+      true,
+    );
+    const converted = reencryptSnapshot(raw, oldKey, newKey);
+    expect(
+      Object.prototype.hasOwnProperty.call(JSON.parse(converted), name),
+    ).toBe(false);
+    safeEqual(decodeSnapshot(converted, newKey).payload, {
+      ...fixtures.plain.state,
+      ...retainedCacheSections,
+    });
+  },
+);
+
+it.each(['RATE', 'MARKET_STATS', 'PORTFOLIO_CHARTS'])(
+  'D17: retains D10 for a non-string outer %s value',
+  name => {
+    const outer = JSON.parse(fixtures.plain.raw);
+    outer[name] = {invalidSerializedShape: true};
+    const failure = caughtDecode(() =>
+      decodeSnapshot(JSON.stringify(outer), oldKey),
+    );
+    expect(vaultDiagnostic(failure)).toEqual({
+      code: 'INVALID_LEGACY_INPUT',
+      phase: 'classify',
+      reason: 'SOURCE_INVALID',
+      detail: 'D10',
+    });
+  },
+);
+
+it.each(['SHOP_CATALOG', 'PORTFOLIO'])(
+  'D17: still parses and rejects malformed retained %s contents',
+  name => {
+    const outer = JSON.parse(fixtures.plain.raw);
+    outer[name] = 'synthetic string that is not JSON';
+    expect(() => decodeSnapshot(JSON.stringify(outer), oldKey)).toThrow(
+      SyntaxError,
+    );
+  },
+);

@@ -23,6 +23,14 @@ import {
 } from './transforms/persist-encryption';
 type Payload = Record<string, any>;
 type Snapshot = {raw: string; payload: Payload; format: 'cbc' | 'gcm'};
+// SHOP_CATALOG and PORTFOLIO are deliberately retained. The backup writer's
+// omission list differs.
+const omittedLegacySections = new Set([
+  'MARKET_STATS',
+  'PORTFOLIO_CHARTS',
+  'RATE',
+]);
+
 function fail(label: keyof typeof decodeDetails): never {
   // Parser checks are fixed classification sites, never native-message inference.
   throw vaultError(
@@ -157,6 +165,7 @@ export const decodeSnapshot = (raw: string, secret: string): Snapshot => {
     if (typeof encoded !== 'string') {
       fail('invalid serialized reducer');
     }
+    if (omittedLegacySections.has(reducer)) continue;
     // redux-persist deserializes each value before reversing the transforms.
     const value = JSON.parse(encoded);
     if (typeof value !== 'string') {

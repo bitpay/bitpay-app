@@ -161,3 +161,46 @@ it.each(cases)(
     expect([...h.data('bitpay.wallet.v2').keys()]).toEqual(['persist:root']);
   },
 );
+
+it.each([
+  ['completed', upstream.completed],
+  ['intermediate', upstream.intermediate],
+])(
+  'D17: captured upstream %s omits caches in raw output and rehydrates reducer defaults',
+  async (_name, raw) => {
+    const source = JSON.parse(raw);
+    for (const name of ['RATE', 'MARKET_STATS', 'SHOP_CATALOG', 'PORTFOLIO'])
+      expect(Object.prototype.hasOwnProperty.call(source, name)).toBe(true);
+    const {decodeSnapshot} = require('./vault-codec');
+    const retained = decodeSnapshot(raw, upstream.oldKey).payload;
+    const key = await prepare(raw, upstream.oldKey);
+    const converted = h.data('bitpay.wallet.v2').get('persist:root');
+    const output = JSON.parse(converted);
+    for (const name of ['RATE', 'MARKET_STATS', 'PORTFOLIO_CHARTS'])
+      expect(Object.prototype.hasOwnProperty.call(output, name)).toBe(false);
+    for (const name of ['SHOP_CATALOG', 'PORTFOLIO', 'WALLET_SECRETS'])
+      expect(Object.prototype.hasOwnProperty.call(output, name)).toBe(true);
+    same(decodeSnapshot(converted, key).payload, retained);
+    const {store} = await h.api.default();
+    expect(h.rehydrates).toHaveLength(1);
+    const action = h.rehydrates[0];
+    expect(action.err).toBeUndefined();
+    for (const name of ['RATE', 'MARKET_STATS', 'PORTFOLIO_CHARTS'])
+      expect(Object.prototype.hasOwnProperty.call(action.payload, name)).toBe(
+        false,
+      );
+    const state = store.getState() as unknown as RootState;
+    const {rateReducer} = require('./rate/rate.reducer');
+    const {marketStatsReducer} = require('./market-stats/market-stats.reducer');
+    same(state.RATE, rateReducer(undefined, {type: '@@INIT'}));
+    same(state.MARKET_STATS, marketStatsReducer(undefined, {type: '@@INIT'}));
+    same(action.payload.SHOP_CATALOG, retained.SHOP_CATALOG);
+    same(action.payload.PORTFOLIO, retained.PORTFOLIO);
+    await expect(
+      require('./persistor').flushPersistor(),
+    ).resolves.toBeUndefined();
+    expect(
+      require('@sentry/react-native').captureException,
+    ).not.toHaveBeenCalled();
+  },
+);
