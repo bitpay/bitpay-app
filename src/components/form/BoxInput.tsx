@@ -230,6 +230,7 @@ interface BoxInputProps extends TextInputProps {
   type?: InputType;
   disabled?: boolean;
   paddingRight?: number;
+  sensitive?: boolean;
 }
 
 const BoxInput = React.forwardRef<
@@ -249,11 +250,13 @@ const BoxInput = React.forwardRef<
       disabled,
       keyboardType,
       paddingRight,
+      sensitive,
       ...props
     },
     ref,
   ) => {
     const isPassword = type === 'password';
+    const clearOnBackground = isPassword || sensitive;
     const isSearch = type === 'search';
     const [isFocused, setIsFocused] = useState(false);
     const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
@@ -290,12 +293,15 @@ const BoxInput = React.forwardRef<
 
     useEffect(() => {
       const sub = AppState.addEventListener('change', state => {
-        if (isPassword && (state === 'inactive' || state === 'background')) {
+        if (
+          clearOnBackground &&
+          (state === 'inactive' || state === 'background')
+        ) {
           props.onChangeText?.('');
         }
       });
       return () => sub.remove();
-    }, [isPassword, props]);
+    }, [clearOnBackground, props]);
 
     return (
       <>
