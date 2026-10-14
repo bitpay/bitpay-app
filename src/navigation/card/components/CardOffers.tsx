@@ -1,10 +1,20 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
-import {Linking} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  Linking,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
-import FastImage, {Source} from 'react-native-fast-image';
-import styled, {useTheme} from 'styled-components/native';
+import FastImage, {FastImageProps, Source} from 'react-native-fast-image';
+import {useTheme} from '../../../contexts';
 import {
   ActiveOpacity,
   CardContainer,
@@ -28,44 +38,96 @@ interface CardOffersProps {
 
 const ICON_SIZE = 50;
 
-const CardOffersOuterContainer = styled(CardContainer)`
-  min-height: 78px;
-`;
+const styles = StyleSheet.create({
+  cardOffersOuterContainer: {
+    minHeight: 78,
+  },
+  cardOffersInnerContainer: {
+    flexDirection: 'row',
+    paddingLeft: 16,
+    paddingRight: 16,
+    width: '100%',
+  },
+  mainColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    paddingVertical: 14,
+  },
+  iconColumn: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
+    justifyContent: 'center',
+    marginLeft: 16,
+    paddingVertical: 14,
+  },
+  titleRow: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 5,
+  },
+  descriptionRow: {
+    fontSize: 12,
+  },
+  iconImage: {
+    height: ICON_SIZE,
+    width: ICON_SIZE,
+  },
+});
 
-const CardOffersInnerContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  padding-left: 16px;
-  padding-right: 16px;
-  width: 100%;
-`;
+const CardOffersOuterContainer = React.forwardRef<View, ViewProps>(
+  ({style, ...rest}, ref) => (
+    <CardContainer
+      ref={ref}
+      style={[styles.cardOffersOuterContainer, style]}
+      {...rest}
+    />
+  ),
+);
 
-const MainColumn = styled.View`
-  flex: 1 1 auto;
-  padding: 14px 0;
-`;
+const CardOffersInnerContainer: React.FC<TouchableOpacityProps> = ({
+  style,
+  ...rest
+}) => (
+  <TouchableOpacity
+    style={[styles.cardOffersInnerContainer, style]}
+    {...rest}
+  />
+);
 
-const IconColumn = styled.View`
-  flex: 0 0 auto;
-  justify-content: center;
-  margin-left: 16px;
-  padding: 14px 0;
-`;
+const MainColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.mainColumn, style]} {...rest} />
+);
 
-const TitleRow = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 5px;
-`;
+const IconColumn = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.iconColumn, style]} {...rest} />
+);
 
-const DescriptionRow = styled(BaseText)`
-  color: ${({theme}) => theme.colors.description};
-  font-size: 12px;
-`;
+const TitleRow = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.titleRow, style]} {...rest} />
+));
 
-const IconImage = styled(FastImage)`
-  height: ${ICON_SIZE}px;
-  width: ${ICON_SIZE}px;
-`;
+const DescriptionRow = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.descriptionRow,
+          {color: theme.colors.description},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+
+const IconImage = (props: FastImageProps) => (
+  <FastImage {...props} style={[styles.iconImage, props.style]} />
+);
 
 const CardOffers: React.FC<CardOffersProps> = props => {
   const theme = useTheme();

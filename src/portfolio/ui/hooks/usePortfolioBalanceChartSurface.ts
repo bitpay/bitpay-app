@@ -56,15 +56,12 @@ export function usePortfolioBalanceChartSurface(args: {
     setChangeRowData(undefined);
   }, []);
 
-  useEffect(() => {
+  const resetSignature = `${args.quoteCurrency}|${args.resetKey}|${enabled}|${walletIdsSignature}`;
+  const [prevResetSignature, setPrevResetSignature] = useState(resetSignature);
+  if (prevResetSignature !== resetSignature) {
+    setPrevResetSignature(resetSignature);
     clearChartDrivenState();
-  }, [
-    args.quoteCurrency,
-    args.resetKey,
-    clearChartDrivenState,
-    enabled,
-    walletIdsSignature,
-  ]);
+  }
 
   useEffect(() => {
     if (

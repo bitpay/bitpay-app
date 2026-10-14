@@ -3,8 +3,16 @@ import {useNavigation, useScrollToTop} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard, ScrollView, View} from 'react-native';
-import styled from 'styled-components/native';
+import {
+  Keyboard,
+  ScrollView,
+  View,
+  ViewProps,
+  SafeAreaView,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
@@ -19,33 +27,54 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 
-const CardIntroContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  cardIntroContainer: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: parseInt(ScreenGutter, 10),
+  },
+  introTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardIntroImgContainer: {
+    marginTop: -20,
+  },
+  titleText: {
+    width: WIDTH * 1.2,
+    textAlign: 'center',
+    fontSize: WIDTH < 380 ? 32 : 38.4,
+    marginBottom: WIDTH < 380 ? 3 : 0,
+  },
+});
 
-const Spacer = styled.View<{height: number}>`
-  height: ${({height}) => height}px;
-`;
+const CardIntroContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.cardIntroContainer, style]} {...rest} />
+);
 
-const ContentContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const Spacer = ({height, style, ...rest}: ViewProps & {height: number}) => (
+  <View style={[{height}, style]} {...rest} />
+);
 
-const IntroTitleContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-`;
+const ContentContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.contentContainer, style]} {...rest} />
+);
 
-const CardIntroImgContainer = styled.View`
-  margin-top: -20px;
-`;
+const IntroTitleContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.introTitleContainer, style]} {...rest} />
+);
 
-const TitleText = styled(BaseText)`
-  width: ${WIDTH * 1.2}px;
-  text-align: center;
-  font-size: ${WIDTH < 380 ? 32 : 38.4}px;
-  margin-bottom: ${WIDTH < 380 ? 3 : 0}px;
-`;
+const CardIntroImgContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardIntroImgContainer, style]} {...rest} />
+);
+
+const TitleText = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.titleText, style]} {...rest} />
+));
 
 const IntroHero = () => {
   const {t} = useTranslation();

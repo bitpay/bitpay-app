@@ -13,7 +13,7 @@ import {BuyCryptoConfig} from '../../../../store/external-services/external-serv
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 
 // Origin the MoonPay embedded frames are loaded from.
-export const MOONPAY_DEFAULT_FRAME_ORIGIN = 'https://blocks.moonpay.com';
+export const MOONPAY_DEFAULT_FRAME_ORIGIN = 'https://platform.moonpay.com';
 
 // Where customers are sent for help with a MoonPay order (buy and sell).
 export const MOONPAY_SUPPORT_URL = 'https://support.moonpay.com';
@@ -297,6 +297,9 @@ export const getMoonpayPaymentMethodFormat = (
       case 'applePay':
         moonpayPaymentMethod = isEmbeddedFlow ? 'apple_pay' : 'mobile_wallet';
         break;
+      case 'googlePay':
+        moonpayPaymentMethod = isEmbeddedFlow ? 'google_pay' : 'google_pay';
+        break;
       case 'paypal':
         moonpayPaymentMethod = 'paypal';
         break;
@@ -328,6 +331,8 @@ const isMoonpayEmbeddedPaymentMethodEnabledByConfig = (
   switch (method) {
     case 'applePay':
       return !moonpayPaymentMethods?.applePayEmbedded?.disabled;
+    case 'googlePay':
+      return !moonpayPaymentMethods?.googlePayEmbedded?.disabled;
     case 'creditCard':
     case 'debitCard':
       return !moonpayPaymentMethods?.cardEmbedded?.disabled;
@@ -342,20 +347,27 @@ const isMoonpayEmbeddedPaymentMethodEnabledByConfig = (
 // allowed by config, and supported at runtime. Apple Pay additionally needs
 // native wallet support on the device, and SEPA needs MoonPay to report it as
 // headless-capable (capabilities.requiresWidget === false).
+export interface MoonpayEmbeddedSupport {
+  applePaySupported?: boolean;
+  googlePaySupported?: boolean;
+  sepaHeadlessSupported?: boolean;
+}
+
 export const isMoonpayEmbeddedPaymentMethodEnabled = (
   method: PaymentMethodKey | undefined,
   buyCryptoConfig: BuyCryptoConfig | undefined,
-  applePaySupported?: boolean,
-  sepaHeadlessSupported?: boolean,
+  support: MoonpayEmbeddedSupport = {},
 ): boolean => {
   if (!isMoonpayEmbeddedPaymentMethodEnabledByConfig(method, buyCryptoConfig)) {
     return false;
   }
   switch (method) {
     case 'applePay':
-      return !!applePaySupported;
+      return !!support.applePaySupported;
+    case 'googlePay':
+      return !!support.googlePaySupported;
     case 'sepaBankTransfer':
-      return !!sepaHeadlessSupported;
+      return !!support.sepaHeadlessSupported;
     default:
       return true;
   }
@@ -366,12 +378,13 @@ export const isMoonpayEmbeddedPaymentMethodEnabled = (
 // can be taken into account here.
 export const isAnyMoonpayEmbeddedPaymentMethodEnabled = (
   buyCryptoConfig: BuyCryptoConfig | undefined,
-  applePaySupported?: boolean,
+  support: MoonpayEmbeddedSupport = {},
 ): boolean =>
+  isMoonpayEmbeddedPaymentMethodEnabled('applePay', buyCryptoConfig, support) ||
   isMoonpayEmbeddedPaymentMethodEnabled(
-    'applePay',
+    'googlePay',
     buyCryptoConfig,
-    applePaySupported,
+    support,
   ) ||
   isMoonpayEmbeddedPaymentMethodEnabledByConfig(
     'creditCard',
@@ -490,7 +503,7 @@ const getMoonpaySepaFailureDescription = (
   switch (failureReason) {
     case 'timeout_bank_transfer':
       return t(
-        'Moonpay did not receive your bank transfer in time, so this purchase was cancelled. You can start a new one whenever you are ready.',
+        'MoonPay did not receive your bank transfer in time, so this purchase was cancelled. You can start a new one whenever you are ready.',
       );
     default:
       return typeof failureReason === 'string'
@@ -546,21 +559,21 @@ export const moonpayGetSepaStatusDetails = (
       return {
         statusTitle: t('Verification'),
         statusDescription: t(
-          'Your transfer arrived and Moonpay is reviewing it. Nothing else is needed from you for now.',
+          'Your transfer arrived and MoonPay is reviewing it. Nothing else is needed from you for now.',
         ),
       };
     case 'processing':
       return {
         statusTitle: t('Processing'),
         statusDescription: t(
-          'Your transfer arrived and Moonpay is purchasing your crypto.',
+          'Your transfer arrived and MoonPay is purchasing your crypto.',
         ),
       };
     case 'delivery':
       return {
         statusTitle: t('Delivery'),
         statusDescription: t(
-          'Moonpay is sending your crypto to the recipient address.',
+          'MoonPay is sending your crypto to the recipient address.',
         ),
       };
     default:
@@ -569,7 +582,7 @@ export const moonpayGetSepaStatusDetails = (
       return currentStage
         ? {
             statusTitle: currentStage.name,
-            statusDescription: t('Moonpay is working on your purchase.'),
+            statusDescription: t('MoonPay is working on your purchase.'),
           }
         : moonpayGetStatusDetails(status);
   }

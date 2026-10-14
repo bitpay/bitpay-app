@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
-import {TouchableOpacity} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {SettingsComponent} from '../SettingsRoot';
@@ -26,71 +25,172 @@ import {
   SlateDark,
   White,
 } from '../../../../styles/colors';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../contexts';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {SettingsScreens} from '../SettingsGroup';
 
-const Container = styled.View`
-  flex: 1;
-  padding: 16px;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  accountCard: {
+    borderRadius: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  accountInfo: {
+    flex: 1,
+  },
+  accountName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  accountEmail: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  unlinkButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  unlinkText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  connectButton: {
+    backgroundColor: Action,
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  connectButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: White,
+  },
+  notConnectedText: {
+    fontSize: 14,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+});
 
-const AccountCard = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
-  padding: 24px 16px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const Container = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.container, style]} {...rest} />
+);
 
-const AccountInfo = styled.View`
-  flex: 1;
-`;
+const AccountCard = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.accountCard,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountName = styled(BaseText)`
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const AccountInfo = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.accountInfo, style]} {...rest} />
+);
 
-const AccountEmail = styled(BaseText)`
-  font-size: 13px;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  margin-top: 2px;
-`;
+const AccountName = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.accountName,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const UnlinkButton = styled(TouchableOpacity)`
-  padding: 4px 8px;
-`;
+const AccountEmail = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.accountEmail,
+        {color: theme.dark ? Slate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const UnlinkText = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-  font-weight: 500;
-`;
+const UnlinkButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity style={[styles.unlinkButton, style]} {...rest} />
+);
 
-const ConnectButton = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? Action : Action)};
-  border-radius: 8px;
-  padding: 14px;
-  align-items: center;
-  margin-top: 32px;
-`;
+const UnlinkText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.unlinkText,
+        {color: theme.dark ? LinkBlue : Action},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ConnectButtonText = styled(BaseText)`
-  font-size: 15px;
-  font-weight: 600;
-  color: ${White};
-`;
+const ConnectButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity style={[styles.connectButton, style]} {...rest} />
+);
 
-const NotConnectedText = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  margin-bottom: 12px;
-  line-height: 20px;
-`;
+const ConnectButtonText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.connectButtonText, style]} {...rest} />
+);
+
+const NotConnectedText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.notConnectedText,
+        {color: theme.dark ? Slate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const MoonpayConnectionSettings = () => {
   const {t} = useTranslation();

@@ -877,6 +877,37 @@ describe('startTSSCeremony', () => {
     expect(lastKeyGen.unsubscribe).toHaveBeenCalled();
   });
 
+  it('creates the first address only after the refresh brings every co-signer into the publicKeyRing', async () => {
+    const keyId = 'ceremony-address-after-refresh';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    let publicKeyRingAtAddressCreation: any;
+    createWalletAddress.mockImplementationOnce(({wallet}: any) => () => {
+      publicKeyRingAtAddressCreation = wallet.credentials.publicKeyRing;
+      return Promise.resolve('mock-address-1');
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      tssKeyId: 'server-assigned-tss-key-id',
+      publicKeyRing: [{xPubKey: 'a'}],
+      copayers: [{id: 'c1'}],
+    });
+    lastKeyGen.emit('complete');
+    await resultPromise;
+
+    expect(publicKeyRingAtAddressCreation).toHaveLength(3);
+  });
+
   it('continues (without throwing) when refreshWalletWithRetry exhausts all retries', async () => {
     jest.useFakeTimers();
     const keyId = 'ceremony-retry-exhausted';

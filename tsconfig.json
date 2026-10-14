@@ -13,7 +13,7 @@
     ],
     "allowJs": true,
     "resolveJsonModule": true,
-    "types": ["jest", "styled-components-react-native"],
+    "types": ["jest"],
     "ignoreDeprecations": "6.0"
   },
   "include": ["**/*.ts", "**/*.tsx"],

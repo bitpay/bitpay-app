@@ -1,26 +1,27 @@
 import * as React from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {storiesOf} from '@storybook/react-native';
 import {action} from '@storybook/addon-actions';
 import HomeSvg from '../../assets/img/tab-icons/home.svg';
-import styled from 'styled-components/native';
 import {SlateDark} from '../../src/styles/colors';
 import BackgroundExample from '../../assets/img/logos/bitpay-white.svg';
 import HomeCard from '../../src/components/home-card/HomeCard';
 
-const HeaderBackground = styled.View`
-  width: 30px;
-  height: 30px;
-  border-radius: 50px;
-  background-color: ${SlateDark};
-  align-items: center;
-  justify-content: center;
-`;
+const styles = StyleSheet.create({
+  headerBackground: {
+    width: 30,
+    height: 30,
+    borderRadius: 50,
+    backgroundColor: SlateDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const HeaderComp = (
-  <HeaderBackground>
+  <View style={styles.headerBackground}>
     <HomeSvg />
-  </HeaderBackground>
+  </View>
 );
 storiesOf('HomeCard', module)
   .addDecorator(story => <View>{story()}</View>)

@@ -147,7 +147,7 @@ export const PairDevice: React.FC<Props> = props => {
     } else {
       setStatus({
         status: 'failed',
-        message: `Unable to connect via USB: ${errorMsg}`,
+        message: t('Unable to connect via USB: {{errorMsg}}', {errorMsg}),
         title: t('Connection Failed'),
       });
       await sleep(7000);

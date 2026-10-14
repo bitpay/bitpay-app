@@ -46,9 +46,10 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
       dispatch(
         showBottomNotificationModal({
           type: 'info',
-          title: `${
-            network === testModeNetwork ? 'Disable' : 'Enable'
-          } Test Mode`,
+          title:
+            network === testModeNetwork
+              ? t('Disable Test Mode')
+              : t('Enable Test Mode'),
           message: t(
             'Tap continue to switch networks. Your app will restart to enable the new network.',
           ),

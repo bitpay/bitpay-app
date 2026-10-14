@@ -1,6 +1,7 @@
 import React, {useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {Text, TextProps, StyleSheet} from 'react-native';
+import {useTheme} from '../../../contexts';
 import Button from '../../../components/button/Button';
 import CardComponent from '../../../components/card/Card';
 import ProgressBar from '../../../components/progress-bar/ProgressBar';
@@ -14,16 +15,39 @@ interface ShippingStatusProps {
   onActivatePress?: (card: Card) => any;
 }
 
-const StyledHeading = styled(H3)`
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-`;
+const styles = StyleSheet.create({
+  description: {
+    fontSize: 14,
+    marginBottom: 12,
+    marginTop: 12,
+  },
+});
 
-const Description = styled(BaseText)`
-  color: ${({theme}) => theme.colors.description};
-  font-size: 14px;
-  margin-bottom: 12px;
-  margin-top: 12px;
-`;
+const StyledHeading = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <H3
+        ref={ref}
+        style={[{color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+
+const Description = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[styles.description, {color: theme.colors.description}, style]}
+        {...rest}
+      />
+    );
+  },
+);
 
 const ShippingStatus: React.FC<ShippingStatusProps> = props => {
   const {t} = useTranslation();

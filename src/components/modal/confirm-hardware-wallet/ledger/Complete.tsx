@@ -1,5 +1,6 @@
+import React from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import {Check} from '../../../../components/icons/check/Check';
 import {H3} from '../../../../components/styled/Text';
 import {Success} from '../../../../styles/colors';
@@ -8,12 +9,14 @@ import {
   Wrapper,
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 
-const IconWrapper = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  padding-bottom: 4px;
-  padding-top: 28px;
-`;
+const styles = StyleSheet.create({
+  iconWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingBottom: 4,
+    paddingTop: 28,
+  },
+});
 
 export const ConfirmLedgerComplete: React.FC = () => {
   const {t} = useTranslation();
@@ -23,9 +26,9 @@ export const ConfirmLedgerComplete: React.FC = () => {
       style={{
         minHeight: 0,
       }}>
-      <IconWrapper>
+      <View style={styles.iconWrapper}>
         <Check size={40} color={Success} />
-      </IconWrapper>
+      </View>
 
       <Header
         style={{

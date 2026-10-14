@@ -46,15 +46,25 @@ const logTransformFailure = (
   } catch {}
 };
 
+export const PERSISTED_TX_HISTORY_LIMIT = 10;
+
 export const bootstrapWallets = (wallets: Wallet[]) => {
   return wallets.map(wallet => {
     try {
-      // reset transaction history
-      wallet.transactionHistory = {
-        transactions: [],
-        loadMore: true,
-        hasConfirmingTxs: false,
-      };
+      const persistedTransactions =
+        wallet.transactionHistory?.transactions ?? [];
+      wallet.transactionHistory = persistedTransactions.length
+        ? {
+            transactions: persistedTransactions,
+            loadMore: wallet.transactionHistory?.loadMore ?? true,
+            hasConfirmingTxs:
+              wallet.transactionHistory?.hasConfirmingTxs ?? false,
+          }
+        : {
+            transactions: [],
+            loadMore: true,
+            hasConfirmingTxs: false,
+          };
       const walletClient = BWCProvider.getClient(
         JSON.stringify(wallet.credentials),
       );
@@ -191,18 +201,28 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
     }
     const persistedState = {...inboundState} as WalletState;
     if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys)) {
-        key.wallets.forEach(wallet => delete wallet.transactionHistory);
-
-        inboundState.keys[id] = {
-          ...key,
-        };
-      }
       persistedState.keys = Object.entries(inboundState.keys).reduce(
         (persisted, [id, key]) => {
           const trimmed = {
             ...key,
-            wallets: (key.wallets || []).map(omitBwcClientFields),
+            wallets: (key.wallets || []).map(wallet => {
+              const persistedWallet = omitBwcClientFields(wallet);
+              const {transactionHistory} = persistedWallet;
+              const transactions = transactionHistory?.transactions ?? [];
+              if (
+                transactionHistory &&
+                transactions.length > PERSISTED_TX_HISTORY_LIMIT
+              ) {
+                persistedWallet.transactionHistory = {
+                  ...transactionHistory,
+                  transactions: transactions.slice(
+                    0,
+                    PERSISTED_TX_HISTORY_LIMIT,
+                  ),
+                };
+              }
+              return persistedWallet;
+            }),
           };
           persisted[id] = inboundState.secretsMigrated
             ? withoutSecrets(trimmed)

@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet, Text, View, ViewProps} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {ButtonState} from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../components/styled/Containers';
@@ -19,71 +20,162 @@ import KeyEvent from 'react-native-keyevent';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import BottomAmountPills, {BottomAmountPillsProps} from './BottomAmountPills';
 
-const AmountContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  amountContainer: {
+    flex: 1,
+  },
+  testContainer: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+  },
+  testText: {
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  ctaContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    height: 46.7,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    shadowColor: 'rgba(0, 0, 0, 0.05)',
+    shadowOffset: {width: 0, height: -4},
+    shadowRadius: 4,
+    shadowOpacity: 1,
+  },
+  amountHeroContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  actionContainer: {
+    marginBottom: 15,
+    width: '100%',
+  },
+  viewContainer: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  virtualKeyboardContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  warnMsgText: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: '700',
+    color: Caution,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+});
 
-const TestContainer = styled.View<{isSmallScreen?: boolean}>`
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  justify-content: center;
-  background-color: ${({theme}) => (theme.dark ? '#121212' : White)};
-  padding: 16px 8px;
-`;
+const AmountContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.amountContainer, style]} {...rest} />
+);
 
-const TestText = styled(BaseText)`
-  margin-top: 2px;
-  font-size: 10px;
-  font-weight: 700;
-  color: ${({theme}) => (theme.dark ? White : '#000000')};
-`;
+const TestContainer: React.FC<ViewProps & {isSmallScreen?: boolean}> = ({
+  style,
+  isSmallScreen,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.testContainer,
+        {
+          marginTop: isSmallScreen ? 0 : 20,
+          backgroundColor: theme.dark ? '#121212' : White,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
-  /* width: 100%; */
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  justify-content: center;
-  background-color: ${({theme}) => (theme.dark ? '#121212' : NeutralSlate)};
-  height: 46.7px;
-  padding: 16px 8px;
-  box-shadow: 0px -4px 4px rgba(0, 0, 0, 0.05);
-`;
+const TestText = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.testText,
+          {color: theme.dark ? White : '#000000'},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+TestText.displayName = 'TestText';
 
-export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
-  flex-direction: column;
-  align-items: center;
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
-  padding: 0 ${ScreenGutter};
-`;
+const CtaContainer: React.FC<ViewProps & {isSmallScreen?: boolean}> = ({
+  style,
+  isSmallScreen,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.ctaContainer,
+        {
+          marginTop: isSmallScreen ? 0 : 20,
+          backgroundColor: theme.dark ? '#121212' : NeutralSlate,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const ActionContainer = styled.View`
-  margin-bottom: 15px;
-  width: 100%;
-`;
+export const AmountHeroContainer: React.FC<
+  ViewProps & {isSmallScreen: boolean}
+> = ({style, isSmallScreen, ...rest}) => (
+  <View
+    style={[
+      styles.amountHeroContainer,
+      {marginTop: isSmallScreen ? 0 : 20},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const ViewContainer = styled.View`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
+const ActionContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.actionContainer, style]} {...rest} />
+);
 
-const VirtualKeyboardContainer = styled.View`
-  justify-content: center;
-  align-items: center;
-`;
+const ViewContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.viewContainer, style]} {...rest} />
+);
 
-const WarnMsgText = styled(BaseText)`
-  margin-top: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: ${Caution};
-  padding: 4px 8px;
-`;
+const VirtualKeyboardContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.virtualKeyboardContainer, style]} {...rest} />
+);
+
+const WarnMsgText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.warnMsgText, style]} {...rest} />
+));
+WarnMsgText.displayName = 'WarnMsgText';
 
 export interface Limits {
   min?: number;

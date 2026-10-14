@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {
   ActionContainer,
@@ -23,7 +22,12 @@ import {
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
 import {HeaderTitle} from '../styled/WalletConnectText';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import {useAppDispatch} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -45,7 +49,7 @@ import {
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {getMessageView, getRequestSummary} from './walletConnectRequestSummary';
-import {View} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import Blockie from '../../../components/blockie/Blockie';
 import Banner from '../../../components/banner/Banner';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -57,50 +61,66 @@ export type WalletConnectRequestDetailsParamList = {
   topic?: string;
 };
 
-const RequestDetailsContainer = styled.View``;
+const styles = StyleSheet.create({
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 16,
+  },
+  addressTextContainer: {
+    borderRadius: 40,
+    height: 37,
+    width: 150,
+    marginLeft: 2,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  messageTitleContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+  },
+  messageNoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  infoSubTitle: {
+    fontStyle: 'italic',
+  },
+});
 
-const AddressContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 16px 0;
-`;
+const AddressTextContainer = ({
+  disabled,
+  onPress,
+  children,
+}: {
+  disabled?: boolean;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.addressTextContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const AddressTextContainer = styled(TouchableOpacity)`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-radius: 40px;
-  height: 37px;
-  width: 150px;
-  margin-left: 2px;
-  justify-content: center;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 20px;
-`;
-
-const MessageTitleContainer = styled.View`
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 16px 0;
-`;
-
-const MessageNoteContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-`;
-
-const MessageTextContainer = styled(TouchableOpacity)`
-  align-items: flex-start;
-  max-width: 242px;
-  justify-content: center;
-  margin-left: 2px;
-`;
-
-const InfoSubTitle = styled(InfoTitle)`
-  font-style: italic;
-`;
+const InfoSubTitle = ({children}: {children: React.ReactNode}) => (
+  <InfoTitle style={styles.infoSubTitle}>{children}</InfoTitle>
+);
 
 const WalletConnectRequestDetails = () => {
   const {t} = useTranslation();
@@ -317,7 +337,7 @@ const WalletConnectRequestDetails = () => {
   return (
     <WalletConnectContainer>
       <ScrollView>
-        <RequestDetailsContainer>
+        <View>
           {isMethodSupported ? (
             <>
               <HeaderTitle>{t('Summary')}</HeaderTitle>
@@ -328,7 +348,7 @@ const WalletConnectRequestDetails = () => {
                     <ItemTitleContainer>
                       <H7>{t('Address')}</H7>
                     </ItemTitleContainer>
-                    <AddressContainer>
+                    <View style={styles.addressContainer}>
                       {clipboardObj.copied &&
                       clipboardObj.type === 'address' ? (
                         <CopiedSvg width={17} />
@@ -348,7 +368,7 @@ const WalletConnectRequestDetails = () => {
                           {address}
                         </H7>
                       </AddressTextContainer>
-                    </AddressContainer>
+                    </View>
                   </ItemContainer>
                   <Hr />
                 </>
@@ -363,7 +383,7 @@ const WalletConnectRequestDetails = () => {
                   )}
                 />
               ) : null}
-              <MessageTitleContainer>
+              <View style={styles.messageTitleContainer}>
                 <ItemTitleContainer>
                   <H7>
                     {decodedInstructions ? t('Instructions') : t('Message')}
@@ -377,7 +397,7 @@ const WalletConnectRequestDetails = () => {
                 {decodedInstructions
                   ? parseAndDisplayMessage(decodedInstructions)
                   : renderMessage(message)}
-              </MessageTitleContainer>
+              </View>
             </>
           ) : (
             <Info>
@@ -394,16 +414,16 @@ const WalletConnectRequestDetails = () => {
                 <ItemTitleContainer>
                   <H7>{t('Date')}</H7>
                 </ItemTitleContainer>
-                <MessageNoteContainer>
+                <View style={styles.messageNoteContainer}>
                   <H7 numberOfLines={1} ellipsizeMode={'middle'}>
                     {GetAmFormatDate(request?.createdOn)}
                   </H7>
-                </MessageNoteContainer>
+                </View>
               </ItemContainer>
               <Hr />
             </>
           ) : null}
-        </RequestDetailsContainer>
+        </View>
         <CtaContainer>
           <ActionContainer>
             <Button

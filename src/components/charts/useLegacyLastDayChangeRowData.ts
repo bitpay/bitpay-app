@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import type {Wallet} from '../../store/wallet/wallet.models';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../constants/wallet';
@@ -20,6 +20,9 @@ import {
 import {getRangeLabelForFiatTimeframe} from './fiatTimeframes';
 import useRuntimeFiatRateSeriesCache from '../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {getLastDayTimestampStartOfHourMs} from '../../utils/helper-methods';
+import {buildRuntimeFiatRateCacheRequestKey} from '../../portfolio/ui/fiatRateSeries';
+
+const EMPTY_DISABLED_RATES = {};
 
 const toFiniteNumber = (value: unknown): number => {
   const n = typeof value === 'number' ? value : Number(value);
@@ -49,7 +52,7 @@ const buildLegacyLastDayChangeRowDataFromPnl = (args: {
     },
     quoteCurrency: args.quoteCurrency,
     label: args.label,
-  });
+  })!;
 
 export const buildLegacyLastDayChangeRowData = (args: {
   wallets: Wallet[] | undefined;
@@ -75,16 +78,19 @@ export const buildLegacyLastDayChangeRowData = (args: {
   });
 };
 
-const useLegacyLastDayChangeRowData = (args: {
+type UseLegacyLastDayChangeRowDataArgs = {
   wallets: Wallet[] | undefined;
   currentFiatBalance: number | undefined;
   quoteCurrency: string;
   enabled?: boolean;
   mode?: LegacyLastDayPnlMode;
   representativeAsset?: LegacyLastDayAssetIdentity;
-}): ChangeRowData | undefined => {
+};
+
+export const useLegacyLastDayChangeRowDataState = (
+  args: UseLegacyLastDayChangeRowDataArgs,
+): {data: ChangeRowData | undefined; isLoading: boolean} => {
   const {t} = useTranslation();
-  const rates = useAppSelector(({RATE}) => RATE.rates);
   const {
     currentFiatBalance,
     enabled: enabledArg,
@@ -94,11 +100,21 @@ const useLegacyLastDayChangeRowData = (args: {
     wallets,
   } = args;
   const enabled = enabledArg !== false;
-  const lastDayLabel = getRangeLabelForFiatTimeframe(t, '1D');
-  const baselineTimestampMs = useMemo(
-    () => getLastDayTimestampStartOfHourMs(),
-    [quoteCurrency],
+  const rates = useAppSelector(({RATE}) =>
+    enabled ? RATE.rates : EMPTY_DISABLED_RATES,
   );
+  const lastDayLabel = getRangeLabelForFiatTimeframe(t, '1D');
+  const baselineTimestampRef = useRef({
+    quoteCurrency: '',
+    timestampMs: 0,
+  });
+  if (baselineTimestampRef.current.quoteCurrency !== quoteCurrency) {
+    baselineTimestampRef.current = {
+      quoteCurrency,
+      timestampMs: getLastDayTimestampStartOfHourMs(),
+    };
+  }
+  const baselineTimestampMs = baselineTimestampRef.current.timestampMs;
   const rateRequests = useMemo(() => {
     if (!enabled) {
       return [];
@@ -111,7 +127,7 @@ const useLegacyLastDayChangeRowData = (args: {
 
     return buildLegacyLastDayRateRequestsForWallets({wallets});
   }, [enabled, mode, representativeAsset, wallets]);
-  const {cache: fiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
+  const {cache: fiatRateSeriesCache, loading} = useRuntimeFiatRateSeriesCache({
     quoteCurrency,
     requests: rateRequests,
     maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
@@ -119,7 +135,20 @@ const useLegacyLastDayChangeRowData = (args: {
     clearOnRequestChange: true,
   });
 
-  return useMemo(() => {
+  const requestKey = buildRuntimeFiatRateCacheRequestKey({
+    quoteCurrency,
+    requests: rateRequests,
+  });
+  const startedLoadingKeyRef = useRef<string | undefined>(undefined);
+  if (loading) {
+    startedLoadingKeyRef.current = requestKey;
+  }
+  const isLoading =
+    enabled &&
+    rateRequests.length > 0 &&
+    (loading || startedLoadingKeyRef.current !== requestKey);
+
+  const data = useMemo(() => {
     if (!enabled) {
       return undefined;
     }
@@ -165,6 +194,12 @@ const useLegacyLastDayChangeRowData = (args: {
     representativeAsset,
     wallets,
   ]);
+
+  return {data, isLoading};
 };
+
+const useLegacyLastDayChangeRowData = (
+  args: UseLegacyLastDayChangeRowDataArgs,
+): ChangeRowData | undefined => useLegacyLastDayChangeRowDataState(args).data;
 
 export default useLegacyLastDayChangeRowData;

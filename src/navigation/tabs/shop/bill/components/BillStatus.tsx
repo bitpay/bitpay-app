@@ -1,7 +1,8 @@
 import React from 'react';
 import {t} from 'i18next';
 import moment from 'moment';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
@@ -34,17 +35,17 @@ const statusFields = {
   dueNow: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Due in 1 day',
+    text: () => t('Due in 1 day'),
   },
   dueSoon: {
     backgroundColor: '#FEECD4',
     color: '#A05708',
-    text: 'Due in 1 day',
+    text: () => t('Due in 1 day'),
   },
   dueLater: {
     backgroundColor: '#ffffff',
     color: SlateDark,
-    text: 'Due in 15 days',
+    text: () => t('Due in 15 days'),
     darkTheme: {
       color: Slate30,
       backgroundColor: 'transparent',
@@ -53,32 +54,32 @@ const statusFields = {
   failed: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   canceled: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Canceled',
+    text: () => t('Canceled'),
   },
   reversed: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   reversalRequired: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   reversalProcessing: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
-    text: 'Failed',
+    text: () => t('Failed'),
   },
   complete: {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
-    text: 'Completed',
+    text: () => t('Completed'),
     darkTheme: {
       backgroundColor: '#076A46',
       color: '#4FEFC4',
@@ -87,7 +88,7 @@ const statusFields = {
   sent: {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
-    text: 'Sent',
+    text: () => t('Sent'),
     darkTheme: {
       backgroundColor: '#076A46',
       color: '#4FEFC4',
@@ -96,7 +97,7 @@ const statusFields = {
   refunded: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Refunded',
+    text: () => t('Refunded'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -105,7 +106,7 @@ const statusFields = {
   refundCreated: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Refunding',
+    text: () => t('Refunding'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -114,7 +115,7 @@ const statusFields = {
   processing: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Processing',
+    text: () => t('Processing'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -123,7 +124,7 @@ const statusFields = {
   pending: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Processing',
+    text: () => t('Processing'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -132,7 +133,7 @@ const statusFields = {
   connecting: {
     backgroundColor: LightBlue,
     color: Action,
-    text: 'Connecting',
+    text: () => t('Connecting'),
     darkTheme: {
       backgroundColor: '#071A6A',
       color: LinkBlue,
@@ -155,22 +156,64 @@ const getStatusStyle = (status: string, style: string, isDark: boolean) => {
     : statusObj[style];
 };
 
-const StatusContainer = styled.View<BillStatusStyleProps>`
-  background-color: ${({status, theme}) =>
-      getStatusStyle(status, 'backgroundColor', theme.dark)}
-    ${({status, theme}) =>
-      status === 'dueLater'
-        ? `border: 1px solid ${theme.dark ? LightBlack : Slate30}`
-        : ''};
-  border-radius: 6px;
-  padding: 0 10px;
-`;
+const styles = StyleSheet.create({
+  statusContainer: {
+    borderRadius: 6,
+    paddingHorizontal: 10,
+  },
+  statusText: {
+    fontSize: 14,
+    textTransform: 'capitalize',
+  },
+});
 
-const StatusText = styled(Paragraph)<BillStatusStyleProps>`
-  color: ${({status, theme}) => getStatusStyle(status, 'color', theme.dark)};
-  font-size: 14px;
-  text-transform: capitalize;
-`;
+const StatusContainer = ({
+  status,
+  style,
+  ...rest
+}: BillStatusStyleProps & React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.statusContainer,
+        {
+          backgroundColor: getStatusStyle(
+            status,
+            'backgroundColor',
+            theme.dark,
+          ),
+        },
+        status === 'dueLater'
+          ? {
+              borderWidth: 1,
+              borderColor: theme.dark ? LightBlack : Slate30,
+            }
+          : null,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const StatusText = ({
+  status,
+  style,
+  ...rest
+}: BillStatusStyleProps & React.ComponentProps<typeof Paragraph>) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      style={[
+        styles.statusText,
+        {color: getStatusStyle(status, 'color', theme.dark)},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const getBillStatus = (account: BillPayAccount) => {
   if (account.paymentStatus === 'activating') {
@@ -200,9 +243,10 @@ export default ({account, payment}: BillStatusProps) => {
     payment && statusFields[payment.status]
       ? payment.status || 'processing'
       : 'processing';
-  const paymentStatusText = statusFields[payment && payment.status]
-    ? t(statusFields[paymentStatusStyle].text)
-    : payment?.status || t('Processing');
+  const paymentStatusText =
+    statusFields[payment && payment.status]?.text?.() ||
+    payment?.status ||
+    t('Processing');
   const statusStyle = payment
     ? paymentStatusStyle
     : getBillStatus(account).status;

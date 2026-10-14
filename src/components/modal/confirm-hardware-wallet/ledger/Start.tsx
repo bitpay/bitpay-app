@@ -3,7 +3,7 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useAppDispatch, useMount} from '../../../../utils/hooks';
@@ -28,13 +28,11 @@ interface PairHardwareWalletModalProps {
   currencyLabel: string;
 }
 
-const Bold = styled.Text`
-  font-weight: 600;
-`;
-
-const IconWrapper = styled.View`
-  padding: 28px;
-`;
+const styles = StyleSheet.create({
+  iconWrapper: {
+    padding: 28,
+  },
+});
 
 export const ConfirmLedgerStart: React.FC<
   PairHardwareWalletModalProps
@@ -69,7 +67,10 @@ export const ConfirmLedgerStart: React.FC<
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         setStatus({
           status: 'failed',
-          message: `An error occurred while checking hardware wallet connection support: ${errMsg}`,
+          message: t(
+            'An error occurred while checking hardware wallet connection support: {{errMsg}}',
+            {errMsg},
+          ),
           title: t('Connection Failed'),
         });
         logManager.error(
@@ -172,7 +173,7 @@ export const ConfirmLedgerStart: React.FC<
     } else {
       setStatus({
         status: 'failed',
-        message: `Unable to connect via USB: ${errorMsg}`,
+        message: t('Unable to connect via USB: {{errorMsg}}', {errorMsg}),
         title: t('Connection Failed'),
       });
       await sleep(7000);
@@ -187,9 +188,9 @@ export const ConfirmLedgerStart: React.FC<
       ) : (
         <Wrapper>
           <Header>
-            <IconWrapper>
+            <View style={styles.iconWrapper}>
               <LedgerLogoIconSvg height={60} width={60} />
-            </IconWrapper>
+            </View>
 
             <H3>{t('Approve on your Ledger')}</H3>
           </Header>

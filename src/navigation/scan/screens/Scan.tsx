@@ -5,7 +5,6 @@ import {
   useCameraPermission,
   useCodeScanner,
 } from 'react-native-vision-camera';
-import styled from 'styled-components/native';
 import {incomingData} from '../../../store/scan/scan.effects';
 import debounce from 'lodash.debounce';
 import {useRoute} from '@react-navigation/native';
@@ -16,19 +15,35 @@ import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
-import {ActivityIndicator, Alert, Linking, StyleSheet} from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {BaseText, Link} from '../../../components/styled/Text';
 
-const ScanContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  scanContainer: {
+    flex: 1,
+  },
+  scanGuide: {
+    maxWidth: 400,
+    maxHeight: '50%',
+    margin: 'auto',
+    opacity: 0.7,
+  },
+});
 
-const ScanGuide = styled.View`
-  max-width: 400px;
-  max-height: 50%;
-  margin: auto;
-  opacity: 0.7;
-`;
+const ScanContainer: React.FC<React.PropsWithChildren> = ({children}) => (
+  <SafeAreaView style={styles.scanContainer}>{children}</SafeAreaView>
+);
+
+const ScanGuide: React.FC<React.PropsWithChildren> = ({children}) => (
+  <View style={styles.scanGuide}>{children}</View>
+);
 
 const NoPermissionCameraDeviceError = ({
   showAppSettingsLabel,

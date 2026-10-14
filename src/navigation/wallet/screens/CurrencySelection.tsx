@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import styled from 'styled-components/native';
 import {
   CtaContainer,
   HeaderRightContainer,
@@ -17,7 +16,14 @@ import CurrencySelectionRow, {
   CurrencySelectionRowProps,
 } from '../../../components/list/CurrencySelectionRow';
 import Button from '../../../components/button/Button';
-import {FlatList, ListRenderItem} from 'react-native';
+import {
+  FlatList,
+  ListRenderItem,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -84,20 +90,50 @@ export interface ContextHandler {
   selectedCurrencies: SelectedCurrencies[];
 }
 
-export const CurrencySelectionContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const ListContainer = styled.View`
-  flex-shrink: 1;
-`;
+const styles = StyleSheet.create({
+  currencySelectionContainer: {
+    flex: 1,
+  },
+  listContainer: {
+    flexShrink: 1,
+  },
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: '500',
+    paddingVertical: 16,
+    paddingHorizontal: gutter,
+  },
+});
 
-const SectionHeader = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 500;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  padding: 16px ${ScreenGutter};
-`;
+export const CurrencySelectionContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.currencySelectionContainer, style]} {...rest} />
+);
+
+const ListContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.listContainer, style]} {...rest} />;
+
+const SectionHeader: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.sectionHeader,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
   SupportedCurrencyOptions.filter(currency => currency.hasMultisig);

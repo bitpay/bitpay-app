@@ -1,5 +1,5 @@
 diff --git a/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js b/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js
-index 59f4b97..fe9df8f 100644
+index e2ae140..41cfdb2 100644
 --- a/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js
 +++ b/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js
 @@ -17,7 +17,7 @@ class XrpValidation {

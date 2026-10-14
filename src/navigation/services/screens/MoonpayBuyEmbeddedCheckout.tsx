@@ -8,6 +8,10 @@ import {
   ScrollView,
   View,
   StyleSheet,
+  Text,
+  SafeAreaView,
+  ViewProps,
+  TextProps,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import {
@@ -17,7 +21,7 @@ import {
   useNavigation,
   CommonActions,
 } from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme as useStyledTheme} from '../../../contexts';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   Black,
@@ -80,6 +84,13 @@ import {
   moonpayGetTransactionDetailsEmbedded,
 } from '../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
+  MoonPayGooglePayFrame,
+  GooglePayFrameRef,
+  GooglePayCompletePayload,
+  GooglePayErrorPayload,
+  GooglePayUnsupportedDetails,
+} from '../components/MoonPayGooglePayFrame';
+import {
   MoonPayApplePayFrame,
   ApplePayCompletePayload,
   ApplePayErrorPayload,
@@ -127,145 +138,365 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 // Styled
-export const MoonpayEmbeddedCheckoutContainer = styled.SafeAreaView`
-  flex: 1;
-  margin: 14px;
-`;
+const styles = StyleSheet.create({
+  root: {flex: 1},
+  moonpayEmbeddedCheckoutContainer: {
+    flex: 1,
+    margin: 14,
+  },
+  rowText: {
+    fontSize: 13,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 39,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 22,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
+  totalContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  cryptoTotalText: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  fiatTotalText: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  rowDataContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 0,
+  },
+  bottomSection: {
+    paddingTop: 16,
+  },
+  legalText: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  disclosureText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  poweredByContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  poweredByText: {
+    fontSize: 11,
+    marginRight: 4,
+  },
+  poweredByPartner: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  webViewModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    overflow: 'scroll',
+  },
+  webViewModalHeader: {
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+  },
+  webViewCloseButton: {
+    padding: 10,
+  },
+  webViewCloseText: {
+    fontSize: 24,
+  },
+});
 
-const RowLabel = styled(BaseText)`
-  font-size: 13px;
-`;
+export const MoonpayEmbeddedCheckoutContainer: React.FC<ViewProps> = ({
+  style,
+  ...rest
+}) => (
+  <SafeAreaView
+    style={[styles.moonpayEmbeddedCheckoutContainer, style]}
+    {...rest}
+  />
+);
 
-const RowData = styled(BaseText)`
-  font-size: 13px;
-`;
+const RowLabel = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.rowText, style]} {...rest} />
+  ),
+);
+RowLabel.displayName = 'RowLabel';
 
-const HeaderContainer = styled.View`
-  align-items: center;
-  margin-bottom: 24px;
-`;
+const RowData = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.rowText, style]} {...rest} />
+  ),
+);
+RowData.displayName = 'RowData';
 
-const IconRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 20px;
-`;
+const HeaderContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.headerContainer, style]} {...rest} />
+);
 
-const Title = styled(BaseText)`
-  font-size: 39px;
-  font-weight: 700;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin-bottom: 10px;
-`;
+const IconRow: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.iconRow, style]} {...rest} />
+);
 
-const Subtitle = styled(BaseText)`
-  font-size: 13px;
-  line-height: 22px;
-  font-weight: 400;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const Title = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useStyledTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[styles.title, {color: theme.dark ? White : SlateDark}, style]}
+        {...rest}
+      />
+    );
+  },
+);
+Title.displayName = 'Title';
 
-const TotalContainer = styled.View`
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-`;
+const Subtitle = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useStyledTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.subtitle,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+Subtitle.displayName = 'Subtitle';
 
-const CryptoTotalText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 700;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 12px;
-`;
+const TotalContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.totalContainer, style]} {...rest} />
+);
 
-const FiatTotalText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const CryptoTotalText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.cryptoTotalText,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+CryptoTotalText.displayName = 'CryptoTotalText';
 
-export const RowDataContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 0;
-`;
+const FiatTotalText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.fiatTotalText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+FiatTotalText.displayName = 'FiatTotalText';
 
-const BottomSection = styled.View`
-  padding-top: 16px;
-`;
+export const RowDataContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.rowDataContainer, style]} {...rest} />
+);
 
-const LegalText = styled(BaseText)`
-  font-size: 13px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-bottom: 16px;
-  line-height: 20px;
-`;
+const BottomSection: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.bottomSection, style]} {...rest} />
+);
 
-const LegalLink = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-`;
+const LegalText = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
+  ({style, ...rest}, ref) => {
+    const theme = useStyledTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.legalText,
+          {color: theme.dark ? Slate30 : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
+LegalText.displayName = 'LegalText';
 
-const DisclosureText = styled(BaseText)`
-  font-size: 12px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  margin-bottom: 12px;
-  line-height: 18px;
-`;
+const LegalLink = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[{color: theme.dark ? LinkBlue : Action}, style]}
+      {...rest}
+    />
+  );
+});
+LegalLink.displayName = 'LegalLink';
 
-const PoweredByContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-top: 12px;
-`;
+const DisclosureText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.disclosureText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+DisclosureText.displayName = 'DisclosureText';
 
-const PoweredByText = styled(BaseText)`
-  font-size: 11px;
-  margin-right: 4px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const PoweredByContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.poweredByContainer, style]} {...rest} />
+);
 
-const PoweredByPartner = styled(BaseText)`
-  font-size: 11px;
-  font-weight: 700;
-  color: ${({theme: {dark}}) => (dark ? White : '#565656')};
-`;
+const PoweredByText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.poweredByText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PoweredByText.displayName = 'PoweredByText';
 
-const WebViewModalContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  overflow: scroll;
-`;
+const PoweredByPartner = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.poweredByPartner,
+        {color: theme.dark ? White : '#565656'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+PoweredByPartner.displayName = 'PoweredByPartner';
 
-const WebViewModalHeader = styled.View<{topInset: number}>`
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  margin-top: ${({topInset}) => topInset}px;
-  height: 50px;
-  background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
-  justify-content: center;
-  align-items: flex-start;
-  padding-left: 15px;
-  padding-right: 15px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
-`;
+const WebViewModalContainer: React.FC<ViewProps> = ({style, ...rest}) => (
+  <View style={[styles.webViewModalContainer, style]} {...rest} />
+);
 
-const WebViewCloseButton = styled(TouchableOpacity)`
-  padding: 10px;
-`;
+const WebViewModalHeader: React.FC<ViewProps & {topInset: number}> = ({
+  style,
+  topInset,
+  ...rest
+}) => {
+  const theme = useStyledTheme();
+  return (
+    <View
+      style={[
+        styles.webViewModalHeader,
+        {
+          marginTop: topInset,
+          backgroundColor: theme.dark ? '#1a1a1a' : '#f8f8f8',
+          borderBottomColor: theme.dark ? '#333' : '#ddd',
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const WebViewCloseText = styled(BaseText)`
-  font-size: 24px;
-  color: ${({theme: {dark}}) => (dark ? '#ccc' : '#333')};
-`;
+const WebViewCloseButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.webViewCloseButton, style]} {...rest} />
+);
+
+const WebViewCloseText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useStyledTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.webViewCloseText,
+        {color: theme.dark ? '#ccc' : '#333'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+WebViewCloseText.displayName = 'WebViewCloseText';
 
 export interface MoonpayBuyEmbeddedCheckoutProps {
   wallet: Wallet;
@@ -309,6 +540,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   );
   const scrollViewRef = useRef<ScrollView>(null);
   const applePayFrameRef = useRef<ApplePayFrameRef>(null);
+  const googlePayFrameRef = useRef<GooglePayFrameRef>(null);
   const buyFrameRef = useRef<BuyFrameRef>(null);
   const quoteRefreshTimerRef = useRef<
     ReturnType<typeof setTimeout> | undefined
@@ -328,6 +560,11 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   >(null);
   const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+
+  const isGooglePayPaymentMethod = paymentMethod?.method === 'googlePay';
+  // Google Pay runs on the Payment Request API. When the WebView cannot provide
+  // it the frame says so, and there is nothing to show but a way out.
+  const [googlePayUnsupported, setGooglePayUnsupported] = useState(false);
 
   const isSepaPaymentMethod = paymentMethod?.method === 'sepaBankTransfer';
   const [sepaQuoteSignature, setSepaQuoteSignature] = useState<string | null>(
@@ -471,6 +708,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       }
       if (newQuoteData?.signature) {
         applePayFrameRef.current?.updateQuote(newQuoteData.signature);
+        googlePayFrameRef.current?.updateQuote(newQuoteData.signature);
         // A card quote is only usable when MoonPay marks it executable, since
         // it is bound to a stored instrument. A SEPA quote has none to
         // validate, so only an explicit false rules it out.
@@ -1687,6 +1925,119 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 ) : null}
               </>
             )
+          ) : isGooglePayPaymentMethod ? (
+            googlePayUnsupported ? (
+              <DisclosureText>
+                {t(
+                  'Google Pay is not available on this device. Please go back and choose another payment method.',
+                )}
+              </DisclosureText>
+            ) : !isLoading && !paymentExpired && initialQuoteSignature ? (
+              <MoonPayGooglePayFrame
+                ref={googlePayFrameRef}
+                clientToken={credentials.clientToken}
+                signature={initialQuoteSignature}
+                externalTransactionId={externalTransactionIdRef.current}
+                theme={theme.dark ? 'dark' : 'light'}
+                onReady={() => {
+                  logger.debug('MoonPay Google Pay frame ready');
+                }}
+                onComplete={async (payload: GooglePayCompletePayload) => {
+                  await handleTransactionComplete(payload.transaction);
+                }}
+                onChallenge={(url: string) => {
+                  cancelQuoteRefresh();
+                  logger.debug(
+                    'MoonPay Google Pay challenge required, opening challenge frame',
+                  );
+                  dispatch(
+                    Analytics.track('Buy Crypto Challenge Started', {
+                      exchange: 'moonpay',
+                      context: 'MoonpayBuyEmbeddedCheckout',
+                      paymentMethod: paymentMethod?.method || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      coin:
+                        cloneDeep(
+                          wallet?.currencyAbbreviation,
+                        )?.toLowerCase() || '',
+                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      fiatCurrency: offer?.fiatCurrency || '',
+                    }),
+                  );
+                  setChallengeUrl(url);
+                }}
+                onQuoteExpired={refreshQuote}
+                onButtonPressed={() => {
+                  logger.debug('MoonPay Google Pay button pressed');
+                }}
+                onCancelled={(code?: string) => {
+                  logger.debug(
+                    'MoonPay Google Pay sheet dismissed by user' +
+                      (code ? ': ' + code : ''),
+                  );
+                  dispatch(
+                    Analytics.track('Failed Buy Crypto', {
+                      exchange: 'moonpay',
+                      context: 'MoonpayBuyEmbeddedCheckout',
+                      reason: 'Google Pay sheet dismissed by user',
+                      paymentMethod: paymentMethod?.method || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      coin:
+                        cloneDeep(
+                          wallet?.currencyAbbreviation,
+                        )?.toLowerCase() || '',
+                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      fiatCurrency: offer?.fiatCurrency || '',
+                    }),
+                  );
+                }}
+                onUnsupported={(details: GooglePayUnsupportedDetails) => {
+                  cancelQuoteRefresh();
+                  // Unmounts the frame, so no dead Google Pay button is left
+                  // behind the modal.
+                  setGooglePayUnsupported(true);
+
+                  const reportedBy =
+                    details.source === 'unsupportedEvent'
+                      ? "the 'unsupported' event"
+                      : `an 'error' message with code '${details.code}'`;
+                  logger.error(
+                    '[MoonPay Google Pay] unavailable on this device.' +
+                      ` Reported by: ${reportedBy}.` +
+                      ` MoonPay message: ${details.message ?? '(none)'}.` +
+                      ` Raw payload: ${JSON.stringify(
+                        details.payload ?? null,
+                      )}.` +
+                      ' Device requirements: Android System WebView 137+,' +
+                      ' Google Play services 25.18.30+, and a Google account' +
+                      ' with a usable payment method.',
+                  );
+
+                  showError(
+                    t(
+                      'Google Pay is not available on this device. Please go back and choose another payment method.',
+                    ),
+                    `googlePayUnsupported:${details.source}`,
+                    undefined,
+                    t('Google Pay not available'),
+                  );
+                }}
+                onError={(error: GooglePayErrorPayload) => {
+                  cancelQuoteRefresh();
+                  logger.error(
+                    'MoonPay Google Pay frame error: [' +
+                      error.code +
+                      '] ' +
+                      error.message,
+                  );
+                  showError(error, error.code, error.message);
+                }}
+              />
+            ) : (
+              <SpinnerContainer>
+                <ActivityIndicator color={ProgressBlue} />
+              </SpinnerContainer>
+            )
           ) : !isLoading && !paymentExpired && initialQuoteSignature ? (
             <MoonPayApplePayFrame
               ref={applePayFrameRef}
@@ -1960,9 +2311,5 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {flex: 1},
-});
 
 export default MoonpayBuyEmbeddedCheckout;

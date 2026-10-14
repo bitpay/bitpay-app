@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleProp, ViewStyle} from 'react-native';
-import {useTheme} from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
+import {useTheme} from '../../contexts';
 import {SlateDark, White} from '../../styles/colors';
 import MultisigIcon from '../../../assets/img/icon-multisig-group.svg';
 import WalletTypeBadge, {

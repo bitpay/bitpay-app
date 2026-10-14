@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {BaseText} from '../../../components/styled/Text';
 import {
   Action,
@@ -18,44 +19,33 @@ interface Props {
   onPress: (dateRange: DateRanges) => void;
 }
 
-const ButtonsRow = styled.View`
-  width: 100%;
-  justify-content: space-evenly;
-  flex-direction: row;
-`;
-
-const ButtonContainer = styled.View`
-  align-items: center;
-`;
-
-const ButtonText = styled(BaseText)<{isActive: string; label: string}>`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: ${({isActive, label}) => (isActive === label ? 500 : 400)};
-  line-height: 24px;
-  letter-spacing: 0px;
-  text-align: center;
-  color: ${({isActive, label, theme}) =>
-    isActive === label
-      ? theme.dark
-        ? White
-        : Action
-      : theme.dark
-      ? NeutralSlate
-      : LightBlack};
-`;
-
-const LinkButton = styled(TouchableOpacity)<{isActive: string; label: string}>`
-  height: 40px;
-  width: 50px;
-  border-radius: 18px;
-  align-items: center;
-  justify-content: center;
-  background: ${({isActive, label, theme}) =>
-    isActive === label ? (theme.dark ? Midnight : '#EDF0FE') : 'transparent'};
-`;
+const styles = StyleSheet.create({
+  buttonsRow: {
+    width: '100%',
+    justifyContent: 'space-evenly',
+    flexDirection: 'row',
+  },
+  buttonContainer: {
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    lineHeight: 24,
+    letterSpacing: 0,
+    textAlign: 'center',
+  },
+  linkButton: {
+    height: 40,
+    width: 50,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const RangeDateSelector = ({onPress}: Props) => {
+  const theme = useTheme();
   const [activeOption, setActiveOption] = useState<DateRanges>(DateRanges.Day);
   const updateOptions: Array<{label: string; dateRange: DateRanges}> = [
     {label: '1D', dateRange: DateRanges.Day},
@@ -70,27 +60,51 @@ const RangeDateSelector = ({onPress}: Props) => {
   };
 
   return (
-    <ButtonsRow>
-      {updateOptions.map(({label, dateRange}) => (
-        <ButtonContainer key={label}>
-          <LinkButton
-            activeOpacity={ActiveOpacity}
-            isActive={isActive.label}
-            label={label}
-            onPress={() => {
-              haptic('impactLight');
-              if (isActive.label !== label) {
-                setActiveOption(dateRange);
-                onPress(dateRange);
-              }
-            }}>
-            <ButtonText isActive={isActive.label} label={label}>
-              {titleCasing(label)}
-            </ButtonText>
-          </LinkButton>
-        </ButtonContainer>
-      ))}
-    </ButtonsRow>
+    <View style={styles.buttonsRow}>
+      {updateOptions.map(({label, dateRange}) => {
+        const active = isActive.label === label;
+        return (
+          <View style={styles.buttonContainer} key={label}>
+            <TouchableOpacity
+              style={[
+                styles.linkButton,
+                {
+                  backgroundColor: active
+                    ? theme.dark
+                      ? Midnight
+                      : '#EDF0FE'
+                    : 'transparent',
+                },
+              ]}
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                haptic('impactLight');
+                if (isActive.label !== label) {
+                  setActiveOption(dateRange);
+                  onPress(dateRange);
+                }
+              }}>
+              <BaseText
+                style={[
+                  styles.buttonText,
+                  {
+                    fontWeight: active ? '500' : '400',
+                    color: active
+                      ? theme.dark
+                        ? White
+                        : Action
+                      : theme.dark
+                      ? NeutralSlate
+                      : LightBlack,
+                  },
+                ]}>
+                {titleCasing(label)}
+              </BaseText>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+    </View>
   );
 };
 

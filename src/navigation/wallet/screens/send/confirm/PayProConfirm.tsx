@@ -387,7 +387,6 @@ const PayProConfirm = () => {
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet!.id,
-                  key,
                 },
               },
             ],
@@ -406,7 +405,6 @@ const PayProConfirm = () => {
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet!.id,
-                  key,
                 },
               },
             ],
@@ -553,7 +551,7 @@ const PayProConfirm = () => {
         contentContainerStyle={{paddingBottom: 50}}
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
-          <Header hr>Summary</Header>
+          <Header hr>{t('Summary')}</Header>
           {wallet && isTSSWallet(wallet) && (
             <TSSProgressTracker
               status={tssStatus}

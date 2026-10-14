@@ -1,12 +1,19 @@
 import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
-import {Alert, Share} from 'react-native';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StyleSheet,
+  TouchableOpacity as RNTouchableOpacity,
+  View,
+} from 'react-native';
 import {shareNative} from '../../../utils/share';
-import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
-import {useTheme} from 'styled-components/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {useTheme} from '../../../contexts';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
@@ -78,93 +85,209 @@ import {
   SheetParams,
 } from '../../../components/styled/Containers';
 
-const Container = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const Content = styled.ScrollView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+  },
+  qrSection: {
+    paddingVertical: 24,
+    paddingHorizontal: gutter,
+  },
+  sessionAcceptedContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    flex: 1,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  inviteCodeSection: {
+    paddingHorizontal: gutter,
+  },
+  inviteCodeContainer: {
+    borderRadius: 12,
+    padding: 16,
+    minHeight: 355,
+    width: '100%',
+    flex: 1,
+  },
+  inviteCodeLabel: {
+    fontSize: 16,
+    fontWeight: '400',
+    marginBottom: 12,
+  },
+  scanButton: {
+    padding: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  buttonContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: gutter,
+  },
+  inputContainer: {
+    marginTop: 20,
+  },
+  optionContainer: {
+    flexDirection: 'column',
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  optionTitleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  optionDescriptionText: {
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+});
 
-const QRSection = styled.View`
-  padding: 24px ${ScreenGutter};
-`;
+const Container: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
+  style,
+  ...rest
+}) => <SafeAreaView style={[styles.container, style]} {...rest} />;
 
-const SessionAcceptedContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  flex: 1;
-`;
+const Content: React.FC<React.ComponentProps<typeof ScrollView>> = ({
+  style,
+  ...rest
+}) => <ScrollView style={[styles.content, style]} {...rest} />;
 
-const ShareButton = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  padding: 8px 12px;
-`;
+const QRSection: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.qrSection, style]} {...rest} />;
 
-const InviteCodeSection = styled.View`
-  padding: 0 ${ScreenGutter};
-`;
+const SessionAcceptedContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.sessionAcceptedContainer, style]} {...rest} />;
 
-const InviteCodeContainer = styled.View`
-  border-radius: 12px;
-  padding: 16px;
-  min-height: 355px;
-  width: 100%;
-  flex: 1;
-`;
+const ShareButton: React.FC<
+  React.ComponentProps<typeof RNTouchableOpacity>
+> = ({style, ...rest}) => (
+  <RNTouchableOpacity style={[styles.shareButton, style]} {...rest} />
+);
 
-const InviteCodeLabel = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 12px;
-`;
+const InviteCodeSection: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.inviteCodeSection, style]} {...rest} />;
 
-const ScanButton = styled.TouchableOpacity`
-  padding: 4px;
-`;
+const InviteCodeContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.inviteCodeContainer, style]} {...rest} />;
 
-const LoadingContainer = styled.View`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-`;
+const InviteCodeLabel: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.inviteCodeLabel,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const LoadingText = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const ScanButton: React.FC<React.ComponentProps<typeof RNTouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <RNTouchableOpacity style={[styles.scanButton, style]} {...rest} />;
 
-const ButtonContainer = styled.View`
-  padding: 16px ${ScreenGutter};
-`;
+const LoadingContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.loadingContainer, style]} {...rest} />;
 
-const InputContainer = styled.View`
-  margin-top: 20px;
-`;
+const LoadingText: React.FC<React.ComponentProps<typeof H5>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H5 style={[{color: theme.dark ? White : SlateDark}, style]} {...rest} />
+  );
+};
 
-const OptionContainer = styled.TouchableOpacity<SheetParams>`
-  flex-direction: column;
-  padding-${({placement}) => placement}: 31px;
-  padding-top: 16px;
-  padding-bottom: 16px;
-`;
+const ButtonContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.buttonContainer, style]} {...rest} />;
 
-const OptionTitleText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 6px;
-`;
+const InputContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.inputContainer, style]} {...rest} />;
 
-const OptionDescriptionText = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-`;
+const OptionContainer: React.FC<
+  SheetParams & React.ComponentProps<typeof RNTouchableOpacity>
+> = ({placement, style, ...rest}) => (
+  <RNTouchableOpacity
+    style={[
+      placement
+        ? {[`padding${placement === 'top' ? 'Top' : 'Bottom'}`]: 31}
+        : null,
+      styles.optionContainer,
+      style,
+    ]}
+    {...rest}
+  />
+);
+
+const OptionTitleText: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.optionTitleText,
+        {color: theme.dark ? White : Black},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const OptionDescriptionText: React.FC<
+  React.ComponentProps<typeof BaseText>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.optionDescriptionText,
+        {color: theme.dark ? Slate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 type JoinFormValues = {
   myName: string;

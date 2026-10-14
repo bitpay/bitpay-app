@@ -1,6 +1,21 @@
 import {isAbortError} from './abort';
 
 const DEFAULT_SCHEDULE_AFTER_INTERACTIONS_FALLBACK_MS = 700;
+const DEFAULT_TRANSITION_FALLBACK_MS = 800;
+
+type NavigationTransitionEvent = {
+  data?: {
+    closing?: boolean;
+  };
+};
+
+type TransitionNavigation = {
+  addListener?: (
+    event: 'transitionStart' | 'transitionEnd',
+    listener: (event: NavigationTransitionEvent) => void,
+  ) => (() => void) | {remove: () => void} | undefined;
+  getParent?: () => TransitionNavigation | undefined;
+};
 
 export type ScheduledAfterInteractionsHandle = {
   cancel: () => void;
@@ -15,10 +30,9 @@ export const scheduleAfterInteractionsAndFrames = (args: {
 }): ScheduledAfterInteractionsHandle => {
   const controller = new AbortController();
   let didRun = false;
+  let idleCallbackHandle: number | undefined;
   let timeout: ReturnType<typeof setTimeout> | undefined;
-  let idleFallbackTimeout: ReturnType<typeof setTimeout> | undefined;
   let fallbackTimeout: ReturnType<typeof setTimeout> | undefined;
-  let idleCallback: number | undefined;
   let firstFrame: number | undefined;
   let secondFrame: number | undefined;
   let resolveDone: (() => void) | undefined;
@@ -45,10 +59,18 @@ export const scheduleAfterInteractionsAndFrames = (args: {
       clearTimeout(timeout);
       timeout = undefined;
     }
-    if (idleFallbackTimeout) {
-      clearTimeout(idleFallbackTimeout);
-      idleFallbackTimeout = undefined;
+  };
+
+  const clearScheduledIdleCallback = () => {
+    if (typeof idleCallbackHandle !== 'number') {
+      return;
     }
+
+    const cancelIdleCallback = (global as any).cancelIdleCallback;
+    if (typeof cancelIdleCallback === 'function') {
+      cancelIdleCallback(idleCallbackHandle);
+    }
+    idleCallbackHandle = undefined;
   };
 
   const clearScheduledFrames = () => {
@@ -115,45 +137,29 @@ export const scheduleAfterInteractionsAndFrames = (args: {
 
     didRun = true;
     clearScheduledTimers();
+    clearScheduledIdleCallback();
     timeout = setTimeout(executeCallback, 0);
   };
 
-  const scheduleAfterIdle = () => {
-    idleCallback = undefined;
-    idleFallbackTimeout = undefined;
+  const requestIdleCallback = (global as any).requestIdleCallback;
+  if (typeof requestIdleCallback === 'function') {
+    idleCallbackHandle = requestIdleCallback(runCallback, {
+      timeout:
+        args.fallbackMs ?? DEFAULT_SCHEDULE_AFTER_INTERACTIONS_FALLBACK_MS,
+    });
+  } else if (typeof requestAnimationFrame === 'function') {
+    firstFrame = requestAnimationFrame(() => {
+      firstFrame = undefined;
 
-    if (shouldSkipScheduling()) {
-      return;
-    }
+      if (shouldSkipScheduling()) {
+        return;
+      }
 
-    if (typeof requestAnimationFrame === 'function') {
-      firstFrame = requestAnimationFrame(() => {
-        firstFrame = undefined;
-
-        if (shouldSkipScheduling()) {
-          return;
-        }
-
-        secondFrame = requestAnimationFrame(() => {
-          secondFrame = undefined;
-          runCallback();
-        });
+      secondFrame = requestAnimationFrame(() => {
+        secondFrame = undefined;
+        runCallback();
       });
-      return;
-    }
-
-    runCallback();
-  };
-
-  const idleCallbacks = globalThis as typeof globalThis & {
-    requestIdleCallback?: (callback: () => void) => number;
-    cancelIdleCallback?: (handle: number) => void;
-  };
-
-  if (typeof idleCallbacks.requestIdleCallback === 'function') {
-    idleCallback = idleCallbacks.requestIdleCallback(scheduleAfterIdle);
-  } else {
-    idleFallbackTimeout = setTimeout(scheduleAfterIdle, 0);
+    });
   }
 
   if (!controller.signal.aborted && !didRun) {
@@ -175,15 +181,151 @@ export const scheduleAfterInteractionsAndFrames = (args: {
       }
 
       controller.abort();
-      if (
-        typeof idleCallback === 'number' &&
-        typeof idleCallbacks.cancelIdleCallback === 'function'
-      ) {
-        idleCallbacks.cancelIdleCallback(idleCallback);
-        idleCallback = undefined;
-      }
       clearScheduledTimers();
+      clearScheduledIdleCallback();
       clearScheduledFrames();
+      finish();
+    },
+    done,
+    signal: controller.signal,
+  };
+};
+
+const removeNavigationListener = (
+  unsubscribe: (() => void) | {remove: () => void} | undefined,
+) => {
+  if (typeof unsubscribe === 'function') {
+    unsubscribe();
+  } else {
+    unsubscribe?.remove();
+  }
+};
+
+export const scheduleAfterTransitionAndIdle = (args: {
+  navigation: TransitionNavigation;
+  callback: (signal: AbortSignal) => void | Promise<void>;
+  transitionFallbackMs?: number;
+  idleTimeoutMs?: number;
+  onError?: (error: unknown) => void;
+}): ScheduledAfterInteractionsHandle => {
+  const controller = new AbortController();
+  let idleTask: ScheduledAfterInteractionsHandle | undefined;
+  let transitionFallbackTimer: ReturnType<typeof setTimeout> | undefined;
+  let transitionInProgress = false;
+  let didScheduleIdle = false;
+  let resolveDone: (() => void) | undefined;
+  const unsubscribers: ((() => void) | {remove: () => void} | undefined)[] = [];
+
+  const done = new Promise<void>(resolve => {
+    resolveDone = resolve;
+  });
+
+  const finish = () => {
+    if (!resolveDone) {
+      return;
+    }
+
+    resolveDone();
+    resolveDone = undefined;
+  };
+
+  const clearTransitionListeners = () => {
+    while (unsubscribers.length) {
+      removeNavigationListener(unsubscribers.pop());
+    }
+  };
+
+  const clearTransitionFallback = () => {
+    if (!transitionFallbackTimer) {
+      return;
+    }
+
+    clearTimeout(transitionFallbackTimer);
+    transitionFallbackTimer = undefined;
+  };
+
+  const scheduleIdle = () => {
+    if (controller.signal.aborted || didScheduleIdle || transitionInProgress) {
+      return;
+    }
+
+    didScheduleIdle = true;
+    clearTransitionFallback();
+    clearTransitionListeners();
+    idleTask = scheduleAfterInteractionsAndFrames({
+      fallbackMs: args.idleTimeoutMs,
+      onError: args.onError,
+      callback: () => args.callback(controller.signal),
+    });
+    idleTask.done.finally(finish);
+  };
+
+  const onTransitionStart = (event: NavigationTransitionEvent) => {
+    if (!event.data?.closing) {
+      transitionInProgress = true;
+    }
+  };
+
+  const onTransitionEnd = (event: NavigationTransitionEvent) => {
+    if (event.data?.closing) {
+      return;
+    }
+
+    transitionInProgress = false;
+    scheduleIdle();
+  };
+
+  const transitionNavigations = [
+    args.navigation,
+    args.navigation.getParent?.(),
+  ].filter(
+    (navigation, index, allNavigations): navigation is TransitionNavigation =>
+      !!navigation && allNavigations.indexOf(navigation) === index,
+  );
+
+  for (const navigation of transitionNavigations) {
+    if (typeof navigation.addListener !== 'function') {
+      continue;
+    }
+
+    unsubscribers.push(
+      navigation.addListener('transitionStart', onTransitionStart),
+      navigation.addListener('transitionEnd', onTransitionEnd),
+    );
+  }
+
+  const waitForTransitionFallback = () => {
+    transitionFallbackTimer = undefined;
+    if (controller.signal.aborted || didScheduleIdle) {
+      return;
+    }
+
+    if (transitionInProgress) {
+      transitionFallbackTimer = setTimeout(waitForTransitionFallback, 100);
+      return;
+    }
+
+    scheduleIdle();
+  };
+
+  transitionFallbackTimer = setTimeout(
+    waitForTransitionFallback,
+    Math.max(
+      0,
+      Math.floor(args.transitionFallbackMs ?? DEFAULT_TRANSITION_FALLBACK_MS),
+    ),
+  );
+
+  return {
+    cancel: () => {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      controller.abort();
+      clearTransitionFallback();
+      clearTransitionListeners();
+      idleTask?.cancel();
       finish();
     },
     done,

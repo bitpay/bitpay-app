@@ -1,8 +1,8 @@
 import React from 'react';
 import TestRenderer, {act} from 'react-test-renderer';
 import {View} from 'react-native';
-import {ThemeProvider} from 'styled-components/native';
-import type {DefaultTheme} from 'styled-components/native';
+import {ThemeProvider} from '../../contexts';
+import type {BitPayTheme} from '../../themes/bitpay';
 import InteractiveLineChart from './InteractiveLineChart';
 import {SlateDark} from '../../styles/colors';
 import {withTiming} from 'react-native-reanimated';
@@ -179,7 +179,7 @@ describe('InteractiveLineChart', () => {
       thickness: number,
       opacity: number,
     ) => (
-      <ThemeProvider theme={theme as DefaultTheme}>
+      <ThemeProvider theme={theme as BitPayTheme}>
         <InteractiveLineChart
           points={points}
           color="#000000"

@@ -275,6 +275,7 @@ export type MoonpayPaymentType =
   | 'paypal'
   | 'cash_app'
   | 'apple_pay' // applePay embedded flow
+  | 'google_pay' // googlePay embedded flow
   | 'mobile_wallet' // applePay
   | 'sepa_bank_transfer'
   | 'credit_debit_card'
@@ -368,7 +369,10 @@ export interface MoonpayQuoteEmbeddedData {
   source: MoonpayEmbeddedAmount;
   destination: MoonpayEmbeddedAmount;
   fees: MoonpayEmbeddedFees;
-  paymentMethod: {type: 'apple_pay' | 'card' | 'sepa'; id?: string} | null;
+  paymentMethod: {
+    type: 'apple_pay' | 'google_pay' | 'card' | 'sepa';
+    id?: string;
+  } | null;
   wallet: {
     address: string;
   };

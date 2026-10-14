@@ -1,6 +1,15 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {
+  SafeAreaView,
+  ScrollView as RNScrollView,
+  View,
+  ViewProps,
+  ScrollViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import {
   HeaderRightContainer,
   ScreenGutter,
@@ -26,7 +35,10 @@ import Button from '../../../components/button/Button';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {OnboardingScreens} from '../../onboarding/OnboardingGroup';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {getPasskeyCredentials, registerPasskey} from '../../../utils/passkey';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -38,96 +50,176 @@ import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {SumSubEffects, SumSubSelectors} from '../../../store/sumsub';
 
-const AccountSecurityScreenContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  accountSecurityScreenContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginHorizontal: parseInt(ScreenGutter, 10),
+    paddingBottom: 100,
+  },
+  headerTextContainer: {
+    marginVertical: 16,
+  },
+  headerText: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  cardPressable: {
+    padding: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  cardTitleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardContent: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  titleContainer: {
+    flexGrow: 1,
+    marginLeft: 16,
+  },
+  titleText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  bullets: {
+    display: 'flex',
+    width: '80%',
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 20,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
+    marginTop: 7,
+  },
+  bulletText: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  chevron: {
+    marginLeft: 10,
+    paddingTop: 2,
+  },
+});
 
-const ScrollView = styled.ScrollView`
-  margin: 0 ${ScreenGutter};
-  padding-bottom: 100px;
-`;
+const AccountSecurityScreenContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView
+    style={[styles.accountSecurityScreenContainer, style]}
+    {...rest}
+  />
+);
 
-const HeaderTextContainer = styled.View`
-  margin: 16px 0;
-`;
+const ScrollView = ({style, ...rest}: ScrollViewProps) => (
+  <RNScrollView style={[styles.scrollView, style]} {...rest} />
+);
 
-const HeaderText = styled(Paragraph)`
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-`;
+const HeaderTextContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.headerTextContainer, style]} {...rest} />
+);
 
-const CardPressable = styled(TouchableOpacity)`
-  padding: 16px;
-  background: transparent;
-  border-width: 1px;
-  border-radius: 12px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  margin-bottom: 16px;
-`;
+const HeaderText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <Paragraph ref={ref} style={[styles.headerText, style]} {...rest} />
+  ),
+);
 
-const CardTitleContainer = styled.View`
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-`;
+const CardPressable: React.FC<TouchableOpacityProps> = ({style, ...rest}) => {
+  const {dark} = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.cardPressable,
+        {borderColor: dark ? SlateDark : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const IconBadge = styled.View`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  background: ${({theme: {dark}}) =>
-    dark ? 'rgba(34, 64, 196, 0.25)' : LightBlue};
-`;
+const CardTitleContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardTitleContainer, style]} {...rest} />
+);
 
-const CardContent = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const IconBadge = ({style, ...rest}: ViewProps) => {
+  const {dark} = useTheme();
+  return (
+    <View
+      style={[
+        styles.iconBadge,
+        {backgroundColor: dark ? 'rgba(34, 64, 196, 0.25)' : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const TitleContainer = styled.View`
-  flex-grow: 1;
-  margin-left: 16px;
-`;
+const CardContent = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardContent, style]} {...rest} />
+);
 
-const TitleText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 600;
-`;
+const TitleContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.titleContainer, style]} {...rest} />
+);
 
-const Bullets = styled.View`
-  display: flex;
-  width: 80%;
-`;
+const TitleText = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <BaseText ref={ref} style={[styles.titleText, style]} {...rest} />
+));
 
-const BulletRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-  margin-top: 20px;
-`;
+const Bullets = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.bullets, style]} {...rest} />
+);
 
-const Dot = styled.View`
-  width: 6px;
-  height: 6px;
-  border-radius: 3px;
-  background: ${({theme: {dark}}) => (dark ? '#4989FF' : Action)};
-  margin-right: 8px;
-  margin-top: 7px;
-`;
+const BulletRow = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.bulletRow, style]} {...rest} />
+);
 
-const BulletText = styled(BaseText)`
-  font-size: 16px;
-  line-height: 20px;
-`;
+const Dot = ({style, ...rest}: ViewProps) => {
+  const {dark} = useTheme();
+  return (
+    <View
+      style={[styles.dot, {backgroundColor: dark ? '#4989FF' : Action}, style]}
+      {...rest}
+    />
+  );
+};
 
-const Chevron = styled.View`
-  margin-left: 10px;
-  padding-top: 2px;
-`;
+const BulletText = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.bulletText, style]} {...rest} />
+  ),
+);
+
+const Chevron = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.chevron, style]} {...rest} />
+);
 
 export const SecureAccountScreen = () => {
   const {t} = useTranslation();

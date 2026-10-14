@@ -5,9 +5,11 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../contexts';
 import {BaseText} from '../styled/Text';
 import {formatFiatAmount} from '../../utils/helper-methods';
+import {HIDDEN_BALANCE_MASK} from '../../utils/hideBalances';
+import {useAppSelector} from '../../utils/hooks';
 import {Slate30, SlateDark} from '../../styles/colors';
 import {isNumberSharedValue, type NumberSharedValue} from './sharedValueGuards';
 import {getChartAxisLabelTranslateX} from './chartLayout';
@@ -22,6 +24,7 @@ export type ChartAxisLabelProps = {
   type: 'min' | 'max';
   textColor?: string;
   contentOpacity?: number | NumberSharedValue;
+  maskWhenBalancesHidden?: boolean;
 };
 
 const AnimatedBaseText = Animated.createAnimatedComponent(BaseText);
@@ -47,18 +50,25 @@ const ChartAxisLabel = ({
   type,
   textColor,
   contentOpacity = 1,
+  maskWhenBalancesHidden = false,
 }: ChartAxisLabelProps): React.ReactElement => {
   const theme = useTheme();
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const maskValue = maskWhenBalancesHidden && hideAllBalances;
   const normalizedValue = useMemo(
     () => normalizeChartAxisLabelValue(value, type),
     [type, value],
   );
 
   const labelText = useMemo(() => {
+    if (maskValue) {
+      return HIDDEN_BALANCE_MASK;
+    }
+
     return formatFiatAmount(normalizedValue, quoteCurrency, {
       currencyAbbreviation,
     });
-  }, [currencyAbbreviation, normalizedValue, quoteCurrency]);
+  }, [currencyAbbreviation, maskValue, normalizedValue, quoteCurrency]);
 
   // We need an accurate text width to position the label without clipping.
   // Measuring via onLayout is correct, but between timeframes the label text can

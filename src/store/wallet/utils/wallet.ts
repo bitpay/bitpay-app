@@ -47,7 +47,7 @@ import {
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import {toStringOrEmpty} from '../../../utils/text';
-import _, {find, isEqual} from 'lodash';
+import {find, isEqual} from 'lodash';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
   AssetsByChainData,
@@ -353,9 +353,6 @@ export const toFiat =
 
     if (!ratesPerCurrency) {
       // Rate not found return 0
-      logManager.debug(
-        `[toFiat] Rate not found for currency: ${currencyAbbreviation}`,
-      );
       return 0;
     }
 
@@ -366,9 +363,6 @@ export const toFiat =
 
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
-      logManager.debug(
-        `[toFiat] Rate not found or zero for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
-      );
       return 0;
     }
 
@@ -808,48 +802,6 @@ export const findWalletByIdHashed = (
   });
 };
 
-type getFiatOptions = {
-  dispatch: AppDispatch;
-  satAmount: number;
-  defaultAltCurrencyIsoCode: string;
-  currencyAbbreviation: string;
-  chain: string;
-  rates: Rates;
-  tokenAddress: string | undefined;
-  hideWallet: boolean | undefined;
-  hideWalletByAccount: boolean | undefined;
-  network: Network;
-  currencyDisplay?: 'symbol' | 'code';
-};
-
-const getFiat = ({
-  dispatch,
-  satAmount,
-  defaultAltCurrencyIsoCode,
-  currencyAbbreviation,
-  chain,
-  rates,
-  tokenAddress,
-  hideWallet,
-  hideWalletByAccount,
-  network,
-}: getFiatOptions) =>
-  convertToFiat(
-    dispatch(
-      toFiat(
-        satAmount,
-        defaultAltCurrencyIsoCode,
-        currencyAbbreviation,
-        chain,
-        rates,
-        tokenAddress,
-      ),
-    ),
-    hideWallet,
-    hideWalletByAccount,
-    network,
-  );
-
 export const buildUIFormattedWallet: (
   wallet: Wallet,
   defaultAltCurrencyIsoCode: string,
@@ -888,19 +840,6 @@ export const buildUIFormattedWallet: (
     tssMetadata,
   } = wallet;
 
-  const opts: Omit<getFiatOptions, 'satAmount'> = {
-    dispatch,
-    defaultAltCurrencyIsoCode,
-    currencyAbbreviation,
-    chain,
-    rates,
-    tokenAddress,
-    hideWallet,
-    hideWalletByAccount,
-    network,
-    currencyDisplay,
-  };
-
   const buildUIFormattedWallet = {
     id,
     keyId,
@@ -935,15 +874,36 @@ export const buildUIFormattedWallet: (
   } as WalletRowProps;
 
   if (!skipFiatCalculations) {
+    const fiatPerSat = dispatch(
+      toFiat(
+        1,
+        defaultAltCurrencyIsoCode,
+        currencyAbbreviation,
+        chain,
+        rates,
+        tokenAddress,
+      ),
+    );
+    const formattedFiatBalances = new Map<number, string>();
     const computeAndFormatFiatBalance = (satAmount: number) => {
-      const fiatAmount = getFiat({...opts, satAmount});
-      return {
-        fiatAmount,
-        formatted: formatFiat({
+      const fiatAmount = convertToFiat(
+        satAmount * fiatPerSat,
+        hideWallet,
+        hideWalletByAccount,
+        network,
+      );
+      let formatted = formattedFiatBalances.get(fiatAmount);
+      if (formatted === undefined) {
+        formatted = formatFiat({
           fiatAmount,
           defaultAltCurrencyIsoCode,
           currencyDisplay,
-        }),
+        });
+        formattedFiatBalances.set(fiatAmount, formatted);
+      }
+      return {
+        fiatAmount,
+        formatted,
       };
     };
 
@@ -1012,6 +972,15 @@ export const getWalletStableDeduplicationId = (
   return credentialsWalletId || undefined;
 };
 
+const buildStableListRowId = (prefix: string, ...parts: unknown[]): string => {
+  const encodedParts = parts.map(part => {
+    const value = toStringOrEmpty(part);
+    return `${value.length}:${value}`;
+  });
+
+  return `${prefix}_${encodedParts.join('|')}`;
+};
+
 export const isWalletVisibleForKey = (
   key: Key | undefined,
   wallet: Wallet | undefined,
@@ -1062,12 +1031,20 @@ export const buildAccountList = (
 ) => {
   const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
 
-  const formatBalance = (fiatAmount: number) =>
-    formatFiat({
+  const formattedBalanceCache = new Map<number, string>();
+  const formatBalance = (fiatAmount: number) => {
+    const cachedBalance = formattedBalanceCache.get(fiatAmount);
+    if (cachedBalance !== undefined) {
+      return cachedBalance;
+    }
+    const formattedBalance = formatFiat({
       fiatAmount,
       defaultAltCurrencyIsoCode,
       currencyDisplay: 'symbol',
     });
+    formattedBalanceCache.set(fiatAmount, formattedBalance);
+    return formattedBalance;
+  };
 
   const seenWalletIds = new Set<string>();
   const wallets = (opts?.filterByCustomWallets || key?.wallets || []).filter(
@@ -1179,7 +1156,7 @@ export const buildAccountList = (
 
     if (!existingAccount) {
       accountMap[accountKey] = {
-        id: _.uniqueId('account_'),
+        id: buildStableListRowId('account', key.id, accountKey),
         keyId,
         chains: [chain],
         accountName: isTokensSupportedChain
@@ -1275,6 +1252,7 @@ export const buildAccountList = (
 // needed for building SectionList format
 const buildUIFormattedAssetsList = (
   assetsByChainMap: {[key: string]: Partial<AssetsByChainListProps>},
+  accountItem: AccountRowProps,
   wallet: WalletRowProps,
   defaultAltCurrencyIsoCode: string,
   currencyDisplay?: 'symbol',
@@ -1326,7 +1304,12 @@ const buildUIFormattedAssetsList = (
       chains: [wallet.chain], // useful only for chain selector
       data: [
         {
-          id: _.uniqueId('chain_'),
+          id: buildStableListRowId(
+            'chain',
+            accountItem.keyId,
+            accountItem.receiveAddress,
+            wallet.chain,
+          ),
           chain: wallet.chain,
           chainImg: wallet.badgeImg || wallet.img,
           chainName: wallet.chainName,
@@ -1377,6 +1360,7 @@ export const buildAssetsByChainList = (
   accountItem?.wallets?.forEach(coin => {
     buildUIFormattedAssetsList(
       assetsByChainMap,
+      accountItem,
       coin,
       defaultAltCurrencyIso,
       'symbol',
@@ -1398,6 +1382,7 @@ export const buildAssetsByChainList = (
 
 const buildUIFormattedAssets = (
   assetsByChainList: {[key: string]: AssetsByChainData},
+  accountItem: AccountRowProps,
   wallet: WalletRowProps,
   defaultAltCurrencyIsoCode: string,
   currencyDisplay?: 'symbol',
@@ -1440,7 +1425,12 @@ const buildUIFormattedAssets = (
     });
   } else {
     const newChainData: AssetsByChainData = {
-      id: _.uniqueId('chain_'),
+      id: buildStableListRowId(
+        'chain',
+        accountItem.keyId,
+        accountItem.receiveAddress,
+        wallet.chain,
+      ),
       chain: wallet.chain,
       chainImg: wallet.badgeImg || wallet.img,
       chainName: wallet.chainName,
@@ -1491,6 +1481,7 @@ export const buildAssetsByChain = (
   accountItem?.wallets?.forEach(coin => {
     buildUIFormattedAssets(
       assetsByChainList,
+      accountItem,
       coin,
       defaultAltCurrencyIso,
       'symbol',

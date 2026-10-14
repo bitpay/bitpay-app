@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Animated, Easing, View} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import {Animated, Easing, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {
   White,
   Black,
@@ -43,128 +43,114 @@ import {
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Loader from '../../../components/loader/Loader';
 
-const ProgressButton = styled(TouchableOpacity)<{
-  context?: TSSProgressTrackerContext;
-}>`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  margin: ${({context}) =>
-    context === 'swapCrypto' ? '0 15px 5px 15px' : '0'};
-`;
-
-const ProgressIndicator = styled.View<{status: TSSSigningStatus}>`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: ${({status, theme: {dark}}) =>
-    status === 'complete'
-      ? dark
-        ? '#004D27'
-        : Success25
-      : dark
-      ? '#2240C440'
-      : LightBlue};
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-`;
-
-const ProgressButtonText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const ProgressBarContainer = styled.View`
-  height: 3px;
-  background-color: ${({theme: {dark}}) => (dark ? '#2A2A2A' : '#E5E5E5')};
-  border-radius: 2px;
-  margin-top: 8px;
-  overflow: hidden;
-`;
-
-const ProgressBarFill = styled.View<{progress: number; complete?: boolean}>`
-  height: 100%;
-  width: ${({progress}) => progress}%;
-  background-color: ${({complete, theme: {dark}}) =>
-    complete ? (dark ? '#00A651' : '#2FCF6E') : Action};
-  border-radius: 2px;
-`;
-
-const DetailsLabel = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme}) => theme.colors.description};
-  margin-bottom: 8px;
-`;
-
-const ModalContainer = styled.View`
-  padding: 20px;
-  padding-bottom: 40px;
-`;
-
-const Header = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-`;
-
-const Title = styled(H4)`
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const StepsContainer = styled.View``;
-
-const StepConnector = styled.View<{completed?: boolean}>`
-  width: 2px;
-  flex: 1;
-  min-height: 20px;
-  margin-top: 0px;
-  background-color: ${({theme: {dark}, completed}) =>
-    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : LightBlue};
-`;
-
-const StepTitle = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
-
-const StepSubtitle = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  line-height: 20px;
-`;
-
-const StepTime = styled(BaseText)`
-  color: ${({theme}) => theme.colors.description};
-  font-size: 12px;
-  margin-left: auto;
-`;
-
-const HelpButton = styled(TouchableOpacity)`
-  margin-left: 6px;
-  padding: 2px 4px;
-`;
-
-const HelpBanner = styled.View`
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
-`;
-
-const HelpBannerText = styled(BaseText)`
-  font-size: 13px;
-  line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
-`;
+const styles = StyleSheet.create({
+  progressButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  progressButtonMarginSwap: {
+    marginTop: 0,
+    marginRight: 15,
+    marginBottom: 5,
+    marginLeft: 15,
+  },
+  progressButtonMarginDefault: {
+    margin: 0,
+  },
+  progressIndicator: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  progressButtonText: {
+    fontSize: 16,
+  },
+  progressBarContainer: {
+    height: 3,
+    borderRadius: 2,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  modalContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  stepConnector: {
+    width: 2,
+    flex: 1,
+    minHeight: 20,
+    marginTop: 0,
+  },
+  stepTitle: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  stepTime: {
+    fontSize: 12,
+    marginLeft: 'auto',
+  },
+  helpButton: {
+    marginLeft: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  helpBanner: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  helpBannerText: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  copayerList: {
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  copayerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    position: 'relative',
+  },
+  copayerIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  copayerName: {
+    fontSize: 14,
+  },
+});
 
 const TimeAgo: React.FC<{date: Date}> = ({date}) => {
+  const theme = useTheme();
   const [label, setLabel] = useState(() => GetAmTimeAgo(date.getTime()));
   useEffect(() => {
     const interval = setInterval(
@@ -173,54 +159,12 @@ const TimeAgo: React.FC<{date: Date}> = ({date}) => {
     );
     return () => clearInterval(interval);
   }, [date]);
-  return <StepTime>{label}</StepTime>;
+  return (
+    <BaseText style={[styles.stepTime, {color: theme.colors.description}]}>
+      {label}
+    </BaseText>
+  );
 };
-
-const CopayerList = styled.View`
-  margin-top: 0px;
-  margin-bottom: 0px;
-`;
-
-const CopayerRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding: 4px 0;
-  position: relative;
-`;
-
-const CopayerIndicator = styled.View<{signed: boolean}>`
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background-color: ${({signed, theme: {dark}}) =>
-    signed ? (dark ? '#004D27' : Success25) : 'transparent'};
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-`;
-
-const CopayerName = styled(BaseText)<{signed: boolean}>`
-  color: ${({theme: {dark}, signed}) =>
-    signed ? (dark ? White : Black) : dark ? White : SlateDark};
-  font-size: 14px;
-`;
-
-const CopayerRail = styled.View`
-  width: 20px;
-  align-items: center;
-  margin-right: 8px;
-  position: relative;
-`;
-
-const CopayerConnector = styled.View<{signed: boolean}>`
-  width: 2px;
-  height: 28px;
-  position: absolute;
-  top: 20px;
-  left: 5px;
-  background-color: ${({theme: {dark}, signed}) =>
-    signed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
-`;
 
 export interface TSSCopayer {
   id: string;
@@ -467,28 +411,65 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     <>
       {!hideTracker ? (
         <View style={{paddingBottom: 10}}>
-          <ProgressButton
+          <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => setModalVisible(true)}
-            context={context}>
-            <ProgressIndicator status={status}>
+            style={[
+              styles.progressButton,
+              {borderColor: theme.dark ? SlateDark : Slate30},
+              context === 'swapCrypto'
+                ? styles.progressButtonMarginSwap
+                : styles.progressButtonMarginDefault,
+            ]}>
+            <View
+              style={[
+                styles.progressIndicator,
+                {
+                  backgroundColor:
+                    status === 'complete'
+                      ? theme.dark
+                        ? '#004D27'
+                        : Success25
+                      : theme.dark
+                      ? '#2240C440'
+                      : LightBlue,
+                },
+              ]}>
               {status === 'complete' ? (
                 <SuccessIcon width={20} height={16} />
               ) : (
                 <ClockIcon width={28} height={28} />
               )}
-            </ProgressIndicator>
+            </View>
             <View style={{flex: 1, marginRight: 12}}>
-              <ProgressButtonText>{getButtonText()}</ProgressButtonText>
-              <ProgressBarContainer style={{marginTop: 6}}>
-                <ProgressBarFill
-                  progress={getProgressPercentage()}
-                  complete={status === 'complete'}
+              <BaseText
+                style={[styles.progressButtonText, {color: theme.colors.text}]}>
+                {getButtonText()}
+              </BaseText>
+              <View
+                style={[
+                  styles.progressBarContainer,
+                  {backgroundColor: theme.dark ? '#2A2A2A' : '#E5E5E5'},
+                  {marginTop: 6},
+                ]}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${getProgressPercentage()}%`,
+                      backgroundColor:
+                        status === 'complete'
+                          ? theme.dark
+                            ? '#00A651'
+                            : '#2FCF6E'
+                          : Action,
+                    },
+                  ]}
                 />
-              </ProgressBarContainer>
+              </View>
             </View>
             <ChevronDownSvg width={16} height={16} />
-          </ProgressButton>
+          </TouchableOpacity>
         </View>
       ) : (
         <></>
@@ -498,14 +479,16 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         isVisible={isModalVisible}
         onBackdropPress={handleClose}
         modalLibrary="bottom-sheet">
-        <ModalContainer>
-          <Header>
+        <View style={styles.modalContainer}>
+          <View style={styles.header}>
             <View style={{width: 24}} />
-            <Title>{t('Transaction Progress')}</Title>
+            <H4 style={{color: theme.colors.text}}>
+              {t('Transaction Progress')}
+            </H4>
             <View style={{width: 24}} />
-          </Header>
+          </View>
 
-          <StepsContainer>
+          <View>
             {steps.map((step, index) => {
               const stepStatus = getStepStatus(index);
               const isActive = stepStatus === 'active';
@@ -532,8 +515,20 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                       </StepIndicator>
                       {index < steps.length - 1 &&
                         !(index === 2 && showSigningHelp) && (
-                          <StepConnector
-                            completed={getStepStatus(index + 1) !== 'pending'}
+                          <View
+                            style={[
+                              styles.stepConnector,
+                              {
+                                backgroundColor:
+                                  getStepStatus(index + 1) !== 'pending'
+                                    ? theme.dark
+                                      ? '#004D27'
+                                      : Success25
+                                    : theme.dark
+                                    ? '#2A2A2A'
+                                    : LightBlue,
+                              },
+                            ]}
                           />
                         )}
                     </StepRail>
@@ -541,41 +536,64 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                     <StepContent style={{paddingTop: index >= 2 ? 10 : 5}}>
                       <View
                         style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <StepTitle>{step.title}</StepTitle>
+                        <BaseText
+                          style={[
+                            styles.stepTitle,
+                            {color: theme.dark ? White : Black},
+                          ]}>
+                          {step.title}
+                        </BaseText>
                         {index === 2 && (
-                          <HelpButton
+                          <TouchableOpacity
                             activeOpacity={ActiveOpacity}
-                            onPress={() => setShowSigningHelp(v => !v)}>
+                            onPress={() => setShowSigningHelp(v => !v)}
+                            style={styles.helpButton}>
                             <InfoIcon
                               bgColor={theme.dark ? Slate : undefined}
                             />
-                          </HelpButton>
+                          </TouchableOpacity>
                         )}
                         {step.time &&
                           status !== 'initializing' &&
                           status !== 'error' && <TimeAgo date={step.time} />}
                       </View>
                       {index === 2 && showSigningHelp && (
-                        <HelpBanner>
-                          <HelpBannerText>
+                        <View
+                          style={[
+                            styles.helpBanner,
+                            {
+                              backgroundColor: theme.dark
+                                ? Midnight
+                                : LightBlue,
+                            },
+                          ]}>
+                          <BaseText
+                            style={[
+                              styles.helpBannerText,
+                              {color: theme.dark ? White : BitPay},
+                            ]}>
                             {t(
                               'All co-signers must have the app open and active during signing. If the session gets stuck, delete this proposal and create a new one.',
                             )}
-                          </HelpBannerText>
-                        </HelpBanner>
+                          </BaseText>
+                        </View>
                       )}
                       {step.subtitle && (
-                        <StepSubtitle>
+                        <BaseText
+                          style={[
+                            styles.stepSubtitle,
+                            {color: theme.dark ? White : SlateDark},
+                          ]}>
                           {index === 0 && creatorCopayerName
                             ? `${step.subtitle} - ${t(
                                 'Created by',
                               )}: ${creatorCopayerName}`
                             : step.subtitle}
-                        </StepSubtitle>
+                        </BaseText>
                       )}
 
                       {showCopayers && copayers.length > 0 && (
-                        <CopayerList style={{marginTop: 8}}>
+                        <View style={[styles.copayerList, {marginTop: 8}]}>
                           {copayers
                             .filter(c => !hiddenCopayerIds.has(c.id))
                             .map(copayer => (
@@ -585,29 +603,51 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                                   opacity:
                                     copayerOpacities.get(copayer.id) ?? 1,
                                 }}>
-                                <CopayerRow>
-                                  <CopayerIndicator signed={copayer.signed}>
+                                <View style={styles.copayerRow}>
+                                  <View
+                                    style={[
+                                      styles.copayerIndicator,
+                                      {
+                                        backgroundColor: copayer.signed
+                                          ? theme.dark
+                                            ? '#004D27'
+                                            : Success25
+                                          : 'transparent',
+                                      },
+                                    ]}>
                                     {copayer.signed ? (
                                       <SuccessIcon width={12} height={12} />
                                     ) : (
                                       <Loader size={16} spinning />
                                     )}
-                                  </CopayerIndicator>
-                                  <CopayerName signed={copayer.signed}>
+                                  </View>
+                                  <BaseText
+                                    style={[
+                                      styles.copayerName,
+                                      {
+                                        color: copayer.signed
+                                          ? theme.dark
+                                            ? White
+                                            : Black
+                                          : theme.dark
+                                          ? White
+                                          : SlateDark,
+                                      },
+                                    ]}>
                                     {copayer.name}
-                                  </CopayerName>
-                                </CopayerRow>
+                                  </BaseText>
+                                </View>
                               </Animated.View>
                             ))}
-                        </CopayerList>
+                        </View>
                       )}
                     </StepContent>
                   </StepRow>
                 </View>
               );
             })}
-          </StepsContainer>
-        </ModalContainer>
+          </View>
+        </View>
       </SheetModal>
     </>
   );

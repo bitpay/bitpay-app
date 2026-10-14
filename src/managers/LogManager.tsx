@@ -13,6 +13,7 @@ class LogManager {
   private listeners: Set<(data: LogData) => void> = new Set();
   private logs: LogEntry[] = [];
   private maxLogs: number = 1000;
+  private notificationScheduled = false;
 
   private constructor() {}
 
@@ -34,7 +35,7 @@ class LogManager {
       this.logs = this.logs.slice(-this.maxLogs);
     }
 
-    this.notifyListeners();
+    this.scheduleNotifyListeners();
   }
 
   getLogs(): LogEntry[] {
@@ -50,7 +51,7 @@ class LogManager {
 
   clearLogs() {
     this.logs = [];
-    this.notifyListeners();
+    this.scheduleNotifyListeners();
   }
 
   subscribe(listener: (data: LogData) => void): () => void {
@@ -61,9 +62,17 @@ class LogManager {
     };
   }
 
-  private notifyListeners() {
-    const data = this.getLogData();
-    this.listeners.forEach(listener => listener(data));
+  private scheduleNotifyListeners() {
+    if (this.notificationScheduled || this.listeners.size === 0) {
+      return;
+    }
+
+    this.notificationScheduled = true;
+    Promise.resolve().then(() => {
+      this.notificationScheduled = false;
+      const data = this.getLogData();
+      this.listeners.forEach(listener => listener(data));
+    });
   }
 
   private _logWithSentryMessage(
