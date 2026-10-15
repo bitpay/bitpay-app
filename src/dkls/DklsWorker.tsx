@@ -18,11 +18,15 @@ let _isReady = false;
 let _readyResolve: (() => void) | null = null;
 let _readyReject: ((e: Error) => void) | null = null;
 let _bootTimer: ReturnType<typeof setTimeout> | null = null;
-const _readyPromise: Promise<void> = new Promise<void>((res, rej) => {
-  _readyResolve = res;
-  _readyReject = rej;
-});
-_readyPromise.catch(() => {});
+let _readyPromise: Promise<void>;
+const resetReadiness = () => {
+  _readyPromise = new Promise<void>((res, rej) => {
+    _readyResolve = res;
+    _readyReject = rej;
+  });
+  _readyPromise.catch(() => {});
+};
+resetReadiness();
 const _outQueue: string[] = [];
 const pendings = new Map<number, Pending>();
 let seq = 1;
@@ -45,6 +49,12 @@ const failBoot = (reason: string) => {
   const reject = _readyReject;
   _readyResolve = null;
   _readyReject = null;
+  // Unmount the failed WebView and start over on the next call, so one
+  // failed boot doesn't disable TSS until the app restarts. Calls already
+  // waiting hold the old promise and are rejected below.
+  resetReadiness();
+  _mountRequested = false;
+  _mountListeners.forEach(listener => listener());
   reject(new Error(`DKLS worker failed to start: ${reason}`));
 };
 

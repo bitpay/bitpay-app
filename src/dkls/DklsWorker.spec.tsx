@@ -64,6 +64,51 @@ describe('DklsWorkerHost', () => {
     }
   });
 
+  it('remounts and works again on the next call after a failed boot', async () => {
+    jest.useFakeTimers();
+    try {
+      const {render, act, callWorker} = load();
+      const renderer = await render();
+      const first = callWorker({type: 'init'});
+      const firstOutcome = expect(first).rejects.toThrow(
+        'DKLS worker failed to start',
+      );
+      await act(async () => {
+        jest.advanceTimersByTime(20000);
+      });
+      await firstOutcome;
+      expect(webViews(renderer)).toHaveLength(0);
+
+      let second!: Promise<unknown>;
+      await act(async () => {
+        second = callWorker({type: 'init'});
+      });
+      expect(webViews(renderer)).toHaveLength(1);
+      const {onMessage} = webViews(renderer)[0].props;
+      await act(async () => {
+        onMessage({
+          nativeEvent: {
+            data: JSON.stringify({id: -1, ok: true, result: 'BOOTED'}),
+          },
+        });
+      });
+      // Booted: the call is no longer waiting on readiness, so the old
+      // failure doesn't reject it.
+      let settled = false;
+      second.then(
+        () => (settled = true),
+        () => (settled = true),
+      );
+      await act(async () => {
+        jest.advanceTimersByTime(20000);
+      });
+      expect(settled).toBe(false);
+      act(() => renderer.unmount());
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('mounts straight away when the worker was requested before render', async () => {
     const {render, act, requestDklsWorkerMount} = load();
     requestDklsWorkerMount();
