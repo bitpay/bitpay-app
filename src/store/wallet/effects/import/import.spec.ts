@@ -7,6 +7,7 @@
  *   - startMigration      : thunk — test the "no directory" / "no keys" early-
  *                           exit paths that trigger navigation without needing BWS
  *   - startImportFromHardwareWallet: basic validation paths (no key / bad coin)
+ *   - serverAssistedImport : progress-message queue never delays the result
  *   - getMissingVmAccounts (private) : indirectly via startImportMnemonic flow
  */
 
@@ -18,7 +19,10 @@ import {
   startMigrationMMKVStorage,
   startMigration,
   startImportFromHardwareWallet,
+  serverAssistedImport,
 } from './import';
+import {BwcProvider} from '../../../../lib/bwc';
+import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 
 // ---------------------------------------------------------------------------
 // Mocks – must appear before any imports that trigger module evaluation
@@ -457,5 +461,91 @@ describe('startImportFromHardwareWallet – validation paths', () => {
     await expect(
       store.dispatch(startImportFromHardwareWallet(args)),
     ).rejects.toThrow('already in the app');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// serverAssistedImport – progress messages are paced but never delay the result
+// ---------------------------------------------------------------------------
+
+describe('serverAssistedImport – progress queue', () => {
+  const bwcImport = BwcProvider.API.serverAssistedImport as jest.Mock;
+  let emitter: any;
+  let show: jest.SpyInstance;
+
+  const wallet = (walletId: string) => ({credentials: {walletId}} as any);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    show = jest.spyOn(ongoingProcessManager, 'show').mockImplementation();
+    bwcImport.mockImplementation((_opts, _clientOpts, events) => {
+      emitter = events;
+    });
+  });
+
+  afterEach(() => {
+    show.mockRestore();
+    bwcImport.mockReset();
+    jest.useRealTimers();
+  });
+
+  const emitProgress = () => {
+    emitter.emit('findingCopayers', 16);
+    emitter.emit('foundCopayers', 2);
+    emitter.emit('findingCopayers', 2);
+    emitter.emit('foundCopayers', 0);
+    emitter.emit('gettingStatuses');
+    emitter.emit('gatheringWalletsInfos', 2);
+  };
+
+  it('paces queued messages one per second while the import runs', () => {
+    serverAssistedImport({words: 'w'});
+    emitProgress();
+
+    expect(show).toHaveBeenCalledTimes(1);
+    expect(show).toHaveBeenLastCalledWith('findingCopayers', expect.anything());
+    jest.advanceTimersByTime(1000);
+    expect(show).toHaveBeenCalledTimes(2);
+    expect(show).toHaveBeenLastCalledWith('foundCopayers', expect.anything());
+  });
+
+  it('resolves on done without waiting for queued messages', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitProgress();
+    emitter.emit('done', {key: {id: 'k'}, clients: [wallet('a'), wallet('a')]});
+
+    await expect(result).resolves.toEqual({
+      key: {id: 'k'},
+      wallets: [wallet('a')],
+    });
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no queued message after done, so the modal cannot reappear', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitProgress();
+    emitter.emit('done', {key: {id: 'k'}, clients: [wallet('a')]});
+    await result;
+
+    emitter.emit('gettingStatuses');
+    jest.advanceTimersByTime(60000);
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects on error without waiting for queued messages', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitProgress();
+    emitter.emit('error', new Error('boom'));
+
+    await expect(result).rejects.toThrow('boom');
+    jest.advanceTimersByTime(60000);
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it('still rejects with WALLET_DOES_NOT_EXIST when nothing was found', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitter.emit('done', {key: {id: 'k'}, clients: []});
+
+    await expect(result).rejects.toThrow('WALLET_DOES_NOT_EXIST');
   });
 });

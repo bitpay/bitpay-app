@@ -41,7 +41,6 @@ import {
   checkEncryptedKeysForEddsaMigration,
   getAccount,
   isL2NoSideChainNetwork,
-  sleep,
 } from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {
@@ -218,7 +217,6 @@ export const addWallet =
           !key?.properties?.xPrivKeyEDDSAEncrypted
         ) {
           try {
-            await sleep(500);
             key.methods.addKeyByAlgorithm('EDDSA', {password});
             key.properties = key.methods.toObj();
           } catch (err) {
@@ -888,7 +886,6 @@ export const getDecryptPassword =
         showDecryptPasswordModal({
           onSubmitHandler: async (_password: string) => {
             dispatch(dismissDecryptPasswordModal());
-            await sleep(500);
             if (checkEncryptPassword(key, _password)) {
               dispatch(checkEncryptedKeysForEddsaMigration(key, _password));
               return resolve(_password);
