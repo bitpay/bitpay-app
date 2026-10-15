@@ -109,6 +109,20 @@ async function runDeviceEvent({
   return visitorId;
 }
 
+export const DEVICE_EVENT_TIMEOUT_MS = 30000;
+
+// A hung request or fingerprint would otherwise block the queue forever.
+const withTimeout = <T>(promise: Promise<T>): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Device Intelligence event timed out')),
+      DEVICE_EVENT_TIMEOUT_MS,
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
 // fisherman is a singleton, so events are serialized to avoid stomping the shared token.
 let eventQueue: Promise<unknown> = Promise.resolve();
 
@@ -119,7 +133,7 @@ let eventQueue: Promise<unknown> = Promise.resolve();
 export const submitDeviceEvent = (
   params: DeviceEventParams,
 ): Promise<string | undefined> => {
-  const result = eventQueue.then(() => runDeviceEvent(params));
+  const result = eventQueue.then(() => withTimeout(runDeviceEvent(params)));
   eventQueue = result.catch(() => undefined);
   return result;
 };
