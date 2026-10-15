@@ -34,6 +34,15 @@ export const TOKEN_LISTS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 type CachedTokenList = {savedAt: number; tokens: Token[]};
 
+// populateTokenInfo reads these fields; one malformed entry must not be able
+// to break every launch once it is cached.
+const isUsableToken = (token: any): token is Token =>
+  !!token &&
+  typeof token.address === 'string' &&
+  typeof token.symbol === 'string' &&
+  typeof token.name === 'string' &&
+  typeof token.decimals === 'number';
+
 let tokenListsStorage: MMKV | undefined;
 const getTokenListsStorage = () =>
   (tokenListsStorage ??= new MMKV({id: TOKEN_LISTS_STORAGE_ID}));
@@ -48,7 +57,10 @@ const readCachedTokenList = (chain: string): CachedTokenList | undefined => {
     if (typeof parsed?.savedAt !== 'number' || !Array.isArray(parsed.tokens)) {
       return undefined;
     }
-    return parsed;
+    return {
+      savedAt: parsed.savedAt,
+      tokens: parsed.tokens.filter(isUsableToken),
+    };
   } catch {
     logManager.warn(
       `[startGetTokenOptions] ignoring unreadable cached token list for ${chain}`,
@@ -83,7 +95,15 @@ const fetchTokenList = async (chain: string): Promise<Token[] | undefined> => {
       );
       return undefined;
     }
-    return data;
+    const tokens = data.filter(isUsableToken);
+    if (tokens.length !== data.length) {
+      logManager.warn(
+        `[startGetTokenOptions] dropped ${
+          data.length - tokens.length
+        } malformed token(s) for ${chain}`,
+      );
+    }
+    return tokens;
   } catch {
     logManager.info(
       `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
@@ -135,6 +155,33 @@ const fetchTokenLists = async (
   return {results, anyFetched: results.some(result => result.fetched)};
 };
 
+// A cache that can't be applied is discarded so the caller fetches fresh.
+const applyCachedTokenLists = (
+  cached: Record<string, CachedTokenList | undefined>,
+): boolean => {
+  try {
+    applyTokenLists(
+      SUPPORTED_VM_TOKENS.map(chain => ({
+        chain,
+        tokens: cached[chain]!.tokens,
+      })),
+    );
+    return true;
+  } catch (error) {
+    const errorStr = error instanceof Error ? error.message : String(error);
+    logManager.warn(
+      `[startGetTokenOptions] discarding cached token lists: ${errorStr}`,
+    );
+    for (const chain of SUPPORTED_VM_TOKENS) {
+      cached[chain] = undefined;
+      try {
+        getTokenListsStorage().delete(chain);
+      } catch {}
+    }
+    return false;
+  }
+};
+
 let backgroundTokenListsRefresh: Promise<void> | undefined;
 
 const refreshTokenListsInBackground = (
@@ -169,13 +216,10 @@ export const startGetTokenOptions =
 
       // Every chain cached: use it now, and refresh in the background when
       // any list is older than the TTL.
-      if (SUPPORTED_VM_TOKENS.every(chain => cached[chain])) {
-        applyTokenLists(
-          SUPPORTED_VM_TOKENS.map(chain => ({
-            chain,
-            tokens: cached[chain]!.tokens,
-          })),
-        );
+      if (
+        SUPPORTED_VM_TOKENS.every(chain => cached[chain]) &&
+        applyCachedTokenLists(cached)
+      ) {
         logManager.info('successful [startGetTokenOptions] (cached)');
         dispatch(AppActions.appTokensDataLoaded());
         const now = Date.now();

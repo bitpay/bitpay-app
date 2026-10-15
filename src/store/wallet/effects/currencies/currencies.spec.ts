@@ -15,6 +15,7 @@ jest.mock('react-native-mmkv', () => ({
   MMKV: jest.fn().mockImplementation(() => ({
     getString: (k: string) => mockMmkvStore.get(k),
     set: (k: string, v: string) => mockMmkvStore.set(k, v),
+    delete: (k: string) => mockMmkvStore.delete(k),
   })),
 }));
 
@@ -341,6 +342,38 @@ describe('startGetTokenOptions – token list cache', () => {
     expect(mockedAxios.get).toHaveBeenCalledTimes(2);
     expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
     expect(addressesIn(0)).toHaveLength(2);
+  });
+
+  it('drops malformed tokens before caching or applying them', async () => {
+    mockedAxios.get.mockResolvedValue({
+      data: [makeToken(), {address: '0xbad', symbol: 'BAD'}],
+    });
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    expect(cachedChain('eth').tokens).toHaveLength(1);
+    expect(addressesIn(0)).toHaveLength(2);
+    expect(failedGetTokenOptions).not.toHaveBeenCalled();
+  });
+
+  it('discards a cache that fails to apply and fetches fresh lists', async () => {
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})]);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})]);
+    mockedSetTokenOptions.mockImplementationOnce(() => {
+      throw new Error('bad cached data');
+    });
+    mockedAxios.get.mockResolvedValue({
+      data: [makeToken({address: '0xf1', symbol: 'F1'})],
+    });
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(2);
+    expect(cachedChain('eth').tokens[0].address).toBe('0xf1');
+    expect(failedGetTokenOptions).not.toHaveBeenCalled();
   });
 
   it('ignores an unreadable cache entry and fetches', async () => {
