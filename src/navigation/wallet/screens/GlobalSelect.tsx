@@ -60,6 +60,7 @@ import {
   TextAlign,
   BaseText,
   Paragraph,
+  HeaderTitle,
 } from '../../../components/styled/Text';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import ReceiveAddress from '../components/ReceiveAddress';
@@ -139,6 +140,8 @@ import type {Rates} from '../../../store/rate/rate.models';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
 import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
+import {getEmailRecipientAddress} from './send/sendTo.utils';
+import {EmailUnableToReceiveCrypto} from '../components/ErrorMessages';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 const EMPTY_GLOBAL_SELECT_RATES: Rates = {};
@@ -468,9 +471,10 @@ export type GlobalSelectParamList = {
   context: GlobalSelectModalContext;
   _preloadContent?: boolean;
   recipient?: {
-    address: string;
-    currency: string;
-    chain: string;
+    address?: string;
+    currency?: string;
+    chain?: string;
+    email?: string;
     name?: string;
     type?: string;
     network?: string;
@@ -1417,6 +1421,39 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     setHideCloseButton(true);
   }, [currenciesSupportedList]);
 
+  const isRecipientContext = ['scanner', 'contact'].includes(context);
+  const canBuyRecipientCurrency =
+    !recipient?.network || recipient.network === Network.mainnet;
+  const recipientNetworkName = recipient?.opts?.showEVMWalletsAndTokens
+    ? 'EVM'
+    : SupportedChainsOptions.find(({chain}) => chain === recipient?.chain)
+        ?.chainName;
+
+  useLayoutEffect(() => {
+    if (useAsModal || !isRecipientContext) {
+      return;
+    }
+    navigation.setOptions({
+      headerTitle: () => <HeaderTitle>{t('Sending from')}</HeaderTitle>,
+    });
+  }, [isRecipientContext, navigation, t, useAsModal]);
+
+  const goToBuyRecipientCurrency = () => {
+    dispatch(
+      Analytics.track('Clicked Buy Crypto', {
+        context: `GlobalSelect-${context}`,
+        coin: recipient?.currency || '',
+        chain: recipient?.chain || '',
+      }),
+    );
+    navigation.navigate('BuyAndSellRoot', {
+      context: 'buyCrypto',
+      ...(recipient?.currency && recipient?.chain
+        ? {currencyAbbreviation: recipient.currency, chain: recipient.chain}
+        : {}),
+    });
+  };
+
   const goToBuyCrypto = async () => {
     if (globalSelectOnDismiss) {
       globalSelectOnDismiss(undefined);
@@ -1554,6 +1591,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             message: opts?.message,
             solanaPayOpts: opts?.solanaPayOpts,
           });
+          sleep(300).then(() => setButtonState?.(null));
         } catch (err: any) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
@@ -1578,6 +1616,22 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     [hideOngoingProcess, navigation, showOngoingProcess],
   );
 
+  const resolveEmailAddress = useCallback(
+    async (email: string, wallet: Wallet) => {
+      showOngoingProcess('FETCHING_PAYMENT_INFO');
+      const address = await dispatch(getEmailRecipientAddress(email, wallet));
+      hideOngoingProcess();
+      if (!address) {
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal(EmailUnableToReceiveCrypto(email)),
+        );
+      }
+      return address;
+    },
+    [dispatch, hideOngoingProcess, showOngoingProcess],
+  );
+
   const onWalletSelect = useCallback(
     async (wallet: Wallet | undefined, addWalletData?: AddWalletData) => {
       if (useAsModal && globalSelectOnDismiss) {
@@ -1588,7 +1642,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         return;
       }
       if (['contact', 'scanner'].includes(context)) {
-        const {name, address, type, destinationTag, opts} = recipient!;
+        const {name, type, destinationTag, email, opts} = recipient!;
+        const address =
+          recipient!.address ||
+          (email ? await resolveEmailAddress(email, wallet) : undefined);
         if (!address) {
           return;
         }
@@ -1599,6 +1656,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             type: type || context,
             address,
             destinationTag,
+            email,
           };
 
           if (!amount) {
@@ -1610,14 +1668,14 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
-              onAmountSelected: async (amount, setButtonState, opts) => {
+              onAmountSelected: async (amount, setButtonState, amountOpts) => {
                 dispatch(
                   createProposalAndNavigate({
                     wallet,
                     amount: Number(amount),
                     sendTo,
                     setButtonState,
-                    opts,
+                    opts: {...opts, ...amountOpts},
                   }),
                 );
               },
@@ -1657,6 +1715,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       globalSelectOnDismiss,
       navigation,
       recipient,
+      resolveEmailAddress,
       useAsModal,
     ],
   );
@@ -2435,6 +2494,29 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
+            {isRecipientContext ? (
+              <>
+                <NoWalletsMsg>
+                  {recipientNetworkName
+                    ? t(
+                        'There are no wallets with enough funds on the {{network}} network.',
+                        {network: recipientNetworkName},
+                      )
+                    : t(
+                        'There are no wallets with funds available to use this feature.',
+                      )}
+                </NoWalletsMsg>
+                {canBuyRecipientCurrency ? (
+                  <Button
+                    style={{marginTop: 20}}
+                    onPress={goToBuyRecipientCurrency}
+                    buttonStyle={'primary'}>
+                    {t('Buy Crypto')}
+                  </Button>
+                ) : null}
+              </>
+            ) : null}
+
             {context === 'sell' ? (
               <NoWalletsMsg>
                 {t(
@@ -2456,7 +2538,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 style={{marginTop: 20}}
                 onPress={goToBuyCrypto}
                 buttonStyle={'primary'}>
-                {'Buy Crypto'}
+                {t('Buy Crypto')}
               </Button>
             ) : null}
           </>

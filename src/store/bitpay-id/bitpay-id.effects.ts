@@ -873,12 +873,14 @@ export const startFetchReceivingAddresses =
               chain,
             };
           });
-        dispatch(
-          BitPayIdActions.successFetchReceivingAddresses(
-            APP.network,
-            receivingAddresses,
-          ),
-        );
+        if (!params) {
+          dispatch(
+            BitPayIdActions.successFetchReceivingAddresses(
+              APP.network,
+              receivingAddresses,
+            ),
+          );
+        }
         return receivingAddresses;
       } catch (err: any) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);

@@ -96,6 +96,8 @@ import {
   buildAssetsByChainList,
   buildKeyWalletRowsFromAccountList,
   isWalletVisibleForKey,
+  BuildPayProWalletSelectorList,
+  WalletsAndAccounts,
 } from './wallet';
 import {syncTestnetWalletsVisibility} from './testnet';
 
@@ -181,6 +183,205 @@ const makeKey = (overrides: any = {}): any => ({
   hideKeyBalance: false,
   isReadOnly: false,
   ...overrides,
+});
+
+describe('BuildPayProWalletSelectorList', () => {
+  const selectedAccountAddress = '0xpinned-account';
+  const makePayProWallet = (id: string, overrides: any = {}) =>
+    makeWallet({
+      id,
+      chain: 'eth',
+      currencyAbbreviation: 'eth',
+      receiveAddress: selectedAccountAddress,
+      credentials: makeCredentials({walletId: id}),
+      balance: makeBalance({sat: 100}),
+      ...overrides,
+    });
+
+  const getState = () => ({
+    RATE: {rates: {}},
+    WALLET: {customTokenDataByAddress: {}},
+  });
+  const dispatch = (effect: any): any =>
+    typeof effect === 'function' ? effect(dispatch, getState) : effect;
+  const buildSelector = (
+    keys: Parameters<typeof BuildPayProWalletSelectorList>[0]['keys'],
+    accountAddress?: string,
+  ): WalletsAndAccounts =>
+    dispatch(
+      BuildPayProWalletSelectorList({
+        keys,
+        selectedAccountAddress: accountAddress,
+        network: Network.mainnet,
+      }),
+    );
+  const getWalletIds = ({keyWallets}: WalletsAndAccounts) =>
+    keyWallets
+      .flatMap(key =>
+        key.mergedUtxoAndEvmAccounts.flatMap(row =>
+          'chain' in row ? [row.id] : row.wallets.map(wallet => wallet.id),
+        ),
+      )
+      .sort();
+
+  it('keeps the pinned account assets across chains and excludes other accounts and keys', () => {
+    const pinnedWallets = [
+      makePayProWallet('pinned-eth'),
+      makePayProWallet('pinned-usdc', {currencyAbbreviation: 'usdc'}),
+      makePayProWallet('pinned-pol', {
+        chain: 'matic',
+        currencyAbbreviation: 'pol',
+      }),
+    ];
+    const keys = {
+      'key-1': makeKey({
+        wallets: [
+          ...pinnedWallets,
+          makePayProWallet('other-account', {
+            receiveAddress: '0xother-account',
+          }),
+        ],
+      }),
+      'key-2': makeKey({
+        id: 'key-2',
+        wallets: [
+          makePayProWallet('other-key-account', {
+            keyId: 'key-2',
+            receiveAddress: '0xother-key-account',
+          }),
+        ],
+      }),
+    };
+
+    const result = buildSelector(keys, selectedAccountAddress);
+
+    expect(getWalletIds(result)).toEqual([
+      'pinned-eth',
+      'pinned-pol',
+      'pinned-usdc',
+    ]);
+    expect(result.keyWallets).toHaveLength(1);
+    expect(result.keyWallets[0].accounts[0].chains).toEqual(['eth', 'matic']);
+    expect(keys['key-1'].wallets).toHaveLength(4);
+    expect(keys['key-2'].wallets).toHaveLength(1);
+  });
+
+  it('keeps wallets from all accounts and empty keys when no account is pinned', () => {
+    const keys = {
+      'key-1': makeKey({
+        wallets: [
+          makePayProWallet('first-account'),
+          makePayProWallet('second-account', {
+            receiveAddress: '0xother-account',
+          }),
+        ],
+      }),
+      'key-2': makeKey({
+        id: 'key-2',
+        wallets: [
+          makePayProWallet('other-key', {
+            keyId: 'key-2',
+            receiveAddress: '0xother-key-account',
+          }),
+        ],
+      }),
+      'key-3': makeKey({id: 'key-3'}),
+    };
+
+    const result = buildSelector(keys);
+
+    expect(getWalletIds(result)).toEqual([
+      'first-account',
+      'other-key',
+      'second-account',
+    ]);
+    expect(result.keyWallets).toHaveLength(3);
+    expect(result.keyWallets[2].accounts).toEqual([]);
+    expect(result.keyWallets[2].mergedUtxoAndEvmAccounts).toEqual([]);
+  });
+
+  it('still excludes hidden, empty and incompatible network wallets from the pinned account', () => {
+    const keys = {
+      'key-1': makeKey({
+        wallets: [
+          makePayProWallet('eligible'),
+          makePayProWallet('hidden-wallet', {hideWallet: true}),
+          makePayProWallet('hidden-account', {hideWalletByAccount: true}),
+          makePayProWallet('empty', {balance: makeBalance({sat: 0})}),
+          makePayProWallet('testnet', {network: Network.testnet}),
+        ],
+      }),
+    };
+
+    expect(getWalletIds(buildSelector(keys, selectedAccountAddress))).toEqual([
+      'eligible',
+    ]);
+  });
+
+  it('leaves one key, account and wallet when other pinned wallets fail the final filters', () => {
+    const keys = {
+      'key-1': makeKey({wallets: [makePayProWallet('eligible')]}),
+      'key-2': makeKey({
+        id: 'key-2',
+        wallets: [
+          makePayProWallet('empty', {
+            keyId: 'key-2',
+            balance: makeBalance({sat: 0}),
+          }),
+          makePayProWallet('hidden', {keyId: 'key-2', hideWallet: true}),
+          makePayProWallet('testnet', {
+            keyId: 'key-2',
+            network: Network.testnet,
+          }),
+        ],
+      }),
+    };
+
+    const {keyWallets} = buildSelector(keys, selectedAccountAddress);
+
+    expect(keyWallets).toHaveLength(1);
+    expect(keyWallets[0].key).toBe('key-1');
+    expect(keyWallets[0].accounts).toHaveLength(1);
+    expect(keyWallets[0].accounts[0].wallets).toHaveLength(1);
+    expect(keyWallets[0].accounts[0].wallets[0].id).toBe('eligible');
+  });
+
+  it('keeps pinned UTXO wallets whose key has no account rows', () => {
+    const keys = {
+      'key-1': makeKey({
+        wallets: [
+          makePayProWallet('pinned-btc', {
+            chain: 'btc',
+            currencyAbbreviation: 'btc',
+          }),
+        ],
+      }),
+    };
+
+    const result = buildSelector(keys, selectedAccountAddress);
+
+    expect(result.keyWallets).toHaveLength(1);
+    expect(result.keyWallets[0].accounts).toEqual([]);
+    expect(getWalletIds(result)).toEqual(['pinned-btc']);
+  });
+
+  it('does not fall back to another account when the pinned account has no eligible wallets', () => {
+    const keys = {
+      'key-1': makeKey({
+        wallets: [
+          makePayProWallet('empty-pinned-account', {
+            balance: makeBalance({sat: 0}),
+          }),
+          makePayProWallet('funded-other-account', {
+            receiveAddress: '0xother-account',
+          }),
+        ],
+      }),
+    };
+
+    expect(buildSelector(keys, selectedAccountAddress).keyWallets).toEqual([]);
+    expect(buildSelector(keys, '0xmissing-account').keyWallets).toEqual([]);
+  });
 });
 
 // ─── findWalletById ────────────────────────────────────────────────────────────

@@ -39,6 +39,7 @@ import AddCustomToken, {
 } from './screens/AddCustomToken';
 import AmountScreen, {AmountScreenParamList} from './screens/AmountScreen';
 import SendTo from './screens/send/SendTo';
+import GlobalSendTo from './screens/send/GlobalSendTo';
 import Confirm, {ConfirmParamList} from './screens/send/confirm/Confirm';
 import CreateMultisig, {
   CreateMultisigParamsList,
@@ -153,6 +154,7 @@ export type WalletGroupParamList = {
     copayerId?: string;
     _preloadContent?: boolean;
   };
+  GlobalSendTo: {selectedAccountAddress?: string} | undefined;
   Confirm: ConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
   PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
@@ -214,7 +216,10 @@ export type WalletGroupParamList = {
   ClearEncryptPassword: ClearEncryptPasswordParamList;
   SendToOptions: SendToOptionsParamList;
   SelectInputs: SelectInputsParamList;
-  EnterBuyerProvidedEmail: {data: string};
+  EnterBuyerProvidedEmail: {
+    data: string;
+    selectedAccountAddress?: string;
+  };
   ExportTransactionHistory: {
     keyId: string;
     walletId: string;
@@ -255,6 +260,7 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'WalletAmountScreen',
   SEND_TO = 'SendTo',
+  GLOBAL_SEND_TO = 'GlobalSendTo',
   CONFIRM = 'Confirm',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
   PAY_PRO_CONFIRM = 'PayProConfirm',
@@ -389,6 +395,13 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen name={WalletScreens.TERMS_OF_USE} component={TermsOfUse} />
       <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
       <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
+      <Wallet.Screen
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
+        }}
+        name={WalletScreens.GLOBAL_SEND_TO}
+        component={GlobalSendTo}
+      />
       <Wallet.Screen
         options={{gestureEnabled: false}}
         name={WalletScreens.CONFIRM}

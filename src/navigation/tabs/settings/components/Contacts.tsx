@@ -1,10 +1,11 @@
-import React, {useMemo} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {H6, Link} from '../../../../components/styled/Text';
 import {RootState} from '../../../../store';
 import Icons from '../../../wallet/components/WalletIcons';
 import {useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {StackActions, useFocusEffect} from '@react-navigation/native';
 import {
   ActiveOpacity,
   Hr,
@@ -62,25 +63,35 @@ const Contacts: React.FC<Props> = ({navigation}) => {
     [contacts],
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!contacts.length) {
+        navigation.getParent()?.dispatch(StackActions.replace('ContactsAdd'));
+      }
+    }, [contacts.length, navigation]),
+  );
+
+  if (!contacts.length) {
+    return null;
+  }
+
   return (
     <SettingsComponent>
       <ContactsContainer>
-        {previewContacts.length
-          ? previewContacts.map(item => (
-              <View
-                key={`${item.address}-${item.coin}-${item.network}-${
-                  item.chain ?? ''
-                }`}>
-                <ContactRow
-                  contact={item}
-                  onPress={() => {
-                    navigation.navigate('ContactsDetails', {contact: item});
-                  }}
-                />
-                <Hr />
-              </View>
-            ))
-          : null}
+        {previewContacts.map(item => (
+          <View
+            key={`${item.address}-${item.coin}-${item.network}-${
+              item.chain ?? ''
+            }`}>
+            <ContactRow
+              contact={item}
+              onPress={() => {
+                navigation.navigate('ContactsDetails', {contact: item});
+              }}
+            />
+            <Hr />
+          </View>
+        ))}
       </ContactsContainer>
 
       <Setting

@@ -2082,8 +2082,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             }}
             send={{
               cta: () => {
-                navigation.navigate('GlobalSelect', {
-                  context: 'send',
+                navigation.navigate('GlobalSendTo', {
                   selectedAccountAddress: accountItem?.receiveAddress,
                 });
               },

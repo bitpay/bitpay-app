@@ -82,6 +82,7 @@ import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
+  selectedAccountAddress?: string;
   recipient?: Recipient;
   txp?: TransactionProposal;
   txDetails?: TxDetails;
@@ -104,6 +105,7 @@ const PayProConfirm = () => {
     txDetails: _txDetails,
     txp: _txp,
     invoice,
+    selectedAccountAddress,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -151,9 +153,16 @@ const PayProConfirm = () => {
           keys,
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           payProOptions,
+          selectedAccountAddress,
         }),
       ),
-    [defaultAltCurrency.isoCode, dispatch, keys, payProOptions],
+    [
+      defaultAltCurrency.isoCode,
+      dispatch,
+      keys,
+      payProOptions,
+      selectedAccountAddress,
+    ],
   );
 
   const reshowWalletSelector = async () => {

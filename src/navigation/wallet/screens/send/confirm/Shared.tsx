@@ -248,7 +248,7 @@ export const SendingTo: React.FC<SendingToProps> = ({
     }
     const timer = setTimeout(() => {
       setCopied(false);
-    }, 1000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [copied]);
@@ -294,12 +294,12 @@ export const SendingTo: React.FC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description =
-      recipientName ||
-      recipientEmail ||
-      formatCryptoAddress(
-        (recipientFullAddress || '').replace('bitcoincash:', ''),
-      );
+    const shortAddress = formatCryptoAddress(
+      (recipientFullAddress || '').replace('bitcoincash:', ''),
+    );
+    description = copied
+      ? shortAddress
+      : recipientName || recipientEmail || shortAddress;
   }
 
   return (

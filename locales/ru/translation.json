@@ -2308,5 +2308,6 @@
   "Add Testnet Wallets": "Добавить кошельки тестовой сети",
   "Wallet data could not be opened": "Не удалось открыть данные кошелька",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ваши локальные данные сохранены. Повторите попытку или обратитесь в службу поддержки. Не удаляйте приложение и не очищайте его данные. Справочный код: {{id}}.",
-  "Retry": "Повторить"
+  "Retry": "Повторить",
+  "There are no wallets with enough funds on the {{network}} network.": "Нет кошельков с достаточным количеством средств в сети {{network}}."
 }
