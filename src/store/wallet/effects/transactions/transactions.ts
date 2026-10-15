@@ -22,7 +22,7 @@ import {
   WithinSameMonth,
 } from '../../utils/time';
 import moment, {MomentInput} from 'moment';
-import 'moment/min/locales';
+import '../../../../utils/momentLocales';
 import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
