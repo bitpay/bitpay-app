@@ -14,7 +14,7 @@ export const encryptValue = (value: any, secretKey: string): string => {
     const encrypted = Aes.encrypt(String(value), secretKey).toString();
     const result = `${encryptedPrefix}${encrypted}`;
     return result;
-  } catch (err) {
+  } catch {
     return value;
   }
 };
@@ -33,7 +33,7 @@ export const decryptValue = (value: any, secretKey: string): any => {
       throw new Error('Decrypted string is empty');
     }
     return result;
-  } catch (err) {
+  } catch {
     return value;
   }
 };

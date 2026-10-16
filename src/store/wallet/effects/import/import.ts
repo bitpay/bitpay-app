@@ -126,7 +126,6 @@ const getMissingVmAccounts = (
 };
 
 const BWC = BwcProvider.getInstance();
-const BwcConstants = BWC.getConstants();
 
 const cordovaStoragePath =
   Platform.OS === 'ios'
@@ -529,7 +528,7 @@ export const startMigration =
           .map(res => {
             try {
               return JSON.parse(res);
-            } catch (err) {}
+            } catch {}
             return {};
           })
           .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
@@ -579,7 +578,7 @@ export const startMigration =
                 'utf8',
               ),
             );
-          } catch (e) {}
+          } catch {}
         };
 
         const [phone, phoneCountryInfo] = await Promise.all([
@@ -779,7 +778,7 @@ export const migrateKeyAndWallets =
                 cordovaStoragePath + `hideWallet-${id}`,
                 'utf8',
               )) === 'true';
-          } catch (e) {
+          } catch {
             // not found. Continue anyway
           }
 
@@ -1015,7 +1014,7 @@ export const startImportFromHardwareWallet =
     accountNumber: number;
     network: Network;
   }): Effect<Promise<Wallet>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     return new Promise(async (resolve, reject) => {
       if (!hardwareSource) {
         return reject(new Error('Invalid hardware wallet source'));
@@ -1087,7 +1086,7 @@ export const startImportFromHardwareWallet =
             singleAddress,
           };
 
-          await new Promise((resolve, reject) =>
+          await new Promise((resolveCreate, rejectCreate) =>
             bwcClient.createWallet(
               walletName,
               copayerName,
@@ -1095,7 +1094,7 @@ export const startImportFromHardwareWallet =
               n,
               createWalletOpts,
               (err: any, result: any) => {
-                err ? reject(err) : resolve(result);
+                err ? rejectCreate(err) : resolveCreate(result);
               },
             ),
           );
@@ -1113,9 +1112,9 @@ export const startImportFromHardwareWallet =
         }
       }
 
-      await new Promise((resolve, reject) =>
+      await new Promise((resolveOpen, rejectOpen) =>
         bwcClient.openWallet({}, (err: any, result: any) => {
-          err ? reject(err) : resolve(result);
+          err ? rejectOpen(err) : resolveOpen(result);
         }),
       );
 
@@ -1162,15 +1161,15 @@ export const startImportFromHardwareWallet =
               );
             }
             if (key?.id && !isSingleAddressChain(wallet.credentials.chain)) {
-              const status = await new Promise<any>((res, rej) => {
+              const scanStatus = await new Promise<any>((res, rej) => {
                 bwcClient.getStatus(
                   {network: wallet.network},
-                  async (err: any, result: any) => {
-                    err ? rej(err) : res(result);
+                  async (statusErr: any, result: any) => {
+                    statusErr ? rej(statusErr) : res(result);
                   },
                 );
               }).catch(() => null);
-              if (!status?.wallet?.singleAddress) {
+              if (!scanStatus?.wallet?.singleAddress) {
                 // set scanning (for UI scanning label on wallet details )
                 wallet.isScanning = true;
               }
@@ -1233,17 +1232,19 @@ export const startImportFile =
           let filteredKeys = matchedKey.wallets.filter(
             w => w.credentials.walletId !== wallets[0].credentials.walletId,
           );
-          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          filteredKeys.forEach(w => {
+            w.credentials.keyId = w.keyId = _key.id;
+          });
           wallets = wallets.concat(filteredKeys);
           dispatch(deleteKey({keyId: opts.keyId}));
         }
 
         const key = buildKeyObj({
           key: _key,
-          wallets: wallets.map(wallet => {
+          wallets: wallets.map(walletItem => {
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
-              dispatch(subscribePushNotifications(wallet, brazeEid!));
+              dispatch(subscribePushNotifications(walletItem, brazeEid!));
             }
             // subscribe new wallet to email notifications
             if (
@@ -1256,19 +1257,19 @@ export const startImportFile =
                 language: defaultLanguage,
                 unit: 'btc', // deprecated
               };
-              dispatch(subscribeEmailNotifications(wallet, prefs));
+              dispatch(subscribeEmailNotifications(walletItem, prefs));
             }
             const {currencyAbbreviation, currencyName} = dispatch(
               mapAbbreviationAndName(
-                wallet.credentials.coin,
-                wallet.credentials.chain,
-                wallet.credentials.token?.address,
+                walletItem.credentials.coin,
+                walletItem.credentials.chain,
+                walletItem.credentials.token?.address,
               ),
             );
             return merge(
-              wallet,
+              walletItem,
               buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
+                {...walletItem.credentials, currencyAbbreviation, currencyName},
                 tokenOptsByAddress,
               ),
             );
@@ -1486,12 +1487,11 @@ const createKeyAndCredentials = async (
 
 const createKeyAndCredentialsWithFile = async (
   decryptBackupText: string,
-  opts: Partial<KeyOptions>,
+  _opts: Partial<KeyOptions>,
 ): Promise<any> => {
   const bwcClient = BWC.getClient(undefined);
   let credentials;
   let key;
-  let addressBook;
 
   const data = JSON.parse(decryptBackupText);
   if (data.credentials) {
@@ -1505,7 +1505,7 @@ const createKeyAndCredentialsWithFile = async (
         if (!key.fingerPrintEDDSA) {
           try {
             key.addKeyByAlgorithm('EDDSA');
-          } catch (err) {
+          } catch {
             // If the chain is not Solana, the EDDSA key can be migrated later
             if (credentials.chain === 'sol') {
               throw new Error(t('Unable to add EDDSA key. Check input file.'));
@@ -1513,7 +1513,6 @@ const createKeyAndCredentialsWithFile = async (
           }
         }
       }
-      addressBook = data.addressBook;
     } catch (err: any) {
       if (err && err.message === 'Bad Key version') {
         // Workaround for bad generated files. Fixed: https://github.com/bitpay/wallet/pull/11872
@@ -1526,7 +1525,7 @@ const createKeyAndCredentialsWithFile = async (
         if (!key.fingerPrintEDDSA) {
           try {
             key.addKeyByAlgorithm('EDDSA');
-          } catch (err) {
+          } catch {
             // If the chain is not Solana, the EDDSA key can be migrated later
             if (credentials.chain === 'sol') {
               throw new Error(t('Unable to add EDDSA key. Check input file.'));
@@ -1553,8 +1552,7 @@ const createKeyAndCredentialsWithFile = async (
       let migrated = BWC.upgradeCredentialsV1(data);
       credentials = migrated.credentials;
       key = migrated.key;
-      addressBook = data.addressBook ? data.addressBook : {};
-    } catch (error) {
+    } catch {
       throw new Error(t('Old format. Could not import. Check input file.'));
     }
   }
@@ -1808,33 +1806,34 @@ export const startImportTSSFile =
                 `[ImportTSS] Recreated wallet client - ${credObj.walletId}`,
               );
 
-              await new Promise((resolve, reject) =>
+              await new Promise((resolveOpen, rejectOpen) =>
                 walletClient.openWallet({}, (err: any, result: any) => {
                   if (err) {
                     logManager.warn(
                       `[ImportTSS] Could not open wallet ${credObj.walletId}:`,
                       err,
                     );
-                    return reject(err);
+                    return rejectOpen(err);
                   }
-                  resolve(result);
+                  resolveOpen(result);
                 }),
               );
 
-              const status: any = await new Promise((resolve, reject) =>
-                walletClient.getStatus(
-                  {includeExtendedInfo: true},
-                  (err: any, result: any) => {
-                    if (err) {
-                      logManager.warn(
-                        `[ImportTSS] Could not get status for ${credObj.walletId}:`,
-                        err,
-                      );
-                      return reject(err);
-                    }
-                    resolve(result);
-                  },
-                ),
+              const status: any = await new Promise(
+                (resolveStatus, rejectStatus) =>
+                  walletClient.getStatus(
+                    {includeExtendedInfo: true},
+                    (err: any, result: any) => {
+                      if (err) {
+                        logManager.warn(
+                          `[ImportTSS] Could not get status for ${credObj.walletId}:`,
+                          err,
+                        );
+                        return rejectStatus(err);
+                      }
+                      resolveStatus(result);
+                    },
+                  ),
               );
 
               const {currencyAbbreviation, currencyName} = dispatch(
@@ -1917,7 +1916,9 @@ export const startImportTSSFile =
           const filteredKeys = matchedKey.wallets.filter(
             w => !newWalletIds.has(w.credentials.walletId),
           );
-          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          filteredKeys.forEach(w => {
+            w.credentials.keyId = w.keyId = _key.id;
+          });
           processedWallets = [...processedWallets, ...filteredKeys];
           dispatch(deleteKey({keyId: opts.keyId}));
         }

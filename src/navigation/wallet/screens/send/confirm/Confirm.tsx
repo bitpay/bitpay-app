@@ -289,7 +289,7 @@ const Confirm = () => {
       if (hardwareWalletTransport) {
         try {
           hardwareWalletTransport.close();
-        } catch (err) {
+        } catch {
           // swallow
         }
       }
@@ -338,6 +338,7 @@ const Confirm = () => {
       newTp.on('disconnect', onDisconnect);
     }
     setHardwareWalletTransport(newTp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must stay a constant fn so it can be attached to and detached from transports; isConfirmHardwareWalletModalVisible is captured from the first render
   }, []);
 
   const isTxLevelAvailable = () => {
@@ -460,10 +461,12 @@ const Confirm = () => {
 
     try {
       if (isUsingHardwareWallet) {
-        const {chain, network} = wallet.credentials;
-        const configFn = currencyConfigs[chain];
+        const {chain: credentialsChain, network} = wallet.credentials;
+        const configFn = currencyConfigs[credentialsChain];
         if (!configFn) {
-          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
+          throw new Error(
+            `Unsupported currency: ${credentialsChain.toUpperCase()}`,
+          );
         }
         const params = configFn(network);
         await prepareLedgerApp(
@@ -488,7 +491,7 @@ const Confirm = () => {
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        const result = await dispatch(
+        await dispatch(
           startSendPayment({
             txp,
             key,
@@ -553,14 +556,15 @@ const Confirm = () => {
         );
       }
     } catch (err) {
+      let paymentError = err;
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
+        paymentError = getLedgerErrorMessage(err);
       }
       await sleep(500);
       setResetSwipeButton(true);
-      switch (err) {
+      switch (paymentError) {
         case 'invalid password':
           dispatch(showBottomNotificationModal(WrongPasswordError()));
           break;
@@ -573,7 +577,7 @@ const Confirm = () => {
         default:
           await showErrorMessage(
             CustomErrorMessage({
-              errMsg: BWCErrorMessage(err),
+              errMsg: BWCErrorMessage(paymentError),
               title: t('Uh oh, something went wrong'),
             }),
           );
@@ -581,8 +585,8 @@ const Confirm = () => {
     }
   };
 
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
+  const onSwipeCompleteHardwareWallet = async (hwKey: Key) => {
+    if (hwKey.hardwareSource === 'ledger') {
       if (hardwareWalletTransport) {
         setConfirmHardwareWalletVisible(true);
         startSendingPayment({transport: hardwareWalletTransport});
@@ -646,6 +650,7 @@ const Confirm = () => {
 
   useEffect(() => {
     checkHighFees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-checks only when the selected fee changes; txp and wallet are read at that time
   }, [fee]);
 
   let recipientData, recipientListData;
@@ -692,16 +697,6 @@ const Confirm = () => {
   } else {
     recipientData = sendingTo;
   }
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <>
@@ -892,7 +887,7 @@ const Confirm = () => {
             {txp ? (
               <TxDescription
                 txDescription={txp.message || message || ''}
-                onChange={message => setTxp({...txp, message})}
+                onChange={newMessage => setTxp({...txp, message: newMessage})}
               />
             ) : null}
             <Amount

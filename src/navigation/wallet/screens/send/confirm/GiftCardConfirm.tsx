@@ -93,7 +93,6 @@ import {useOngoingProcess} from '../../../../../contexts';
 import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
-import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -293,6 +292,7 @@ const Confirm = () => {
       newTp.on('disconnect', onDisconnect);
     }
     setHardwareWalletTransport(newTp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must stay a constant fn so it can be attached to and detached from transports; isConfirmHardwareWalletModalVisible is captured from the first render
   }, []);
 
   const createGiftCardInvoice = async ({
@@ -360,8 +360,8 @@ const Confirm = () => {
       handleCreateTxProposalError(err, onDismiss),
     );
     if (errorMessage === GiftCardInvoiceCreationErrors.kycRequired) {
-      const route = user ? 'login' : 'signup';
-      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/${route}?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
+      const authRoute = user ? 'login' : 'signup';
+      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/${authRoute}?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
       errorMessageConfig = {
         type: 'warning',
         message: t(
@@ -501,10 +501,11 @@ const Confirm = () => {
 
       await redeemGiftCardAndNavigateToGiftCardDetails();
     } catch (err: any) {
+      let paymentError = err;
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
+        paymentError = getLedgerErrorMessage(err);
       }
       dispatch(
         ShopActions.updatedGiftCardStatus({
@@ -515,7 +516,7 @@ const Confirm = () => {
       );
       await sleep(400);
       try {
-        await handlePaymentFailure(err);
+        await handlePaymentFailure(paymentError);
       } finally {
         setDisableSwipeSendButton(false);
       }
@@ -624,8 +625,8 @@ const Confirm = () => {
     }
   };
 
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
+  const onSwipeCompleteHardwareWallet = async (hwKey: Key) => {
+    if (hwKey.hardwareSource === 'ledger') {
       if (hardwareWalletTransport) {
         setConfirmHardwareWalletVisible(true);
         sendPaymentAndRedeemGiftCard({transport: hardwareWalletTransport});

@@ -197,7 +197,7 @@ const removePortfolioChartsPersistRoot = (
     delete parsed.PORTFOLIO_CHARTS;
 
     return {changed: true, value: JSON.stringify(parsed)};
-  } catch (_) {
+  } catch {
     return {changed: false, value: rawJson};
   }
 };
@@ -250,7 +250,7 @@ export const reduxStorage: Storage = {
           backupTriggerAction = null;
         }
       }
-    } catch (_) {}
+    } catch {}
     if (PERF_DEBUG) {
       logPersistPhase(
         'setItem.total',
@@ -278,7 +278,7 @@ export const reduxStorage: Storage = {
             logManager.info(
               `MMKV persist:root removed PORTFOLIO_CHARTS - beforeBytes:${value.length} afterBytes:${sanitized.value.length}`,
             );
-          } catch (_) {}
+          } catch {}
         }
         return Promise.resolve(sanitized.value);
       }
@@ -454,6 +454,7 @@ const rootReducer = (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- dev debug toggle: enabled by uncommenting middlewares.push(logger) in configureStore
 const logger = createLogger({
   predicate: (_getState, action) =>
     ![
@@ -555,7 +556,7 @@ const getStore = async () => {
             flushPersistenceSoon();
           }
         }
-      } catch (_) {}
+      } catch {}
       return next(action);
     };
 
@@ -700,7 +701,7 @@ const getStore = async () => {
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.start storageKeys:${keysCount}`,
             );
-          } catch (_) {}
+          } catch {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
           !firstRehydrateLogged
@@ -712,7 +713,7 @@ const getStore = async () => {
             const totalSize = (() => {
               try {
                 return JSON.stringify(payload).length;
-              } catch (_) {
+              } catch {
                 return -1;
               }
             })();
@@ -721,15 +722,15 @@ const getStore = async () => {
               Object.keys(payload).forEach(k => {
                 try {
                   sizeByReduxKey[k] = JSON.stringify(payload[k]).length;
-                } catch (_) {}
+                } catch {}
               });
-            } catch (_) {}
+            } catch {}
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.complete durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
                 sizeByReduxKey,
               )}`,
             );
-          } catch (_) {}
+          } catch {}
         }
       }
       return next(action);

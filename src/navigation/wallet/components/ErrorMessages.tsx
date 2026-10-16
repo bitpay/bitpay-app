@@ -3,7 +3,6 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {BaseText} from '../../../components/styled/Text';
 import {StyleSheet} from 'react-native';
 import {t} from 'i18next';
-import {RootStacks, navigationRef} from '../../../Root';
 
 interface BottomNotificationListType {
   key: number;

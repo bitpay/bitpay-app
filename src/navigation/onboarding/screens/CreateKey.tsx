@@ -210,7 +210,8 @@ const CreateOrImportKey = ({
     if (!isImportLedgerModalVisible && Object.values(keys).length > 0) {
       navigation.navigate('TermsOfUse');
     }
-  }, [isImportLedgerModalVisible]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to the Ledger import modal closing; keys are read at that time
+  }, [isImportLedgerModalVisible, navigation]);
 
   const textColor = theme.colors.text;
   const bodyColor = theme.dark ? Slate30 : SlateDark;

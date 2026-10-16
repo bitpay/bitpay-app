@@ -320,9 +320,7 @@ export const getBuyCryptoFiatLimits =
     fiatCurrency?: string,
     paymentMethod?: PaymentMethodKey,
   ): Effect<BuyCryptoLimits> =>
-  (dispatch, getState) => {
-    const state = getState();
-    const locationData = state.LOCATION.locationData;
+  dispatch => {
     let limits: BuyCryptoLimits = {min: undefined, max: undefined};
     let baseFiatArray: string[];
 

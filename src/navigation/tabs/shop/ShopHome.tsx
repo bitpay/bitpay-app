@@ -206,6 +206,7 @@ const ShopHome: React.FC<
         categoriesAndCurations,
         purchasedGiftCards,
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is an intentional trigger: getGiftCardCurations translates curation titles via the global i18n t
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards, t],
   );
 
@@ -322,7 +323,7 @@ const ShopHome: React.FC<
         dispatch(ShopEffects.startSyncGiftCards());
         setInitialSyncComplete(true);
       }
-    }, [initialSyncComplete]),
+    }, [dispatch, initialSyncComplete]),
   );
 
   return (

@@ -180,10 +180,10 @@ export const useDeeplinks = () => {
             const totalSecs =
               Number(lockAuthorizedUntil) - Number(timeSinceBoot);
             if (totalSecs < 0 && !inAppBrowserOpen) {
-              const subscription = DeviceEventEmitter.addListener(
+              const lockDismissedSubscription = DeviceEventEmitter.addListener(
                 DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
                 () => {
-                  subscription.remove();
+                  lockDismissedSubscription.remove();
                   handleUrl();
                 },
               );
@@ -191,10 +191,10 @@ export const useDeeplinks = () => {
               handleUrl();
             }
           } else {
-            const subscription = DeviceEventEmitter.addListener(
+            const lockDismissedSubscription = DeviceEventEmitter.addListener(
               DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
               () => {
-                subscription.remove();
+                lockDismissedSubscription.remove();
                 handleUrl();
               },
             );

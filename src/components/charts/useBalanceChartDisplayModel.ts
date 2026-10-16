@@ -528,9 +528,9 @@ export function useBalanceChartDisplayModel({
       return;
     }
 
-    const chartQueryArgs = chartQueryArgsRef.current;
+    const latestChartQueryArgs = chartQueryArgsRef.current;
 
-    if (!chartQueryArgs.wallets.length) {
+    if (!latestChartQueryArgs.wallets.length) {
       setLoading(false);
       setError(undefined);
       setVisibleState(undefined);
@@ -555,7 +555,7 @@ export function useBalanceChartDisplayModel({
         return;
       }
 
-      runPortfolioBalanceChartViewModelQuery(chartQueryArgs)
+      runPortfolioBalanceChartViewModelQuery(latestChartQueryArgs)
         .then(viewModel => {
           if (cancelled || activeRequestIdRef.current !== requestId) {
             return;
@@ -571,12 +571,12 @@ export function useBalanceChartDisplayModel({
 
           commitVisibleSeries({
             series: hydratedSeries,
-            timeframe: chartQueryArgs.timeframe,
+            timeframe: latestChartQueryArgs.timeframe,
             queryRevisionKey,
-            quoteCurrency: chartQueryArgs.quoteCurrency,
+            quoteCurrency: latestChartQueryArgs.quoteCurrency,
             scopeId,
-            walletIds: chartQueryArgs.walletIds,
-            balanceOffset: chartQueryArgs.balanceOffset,
+            walletIds: latestChartQueryArgs.walletIds,
+            balanceOffset: latestChartQueryArgs.balanceOffset,
             cachedAt: Date.now(),
             persistable: true,
           });

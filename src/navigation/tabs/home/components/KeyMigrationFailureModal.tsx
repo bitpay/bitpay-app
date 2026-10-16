@@ -1,6 +1,6 @@
 import Modal from 'react-native-modal';
 import React from 'react';
-import {Linking, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../../../contexts';
 import {H5, Paragraph, TextAlign} from '../../../../components/styled/Text';
 import {

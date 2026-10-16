@@ -226,6 +226,7 @@ const PayProConfirm = () => {
       newTp.on('disconnect', onDisconnect);
     }
     setHardwareWalletTransport(newTp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must stay a constant fn so it can be attached to and detached from transports; isConfirmHardwareWalletModalVisible is captured from the first render
   }, []);
 
   const createTxp = async (selectedWallet: Wallet) => {
@@ -282,6 +283,7 @@ const PayProConfirm = () => {
       wallet
         ? createTxp(wallet)
         : setTimeout(() => openKeyWalletSelector(), 500);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- runs on each focus with the initial wallet; adding wallet/createTxp would rebuild the txp whenever createTxp updates the wallet
     }, []),
   );
 
@@ -412,12 +414,13 @@ const PayProConfirm = () => {
         );
       }
     } catch (err: any) {
+      let paymentError = err;
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
+        paymentError = getLedgerErrorMessage(err);
       }
-      await handlePaymentFailure(err);
+      await handlePaymentFailure(paymentError);
     }
   };
 
@@ -442,7 +445,7 @@ const PayProConfirm = () => {
         ),
       );
     },
-    [dispatch],
+    [dispatch, t],
   );
 
   const handlePaymentFailure = async (error: any) => {
@@ -475,17 +478,24 @@ const PayProConfirm = () => {
     );
   };
 
-  const checkHighFees = async (wallet: Wallet, txp: any, fee: TxDetailsFee) => {
-    const {feeUnitAmount} = GetFeeUnits(wallet.chain);
+  const checkHighFees = async (
+    txWallet: Wallet,
+    proposal: any,
+    txFee: TxDetailsFee,
+  ) => {
+    const {feeUnitAmount} = GetFeeUnits(txWallet.chain);
     let feePerKb: number;
-    if (txp.feePerKb) {
-      feePerKb = txp.feePerKb;
+    if (proposal.feePerKb) {
+      feePerKb = proposal.feePerKb;
     } else {
-      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee.feeLevel});
+      feePerKb = await getFeeRatePerKb({
+        wallet: txWallet,
+        feeLevel: txFee.feeLevel,
+      });
     }
     setShowHighFeeWarningMessage(
-      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[wallet.chain] &&
-        txp.amount !== 0,
+      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[txWallet.chain] &&
+        proposal.amount !== 0,
     );
   };
 
@@ -513,8 +523,8 @@ const PayProConfirm = () => {
     }
   };
 
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
+  const onSwipeCompleteHardwareWallet = async (hwKey: Key) => {
+    if (hwKey.hardwareSource === 'ledger') {
       if (hardwareWalletTransport) {
         setConfirmHardwareWalletVisible(true);
         startSendingPayment({transport: hardwareWalletTransport});

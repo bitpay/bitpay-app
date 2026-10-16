@@ -630,7 +630,7 @@ const createBrazeEid = (): Effect<string | undefined> => dispatch => {
  * Requests a refresh for Braze content.
  * @returns void
  */
-export const requestBrazeContentRefresh = (): Effect => async dispatch => {
+export const requestBrazeContentRefresh = (): Effect => async () => {
   if (Analytics.isMergingUser()) {
     logManager.debug('Skipping Braze content refresh during user merge.');
     return;
@@ -650,7 +650,7 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: WalletKitTypes.EventArguments['session_request'],
+    sessionRequest: WalletKitTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
@@ -669,7 +669,9 @@ export const startInAppNotification =
     // Translate message before show message
     const _message = _InAppNotificationMessages[key];
 
-    dispatch(AppActions.showInAppNotification(context, _message, request));
+    dispatch(
+      AppActions.showInAppNotification(context, _message, sessionRequest),
+    );
   };
 
 /**
@@ -826,7 +828,7 @@ const trackAppInstalled =
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  () => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
@@ -849,7 +851,7 @@ export const subscribePushNotifications =
 
 export const unSubscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  () => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
         logManager.error(
@@ -869,7 +871,7 @@ export const subscribeEmailNotifications =
     walletClient: any,
     prefs: {email: string; language: string; unit: string},
   ): Effect<Promise<void>> =>
-  async dispatch => {
+  async () => {
     walletClient.savePreferences(prefs, (err: any) => {
       if (err) {
         logManager.error(
@@ -886,7 +888,7 @@ export const subscribeEmailNotifications =
 
 export const unSubscribeEmailNotifications =
   (walletClient: any): Effect<Promise<void>> =>
-  async dispatch => {
+  async () => {
     walletClient.savePreferences({email: ''}, (err: any) => {
       if (err) {
         logManager.error(
@@ -1529,7 +1531,7 @@ export const checkFaceIdPermissions = async () => {
 
 export const isVersionUpdated =
   (currentVersion: string, savedVersion: string): Effect<Promise<boolean>> =>
-  async dispatch => {
+  async () => {
     const verifyTagFormat = (tag: string) => {
       const regex = /^v?\d+\.\d+\.\d+$/i;
       return regex.exec(tag);
@@ -1610,33 +1612,31 @@ export const shortcutListener =
  *
  * @returns
  */
-export const requestInAppReview =
-  (): Effect<Promise<void>> => async dispatch => {
-    try {
-      // Whether the device supports app ratings
-      const isAvailable = InAppReview.isAvailable();
+export const requestInAppReview = (): Effect<Promise<void>> => async () => {
+  try {
+    // Whether the device supports app ratings
+    const isAvailable = InAppReview.isAvailable();
 
-      if (!isAvailable) {
-        logManager.debug('In-app review not available.');
-        return;
-      }
-
-      logManager.debug('Requesting in-app review...');
-
-      // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
-      // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
-      const hasFlowFinishedSuccessfully =
-        await InAppReview.RequestInAppReview();
-
-      logManager.debug(
-        `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
-      );
-    } catch (e: any) {
-      logManager.debug(
-        `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
-      );
+    if (!isAvailable) {
+      logManager.debug('In-app review not available.');
+      return;
     }
-  };
+
+    logManager.debug('Requesting in-app review...');
+
+    // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
+    // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
+    const hasFlowFinishedSuccessfully = await InAppReview.RequestInAppReview();
+
+    logManager.debug(
+      `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
+    );
+  } catch (e: any) {
+    logManager.debug(
+      `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
+    );
+  }
+};
 
 export const joinWaitlist =
   (

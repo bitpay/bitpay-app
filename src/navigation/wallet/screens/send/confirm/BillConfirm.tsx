@@ -255,6 +255,7 @@ const BillConfirm: React.FC<
       newTp.on('disconnect', onDisconnect);
     }
     setHardwareWalletTransport(newTp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must stay a constant fn so it can be attached to and detached from transports; isConfirmHardwareWalletModalVisible is captured from the first render
   }, []);
 
   const openWalletSelector = async (delay?: number) => {
@@ -465,8 +466,8 @@ const BillConfirm: React.FC<
     startSendingPayment({transport});
   };
 
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
+  const onSwipeCompleteHardwareWallet = async (hwKey: Key) => {
+    if (hwKey.hardwareSource === 'ledger') {
       if (hardwareWalletTransport) {
         setConfirmHardwareWalletVisible(true);
         startSendingPayment({transport: hardwareWalletTransport});
@@ -522,13 +523,14 @@ const BillConfirm: React.FC<
       }
       await handlePaymentSuccess();
     } catch (err: any) {
+      let paymentError = err;
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
+        paymentError = getLedgerErrorMessage(err);
       }
       await sleep(400);
-      await handlePaymentFailure(err);
+      await handlePaymentFailure(paymentError);
     }
   };
 
@@ -574,26 +576,28 @@ const BillConfirm: React.FC<
                   : '',
               img: () => (
                 <View style={{flexDirection: 'row'}}>
-                  {billPayments.map(({billPayAccount}, index) => (
-                    <Image
-                      key={index}
-                      style={{
-                        height: 18,
-                        width: 18,
-                        marginTop: -2,
-                        borderRadius: 10,
-                        marginRight: 2,
-                        ...(billPayments.length > 1 && {
-                          marginRight:
-                            index === billPayments.length - 1 ? -5 : -3,
-                          zIndex: billPayments.length - index,
-                        }),
-                      }}
-                      source={{
-                        uri: billPayAccount[billPayAccount.type].merchantIcon,
-                      }}
-                    />
-                  ))}
+                  {billPayments.map(
+                    ({billPayAccount: paymentAccount}, index) => (
+                      <Image
+                        key={index}
+                        style={{
+                          height: 18,
+                          width: 18,
+                          marginTop: -2,
+                          borderRadius: 10,
+                          marginRight: 2,
+                          ...(billPayments.length > 1 && {
+                            marginRight:
+                              index === billPayments.length - 1 ? -5 : -3,
+                            zIndex: billPayments.length - index,
+                          }),
+                        }}
+                        source={{
+                          uri: paymentAccount[paymentAccount.type].merchantIcon,
+                        }}
+                      />
+                    ),
+                  )}
                 </View>
               ),
             }}

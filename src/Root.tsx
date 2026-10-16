@@ -582,7 +582,7 @@ export default () => {
       subscriptionAppStateChange.remove();
       stopSilentInterval();
     };
-  }, []);
+  }, [dispatch]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
@@ -614,9 +614,9 @@ export default () => {
               dispatch(AppActions.lockAuthorizedUntil(undefined));
               showLockOption();
             } else {
-              const timeSinceBoot = await Timer.getRelativeTime();
+              const currentTimeSinceBoot = await Timer.getRelativeTime();
               const authorizedUntil =
-                Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+                Number(currentTimeSinceBoot) + LOCK_AUTHORIZED_TIME;
               dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
               dispatch(AppActions.showBlur(false));
             }
@@ -649,6 +649,7 @@ export default () => {
       onAppStateChange,
     );
     return () => subscriptionAppStateChange.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- blurScreenList is a constant array rebuilt every render; listing it would re-subscribe on every render
   }, [
     dispatch,
     onboardingCompleted,
@@ -727,7 +728,7 @@ export default () => {
             if (message.length < 800) {
               console.debug(`[BWC] ${message}`);
             }
-          } catch (_) {}
+          } catch {}
         };
       });
     };
