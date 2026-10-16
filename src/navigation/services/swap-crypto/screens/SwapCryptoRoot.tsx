@@ -109,12 +109,13 @@ import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/chan
 import {
   RangoCheckoutTx,
   RangoRateMovedError,
+  rangoAwaitApproval,
   rangoCreateCheckoutTx,
   rangoTrackSwap,
   saveRangoTx,
 } from '../../../../store/swap-crypto/effects/rango/rango-checkout.effects';
 import {RangoQuoteResponse} from '../../../../store/swap-crypto/models/rango.models';
-import {rangoToSmallestUnit} from '../utils/rango-tx';
+import {rangoFromSmallestUnit, rangoToSmallestUnit} from '../utils/rango-tx';
 import {RANGO_DEFAULT_SLIPPAGE} from '../utils/rango-utils';
 import {
   dismissBottomNotificationModal,
@@ -500,9 +501,6 @@ const SwapCryptoRoot: React.FC = () => {
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [rangoCheckout, setRangoCheckout] = useState<RangoCheckoutTx>();
-  // Lets the Rango status poll stop itself instead of leaving a timer running
-  // after the user navigates away.
-  const isScreenMountedRef = useRef(true);
   const [txData, setTxData] = useState<any>();
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const [loadingCreateTx, setLoadingCreateTx] = useState(false);
@@ -708,8 +706,6 @@ const SwapCryptoRoot: React.FC = () => {
         setSelectedOffer(undefined);
         setCtxp(undefined);
         setRangoCheckout(undefined);
-        setRangoCheckout(undefined);
-        setRangoCheckout(undefined);
         setTxData(undefined);
         setFormatedAmountFrom('');
         setUseSendMax(false);
@@ -760,7 +756,6 @@ const SwapCryptoRoot: React.FC = () => {
       // Clear previous offer data when amount changes
       setSelectedOffer(undefined);
       setCtxp(undefined);
-      setRangoCheckout(undefined);
       setRangoCheckout(undefined);
       setTxData(undefined);
 
@@ -2734,11 +2729,33 @@ const SwapCryptoRoot: React.FC = () => {
               showError({msg: err, reason: 'rango approve error'});
               return;
             }
-            if (approveTxSent?.txid) {
-              // Re-run: the proposal must be built against the new allowance.
-              await sleep(1000);
-              createRangoTransaction();
+            if (!approveTxSent?.txid) {
+              // Dismissed without sending. Returning to offer selection is
+              // better than leaving skeleton rows and a dead swipe button.
+              setSelectedOffer(undefined);
+              return;
             }
+
+            // Wait for the allowance to actually confirm. Re-running straight
+            // away re-reads a zero allowance, so Rango returns approveData
+            // again and the user is pushed to the approve screen a second
+            // time — and pays for a second approval if they sign it.
+            setLoadingCreateTx(true);
+            const approved = await dispatch(
+              rangoAwaitApproval(checkout.requestId, approveTxSent.txid),
+            );
+            if (!approved) {
+              setLoadingCreateTx(false);
+              showError({
+                msg: t(
+                  'The approval is taking longer than expected. Please try again once it confirms.',
+                ),
+                reason: 'rango approval not confirmed',
+                goBack: true,
+              });
+              return;
+            }
+            createRangoTransaction();
           },
           wallet: fromWalletSelected,
           spenderData: {
@@ -2752,13 +2769,132 @@ const SwapCryptoRoot: React.FC = () => {
         return;
       }
 
+      dispatch(
+        Analytics.track('Requested Swap Crypto', {
+          fromCoin: fromWalletSelected.currencyAbbreviation,
+          fromChain: fromWalletSelected.chain,
+          toCoin: toWalletSelected.currencyAbbreviation,
+          toChain: toWalletSelected.chain,
+          amountFrom: amountFrom,
+          exchange: 'rango',
+        }),
+      );
+
       setRangoCheckout(checkout);
       setCtxp(checkout.ctxp);
+
+      const route = checkout.response.route;
+      const toPrecision = dispatch(
+        GetPrecision(
+          toWalletSelected.currencyAbbreviation,
+          toWalletSelected.chain,
+          toWalletSelected.tokenAddress,
+        ),
+      );
+
+      // The swap call re-quotes, so the card must show what was actually
+      // agreed rather than the earlier preview. This also sets amountTo, which
+      // canContinue requires before the swipe button will enable.
+      const receiving = toPrecision
+        ? Number(
+            rangoFromSmallestUnit(
+              route?.outputAmount ?? '0',
+              toPrecision.unitDecimals,
+            ),
+          )
+        : 0;
+      setAmountTo(receiving);
+
+      if (selectedOffer) {
+        selectedOffer.amountReceiving = String(receiving);
+        try {
+          selectedOffer.amountReceivingFiat = formatFiatAmount(
+            dispatch(
+              toFiat(
+                Number(route?.outputAmount ?? 0),
+                defaultAltCurrency.isoCode,
+                toWalletSelected.currencyAbbreviation.toLowerCase(),
+                toWalletSelected.chain,
+                rates,
+                toWalletSelected.tokenAddress,
+              ),
+            ),
+            defaultAltCurrency.isoCode,
+            {
+              currencyDisplay:
+                defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+            },
+          );
+        } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error('toFiat Error for Rango amountReceiving: ' + errMsg);
+          // continue anyways
+        }
+      }
+
+      // The Network Fee row calls FormatAmountStr on minerFee unconditionally,
+      // and that throws on a NaN rather than rendering blank. Computed the same
+      // way Changelly does it.
+      const minerFee = checkout.ctxp?.fee;
+      let minerFeeFiat: string | undefined;
+      try {
+        if (minerFee >= 0) {
+          minerFeeFiat = formatFiatAmount(
+            dispatch(
+              toFiat(
+                minerFee,
+                defaultAltCurrency.isoCode,
+                BitpaySupportedCoins[fromWalletSelected.chain]?.feeCurrency,
+                fromWalletSelected.chain,
+                rates,
+                undefined,
+              ),
+            ),
+            defaultAltCurrency.isoCode,
+            {
+              currencyDisplay:
+                defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+            },
+          );
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('toFiat Error for Rango minerFee: ' + errMsg);
+        // continue anyways
+      }
+
+      // Rango reports its fee in USD. The Exchange Fee row labels whatever it
+      // is given with the destination coin, so the USD figure is carried as
+      // the fiat string and the row is given the destination-asset amount.
+      const exchangeFeeFiat = route?.feeUsd
+        ? formatFiatAmount(route.feeUsd, 'USD', {currencyDisplay: 'symbol'})
+        : undefined;
+      const grossOutput = Number(route?.outputAmount ?? 0);
+      const netOutput = Number(
+        route?.outputAmountMin ?? route?.outputAmount ?? 0,
+      );
+      const totalExchangeFee =
+        toPrecision && grossOutput > netOutput
+          ? Number(
+              rangoFromSmallestUnit(
+                String(grossOutput - netOutput),
+                toPrecision.unitDecimals,
+              ),
+            )
+          : 0;
+
       setTxData({
         addressFrom,
         addressTo,
         status: 'running',
-        totalExchangeFee: checkout.response.route?.feeUsd ?? 0,
+        totalExchangeFee,
+        totalExchangeFeeFiat: exchangeFeeFiat,
+        minerFee,
+        minerFeeFiat,
+        // No expiry: Rango does not pin a rate, so the Expires row is hidden
+        // rather than left shimmering on a skeleton forever.
+        expirationTime: undefined,
       });
 
       setLoadingCreateTx(false);
@@ -2834,6 +2970,16 @@ const SwapCryptoRoot: React.FC = () => {
       }
       if (selectedOffer?.key === 'rango' && rangoCheckout) {
         saveRangoSwap(broadcastedTx?.txid);
+        dispatch(
+          Analytics.track('Successful Crypto Swap', {
+            fromCoin: fromWalletSelected.currencyAbbreviation,
+            fromChain: fromWalletSelected.chain,
+            toCoin: toWalletSelected?.currencyAbbreviation ?? '',
+            toChain: toWalletSelected?.chain ?? '',
+            amountFrom: amountFrom,
+            exchange: 'rango',
+          }),
+        );
       } else {
         saveChangellyTx();
       }
@@ -2979,11 +3125,15 @@ const SwapCryptoRoot: React.FC = () => {
       }),
     );
 
+    // Deliberately NOT tied to this screen's lifetime: makePayment resets the
+    // navigator to the history screen straight after, so a mount-tied cancel
+    // would kill the poll on every successful swap and leave every order
+    // stuck on "running". The order is already persisted, so the worst case
+    // of letting this run is a status update that arrives late.
     dispatch(
       rangoTrackSwap({
         requestId: rangoCheckout.requestId,
         txid,
-        cancelled: () => !isScreenMountedRef.current,
       }),
     );
   };
@@ -3060,19 +3210,17 @@ const SwapCryptoRoot: React.FC = () => {
   }, [fromWalletSelected, toWalletSelected]);
 
   useEffect(() => {
-    isScreenMountedRef.current = true;
-    return () => {
-      isScreenMountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
     if (selectedOffer) {
       if (countDownRef.current) {
         clearInterval(countDownRef.current);
         countDownRef.current = null;
       }
       setLoadingCreateTx(true);
+      // These are owned by whichever provider was selected last; leaving them
+      // set would show a frozen countdown, or keep paymentExpired true and
+      // hide the swipe button entirely.
+      setRemainingTimeStr('');
+      setPaymentExpired(false);
       logger.debug(`${selectedOffer.key} offer selected. Creating Tx...`);
       switch (selectedOffer.key) {
         case 'changelly':
@@ -3956,9 +4104,6 @@ const SwapCryptoRoot: React.FC = () => {
             setSelectedOffer(undefined);
             setCtxp(undefined);
             setRangoCheckout(undefined);
-            setRangoCheckout(undefined);
-            setRangoCheckout(undefined);
-            setRangoCheckout(undefined);
             setTxData(undefined);
 
             setSelectedPillValue(pillValue);
@@ -3968,10 +4113,6 @@ const SwapCryptoRoot: React.FC = () => {
               }
 
               setCtxp(undefined);
-              setRangoCheckout(undefined);
-              setRangoCheckout(undefined);
-              setRangoCheckout(undefined);
-              setRangoCheckout(undefined);
               setRangoCheckout(undefined);
               setTxData(undefined);
               setSelectedOffer(undefined);

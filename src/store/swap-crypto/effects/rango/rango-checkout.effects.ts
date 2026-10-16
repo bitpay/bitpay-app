@@ -6,6 +6,7 @@ import {SwapCryptoActions} from '../../index';
 import {
   RangoPreparedSwap,
   rangoAbandonSwap,
+  rangoCheckApproval,
   rangoPollStatus,
   rangoPrepareSwap,
   RangoQuoteError,
@@ -252,4 +253,34 @@ export const rangoTrackSwap =
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.debug(`rangoTrackSwap stopped: ${errStr}`);
     }
+  };
+
+/**
+ * Waits for an ERC20 approval to actually confirm.
+ *
+ * Rango derives approveTo/approveData from the on-chain allowance, so
+ * re-quoting before the approve transaction mines returns the same approval
+ * request — the user is sent back to the approve screen and pays twice if
+ * they sign it again.
+ */
+export const rangoAwaitApproval =
+  (
+    requestId: string,
+    txId: string,
+    opts?: {intervalMs?: number; timeoutMs?: number},
+  ): Effect<Promise<boolean>> =>
+  async (dispatch): Promise<boolean> => {
+    const intervalMs = opts?.intervalMs ?? 5_000;
+    const deadline = Date.now() + (opts?.timeoutMs ?? 3 * 60_000);
+
+    while (Date.now() < deadline) {
+      if (await dispatch(rangoCheckApproval(requestId, txId))) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    // Not an error: the approval may still confirm. The caller tells the user
+    // to retry rather than treating this as a failure.
+    return false;
   };
