@@ -158,6 +158,7 @@ const AssetBalanceHistoryScreen = ({
     requestedTimeframe !== displayedTimeframe;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets chart selection/timeframe state when the viewed asset changes
     setChartChangeRow(undefined);
     setSelectionActive(false);
     setChartDisplayedPoint(undefined);

@@ -86,7 +86,7 @@ const MultipleOutputsTx = ({
 }) => {
   const {t} = useTranslation();
   const theme = useTheme();
-  let {coin, network, chain} = tx;
+  const {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
 
   const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
@@ -146,8 +146,8 @@ const MultipleOutputsTx = ({
 
       if (!derivedCoin || !derivedNetwork) {
         const cn = GetCoinAndNetwork(outputAddr, derivedNetwork, chain);
-        derivedCoin ||= cn?.coin;
-        derivedNetwork ||= cn?.network;
+        derivedCoin = derivedCoin || cn?.coin;
+        derivedNetwork = derivedNetwork || cn?.network;
       }
 
       const addressToShow = dispatch(
@@ -167,7 +167,7 @@ const MultipleOutputsTx = ({
       };
     });
   }, [
-    tx?.outputs,
+    tx.outputs,
     contactList,
     tokenAddress,
     chain,

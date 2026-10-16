@@ -686,7 +686,8 @@ export const WalletSelector = ({
     isVisible
       ? !hasWallets(walletsAndAccounts)
         ? dispatch(showNoWalletsModal({navigation}))
-        : showSelector(autoSelectSingleWallet)
+        : // eslint-disable-next-line react-hooks/set-state-in-effect -- the selector is opened imperatively when the isVisible prop flips (it may also auto-select and close)
+          showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
   }, [isVisible, walletsAndAccounts, autoSelectSingleWallet]);
 

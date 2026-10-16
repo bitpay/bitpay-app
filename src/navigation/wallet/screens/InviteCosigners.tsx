@@ -782,15 +782,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     }
   };
 
-  useEffect(() => {
-    if (tssSession?.status === 'ceremony_in_progress') {
-      handleStartCeremony();
-    }
-    return () => {
-      dispatch(cancelTSSCeremony(keyId));
-    };
-  }, []);
-
   const handleStartCeremony = async () => {
     setIsCeremonyStarted(true);
     setIsCeremonyComplete(false);
@@ -835,6 +826,16 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       );
     }
   };
+
+  useEffect(() => {
+    if (tssSession?.status === 'ceremony_in_progress') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resumes an in-progress ceremony on mount (imperative async flow)
+      handleStartCeremony();
+    }
+    return () => {
+      dispatch(cancelTSSCeremony(keyId));
+    };
+  }, []);
 
   const getModalTitle = () => {
     // if (currentStep === 3) {

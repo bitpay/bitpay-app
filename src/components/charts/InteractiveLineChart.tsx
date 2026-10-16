@@ -235,14 +235,14 @@ const InteractiveLineChart = ({
     'worklet';
 
     // Support callers passing either a number or a Reanimated shared/derived value.
-    const scale = sharedStrokeScale?.value ?? strokeScaleNumber;
+    const scale = sharedStrokeScale?.get() ?? strokeScaleNumber;
     return Number.isFinite(scale) ? scale : 1;
   });
   const firstPointGuideLineOpacityValue = useDerivedValue(() => {
     'worklet';
 
     const opacity =
-      sharedFirstPointGuideLineOpacity?.value ??
+      sharedFirstPointGuideLineOpacity?.get() ??
       firstPointGuideLineOpacityNumber;
     return Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1;
   });
@@ -257,7 +257,7 @@ const InteractiveLineChart = ({
   // React re-renders (i.e. no jank).
   const compensatedLineThickness = useDerivedValue(() => {
     'worklet';
-    const scale = strokeScaleValue.value;
+    const scale = strokeScaleValue.get();
     // Guard against accidental 0/negative scales.
     const safeScale = scale > 0 ? scale : 1;
     return (
@@ -282,7 +282,7 @@ const InteractiveLineChart = ({
 
   const firstPointGuideLineAnimatedProps =
     useAnimatedProps<SvgLineAnimatedProps>(() => {
-      const scale = strokeScaleValue.value;
+      const scale = strokeScaleValue.get();
       const safeScale = scale > 0 ? scale : 1;
 
       return {
@@ -516,34 +516,36 @@ const InteractiveLineChart = ({
   const graphOpacity = isLoading ? (hideLineWhileLoading ? 0 : 0.25) : 1;
 
   const firstPointGuideLineAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: graphOpacity * firstPointGuideLineOpacityValue.value,
-    transform: [{translateY: firstPointGuideLineTranslateY.value}],
+    opacity: graphOpacity * firstPointGuideLineOpacityValue.get(),
+    transform: [{translateY: firstPointGuideLineTranslateY.get()}],
   }));
 
   React.useLayoutEffect(() => {
     if (firstPointGuideLineTopTarget == null) {
       setFirstPointGuideLineBaseTop(undefined);
-      firstPointGuideLineTranslateY.value = 0;
+      firstPointGuideLineTranslateY.set(0);
       return;
     }
 
     if (firstPointGuideLineBaseTop == null) {
       setFirstPointGuideLineBaseTop(firstPointGuideLineTopTarget);
-      firstPointGuideLineTranslateY.value = 0;
+      firstPointGuideLineTranslateY.set(0);
       return;
     }
 
     const nextTranslateY =
       firstPointGuideLineTopTarget - firstPointGuideLineBaseTop;
 
-    if (firstPointGuideLineTranslateY.value === nextTranslateY) {
+    if (firstPointGuideLineTranslateY.get() === nextTranslateY) {
       return;
     }
 
-    firstPointGuideLineTranslateY.value = withTiming(nextTranslateY, {
-      duration: 260,
-      easing: Easing.out(Easing.cubic),
-    });
+    firstPointGuideLineTranslateY.set(
+      withTiming(nextTranslateY, {
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
   }, [
     firstPointGuideLineBaseTop,
     firstPointGuideLineTopTarget,

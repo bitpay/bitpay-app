@@ -123,10 +123,19 @@ export const useDebouncedSendToValidation = (
   validate: (text: string) => void,
   wait = 300,
 ) => {
+  // React Compiler opt-out: this hook deliberately keeps the latest `validate`
+  // in a ref (written during render) and hands a ref-reading closure to
+  // lodash.debounce inside useMemo so the debounced function stays stable
+  // across renders while always calling the newest validator. The compiler
+  // cannot prove debounce() does not call the closure during render, so it
+  // rejects every equivalent formulation; keep the existing semantics.
+  'use no memo';
   const validateRef = useRef(validate);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   validateRef.current = validate;
 
   const debouncedValidate = useMemo(
+    // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
     () => debounce((text: string) => validateRef.current(text), wait),
     [wait],
   );

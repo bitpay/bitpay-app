@@ -337,6 +337,7 @@ const AddCustomToken = ({
         !IsERCToken(currencyAbbreviation, _chain) &&
         receiveAddress === selectedAccountAddress,
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- derives the associated wallet only when the chain changes (intentionally not on key changes)
     setAssociatedWallet(_associatedWallet);
   }, [chain]);
 

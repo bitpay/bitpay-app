@@ -111,7 +111,9 @@ const AmountScreen: React.FC<
     return onAmountSelected?.('', setButtonState, {sendMax: true});
   };
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
-  onSendMaxPressedRef.current = onSendMaxPressed;
+  useLayoutEffect(() => {
+    onSendMaxPressedRef.current = onSendMaxPressed;
+  });
 
   const getHeaderRight = useCallback(
     () => (

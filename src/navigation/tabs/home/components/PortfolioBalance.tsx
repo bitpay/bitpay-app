@@ -375,33 +375,33 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   useEffect(() => {
     setIsChartCollapsed(shouldApplyChartCollapse);
     cancelAnimation(collapseProgress);
-    collapseProgress.value = shouldApplyChartCollapse ? 1 : 0;
+    collapseProgress.set(shouldApplyChartCollapse ? 1 : 0);
   }, [collapseProgress, shouldApplyChartCollapse]);
 
   const buttonAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity:
-        interpolate(collapseProgress.value, [0, 1], [1, 0]) *
-        collapseButtonPressOpacity.value,
+        interpolate(collapseProgress.get(), [0, 1], [1, 0]) *
+        collapseButtonPressOpacity.get(),
     };
   });
 
   const chartScale = useDerivedValue(() => {
-    return interpolate(collapseProgress.value, [0, 1], [1, collapsedScale]);
+    return interpolate(collapseProgress.get(), [0, 1], [1, collapsedScale]);
   });
 
   const chartSpacerAnimatedStyle = useAnimatedStyle(() => {
     return {
-      height: interpolate(collapseProgress.value, [0, 1], [fullChartHeight, 0]),
+      height: interpolate(collapseProgress.get(), [0, 1], [fullChartHeight, 0]),
     };
   });
 
   const axisLabelOpacity = useDerivedValue(() => {
-    return interpolate(collapseProgress.value, [0, 0.08, 1], [1, 0, 0]);
+    return interpolate(collapseProgress.get(), [0, 0.08, 1], [1, 0, 0]);
   });
 
   const timeframeSelectorOpacity = useDerivedValue(() => {
-    return interpolate(collapseProgress.value, [0, 0.28, 1], [1, 0, 0]);
+    return interpolate(collapseProgress.get(), [0, 0.28, 1], [1, 0, 0]);
   });
 
   // Fine-tune the final collapsed Y alignment so the mini chart sits perfectly
@@ -435,7 +435,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       : fallbackCollapsedTranslateY;
 
   const chartWrapperAnimatedStyle = useAnimatedStyle(() => {
-    const progress = collapseProgress.value;
+    const progress = collapseProgress.get();
     return {
       transform: [
         {
@@ -444,7 +444,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
         {
           translateY: interpolate(progress, [0, 1], [0, collapsedTranslateY]),
         },
-        {scale: chartScale.value},
+        {scale: chartScale.get()},
       ],
     };
   });
@@ -466,21 +466,23 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       }
 
       cancelAnimation(collapseProgress);
-      collapseProgress.value = withTiming(
-        toCollapsed ? 1 : 0,
-        {
-          duration: 360,
-          easing: Easing.inOut(Easing.cubic),
-        },
-        finished => {
-          if (!finished) {
-            return;
-          }
-          runOnJS(persistHomeChartCollapsePreference)(toCollapsed);
-          if (!toCollapsed) {
-            runOnJS(setIsChartCollapsed)(false);
-          }
-        },
+      collapseProgress.set(
+        withTiming(
+          toCollapsed ? 1 : 0,
+          {
+            duration: 360,
+            easing: Easing.inOut(Easing.cubic),
+          },
+          finished => {
+            if (!finished) {
+              return;
+            }
+            runOnJS(persistHomeChartCollapsePreference)(toCollapsed);
+            if (!toCollapsed) {
+              runOnJS(setIsChartCollapsed)(false);
+            }
+          },
+        ),
       );
     },
     [canCollapseChart, collapseProgress, persistHomeChartCollapsePreference],
@@ -489,19 +491,23 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const onCollapseButtonPressIn = useCallback(() => {
     setIsCollapseButtonActive(true);
     cancelAnimation(collapseButtonPressOpacity);
-    collapseButtonPressOpacity.value = withTiming(ActiveOpacity, {
-      duration: 80,
-      easing: Easing.linear,
-    });
+    collapseButtonPressOpacity.set(
+      withTiming(ActiveOpacity, {
+        duration: 80,
+        easing: Easing.linear,
+      }),
+    );
   }, [collapseButtonPressOpacity]);
 
   const onCollapseButtonPressOut = useCallback(() => {
     setIsCollapseButtonActive(false);
     cancelAnimation(collapseButtonPressOpacity);
-    collapseButtonPressOpacity.value = withTiming(1, {
-      duration: 120,
-      easing: Easing.linear,
-    });
+    collapseButtonPressOpacity.set(
+      withTiming(1, {
+        duration: 120,
+        easing: Easing.linear,
+      }),
+    );
   }, [collapseButtonPressOpacity]);
 
   const onCollapseChartPress = useCallback(() => {
