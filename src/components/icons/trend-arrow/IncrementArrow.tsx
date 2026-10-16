@@ -2,7 +2,7 @@ import React from 'react';
 import {useTheme} from '../../../contexts';
 import Svg, {Rect, Path} from 'react-native-svg';
 import type {SvgProps} from 'react-native-svg';
-import {Success50, White} from '../../../styles/colors';
+import {White} from '../../../styles/colors';
 
 export interface TrendArrowProps extends SvgProps {
   backgroundColor?: string;

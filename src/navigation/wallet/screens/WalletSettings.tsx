@@ -160,10 +160,10 @@ const WalletSettings = () => {
 
   useEffect(() => {
     if (wallet.receiveAddress) {
-      const {hideAccount, accountToggleSelected} =
+      const {hideAccount: accountHidden, accountToggleSelected: accountToggle} =
         evmAccountsInfo?.[wallet.receiveAddress] || {};
-      setHideAccount(hideAccount ?? false);
-      setAccountToggleSelected(accountToggleSelected ?? false);
+      setHideAccount(accountHidden ?? false);
+      setAccountToggleSelected(accountToggle ?? false);
     }
   }, [evmAccountsInfo, wallet.receiveAddress]);
 
@@ -210,10 +210,10 @@ const WalletSettings = () => {
   };
 
   const handleToggleAndUpdateAccount = (
-    keyId: string,
+    accountKeyId: string,
     accountAddress: string,
   ) => {
-    dispatch(toggleHideAccount({keyId, accountAddress}));
+    dispatch(toggleHideAccount({keyId: accountKeyId, accountAddress}));
     dispatch(
       startUpdateAllWalletStatusForKey({
         key,

@@ -60,6 +60,7 @@ const BanxaSettings: React.FC = () => {
         `Coming from payment request: banxaExternalId: ${incomingPaymentRequest.banxaExternalId}`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
 
   useEffect(() => {
@@ -69,6 +70,7 @@ const BanxaSettings: React.FC = () => {
       );
       setTransactions(banxaPaymentRequests);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
   }, [isFocused]);
 
   return (

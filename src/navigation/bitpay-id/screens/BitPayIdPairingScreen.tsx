@@ -36,7 +36,7 @@ const BitPayIdPairingScreen = (
     if (!handled) {
       navigation.replace('BitPayIdProfile');
     }
-  }, [navigation, redirect]);
+  }, [dispatch, navigation, redirect]);
 
   const onFailure = () => {
     navigation.dispatch(

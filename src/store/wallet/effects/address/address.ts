@@ -1,4 +1,4 @@
-import {KeyMethods, Wallet} from '../../wallet.models';
+import {Wallet} from '../../wallet.models';
 import {ValidateCoinAddress} from '../../utils/validations';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
@@ -187,10 +187,10 @@ export const GetCoinAndNetwork = (
   const address = ExtractCoinNetworkAddress(str);
   try {
     return {coin: 'btc', network: GetAddressNetwork(address, 'btc')};
-  } catch (e) {
+  } catch {
     try {
       return {coin: 'bch', network: GetAddressNetwork(address, 'bch')};
-    } catch (bchErr) {
+    } catch {
       try {
         let isValidTokenAddress = false;
         let validCoin = '';
@@ -210,7 +210,7 @@ export const GetCoinAndNetwork = (
         } else {
           throw isValidTokenAddress;
         }
-      } catch (ethErr) {
+      } catch {
         try {
           const isValidXrpAddress = Core.Validation.validateAddress(
             'XRP',
@@ -222,13 +222,13 @@ export const GetCoinAndNetwork = (
           } else {
             throw isValidXrpAddress;
           }
-        } catch (xrpErr) {
+        } catch {
           try {
             return {coin: 'doge', network: GetAddressNetwork(address, 'doge')};
-          } catch (dogeErr) {
+          } catch {
             try {
               return {coin: 'ltc', network: GetAddressNetwork(address, 'ltc')};
-            } catch (ltcErr) {
+            } catch {
               return null;
             }
           }

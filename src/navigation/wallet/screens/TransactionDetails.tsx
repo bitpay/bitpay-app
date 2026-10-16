@@ -444,6 +444,7 @@ const TransactionDetailsContent = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to load the transaction details
   }, []);
 
   const speedup = async () => {

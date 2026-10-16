@@ -242,7 +242,7 @@ export const Bills = () => {
         navigation.navigate(BillScreens.CONNECT_BILLS_OPTIONS, {});
         return;
       }
-    } catch (err) {
+    } catch {
       setConnectButtonState(undefined);
     }
     verifyUserInfo();

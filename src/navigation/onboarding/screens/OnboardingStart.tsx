@@ -254,6 +254,7 @@ interface OnboardingCarouselProps {
   onSnapToItem: (index: number) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-shadow -- named function expression gives the memoized component its display name
 const OnboardingCarousel = memo(function OnboardingCarousel({
   onboardingSlides,
   progressValue,

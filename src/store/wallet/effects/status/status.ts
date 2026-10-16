@@ -91,8 +91,8 @@ export const startUpdateWalletStatus =
           );
 
           const totalFiatBalance = wallets.reduce(
-            (acc: number, wallet: Wallet) => {
-              const sat = wallet.balance.sat;
+            (acc: number, keyWallet: Wallet) => {
+              const sat = keyWallet.balance.sat;
               return (
                 acc +
                 convertToFiat(
@@ -100,15 +100,15 @@ export const startUpdateWalletStatus =
                     toFiat(
                       sat,
                       defaultAltCurrency.isoCode,
-                      wallet.currencyAbbreviation,
-                      wallet.chain,
+                      keyWallet.currencyAbbreviation,
+                      keyWallet.chain,
                       rates,
-                      wallet.tokenAddress,
+                      keyWallet.tokenAddress,
                     ),
                   ),
                   false, // already filtered by hideWallet
                   false,
-                  wallet.network,
+                  keyWallet.network,
                 )
               );
             },
@@ -116,22 +116,22 @@ export const startUpdateWalletStatus =
           );
 
           const totalLastDayFiatBalance = wallets.reduce(
-            (acc: number, wallet: Wallet) => {
-              const sat = wallet.balance.sat;
+            (acc: number, keyWallet: Wallet) => {
+              const sat = keyWallet.balance.sat;
               const fiatLastDay = convertToFiat(
                 dispatch(
                   toFiat(
                     sat,
                     defaultAltCurrency.isoCode,
-                    wallet.currencyAbbreviation,
-                    wallet.chain,
+                    keyWallet.currencyAbbreviation,
+                    keyWallet.chain,
                     lastDayRates,
-                    wallet.tokenAddress,
+                    keyWallet.tokenAddress,
                   ),
                 ),
                 false, // already filtered by hideWallet
                 false,
-                wallet.network,
+                keyWallet.network,
               );
               return fiatLastDay ? acc + fiatLastDay : acc;
             },
@@ -604,7 +604,7 @@ export const startUpdateAllWalletStatusForKey =
     if (createTokenWalletWithFunds) {
       try {
         await dispatch(detectAndCreateTokensForEachEvmWallet({key}));
-      } catch (error) {
+      } catch {
         logManager.info(
           'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
         );
@@ -675,7 +675,7 @@ export const startUpdateAllKeyAndWalletStatus =
               tokenAddress ? ' Contract address: ' + tokenAddress + '. ' : ''
             }`,
           );
-          for (const [index, k] of keys.entries()) {
+          for (const [, k] of keys.entries()) {
             try {
               await dispatch(
                 detectAndCreateTokensForEachEvmWallet({
@@ -684,7 +684,7 @@ export const startUpdateAllKeyAndWalletStatus =
                   tokenAddress,
                 }),
               );
-            } catch (error) {
+            } catch {
               logManager.info(
                 'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
               );
@@ -819,7 +819,7 @@ export const updateWalletStatus =
               pendingTxps: newPendingTxps,
               singleAddress,
             });
-          } catch (err2) {
+          } catch {
             resolve({
               balance: {
                 ...cachedBalance,
@@ -1214,7 +1214,7 @@ export const startFormatBalanceAllWalletsForKey =
 
             wallet.balance = {...wallet.balance, ...newBalance};
             return newBalance;
-          } catch (error) {
+          } catch {
             return {
               ...cachedBalance,
               ...dispatch(

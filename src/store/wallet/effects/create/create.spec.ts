@@ -37,7 +37,6 @@ jest.mock('../../../../managers/TokenManager', () => ({
 }));
 
 jest.mock('../../../../utils/helper-methods', () => ({
-  sleep: jest.fn(() => Promise.resolve()),
   addTokenChainSuffix: jest.fn(
     (addr: string, chain: string) => `${addr}_e.${chain}`,
   ),
@@ -142,7 +141,7 @@ const mockBwcClient = {
     token: undefined,
     walletId: 'mock-wallet-id',
     rootPath: undefined,
-    getTokenCredentials: jest.fn((tokenOpts: any, chain: string) => ({
+    getTokenCredentials: jest.fn(() => ({
       walletId: 'mock-token-wallet-id',
       token: {address: '0xTokenAddress'},
     })),
@@ -241,7 +240,7 @@ const makeMockWallet = (overrides: Record<string, any> = {}): any => ({
     token: undefined,
     walletId: 'mock-wallet-1',
     rootPath: undefined,
-    getTokenCredentials: jest.fn((tokenOpts: any) => ({
+    getTokenCredentials: jest.fn(() => ({
       walletId: `mock-wallet-1-0xtoken`,
       token: {address: '0xToken'},
     })),

@@ -92,7 +92,7 @@ const countDecimals = (num: number): number => {
   const strNum = num.toString();
   // verify if number 0.000005 is represented as "5e-6"
   if (strNum.indexOf('e-') > -1) {
-    const [base, trail] = strNum.split('e-');
+    const [, trail] = strNum.split('e-');
     const deg = parseInt(trail, 10);
     return deg;
   }

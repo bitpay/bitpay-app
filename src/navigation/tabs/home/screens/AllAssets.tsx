@@ -199,6 +199,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   }, [legacyAssetRowsEnabled, visibleWallets]);
   const legacyAssetBaselineTimestampMs = useMemo(
     () => getLastDayTimestampStartOfHourMs(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- quoteCurrency is an intentional trigger to recompute the baseline timestamp when the quote currency changes
     [quoteCurrency],
   );
   const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(

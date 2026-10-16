@@ -104,6 +104,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
         intervals: [...FIAT_RATE_SERIES_CACHED_INTERVALS],
         hasValidNormalizedCoin: shared.hasValidNormalizedCoin,
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on historicalRateIdentity's only fields (chain, tokenAddress) instead of object identity
     [
       shared.hasValidNormalizedCoin,
       shared.historicalRateIdentity.chain,

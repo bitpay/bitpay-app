@@ -44,7 +44,7 @@ export const startGetTokenOptions =
               return {chain, tokens: [] as Token[]};
             }
             return {chain, tokens: data};
-          } catch (error) {
+          } catch {
             logManager.info(
               `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
             );

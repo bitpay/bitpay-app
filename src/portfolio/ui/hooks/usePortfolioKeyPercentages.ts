@@ -78,6 +78,7 @@ export function usePortfolioKeyPercentages(args: {
         currentRatesSignature: scope.currentRatesSignature,
       };
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keysInputSignature is a deliberate recompute trigger for key/wallet content changes that keep the same args.keys reference
   }, [args.keys, dispatch, enabled, keysInputSignature, quoteCurrency, rates]);
 
   const requestKey = useMemo(() => {

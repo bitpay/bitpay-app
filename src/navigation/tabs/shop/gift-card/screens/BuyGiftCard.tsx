@@ -314,6 +314,7 @@ const BuyGiftCard = ({
         ...(visibleCoupon && {visibleCoupon}),
       }),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- visibleCoupon is derived from cardConfig (already a dep) and is recreated each render
   }, [cardConfig, cardConfig.name, dispatch]);
 
   const showActivationFeeSheet = (

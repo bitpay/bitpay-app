@@ -80,7 +80,7 @@ import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {RootStacks, getNavigationTabName} from '../../../Root';
+import {RootStacks} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
@@ -303,8 +303,8 @@ const AddCustomToken = ({
   ) as {[key in string]: Token};
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = keys[_key.id];
-  const [isTestnet, setIsTestnet] = useState(false);
-  const [isRegtest, setIsRegtest] = useState(false);
+  const [isTestnet] = useState(false);
+  const [isRegtest] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
   const [chain, setChain] = useState(selectedChain);
   const SupportedChainCurrencyOptions = IsSVMChain(selectedChain)
@@ -332,12 +332,17 @@ const AddCustomToken = ({
 
   useEffect(() => {
     const _associatedWallet = key.wallets.find(
-      ({chain: _chain, currencyAbbreviation, receiveAddress}) =>
+      ({
+        chain: _chain,
+        currencyAbbreviation: walletCurrencyAbbreviation,
+        receiveAddress,
+      }) =>
         _chain === chain &&
-        !IsERCToken(currencyAbbreviation, _chain) &&
+        !IsERCToken(walletCurrencyAbbreviation, _chain) &&
         receiveAddress === selectedAccountAddress,
     );
     setAssociatedWallet(_associatedWallet);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the selected chain changes; key wallets and account are read at that time
   }, [chain]);
 
   const [chainModalVisible, setChainModalVisible] = useState(false);
@@ -372,6 +377,7 @@ const AddCustomToken = ({
     if (currencyName) {
       reset({walletName: currencyName});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resets the form only when the fetched token name changes
   }, [currencyName]);
 
   const _addWallet = async (): Promise<Wallet> => {
@@ -435,7 +441,7 @@ const AddCustomToken = ({
           await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
           await sleep(1000);
           dispatch(updatePortfolioBalance());
-        } catch (error) {
+        } catch {
           // ignore error
         }
 
@@ -541,13 +547,13 @@ const AddCustomToken = ({
     }
   });
 
-  const showMissingWalletMsg = async (chain: string) => {
+  const showMissingWalletMsg = async (missingChain: string) => {
     await sleep(500);
     dispatch(
       showBottomNotificationModal({
         type: 'info',
         title: t('Missing wallet'),
-        message: DESCRIPTIONS[chain],
+        message: DESCRIPTIONS[missingChain],
         actions: [
           {
             text: t('OK'),
@@ -582,32 +588,33 @@ const AddCustomToken = ({
     ({item}: {item: SupportedCurrencyOption}) => (
       <ChainSelectionRow
         chainObj={BitpaySupportedCoins[item.chain]}
-        onToggle={async (currencyAbbreviation, chain) => {
+        onToggle={async (_currencyAbbreviation, toggledChain) => {
           haptic('soft');
           setChainModalVisible(false);
           await sleep(1000);
           const hasAssociatedWallet = key.wallets.find(
-            ({chain: _chain}) => _chain === chain,
+            ({chain: _chain}) => _chain === toggledChain,
           );
           if (!hasAssociatedWallet) {
-            showMissingWalletMsg(chain);
+            showMissingWalletMsg(toggledChain);
           } else {
-            setChain(chain);
+            setChain(toggledChain);
           }
         }}
         key={item.id}
       />
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- memoized once on mount, as before; key and showMissingWalletMsg are captured from the first render
     [],
   );
 
-  const setTokenInfo = async (tokenAddress: string | undefined) => {
+  const setTokenInfo = async (newTokenAddress: string | undefined) => {
     try {
-      if (!tokenAddress) {
+      if (!newTokenAddress) {
         return;
       }
-      setTokenAddress(tokenAddress);
-      const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
+      setTokenAddress(newTokenAddress);
+      const addrData = GetCoinAndNetwork(newTokenAddress, network, chain);
       const isValid =
         addrData?.coin.toLowerCase() && network === addrData?.network;
 
@@ -618,7 +625,9 @@ const AddCustomToken = ({
       setInvalidTokenAddress(false);
 
       let tokenContractInfo =
-        tokenOptionsByAddress?.[getCurrencyAbbreviation(tokenAddress, chain)];
+        tokenOptionsByAddress?.[
+          getCurrencyAbbreviation(newTokenAddress, chain)
+        ];
       if (!tokenContractInfo) {
         logManager.debug(
           '[AddCustomToken] contract info not present in token options - consulting bws',
@@ -627,7 +636,7 @@ const AddCustomToken = ({
           ({id}) => id === associatedWallet?.id,
         )!;
         tokenContractInfo = await getTokenContractInfo(fullWalletObj, {
-          tokenAddress,
+          tokenAddress: newTokenAddress,
           chain,
         });
         let customToken: Token = {
@@ -635,15 +644,15 @@ const AddCustomToken = ({
           symbol: tokenContractInfo.symbol?.toLowerCase(),
           decimals: Number(tokenContractInfo.decimals),
           address: IsSVMChain(chain)
-            ? tokenAddress
-            : tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
+            ? newTokenAddress
+            : newTokenAddress?.toLowerCase(), // Solana addresses are case sensitive
         };
         dispatch(addCustomTokenOption(customToken, chain));
       }
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
       Keyboard.dismiss();
-    } catch (error) {
+    } catch {
       Keyboard.dismiss();
       setTokenAddress(undefined);
       await sleep(200);

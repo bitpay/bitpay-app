@@ -828,14 +828,16 @@ const buildSelectableWalletList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
 
-      coinEntry.chains.forEach(chain => {
-        const wallet = filteredWallets.find(w => w.chain === chain);
-        if (!wallet || coinEntry.chainsImg[chain]?.priority) {
+      coinEntry.chains.forEach(entryChain => {
+        const wallet = filteredWallets.find(w => w.chain === entryChain);
+        if (!wallet || coinEntry.chainsImg[entryChain]?.priority) {
           return;
         }
-        coinEntry.chainsImg[chain] = {
+        coinEntry.chainsImg[entryChain] = {
           badgeUri:
-            IsVMChain(chain) && !wallet.badgeImg ? wallet.img : wallet.badgeImg,
+            IsVMChain(entryChain) && !wallet.badgeImg
+              ? wallet.img
+              : wallet.badgeImg,
           priority,
         };
       });
@@ -1603,14 +1605,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
-              onAmountSelected: async (amount, setButtonState, opts) => {
+              onAmountSelected: async (
+                selectedAmount,
+                setButtonState,
+                amountOpts,
+              ) => {
                 dispatch(
                   createProposalAndNavigate({
                     wallet,
-                    amount: Number(amount),
+                    amount: Number(selectedAmount),
                     sendTo,
                     setButtonState,
-                    opts,
+                    opts: amountOpts,
                   }),
                 );
               },
@@ -2184,11 +2190,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }
       // user is selecting address to receive funds if context === receive
       setCryptoSelectModalVisible(false);
-      const {keyId, wallets} = selectedAccount;
+      const {keyId, wallets: accountWallets} = selectedAccount;
       const walletFullObject = findWalletById(
         keys[keyId].wallets,
-        wallets[0].id,
-        wallets[0].copayerId,
+        accountWallets[0].id,
+        accountWallets[0].copayerId,
       ) as Wallet;
       onWalletSelect(walletFullObject, undefined);
       return;

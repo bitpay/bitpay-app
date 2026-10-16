@@ -69,7 +69,7 @@ function parseEncryptedValue(encryptedValue: string): {
     if (obj?.ephemeralPublicKey && obj?.iv && obj?.ciphertext) {
       return obj;
     }
-  } catch (_) {}
+  } catch {}
 
   // 2) If that fails, try decode as base64-encoded JSON (legacy format)
   try {
@@ -78,7 +78,7 @@ function parseEncryptedValue(encryptedValue: string): {
     if (obj?.ephemeralPublicKey && obj?.iv && obj?.ciphertext) {
       return obj;
     }
-  } catch (_) {}
+  } catch {}
 
   throw new Error(
     'Invalid encryptedValue format: not JSON and not base64(JSON)',
