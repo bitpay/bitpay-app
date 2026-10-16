@@ -53,7 +53,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
-import _ from 'lodash';
+import {orderBy} from '../../../utils/array';
 import {
   buildUIFormattedWallet,
   toFiat,
@@ -259,8 +259,8 @@ const SelectInputs = () => {
         utxosWithFiatAmount.filter(u => u.locked),
         utxosWithFiatAmount.filter(u => !u.locked),
       ];
-      setLockedUtxos(_.orderBy(_lockedUtxos, 'amount', 'desc'));
-      setInputs(_.orderBy(_availableUtxos, 'amount', 'desc'));
+      setLockedUtxos(orderBy(_lockedUtxos, 'amount', 'desc'));
+      setInputs(orderBy(_availableUtxos, 'amount', 'desc'));
     } catch (err) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(`An error occurred while getting utxos: ${errStr}`);

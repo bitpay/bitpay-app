@@ -9,7 +9,6 @@ import {
   CommonActions,
 } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import cloneDeep from 'lodash.clonedeep';
 import {
   useAppDispatch,
   useAppSelector,
@@ -654,7 +653,7 @@ const RampSellCheckout: React.FC = () => {
 
     const realMaxAmount = dispatch(
       SatToUnit(
-        cloneDeep(sendMaxInfo.amount),
+        sendMaxInfo.amount,
         wallet.currencyAbbreviation,
         wallet.chain,
         wallet.tokenAddress,
@@ -690,8 +689,7 @@ const RampSellCheckout: React.FC = () => {
       t(
         'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
         {
-          chain:
-            dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
+          chain: dispatch(GetName(chain, chain)) || chain.toUpperCase(),
           fee,
           coin: coin.toUpperCase(),
         },

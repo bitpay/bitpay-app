@@ -20,7 +20,7 @@ import {
   InAppNotificationContextType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../utils/array';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';

@@ -27,7 +27,6 @@ import {
   getTransakSupportedCurrencies,
   transakSupportedFiatCurrencies,
 } from './transak-utils';
-import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {LastPurchaseData} from '../../../../store/buy-crypto/buy-crypto.models';
@@ -75,20 +74,22 @@ export const getBuyEnabledPaymentMethods = (
     }
   });
 
-  const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
-    if (!method.enabled || paymentMethodsConfig?.[method.method]?.disabled) {
-      return false;
-    }
-    const isSupportedByExchange = (exch: BuyCryptoExchangeKey) =>
-      !isPaymentMethodDisabledForPartner(
-        buyCryptoConfig?.[exch],
-        method.method,
-      ) &&
-      isPaymentMethodSupported(exch, method, coin, chain, currency, country);
-    return exchange && BuyCryptoSupportedExchanges.includes(exchange)
-      ? isSupportedByExchange(exchange)
-      : BuyCryptoSupportedExchanges.some(isSupportedByExchange);
-  });
+  const EnabledPaymentMethods = Object.fromEntries(
+    Object.entries(PaymentMethodsAvailable).filter(([, method]) => {
+      if (!method.enabled || paymentMethodsConfig?.[method.method]?.disabled) {
+        return false;
+      }
+      const isSupportedByExchange = (exch: BuyCryptoExchangeKey) =>
+        !isPaymentMethodDisabledForPartner(
+          buyCryptoConfig?.[exch],
+          method.method,
+        ) &&
+        isPaymentMethodSupported(exch, method, coin, chain, currency, country);
+      return exchange && BuyCryptoSupportedExchanges.includes(exchange)
+        ? isSupportedByExchange(exchange)
+        : BuyCryptoSupportedExchanges.some(isSupportedByExchange);
+    }),
+  );
 
   return EnabledPaymentMethods;
 };

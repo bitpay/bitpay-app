@@ -34,7 +34,7 @@ import {
   getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
-import _ from 'lodash';
+import {orderBy} from '../../../../utils/array';
 import {
   AppDispatch,
   useAppDispatch,
@@ -467,7 +467,7 @@ export const createHomeCardList = ({
   const order = homeCarouselConfig.map(item => item.id);
 
   return {
-    list: [..._.sortBy(list, item => _.indexOf(order, item.id))],
+    list: [...orderBy(list, item => order.indexOf(item.id))],
     defaults,
   };
 };

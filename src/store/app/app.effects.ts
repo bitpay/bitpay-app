@@ -1,6 +1,6 @@
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
-import {debounce} from 'lodash';
+import {debounce} from '../../utils/debounce';
 import {
   DeviceEventEmitter,
   EmitterSubscription,

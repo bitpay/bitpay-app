@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {StyleSheet, Text, View, ViewProps} from 'react-native';
 import {useTheme} from '../../../contexts';
-import {orderBy} from 'lodash';
+import {orderBy} from '../../../utils/array';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../store';

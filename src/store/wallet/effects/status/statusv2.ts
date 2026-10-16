@@ -1,7 +1,7 @@
 import {Effect} from '../../../index';
 import {Key, Wallet, WalletStatus} from '../../wallet.models';
 import {successUpdateWalletBalancesAndStatus} from '../../wallet.actions';
-import _ from 'lodash';
+import {partition} from '../../../../utils/array';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import {WalletActions} from '../..';
 import {startGetRates} from '../rates/rates';
@@ -108,7 +108,7 @@ export const getUpdatedWalletBalances =
       RATE: {rates, lastDayRates},
     } = getState();
 
-    const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
+    const [readOnlyKeys, keys] = partition(Object.values(_keys), 'isReadOnly');
     const keyBalances: {
       keyId: string;
       totalBalance: number;

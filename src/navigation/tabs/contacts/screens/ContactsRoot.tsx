@@ -1,6 +1,6 @@
 import React, {useState, useCallback, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../../utils/debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../../../contexts';
 import {FlatList, SafeAreaView, StyleSheet, View} from 'react-native';

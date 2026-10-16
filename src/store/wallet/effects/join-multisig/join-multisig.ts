@@ -1,6 +1,6 @@
 import {Effect} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {
   buildKeyObj,
   buildWalletObj,

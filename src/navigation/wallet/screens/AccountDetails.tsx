@@ -5,7 +5,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import _ from 'lodash';
+import {merge} from '../../../utils/object';
 import React, {
   ReactElement,
   useCallback,
@@ -172,7 +172,7 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
@@ -201,7 +201,7 @@ import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg
 import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../../utils/array';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -952,7 +952,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 syncWallet.credentials.token?.address,
               ),
             );
-            return _.merge(
+            return merge(
               syncWallet,
               buildWalletObj(
                 {
@@ -1060,7 +1060,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             },
           }),
         );
-        if (_.isEmpty(wallets)) {
+        if (wallets.length === 0) {
           if (!key.isPrivKeyEncrypted) {
             await startSyncWallets(key.properties!.mnemonic);
           } else {

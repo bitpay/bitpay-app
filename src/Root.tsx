@@ -5,7 +5,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import debounce from 'lodash.debounce';
+import {debounce} from './utils/debounce';
 import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useRef} from 'react';
 import {useStore} from 'react-redux';

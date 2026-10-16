@@ -89,7 +89,6 @@ import {
   openUrlWithInAppBrowser,
   submitDeviceEvent,
 } from '../../../app/app.effects';
-import _ from 'lodash';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {DeviceEventEmitter, Platform} from 'react-native';
@@ -994,7 +993,7 @@ export const buildTransactionProposal =
               wallet.chain,
             );
 
-            if (!_.isEmpty(warningMsg)) {
+            if (warningMsg) {
               dispatch(
                 showBottomNotificationModal(
                   ExcludedUtxosWarning({

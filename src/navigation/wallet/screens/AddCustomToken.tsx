@@ -94,7 +94,6 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from '@components/base/TouchableOpacity';
-import cloneDeep from 'lodash.clonedeep';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
@@ -480,13 +479,11 @@ const AddCustomToken = ({
         // check tokens within associated wallet and see if token already exist
         const {tokens} = associatedWallet;
 
-        const _tokenAddress = cloneDeep(tokenAddress); // Necessary to avoid saving tokenAddress in lowercase
-
         for (const token of tokens) {
           if (
             key?.wallets
               .find(wallet => wallet.id === token)
-              ?.tokenAddress?.toLowerCase() === _tokenAddress?.toLowerCase()
+              ?.tokenAddress?.toLowerCase() === tokenAddress?.toLowerCase()
           ) {
             dispatch(
               showBottomNotificationModal({

@@ -1,6 +1,5 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
-import {orderBy} from 'lodash';
 import {useTheme} from '../../../../contexts';
 import {
   ModalHeader,
@@ -42,6 +41,7 @@ import {
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {getCachedExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
 import {sleep} from '../../../../utils/helper-methods';
+import {orderBy} from '../../../../utils/array';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import TimeIcon from '../../../../components/icons/payment-methods/timeIcon';
@@ -291,7 +291,7 @@ const PaymentMethodsModal = ({
   const EnabledPaymentMethods = getEnabledPaymentMethods();
 
   const OrderedEnabledPaymentMethods = EnabledPaymentMethods
-    ? orderBy(EnabledPaymentMethods, ['order'], ['asc'])
+    ? orderBy(Object.values(EnabledPaymentMethods), ['order'], ['asc'])
     : null;
 
   const showOtherPaymentMethodsInfoSheet = async (

@@ -35,10 +35,9 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {IsERCToken, IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
-import _ from 'lodash';
 import {createWalletAddress} from '../address/address';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
-import uniqBy from 'lodash.uniqby';
+import {partition, uniqBy} from '../../../../utils/array';
 import {logManager} from '../../../../managers/LogManager';
 import {type BulkClient} from '@bitpay-labs/bitcore-wallet-client/src/lib/bulkclient';
 export const startUpdateWalletStatus =
@@ -726,7 +725,10 @@ export const startUpdateAllKeyAndWalletStatus =
           return resolve();
         }
 
-        const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
+        const [readOnlyKeys, keys] = partition(
+          Object.values(_keys),
+          'isReadOnly',
+        );
 
         if (createTokenWalletWithFunds) {
           logManager.debug(

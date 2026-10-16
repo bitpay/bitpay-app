@@ -278,11 +278,14 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('lodash.debounce', () => (fn: (...args: any[]) => any) => {
-  const debounced = (...args: any[]) => fn(...args);
-  debounced.cancel = jest.fn();
-  return debounced;
-});
+jest.mock('../../../utils/debounce', () => ({
+  ...jest.requireActual('../../../utils/debounce'),
+  debounce: (fn: (...args: any[]) => any) => {
+    const debounced = (...args: any[]) => fn(...args);
+    debounced.cancel = jest.fn();
+    return debounced;
+  },
+}));
 
 jest.mock('../../../utils/hooks', () => ({
   useAppDispatch: () => mockDispatch,

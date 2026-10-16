@@ -8,7 +8,7 @@ import {
 import {Effect} from '../../../index';
 import {requireVaultActive} from '../../../vault-storage';
 import {BwcProvider} from '../../../../lib/bwc';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {
   buildKeyObj,
   buildMigrationKeyObj,
@@ -77,7 +77,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../../../utils/array';
 import {getBaseVMAccountCreationCoinsAndTokens} from '../../../../constants/currencies';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {
