@@ -90,7 +90,19 @@ export const rangoPrepareSwap =
     txpParams: RangoTxProposalParams,
   ): Effect<Promise<RangoPreparedSwap>> =>
   async (): Promise<RangoPreparedSwap> => {
-    const res = await rangoCreateSwapTx({env: rangoEnv, ...requestData});
+    // On UTXO chains `fromAddress` is a single HD address, not the wallet's
+    // whole balance, so Rango's own balance check reports a false
+    // "insufficient funds". The app validates spendable balance itself before
+    // reaching here.
+    const isUtxo = ['btc', 'bch', 'doge', 'ltc'].includes(
+      txpParams.chain?.toLowerCase(),
+    );
+
+    const res = await rangoCreateSwapTx({
+      env: rangoEnv,
+      ...(isUtxo && {disableEstimate: true}),
+      ...requestData,
+    });
 
     if (!rangoIsRouteUsable(res)) {
       const msg = rangoGetErrorMessage(res) ?? 'No route available';

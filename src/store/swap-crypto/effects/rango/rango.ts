@@ -15,6 +15,25 @@ import {
 } from '../../models/rango.models';
 import {logManager} from '../../../../managers/LogManager';
 
+/**
+ * Rango Basic API (single step), proxied through BWS.
+ *
+ * Basic rather than the Main multi-step API, deliberately. Main returns a
+ * route of N steps, each needing its own create-transaction, sign, broadcast
+ * and status poll, with the user signing once per step — a materially larger
+ * execution surface. Basic returns one transaction per swap, which maps onto
+ * the single createTxProposal/publishAndSign flow the app already has.
+ *
+ * The cost is that Basic will not return routes needing two or more steps; it
+ * answers NO_ROUTE instead. Spot-checked on the chains the wallet custodies
+ * (BTC->ETH, BTC->POLYGON.USDC): Main returns a 1-step route for the same
+ * pairs, so Basic is not losing them. BCH->ETH is NO_ROUTE on BOTH tiers, so
+ * that gap is liquidity, not API choice.
+ *
+ * Rango's own integration checklist lists a "+2 step swap" as a launch
+ * scenario, so this should be re-measured across the full pair matrix before
+ * enabling, and revisited if the NO_ROUTE rate turns out to be material.
+ */
 const bwsUri = BASE_BWS_URL;
 
 const config = {

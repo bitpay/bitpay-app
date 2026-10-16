@@ -177,8 +177,15 @@ export interface RangoTransferTransaction {
    */
   memoType?: RangoMemoType | null;
   asset?: RangoToken;
-  /** Rango-built unsigned PSBT. Unused — BWS builds our UTXO transactions. */
-  psbt?: {unsignedPsbtBase64?: string} | null;
+  /**
+   * Rango-built unsigned PSBT. Unused: BWS builds our UTXO transactions from
+   * the recipient/amount/memo above. Kept modelled so the alternative is
+   * visible if the proposal path ever cannot express a route.
+   */
+  psbt?: {
+    unsignedPsbtBase64?: string;
+    inputsToSign?: Array<{address: string; signingIndexes: number[]}>;
+  } | null;
   prerequisites?: RangoPrerequisite[] | null;
   expectedOutput?: string | null;
 }
@@ -199,12 +206,33 @@ export interface RangoSolanaTransaction {
 }
 
 /**
- * A step Rango requires before the main transaction can be signed, e.g. an
- * allowance that must be set first. A non-empty list means the swap is not
- * ready to sign.
+ * A setup transaction that must be completed before the main swap can be
+ * signed. Shapes follow rango-types@0.6.0, which models these as a
+ * discriminated union.
+ *
+ * Note these are NOT always about the source chain. Bridging into a non-native
+ * Stellar or XRPL token requires a trustline on the DESTINATION chain, set up
+ * before the source transaction is broadcast — the docs call this out
+ * explicitly. None of these can arise for the chains the wallet custodies
+ * today (no Stellar, no Tron, and XRP is excluded as both source and
+ * destination), so the builder refuses any non-empty list rather than
+ * implementing handlers it cannot exercise. Revisit if XRP support lands.
  */
+export type RangoPrerequisiteType =
+  | 'STELLAR_CHANGE_TRUSTLINE'
+  | 'XRPL_CHANGE_TRUSTLINE'
+  | 'EVM_APPROVE'
+  | 'TRON_APPROVE';
+
 export interface RangoPrerequisite {
-  type?: string;
+  type?: RangoPrerequisiteType | string;
+  /** Trustline prerequisites: the asset code and its issuer. */
+  code?: string;
+  issuer?: string;
+  value?: string;
+  /** Destination wallet that needs the trustline. */
+  wallet?: string;
+  /** Approve prerequisites. */
   blockchain?: string;
   token?: RangoToken;
   requiredAmount?: string;
