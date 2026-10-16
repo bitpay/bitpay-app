@@ -139,7 +139,8 @@ export interface SwapCryptoApproveErc20Params {
   spenderData: {
     offerKey: string;
     offerName: string;
-    spenderKey: ThorswapProvider;
+    /** Thorswap names its routers; other providers pass a display string. */
+    spenderKey: ThorswapProvider | string;
     address: string;
     amount: string;
   };
@@ -396,10 +397,13 @@ const SwapCryptoApproveErc20: React.FC = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
-  const exchangeName =
-    spenderData.spenderKey && ThorswapProviderNames[spenderData.spenderKey]
-      ? ThorswapProviderNames[spenderData.spenderKey]
-      : spenderData.spenderKey;
+  // Thorswap identifies its routers by key and maps them to display names;
+  // other providers pass a name directly.
+  const thorswapName =
+    ThorswapProviderNames[
+      spenderData.spenderKey as keyof typeof ThorswapProviderNames
+    ];
+  const exchangeName = thorswapName ?? spenderData.spenderKey;
   const coinName = wallet.currencyAbbreviation.toUpperCase();
 
   return (

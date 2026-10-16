@@ -162,7 +162,12 @@ export const rangoPollStatus =
   (
     requestId: string,
     txId: string,
-    opts?: {intervalMs?: number; timeoutMs?: number},
+    opts?: {
+      intervalMs?: number;
+      timeoutMs?: number;
+      /** Checked each tick so a screen can drop the poll on unmount. */
+      cancelled?: () => boolean;
+    },
   ): Effect<Promise<RangoStatusResponse | undefined>> =>
   async (): Promise<RangoStatusResponse | undefined> => {
     const intervalMs = opts?.intervalMs ?? 15_000;
@@ -172,6 +177,10 @@ export const rangoPollStatus =
     let last: RangoStatusResponse | undefined;
 
     while (Date.now() < deadline) {
+      if (opts?.cancelled?.()) {
+        return last;
+      }
+
       try {
         last = await rangoGetStatus({env: rangoEnv, requestId, txId});
         if (last?.status === 'success' || last?.status === 'failed') {
@@ -186,6 +195,11 @@ export const rangoPollStatus =
 
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
+
+    // Timed out rather than settled. The caller must read an absent or
+    // 'running' status as still pending, never as failure — the swap is
+    // broadcast and in flight. iOS also suspends JS timers in the background,
+    // so a resumed app will usually land here.
 
     return last;
   };
