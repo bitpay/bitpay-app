@@ -37,6 +37,7 @@ import {
 import {useTheme} from '../../../contexts';
 import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {
+  GetBlockExplorerLink,
   GetBlockExplorerUrl,
   IsCustomERCToken,
 } from '../../../store/wallet/utils/currency';
@@ -567,7 +568,7 @@ const TransactionDetailsContent = ({
             : `https://${url}tx/DOGETEST/${txs?.txid}`;
         break;
       default:
-        url = `https://${url}tx/${txs?.txid}`;
+        url = GetBlockExplorerLink(network, chain, `tx/${txs?.txid}`);
     }
 
     dispatch(openUrlWithInAppBrowser(url));

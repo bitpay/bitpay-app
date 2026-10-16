@@ -2271,5 +2271,12 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "请输入恢复短语中的第 {{first}}、第 {{second}} 和第 {{third}} 个单词，以确认您已正确保存恢复短语。",
   "Show balances": "显示余额",
   "Hide balances": "隐藏余额",
-  "Could not check this account for pending transactions. Check your connection and try again.": "无法检查此账户是否有待处理交易。请检查您的网络连接，然后重试。"
+  "Could not check this account for pending transactions. Check your connection and try again.": "无法检查此账户是否有待处理交易。请检查您的网络连接，然后重试。",
+  "Testnet mode unlocked": "测试网模式已解锁",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "现在会显示测试网钱包和网络。您可以在下方将其关闭。",
+  "Show Testnet Wallets": "显示测试网钱包",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "启用后，测试网钱包会在整个应用中显示，您可以创建测试网钱包和代币。测试网币没有价值。停用后，测试网钱包会被隐藏，但不会被删除。",
+  "NETWORK": "网络",
+  "Select a Network": "选择网络",
+  "Add Testnet Wallets": "添加测试网钱包"
 }

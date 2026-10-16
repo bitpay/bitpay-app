@@ -225,6 +225,10 @@ import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterIntera
 import {performanceLog} from '../../../utils/performanceDebug';
 import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
+import {
+  getAccountChainsOnNetwork,
+  isHiddenByTestnetMode,
+} from '../../../store/wallet/utils/testnet';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -642,7 +646,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     () =>
       uniqBy(
         key.wallets.filter(
-          (w: Wallet) => w.receiveAddress === selectedAccountAddress,
+          (w: Wallet) =>
+            w.receiveAddress === selectedAccountAddress &&
+            !isHiddenByTestnetMode(w),
         ),
         (wallet: Wallet) => {
           return wallet.id;
@@ -1021,8 +1027,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   };
 
   const keyOptions: Array<Option> = [];
+  // Testnet wallets share the account, so count the chains on the network
+  // "Add Ethereum Networks" creates wallets for.
   const hasAllChains =
-    accountItem?.chains?.length ===
+    getAccountChainsOnNetwork(keyFullWalletObjs, network).length ===
     Object.keys(
       isSvmAccount ? BitpaySupportedSvmCoins : BitpaySupportedEvmCoins,
     ).length;

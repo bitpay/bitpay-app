@@ -40,6 +40,7 @@ import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {StackActions} from '@react-navigation/native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch', 'doge', 'ltc'];
 
@@ -268,6 +269,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       wallet =>
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
+        !isHiddenByTestnetMode(wallet) &&
         wallet.isComplete() &&
         !wallet.pendingTssSession,
     );

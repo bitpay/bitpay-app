@@ -120,6 +120,7 @@ import {
   startTSSSigning,
   pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
+import {isHiddenByTestnetMode} from '../../utils/testnet';
 
 const HAS_CONFIRMING_TXS_MAX_AGE_MS = 10 * 1000;
 
@@ -2510,6 +2511,7 @@ export const sendCrypto =
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
+          !isHiddenByTestnetMode(wallet) &&
           wallet.isComplete() &&
           !wallet.pendingTssSession,
       )

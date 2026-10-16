@@ -2298,5 +2298,12 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Убедитесь, что вы правильно записали фразу восстановления: введите слова под номерами {{first}}, {{second}} и {{third}} из вашей фразы восстановления.",
   "Show balances": "Показать балансы",
   "Hide balances": "Скрыть балансы",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Не удалось проверить этот аккаунт на наличие ожидающих транзакций. Проверьте подключение и повторите попытку."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Не удалось проверить этот аккаунт на наличие ожидающих транзакций. Проверьте подключение и повторите попытку.",
+  "Testnet mode unlocked": "Режим тестовой сети разблокирован",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "Кошельки и сети тестовой сети теперь отображаются. Их можно отключить ниже.",
+  "Show Testnet Wallets": "Показывать кошельки тестовой сети",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Если включено, кошельки тестовой сети отображаются во всём приложении, и вы можете создавать кошельки и токены тестовой сети. Монеты тестовой сети не имеют ценности. Если отключено, кошельки тестовой сети скрываются, но не удаляются.",
+  "NETWORK": "СЕТЬ",
+  "Select a Network": "Выберите сеть",
+  "Add Testnet Wallets": "Добавить кошельки тестовой сети"
 }

@@ -95,7 +95,15 @@ import {
   buildAssetsByChain,
   buildAssetsByChainList,
   buildKeyWalletRowsFromAccountList,
+  isWalletVisibleForKey,
 } from './wallet';
+import {syncTestnetWalletsVisibility} from './testnet';
+
+const setTestnetMode = (showTestnetWallets: boolean) =>
+  syncTestnetWalletsVisibility({
+    APP: {network: 'livenet'},
+    WALLET: {keys: {}, showTestnetWallets},
+  } as any);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1376,6 +1384,49 @@ describe('buildAccountList', () => {
     });
     expect(result.length).toBeGreaterThan(0);
     expect(result[0].chains).toContain('btc');
+  });
+
+  describe('testnet mode', () => {
+    afterEach(() => setTestnetMode(false));
+
+    const makeAccountWallets = () => [
+      makeBtcWallet({id: 'btc-main'}),
+      makeBtcWallet({
+        id: 'btc-test',
+        network: Network.testnet,
+        receiveAddress: 'tb1xyz',
+      }),
+    ];
+
+    it('leaves testnet wallets out of every list while it is off', () => {
+      setTestnetMode(false);
+      const key = makeKey2(makeAccountWallets());
+      const dispatch = makeDispatch() as any;
+
+      // Settings screens build without filterByHideWallet; testnet is still out.
+      const result = buildAccountList(key, 'USD', {}, dispatch, {
+        skipFiatCalculations: true,
+      });
+      expect(result.flatMap(account => account.wallets.map(w => w.id))).toEqual(
+        ['btc-main'],
+      );
+      expect(isWalletVisibleForKey(key, key.wallets[1])).toBe(false);
+    });
+
+    it('lists testnet wallets while it is on', () => {
+      setTestnetMode(true);
+      const key = makeKey2(makeAccountWallets());
+      const dispatch = makeDispatch() as any;
+
+      const result = buildAccountList(key, 'USD', {}, dispatch, {
+        skipFiatCalculations: true,
+        filterByHideWallet: true,
+      });
+      expect(
+        result.flatMap(account => account.wallets.map(w => w.id)).sort(),
+      ).toEqual(['btc-main', 'btc-test']);
+      expect(isWalletVisibleForKey(key, key.wallets[1])).toBe(true);
+    });
   });
 
   it('filters out wallets where hideWallet is true when filterByHideWallet=true', () => {

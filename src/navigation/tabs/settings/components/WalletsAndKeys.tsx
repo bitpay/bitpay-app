@@ -16,6 +16,10 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {keyBackupRequired} from '../../home/components/Crypto';
 import {SettingsComponent} from '../SettingsRoot';
 import {resolveKeySettingsAccountList} from '../../../wallet/screens/keySettingsAccountListCache';
+import {
+  filterTestnetWallets,
+  isKeyVisibleForTestnetMode,
+} from '../../../../store/wallet/utils/testnet';
 
 const styles = StyleSheet.create({
   createOrImportLink: {
@@ -49,7 +53,9 @@ const WalletsAndKeys = () => {
   const defaultAltCurrencyIsoCode = useAppSelector(
     ({APP}) => APP.defaultAltCurrency.isoCode,
   );
-  const keyList: Key[] = Object.values(keys);
+  const keyList: Key[] = Object.values(keys).filter(key =>
+    isKeyVisibleForTestnetMode(key),
+  );
 
   const warmKeySettingsAccountList = (key: Key) => {
     resolveKeySettingsAccountList({
@@ -91,7 +97,9 @@ const WalletsAndKeys = () => {
                     buttonType={'pill'}
                     onPressIn={() => warmKeySettingsAccountList(key)}
                     onPress={() => onPressKey(key)}>
-                    {t('{{count}} wallet', {count: key.wallets.length})}
+                    {t('{{count}} wallet', {
+                      count: filterTestnetWallets(key.wallets).length,
+                    })}
                   </KeyStatusButton>
                 ) : (
                   <KeyStatusButton

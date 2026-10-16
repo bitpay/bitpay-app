@@ -1234,6 +1234,27 @@ describe('REMOVE_PENDING_JOINER_SESSION', () => {
   });
 });
 
+describe('SET_SHOW_TESTNET_WALLETS', () => {
+  it('starts unset so existing users keep their current view', () => {
+    expect(initialState.showTestnetWallets).toBeNull();
+  });
+
+  it('stores the toggle and gives every key new references', () => {
+    const key = makeKey({wallets: [makeWallet()]});
+    const base: WalletState = {...freshState(), keys: {[key.id]: key}};
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SET_SHOW_TESTNET_WALLETS,
+      payload: true,
+    });
+
+    expect(state.showTestnetWallets).toBe(true);
+    // Lists memoized on keys or key.wallets must re-filter.
+    expect(state.keys[key.id]).not.toBe(key);
+    expect(state.keys[key.id].wallets).not.toBe(key.wallets);
+    expect(state.keys[key.id].wallets).toEqual(key.wallets);
+  });
+});
+
 describe('SET_TSS_ENABLED', () => {
   it('sets tssEnabled to true', () => {
     const state = walletReducer(freshState(), {

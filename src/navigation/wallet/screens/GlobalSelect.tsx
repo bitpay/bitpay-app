@@ -138,6 +138,7 @@ import {logManager} from '../../../managers/LogManager';
 import type {Rates} from '../../../store/rate/rate.models';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 const EMPTY_GLOBAL_SELECT_RATES: Rates = {};
@@ -935,6 +936,7 @@ export const preloadCustomGlobalSelectList = ({
       wallet =>
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
+        !isHiddenByTestnetMode(wallet) &&
         (!livenetOnly || wallet.network === 'livenet'),
     );
 
@@ -1150,7 +1152,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const wallets = useMemo(() => {
     let filteredWallets = Object.values(keys)
       .flatMap(key => key.wallets)
-      .filter(wallet => !wallet.hideWallet && !wallet.hideWalletByAccount);
+      .filter(
+        wallet =>
+          !wallet.hideWallet &&
+          !wallet.hideWalletByAccount &&
+          !isHiddenByTestnetMode(wallet),
+      );
 
     if (['send', 'sell', 'swapFrom', 'contact', 'scanner'].includes(context)) {
       filteredWallets = filteredWallets.filter(
@@ -1969,12 +1976,17 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }
 
       const {keyId, wallets: selectedAccountWallets} = selectedAccount;
-      const wallet = selectedAccountWallets.find(
+      const matchingWallets = selectedAccountWallets.filter(
         w =>
           w.currencyAbbreviation.toLowerCase() ===
             selectedCurrency.currencyAbbreviation.toLowerCase() &&
           w.chain.toLowerCase() === selectedNetwork.toLowerCase(),
       );
+      // A testnet wallet shares the account (and address) of its mainnet
+      // wallet; the mainnet one wins unless it is the only match.
+      const wallet =
+        matchingWallets.find(w => w.network === Network.mainnet) ??
+        matchingWallets[0];
       const handleWalletSelection = (walletId: string, copayerId?: string) => {
         const walletFullObject = findWalletById(
           keys[keyId].wallets,

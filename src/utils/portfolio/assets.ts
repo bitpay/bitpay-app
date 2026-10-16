@@ -16,6 +16,7 @@ import {
   getWalletStableDeduplicationId,
   isWalletVisibleForKey,
 } from '../../store/wallet/utils/wallet';
+import {isKeyVisibleForTestnetMode} from '../../store/wallet/utils/testnet';
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
@@ -983,7 +984,9 @@ export const getVisibleKeysFromKeys = (
   keys: Record<string, Key> | undefined,
   homeCarouselConfig?: HomeCarouselConfig[] | undefined,
 ): Key[] => {
-  const all = Object.values(keys || {}) as Key[];
+  const all = (Object.values(keys || {}) as Key[]).filter(key =>
+    isKeyVisibleForTestnetMode(key),
+  );
   if (!homeCarouselConfig?.length) {
     return all;
   }

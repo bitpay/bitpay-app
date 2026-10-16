@@ -54,7 +54,8 @@ import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {selectShowTestnetWallets} from '../../../store/wallet/utils/testnet';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -324,6 +325,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {currency, chain, key, context} = route.params;
   const segwitSupported = IsSegwitCoin(currency);
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [regtestEnabled, setRegtestEnabled] = useState(false);
@@ -814,7 +816,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-            {showOptions && (
+            {showOptions && showTestnetWallets && (
               <AdvancedOptions>
                 <RowContainer
                   onPress={toggleTestnet}
