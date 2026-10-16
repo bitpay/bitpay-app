@@ -97,17 +97,11 @@ export enum AppActionTypes {
   SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
   SET_HAS_VIEWED_TSS_ONBOARDING = 'APP/SET_HAS_VIEWED_TSS_ONBOARDING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
-  IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
   SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
   RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
-}
-
-interface ImportLedgerModalToggled {
-  type: typeof AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED;
-  payload: boolean;
 }
 
 interface NetworkChanged {
@@ -539,7 +533,6 @@ export type AppActionType =
   | SetHasViewedBillsTab
   | SetHasViewedTSSOnboarding
   | InAppBrowserOpen
-  | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
   | SetLocalAssetsDropdown

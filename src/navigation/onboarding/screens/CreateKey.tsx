@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useEffect, useLayoutEffect, useCallback} from 'react';
+import React, {useLayoutEffect, useCallback} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -16,7 +16,7 @@ import {Action, SlateDark, Slate30, White} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useMount} from '../../../utils/hooks';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
 import {
@@ -135,9 +135,6 @@ const CreateOrImportKey = ({
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const isImportLedgerModalVisible = useAppSelector(
-    ({APP}) => APP.isImportLedgerModalVisible,
-  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   useAndroidBackHandler(() => true);
@@ -206,11 +203,11 @@ const CreateOrImportKey = ({
     });
   }, [navigation, t]);
 
-  useEffect(() => {
-    if (!isImportLedgerModalVisible && Object.values(keys).length > 0) {
+  useMount(() => {
+    if (Object.values(keys).length > 0) {
       navigation.navigate('TermsOfUse');
     }
-  }, [isImportLedgerModalVisible]);
+  });
 
   const textColor = theme.colors.text;
   const bodyColor = theme.dark ? Slate30 : SlateDark;
