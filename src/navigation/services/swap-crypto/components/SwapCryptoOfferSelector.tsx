@@ -67,7 +67,14 @@ import {
   getThorswapSpenderDataFromRoute,
   thorswapEnv,
 } from '../utils/thorswap-utils';
-import {RANGO_DEFAULT_SLIPPAGE} from '../utils/rango-utils';
+import {
+  getRangoAsset,
+  RANGO_DEFAULT_SLIPPAGE,
+  RANGO_EXECUTION_ENABLED,
+  rangoGetErrorMessage,
+} from '../utils/rango-utils';
+import {rangoQuote} from '../../../../store/swap-crypto/effects/rango/rango-swap.effects';
+import {rangoToSmallestUnit} from '../utils/rango-tx';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
@@ -371,6 +378,12 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   SwapCryptoSupportedExchanges.forEach((exchange: SwapCryptoExchangeKey) => {
+    // Hard gate: Rango can quote but cannot yet sign or broadcast, so the
+    // offer must never reach the user regardless of pair support or config.
+    if (exchange === 'rango' && !RANGO_EXECUTION_ENABLED) {
+      offersDefault.rango.showOffer = false;
+      return;
+    }
     if (offersDefault[exchange]) {
       let supportedCoins: SwapCryptoCoin[] | undefined;
       if (preLoadPartnersData && preLoadPartnersData[exchange]) {
@@ -435,6 +448,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   const [finishedChangelly, setFinishedChangelly] = useState<boolean | null>(
     null,
   );
+  const [finishedRango, setFinishedRango] = useState<boolean | null>(null);
   const [finishedThorswap, setFinishedThorswap] = useState<boolean | null>(
     null,
   );
@@ -868,6 +882,128 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     }
   };
 
+  const showRangoError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err.message && typeof err.message === 'string') {
+        msg = err.message;
+      }
+    }
+    logger.error(`Rango error: ${msg} ${reason ? `| ${reason}` : ''}`);
+    offers.rango.errorMsg = msg;
+    offers.rango.showOffer = false;
+    setFinishedRango(true);
+    setUpdateView(Math.random());
+  };
+
+  const getRangoQuote = async (
+    selectedWalletFrom: Wallet,
+    selectedWalletTo: Wallet,
+  ): Promise<void> => {
+    logger.debug('Rango getting quote');
+
+    if (swapCryptoConfig?.rango?.disabled) {
+      const err = swapCryptoConfig?.rango?.disabledMessage
+        ? swapCryptoConfig?.rango?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      showRangoError(
+        err,
+        'rangoGetQuote Error. Exchange disabled from config.',
+      );
+      return;
+    }
+
+    const from = getRangoAsset(
+      selectedWalletFrom.currencyAbbreviation,
+      selectedWalletFrom.chain,
+      selectedWalletFrom.tokenAddress,
+    );
+    const to = getRangoAsset(
+      selectedWalletTo.currencyAbbreviation,
+      selectedWalletTo.chain,
+      selectedWalletTo.tokenAddress,
+    );
+
+    if (!from || !to) {
+      showRangoError(
+        t('This pair is not supported by Rango.'),
+        'rangoGetQuote: unmapped chain',
+      );
+      return;
+    }
+
+    // Rango expects the amount in the asset's smallest unit. Converted with
+    // string arithmetic because an 18-decimal amount overflows the range where
+    // float multiplication stays exact.
+    const precision = dispatch(
+      GetPrecision(
+        selectedWalletFrom.currencyAbbreviation,
+        selectedWalletFrom.chain,
+        selectedWalletFrom.tokenAddress,
+      ),
+    );
+
+    if (!precision) {
+      showRangoError(
+        t('Could not read the precision for this asset.'),
+        'rangoGetQuote: missing precision',
+      );
+      return;
+    }
+
+    let amount: string;
+    try {
+      amount = rangoToSmallestUnit(amountFrom, precision.unitDecimals);
+    } catch (err) {
+      showRangoError(err, 'rangoGetQuote: amount conversion failed');
+      return;
+    }
+
+    try {
+      const res = await dispatch(
+        rangoQuote({
+          from,
+          to,
+          amount,
+          slippage: offers.rango.slippage ?? RANGO_DEFAULT_SLIPPAGE,
+          referrerFee: swapCryptoConfig?.rango?.config?.referrerFee,
+        }),
+      );
+
+      const route = res.route!;
+      offers.rango.quoteData = res;
+      offers.rango.amountReceiving = route.outputAmount;
+      offers.rango.estimatedMinAmountReceiving = route.outputAmountMin;
+      offers.rango.fee = route.feeUsd ?? undefined;
+
+      if (route.estimatedTimeInSeconds) {
+        offers.rango.estimatedTime = `${Math.round(
+          route.estimatedTimeInSeconds / 60,
+        )} min`;
+      }
+
+      // Rango reports limits per route rather than per exchange, so an
+      // out-of-range amount surfaces here rather than being pre-filtered.
+      const restriction = route.amountRestriction;
+      if (restriction?.min || restriction?.max) {
+        offers.rango.amountLimits = {
+          min: restriction.min ? Number(restriction.min) : undefined,
+          max: restriction.max ? Number(restriction.max) : undefined,
+        } as SwapCryptoLimits;
+      }
+
+      setFinishedRango(true);
+      setUpdateView(Math.random());
+    } catch (err: any) {
+      showRangoError(
+        rangoGetErrorMessage(err?.resultType ? err : {}) ?? err,
+        'rangoGetQuote Error',
+      );
+    }
+  };
+
   const showThorswapError = (err?: any, reason?: string) => {
     let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
@@ -1257,6 +1393,13 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       } else {
         setFinishedChangelly(null); // Not participating
       }
+      if (offers.rango.showOffer) {
+        setFinishedRango(false);
+        offers.rango.swapClicked = false;
+        getRangoQuote(selectedWalletFrom, selectedWalletTo);
+      } else {
+        setFinishedRango(null); // Not participating
+      }
       if (offers.thorswap.showOffer) {
         setFinishedThorswap(false);
         offers.thorswap.swapClicked = false;
@@ -1370,16 +1513,19 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     }
 
     // Check if all participating exchanges have finished
-    // finishedChangelly/finishedThorswap: null = not participating, false = loading, true = finished
+    // finished*: null = not participating, false = loading, true = finished
     const changellyReady =
       finishedChangelly === null || finishedChangelly === true;
+    const rangoReady = finishedRango === null || finishedRango === true;
     const thorswapReady =
       finishedThorswap === null || finishedThorswap === true;
-    const allExchangesFinished = changellyReady && thorswapReady;
+    const allExchangesFinished = changellyReady && rangoReady && thorswapReady;
 
     // At least one exchange must be participating (not null)
     const hasParticipatingExchange =
-      finishedChangelly !== null || finishedThorswap !== null;
+      finishedChangelly !== null ||
+      finishedRango !== null ||
+      finishedThorswap !== null;
 
     if (!allExchangesFinished || !hasParticipatingExchange) {
       return;
@@ -1436,7 +1582,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     }
     setSelectedOfferLoading(false);
     setOffersLoading?.(false);
-  }, [finishedChangelly, finishedThorswap, updateView]);
+  }, [finishedChangelly, finishedRango, finishedThorswap, updateView]);
 
   useEffect(() => {
     setOfferWarnMsg(getWarnMsg);

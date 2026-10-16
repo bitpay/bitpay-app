@@ -10,6 +10,8 @@
 
 export type RangoEnv = 'sandbox' | 'production';
 
+export type RangoMemoType = 'UTF8' | 'HEX' | 'SCRIPT';
+
 /**
  * Rango returns one of these per blockchain. The wallet only signs EVM,
  * TRANSFER (UTXO) and SOLANA today — see RANGO_SUPPORTED_TX_TYPES.
@@ -128,17 +130,24 @@ export interface RangoEvmTransaction {
   from: string;
   txTo: string;
   txData: string | null;
+  /** Hex-encoded wei, e.g. '0x3635c9adc5dea00000'. Not decimal. */
   value: string | null;
+  /** Hex-encoded, e.g. '0x1e1d67'. Not decimal. */
   gasLimit: string | null;
+  /** Decimal wei string on legacy chains; null where EIP-1559 fields are set. */
   gasPrice: string | null;
+  priorityGasPrice?: string | null;
   maxFeePerGas?: string | null;
   maxPriorityFeePerGas?: string | null;
+  maxGasPrice?: string | null;
   /**
    * Spender for the ERC20 approval. Rango generates this per quote for some
    * bridges, so it must never be hard-coded or cached across quotes.
    */
   approveTo: string | null;
   approveData: string | null;
+  prerequisites?: RangoPrerequisite[] | null;
+  expectedOutput?: string | null;
 }
 
 /**
@@ -152,10 +161,26 @@ export interface RangoTransferTransaction {
   blockChain: RangoBlockchainMeta | string;
   fromWalletAddress: string;
   recipientAddress: string;
+  /**
+   * Amount to send, in the asset's smallest unit, and already NET of Rango's
+   * fees — it will be lower than the amount requested in the swap call. Always
+   * send this value, never the requested one.
+   */
   amount: string;
   decimals: number;
   memo: string | null;
+  /**
+   * How to treat `memo`:
+   *   UTF8 / HEX -> data to wrap in an OP_RETURN output
+   *   SCRIPT     -> already a complete output script; use verbatim
+   * Route-dependent on the same pair: Thorchain returns UTF8, TeleSwap SCRIPT.
+   */
+  memoType?: RangoMemoType | null;
   asset?: RangoToken;
+  /** Rango-built unsigned PSBT. Unused — BWS builds our UTXO transactions. */
+  psbt?: {unsignedPsbtBase64?: string} | null;
+  prerequisites?: RangoPrerequisite[] | null;
+  expectedOutput?: string | null;
 }
 
 export interface RangoSolanaTransaction {
@@ -169,6 +194,22 @@ export interface RangoSolanaTransaction {
   recentBlockhash?: string | null;
   signatures?: any[];
   instructions?: any[];
+  prerequisites?: RangoPrerequisite[] | null;
+  expectedOutput?: string | null;
+}
+
+/**
+ * A step Rango requires before the main transaction can be signed, e.g. an
+ * allowance that must be set first. A non-empty list means the swap is not
+ * ready to sign.
+ */
+export interface RangoPrerequisite {
+  type?: string;
+  blockchain?: string;
+  token?: RangoToken;
+  requiredAmount?: string;
+  currentAmount?: string;
+  [key: string]: any;
 }
 
 export type RangoTransaction =

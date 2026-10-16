@@ -86,7 +86,7 @@ const RangoSettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            dispatch(openUrlWithInAppBrowser('https://rango.exchange/support'));
+            dispatch(openUrlWithInAppBrowser('https://docs.rango.exchange'));
           }}>
           <Link>{t('Contact the Rango community and support.')}</Link>
         </TouchableOpacity>

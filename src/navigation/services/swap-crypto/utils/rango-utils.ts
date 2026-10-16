@@ -1,3 +1,4 @@
+import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {
   RangoBlockchainMeta,
   RangoEnv,
@@ -6,6 +7,18 @@ import {
 } from '../../../../store/swap-crypto/models/rango.models';
 
 export const rangoEnv: RangoEnv = __DEV__ ? 'sandbox' : 'production';
+
+/**
+ * Master switch for the Rango offer.
+ *
+ * Setting `showOffer: false` on the default offer is NOT sufficient — the
+ * offer selector recomputes `showOffer` from isPairSupported() for every
+ * exchange in SwapCryptoSupportedExchanges and overwrites it. This flag is
+ * checked after that, so it is the only gate that actually holds.
+ *
+ * Flip to true in the PR that wires signing and broadcast.
+ */
+export const RANGO_EXECUTION_ENABLED = false;
 
 /**
  * Default slippage, in percent. Rango rejects the swap rather than filling
@@ -104,12 +117,18 @@ export const getRangoAsset = (
     return undefined;
   }
 
-  const isNative = coin.toLowerCase() === chain.toLowerCase();
-  if (isNative || !tokenAddress) {
+  if (tokenAddress) {
+    return `${rangoChain}.${symbol}--${tokenAddress.toLowerCase()}`;
+  }
+
+  // No contract address means this must be the chain's native asset. Emitting
+  // `ETH.USDC` for a token we have no address for makes Rango answer
+  // "Incorrect native token" — better to decline the pair here.
+  if (!IsERCToken(coin, chain)) {
     return `${rangoChain}.${symbol}`;
   }
 
-  return `${rangoChain}.${symbol}--${tokenAddress.toLowerCase()}`;
+  return undefined;
 };
 
 /**
@@ -117,6 +136,12 @@ export const getRangoAsset = (
  * list, so newly listed tokens do not require an app release. The static chain
  * map above is still the gate: a token on a chain we cannot sign is excluded
  * no matter what Rango reports.
+ */
+/**
+ * TODO(rango-execution): when the live token list is wired in, it must be
+ * keyed with getExternalServiceSymbol() like the rest of the swap module and
+ * matched on contract address, not symbol — OPTIMISM lists two USDC and BASE
+ * two USDT, so a symbol match picks the wrong one.
  */
 export const isCoinSupportedByRango = (
   coin: string,
@@ -127,34 +152,16 @@ export const isCoinSupportedByRango = (
     return false;
   }
 
+  // Without the live list we cannot know whether Rango lists this asset, and
+  // claiming support we cannot honour surfaces an offer that never fills.
+  // `coin === chain` is also wrong as a native-asset test: ETH on Arbitrum and
+  // POL on the chain the app calls 'matic' are both native but fail it.
   if (!supportedCoins?.length) {
-    // Before meta has loaded, allow native assets on mapped chains so the
-    // offer can render a loading state instead of disappearing.
-    return coin?.toLowerCase() === chain?.toLowerCase();
+    return false;
   }
 
   const symbol = `${coin}_${chain}`.toLowerCase();
   return supportedCoins.includes(symbol);
-};
-
-/**
- * Flattens a Rango meta response into the `coin_chain` keys the swap module
- * uses elsewhere, dropping anything on an unmappable chain.
- */
-export const rangoGetSupportedCoinKeys = (
-  tokens: Array<{blockchain: string; symbol: string; address: string | null}>,
-): string[] => {
-  const keys = new Set<string>();
-
-  tokens?.forEach(token => {
-    const bitpayChain = getBitpayChainFromRango(token.blockchain);
-    if (!bitpayChain) {
-      return;
-    }
-    keys.add(`${token.symbol}_${bitpayChain}`.toLowerCase());
-  });
-
-  return Array.from(keys);
 };
 
 export const rangoGetEnabledChains = (

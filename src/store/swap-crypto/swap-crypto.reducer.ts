@@ -45,6 +45,25 @@ export const swapCryptoReducer = (
         changelly: {...changellyTxList},
       };
 
+    case SwapCryptoActionTypes.SUCCESS_TX_RANGO:
+      const {rangoTxData} = action.payload;
+      return {
+        ...state,
+        rango: {
+          ...state.rango,
+          [rangoTxData.requestId]: rangoTxData,
+        },
+      };
+
+    case SwapCryptoActionTypes.REMOVE_TX_RANGO:
+      const {requestId} = action.payload;
+      const rangoTxList = {...state.rango};
+      delete rangoTxList[requestId];
+      return {
+        ...state,
+        rango: {...rangoTxList},
+      };
+
     case SwapCryptoActionTypes.SUCCESS_TX_THORSWAP:
       const {thorswapTxData} = action.payload;
       return {
