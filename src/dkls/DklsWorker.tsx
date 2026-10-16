@@ -63,10 +63,6 @@ export function requestDklsWorkerMount(): void {
     return;
   }
   _mountRequested = true;
-  _bootTimer = setTimeout(
-    () => failBoot(`no boot signal within ${BOOT_TIMEOUT_MS}ms`),
-    BOOT_TIMEOUT_MS,
-  );
   _mountListeners.forEach(listener => listener());
 }
 
@@ -807,8 +803,18 @@ const DklsWorkerWebView = () => {
     if (_outQueue.length && _post) {
       for (const p of _outQueue.splice(0)) _post(p);
     }
+    // The boot timeout runs only while the WebView is mounted, so a mount
+    // request with no host rendered (e.g. in tests) leaves no timer behind.
+    if (!_isReady) {
+      clearBootTimer();
+      _bootTimer = setTimeout(
+        () => failBoot(`no boot signal within ${BOOT_TIMEOUT_MS}ms`),
+        BOOT_TIMEOUT_MS,
+      );
+    }
     return () => {
       _post = null;
+      clearBootTimer();
     };
   }, []);
 

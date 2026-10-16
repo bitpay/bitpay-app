@@ -48,7 +48,10 @@ describe('DklsWorkerHost', () => {
     try {
       const {render, act, callWorker} = load();
       const renderer = await render();
-      const call = callWorker({type: 'init'});
+      let call!: Promise<unknown>;
+      await act(async () => {
+        call = callWorker({type: 'init'});
+      });
       const outcome = expect(call).rejects.toThrow(
         'DKLS worker failed to start',
       );
@@ -69,7 +72,10 @@ describe('DklsWorkerHost', () => {
     try {
       const {render, act, callWorker} = load();
       const renderer = await render();
-      const first = callWorker({type: 'init'});
+      let first!: Promise<unknown>;
+      await act(async () => {
+        first = callWorker({type: 'init'});
+      });
       const firstOutcome = expect(first).rejects.toThrow(
         'DKLS worker failed to start',
       );
@@ -104,6 +110,39 @@ describe('DklsWorkerHost', () => {
       });
       expect(settled).toBe(false);
       act(() => renderer.unmount());
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('starts no boot timer when no host is rendered', () => {
+    jest.useFakeTimers();
+    try {
+      const {requestDklsWorkerMount} = load();
+      requestDklsWorkerMount();
+
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('clears the boot timer when the WebView unmounts', async () => {
+    jest.useFakeTimers();
+    try {
+      const {render, act, requestDklsWorkerMount} = load();
+      requestDklsWorkerMount();
+      const renderer = await render();
+      act(() => renderer.unmount());
+
+      // A timer left running would fail the boot and clear the mount
+      // request, so a host rendered later would show no WebView.
+      act(() => {
+        jest.advanceTimersByTime(20000);
+      });
+      const next = await render();
+      expect(webViews(next)).toHaveLength(1);
+      act(() => next.unmount());
     } finally {
       jest.useRealTimers();
     }
