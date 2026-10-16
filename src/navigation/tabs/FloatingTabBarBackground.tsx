@@ -2,7 +2,8 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
 import {useTheme} from '../../contexts';
-import {CharcoalBlack, Air} from '../../styles/colors';
+import {CharcoalBlack, Air, White} from '../../styles/colors';
+import {changeOpacity} from '../../utils/helper-methods';
 
 const styles = StyleSheet.create({
   fill: {
@@ -29,9 +30,10 @@ const FloatingTabBarBackground = () => {
         style={[
           styles.fill,
           {
-            backgroundColor: `${dark ? CharcoalBlack : Air}${
-              dark ? '40' : '8C'
-            }`,
+            backgroundColor: changeOpacity(
+              dark ? CharcoalBlack : White,
+              dark ? 0.25 : 0.3,
+            ),
           },
         ]}
       />
