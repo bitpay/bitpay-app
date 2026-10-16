@@ -157,10 +157,10 @@ describe('Crypto settings testnet unlock', () => {
     expect(getByText('Show Testnet Wallets')).toBeTruthy();
   });
 
-  it('shows the toggle for people who already own testnet wallets', () => {
+  it('keeps the toggle hidden for people who own testnet wallets until they unlock it', () => {
     mockState = makeState(null, [{network: 'testnet'}]);
-    const {getByText} = render(<Crypto />);
-    expect(getByText('Show Testnet Wallets')).toBeTruthy();
+    const {queryByText} = render(<Crypto />);
+    expect(queryByText('Show Testnet Wallets')).toBeNull();
   });
 
   it('ignores title taps once unlocked', () => {

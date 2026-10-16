@@ -1,4 +1,3 @@
-import {createSelector} from 'reselect';
 import type {AppSelector, RootState} from '../..';
 import {Network} from '../../../constants';
 import type {Key} from '../wallet.models';
@@ -11,41 +10,25 @@ export const isTestnetWallet = (wallet?: NetworkCarrier): boolean => {
   return !!network && network !== Network.mainnet;
 };
 
-export const hasTestnetWallets = (
-  keys: {[key in string]: Pick<Key, 'wallets'> | undefined} | undefined,
-): boolean =>
-  Object.values(keys ?? {}).some(key =>
-    (key?.wallets ?? []).some(isTestnetWallet),
-  );
-
 const selectShowTestnetWalletsSetting: AppSelector<boolean | null> = ({
   WALLET,
 }) => WALLET?.showTestnetWallets ?? null;
 
-const selectOwnsTestnetWallets = createSelector(
-  [(state: RootState) => state.WALLET?.keys],
-  keys => hasTestnetWallets(keys),
-);
-
 /**
- * Whether testnet wallets and testnet options are shown.
- * - Test Mode (Settings > Theme) runs the whole app on testnet, so it always
- *   shows them.
- * - Until the user picks a value, people who already own testnet wallets keep
- *   seeing them, so the upgrade does not make wallets disappear.
+ * Whether testnet wallets and testnet options are shown. Off until the user
+ * unlocks testnet mode in Settings > Crypto and leaves it on. Test Mode
+ * (Settings > Theme) runs the whole app on testnet, so it always shows them.
  */
 export const selectShowTestnetWallets: AppSelector<boolean> = state => {
   if (state.APP?.network && state.APP.network !== Network.mainnet) {
     return true;
   }
-  const setting = selectShowTestnetWalletsSetting(state);
-  return setting ?? selectOwnsTestnetWallets(state);
+  return selectShowTestnetWalletsSetting(state) === true;
 };
 
 /** Whether the testnet toggle is visible in Settings > Crypto. */
 export const selectTestnetModeUnlocked: AppSelector<boolean> = state =>
-  selectShowTestnetWalletsSetting(state) !== null ||
-  selectOwnsTestnetWallets(state);
+  selectShowTestnetWalletsSetting(state) !== null;
 
 /** Drops testnet wallets from a list unless testnet mode is on. */
 export const filterTestnetWallets = <T extends NetworkCarrier>(

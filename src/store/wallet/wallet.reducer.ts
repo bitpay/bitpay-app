@@ -45,9 +45,8 @@ export interface WalletState {
   pendingJoinerSession: PendingJoinerSession | null;
   tssEnabled: boolean;
   /**
-   * Testnet mode. `null` until the user unlocks it (or already owns testnet
-   * wallets, see selectShowTestnetWallets); once set the toggle stays visible
-   * in Settings > Crypto.
+   * Testnet mode. `null` until the user unlocks it with the title taps in
+   * Settings > Crypto; once set the toggle stays visible there.
    */
   showTestnetWallets: boolean | null;
   secretsMigrated: boolean;

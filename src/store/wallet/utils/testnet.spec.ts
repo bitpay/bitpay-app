@@ -2,7 +2,6 @@ import {
   areTestnetWalletsVisible,
   filterTestnetWallets,
   getAccountChainsOnNetwork,
-  hasTestnetWallets,
   isHiddenByTestnetMode,
   isKeyVisibleForTestnetMode,
   isTestnetWallet,
@@ -45,16 +44,16 @@ describe('isTestnetWallet', () => {
 });
 
 describe('selectShowTestnetWallets', () => {
-  it('is off by default for people without testnet wallets', () => {
+  it('is off and locked by default', () => {
     const state = makeState({wallets: [mainnet]});
     expect(selectShowTestnetWallets(state)).toBe(false);
     expect(selectTestnetModeUnlocked(state)).toBe(false);
   });
 
-  it('keeps existing testnet wallets visible until a value is picked', () => {
+  it('stays off and locked for people who already own testnet wallets', () => {
     const state = makeState({wallets: [mainnet, sepolia]});
-    expect(selectShowTestnetWallets(state)).toBe(true);
-    expect(selectTestnetModeUnlocked(state)).toBe(true);
+    expect(selectShowTestnetWallets(state)).toBe(false);
+    expect(selectTestnetModeUnlocked(state)).toBe(false);
   });
 
   it('follows the toggle once set, and stays unlocked when turned off', () => {
@@ -103,17 +102,6 @@ describe('list helpers', () => {
     expect(isKeyVisibleForTestnetMode({wallets: [sepolia]} as any, true)).toBe(
       true,
     );
-  });
-
-  it('detects testnet wallets across keys', () => {
-    expect(hasTestnetWallets({a: {wallets: [mainnet]} as any})).toBe(false);
-    expect(
-      hasTestnetWallets({
-        a: {wallets: [mainnet]} as any,
-        b: {wallets: [sepolia]} as any,
-      }),
-    ).toBe(true);
-    expect(hasTestnetWallets(undefined)).toBe(false);
   });
 
   it('counts an account chain per network', () => {
