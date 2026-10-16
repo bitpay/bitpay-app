@@ -14,6 +14,7 @@ import {useStackScreenOptions} from '../../utils/headerHelpers';
 import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
 import {
   changellyTxData,
+  rangoTxData,
   thorswapTxData,
 } from '../../../store/swap-crypto/swap-crypto.models';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
@@ -45,12 +46,18 @@ const SwapHistoryHeaderRight = () => {
   const changellyHistory: changellyTxData = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
+  const rangoHistory: {[key: string]: rangoTxData} = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.rango,
+  );
   const thorswapHistory: thorswapTxData = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
   );
 
   type SwapTxs = {
-    [key in SwapCryptoExchangeKey]: changellyTxData[] | thorswapTxData[];
+    [key in SwapCryptoExchangeKey]:
+      | changellyTxData[]
+      | rangoTxData[]
+      | thorswapTxData[];
   };
   type SwapHistoryData = {
     path: SwapHistoryPath;
@@ -59,6 +66,7 @@ const SwapHistoryHeaderRight = () => {
 
   const swapTxs: SwapTxs = {
     changelly: Object.values(changellyHistory),
+    rango: Object.values(rangoHistory),
     thorswap: Object.values(thorswapHistory),
   };
 

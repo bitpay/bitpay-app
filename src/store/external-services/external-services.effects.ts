@@ -13,7 +13,12 @@ import {
   SWAP_CRYPTO_CACHE_TTL,
 } from '../swap-crypto/swap-crypto.effects';
 import {changellyGetCurrencies} from '../swap-crypto/effects/changelly/changelly';
+import {rangoGetCurrencies} from '../swap-crypto/effects/rango/rango';
 import {thorswapGetCurrencies} from '../swap-crypto/effects/thorswap/thorswap';
+import {
+  RANGO_SUPPORTED_BLOCKCHAINS,
+  rangoEnv,
+} from '../../navigation/services/swap-crypto/utils/rango-utils';
 import {thorswapEnv} from '../../navigation/services/swap-crypto/utils/thorswap-utils';
 
 const bwsUri = BASE_BWS_URL;
@@ -146,24 +151,35 @@ export const prefetchExternalServicesData =
         swapCryptoConfig?.changelly?.removed ||
         swapCryptoConfig?.changelly?.disabled
       );
+      const fetchRango = !(
+        swapCryptoConfig?.rango?.removed || swapCryptoConfig?.rango?.disabled
+      );
       const fetchThorswap = !(
         swapCryptoConfig?.thorswap?.removed ||
         swapCryptoConfig?.thorswap?.disabled
       );
 
       // 3. Fetch raw currencies in parallel
-      const [changellyResult, thorswapResult] = await Promise.allSettled([
-        fetchChangelly
-          ? changellyGetCurrencies(true).then(data => data?.result)
-          : Promise.resolve(undefined),
-        fetchThorswap
-          ? thorswapGetCurrencies({
-              env: thorswapEnv,
-              categories: 'all',
-              includeDetails: true,
-            })
-          : Promise.resolve(undefined),
-      ]);
+      const [changellyResult, rangoResult, thorswapResult] =
+        await Promise.allSettled([
+          fetchChangelly
+            ? changellyGetCurrencies(true).then(data => data?.result)
+            : Promise.resolve(undefined),
+          fetchRango
+            ? rangoGetCurrencies({
+                env: rangoEnv,
+                blockchains: RANGO_SUPPORTED_BLOCKCHAINS.join(','),
+                excludeNonPopulars: true,
+              })
+            : Promise.resolve(undefined),
+          fetchThorswap
+            ? thorswapGetCurrencies({
+                env: thorswapEnv,
+                categories: 'all',
+                includeDetails: true,
+              })
+            : Promise.resolve(undefined),
+        ]);
 
       setSwapCryptoPrefetchedData({
         swapCryptoConfig,
@@ -171,6 +187,8 @@ export const prefetchExternalServicesData =
           changellyResult.status === 'fulfilled'
             ? changellyResult.value
             : undefined,
+        rangoRawCurrencies:
+          rangoResult.status === 'fulfilled' ? rangoResult.value : undefined,
         thorswapRawCurrencies:
           thorswapResult.status === 'fulfilled'
             ? thorswapResult.value

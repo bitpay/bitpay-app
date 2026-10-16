@@ -41,6 +41,7 @@ import {
   ThorswapQuoteRoute,
 } from '../../../../store/swap-crypto/models/thorswap.models';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
+import RangoLogo from '../../../../components/icons/external-services/rango/rango-logo';
 import ThorswapLogo from '../../../../components/icons/external-services/thorswap/thorswap-logo';
 import {THORSWAP_DEFAULT_SLIPPAGE} from '../constants/ThorswapConstants';
 import {
@@ -66,6 +67,7 @@ import {
   getThorswapSpenderDataFromRoute,
   thorswapEnv,
 } from '../utils/thorswap-utils';
+import {RANGO_DEFAULT_SLIPPAGE} from '../utils/rango-utils';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
@@ -260,6 +262,34 @@ const offersDefault: {
     rateFiat: undefined,
     hasExtraOpts: false,
     slippage: undefined,
+    estimatedTime: undefined,
+    estimatedMinAmountReceiving: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  rango: {
+    key: 'rango',
+    name: 'Rango',
+    amountReceiving: undefined,
+    // Execution (signing + broadcast) is not wired yet, so the offer stays
+    // hidden regardless of remote config. Flip to true with that PR.
+    showOffer: false,
+    logo: <RangoLogo iconOnly={true} width={25} height={25} />,
+    expanded: false,
+    swapClicked: false,
+    showApprove: false,
+    approveConfirming: false,
+    rate: undefined,
+    rateFiat: undefined,
+    hasExtraOpts: true,
+    slippage: RANGO_DEFAULT_SLIPPAGE,
+    slippageOpts: {
+      steps: 0.5,
+      max: 10,
+      min: 0,
+      minLimit: 0.5,
+      maxLimit: 10,
+    },
     estimatedTime: undefined,
     estimatedMinAmountReceiving: undefined,
     errorMsg: undefined,

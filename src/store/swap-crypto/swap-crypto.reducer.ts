@@ -1,5 +1,9 @@
 import {SwapCryptoActionType, SwapCryptoActionTypes} from './swap-crypto.types';
-import {changellyTxData, thorswapTxData} from './swap-crypto.models';
+import {
+  changellyTxData,
+  rangoTxData,
+  thorswapTxData,
+} from './swap-crypto.models';
 
 type SwapCryptoReduxPersistBlackList = string[];
 export const swapCryptoReduxPersistBlackList: SwapCryptoReduxPersistBlackList =
@@ -7,11 +11,13 @@ export const swapCryptoReduxPersistBlackList: SwapCryptoReduxPersistBlackList =
 
 export interface SwapCryptoState {
   changelly: {[key in string]: changellyTxData};
+  rango: {[key in string]: rangoTxData};
   thorswap: {[key in string]: thorswapTxData};
 }
 
 const initialState: SwapCryptoState = {
   changelly: {},
+  rango: {},
   thorswap: {},
 };
 

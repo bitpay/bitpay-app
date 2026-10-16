@@ -22,6 +22,7 @@ import WyreSettings from './screens/WyreSettings';
 import WyreDetails from './screens/WyreDetails';
 import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
+import RangoSettings from './screens/RangoSettings';
 import ThorswapSettings from './screens/ThorswapSettings';
 import ThorswapDetails from './screens/ThorswapDetails';
 import {
@@ -127,6 +128,7 @@ export type ExternalServicesSettingsGroupParamList = {
   ChangellyDetails: {
     swapTx: changellyTxData;
   };
+  RangoSettings: undefined;
   ThorswapSettings: undefined;
   ThorswapDetails: {
     swapTx: thorswapTxData;
@@ -154,6 +156,7 @@ export enum ExternalServicesSettingsScreens {
   SWAP_HISTORY_SELECTOR = 'SwapHistorySelector',
   CHANGELLY_SETTINGS = 'ChangellySettings',
   CHANGELLY_DETAILS = 'ChangellyDetails',
+  RANGO_SETTINGS = 'RangoSettings',
   THORSWAP_SETTINGS = 'ThorswapSettings',
   THORSWAP_DETAILS = 'ThorswapDetails',
 }
@@ -311,6 +314,13 @@ const ExternalServicesSettingsGroup = ({
         component={ChangellyDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.RANGO_SETTINGS}
+        component={RangoSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Rango')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen

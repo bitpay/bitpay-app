@@ -300,6 +300,15 @@ const swapCryptoExchangesDefault: PreLoadPartnersData = {
       max: undefined,
     },
   },
+  rango: {
+    key: 'rango',
+    // Hidden until execution lands; see RangoLogo offer entry.
+    showOffer: false,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: undefined,
+  },
   thorswap: {
     key: 'thorswap',
     showOffer: true,

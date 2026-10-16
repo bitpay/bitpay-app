@@ -13,6 +13,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import ChangellyLogo from '../../../../../components/icons/external-services/changelly/changelly-logo';
+import RangoLogo from '../../../../../components/icons/external-services/rango/rango-logo';
 import ThorswapLogo from '../../../../../components/icons/external-services/thorswap/thorswap-logo';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {SwapCryptoExchangeKey} from '../../../../services/swap-crypto/utils/swap-crypto-utils';
@@ -50,6 +51,7 @@ const SwapHistorySelector = () => {
   const changellyHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
+  const rangoHistory = useAppSelector(({SWAP_CRYPTO}) => SWAP_CRYPTO.rango);
   const thorswapHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
   );
@@ -73,6 +75,14 @@ const SwapHistorySelector = () => {
         changellyHistory && Object.values(changellyHistory).length > 0
       ),
       txCount: changellyHistory ? Object.values(changellyHistory).length : 0,
+    },
+    rango: {
+      key: 'rango',
+      exchangeName: 'Rango',
+      logo: <RangoLogo iconOnly={true} width={30} height={30} />,
+      screenHistory: ExternalServicesSettingsScreens.RANGO_SETTINGS,
+      showExchange: !!(rangoHistory && Object.values(rangoHistory).length > 0),
+      txCount: rangoHistory ? Object.values(rangoHistory).length : 0,
     },
     thorswap: {
       key: 'thorswap',

@@ -1,5 +1,9 @@
 import {SwapCryptoActionType, SwapCryptoActionTypes} from './swap-crypto.types';
-import {changellyTxData, thorswapTxData} from './swap-crypto.models';
+import {
+  changellyTxData,
+  rangoTxData,
+  thorswapTxData,
+} from './swap-crypto.models';
 
 export const successTxChangelly = (payload: {
   changellyTxData: changellyTxData;
@@ -26,5 +30,19 @@ export const removeTxThorswap = (payload: {
   orderId: string;
 }): SwapCryptoActionType => ({
   type: SwapCryptoActionTypes.REMOVE_TX_THORSWAP,
+  payload,
+});
+
+export const successTxRango = (payload: {
+  rangoTxData: rangoTxData;
+}): SwapCryptoActionType => ({
+  type: SwapCryptoActionTypes.SUCCESS_TX_RANGO,
+  payload,
+});
+
+export const removeTxRango = (payload: {
+  requestId: string;
+}): SwapCryptoActionType => ({
+  type: SwapCryptoActionTypes.REMOVE_TX_RANGO,
   payload,
 });
