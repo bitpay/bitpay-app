@@ -67,8 +67,8 @@ private func verifyBundleIntegrity() -> Bool {
 }
 
 /// Shows a blocking security alert and calls abort() when the user dismisses it.
-/// Must be called on the main thread (already guaranteed by didFinishLaunchingWithOptions).
-private func showBundleTamperedAlert() {
+/// Must be called on the main thread (already guaranteed by scene(_:willConnectTo:options:)).
+private func showBundleTamperedAlert(in scene: UIWindowScene) {
     let alert = UIAlertController(
         title: "Security Warning",
         message: "This application has been modified and cannot run. Please reinstall from the App Store.",
@@ -83,13 +83,7 @@ private func showBundleTamperedAlert() {
     // Create a window above all other UI to host the alert.
     // Stored in securityAlertWindow to prevent ARC from deallocating it before
     // the async presentation completes and the user dismisses the alert.
-    let window: UIWindow
-    if #available(iOS 13.0, *),
-       let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-        window = UIWindow(windowScene: scene)
-    } else {
-        window = UIWindow(frame: UIScreen.main.bounds)
-    }
+    let window = UIWindow(windowScene: scene)
     window.rootViewController = UIViewController()
     window.windowLevel = .alert + 1
     window.makeKeyAndVisible()
@@ -133,8 +127,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     public var isBitPayAppLoaded: Bool = false
     public var cachedInAppMessage: Braze.InAppMessage?
     private var keyEvent: RNKeyEvent?
+    private var isBundleTampered = false
 
     // MARK: - React Native bootstrap helpers
+    // Mirrors the scene's window for libraries that still read UIApplication.delegate.window.
     var window: UIWindow?
     private var reactNativeDelegate: ReactNativeDelegate?
     private var reactNativeFactory: RCTReactNativeFactory?
@@ -145,12 +141,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         AppDelegate.shared = self
 
         // Verify React Native bundle integrity to prevent tampering.
-        // On failure: show a blocking security window and return early without starting React Native.
+        // On failure: return early without starting React Native; the scene shows a blocking security window.
         // We return true (not false) so UIKit doesn't log a spurious launch-URL error.
         // Skipped during Maestro E2E test runs (MAESTRO compilation condition set by CI build).
         #if !MAESTRO
         if !verifyBundleIntegrity() {
-            showBundleTamperedAlert()
+            isBundleTampered = true
             return true
         }
         #endif
@@ -166,14 +162,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         self.reactNativeDelegate = rnDelegate
         self.reactNativeFactory = factory
 
-        // 2. Create UIWindow and start RN
-        window = UIWindow(frame: UIScreen.main.bounds)
-        factory.startReactNative(
-            withModuleName: "BitPay",
-            in: window,
-            launchOptions: launchOptions
-        )
-        window?.makeKeyAndVisible()
+        // 2. The window and RN root view are created in SceneDelegate (UIScene life cycle is required).
 
         // MARK: Braze SDK setup
         BrazeReactInitializer.configure({ config in
@@ -275,32 +264,56 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         return true
     }
 
-    // MARK: - Quick Actions
-    func application(_ application: UIApplication,
-                     performActionFor shortcutItem: UIApplicationShortcutItem,
-                     completionHandler: @escaping (Bool) -> Void) {
-        RNQuickActionManager.onQuickActionPress(shortcutItem, completionHandler: completionHandler)
+    // MARK: - Scene bootstrap
+    /// Creates the scene's window and starts React Native in it. Returns nil when the bundle was tampered with.
+    func startReactNative(in scene: UIWindowScene, connectionOptions: UIScene.ConnectionOptions) -> UIWindow? {
+        if isBundleTampered {
+            showBundleTamperedAlert(in: scene)
+            return nil
+        }
+
+        let window = UIWindow(windowScene: scene)
+        self.window = window
+        reactNativeFactory?.startReactNative(
+            withModuleName: "BitPay",
+            in: window,
+            launchOptions: launchOptions(from: connectionOptions)
+        )
+        window.makeKeyAndVisible()
+        return window
+    }
+
+    /// RCTLinkingManager.getInitialURL and RNQuickActionManager read the cold-start URL/shortcut from
+    /// launchOptions, which UIKit no longer populates under the scene life cycle.
+    private func launchOptions(from connectionOptions: UIScene.ConnectionOptions) -> [UIApplication.LaunchOptionsKey: Any] {
+        var options: [UIApplication.LaunchOptionsKey: Any] = [:]
+        if let url = connectionOptions.urlContexts.first?.url {
+            options[.url] = url
+        }
+        if let userActivity = connectionOptions.userActivities.first {
+            options[.userActivityDictionary] = [
+                UIApplication.LaunchOptionsKey.userActivityType.rawValue: userActivity.activityType,
+                "UIApplicationLaunchOptionsUserActivityKey": userActivity
+            ]
+        }
+        if let shortcutItem = connectionOptions.shortcutItem {
+            options[.shortcutItem] = shortcutItem
+        }
+        return options
     }
 
     // MARK: - Deep Linking
-    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-        RCTLinkingManager.application(app, open: url, options: options)
-        AppsFlyerAttribution.shared().handleOpen(url, options: options)
-        return true
+    func handleOpen(_ urlContext: UIOpenURLContext) {
+        var options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+        options[.sourceApplication] = urlContext.options.sourceApplication
+        options[.annotation] = urlContext.options.annotation
+        RCTLinkingManager.application(UIApplication.shared, open: urlContext.url, options: options)
+        AppsFlyerAttribution.shared().handleOpen(urlContext.url, options: options)
     }
 
-    func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
-        RCTLinkingManager.application(application, open: url, sourceApplication: sourceApplication, annotation: annotation)
-        AppsFlyerAttribution.shared().handleOpen(url, sourceApplication: sourceApplication, annotation: annotation)
-        return true
-    }
-
-    func application(_ application: UIApplication,
-                     continue userActivity: NSUserActivity,
-                     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
-        RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    func handleUserActivity(_ userActivity: NSUserActivity) {
+        RCTLinkingManager.application(UIApplication.shared, continue: userActivity) { _ in }
         AppsFlyerAttribution.shared().continue(userActivity, restorationHandler: nil)
-        return true
     }
 
     // MARK: - Hardware Keyboard Handling
@@ -374,5 +387,42 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
 
       (braze.inAppMessagePresenter as? BrazeInAppMessageUI)?.presentNext()
       cachedInAppMessage = nil
+    }
+}
+
+// MARK: - Scene Delegate
+
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        window = AppDelegate.shared.startReactNative(in: windowScene, connectionOptions: connectionOptions)
+        guard window != nil else { return }
+
+        // Under the app life cycle UIKit also delivered cold-start URLs, activities and shortcuts
+        // to the open/continue/performAction callbacks; keep that so AppsFlyer still sees them.
+        connectionOptions.urlContexts.forEach { AppDelegate.shared.handleOpen($0) }
+        connectionOptions.userActivities.forEach { AppDelegate.shared.handleUserActivity($0) }
+        if let shortcutItem = connectionOptions.shortcutItem {
+            RNQuickActionManager.onQuickActionPress(shortcutItem) { _ in }
+        }
+    }
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        URLContexts.forEach { AppDelegate.shared.handleOpen($0) }
+    }
+
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        AppDelegate.shared.handleUserActivity(userActivity)
+    }
+
+    // MARK: - Quick Actions
+    func windowScene(_ windowScene: UIWindowScene,
+                     performActionFor shortcutItem: UIApplicationShortcutItem,
+                     completionHandler: @escaping (Bool) -> Void) {
+        RNQuickActionManager.onQuickActionPress(shortcutItem, completionHandler: completionHandler)
     }
 }
