@@ -61,6 +61,31 @@ export const rangoParseNumeric = (
 };
 
 /**
+ * Converts a Rango amount (hex like '0x3635c9adc5dea00000', or decimal) to an
+ * exact decimal string.
+ *
+ * BigInt rather than Number because wei values exceed the range where JS
+ * integers stay exact: 0x3635c9adc5dea00001 rounds to 1e21 and drops its last
+ * digit, and a Number that large also serialises as '1e+21' instead of digits.
+ */
+export const rangoAmountToString = (
+  value: string | number | null | undefined,
+): string => {
+  if (value === null || value === undefined || value === '') {
+    return '0';
+  }
+
+  const raw = String(value).trim();
+
+  try {
+    // BigInt() accepts both '0x...' and plain decimal digits.
+    return BigInt(raw).toString();
+  } catch {
+    throw new Error(`rangoAmountToString: unreadable amount ${raw}`);
+  }
+};
+
+/**
  * Encodes a Rango memo as an OP_RETURN script for the given UTXO chain.
  *
  * The memo is what identifies the swap to the destination network — a UTXO
@@ -157,7 +182,13 @@ const buildEvmProposal = (
   tx: RangoEvmTransaction,
   params: RangoTxProposalParams,
 ) => {
-  const amount = rangoParseNumeric(tx.value) ?? 0;
+  // Kept as an exact decimal string. A wei value routinely exceeds
+  // Number.MAX_SAFE_INTEGER, where two things go wrong: 0x3635c9adc5dea00001
+  // parses to 1e21 and loses its last digit, and JSON.stringify emits
+  // '1e+21' rather than digits. This is what parseAmountToStringIfBN exists
+  // to prevent elsewhere in the swap and sell checkouts.
+  const amount = rangoAmountToString(tx.value);
+  // Safe as a Number — gas limits are ~1e6.
   const gasLimit = rangoParseNumeric(tx.gasLimit);
 
   const outputs = [
@@ -202,8 +233,10 @@ const buildTransferProposal = (
   tx: RangoTransferTransaction,
   params: RangoTxProposalParams,
 ) => {
-  const amount = rangoParseNumeric(tx.amount);
-  if (amount === undefined) {
+  // Exact string for the same reason as the EVM path; UTXO amounts are small
+  // enough today but the conversion should not be the thing that decides that.
+  const amount = rangoAmountToString(tx.amount);
+  if (amount === '0') {
     throw new Error(`buildRangoTxProposal: unreadable amount ${tx.amount}`);
   }
 

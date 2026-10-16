@@ -3,6 +3,7 @@ import {
   buildRangoTxProposal,
   rangoCanBuildTxProposal,
   rangoGetApprovalData,
+  rangoAmountToString,
   rangoParseNumeric,
   rangoToSmallestUnit,
   RangoPrerequisiteError,
@@ -123,8 +124,8 @@ describe('buildRangoTxProposal — TRANSFER', () => {
     // The swap was requested for 10000000 sats; Rango returns 9990000 after
     // its fee. Sending the requested figure would overpay the route.
     const txp = buildRangoTxProposal(transferTx, params);
-    expect(txp.amount).toBe(9990000);
-    expect(txp.outputs[0].amount).toBe(9990000);
+    expect(txp.amount).toBe('9990000');
+    expect(txp.outputs[0].amount).toBe('9990000');
   });
 
   it('omits the OP_RETURN output when there is no memo', () => {
@@ -152,7 +153,7 @@ describe('buildRangoTxProposal — EVM', () => {
 
   it('converts the hex value and gasLimit to numbers', () => {
     const txp = buildRangoTxProposal(evmTx, params);
-    expect(txp.amount).toBe(1e21);
+    expect(txp.amount).toBe('1000000000000000000000');
     expect(txp.gasLimit).toBe(1973607);
     expect(txp.outputs[0].gasLimit).toBe(1973607);
   });
@@ -167,7 +168,23 @@ describe('buildRangoTxProposal — EVM', () => {
 
   it('uses zero value for a token swap that sends no native currency', () => {
     const txp = buildRangoTxProposal({...evmTx, value: null}, params);
-    expect(txp.amount).toBe(0);
+    expect(txp.amount).toBe('0');
+  });
+
+  it('keeps wei exact past Number.MAX_SAFE_INTEGER', () => {
+    // 1e21 + 1 wei. As a JS Number this rounds to 1e21 and the final digit is
+    // lost; the user would sign a different amount than Rango quoted.
+    const txp = buildRangoTxProposal(
+      {...evmTx, value: '0x3635c9adc5dea00001'},
+      params,
+    );
+    expect(txp.amount).toBe('1000000000000000000001');
+  });
+
+  it('never serialises an amount in exponential notation', () => {
+    // JSON.stringify(1e21) is '1e+21', which BWS cannot read as an amount.
+    const txp = buildRangoTxProposal(evmTx, params);
+    expect(JSON.stringify(txp)).not.toMatch(/e\+/);
   });
 });
 
@@ -306,5 +323,23 @@ describe('buildRangoMemoScript — SCRIPT memos', () => {
     expect(() => buildRangoMemoScript('btc', 'abc', 'BASE64' as any)).toThrow(
       /unknown memoType/,
     );
+  });
+});
+
+describe('rangoAmountToString', () => {
+  it('reads hex and decimal alike', () => {
+    expect(rangoAmountToString('0x1e1d67')).toBe('1973607');
+    expect(rangoAmountToString('9990000')).toBe('9990000');
+  });
+
+  it('treats an absent value as zero', () => {
+    expect(rangoAmountToString(null)).toBe('0');
+    expect(rangoAmountToString(undefined)).toBe('0');
+    expect(rangoAmountToString('')).toBe('0');
+  });
+
+  it('throws on junk rather than returning a wrong amount', () => {
+    expect(() => rangoAmountToString('abc')).toThrow(/unreadable amount/);
+    expect(() => rangoAmountToString('1.5')).toThrow(/unreadable amount/);
   });
 });
