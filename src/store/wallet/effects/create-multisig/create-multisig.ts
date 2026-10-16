@@ -504,6 +504,7 @@ export const startTSSCeremony =
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       let ceremonyTimeoutId: ReturnType<typeof setTimeout> | undefined;
+      let activeCeremony = {unsubscribe: () => {}};
       try {
         const {
           APP: {
@@ -536,7 +537,7 @@ export const startTSSCeremony =
           return;
         }
 
-        activeCeremonies.set(keyId, {unsubscribe: () => {}});
+        activeCeremonies.set(keyId, activeCeremony);
 
         const {
           coin,
@@ -564,12 +565,15 @@ export const startTSSCeremony =
         await tssKeyGen.restoreSession({session: sessionExport});
         logManager.debug(`[TSS Ceremony] Session restored: ${tssKeyGen.id}`);
 
-        if (!activeCeremonies.has(keyId)) {
+        if (
+          activeCeremonies.get(keyId) !== activeCeremony ||
+          !getState().WALLET.keys[keyId]
+        ) {
           tssKeyGen.unsubscribe?.();
-          reject(new Error('CEREMONY_CANCELLED'));
-          return;
+          throw new Error('CEREMONY_CANCELLED');
         }
 
+        activeCeremony = tssKeyGen;
         activeCeremonies.set(keyId, tssKeyGen);
         initCeremonyStats(keyId, tssKeyGen.id);
         logManager.info(
@@ -885,6 +889,13 @@ export const startTSSCeremony =
           sessionExport: undefined,
         };
 
+        if (
+          activeCeremonies.get(keyId) !== tssKeyGen ||
+          !getState().WALLET.keys[keyId]
+        ) {
+          throw new Error('CEREMONY_CANCELLED');
+        }
+
         dispatch(successUpdateKey({key: finalKey}));
         logCeremonyStats(keyId, 'complete');
         activeCeremonies.delete(keyId);
@@ -898,13 +909,15 @@ export const startTSSCeremony =
         clearTimeout(ceremonyTimeoutId);
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        logCeremonyStats(keyId, 'caught error');
         logManager.error(
           `[TSS Ceremony] Caught error, cleaning up: ${errorStr}`,
         );
-        activeCeremonies.get(keyId)?.unsubscribe();
-        activeCeremonies.delete(keyId);
-        clearCeremonyStats(keyId);
+        if (activeCeremonies.get(keyId) === activeCeremony) {
+          logCeremonyStats(keyId, 'caught error');
+          activeCeremony.unsubscribe();
+          activeCeremonies.delete(keyId);
+          clearCeremonyStats(keyId);
+        }
         reject(err);
       }
     });

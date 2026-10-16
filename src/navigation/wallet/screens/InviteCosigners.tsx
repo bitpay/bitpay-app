@@ -1151,7 +1151,12 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           img: <Icons.Delete />,
           title: t('Delete'),
           description: t('Permanently deletes all wallets using this key.'),
-          onPress: () => navigation.navigate('DeleteKey', {keyId}),
+          onPress: () => {
+            dispatch(cancelTSSCeremony(keyId));
+            setIsCeremonyStarted(false);
+            setIsCeremonyInRounds(false);
+            navigation.navigate('DeleteKey', {keyId});
+          },
         },
       ]}
       closeModal={() => setShowKeyOptions(false)}
