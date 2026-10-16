@@ -7,7 +7,6 @@ import {
 import UserApi from '../../api/user';
 import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
-import Dosh from '../../lib/dosh';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {BrazeWrapper} from '../../lib/Braze';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
@@ -19,7 +18,6 @@ import {
   submitDeviceEvent,
 } from '../app/app.effects';
 import {DeviceEvent} from '../../lib/sumsub/deviceIntelligence';
-import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {ShopActions, ShopEffects} from '../shop';
 import {SumSubActions, SumSubEffects} from '../sumsub';
@@ -387,7 +385,6 @@ export const startLogin =
         }),
       );
 
-      dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
       return true;
     } catch (err: any) {
@@ -664,7 +661,6 @@ export const startPairAndLoadUser =
         }),
       );
 
-      dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(SumSubEffects.startGetKycStatus());
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>
@@ -735,17 +731,6 @@ export const startDisconnectBitPayId =
       );
     }
 
-    try {
-      Dosh.clearUser();
-    } catch (err: any) {
-      // log but swallow this error
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      logManager.debug(
-        '[startDisconnectBitPayId] An error occurred while clearing Dosh user.',
-        errMsg,
-      );
-    }
-
     // Braze doesn't recommend changeUser to a new EID
     // Keep tracking current EID as part of logout
     // until login with a different user or uninstall the app
@@ -763,7 +748,6 @@ export const startDisconnectBitPayId =
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     dispatch(SumSubActions.resetKyc(APP.network));
     dispatch(resetKycGetVerifiedModal());
-    dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));
     dispatch(setEmailNotificationsAccepted(false, null)); // Only uncheck accepted, keep subscription status
@@ -796,24 +780,6 @@ export const startFetchBasicInfo =
       throw err;
     }
   };
-
-export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
-  try {
-    const {APP, BITPAY_ID} = getState();
-    const doshToken = await UserApi.fetchDoshToken(
-      BITPAY_ID.apiToken[APP.network],
-    );
-
-    dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error(
-      '[startFetchDoshToken] Failed to fetch dosh token.',
-      errMsg,
-    );
-    dispatch(BitPayIdActions.failedFetchDoshToken());
-  }
-};
 
 export const startFetchSecuritySettings =
   (): Effect<Promise<SecuritySettings>> => async (dispatch, getState) =>

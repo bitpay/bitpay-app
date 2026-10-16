@@ -42,7 +42,6 @@ import {
   sellCryptoReducer,
   sellCryptoReduxPersistBlackList,
 } from './sell-crypto/sell-crypto.reducer';
-import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
 import {
   locationReducer,
   locationReduxPersistBlackList,
@@ -358,9 +357,30 @@ const registerPersistFlushOnBackground = (persistor: {
   );
 };
 
+// Slices that no longer exist but can still be in state persisted by older
+// app versions. Dropping them before the merge keeps combineReducers from
+// warning about unexpected keys, and the next write leaves them out.
+const REMOVED_PERSISTED_SLICES = ['CARD'];
+
+const reconcilePersistedState: typeof autoMergeLevel2 = (
+  inboundState,
+  originalState,
+  reducedState,
+  config,
+) => {
+  const inbound = {...inboundState} as Record<string, unknown>;
+  REMOVED_PERSISTED_SLICES.forEach(slice => delete inbound[slice]);
+  return autoMergeLevel2(
+    inbound as typeof inboundState,
+    originalState,
+    reducedState,
+    config,
+  );
+};
+
 const basePersistConfig = {
   storage: reduxStorage,
-  stateReconciler: autoMergeLevel2,
+  stateReconciler: reconcilePersistedState,
   writeFailHandler: reportPersistWriteError,
 };
 
@@ -368,7 +388,6 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   APP: appReduxPersistBlackList,
   BITPAY_ID: bitPayIdReduxPersistBlackList,
   BUY_CRYPTO: buyCryptoReduxPersistBlackList,
-  CARD: cardReduxPersistBlacklist,
   LOCATION: locationReduxPersistBlackList,
   LOG: logReduxPersistBlackList,
   SELL_CRYPTO: sellCryptoReduxPersistBlackList,
@@ -396,7 +415,6 @@ const reducers = {
   APP: appReducer,
   BITPAY_ID: bitPayIdReducer,
   BUY_CRYPTO: buyCryptoReducer,
-  CARD: cardReducer,
   LOCATION: locationReducer,
   LOG: logReducer,
   SELL_CRYPTO: sellCryptoReducer,
@@ -485,7 +503,6 @@ const logger = createLogger({
       },
       BITPAY_ID: {
         ...state.BITPAY_ID,
-        doshToken: null,
         apiToken: null,
       },
     };

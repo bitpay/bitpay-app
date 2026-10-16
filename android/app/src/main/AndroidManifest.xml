@@ -76,7 +76,7 @@
             </intent-filter>
         </service>
 
-        <!-- Used by Dosh Android SDK -->
+        <!-- Google Maps API key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="GOOGLE_MAPS_API_KEY_REPLACE_ME" />

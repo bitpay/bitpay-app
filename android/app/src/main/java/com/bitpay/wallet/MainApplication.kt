@@ -23,8 +23,6 @@ class MainApplication : Application(), ReactApplication {
           packageList =
                 PackageList(this).packages.apply {
                     // Add custom packages
-                    add(DoshPackage())
-                    add(GooglePushProvisioningPackage())
                     add(SilentPushPackage())
                     add(TimerPackage())
                     add(InAppMessagePackage())
