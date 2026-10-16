@@ -44,6 +44,8 @@ export type SettingsHomeProps = NativeStackScreenProps<
   SettingsScreens.SETTINGS_HOME
 >;
 
+const ANDROID_BOTTOM_PADDING = 100;
+
 const styles = StyleSheet.create({
   settingsContainer: {
     flex: 1,
@@ -261,7 +263,8 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
         <ScrollView
           ref={listRef}
           contentContainerStyle={{
-            paddingBottom: Platform.OS === 'ios' ? tabBarInset + 16 : 100,
+            paddingBottom:
+              Platform.OS === 'ios' ? tabBarInset : ANDROID_BOTTOM_PADDING,
           }}
           scrollIndicatorInsets={{bottom: tabBarInset}}>
           {listHeader}

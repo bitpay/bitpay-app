@@ -563,6 +563,14 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
   const scrollViewRef = useRef<ScrollView>(null);
   const tabBarInset = useFloatingTabBarInset();
+  const contentContainerStyle = useMemo(
+    () => ({paddingBottom: tabBarInset}),
+    [tabBarInset],
+  );
+  const scrollIndicatorInsets = useMemo(
+    () => ({bottom: tabBarInset}),
+    [tabBarInset],
+  );
   useScrollToTop(scrollViewRef);
   const homeViewportHeightRef = useRef(0);
   const homeScrollOffsetYRef = useRef(0);
@@ -813,8 +821,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               // Prevent iOS from injecting automatic top insets which creates a gap
               // between the Archax banner and the Home header when the scene is edge-to-edge
               contentInsetAdjustmentBehavior="never"
-              contentContainerStyle={{paddingBottom: tabBarInset}}
-              scrollIndicatorInsets={{bottom: tabBarInset}}
+              contentContainerStyle={contentContainerStyle}
+              scrollIndicatorInsets={scrollIndicatorInsets}
               refreshControl={
                 <RefreshControl
                   tintColor={theme.dark ? White : SlateDark}

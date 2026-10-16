@@ -39,6 +39,7 @@ import {ThemeRelay} from '../../contexts';
 import FloatingTabBarBackground from './FloatingTabBarBackground';
 import {
   FLOATING_TAB_BAR_HEIGHT,
+  FLOATING_TAB_BAR_BORDER,
   getFloatingTabBarBottomOffset,
   getFloatingTabBarWidth,
 } from './floatingTabBar';
@@ -149,8 +150,8 @@ const TabsStack = () => {
               borderRadius: FLOATING_TAB_BAR_HEIGHT / 2,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: dark
-                ? 'rgba(255, 255, 255, 0.14)'
-                : 'rgba(0, 0, 0, 0.08)',
+                ? FLOATING_TAB_BAR_BORDER.dark
+                : FLOATING_TAB_BAR_BORDER.light,
               overflow: 'hidden',
               backgroundColor: 'transparent',
             }

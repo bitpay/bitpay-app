@@ -10,3 +10,10 @@ export const getFloatingTabBarWidth = (windowWidth: number) =>
 
 export const getFloatingTabBarBottomOffset = (insetsBottom: number) =>
   Math.max(insetsBottom - 8, 12);
+
+export const FLOATING_TAB_BAR_CONTENT_GAP = 16;
+
+export const FLOATING_TAB_BAR_BORDER = {
+  dark: 'rgba(255, 255, 255, 0.14)',
+  light: 'rgba(0, 0, 0, 0.08)',
+};
