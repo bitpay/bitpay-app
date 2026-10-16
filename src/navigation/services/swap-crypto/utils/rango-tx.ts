@@ -86,6 +86,33 @@ export const rangoAmountToString = (
 };
 
 /**
+ * Converts a smallest-unit amount to a human-readable decimal string.
+ *
+ * Rango reports route outputs in machine units ('121026' sats, not '0.00121026'
+ * BTC). Shown unconverted it reads as 121026 BTC, and any best-offer
+ * comparison against another provider's human-unit figure is wrong by 10^8.
+ */
+export const rangoFromSmallestUnit = (
+  amount: string | number | null | undefined,
+  decimals: number,
+): string => {
+  if (!Number.isInteger(decimals) || decimals < 0) {
+    throw new Error(`rangoFromSmallestUnit: bad decimals ${decimals}`);
+  }
+
+  const raw = rangoAmountToString(amount);
+  if (decimals === 0) {
+    return raw;
+  }
+
+  const padded = raw.padStart(decimals + 1, '0');
+  const whole = padded.slice(0, padded.length - decimals);
+  const frac = padded.slice(padded.length - decimals).replace(/0+$/, '');
+
+  return frac ? `${whole}.${frac}` : whole;
+};
+
+/**
  * Encodes a Rango memo as an OP_RETURN script for the given UTXO chain.
  *
  * The memo is what identifies the swap to the destination network — a UTXO
@@ -105,33 +132,6 @@ export const buildRangoMemoScript = (
     throw new Error('buildRangoMemoScript: empty memo');
   }
 
-  // SCRIPT memos are already a complete output script, not data to be wrapped.
-  // Observed on the same BTC->ETH pair: Thorchain routes return UTF8 text
-  // ('=:e:0x...') while TeleSwap routes return SCRIPT ('6a4c4d...'). Wrapping a
-  // SCRIPT memo in a second OP_RETURN produces a deposit the destination
-  // network cannot attribute, and the funds are not recoverable.
-  if (memoType === 'SCRIPT') {
-    const script = memo.toLowerCase().replace(/^0x/, '');
-    if (!/^[0-9a-f]+$/.test(script)) {
-      throw new Error('buildRangoMemoScript: SCRIPT memo is not hex');
-    }
-    if (!script.startsWith('6a')) {
-      throw new Error(
-        `buildRangoMemoScript: SCRIPT memo is not an OP_RETURN, got ${script.slice(
-          0,
-          8,
-        )}`,
-      );
-    }
-    return script;
-  }
-
-  if (memoType && memoType !== 'UTF8' && memoType !== 'HEX') {
-    // Refuse rather than guess an encoding: a wrong guess silently misdirects
-    // the deposit.
-    throw new Error(`buildRangoMemoScript: unknown memoType ${memoType}`);
-  }
-
   const lib = (() => {
     switch (chain?.toLowerCase()) {
       case 'bch':
@@ -149,21 +149,99 @@ export const buildRangoMemoScript = (
     }
   })();
 
-  // buildDataOut picks the right push opcode, including OP_PUSHDATA1 past 75
-  // bytes, which Thorchain-style memos can exceed.
-  const encoding = memoType === 'HEX' ? 'hex' : 'utf8';
-  const script = lib.Script.buildDataOut(memo, encoding).toHex();
+  // Standardness cap on an OP_RETURN output. BCH raised it; everyone else
+  // kept Bitcoin's. Over this the node accepts the proposal, the user signs,
+  // and the broadcast is rejected as non-standard — a stuck signed swap.
+  const maxScriptBytes = chain?.toLowerCase() === 'bch' ? 223 : 83;
 
-  if (!script.startsWith('6a')) {
-    throw new Error(
-      `buildRangoMemoScript: expected an OP_RETURN script, got ${script.slice(
-        0,
-        8,
-      )}`,
-    );
+  const assertUsable = (script: string): string => {
+    let parsed;
+    try {
+      parsed = lib.Script.fromHex(script);
+    } catch {
+      throw new Error('buildRangoMemoScript: memo is not a parseable script');
+    }
+
+    // Checked before isDataOut() because bitcore's own implementation also
+    // rejects oversize scripts, and "not an OP_RETURN" would be a misleading
+    // reason for a memo that is simply too long.
+    if (script.length / 2 > maxScriptBytes) {
+      throw new Error(
+        `buildRangoMemoScript: script is ${
+          script.length / 2
+        } bytes, over the ${maxScriptBytes}-byte standardness limit`,
+      );
+    }
+
+    // isDataOut() is what makes this an OP_RETURN carrying exactly one push.
+    if (!parsed.isDataOut()) {
+      throw new Error(
+        `buildRangoMemoScript: not an OP_RETURN data output, got ${script.slice(
+          0,
+          8,
+        )}`,
+      );
+    }
+
+    // A declared push length longer than the bytes actually present parses
+    // leniently here but is rejected by the network at broadcast.
+    const chunk = parsed.chunks?.[1];
+    if (!chunk?.buf?.length) {
+      throw new Error('buildRangoMemoScript: memo carries no data');
+    }
+    if (chunk.len !== undefined && chunk.len !== chunk.buf.length) {
+      throw new Error(
+        `buildRangoMemoScript: declared push ${chunk.len} but carries ${chunk.buf.length} bytes`,
+      );
+    }
+    return script;
+  };
+
+  // SCRIPT memos are already a complete output script, not data to be wrapped.
+  // Route-dependent on the same pair: Thorchain returns UTF8, Chainflip HEX,
+  // TeleSwap SCRIPT. Wrapping a SCRIPT memo a second time produces a deposit
+  // the destination network cannot attribute, and the funds are not
+  // recoverable.
+  if (memoType === 'SCRIPT') {
+    const script = memo.toLowerCase().replace(/^0x/, '');
+    if (!/^[0-9a-f]+$/.test(script) || script.length % 2 !== 0) {
+      throw new Error('buildRangoMemoScript: SCRIPT memo is not valid hex');
+    }
+    return assertUsable(script);
   }
 
-  return script;
+  if (memoType && memoType !== 'UTF8' && memoType !== 'HEX') {
+    // Refuse rather than guess an encoding: a wrong guess silently misdirects
+    // the deposit.
+    throw new Error(`buildRangoMemoScript: unknown memoType ${memoType}`);
+  }
+
+  let data: Buffer;
+  if (memoType === 'HEX') {
+    // Buffer.from(str, 'hex') does NOT throw on bad input — it stops at the
+    // first invalid character. '0xdead' decodes to zero bytes and yields the
+    // empty OP_RETURN '6a00', which passes a naive prefix check and is
+    // accepted by BWS, sending the deposit out with no memo at all.
+    const hex = memo.toLowerCase().replace(/^0x/, '');
+    if (!/^[0-9a-f]+$/.test(hex) || hex.length % 2 !== 0) {
+      throw new Error('buildRangoMemoScript: HEX memo is not valid hex');
+    }
+    data = Buffer.from(hex, 'hex');
+    if (data.length !== hex.length / 2) {
+      throw new Error('buildRangoMemoScript: HEX memo decoded short');
+    }
+  } else {
+    data = Buffer.from(memo, 'utf8');
+  }
+
+  if (!data.length) {
+    throw new Error('buildRangoMemoScript: memo decoded to zero bytes');
+  }
+
+  // buildDataOut picks the right push opcode, including OP_PUSHDATA1 past 75
+  // bytes, which Thorchain-style memos can exceed. Passing a Buffer avoids a
+  // second round of string decoding.
+  return assertUsable(lib.Script.buildDataOut(data).toHex());
 };
 
 export interface RangoTxProposalParams {
@@ -240,23 +318,41 @@ const buildTransferProposal = (
     throw new Error(`buildRangoTxProposal: unreadable amount ${tx.amount}`);
   }
 
+  // BWS rejects a BCH address that is not prefix-less cashaddr
+  // (ONLY_CASHADDR). Rango's samples already are, but a legacy or
+  // 'bitcoincash:'-prefixed one would fail at createTxProposal. Normalised the
+  // same way the Changelly checkout does it.
+  const recipientAddress =
+    params.chain?.toLowerCase() === 'bch'
+      ? BWC.getBitcoreCash().Address(tx.recipientAddress).toString(true)
+      : tx.recipientAddress;
+
   const outputs: Array<Record<string, any>> = [
     {
-      toAddress: tx.recipientAddress,
+      toAddress: recipientAddress,
       amount,
       message: params.message,
     },
   ];
 
-  if (tx.memo) {
-    outputs.push({
-      script: buildRangoMemoScript(params.chain, tx.memo, tx.memoType),
-      amount: 0,
-    });
+  // For Thorchain, Chainflip and TeleSwap the memo IS the swap: a deposit to
+  // the vault without it is an ordinary transfer that cannot be attributed and
+  // cannot be recovered. `method` is not inspected because nothing documents a
+  // UTXO route that legitimately omits the memo — if one exists, gate on it
+  // here deliberately rather than letting an empty memo through by default.
+  if (!tx.memo) {
+    throw new Error(
+      'buildRangoTxProposal: UTXO route returned no memo; refusing to build an unattributable deposit',
+    );
   }
 
+  outputs.push({
+    script: buildRangoMemoScript(params.chain, tx.memo, tx.memoType),
+    amount: 0,
+  });
+
   return {
-    toAddress: tx.recipientAddress,
+    toAddress: recipientAddress,
     amount,
     chain: params.chain,
     outputs,
@@ -264,7 +360,7 @@ const buildTransferProposal = (
     excludeUnconfirmedUtxos: true,
     feeLevel: 'priority',
     customData: {
-      rango: tx.recipientAddress,
+      rango: recipientAddress,
       service: 'rango',
     },
   };

@@ -4,6 +4,7 @@ import {
   rangoCanBuildTxProposal,
   rangoGetApprovalData,
   rangoAmountToString,
+  rangoFromSmallestUnit,
   rangoParseNumeric,
   rangoToSmallestUnit,
   RangoPrerequisiteError,
@@ -68,9 +69,11 @@ describe('rangoParseNumeric', () => {
 });
 
 describe('buildRangoMemoScript', () => {
-  it('produces an OP_RETURN script for a real Thorchain-style memo', () => {
+  it('produces the exact expected script for a real Thorchain memo', () => {
     const script = buildRangoMemoScript('btc', transferTx.memo!, 'UTF8');
-    expect(script.startsWith('6a')).toBe(true);
+    expect(script).toBe(
+      '6a413d3a653a3078366633336262313736336565626561643037636638383135613632666364376233303331316661333a3333353836383738382f3330303a72673a30',
+    );
     // 6a = OP_RETURN, then a single length byte for memos under 76 bytes.
     const len = Buffer.from(transferTx.memo!, 'utf8').length;
     expect(len).toBeLessThan(76);
@@ -78,17 +81,19 @@ describe('buildRangoMemoScript', () => {
   });
 
   it('switches to OP_PUSHDATA1 past 75 bytes', () => {
-    const script = buildRangoMemoScript('btc', 'x'.repeat(120), 'UTF8');
-    // 6a 4c 78 -> OP_RETURN, OP_PUSHDATA1, length 120
-    expect(script.startsWith('6a4c78')).toBe(true);
+    // 80 bytes: past the single-byte push boundary, still inside the 83-byte
+    // standardness limit.
+    const script = buildRangoMemoScript('btc', 'x'.repeat(80), 'UTF8');
+    // 6a 4c 50 -> OP_RETURN, OP_PUSHDATA1, length 80
+    expect(script.startsWith('6a4c50')).toBe(true);
   });
 
-  it('supports every UTXO chain the wallet custodies', () => {
-    for (const chain of ['btc', 'bch', 'doge', 'ltc']) {
-      expect(buildRangoMemoScript(chain, 'memo', 'UTF8').startsWith('6a')).toBe(
-        true,
-      );
-    }
+  it('encodes identically across every UTXO chain the wallet custodies', () => {
+    const scripts = ['btc', 'bch', 'doge', 'ltc'].map(c =>
+      buildRangoMemoScript(c, 'memo', 'UTF8'),
+    );
+    expect(scripts[0]).toBe('6a046d656d6f');
+    expect(new Set(scripts).size).toBe(1);
   });
 
   it('refuses a non-UTXO chain rather than guessing', () => {
@@ -126,11 +131,6 @@ describe('buildRangoTxProposal — TRANSFER', () => {
     const txp = buildRangoTxProposal(transferTx, params);
     expect(txp.amount).toBe('9990000');
     expect(txp.outputs[0].amount).toBe('9990000');
-  });
-
-  it('omits the OP_RETURN output when there is no memo', () => {
-    const txp = buildRangoTxProposal({...transferTx, memo: null}, params);
-    expect(txp.outputs).toHaveLength(1);
   });
 
   it('rejects an unreadable amount instead of sending zero', () => {
@@ -281,41 +281,83 @@ describe('rangoToSmallestUnit — exponential inputs', () => {
   });
 });
 
+describe('buildRangoMemoScript — HEX memos', () => {
+  // Verbatim from a live BTC->ETH swap routed through Chainflip, which is
+  // what memoType HEX looks like on the wire today.
+  const chainflipMemo =
+    '01016f33bb1763eebead07cf8815a62fcd7b30311fa3960045a0e2f6c5bd9a1600000000000000006401000200000a00';
+  const expected = `6a30${chainflipMemo}`;
+
+  it('encodes a real Chainflip HEX memo to the exact expected script', () => {
+    expect(buildRangoMemoScript('btc', chainflipMemo, 'HEX')).toBe(expected);
+  });
+
+  it('accepts a 0x prefix instead of decoding it to nothing', () => {
+    // Buffer.from('0xdead','hex') stops at 'x' and yields zero bytes, so the
+    // naive path produced '6a00' — a valid-looking but empty OP_RETURN that
+    // sends the deposit out with no memo.
+    expect(buildRangoMemoScript('btc', `0x${chainflipMemo}`, 'HEX')).toBe(
+      expected,
+    );
+  });
+
+  it('rejects odd-length hex rather than dropping the last nibble', () => {
+    // Buffer.from('abc','hex') silently yields 0xab.
+    expect(() => buildRangoMemoScript('btc', 'abc', 'HEX')).toThrow(
+      /not valid hex/,
+    );
+  });
+
+  it('rejects non-hex rather than emitting an empty OP_RETURN', () => {
+    expect(() => buildRangoMemoScript('btc', 'zz', 'HEX')).toThrow(
+      /not valid hex/,
+    );
+  });
+
+  it('never returns the empty OP_RETURN 6a00', () => {
+    for (const bad of ['0xdead', 'zz', 'abc', '']) {
+      let out: string | undefined;
+      try {
+        out = buildRangoMemoScript('btc', bad, 'HEX');
+      } catch {
+        out = undefined;
+      }
+      expect(out).not.toBe('6a00');
+    }
+  });
+});
+
 describe('buildRangoMemoScript — SCRIPT memos', () => {
-  // Verbatim from a live BTC->ETH swap routed through TeleSwap. The memo is
-  // already a complete OP_RETURN output script.
-  const scriptMemo =
-    '6a4c4d0001140000000000000000000000006f33bb1763eebead07cf8815a62fcd7b30311fa30000';
+  // A complete, valid OP_RETURN script carrying the live Chainflip payload.
+  const validScript =
+    '6a3001016f33bb1763eebead07cf8815a62fcd7b30311fa3960045a0e2f6c5bd9a1600000000000000006401000200000a00';
 
-  it('uses a SCRIPT memo verbatim instead of wrapping it again', () => {
-    const out = buildRangoMemoScript('btc', scriptMemo, 'SCRIPT');
-    expect(out).toBe(scriptMemo);
+  it('uses a valid SCRIPT memo verbatim instead of wrapping it again', () => {
+    expect(buildRangoMemoScript('btc', validScript, 'SCRIPT')).toBe(
+      validScript,
+    );
   });
 
-  it('does NOT double-wrap — the result must not be 6a-prefixed twice', () => {
-    const out = buildRangoMemoScript('btc', scriptMemo, 'SCRIPT');
-    // A double wrap would push the original script as data, making the
-    // original '6a' appear after a length byte rather than at position 0.
-    expect(out.indexOf('6a4c4d')).toBe(0);
-    expect(out.length).toBe(scriptMemo.length);
-  });
-
-  it('still wraps a UTF8 memo from the same pair', () => {
-    const text = '=:e:0x6f33bb1763eebead07cf8815a62fcd7b30311fa3:335868788/300';
-    const out = buildRangoMemoScript('btc', text, 'UTF8');
-    expect(out.startsWith('6a')).toBe(true);
-    expect(out).not.toBe(text);
+  it('rejects a script whose declared push is longer than its data', () => {
+    // Declares OP_PUSHDATA1 77 bytes but carries 37. bitcore parses this
+    // leniently, so it would sign and then be rejected at broadcast as
+    // non-standard, leaving a stuck signed swap.
+    const truncated =
+      '6a4c4d0001140000000000000000000000006f33bb1763eebead07cf8815a62fcd7b30311fa30000';
+    expect(() => buildRangoMemoScript('btc', truncated, 'SCRIPT')).toThrow(
+      /declared push/,
+    );
   });
 
   it('rejects a SCRIPT memo that is not an OP_RETURN', () => {
     expect(() => buildRangoMemoScript('btc', '76a914abcd', 'SCRIPT')).toThrow(
-      /not an OP_RETURN/,
+      /not an OP_RETURN|not a parseable script/,
     );
   });
 
   it('rejects a SCRIPT memo that is not hex', () => {
     expect(() => buildRangoMemoScript('btc', 'not-hex', 'SCRIPT')).toThrow(
-      /not hex/,
+      /not valid hex/,
     );
   });
 
@@ -323,6 +365,20 @@ describe('buildRangoMemoScript — SCRIPT memos', () => {
     expect(() => buildRangoMemoScript('btc', 'abc', 'BASE64' as any)).toThrow(
       /unknown memoType/,
     );
+  });
+});
+
+describe('buildRangoMemoScript — standardness limits', () => {
+  it('rejects a memo over the 83-byte OP_RETURN limit on BTC', () => {
+    expect(() => buildRangoMemoScript('btc', 'x'.repeat(200), 'UTF8')).toThrow(
+      /standardness limit/,
+    );
+  });
+
+  it('allows BCH its larger 223-byte limit', () => {
+    expect(
+      buildRangoMemoScript('bch', 'x'.repeat(200), 'UTF8').startsWith('6a'),
+    ).toBe(true);
   });
 });
 
@@ -341,5 +397,73 @@ describe('rangoAmountToString', () => {
   it('throws on junk rather than returning a wrong amount', () => {
     expect(() => rangoAmountToString('abc')).toThrow(/unreadable amount/);
     expect(() => rangoAmountToString('1.5')).toThrow(/unreadable amount/);
+  });
+});
+
+describe('rangoFromSmallestUnit', () => {
+  it('converts a real BTC route output to human units', () => {
+    // Shown unconverted this reads as "121026 BTC".
+    expect(rangoFromSmallestUnit('121026', 8)).toBe('0.00121026');
+  });
+
+  it('converts an 18-decimal output exactly', () => {
+    expect(rangoFromSmallestUnit('998971062744772304', 18)).toBe(
+      '0.998971062744772304',
+    );
+  });
+
+  it('round-trips with rangoToSmallestUnit', () => {
+    for (const [v, d] of [
+      ['0.00121026', 8],
+      ['1.5', 18],
+      ['12.345678', 6],
+    ] as Array<[string, number]>) {
+      expect(rangoFromSmallestUnit(rangoToSmallestUnit(v, d), d)).toBe(v);
+    }
+  });
+
+  it('handles whole numbers and zero without a trailing point', () => {
+    expect(rangoFromSmallestUnit('100000000', 8)).toBe('1');
+    expect(rangoFromSmallestUnit('0', 8)).toBe('0');
+  });
+});
+
+describe('buildRangoTxProposal — memo is mandatory on UTXO', () => {
+  it('refuses to build a deposit with no memo', () => {
+    expect(() =>
+      buildRangoTxProposal(
+        {...transferTx, memo: null},
+        {
+          chain: 'btc',
+          message: 'm',
+        },
+      ),
+    ).toThrow(/refusing to build an unattributable deposit/);
+  });
+});
+
+describe('buildRangoTxProposal — BCH address normalisation', () => {
+  it('strips the cashaddr prefix BWS rejects', () => {
+    const txp = buildRangoTxProposal(
+      {
+        ...transferTx,
+        blockChain: 'BCH',
+        recipientAddress:
+          'bitcoincash:qzumtx6ufk3qu92slcsg5ajehujehzcquydmhaq0eh',
+      },
+      {chain: 'bch', message: 'BCH to ETH'},
+    );
+    expect(txp.toAddress).toBe('qzumtx6ufk3qu92slcsg5ajehujehzcquydmhaq0eh');
+    expect(txp.outputs[0].toAddress).toBe(
+      'qzumtx6ufk3qu92slcsg5ajehujehzcquydmhaq0eh',
+    );
+  });
+
+  it('leaves a BTC address untouched', () => {
+    const txp = buildRangoTxProposal(transferTx, {
+      chain: 'btc',
+      message: 'm',
+    });
+    expect(txp.toAddress).toBe(transferTx.recipientAddress);
   });
 });

@@ -74,7 +74,7 @@ import {
   rangoGetErrorMessage,
 } from '../utils/rango-utils';
 import {rangoQuote} from '../../../../store/swap-crypto/effects/rango/rango-swap.effects';
-import {rangoToSmallestUnit} from '../utils/rango-tx';
+import {rangoFromSmallestUnit, rangoToSmallestUnit} from '../utils/rango-tx';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
@@ -968,14 +968,39 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
           to,
           amount,
           slippage: offers.rango.slippage ?? RANGO_DEFAULT_SLIPPAGE,
-          referrerFee: swapCryptoConfig?.rango?.config?.referrerFee,
         }),
       );
 
       const route = res.route!;
+
+      // Rango reports route amounts in the destination asset's smallest unit
+      // ('121026' sats, not '0.00121026' BTC). Every consumer below —
+      // the offer card, the fiat conversion and the best-offer comparison —
+      // expects human units, so an unconverted figure both displays wrongly
+      // and wins every comparison by a factor of 10^decimals.
+      const toPrecision = dispatch(
+        GetPrecision(coinTo, chainTo, selectedWalletTo.tokenAddress),
+      );
+      const toDecimals =
+        toPrecision?.unitDecimals ?? route.to?.decimals ?? undefined;
+
+      if (toDecimals === undefined) {
+        showRangoError(
+          t('Could not read the precision for this asset.'),
+          'rangoGetQuote: missing destination precision',
+        );
+        return;
+      }
+
       offers.rango.quoteData = res;
-      offers.rango.amountReceiving = route.outputAmount;
-      offers.rango.estimatedMinAmountReceiving = route.outputAmountMin;
+      offers.rango.amountReceiving = rangoFromSmallestUnit(
+        route.outputAmount,
+        toDecimals,
+      );
+      offers.rango.estimatedMinAmountReceiving = rangoFromSmallestUnit(
+        route.outputAmountMin,
+        toDecimals,
+      );
       offers.rango.fee = route.feeUsd ?? undefined;
 
       if (route.estimatedTimeInSeconds) {
@@ -988,9 +1013,19 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       // out-of-range amount surfaces here rather than being pre-filtered.
       const restriction = route.amountRestriction;
       if (restriction?.min || restriction?.max) {
+        // Restrictions are quoted in the SOURCE asset's smallest unit, while
+        // amountFrom is a human figure.
         offers.rango.amountLimits = {
-          min: restriction.min ? Number(restriction.min) : undefined,
-          max: restriction.max ? Number(restriction.max) : undefined,
+          min: restriction.min
+            ? Number(
+                rangoFromSmallestUnit(restriction.min, precision.unitDecimals),
+              )
+            : undefined,
+          max: restriction.max
+            ? Number(
+                rangoFromSmallestUnit(restriction.max, precision.unitDecimals),
+              )
+            : undefined,
         } as SwapCryptoLimits;
       }
 
@@ -1421,6 +1456,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       setOffersLoading?.(false);
       setOffers(cloneDeep(initialOffers));
       setFinishedChangelly(null);
+      setFinishedRango(null);
       setFinishedThorswap(null);
       return;
     }
@@ -1435,6 +1471,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       setOffersLoading?.(false);
       setOffers(cloneDeep(initialOffers));
       setFinishedChangelly(null);
+      setFinishedRango(null);
       setFinishedThorswap(null);
       return;
     }
@@ -1458,6 +1495,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         setOffersLoading?.(false);
         setOffers(cloneDeep(initialOffers));
         setFinishedChangelly(null);
+        setFinishedRango(null);
         setFinishedThorswap(null);
         return;
       }
