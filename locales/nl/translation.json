@@ -2451,5 +2451,10 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Controleer of u uw herstelzin correct hebt genoteerd door de woorden {{first}}, {{second}} en {{third}} van uw herstelzin in te voeren.",
   "Show balances": "Saldi weergeven",
   "Hide balances": "Saldi verbergen",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Kan dit account niet controleren op openstaande transacties. Controleer uw verbinding en probeer het opnieuw."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Kan dit account niet controleren op openstaande transacties. Controleer uw verbinding en probeer het opnieuw.",
+  "Loading balance history": "Saldogeschiedenis laden",
+  "Updating history · {{completed}} of {{count}} wallets_one": "Geschiedenis bijwerken · {{completed}} van {{count}} wallet",
+  "Updating history · {{completed}} of {{count}} wallets_other": "Geschiedenis bijwerken · {{completed}} van {{count}} wallets",
+  "Couldn't load balance history.": "Saldogeschiedenis kon niet worden geladen.",
+  "Retry": "Opnieuw proberen"
 }

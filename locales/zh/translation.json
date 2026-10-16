@@ -2429,5 +2429,9 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "请输入恢复短语中的第 {{first}}、第 {{second}} 和第 {{third}} 个单词，以确认您已正确保存恢复短语。",
   "Show balances": "显示余额",
   "Hide balances": "隐藏余额",
-  "Could not check this account for pending transactions. Check your connection and try again.": "无法检查此账户是否有待处理交易。请检查您的网络连接，然后重试。"
+  "Could not check this account for pending transactions. Check your connection and try again.": "无法检查此账户是否有待处理交易。请检查您的网络连接，然后重试。",
+  "Loading balance history": "正在加载余额历史",
+  "Updating history · {{completed}} of {{count}} wallets_other": "正在更新历史 · 已完成 {{completed}}/{{count}} 个钱包",
+  "Couldn't load balance history.": "无法加载余额历史。",
+  "Retry": "重试"
 }

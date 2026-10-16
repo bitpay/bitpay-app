@@ -2462,5 +2462,11 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Vérifiez que vous avez correctement noté votre phrase de récupération en saisissant les mots {{first}}, {{second}} et {{third}} de votre phrase de récupération.",
   "Show balances": "Afficher les soldes",
   "Hide balances": "Masquer les soldes",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Impossible de vérifier si ce compte a des transactions en attente. Vérifiez votre connexion et réessayez."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Impossible de vérifier si ce compte a des transactions en attente. Vérifiez votre connexion et réessayez.",
+  "Loading balance history": "Chargement de l'historique du solde",
+  "Updating history · {{completed}} of {{count}} wallets_one": "Mise à jour de l'historique · {{completed}} sur {{count}} portefeuille",
+  "Updating history · {{completed}} of {{count}} wallets_many": "Mise à jour de l'historique · {{completed}} sur {{count}} portefeuilles",
+  "Updating history · {{completed}} of {{count}} wallets_other": "Mise à jour de l'historique · {{completed}} sur {{count}} portefeuilles",
+  "Couldn't load balance history.": "Impossible de charger l'historique du solde.",
+  "Retry": "Réessayer"
 }
