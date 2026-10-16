@@ -45,4 +45,35 @@ describe('submitDeviceEvent', () => {
     expect(String(await hungError)).toMatch('timed out');
     await expect(next).resolves.toBe('visitor');
   });
+
+  it('does not submit when a timed-out event resumes after being superseded', async () => {
+    let releaseToken: (v: unknown) => void = () => {};
+    post.mockReset();
+    post.mockReturnValueOnce(new Promise(r => (releaseToken = r)));
+    post.mockResolvedValue({data: {data: 'token'}});
+
+    const stale = submitDeviceEvent({
+      network: 'livenet' as any,
+      event: 'login',
+    });
+    const staleError = stale.catch(e => e);
+    const next = submitDeviceEvent({
+      network: 'livenet' as any,
+      event: 'signup',
+    });
+
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve();
+    }
+    jest.advanceTimersByTime(DEVICE_EVENT_TIMEOUT_MS);
+    await staleError;
+    await next;
+
+    const callsBefore = post.mock.calls.length;
+    releaseToken({data: {data: 'late-token'}});
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve();
+    }
+    expect(post.mock.calls.length).toBe(callsBefore);
+  });
 });
