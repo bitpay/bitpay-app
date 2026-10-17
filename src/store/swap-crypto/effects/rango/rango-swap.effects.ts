@@ -137,17 +137,35 @@ export const rangoPrepareSwap =
  * The spender can be quote-specific, so this is always asked per request,
  * never cached.
  */
+export class RangoApprovalFailedError extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'RangoApprovalFailedError';
+  }
+}
+
 export const rangoCheckApproval =
   (requestId: string, txId: string): Effect<Promise<boolean>> =>
   async (): Promise<boolean> => {
-    try {
-      const res = await rangoIsApproved({env: rangoEnv, requestId, txId});
-      return !!res?.isApproved;
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      logManager.debug(`rangoCheckApproval failed: ${errStr}`);
-      return false;
+    const res = await rangoIsApproved({env: rangoEnv, requestId, txId});
+
+    if (res?.isApproved) {
+      return true;
     }
+
+    // Distinguish "not yet" from "never will be". Treating a reverted or
+    // short approval as pending leaves the user staring at a spinner until
+    // the poll times out.
+    if (res?.txStatus === 'failed') {
+      throw new RangoApprovalFailedError('The approval transaction failed.');
+    }
+    if (res?.txStatus === 'success') {
+      throw new RangoApprovalFailedError(
+        'The approval confirmed but did not grant enough allowance.',
+      );
+    }
+
+    return false;
   };
 
 /**

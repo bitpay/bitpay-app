@@ -961,6 +961,13 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       return;
     }
 
+    const fromAddress = await dispatch(
+      createWalletAddress({wallet: selectedWalletFrom, newAddress: false}),
+    );
+    const toAddress = await dispatch(
+      createWalletAddress({wallet: selectedWalletTo, newAddress: false}),
+    );
+
     try {
       const res = await dispatch(
         rangoQuote({
@@ -968,6 +975,11 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
           to,
           amount,
           slippage: offers.rango.slippage ?? RANGO_DEFAULT_SLIPPAGE,
+          // Without addresses Rango routes the preview through a different
+          // swapper than the swap call, so the two disagree on output and the
+          // rate guard aborts every attempt.
+          fromAddress,
+          toAddress,
         }),
       );
 

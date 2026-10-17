@@ -55,7 +55,7 @@ export interface RangoCheckoutTx extends RangoPreparedSwap {
   /** Created proposal, ready for publishAndSign. */
   ctxp: any;
   /** Present when an ERC20 allowance must be granted before signing. */
-  approval?: {spenderAddress: string; data: string};
+  approval?: {approveTo: string; spenderAddress: string; data: string};
 }
 
 /**
@@ -108,7 +108,16 @@ export const rangoCreateCheckoutTx =
     const offeredMin = prepared.response.route?.outputAmountMin;
     if (params.acceptedOutputAmountMin && offeredMin) {
       try {
-        if (BigInt(offeredMin) < BigInt(params.acceptedOutputAmountMin)) {
+        // Allow the swap-time minimum to sit within the slippage the user
+        // already accepted. An exact comparison aborts on ordinary routing
+        // variance between the preview and the swap call.
+        const accepted = BigInt(params.acceptedOutputAmountMin);
+        const tolerated =
+          accepted -
+          (accepted * BigInt(Math.round((params.slippage ?? 1.5) * 100))) /
+            BigInt(10000);
+
+        if (BigInt(offeredMin) < tolerated) {
           await dispatch(
             rangoAbandonSwap(
               prepared.requestId,

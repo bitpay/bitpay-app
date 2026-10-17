@@ -222,16 +222,34 @@ describe('rangoGetApprovalData', () => {
     expect(rangoGetApprovalData(evmTx)).toBeUndefined();
   });
 
-  it('returns the per-quote spender when an approval is required', () => {
+  it('extracts the real spender from the calldata, not approveTo', () => {
+    // approveTo is the TOKEN contract the approve call is sent to. The
+    // address being granted the allowance is the first argument inside
+    // approve(address,uint256) — selector, then a 32-byte word.
+    const spender = '69460570c93f9de5e2edbc3052bf10125f0ca22d'; // RangoDiamond
     const needsApproval = {
+      ...evmTx,
+      approveTo: '0xaf88d065e77c8cc2239327c5edb3a432268e5831', // USDC
+      approveData: `0x095ea7b3${'0'.repeat(24)}${spender}${'0'.repeat(63)}1`,
+    };
+
+    const got = rangoGetApprovalData(needsApproval)!;
+    expect(got.approveTo).toBe('0xaf88d065e77c8cc2239327c5edb3a432268e5831');
+    expect(got.spenderAddress.toLowerCase()).toBe(`0x${spender}`);
+    // Whitelisting or displaying approveTo would check the token, not the
+    // contract that can move the funds.
+    expect(got.spenderAddress).not.toBe(got.approveTo);
+  });
+
+  it('falls back to approveTo when the calldata is too short to parse', () => {
+    const got = rangoGetApprovalData({
       ...evmTx,
       approveTo: '0x1111111254eeb25477b68fb85ed929f73a960582',
       approveData: '0x095ea7b3',
-    };
-    expect(rangoGetApprovalData(needsApproval)).toEqual({
-      spenderAddress: '0x1111111254eeb25477b68fb85ed929f73a960582',
-      data: '0x095ea7b3',
-    });
+    })!;
+    expect(got.spenderAddress).toBe(
+      '0x1111111254eeb25477b68fb85ed929f73a960582',
+    );
   });
 
   it('never returns approval data for a UTXO transfer', () => {

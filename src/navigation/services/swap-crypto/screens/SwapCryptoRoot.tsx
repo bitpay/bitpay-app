@@ -2870,6 +2870,9 @@ const SwapCryptoRoot: React.FC = () => {
             approveData: checkout.approval.data,
             spenderKey: checkout.response.route?.swapper?.title ?? 'Rango',
             address: checkout.approval.spenderAddress,
+            // Destination of the approve call (the token contract); the
+            // address above is who actually receives the allowance.
+            approveTo: checkout.approval.approveTo,
             amount: String(amountFrom),
           },
         });
@@ -2977,19 +2980,20 @@ const SwapCryptoRoot: React.FC = () => {
       const exchangeFeeFiat = route?.feeUsd
         ? formatFiatAmount(route.feeUsd, 'USD', {currencyDisplay: 'symbol'})
         : undefined;
-      const grossOutput = Number(route?.outputAmount ?? 0);
-      const netOutput = Number(
-        route?.outputAmountMin ?? route?.outputAmount ?? 0,
+      // outputAmount minus outputAmountMin is the slippage allowance, not a
+      // fee. Rango itemises its own cut in route.fee, denominated in the
+      // SOURCE token.
+      const rangoFee = (route?.fee ?? []).find(
+        f => f.name === 'Rango Fee' || f.expenseType === 'DECREASE_FROM_OUTPUT',
       );
-      const totalExchangeFee =
-        toPrecision && grossOutput > netOutput
-          ? Number(
-              rangoFromSmallestUnit(
-                String(grossOutput - netOutput),
-                toPrecision.unitDecimals,
-              ),
-            )
-          : 0;
+      const totalExchangeFee = rangoFee?.amount
+        ? Number(
+            rangoFromSmallestUnit(
+              rangoFee.amount,
+              rangoFee.token?.decimals ?? precision.unitDecimals,
+            ),
+          )
+        : 0;
 
       setTxData({
         addressFrom,
@@ -4002,7 +4006,15 @@ const SwapCryptoRoot: React.FC = () => {
                       </OfferSelectorContainerRight>
                     </OfferSelectorItemRow>
                     <ItemDivisor />
-                    <OfferSelectorItemRow>
+                    {/* Providers without a pinned rate have no expiry; the row
+                        would otherwise shimmer on a skeleton forever. */}
+                    <OfferSelectorItemRow
+                      style={{
+                        display:
+                          txData?.expirationTime === undefined
+                            ? 'none'
+                            : 'flex',
+                      }}>
                       <OfferSelectorContainerLeft>
                         <OfferSelectorText>{t('Expires')}</OfferSelectorText>
                       </OfferSelectorContainerLeft>

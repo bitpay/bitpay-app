@@ -148,6 +148,8 @@ export interface SwapCryptoApproveErc20Params {
     approveData?: string;
     /** Thorswap names its routers; other providers pass a display string. */
     spenderKey: ThorswapProvider | string;
+    /** Contract the approve call is sent to. Defaults to the wallet's token. */
+    approveTo?: string;
     address: string;
     amount: string;
   };
@@ -326,20 +328,23 @@ const SwapCryptoApproveErc20: React.FC = () => {
   };
 
   const createTx = async (approveData: string) => {
+    // Provider-supplied calldata must go to the contract the provider names,
+    // which is not always the wallet's own token address.
+    const destination = spenderData.approveTo ?? wallet.tokenAddress;
     try {
       const message =
         wallet.currencyAbbreviation.toUpperCase() + ' ' + t('Approve');
       let outputs = [];
 
       outputs.push({
-        toAddress: wallet.tokenAddress,
+        toAddress: destination,
         amount: 0,
         message: message,
         data: approveData,
       });
 
       let txp: Partial<TransactionProposal> = {
-        toAddress: wallet.tokenAddress,
+        toAddress: destination,
         amount: 0,
         chain: wallet.chain,
         outputs,

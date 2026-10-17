@@ -401,11 +401,21 @@ export const buildRangoTxProposal = (
  */
 export const rangoGetApprovalData = (
   tx: RangoTransaction | null | undefined,
-): {spenderAddress: string; data: string} | undefined => {
+): {approveTo: string; spenderAddress: string; data: string} | undefined => {
   if (!tx || tx.type !== 'EVM' || !tx.approveTo || !tx.approveData) {
     return undefined;
   }
-  return {spenderAddress: tx.approveTo, data: tx.approveData};
+
+  // `approveTo` is the TOKEN contract the approve call is sent to — for an
+  // ERC20 that is the token itself. The spender being granted the allowance is
+  // the first argument inside approve(address,uint256): 4 bytes of selector,
+  // then a 32-byte word whose low 20 bytes are the address. Showing or
+  // whitelisting `approveTo` checks the token, not who can spend.
+  const data = tx.approveData;
+  const spenderAddress =
+    data.length >= 74 ? `0x${data.slice(34, 74)}` : tx.approveTo;
+
+  return {approveTo: tx.approveTo, spenderAddress, data};
 };
 
 /**

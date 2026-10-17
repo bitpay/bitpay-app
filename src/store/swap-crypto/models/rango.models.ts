@@ -293,6 +293,13 @@ export interface RangoIsApprovedRequestData {
 
 export interface RangoIsApprovedResponse {
   isApproved: boolean;
+  /**
+   * State of the approve transaction itself. Rango's documented stop
+   * conditions: 'failed' means the approve reverted; 'success' with
+   * isApproved false means it confirmed but granted too little. Either way,
+   * polling on is pointless.
+   */
+  txStatus?: 'success' | 'failed' | null;
   currentApprovedAmount?: string | null;
   requiredApprovedAmount?: string | null;
   error?: string | null;

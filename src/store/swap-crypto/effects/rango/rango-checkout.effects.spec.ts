@@ -198,6 +198,10 @@ describe('rangoCreateCheckoutTx', () => {
     );
 
     expect(result.approval).toEqual({
+      // approveTo is the contract the approve is sent to; spenderAddress is
+      // who receives the allowance, parsed out of the calldata when it is
+      // long enough and falling back to approveTo when it is not.
+      approveTo: '0xspender',
       spenderAddress: '0xspender',
       data: '0x095ea7b3',
     });
