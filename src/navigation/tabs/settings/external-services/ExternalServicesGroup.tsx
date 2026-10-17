@@ -24,6 +24,7 @@ import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
 import RangoSettings from './screens/RangoSettings';
 import ThorswapSettings from './screens/ThorswapSettings';
+import RangoDetails from './screens/RangoDetails';
 import ThorswapDetails from './screens/ThorswapDetails';
 import {
   BanxaIncomingData,
@@ -42,7 +43,10 @@ import {MoonpaySellOrderData} from '../../../../store/sell-crypto/models/moonpay
 import {RampSellOrderData} from '../../../../store/sell-crypto/models/ramp-sell.models';
 import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
-import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
+import {
+  rangoTxData,
+  thorswapTxData,
+} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
 import {useStackScreenOptions} from '../../../utils/headerHelpers';
 import SwapHistorySelector from './screens/SwapHistorySelector';
@@ -130,6 +134,9 @@ export type ExternalServicesSettingsGroupParamList = {
   };
   RangoSettings: undefined;
   ThorswapSettings: undefined;
+  RangoDetails: {
+    swapTx: rangoTxData;
+  };
   ThorswapDetails: {
     swapTx: thorswapTxData;
   };
@@ -158,6 +165,7 @@ export enum ExternalServicesSettingsScreens {
   CHANGELLY_DETAILS = 'ChangellyDetails',
   RANGO_SETTINGS = 'RangoSettings',
   THORSWAP_SETTINGS = 'ThorswapSettings',
+  RANGO_DETAILS = 'RangoDetails',
   THORSWAP_DETAILS = 'ThorswapDetails',
 }
 
@@ -328,6 +336,13 @@ const ExternalServicesSettingsGroup = ({
         component={ThorswapSettings}
         options={{
           headerTitle: () => <HeaderTitle>{t('THORSwap')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.RANGO_DETAILS}
+        component={RangoDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen

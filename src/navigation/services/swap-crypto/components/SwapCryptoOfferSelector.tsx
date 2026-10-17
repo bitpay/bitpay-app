@@ -883,17 +883,30 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   };
 
   const showRangoError = (err?: any, reason?: string) => {
-    let msg = t('Could not get crypto offer. Please try again later.');
-    if (err) {
-      if (typeof err === 'string') {
-        msg = err;
-      } else if (err.message && typeof err.message === 'string') {
-        msg = err.message;
-      }
-    }
-    logger.error(`Rango error: ${msg} ${reason ? `| ${reason}` : ''}`);
+    let msg = getErrorMessage(err);
+    logger.error('Rango error: ' + msg + ' | Reason: ' + reason);
+
+    dispatch(
+      Analytics.track('Failed Swap Crypto', {
+        exchange: 'rango',
+        context: 'SwapCryptoOffers',
+        reason: reason || 'unknown',
+        amountFrom: amountFrom,
+        amountTo: offers.rango.amountReceiving || '',
+        coinFrom: coinFrom?.toLowerCase() || '',
+        chainFrom: chainFrom?.toLowerCase() || '',
+        coinTo: coinTo?.toLowerCase() || '',
+        chainTo: chainTo?.toLowerCase() || '',
+      }),
+    );
+
     offers.rango.errorMsg = msg;
-    offers.rango.showOffer = false;
+    offers.rango.amountReceiving = undefined;
+    offers.rango.expanded = false;
+    // Deliberately NOT showOffer = false. That is sticky across retries, so a
+    // single timeout removed Rango from the comparison for the rest of the
+    // session - and hid the error message explaining why. The other providers
+    // keep their card and show the error on it.
     setFinishedRango(true);
     setUpdateView(Math.random());
   };

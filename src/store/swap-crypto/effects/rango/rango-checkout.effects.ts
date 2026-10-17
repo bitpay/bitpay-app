@@ -32,6 +32,13 @@ export class RangoRateMovedError extends Error {
   }
 }
 
+export class RangoUnverifiableRateError extends Error {
+  constructor(reason: string) {
+    super(`The guaranteed minimum could not be verified: ${reason}`);
+    this.name = 'RangoUnverifiableRateError';
+  }
+}
+
 export interface RangoCheckoutParams {
   fromWallet: Wallet;
   toWallet: Wallet;
@@ -49,6 +56,16 @@ export interface RangoCheckoutParams {
    * promise.
    */
   acceptedOutputAmountMin?: string;
+  /**
+   * Asked to approve a guaranteed minimum lower than the one on the confirm
+   * screen. Returning false abandons the route.
+   *
+   * The swap endpoint re-quotes, so a small move between preview and signing
+   * is ordinary. Silently accepting it would break the promise the confirm
+   * screen made; silently refusing it strands the user on a screen that never
+   * proceeds. Both are worse than asking.
+   */
+  confirmLowerMinimum?: (accepted: string, offered: string) => Promise<boolean>;
 }
 
 export interface RangoCheckoutTx extends RangoPreparedSwap {
@@ -102,22 +119,42 @@ export const rangoCreateCheckoutTx =
       ),
     );
 
-    // The swap endpoint re-quotes. If the guaranteed minimum came back below
-    // what the user accepted, the rate moved and signing would deliver less
-    // than was shown.
+    // The swap endpoint re-quotes. `acceptedOutputAmountMin` is already the
+    // preview route's slippage-protected floor, so it is compared directly -
+    // subtracting slippage from it a second time would permit delivery below
+    // the number the confirm screen guaranteed.
     const offeredMin = prepared.response.route?.outputAmountMin;
-    if (params.acceptedOutputAmountMin && offeredMin) {
+    if (params.acceptedOutputAmountMin) {
+      let accepted: bigint;
+      let offered: bigint;
       try {
-        // Allow the swap-time minimum to sit within the slippage the user
-        // already accepted. An exact comparison aborts on ordinary routing
-        // variance between the preview and the swap call.
-        const accepted = BigInt(params.acceptedOutputAmountMin);
-        const tolerated =
-          accepted -
-          (accepted * BigInt(Math.round((params.slippage ?? 1.5) * 100))) /
-            BigInt(10000);
+        accepted = BigInt(params.acceptedOutputAmountMin);
+        offered = BigInt(offeredMin!);
+      } catch {
+        // Fails closed. These are modelled as required integer strings, so a
+        // missing or malformed value means the response is not what we think
+        // it is - not a reason to sign without the check.
+        await dispatch(
+          rangoAbandonSwap(
+            prepared.requestId,
+            'FETCH_TX_FAILED',
+            'output minimum missing or malformed',
+          ),
+        );
+        throw new RangoUnverifiableRateError(
+          `accepted ${params.acceptedOutputAmountMin}, offered ${offeredMin}`,
+        );
+      }
 
-        if (BigInt(offeredMin) < tolerated) {
+      if (offered < accepted) {
+        const proceed = params.confirmLowerMinimum
+          ? await params.confirmLowerMinimum(
+              params.acceptedOutputAmountMin,
+              offeredMin!,
+            )
+          : false;
+
+        if (!proceed) {
           await dispatch(
             rangoAbandonSwap(
               prepared.requestId,
@@ -127,22 +164,23 @@ export const rangoCreateCheckoutTx =
           );
           throw new RangoRateMovedError(
             params.acceptedOutputAmountMin,
-            offeredMin,
+            offeredMin!,
           );
         }
-      } catch (err) {
-        if (err instanceof RangoRateMovedError) {
-          throw err;
-        }
-        // A non-numeric minimum is not a reason to block the swap; the
-        // guaranteed minimum is still enforced on-chain by the route itself.
+
         logManager.debug(
-          'rangoCreateCheckoutTx: could not compare output minimums',
+          `rangoCreateCheckoutTx: user accepted a lower minimum (${params.acceptedOutputAmountMin} -> ${offeredMin})`,
         );
       }
     }
 
-    const approval = rangoGetApprovalData(prepared.tx);
+    // Validated against the token actually being spent and the amount the
+    // user authorised; throws RangoApprovalDataError rather than forwarding
+    // calldata we cannot account for.
+    const approval = rangoGetApprovalData(prepared.tx, {
+      tokenAddress: fromWallet.tokenAddress,
+      amount: params.amount,
+    });
 
     // An allowance has to be granted before the swap proposal can be built
     // against it, so stop here and let the caller run the approve flow.
@@ -183,6 +221,8 @@ export const saveRangoTx =
     amountFrom: number;
     amountTo: number;
     slippage?: number;
+    /** Rango's cut in SOURCE-coin units, as shown on the confirm screen. */
+    totalExchangeFee: number;
   }): Effect<void> =>
   dispatch => {
     const {prepared, fromWallet, toWallet} = args;
@@ -213,7 +253,11 @@ export const saveRangoTx =
               toWallet.chain,
               toWallet.tokenAddress,
             ) ?? '',
-          totalExchangeFee: prepared.response.route?.feeUsd ?? 0,
+          // route.feeUsd is dollars; this field is coin units everywhere else
+          // in the app, so a details screen would otherwise label a USD
+          // number with the source coin's ticker.
+          totalExchangeFee: args.totalExchangeFee,
+          totalExchangeFeeUsd: prepared.response.route?.feeUsd ?? undefined,
           slippage: args.slippage,
           status: 'running',
           swapperId: prepared.response.route?.swapper?.id,

@@ -172,6 +172,11 @@ describe('rangoCreateCheckoutTx', () => {
   });
 
   it('returns the approval and builds nothing when an allowance is missing', async () => {
+    const spender = '69460570c93f9de5e2edbc3052bf10125f0ca22d';
+    const token = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
+    // approve(spender, 10000000) - exactly the amount being swapped
+    const allowance = (10000000).toString(16).padStart(64, '0');
+
     mockCreateSwapTx.mockResolvedValue(
       swapResponse({
         tx: {
@@ -183,8 +188,8 @@ describe('rangoCreateCheckoutTx', () => {
           value: '0x0',
           gasLimit: '0x1e1d67',
           gasPrice: null,
-          approveTo: '0xspender',
-          approveData: '0x095ea7b3',
+          approveTo: token,
+          approveData: `0x095ea7b3${'0'.repeat(24)}${spender}${allowance}`,
         },
       }),
     );
@@ -193,18 +198,20 @@ describe('rangoCreateCheckoutTx', () => {
     const result = await store.dispatch(
       rangoCreateCheckoutTx({
         ...baseParams,
-        fromWallet: wallet({chain: 'eth', currencyAbbreviation: 'eth'}),
+        fromWallet: wallet({
+          chain: 'eth',
+          currencyAbbreviation: 'eth',
+          tokenAddress: token,
+        }),
+        // must match tx.from, or the sender check refuses the transaction
+        fromAddress: '0xsender',
       }),
     );
 
-    expect(result.approval).toEqual({
-      // approveTo is the contract the approve is sent to; spenderAddress is
-      // who receives the allowance, parsed out of the calldata when it is
-      // long enough and falling back to approveTo when it is not.
-      approveTo: '0xspender',
-      spenderAddress: '0xspender',
-      data: '0x095ea7b3',
-    });
+    // approveTo is the token the approve is sent to; spenderAddress is who
+    // receives the allowance, decoded out of the calldata.
+    expect(result.approval!.approveTo).toBe(token);
+    expect(result.approval!.spenderAddress.toLowerCase()).toBe(`0x${spender}`);
     // The proposal must be built against the NEW allowance, so not yet.
     expect(result.ctxp).toBeUndefined();
     expect(mockCreateTxProposal).not.toHaveBeenCalled();
@@ -266,6 +273,7 @@ describe('saveRangoTx', () => {
         toAddress: '0xrecipient',
         amountFrom: 0.1,
         amountTo: 1.5,
+        totalExchangeFee: 0.002,
       }),
     );
 
@@ -337,6 +345,7 @@ describe('rangoTrackSwap', () => {
         toAddress: '0xrecipient',
         amountFrom: 0.1,
         amountTo: 1.5,
+        totalExchangeFee: 0.002,
       }),
     );
 
@@ -362,6 +371,7 @@ describe('rangoTrackSwap', () => {
         toAddress: '0xrecipient',
         amountFrom: 0.1,
         amountTo: 1.5,
+        totalExchangeFee: 0.002,
       }),
     );
 

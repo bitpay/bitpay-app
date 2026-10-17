@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useIsFocused} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -23,6 +23,7 @@ import {
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
 import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
+import {rangoGetStatusColor} from '../../../../services/swap-crypto/utils/rango-utils';
 
 /**
  * Rango order history.
@@ -32,6 +33,7 @@ import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
  */
 const RangoSettings: React.FC = () => {
   const {t} = useTranslation();
+  const navigation = useNavigation<any>();
   const rangoHistory = useAppSelector(({SWAP_CRYPTO}) => SWAP_CRYPTO.rango);
   const dispatch = useAppDispatch();
   const isFocused = useIsFocused();
@@ -53,13 +55,24 @@ const RangoSettings: React.FC = () => {
             {!!swapTxs?.length &&
               swapTxs.map(swapTx => {
                 return (
-                  <PrRow key={swapTx.requestId}>
+                  <PrRow
+                    key={swapTx.requestId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('RangoDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
                     <PrRowLeft>
                       <PrTxtFiatAmount>
                         {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
                       </PrTxtFiatAmount>
                       {!!swapTx.status && (
-                        <PrTxtStatus style={{textTransform: 'capitalize'}}>
+                        <PrTxtStatus
+                          style={{
+                            color: rangoGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
                           {swapTx.status}
                         </PrTxtStatus>
                       )}

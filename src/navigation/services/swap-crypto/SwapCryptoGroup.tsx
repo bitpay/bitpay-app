@@ -115,6 +115,11 @@ const SwapHistoryHeaderRight = () => {
                 ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
               );
               break;
+            case 'rango':
+              navigationRef.navigate(
+                ExternalServicesSettingsScreens.RANGO_SETTINGS,
+              );
+              break;
             case 'thorswap':
               navigationRef.navigate(
                 ExternalServicesSettingsScreens.THORSWAP_SETTINGS,

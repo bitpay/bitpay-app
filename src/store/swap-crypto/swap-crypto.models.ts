@@ -80,7 +80,10 @@ export interface rangoTxData {
   /** Rango asset identifiers, e.g. 'BTC.BTC' / 'ETH.USDC--0xa0b8...'. */
   assetFrom: string;
   assetTo: string;
+  /** Rango's own cut, in units of the SOURCE coin - the same meaning this field carries for the other providers. */
   totalExchangeFee: number;
+  /** Rango also reports the route's total fee in USD; kept separate so the two are never confused. */
+  totalExchangeFeeUsd?: number;
   slippage?: number;
   status: RangoTxStatus;
   /** Swapper that actually filled the route, for support and display. */

@@ -120,9 +120,22 @@ export const rangoPrepareSwap =
       );
     }
 
-    // Throws on unmet prerequisites or an unreadable amount rather than
-    // producing a signable proposal that does the wrong thing.
-    const txp = buildRangoTxProposal(res.tx, txpParams);
+    // What the user agreed to, taken from the request rather than the
+    // response, so the proposal builder has something independent to check
+    // the response against. `from` is 'BLOCKCHAIN.SYMBOL' or
+    // 'BLOCKCHAIN.SYMBOL--0xcontract'; the chain is everything before the
+    // first dot.
+    const auth = {
+      amount: requestData.amount,
+      fromAddress: requestData.fromAddress,
+      blockChain: requestData.from.split('.')[0],
+    };
+
+    // Throws on unmet prerequisites, an unreadable amount, a spend larger
+    // than was authorised, or a transaction built for another chain or
+    // account, rather than producing a signable proposal that does the wrong
+    // thing.
+    const txp = buildRangoTxProposal(res.tx, txpParams, auth);
 
     return {
       requestId: res.requestId,

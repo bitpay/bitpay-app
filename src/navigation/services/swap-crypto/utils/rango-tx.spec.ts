@@ -7,7 +7,9 @@ import {
   rangoFromSmallestUnit,
   rangoParseNumeric,
   rangoToSmallestUnit,
+  RangoApprovalDataError,
   RangoPrerequisiteError,
+  RangoUnauthorizedSpendError,
   RangoUnsupportedTxError,
 } from './rango-tx';
 import {
@@ -48,6 +50,22 @@ const evmTx: RangoEvmTransaction = {
   gasPrice: null,
   maxFeePerGas: '358224438030',
   maxPriorityFeePerGas: '194699308812',
+};
+
+/**
+ * What the user authorised, carried alongside the response so the builder has
+ * something independent to check it against.
+ */
+const transferAuth = {
+  amount: '10000000',
+  fromAddress: transferTx.fromWalletAddress,
+  blockChain: 'BTC',
+};
+
+const evmAuth = {
+  amount: '1000000000000000000000', // 0x3635c9adc5dea00000
+  fromAddress: evmTx.from,
+  blockChain: 'POLYGON',
 };
 
 describe('rangoParseNumeric', () => {
@@ -109,9 +127,10 @@ describe('buildRangoMemoScript', () => {
 
 describe('buildRangoTxProposal — TRANSFER', () => {
   const params = {chain: 'btc', message: 'BTC to ETH'};
+  const auth = transferAuth;
 
   it('sends to the deposit address with the memo as a second output', () => {
-    const txp = buildRangoTxProposal(transferTx, params);
+    const txp = buildRangoTxProposal(transferTx, params, auth);
 
     expect(txp.toAddress).toBe(transferTx.recipientAddress);
     expect(txp.outputs).toHaveLength(2);
@@ -120,7 +139,7 @@ describe('buildRangoTxProposal — TRANSFER', () => {
   });
 
   it('gives the OP_RETURN output zero amount, which BWS requires', () => {
-    const txp = buildRangoTxProposal(transferTx, params);
+    const txp = buildRangoTxProposal(transferTx, params, auth);
     expect(txp.outputs[1].amount).toBe(0);
     expect(txp.outputs[1].toAddress).toBeUndefined();
   });
@@ -128,23 +147,24 @@ describe('buildRangoTxProposal — TRANSFER', () => {
   it("sends Rango's net amount, not the amount originally requested", () => {
     // The swap was requested for 10000000 sats; Rango returns 9990000 after
     // its fee. Sending the requested figure would overpay the route.
-    const txp = buildRangoTxProposal(transferTx, params);
+    const txp = buildRangoTxProposal(transferTx, params, auth);
     expect(txp.amount).toBe('9990000');
     expect(txp.outputs[0].amount).toBe('9990000');
   });
 
   it('rejects an unreadable amount instead of sending zero', () => {
     expect(() =>
-      buildRangoTxProposal({...transferTx, amount: 'abc'}, params),
+      buildRangoTxProposal({...transferTx, amount: 'abc'}, params, auth),
     ).toThrow(/unreadable amount/);
   });
 });
 
 describe('buildRangoTxProposal — EVM', () => {
   const params = {chain: 'matic', message: 'MATIC to ETH'};
+  const auth = evmAuth;
 
   it('builds a contract call carrying Rango calldata', () => {
-    const txp = buildRangoTxProposal(evmTx, params);
+    const txp = buildRangoTxProposal(evmTx, params, auth);
 
     expect(txp.toAddress).toBe(evmTx.txTo);
     expect(txp.outputs[0].data).toBe(evmTx.txData);
@@ -152,22 +172,23 @@ describe('buildRangoTxProposal — EVM', () => {
   });
 
   it('converts the hex value and gasLimit to numbers', () => {
-    const txp = buildRangoTxProposal(evmTx, params);
+    const txp = buildRangoTxProposal(evmTx, params, auth);
     expect(txp.amount).toBe('1000000000000000000000');
     expect(txp.gasLimit).toBe(1973607);
     expect(txp.outputs[0].gasLimit).toBe(1973607);
   });
 
   it('passes the token address through for ERC20 swaps', () => {
-    const txp = buildRangoTxProposal(evmTx, {
-      ...params,
-      tokenAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-    });
+    const txp = buildRangoTxProposal(
+      evmTx,
+      {...params, tokenAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'},
+      auth,
+    );
     expect(txp.tokenAddress).toBe('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48');
   });
 
   it('uses zero value for a token swap that sends no native currency', () => {
-    const txp = buildRangoTxProposal({...evmTx, value: null}, params);
+    const txp = buildRangoTxProposal({...evmTx, value: null}, params, auth);
     expect(txp.amount).toBe('0');
   });
 
@@ -177,13 +198,15 @@ describe('buildRangoTxProposal — EVM', () => {
     const txp = buildRangoTxProposal(
       {...evmTx, value: '0x3635c9adc5dea00001'},
       params,
+      // the extra wei is within what was authorised
+      {...auth, amount: '1000000000000000000002'},
     );
     expect(txp.amount).toBe('1000000000000000000001');
   });
 
   it('never serialises an amount in exponential notation', () => {
     // JSON.stringify(1e21) is '1e+21', which BWS cannot read as an amount.
-    const txp = buildRangoTxProposal(evmTx, params);
+    const txp = buildRangoTxProposal(evmTx, params, auth);
     expect(JSON.stringify(txp)).not.toMatch(/e\+/);
   });
 });
@@ -194,16 +217,18 @@ describe('buildRangoTxProposal — refusals', () => {
       buildRangoTxProposal(
         {...evmTx, prerequisites: [{type: 'ALLOWANCE'}]},
         {chain: 'matic', message: 'm'},
+        evmAuth,
       ),
     ).toThrow(RangoPrerequisiteError);
   });
 
   it('refuses transaction types the wallet cannot sign', () => {
     expect(() =>
-      buildRangoTxProposal({type: 'SOLANA'} as any, {
-        chain: 'sol',
-        message: 'm',
-      }),
+      buildRangoTxProposal(
+        {type: 'SOLANA'} as any,
+        {chain: 'sol', message: 'm'},
+        {amount: '1', fromAddress: 'x', blockChain: 'SOLANA'},
+      ),
     ).toThrow(RangoUnsupportedTxError);
   });
 });
@@ -218,6 +243,9 @@ describe('rangoCanBuildTxProposal', () => {
 });
 
 describe('rangoGetApprovalData', () => {
+  const SPENDER = '69460570c93f9de5e2edbc3052bf10125f0ca22d'; // RangoDiamond
+  const USDC = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
+
   it('returns nothing when the allowance is already sufficient', () => {
     expect(rangoGetApprovalData(evmTx)).toBeUndefined();
   });
@@ -241,15 +269,69 @@ describe('rangoGetApprovalData', () => {
     expect(got.spenderAddress).not.toBe(got.approveTo);
   });
 
-  it('falls back to approveTo when the calldata is too short to parse', () => {
-    const got = rangoGetApprovalData({
-      ...evmTx,
-      approveTo: '0x1111111254eeb25477b68fb85ed929f73a960582',
-      approveData: '0x095ea7b3',
-    })!;
-    expect(got.spenderAddress).toBe(
-      '0x1111111254eeb25477b68fb85ed929f73a960582',
-    );
+  it('refuses calldata too short to be approve(address,uint256)', () => {
+    // Previously this fell back to approveTo and forwarded the stub bytes.
+    expect(() =>
+      rangoGetApprovalData({
+        ...evmTx,
+        approveTo: '0x1111111254eeb25477b68fb85ed929f73a960582',
+        approveData: '0x095ea7b3',
+      }),
+    ).toThrow(RangoApprovalDataError);
+  });
+
+  it('refuses calldata that is not an approve call', () => {
+    expect(() =>
+      rangoGetApprovalData({
+        ...evmTx,
+        approveTo: USDC,
+        // transfer(address,uint256)
+        approveData: `0xa9059cbb${'0'.repeat(24)}${SPENDER}${'0'.repeat(63)}1`,
+      }),
+    ).toThrow(/not approve\(address,uint256\)/);
+  });
+
+  it('refuses an approve aimed at something other than the token', () => {
+    expect(() =>
+      rangoGetApprovalData(
+        {
+          ...evmTx,
+          approveTo: '0x1111111254eeb25477b68fb85ed929f73a960582',
+          approveData: `0x095ea7b3${'0'.repeat(24)}${SPENDER}${'0'.repeat(
+            63,
+          )}1`,
+        },
+        {tokenAddress: USDC},
+      ),
+    ).toThrow(/not the token being swapped/);
+  });
+
+  it('refuses an allowance larger than the amount authorised', () => {
+    // An unlimited approval survives the swap being abandoned.
+    const maxUint = 'f'.repeat(64);
+    expect(() =>
+      rangoGetApprovalData(
+        {
+          ...evmTx,
+          approveTo: USDC,
+          approveData: `0x095ea7b3${'0'.repeat(24)}${SPENDER}${maxUint}`,
+        },
+        {tokenAddress: USDC, amount: '52510000'},
+      ),
+    ).toThrow(/would grant an allowance/);
+  });
+
+  it('accepts an exact-amount approval on the right token', () => {
+    const amount = (52510000).toString(16).padStart(64, '0');
+    const got = rangoGetApprovalData(
+      {
+        ...evmTx,
+        approveTo: USDC,
+        approveData: `0x095ea7b3${'0'.repeat(24)}${SPENDER}${amount}`,
+      },
+      {tokenAddress: USDC, amount: '52510000'},
+    )!;
+    expect(got.spenderAddress.toLowerCase()).toBe(`0x${SPENDER}`);
   });
 
   it('never returns approval data for a UTXO transfer', () => {
@@ -451,10 +533,8 @@ describe('buildRangoTxProposal — memo is mandatory on UTXO', () => {
     expect(() =>
       buildRangoTxProposal(
         {...transferTx, memo: null},
-        {
-          chain: 'btc',
-          message: 'm',
-        },
+        {chain: 'btc', message: 'm'},
+        transferAuth,
       ),
     ).toThrow(/refusing to build an unattributable deposit/);
   });
@@ -470,6 +550,7 @@ describe('buildRangoTxProposal — BCH address normalisation', () => {
           'bitcoincash:qzumtx6ufk3qu92slcsg5ajehujehzcquydmhaq0eh',
       },
       {chain: 'bch', message: 'BCH to ETH'},
+      {...transferAuth, blockChain: 'BCH'},
     );
     expect(txp.toAddress).toBe('qzumtx6ufk3qu92slcsg5ajehujehzcquydmhaq0eh');
     expect(txp.outputs[0].toAddress).toBe(
@@ -478,10 +559,83 @@ describe('buildRangoTxProposal — BCH address normalisation', () => {
   });
 
   it('leaves a BTC address untouched', () => {
-    const txp = buildRangoTxProposal(transferTx, {
-      chain: 'btc',
-      message: 'm',
-    });
+    const txp = buildRangoTxProposal(
+      transferTx,
+      {chain: 'btc', message: 'm'},
+      transferAuth,
+    );
     expect(txp.toAddress).toBe(transferTx.recipientAddress);
+  });
+});
+
+describe('buildRangoTxProposal — authorisation binding', () => {
+  /**
+   * Rango decides how much moves. Nothing downstream re-checks it against the
+   * confirm screen, so a response asking for more than was authorised has to
+   * stop here rather than become a signable proposal.
+   */
+  it('refuses a UTXO deposit larger than the authorised amount', () => {
+    expect(() =>
+      buildRangoTxProposal(
+        {...transferTx, amount: '20000000'},
+        {chain: 'btc', message: 'm'},
+        transferAuth, // authorised 10000000
+      ),
+    ).toThrow(RangoUnauthorizedSpendError);
+  });
+
+  it('refuses a native EVM value larger than the authorised amount', () => {
+    expect(() =>
+      buildRangoTxProposal(
+        {...evmTx, value: '0x3635c9adc5dea00001'},
+        {chain: 'matic', message: 'm'},
+        evmAuth,
+      ),
+    ).toThrow(/exceeds the authorised/);
+  });
+
+  it('does not bind value for a token swap, where value is only the fee', () => {
+    // The token moves by transferFrom against the allowance, so `value` here
+    // is the route's native fee and has nothing to do with the swap amount.
+    const txp = buildRangoTxProposal(
+      {...evmTx, value: '0x3635c9adc5dea00001'},
+      {
+        chain: 'matic',
+        message: 'm',
+        tokenAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      },
+      evmAuth,
+    );
+    expect(txp.amount).toBe('1000000000000000000001');
+  });
+
+  it('refuses a transaction built for another chain', () => {
+    expect(() =>
+      buildRangoTxProposal(
+        {...evmTx, blockChain: 'ETH'},
+        {chain: 'matic', message: 'm'},
+        evmAuth,
+      ),
+    ).toThrow(/is for ETH but the wallet is on POLYGON/);
+  });
+
+  it('refuses a transaction built for another sending address', () => {
+    expect(() =>
+      buildRangoTxProposal(
+        {...evmTx, from: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'},
+        {chain: 'matic', message: 'm'},
+        evmAuth,
+      ),
+    ).toThrow(/different sending address/);
+  });
+});
+
+describe('buildRangoMemoScript — encoding must be stated', () => {
+  it('refuses a memo with no memoType rather than assuming UTF8', () => {
+    // 'deadbeef' as UTF8 is eight ASCII bytes, not the four it encodes. The
+    // vault is paid either way, but the swap cannot be attributed.
+    expect(() =>
+      buildRangoMemoScript('btc', 'deadbeef', undefined as any),
+    ).toThrow(/refusing to guess an encoding/);
   });
 });

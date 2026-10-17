@@ -1,7 +1,11 @@
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {isCoinSupportedByChangelly} from './changelly-utils';
-import {isCoinSupportedByRango, RANGO_EXECUTION_ENABLED} from './rango-utils';
+import {
+  isCoinSupportedByRango,
+  rangoCanSwapFromChain,
+  RANGO_EXECUTION_ENABLED,
+} from './rango-utils';
 import {isCoinSupportedByThorswap} from './thorswap-utils';
 
 export type SwapCryptoExchangeKey = 'changelly' | 'rango' | 'thorswap';
@@ -57,6 +61,13 @@ export const isPairSupported = (
   country?: string,
 ): boolean => {
   if (!exchange && !supportedCoins) {
+    return false;
+  }
+
+  // Rango is the only provider whose support is not symmetric: it can deliver
+  // to a chain it cannot spend from. Checked before the symbol lookups below,
+  // which treat both sides the same way.
+  if (exchange === 'rango' && !rangoCanSwapFromChain(chainFrom)) {
     return false;
   }
 

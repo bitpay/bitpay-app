@@ -4,6 +4,7 @@ import {
   RangoEnv,
   RangoTransaction,
   RangoTransactionType,
+  RangoTxStatus,
 } from '../../../../store/swap-crypto/models/rango.models';
 
 export const rangoEnv: RangoEnv = __DEV__ ? 'sandbox' : 'production';
@@ -76,10 +77,13 @@ export const RANGO_TO_BITPAY_CHAIN: {[name: string]: string} = Object.entries(
  * TRANSFER -> UTXO send with the memo written as an OP_RETURN output
  * SOLANA   -> serialised Solana transaction
  */
+// Must stay in step with rangoCanBuildTxProposal(). Listing a type here that
+// the builder cannot produce a proposal for advertises routes that always
+// fail at checkout: Solana arrives as a pre-serialised transaction the BWS
+// proposal pipeline has no way to carry, so it is deliberately absent.
 export const RANGO_SUPPORTED_TX_TYPES: RangoTransactionType[] = [
   'EVM',
   'TRANSFER',
-  'SOLANA',
 ];
 
 export const rangoSupportsTxType = (
@@ -164,6 +168,21 @@ export const isCoinSupportedByRango = (
   return supportedCoins.includes(symbol);
 };
 
+/**
+ * Whether a swap can be SENT from this chain.
+ *
+ * Asymmetric on purpose. A destination only needs an address, but the source
+ * chain is where a transaction has to be built, signed and broadcast. Rango
+ * returns Solana routes as a pre-serialised transaction that the BWS proposal
+ * pipeline has no way to carry, so Solana is a perfectly good destination and
+ * never a valid source - offering it as one produces a quote that always
+ * fails at checkout. Keep in step with rangoCanBuildTxProposal().
+ */
+export const RANGO_UNSUPPORTED_SOURCE_CHAINS = ['sol'];
+
+export const rangoCanSwapFromChain = (chain?: string): boolean =>
+  !!chain && !RANGO_UNSUPPORTED_SOURCE_CHAINS.includes(chain.toLowerCase());
+
 export const rangoGetEnabledChains = (
   blockchains: RangoBlockchainMeta[],
 ): string[] =>
@@ -176,6 +195,58 @@ export const rangoGetEnabledChains = (
  * Rango reports business failures as a 200 with an `error` field, so a
  * successful HTTP call is not a successful quote.
  */
+export interface RangoStatus {
+  statusTitle: string | undefined;
+  statusDescription: string | undefined;
+}
+
+/**
+ * Rango reports only running / failed / success, so unlike Changelly there is
+ * no intermediate vocabulary to map. The descriptions carry the one thing a
+ * cross-chain swap needs to say: `running` can legitimately take a while,
+ * because the destination leg settles on another chain.
+ */
+export const rangoGetStatusDetails = (status: RangoTxStatus): RangoStatus => {
+  switch (status) {
+    case 'running':
+      return {
+        statusTitle: 'In progress',
+        statusDescription:
+          'Your swap is being processed. Cross-chain swaps settle on the destination chain and can take several minutes.',
+      };
+    case 'success':
+      return {
+        statusTitle: 'Finished',
+        statusDescription:
+          'The swap completed and the funds were delivered to your wallet.',
+      };
+    case 'failed':
+      return {
+        statusTitle: 'Failed',
+        statusDescription:
+          'The swap could not be completed. If funds left your wallet, contact Rango support with the request ID below.',
+      };
+    default:
+      return {
+        statusTitle: undefined,
+        statusDescription: undefined,
+      };
+  }
+};
+
+export const rangoGetStatusColor = (status: RangoTxStatus): string => {
+  switch (status) {
+    case 'failed':
+      return '#df5264';
+    case 'success':
+      return '#01d1a2';
+    case 'running':
+      return '#fdb455';
+    default:
+      return '#666677';
+  }
+};
+
 export const rangoIsRouteUsable = (res: {
   resultType?: string;
   route?: unknown;

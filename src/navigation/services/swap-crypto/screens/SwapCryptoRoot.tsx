@@ -109,6 +109,7 @@ import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/chan
 import {
   RangoCheckoutTx,
   RangoRateMovedError,
+  RangoUnverifiableRateError,
   rangoAwaitApproval,
   rangoCreateCheckoutTx,
   rangoTrackSwap,
@@ -119,7 +120,12 @@ import {
   RangoQuoteResponse,
 } from '../../../../store/swap-crypto/models/rango.models';
 import {rangoGetCurrencies} from '../../../../store/swap-crypto/effects/rango/rango';
-import {rangoFromSmallestUnit, rangoToSmallestUnit} from '../utils/rango-tx';
+import {
+  RangoApprovalDataError,
+  RangoUnauthorizedSpendError,
+  rangoFromSmallestUnit,
+  rangoToSmallestUnit,
+} from '../utils/rango-tx';
 import {
   getBitpayChainFromRango,
   RANGO_DEFAULT_SLIPPAGE,
@@ -1859,6 +1865,15 @@ const SwapCryptoRoot: React.FC = () => {
                   );
                   swapCryptoExchangesDefault.changelly.showOffer = false;
                   break;
+                case 'rango':
+                  logger.debug(
+                    'getRangoCurrencies Error: ' + e.promiseRes.reason.message,
+                  );
+                  // Rango has a static native-asset fallback, so without this
+                  // the UI keeps advertising it after its metadata request
+                  // failed.
+                  swapCryptoExchangesDefault.rango.showOffer = false;
+                  break;
                 case 'thorswap':
                   logger.debug(
                     'getThorswapCurrencies Error: ' +
@@ -2804,6 +2819,51 @@ const SwapCryptoRoot: React.FC = () => {
         createWalletAddress({wallet: toWalletSelected, newAddress: false}),
       );
 
+      const precisionTo = dispatch(
+        GetPrecision(
+          toWalletSelected.currencyAbbreviation,
+          toWalletSelected.chain,
+          toWalletSelected.tokenAddress,
+        ),
+      );
+
+      // The /basic/swap call re-quotes, so the guaranteed minimum can come
+      // back below the one on the confirm screen. Signing it silently would
+      // break the promise that screen made, and refusing it silently leaves
+      // the user on a screen that never proceeds - so the difference is put
+      // to them in the destination coin they were quoted in.
+      const confirmLowerMinimum = (accepted: string, offered: string) =>
+        new Promise<boolean>(resolve => {
+          const toCoin = toWalletSelected.currencyAbbreviation.toUpperCase();
+          const decimals = precisionTo?.unitDecimals ?? 8;
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('The rate changed'),
+              message: t(
+                'This swap now guarantees at least RangoOffered RangoCoin, instead of the RangoAccepted RangoCoin you were quoted. Continue at the new rate?',
+                {
+                  RangoOffered: rangoFromSmallestUnit(offered, decimals),
+                  RangoAccepted: rangoFromSmallestUnit(accepted, decimals),
+                  RangoCoin: toCoin,
+                },
+              ),
+              enableBackdropDismiss: false,
+              actions: [
+                {
+                  text: t('Continue'),
+                  action: () => resolve(true),
+                  primary: true,
+                },
+                {
+                  text: t('Cancel'),
+                  action: () => resolve(false),
+                },
+              ],
+            }),
+          );
+        });
+
       const checkout = await dispatch(
         rangoCreateCheckoutTx({
           fromWallet: fromWalletSelected,
@@ -2815,6 +2875,7 @@ const SwapCryptoRoot: React.FC = () => {
           acceptedOutputAmountMin: (
             selectedOffer.quoteData as RangoQuoteResponse
           )?.route?.outputAmountMin,
+          confirmLowerMinimum,
         }),
       );
 
@@ -2880,13 +2941,17 @@ const SwapCryptoRoot: React.FC = () => {
       }
 
       dispatch(
+        // Property names match Changelly and Thorswap exactly; a dashboard
+        // keyed on coinFrom/chainFrom would otherwise simply not see Rango.
         Analytics.track('Requested Swap Crypto', {
-          fromCoin: fromWalletSelected.currencyAbbreviation,
-          fromChain: fromWalletSelected.chain,
-          toCoin: toWalletSelected.currencyAbbreviation,
-          toChain: toWalletSelected.chain,
-          amountFrom: amountFrom,
           exchange: 'rango',
+          amountFrom: amountFrom,
+          amountTo: selectedOffer.amountReceiving || '',
+          coinFrom:
+            fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          chainFrom: fromWalletSelected.chain?.toLowerCase() || '',
+          coinTo: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          chainTo: toWalletSelected.chain?.toLowerCase() || '',
         }),
       );
 
@@ -3016,15 +3081,38 @@ const SwapCryptoRoot: React.FC = () => {
       hideOngoingProcess();
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error('createRangoTransaction Error: ' + errMsg);
+
+      // The raw message can be Axios/proxy text or an unlocalised Rango
+      // string, so only the cases we can describe ourselves are shown. The
+      // rest get the same generic message the other providers use, with the
+      // detail kept in the log.
+      let msg: string;
+      if (err instanceof RangoRateMovedError) {
+        msg = t(
+          'The rate changed before this swap could be signed. Please try again.',
+        );
+      } else if (err instanceof RangoUnverifiableRateError) {
+        msg = t(
+          'We could not confirm the amount you would receive. Please try again.',
+        );
+      } else if (
+        err instanceof RangoApprovalDataError ||
+        err instanceof RangoUnauthorizedSpendError
+      ) {
+        msg = t(
+          'This swap did not match what was quoted, so it was not prepared. Please try again.',
+        );
+      } else {
+        msg = t(
+          'Rango is not available at this moment. Please try again later.',
+        );
+      }
+
       showError({
-        msg:
-          err instanceof RangoRateMovedError
-            ? t(
-                'The rate changed before this swap could be signed. Please try again.',
-              )
-            : errMsg,
+        msg,
         reason: 'createRangoTransaction Error',
         goBack: false,
+        fireAnalytics: true,
       });
     }
   };
@@ -3233,6 +3321,7 @@ const SwapCryptoRoot: React.FC = () => {
         amountFrom,
         amountTo: Number(selectedOffer?.amountReceiving ?? 0),
         slippage: selectedOffer?.slippage,
+        totalExchangeFee: txData?.totalExchangeFee ?? 0,
       }),
     );
 
