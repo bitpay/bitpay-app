@@ -152,12 +152,12 @@ export const isCoinSupportedByRango = (
     return false;
   }
 
-  // Without the live list we cannot know whether Rango lists this asset, and
-  // claiming support we cannot honour surfaces an offer that never fills.
-  // `coin === chain` is also wrong as a native-asset test: ETH on Arbitrum and
-  // POL on the chain the app calls 'matic' are both native but fail it.
+  // Without the live list, answer statically for native assets only: Rango
+  // lists the native of every chain we map, so that is safe to assert. Tokens
+  // vary and are only claimed once the live list has loaded — the same shape
+  // as Changelly's static natives plus per-chain token lists.
   if (!supportedCoins?.length) {
-    return false;
+    return !IsERCToken(coin, chain);
   }
 
   const symbol = `${coin}_${chain}`.toLowerCase();

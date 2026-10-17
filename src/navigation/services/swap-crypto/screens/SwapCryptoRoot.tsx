@@ -114,9 +114,19 @@ import {
   rangoTrackSwap,
   saveRangoTx,
 } from '../../../../store/swap-crypto/effects/rango/rango-checkout.effects';
-import {RangoQuoteResponse} from '../../../../store/swap-crypto/models/rango.models';
+import {
+  RangoMetaResponse,
+  RangoQuoteResponse,
+} from '../../../../store/swap-crypto/models/rango.models';
+import {rangoGetCurrencies} from '../../../../store/swap-crypto/effects/rango/rango';
 import {rangoFromSmallestUnit, rangoToSmallestUnit} from '../utils/rango-tx';
-import {RANGO_DEFAULT_SLIPPAGE} from '../utils/rango-utils';
+import {
+  getBitpayChainFromRango,
+  RANGO_DEFAULT_SLIPPAGE,
+  RANGO_EXECUTION_ENABLED,
+  RANGO_SUPPORTED_BLOCKCHAINS,
+  rangoEnv,
+} from '../utils/rango-utils';
 import {
   dismissBottomNotificationModal,
   showBottomNotificationModal,
@@ -282,6 +292,7 @@ export interface SwapCryptoCoin {
   tokenAddress?: string;
   supportedBy?: {
     changelly?: boolean;
+    rango?: boolean;
     thorswap?: boolean;
   };
 }
@@ -313,8 +324,10 @@ const swapCryptoExchangesDefault: PreLoadPartnersData = {
   },
   rango: {
     key: 'rango',
-    // Hidden until execution lands; see RangoLogo offer entry.
-    showOffer: false,
+    // Single source of truth with the offer selector. enabledExchanges below
+    // filters on showOffer, so hardcoding false here meant flipping
+    // RANGO_EXECUTION_ENABLED alone silently did nothing.
+    showOffer: RANGO_EXECUTION_ENABLED,
     supportedCoins: undefined,
     disabled: false,
     offerError: undefined,
@@ -490,6 +503,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   // Refs to capture raw API responses during conventional fetch (for cache write-back)
   const changellyRawRef = useRef<ChangellyCurrency[] | undefined>(undefined);
+  const rangoRawRef = useRef<RangoMetaResponse | undefined>(undefined);
   const thorswapRawRef = useRef<ThorswapCurrency[] | undefined>(undefined);
 
   // Checkout props
@@ -1490,6 +1504,86 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
+  /**
+   * Maps Rango's token metadata onto SwapCryptoCoin.
+   *
+   * Rango names chains its own way (POLYGON, ARBITRUM, ...), so each token is
+   * translated back to the app's chain code and anything on a chain the wallet
+   * does not custody is dropped — a listed token we cannot sign for would show
+   * as swappable and then fail.
+   */
+  const getRangoCurrencies = async (
+    cachedRawCurrencies?: RangoMetaResponse,
+  ): Promise<SwapCryptoCoin[]> => {
+    let meta: RangoMetaResponse;
+
+    if (cachedRawCurrencies?.tokens?.length) {
+      meta = cachedRawCurrencies;
+    } else {
+      meta = await rangoGetCurrencies({
+        env: rangoEnv,
+        blockchains: RANGO_SUPPORTED_BLOCKCHAINS.join(','),
+        excludeNonPopulars: true,
+      });
+    }
+
+    rangoRawRef.current = meta;
+
+    const tokens = meta?.tokens ?? [];
+    if (!tokens.length) {
+      return [];
+    }
+
+    let supported: SwapCryptoCoin[] = tokens
+      .map(token => {
+        const chain = getBitpayChainFromRango(token.blockchain);
+        if (!chain) {
+          return undefined;
+        }
+
+        const currencyAbbreviation = token.symbol?.toLowerCase();
+        if (!currencyAbbreviation) {
+          return undefined;
+        }
+
+        const tokenAddress = token.address
+          ? token.address.toLowerCase()
+          : undefined;
+
+        const name = tokenAddress
+          ? BitpaySupportedTokens[addTokenChainSuffix(tokenAddress, chain)]
+              ?.name
+          : BitpaySupportedCoins[currencyAbbreviation]?.name;
+
+        return {
+          currencyAbbreviation,
+          symbol: getExternalServiceSymbol(currencyAbbreviation, chain),
+          name: name ?? token.name ?? token.symbol,
+          chain,
+          protocol: token.blockchain,
+          logoUri: getLogoUri(currencyAbbreviation, chain),
+          badgeUri: getBadgeImg(currencyAbbreviation, chain),
+          tokenAddress,
+          supportedBy: {rango: true},
+        } as SwapCryptoCoin;
+      })
+      .filter((c): c is SwapCryptoCoin => !!c);
+
+    supported = _.uniqBy(supported, 'symbol');
+
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+
+    return orderBy(
+      supported,
+      [c => orderedArray.indexOf(c.symbol) !== -1, c => c.name.toLowerCase()],
+      ['desc', 'asc'],
+    );
+  };
+
   const getThorswapCurrencies = async (
     cachedRawCurrencies?: ThorswapCurrency[],
   ) => {
@@ -1718,6 +1812,10 @@ const SwapCryptoRoot: React.FC = () => {
           return getChangellyCurrencies(
             isCacheFresh ? prefetchedOpts?.changellyRawCurrencies : undefined,
           );
+        case 'rango':
+          return getRangoCurrencies(
+            isCacheFresh ? prefetchedOpts?.rangoRawCurrencies : undefined,
+          );
         case 'thorswap':
           return getThorswapCurrencies(
             isCacheFresh ? prefetchedOpts?.thorswapRawCurrencies : undefined,
@@ -1778,6 +1876,10 @@ const SwapCryptoRoot: React.FC = () => {
               case 'changelly':
                 swapCryptoExchangesDefault.changelly.supportedCoins = e
                   .promiseRes.value as SwapCryptoCoin[];
+                break;
+              case 'rango':
+                swapCryptoExchangesDefault.rango.supportedCoins = e.promiseRes
+                  .value as SwapCryptoCoin[];
                 break;
               case 'thorswap':
                 swapCryptoExchangesDefault.thorswap.supportedCoins = e
@@ -1841,6 +1943,7 @@ const SwapCryptoRoot: React.FC = () => {
             setSwapCryptoPrefetchedData({
               swapCryptoConfig,
               changellyRawCurrencies: changellyRawRef.current,
+              rangoRawCurrencies: rangoRawRef.current,
               thorswapRawCurrencies: thorswapRawRef.current,
               fetchedAt: Date.now(),
             });
@@ -2761,6 +2864,10 @@ const SwapCryptoRoot: React.FC = () => {
           spenderData: {
             offerKey: 'rango',
             offerName: 'Rango',
+            // Rango's own calldata. Rebuilding it locally produces an approve
+            // that succeeds on-chain while leaving the allowance Rango checks
+            // at zero, because the target is generated per quote.
+            approveData: checkout.approval.data,
             spenderKey: checkout.response.route?.swapper?.title ?? 'Rango',
             address: checkout.approval.spenderAddress,
             amount: String(amountFrom),

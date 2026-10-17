@@ -278,9 +278,9 @@ const offersDefault: {
     key: 'rango',
     name: 'Rango',
     amountReceiving: undefined,
-    // Execution (signing + broadcast) is not wired yet, so the offer stays
-    // hidden regardless of remote config. Flip to true with that PR.
-    showOffer: false,
+    // Driven by the single RANGO_EXECUTION_ENABLED switch, same as the
+    // preload defaults in SwapCryptoRoot.
+    showOffer: RANGO_EXECUTION_ENABLED,
     logo: <RangoLogo iconOnly={true} width={25} height={25} />,
     expanded: false,
     swapClicked: false,
@@ -1002,6 +1002,51 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         toDecimals,
       );
       offers.rango.fee = route.feeUsd ?? undefined;
+
+      // Without these the card renders "undefined" for both the fiat value and
+      // the rate line, which is what a user sees first.
+      const receiving = Number(offers.rango.amountReceiving);
+      if (Number.isFinite(receiving) && toPrecision) {
+        offers.rango.amountReceivingFiat = formatFiatAmount(
+          dispatch(
+            toFiat(
+              receiving * toPrecision.unitToSatoshi,
+              defaultAltCurrency.isoCode,
+              selectedWalletTo.currencyAbbreviation,
+              selectedWalletTo.chain,
+              rates,
+              selectedWalletTo.tokenAddress,
+            ),
+          ),
+          defaultAltCurrency.isoCode,
+          {
+            currencyDisplay:
+              defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+          },
+        );
+
+        if (amountFrom) {
+          const newRate = receiving / amountFrom;
+          offers.rango.rate = newRate.toFixed(6).replace(/\.?0+$/, '');
+          offers.rango.rateFiat = formatFiatAmount(
+            dispatch(
+              toFiat(
+                newRate * toPrecision.unitToSatoshi,
+                defaultAltCurrency.isoCode,
+                selectedWalletTo.currencyAbbreviation,
+                selectedWalletTo.chain,
+                rates,
+                selectedWalletTo.tokenAddress,
+              ),
+            ),
+            defaultAltCurrency.isoCode,
+            {
+              currencyDisplay:
+                defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+            },
+          );
+        }
+      }
 
       if (route.estimatedTimeInSeconds) {
         offers.rango.estimatedTime = `${Math.round(

@@ -1,7 +1,7 @@
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {isCoinSupportedByChangelly} from './changelly-utils';
-import {isCoinSupportedByRango} from './rango-utils';
+import {isCoinSupportedByRango, RANGO_EXECUTION_ENABLED} from './rango-utils';
 import {isCoinSupportedByThorswap} from './thorswap-utils';
 
 export type SwapCryptoExchangeKey = 'changelly' | 'rango' | 'thorswap';
@@ -17,12 +17,12 @@ export const isCoinSupportedToSwap = (
   chain: string,
   country?: string,
 ): boolean => {
-  // Rango is intentionally excluded here while its offer is gated off. This
-  // gates the Swap entry point, so including a provider that cannot execute
-  // would advertise a swap the user cannot complete. Add it back in the same
-  // PR that flips showOffer to true.
+  // Rango participates only when execution is enabled: this gates the Swap
+  // entry point, so advertising a provider that cannot execute would offer a
+  // swap the user is unable to finish.
   return (
     isCoinSupportedBy('changelly', coin, chain) ||
+    (RANGO_EXECUTION_ENABLED && isCoinSupportedBy('rango', coin, chain)) ||
     isCoinSupportedBy('thorswap', coin, chain)
   );
 };

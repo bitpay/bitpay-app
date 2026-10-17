@@ -139,6 +139,13 @@ export interface SwapCryptoApproveErc20Params {
   spenderData: {
     offerKey: string;
     offerName: string;
+    /**
+     * Calldata supplied by the provider. Rango generates the approval target
+     * per quote and its docs require using their data rather than rebuilding
+     * it — a locally encoded approve can succeed on-chain while leaving the
+     * allowance the provider checks at zero.
+     */
+    approveData?: string;
     /** Thorswap names its routers; other providers pass a display string. */
     spenderKey: ThorswapProvider | string;
     address: string;
@@ -234,6 +241,26 @@ const SwapCryptoApproveErc20: React.FC = () => {
         wallet.tokenAddress,
       ),
     );
+    // Provider-supplied calldata wins: see approveData above.
+    if (spenderData.approveData) {
+      logger.debug('Using provider-supplied approve calldata');
+      setEncodedData(spenderData.approveData);
+      try {
+        const ctxpFromProvider = await createTx(spenderData.approveData);
+        setCtxp(ctxpFromProvider);
+        setIsLoading(false);
+      } catch (err) {
+        setIsLoading(false);
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('Error creating approve transaction: ' + errStr);
+        finish(
+          undefined,
+          t('Uh oh, something went wrong. Error creating transaction'),
+        );
+      }
+      return;
+    }
+
     const amountToApprove = ethers.utils.parseUnits(
       spenderData.amount,
       precision!.unitDecimals,
