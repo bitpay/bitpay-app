@@ -73,7 +73,8 @@ candidate, and check `profile.storeBytes` for the slice that grew.
 - **Already covered (base of this branch, do not redo):** #2449 import
   progress delays, #2450 per-key balance errors, #2451 launch balance caching,
   #2452 persist throttle, #2453 lazy locales, #2454 DKLS mount-on-demand, #2455
-  card removal, #2456 Ledger removal, #2457 lint, #2458 React Compiler.
+  card removal, #2456 Ledger removal, #2457 lint, #2458 React Compiler, #2461 chart ghost-line
+  loader (added later; the old Skia spinner had still been measured until then).
 - **Trust the noise rule.** A move counts only beyond 2× the larger stddev.
   The harness aborts on thermal throttling; let the phone cool rather than
   rerun hot.
@@ -81,7 +82,7 @@ candidate, and check `profile.storeBytes` for the slice that grew.
   trade-off that cannot be made neutral, or anything touching keys, seeds or
   funds handling beyond pure performance.
 
-## UI parity track
+## UI parity track (parked — Android first)
 
 Layout regressions between platforms (e.g. bottom-notification actions
 stacked instead of left/right) are caught by `perf/parity/`: the same screens

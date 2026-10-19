@@ -82,6 +82,14 @@ exercised. Since `cd06f38dc` the flow requires the seed and the device holds
 the funded test wallet (**$179, 30 wallets incl. USDC**), and the accepted
 baseline was re-taken on it: TTFD **3,350 ms**, TTID 724 ms.
 
+## Base change: PR #2461 added
+
+The base originally stacked #2449–#2458 only, so Home still showed the old
+Skia spinner (`LoaderSvg.tsx`) instead of the ghost-line loader. #2461 is now
+merged into `perf/self-healing-base` (React Compiler conflict resolved in
+`.get()/.set()` style; chart tests pass) and the branch rebased onto it.
+Baselines from here on include it.
+
 ## Bugs found along the way
 
 | ID | What | Evidence | Status |
