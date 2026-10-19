@@ -28,24 +28,27 @@ open class BaseTest {
     }
 
     /**
-     * Number of retry attempts for this test class. Defaults to 3.
+     * Number of attempts for this test class. Defaults to 1 (no retry).
      *
      * IMPORTANT: Retries here happen IN-PROCESS — the same app instance is
      * reused across attempts, launchApp() only clears the Activity stack
      * (FLAG_ACTIVITY_CLEAR_TASK), not persisted app data (prefs, DB, wallet
      * state). A true "pm clear"-style reset can't safely run from inside
      * the same process hosting the instrumentation (it would kill the test
-     * harness itself), so retries are only safe for read-only/idempotent
-     * tests (navigation checks, text assertions).
+     * harness itself). The runner only clears app data once per class, so
+     * attempt 2 starts from whatever attempt 1 left behind.
      *
-     * For state-mutating flows (e.g. wallet creation, onboarding), override
-     * this to 1 in the test class so a genuine failure surfaces immediately
+     * Retries are only safe for read-only/idempotent tests (navigation
+     * checks, text assertions). Those tests can opt in:
+     *
+     *   override val retryCount = 3
+     *
+     * State-mutating flows (wallet creation, import, send/swap/buy/sell)
+     * must keep the default of 1 so a genuine failure surfaces immediately
      * instead of retrying against an app that's now in a different state
-     * than attempt 1 expected:
-     *
-     *   override val retryCount = 1
+     * than attempt 1 expected.
      */
-    protected open val retryCount: Int = 3
+    protected open val retryCount: Int = 1
 
     // Outer rule (order 0): captures a screenshot only once all retries
     // are exhausted and the test has truly failed.
