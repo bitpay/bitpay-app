@@ -280,31 +280,20 @@ export const addCustomTokenOption =
     }
   };
 
-const populateTokenInfo = ({
-  chain,
-  token,
-  tokenOptionsByAddress,
-  tokenDataByAddress,
-}: {
-  chain: string;
-  token: Token;
-  tokenOptionsByAddress: {[key in string]: Token};
-  tokenDataByAddress: {[key in string]: CurrencyOpts};
-}) => {
-  const tokenAddressWithSuffix = addTokenChainSuffix(token.address, chain);
-  const tokenData = {
-    name: token.name.replace('(PoS)', '').trim(),
-    chain,
-    coin: token.symbol.toLowerCase(),
+// Everything in a token's CurrencyOpts that depends only on its chain, built
+// once per chain rather than once per token. Launch applies ~21k cached 1inch
+// tokens; rebuilding these nested objects (and re-deriving the protocol
+// prefixes and fee currency) for each one was most of that cost. The objects
+// are shared between a chain's tokens, which is safe because CurrencyOpts is
+// treated as read-only config throughout the app.
+type ChainTokenTemplate = Pick<
+  CurrencyOpts,
+  'feeCurrency' | 'properties' | 'paymentInfo' | 'feeInfo'
+>;
+const chainTokenTemplates: {[chain: string]: ChainTokenTemplate} = {};
+const getChainTokenTemplate = (chain: string): ChainTokenTemplate =>
+  (chainTokenTemplates[chain] ??= {
     feeCurrency: getEVMFeeCurrency(chain),
-    logoURI: token.logoURI,
-    address: token.address,
-    unitInfo: {
-      unitName: token.symbol.toUpperCase(),
-      unitToSatoshi: 10 ** token.decimals,
-      unitDecimals: token.decimals,
-      unitCode: token.symbol,
-    },
     properties: {
       hasMultiSig: false,
       hasMultiSend: false,
@@ -331,9 +320,47 @@ const populateTokenInfo = ({
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+  } as ChainTokenTemplate);
+
+/** Tests that swap the explorer or coin config must drop the cached templates. */
+export const clearChainTokenTemplatesForTests = (): void => {
+  Object.keys(chainTokenTemplates).forEach(chain => {
+    delete chainTokenTemplates[chain];
+  });
+};
+
+const populateTokenInfo = ({
+  chain,
+  token,
+  tokenOptionsByAddress,
+  tokenDataByAddress,
+}: {
+  chain: string;
+  token: Token;
+  tokenOptionsByAddress: {[key in string]: Token};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
+}) => {
+  const tokenAddressWithSuffix = addTokenChainSuffix(token.address, chain);
+  const template = getChainTokenTemplate(chain);
+  const tokenData = {
+    name: token.name.replace('(PoS)', '').trim(),
+    chain,
+    coin: token.symbol.toLowerCase(),
+    feeCurrency: template.feeCurrency,
+    logoURI: token.logoURI,
+    address: token.address,
+    unitInfo: {
+      unitName: token.symbol.toUpperCase(),
+      unitToSatoshi: 10 ** token.decimals,
+      unitDecimals: token.decimals,
+      unitCode: token.symbol,
+    },
+    properties: template.properties,
+    paymentInfo: template.paymentInfo,
+    feeInfo: template.feeInfo,
   };
   tokenOptionsByAddress[tokenAddressWithSuffix] = token;
-  tokenDataByAddress[tokenAddressWithSuffix] = tokenData;
+  tokenDataByAddress[tokenAddressWithSuffix] = tokenData as CurrencyOpts;
 };
 
 export const startCustomTokensMigration =

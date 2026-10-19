@@ -4,6 +4,7 @@ import {
   startGetTokenOptions,
   addCustomTokenOption,
   startCustomTokensMigration,
+  clearChainTokenTemplatesForTests,
 } from './currencies';
 import {tokenManager} from '../../../../managers/TokenManager';
 
@@ -467,6 +468,7 @@ describe('addCustomTokenOption', () => {
     const configMock = jest.requireMock('../../../../constants/config');
     const originalExplorers = configMock.BLOCKCHAIN_EXPLORERS;
     // Override with a proxy that returns undefined for 'eth' to trigger a TypeError
+    clearChainTokenTemplatesForTests();
     configMock.BLOCKCHAIN_EXPLORERS = new Proxy(
       {},
       {
@@ -482,6 +484,7 @@ describe('addCustomTokenOption', () => {
     expect(failedGetTokenOptions).toHaveBeenCalled();
 
     configMock.BLOCKCHAIN_EXPLORERS = originalExplorers;
+    clearChainTokenTemplatesForTests();
   });
 });
 
@@ -544,5 +547,93 @@ describe('startCustomTokensMigration', () => {
     await expect(
       store.dispatch(startCustomTokensMigration()),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('token option entries', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMmkvStore.clear();
+  });
+
+  // Pins the full CurrencyOpts built for a 1inch token, so building the
+  // chain-constant parts once per chain cannot change what consumers see.
+  it('builds the same CurrencyOpts for every token, with per-token fields kept separate', async () => {
+    mockedAxios.get.mockImplementation(async (url: string) => ({
+      data: url.endsWith('/eth')
+        ? [
+            makeToken({
+              address: '0xAbC',
+              name: 'Wrapped (PoS) Thing ',
+              symbol: 'WThg',
+              decimals: 6,
+            }),
+            makeToken({
+              address: '0xDEF',
+              name: 'Other',
+              symbol: 'OTH',
+              decimals: 18,
+            }),
+          ]
+        : [],
+    }));
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    const {tokenDataByAddress, tokenOptionsByAddress} =
+      mockedSetTokenOptions.mock.calls[0][0];
+    expect(Object.keys(tokenDataByAddress).sort()).toEqual([
+      '0xabc_e',
+      '0xdef_e',
+    ]);
+    expect(tokenOptionsByAddress['0xabc_e'].address).toBe('0xAbC');
+    expect(tokenDataByAddress['0xabc_e']).toEqual({
+      name: 'Wrapped  Thing',
+      chain: 'eth',
+      coin: 'wthg',
+      feeCurrency: 'eth',
+      logoURI: 'https://example.com/logo.png',
+      address: '0xAbC',
+      unitInfo: {
+        unitName: 'WTHG',
+        unitToSatoshi: 1e6,
+        unitDecimals: 6,
+        unitCode: 'WThg',
+      },
+      properties: {
+        hasMultiSig: false,
+        hasMultiSend: false,
+        isUtxo: false,
+        isERCToken: true,
+        isStableCoin: false,
+        singleAddress: true,
+        isCustom: true,
+      },
+      paymentInfo: {
+        paymentCode: 'EIP681b',
+        protocolPrefix: {
+          livenet: 'ethereum',
+          testnet: 'ethereum',
+          regtest: 'ethereum',
+        },
+        ratesApi: '',
+        blockExplorerUrls: 'https://explorer.test',
+        blockExplorerUrlsTestnet: 'https://explorer-test.test',
+      },
+      feeInfo: {
+        feeUnit: 'Gwei',
+        feeUnitAmount: 1e9,
+        blockTime: 0.2,
+        maxMerchantFee: 'urgent',
+      },
+    });
+    // Per-token fields never leak between tokens of the same chain.
+    expect(tokenDataByAddress['0xdef_e'].unitInfo).toEqual({
+      unitName: 'OTH',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'OTH',
+    });
   });
 });
