@@ -36,7 +36,9 @@ be a test-only phrase. Perf builds are signed with the debug keystore, so
      `cp perf/loop/state/run-<stamp>-<sha>-dirty.json perf/loop/state/accepted.json`
      — it measured exactly the tree that was committed.
    - `NEUTRAL` → revert, unless the change is a correctness fix worth keeping
-     on its own merits (record it as such).
+     on its own merits, or an algorithmic win on a path the test wallet does
+     not exercise, proven by a benchmark and an equivalence test that passes
+     against the old code too (record which, with the benchmark numbers).
    - `REJECT` → revert. Try another variant; after three variants, park the
      candidate with what was learned.
 5. **Record** in `LEDGER.md`: hypothesis, evidence, each attempt and its
