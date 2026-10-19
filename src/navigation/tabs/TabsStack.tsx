@@ -25,6 +25,7 @@ import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 import BillStack from './shop/bill/BillStack';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {Analytics} from '../../store/analytics/analytics.effects';
+import {ThemeRelay} from '../../contexts';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -61,6 +62,10 @@ const TransactTabBarIcon = () => <TransactModal />;
 
 const TransactTabBarButton = (props: any) => <View {...props} />;
 
+const tabScreenLayout = ({children}: {children: React.ReactElement}) => (
+  <ThemeRelay>{children}</ThemeRelay>
+);
+
 export enum TabsScreens {
   HOME = 'Home',
   SHOP = 'Shop',
@@ -95,6 +100,7 @@ const TabsStack = () => {
   return (
     <Tab.Navigator
       initialRouteName={TabsScreens.HOME}
+      screenLayout={tabScreenLayout}
       screenOptions={({route}) => ({
         headerShown: false,
         freezeOnBlur: true,
