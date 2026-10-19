@@ -8,6 +8,13 @@ appId: com.bitpay.wallet
 # identical on every run — a content-dependent stop condition would make the
 # frame counts incomparable between versions.
 
+# Earlier scenarios can leave Home scrolled down; start from the top so
+# every iteration scrolls the same content.
+- scrollUntilVisible:
+    element:
+      id: 'portfolio-balance-toggle'
+    direction: UP
+    timeout: 10000
 - assertVisible:
     id: 'portfolio-balance-toggle'
 - waitForAnimationToEnd

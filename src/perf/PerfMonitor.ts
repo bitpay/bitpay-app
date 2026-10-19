@@ -342,11 +342,18 @@ if (enabled && typeof XMLHttpRequest !== 'undefined') {
       this.addEventListener?.('loadend', () => {
         record.durationMs = perfNow() - record.startMs;
         record.status = this.status;
-        const len =
-          typeof this.responseText === 'string' && this.responseType === ''
-            ? this.responseText.length
-            : null;
-        record.bytes = len;
+        // Check responseType before touching responseText: React Native's XHR
+        // throws when responseText is read on a 'blob' response (images), and
+        // an exception here surfaced as an "Unexpected error" alert in the
+        // Shop tab of perf builds.
+        try {
+          record.bytes =
+            this.responseType === '' || this.responseType === 'text'
+              ? String(this.responseText ?? '').length
+              : null;
+        } catch {
+          record.bytes = null;
+        }
       });
     }
     return send.apply(this, args);
