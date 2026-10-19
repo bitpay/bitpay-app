@@ -36,6 +36,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 7 | Render | Remember sorted wallet-id lists (localeCompare/ICU sort repeated every Home render) | Home first render 397 → 359 ms (−38, p=.003), funded wallet | `1b3ee0bbe` |
 | 8 | Network | BWS request signing reuses the parsed request key (3 EC multiplications → 1); signatures byte-identical | 2.32 → 0.66 ms/signature (V8); JS profile: signing 212 → 84 ms in Home commit → splash | `da4b8b6a0` |
 | 9 | Network | External-services/swap-currency prefetch (~0.5 MB) waits until startup settles | requests before first draw 4 → 2 (p<.001) | `1f893f9d0` |
+| 10 | Memory | Shop's remote images decode at display size on Android (`resizeMethod="resize"`) | Shop tab native 336 → 202 MB, graphics 180 → 57 MB (−257 MB; memtabs, 3× each) | `e0b8abccb` |
 | 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `918236421` |
 
 ## Candidates (ranked by expected win × confidence)
@@ -56,6 +57,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C24 | Rebasing tokens (Aave aTokens) make launch repopulate the portfolio over and over: `balance_mismatch` fires whenever the live balance drifts (interest), a repopulate cannot change the history-derived balance, so it recurs — ~4 s of extra JS CPU in ~20% of launches on the test wallet (`decisionReasonByWalletId` → Aave Arbitrum aUSDC `0x724dc807…`) | `portfolioStaleness.ts:345-357` repopulates when `deltaAtomic` changes | **proposal for the portfolio owners**: remember whether the last repopulate changed `computedAtomic`; if not, throttle drift-only mismatches for that wallet to the 24 h retry interval (and/or recognise rebasing tokens). Changes persisted portfolio state, so not done unilaterally |
 | C23 | Persisted rates are 2.11 MB on the funded wallet (Storage Usage) | read/parse cost each launch | open |
 | C25 | Tab switching (nav-tabs, funded wallet): **37% janky frames, p95 150 ms, peak PSS 1.24 GB**; Gift Cards 362 ms, Bills 338 ms, Home 221 ms transitions. Scrolling Home by contrast: 5% janky, p99 24 ms, peak 557 MB | `interaction-baseline.json` | open — next |
+| C26 | "Unknown" (anonymous) memory 175–416 MB and session-dependent — largest unexplained PSS category; likely Hermes heaps of the main runtime + three worklet runtimes | memtabs.sh | open |
 | C21 | `changelly/getCurrencies` 474 KB at startup | fixed (#9); still re-downloaded once per launch (memory-only cache) — persisting with the 4 h TTL would save the bandwidth | partly done |
 | C19 | Big Fabric mount frames around and after the splash (180–350 ms `Choreographer#doFrame/animation`) | Perfetto; RN release builds emit no sections, so needs RN systrace markers to attribute | open |
 | C7 | wallet secrets migration, 184 ms every launch | name suggests a one-time migration | open |
