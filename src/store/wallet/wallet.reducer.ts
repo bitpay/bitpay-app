@@ -679,6 +679,9 @@ export const walletReducer = (
             if (!status) {
               return;
             }
+            // Wallet screens check freshness per wallet, so record it here too;
+            // otherwise opening a wallet refetches what this refresh just got.
+            balanceCacheUpdates[wallet.id] = refreshedAt;
 
             if (!walletHasStatus(wallet, status)) {
               updatedWallets ??= [...currentKey.wallets];
