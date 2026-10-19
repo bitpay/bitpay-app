@@ -1,4 +1,5 @@
 import {mark as perfMark} from '../../perf/PerfMonitor';
+import {whenStartupSettled} from '../../utils/startupSignals';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
@@ -210,6 +211,9 @@ export const reportDeviceIntegrity = (): Effect => dispatch => {
   }
 };
 
+/** Delay after startup settles before the external-services prefetch. */
+const EXTERNAL_SERVICES_PREFETCH_DELAY_MS = 3000;
+
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     perfMark('bp_app_init_start');
@@ -364,9 +368,18 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
 
-    // Pre-fetch external services config and swap crypto currencies in background
+    // Pre-fetch external services config and swap crypto currencies in
+    // background — once startup has settled. The swap currency lists are
+    // ~0.5 MB of JSON fetched and parsed on every launch; none of it is needed
+    // for the first screen, and swap screens fetch on their own if they open
+    // first.
     await locationDataPromise;
-    dispatch(prefetchExternalServicesData());
+    whenStartupSettled(() => {
+      setTimeout(
+        () => dispatch(prefetchExternalServicesData()),
+        EXTERNAL_SERVICES_PREFETCH_DELAY_MS,
+      );
+    });
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
