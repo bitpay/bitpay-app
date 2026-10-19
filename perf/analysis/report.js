@@ -143,10 +143,12 @@ function scenarioSection(name, data) {
   return `<section>
     <h3>${esc(name)}</h3>
     ${data.description ? `<p class="dim">${esc(data.description)}</p>` : ''}
-    <table>
-      <thead><tr><th>Metric</th><th class="num">Median</th><th class="num">p90</th><th class="num">Spread</th><th class="num">Range</th></tr></thead>
-      <tbody>${metricRows}${perScreen}</tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th class="num">Median</th><th class="num">p90</th><th class="num">Spread</th><th class="num">Range</th></tr></thead>
+        <tbody>${metricRows}${perScreen}</tbody>
+      </table>
+    </div>
   </section>`;
 }
 
@@ -188,12 +190,12 @@ function comparisonSection(comparison) {
     }</td>
     <td>${
       c.regression
-        ? 'REGRESSION'
+        ? '<span class="verdict is-bad">regression</span>'
         : c.improvement
-        ? 'improved'
+        ? '<span class="verdict is-good">improved</span>'
         : c.inconclusive
-        ? 'within noise'
-        : 'ok'
+        ? '<span class="verdict is-warn">within noise</span>'
+        : '<span class="verdict is-neutral">ok</span>'
     }</td>
   </tr>`;
 
@@ -225,14 +227,16 @@ function comparisonSection(comparison) {
             .join(', ')}${comparison.missing.length > 12 ? ' …' : ''}</p>`
         : ''
     }
-    <table>
-      <thead><tr><th>Scenario</th><th>Metric</th><th class="num">Baseline</th><th class="num">This run</th><th class="num">Change</th><th>Verdict</th></tr></thead>
-      <tbody>${
-        interesting.length
-          ? interesting.map(row).join('\n')
-          : '<tr><td colspan="6" class="dim">All compared metrics within tolerance.</td></tr>'
-      }</tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Scenario</th><th>Metric</th><th class="num">Baseline</th><th class="num">This run</th><th class="num">Change</th><th>Verdict</th></tr></thead>
+        <tbody>${
+          interesting.length
+            ? interesting.map(row).join('\n')
+            : '<tr><td colspan="6" class="dim">All compared metrics within tolerance.</td></tr>'
+        }</tbody>
+      </table>
+    </div>
   </section>`;
 }
 
@@ -264,60 +268,221 @@ function render(results, comparison) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Performance report — ${esc(meta.appVersion || '')}</title>
 <style>
+  /*
+   * Visual system derived from the Vercel DESIGN.md spec
+   * (voltagent/awesome-design-md): a stark ink-on-near-white duet, a four-step
+   * surface ladder, mono reserved for the technical layer, and stacked
+   * shadows with an inset hairline ring instead of a single heavy drop.
+   * Dark mode is the spec's polarity-flipped ink band carried across the page.
+   *
+   * Deliberate deviations, both required by this surface:
+   *  - System font stack rather than loading Geist/Inter. The report must open
+   *    from file:// and inside CI artifact viewers, so no font CDN — this is
+   *    the spec's own declared fallback chain.
+   *  - Muted text sits at #6b6b6b rather than the spec's #888888, and the
+   *    verdict green comes from the system's in-product green scale. #888888
+   *    lands at 3.4:1 on the page canvas, which fails AA at the label sizes
+   *    this report uses.
+   */
   :root {
-    --bg: #ffffff; --fg: #16181d; --dim: #6b7280; --line: #e5e7eb;
-    --card: #f9fafb; --good: #067647; --bad: #b42318; --warn: #b54708;
-    --accent: #1a3b8b;
+    /* Light — the default polarity. Four-step surface ladder. */
+    --canvas: #fafafa;
+    --surface: #ffffff;
+    --surface-inset: #f5f5f5;
+    --ink: #171717;
+    --ink-body: #4d4d4d;
+    --ink-mute: #6b6b6b;
+    --hairline: #ebebeb;
+    --hairline-strong: #e0e0e0;
+    --link: #0070f3;
+
+    --bad: #c50000;
+    --bad-soft: #f7d4d6;
+    --warn: #ab570a;
+    --warn-soft: #ffefcf;
+    --good: #0d6e31;
+    --good-soft: #d5efdf;
+
+    /* Stacked offsets plus an inset ring — never one heavy drop. */
+    --ring: inset 0 0 0 1px #00000014;
+    --elevation-2: 0px 1px 1px #00000005, 0px 2px 2px #0000000a, var(--ring);
+
+    /* 4px base unit */
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+    --sp-6: 24px; --sp-8: 32px; --sp-12: 48px; --sp-16: 64px;
+    --r-sm: 6px; --r-md: 8px; --r-lg: 12px;
+
+    --sans: Geist, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0f1115; --fg: #e6e8eb; --dim: #9099a8; --line: #262b33;
-      --card: #161a20; --good: #4ade80; --bad: #f87171; --warn: #fbbf24;
-      --accent: #7aa2f7;
+      /* The spec's polarity-flipped ink band, carried across the whole page. */
+      --canvas: #171717;
+      --surface: #1f1f1f;
+      --surface-inset: #232323;
+      --ink: #ededed;
+      --ink-body: #a1a1a1;
+      --ink-mute: #8f8f8f;
+      --hairline: #2e2e2e;
+      --hairline-strong: #3a3a3a;
+      --link: #52a8ff;
+
+      --bad: #ff6166;
+      --bad-soft: #2a1215;
+      --warn: #f5a623;
+      --warn-soft: #2b2010;
+      --good: #62c073;
+      --good-soft: #12261a;
+
+      --ring: inset 0 0 0 1px #ffffff14;
+      --elevation-2: var(--ring);
     }
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 2rem 1.25rem 4rem; background: var(--bg); color: var(--fg);
-    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0 var(--sp-6) var(--sp-16);
+    background: var(--canvas);
+    color: var(--ink);
+    font: 400 14px/20px var(--sans);
+    letter-spacing: -0.28px;
+    -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 1100px; margin: 0 auto; }
-  h1 { font-size: 1.6rem; margin: 0 0 .35rem; }
-  h3 { font-size: 1.1rem; margin: 2rem 0 .6rem; }
-  .dim { color: var(--dim); }
-  .strong { font-weight: 650; }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
-  .meta { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-          padding: .9rem 1.1rem; margin: 1rem 0 1.5rem; }
-  .meta dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-             gap: .5rem 1.5rem; margin: 0; }
-  .meta dt { color: var(--dim); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
-  .meta dd { margin: 0 0 .4rem; font-weight: 550; }
-  table { width: 100%; border-collapse: collapse; margin: .5rem 0 1rem; font-size: .93rem; }
-  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--line); }
-  th { color: var(--dim); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  tr.muted td { color: var(--dim); font-style: italic; }
-  tr.group td { background: var(--card); font-weight: 650; font-size: .85rem; }
-  tr.bad td { background: color-mix(in srgb, var(--bad) 10%, transparent); }
-  tr.good td { background: color-mix(in srgb, var(--good) 10%, transparent); }
-  tr.warn-row td { background: color-mix(in srgb, var(--warn) 10%, transparent); }
-  .badge { font-size: .68rem; padding: .1rem .4rem; border-radius: 4px; vertical-align: middle;
-           text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
-  .badge.warn { background: var(--warn); color: #fff; }
-  .badge.muted-badge { background: var(--dim); color: var(--bg); }
-  .pass { color: var(--good); font-weight: 650; }
-  .fail { color: var(--bad); font-weight: 650; }
+  main { max-width: 1200px; margin: 0 auto; padding-top: var(--sp-12); }
+
+  /* The brand gradient, kept full-bleed at page scale — never miniaturised. */
+  .brandbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 1;
+    background: linear-gradient(90deg,
+      #007cf0 0%, #00dfd8 25%, #7928ca 45%, #ff0080 65%, #ff4d4d 85%, #f9cb28 100%);
+  }
+
+  /* Type ------------------------------------------------------------------ */
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; line-height: 16px;
+    letter-spacing: 0; color: var(--ink-mute); margin: 0 0 var(--sp-2);
+  }
+  h1 {
+    font-size: 32px; font-weight: 600; line-height: 40px; letter-spacing: -1.28px;
+    margin: 0 0 var(--sp-2);
+  }
+  h3 {
+    font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.6px;
+    margin: var(--sp-12) 0 var(--sp-3);
+  }
+  .subtitle {
+    font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: 0;
+    color: var(--ink-mute); margin: 0;
+  }
+  .dim { color: var(--ink-body); }
+  .strong { font-weight: 500; color: var(--ink); }
+  code {
+    font-family: var(--mono); font-size: 13px; line-height: 20px; letter-spacing: 0;
+  }
+  p { margin: var(--sp-3) 0; color: var(--ink-body); }
+  ul { margin: var(--sp-2) 0; padding-left: var(--sp-6); color: var(--ink-body); }
+  li { margin: var(--sp-1) 0; }
+  b { font-weight: 500; color: var(--ink); }
+  a { color: var(--link); }
+  :focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+  /* Run metadata card ----------------------------------------------------- */
+  .meta {
+    background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--elevation-2);
+    padding: var(--sp-6); margin: var(--sp-6) 0 var(--sp-8);
+  }
+  .meta dl {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--sp-6); margin: 0;
+  }
+  .meta dt {
+    font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: 0;
+    color: var(--ink-mute); margin-bottom: var(--sp-1);
+  }
+  .meta dd { margin: 0; font-size: 14px; font-weight: 500; color: var(--ink); }
+
+  /* Tables ---------------------------------------------------------------- */
+  .table-wrap {
+    overflow-x: auto; background: var(--surface);
+    border-radius: var(--r-lg); box-shadow: var(--elevation-2);
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    text-align: left; padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--hairline);
+  }
+  tr:last-child td { border-bottom: 0; }
+  /* Mono is the voice of the technical layer: headers, numbers, labels. */
+  th {
+    font-family: var(--mono); font-size: 12px; font-weight: 400; line-height: 16px;
+    letter-spacing: 0; color: var(--ink-mute); white-space: nowrap;
+    background: var(--surface-inset);
+  }
+  td { color: var(--ink-body); }
+  td.num, th.num { text-align: right; }
+  td.num {
+    font-family: var(--mono); font-size: 13px; line-height: 20px; letter-spacing: 0;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  td.num.dim { color: var(--ink-mute); }
+  tr.muted td { color: var(--ink-mute); }
+  tr.group td {
+    background: var(--surface-inset); color: var(--ink);
+    font-family: var(--mono); font-size: 12px; font-weight: 400; line-height: 16px;
+    letter-spacing: 0;
+  }
+  tr.bad td { background: color-mix(in srgb, var(--bad) 7%, transparent); }
+  tr.good td { background: color-mix(in srgb, var(--good) 7%, transparent); }
+  tr.warn-row td { background: color-mix(in srgb, var(--warn) 8%, transparent); }
+
+  /* Badges — soft fill, deep ink, 6px nav-scale radius throughout ---------- */
+  .badge, .verdict {
+    display: inline-block; font-family: var(--mono); font-size: 12px; line-height: 16px;
+    font-weight: 400; letter-spacing: 0; white-space: nowrap;
+    padding: 1px var(--sp-2); border-radius: var(--r-sm); vertical-align: middle;
+  }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.muted-badge {
+    background: var(--surface-inset); color: var(--ink-mute); box-shadow: var(--ring);
+  }
+  .verdict.is-bad { background: var(--bad-soft); color: var(--bad); }
+  .verdict.is-good { background: var(--good-soft); color: var(--good); }
+  .verdict.is-warn { background: var(--warn-soft); color: var(--warn); }
+  .verdict.is-neutral { background: var(--surface-inset); color: var(--ink-mute); }
+  .pass { color: var(--good); font-weight: 500; }
+  .fail { color: var(--bad); font-weight: 500; }
   .warn-text { color: var(--warn); }
-  section.alert { border: 1px solid var(--warn); border-radius: 10px; padding: .5rem 1.1rem 1rem; }
-  .table-wrap { overflow-x: auto; }
-  ul { margin: .4rem 0; padding-left: 1.2rem; }
+
+  /* Callouts — a card with a semantic left edge, not a full colored box ---- */
+  section.alert {
+    background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--elevation-2);
+    border-left: 2px solid var(--warn);
+    padding: var(--sp-1) var(--sp-6) var(--sp-4);
+    margin: var(--sp-6) 0;
+  }
+  section.alert h3 { margin-top: var(--sp-4); font-size: 16px; letter-spacing: -0.32px; }
+
+  /* Footer ---------------------------------------------------------------- */
+  .footnote {
+    color: var(--ink-mute); font-size: 12px; line-height: 16px;
+    border-top: 1px solid var(--hairline);
+    padding-top: var(--sp-4); margin: var(--sp-16) 0 0;
+  }
+
+  @media (max-width: 639px) {
+    body { padding: 0 var(--sp-4) var(--sp-8); }
+    h1 { font-size: 24px; line-height: 32px; letter-spacing: -0.96px; }
+    .meta { padding: var(--sp-4); }
+  }
 </style>
 </head>
 <body>
+<div class="brandbar"></div>
 <main>
-  <h1>Performance report</h1>
-  <p class="dim">${esc(meta.appVersion || 'unknown version')} · ${esc(
+  <p class="eyebrow">${esc(meta.platform || '')} performance harness</p>
+  <h1>Performance report.</h1>
+  <p class="subtitle">${esc(meta.appVersion || 'unknown version')} · ${esc(
     meta.gitSha || 'no sha',
   )} · ${esc(meta.timestamp || '')}</p>
 
@@ -360,15 +525,15 @@ function render(results, comparison) {
 
   ${comparisonSection(comparison)}
 
-  <div class="table-wrap">${scenarios}</div>
+  ${scenarios}
 
   ${
     staticRows
-      ? `<section><h3>Artifact</h3><table><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody>${staticRows}</tbody></table></section>`
+      ? `<section><h3>Artifact</h3><div class="table-wrap"><table><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody>${staticRows}</tbody></table></div></section>`
       : ''
   }
 
-  <p class="dim" style="margin-top:2rem">
+  <p class="footnote">
     TTID comes from the ActivityTaskManager <code>Displayed</code> log line for
     <code>.MainActivity</code>. <code>am start -W</code> TotalTime is reported for reference only:
     the manifest launcher is <code>.LaunchActivity</code>, a trampoline that finishes before the app
