@@ -48,7 +48,6 @@ describe('appReducer — default state', () => {
     expect(state.hasViewedZenLedgerWarning).toBe(false);
     expect(state.hasViewedBillsTab).toBe(false);
     expect(state.dismissedMarketingCardIds).toEqual([]);
-    expect(state.isImportLedgerModalVisible).toBe(false);
     expect(state.inAppBrowserOpen).toBe(false);
     expect(state.tokensDataLoaded).toBe(false);
     expect(state.showArchaxBanner).toBe(false);
@@ -58,29 +57,6 @@ describe('appReducer — default state', () => {
     const state = freshState();
     const next = appReducer(state, {type: 'COMPLETELY_UNKNOWN'} as any);
     expect(next).toBe(state);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// IMPORT_LEDGER_MODAL_TOGGLED
-// ---------------------------------------------------------------------------
-
-describe('IMPORT_LEDGER_MODAL_TOGGLED', () => {
-  it('sets isImportLedgerModalVisible to true', () => {
-    const state = appReducer(freshState(), {
-      type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
-      payload: true,
-    });
-    expect(state.isImportLedgerModalVisible).toBe(true);
-  });
-
-  it('sets isImportLedgerModalVisible to false', () => {
-    const base: AppState = {...freshState(), isImportLedgerModalVisible: true};
-    const state = appReducer(base, {
-      type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
-      payload: false,
-    });
-    expect(state.isImportLedgerModalVisible).toBe(false);
   });
 });
 

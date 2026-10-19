@@ -52,7 +52,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showPinModal',
   'selectedLocalChainFilterOption',
   'tokensDataLoaded',
-  'isImportLedgerModalVisible',
   'showArchaxBanner',
   'hasViewedTSSOnboarding',
   'showKycGetVerifiedModal',
@@ -171,7 +170,6 @@ export interface AppState {
   hasViewedZenLedgerWarning: boolean;
   hasViewedBillsTab: boolean;
   hasViewedTSSOnboarding: boolean;
-  isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
@@ -275,7 +273,6 @@ const initialState: AppState = {
   hasViewedZenLedgerWarning: false,
   hasViewedBillsTab: false,
   hasViewedTSSOnboarding: false,
-  isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
@@ -289,12 +286,6 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
-    case AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED:
-      return {
-        ...state,
-        isImportLedgerModalVisible: action.payload,
-      };
-
     case AppActionTypes.NETWORK_CHANGED:
       return {
         ...state,

@@ -21,7 +21,13 @@ jest.mock('../../../../managers/TokenManager', () => ({
 
 import configureTestStore from '@test/store';
 import {processSwapRequest} from '../../../../utils/helper-methods';
-import {buildTransactionProposal, createTxProposal} from './send';
+import {
+  buildTransactionProposal,
+  createTxProposal,
+  HARDWARE_WALLET_SIGNING_UNSUPPORTED,
+  publishAndSign,
+  startSendPayment,
+} from './send';
 import {ethers} from 'ethers';
 import {abiERC20} from '../../../../navigation/wallet-connect/constants/abis/abi-erc20';
 
@@ -229,5 +235,49 @@ describe('createTxProposal', () => {
     await store.dispatch(createTxProposal(wallet, {amount: 1}) as any);
 
     expect(wallet.createTxProposal.mock.calls[0][0]).toEqual({amount: 1});
+  });
+});
+
+describe('hardware wallet keys', () => {
+  const ledgerKey = {
+    id: 'readonly/ledger',
+    isReadOnly: true,
+    hardwareSource: 'ledger',
+  } as any;
+  const makeHardwareWallet = () =>
+    ({
+      id: 'ledger-wallet',
+      isHardwareWallet: true,
+      credentials: {chain: 'btc', coin: 'btc', network: 'livenet'},
+      createTxProposal: jest.fn(),
+      publishTxProposal: jest.fn(),
+    } as any);
+
+  it('rejects startSendPayment before creating a proposal', async () => {
+    const store = configureTestStore({});
+    const wallet = makeHardwareWallet();
+
+    await expect(
+      store.dispatch(
+        startSendPayment({txp: {amount: 1}, key: ledgerKey, wallet}) as any,
+      ),
+    ).rejects.toThrow(HARDWARE_WALLET_SIGNING_UNSUPPORTED);
+    expect(wallet.createTxProposal).not.toHaveBeenCalled();
+  });
+
+  it('rejects publishAndSign before publishing', async () => {
+    const store = configureTestStore({});
+    const wallet = makeHardwareWallet();
+
+    await expect(
+      store.dispatch(
+        publishAndSign({
+          txp: {id: 'txp1'} as any,
+          key: ledgerKey,
+          wallet,
+        }) as any,
+      ),
+    ).rejects.toThrow(HARDWARE_WALLET_SIGNING_UNSUPPORTED);
+    expect(wallet.publishTxProposal).not.toHaveBeenCalled();
   });
 });
