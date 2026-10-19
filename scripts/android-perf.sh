@@ -74,7 +74,8 @@ export BP_PERF_BUILD=1
     -PAPP_UPLOAD_STORE_FILE=debug.keystore \
     -PAPP_UPLOAD_STORE_PASSWORD=android \
     -PAPP_UPLOAD_KEY_ALIAS=androiddebugkey \
-    -PAPP_UPLOAD_KEY_PASSWORD=android )
+    -PAPP_UPLOAD_KEY_PASSWORD=android \
+    ${PERF_GRADLE_ARGS:-} )
 
 echo ""
 echo "Instrumented APKs:"
