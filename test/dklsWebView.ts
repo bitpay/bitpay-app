@@ -107,7 +107,11 @@ export const createDklsWebViewHost = (reply: (data: string) => void) => {
 };
 
 export const mountDklsWorkerHost = async () => {
-  const {DklsWorkerHost} = require('../src/dkls/DklsWorker');
+  const {
+    DklsWorkerHost,
+    requestDklsWorkerMount,
+  } = require('../src/dkls/DklsWorker');
+  requestDklsWorkerMount();
   let host: ReturnType<typeof createDklsWebViewHost>;
   let renderer!: TestRenderer.ReactTestRenderer;
   await act(async () => {

@@ -41,6 +41,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {requestDklsWorkerMount} from '../../../dkls/DklsWorker';
 import {
   startCreateKeyMultisig,
   startCreateTSSKey,
@@ -352,6 +353,10 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     name: 'totalCopayers',
     defaultValue: 3,
   });
+
+  useEffect(() => {
+    requestDklsWorkerMount();
+  }, []);
 
   useEffect(() => {
     if (watchedRequiredSignatures !== watchedTotalCopayers) {

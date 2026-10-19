@@ -133,6 +133,7 @@ import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
 import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
+import {requestDklsWorkerMount} from '../../../../dkls/DklsWorker';
 import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
@@ -1445,6 +1446,9 @@ export const publishAndSign =
       }
 
       const isTSSSigning = requiresTSSSigning(wallet, key);
+      if (isTSSSigning) {
+        requestDklsWorkerMount();
+      }
       try {
         if (isTSSSigning && !tssCallbacks) {
           tssCallbacks = {
