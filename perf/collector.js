@@ -1,4 +1,5 @@
 const {run} = require('./lib/exec');
+const {addPhases} = require('./analysis/phases');
 
 /**
  * Collects in-app performance payloads from logcat.
@@ -132,7 +133,7 @@ function extractStartupTimeline(payload) {
     extra.process_start_ms = Number((processStart.value - origin).toFixed(2));
   }
 
-  return {
+  return addPhases({
     ...extra,
     native_launch_end_ms: rel('nativeLaunchEnd'),
     js_bundle_exec_ms:
@@ -146,7 +147,7 @@ function extractStartupTimeline(payload) {
     nav_ready_ms: rel('bp_nav_ready'),
     splash_hidden_ms: rel('bp_splash_hidden'),
     content_appeared_ms: rel('contentAppeared'),
-  };
+  });
 }
 
 /** Per-screen navigation transition durations emitted by the nav listener. */
