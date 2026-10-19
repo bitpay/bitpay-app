@@ -22,6 +22,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Platform} from 'react-native';
 import ApplePushProvisioningModule from '../../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {useAppSelector} from '../../../utils/hooks';
+import {useStartupSettled} from '../../../utils/startupSignals';
 import {
   clearMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedStatus,
@@ -83,6 +84,11 @@ export function MoonpayEmbeddedCredentialManager() {
     undefined,
   );
   const userEid = user?.eid ?? anonymousEid;
+  // The check mounts an invisible WebView (on Android, the process's first
+  // WebView initialises Chromium on the UI thread), generates an x25519 key
+  // pair and makes a network round-trip. None of it is needed to draw the
+  // first screen, so it waits until startup has settled.
+  const startupSettled = useStartupSettled();
 
   // If no cached external services config exists yet, use local conditions.
   // Once the config is available, disable embedded MoonPay if embeddedBuyDisabled is true.
@@ -204,7 +210,9 @@ export function MoonpayEmbeddedCredentialManager() {
   // Create a session token and render the check frame
   // -------------------------------------------------------------------------
   useEffect(() => {
-    if (!moonpayEmbeddedEnabled || !userEid) return;
+    // Enabled is published immediately (above) so Buy/Sell sees the usual
+    // "check pending" state; only the check itself waits for startup.
+    if (!moonpayEmbeddedEnabled || !userEid || !startupSettled) return;
 
     // Skip if we already have valid credentials
     if (isMoonpayEmbeddedCredentialsValid()) return;
@@ -312,7 +320,13 @@ export function MoonpayEmbeddedCredentialManager() {
     // when wallet availability changes (false→true), not on every Redux action
     // that produces a new allKeys reference (balance updates, etc.).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moonpayEmbeddedEnabled, userEid, checkTrigger, hasEligibleWallet]);
+  }, [
+    moonpayEmbeddedEnabled,
+    userEid,
+    checkTrigger,
+    hasEligibleWallet,
+    startupSettled,
+  ]);
 
   // -------------------------------------------------------------------------
   // Cleanup timer on unmount

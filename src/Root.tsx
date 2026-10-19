@@ -136,6 +136,7 @@ import {
   startNavigationReporting as perfStartNavigationReporting,
 } from './perf/PerfMonitor';
 import {reportFullyDrawn} from './perf/fullyDrawn';
+import {markFirstScreenShown} from './utils/startupSignals';
 import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
@@ -1079,6 +1080,7 @@ export default () => {
                   // gone and a navigable screen is on-screen. Everything the
                   // harness reports as TTFD is anchored here.
                   perfMark('bp_splash_hidden');
+                  markFirstScreenShown();
                   reportFullyDrawn();
                   perfFlushStartup();
                   perfScheduleLoadProfile();
