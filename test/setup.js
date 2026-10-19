@@ -203,12 +203,6 @@ jest.mock('i18next', () => ({
   t: key => key,
 }));
 
-jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({
-  default: {
-    open: jest.fn(() => Promise.resolve('mocked transport instance')),
-  },
-}));
-
 // SafeAreaView is deprecated in RN 0.82 and fails to load its native deps in tests.
 // This mock intercepts the require inside react-native/index.js's SafeAreaView getter.
 jest.mock('react-native/Libraries/Components/SafeAreaView/SafeAreaView', () => {

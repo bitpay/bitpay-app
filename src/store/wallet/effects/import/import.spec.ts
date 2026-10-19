@@ -6,7 +6,6 @@
  *   - startMigrationMMKVStorage : thunk that reads/writes AsyncStorage (mocked)
  *   - startMigration      : thunk — test the "no directory" / "no keys" early-
  *                           exit paths that trigger navigation without needing BWS
- *   - startImportFromHardwareWallet: basic validation paths (no key / bad coin)
  *   - serverAssistedImport : progress-message queue never delays the result
  *   - getMissingVmAccounts (private) : indirectly via startImportMnemonic flow
  */
@@ -18,7 +17,6 @@ import {
   normalizeMnemonic,
   startMigrationMMKVStorage,
   startMigration,
-  startImportFromHardwareWallet,
   serverAssistedImport,
 } from './import';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -136,16 +134,6 @@ jest.mock('../../utils/wallet', () => ({
   })),
   findKeyByKeyId: jest.fn(() => ({id: 'k1', wallets: []})),
   isCacheKeyStale: jest.fn(() => true),
-}));
-
-// wallet-hardware utils
-jest.mock('../../../../utils/wallet-hardware', () => ({
-  credentialsFromExtendedPublicKey: jest.fn(() =>
-    JSON.stringify({
-      walletId: 'test-wallet-id',
-      walletPrivKey: 'test-priv-key',
-    }),
-  ),
 }));
 
 // currency utils
@@ -399,68 +387,6 @@ describe('startMigration – early-exit paths', () => {
     const store = configureTestStore({});
     // startMigration catches errors and resolves
     await expect(store.dispatch(startMigration())).resolves.toBeUndefined();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// startImportFromHardwareWallet – validation paths (no real BWS calls)
-// ---------------------------------------------------------------------------
-describe('startImportFromHardwareWallet – validation paths', () => {
-  const baseArgs = {
-    key: {
-      id: 'hw-key-id',
-      wallets: [],
-    } as any,
-    hardwareSource: 'ledger' as any,
-    xPubKey: 'xpub-test',
-    accountPath: "m/44'/0'/0'",
-    coin: 'btc' as const,
-    chain: 'btc' as const,
-    derivationStrategy: 'BIP44',
-    accountNumber: 0,
-    network: 'livenet' as any,
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('rejects when hardwareSource is falsy', async () => {
-    const store = configureTestStore({});
-    const args = {...baseArgs, hardwareSource: '' as any};
-    await expect(
-      store.dispatch(startImportFromHardwareWallet(args)),
-    ).rejects.toThrow('Invalid hardware wallet source');
-  });
-
-  it('rejects when coin is not in BitpaySupportedCoins', async () => {
-    const store = configureTestStore({});
-    const args = {...baseArgs, coin: 'INVALIDCOIN' as any};
-    await expect(
-      store.dispatch(startImportFromHardwareWallet(args)),
-    ).rejects.toThrow('Unsupported currency');
-  });
-
-  it('rejects when the wallet already exists in the key', async () => {
-    const store = configureTestStore({});
-    const existingWallet = {
-      credentials: {
-        rootPath: "m/44'/0'/0'",
-        account: 0,
-        network: 'livenet',
-        coin: 'btc',
-        chain: 'btc',
-      },
-      currencyAbbreviation: 'btc',
-      chain: 'btc',
-    };
-    const args = {
-      ...baseArgs,
-      key: {id: 'hw-key-id', wallets: [existingWallet]} as any,
-    };
-    await expect(
-      store.dispatch(startImportFromHardwareWallet(args)),
-    ).rejects.toThrow('already in the app');
   });
 });
 

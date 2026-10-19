@@ -1,12 +1,4 @@
-import Transport from '@ledgerhq/hw-transport';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {HeaderRightContainer} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
@@ -19,7 +11,6 @@ import {
   TransactionProposal,
   TxDetails,
   Wallet,
-  Key,
   TSSSigningStatus,
   TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
@@ -48,7 +39,6 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {useTranslation} from 'react-i18next';
@@ -64,19 +54,6 @@ import BillAlert from '../../../../tabs/shop/bill/components/BillAlert';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParamsForMultipleBills} from '../../../../tabs/shop/bill/utils';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../../components/modal/import-ledger-wallet/utils';
-import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
-import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
@@ -128,12 +105,6 @@ const BillConfirm: React.FC<
   const [txp, updateTxp] = useState(_txp);
   const {fee, networkCost, sendingFrom, total} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -211,50 +182,6 @@ const BillConfirm: React.FC<
       Analytics.track('Bill Pay - Viewed Confirm Page', baseEventParams),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
   }, []);
 
   const openWalletSelector = async (delay?: number) => {
@@ -409,26 +336,6 @@ const BillConfirm: React.FC<
     hidePaymentSent();
   };
 
-  const showError = ({
-    error,
-    defaultErrorMessage,
-    onDismiss,
-  }: {
-    error?: any;
-    defaultErrorMessage: string;
-    onDismiss?: () => Promise<void>;
-  }) => {
-    dispatch(
-      AppActions.showBottomNotificationModal(
-        CustomErrorMessage({
-          title: t('Error'),
-          errMsg: error?.message || defaultErrorMessage,
-          action: () => onDismiss && onDismiss(),
-        }),
-      ),
-    );
-  };
-
   const handlePaymentFailure = async (error: any) => {
     const handled = dispatch(
       handleSendError({error, onDismiss: () => openWalletSelector(400)}),
@@ -452,92 +359,21 @@ const BillConfirm: React.FC<
     dispatch(Analytics.track('Bill Pay - Failed Bill Paid', baseEventParams));
   };
 
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = (args: {transport: Transport}) => {
-    const {transport} = args;
-    transport.on('disconnect', disconnectFnRef.current);
-    setHardwareWalletTransport(transport);
-    startSendingPayment({transport});
-  };
-
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        startSendingPayment({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      showError({
-        defaultErrorMessage: 'Unsupported hardware wallet',
-      });
-    }
-  };
-
-  const startSendingPayment = async ({
-    transport,
-  }: {transport?: Transport} = {}) => {
-    const isUsingHardwareWallet = !!transport;
-
+  const startSendingPayment = async () => {
     dispatch(
       Analytics.track('Bill Pay - Clicked Slide to Confirm', baseEventParams),
     );
     try {
-      if (isUsingHardwareWallet && wallet) {
-        const {chain, network} = wallet.credentials;
-        const configFn = currencyConfigs[chain];
-        if (!configFn) {
-          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-        }
-        const params = configFn(network);
-        await prepareLedgerApp(
-          params.appName,
-          transportRef,
-          setHardwareWalletTransport,
-          onDisconnect,
-          setPromptOpenAppState,
-        );
-        setConfirmHardwareState('sending');
-        await sleep(500);
-        await dispatch(
-          startSendPayment({
-            txp,
-            key,
-            wallet,
-            recipient,
-            transport,
-          }),
-        );
-        setConfirmHardwareState('complete');
-        await sleep(1000);
-        setConfirmHardwareWalletVisible(false);
-      } else {
-        await sendPayment();
-      }
+      await sendPayment();
       await handlePaymentSuccess();
     } catch (err: any) {
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
       await sleep(400);
       await handlePaymentFailure(err);
     }
   };
 
   const onSwipeComplete = async () => {
-    if (key?.hardwareSource) {
-      await onSwipeCompleteHardwareWallet(key);
-    } else {
-      await startSendingPayment();
-    }
+    await startSendingPayment();
   };
 
   useEffect(() => {
@@ -664,22 +500,6 @@ const BillConfirm: React.FC<
           }
         }}
       />
-
-      {key?.hardwareSource && wallet ? (
-        <ConfirmHardwareWalletModal
-          isVisible={isConfirmHardwareWalletModalVisible}
-          state={confirmHardwareState}
-          hardwareSource={key.hardwareSource}
-          transport={hardwareWalletTransport}
-          currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
-          onBackdropPress={() => {
-            setConfirmHardwareWalletVisible(false);
-            setResetSwipeButton(true);
-            setConfirmHardwareState(null);
-          }}
-          onPaired={onHardwareWalletPaired}
-        />
-      ) : null}
     </ConfirmContainer>
   );
 };

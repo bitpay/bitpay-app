@@ -132,7 +132,6 @@ import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-//import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
 import {KeyMethods} from './store/wallet/wallet.models';
 import {
@@ -1208,7 +1207,6 @@ export default () => {
             onRender={logReactProfiler}>
             <BiometricModal />
           </PerformanceProfiler>
-          {/* <ImportLedgerWalletModal /> */}
           <PerformanceProfiler
             id="overlay:wallet-connect"
             onRender={logReactProfiler}>

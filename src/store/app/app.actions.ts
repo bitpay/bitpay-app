@@ -21,11 +21,6 @@ import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
 
-export const importLedgerModalToggled = (show: boolean): AppActionType => ({
-  type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
-  payload: show,
-});
-
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
   payload: network,

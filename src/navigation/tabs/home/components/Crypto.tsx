@@ -84,7 +84,6 @@ import {IsSVMChain, IsVMChain} from '../../../../store/wallet/utils/currency';
 import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../../utils/performanceDebug';
 import {getSinglePreloadCandidate} from '../../../../utils/navigationPreload';
-//import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
 const styles = StyleSheet.create({
   cryptoContainer: {
@@ -452,8 +451,6 @@ export const createHomeCardList = ({
 
   defaults.push({id: 'createWallet', component: <CreateWallet />});
 
-  // defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
-
   if (hasGiftCards) {
     // TODO
   }
@@ -812,13 +809,6 @@ const Crypto = ({active = true}: CryptoProps) => {
                   {translate('Create, import or join a shared wallet')}
                 </Button>
               </NoKeysButtonWrapper>
-              {/*<Button
-                buttonStyle={'secondary'}
-                onPress={() => {
-                  dispatch(AppActions.importLedgerModalToggled(true));
-                }}>
-                {translate('Connect your Ledger Nano X')}
-                </Button> */}
             </ButtonContainer>
           </Column>
         </NoKeysSectionHeaderContainer>
