@@ -1,4 +1,4 @@
-import {InteractionManager, NativeModules} from 'react-native';
+import {NativeModules} from 'react-native';
 import {IS_PERF} from '@env';
 
 /**
@@ -41,6 +41,23 @@ if (enabled) {
 }
 
 const isReady = () => enabled && performanceApi !== null;
+
+/**
+ * Run `cb` once the JS thread goes idle.
+ *
+ * Stands in for `InteractionManager.runAfterInteractions`, which React Native
+ * 0.87 removed: in release builds the export is simply undefined, so calling
+ * it threw on the first navigation and took the instrumented app down at
+ * launch. The timeout bounds how long a busy thread can defer a measurement.
+ */
+function afterIdle(cb: () => void): void {
+  const idle = (global as any).requestIdleCallback;
+  if (typeof idle === 'function') {
+    idle(cb, {timeout: 10000});
+  } else {
+    setTimeout(cb, 0);
+  }
+}
 
 /** Record a point in time. Safe to call from anywhere, including hot paths. */
 export function mark(name: string): void {
@@ -135,7 +152,7 @@ export function flushStartup(): void {
 
   // Let the frame that hides the splash actually render before serializing,
   // so `contentAppeared` is present in the payload.
-  InteractionManager.runAfterInteractions(() => {
+  afterIdle(() => {
     post('startup', {entries: getEntries()});
   });
 }
@@ -172,7 +189,7 @@ export function onNavigationStateChange(currentRouteName?: string): void {
   mark(startMark);
   pendingTransitions.set(currentRouteName, Date.now());
 
-  InteractionManager.runAfterInteractions(() => {
+  afterIdle(() => {
     const started = pendingTransitions.get(currentRouteName);
     if (started === undefined) {
       return;

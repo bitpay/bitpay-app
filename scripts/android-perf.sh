@@ -56,7 +56,21 @@ done
 
 echo "Building instrumented release APK (IS_PERF=true)..."
 # Subshell so the cd cannot leak into the trap's execution context.
-( cd "$REPO_ROOT/android" && ./gradlew app:assembleRelease )
+# Perf builds are signed with the repo's debug keystore, never the Play upload
+# key: they are throwaway artifacts, and one consistent signer means
+# `adb install -r` keeps app data (the imported wallet) between iterations.
+# Override PERF_ABI to build other ABIs; one ABI roughly halves build time.
+PERF_ABI="${PERF_ABI:-arm64-v8a}"
+# Perf bundles must never reach Sentry: their source maps would be
+# attributed to a real release version.
+export SENTRY_DISABLE_AUTO_UPLOAD=true
+( cd "$REPO_ROOT/android" && ./gradlew app:assembleRelease \
+    -PreactNativeArchitectures="$PERF_ABI" \
+    -PperfBuild=true \
+    -PAPP_UPLOAD_STORE_FILE=debug.keystore \
+    -PAPP_UPLOAD_STORE_PASSWORD=android \
+    -PAPP_UPLOAD_KEY_ALIAS=androiddebugkey \
+    -PAPP_UPLOAD_KEY_PASSWORD=android )
 
 echo ""
 echo "Instrumented APKs:"

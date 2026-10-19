@@ -1,4 +1,10 @@
 appId: com.bitpay.wallet
+env:
+  # Override with a richer test wallet, e.g.
+  #   maestro test -e SEED="$(cat ~/.bitpay-perf/seed.txt)" perf/setup/onboard.yaml
+  # The default is the public phrase .maestro/flows already uses. Never pass a
+  # phrase that holds real funds: Maestro echoes inputs to its own logs.
+  SEED: 'gown pizza sell law yard laundry gown action enemy speed embark awkward'
 ---
 # SETUP FLOW — not a measured scenario.
 #
@@ -55,7 +61,7 @@ appId: com.bitpay.wallet
     timeout: 15000
 - tapOn:
     id: 'import-text-input'
-- inputText: 'gown pizza sell law yard laundry gown action enemy speed embark awkward'
+- inputText: ${SEED}
 # The soft keyboard covers the import button on shorter screens (it does not on
 # the CI emulator profile, which is why .maestro/flows/onboarding_to_home.yaml
 # gets away without this). Without the dismiss, the tap lands on a keyboard key

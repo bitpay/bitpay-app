@@ -43,11 +43,15 @@ class MainActivity : ReactActivity() {
         super.onCreate(savedInstanceState)
         (application as MainApplication).addActivityToStack(this.javaClass)
 
-        window.apply {
-            setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
+        // Perf builds leave screen capture on so the UI-parity harness can take
+        // screenshots. PERF_BUILD is false in every production build.
+        if (!BuildConfig.PERF_BUILD) {
+            window.apply {
+                setFlags(
+                    WindowManager.LayoutParams.FLAG_SECURE,
+                    WindowManager.LayoutParams.FLAG_SECURE
+                )
+            }
         }
     }
 
