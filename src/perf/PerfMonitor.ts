@@ -440,6 +440,33 @@ function heapStats(): Record<string, number> | null {
   }
 }
 
+/**
+ * Profiling builds only: have the native side write the Hermes sampled trace
+ * (started in PerfMarks.startJsProfiler) to the app's external files dir,
+ * which `adb pull` can read on a release build. Non-profiling builds reject
+ * immediately and nothing is posted.
+ */
+function dumpJsProfile(): void {
+  const appPerf = NativeModules.AppPerf;
+  if (!appPerf?.dumpJsProfile) {
+    return;
+  }
+  let dir: string;
+  try {
+    dir = require('react-native-fs').ExternalDirectoryPath;
+  } catch {
+    return;
+  }
+  appPerf
+    .dumpJsProfile(`${dir}/bp-startup-profile.json`)
+    .then((file: string) => post('profile', {file}))
+    .catch((e: any) => {
+      if (e?.code !== 'E_NOT_PROFILING') {
+        post('profile', {error: String(e?.message || e)});
+      }
+    });
+}
+
 function flushLoad(label: string): void {
   post('load', {
     label,
@@ -462,5 +489,12 @@ export function scheduleLoadProfile(): void {
   }
   loadScheduled = true;
   afterIdle(() => flushLoad('ttfd'));
-  setTimeout(() => afterIdle(() => flushLoad('settled')), LOAD_SETTLE_MS);
+  setTimeout(
+    () =>
+      afterIdle(() => {
+        flushLoad('settled');
+        dumpJsProfile();
+      }),
+    LOAD_SETTLE_MS,
+  );
 }

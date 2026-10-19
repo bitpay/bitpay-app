@@ -18,6 +18,21 @@ object PerfMarks {
         }
     }
 
+    /**
+     * Profiling builds only: start the Hermes sampling profiler before the JS
+     * runtime exists, so bundle evaluation is sampled too. Dumped by
+     * AppPerfModule.dumpJsProfile once the app settles.
+     */
+    fun startJsProfiler() {
+        if (BuildConfig.PERF_PROFILE) {
+            try {
+                com.facebook.hermes.instrumentation.HermesSamplingProfiler.enable()
+            } catch (t: Throwable) {
+                android.util.Log.w("BitPayPerf", "sampling profiler unavailable: $t")
+            }
+        }
+    }
+
     /** The real process start, which react-native-performance only estimates. */
     fun processStart() {
         if (BuildConfig.PERF_BUILD) {

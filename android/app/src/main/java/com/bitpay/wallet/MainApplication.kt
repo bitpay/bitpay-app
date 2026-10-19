@@ -38,6 +38,7 @@ class MainApplication : Application(), ReactApplication {
         super.onCreate()
         val context: Context = this
         loadReactNative(context)
+        PerfMarks.startJsProfiler()
 
         // Set custom OkHttpClient
         OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory(context))

@@ -80,6 +80,26 @@ public class AppPerfModule extends ReactContextBaseJavaModule {
      * Safe to call more than once — the framework only honours the first call
      * per activity launch and ignores the rest.
      */
+    /**
+     * Profiling builds only (-PperfProfile=true): write the Hermes sampled
+     * trace started in PerfMarks.startJsProfiler() to {@code path} and stop
+     * sampling. Resolves the path, or rejects with why there is no trace.
+     */
+    @ReactMethod
+    public void dumpJsProfile(String path, com.facebook.react.bridge.Promise promise) {
+        if (!BuildConfig.PERF_PROFILE) {
+            promise.reject("E_NOT_PROFILING", "not a profiling build");
+            return;
+        }
+        try {
+            com.facebook.hermes.instrumentation.HermesSamplingProfiler.dumpSampledTraceToFile(path);
+            com.facebook.hermes.instrumentation.HermesSamplingProfiler.disable();
+            promise.resolve(path);
+        } catch (Throwable t) {
+            promise.reject("E_PROFILE", t.toString());
+        }
+    }
+
     @ReactMethod
     public void reportFullyDrawn() {
         final Activity activity = getCurrentActivity();

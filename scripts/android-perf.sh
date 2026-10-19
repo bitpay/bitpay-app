@@ -70,6 +70,7 @@ export BP_PERF_BUILD=1
 ( cd "$REPO_ROOT/android" && ./gradlew app:assembleRelease \
     -PreactNativeArchitectures="$PERF_ABI" \
     -PperfBuild=true \
+    -PperfProfile="$([ "${BP_PERF_PROFILE:-}" = 1 ] && echo true || echo false)" \
     -PAPP_UPLOAD_STORE_FILE=debug.keystore \
     -PAPP_UPLOAD_STORE_PASSWORD=android \
     -PAPP_UPLOAD_KEY_ALIAS=androiddebugkey \
