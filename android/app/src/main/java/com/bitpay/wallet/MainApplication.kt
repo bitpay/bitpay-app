@@ -27,6 +27,7 @@ class MainApplication : Application(), ReactApplication {
                     add(TimerPackage())
                     add(InAppMessagePackage())
                     add(CrashTestPackage())
+                    add(AppPerfPackage())
                 },
             )
         }

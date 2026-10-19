@@ -32,6 +32,9 @@ declare module '@env' {
   export const SENTRY_DSN: string;
   export const REGTEST_BASE_BITPAY_URL: string;
   export const STATIC_CONTENT_CARDS_ENABLED: string;
+  export const IS_MAESTRO: string;
+  /** Set to 'true' only by scripts/android-perf.sh — gates src/perf. */
+  export const IS_PERF: string;
 }
 
 declare module '@sumsub/react-native-mobilesdk-module' {

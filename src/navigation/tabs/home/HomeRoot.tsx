@@ -806,6 +806,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           <View onLayout={onHomeViewportLayout} style={styles.viewport}>
             <ScrollView
               ref={scrollViewRef}
+              testID="home-scroll-view"
               onScroll={onHomeScroll}
               scrollEventThrottle={32}
               // Prevent iOS from injecting automatic top insets which creates a gap

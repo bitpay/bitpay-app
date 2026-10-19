@@ -1,0 +1,85 @@
+appId: com.bitpay.wallet
+---
+# SETUP FLOW — not a measured scenario.
+#
+# Gets the device into the logged-in state that the interaction scenarios
+# (nav-tabs, scroll-home) and the non-fresh startup scenarios assume. Run it
+# once by hand before those:
+#
+#   maestro test perf/setup/onboard.yaml
+#
+# Derived from .maestro/flows/onboarding_to_home.yaml with the screenshot steps
+# removed: MainActivity sets WindowManager.LayoutParams.FLAG_SECURE
+# unconditionally, so screen capture fails against a release build. Screenshots
+# are useless here anyway — this flow exists to establish state, not to document
+# it.
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible:
+      id: 'onboarding-start-view'
+    timeout: 600000
+- waitForAnimationToEnd
+- tapOn:
+    id: 'continue-without-an-account-button'
+
+- extendedWaitUntil:
+    visible:
+      id: 'set-notifications-view'
+    timeout: 15000
+- waitForAnimationToEnd
+- tapOn:
+    id: 'deny-button'
+
+- extendedWaitUntil:
+    visible:
+      id: 'security-view'
+    timeout: 30000
+- waitForAnimationToEnd
+- tapOn:
+    id: 'skip-security-button'
+
+- extendedWaitUntil:
+    visible:
+      id: 'create-key-view'
+    timeout: 15000
+- waitForAnimationToEnd
+- tapOn:
+    id: 'i-already-have-a-key-button'
+
+- extendedWaitUntil:
+    visible:
+      id: 'import-view'
+    timeout: 15000
+- tapOn:
+    id: 'import-text-input'
+- inputText: 'gown pizza sell law yard laundry gown action enemy speed embark awkward'
+# The soft keyboard covers the import button on shorter screens (it does not on
+# the CI emulator profile, which is why .maestro/flows/onboarding_to_home.yaml
+# gets away without this). Without the dismiss, the tap lands on a keyboard key
+# and the flow silently sits on the import screen until the assertion times out.
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: 'import-wallet-button'
+
+# Import scans address history against BWS — genuinely slow on a cold wallet.
+- extendedWaitUntil:
+    visible:
+      id: 'terms-of-use-container'
+    timeout: 300000
+- tapOn:
+    id: 'first-term-checkbox'
+- tapOn:
+    id: 'second-term-checkbox'
+- tapOn:
+    id: 'third-term-checkbox'
+- tapOn:
+    id: 'agree-and-continue-button'
+
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 120000

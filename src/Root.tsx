@@ -128,6 +128,13 @@ import BillGroup, {
 } from './navigation/tabs/shop/bill/BillGroup';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
+import {
+  mark as perfMark,
+  flushStartup as perfFlushStartup,
+  onNavigationStateChange as perfOnNavigationStateChange,
+  startNavigationReporting as perfStartNavigationReporting,
+} from './perf/PerfMonitor';
+import {reportFullyDrawn} from './perf/fullyDrawn';
 import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
@@ -747,6 +754,8 @@ export default () => {
           theme={theme}
           linking={linking}
           onReady={async () => {
+            perfMark('bp_nav_ready');
+            perfStartNavigationReporting();
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
             dispatch(showBlur(pinLockActive || biometricLockActive));
@@ -1040,11 +1049,16 @@ export default () => {
               lastNavStartTsRef.current = Date.now();
             }
 
+            const currentRoute = navigationRef.getCurrentRoute()?.name;
+
+            // Deliberately NOT debounced: the analytics listener above can
+            // afford to coalesce events, but a transition timer that waits
+            // 300ms would measure the debounce instead of the navigation.
+            perfOnNavigationStateChange(currentRoute);
+
             if (splashHiddenRef.current) {
               return;
             }
-
-            const currentRoute = navigationRef.getCurrentRoute()?.name;
 
             if (currentRoute && currentRoute !== 'StartupGate') {
               splashHiddenRef.current = true;
@@ -1058,6 +1072,13 @@ export default () => {
                       }`,
                     );
                   });
+
+                  // This is the app's real time-to-interactive: the splash is
+                  // gone and a navigable screen is on-screen. Everything the
+                  // harness reports as TTFD is anchored here.
+                  perfMark('bp_splash_hidden');
+                  reportFullyDrawn();
+                  perfFlushStartup();
                 });
               });
             }

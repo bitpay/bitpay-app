@@ -13743,6 +13743,11 @@ react-native-passkey@3.3.2:
   resolved "https://registry.yarnpkg.com/react-native-passkey/-/react-native-passkey-3.3.2.tgz#1efe2c8fc875a9e73ba3f08fe83606bb7b6bb5e7"
   integrity sha512-YgXERrBlgVHAYkxGPpncB0zoiRQfZyMMMlWfNTYMyKvOS6muFMlhzk6w5lG4FyEEVrvXHGV4AS6twbmt2Rv8GA==
 
+react-native-performance@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-performance/-/react-native-performance-6.0.0.tgz#66b7060ea8629a5675b0ae20602433040ce25541"
+  integrity sha512-Sca75O8jhqXAnNbqvINnrw248Kv9cIwoGxToD8u2uX+BrkAxxXS+YhClEV5L3JdiOpdNCO1MJ5R9bgs2VkNpFg==
+
 react-native-permissions@5.4.2:
   version "5.4.2"
   resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-5.4.2.tgz#206c0e440cff2ce047514995457bd73a9924fd8b"
