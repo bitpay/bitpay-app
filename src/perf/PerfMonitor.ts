@@ -60,6 +60,20 @@ function afterIdle(cb: () => void): void {
   }
 }
 
+const markedOnce = new Set<string>();
+
+/**
+ * Mark only the first occurrence — for render bodies and effects, which run
+ * many times but whose first run is the startup cost.
+ */
+export function markOnce(name: string): void {
+  if (!enabled || markedOnce.has(name)) {
+    return;
+  }
+  markedOnce.add(name);
+  mark(name);
+}
+
 /** Record a point in time. Safe to call from anywhere, including hot paths. */
 export function mark(name: string): void {
   if (!isReady()) {
@@ -358,7 +372,7 @@ export function recordAction(type: string, ms: number): void {
   entry.ms += ms;
 }
 
-function moduleSummary() {
+function moduleSummary(full: boolean) {
   const stats = (global as any).__BP_MODULE_STATS__;
   if (!stats) {
     return null;
@@ -370,10 +384,23 @@ function moduleSummary() {
     totalSelfMs += records[i + 1];
     all.push([records[i], records[i + 1], records[i + 2]]);
   }
+  // Full records let the harness bucket module cost by startup phase. Kept
+  // compact: [id, selfMs×10, startMs] as integers.
+  const compact = full
+    ? all.map(([id, self, start]) => [
+        id,
+        Math.round(self * 10),
+        Math.round(start),
+      ])
+    : undefined;
   all.sort((a, b) => b[1] - a[1]);
   return {
     count,
     totalSelfMs,
+    // Absolute time of the module timer's origin, on the same clock as the
+    // performance marks, so startMs can be placed on the startup timeline.
+    origin: (global as any).__BP_MODULE_STATS__?.origin,
+    all: compact,
     // [moduleId, selfMs, startMs] — the harness maps ids to paths.
     top: all
       .slice(0, 60)
@@ -416,7 +443,7 @@ function heapStats(): Record<string, number> | null {
 function flushLoad(label: string): void {
   post('load', {
     label,
-    modules: moduleSummary(),
+    modules: moduleSummary(label === 'ttfd'),
     requests: requests.slice(),
     actions: actionCounts,
     heap: heapStats(),

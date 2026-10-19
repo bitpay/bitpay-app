@@ -1,4 +1,5 @@
 import React from 'react';
+import {markOnce as perfMarkOnce} from '../../perf/PerfMonitor';
 import {StyleSheet, View, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -86,6 +87,7 @@ export type TabsStackParamList = {
 export const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
+  perfMarkOnce('bp_tabs_render');
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const insets = useSafeAreaInsets();

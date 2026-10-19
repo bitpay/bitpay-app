@@ -1,4 +1,5 @@
 import {useIsFocused, useScrollToTop, useTheme} from '@react-navigation/native';
+import {markOnce as perfMarkOnce} from '../../../perf/PerfMonitor';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
@@ -455,6 +456,8 @@ const HomeExchangeRatesSection = React.memo(
 );
 
 const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
+  perfMarkOnce('bp_home_render');
+  useEffect(() => perfMarkOnce('bp_home_commit'), []);
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();

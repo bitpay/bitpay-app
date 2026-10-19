@@ -254,6 +254,15 @@ function extractLoadProfile(payloads, moduleMap) {
     profile.actions = settled.actions || {};
   }
 
+  // Which JS initialised in which startup phase. With inline requires, a
+  // module runs on first use, so this shows e.g. how much code the Home
+  // screen's first render pulls in.
+  const startup = (payloads || []).find(p => p.kind === 'startup');
+  const ttfdMods = (byLabel.ttfd || {}).modules;
+  if (startup && ttfdMods && Array.isArray(ttfdMods.all) && ttfdMods.origin) {
+    profile.modulePhases = bucketModulesByPhase(startup, ttfdMods, moduleMap);
+  }
+
   // Module detail from the ttfd snapshot: that is what blocked first use.
   const modSnap = (byLabel.ttfd || settled || {}).modules;
   if (modSnap) {
@@ -266,6 +275,73 @@ function extractLoadProfile(payloads, moduleMap) {
   }
 
   return {metrics, profile, sawLabels: Object.keys(byLabel)};
+}
+
+function bucketModulesByPhase(startupPayload, mods, moduleMap) {
+  const marks = (startupPayload.entries || [])
+    .filter(
+      e =>
+        e.entryType === 'mark' &&
+        e.name.startsWith('bp_') &&
+        !e.name.includes(':') &&
+        !e.name.startsWith('bp_native_'),
+    )
+    .sort((a, b) => a.startTime - b.startTime);
+  const bounds = marks.map(m => ({name: m.name.slice(3), at: m.startTime}));
+  const phases = [];
+  const phaseFor = absStart => {
+    let i = 0;
+    while (i < bounds.length && absStart >= bounds[i].at) {
+      i++;
+    }
+    const from = i === 0 ? 'bundle start' : bounds[i - 1].name;
+    const to = i === bounds.length ? 'after' : bounds[i].name;
+    return `${from} → ${to}`;
+  };
+  const byPhase = new Map();
+  mods.all.forEach(([id, self10, start]) => {
+    const key = phaseFor(mods.origin + start);
+    if (!byPhase.has(key)) {
+      byPhase.set(key, {phase: key, count: 0, selfMs: 0, modules: []});
+    }
+    const b = byPhase.get(key);
+    b.count++;
+    b.selfMs += self10 / 10;
+    b.modules.push({
+      path: (moduleMap && moduleMap[id]) || `#${id}`,
+      selfMs: self10 / 10,
+    });
+  });
+  byPhase.forEach(b => {
+    b.selfMs = Number(b.selfMs.toFixed(1));
+    b.modules.sort((x, y) => y.selfMs - x.selfMs);
+    b.top = b.modules.slice(0, 12);
+    // Package-level rollup: which dependency dominates the phase.
+    const pkgs = {};
+    b.modules.forEach(m => {
+      const pm = m.path.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
+      const pkg = pm ? pm[1] : m.path.split('/').slice(0, 3).join('/');
+      const e = pkgs[pkg] || (pkgs[pkg] = {count: 0, selfMs: 0});
+      e.count++;
+      e.selfMs += m.selfMs;
+    });
+    b.packages = Object.entries(pkgs)
+      .map(([pkg, v]) => ({
+        pkg,
+        count: v.count,
+        selfMs: Number(v.selfMs.toFixed(1)),
+      }))
+      .sort((x, y) => y.selfMs - x.selfMs)
+      .slice(0, 12);
+    delete b.modules;
+    phases.push(b);
+  });
+  const order = bounds.map(b => b.name);
+  return phases.sort(
+    (a, b) =>
+      order.indexOf(a.phase.split(' → ')[0]) -
+      order.indexOf(b.phase.split(' → ')[0]),
+  );
 }
 
 module.exports = {

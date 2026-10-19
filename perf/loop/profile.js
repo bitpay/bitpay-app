@@ -88,6 +88,22 @@ console.log(
   );
 });
 
+if (p.modulePhases) {
+  console.log('\nMODULE INIT BY STARTUP PHASE (count, self ms; top packages)');
+  p.modulePhases.forEach(ph => {
+    console.log(`\n  ${ph.phase}: ${ph.count} modules, ${ph.selfMs} ms`);
+    ph.packages
+      .slice(0, 6)
+      .forEach(x =>
+        console.log(
+          `      ${String(x.selfMs).padStart(7)} ms ${String(x.count).padStart(
+            5,
+          )}  ${x.pkg}`,
+        ),
+      );
+  });
+}
+
 console.log('\nREQUESTS (count, total ms, KB, endpoint)');
 Object.entries(p.requests || {})
   .sort((a, b) => b[1].bytes - a[1].bytes)
