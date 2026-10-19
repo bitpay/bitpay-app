@@ -184,7 +184,7 @@ const WalletConnectConfirm = () => {
 
   const requestV2: WCV2RequestType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
-      WALLET_CONNECT_V2.requests.find(requestV2 => requestV2.topic === topic),
+      WALLET_CONNECT_V2.requests.find(req => req.topic === topic),
   );
 
   let VerifyIcon: React.FC<SvgProps> | null = null;
@@ -247,6 +247,7 @@ const WalletConnectConfirm = () => {
 
   useEffect(() => {
     _setTxDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to build the initial tx proposal
   }, []);
 
   const feeOptions = GetFeeOptions(wallet.chain);
@@ -445,7 +446,7 @@ const WalletConnectConfirm = () => {
     if (accountDisconnected) {
       navigation.goBack();
     }
-  }, [accountDisconnected]);
+  }, [accountDisconnected, navigation]);
 
   useEffect(() => {
     if (!requestV2) {
@@ -461,7 +462,7 @@ const WalletConnectConfirm = () => {
       }
     };
     handleRequestDismiss();
-  }, [requestDismissed]);
+  }, [requestDismissed, navigation]);
 
   return (
     <ConfirmContainer>

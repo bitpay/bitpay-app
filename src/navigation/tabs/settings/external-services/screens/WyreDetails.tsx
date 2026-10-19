@@ -54,8 +54,7 @@ const WyreDetails: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
-  const [paymentData, setPaymentData] =
-    useState<WyrePaymentData>(paymentRequest);
+  const [paymentData] = useState<WyrePaymentData>(paymentRequest);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedTransferId, setCopiedTransferId] = useState(false);
   const [copiedOrderId, setCopiedOrderId] = useState(false);

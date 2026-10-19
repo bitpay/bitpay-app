@@ -606,6 +606,7 @@ export async function findWorkletLastPointAtOrBefore(
   let hi = idx.chunks.length - 1;
   let candidate = -1;
   while (lo <= hi) {
+    // eslint-disable-next-line no-bitwise -- integer midpoint for the binary search over snapshot chunks
     const mid = (lo + hi) >> 1;
     const chunkMeta = idx.chunks[mid];
     if (chunkMeta.toTs >= args.tsMs) {

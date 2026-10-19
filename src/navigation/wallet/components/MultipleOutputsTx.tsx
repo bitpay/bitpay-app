@@ -9,7 +9,6 @@ import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {H7} from '../../../components/styled/Text';
 import CardSvg from '../../../../assets/img/wallet/transactions/card.svg';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SendToPill from './SendToPill';
 import {
@@ -195,20 +194,20 @@ const MultipleOutputsTx = ({
   const getIcon = (address: string) => {
     const existsContact = findContact(contactList, address);
 
-    const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
-    const img = CurrencyListIcons[coin]
-      ? CurrencyListIcons[coin]
+    const coinAbbreviation = getCurrencyAbbreviation(tx.coin, tx.chain);
+    const img = CurrencyListIcons[coinAbbreviation]
+      ? CurrencyListIcons[coinAbbreviation]
       : foundToken &&
         // @ts-ignore
         foundToken?.logoURI
       ? // @ts-ignore
         (foundToken.logoURI as string)
       : '';
-    const badgeImg = getBadgeImg(coin, chain);
+    const badgeImg = getBadgeImg(coinAbbreviation, chain);
     const icon = tx.customData?.recipientEmail ? (
       <ContactIcon
         name={tx.customData?.recipientEmail}
-        coin={coin}
+        coin={coinAbbreviation}
         chain={chain}
         address={address}
         size={18}
@@ -216,7 +215,7 @@ const MultipleOutputsTx = ({
     ) : existsContact ? (
       <ContactIcon
         name={getDesc()}
-        coin={coin}
+        coin={coinAbbreviation}
         chain={chain}
         address={address}
         size={18}
@@ -241,14 +240,14 @@ const MultipleOutputsTx = ({
     address: string;
     email?: string;
   }) => {
-    const {network, coin, chain} = tx;
+    const {network: txNetwork, coin: txCoin, chain: txChain} = tx;
     navigation.navigate('ContactsAdd', {
       contact: {
         address,
         email,
-        network,
-        coin,
-        chain,
+        network: txNetwork,
+        coin: txCoin,
+        chain: txChain,
         tokenAddress: tokenAddress?.toLowerCase(),
       },
     });

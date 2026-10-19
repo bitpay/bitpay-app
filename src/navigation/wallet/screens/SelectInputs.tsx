@@ -299,11 +299,13 @@ const SelectInputs = () => {
         defaultAltCurrency.isoCode,
       ),
     );
-  }, [totalAmount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputes the fiat total only when totalAmount changes; rates and wallet fields are read at that time
+  }, [totalAmount, dispatch]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async mount-time UTXO load; state is only set after awaits
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to load the wallet UTXOs
   }, []);
 
   useEffect(() => {
@@ -316,12 +318,13 @@ const SelectInputs = () => {
     );
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentionally rebuilt only when lockedUtxos changes
     setUiFormattedWallet(_uiFormattedWallet);
-  }, [lockedUtxos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuilds the wallet row only when lockedUtxos change; wallet, rates and currency are read at that time
+  }, [lockedUtxos, dispatch]);
 
   const inputsSelectAll = (UtxosWithFiatAmount: UtxoWithFiatAmount[]) => {
-    let totalAmount = 0;
+    let selectedTotal = 0;
     const updatedUtxos = UtxosWithFiatAmount.map(utxo => {
-      totalAmount += Number(utxo.amount);
+      selectedTotal += Number(utxo.amount);
       return {...utxo, checked: !utxo.checked};
     });
     setInputs(updatedUtxos);
@@ -329,7 +332,7 @@ const SelectInputs = () => {
       setTotalAmount(Number(0).toFixed(precision?.unitDecimals));
       setSelectAll(false);
     } else {
-      setTotalAmount(Number(totalAmount).toFixed(precision!.unitDecimals));
+      setTotalAmount(Number(selectedTotal).toFixed(precision!.unitDecimals));
       setSelectAll(true);
     }
   };
@@ -488,7 +491,8 @@ const SelectInputs = () => {
         ) : null}
       </>
     ),
-    [lockedUtxos, hideLockedUtxos],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- precision is re-created every render from the route-param wallet; memo keyed on the UTXO list and toggle
+    [lockedUtxos, hideLockedUtxos, t],
   );
 
   return (

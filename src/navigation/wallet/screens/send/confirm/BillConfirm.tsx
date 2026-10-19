@@ -417,26 +417,28 @@ const BillConfirm: React.FC<
                   : '',
               img: () => (
                 <View style={{flexDirection: 'row'}}>
-                  {billPayments.map(({billPayAccount}, index) => (
-                    <Image
-                      key={index}
-                      style={{
-                        height: 18,
-                        width: 18,
-                        marginTop: -2,
-                        borderRadius: 10,
-                        marginRight: 2,
-                        ...(billPayments.length > 1 && {
-                          marginRight:
-                            index === billPayments.length - 1 ? -5 : -3,
-                          zIndex: billPayments.length - index,
-                        }),
-                      }}
-                      source={{
-                        uri: billPayAccount[billPayAccount.type].merchantIcon,
-                      }}
-                    />
-                  ))}
+                  {billPayments.map(
+                    ({billPayAccount: paymentAccount}, index) => (
+                      <Image
+                        key={index}
+                        style={{
+                          height: 18,
+                          width: 18,
+                          marginTop: -2,
+                          borderRadius: 10,
+                          marginRight: 2,
+                          ...(billPayments.length > 1 && {
+                            marginRight:
+                              index === billPayments.length - 1 ? -5 : -3,
+                            zIndex: billPayments.length - index,
+                          }),
+                        }}
+                        source={{
+                          uri: paymentAccount[paymentAccount.type].merchantIcon,
+                        }}
+                      />
+                    ),
+                  )}
                 </View>
               ),
             }}

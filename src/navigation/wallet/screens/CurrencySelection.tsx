@@ -475,7 +475,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         />
       );
     },
-    [memoizedOnToggle, key?.hardwareSource, isMultisigContext],
+    [memoizedOnToggle, key?.hardwareSource],
   );
 
   return (

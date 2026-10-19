@@ -35,6 +35,7 @@ const Tabs: React.FC<TabsProps> = props => {
       ...t,
       key: 'tab-' + idx,
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- defaultLanguage is an intentional trigger so translated tab titles from tabs() are rebuilt on language change
   }, [tabs, defaultLanguage]);
 
   const TabButtons = memoizedTabs.map((d, idx) => (

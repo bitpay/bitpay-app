@@ -560,7 +560,7 @@ export const startTSSSigning =
     callbacks: TSSSigningCallbacks;
     password?: string | undefined;
   }): Effect<Promise<TransactionProposal>> =>
-  async (dispatch, getState): Promise<TransactionProposal> => {
+  async (): Promise<TransactionProposal> => {
     const {key, wallet, txp, callbacks, password} = opts;
 
     return new Promise(async (resolve, reject) => {
@@ -718,7 +718,7 @@ export const pollTxpUntilBroadcast = async (
       if (updatedTxp.status === 'broadcasted') {
         return updatedTxp;
       }
-    } catch (_) {}
+    } catch {}
   }
   throw new Error(
     'It seems there was a problem broadcasting the transaction. Please try creating a new one.',
@@ -794,7 +794,7 @@ export const joinTSSSigningSession =
         logManager.debug('[TSS Join] Broadcast complete');
         await callbacks.onStatusChange('complete');
         return broadcastedTx as TransactionProposal;
-      } catch (_) {
+      } catch {
         // Another participant may have broadcasted already — poll for it.
         logManager.debug(
           '[TSS Join] Broadcast failed, polling for broadcasted status',

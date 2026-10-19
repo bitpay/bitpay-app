@@ -227,7 +227,9 @@ const MoonpaySellDetails: React.FC = () => {
       allWallets = [...allWallets, ...key.wallets];
     });
 
-    wallet = allWallets.find(wallet => wallet.id === sellOrder.wallet_id);
+    wallet = allWallets.find(
+      walletItem => walletItem.id === sellOrder.wallet_id,
+    );
     setSourceWallet(wallet);
   };
 
@@ -236,6 +238,7 @@ const MoonpaySellDetails: React.FC = () => {
     getSellTransactionDetails();
     getWallet();
     logger.debug('Sell order details: ' + JSON.stringify(sellOrder));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status, fetch the sell transaction, resolve the source wallet and log the order
   }, []);
 
   useEffect(() => {
@@ -562,7 +565,7 @@ const MoonpaySellDetails: React.FC = () => {
                               );
                               updateStatusDescription();
                             }
-                          } catch (err) {
+                          } catch {
                             await sleep(500);
                             dispatch(
                               showBottomNotificationModal({

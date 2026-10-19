@@ -640,15 +640,15 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    intervalId?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr('expired');
-      if (countDown) {
-        clearInterval(countDown);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
       return;
     }
@@ -1303,6 +1303,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         clearTimeout(quoteRefreshTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; cleanup clears timers on unmount
   }, []);
 
   useEffect(() => {
@@ -1318,7 +1319,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         );
       }
     });
-  }, [embeddedQuoteData?.paymentDisclosures]);
+  }, [embeddedQuoteData?.paymentDisclosures, logger]);
 
   useEffect(() => {
     if (
@@ -1340,7 +1341,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
-  }, [remainingTimeStr, expiredAnalyticSent, challengeUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on expiry state changes only; offer/wallet/paymentMethod are read at that time for the analytics payload
+  }, [remainingTimeStr, expiredAnalyticSent, challengeUrl, dispatch]);
 
   // SEPA: once the purchase is registered the customer still has to send the
   // money, so the screen turns into the deposit instructions.

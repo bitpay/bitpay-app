@@ -61,6 +61,7 @@ const TransakSettings: React.FC = () => {
         `Coming from payment request: transakExternalId: ${incomingPaymentRequest.transakExternalId}`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ const TransakSettings: React.FC = () => {
       );
       setTransactions(transakPaymentRequests);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
   }, [isFocused]);
 
   return (

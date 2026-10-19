@@ -1,3 +1,4 @@
+/* global atob, btoa -- provided by Hermes (RN >= 0.74) and by Node in Jest */
 import { Crypto } from '@peculiar/webcrypto';
 import { install as installEd25519 } from '@solana/webcrypto-ed25519-polyfill';
 import * as RNWasm from 'react-native-webassembly';

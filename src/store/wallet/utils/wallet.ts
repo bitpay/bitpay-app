@@ -840,7 +840,7 @@ export const buildUIFormattedWallet: (
     tssMetadata,
   } = wallet;
 
-  const buildUIFormattedWallet = {
+  const uiFormattedWallet = {
     id,
     keyId,
     img,
@@ -920,27 +920,25 @@ export const buildUIFormattedWallet: (
     const fiatPendingBalanceData = computeAndFormatFiatBalance(
       balance.satPending,
     );
-    buildUIFormattedWallet.fiatBalance = fiatBalanceData.fiatAmount;
-    buildUIFormattedWallet.fiatLockedBalance = fiatLockedBalanceData.fiatAmount;
-    buildUIFormattedWallet.fiatConfirmedLockedBalance =
+    uiFormattedWallet.fiatBalance = fiatBalanceData.fiatAmount;
+    uiFormattedWallet.fiatLockedBalance = fiatLockedBalanceData.fiatAmount;
+    uiFormattedWallet.fiatConfirmedLockedBalance =
       fiatConfirmedLockedBalanceData.fiatAmount;
-    buildUIFormattedWallet.fiatSpendableBalance =
+    uiFormattedWallet.fiatSpendableBalance =
       fiatSpendableBalanceData.fiatAmount;
-    buildUIFormattedWallet.fiatPendingBalance =
-      fiatPendingBalanceData.fiatAmount;
+    uiFormattedWallet.fiatPendingBalance = fiatPendingBalanceData.fiatAmount;
 
-    buildUIFormattedWallet.fiatBalanceFormat = fiatBalanceData.formatted;
-    buildUIFormattedWallet.fiatLockedBalanceFormat =
-      fiatLockedBalanceData.formatted;
-    buildUIFormattedWallet.fiatConfirmedLockedBalanceFormat =
+    uiFormattedWallet.fiatBalanceFormat = fiatBalanceData.formatted;
+    uiFormattedWallet.fiatLockedBalanceFormat = fiatLockedBalanceData.formatted;
+    uiFormattedWallet.fiatConfirmedLockedBalanceFormat =
       fiatConfirmedLockedBalanceData.formatted;
-    buildUIFormattedWallet.fiatSpendableBalanceFormat =
+    uiFormattedWallet.fiatSpendableBalanceFormat =
       fiatSpendableBalanceData.formatted;
-    buildUIFormattedWallet.fiatPendingBalanceFormat =
+    uiFormattedWallet.fiatPendingBalanceFormat =
       fiatPendingBalanceData.formatted;
   }
 
-  return buildUIFormattedWallet;
+  return uiFormattedWallet;
 };
 
 export const getWalletAccountVisibilityKey = (
@@ -1210,8 +1208,8 @@ export const buildAccountList = (
     });
   }
 
-  const sortedAccountMap = Object.keys(accountMap).reduce((acc, key) => {
-    const account = {...accountMap[key]};
+  const sortedAccountMap = Object.keys(accountMap).reduce((acc, accountKey) => {
+    const account = {...accountMap[accountKey]};
     if (!account.wallets) {
       return acc;
     }
@@ -1238,7 +1236,7 @@ export const buildAccountList = (
       }
     });
     // @ts-ignore
-    acc[key] = account;
+    acc[accountKey] = account;
     return acc;
   }, {}) as {
     [key: string]: Partial<AccountRowProps>;

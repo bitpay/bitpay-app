@@ -216,7 +216,7 @@ const RequestSpecificAmountQR = () => {
         </ShareIconContainer>
       ),
     });
-  }, [navigation, walletName, qrValue]);
+  }, [navigation, walletName, qrValue, dispatch]);
 
   const init = async () => {
     try {
@@ -240,7 +240,7 @@ const RequestSpecificAmountQR = () => {
       setFormattedAmountObj(_formattedAmountObj);
       setQrValue(_qrValue);
       setLoading(false);
-    } catch (e) {
+    } catch {
       setLoading(false);
     }
   };
@@ -248,6 +248,7 @@ const RequestSpecificAmountQR = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- init() is async; its synchronous setState is the loading flag before the await
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when wallet changes; init reads the current amount and wallet fields
   }, [wallet]);
 
   const [copied, setCopied] = useState(false);

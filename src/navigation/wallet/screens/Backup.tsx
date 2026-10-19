@@ -173,7 +173,8 @@ const BackupScreen = ({route}: BackupScreenProps) => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- header is set when navigation or t change; context, key, walletTermsAccepted and gotoBackup are read at that time
+  }, [navigation, t, dispatch]);
 
   useAndroidBackHandler(() => true);
 

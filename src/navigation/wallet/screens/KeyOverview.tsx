@@ -1891,6 +1891,7 @@ const KeyOverview = () => {
         </WalletListHeader>
       </PerformanceProfiler>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- known bug (RN-3026): missing shouldShowLegacyChangeRowSkeleton
   }, [
     chartableVisibleKeyWallets,
     dispatch,

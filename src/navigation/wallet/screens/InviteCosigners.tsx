@@ -443,13 +443,6 @@ const ModalTitle = ({
   );
 };
 
-const HeaderButton = ({
-  style,
-  ...rest
-}: React.ComponentProps<typeof RNTouchableOpacity>) => (
-  <RNTouchableOpacity style={[styles.headerButton, style]} {...rest} />
-);
-
 const PlaceholderView = ({
   style,
   ...rest
@@ -522,10 +515,6 @@ const StatusContainer = ({
   ...rest
 }: React.ComponentProps<typeof View>) => (
   <View style={[styles.statusContainer, style]} {...rest} />
-);
-
-const QRCodeWrapper = ({style, ...rest}: React.ComponentProps<typeof View>) => (
-  <View style={[styles.qrCodeWrapper, style]} {...rest} />
 );
 
 const ShareButton = ({
@@ -687,7 +676,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     return null;
   }
 
-  const {m, n, walletName, copayers = []} = tssSession;
+  const {copayers = []} = tssSession;
   const allInvited = copayers.every(c => c.status === 'invited');
 
   const handleOpenModal = (copayer: TSSCopayerInfo) => {
@@ -832,6 +821,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- known bug (RN-3026): called after the early return above
   useEffect(() => {
     if (tssSession?.status === 'ceremony_in_progress') {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- resumes an in-progress ceremony on mount (imperative async flow)
@@ -840,7 +830,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     return () => {
       dispatch(cancelTSSCeremony(keyId));
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount (resume an in-progress ceremony); cleanup cancels it on unmount
+  }, [dispatch]);
 
   const getModalTitle = () => {
     // if (currentStep === 3) {

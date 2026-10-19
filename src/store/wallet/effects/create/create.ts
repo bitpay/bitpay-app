@@ -297,7 +297,7 @@ export const addWallet =
                     associatedWallet,
                     opts,
                   );
-                } catch (err) {
+                } catch {
                   logManager.debug(
                     `Error in getTokenContractInfo for opts: ${JSON.stringify(
                       opts,
@@ -626,8 +626,8 @@ const createWallet =
                   return reject(err);
                 }
 
-                const account = options.account || 0;
-                if (account >= 20) {
+                const currentAccount = options.account || 0;
+                if (currentAccount >= 20) {
                   return reject(
                     new Error(
                       t(
@@ -643,7 +643,7 @@ const createWallet =
                       key,
                       coin,
                       chain,
-                      options: {...options, account: account + 1},
+                      options: {...options, account: currentAccount + 1},
                     }),
                   ),
                 );
@@ -669,7 +669,7 @@ const createTokenWallet =
     tokenAddress: string,
     tokenOptsByAddress: {[key in string]: Token},
   ): Effect<Promise<API>> =>
-  async (dispatch): Promise<API> => {
+  async (): Promise<API> => {
     return new Promise((resolve, reject) => {
       try {
         const bwcClient = BWC.getClient();
@@ -769,7 +769,7 @@ const createTokenWallet =
 
 export const startCreateKeyWithOpts =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  async (dispatch): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
         const _key = BWC.createKey({
@@ -901,7 +901,6 @@ export const getDecryptPassword =
 export const detectAndCreateTokensForEachEvmWallet =
   ({
     key,
-    force,
     chain,
     tokenAddress,
   }: {
@@ -926,7 +925,7 @@ export const detectAndCreateTokensForEachEvmWallet =
           !findByTokenWalletId(
             w.tokens,
             buildTokenWalletId(w.id, tokenAddress),
-            t => t,
+            item => item,
           );
         return _IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
@@ -1068,7 +1067,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                   }),
                 );
               }
-            } catch (err) {
+            } catch {
               logManager.debug(
                 `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
               );

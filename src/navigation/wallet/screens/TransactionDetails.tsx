@@ -449,6 +449,7 @@ const TransactionDetailsContent = ({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async mount-time load; state is only set after awaits
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to load the transaction details
   }, []);
 
   const speedup = async () => {

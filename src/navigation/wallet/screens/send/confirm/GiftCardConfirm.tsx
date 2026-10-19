@@ -77,7 +77,6 @@ import {useOngoingProcess} from '../../../../../contexts';
 import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
-import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -300,8 +299,8 @@ const Confirm = () => {
       handleCreateTxProposalError(err, onDismiss),
     );
     if (errorMessage === GiftCardInvoiceCreationErrors.kycRequired) {
-      const route = user ? 'login' : 'signup';
-      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/${route}?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
+      const authRoute = user ? 'login' : 'signup';
+      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/${authRoute}?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
       errorMessageConfig = {
         type: 'warning',
         message: t(

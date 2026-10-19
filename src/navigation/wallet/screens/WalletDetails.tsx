@@ -1085,11 +1085,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
   const setNeedActionTxps = useCallback(
-    (pendingTxps: TransactionProposal[]) => {
+    (txps: TransactionProposal[]) => {
       const txpsPending: TransactionProposal[] = [];
       const txpsUnsent: TransactionProposal[] = [];
       const formattedPendingTxps = BuildUiFriendlyList(
-        pendingTxps,
+        txps,
         currencyAbbreviation,
         chain,
         [],
@@ -1443,11 +1443,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const viewOnBlockchain = async (withConfirmation?: boolean) => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
-    const chain = fullWalletObj.chain.toLowerCase();
+    const walletChain = fullWalletObj.chain.toLowerCase();
 
     if (
-      ['eth', 'matic', 'xrp', 'arb', 'base', 'op', 'sol'].includes(chain) ||
-      IsERCToken(coin, chain)
+      ['eth', 'matic', 'xrp', 'arb', 'base', 'op', 'sol'].includes(
+        walletChain,
+      ) ||
+      IsERCToken(coin, walletChain)
     ) {
       let address;
       try {
@@ -1465,17 +1467,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrls}account/${address}`
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
-      if (SUPPORTED_VM_TOKENS.includes(chain)) {
+      if (SUPPORTED_VM_TOKENS.includes(walletChain)) {
         url =
           fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`
-            : `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+            ? `https://${BitpaySupportedCoins[walletChain].paymentInfo.blockExplorerUrls}address/${address}`
+            : `https://${BitpaySupportedCoins[walletChain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
       }
-      if (IsERCToken(coin, chain)) {
+      if (IsERCToken(coin, walletChain)) {
         url =
           fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
-            : `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+            ? `https://${BitpaySupportedCoins[walletChain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
+            : `https://${BitpaySupportedCoins[walletChain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
       }
 
       if (url) {

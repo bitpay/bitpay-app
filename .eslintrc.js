@@ -33,6 +33,8 @@ module.exports = {
   rules: {
     'react-native/no-inline-styles': 0,
     ...compilerRules('warn'),
+    // `void promise;` marks a deliberately unawaited promise.
+    'no-void': ['warn', {allowAsStatement: true}],
   },
   overrides: [
     {

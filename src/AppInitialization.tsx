@@ -15,7 +15,8 @@ export const AppInitialization = ({children}: {children: React.ReactNode}) => {
       }
     };
     initializeApp();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the migration flag is only checked at startup
+  }, [dispatch]);
 
   if (!migrationMMKVStorageComplete) {
     return <></>;

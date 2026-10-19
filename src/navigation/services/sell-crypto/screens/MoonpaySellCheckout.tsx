@@ -109,7 +109,6 @@ import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
-import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 const styles = StyleSheet.create({
@@ -157,7 +156,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const sellOrder: MoonpaySellOrderData = useAppSelector(
     ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCryptoExternalId],
   );
-  const [isToken, setIsToken] = useState(
+  const [isToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -167,7 +166,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [expiredAnalyticSent, setExpiredAnalyticSent] =
     useState<boolean>(false);
-  const [amountExpected, setAmountExpected] = useState<number>(amount);
+  const [amountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
@@ -223,15 +222,15 @@ const MoonpaySellCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    intervalId?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr('expired');
-      if (countDown) {
-        clearInterval(countDown);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
       return;
     }
@@ -407,15 +406,15 @@ const MoonpaySellCheckout: React.FC = () => {
     }
 
     createTx(wallet, toAddress, depositSat, destinationTag)
-      .then(async ctxp => {
-        setCtxp(ctxp);
-        setFee(ctxp.fee);
+      .then(async newCtxp => {
+        setCtxp(newCtxp);
+        setFee(newCtxp.fee);
         setIsLoading(false);
         hideOngoingProcess();
         await sleep(400);
 
         if (useSendMax) {
-          showSendMaxWarning(ctxp.coin, ctxp.chain, wallet.tokenAddress);
+          showSendMaxWarning(newCtxp.coin, newCtxp.chain, wallet.tokenAddress);
         }
         return;
       })
@@ -441,37 +440,37 @@ const MoonpaySellCheckout: React.FC = () => {
   };
 
   const createTx = async (
-    wallet: Wallet,
-    toAddress: string,
+    txWallet: Wallet,
+    txToAddress: string,
     depositSat: number,
     destTag?: string,
   ): Promise<TransactionProposal> => {
     try {
-      const message = `Sold ${wallet.currencyAbbreviation.toUpperCase()}`;
+      const message = `Sold ${txWallet.currencyAbbreviation.toUpperCase()}`;
       let outputs = [];
 
       outputs.push({
-        toAddress,
+        toAddress: txToAddress,
         amount: depositSat,
         message: message,
       });
 
       let txp: Partial<TransactionProposal> = {
-        toAddress,
+        toAddress: txToAddress,
         amount: depositSat,
-        chain: wallet.chain,
+        chain: txWallet.chain,
         outputs,
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
         customData: {
-          moonpay: toAddress,
+          moonpay: txToAddress,
           service: 'moonpay',
         },
       };
 
       if (isToken) {
-        if (wallet.tokenAddress) {
-          txp.tokenAddress = wallet.tokenAddress;
+        if (txWallet.tokenAddress) {
+          txp.tokenAddress = txWallet.tokenAddress;
           if (IsEVMChain(txp.chain!)) {
             if (txp.outputs) {
               for (const output of txp.outputs) {
@@ -480,19 +479,19 @@ const MoonpaySellCheckout: React.FC = () => {
                 }
                 if (!output.data) {
                   output.data = BWC.getCore()
-                    .Transactions.get({chain: getCWCChain(wallet.chain)})
+                    .Transactions.get({chain: getCWCChain(txWallet.chain)})
                     .encodeData({
                       recipients: [
                         {address: output.toAddress, amount: output.amount},
                       ],
-                      tokenAddress: wallet.tokenAddress,
+                      tokenAddress: txWallet.tokenAddress,
                     });
                 }
               }
             }
           } else if (IsSVMChain(txp.chain!)) {
             const receiveAddressSolanaTokens: SolanaTokenData[] =
-              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
+              await getSolanaATAs(txWallet?.receiveAddress!, txWallet?.network);
 
             let ataReceiveAddress: SolanaTokenData | undefined;
             if (receiveAddressSolanaTokens) {
@@ -510,7 +509,7 @@ const MoonpaySellCheckout: React.FC = () => {
               const _ataReceiveAddress =
                 await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
-                  feePayer: wallet?.receiveAddress!,
+                  feePayer: txWallet?.receiveAddress!,
                 });
               txp.fromAta = _ataReceiveAddress;
               logger.debug(
@@ -520,7 +519,7 @@ const MoonpaySellCheckout: React.FC = () => {
 
             if (txp.outputs) {
               const toAddressSolanaTokens: SolanaTokenData[] =
-                await getSolanaATAs(toAddress, wallet?.network);
+                await getSolanaATAs(txToAddress, txWallet?.network);
 
               let ataToAddress: string | undefined;
               if (toAddressSolanaTokens) {
@@ -532,16 +531,16 @@ const MoonpaySellCheckout: React.FC = () => {
               if (!ataToAddress) {
                 ataToAddress = await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
-                  feePayer: toAddress,
+                  feePayer: txToAddress,
                 });
-                setAtaOwnerAddress(toAddress);
+                setAtaOwnerAddress(txToAddress);
                 logger.debug(
                   `Using ATA toAddress from getOrCreateAssociatedTokenAddress: ${ataToAddress}`,
                 );
               }
 
               for (const output of txp.outputs) {
-                if (output.toAddress === toAddress) {
+                if (output.toAddress === txToAddress) {
                   output.toAddress = ataToAddress;
                 }
               }
@@ -550,7 +549,7 @@ const MoonpaySellCheckout: React.FC = () => {
         }
       }
 
-      if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
+      if (['btc', 'eth', 'matic'].includes(txWallet.chain)) {
         txp.feeLevel = 'priority';
       } // Avoid expired order due to slow TX confirmation
 
@@ -558,8 +557,8 @@ const MoonpaySellCheckout: React.FC = () => {
         txp.destinationTag = Number(destTag);
       }
 
-      const ctxp = await dispatch(createTxProposal(wallet, txp));
-      return Promise.resolve(ctxp);
+      const createdTxp = await dispatch(createTxProposal(txWallet, txp));
+      return Promise.resolve(createdTxp);
     } catch (err: any) {
       const errStr =
         err instanceof Error
@@ -730,7 +729,9 @@ const MoonpaySellCheckout: React.FC = () => {
     let warningMsg = dispatch(
       GetExcludedUtxosMessage(coin, chain, tokenAddress, sendMaxInfo),
     );
-    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
+    const sendMaxFee = dispatch(
+      SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress),
+    );
 
     const realMaxAmount = dispatch(
       SatToUnit(
@@ -761,7 +762,7 @@ const MoonpaySellCheckout: React.FC = () => {
           },
         );
         warningMsg = warningMsg + `\n${message}`;
-      } catch (err) {
+      } catch {
         // continue without message
       }
     }
@@ -772,7 +773,7 @@ const MoonpaySellCheckout: React.FC = () => {
         {
           chain:
             dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
-          fee,
+          fee: sendMaxFee,
           coin: coin.toUpperCase(),
         },
       ) + `\n${warningMsg}`;
@@ -867,17 +868,19 @@ const MoonpaySellCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    const _getSendMaxData = async (wallet: Wallet) => {
+    const _getSendMaxData = async (sendMaxWallet: Wallet) => {
       // We obtain the sendMaxData, but we do not send the maximum amount, since Moonpay misinterprets it
       // (It rounds the last digit of the decimal up, based on a variable precision number from its side. Therefore, it causes a failure in the execution of the order)
       // As a workaround we continue to use the previously agreed amount
-      const sendMaxData = await getSendMaxData(wallet);
+      const sendMaxData = await getSendMaxData(sendMaxWallet);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only init() below (same mount-time closure) needs to see the fetched value
       sendMaxInfo = cloneDeep(sendMaxData);
       init();
     };
 
     showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only init() below (same mount-time closure) needs to see the overridden value
       useSendMax = false;
     }
     if (sellOrder?.send_max && !isToken) {
@@ -908,7 +911,8 @@ const MoonpaySellCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
-  }, [remainingTimeStr, expiredAnalyticSent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on expiry state changes only; order/wallet values are read at that time for the analytics payload
+  }, [remainingTimeStr, expiredAnalyticSent, dispatch]);
 
   useEffect(() => {
     if (!resetSwipeButton) {

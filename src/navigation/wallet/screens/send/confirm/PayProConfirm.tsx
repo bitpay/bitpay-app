@@ -223,6 +223,7 @@ const PayProConfirm = () => {
         ? createTxp(wallet)
         : // eslint-disable-next-line react-hooks/immutability -- openKeyWalletSelector is declared below but only called from a timeout, when it already exists
           setTimeout(() => openKeyWalletSelector(), 500);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- runs on each focus with the initial wallet; adding wallet/createTxp would rebuild the txp whenever createTxp updates the wallet
     }, []),
   );
 
@@ -355,17 +356,24 @@ const PayProConfirm = () => {
     );
   };
 
-  const checkHighFees = async (wallet: Wallet, txp: any, fee: TxDetailsFee) => {
-    const {feeUnitAmount} = GetFeeUnits(wallet.chain);
+  const checkHighFees = async (
+    txWallet: Wallet,
+    proposal: any,
+    txFee: TxDetailsFee,
+  ) => {
+    const {feeUnitAmount} = GetFeeUnits(txWallet.chain);
     let feePerKb: number;
-    if (txp.feePerKb) {
-      feePerKb = txp.feePerKb;
+    if (proposal.feePerKb) {
+      feePerKb = proposal.feePerKb;
     } else {
-      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee.feeLevel});
+      feePerKb = await getFeeRatePerKb({
+        wallet: txWallet,
+        feeLevel: txFee.feeLevel,
+      });
     }
     setShowHighFeeWarningMessage(
-      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[wallet.chain] &&
-        txp.amount !== 0,
+      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[txWallet.chain] &&
+        proposal.amount !== 0,
     );
   };
 

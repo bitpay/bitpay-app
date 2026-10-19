@@ -206,12 +206,12 @@ const mockEquivalentUpdatedOneDaySeries = buildEquivalentSeries(
 
 jest.mock('react-native-reanimated', () => {
   const ReactLib = require('react');
-  const {View} = require('react-native');
+  const {View: RNView} = require('react-native');
   return {
     __esModule: true,
     default: {
       View: ({children, ...props}: any) =>
-        ReactLib.createElement(View, props, children),
+        ReactLib.createElement(RNView, props, children),
     },
     // Match the native hook contract, not the web-only dependency argument.
     useAnimatedStyle: (factory: () => any, ...dependencies: unknown[]) => {
