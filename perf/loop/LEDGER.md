@@ -38,6 +38,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 9 | Network | External-services/swap-currency prefetch (~0.5 MB) waits until startup settles | requests before first draw 4 → 2 (p<.001) | `1f893f9d0` |
 | 10 | Memory | Shop's remote images decode at display size on Android (`resizeMethod="resize"`) | Shop tab native 336 → 202 MB, graphics 180 → 57 MB (−257 MB; memtabs, 3× each) | `e0b8abccb` |
 | 11 | Launch | VisionCamera's native modules are created on first use (Scan), not while the React host starts | camera init gone from launch; RN start → JS entry 683 → 661 ms (p=.005); first Scan open unchanged (~0.8 s) | `791ec15b3` |
+| 12 | Launch | Cached token lists apply in ~8 ms slices that yield, so app init and routing no longer wait behind 21k tokens | TTFD 2945 → 2474 ms (−471, −16%, p<.001); app-init sync 308 → 1.4 ms; heap at first draw 44 → 32 MB | `d085a7d08` |
 | 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `918236421` |
 
 ## Candidates (ranked by expected win × confidence)
@@ -47,7 +48,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C1 | Home commit → splash hidden, 613 ms | profile: ~420 ms synchronous React re-renders triggered from mount effects, `bn.js` multiplication | open |
 | C2 | `GetPrecision` / `GetName` token-table copies | | **fixed (#3)** |
 | C3 | Home first render, 294 ms | profile: render work, 39 ms of it module init (Skia 20 ms) | open |
-| C4 | Remaining app-init sync work, 303 ms | 4.7 MB token-list JSON parse + loop, still ahead of SUCCESS_APP_INIT | open |
+| C4 | fixed (#12) — Remaining app-init sync work, 303 ms | 4.7 MB token-list JSON parse + loop, still ahead of SUCCESS_APP_INIT | open |
 | C5 | RN start → JS entry, 821 ms | 2,716 modules evaluate before index.js runs; `shim.js` → react-native-webassembly pulls in `Image` → UIManager constants (~300 ms, RN core) | research |
 | C6 | process start → first ContentProvider, 657 ms | Perfetto: `OpenDexFilesFromOat` 630 ms. ART rejects the app's compiled code on Motorola firmware: the OS adds `com.motorola.androidx.camera.extensions.jar` to every app's class-loader context at a path that differs from dexopt's (`/system/system_ext` vs `/system_ext`). Not fixable from the manifest (tried; the OS adds it implicitly). Runs from 38 MB of raw dex every launch | see C16 |
 | C16 | **R8 shrinking has never been enabled** (`enableProguardInReleaseBuilds = false` since the initial commit) | dex 38 MB / 15 files → 15 MB / 2 files, APK 150.7 → 128.3 MB. First attempt (`-PenableR8=true`): blank screen, ML Kit registrars stripped. Needs keep rules per SDK and full QA | **needs your call — own PR** |
@@ -59,9 +60,11 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C23 | Persisted rates are 2.11 MB on the funded wallet (Storage Usage) | read/parse cost each launch | open |
 | C25 | Tab switching (nav-tabs, funded wallet): **37% janky frames, p95 150 ms, peak PSS 1.24 GB**; Gift Cards 362 ms, Bills 338 ms, Home 221 ms transitions. Scrolling Home by contrast: 5% janky, p99 24 ms, peak 557 MB | `interaction-baseline.json` | open — next |
 | C26 | "Unknown" (anonymous) memory 175–416 MB and session-dependent — largest unexplained PSS category; likely Hermes heaps of the main runtime + three worklet runtimes | memtabs.sh | open |
+| C28 | 38 third-party packages still use the legacy eager `ReactPackage` (all modules built at host start) | bounded: RN start → JS entry is 661 ms of which ~615 is bundle exec, so ≲40 ms total; only the camera was heavy (#11) | low |
 | C27 | `SHOP_CATALOG` (gift-card catalog, ~1.1 MB) is persisted in redux-persist and rehydrated on every launch once the user has opened Shop — +51 ms store creation and +4 MB heap at first draw on the test phone, for data only Shop needs | store_kb by slice: 0 → 1107 KB after one Shop visit | open |
 | C21 | `changelly/getCurrencies` 474 KB at startup | fixed (#9); still re-downloaded once per launch (memory-only cache) — persisting with the 4 h TTL would save the bandwidth | partly done |
-| C19 | Big Fabric mount frames around and after the splash (180–350 ms `Choreographer#doFrame/animation`) | Perfetto; RN release builds emit no sections, so needs RN systrace markers to attribute | open |
+| C19 | Big UI-thread frames around the splash: three of 110–270 ms at ~2.0–2.5 s; inside them `Record View#draw()` ≈255 ms over 4 frames and Fabric mount (`animation`) ≈350 ms | Perfetto, current build. **Ablation** (Home chart removed, diagnostic build only): time over frame budget 718–849 → 598–625 ms, so the Skia balance chart costs ~120–150 ms of first-frame jank; the largest frames remain, i.e. Home's own mount | open — chart first-draw is the attributable part |
+| C29 | Chromium loads at ~1.5 s on an OkHttp thread: RN's cookie jar initialises WebView `CookieManager` on the first request | by design (Cloudflare challenge shares cookies between WebView and native requests) | won't fix |
 | C7 | wallet secrets migration, 184 ms every launch | name suggests a one-time migration | open |
 | C8 | SUCCESS_APP_INIT → route, 176 ms | | open |
 | C9 | `changelly/getCurrencies` 475 KB POST every launch | `prefetchExternalServicesData` after init | open |

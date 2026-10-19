@@ -112,25 +112,40 @@ const fetchTokenList = async (chain: string): Promise<Token[] | undefined> => {
   }
 };
 
-const applyTokenLists = (
+// Applying ~21k cached tokens takes a few hundred ms on a mid-range phone.
+// It runs inside startWalletStoreInit, which startAppInit starts but does not
+// await, so done in one go it held the JS thread before SUCCESS_APP_INIT and
+// the first route. Process in slices that yield to the event loop, so app
+// init, routing and the first render interleave with it; the result is the
+// same maps, set once at the end.
+const TOKEN_APPLY_SLICE_MS = 8;
+const yieldToEventLoop = () =>
+  new Promise<void>(resolve => setTimeout(resolve, 0));
+
+const applyTokenLists = async (
   chainResults: Array<{chain: string; tokens: Token[]}>,
 ) => {
   let tokenOptionsByAddress: {[key in string]: Token} = {};
   let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
+  let sliceStart = Date.now();
   for (const {chain, tokens} of chainResults) {
-    tokens.forEach(token => {
+    for (const token of tokens) {
       if (
-        BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
+        !BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
       ) {
-        return;
-      } // remove bitpay supported tokens and currencies
-      populateTokenInfo({
-        chain,
-        token,
-        tokenOptionsByAddress,
-        tokenDataByAddress,
-      });
-    });
+        // bitpay supported tokens and currencies are skipped
+        populateTokenInfo({
+          chain,
+          token,
+          tokenOptionsByAddress,
+          tokenDataByAddress,
+        });
+      }
+      if (Date.now() - sliceStart >= TOKEN_APPLY_SLICE_MS) {
+        await yieldToEventLoop();
+        sliceStart = Date.now();
+      }
+    }
   }
   tokenManager.setTokenOptions({tokenOptionsByAddress, tokenDataByAddress});
 };
@@ -156,11 +171,11 @@ const fetchTokenLists = async (
 };
 
 // A cache that can't be applied is discarded so the caller fetches fresh.
-const applyCachedTokenLists = (
+const applyCachedTokenLists = async (
   cached: Record<string, CachedTokenList | undefined>,
-): boolean => {
+): Promise<boolean> => {
   try {
-    applyTokenLists(
+    await applyTokenLists(
       SUPPORTED_VM_TOKENS.map(chain => ({
         chain,
         tokens: cached[chain]!.tokens,
@@ -188,9 +203,9 @@ const refreshTokenListsInBackground = (
   cached: Record<string, CachedTokenList | undefined>,
 ) => {
   backgroundTokenListsRefresh ??= fetchTokenLists(cached)
-    .then(({results, anyFetched}) => {
+    .then(async ({results, anyFetched}) => {
       if (anyFetched) {
-        applyTokenLists(results);
+        await applyTokenLists(results);
         logManager.info('successful [startGetTokenOptions] background refresh');
       }
     })
@@ -210,7 +225,10 @@ export const startGetTokenOptions =
     try {
       logManager.info('starting [startGetTokenOptions]');
       const cached: Record<string, CachedTokenList | undefined> = {};
+      // Each chain's cached list is a large JSON parse; yield between them
+      // so the first one does not run before startAppInit gets going.
       for (const chain of SUPPORTED_VM_TOKENS) {
+        await yieldToEventLoop();
         cached[chain] = readCachedTokenList(chain);
       }
 
@@ -218,7 +236,7 @@ export const startGetTokenOptions =
       // any list is older than the TTL.
       if (
         SUPPORTED_VM_TOKENS.every(chain => cached[chain]) &&
-        applyCachedTokenLists(cached)
+        (await applyCachedTokenLists(cached))
       ) {
         logManager.info('successful [startGetTokenOptions] (cached)');
         dispatch(AppActions.appTokensDataLoaded());
@@ -234,7 +252,7 @@ export const startGetTokenOptions =
       }
 
       const {results} = await fetchTokenLists(cached);
-      applyTokenLists(results);
+      await applyTokenLists(results);
       logManager.info('successful [startGetTokenOptions]');
       dispatch(AppActions.appTokensDataLoaded());
     } catch (e) {
