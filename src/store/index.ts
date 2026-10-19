@@ -609,7 +609,11 @@ const getStore = async () => {
       const startedAt = performance.now();
       const result = next(action);
       if (typeof action?.type === 'string') {
-        recordAction(action.type, performance.now() - startedAt);
+        recordAction(
+          action.type,
+          performance.now() - startedAt,
+          (action as AnyAction).payload,
+        );
       }
       return result;
     });

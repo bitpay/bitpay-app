@@ -319,6 +319,9 @@ async function runScenario(ctx, scenarioName) {
   const transitionRuns = [];
   const failures = [];
   let lastProfile = null;
+  // Per-run action counts: cheap, and what explains a run that did far more
+  // work than its neighbours.
+  const actionsByRun = [];
 
   log(`\n▸ ${scenarioName} — ${scenario.description}`);
 
@@ -347,6 +350,16 @@ async function runScenario(ctx, scenarioName) {
         transitionRuns.push(result.transitions || {});
         if (result.profile) {
           lastProfile = result.profile;
+          actionsByRun.push({
+            ...Object.fromEntries(
+              Object.entries(result.profile.actions || {}).map(([k, v]) => [
+                k,
+                v.count,
+              ]),
+            ),
+            _details: result.profile.actionDetails || [],
+            _js_cpu_ms: result.metrics.js_cpu_ms_settled ?? null,
+          });
         }
       }
     }
@@ -382,6 +395,7 @@ async function runScenario(ctx, scenarioName) {
     // Detail from the last measured iteration — names what loaded, which the
     // aggregated metrics cannot.
     profile: lastProfile,
+    actionsByRun,
     failures,
     completedRuns: iterations.length,
   };

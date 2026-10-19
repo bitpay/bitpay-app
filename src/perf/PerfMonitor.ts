@@ -362,10 +362,21 @@ export function registerStoreForPerf(
   }
 }
 
+// Actions whose payload explains a run, recorded verbatim (perf builds only).
+const DETAIL_ACTION_TYPES = new Set(['PORTFOLIO/START_POPULATE_PORTFOLIO']);
+const actionDetails: Array<{type: string; at: number; payload: unknown}> = [];
+
 /** Redux middleware body — counts and times every dispatched action. */
-export function recordAction(type: string, ms: number): void {
+export function recordAction(
+  type: string,
+  ms: number,
+  payload?: unknown,
+): void {
   if (!enabled) {
     return;
+  }
+  if (DETAIL_ACTION_TYPES.has(type) && actionDetails.length < 20) {
+    actionDetails.push({type, at: Math.round(perfNow()), payload});
   }
   const entry = actionCounts[type] || (actionCounts[type] = {count: 0, ms: 0});
   entry.count++;
@@ -473,6 +484,7 @@ function flushLoad(label: string): void {
     modules: moduleSummary(label === 'ttfd'),
     requests: requests.slice(),
     actions: actionCounts,
+    actionDetails,
     heap: heapStats(),
     // Slice sizes are the expensive part (a full serialisation), so they are
     // only taken once the app has settled.
