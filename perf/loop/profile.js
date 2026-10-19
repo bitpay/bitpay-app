@@ -29,7 +29,7 @@ const timeline = Object.entries(m)
     ([k, v]) =>
       k.endsWith('_ms') &&
       v.median != null &&
-      !/^(am_|wall_clock|visible|ttid|js_bundle_exec|module_init|action_ms)/.test(
+      !/^(am_|wall_clock|visible|ttid|js_bundle_exec|module_init|action_ms|phase_)/.test(
         k,
       ),
   )
