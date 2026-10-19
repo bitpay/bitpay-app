@@ -58,6 +58,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C23 | Persisted rates are 2.11 MB on the funded wallet (Storage Usage) | read/parse cost each launch | open |
 | C25 | Tab switching (nav-tabs, funded wallet): **37% janky frames, p95 150 ms, peak PSS 1.24 GB**; Gift Cards 362 ms, Bills 338 ms, Home 221 ms transitions. Scrolling Home by contrast: 5% janky, p99 24 ms, peak 557 MB | `interaction-baseline.json` | open — next |
 | C26 | "Unknown" (anonymous) memory 175–416 MB and session-dependent — largest unexplained PSS category; likely Hermes heaps of the main runtime + three worklet runtimes | memtabs.sh | open |
+| C27 | `SHOP_CATALOG` (gift-card catalog, ~1.1 MB) is persisted in redux-persist and rehydrated on every launch once the user has opened Shop — +51 ms store creation and +4 MB heap at first draw on the test phone, for data only Shop needs | store_kb by slice: 0 → 1107 KB after one Shop visit | open |
 | C21 | `changelly/getCurrencies` 474 KB at startup | fixed (#9); still re-downloaded once per launch (memory-only cache) — persisting with the 4 h TTL would save the bandwidth | partly done |
 | C19 | Big Fabric mount frames around and after the splash (180–350 ms `Choreographer#doFrame/animation`) | Perfetto; RN release builds emit no sections, so needs RN systrace markers to attribute | open |
 | C7 | wallet secrets migration, 184 ms every launch | name suggests a one-time migration | open |

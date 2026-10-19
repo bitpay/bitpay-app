@@ -50,6 +50,16 @@ be a test-only phrase. Perf builds are signed with the debug keystore, so
 Every five kept fixes, also run `--scenarios nav-tabs,scroll-home` so a startup
 win cannot quietly cost interaction smoothness.
 
+## Device state drifts — compare back to back
+
+App data on the device changes over a session (visiting Shop persisted a
+1.1 MB catalog; interest-bearing tokens change balances; caches fill). A
+baseline taken an hour earlier can differ from the candidate for reasons
+that have nothing to do with the change. When `store_kb_*`, `phase_store_*`
+or heap metrics move on a change that cannot touch them, re-take the
+baseline (`iterate.sh --accept` on the base build) immediately before the
+candidate, and check `profile.storeBytes` for the slice that grew.
+
 ## Rules
 
 - **Optimise what exists; do not remove features or sections.** Deferring work
