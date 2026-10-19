@@ -1,8 +1,14 @@
-import {changellyTxData, thorswapTxData} from './swap-crypto.models';
+import {
+  changellyTxData,
+  rangoTxData,
+  thorswapTxData,
+} from './swap-crypto.models';
 
 export enum SwapCryptoActionTypes {
   SUCCESS_TX_CHANGELLY = 'SWAP_CRYPTO/SUCCESS_TX_CHANGELLY',
   REMOVE_TX_CHANGELLY = 'SWAP_CRYPTO/REMOVE_TX_CHANGELLY',
+  SUCCESS_TX_RANGO = 'SWAP_CRYPTO/SUCCESS_TX_RANGO',
+  REMOVE_TX_RANGO = 'SWAP_CRYPTO/REMOVE_TX_RANGO',
   SUCCESS_TX_THORSWAP = 'SWAP_CRYPTO/SUCCESS_TX_THORSWAP',
   REMOVE_TX_THORSWAP = 'SWAP_CRYPTO/REMOVE_TX_THORSWAP',
 }
@@ -18,6 +24,20 @@ interface removeTxChangelly {
   type: typeof SwapCryptoActionTypes.REMOVE_TX_CHANGELLY;
   payload: {
     exchangeTxId: string;
+  };
+}
+
+interface successTxRango {
+  type: typeof SwapCryptoActionTypes.SUCCESS_TX_RANGO;
+  payload: {
+    rangoTxData: rangoTxData;
+  };
+}
+
+interface removeTxRango {
+  type: typeof SwapCryptoActionTypes.REMOVE_TX_RANGO;
+  payload: {
+    requestId: string;
   };
 }
 
@@ -38,5 +58,7 @@ interface removeTxThorswap {
 export type SwapCryptoActionType =
   | successTxChangelly
   | removeTxChangelly
+  | successTxRango
+  | removeTxRango
   | successTxThorswap
   | removeTxThorswap;

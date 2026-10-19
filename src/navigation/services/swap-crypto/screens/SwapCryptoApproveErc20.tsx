@@ -139,7 +139,17 @@ export interface SwapCryptoApproveErc20Params {
   spenderData: {
     offerKey: string;
     offerName: string;
-    spenderKey: ThorswapProvider;
+    /**
+     * Calldata supplied by the provider. Rango generates the approval target
+     * per quote and its docs require using their data rather than rebuilding
+     * it — a locally encoded approve can succeed on-chain while leaving the
+     * allowance the provider checks at zero.
+     */
+    approveData?: string;
+    /** Thorswap names its routers; other providers pass a display string. */
+    spenderKey: ThorswapProvider | string;
+    /** Contract the approve call is sent to. Defaults to the wallet's token. */
+    approveTo?: string;
     address: string;
     amount: string;
   };
@@ -233,6 +243,26 @@ const SwapCryptoApproveErc20: React.FC = () => {
         wallet.tokenAddress,
       ),
     );
+    // Provider-supplied calldata wins: see approveData above.
+    if (spenderData.approveData) {
+      logger.debug('Using provider-supplied approve calldata');
+      setEncodedData(spenderData.approveData);
+      try {
+        const ctxpFromProvider = await createTx(spenderData.approveData);
+        setCtxp(ctxpFromProvider);
+        setIsLoading(false);
+      } catch (err) {
+        setIsLoading(false);
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('Error creating approve transaction: ' + errStr);
+        finish(
+          undefined,
+          t('Uh oh, something went wrong. Error creating transaction'),
+        );
+      }
+      return;
+    }
+
     const amountToApprove = ethers.utils.parseUnits(
       spenderData.amount,
       precision!.unitDecimals,
@@ -298,20 +328,23 @@ const SwapCryptoApproveErc20: React.FC = () => {
   };
 
   const createTx = async (approveData: string) => {
+    // Provider-supplied calldata must go to the contract the provider names,
+    // which is not always the wallet's own token address.
+    const destination = spenderData.approveTo ?? wallet.tokenAddress;
     try {
       const message =
         wallet.currencyAbbreviation.toUpperCase() + ' ' + t('Approve');
       let outputs = [];
 
       outputs.push({
-        toAddress: wallet.tokenAddress,
+        toAddress: destination,
         amount: 0,
         message: message,
         data: approveData,
       });
 
       let txp: Partial<TransactionProposal> = {
-        toAddress: wallet.tokenAddress,
+        toAddress: destination,
         amount: 0,
         chain: wallet.chain,
         outputs,
@@ -396,10 +429,13 @@ const SwapCryptoApproveErc20: React.FC = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
-  const exchangeName =
-    spenderData.spenderKey && ThorswapProviderNames[spenderData.spenderKey]
-      ? ThorswapProviderNames[spenderData.spenderKey]
-      : spenderData.spenderKey;
+  // Thorswap identifies its routers by key and maps them to display names;
+  // other providers pass a name directly.
+  const thorswapName =
+    ThorswapProviderNames[
+      spenderData.spenderKey as keyof typeof ThorswapProviderNames
+    ];
+  const exchangeName = thorswapName ?? spenderData.spenderKey;
   const coinName = wallet.currencyAbbreviation.toUpperCase();
 
   return (

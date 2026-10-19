@@ -1,12 +1,18 @@
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {isCoinSupportedByChangelly} from './changelly-utils';
+import {
+  isCoinSupportedByRango,
+  rangoCanSwapFromChain,
+  RANGO_EXECUTION_ENABLED,
+} from './rango-utils';
 import {isCoinSupportedByThorswap} from './thorswap-utils';
 
-export type SwapCryptoExchangeKey = 'changelly' | 'thorswap';
+export type SwapCryptoExchangeKey = 'changelly' | 'rango' | 'thorswap';
 
 export const SwapCryptoSupportedExchanges: SwapCryptoExchangeKey[] = [
   'changelly',
+  'rango',
   'thorswap',
 ];
 
@@ -15,8 +21,12 @@ export const isCoinSupportedToSwap = (
   chain: string,
   country?: string,
 ): boolean => {
+  // Rango participates only when execution is enabled: this gates the Swap
+  // entry point, so advertising a provider that cannot execute would offer a
+  // swap the user is unable to finish.
   return (
     isCoinSupportedBy('changelly', coin, chain) ||
+    (RANGO_EXECUTION_ENABLED && isCoinSupportedBy('rango', coin, chain)) ||
     isCoinSupportedBy('thorswap', coin, chain)
   );
 };
@@ -32,6 +42,8 @@ const isCoinSupportedBy = (
         coin.toLowerCase(),
         chain.toLowerCase(),
       );
+    case 'rango':
+      return isCoinSupportedByRango(coin.toLowerCase(), chain.toLowerCase());
     case 'thorswap':
       return isCoinSupportedByThorswap(coin.toLowerCase(), chain.toLowerCase());
     default:
@@ -49,6 +61,13 @@ export const isPairSupported = (
   country?: string,
 ): boolean => {
   if (!exchange && !supportedCoins) {
+    return false;
+  }
+
+  // Rango is the only provider whose support is not symmetric: it can deliver
+  // to a chain it cannot spend from. Checked before the symbol lookups below,
+  // which treat both sides the same way.
+  if (exchange === 'rango' && !rangoCanSwapFromChain(chainFrom)) {
     return false;
   }
 

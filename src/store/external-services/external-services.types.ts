@@ -40,6 +40,7 @@ export type SwapCryptoConfig = {
   disabledTitle?: string;
   disabledMessage?: string;
   changelly?: ExchangeConfig;
+  rango?: ExchangeConfig;
   thorswap?: ExchangeConfig;
 };
 
