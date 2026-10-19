@@ -62,15 +62,33 @@ export const whenStartupSettled = (cb: () => void): (() => void) => {
   return () => settleListeners.delete(cb);
 };
 
-/** Component form: false until startup has settled. */
-export const useStartupSettled = (): boolean => {
-  const [value, setValue] = useState(settled);
+/**
+ * Component form: false until startup has settled, plus `extraDelayMs` and a
+ * further idle moment. Heavy deferred work (a WebView, say) needs the delay:
+ * "settled" lands right after the first screen appears, and work started
+ * there just moves the jank onto the user's first look at it.
+ */
+export const useStartupSettled = (extraDelayMs = 0): boolean => {
+  const [value, setValue] = useState(settled && !extraDelayMs);
   useEffect(() => {
     if (value) {
       return;
     }
-    return whenStartupSettled(() => setValue(true));
-  }, [value]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = whenStartupSettled(() => {
+      if (!extraDelayMs) {
+        setValue(true);
+        return;
+      }
+      timer = setTimeout(() => afterIdle(() => setValue(true)), extraDelayMs);
+    });
+    return () => {
+      unsubscribe();
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [value, extraDelayMs]);
   return value;
 };
 

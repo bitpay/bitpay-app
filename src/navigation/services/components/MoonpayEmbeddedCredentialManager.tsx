@@ -54,6 +54,9 @@ import {ExternalServicesConfig} from '../../../store/external-services/external-
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {RootState} from '../../../store';
 
+/** How long after startup settles the connection check may start. */
+const MOONPAY_CHECK_DELAY_MS = 5000;
+
 /** Refresh credentials this many ms before expiry. */
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 min
 
@@ -85,10 +88,12 @@ export function MoonpayEmbeddedCredentialManager() {
   );
   const userEid = user?.eid ?? anonymousEid;
   // The check mounts an invisible WebView (on Android, the process's first
-  // WebView initialises Chromium on the UI thread), generates an x25519 key
-  // pair and makes a network round-trip. None of it is needed to draw the
-  // first screen, so it waits until startup has settled.
-  const startupSettled = useStartupSettled();
+  // WebView initialises Chromium on the UI thread — 300 ms frames on a
+  // mid-range phone), generates an x25519 key pair and makes a network
+  // round-trip. None of it is needed for the first screen, and run right as
+  // that screen appears it janks the user's first look, so it waits a few
+  // quiet seconds past startup. Buy/Sell already handles a check in flight.
+  const startupSettled = useStartupSettled(MOONPAY_CHECK_DELAY_MS);
 
   // If no cached external services config exists yet, use local conditions.
   // Once the config is available, disable embedded MoonPay if embeddedBuyDisabled is true.

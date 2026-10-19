@@ -32,6 +32,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 2 | Launch | Token-list entries share per-chain config instead of rebuilding it for each of ~21k tokens | app-init phase 354 → 303 ms (−51); JS heap −6 MB | `61aece25c` |
 | 3 | Render | `GetPrecision`/`GetName` look tokens up directly instead of copying three token tables (~21k entries) per call | 6.4 ms → 0.00004 ms per call (benchmark); neutral on this wallet, which holds no token wallets | `3632ff4b1` |
 | 4 | Launch | MoonPay embedded check (session request, x25519 keys, invisible WebView) waits for startup to settle | route phase 168 → 91 ms (−77, p<.001); TTFD median 3913 → 3697 ms (−217, p=.016) | `e7e0c4735` |
+| 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `918236421` |
 
 ## Candidates (ranked by expected win × confidence)
 
@@ -42,7 +43,11 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C3 | Home first render, 294 ms | profile: render work, 39 ms of it module init (Skia 20 ms) | open |
 | C4 | Remaining app-init sync work, 303 ms | 4.7 MB token-list JSON parse + loop, still ahead of SUCCESS_APP_INIT | open |
 | C5 | RN start → JS entry, 821 ms | 2,716 modules evaluate before index.js runs; `shim.js` → react-native-webassembly pulls in `Image` → UIManager constants (~300 ms, RN core) | research |
-| C6 | process start → first ContentProvider, 657 ms | before any app code; needs a system trace (Perfetto) | needs tooling |
+| C6 | process start → first ContentProvider, 657 ms | Perfetto: `OpenDexFilesFromOat` 630 ms. ART rejects the app's compiled code on Motorola firmware: the OS adds `com.motorola.androidx.camera.extensions.jar` to every app's class-loader context at a path that differs from dexopt's (`/system/system_ext` vs `/system_ext`). Not fixable from the manifest (tried; the OS adds it implicitly). Runs from 38 MB of raw dex every launch | see C16 |
+| C16 | **R8 shrinking has never been enabled** (`enableProguardInReleaseBuilds = false` since the initial commit) | dex 38 MB / 15 files → 15 MB / 2 files, APK 150.7 → 128.3 MB. First attempt (`-PenableR8=true`): blank screen, ML Kit registrars stripped. Needs keep rules per SDK and full QA | **needs your call — own PR** |
+| C17 | Vision Camera initialises `ProcessCameraProvider` + `ExtensionsManager` at launch (its module's init, "as early as possible"); camera thread + `CameraValidator` in the startup trace | only the Scan screen uses the camera | open |
+| C18 | Three worklet runtimes (portfolio, rates, analysis) created synchronously during Home's first render | 36–57 ms JS each + a Hermes runtime's memory each | open (architectural) |
+| C19 | Big Fabric mount frames around and after the splash (180–350 ms `Choreographer#doFrame/animation`) | Perfetto; RN release builds emit no sections, so needs RN systrace markers to attribute | open |
 | C7 | wallet secrets migration, 184 ms every launch | name suggests a one-time migration | open |
 | C8 | SUCCESS_APP_INIT → route, 176 ms | | open |
 | C9 | `changelly/getCurrencies` 475 KB POST every launch | `prefetchExternalServicesData` after init | open |
