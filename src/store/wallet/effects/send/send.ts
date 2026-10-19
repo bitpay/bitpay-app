@@ -1263,6 +1263,12 @@ export const buildTransactionProposal =
           }
         }
 
+        // A Solana Pay memo says what the payment is for (BitPay matches SOL
+        // invoice payments by it), so native SOL sends need it as much as SPL.
+        if (solanaPayOpts?.memo && IsSVMChain(txp.chain!) && !txp.memo) {
+          txp.memo = solanaPayOpts.memo;
+        }
+
         resolve(txp);
       } catch (error) {
         reject(error);

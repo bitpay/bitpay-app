@@ -281,3 +281,43 @@ describe('hardware wallet keys', () => {
     expect(wallet.publishTxProposal).not.toHaveBeenCalled();
   });
 });
+
+const SOL_RECIPIENT = '2or9p8ZY6yWi3pd28Qg2oiNEDycbKSm73NkGDtwF1LcT';
+const SOLANA_PAY_MEMO =
+  'v43SXMgaP9xHQawB5AGy4VZDQaYmoFYYCsJs7SzxgcEDAyrSRrx3BBNBTJFH';
+
+const buildSolProposal = (extra: any = {}) =>
+  dispatch(
+    buildTransactionProposal({
+      chain: 'sol',
+      currency: 'sol',
+      amount: 66896000,
+      toAddress: SOL_RECIPIENT,
+      ...extra,
+    } as any),
+  );
+
+describe('buildTransactionProposal for a native SOL send', () => {
+  it('carries the Solana Pay memo into the proposal', async () => {
+    const txp: any = await buildSolProposal({
+      solanaPayOpts: {memo: SOLANA_PAY_MEMO},
+    });
+
+    expect(txp.memo).toBe(SOLANA_PAY_MEMO);
+  });
+
+  it('keeps a memo set on the transaction over the Solana Pay one', async () => {
+    const txp: any = await buildSolProposal({
+      memo: 'from-the-transaction',
+      solanaPayOpts: {memo: SOLANA_PAY_MEMO},
+    });
+
+    expect(txp.memo).toBe('from-the-transaction');
+  });
+
+  it('adds no memo to a plain send', async () => {
+    const txp: any = await buildSolProposal();
+
+    expect(txp.memo).toBeUndefined();
+  });
+});
