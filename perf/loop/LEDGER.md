@@ -37,6 +37,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 8 | Network | BWS request signing reuses the parsed request key (3 EC multiplications → 1); signatures byte-identical | 2.32 → 0.66 ms/signature (V8); JS profile: signing 212 → 84 ms in Home commit → splash | `da4b8b6a0` |
 | 9 | Network | External-services/swap-currency prefetch (~0.5 MB) waits until startup settles | requests before first draw 4 → 2 (p<.001) | `1f893f9d0` |
 | 10 | Memory | Shop's remote images decode at display size on Android (`resizeMethod="resize"`) | Shop tab native 336 → 202 MB, graphics 180 → 57 MB (−257 MB; memtabs, 3× each) | `e0b8abccb` |
+| 11 | Launch | VisionCamera's native modules are created on first use (Scan), not while the React host starts | camera init gone from launch; RN start → JS entry 683 → 661 ms (p=.005); first Scan open unchanged (~0.8 s) | `791ec15b3` |
 | 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `918236421` |
 
 ## Candidates (ranked by expected win × confidence)
@@ -50,7 +51,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C5 | RN start → JS entry, 821 ms | 2,716 modules evaluate before index.js runs; `shim.js` → react-native-webassembly pulls in `Image` → UIManager constants (~300 ms, RN core) | research |
 | C6 | process start → first ContentProvider, 657 ms | Perfetto: `OpenDexFilesFromOat` 630 ms. ART rejects the app's compiled code on Motorola firmware: the OS adds `com.motorola.androidx.camera.extensions.jar` to every app's class-loader context at a path that differs from dexopt's (`/system/system_ext` vs `/system_ext`). Not fixable from the manifest (tried; the OS adds it implicitly). Runs from 38 MB of raw dex every launch | see C16 |
 | C16 | **R8 shrinking has never been enabled** (`enableProguardInReleaseBuilds = false` since the initial commit) | dex 38 MB / 15 files → 15 MB / 2 files, APK 150.7 → 128.3 MB. First attempt (`-PenableR8=true`): blank screen, ML Kit registrars stripped. Needs keep rules per SDK and full QA | **needs your call — own PR** |
-| C17 | Vision Camera initialises `ProcessCameraProvider` + `ExtensionsManager` at launch (its module's init, "as early as possible"); camera thread + `CameraValidator` in the startup trace | only the Scan screen uses the camera | open |
+| C17 | fixed (#11) — Vision Camera initialises `ProcessCameraProvider` + `ExtensionsManager` at launch (its module's init, "as early as possible"); camera thread + `CameraValidator` in the startup trace | only the Scan screen uses the camera | open |
 | C18 | Three worklet runtimes (portfolio, rates, analysis) created synchronously during Home's first render | 36–57 ms JS each + a Hermes runtime's memory each | open (architectural) |
 | C20 | BWS request signing | fixed (#8) | done |
 | C22 | JS CPU per cold start is bimodal: ~6–9 s most runs, ~12 s in 2–3 of 10 | **explained → C24** | done |
