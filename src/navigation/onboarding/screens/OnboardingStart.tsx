@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
   },
   carousel: {
     width: WIDTH,
-    height: WIDTH * 1.2,
   },
   carouselPage: {
     width: WIDTH,
@@ -193,6 +192,7 @@ const LinkText = ({children}: {children: React.ReactNode}) => (
 );
 
 const PAGINATION_DOT_STEP = 30;
+const CAROUSEL_MIN_HEIGHT = WIDTH * 1.2;
 
 const OnboardingPagination = memo(
   ({
@@ -260,13 +260,31 @@ const OnboardingCarousel = memo(function OnboardingCarousel({
   onSnapToItem,
 }: OnboardingCarouselProps) {
   const currentIndexRef = useRef(0);
+  // The carousel needs an explicit height, but slide content (long copy,
+  // translations, larger accessibility font sizes) can be taller than the
+  // default. Grow to the tallest slide rendered so far (windowSize renders
+  // the neighbours right after the first one) so nothing is clipped.
+  const [tallestSlide, setTallestSlide] = useState(0);
+  const onSlideLayout = useCallback((event: LayoutChangeEvent) => {
+    const slideHeight = Math.ceil(event.nativeEvent.layout.height);
+    setTallestSlide(current => Math.max(current, slideHeight));
+  }, []);
   const renderItem = useCallback(
     ({item}: ListRenderItemInfo<OnboardingSlideItem>) => (
       <View style={styles.carouselPage}>
-        <OnboardingSlide item={item} />
+        <View onLayout={onSlideLayout}>
+          <OnboardingSlide item={item} />
+        </View>
       </View>
     ),
-    [],
+    [onSlideLayout],
+  );
+  const carouselStyle = useMemo(
+    () => [
+      styles.carousel,
+      {height: Math.max(CAROUSEL_MIN_HEIGHT, tallestSlide)},
+    ],
+    [tallestSlide],
   );
   const onScroll = useAnimatedScrollHandler(
     {
@@ -295,7 +313,7 @@ const OnboardingCarousel = memo(function OnboardingCarousel({
 
   return (
     <Animated.FlatList
-      style={styles.carousel}
+      style={carouselStyle}
       data={onboardingSlides}
       horizontal={true}
       pagingEnabled={true}
@@ -473,7 +491,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
       <PerformanceProfiler
         id="OnboardingStart:carousel"
         onRender={logReactProfiler}>
-        <ScrollView scrollEnabled={isNarrowHeight}>
+        <ScrollView alwaysBounceVertical={false}>
           <OnboardingCarousel
             onboardingSlides={onboardingSlides}
             progressValue={progressValue}
