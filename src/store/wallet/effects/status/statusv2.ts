@@ -140,17 +140,35 @@ export const getUpdatedWalletBalances =
     const keyStatusResults = await mapWithConcurrency(
       keys,
       WALLET_REQUEST_CONCURRENCY,
-      async key => ({
-        key,
-        keyBalance: await dispatch(
-          updateKeyStatus({
-            key,
-            force,
-            dataOnly: true,
-          }),
-        ),
-      }),
+      async key => {
+        try {
+          const keyBalance = await dispatch(
+            updateKeyStatus({
+              key,
+              force,
+              dataOnly: true,
+            }),
+          );
+          return {key, keyBalance};
+        } catch (error) {
+          return {key, keyBalance: undefined, error};
+        }
+      },
     );
+
+    // One key failing must not discard the balances already fetched for the
+    // others. The refresh as a whole fails only when every key failed.
+    const failedKeys = keyStatusResults.filter(result => 'error' in result);
+    if (failedKeys.length > 0 && failedKeys.length === keys.length) {
+      throw failedKeys[0].error;
+    }
+    for (const {key, error} of failedKeys) {
+      const errorStr =
+        error instanceof Error ? error.message : JSON.stringify(error);
+      logManager.error(
+        `Error updating key status for key ${key.id}, keeping the other keys' balances: ${errorStr}`,
+      );
+    }
 
     for (const {key, keyBalance} of keyStatusResults) {
       if (keyBalance) {
