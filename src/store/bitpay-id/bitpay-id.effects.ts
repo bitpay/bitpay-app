@@ -53,6 +53,7 @@ import {
 } from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
 import {sleep, titleCasing} from '../../utils/helper-methods';
+import {toStringOrEmpty} from '../../utils/text';
 
 interface StartLoginParams {
   email?: string;
@@ -240,7 +241,11 @@ export const startCreateAccount =
         errMsg = JSON.stringify(err);
       }
 
-      dispatch(BitPayIdActions.failedCreateAccount(titleCasing(errMsg)));
+      dispatch(
+        BitPayIdActions.failedCreateAccount(
+          titleCasing(toStringOrEmpty(errMsg)),
+        ),
+      );
       logManager.error(
         '[startCreateAccount] Failed to create account.',
         errMsg,
@@ -433,10 +438,12 @@ export const startLogin =
         );
       } else if (isAxiosError<LoginErrorResponse>(err)) {
         errMsg = titleCasing(
-          err.response?.data?.message ||
-            safeErrorMessage(err.response?.data, '') ||
-            err.message ||
-            t('An unexpected error occurred.'),
+          toStringOrEmpty(
+            err.response?.data?.message ||
+              safeErrorMessage(err.response?.data, '') ||
+              err.message ||
+              t('An unexpected error occurred.'),
+          ),
         );
       } else {
         // Never surface a raw response body — it may be an HTML error page.
