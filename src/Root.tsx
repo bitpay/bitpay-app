@@ -101,9 +101,6 @@ import DebugScreen, {
   DebugScreenParamList,
   DebugScreens,
 } from './navigation/Debug';
-import CardActivationGroup, {
-  CardActivationGroupParamList,
-} from './navigation/card-activation/CardActivationGroup';
 import {
   createWalletsForAccounts,
   fixWalletAddresses,
@@ -195,7 +192,6 @@ export type RootStackParamList = {
   ScanGroupParamList &
   ExternalServicesGroupParamList &
   SwapCryptoGroupParamList &
-  CardActivationGroupParamList &
   OnboardingGroupParamList &
   AuthGroupParamList &
   GiftCardGroupParamList &
@@ -224,7 +220,6 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingGroupParamList &
     BitpayIdGroupParamList &
     WalletGroupParamList &
-    CardActivationGroupParamList &
     GiftCardGroupParamList &
     MerchantGroupParamList &
     BillGroupParamList &
@@ -279,7 +274,7 @@ export const getNavigationTabName = () => {
     TabsScreens.HOME,
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
-    TabsScreens.CARD,
+    TabsScreens.BILLS,
     TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
@@ -1155,7 +1150,6 @@ export default () => {
             {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root, theme})}
             {WalletGroup({Wallet: Root, theme})}
-            {CardActivationGroup({CardActivation: Root, theme})}
             {ScanGroup({Scan: Root, theme})}
             {GiftCardGroup({GiftCard: Root, theme})}
             {MerchantGroup({Merchant: Root, theme})}

@@ -6,7 +6,6 @@ import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
-import {CardStackParamList} from '../card/CardStack';
 import SettingsStack from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
@@ -16,8 +15,6 @@ import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
 import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
 import BillsIcon from '../../../assets/img/tab-icons/bills.svg';
 import BillsFocusedIcon from '../../../assets/img/tab-icons/bills-focused.svg';
-import CardIcon from '../../../assets/img/tab-icons/card.svg';
-import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
@@ -36,8 +33,6 @@ const Icons: Record<string, React.FC<SvgProps>> = {
   ShopFocused: ShopFocusedIcon,
   Bills: BillsIcon,
   BillsFocused: BillsFocusedIcon,
-  Card: CardIcon,
-  CardFocused: CardFocusedIcon,
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
   TransactButton: TransactButtonIcon,
@@ -72,7 +67,6 @@ export enum TabsScreens {
   TRANSACT_BUTTON = 'TransactButton',
   BILLS = 'Bills',
   SETTINGS = 'Settings',
-  CARD = 'Card',
   CAMERA = 'Camera',
 }
 
@@ -85,7 +79,6 @@ export type TabsStackParamList = {
   Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
   Bills: undefined;
-  Card: NavigatorScreenParams<CardStackParamList> | undefined;
   Settings: undefined;
   Camera: undefined;
 };

@@ -57,9 +57,6 @@ import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import KeyGlobalSelect, {
   KeyGlobalSelectParamList,
 } from './screens/KeyGlobalSelect';
-import DebitCardConfirm, {
-  DebitCardConfirmParamList,
-} from './screens/send/confirm/DebitCardConfirm';
 import WalletInformation from './screens/wallet-settings/WalletInformation';
 import ExportWallet from './screens/wallet-settings/ExportWallet';
 import Addresses from './screens/wallet-settings/Addresses';
@@ -157,7 +154,6 @@ export type WalletGroupParamList = {
     _preloadContent?: boolean;
   };
   Confirm: ConfirmParamList;
-  DebitCardConfirm: DebitCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
   PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigParamsList;
@@ -260,7 +256,6 @@ export enum WalletScreens {
   AMOUNT = 'WalletAmountScreen',
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
-  DEBIT_CARD_CONFIRM = 'DebitCardConfirm',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
   PAY_PRO_CONFIRM = 'PayProConfirm',
   PAY_PRO_CONFIRM_TWO_FACTOR = 'PayProConfirmTwoFactor',
@@ -398,14 +393,6 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         options={{gestureEnabled: false}}
         name={WalletScreens.CONFIRM}
         component={Confirm}
-      />
-      <Wallet.Screen
-        options={{
-          gestureEnabled: false,
-          headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,
-        }}
-        name={WalletScreens.DEBIT_CARD_CONFIRM}
-        component={DebitCardConfirm}
       />
       <Wallet.Screen
         options={{

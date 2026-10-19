@@ -189,6 +189,31 @@ it.each([
   persistor.pause();
 });
 
+it('drops the removed CARD slice from persisted state', async () => {
+  (Keychain.getGenericPassword as jest.Mock).mockResolvedValue({
+    password: 'original-key',
+  });
+  const root = JSON.parse(persistedRoot(true));
+  root.CARD = JSON.stringify(
+    encryptTransform({secretKey: 'original-key'}).in(
+      {cards: {livenet: [{id: 'c1'}]}},
+      'CARD',
+      {},
+    ),
+  );
+  storage.set('persist:root', JSON.stringify(root));
+  const consoleError = jest.spyOn(console, 'error').mockImplementation();
+  const {store, persistor} = await getRehydratedStore();
+
+  expect(store.getState()).not.toHaveProperty('CARD');
+  await flushPersistor();
+  expect(JSON.parse(readStored('persist:root'))).not.toHaveProperty('CARD');
+  expect(consoleError).not.toHaveBeenCalledWith(
+    expect.stringContaining('Unexpected key'),
+  );
+  persistor.pause();
+});
+
 it('rehydrates and persists the same encrypted state with the correct key', async () => {
   (Keychain.getGenericPassword as jest.Mock).mockResolvedValue({
     password: 'original-key',

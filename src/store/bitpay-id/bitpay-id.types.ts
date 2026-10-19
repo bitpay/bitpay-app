@@ -9,7 +9,6 @@ import {
 import {
   EmailPairingStatus,
   FetchBasicInfoStatus,
-  FetchDoshTokenStatus,
   FetchSessionStatus,
   LoginStatus,
   PairingBitPayIdStatus,
@@ -49,9 +48,6 @@ export enum BitPayIdActionTypes {
   FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
   UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
   BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
-  SUCCESS_FETCH_DOSH_TOKEN = 'BitPayId/SUCCESS_FETCH_DOSH_TOKEN',
-  FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
-  UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
   FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/FORGOT_PASSWORD_EMAIL_STATUS',
   RESET_FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/RESET_FORGOT_PASSWORD_EMAIL_STATUS',
   SUCCESS_FETCH_RECEIVING_ADDRESSES = 'BitPayId/SUCCESS_FETCH_RECEIVING_ADDRESSES',
@@ -176,7 +172,7 @@ interface CompletedPairing {
 
 interface SuccessInitializeStore {
   type: typeof BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE;
-  payload: {network: Network; user: User; doshToken: string};
+  payload: {network: Network; user: User};
 }
 
 interface SuccessFetchBasicInfo {
@@ -196,20 +192,6 @@ interface UpdateFetchBasicInfoStatus {
 interface BitPayIdDisconnected {
   type: typeof BitPayIdActionTypes.BITPAY_ID_DISCONNECTED;
   payload: {network: Network};
-}
-
-interface SuccessFetchDoshToken {
-  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN;
-  payload: {network: Network; token: string};
-}
-
-interface FailedFetchDoshToken {
-  type: typeof BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN;
-}
-
-interface UpdateFetchDoshTokenStatus {
-  type: typeof BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS;
-  payload: FetchDoshTokenStatus;
 }
 
 interface ForgotPasswordEmailStatus {
@@ -300,9 +282,6 @@ export type BitPayIdActionType =
   | FailedFetchBasicInfo
   | UpdateFetchBasicInfoStatus
   | BitPayIdDisconnected
-  | SuccessFetchDoshToken
-  | FailedFetchDoshToken
-  | UpdateFetchDoshTokenStatus
   | SuccessFetchReceivingAddresses
   | SuccessFetchSecuritySettings
   | SuccessResetMethodUser
