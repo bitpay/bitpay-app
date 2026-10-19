@@ -79,6 +79,7 @@ describe('isEqual', () => {
   it('distinguishes arrays from objects and compares dates by time', () => {
     expect(isEqual([], {})).toBe(false);
     expect(isEqual(new Date(1), new Date(1))).toBe(true);
+    expect(isEqual(new Date(1), new Date(2))).toBe(false);
     expect(isEqual(NaN, NaN)).toBe(true);
   });
 });

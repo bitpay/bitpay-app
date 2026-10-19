@@ -95,9 +95,16 @@ describe('minBy and maxBy', () => {
     expect(minBy(limits, limit => limit.maxAmount)?.provider).toBe('d');
   });
 
+  it('skip a NaN value in the first position', () => {
+    const amounts = [{amount: NaN}, {amount: 3}, {amount: 1}];
+    expect(minBy(amounts, 'amount')).toBe(amounts[2]);
+    expect(maxBy(amounts, 'amount')).toBe(amounts[1]);
+  });
+
   it('return undefined when no item has a comparable value', () => {
     expect(minBy([], 'minAmount')).toBeUndefined();
     expect(maxBy([{maxAmount: undefined}], 'maxAmount')).toBeUndefined();
+    expect(minBy([{minAmount: NaN}], 'minAmount')).toBeUndefined();
   });
 });
 
