@@ -282,6 +282,11 @@ async function runIteration(ctx, scenario) {
       ctx.sawInstrumentation = true;
     }
 
+    // Total CPU work to start and settle, by thread (see readThreadCpuTotals).
+    if (scenario.settleForLoadProfile) {
+      Object.assign(metrics, android.readThreadCpuTotals(serial));
+    }
+
     let profile = null;
     if ((scenario.measures || []).includes('load')) {
       const load = collector.extractLoadProfile(payloads, ctx.moduleMap);

@@ -54,6 +54,13 @@ for env_file in "${ENV_FILES[@]}"; do
   echo "IS_PERF=true" >> "$env_file"
 done
 
+# The React Native gradle plugin excludes node_modules from the bundle task's
+# inputs, so a patched dependency (patch-package) leaves the task UP-TO-DATE
+# and the APK ships the old JS. Removing the bundle output forces it to rerun;
+# Metro's own cache keeps that cheap.
+rm -rf "$REPO_ROOT/android/app/build/generated/assets/createBundleReleaseJsAndAssets" \
+       "$REPO_ROOT/android/app/build/generated/assets/react/release"
+
 echo "Building instrumented release APK (IS_PERF=true)..."
 # Subshell so the cd cannot leak into the trap's execution context.
 # Perf builds are signed with the repo's debug keystore, never the Play upload

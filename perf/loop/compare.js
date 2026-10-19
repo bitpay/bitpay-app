@@ -47,6 +47,8 @@ const POSITIONAL =
 const IGNORE = new Set(['wall_clock_ms', 'am_wait_time_ms', 'visible_ms']);
 // Small absolute moves in these never matter, whatever the noise says.
 const MIN_ABS = {_ms: 5, _mb: 1, _kb: 2, _pct: 0.5};
+// CPU totals are ~10 ms-granular (clock ticks); ignore single-tick moves.
+const MIN_ABS_CPU_MS = 20;
 // Count metrics: a handful of modules or one action is not a regression.
 const MIN_ABS_PREFIX = {modules_: 25, actions_: 2, requests_: 1};
 
@@ -54,6 +56,9 @@ function minAbsFor(key) {
   const prefix = Object.keys(MIN_ABS_PREFIX).find(p => key.startsWith(p));
   if (prefix) {
     return MIN_ABS_PREFIX[prefix];
+  }
+  if (key.endsWith('_cpu_ms_settled')) {
+    return MIN_ABS_CPU_MS;
   }
   const suffix = Object.keys(MIN_ABS).find(s => key.endsWith(s));
   return suffix ? MIN_ABS[suffix] : 1;

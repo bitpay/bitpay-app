@@ -38,7 +38,10 @@ be a test-only phrase. Perf builds are signed with the debug keystore, so
    - `NEUTRAL` → revert, unless the change is a correctness fix worth keeping
      on its own merits, or an algorithmic win on a path the test wallet does
      not exercise, proven by a benchmark and an equivalence test that passes
-     against the old code too (record which, with the benchmark numbers).
+     against the old code too (record which, with the benchmark numbers) —
+     or a CPU reduction the JS profiler attributes directly to the change,
+     with an equivalence proof, on a phase whose wall-clock is set by
+     something else (network, UI thread).
    - `REJECT` → revert. Try another variant; after three variants, park the
      candidate with what was learned.
 5. **Record** in `LEDGER.md`: hypothesis, evidence, each attempt and its

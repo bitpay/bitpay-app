@@ -176,7 +176,10 @@ function prepareDevice(serial, {disableAnimations = true} = {}) {
 
   if (disableAnimations) {
     ANIMATION_SCALES.forEach(key => {
-      restore[key] = adbShell(serial, `settings get global ${key}`).stdout.trim();
+      restore[key] = adbShell(
+        serial,
+        `settings get global ${key}`,
+      ).stdout.trim();
       adbShell(serial, `settings put global ${key} 0`);
     });
   }
@@ -504,6 +507,68 @@ function readMemoryMb(serial) {
  * thread) and RenderThread. Total process CPU hides the case where JS is
  * saturated while the process looks idle, so we break them out.
  */
+/**
+ * Cumulative CPU time per thread class since the process started, read once.
+ *
+ * The interval sampler cannot run during cold launches (the launch wait is
+ * synchronous, so its timer never fires); this needs no timer. Read at the
+ * end of startup-load, it is the total work the app did to start and settle,
+ * attributed to the JS, UI, render, JIT and GC threads — the metric that
+ * shows a JS-CPU saving even when wall-clock phases are network-bound.
+ */
+function readThreadCpuTotals(serial) {
+  const pid = getPid(serial);
+  if (!pid) {
+    return {};
+  }
+  const out = adbShell(
+    serial,
+    `for f in /proc/${pid}/task/*/stat; do cat $f 2>/dev/null; done`,
+  ).stdout;
+  const totals = {js: 0, ui: 0, render: 0, jit: 0, gc: 0, all: 0};
+  let sawJs = false;
+  out.split('\n').forEach(line => {
+    const close = line.lastIndexOf(')');
+    const open = line.indexOf('(');
+    if (close < 0 || open < 0) {
+      return;
+    }
+    const tid = Number(line.slice(0, open).trim());
+    const comm = line.slice(open + 1, close);
+    const fields = line.slice(close + 2).split(/\s+/);
+    // utime + stime in clock ticks (USER_HZ = 100 on Android) -> ms.
+    const ms = (Number(fields[11]) + Number(fields[12])) * 10;
+    if (!Number.isFinite(ms)) {
+      return;
+    }
+    totals.all += ms;
+    if (JS_THREAD_RE.test(comm)) {
+      sawJs = true;
+      totals.js += ms;
+    }
+    if (tid === pid) {
+      totals.ui += ms;
+    }
+    if (comm === 'RenderThread') {
+      totals.render += ms;
+    }
+    if (comm.startsWith('Jit thread')) {
+      totals.jit += ms;
+    }
+    if (comm === 'hades' || comm === 'HeapTaskDaemon') {
+      totals.gc += ms;
+    }
+  });
+  return {
+    js_cpu_ms_settled: sawJs ? totals.js : null,
+    ui_cpu_ms_settled: totals.ui,
+    render_cpu_ms_settled: totals.render,
+    jit_cpu_ms_settled: totals.jit,
+    gc_cpu_ms_settled: totals.gc,
+    process_cpu_ms_settled: totals.all,
+  };
+}
+
 function createCpuSampler(serial) {
   let last = null;
   const samples = [];
@@ -533,7 +598,11 @@ function createCpuSampler(serial) {
       const utime = Number(fields[11]);
       const stime = Number(fields[12]);
 
-      if (Number.isFinite(tid) && Number.isFinite(utime) && Number.isFinite(stime)) {
+      if (
+        Number.isFinite(tid) &&
+        Number.isFinite(utime) &&
+        Number.isFinite(stime)
+      ) {
         threads[tid] = {comm, ticks: utime + stime};
       }
     });
@@ -598,7 +667,9 @@ function createCpuSampler(serial) {
 
         samples.push({
           total_cpu_pct: Number(pct(totalTicks).toFixed(1)),
-          js_thread_cpu_pct: sawJsThread ? Number(pct(jsTicks).toFixed(1)) : null,
+          js_thread_cpu_pct: sawJsThread
+            ? Number(pct(jsTicks).toFixed(1))
+            : null,
           ui_thread_cpu_pct: Number(pct(uiTicks).toFixed(1)),
           render_thread_cpu_pct: Number(pct(renderTicks).toFixed(1)),
           hermes_gc_cpu_pct: Number(pct(gcTicks).toFixed(1)),
@@ -645,15 +716,13 @@ function artifactStats(apkPath) {
   const {stdout} = run('unzip', ['-l', apkPath]);
 
   const sumMatching = re =>
-    stdout
-      .split('\n')
-      .reduce((acc, line) => {
-        const m = line.trim().match(/^(\d+)\s+\S+\s+\S+\s+(.+)$/);
-        if (m && re.test(m[2])) {
-          return acc + Number(m[1]);
-        }
-        return acc;
-      }, 0) || null;
+    stdout.split('\n').reduce((acc, line) => {
+      const m = line.trim().match(/^(\d+)\s+\S+\s+\S+\s+(.+)$/);
+      if (m && re.test(m[2])) {
+        return acc + Number(m[1]);
+      }
+      return acc;
+    }, 0) || null;
 
   return {
     apk_size_bytes: size,
@@ -686,6 +755,7 @@ module.exports = {
   readGfxInfo,
   readMemoryMb,
   createCpuSampler,
+  readThreadCpuTotals,
   artifactStats,
   parseAndroidDuration,
 };
