@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {H6, Link} from '../../../../components/styled/Text';
 import {RootState} from '../../../../store';
 import Icons from '../../../wallet/components/WalletIcons';
@@ -49,16 +49,28 @@ const ContactsContainer = ({
 
 type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Contacts'>;
 
+// Contacts are stored in the order they were added, newest last.
+const PREVIEW_COUNT = 6;
+
 const Contacts: React.FC<Props> = ({navigation}) => {
   const {t} = useTranslation();
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
+  // Show the most recently added contacts, newest first, so a contact the
+  // user just added is visible here; the full list is under View All.
+  const previewContacts = useMemo(
+    () => contacts.slice(-PREVIEW_COUNT).reverse(),
+    [contacts],
+  );
 
   return (
     <SettingsComponent>
       <ContactsContainer>
-        {contacts.length
-          ? contacts.slice(0, 6).map((item, index) => (
-              <View key={index}>
+        {previewContacts.length
+          ? previewContacts.map(item => (
+              <View
+                key={`${item.address}-${item.coin}-${item.network}-${
+                  item.chain ?? ''
+                }`}>
                 <ContactRow
                   contact={item}
                   onPress={() => {
@@ -83,7 +95,7 @@ const Contacts: React.FC<Props> = ({navigation}) => {
         <H6 medium={true}>{t('Add Contact')}</H6>
       </Setting>
 
-      {contacts.length > 6 ? (
+      {contacts.length > PREVIEW_COUNT ? (
         <Setting
           style={{justifyContent: 'center'}}
           onPress={() => navigation.navigate('ContactsRoot')}
