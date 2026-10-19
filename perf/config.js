@@ -66,6 +66,18 @@ const THRESHOLDS = {
   janky_frames_legacy_pct: {direction: 'lower', tolerance: 0.2},
   frame_p95_ms: {direction: 'lower', tolerance: 0.2},
   frame_deadline_missed: {direction: 'lower', tolerance: 0.25},
+  // Load profile (startup-load). Counts are close to deterministic for a given
+  // wallet, so they get tight tolerances; times keep the usual ones.
+  modules_ttfd: {direction: 'lower', tolerance: 0.03},
+  module_init_ms_ttfd: {direction: 'lower', tolerance: 0.1},
+  modules_settled: {direction: 'lower', tolerance: 0.03},
+  requests_ttfd: {direction: 'lower', tolerance: 0.1},
+  requests_settled: {direction: 'lower', tolerance: 0.1},
+  actions_ttfd: {direction: 'lower', tolerance: 0.1},
+  actions_settled: {direction: 'lower', tolerance: 0.1},
+  action_ms_settled: {direction: 'lower', tolerance: 0.15},
+  js_heap_mb_settled: {direction: 'lower', tolerance: 0.1},
+  store_kb_settled: {direction: 'lower', tolerance: 0.05},
   /** Sizes are deterministic — zero noise, so a tight tolerance is safe. */
   apk_size_bytes: {direction: 'lower', tolerance: 0.05},
   bundle_size_bytes: {direction: 'lower', tolerance: 0.05},
@@ -83,6 +95,16 @@ const SCENARIOS = {
     measures: ['startup', 'memory', 'cpu', 'jsTimeline'],
     description:
       'Force-stopped process, launched through the real LAUNCHER intent, timed to first draw and to fully-drawn.',
+  },
+  'startup-load': {
+    // No Maestro flow: TTID/TTFD come from logcat, and Maestro's own driver
+    // startup (~14s per run) was most of the wall-clock of startup-cold.
+    flow: null,
+    launchMode: 'cold',
+    settleForLoadProfile: true,
+    measures: ['startup', 'memory', 'cpu', 'jsTimeline', 'load'],
+    description:
+      'Cold start on the onboarded wallet, held until the app settles: timeline plus what loaded — modules, requests, actions, heap, store size. The self-healing loop gates on this.',
   },
   'startup-cold-fresh': {
     flow: 'startup_cold_fresh.yaml',

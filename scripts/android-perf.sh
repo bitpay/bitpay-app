@@ -64,6 +64,9 @@ PERF_ABI="${PERF_ABI:-arm64-v8a}"
 # Perf bundles must never reach Sentry: their source maps would be
 # attributed to a real release version.
 export SENTRY_DISABLE_AUTO_UPLOAD=true
+# Tells metro.config.js to add the module-initialisation timer and write the
+# module id map (perf/build/module-map.json) for the harness.
+export BP_PERF_BUILD=1
 ( cd "$REPO_ROOT/android" && ./gradlew app:assembleRelease \
     -PreactNativeArchitectures="$PERF_ABI" \
     -PperfBuild=true \

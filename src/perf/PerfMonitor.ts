@@ -257,3 +257,181 @@ export function stopNavigationReporting(): void {
 }
 
 export const isPerfEnabled = enabled;
+
+// ------------------------------------------------------------- load profile
+
+/**
+ * "How much is loading at once": what the app does between launch and the
+ * moment it settles, beyond the phase timeline above.
+ *
+ *   - JS modules initialised, from perf/runtime/module-timer.js (a Metro
+ *     polyfill present only in perf builds)
+ *   - network requests started, via a thin XMLHttpRequest wrapper (fetch is
+ *     built on XHR in React Native, so this sees both)
+ *   - Redux actions dispatched, via perfActionMiddleware in src/store
+ *   - Hermes heap size, and the serialised size of each store slice
+ *
+ * Emitted twice per launch: when the splash hides ('ttfd') and again once the
+ * app has had time to settle ('settled'), so startup work deferred until just
+ * after first paint is visible too.
+ */
+
+type RequestRecord = {
+  method: string;
+  url: string;
+  startMs: number;
+  durationMs: number | null;
+  status: number | null;
+  bytes: number | null;
+};
+
+const LOAD_SETTLE_MS = 10000;
+const requests: RequestRecord[] = [];
+const actionCounts: Record<string, {count: number; ms: number}> = {};
+let getStoreState: (() => Record<string, unknown>) | null = null;
+const perfNow = () =>
+  typeof (global as any).nativePerformanceNow === 'function'
+    ? (global as any).nativePerformanceNow()
+    : Date.now();
+
+/** Strip query strings and ids so requests group by endpoint. */
+function endpointOf(url: string): string {
+  const withoutQuery = String(url).split(/[?#]/)[0];
+  return withoutQuery
+    .replace(/\/[0-9a-f]{16,}(?=\/|$)/gi, '/:id')
+    .replace(/\/0x[0-9a-f]{20,}(?=\/|$)/gi, '/:addr')
+    .replace(/\/\d+(?=\/|$)/g, '/:n');
+}
+
+if (enabled && typeof XMLHttpRequest !== 'undefined') {
+  const proto = XMLHttpRequest.prototype as any;
+  const open = proto.open;
+  const send = proto.send;
+  proto.open = function (method: string, url: string, ...rest: unknown[]) {
+    this.__bpPerf = {method, url: endpointOf(url)};
+    return open.call(this, method, url, ...rest);
+  };
+  proto.send = function (...args: unknown[]) {
+    const meta = this.__bpPerf;
+    if (meta) {
+      const record: RequestRecord = {
+        method: meta.method,
+        url: meta.url,
+        startMs: perfNow(),
+        durationMs: null,
+        status: null,
+        bytes: null,
+      };
+      requests.push(record);
+      this.addEventListener?.('loadend', () => {
+        record.durationMs = perfNow() - record.startMs;
+        record.status = this.status;
+        const len =
+          typeof this.responseText === 'string' && this.responseType === ''
+            ? this.responseText.length
+            : null;
+        record.bytes = len;
+      });
+    }
+    return send.apply(this, args);
+  };
+}
+
+/** Called from src/store once the store exists, for slice sizes. */
+export function registerStoreForPerf(
+  getState: () => Record<string, unknown>,
+): void {
+  if (enabled) {
+    getStoreState = getState;
+  }
+}
+
+/** Redux middleware body — counts and times every dispatched action. */
+export function recordAction(type: string, ms: number): void {
+  if (!enabled) {
+    return;
+  }
+  const entry = actionCounts[type] || (actionCounts[type] = {count: 0, ms: 0});
+  entry.count++;
+  entry.ms += ms;
+}
+
+function moduleSummary() {
+  const stats = (global as any).__BP_MODULE_STATS__;
+  if (!stats) {
+    return null;
+  }
+  const {records, count} = stats as {records: number[]; count: number};
+  let totalSelfMs = 0;
+  const all: Array<[number, number, number]> = [];
+  for (let i = 0; i < records.length; i += 3) {
+    totalSelfMs += records[i + 1];
+    all.push([records[i], records[i + 1], records[i + 2]]);
+  }
+  all.sort((a, b) => b[1] - a[1]);
+  return {
+    count,
+    totalSelfMs,
+    // [moduleId, selfMs, startMs] — the harness maps ids to paths.
+    top: all
+      .slice(0, 60)
+      .map(([id, self, start]) => [
+        id,
+        Math.round(self * 100) / 100,
+        Math.round(start),
+      ]),
+  };
+}
+
+function storeSizes(): Record<string, number> | null {
+  if (!getStoreState) {
+    return null;
+  }
+  try {
+    const state = getStoreState();
+    const sizes: Record<string, number> = {};
+    Object.keys(state).forEach(slice => {
+      try {
+        sizes[slice] = JSON.stringify(state[slice])?.length ?? 0;
+      } catch {
+        sizes[slice] = -1;
+      }
+    });
+    return sizes;
+  } catch {
+    return null;
+  }
+}
+
+function heapStats(): Record<string, number> | null {
+  try {
+    return (global as any).HermesInternal?.getInstrumentedStats?.() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function flushLoad(label: string): void {
+  post('load', {
+    label,
+    modules: moduleSummary(),
+    requests: requests.slice(),
+    actions: actionCounts,
+    heap: heapStats(),
+    // Slice sizes are the expensive part (a full serialisation), so they are
+    // only taken once the app has settled.
+    store: label === 'settled' ? storeSizes() : null,
+  });
+}
+
+let loadScheduled = false;
+
+/** Call when the splash hides. */
+export function scheduleLoadProfile(): void {
+  if (!enabled || loadScheduled) {
+    return;
+  }
+  loadScheduled = true;
+  afterIdle(() => flushLoad('ttfd'));
+  setTimeout(() => afterIdle(() => flushLoad('settled')), LOAD_SETTLE_MS);
+}

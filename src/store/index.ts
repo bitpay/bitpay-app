@@ -113,6 +113,11 @@ import {
   logReducerDuration,
 } from './performanceDiagnostics';
 import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
+import {
+  isPerfEnabled,
+  recordAction,
+  registerStoreForPerf,
+} from '../perf/PerfMonitor';
 
 export const storage = new MMKV();
 
@@ -597,6 +602,18 @@ const getStore = async () => {
   if (PERF_DEBUG) {
     middlewares.unshift(reduxPerformanceMiddleware);
   }
+  // Perf builds only (IS_PERF): counts and times every action for the
+  // harness's load profile. Outermost, so it times the whole chain.
+  if (isPerfEnabled) {
+    middlewares.unshift(() => next => (action: AnyAction) => {
+      const startedAt = performance.now();
+      const result = next(action);
+      if (typeof action?.type === 'string') {
+        recordAction(action.type, performance.now() - startedAt);
+      }
+      return result;
+    });
+  }
   middlewares.push(lastActionMiddleware());
   middlewares.push(invalidateWalletDerivedCachesMiddleware);
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
@@ -771,6 +788,9 @@ const getStore = async () => {
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+  registerStoreForPerf(
+    store.getState as unknown as () => Record<string, unknown>,
+  );
   // Enable direct log dispatching now that the store exists
   storeDispatch = store.dispatch;
 

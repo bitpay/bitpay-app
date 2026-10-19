@@ -145,4 +145,107 @@ function extractTransitions(payload) {
   return transitions;
 }
 
-module.exports = {collect, extractStartupTimeline, extractTransitions, LINE_RE};
+/**
+ * Load profile: what ran between launch and settling (see scheduleLoadProfile
+ * in src/perf/PerfMonitor.ts). Two snapshots per launch — 'ttfd' when the
+ * splash hides and 'settled' ~10s later.
+ *
+ * Returns flat metrics for statistics plus a `profile` with the detail
+ * (heaviest modules by path, requests by endpoint, actions by type, store
+ * bytes by slice) — the part that says what to fix, not just how much.
+ */
+function extractLoadProfile(payloads, moduleMap) {
+  const byLabel = {};
+  (payloads || [])
+    .filter(p => p.kind === 'load')
+    .forEach(p => {
+      byLabel[p.label] = p;
+    });
+
+  const metrics = {};
+  const profile = {};
+
+  const sumActions = actions =>
+    Object.values(actions || {}).reduce(
+      (acc, a) => ({count: acc.count + a.count, ms: acc.ms + a.ms}),
+      {count: 0, ms: 0},
+    );
+
+  ['ttfd', 'settled'].forEach(label => {
+    const p = byLabel[label];
+    if (!p) {
+      return;
+    }
+    const round = v =>
+      v === null || v === undefined ? null : Number(v.toFixed(2));
+    if (p.modules) {
+      metrics[`modules_${label}`] = p.modules.count;
+      metrics[`module_init_ms_${label}`] = round(p.modules.totalSelfMs);
+    }
+    const reqs = p.requests || [];
+    metrics[`requests_${label}`] = reqs.length;
+    const acts = sumActions(p.actions);
+    metrics[`actions_${label}`] = acts.count;
+    metrics[`action_ms_${label}`] = round(acts.ms);
+    if (p.heap && typeof p.heap.js_heapSize === 'number') {
+      metrics[`js_heap_mb_${label}`] = round(p.heap.js_heapSize / 1048576);
+    }
+  });
+
+  const settled = byLabel.settled || byLabel.ttfd;
+  if (settled) {
+    const reqs = settled.requests || [];
+    metrics.request_kb_settled = Number(
+      (reqs.reduce((s, r) => s + (r.bytes || 0), 0) / 1024).toFixed(1),
+    );
+    if (settled.heap && typeof settled.heap.js_numGCs === 'number') {
+      metrics.js_gc_count_settled = settled.heap.js_numGCs;
+    }
+    if (settled.store) {
+      metrics.store_kb_settled = Number(
+        (
+          Object.values(settled.store).reduce((s, v) => s + Math.max(v, 0), 0) /
+          1024
+        ).toFixed(1),
+      );
+      profile.storeBytes = settled.store;
+    }
+
+    const endpoints = {};
+    reqs.forEach(r => {
+      const key = `${r.method} ${r.url}`;
+      const e =
+        endpoints[key] ||
+        (endpoints[key] = {count: 0, totalMs: 0, bytes: 0, failed: 0});
+      e.count++;
+      e.totalMs += r.durationMs || 0;
+      e.bytes += r.bytes || 0;
+      if (!r.status || r.status >= 400) {
+        e.failed++;
+      }
+    });
+    profile.requests = endpoints;
+    profile.actions = settled.actions || {};
+  }
+
+  // Module detail from the ttfd snapshot: that is what blocked first use.
+  const modSnap = (byLabel.ttfd || settled || {}).modules;
+  if (modSnap) {
+    profile.topModules = modSnap.top.map(([id, selfMs, startMs]) => ({
+      id,
+      path: (moduleMap && moduleMap[id]) || null,
+      selfMs,
+      startMs,
+    }));
+  }
+
+  return {metrics, profile, sawLabels: Object.keys(byLabel)};
+}
+
+module.exports = {
+  collect,
+  extractStartupTimeline,
+  extractTransitions,
+  extractLoadProfile,
+  LINE_RE,
+};

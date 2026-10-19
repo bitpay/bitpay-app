@@ -91,6 +91,59 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   );
 };
 
+// Perf builds (scripts/android-perf.sh) add a module-initialisation timer and
+// record the module id -> path map so the harness can name what loaded. The
+// script writes IS_PERF=true into the env files for the duration of the build;
+// every other build gets exactly the config above.
+const isPerfBuild = (() => {
+  if (process.env.BP_PERF_BUILD === '1') {
+    return true;
+  }
+  try {
+    const envFile =
+      process.env.NODE_ENV === 'production'
+        ? '.env.production'
+        : '.env.development';
+    return /^IS_PERF=true$/m.test(
+      require('fs').readFileSync(path.join(__dirname, envFile), 'utf8'),
+    );
+  } catch {
+    return false;
+  }
+})();
+
+if (isPerfBuild) {
+  const fs = require('fs');
+  const defaults = getDefaultConfig(__dirname);
+  const MODULE_MAP_PATH = path.join(__dirname, 'perf/build/module-map.json');
+
+  config.serializer = {
+    getPolyfills: options => [
+      ...defaults.serializer.getPolyfills(options),
+      path.join(__dirname, 'perf/runtime/module-timer.js'),
+    ],
+    // Same sequential ids as Metro's default factory, but remembered so the
+    // map can be written when bundling finishes.
+    createModuleIdFactory: () => {
+      const ids = new Map();
+      process.once('exit', () => {
+        const byId = {};
+        ids.forEach((id, file) => {
+          byId[id] = path.relative(__dirname, file);
+        });
+        fs.mkdirSync(path.dirname(MODULE_MAP_PATH), {recursive: true});
+        fs.writeFileSync(MODULE_MAP_PATH, JSON.stringify(byId));
+      });
+      return file => {
+        if (!ids.has(file)) {
+          ids.set(file, ids.size);
+        }
+        return ids.get(file);
+      };
+    },
+  };
+}
+
 module.exports = withSentryConfig(
   mergeConfig(getDefaultConfig(__dirname), config),
 );

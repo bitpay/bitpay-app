@@ -107,3 +107,6 @@ android/sentry.properties
 perf/results/
 *.perf-backup
 .env.production.perf-backup
+
+# Perf build byproducts (module id map)
+perf/build/

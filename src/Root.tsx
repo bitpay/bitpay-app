@@ -131,6 +131,7 @@ import RNBootSplash from 'react-native-bootsplash';
 import {
   mark as perfMark,
   flushStartup as perfFlushStartup,
+  scheduleLoadProfile as perfScheduleLoadProfile,
   onNavigationStateChange as perfOnNavigationStateChange,
   startNavigationReporting as perfStartNavigationReporting,
 } from './perf/PerfMonitor';
@@ -1079,6 +1080,7 @@ export default () => {
                   perfMark('bp_splash_hidden');
                   reportFullyDrawn();
                   perfFlushStartup();
+                  perfScheduleLoadProfile();
                 });
               });
             }

@@ -107,6 +107,20 @@ function baselineNameFor(device) {
   return `android-${kind}-${model}.json`;
 }
 
+/**
+ * Module id -> path map written by metro.config.js when it bundles a perf
+ * build. Only valid for the APK built alongside it, which is the normal case:
+ * build, then run.
+ */
+function loadModuleMap() {
+  const mapPath = path.join(__dirname, 'build', 'module-map.json');
+  try {
+    return JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 // --------------------------------------------------------- scenario execution
 
 /**
@@ -240,7 +254,19 @@ async function runIteration(ctx, scenario) {
     // are still buffered when we read and get discarded with the next
     // iteration's log clear.
     await sleep(3000);
-    const payloads = collector.collect(serial);
+    let payloads = collector.collect(serial);
+
+    // startup-load holds the iteration open until the app's 'settled' load
+    // snapshot (~10s after the splash hides) has been emitted.
+    if (scenario.settleForLoadProfile) {
+      const deadline = Date.now() + 20000;
+      const hasSettled = () =>
+        payloads.some(p => p.kind === 'load' && p.label === 'settled');
+      while (!hasSettled() && Date.now() < deadline) {
+        await sleep(1000);
+        payloads = collector.collect(serial);
+      }
+    }
     const startupPayload = payloads.find(p => p.kind === 'startup');
     const navPayloads = payloads.filter(p => p.kind === 'navigation');
 
@@ -256,7 +282,17 @@ async function runIteration(ctx, scenario) {
       ctx.sawInstrumentation = true;
     }
 
-    return {metrics, transitions};
+    let profile = null;
+    if ((scenario.measures || []).includes('load')) {
+      const load = collector.extractLoadProfile(payloads, ctx.moduleMap);
+      Object.assign(metrics, load.metrics);
+      profile = load.profile;
+      if (!load.sawLabels.includes('settled')) {
+        ctx.missingSettledLoad = true;
+      }
+    }
+
+    return {metrics, transitions, profile};
   } finally {
     stopSampling();
   }
@@ -277,13 +313,16 @@ async function runScenario(ctx, scenarioName) {
   const iterations = [];
   const transitionRuns = [];
   const failures = [];
+  let lastProfile = null;
 
   log(`\n▸ ${scenarioName} — ${scenario.description}`);
 
   for (let i = 0; i < totalRuns; i++) {
     const isWarmup = i < ctx.discard;
     process.stdout.write(
-      `  run ${i + 1}/${totalRuns}${isWarmup ? ' (warm-up, discarded)' : ''} ... `,
+      `  run ${i + 1}/${totalRuns}${
+        isWarmup ? ' (warm-up, discarded)' : ''
+      } ... `,
     );
 
     const result = await runIteration(ctx, scenario);
@@ -301,6 +340,9 @@ async function runScenario(ctx, scenarioName) {
       if (!isWarmup) {
         iterations.push(result.metrics);
         transitionRuns.push(result.transitions || {});
+        if (result.profile) {
+          lastProfile = result.profile;
+        }
       }
     }
 
@@ -332,6 +374,9 @@ async function runScenario(ctx, scenarioName) {
     description: scenario.description,
     metrics: stats.summarizeRuns(iterations, {maxCov: ctx.maxCov}),
     perScreen,
+    // Detail from the last measured iteration — names what loaded, which the
+    // aggregated metrics cannot.
+    profile: lastProfile,
     failures,
     completedRuns: iterations.length,
   };
@@ -407,6 +452,7 @@ async function cmdRun(args) {
     cooldownMs,
     maxCov: DEFAULTS.maxCoefficientOfVariation,
     sawInstrumentation: false,
+    moduleMap: loadModuleMap(),
   };
 
   const scenarios = {};
@@ -420,6 +466,13 @@ async function cmdRun(args) {
     }
   } finally {
     android.restoreDevice(info.serial, restore);
+  }
+
+  if (ctx.missingSettledLoad) {
+    const msg =
+      "At least one iteration never received the app's 'settled' load snapshot; *_settled metrics there are missing, not zero.";
+    warn(msg);
+    warnings.push(msg);
   }
 
   if (ctx.gpuTimingUnavailable) {
@@ -533,7 +586,9 @@ function printSummary(results, comparison) {
       .filter(Boolean);
 
     log(
-      `${name}: ${headline.length ? headline.join('  ') : 'no metrics collected'}`,
+      `${name}: ${
+        headline.length ? headline.join('  ') : 'no metrics collected'
+      }`,
     );
   });
 
