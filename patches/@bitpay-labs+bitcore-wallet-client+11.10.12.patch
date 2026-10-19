@@ -1,3 +1,43 @@
+diff --git a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
+index edec33e..51ac37b 100644
+--- a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
++++ b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
+@@ -87,11 +87,34 @@ class Utils {
+     }
+     static signMessage(message, privKey) {
+         $.checkArgument(message);
+-        const priv = new PrivateKey(privKey);
++        const priv = Utils._requestPrivateKey(privKey);
+         const flattenedMessage = Array.isArray(message) ? message.join(',') : message;
+         const hash = this.hashMessage(flattenedMessage);
+         return crypto.ECDSA.sign(hash, priv, { endian: 'little' }).toString();
+     }
++    // Every BWS request is signed with the same request key. Building a new
++    // PrivateKey from the string each time re-derived its public key (one EC
++    // multiplication) and re-validated it (another, the slower kind) just to
++    // read the `compressed` flag, tripling the cost of each signature; on a
++    // mid-range Android phone under Hermes that was ~50 ms of JS per request.
++    // The string form of the key already lives in the wallet credentials, so
++    // keeping its parsed PrivateKey changes nothing about what is in memory.
++    // Signatures are unchanged (RFC 6979 deterministic k).
++    static _requestPrivateKey(privKey) {
++        if (typeof privKey !== 'string') {
++            return new PrivateKey(privKey);
++        }
++        const cache = Utils._requestPrivateKeys || (Utils._requestPrivateKeys = new Map());
++        let priv = cache.get(privKey);
++        if (!priv) {
++            priv = new PrivateKey(privKey);
++            if (cache.size >= 32) {
++                cache.delete(cache.keys().next().value);
++            }
++            cache.set(privKey, priv);
++        }
++        return priv;
++    }
+     static verifyMessage(message, signature, pubKey) {
+         $.checkArgument(message);
+         $.checkArgument(pubKey);
 diff --git a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js
 index c8bef3f..c495251 100644
 --- a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js
