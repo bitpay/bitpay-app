@@ -31,7 +31,10 @@ class MainActivity : ReactActivity() {
         // Integrity check must run before React Native initialises.
         // super.onCreate is called first in the failure path so the activity window token
         // is valid when AlertDialog.Builder tries to attach the dialog.
-        if (!BundleIntegrityVerifier.verify(this)) {
+        PerfMarks.mark("bp_native_activity_create_start")
+        val bundleVerified = BundleIntegrityVerifier.verify(this)
+        PerfMarks.mark("bp_native_integrity_checked")
+        if (!bundleVerified) {
             super.onCreate(savedInstanceState)
             BundleIntegrityVerifier.showTamperedAlert(this)
             return
@@ -42,6 +45,7 @@ class MainActivity : ReactActivity() {
         supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
         super.onCreate(savedInstanceState)
         (application as MainApplication).addActivityToStack(this.javaClass)
+        PerfMarks.mark("bp_native_activity_create_end")
 
         // Perf builds leave screen capture on so the UI-parity harness can take
         // screenshots. PERF_BUILD is false in every production build.

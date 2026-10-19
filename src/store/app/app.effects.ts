@@ -1,3 +1,4 @@
+import {mark as perfMark} from '../../perf/PerfMonitor';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
@@ -211,6 +212,7 @@ export const reportDeviceIntegrity = (): Effect => dispatch => {
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
+    perfMark('bp_app_init_start');
     logManager.info(
       `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
     );
@@ -236,6 +238,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     } else {
       logManager.warn('SSL pinning is not available on this device');
     }
+    perfMark('bp_ssl_pinning_done');
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
@@ -259,6 +262,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         resumePersistRootBackups,
       ),
     );
+    perfMark('bp_wallet_secrets_done');
 
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());
@@ -352,6 +356,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
 
+    perfMark('bp_app_init_success');
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
     logManager.info('Initialized app successfully.');

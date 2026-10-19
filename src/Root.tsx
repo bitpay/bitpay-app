@@ -332,6 +332,7 @@ const StartupGate = () => {
     }
 
     hasRoutedRef.current = true;
+    perfMark('bp_startup_route');
 
     navigation.reset({
       index: 0,

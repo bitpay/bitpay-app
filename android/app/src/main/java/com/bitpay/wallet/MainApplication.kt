@@ -33,6 +33,8 @@ class MainApplication : Application(), ReactApplication {
         }
 
     override fun onCreate() {
+        PerfMarks.processStart()
+        PerfMarks.mark("bp_native_app_create_start")
         super.onCreate()
         val context: Context = this
         loadReactNative(context)
@@ -58,6 +60,7 @@ class MainApplication : Application(), ReactApplication {
                 registerInAppMessageManager = false
             )
         )
+        PerfMarks.mark("bp_native_app_create_end")
     }
 
     fun notifyReactNativeAppLoaded() {

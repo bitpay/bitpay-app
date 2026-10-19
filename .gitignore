@@ -110,3 +110,4 @@ perf/results/
 
 # Perf build byproducts (module id map)
 perf/build/
+perf/loop/state/

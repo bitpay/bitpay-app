@@ -26,6 +26,7 @@ type PerfEntry = {
   entryType: string;
   startTime: number;
   duration: number;
+  value?: number;
 };
 
 let performanceApi: any = null;
@@ -99,6 +100,7 @@ function getEntries(): PerfEntry[] {
       entryType: e.entryType,
       startTime: e.startTime,
       duration: e.duration,
+      ...(typeof e.value === 'number' ? {value: e.value} : {}),
     }));
   } catch {
     return [];

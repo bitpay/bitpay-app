@@ -107,7 +107,33 @@ function extractStartupTimeline(payload) {
   const bundleStart = byName.runJsBundleStart;
   const bundleEnd = byName.runJsBundleEnd;
 
+  // Every other `bp_*` mark (native PerfMarks.kt and JS sub-phase marks) is
+  // reported generically as `<name>_ms`, so adding a mark in the app needs
+  // no change here. Per-screen nav marks (`bp_nav_start:Foo`) are excluded.
+  const named = new Set([
+    'bp_js_entry',
+    'bp_store_ready',
+    'bp_store_rehydrated',
+    'bp_app_initialized',
+    'bp_nav_ready',
+    'bp_splash_hidden',
+  ]);
+  const extra = {};
+  Object.keys(byName)
+    .filter(n => n.startsWith('bp_') && !n.includes(':') && !named.has(n))
+    .forEach(n => {
+      extra[`${n.slice(3)}_ms`] = rel(n);
+    });
+
+  // react-native-performance estimates nativeLaunchStart from CPU time; the
+  // real process start (PerfMarks.processStart) shows how far off that is.
+  const processStart = payload.entries.find(e => e.name === 'bp_process_start');
+  if (processStart && typeof processStart.value === 'number') {
+    extra.process_start_ms = Number((processStart.value - origin).toFixed(2));
+  }
+
   return {
+    ...extra,
     native_launch_end_ms: rel('nativeLaunchEnd'),
     js_bundle_exec_ms:
       bundleStart !== undefined && bundleEnd !== undefined
