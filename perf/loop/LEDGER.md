@@ -1,0 +1,76 @@
+# Self-healing loop — ledger
+
+Device: **Motorola one 5G ace** (Android 11, arm64, 5.5 GB), onboarded test
+wallet. Every number is a median of 10 cold starts of `startup-load`; a change
+counts only beyond 2× the larger stddev. Base: `upstream/develop` + open perf
+PRs #2449–#2458 (see LOOP.md).
+
+## Starting point (accepted run `176b156e8`)
+
+TTFD (splash hidden) **3,852 ms** · TTID 1,262 ms · 3,844 modules / 760 ms of
+module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
+
+| Phase | ms |
+|---|---:|
+| process start → first ContentProvider | 657 |
+| Application.onCreate | 150 |
+| LaunchActivity trampoline | 84 |
+| MainActivity.onCreate (bundle hash 40) | 132 |
+| RN start → JS entry (Hermes bundle exec 663) | 821 |
+| store create + rehydrate | 165 |
+| wallet secrets migration | 184 |
+| wallet secrets → app init success | 354 |
+| app init success → StartupGate routes | 176 |
+| Home first render → commit | 294 |
+| Home commit → splash hidden | 613 |
+
+## Fixes
+
+| # | Area | Change | Measured | Commit |
+|---|---|---|---|---|
+| 1 | UI | Bottom-notification actions back to bottom-left / bottom-right (a wrapping row, not a column) | layout — both platforms | `d2c871925` |
+| 2 | Launch | Token-list entries share per-chain config instead of rebuilding it for each of ~21k tokens | app-init phase 354 → 303 ms (−51); JS heap −6 MB | `61aece25c` |
+| 3 | Render | `GetPrecision`/`GetName` look tokens up directly instead of copying three token tables (~21k entries) per call | 6.4 ms → 0.00004 ms per call (benchmark); neutral on this wallet, which holds no token wallets | `3632ff4b1` |
+| 4 | Launch | MoonPay embedded check (session request, x25519 keys, invisible WebView) waits for startup to settle | route phase 168 → 91 ms (−77, p<.001); TTFD median 3913 → 3697 ms (−217, p=.016) | `e7e0c4735` |
+
+## Candidates (ranked by expected win × confidence)
+
+| ID | Where | Evidence | Status |
+|---|---|---|---|
+| C1 | Home commit → splash hidden, 613 ms | profile: ~420 ms synchronous React re-renders triggered from mount effects, `bn.js` multiplication | open |
+| C2 | `GetPrecision` / `GetName` token-table copies | | **fixed (#3)** |
+| C3 | Home first render, 294 ms | profile: render work, 39 ms of it module init (Skia 20 ms) | open |
+| C4 | Remaining app-init sync work, 303 ms | 4.7 MB token-list JSON parse + loop, still ahead of SUCCESS_APP_INIT | open |
+| C5 | RN start → JS entry, 821 ms | 2,716 modules evaluate before index.js runs; `shim.js` → react-native-webassembly pulls in `Image` → UIManager constants (~300 ms, RN core) | research |
+| C6 | process start → first ContentProvider, 657 ms | before any app code; needs a system trace (Perfetto) | needs tooling |
+| C7 | wallet secrets migration, 184 ms every launch | name suggests a one-time migration | open |
+| C8 | SUCCESS_APP_INIT → route, 176 ms | | open |
+| C9 | `changelly/getCurrencies` 475 KB POST every launch | `prefetchExternalServicesData` after init | open |
+| C10 | LaunchActivity trampoline, 84 ms | also an Android Vitals anti-pattern | open |
+| C11 | After first draw: `GlobalSelect` render 105 ms, noble-curves and AES work | post-TTFD jank | open |
+| C12 | Bundle integrity check, 40 ms | security control — only a neutral-guarantee change | low |
+| C13 | Four confirm screens keep `'use no memo'` whose stated reason (Ledger transport refs) left with #2456 | React Compiler could now compile them | open |
+
+## Test-wallet caveat
+
+The test seed's wallet has **$0 balance, no token wallets and no history**, so
+balance math, token lookups, the portfolio chart and transaction lists barely
+run in these measurements. Fixes on those paths are kept on benchmark plus
+equivalence-test evidence (rule in LOOP.md). A wallet with a little on-chain
+activity would make them measurable.
+
+## Harness built during the loop
+
+- Perf builds: debug-keystore signed, arm64-only (~2.5 min incremental), no
+  Sentry upload, screenshots allowed (`PERF_BUILD` gates FLAG_SECURE).
+- Fixed a launch crash in every IS_PERF build: RN 0.87 removed
+  `InteractionManager`.
+- Load profile: modules initialised (Metro polyfill), requests by endpoint,
+  actions by type, Hermes heap, store bytes per slice; module cost bucketed by
+  startup phase.
+- Native and JS sub-phase marks; phase durations as gated metrics.
+- Symbolicated Hermes CPU profiles per startup phase (`jsprofile.sh`).
+- `iterate.sh` / `compare.js`: build → measure → KEEP / NEUTRAL / REJECT,
+  with MAD-based noise, a Mann–Whitney rank test, and a stricter threshold for
+  non-target metrics (identical builds compare NEUTRAL). `merge-runs.js` pools
+  runs when 10 cannot decide.
