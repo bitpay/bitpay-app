@@ -342,7 +342,7 @@ const flushPersistenceSoon = () => {
 
 let persistFlushSubscription: {remove: () => void} | null = null;
 
-const registerPersistFlushOnBackground = (persistor: {
+export const registerPersistFlushOnBackground = (persistor: {
   flush: () => Promise<void>;
 }) => {
   // getStore can run more than once, so replace any previous listener rather
@@ -351,14 +351,25 @@ const registerPersistFlushOnBackground = (persistor: {
   persistFlushSubscription = AppState.addEventListener(
     'change',
     nextAppState => {
-      if (nextAppState === 'background') {
+      // 'inactive' too: an app swiped away from the iOS app switcher can be
+      // terminated without ever reaching 'background', and throttled writes
+      // may still be queued.
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
         persistor.flush().catch(() => {});
       }
     },
   );
 };
 
+// redux-persist re-serialises each changed slice and rewrites all of
+// persist:root synchronously on the JS thread. Throttling lets a burst of
+// updates (a balance refresh dispatches many) collapse into a few writes.
+// Critical actions still flush immediately (FS_BACKUP_TRIGGER_ACTIONS), and
+// the app flushes when it leaves the foreground.
+export const PERSIST_THROTTLE_MS = 500;
+
 const basePersistConfig = {
+  throttle: PERSIST_THROTTLE_MS,
   storage: reduxStorage,
   stateReconciler: autoMergeLevel2,
   writeFailHandler: reportPersistWriteError,

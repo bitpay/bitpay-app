@@ -51,7 +51,13 @@ jest.mock('../managers/LogManager', () => ({
 import * as Keychain from 'react-native-keychain';
 import RNFS from 'react-native-fs';
 import {encryptTransform} from 'redux-persist-transform-encrypt';
-import getStore, {getEncryptionKey, storage} from './index';
+import {AppState} from 'react-native';
+import getStore, {
+  getEncryptionKey,
+  PERSIST_THROTTLE_MS,
+  storage,
+} from './index';
+import {showPortfolioValue} from './app/app.actions';
 import * as backups from './backup/fs-backup';
 import {flushPersistor} from './persistor';
 import {initialWalletSecretsState} from './wallet-secrets/wallet-secrets.reducer';
@@ -197,4 +203,58 @@ it('rehydrates and persists the same encrypted state with the correct key', asyn
   await flushPersistor();
   expect(storage.set).toHaveBeenCalledWith('persist:root', expect.any(String));
   persistor.pause();
+});
+
+describe('persist write throttling', () => {
+  const rootWrites = () =>
+    (storage.set as jest.Mock).mock.calls.filter(
+      ([key]) => key === 'persist:root',
+    ).length;
+
+  const rehydratedWithCorrectKey = async () => {
+    (Keychain.getGenericPassword as jest.Mock).mockResolvedValue({
+      password: 'original-key',
+    });
+    storage.set('persist:root', persistedRoot(true));
+    const result = await getRehydratedStore();
+    await flushPersistor();
+    (storage.set as jest.Mock).mockClear();
+    return result;
+  };
+
+  it('coalesces ordinary updates into one write per throttle window', async () => {
+    const {store, persistor} = await rehydratedWithCorrectKey();
+
+    store.dispatch(showPortfolioValue(false));
+    store.dispatch(showPortfolioValue(true));
+    store.dispatch(showPortfolioValue(false));
+    jest.advanceTimersByTime(PERSIST_THROTTLE_MS - 1);
+    expect(rootWrites()).toBe(0);
+
+    jest.advanceTimersByTime(1);
+    expect(rootWrites()).toBe(1);
+    persistor.pause();
+  });
+
+  it.each(['inactive', 'background'] as const)(
+    'flushes queued writes immediately when the app goes %s',
+    async appState => {
+      const listeners: Array<(state: string) => void> = [];
+      jest
+        .spyOn(AppState, 'addEventListener')
+        .mockImplementation((_type: any, listener: any) => {
+          listeners.push(listener);
+          return {remove: jest.fn()} as any;
+        });
+      const {store, persistor} = await rehydratedWithCorrectKey();
+
+      store.dispatch(showPortfolioValue(false));
+      expect(rootWrites()).toBe(0);
+      listeners.forEach(listener => listener(appState));
+      await Promise.resolve();
+
+      expect(rootWrites()).toBe(1);
+      persistor.pause();
+    },
+  );
 });
