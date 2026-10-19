@@ -1,3 +1,4 @@
+import Aes from 'crypto-js/aes.js';
 import isEqual from 'lodash.isequal';
 import {decodeSnapshot, encodeSnapshot} from './vault-codec';
 import {
@@ -1460,4 +1461,144 @@ it('D16: a labelled optional backup rejection stays optional and grants no relea
   expect(h.record()?.copies.main).toBeNull();
   expect(h.record()?.release.main).toBe(false);
   equal(decodeSnapshot(h.destinations.root!, newKey).payload, fixture.state);
+});
+
+it.each([
+  'missing root',
+  'different key',
+  'readable CBC',
+  'read throws',
+  'pending throws',
+])('D18: holds retirement for %s', async kind => {
+  const transfer = loadTransfer(true);
+  const h = harness();
+  await transfer(h.io);
+  h.cold();
+  expect(h.record()!.copies.root).toBe('mmkv');
+  const control = h.controlRaw();
+  const release = h.record()!.release;
+  if (kind === 'missing root' || kind === 'pending throws')
+    h.destinations.root = null;
+  if (kind === 'different key')
+    h.destinations.root = encodeSnapshot(
+      fixture.state,
+      Buffer.alloc(32, 73).toString('base64'),
+    );
+  if (kind === 'readable CBC') {
+    h.destinations.root = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(fixture.state).map(([name, state]) => [
+          name,
+          JSON.stringify(Aes.encrypt(JSON.stringify(state), newKey).toString()),
+        ]),
+      ),
+    );
+    expect(decodeSnapshot(h.destinations.root, newKey).format).toBe('cbc');
+  }
+  if (kind === 'read throws') h.fault('destination:read:root');
+  if (kind === 'pending throws') {
+    const original = h.io.pending;
+    h.io.pending = () => {
+      original();
+      throw new Error('synthetic pending failure');
+    };
+  }
+  const claim = jest.spyOn(h.io, 'claimColdRetirement');
+  const write = jest.spyOn(h.io, 'writeControl');
+  const pending = jest.spyOn(h.io, 'pending');
+  h.events.length = 0;
+  expect((await transfer(h.io)) === newKey).toBe(true);
+  expect(h.record()!.phase).toBe('active');
+  expect(h.controlRaw() === control).toBe(true);
+  expect(h.record()!.release).toEqual(release);
+  expect(h.events.filter(e => e === 'destination:read:root')).toHaveLength(1);
+  expect(h.events.some(e => e.startsWith('retirement:'))).toBe(false);
+  expect(h.events).not.toContain('legacy-key:remove');
+  expect(claim).not.toHaveBeenCalled();
+  expect(write).not.toHaveBeenCalled();
+  expect(pending).toHaveBeenCalledTimes(1);
+  expect(pending).toHaveBeenCalledWith();
+  expect(h.events.filter(e => e === 'pending')).toHaveLength(1);
+  if (kind === 'read throws') expect(h.reached()).toBe(true);
+});
+
+it('D18: disabled policy adds no root read or pending report', async () => {
+  const h = harness();
+  await loadTransfer(true)(h.io);
+  h.destinations.root = null;
+  const control = h.controlRaw();
+  h.events.length = 0;
+  expect((await loadTransfer(false)(h.io)) === newKey).toBe(true);
+  expect(h.events).toContain('key:read');
+  expect(h.events).not.toContain('destination:read:root');
+  expectNoRetirement(h);
+  expect(h.controlRaw() === control).toBe(true);
+});
+
+it('D18: already-retired records add no root read or pending report', async () => {
+  const transfer = loadTransfer(true);
+  const h = harness();
+  await transfer(h.io);
+  h.cold();
+  await transfer(h.io);
+  expect(h.record()!.phase).toBe('retired');
+  h.destinations.root = null;
+  const control = h.controlRaw();
+  h.events.length = 0;
+  expect((await transfer(h.io)) === newKey).toBe(true);
+  expect(h.events).toContain('key:read');
+  expect(h.events).not.toContain('destination:read:root');
+  expectNoRetirement(h);
+  expect(h.controlRaw() === control).toBe(true);
+});
+
+it('D18: rootless activation retires disposable material without a root read', async () => {
+  const transfer = loadTransfer(true);
+  const h = harness('fresh');
+  h.state.sources.temp = 'synthetic disposable output';
+  await transfer(h.io);
+  expect(h.record()!.copies.root).toBeNull();
+  h.cold();
+  h.events.length = 0;
+  expect((await transfer(h.io)) === newKey).toBe(true);
+  expect(h.events).not.toContain('destination:read:root');
+  expect(h.events).not.toContain('pending');
+  expect(h.events).toContain('retirement:before:temp');
+  expect(h.state.sources.temp).toBeNull();
+  expect(h.record()!.phase).toBe('retired');
+});
+
+it('D18: repeated holds recheck the root and a later valid root resumes retirement', async () => {
+  const transfer = loadTransfer(true);
+  const h = harness();
+  await transfer(h.io);
+  h.cold();
+  const validRoot = h.destinations.root;
+  const control = h.controlRaw();
+  const release = h.record()!.release;
+  const claim = jest.spyOn(h.io, 'claimColdRetirement');
+  h.destinations.root = null;
+  for (let invocation = 0; invocation < 2; invocation++) {
+    h.events.length = 0;
+    expect((await transfer(h.io)) === newKey).toBe(true);
+    expect(h.events.filter(e => e === 'destination:read:root')).toHaveLength(1);
+    expect(h.events.filter(e => e === 'pending')).toHaveLength(1);
+    expect(h.events.some(e => e.startsWith('retirement:'))).toBe(false);
+    expect(h.events).not.toContain('legacy-key:remove');
+    expect(h.controlRaw() === control).toBe(true);
+    expect(h.record()!.release).toEqual(release);
+    expect(claim).not.toHaveBeenCalled();
+  }
+  h.destinations.root = validRoot;
+  h.events.length = 0;
+  expect((await transfer(h.io)) === newKey).toBe(true);
+  const read = h.events.indexOf('destination:read:root');
+  expect(read).toBeGreaterThan(h.events.indexOf('key:read'));
+  expect(read).toBeLessThan(
+    h.events.findIndex(e => e.startsWith('retirement:')),
+  );
+  expect(h.events).toContain('legacy-key:remove');
+  expect(h.events).not.toContain('pending');
+  expect(h.record()!.phase).toBe('retired');
+  expect(h.record()!.release).toEqual(release);
 });

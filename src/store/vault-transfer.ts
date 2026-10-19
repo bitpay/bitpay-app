@@ -261,8 +261,20 @@ function plan(inventory: Inventory, candidates: string[]): TransferRecord {
   };
 }
 
-async function retire(io: TransferIO, record: TransferRecord) {
+async function retire(io: TransferIO, record: TransferRecord, key: string) {
   if (!LEGACY_RETIREMENT_ENABLED || record.phase === 'retired') return;
+  if (record.copies.root !== null) {
+    try {
+      const raw = await io.readDestination('root');
+      if (raw === null || decodeSnapshot(raw, key).format !== 'gcm')
+        throw new Error();
+    } catch {
+      try {
+        io.pending();
+      } catch {}
+      return;
+    }
+  }
   let pending = false;
   const remove = async (slot: Retirement) => {
     if (!(await io.sourceExists(slot))) return;
@@ -315,7 +327,7 @@ export async function transferVault(io: TransferIO): Promise<string> {
   let record = readRecord(io);
   if (record && record.phase !== 'preparing') {
     const key = await io.modernKey(false);
-    await retire(io, record);
+    await retire(io, record, key);
     return key;
   }
   if (!record) {
