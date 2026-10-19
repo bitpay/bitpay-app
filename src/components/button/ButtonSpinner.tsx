@@ -31,14 +31,16 @@ const styles = StyleSheet.create({
 
 const Spinner = ({buttonStyle}: {buttonStyle?: string}) => {
   const angle = useSharedValue(0);
-  angle.value = withRepeat(
-    withTiming(180, {duration: 250, easing: Easing.linear}),
-    -1,
-    false,
+  angle.set(
+    withRepeat(
+      withTiming(180, {duration: 250, easing: Easing.linear}),
+      -1,
+      false,
+    ),
   );
 
   const spin = useAnimatedStyle(() => ({
-    transform: [{rotate: `${angle.value}deg`}],
+    transform: [{rotate: `${angle.get()}deg`}],
   }));
 
   return (

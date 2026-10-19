@@ -156,6 +156,12 @@ export const SettingTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
 };
 
 const Confirm = () => {
+  // React Compiler opt-out: the hardware-wallet flow relies on render-time
+  // latest-value refs (transportRef / disconnectFnRef, read mid-await while a
+  // transport may be swapped) and on onDisconnect re-attaching itself as a
+  // stable listener. Rewriting that to satisfy the compiler would change
+  // transport/disconnect timing, so keep the existing semantics.
+  'use no memo';
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
@@ -483,6 +489,7 @@ const Confirm = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- checkHighFees() is async and updates the warning after fetching the fee rate
     checkHighFees();
   }, [fee]);
 

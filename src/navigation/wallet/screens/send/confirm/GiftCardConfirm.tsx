@@ -140,6 +140,12 @@ const GiftCardHeader = ({
 const MemoizedGiftCardHeader = React.memo(GiftCardHeader);
 
 const Confirm = () => {
+  // React Compiler opt-out: the hardware-wallet flow relies on render-time
+  // latest-value refs (transportRef / disconnectFnRef, read mid-await while a
+  // transport may be swapped) and on onDisconnect re-attaching itself as a
+  // stable listener. Rewriting that to satisfy the compiler would change
+  // transport/disconnect timing, so keep the existing semantics.
+  'use no memo';
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();

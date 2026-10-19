@@ -528,6 +528,12 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 };
 
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
+  // React Compiler opt-out: the compiler already skips this screen because of
+  // its existing exhaustive-deps lint suppressions, and
+  // accountDropdownList caches its last value in a ref read/written inside
+  // useMemo (keeps the previous list while the dropdown is closed), which has
+  // no behaviour-identical compiler-safe form. Keep it uncompiled explicitly.
+  'use no memo';
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
@@ -600,6 +606,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     if (!showPortfolioValue && activeTab === 'allocation') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- falls back to the wallets tab when the allocation tab becomes unavailable
       setActiveTab('wallets');
     }
   }, [activeTab, showPortfolioValue]);
@@ -699,6 +706,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     }
 
     hasHydratedHistoryRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot hydration from the cached history once content is ready
     setAccountTransactionsHistory(cachedAccountHistory);
     setGroupedHistory(GroupTransactionHistory(transactions));
     setLoadMore(
@@ -793,6 +801,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     useRef<typeof activeAccountList>(activeAccountList);
   const accountDropdownList = useMemo(() => {
     if (!showAccountDropdown) {
+      // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
       return accountDropdownListRef.current;
     }
 
@@ -804,6 +813,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       {filterByHideWallet: true},
     ).filter(({chains}) => IsVMChain(chains[0]));
 
+    // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
     accountDropdownListRef.current = accountsForDropdown;
     return accountsForDropdown;
   }, [defaultAltCurrency.isoCode, dispatch, key, rates, showAccountDropdown]);
@@ -1202,6 +1212,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const updateWalletStatusAndProfileBalanceRef = useRef(
     updateWalletStatusAndProfileBalance,
   );
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   updateWalletStatusAndProfileBalanceRef.current =
     updateWalletStatusAndProfileBalance;
 
@@ -1426,6 +1437,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       dispatch(
         showBottomNotificationModal(
           RbfTransaction(
+            // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
             () => speedupTransaction(transaction),
             () => goToTransactionDetails(transaction),
           ),
@@ -1695,6 +1707,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [keyFullWalletObjs],
   );
   const preloadWalletDetailsRef = useRef(preloadWalletDetails);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   preloadWalletDetailsRef.current = preloadWalletDetails;
   const stablePreloadWalletDetails = useCallback(
     (walletId: string) => preloadWalletDetailsRef.current(walletId),
@@ -1857,6 +1870,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       }),
     [defaultAltCurrency.isoCode, key, keyFullWalletObjs, rates],
   );
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
   const memorizedAssetsByChainList = useMemo(() => {
     if (!contentReady) {
       return (

@@ -220,7 +220,8 @@ jest.mock('react-native-reanimated', () => {
     },
     useDerivedValue: (factory: () => number, ...dependencies: unknown[]) => {
       expect(dependencies).toHaveLength(0);
-      return {value: factory()};
+      const value = factory();
+      return {value, get: () => value};
     },
     withTiming: (value: number) => value,
   };

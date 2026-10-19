@@ -245,6 +245,7 @@
     "@types/redux-logger": "3.0.9",
     "babel-jest": "29.6.3",
     "babel-loader": "9.1.2",
+    "babel-plugin-react-compiler": "1.0.0",
     "babel-plugin-transform-import-meta": "2.3.3",
     "babel-plugin-transform-remove-console": "6.9.4",
     "dotenv": "16.0.1",

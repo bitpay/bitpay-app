@@ -246,6 +246,7 @@ const RequestSpecificAmountQR = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- init() is async; its synchronous setState is the loading flag before the await
     init();
   }, [wallet]);
 

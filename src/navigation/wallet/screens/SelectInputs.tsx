@@ -278,6 +278,7 @@ const SelectInputs = () => {
       return;
     }
     const totalSat = Number(totalAmount) * precision.unitToSatoshi;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentionally recomputed only when totalAmount changes (not on rate updates)
     setTotalFiatAmount(
       formatFiatAmount(
         convertToFiat(
@@ -301,6 +302,7 @@ const SelectInputs = () => {
   }, [totalAmount]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async mount-time UTXO load; state is only set after awaits
     init();
   }, []);
 
@@ -312,6 +314,7 @@ const SelectInputs = () => {
       dispatch,
       'symbol',
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentionally rebuilt only when lockedUtxos changes
     setUiFormattedWallet(_uiFormattedWallet);
   }, [lockedUtxos]);
 

@@ -160,10 +160,10 @@ const BalanceHistoryChart = ({
     }),
   );
   const maxAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: zeroBalanceAxisLabelOpacity.value,
+    opacity: zeroBalanceAxisLabelOpacity.get(),
   }));
   const minAxisLabelZeroBalanceAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: zeroBalanceAxisLabelOpacity.value,
+    opacity: zeroBalanceAxisLabelOpacity.get(),
   }));
   const FadingMaxAxisLabel = React.useCallback(
     (props: InteractiveLineChartAxisLabelProps) => (
@@ -200,7 +200,7 @@ const BalanceHistoryChart = ({
       : 1;
 
   const timeframeSelectorAnimatedStyle = useAnimatedStyle(() => {
-    const sharedOpacity = sharedTimeframeSelectorOpacity?.value;
+    const sharedOpacity = sharedTimeframeSelectorOpacity?.get();
     return {
       opacity:
         typeof sharedOpacity === 'number' && Number.isFinite(sharedOpacity)

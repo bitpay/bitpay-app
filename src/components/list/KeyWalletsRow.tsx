@@ -253,6 +253,12 @@ const KeyWalletsRow = ({
   hideBalance,
   supportedTransactionCurrencies,
 }: KeyWalletProps) => {
+  // React Compiler opt-out: prevValueRef is read and written while mapping the
+  // rows during render and is NOT reset between renders, so the first UTXO row
+  // of a re-render sees the last row of the previous render as `prev`. A
+  // per-render local (the compiler-safe fix) would change the isLast /
+  // isSameChain / chain-header output on re-renders, so keep it uncompiled.
+  'use no memo';
   const {t} = useTranslation();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [showChainAssets, setShowChainAssets] = useState<{
@@ -273,6 +279,7 @@ const KeyWalletsRow = ({
 
   return (
     <View style={styles.outerContainer}>
+      {/* eslint-disable-next-line react-hooks/refs -- see 'use no memo' above */}
       {keyAccounts.map(key => (
         <View style={styles.keyWalletsRowContainer} key={key.key}>
           {(key.accounts?.length > 0 ||
