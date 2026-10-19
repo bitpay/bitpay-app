@@ -155,6 +155,7 @@ const WalletSettings = () => {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tracks wallet visibility from the store; state is also toggled locally
     setHadVisibleWallet(wallets.some(w => !w.hideWallet && IsVMChain(w.chain)));
   }, [wallets]);
 
@@ -162,6 +163,7 @@ const WalletSettings = () => {
     if (wallet.receiveAddress) {
       const {hideAccount, accountToggleSelected} =
         evmAccountsInfo?.[wallet.receiveAddress] || {};
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- re-syncs locally toggled switch state from the store when it changes
       setHideAccount(hideAccount ?? false);
       setAccountToggleSelected(accountToggleSelected ?? false);
     }

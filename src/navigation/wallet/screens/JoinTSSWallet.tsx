@@ -299,6 +299,11 @@ type Props = NativeStackScreenProps<
 >;
 
 const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
+  // React Compiler opt-out: react-hook-form's `watch()` returns values the
+  // compiler cannot memoize safely (it already skips this component for that
+  // reason). Switching to `useWatch` would change the re-render subscription,
+  // so keep the existing behaviour explicit until that is done deliberately.
+  'use no memo';
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
@@ -312,6 +317,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     mode: 'onChange',
     defaultValues: {myName: undefined},
   });
+  // eslint-disable-next-line react-hooks/incompatible-library -- see 'use no memo' above
   const myNameValue = watch('myName');
   const isFormValid = myNameValue?.trim().length > 0;
 

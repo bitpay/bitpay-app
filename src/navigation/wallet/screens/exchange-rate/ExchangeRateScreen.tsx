@@ -46,6 +46,12 @@ type ExchangeRateScreenProps = {
 };
 
 const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
+  // React Compiler opt-out: displayDataRef / quoteCurrencyRef /
+  // currencyAbbreviationRef are written during render because the axis label
+  // components from useStableChartAxisLabels read them while rendering in the
+  // same pass. Moving the writes into an effect would render the min/max
+  // labels with the previous chart data, so keep the render-time writes.
+  'use no memo';
   const {t} = useTranslation();
   const theme = useTheme();
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
@@ -55,6 +61,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
   const [displayData, setDisplayData] =
     useState<ChartDataType>(defaultDisplayData);
   const displayDataRef = useRef(displayData);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   displayDataRef.current = displayData;
   const gestureStarted = useRef(false);
   const [selectedPoint, setSelectedPoint] = useState<
@@ -211,6 +218,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
       typeof pointsForChartRaw !== 'undefined' &&
       typeof derivedDisplayData !== 'undefined'
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- displayData intentionally lags derived data and is kept while the series cache reloads
       setDisplayData(derivedDisplayData);
       setIsChartLoading(false);
       return;
@@ -343,12 +351,15 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
 
   const chartPoints = displayData.data;
   const currencyAbbreviationRef = useRef(shared.currencyAbbreviation);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   currencyAbbreviationRef.current = shared.currencyAbbreviation;
   const quoteCurrencyRef = useRef(shared.resolvedQuoteCurrency);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   quoteCurrencyRef.current = shared.resolvedQuoteCurrency;
 
   useEffect(() => {
     gestureStarted.current = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the scrub selection after the new chart points commit, alongside the gesture ref reset
     setSelectedPoint(undefined);
   }, [chartPoints]);
 

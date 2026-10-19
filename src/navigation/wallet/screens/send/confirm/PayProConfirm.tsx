@@ -107,6 +107,12 @@ export interface PayProConfirmParamList {
 }
 
 const PayProConfirm = () => {
+  // React Compiler opt-out: the hardware-wallet flow relies on render-time
+  // latest-value refs (transportRef / disconnectFnRef, read mid-await while a
+  // transport may be swapped) and on onDisconnect re-attaching itself as a
+  // stable listener. Rewriting that to satisfy the compiler would change
+  // transport/disconnect timing, so keep the existing semantics.
+  'use no memo';
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -186,6 +192,7 @@ const PayProConfirm = () => {
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
   const transportRef = useRef(hardwareWalletTransport);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   transportRef.current = hardwareWalletTransport;
 
   const setPromptOpenAppState = (state: boolean) =>
@@ -223,6 +230,7 @@ const PayProConfirm = () => {
     }
 
     if (newTp) {
+      // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
       newTp.on('disconnect', onDisconnect);
     }
     setHardwareWalletTransport(newTp);
@@ -250,6 +258,7 @@ const PayProConfirm = () => {
         address: string;
       });
       if (fee) {
+        // eslint-disable-next-line react-hooks/immutability -- checkHighFees is declared later but only called after an await, when it already exists
         checkHighFees(selectedWallet, newTxp, fee);
       }
       dispatch(
@@ -281,7 +290,8 @@ const PayProConfirm = () => {
     useCallback(() => {
       wallet
         ? createTxp(wallet)
-        : setTimeout(() => openKeyWalletSelector(), 500);
+        : // eslint-disable-next-line react-hooks/immutability -- openKeyWalletSelector is declared below but only called from a timeout, when it already exists
+          setTimeout(() => openKeyWalletSelector(), 500);
     }, []),
   );
 
@@ -493,6 +503,7 @@ const PayProConfirm = () => {
   // errors will be thrown and caught as needed in their respective workflows
   const disconnectFn = () => setHardwareWalletTransport(null);
   const disconnectFnRef = useRef(disconnectFn);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   disconnectFnRef.current = disconnectFn;
 
   const onHardwareWalletPaired = (args: {transport: Transport}) => {

@@ -8,6 +8,23 @@ import {SlateDark} from '../../styles/colors';
 import {withTiming} from 'react-native-reanimated';
 import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
 
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
+
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 let mockLatestLineGraphProps: any;
@@ -44,9 +61,11 @@ jest.mock('react-native-reanimated', () => {
     },
     useDerivedValue: (fn: () => unknown, ...dependencies: unknown[]) => {
       expect(dependencies).toHaveLength(0);
-      return {value: fn()};
+      const value = fn();
+      return {value, get: () => value};
     },
-    useSharedValue: (value: unknown) => ReactLib.useRef({value}).current,
+    useSharedValue: (value: unknown) =>
+      ReactLib.useRef(mockSharedValue(value)).current,
     withTiming: jest.fn((value: unknown) => value),
   };
 });
@@ -135,7 +154,7 @@ describe('InteractiveLineChart', () => {
               color="#000000"
               gradientFillColors={['#ffffff', '#ffffff']}
               animated={false}
-              strokeScale={{value: 0.5} as any}
+              strokeScale={mockSharedValue(0.5) as any}
             />
           </View>
         </ThemeProvider>,
@@ -157,7 +176,7 @@ describe('InteractiveLineChart', () => {
               color="#000000"
               gradientFillColors={['#ffffff', '#ffffff']}
               animated
-              strokeScale={{value: 0.5} as any}
+              strokeScale={mockSharedValue(0.5) as any}
             />
           </View>
         </ThemeProvider>,
@@ -215,7 +234,7 @@ describe('InteractiveLineChart', () => {
     )[0];
     expect(guideLine.props.animatedProps.strokeWidth).toBe(4);
 
-    const sharedScale = {value: 0.5};
+    const sharedScale = mockSharedValue(0.5);
     act(() => renderer.update(renderChart(sharedScale, 3, 0.8)));
     expect(mockLatestLineGraphProps.lineThickness.value).toBeCloseTo(
       3 / Math.pow(0.5, 0.9),

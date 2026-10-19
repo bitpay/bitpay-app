@@ -206,7 +206,7 @@ const OnboardingPagination = memo(
       transform: [
         {
           translateX: interpolate(
-            progressValue.value,
+            progressValue.get(),
             [0, length - 1],
             [0, PAGINATION_DOT_STEP * (length - 1)],
             Extrapolate.CLAMP,
@@ -271,7 +271,7 @@ const OnboardingCarousel = memo(function OnboardingCarousel({
   const onScroll = useAnimatedScrollHandler(
     {
       onScroll: event => {
-        progressValue.value = event.contentOffset.x / WIDTH;
+        progressValue.set(event.contentOffset.x / WIDTH);
       },
     },
     [progressValue],

@@ -156,8 +156,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const [allListItems, setAllListItems] = useState<CurrencySelectionListItem[]>(
     [],
   );
-  const allListItemsRef = useRef(allListItems);
-  allListItemsRef.current = allListItems;
 
   useEffect(() => {
     switch (context) {
@@ -200,6 +198,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           });
         });
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- builds the initial list for the current context on mount/context change; list is later edited in place by toggles
         setAllListItems(utxoItems);
         return;
       }
@@ -447,7 +446,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   };
 
   const onToggleRef = useRef(onToggle);
-  onToggleRef.current = onToggle;
+  useLayoutEffect(() => {
+    onToggleRef.current = onToggle;
+  });
 
   const memoizedOnToggle = useCallback(
     (currencyAbbreviation: string, chain?: string) => {

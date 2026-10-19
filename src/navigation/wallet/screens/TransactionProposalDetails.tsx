@@ -325,6 +325,11 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 let countDown: NodeJS.Timeout | undefined;
 
 const TransactionProposalDetails = () => {
+  // React Compiler opt-out: render reads `Date.now()` (the TSS "older than 10
+  // minutes" delete-button check and the TSSProgressTracker `date` fallback,
+  // a fresh Date each render). Memoizing would freeze those time-dependent
+  // values. Also writes the module-level `countDown` interval handle.
+  'use no memo';
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -430,6 +435,38 @@ const TransactionProposalDetails = () => {
     }
   });
 
+  const paymentTimeControl = (expires: string): void => {
+    const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
+    setPaymentExpired(false);
+    setExpirationTime(expirationTime);
+
+    // Only called from the async checkPayPro handler, never during render.
+    // eslint-disable-next-line react-hooks/globals -- see 'use no memo' above
+    countDown = setInterval(() => {
+      setExpirationTime(expirationTime, countDown);
+    }, 1000);
+  };
+
+  const setExpirationTime = (
+    expirationTime: number,
+    interval?: NodeJS.Timeout,
+  ): void => {
+    const now = Math.floor(Date.now() / 1000);
+
+    if (now > expirationTime) {
+      setPaymentExpired(true);
+      setRemainingTimeStr(t('Expired'));
+      if (interval) {
+        clearInterval(interval);
+      }
+      return;
+    }
+    const totalSecs = expirationTime - now;
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
+  };
+
   const checkPayPro = useLatestCallback(async () => {
     try {
       setPayproIsLoading(true);
@@ -468,36 +505,6 @@ const TransactionProposalDetails = () => {
       );
     }
   });
-
-  const paymentTimeControl = (expires: string): void => {
-    const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
-    setPaymentExpired(false);
-    setExpirationTime(expirationTime);
-
-    countDown = setInterval(() => {
-      setExpirationTime(expirationTime, countDown);
-    }, 1000);
-  };
-
-  const setExpirationTime = (
-    expirationTime: number,
-    interval?: NodeJS.Timeout,
-  ): void => {
-    const now = Math.floor(Date.now() / 1000);
-
-    if (now > expirationTime) {
-      setPaymentExpired(true);
-      setRemainingTimeStr(t('Expired'));
-      if (interval) {
-        clearInterval(interval);
-      }
-      return;
-    }
-    const totalSecs = expirationTime - now;
-    const m = Math.floor(totalSecs / 60);
-    const s = totalSecs % 60;
-    setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
-  };
 
   const broadcastTxp = async (proposal: TransactionProposal) => {
     showOngoingProcess('BROADCASTING_TXP');
@@ -847,6 +854,7 @@ const TransactionProposalDetails = () => {
           {isTSSWallet(wallet) ? (
             <>
               {(txp.creatorId === wallet.credentials.copayerId ||
+                // eslint-disable-next-line react-hooks/purity -- see 'use no memo' above
                 Math.floor(Date.now() / 1000) - txp.createdOn > 10 * 60) &&
                 !key.isReadOnly && (
                   <Button
@@ -889,6 +897,7 @@ const TransactionProposalDetails = () => {
               createdBy={wallet.walletName || 'You'}
               date={
                 new Date(
+                  // eslint-disable-next-line react-hooks/purity -- see 'use no memo' above
                   (txp.createdOn ?? txp.time ?? Date.now() / 1000) * 1000,
                 )
               }

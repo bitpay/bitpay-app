@@ -569,6 +569,12 @@ const getTxDescriptionDetails = (key: string | undefined) =>
   key === 'moonpay' ? 'MoonPay' : undefined;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
+  // React Compiler opt-out: the compiler already skips this screen because of
+  // the intentional mount-only `exhaustive-deps` suppression on the hydrated
+  // history memo below. It also relies on render-time latest-value refs and a
+  // debounced loader memo the compiler cannot preserve; keep it uncompiled
+  // explicitly until those are reworked.
+  'use no memo';
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
@@ -1175,6 +1181,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     },
   );
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
   const debouncedLoadHistory = useMemo(
     () => debounce(loadHistory, 300, {leading: true}),
     [loadHistory],
@@ -1197,10 +1204,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const updateWalletStatusAndProfileBalanceRef = useRef(
     updateWalletStatusAndProfileBalance,
   );
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   updateWalletStatusAndProfileBalanceRef.current =
     updateWalletStatusAndProfileBalance;
 
   useFocusEffect(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
     useCallback(() => {
       dispatch(
         Analytics.track('View Wallet', {
@@ -1278,6 +1287,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listFooterComponent = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
     () => (
       <>
         {!groupedHistory?.length ? null : (

@@ -158,7 +158,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
             if (Math.round(index) !== activeSlideIndex) {
               throttleOnActiveSlideChange(index);
             }
-            progressValue.value = index;
+            progressValue.set(index);
           }}
           renderItem={slideProps => <OnboardingSlide {...slideProps} />}
         />
