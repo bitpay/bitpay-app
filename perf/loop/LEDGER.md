@@ -40,6 +40,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 11 | Launch | VisionCamera's native modules are created on first use (Scan), not while the React host starts | camera init gone from launch; RN start → JS entry 683 → 661 ms (p=.005); first Scan open unchanged (~0.8 s) | `791ec15b3` |
 | 12 | Launch | Cached token lists apply in ~8 ms slices that yield, so app init and routing no longer wait behind 21k tokens | TTFD 2945 → 2474 ms (−471, −16%, p<.001); app-init sync 308 → 1.4 ms; heap at first draw 44 → 32 MB | `d085a7d08` |
 | 13 | Frames | Shop mounts gift-card rows as the user scrolls (was: every card at once) | tab switching: worst frame 625 → 186 ms, UI time over budget 1.7 s → 0.78 s (−52%); idle-batch variant rejected (same total work) | `012f5bfa6` |
+| 14 | Launch | Native component view configs computed on first use: app wraps 57 eager packages as on-demand + RN `UIManager.js` stops spreading (which invoked every lazy getter) | bundle exec 595 → 405 ms (−32%); RN start → JS entry −188 ms; ~150 ms reappears when Home first renders its components; TTFD −55 ms (n.s.) | `5743a6869` |
 | 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `918236421` |
 
 ## Candidates (ranked by expected win × confidence)
@@ -70,6 +71,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C8 | SUCCESS_APP_INIT → route, 176 ms | | open |
 | C9 | `changelly/getCurrencies` 475 KB POST every launch | `prefetchExternalServicesData` after init | open |
 | C10 | LaunchActivity trampoline, 84 ms | also an Android Vitals anti-pattern | open |
+| C5b | (fixed #14) UIManager view-config construction at bundle start | | done |
 | C11 | After first draw: `GlobalSelect` render 105 ms, noble-curves and AES work | post-TTFD jank | open |
 | C12 | Bundle integrity check, 40 ms | security control — only a neutral-guarantee change | low |
 | C13 | Four confirm screens keep `'use no memo'` whose stated reason (Ledger transport refs) left with #2456 | React Compiler could now compile them | open |

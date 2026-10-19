@@ -20,15 +20,18 @@ class MainApplication : Application(), ReactApplication {
     override val reactHost: ReactHost by lazy {
         getDefaultReactHost(
           context = applicationContext,
+          // View managers are served on demand: see OnDemandViewManagers.
           packageList =
-                PackageList(this).packages.apply {
-                    // Add custom packages
-                    add(SilentPushPackage())
-                    add(TimerPackage())
-                    add(InAppMessagePackage())
-                    add(CrashTestPackage())
-                    add(AppPerfPackage())
-                },
+                OnDemandViewManagers.wrap(
+                    PackageList(this).packages.apply {
+                        // Add custom packages
+                        add(SilentPushPackage())
+                        add(TimerPackage())
+                        add(InAppMessagePackage())
+                        add(CrashTestPackage())
+                        add(AppPerfPackage())
+                    },
+                ),
             )
         }
 
