@@ -100,10 +100,6 @@ jest.mock('../../constants/currencies', () => ({
 jest.mock('@react-navigation/native', () => ({
   getStateFromPath: jest.fn(),
 }));
-jest.mock('../../navigation/card/CardStack', () => ({CardScreens: {}}));
-jest.mock('../../navigation/card-activation/CardActivationGroup', () => ({
-  CardActivationScreens: {},
-}));
 jest.mock('../../navigation/tabs/TabsStack', () => ({TabsScreens: {}}));
 jest.mock('../../navigation/wallet/WalletGroup', () => ({
   WalletScreens: {
@@ -200,7 +196,6 @@ jest.mock('../analytics/analytics.effects', () => ({
   },
 }));
 jest.mock('../bitpay-id', () => ({BitPayIdEffects: {}}));
-jest.mock('../card', () => ({CardActions: {}, CardEffects: {}}));
 jest.mock('../sumsub', () => ({
   SumSubEffects: {startGetKycStatus: jest.fn(() => ({type: 'GET_KYC_STATUS'}))},
 }));

@@ -10,7 +10,6 @@
  *   - startTwoFactorAuth (success, failure)
  *   - startDisconnectBitPayId (authenticated + unauthenticated paths)
  *   - startFetchBasicInfo (success, failure)
- *   - startFetchDoshToken (success, failure)
  */
 
 import configureTestStore from '@test/store';
@@ -27,7 +26,6 @@ import {
   startTwoFactorAuth,
   startDisconnectBitPayId,
   startFetchBasicInfo,
-  startFetchDoshToken,
 } from './bitpay-id.effects';
 
 // ---------------------------------------------------------------------------
@@ -54,11 +52,6 @@ jest.mock('../../managers/CloudflareChallengeManager', () => ({
   cloudflareChallengeManager: {
     present: jest.fn(),
   },
-}));
-
-jest.mock('../../lib/dosh', () => ({
-  __esModule: true,
-  default: {clearUser: jest.fn()},
 }));
 
 jest.mock('../../lib/Mixpanel', () => ({
@@ -105,15 +98,6 @@ jest.mock('../shop', () => ({
   },
 }));
 
-jest.mock('../card', () => ({
-  CardEffects: {
-    startCardStoreInit: jest.fn(() => ({type: 'CARD/INIT'})),
-  },
-  CardActions: {
-    isJoinedWaitlist: jest.fn(() => ({type: 'CARD/WAITLIST'})),
-  },
-}));
-
 jest.mock('../../utils/passkey', () => ({
   getPasskeyStatus: jest.fn(),
   signInWithPasskey: jest.fn(),
@@ -143,7 +127,6 @@ jest.mock('../../api/user', () => ({
   default: {
     fetchInitialUserData: jest.fn(),
     fetchBasicInfo: jest.fn(),
-    fetchDoshToken: jest.fn(),
   },
 }));
 
@@ -202,7 +185,6 @@ const makeUser = (overrides = {}): any => ({
 
 const makeInitialData = (userOverrides = {}): any => ({
   basicInfo: makeUser(userOverrides),
-  doshToken: null,
 });
 
 const baseStore = () =>
@@ -782,34 +764,5 @@ describe('startFetchBasicInfo', () => {
       store.dispatch(startFetchBasicInfo('token-abc')),
     ).rejects.toThrow('fetch failed');
     expect(store.getState().BITPAY_ID.fetchBasicInfoStatus).toBe('failed');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// startFetchDoshToken
-// ---------------------------------------------------------------------------
-
-describe('startFetchDoshToken', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('dispatches successFetchDoshToken with the returned token', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockResolvedValueOnce('dosh-xyz');
-
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-
-    expect(store.getState().BITPAY_ID.doshToken[Network.mainnet]).toBe(
-      'dosh-xyz',
-    );
-  });
-
-  it('dispatches failedFetchDoshToken when API call fails', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockRejectedValueOnce(
-      new Error('dosh error'),
-    );
-
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-    expect(store.getState().BITPAY_ID.fetchDoshTokenStatus).toBe('failed');
   });
 });

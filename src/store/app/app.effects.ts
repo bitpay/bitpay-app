@@ -28,8 +28,6 @@ import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {Network} from '../../constants';
-import {CardScreens} from '../../navigation/card/CardStack';
-import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {IsSVMChain} from '../wallet/utils/currency';
@@ -45,9 +43,7 @@ import {
 } from '../../utils/deviceIntegrity';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
-import {CardActions, CardEffects} from '../card';
 import {SumSubEffects} from '../sumsub';
-import {Card} from '../card/card.models';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {
@@ -451,7 +447,6 @@ const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
       );
     }
     dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
-    dispatch(CardEffects.startCardStoreInit(data.user));
     dispatch(SumSubEffects.startGetKycStatus());
   } catch (err: any) {
     if (isAxiosError(err)) {
@@ -1389,47 +1384,6 @@ export const incomingLink =
           });
         };
       }
-    } else if (pathSegments[0] === 'card') {
-      const cardPath = pathSegments[1];
-      const createCardHandler = (cb: (cards: Card[]) => void) => {
-        return () => {
-          const {APP, CARD} = getState();
-          const cards = CARD.cards[APP.network];
-
-          if (cards.length) {
-            cb(cards);
-          } else {
-            navigationRef.navigate(RootStacks.TABS, {
-              screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.HOME,
-              },
-            });
-          }
-        };
-      };
-
-      if (cardPath === 'activate') {
-        handler = createCardHandler(cards => {
-          navigationRef.navigate(CardActivationScreens.ACTIVATE, {
-            card: cards[0],
-          });
-        });
-      } else if (cardPath === 'offers') {
-        handler = createCardHandler(cards => {
-          navigationRef.navigate(RootStacks.TABS, {
-            screen: TabsScreens.CARD,
-            params: {
-              screen: CardScreens.SETTINGS,
-              params: {
-                id: cards[0].id,
-              },
-            },
-          });
-
-          dispatch(CardEffects.startOpenDosh());
-        });
-      }
     } else if (pathSegments[0] === 'exchange-rate') {
       handler = () => {
         navigationRef.navigate(RootStacks.TABS, {
@@ -1639,11 +1593,7 @@ export const requestInAppReview =
   };
 
 export const joinWaitlist =
-  (
-    email: string,
-    attribute: string,
-    context: 'bill-pay' | 'bitpay-card',
-  ): Effect =>
+  (email: string, attribute: string, context: 'bill-pay'): Effect =>
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
@@ -1663,9 +1613,6 @@ export const joinWaitlist =
 
       await axios.post(`${baseUrl}/marketing/marketingOptIn`, data, config);
       switch (context) {
-        case 'bitpay-card':
-          dispatch(CardActions.isJoinedWaitlist(true));
-          break;
         case 'bill-pay':
           dispatch(ShopActions.isJoinedWaitlist(true));
           break;
