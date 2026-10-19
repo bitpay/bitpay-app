@@ -87,12 +87,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
+  // Two actions sit at the bottom-left and bottom-right. Wrapping, rather than
+  // stacking every action, is what keeps a long translated label from
+  // breaking the row: it drops onto its own line only when it has to.
   ctaContainer: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    columnGap: 16,
   },
   actionButton: {
     minHeight: 48,
-    width: '100%',
+    maxWidth: '100%',
     justifyContent: 'center',
     paddingVertical: 10,
     paddingHorizontal: 0,
