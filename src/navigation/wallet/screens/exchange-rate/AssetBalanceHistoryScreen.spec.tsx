@@ -66,6 +66,7 @@ jest.mock('../../../../utils/hooks', () => ({
 }));
 
 jest.mock('../../../../utils/portfolio/assets', () => ({
+  getPopulateProgressForWallets: jest.fn(() => undefined),
   hasCompletedPopulateForWallets: jest.fn(() => false),
   isPopulateLoadingForWallets: jest.fn(() => false),
   walletHasNonZeroLiveBalance: jest.fn(() => false),

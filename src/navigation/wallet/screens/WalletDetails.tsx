@@ -971,6 +971,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     shouldRenderZeroBalanceChart: shouldRenderZeroWalletBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleWalletBalanceChart,
     isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
+    populateProgress: walletChartPopulateProgress,
     chartableWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: cacheEligibleWallets,
@@ -1886,7 +1887,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       }
                     />
                     {shouldShowWalletChartPlaceholder ? (
-                      <BalanceChartLoadingPlaceholder />
+                      <BalanceChartLoadingPlaceholder
+                        populateProgress={walletChartPopulateProgress}
+                      />
                     ) : null}
                     {shouldRenderWalletChart ? (
                       <View
@@ -1894,6 +1897,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           shouldShowWalletChartPlaceholder
                             ? styles.hiddenChart
                             : undefined
+                        }
+                        accessibilityElementsHidden={
+                          shouldShowWalletChartPlaceholder
+                        }
+                        importantForAccessibility={
+                          shouldShowWalletChartPlaceholder
+                            ? 'no-hide-descendants'
+                            : 'auto'
                         }>
                         <BalanceHistoryChart
                           wallets={chartableWallets}
@@ -1927,6 +1938,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             balanceChartSurface.chartCallbacks.onChangeRowData
                           }
                           onRenderableSeriesChange={
+                            onWalletChartRenderableSeriesChange
+                          }
+                          populateProgress={walletChartPopulateProgress}
+                          // Only the visible placeholder animates while this chart is hidden.
+                          skeletonVariant={
+                            shouldShowWalletChartPlaceholder
+                              ? 'static'
+                              : 'drawing'
+                          }
+                          // Reveal the chart's own error state (with Retry).
+                          onErrorStateChange={
                             onWalletChartRenderableSeriesChange
                           }
                           timeframeSelectorWidth={timeframeSelectorWidth}

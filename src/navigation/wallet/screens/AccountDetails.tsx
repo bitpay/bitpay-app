@@ -750,6 +750,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleAccountBalanceChart,
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
+    populateProgress: accountChartPopulateProgress,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: cacheEligibleAccountWallets,
@@ -1989,7 +1990,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   }
                 />
                 {shouldShowAccountChartPlaceholder ? (
-                  <BalanceChartLoadingPlaceholder />
+                  <BalanceChartLoadingPlaceholder
+                    populateProgress={accountChartPopulateProgress}
+                  />
                 ) : null}
                 {shouldRenderAccountBalanceChart ? (
                   <View
@@ -1997,6 +2000,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       shouldShowAccountChartPlaceholder
                         ? styles.hiddenChart
                         : undefined
+                    }
+                    accessibilityElementsHidden={
+                      shouldShowAccountChartPlaceholder
+                    }
+                    importantForAccessibility={
+                      shouldShowAccountChartPlaceholder
+                        ? 'no-hide-descendants'
+                        : 'auto'
                     }>
                     <BalanceHistoryChart
                       wallets={chartableAccountWallets}
@@ -2029,6 +2040,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       onRenderableSeriesChange={
                         onAccountChartRenderableSeriesChange
                       }
+                      populateProgress={accountChartPopulateProgress}
+                      // Only the visible placeholder animates while this chart is hidden.
+                      skeletonVariant={
+                        shouldShowAccountChartPlaceholder ? 'static' : 'drawing'
+                      }
+                      // Reveal the chart's own error state (with Retry).
+                      onErrorStateChange={onAccountChartRenderableSeriesChange}
                     />
                   </View>
                 ) : null}
@@ -2200,6 +2218,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [
     activeTab,
+    accountChartPopulateProgress,
     accountChartPreContent,
     accountHeaderChangeRowData,
     accountItem?.fiatLockedBalanceFormat,

@@ -546,6 +546,7 @@ const mockLegacyLastDayPnl = (currentFiat: unknown, lastDayFiat: unknown) => {
 };
 
 jest.mock('../../../utils/portfolio/assets', () => ({
+  getPopulateProgressForWallets: jest.fn(() => undefined),
   buildLegacyLastDayRateRequestsForWallets: jest.fn(
     ({wallets}: {wallets?: any[]}) =>
       (wallets || [])

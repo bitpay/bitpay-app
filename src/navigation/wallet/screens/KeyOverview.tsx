@@ -1117,6 +1117,7 @@ const KeyOverview = () => {
     shouldRenderZeroBalanceChart: shouldRenderZeroKeyBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleKeyBalanceChart,
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
+    populateProgress: keyChartPopulateProgress,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: keyBalanceChartWallets,
@@ -1832,7 +1833,9 @@ const KeyOverview = () => {
                 }
               />
               {shouldShowKeyChartPlaceholder ? (
-                <BalanceChartLoadingPlaceholder />
+                <BalanceChartLoadingPlaceholder
+                  populateProgress={keyChartPopulateProgress}
+                />
               ) : null}
               {shouldRenderKeyBalanceChart ? (
                 <View
@@ -1840,6 +1843,12 @@ const KeyOverview = () => {
                     shouldShowKeyChartPlaceholder
                       ? styles.hiddenChart
                       : undefined
+                  }
+                  accessibilityElementsHidden={shouldShowKeyChartPlaceholder}
+                  importantForAccessibility={
+                    shouldShowKeyChartPlaceholder
+                      ? 'no-hide-descendants'
+                      : 'auto'
                   }>
                   <BalanceHistoryChart
                     wallets={chartableVisibleKeyWallets}
@@ -1864,6 +1873,13 @@ const KeyOverview = () => {
                       balanceChartSurface.chartCallbacks.onChangeRowData
                     }
                     onRenderableSeriesChange={onKeyChartRenderableSeriesChange}
+                    populateProgress={keyChartPopulateProgress}
+                    // Only the visible placeholder animates while this chart is hidden.
+                    skeletonVariant={
+                      shouldShowKeyChartPlaceholder ? 'static' : 'drawing'
+                    }
+                    // Reveal the chart's own error state (with Retry).
+                    onErrorStateChange={onKeyChartRenderableSeriesChange}
                   />
                 </View>
               ) : null}
@@ -1896,6 +1912,7 @@ const KeyOverview = () => {
     chartableVisibleKeyWallets,
     dispatch,
     balanceChartSurface,
+    keyChartPopulateProgress,
     keyHeaderChangeRowData,
     hasCachedKeyChart,
     hideAllBalances,

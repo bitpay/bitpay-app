@@ -234,7 +234,21 @@ jest.mock('@shopify/react-native-skia', () => ({
   __esModule: true,
   Canvas: 'Canvas',
   Path: 'Path',
-  Skia: {Path: jest.fn(() => ({moveTo: jest.fn(), lineTo: jest.fn(), close: jest.fn()}))},
+  Skia: {
+    Path: Object.assign(
+      jest.fn(() => ({moveTo: jest.fn(), lineTo: jest.fn(), close: jest.fn()})),
+      {
+        Make: jest.fn(() => ({
+          moveTo: jest.fn(),
+          lineTo: jest.fn(),
+          cubicTo: jest.fn(),
+          close: jest.fn(),
+        })),
+      },
+    ),
+  },
+  LinearGradient: 'LinearGradient',
+  vec: jest.fn((x = 0, y = 0) => ({x, y})),
   useValue: jest.fn(() => ({current: 0})),
   useComputedValue: jest.fn(() => ({current: 0})),
   runTiming: jest.fn(),

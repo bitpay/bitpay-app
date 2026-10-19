@@ -2289,5 +2289,10 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.",
   "Show balances": "Show balances",
   "Hide balances": "Hide balances",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Could not check this account for pending transactions. Check your connection and try again."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Could not check this account for pending transactions. Check your connection and try again.",
+  "Loading balance history": "Loading balance history",
+  "Updating history · {{completed}} of {{count}} wallets_one": "Updating history · {{completed}} of {{count}} wallet",
+  "Updating history · {{completed}} of {{count}} wallets_other": "Updating history · {{completed}} of {{count}} wallets",
+  "Couldn't load balance history.": "Couldn't load balance history.",
+  "Retry": "Retry"
 }

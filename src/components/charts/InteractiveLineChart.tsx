@@ -6,14 +6,15 @@ import {LineGraph, type GraphPoint} from 'react-native-graph';
 import type {SelectionDotProps} from 'react-native-graph';
 import Svg, {Line} from 'react-native-svg';
 import Reanimated, {
+  cancelAnimation,
   Easing,
+  runOnJS,
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import Loader from '../loader/Loader';
 import {Slate, SlateDark} from '../../styles/colors';
 import {isNumberSharedValue, type NumberSharedValue} from './sharedValueGuards';
 import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
@@ -28,16 +29,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 220,
   },
-  chartLoaderOverlay: {
+  // Fills chartInner exactly so LineGraph's onLayout coordinates (used to
+  // position the first point guide line) are unchanged by the wrapper.
+  lineLayer: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
+    alignItems: 'stretch',
     justifyContent: 'center',
-    alignItems: 'center',
+  },
+  placeholderLayer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
 });
+
+/** Opacity of the previous line while a new series is pending. */
+export const REFRESHING_LINE_OPACITY = 0.55;
+/** Skeleton -> line crossfade, and line restore after a refresh. */
+export const CHART_LINE_REVEAL_MS = 220;
+/** How quickly an existing line dims when a refresh starts. */
+export const CHART_LINE_DIM_MS = 120;
 
 const AnimatedSvgLine = Reanimated.createAnimatedComponent(Line);
 
@@ -72,8 +89,17 @@ export type InteractiveLineChartProps = {
    * padding up-front to avoid edge clipping without animating layout.
    */
   minStrokeScale?: number;
+  /**
+   * Blocks gestures. With a visible line the line dims to
+   * REFRESHING_LINE_OPACITY (animated) instead of showing an overlay.
+   */
   isLoading?: boolean;
   hideLineWhileLoading?: boolean;
+  /**
+   * Rendered in place of the line (e.g. the ghost line skeleton or error
+   * state). When it is removed it crossfades out while the line fades in.
+   */
+  placeholder?: React.ReactNode;
   enablePanGesture?: boolean;
   panGestureDelay?: number;
   animated?: boolean;
@@ -140,6 +166,7 @@ const InteractiveLineChart = ({
   minStrokeScale,
   isLoading,
   hideLineWhileLoading = false,
+  placeholder,
   enablePanGesture = true,
   panGestureDelay = 100,
   animated = true,
@@ -514,10 +541,86 @@ const InteractiveLineChart = ({
       ? firstPointGuideLine.top - FIRST_POINT_GUIDE_LINE_SVG_HEIGHT / 2
       : null;
 
-  const graphOpacity = isLoading ? (hideLineWhileLoading ? 0 : 0.25) : 1;
+  const isPlaceholderVisible =
+    placeholder != null && placeholder !== false && placeholder !== '';
+  const graphOpacity = isPlaceholderVisible
+    ? 0
+    : isLoading
+    ? hideLineWhileLoading
+      ? 0
+      : REFRESHING_LINE_OPACITY
+    : 1;
+  // Animated on the UI thread so dimming/restoring never re-renders the
+  // memoised LineGraph element below.
+  const lineOpacity = useSharedValue(graphOpacity);
+  const lastGraphOpacityRef = React.useRef(graphOpacity);
+
+  React.useEffect(() => {
+    const previous = lastGraphOpacityRef.current;
+    lastGraphOpacityRef.current = graphOpacity;
+    if (previous === graphOpacity) {
+      return;
+    }
+    cancelAnimation(lineOpacity);
+    lineOpacity.set(
+      withTiming(graphOpacity, {
+        duration:
+          graphOpacity < previous ? CHART_LINE_DIM_MS : CHART_LINE_REVEAL_MS,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
+  }, [graphOpacity, lineOpacity]);
+
+  const lineLayerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: lineOpacity.get(),
+  }));
+
+  // Keep the placeholder mounted while it fades out so the skeleton and the
+  // first real line crossfade instead of cutting.
+  const lastPlaceholderRef = React.useRef<React.ReactNode>(placeholder);
+  if (isPlaceholderVisible) {
+    lastPlaceholderRef.current = placeholder;
+  }
+  const [prevPlaceholderVisible, setPrevPlaceholderVisible] =
+    React.useState(isPlaceholderVisible);
+  const [isPlaceholderExiting, setIsPlaceholderExiting] = React.useState(false);
+  if (prevPlaceholderVisible !== isPlaceholderVisible) {
+    setPrevPlaceholderVisible(isPlaceholderVisible);
+    setIsPlaceholderExiting(!isPlaceholderVisible);
+  }
+  const placeholderOpacity = useSharedValue(1);
+
+  React.useEffect(() => {
+    cancelAnimation(placeholderOpacity);
+    if (!isPlaceholderExiting) {
+      placeholderOpacity.value = 1;
+      return;
+    }
+    placeholderOpacity.value = withTiming(
+      0,
+      {duration: CHART_LINE_REVEAL_MS, easing: Easing.out(Easing.cubic)},
+      finished => {
+        if (finished) {
+          runOnJS(setIsPlaceholderExiting)(false);
+        }
+      },
+    );
+    return () => {
+      cancelAnimation(placeholderOpacity);
+    };
+  }, [isPlaceholderExiting, placeholderOpacity]);
+
+  const placeholderLayerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: placeholderOpacity.value,
+  }));
+  const renderedPlaceholder = isPlaceholderVisible
+    ? placeholder
+    : isPlaceholderExiting
+    ? lastPlaceholderRef.current
+    : null;
 
   const firstPointGuideLineAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: graphOpacity * firstPointGuideLineOpacityValue.get(),
+    opacity: lineOpacity.get() * firstPointGuideLineOpacityValue.get(),
     transform: [{translateY: firstPointGuideLineTranslateY.get()}],
   }));
 
@@ -614,7 +717,6 @@ const InteractiveLineChart = ({
             width: resolvedChartWidth ?? '100%',
             height: graphHeight,
             marginTop: graphMarginTop,
-            opacity: graphOpacity,
           }}
         />
       ) : null,
@@ -631,7 +733,6 @@ const InteractiveLineChart = ({
       gradientFillEnd,
       graphHeight,
       graphMarginTop,
-      graphOpacity,
       handleGestureEnd,
       handleGestureStart,
       handlePointSelected,
@@ -651,7 +752,11 @@ const InteractiveLineChart = ({
       style={styles.chartInner}
       testID="interactive-line-chart-inner"
       onLayout={onChartLayout}>
-      {lineGraph}
+      <Reanimated.View
+        style={[styles.lineLayer, lineLayerAnimatedStyle]}
+        pointerEvents={isLoading || isPlaceholderVisible ? 'none' : 'auto'}>
+        {lineGraph}
+      </Reanimated.View>
       {shouldRenderFirstPointGuideLine ? (
         <Reanimated.View
           pointerEvents="none"
@@ -681,21 +786,18 @@ const InteractiveLineChart = ({
           </Svg>
         </Reanimated.View>
       ) : null}
-      {isLoading ? (
-        <View style={styles.chartLoaderOverlay} pointerEvents="none">
-          <Loader size={32} spinning />
-        </View>
+      {renderedPlaceholder ? (
+        <Reanimated.View
+          style={[styles.placeholderLayer, placeholderLayerAnimatedStyle]}
+          pointerEvents={isPlaceholderVisible ? 'box-none' : 'none'}
+          testID="interactive-line-chart-placeholder">
+          {renderedPlaceholder}
+        </Reanimated.View>
       ) : null}
     </View>
   );
 
-  return (
-    <View
-      style={styles.chartContainer}
-      pointerEvents={isLoading ? 'none' : 'auto'}>
-      {chartInner}
-    </View>
-  );
+  return <View style={styles.chartContainer}>{chartInner}</View>;
 };
 
 export default InteractiveLineChart;

@@ -22,6 +22,7 @@ import BalanceHistoryChart, {
   type BalanceHistoryChartProps,
 } from '../../../../components/charts/BalanceHistoryChart';
 import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../../components/charts/fiatTimeframes';
+import {ZERO_BALANCE_AXIS_LABEL_FADE_MS} from '../../../../components/charts/chartLayout';
 import {useHasCachedBalanceHistoryChartSeries} from '../../../../components/charts/balanceHistoryChartSeriesCache';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useTranslation} from 'react-i18next';
@@ -201,9 +202,9 @@ const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({children}) => (
 );
 
 const PortfolioBalanceChangeRowContainer: React.FC<
-  React.ComponentProps<typeof View>
+  React.ComponentProps<typeof Animated.View>
 > = ({style, ...rest}) => (
-  <View
+  <Animated.View
     style={[headerStyles.portfolioBalanceChangeRowContainer, style]}
     {...rest}
   />
@@ -214,6 +215,7 @@ type PortfolioBalanceChangeRowProps = {
   deltaFiatFormatted?: string;
   rangeLabel?: string;
   style?: StyleProp<ViewStyle>;
+  visible?: boolean;
 };
 
 const PortfolioBalanceChangeRow = ({
@@ -221,17 +223,22 @@ const PortfolioBalanceChangeRow = ({
   deltaFiatFormatted,
   rangeLabel,
   style,
+  visible = true,
 }: PortfolioBalanceChangeRowProps): React.ReactElement => {
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const displayedDelta =
     hideAllBalances && deltaFiatFormatted
       ? HIDDEN_BALANCE_MASK
       : deltaFiatFormatted;
+  const opacity = useDerivedValue(() =>
+    withTiming(visible ? 1 : 0, {duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS}),
+  );
+  const fadeStyle = useAnimatedStyle(() => ({opacity: opacity.value}));
 
   return (
     <PortfolioBalanceChangeRowContainer
       testID="portfolio-balance-change-row"
-      style={style}>
+      style={[style, fadeStyle]}>
       <Percentage
         percentageDifference={percent}
         hideArrow
@@ -562,6 +569,12 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     onDisplayedAnalysisPointChange:
       balanceChartSurface.chartCallbacks.onDisplayedAnalysisPointChange,
     onRenderableSeriesChange: setChartHasRenderableSeries,
+    // Collapsed, the chart is a scaled-down thumbnail under the expand button:
+    // captions would be unreadable and Retry untappable.
+    populateProgress: isChartCollapsed
+      ? undefined
+      : balanceChartReadiness.populateProgress,
+    hideSkeletonCaption: isChartCollapsed,
   };
   const hasInitializedChartLifecycleRef = React.useRef(false);
 
@@ -705,16 +718,12 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
           percent={displayedChangeRowData?.percent ?? 0}
           deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
           rangeLabel={displayedChangeRowData?.rangeLabel}
-          style={[
-            {
-              width: '100%',
-              justifyContent: shouldLeftAlignTopSection
-                ? 'flex-start'
-                : 'center',
-              paddingLeft: shouldLeftAlignTopSection ? 12 : 0,
-            },
-            !displayedChangeRowData ? {opacity: 0} : null,
-          ]}
+          visible={!!displayedChangeRowData}
+          style={{
+            width: '100%',
+            justifyContent: shouldLeftAlignTopSection ? 'flex-start' : 'center',
+            paddingLeft: shouldLeftAlignTopSection ? 12 : 0,
+          }}
         />
       ) : null}
 
