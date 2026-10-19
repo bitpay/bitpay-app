@@ -360,6 +360,34 @@ if (enabled && typeof XMLHttpRequest !== 'undefined') {
   };
 }
 
+// Native component view configs requested from UIManager (perf builds only):
+// name, time taken and when. Since configs are computed on first use, this
+// says which components each startup phase pays to configure.
+const viewConfigRequests: Array<[string, number, number]> = [];
+if (enabled) {
+  try {
+    const {UIManager} = require('react-native');
+    const original = UIManager.getViewManagerConfig;
+    const seen = new Set<string>();
+    UIManager.getViewManagerConfig = (name: string) => {
+      if (seen.has(name)) {
+        return original.call(UIManager, name);
+      }
+      seen.add(name);
+      const started = perfNow();
+      const config = original.call(UIManager, name);
+      viewConfigRequests.push([
+        name,
+        Math.round((perfNow() - started) * 10) / 10,
+        Math.round(started),
+      ]);
+      return config;
+    };
+  } catch {
+    // instrumentation must never break the app
+  }
+}
+
 /** Called from src/store once the store exists, for slice sizes. */
 export function registerStoreForPerf(
   getState: () => Record<string, unknown>,
@@ -492,6 +520,7 @@ function flushLoad(label: string): void {
     requests: requests.slice(),
     actions: actionCounts,
     actionDetails,
+    viewConfigs: viewConfigRequests.slice(),
     heap: heapStats(),
     // Slice sizes are the expensive part (a full serialisation), so they are
     // only taken once the app has settled.

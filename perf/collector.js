@@ -254,6 +254,7 @@ function extractLoadProfile(payloads, moduleMap) {
     profile.requests = endpoints;
     profile.actions = settled.actions || {};
     profile.actionDetails = settled.actionDetails || [];
+    profile.viewConfigs = settled.viewConfigs || [];
   }
 
   // Which JS initialised in which startup phase. With inline requires, a
