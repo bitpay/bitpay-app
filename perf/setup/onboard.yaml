@@ -1,10 +1,10 @@
 appId: com.bitpay.wallet
-env:
-  # Override with a richer test wallet, e.g.
-  #   maestro test -e SEED="$(cat ~/.bitpay-perf/seed.txt)" perf/setup/onboard.yaml
-  # The default is the public phrase .maestro/flows already uses. Never pass a
-  # phrase that holds real funds: Maestro echoes inputs to its own logs.
-  SEED: 'gown pizza sell law yard laundry gown action enemy speed embark awkward'
+# SEED is required and has no default: a flow-level `env:` default takes
+# precedence over `maestro test -e SEED=...`, which silently imported an
+# empty public wallet instead of the funded test wallet. Run with:
+#   maestro test -e SEED="$(cat ~/.bitpay-perf/seed.txt)" perf/setup/onboard.yaml
+# Never pass a phrase that holds meaningful funds: Maestro echoes inputs to
+# its own logs.
 ---
 # SETUP FLOW — not a measured scenario.
 #
@@ -20,6 +20,8 @@ env:
 # are useless here anyway — this flow exists to establish state, not to document
 # it.
 
+- runScript:
+    file: require-seed.js
 - launchApp:
     clearState: true
 
