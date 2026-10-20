@@ -14,6 +14,7 @@
  * Runs as a polyfill: after Metro's module system has installed `__d`, before
  * any module is defined. It must not depend on anything else in the bundle.
  */
+/* global globalThis */
 (function (global) {
   var define = global.__d;
   if (typeof define !== 'function') {
