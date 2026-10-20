@@ -355,8 +355,10 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   });
 
   useEffect(() => {
-    requestDklsWorkerMount();
-  }, []);
+    if (isTSS) {
+      requestDklsWorkerMount();
+    }
+  }, [isTSS]);
 
   useEffect(() => {
     if (watchedRequiredSignatures !== watchedTotalCopayers) {
