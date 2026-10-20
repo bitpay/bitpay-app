@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {spanEnd, spanStart} from '../../../perf/PerfMonitor';
+import {findTokenByCoinAndChain} from '../utils/token-lookup';
 import {useTranslation} from 'react-i18next';
 import SwapCurrenciesSvg from '../../../../assets/img/swap-currencies.svg';
 import Button, {ButtonState} from '../../../components/button/Button';
@@ -1164,12 +1165,10 @@ const BuyAndSellRoot = ({
   initAmountRef.current = initAmount;
 
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
-    const foundToken = (
-      Object.values(tokenDataByAddress) as CurrencyOpts[]
-    ).find(
-      token =>
-        token.coin === _currencyAbbreviation.toLowerCase() &&
-        token.chain === _chain,
+    const foundToken = findTokenByCoinAndChain(
+      tokenDataByAddress,
+      _currencyAbbreviation.toLowerCase(),
+      _chain,
     );
     if (
       SupportedCurrencyOptions.find(
@@ -1303,6 +1302,11 @@ const BuyAndSellRoot = ({
       ['asc', 'asc'],
     );
 
+    // Built once, not per coin: each copy of the ~21k-token map cost ~10 ms.
+    const allTokens: {[key: string]: CurrencyOpts} = {
+      ...BitpaySupportedTokens,
+      ...tokenDataByAddress,
+    };
     try {
       const initialBuyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
         supportedCoins
@@ -1314,12 +1318,7 @@ const BuyAndSellRoot = ({
             const isErc20Token = IsERCToken(coin, chain);
             let foundToken: CurrencyOpts | undefined;
             if (isErc20Token) {
-              foundToken = (
-                Object.values({
-                  ...BitpaySupportedTokens,
-                  ...tokenDataByAddress,
-                }) as CurrencyOpts[]
-              ).find(token => token.coin === coin && token.chain === chain);
+              foundToken = findTokenByCoinAndChain(allTokens, coin, chain);
             }
             return {
               currencyAbbreviation: coin,
