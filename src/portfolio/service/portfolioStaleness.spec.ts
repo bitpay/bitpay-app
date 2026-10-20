@@ -486,6 +486,22 @@ describe('portfolioStaleness', () => {
       expect(decision.reason).toBe('balance_mismatch');
     });
 
+    it('populates on a user refresh even while only the live balance drifted', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+        forceRetryQuarantined: true,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
     it('keeps the old behaviour for mismatches recorded before verification existed', async () => {
       const client = decisionClient({
         latestSnapshot: snapshot('100000000'),

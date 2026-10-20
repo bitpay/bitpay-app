@@ -37,11 +37,15 @@ export type PortfolioSnapshotBalanceMismatch = {
  * alone while only the live balance drifts. Without it, a rebasing token's
  * interest changed the delta on most launches and each change repopulated —
  * a rebuild that cannot succeed (~4 s of JS CPU in ~1 in 5 launches on a test
- * wallet holding Aave aUSDC). Short enough that a genuine new transfer on the
- * same wallet is picked up within hours; any history change (computed balance
- * or checkpoint) still repopulates immediately.
+ * wallet holding Aave aUSDC).
+ *
+ * Trade-off: on such a wallet a genuine new transfer looks the same as drift
+ * (the computed balance and checkpoint only move after a populate), so its
+ * history and chart can lag by up to this interval. The live balance is
+ * unaffected, and any user refresh (forceRetryQuarantined) repopulates at
+ * once.
  */
-export const PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+export const PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 const checkpointNextSkip = (
   index: SnapshotIndexV2 | null | undefined,
@@ -386,6 +390,8 @@ const buildBalanceMismatchDecision = (args: {
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
   extras: Partial<PortfolioPopulateDecision>;
   nowMs: number;
+  /** A user refresh: skip the drift throttle (not the unchanged-delta rule). */
+  bypassDriftThrottle?: boolean;
 }): PortfolioPopulateDecision => {
   const previous = args.previousMismatch;
   const carryVerified = (): PortfolioSnapshotBalanceMismatch =>
@@ -401,6 +407,7 @@ const buildBalanceMismatchDecision = (args: {
   // history is unchanged since: only the live balance has drifted, so a
   // repopulate cannot help until the recheck interval has passed.
   const driftOnlyAfterVerifiedPopulate =
+    args.bypassDriftThrottle !== true &&
     previous?.verifiedAfterPopulateAt !== undefined &&
     previous.computedAtomic === args.mismatch.computedAtomic &&
     (previous.verifiedCheckpointNextSkip ?? null) ===
@@ -526,6 +533,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
         previousMismatch: args.previousMismatch,
         extras: {index},
         nowMs: args.nowMs ?? Date.now(),
+        bypassDriftThrottle: args.forceRetryQuarantined === true,
       });
     }
 
@@ -572,6 +580,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
       previousMismatch: args.previousMismatch,
       extras: snapshotDecisionExtras,
       nowMs: args.nowMs ?? Date.now(),
+      bypassDriftThrottle: args.forceRetryQuarantined === true,
     });
   }
 
