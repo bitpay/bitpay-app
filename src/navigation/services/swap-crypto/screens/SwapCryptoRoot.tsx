@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {spanEnd, spanStart} from '../../../../perf/PerfMonitor';
 import {
   ActivityIndicator,
   ScrollView,
@@ -1525,6 +1526,7 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const init = async () => {
+    spanStart('SwapCurrencies');
     const isCacheFresh =
       !!prefetchedOpts?.fetchedAt &&
       Date.now() - prefetchedOpts.fetchedAt < SWAP_CRYPTO_CACHE_TTL;
@@ -1735,6 +1737,7 @@ const SwapCryptoRoot: React.FC = () => {
 
         if (allSupportedCoinsOrdered?.length > 0) {
           setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
+          spanEnd('SwapCurrencies');
 
           // Write back to cache so subsequent opens skip network calls
           if (!isCacheFresh) {

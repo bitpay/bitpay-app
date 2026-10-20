@@ -1,0 +1,56 @@
+appId: com.bitpay.wallet
+---
+# Home → Sell → Choose Crypto → Solana account → SOL → 0.3 SOL → wait for
+# the best offer → back to Home.
+#
+# REAL WALLET: never tap "Continue with …" (provider checkout). Sell quotes
+# are read-only (`*GetSellQuote`).
+
+# A failed earlier iteration can leave the app on a trade screen: back out
+# to Home first (each Back only while Home is not showing).
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              id: 'portfolio-balance-toggle'
+          commands:
+            - back
+            - waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: 'portfolio-balance-toggle'
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: 'sell-button'
+- extendedWaitUntil:
+    visible: 'Choose Crypto'
+    timeout: 30000
+- tapOn: 'Choose Crypto'
+- extendedWaitUntil:
+    visible: 'Solana Account.*'
+    timeout: 15000
+- tapOn: 'Solana Account.*'
+# The SOL row is the one carrying the "Gas Token" badge.
+- extendedWaitUntil:
+    visible: 'Gas Token'
+    timeout: 10000
+- tapOn: 'Gas Token'
+# Sell takes the amount in SOL here (fiat pills hidden): type 0.3 SOL
+# (~$31; the balance is ~0.56 SOL).
+- extendedWaitUntil:
+    visible: 'MAX'
+    timeout: 30000
+- tapOn: '\.'
+- tapOn: '3'
+- extendedWaitUntil:
+    visible: 'Continue with .*'
+    timeout: 45000
+- back
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 15000
+- waitForAnimationToEnd

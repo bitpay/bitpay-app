@@ -1,0 +1,78 @@
+appId: com.bitpay.wallet
+---
+# Home → Swap (from: default SOL wallet) → To: Bitcoin → first BTC wallet →
+# open the amount sheet → back to Home.
+#
+# REAL WALLET: this flow stops BEFORE an amount is committed. Once a quote's
+# best offer is Changelly, SwapCryptoRoot immediately creates a fixed-rate
+# exchange order at Changelly (changellyCreateFixTransaction, with the
+# wallet's payout/refund addresses), so loading swap quotes submits data to a
+# provider — out of bounds for repeated measurement. Never tap a pill or
+# the keypad here, and never touch "Slide to swap".
+#
+# Timings: SwapCryptoRoot transition, SwapCurrencies span (supported-coin
+# list built from Changelly/Thorswap currencies).
+
+# A failed earlier iteration can leave the app on a trade screen: back out
+# to Home first (each Back only while Home is not showing).
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              id: 'portfolio-balance-toggle'
+          commands:
+            - back
+            - waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: 'portfolio-balance-toggle'
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: 'swap-button'
+- extendedWaitUntil:
+    visible:
+      id: 'swap-crypto-to-wallet-selector'
+    timeout: 45000
+- extendedWaitUntil:
+    visible:
+      id: 'swap-crypto-enter-amount-button'
+    timeout: 45000
+- tapOn:
+    id: 'swap-crypto-to-wallet-selector'
+- extendedWaitUntil:
+    visible: 'Bitcoin, BTC'
+    timeout: 15000
+- tapOn: 'Bitcoin, BTC'
+- extendedWaitUntil:
+    visible: 'Select Wallet to Deposit to'
+    timeout: 10000
+- waitForAnimationToEnd
+# First wallet row of the sheet (the sheet's title sits at ~67%).
+- tapOn:
+    point: 50%,73%
+- extendedWaitUntil:
+    visible: '.*BTC'
+    timeout: 15000
+- tapOn:
+    id: 'swap-crypto-enter-amount-button'
+- extendedWaitUntil:
+    visible: 'MAX'
+    timeout: 10000
+- back
+- waitForAnimationToEnd
+# Back closes the amount sheet; a second Back leaves Swap — but only if we
+# are still on it (a Back on Home would background the app).
+- runFlow:
+    when:
+      visible:
+        id: 'swap-crypto-to-wallet-selector'
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 15000
+- waitForAnimationToEnd

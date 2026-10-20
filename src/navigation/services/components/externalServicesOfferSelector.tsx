@@ -1,4 +1,5 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
+import {spanEnd, spanStart} from '../../../perf/PerfMonitor';
 import uuid from 'react-native-uuid';
 import {useTheme} from '../../../contexts';
 import {
@@ -2979,6 +2980,7 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     setOfferSelectorText(t('Searching for our Best Offer'));
+    spanStart(context === 'sellCrypto' ? 'SellQuotes' : 'BuyQuotes');
     setOfferWarnMsg(undefined);
     setSelectedOffer(undefined);
     onSelectOffer?.(undefined);
@@ -3075,6 +3077,7 @@ const ExternalServicesOfferSelector: React.FC<
       );
       if (filteredOffers.length === 0) {
         if (allExchangesFinished) {
+          spanEnd('BuyQuotes');
           setOfferWarnMsg(
             t(
               'There are currently no offers that satisfy your request. Please try again later.',
@@ -3105,6 +3108,7 @@ const ExternalServicesOfferSelector: React.FC<
         ? moonpayOffer
         : _selectedOffer;
       setSelectedOffer(offerToSelect);
+      spanEnd('BuyQuotes');
       onSelectOffer?.(offerToSelect);
       setOfferWarnMsg(undefined);
       setOfferSelectorText(
@@ -3183,6 +3187,7 @@ const ExternalServicesOfferSelector: React.FC<
       );
       if (filteredOffers.length === 0) {
         if (allSellExchangesFinished) {
+          spanEnd('SellQuotes');
           setOfferWarnMsg(
             t(
               'There are currently no offers that satisfy your request. Please try again later.',
@@ -3204,6 +3209,7 @@ const ExternalServicesOfferSelector: React.FC<
       const amountReceiving = Number(cloneDeep(_selectedOffer.amountReceiving));
       if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
         setSelectedOffer(_selectedOffer);
+        spanEnd('SellQuotes');
         onSelectOffer?.(_selectedOffer);
         setOfferWarnMsg(undefined);
         setOfferSelectorText(

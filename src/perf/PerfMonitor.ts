@@ -219,6 +219,32 @@ export function onNavigationStateChange(currentRouteName?: string): void {
   });
 }
 
+const openSpans = new Set<string>();
+
+/**
+ * Time something a screen does after it opens (e.g. amount entered → best
+ * offer shown). Reported by the harness as the pseudo-screen `name` in the
+ * per-screen transitions. A span restarted before it ends restarts the clock.
+ */
+export function spanStart(name: string): void {
+  if (!enabled) {
+    return;
+  }
+  openSpans.add(name);
+  mark(`bp_span_start:${name}`);
+}
+
+/** End a span started with spanStart; no-op if none is open. */
+export function spanEnd(name: string): void {
+  if (!enabled || !openSpans.has(name)) {
+    return;
+  }
+  openSpans.delete(name);
+  const endMark = `bp_span_end:${name}`;
+  mark(endMark);
+  measure(`bp_nav:${name}`, `bp_span_start:${name}`, endMark);
+}
+
 /**
  * Ship the navigation measures collected so far. The harness calls for these
  * at the end of a scenario; batching keeps the sink off the critical path
@@ -531,6 +557,57 @@ function flushLoad(label: string): void {
   });
 }
 
+// ------------------------------------------------------- interaction activity
+
+/**
+ * After startup settles, a small cumulative snapshot every 2 s: requests
+ * started (and the records of those that completed since the last snapshot),
+ * actions by type, modules initialised, JS heap. Interaction scenarios
+ * (perf/scenarios/trade_*.yaml) diff the first snapshot of an iteration
+ * against the last, which says what one flow loaded. Started only once the
+ * app has settled, so startup measurements are unaffected.
+ */
+const ACTIVITY_INTERVAL_MS = 2000;
+const postedRequests = new WeakSet<RequestRecord>();
+let lastActionTotal = -1;
+
+function flushActivity(): void {
+  const done = requests.filter(
+    r => r.durationMs !== null && !postedRequests.has(r),
+  );
+  done.forEach(r => postedRequests.add(r));
+  let actionTotal = 0;
+  let actionMs = 0;
+  Object.values(actionCounts).forEach(a => {
+    actionTotal += a.count;
+    actionMs += a.ms;
+  });
+  const heap = heapStats();
+  post('activity', {
+    now: perfNow(),
+    requestsStarted: requests.length,
+    requests: done,
+    actionTotal,
+    actionMs,
+    // The per-type map only when it changed: it is the largest part.
+    actions: actionTotal !== lastActionTotal ? actionCounts : undefined,
+    modules: (global as any).__BP_MODULE_STATS__?.count ?? null,
+    heapMb:
+      heap && typeof heap.js_heapSize === 'number'
+        ? heap.js_heapSize / 1048576
+        : null,
+  });
+  lastActionTotal = actionTotal;
+}
+
+let activityTimer: ReturnType<typeof setInterval> | null = null;
+function startActivityReporting(): void {
+  if (!enabled || activityTimer) {
+    return;
+  }
+  activityTimer = setInterval(flushActivity, ACTIVITY_INTERVAL_MS);
+}
+
 let loadScheduled = false;
 
 /** Call when the splash hides. */
@@ -545,6 +622,7 @@ export function scheduleLoadProfile(): void {
       afterIdle(() => {
         flushLoad('settled');
         dumpJsProfile();
+        startActivityReporting();
       }),
     LOAD_SETTLE_MS,
   );

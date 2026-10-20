@@ -194,6 +194,11 @@ async function runIteration(ctx, scenario) {
       // Startup launches clear the log themselves; interaction runs must clear
       // it here so the collector only sees this iteration's payloads.
       android.clearLogcat(serial);
+      // Activity scenarios diff the app's 2 s activity snapshots; let one
+      // land while the app is idle so the flow has a clean starting point.
+      if ((scenario.measures || []).includes('activity')) {
+        await sleep(2600);
+      }
       android.resetGfxInfo(serial);
       startSampling();
       visibleAnchor = Date.now();
@@ -288,6 +293,14 @@ async function runIteration(ctx, scenario) {
     }
 
     let profile = null;
+    if ((scenario.measures || []).includes('activity')) {
+      // The final snapshot can trail the flow by up to one interval.
+      await sleep(2000);
+      payloads = collector.collect(serial);
+      const activity = collector.extractActivity(payloads);
+      Object.assign(metrics, activity.metrics);
+      profile = activity.profile;
+    }
     if ((scenario.measures || []).includes('load')) {
       const load = collector.extractLoadProfile(payloads, ctx.moduleMap);
       Object.assign(metrics, load.metrics);

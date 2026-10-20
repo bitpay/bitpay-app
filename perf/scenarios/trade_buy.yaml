@@ -1,0 +1,49 @@
+appId: com.bitpay.wallet
+---
+# Home → Buy → wait for the best offer → change the amount with a pill →
+# wait for the new best offer → back to Home.
+#
+# REAL WALLET: this flow must never tap "Continue with …" (that opens the
+# provider checkout). It only lets quotes load. Quote requests are read-only
+# (`*GetQuote`); nothing is created at a provider until checkout.
+#
+# Buy opens on the default wallet with a preset amount and quotes at once;
+# the pill then exercises the "user changed the amount" path (debounced).
+# Timings come from the app's spans (BuyCurrencies, BuyQuotes) and the
+# BuyAndSellRoot transition.
+
+# A failed earlier iteration can leave the app on a trade screen: back out
+# to Home first (each Back only while Home is not showing).
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              id: 'portfolio-balance-toggle'
+          commands:
+            - back
+            - waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: 'portfolio-balance-toggle'
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: 'buy-button'
+- extendedWaitUntil:
+    visible: 'Continue with .*'
+    timeout: 45000
+- tapOn: '\$100'
+- extendedWaitUntil:
+    visible: 'Continue'
+    timeout: 5000
+- extendedWaitUntil:
+    visible: 'Continue with .*'
+    timeout: 45000
+- back
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 15000
+- waitForAnimationToEnd

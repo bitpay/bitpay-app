@@ -1,4 +1,5 @@
 import React, {memo, useEffect, useMemo, useRef, useState} from 'react';
+import {spanEnd, spanStart} from '../../../../perf/PerfMonitor';
 import {useTheme} from '../../../../contexts';
 import {Caution, Slate, SlateDark, White} from '../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
@@ -936,6 +937,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     onSelectOffer?.(undefined);
     setSelectedOfferLoading(true);
     setOffersLoading?.(true);
+    spanStart('SwapQuotes');
 
     // Clean up the previous timeout if the value changes
     if (timeoutRef.current) {
@@ -1015,6 +1017,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
       setOffersLoading?.(false);
+      spanEnd('SwapQuotes');
       return;
     }
     const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
@@ -1048,6 +1051,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     }
     setSelectedOfferLoading(false);
     setOffersLoading?.(false);
+    spanEnd('SwapQuotes');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- picks the best offer only when a partner finishes quoting; other values are read at that time
   }, [finishedChangelly, finishedThorswap, updateView, dispatch]);
 

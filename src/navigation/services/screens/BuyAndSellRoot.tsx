@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {spanEnd, spanStart} from '../../../perf/PerfMonitor';
 import {useTranslation} from 'react-i18next';
 import SwapCurrenciesSvg from '../../../../assets/img/swap-currencies.svg';
 import Button, {ButtonState} from '../../../components/button/Button';
@@ -1190,6 +1191,7 @@ const BuyAndSellRoot = ({
   };
 
   const initBuyCrypto = async () => {
+    spanStart('BuyCurrencies');
     try {
       let config: ExternalServicesConfig;
       if (isExternalServicesConfigCacheFresh()) {
@@ -1335,6 +1337,7 @@ const BuyAndSellRoot = ({
 
       setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
       setIsInitializing(false);
+      spanEnd('BuyCurrencies');
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so the JSON.stringify(err) evaluation (which can throw) is unchanged
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
@@ -1686,6 +1689,7 @@ const BuyAndSellRoot = ({
   };
 
   const initSellCrypto = async () => {
+    spanStart('SellCurrencies');
     if (fromDeeplink) {
       await sleep(300);
     }
@@ -1935,6 +1939,7 @@ const BuyAndSellRoot = ({
             ({symbol}) => symbol,
           );
           setSellCryptoSupportedCoins(_sellCryptoSupportedCoins);
+          spanEnd('SellCurrencies');
           if (!fromWallet) {
             setIsInitializing(false);
           }

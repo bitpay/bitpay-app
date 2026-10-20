@@ -78,6 +78,13 @@ const THRESHOLDS = {
   action_ms_settled: {direction: 'lower', tolerance: 0.15},
   js_heap_mb_settled: {direction: 'lower', tolerance: 0.1},
   store_kb_settled: {direction: 'lower', tolerance: 0.05},
+  // Interaction activity (trade-* scenarios): what one flow loaded.
+  requests_flow: {direction: 'lower', tolerance: 0.1},
+  request_kb_flow: {direction: 'lower', tolerance: 0.1},
+  actions_flow: {direction: 'lower', tolerance: 0.1},
+  action_ms_flow: {direction: 'lower', tolerance: 0.15},
+  modules_flow: {direction: 'lower', tolerance: 0.05},
+  js_heap_mb_peak_flow: {direction: 'lower', tolerance: 0.1},
   /** Sizes are deterministic — zero noise, so a tight tolerance is safe. */
   apk_size_bytes: {direction: 'lower', tolerance: 0.05},
   bundle_size_bytes: {direction: 'lower', tolerance: 0.05},
@@ -132,6 +139,30 @@ const SCENARIOS = {
     launchMode: 'none',
     measures: ['transitions', 'frames', 'cpu', 'memory'],
     description: 'Hops across the bottom tab bar, timing each transition.',
+  },
+  // Buy / Sell / Swap, opened from Home's buttons. Each flow picks a
+  // currency, enters an amount, waits for the quotes, then backs out — it
+  // never continues to a checkout, signs or submits anything (real wallet).
+  'trade-buy': {
+    flow: 'trade_buy.yaml',
+    launchMode: 'none',
+    measures: ['transitions', 'frames', 'cpu', 'memory', 'activity'],
+    description:
+      'Home → Buy: default currency, amount pill, wait for provider offers, back.',
+  },
+  'trade-sell': {
+    flow: 'trade_sell.yaml',
+    launchMode: 'none',
+    measures: ['transitions', 'frames', 'cpu', 'memory', 'activity'],
+    description:
+      'Home → Sell: pick the SOL wallet, type 0.3 SOL, wait for provider offers, back.',
+  },
+  'trade-swap': {
+    flow: 'trade_swap.yaml',
+    launchMode: 'none',
+    measures: ['transitions', 'frames', 'cpu', 'memory', 'activity'],
+    description:
+      'Home → Swap: currencies load, pick To = BTC wallet, open the amount sheet, back (no quotes: see trade_swap.yaml).',
   },
   'scroll-home': {
     flow: 'scroll_home.yaml',
