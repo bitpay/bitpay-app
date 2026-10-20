@@ -13,6 +13,10 @@ import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
 import * as Keychain from 'react-native-keychain';
+import {
+  ENCRYPTION_KEY_SERVICE,
+  takePrefetchedEncryptionKey,
+} from '../startup/encryptionKeyPrefetch';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
@@ -846,13 +850,16 @@ export function configureTestStore(initialState: any) {
 }
 
 export async function getEncryptionKey(): Promise<string> {
-  const encryptionKeyId = 'bitpay-app-encryption-key';
+  const encryptionKeyId = ENCRYPTION_KEY_SERVICE;
 
   try {
     logManager.info('getEncryptionKey: attempting to retrieve from Keychain');
-    const existingKey = await Keychain.getGenericPassword({
-      service: encryptionKeyId,
-    });
+    // Usually already in flight since index.js started it (see
+    // src/startup/encryptionKeyPrefetch.ts); same call, started earlier.
+    const existingKey = await (takePrefetchedEncryptionKey() ??
+      Keychain.getGenericPassword({
+        service: encryptionKeyId,
+      }));
 
     if (existingKey && existingKey.password) {
       logManager.info('getEncryptionKey: found existing key in Keychain');

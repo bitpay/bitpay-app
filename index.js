@@ -1,3 +1,5 @@
+// First: starts the Keychain read the store waits for (src/startup).
+import './src/startup/encryptionKeyPrefetch';
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
 import {install as installQuickCrypto} from 'react-native-quick-crypto';
 import '@ethersproject/shims';
