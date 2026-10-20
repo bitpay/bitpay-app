@@ -1,0 +1,6 @@
+appId: com.bitpay.wallet
+---
+# Fails if the app crashed to react-native-exception-handler's screen or
+# into the JS error fallback.
+- assertNotVisible: "Critical Error Occured !"
+- assertNotVisible: "Something went wrong"
