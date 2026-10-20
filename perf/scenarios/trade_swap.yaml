@@ -25,11 +25,13 @@ appId: com.bitpay.wallet
           commands:
             - back
             - waitForAnimationToEnd
+# Home can be left scrolled far down (it keeps its scroll position).
 - scrollUntilVisible:
     element:
       id: 'portfolio-balance-toggle'
     direction: UP
-    timeout: 10000
+    speed: 90
+    timeout: 30000
 - tapOn:
     id: 'swap-button'
 - extendedWaitUntil:
