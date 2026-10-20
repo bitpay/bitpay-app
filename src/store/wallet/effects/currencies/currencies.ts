@@ -122,11 +122,68 @@ const TOKEN_APPLY_SLICE_MS = 8;
 const yieldToEventLoop = () =>
   new Promise<void>(resolve => setTimeout(resolve, 0));
 
+// Token keys (getCurrencyAbbreviation) of the token wallets the user holds.
+// Their metadata is applied in one go before the sliced pass, so lookups for
+// the user's own tokens (GetPrecision, GetName) never wait on the ~21k list.
+let heldTokenKeys: ReadonlySet<string> = new Set();
+export const setHeldTokenKeysForTokenLists = (keys: Iterable<string>) => {
+  heldTokenKeys = new Set(keys);
+};
+
+const getHeldTokenKeys = (state: any): string[] => {
+  const out: string[] = [];
+  for (const key of Object.values(state?.WALLET?.keys || {}) as any[]) {
+    for (const wallet of key?.wallets || []) {
+      const address =
+        wallet?.credentials?.token?.address || wallet?.tokenAddress;
+      const chain = wallet?.chain || wallet?.credentials?.chain;
+      if (address && chain) {
+        out.push(getCurrencyAbbreviation(address, chain));
+      }
+    }
+  }
+  return out;
+};
+
 const applyTokenLists = async (
   chainResults: Array<{chain: string; tokens: Token[]}>,
 ) => {
   let tokenOptionsByAddress: {[key in string]: Token} = {};
   let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
+  if (heldTokenKeys.size) {
+    for (const {chain, tokens} of chainResults) {
+      for (const token of tokens) {
+        const key = getCurrencyAbbreviation(token.address, chain);
+        if (heldTokenKeys.has(key) && !BitpaySupportedTokens[key]) {
+          populateTokenInfo({
+            chain,
+            token,
+            tokenOptionsByAddress,
+            tokenDataByAddress,
+          });
+        }
+      }
+    }
+    const current = tokenManager.getTokenOptions();
+    const missing = Object.keys(tokenDataByAddress).some(
+      key => !current.tokenDataByAddress?.[key],
+    );
+    if (missing) {
+      // Merged over what is already set, so nothing already known is hidden.
+      tokenManager.setTokenOptions({
+        tokenOptionsByAddress: {
+          ...current.tokenOptionsByAddress,
+          ...tokenOptionsByAddress,
+        },
+        tokenDataByAddress: {
+          ...current.tokenDataByAddress,
+          ...tokenDataByAddress,
+        },
+      });
+    }
+    tokenOptionsByAddress = {};
+    tokenDataByAddress = {};
+  }
   let sliceStart = Date.now();
   for (const {chain, tokens} of chainResults) {
     for (const token of tokens) {
@@ -221,9 +278,10 @@ const refreshTokenListsInBackground = (
 };
 
 export const startGetTokenOptions =
-  (): Effect<Promise<void>> => async dispatch => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
       logManager.info('starting [startGetTokenOptions]');
+      setHeldTokenKeysForTokenLists(getHeldTokenKeys(getState()));
       const cached: Record<string, CachedTokenList | undefined> = {};
       // Each chain's cached list is a large JSON parse; yield between them
       // so the first one does not run before startAppInit gets going.

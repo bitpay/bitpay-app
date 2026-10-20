@@ -238,6 +238,50 @@ describe('startGetTokenOptions', () => {
   });
 });
 
+describe('startGetTokenOptions – held tokens first', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMmkvStore.clear();
+  });
+
+  it("publishes the user's own token metadata before the rest of the list", async () => {
+    const held = makeToken({address: '0xabc123', symbol: 'MYT', decimals: 8});
+    const other = makeToken({address: '0xdef456', symbol: 'OTH'});
+    mockedAxios.get.mockResolvedValue({data: [held, other]});
+
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          k1: {
+            id: 'k1',
+            wallets: [
+              {
+                id: 'w1',
+                chain: 'eth',
+                credentials: {token: {address: '0xabc123'}},
+              },
+            ],
+          },
+        },
+      },
+    });
+    await store.dispatch(startGetTokenOptions());
+
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(2);
+    const first = mockedSetTokenOptions.mock.calls[0][0];
+    expect(Object.keys(first.tokenDataByAddress)).toEqual(
+      expect.arrayContaining([expect.stringContaining('0xabc123')]),
+    );
+    expect(
+      Object.keys(first.tokenDataByAddress).some(k => k.includes('0xdef456')),
+    ).toBe(false);
+    const last = mockedSetTokenOptions.mock.calls[1][0];
+    expect(
+      Object.keys(last.tokenDataByAddress).some(k => k.includes('0xdef456')),
+    ).toBe(true);
+  });
+});
+
 describe('startGetTokenOptions – token list cache', () => {
   const DAY = 24 * 60 * 60 * 1000;
   const cache = (chain: string, tokens: any[], savedAt = Date.now()) =>
