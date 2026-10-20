@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {findTokenByCoinAndChain} from '../../utils/token-lookup';
 import {spanEnd, spanStart} from '../../../../perf/PerfMonitor';
 import {
   ActivityIndicator,
@@ -1263,8 +1264,10 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
-    const foundToken = Object.values(tokenDataByAddress).find(
-      token => token.coin === _currencyAbbreviation && token.chain === _chain,
+    const foundToken = findTokenByCoinAndChain(
+      tokenDataByAddress,
+      _currencyAbbreviation,
+      _chain,
     );
     if (
       SupportedCurrencyOptions.find(
