@@ -17,6 +17,9 @@ export interface SnapshotBalanceMismatch {
   computedUnitsHeld: string;
   currentWalletBalance: string;
   delta: string;
+  /** See PortfolioSnapshotBalanceMismatch in portfolio/service. */
+  verifiedAfterPopulateAt?: number;
+  verifiedCheckpointNextSkip?: number | null;
 }
 
 export interface InvalidDecimalsMarker {

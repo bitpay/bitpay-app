@@ -22,6 +22,7 @@ jest.mock('../../utils/portfolio/assets', () => ({
 }));
 
 import {
+  PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
   PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS,
   buildPortfolioExcessiveBalanceMismatchMarker,
   getPortfolioPopulateDecisionForWallet,
@@ -396,6 +397,112 @@ describe('portfolioStaleness', () => {
     expect(decision.shouldPopulate).toBe(true);
     expect(decision.reason).toBe('balance_mismatch');
     expect(decision.mismatch?.deltaAtomic).toBe('-50000000');
+  });
+
+  describe('after a populate that could not resolve the mismatch', () => {
+    const verifiedAt = 1_000_000;
+    const indexAt = (nextSkip: number) => ({
+      walletId: 'wallet-1',
+      checkpoint: {nextSkip},
+    });
+    // The live balance moved since the populate (interest on a rebasing
+    // token), so the delta differs, but the rebuilt history did not.
+    const driftedSincePopulate = (overrides: Record<string, unknown> = {}) =>
+      previousMismatch({
+        currentAtomic: '140000000',
+        deltaAtomic: '-40000000',
+        currentWalletBalance: '1.4',
+        delta: '-0.4',
+        verifiedAfterPopulateAt: verifiedAt,
+        verifiedCheckpointNextSkip: 40,
+        ...overrides,
+      });
+
+    it('skips populate when only the live balance drifted', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(false);
+      expect(decision.reason).toBe('unchanged_balance_mismatch');
+      // The new delta is recorded, and the verification carried forward so
+      // later launches keep skipping until the recheck interval passes.
+      expect(decision.mismatch).toMatchObject({
+        deltaAtomic: '-50000000',
+        verifiedAfterPopulateAt: verifiedAt,
+        verifiedCheckpointNextSkip: 40,
+      });
+    });
+
+    it('populates again once the recheck interval has passed', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+      expect(decision.mismatch?.verifiedAfterPopulateAt).toBeUndefined();
+    });
+
+    it('populates when the computed balance changed', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({computedAtomic: '90000000'}),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('populates when the snapshot checkpoint moved', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(41),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('keeps the old behaviour for mismatches recorded before verification existed', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({
+          verifiedAfterPopulateAt: undefined,
+          verifiedCheckpointNextSkip: undefined,
+        }),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
   });
 
   it('suppresses auto-populate when invalid history is still under cooldown', async () => {

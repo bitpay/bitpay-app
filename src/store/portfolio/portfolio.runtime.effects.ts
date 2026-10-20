@@ -13,6 +13,7 @@ import {
   buildPortfolioExcessiveBalanceMismatchMarker,
   getPortfolioPopulateDecisionsForWallets,
   getPortfolioInvalidDecimalsMessage,
+  stampMismatchVerifiedAfterPopulate,
   type PortfolioPopulateDecision,
   type PortfolioSnapshotBalanceMismatch,
   type PortfolioUnitDecimalsResolution,
@@ -991,7 +992,13 @@ const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
         previousQuarantine?.reason === 'excessive_balance_mismatch'
           ? previousQuarantine
           : undefined;
-      updates.mismatchByWalletId[decision.walletId] = decision.mismatch;
+      // This mismatch survived the populate that just completed.
+      updates.mismatchByWalletId[decision.walletId] =
+        stampMismatchVerifiedAfterPopulate(
+          decision.mismatch,
+          decision.index,
+          detectedAt,
+        );
       updates.quarantinesByWalletId[decision.walletId] =
         buildPortfolioExcessiveBalanceMismatchMarker({
           mismatch: decision.mismatch,

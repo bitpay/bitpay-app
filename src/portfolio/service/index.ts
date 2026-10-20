@@ -8,6 +8,7 @@ export {
 } from './portfolioPopulateService';
 
 export {
+  PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
   PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_RETRY_INTERVAL_MS,
   PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS,
   PORTFOLIO_EXCESSIVE_BALANCE_MISMATCH_THRESHOLD,
@@ -21,6 +22,7 @@ export {
   isPortfolioQuarantineRetryDue,
   markPortfolioExcessiveBalanceMismatchAttempted,
   markPortfolioQuarantineAttempted,
+  stampMismatchVerifiedAfterPopulate,
   type PortfolioExcessiveBalanceMismatchMarker,
   type PortfolioPopulateDecision,
   type PortfolioPopulateDecisionReason,

@@ -21,7 +21,45 @@ export type PortfolioSnapshotBalanceMismatch = {
   computedUnitsHeld: string;
   currentWalletBalance: string;
   delta: string;
+  /**
+   * Set when this mismatch survived a completed populate: the history was
+   * rebuilt and still could not reproduce the live balance (interest-bearing
+   * / rebasing tokens such as Aave aTokens). Absent on records from before
+   * this field existed, which keeps the previous behaviour.
+   */
+  verifiedAfterPopulateAt?: number;
+  /** The snapshot index checkpoint (nextSkip) at that populate. */
+  verifiedCheckpointNextSkip?: number | null;
 };
+
+/**
+ * How long a mismatch that a completed populate could not resolve is left
+ * alone while only the live balance drifts. Without it, a rebasing token's
+ * interest changed the delta on most launches and each change repopulated —
+ * a rebuild that cannot succeed (~4 s of JS CPU in ~1 in 5 launches on a test
+ * wallet holding Aave aUSDC). Short enough that a genuine new transfer on the
+ * same wallet is picked up within hours; any history change (computed balance
+ * or checkpoint) still repopulates immediately.
+ */
+export const PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+const checkpointNextSkip = (
+  index: SnapshotIndexV2 | null | undefined,
+): number | null => {
+  const nextSkip = index?.checkpoint?.nextSkip;
+  return typeof nextSkip === 'number' ? nextSkip : null;
+};
+
+/** Mark a mismatch as one a just-completed populate could not resolve. */
+export const stampMismatchVerifiedAfterPopulate = (
+  mismatch: PortfolioSnapshotBalanceMismatch,
+  index: SnapshotIndexV2 | null | undefined,
+  at: number,
+): PortfolioSnapshotBalanceMismatch => ({
+  ...mismatch,
+  verifiedAfterPopulateAt: at,
+  verifiedCheckpointNextSkip: checkpointNextSkip(index),
+});
 
 export type PortfolioPopulateDecisionReason =
   | 'missing_index'
@@ -347,15 +385,48 @@ const buildBalanceMismatchDecision = (args: {
   mismatch: PortfolioSnapshotBalanceMismatch;
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
   extras: Partial<PortfolioPopulateDecision>;
-}): PortfolioPopulateDecision =>
-  buildPortfolioPopulateDecision(
+  nowMs: number;
+}): PortfolioPopulateDecision => {
+  const previous = args.previousMismatch;
+  const carryVerified = (): PortfolioSnapshotBalanceMismatch =>
+    previous?.verifiedAfterPopulateAt !== undefined
+      ? {
+          ...args.mismatch,
+          verifiedAfterPopulateAt: previous.verifiedAfterPopulateAt,
+          verifiedCheckpointNextSkip: previous.verifiedCheckpointNextSkip,
+        }
+      : args.mismatch;
+
+  // A completed populate already failed to reproduce this balance, and the
+  // history is unchanged since: only the live balance has drifted, so a
+  // repopulate cannot help until the recheck interval has passed.
+  const driftOnlyAfterVerifiedPopulate =
+    previous?.verifiedAfterPopulateAt !== undefined &&
+    previous.computedAtomic === args.mismatch.computedAtomic &&
+    (previous.verifiedCheckpointNextSkip ?? null) ===
+      checkpointNextSkip(args.extras.index) &&
+    args.nowMs - previous.verifiedAfterPopulateAt <
+      PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS;
+
+  if (
+    driftOnlyAfterVerifiedPopulate ||
+    previous?.deltaAtomic === args.mismatch.deltaAtomic
+  ) {
+    return buildPortfolioPopulateDecision(
+      args.walletId,
+      false,
+      'unchanged_balance_mismatch',
+      {...args.extras, mismatch: carryVerified()},
+    );
+  }
+
+  return buildPortfolioPopulateDecision(
     args.walletId,
-    args.previousMismatch?.deltaAtomic !== args.mismatch.deltaAtomic,
-    args.previousMismatch?.deltaAtomic === args.mismatch.deltaAtomic
-      ? 'unchanged_balance_mismatch'
-      : 'balance_mismatch',
+    true,
+    'balance_mismatch',
     {...args.extras, mismatch: args.mismatch},
   );
+};
 
 function normalizeUnitDecimalsResolution(
   value: PortfolioUnitDecimalsResolution | number | undefined,
@@ -392,6 +463,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
   forceRetryQuarantined?: boolean;
   zeroBalanceTokenMissingIndexErrorMessage?: string;
+  nowMs?: number;
 }): Promise<PortfolioPopulateDecision> {
   const walletId = String(args.wallet?.id || '').trim();
   const invalidHistory = await args.client.getInvalidHistory({walletId});
@@ -453,6 +525,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
         mismatch,
         previousMismatch: args.previousMismatch,
         extras: {index},
+        nowMs: args.nowMs ?? Date.now(),
       });
     }
 
@@ -498,6 +571,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
       mismatch,
       previousMismatch: args.previousMismatch,
       extras: snapshotDecisionExtras,
+      nowMs: args.nowMs ?? Date.now(),
     });
   }
 
@@ -579,6 +653,7 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
         forceRetryQuarantined: args.forceRetryQuarantined,
         zeroBalanceTokenMissingIndexErrorMessage:
           args.zeroBalanceTokenMissingIndexErrorByWalletId?.[walletId],
+        nowMs,
       });
     if (quarantine?.reason === 'zero_balance_token_missing_index') {
       const liveAtomic = getWalletLiveAtomicBalance({

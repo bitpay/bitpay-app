@@ -24,6 +24,13 @@ jest.mock('../../portfolio/service', () => ({
     cancel: mockCancel,
     populateWallets: mockPopulateWallets,
   })),
+  stampMismatchVerifiedAfterPopulate: jest.fn(
+    (mismatch: any, index: any, at: number) => ({
+      ...mismatch,
+      verifiedAfterPopulateAt: at,
+      verifiedCheckpointNextSkip: index?.checkpoint?.nextSkip ?? null,
+    }),
+  ),
   buildPortfolioExcessiveBalanceMismatchMarker: jest.fn(
     ({mismatch, detectedAt, lastAttemptedAt, previousMarker}: any) => {
       const computedAtomic = BigInt(mismatch.computedAtomic);
@@ -998,8 +1005,15 @@ describe('portfolio runtime effects lock deferral', () => {
 
     await dispatch(populatePortfolioWithRuntime({quoteCurrency: 'USD'}));
 
+    // Stamped: this mismatch survived the populate that just completed.
     expect(dispatched).toContainEqual({
-      payload: {'wallet-1': refreshedMismatch},
+      payload: {
+        'wallet-1': {
+          ...refreshedMismatch,
+          verifiedAfterPopulateAt: expect.any(Number),
+          verifiedCheckpointNextSkip: null,
+        },
+      },
       type: 'SET_MISMATCHES',
     });
     const dispatchedTypes = dispatched.map(action => action.type);
