@@ -1,8 +1,8 @@
 diff --git a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
-index edec33e..51ac37b 100644
+index edec33e..ea765e8 100644
 --- a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
 +++ b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
-@@ -87,11 +87,34 @@ class Utils {
+@@ -87,11 +87,41 @@ class Utils {
      }
      static signMessage(message, privKey) {
          $.checkArgument(message);
@@ -20,6 +20,13 @@ index edec33e..51ac37b 100644
 +    // The string form of the key already lives in the wallet credentials, so
 +    // keeping its parsed PrivateKey changes nothing about what is in memory.
 +    // Signatures are unchanged (RFC 6979 deterministic k).
++    // Called when a key is deleted, so parsed request keys don't outlive
++    // the wallets they belong to.
++    static clearRequestPrivateKeyCache() {
++        if (Utils._requestPrivateKeys) {
++            Utils._requestPrivateKeys.clear();
++        }
++    }
 +    static _requestPrivateKey(privKey) {
 +        if (typeof privKey !== 'string') {
 +            return new PrivateKey(privKey);

@@ -579,6 +579,13 @@ const getStore = async () => {
         store.dispatch(clearWalletPortfolioDataWithRuntime({walletIds}) as any);
       }
 
+      // BWC keeps parsed request keys for signing (patched for speed); drop
+      // them with the key. Lazy so the store module doesn't load BWC early.
+      try {
+        const {BwcProvider} = require('../lib/bwc');
+        BwcProvider.getInstance().getUtils().clearRequestPrivateKeyCache?.();
+      } catch {}
+
       return result;
     };
   };
