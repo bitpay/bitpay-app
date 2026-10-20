@@ -97,6 +97,10 @@ import {
   scheduleAfterTransitionAndIdle,
 } from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import {useStartupSettled} from '../../../utils/startupSignals';
+
+/** After startup settles, before the Receive / Send preloads may run. */
+const HOME_FLOW_PRELOAD_STARTUP_DELAY_MS = 2000;
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -684,6 +688,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     },
     [canPreloadReceive, canPreloadSend, navigation],
   );
+  // Preloading Receive / Send renders the wallet picker (a list of wallets
+  // with their icons) on the UI thread. On a cold start it fired during the
+  // first look at Home; hold it until startup has settled.
+  const startupSettledForPreload = useStartupSettled(
+    HOME_FLOW_PRELOAD_STARTUP_DELAY_MS,
+  );
   const wasHomeFocusedRef = useRef(false);
 
   useEffect(() => {
@@ -707,7 +717,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   }, []);
 
   useEffect(() => {
-    if (!isHomeFocused || appIsLoading) {
+    if (!isHomeFocused || appIsLoading || !startupSettledForPreload) {
       return;
     }
 
@@ -764,6 +774,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     isHomeFocused,
     navigation,
     preloadHomeFlow,
+    startupSettledForPreload,
   ]);
 
   const receiveLinkingButton = useMemo(

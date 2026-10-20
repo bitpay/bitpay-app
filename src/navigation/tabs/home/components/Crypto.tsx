@@ -84,6 +84,10 @@ import {IsSVMChain, IsVMChain} from '../../../../store/wallet/utils/currency';
 import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../../utils/performanceDebug';
 import {getSinglePreloadCandidate} from '../../../../utils/navigationPreload';
+import {useStartupSettled} from '../../../../utils/startupSignals';
+
+/** After startup settles, before the key-screen preload may run. */
+const HOME_DESTINATION_PRELOAD_STARTUP_DELAY_MS = 2000;
 
 const styles = StyleSheet.create({
   cryptoContainer: {
@@ -702,11 +706,19 @@ const Crypto = ({active = true}: CryptoProps) => {
     [keyList],
   );
 
+  // Preloading the key screen mounts a whole screen (wallet list, its chart,
+  // ~60 icons) on the UI thread. On a cold start the idle timeout fired it
+  // during the frames the splash waits for; hold it until startup has
+  // settled and the first look at Home is over.
+  const startupSettledForPreload = useStartupSettled(
+    HOME_DESTINATION_PRELOAD_STARTUP_DELAY_MS,
+  );
+
   useFocusEffect(
     useCallback(() => {
       preloadedDestinationRef.current = undefined;
 
-      if (!active || !singlePreloadableKeyId) {
+      if (!active || !singlePreloadableKeyId || !startupSettledForPreload) {
         return;
       }
 
@@ -731,7 +743,13 @@ const Crypto = ({active = true}: CryptoProps) => {
           destinationPreloadTaskRef.current = undefined;
         }
       };
-    }, [active, navigation, preloadWalletDestination, singlePreloadableKeyId]),
+    }, [
+      active,
+      navigation,
+      preloadWalletDestination,
+      singlePreloadableKeyId,
+      startupSettledForPreload,
+    ]),
   );
 
   const cardsList = useMemo(
