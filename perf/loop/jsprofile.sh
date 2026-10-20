@@ -45,6 +45,13 @@ fi
 cp android/app/build/generated/sourcemaps/react/release/index.android.bundle.map "$OUT/bundle.map"
 cp perf/build/module-map.json "$OUT/module-map.json" 2>/dev/null || true
 adb install -r "$APK" > /dev/null
+# Same compiled state as measured runs (perf/drivers/android.js): apply the
+# shipped baseline profile the way Play does at install.
+if [ "${BP_PERF_COMPILE:-}" != none ]; then
+  adb shell am broadcast -a androidx.profileinstaller.action.INSTALL_PROFILE \
+    -n "$APP_ID/androidx.profileinstaller.ProfileInstallReceiver" > /dev/null
+  adb shell cmd package compile -m speed-profile -f "$APP_ID" > /dev/null
+fi
 
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
