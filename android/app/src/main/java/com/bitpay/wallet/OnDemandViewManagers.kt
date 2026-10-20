@@ -37,16 +37,30 @@ object OnDemandViewManagers {
 
 private typealias AnyViewManager = ViewManager<in Nothing, in Nothing>
 
+/**
+ * The managers for one ReactApplicationContext. Stock React Native creates a
+ * package's view managers per React instance, so a new context (a host
+ * reload) gets new managers rather than ones bound to the old context.
+ */
 private class ViewManagerCache(
     private val create: (ReactApplicationContext) -> List<AnyViewManager>
 ) {
-  @Volatile private var managers: Map<String, AnyViewManager>? = null
+  private class Entry(
+      val context: ReactApplicationContext,
+      val managers: Map<String, AnyViewManager>
+  )
 
-  fun get(context: ReactApplicationContext): Map<String, AnyViewManager> =
-      managers
-          ?: synchronized(this) {
-            managers ?: create(context).associateBy { it.name }.also { managers = it }
-          }
+  @Volatile private var entry: Entry? = null
+
+  fun get(context: ReactApplicationContext): Map<String, AnyViewManager> {
+    entry?.let { if (it.context === context) return it.managers }
+    synchronized(this) {
+      entry?.let { if (it.context === context) return it.managers }
+      val managers = create(context).associateBy { it.name }
+      entry = Entry(context, managers)
+      return managers
+    }
+  }
 }
 
 /** Legacy ReactPackage: native modules unchanged, view managers on demand. */
