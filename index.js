@@ -14,8 +14,11 @@ if (IS_MAESTRO === 'true') {
   LogBox.ignoreAllLogs();
 }
 
-// First JS statement we control. Everything before this is native launch plus
-// Hermes bundle evaluation, which react-native-performance reports separately.
+// ES imports are hoisted, so this runs after every module index.js imports
+// (Root and the graph it pulls in) has been evaluated, not before them: the
+// "RN start -> JS entry" phase includes that module graph. To run something
+// before it, put it in a side-effect module imported first (see
+// src/startup/encryptionKeyPrefetch.ts).
 mark('bp_js_entry');
 import Root from './src/Root';
 import React, {useState, useEffect} from 'react';
