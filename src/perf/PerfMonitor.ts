@@ -398,7 +398,10 @@ export function registerStoreForPerf(
 }
 
 // Actions whose payload explains a run, recorded verbatim (perf builds only).
-const DETAIL_ACTION_TYPES = new Set(['PORTFOLIO/START_POPULATE_PORTFOLIO']);
+const DETAIL_ACTION_TYPES = new Set([
+  'PORTFOLIO/START_POPULATE_PORTFOLIO',
+  'PORTFOLIO/SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES',
+]);
 const actionDetails: Array<{type: string; at: number; payload: unknown}> = [];
 
 /** Redux middleware body — counts and times every dispatched action. */
