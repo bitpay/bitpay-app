@@ -151,8 +151,20 @@ function compareRuns(accepted, candidate, targets = []) {
     if (!base) {
       return;
     }
-    Object.entries(cand.metrics || {}).forEach(([key, c]) => {
-      const b = (base.metrics || {})[key];
+    // Per-screen transitions (and the app's spans, which report the same
+    // way) compare as transition_<screen>_ms.
+    const withScreens = run => ({
+      ...(run.metrics || {}),
+      ...Object.fromEntries(
+        Object.entries(run.perScreen || {}).map(([screen, v]) => [
+          `transition_${screen}_ms`,
+          v.transition_ms,
+        ]),
+      ),
+    });
+    const baseMetrics = withScreens(base);
+    Object.entries(withScreens(cand)).forEach(([key, c]) => {
+      const b = baseMetrics[key];
       if (IGNORE.has(key) || !b || c.median == null || b.median == null) {
         return;
       }
