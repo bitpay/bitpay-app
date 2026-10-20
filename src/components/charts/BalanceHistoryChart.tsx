@@ -189,11 +189,15 @@ const BalanceHistoryChart = ({
     onRenderableSeriesChange?.(displayModel.hasRenderableSeries);
   }, [displayModel.hasRenderableSeries, onRenderableSeriesChange]);
 
-  const chartedWalletIdsSignature = displayModel.hasRenderableSeries
-    ? getChartedWalletIds(
-        displayModel.visibleSeries?.walletFiatBalanceByWalletId,
-      )?.join(',')
-    : undefined;
+  const visibleWalletFiatBalanceByWalletId =
+    displayModel.visibleSeries?.walletFiatBalanceByWalletId;
+  const chartedWalletIdsSignature = React.useMemo(
+    () =>
+      displayModel.hasRenderableSeries
+        ? getChartedWalletIds(visibleWalletFiatBalanceByWalletId)?.join(',')
+        : undefined,
+    [displayModel.hasRenderableSeries, visibleWalletFiatBalanceByWalletId],
+  );
   React.useEffect(() => {
     onChartedWalletIdsChange?.(
       chartedWalletIdsSignature === undefined
