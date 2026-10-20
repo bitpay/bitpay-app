@@ -60,6 +60,16 @@ or heap metrics move on a change that cannot touch them, re-take the
 baseline (`iterate.sh --accept` on the base build) immediately before the
 candidate, and check `profile.storeBytes` for the slice that grew.
 
+## Ablations: confirm the screen before trusting the number
+
+A diagnostic build that removes a component can also break it, and an error
+fallback renders a far lighter screen than the real one — a dramatic "win"
+that is really a crash. Take a screenshot of the ablated build at the
+measured moment (wake the screen first; the harness restores the stay-awake
+setting) and only count the result if the screen is the normal one minus the
+removed part. (2026-10-19: forcing the allocation card out of its loading
+state "removed" ~600 ms of jank; the full-section ablation showed ~50–100 ms.)
+
 ## Rules
 
 - **Optimise what exists; do not remove features or sections.** Deferring work
