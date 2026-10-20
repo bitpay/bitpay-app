@@ -488,8 +488,7 @@ const SelectInputs = () => {
         ) : null}
       </>
     ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- precision is re-created every render from the route-param wallet; memo keyed on the UTXO list and toggle
-    [lockedUtxos, hideLockedUtxos, t],
+    [lockedUtxos, hideLockedUtxos, precision?.unitCode, t],
   );
 
   return (

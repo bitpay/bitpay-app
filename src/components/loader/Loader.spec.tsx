@@ -6,8 +6,6 @@ import Loader from './Loader';
 // SweepGradient, vec) that are not fully covered by the global Skia mock.
 // Stub it out so Loader's own animation logic is the focus of these tests.
 jest.mock('./LoaderSvg', () => {
-  // eslint-disable-next-line @typescript-eslint/no-shadow -- jest.mock factories cannot reference the outer import; the JSX below needs React in scope
-  const React = require('react');
   const {View} = require('react-native');
   return ({size}: {size?: number}) => (
     <View testID="loader-svg" style={{width: size, height: size}} />

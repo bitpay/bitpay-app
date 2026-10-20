@@ -429,8 +429,7 @@ const WalletConnectHome = () => {
         ],
       }),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- showErrorMessage is memoized on dispatch only, so it is stable
-  }, [dispatch, sessionV2, t]);
+  }, [dispatch, sessionV2, showErrorMessage, t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
