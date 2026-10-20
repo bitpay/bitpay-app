@@ -186,8 +186,32 @@ function compareRuns(accepted, candidate, targets = []) {
     });
   });
 
+  // Snapshots taken at TTFD (heap, modules, actions, requests, store size,
+  // module time) move whenever TTFD moves relative to background work: a
+  // change that makes the splash come down earlier, or later, changes how
+  // much of that work has happened by then without changing the work. Judge
+  // them only when the same metric at settle agrees.
+  const byKey = new Map(rows.map(r => [`${r.scenario}|${r.key}`, r]));
+  rows.forEach(r => {
+    const m = /^(js_heap_mb|modules|module_init_ms|actions|action_ms|requests|request_kb|store_kb)_ttfd$/.exec(
+      r.key,
+    );
+    if (!m || !r.real) {
+      return;
+    }
+    const settled = byKey.get(`${r.scenario}|${m[1]}_settled`);
+    if (settled && !(settled.real && settled.better === r.better)) {
+      r.snapshotOnly = true;
+    }
+  });
+
   const regressions = rows.filter(
-    r => r.real && !r.better && !r.positional && !r.key.startsWith('am_'),
+    r =>
+      r.real &&
+      !r.better &&
+      !r.positional &&
+      !r.snapshotOnly &&
+      !r.key.startsWith('am_'),
   );
   const targetRows = rows.filter(r => r.target);
   const targetsImproved =
@@ -198,7 +222,7 @@ function compareRuns(accepted, candidate, targets = []) {
   // some other metric improved under the strict (p < 0.001 and 2× noise)
   // threshold — a change can help more, or elsewhere, than predicted.
   const strictWin = rows.some(
-    r => r.real && r.better && !r.positional && !r.target,
+    r => r.real && r.better && !r.positional && !r.snapshotOnly && !r.target,
   );
   let verdict = 'NEUTRAL';
   if (regressions.length || targetWorse) {
@@ -230,6 +254,10 @@ function print({rows, regressions, verdict}) {
     .forEach(r => {
       const mark = !r.real
         ? '~'
+        : r.snapshotOnly
+        ? r.better
+          ? '↓ (snap)'
+          : '↑ (snap)'
         : r.better
         ? r.positional
           ? '↓ (pos)'

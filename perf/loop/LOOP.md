@@ -44,6 +44,15 @@ be a test-only phrase. Perf builds are signed with the debug keystore, so
      something else (network, UI thread).
    - `REJECT` → revert. Try another variant; after three variants, park the
      candidate with what was learned.
+   - Snapshots taken at TTFD (`*_ttfd`: heap, modules, actions, requests,
+     store size, module time) shift whenever TTFD moves relative to
+     background work, without that work changing. compare.js marks them
+     `(snap)` and ignores them unless the same metric at settle moves the
+     same way.
+   - Pooling with `merge-runs.js` after an inconclusive batch is optional
+     stopping: it raises the false-positive rate a little. Use it to settle a
+     close call, say so in the ledger, and don't pool more than once per
+     change.
 5. **Record** in `LEDGER.md`: hypothesis, evidence, each attempt and its
    numbers, the verdict, the commit.
 
