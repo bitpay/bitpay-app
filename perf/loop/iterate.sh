@@ -14,6 +14,11 @@
 # Exit code is compare.js's verdict: 0 KEEP, 2 NEUTRAL, 1 REJECT.
 
 set -uo pipefail
+# Hold the shared phone for the whole run (see device-lock.sh).
+if [ -z "${BP_DEVICE_LOCKED:-}" ]; then
+  export BP_DEVICE_LOCKED=1
+  exec "$(dirname "${BASH_SOURCE[0]}")/device-lock.sh" "$0" "$@"
+fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 STATE="$ROOT/perf/loop/state"
