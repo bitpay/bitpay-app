@@ -16,12 +16,18 @@ export const TOKEN_PRICE_MAX_DEVIATION = 0.2;
 
 /**
  * A reference older than this is not trusted to overrule a live price: a
- * volatile token can legitimately move more than the deviation in a day.
+ * token can legitimately move more than the deviation (a depeg, an exploit)
+ * and the stale price would then win. The 1D series has 5-minute points, so
+ * this allows one missed point. The cache reuse below is shorter still, so
+ * the reference is never older than this in total.
+ *
+ * The overridden rate is what every balance and Send's fiat-to-crypto amount
+ * entry use, which is why the window is kept tight.
  */
-export const TOKEN_PRICE_REFERENCE_MAX_AGE_MS = 30 * 60 * 1000;
+export const TOKEN_PRICE_REFERENCE_MAX_AGE_MS = 10 * 60 * 1000;
 
 /** Rate-series cache entries younger than this are reused, not refetched. */
-export const TOKEN_PRICE_REFERENCE_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
+export const TOKEN_PRICE_REFERENCE_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 /** Never hold up a rates refresh for longer than this waiting on BWS. */
 export const TOKEN_PRICE_REFERENCE_TIMEOUT_MS = 2500;
