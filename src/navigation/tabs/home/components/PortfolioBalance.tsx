@@ -63,6 +63,7 @@ import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 import BalanceVisibilityButton from '../../../../components/balance/BalanceVisibilityButton';
 import {getUnchartedWallets} from '../../../../portfolio/ui/selectors/getUnchartedWallets';
+import {compareCodeUnits} from '../../../../utils/compareCodeUnits';
 
 const portfolioStyles = StyleSheet.create({
   portfolioContainer: {
@@ -353,7 +354,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const visibleKeyIdsSig = visibleKeys
     .map(key => String(key?.id || ''))
     .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b))
+    .sort(compareCodeUnits)
     .join(',');
 
   const walletsAcrossKeys: Wallet[] = useMemo(() => {
@@ -405,7 +406,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const chartWalletIdsSig = chartWalletsAcrossKeys
     .map(wallet => String(wallet?.id || ''))
     .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b))
+    .sort(compareCodeUnits)
     .join(',');
   const balanceChartsEnabled =
     balanceChartReadiness.shouldMountBalanceChart || hasCachedHomeChart;

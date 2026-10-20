@@ -47,6 +47,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 17 | UI | "Some assets not charted" note + sheet listing them; key-row % on the chart's wallet set | sheet's six assets ($135.55) + chart ($133.00) = header ($268.54); key row = chart = −0.22%; TTFD n.s. | see git log |
 | 18 | Render | Rate-request sort builds each key once (was: two key builds + ICU localeCompare per comparison) | JS profile: 39 ms → absent in Home commit → splash; V8 bench 1.01 → 0.07 ms; wall-clock NEUTRAL (−40 ms, p=.27) — kept per the profiler-attributed rule | see git log |
 | 19 | Launch | **Baseline profile** for startup + main tabs (21,786 methods / 6,072 classes from ART's runtime profile on the test device; `perf/loop/baseline-profile.sh`). simpleperf showed the UI thread mostly in ART's interpreter: the APK shipped only AndroidX's 3.9 KB profile | plain install vs profile applied (as Play does), same APK, 10 runs each: **TTFD 2370 → 1891 ms (−20%)**, JIT CPU 2135 → 90 ms, process CPU 20.9 → 16.2 s, UI CPU −635 ms (all p<.001). Full runtime-profile compile: 2643 → 1832 ms; full AOT 1964 ms | `d41c4754c` |
+| 20 | Render | In-memory identifier signatures sorted by code unit (`compareCodeUnits`) instead of ICU `localeCompare` | JS profile: PortfolioBalance:408 28 ms + balanceChartData:213 21 ms → absent; Home render→commit JS 70 → 52 ms; wall-clock NEUTRAL (TTFD −30 ms, p=.09) — kept per the profiler-attributed rule | see git log |
 
 ## Candidates (ranked by expected win × confidence)
 

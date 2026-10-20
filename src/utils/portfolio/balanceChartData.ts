@@ -33,6 +33,7 @@ import type {
   BalanceChartGraphPointDto,
   BalanceChartViewModel,
 } from '../../portfolio/core/pnl/balanceChartViewModel';
+import {compareCodeUnits} from '../compareCodeUnits';
 
 const getHistoricalRateAssetFromStoredWallet = (
   wallet: StoredWallet,
@@ -168,10 +169,8 @@ export function buildBalanceChartHistoricalRateRequests(args: {
   // Only a stable order is needed. Build each sort key once and compare by
   // code unit: the comparator used to rebuild both keys and run an ICU
   // localeCompare per comparison, ~35 ms per Home render on a 30-wallet key.
-  const byCodeUnit = (left: string, right: string) =>
-    left < right ? -1 : left > right ? 1 : 0;
   return Array.from(requestMapsByQuoteCurrency.entries())
-    .sort(([left], [right]) => byCodeUnit(left, right))
+    .sort(([left], [right]) => compareCodeUnits(left, right))
     .map(([requestQuoteCurrency, requestsByAssetKey]) => ({
       quoteCurrency: requestQuoteCurrency,
       requests: Array.from(requestsByAssetKey.values())
@@ -182,7 +181,7 @@ export function buildBalanceChartHistoricalRateRequests(args: {
             tokenAddress: request.tokenAddress,
           }),
         }))
-        .sort((a, b) => byCodeUnit(a.key, b.key))
+        .sort((a, b) => compareCodeUnits(a.key, b.key))
         .map(({request}) => request),
     }));
 }
@@ -210,7 +209,7 @@ export function getBalanceChartHistoricalRateCacheKeysFromRequestGroups(
     }
   }
 
-  return Array.from(cacheKeys).sort((a, b) => a.localeCompare(b));
+  return Array.from(cacheKeys).sort(compareCodeUnits);
 }
 
 export function getBalanceChartHistoricalRateCacheKeys(args: {
@@ -241,8 +240,8 @@ export function getBalanceChartHistoricalRateCacheRevision(args: {
   const fetchedOnSignatureParts: string[] = [];
   const cache = args.fiatRateSeriesCache;
 
-  for (const key of Array.from(new Set(args.depKeys || [])).sort((a, b) =>
-    a.localeCompare(b),
+  for (const key of Array.from(new Set(args.depKeys || [])).sort(
+    compareCodeUnits,
   )) {
     if (!Object.prototype.hasOwnProperty.call(cache || {}, key)) {
       fetchedOnSignatureParts.push(`${key}:missing`);
