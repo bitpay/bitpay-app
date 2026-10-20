@@ -27,6 +27,7 @@ import {
 } from '../../utils/portfolio/chartCache';
 import {useStableBalanceHistoryChartAxisLabels} from './useStableBalanceHistoryChartAxisLabels';
 import {usePortfolioBalanceChartScope} from '../../portfolio/ui/hooks/usePortfolioBalanceChartScope';
+import {getChartedWalletIds} from '../../portfolio/ui/selectors/getUnchartedWallets';
 import useBalanceChartDisplayModel, {
   type BalanceChartCallbackAnalysisPoint,
 } from './useBalanceChartDisplayModel';
@@ -75,6 +76,12 @@ export type BalanceHistoryChartProps = {
     point?: BalanceChartCallbackAnalysisPoint,
   ) => void;
   onRenderableSeriesChange?: (hasRenderableSeries: boolean) => void;
+  /**
+   * The wallet ids the visible series has data for (sorted), or undefined
+   * when there is no series or it has no per-wallet breakdown. Lets a screen
+   * say which of its wallets the line leaves out.
+   */
+  onChartedWalletIdsChange?: (walletIds: string[] | undefined) => void;
   /**
    * Reports when the chart is showing its own error state (no line, query
    * failed). Screens that hide the chart behind a loading placeholder use it
@@ -136,6 +143,7 @@ const BalanceHistoryChart = ({
   onChangeRowData,
   onDisplayedAnalysisPointChange,
   onRenderableSeriesChange,
+  onChartedWalletIdsChange,
   onErrorStateChange,
   populateProgress,
   skeletonVariant = 'drawing',
@@ -180,6 +188,19 @@ const BalanceHistoryChart = ({
   React.useEffect(() => {
     onRenderableSeriesChange?.(displayModel.hasRenderableSeries);
   }, [displayModel.hasRenderableSeries, onRenderableSeriesChange]);
+
+  const chartedWalletIdsSignature = displayModel.hasRenderableSeries
+    ? getChartedWalletIds(
+        displayModel.visibleSeries?.walletFiatBalanceByWalletId,
+      )?.join(',')
+    : undefined;
+  React.useEffect(() => {
+    onChartedWalletIdsChange?.(
+      chartedWalletIdsSignature === undefined
+        ? undefined
+        : chartedWalletIdsSignature.split(',').filter(Boolean),
+    );
+  }, [chartedWalletIdsSignature, onChartedWalletIdsChange]);
 
   React.useEffect(() => {
     onErrorStateChange?.(displayModel.showErrorState);

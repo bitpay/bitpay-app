@@ -161,6 +161,44 @@ describe('usePortfolioKeyPercentages', () => {
     expect(latestResult).toBe(firstResult);
   });
 
+  it('leaves out wallets the balance chart excludes', async () => {
+    const key = keyFactory();
+    key.wallets.push(
+      {
+        id: 'wallet-quarantined',
+        chain: 'sol',
+        currencyAbbreviation: 'sol',
+        hideWallet: false,
+        hideWalletByAccount: false,
+      },
+      {
+        id: 'wallet-bad-decimals',
+        chain: 'eth',
+        currencyAbbreviation: 'link',
+        hideWallet: false,
+        hideWalletByAccount: false,
+      },
+    );
+    mockState = {
+      ...mockState,
+      PORTFOLIO: {
+        ...mockState.PORTFOLIO,
+        quarantinesByWalletId: {'wallet-quarantined': {walletId: 'x'}},
+        invalidDecimalsByWalletId: {'wallet-bad-decimals': {walletId: 'y'}},
+      },
+    };
+
+    await act(async () => {
+      TestRenderer.create(<HookHarness keys={[key]} />);
+    });
+
+    expect(mockMapWalletsToStoredWallets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        wallets: [expect.objectContaining({id: 'wallet-1'})],
+      }),
+    );
+  });
+
   it('does not build chart setup or start chart queries when disabled', async () => {
     let view: TestRenderer.ReactTestRenderer;
     await act(async () => {

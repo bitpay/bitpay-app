@@ -62,6 +62,7 @@ import type {Rates} from '../../../../store/rate/rate.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 import BalanceVisibilityButton from '../../../../components/balance/BalanceVisibilityButton';
+import {getUnchartedWallets} from '../../../../portfolio/ui/selectors/getUnchartedWallets';
 
 const portfolioStyles = StyleSheet.create({
   portfolioContainer: {
@@ -148,8 +149,19 @@ const headerStyles = StyleSheet.create({
   },
   portfolioBalanceChangeRowContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  unchartedNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  unchartedNoteText: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginRight: 3,
   },
 });
 
@@ -216,6 +228,36 @@ type PortfolioBalanceChangeRowProps = {
   rangeLabel?: string;
   style?: StyleProp<ViewStyle>;
   visible?: boolean;
+  /** Shown after the change, e.g. the note that some assets aren't charted. */
+  trailing?: React.ReactNode;
+};
+
+const UnchartedAssetsNote = ({
+  onPress,
+}: {
+  onPress: () => void;
+}): React.ReactElement => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      activeOpacity={ActiveOpacity}
+      testID="portfolio-uncharted-assets-button"
+      accessibilityRole="button"
+      accessibilityLabel={t('Some assets not charted')}
+      hitSlop={{top: 8, bottom: 8, left: 4, right: 8}}
+      style={headerStyles.unchartedNote}
+      onPress={onPress}>
+      <BaseText
+        style={[
+          headerStyles.unchartedNoteText,
+          {color: theme.dark ? White : SlateDark},
+        ]}>
+        {t('Some assets not charted')}
+      </BaseText>
+      <InfoSvg width={13} height={13} />
+    </TouchableOpacity>
+  );
 };
 
 const PortfolioBalanceChangeRow = ({
@@ -224,6 +266,7 @@ const PortfolioBalanceChangeRow = ({
   rangeLabel,
   style,
   visible = true,
+  trailing,
 }: PortfolioBalanceChangeRowProps): React.ReactElement => {
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const displayedDelta =
@@ -247,6 +290,7 @@ const PortfolioBalanceChangeRow = ({
         rangeLabel={rangeLabel}
         fractionDigits={2}
       />
+      {trailing}
     </PortfolioBalanceChangeRowContainer>
   );
 };
@@ -549,6 +593,15 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       hasCachedHomeChart,
     resetKey: chartLifecycleKey,
   });
+  const [chartedWalletIds, setChartedWalletIds] = useState<
+    ReadonlySet<string> | undefined
+  >(undefined);
+  const onChartedWalletIdsChange = useCallback(
+    (walletIds: string[] | undefined) => {
+      setChartedWalletIds(walletIds ? new Set(walletIds) : undefined);
+    },
+    [],
+  );
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
     enabled: active,
     wallets: chartWalletsAcrossKeys,
@@ -569,6 +622,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     onDisplayedAnalysisPointChange:
       balanceChartSurface.chartCallbacks.onDisplayedAnalysisPointChange,
     onRenderableSeriesChange: setChartHasRenderableSeries,
+    onChartedWalletIdsChange,
     // Collapsed, the chart is a scaled-down thumbnail under the expand button:
     // captions would be unreadable and Retry untappable.
     populateProgress: isChartCollapsed
@@ -625,6 +679,52 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData
       : lastDayChangeRowData;
+
+  // The header shows every visible wallet; the chart and its change can only
+  // cover wallets with usable history. Say so, and which ones, rather than
+  // let the gap read as a loss.
+  const unchartedWallets = useMemo(
+    () =>
+      balanceChartsEnabled
+        ? getUnchartedWallets({wallets: walletsAcrossKeys, chartedWalletIds})
+        : [],
+    [balanceChartsEnabled, chartedWalletIds, walletsAcrossKeys],
+  );
+
+  const showUnchartedAssetsModal = () => {
+    const lines = unchartedWallets.map(wallet => {
+      const symbol = String(wallet.currencyAbbreviation || '').toUpperCase();
+      const name = wallet.walletName || wallet.currencyName || symbol;
+      const chain = String(wallet.chain || '').toUpperCase();
+      const fiat = hideAllBalances
+        ? HIDDEN_BALANCE_MASK
+        : formatFiatAmount(
+            Number(wallet.balance?.fiat) || 0,
+            defaultAltCurrency.isoCode,
+            {currencyDisplay: 'symbol'},
+          );
+      return `- ${name} (${symbol}${
+        chain && chain !== symbol ? ` · ${chain}` : ''
+      }): ${fiat}`;
+    });
+    dispatch(
+      showBottomNotificationModal({
+        type: 'info',
+        title: t('Not all assets are charted'),
+        message: `${t(
+          "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.",
+        )}\n\n${lines.join('\n')}`,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('GOT IT'),
+            action: () => null,
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   const showPortfolioBalanceInfoModal = () => {
     dispatch(
@@ -719,6 +819,11 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
           deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
           rangeLabel={displayedChangeRowData?.rangeLabel}
           visible={!!displayedChangeRowData}
+          trailing={
+            unchartedWallets.length && displayedChangeRowData ? (
+              <UnchartedAssetsNote onPress={showUnchartedAssetsModal} />
+            ) : null
+          }
           style={{
             width: '100%',
             justifyContent: shouldLeftAlignTopSection ? 'flex-start' : 'center',

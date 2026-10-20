@@ -2294,5 +2294,8 @@
   "Updating history · {{completed}} of {{count}} wallets_one": "Updating history · {{completed}} of {{count}} wallet",
   "Updating history · {{completed}} of {{count}} wallets_other": "Updating history · {{completed}} of {{count}} wallets",
   "Couldn't load balance history.": "Couldn't load balance history.",
-  "Retry": "Retry"
+  "Retry": "Retry",
+  "Some assets not charted": "Some assets not charted",
+  "Not all assets are charted": "Not all assets are charted",
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them."
 }

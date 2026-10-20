@@ -1575,6 +1575,35 @@ describe('BalanceHistoryChart', () => {
     });
   });
 
+  it('reports which wallets the visible series has data for', async () => {
+    const onChartedWalletIdsChange = jest.fn();
+    mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValueOnce({
+      __series: {
+        ...mockOneWeekSeries,
+        walletFiatBalanceByWalletId: {
+          'wallet-2': [60, 65],
+          'wallet-1': [40, 45],
+          'wallet-empty': [0, 0],
+        },
+      },
+    });
+
+    await act(async () => {
+      TestRenderer.create(
+        balanceHistoryChart({
+          initialSelectedTimeframe: '1W',
+          onChartedWalletIdsChange,
+          showLoaderWhenNoSnapshots: true,
+        }),
+      );
+    });
+
+    expect(onChartedWalletIdsChange).toHaveBeenLastCalledWith([
+      'wallet-1',
+      'wallet-2',
+    ]);
+  });
+
   it('preserves graph points reference after a runtime refresh with equivalent points', async () => {
     const deferred = createDeferred<{
       __series: typeof mockUpdatedOneDaySeries;
