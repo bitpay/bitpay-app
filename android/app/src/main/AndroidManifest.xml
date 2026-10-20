@@ -48,7 +48,7 @@
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:networkSecurityConfig="@xml/network_security_config"
       android:requestLegacyExternalStorage="true">
-      <profileable android:shell="${perfProfileableShell}" tools:targetApi="29" />
+      <profileable android:shell="${perfProfileableShell}" android:enabled="${perfProfileableShell}" tools:targetApi="29" />
 
         <!--
           CameraX (via react-native-vision-camera) declares the optional OEM

@@ -152,6 +152,15 @@ android {
         versionCode 91212433
         versionName "14.46.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
+        // A perf build allows screenshots (no FLAG_SECURE) and is profileable, so
+        // it must never be signed with the Play upload key: refuse the build if
+        // perfBuild arrives (gradle.properties, ORG_GRADLE_PROJECT_*) without
+        // the debug keystore that scripts/android-perf.sh pins.
+        if (project.findProperty('perfBuild') == 'true' &&
+            project.findProperty('APP_UPLOAD_STORE_FILE') != 'debug.keystore') {
+            throw new GradleException(
+                'perfBuild=true is only allowed with APP_UPLOAD_STORE_FILE=debug.keystore (scripts/android-perf.sh)')
+        }
         // Set only by scripts/android-perf.sh (-PperfBuild=true). Production builds
         // never pass it, so it is false there and nothing perf-specific ships.
         buildConfigField "boolean", "PERF_BUILD", (project.findProperty('perfBuild') == 'true').toString()
