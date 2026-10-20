@@ -226,6 +226,15 @@ function applyShippedProfile(serial) {
     `am broadcast -a androidx.profileinstaller.action.INSTALL_PROFILE -n ${APP_ID}/androidx.profileinstaller.ProfileInstallReceiver`,
   );
   adbShell(serial, `cmd package compile -m speed-profile -f ${APP_ID}`);
+  // The first launch after a forced compile loads the new code from disk;
+  // nav-tabs iterations failed to bring the app up in that window. Launch
+  // once and stop it so measured runs start from the same state.
+  adbShell(
+    serial,
+    `am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n ${LAUNCHER_ACTIVITY}`,
+  );
+  adbShell(serial, 'sleep 8');
+  adbShell(serial, `am force-stop ${APP_ID}`);
 }
 
 /**

@@ -122,6 +122,12 @@ does at install. Before that every run measured interpreted code + JIT, so
 baselines from before and after are not comparable; the accepted run was
 re-taken: **TTFD 2,312 → 1,857 ms** (−20%, p<.001; 20 runs, `ceba3d074`), TTID 422 → 353 ms, JIT CPU 2,030 → 90 ms. `BP_PERF_COMPILE=none` reproduces the old state.
 
+Tab switching with vs without the profile, same APK, four batches in
+alternating order (none / profile / none / profile): janky 2.97 / 3.88 /
+3.0 / 2.71 %, p99 36 / 44 / 37 / 37 ms, PSS 705 / 746 / 679 / 537 MB — no
+consistent cost; one profile batch was the outlier and PSS moves ~200 MB
+between batches on device state alone.
+
 ## Harness built during the loop
 
 - Perf builds: debug-keystore signed, arm64-only (~2.5 min incremental), no
