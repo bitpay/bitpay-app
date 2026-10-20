@@ -199,6 +199,12 @@ async function runIteration(ctx, scenario) {
       if ((scenario.measures || []).includes('activity')) {
         await sleep(2600);
       }
+      // The process's memory mode moves PSS, jank and peak CPU of a whole
+      // run (one process serves every iteration): record it so a mismatch
+      // between two runs is visible. Context only — compare.js never judges it.
+      if (wantsMemory) {
+        metrics.unknown_mb_start = android.readMemoryMb(serial).unknown_mb;
+      }
       android.resetGfxInfo(serial);
       startSampling();
       visibleAnchor = Date.now();
