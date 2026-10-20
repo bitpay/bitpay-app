@@ -57,9 +57,15 @@ const readCachedTokenList = (chain: string): CachedTokenList | undefined => {
     if (typeof parsed?.savedAt !== 'number' || !Array.isArray(parsed.tokens)) {
       return undefined;
     }
+    const tokens = parsed.tokens.filter(isUsableToken);
+    // An entry that filters down to nothing is as good as missing: using it
+    // would leave the chain with no tokens (0 fiat) until the TTL expires.
+    if (tokens.length === 0) {
+      return undefined;
+    }
     return {
       savedAt: parsed.savedAt,
-      tokens: parsed.tokens.filter(isUsableToken),
+      tokens,
     };
   } catch {
     logManager.warn(
@@ -69,9 +75,25 @@ const readCachedTokenList = (chain: string): CachedTokenList | undefined => {
   }
 };
 
-const writeCachedTokenList = (chain: string, tokens: Token[]) => {
+// requestIdleCallback when the platform has it, else a macrotask — the same
+// scheduler accountListCache uses, so a large serialize+write never blocks the
+// caller that is awaiting the fetch.
+const scheduleIdle = (task: () => void): void => {
+  const idleCallback = (global as any).requestIdleCallback;
+  if (typeof idleCallback === 'function') {
+    idleCallback(task, {timeout: 2000});
+    return;
+  }
+  setTimeout(task, 0);
+};
+
+const writeCachedTokenList = (
+  chain: string,
+  tokens: Token[],
+  savedAt: number,
+) => {
   try {
-    const entry: CachedTokenList = {savedAt: Date.now(), tokens};
+    const entry: CachedTokenList = {savedAt, tokens};
     getTokenListsStorage().set(chain, JSON.stringify(entry));
   } catch {
     logManager.warn(
@@ -102,6 +124,15 @@ const fetchTokenList = async (chain: string): Promise<Token[] | undefined> => {
           data.length - tokens.length
         } malformed token(s) for ${chain}`,
       );
+    }
+    // Nothing usable came back. Returning [] here would overwrite a good
+    // cached list with an empty one (fresh savedAt) and wipe the chain's
+    // tokens for 24h, so report it as a failed fetch and keep the cache.
+    if (tokens.length === 0) {
+      logManager.warn(
+        `[startGetTokenOptions] no usable tokens returned for ${chain}; treating as a failed fetch`,
+      );
+      return undefined;
     }
     return tokens;
   } catch {
@@ -139,11 +170,14 @@ const applyTokenLists = (
 const fetchTokenLists = async (
   cached: Record<string, CachedTokenList | undefined>,
 ) => {
+  const fetchedAt = Date.now();
   const results = await Promise.all(
     SUPPORTED_VM_TOKENS.map(async chain => {
       const fetched = await fetchTokenList(chain);
       if (fetched) {
-        writeCachedTokenList(chain, fetched);
+        // Serialize + write off the await path so a cold launch doesn't block
+        // init on ~5 MB of JSON; savedAt stays the fetch time for staleness.
+        scheduleIdle(() => writeCachedTokenList(chain, fetched, fetchedAt));
       }
       return {
         chain,
