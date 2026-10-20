@@ -1,4 +1,4 @@
-# Self-healing loop — ledger
+# Performance loop — ledger
 
 Device: **Motorola one 5G ace** (Android 11, arm64, 5.5 GB), onboarded test
 wallet. Every number is a median of 10 cold starts of `startup-load`; a change
@@ -101,7 +101,7 @@ baseline was re-taken on it: TTFD **3,350 ms**, TTID 724 ms.
 
 The base originally stacked #2449–#2458 only, so Home still showed the old
 Skia spinner (`LoaderSvg.tsx`) instead of the ghost-line loader. #2461 is now
-merged into `perf/self-healing-base` (React Compiler conflict resolved in
+merged into `misc-updates-base` (React Compiler conflict resolved in
 `.get()/.set()` style; chart tests pass) and the branch rebased onto it.
 Baselines from here on include it.
 

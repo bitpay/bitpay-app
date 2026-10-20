@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# One iteration of the self-healing loop: build the working tree as an
+# One iteration of the performance loop: build the working tree as an
 # instrumented release APK, measure it on the device, compare against the
 # accepted run.
 #

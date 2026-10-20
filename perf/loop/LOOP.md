@@ -1,8 +1,8 @@
-# Self-healing performance loop
+# Android performance loop
 
 A repeatable loop that finds a bottleneck on a real Android device, works out
 why, tries fixes until one measurably helps, and commits it. Everything lands
-on one branch (`perf/self-healing`), one commit per fix; `LEDGER.md` is the
+on one branch (`misc-updates`), one commit per fix; `LEDGER.md` is the
 running record and becomes the PR description.
 
 ## Setup (once per device)

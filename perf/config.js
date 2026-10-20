@@ -104,7 +104,7 @@ const SCENARIOS = {
     settleForLoadProfile: true,
     measures: ['startup', 'memory', 'cpu', 'jsTimeline', 'load'],
     description:
-      'Cold start on the onboarded wallet, held until the app settles: timeline plus what loaded — modules, requests, actions, heap, store size. The self-healing loop gates on this.',
+      'Cold start on the onboarded wallet, held until the app settles: timeline plus what loaded — modules, requests, actions, heap, store size. The performance loop gates on this.',
   },
   'startup-cold-fresh': {
     flow: 'startup_cold_fresh.yaml',
