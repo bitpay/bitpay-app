@@ -28,30 +28,52 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 
 | # | Area | Change | Measured | Commit |
 |---|---|---|---|---|
-| 1 | UI | Bottom-notification actions back to bottom-left / bottom-right (a wrapping row, not a column) | layout — both platforms | `d2c871925` |
-| 2 | Launch | Token-list entries share per-chain config instead of rebuilding it for each of ~21k tokens | app-init phase 354 → 303 ms (−51); JS heap −6 MB | `61aece25c` |
-| 3 | Render | `GetPrecision`/`GetName` look tokens up directly instead of copying three token tables (~21k entries) per call | 6.4 ms → 0.00004 ms per call (benchmark); neutral on this wallet, which holds no token wallets | `3632ff4b1` |
-| 4 | Launch | MoonPay embedded check (session request, x25519 keys, invisible WebView) waits for startup to settle | route phase 168 → 91 ms (−77, p<.001); TTFD median 3913 → 3697 ms (−217, p=.016) | `e7e0c4735` |
-| 6 | Launch | Stop binding the OEM camera-extensions jar: on Motorola, ART rejected the app's compiled code on every launch ("Found duplicate classes, falling back to extracting from APK") | TTFD 3673 → 2521 ms (−1151, −31%); JS entry −944 ms. New installs immediately; existing installs after the next reboot | `778e7b2fe` |
-| 7 | Render | Remember sorted wallet-id lists (localeCompare/ICU sort repeated every Home render) | Home first render 397 → 359 ms (−38, p=.003), funded wallet | `1b3ee0bbe` |
-| 8 | Network | BWS request signing reuses the parsed request key (3 EC multiplications → 1); signatures byte-identical | 2.32 → 0.66 ms/signature (V8); JS profile: signing 212 → 84 ms in Home commit → splash | `da4b8b6a0` |
-| 9 | Network | External-services/swap-currency prefetch (~0.5 MB) waits until startup settles | requests before first draw 4 → 2 (p<.001) | `1f893f9d0` |
-| 10 | Memory | Shop's remote images decode at display size on Android (`resizeMethod="resize"`) | Shop tab native 336 → 202 MB, graphics 180 → 57 MB (−257 MB; memtabs, 3× each) | `e0b8abccb` |
-| 11 | Launch | VisionCamera's native modules are created on first use (Scan), not while the React host starts | camera init gone from launch; RN start → JS entry 683 → 661 ms (p=.005); first Scan open unchanged (~0.8 s) | `791ec15b3` |
-| 12 | Launch | Cached token lists apply in ~8 ms slices that yield, so app init and routing no longer wait behind 21k tokens | TTFD 2945 → 2474 ms (−471, −16%, p<.001); app-init sync 308 → 1.4 ms; heap at first draw 44 → 32 MB | `d085a7d08` |
-| 13 | Frames | Shop mounts gift-card rows as the user scrolls (was: every card at once) | tab switching: worst frame 625 → 186 ms, UI time over budget 1.7 s → 0.78 s (−52%); idle-batch variant rejected (same total work) | `012f5bfa6` |
-| 14 | Launch | Native component view configs computed on first use: app wraps 57 eager packages as on-demand + RN `UIManager.js` stops spreading (which invoked every lazy getter) | bundle exec 595 → 405 ms (−32%); RN start → JS entry −188 ms; ~150 ms reappears when Home first renders its components; TTFD −55 ms (n.s.) | `5743a6869` |
-| 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `918236421` |
-| 15 | Launch | A balance mismatch that survived a completed populate is stamped (time + snapshot checkpoint); drift-only changes to it are skipped for 6 h, history changes still repopulate | launches > 10.5 s JS CPU 5/40 → 0/20; populates 2/10 → 0/26 launches; worst JS CPU 13.0 → 9.3 s; medians unchanged (tail fix) | `8302b95d7` |
-| 16 | Correctness | Live token price replaced by BWS's when > 20% away from a ≤ 30 min old BWS price (aUSDC: Moralis $0.6165 vs BWS $0.9999) | header $262.60 → $268.77; Last Day −4.26% → −0.14%; chart cliff gone; TTFD n.s. | `e710aaacb` |
-| 17 | UI | "Some assets not charted" note + sheet listing them; key-row % on the chart's wallet set | sheet's six assets ($135.55) + chart ($133.00) = header ($268.54); key row = chart = −0.22%; TTFD n.s. | see git log |
-| 18 | Render | Rate-request sort builds each key once (was: two key builds + ICU localeCompare per comparison) | JS profile: 39 ms → absent in Home commit → splash; V8 bench 1.01 → 0.07 ms; wall-clock NEUTRAL (−40 ms, p=.27) — kept per the profiler-attributed rule | see git log |
-| 19 | Launch | **Baseline profile** for startup + main tabs (21,786 methods / 6,072 classes from ART's runtime profile on the test device; `perf/loop/baseline-profile.sh`). simpleperf showed the UI thread mostly in ART's interpreter: the APK shipped only AndroidX's 3.9 KB profile | plain install vs profile applied (as Play does), same APK, 10 runs each: **TTFD 2370 → 1891 ms (−20%)**, JIT CPU 2135 → 90 ms, process CPU 20.9 → 16.2 s, UI CPU −635 ms (all p<.001). Full runtime-profile compile: 2643 → 1832 ms; full AOT 1964 ms | `d41c4754c` |
-| 20 | Render | In-memory identifier signatures sorted by code unit (`compareCodeUnits`) instead of ICU `localeCompare` | JS profile: PortfolioBalance:408 28 ms + balanceChartData:213 21 ms → absent; Home render→commit JS 70 → 52 ms; wall-clock NEUTRAL (TTFD −30 ms, p=.09) — kept per the profiler-attributed rule | see git log |
-| 21 | Launch | Startup device-integrity *report* (jail-monkey sync TurboModule checks on the JS thread) runs when startup settles; sensitive actions still re-check every time | wallet-secrets phase 119 → 2.9 ms; **TTFD 1827 → 1737 ms (−90, p<.001)**. compare.js REJECT on js_heap_mb_ttfd (+8 MB) / modules_ttfd (+51) overridden: TTFD snapshots; at settle heap, modules, requests, actions, store all identical | see git log |
-| 22 | Launch | Keychain read of the store encryption key starts from the first module index.js imports, overlapping bundle evaluation | store creation 121 → 87.5 ms (−34, p<.001); store ready −22 ms; TTFD −26 ms (n.s.) | see git log |
-| 23 | Frames | Home's GlobalSelect (Receive/Send) and KeyOverview preloads wait for startup settled + 2 s | SVG roots mounted 2.5 s after the first: 88 → 37 (GlobalSelect 49, KeyOverview 13 moved later, still preloaded by 12 s); long frames at ~2.4–2.9 s gone; over budget first 6 s 420 → 353 ms; TTFD n.s. | see git log |
-| 24 | Launch | **R8 on by default** for release (no obfuscation: no Sentry mapping upload) | TTFD 1697 → 1641 ms (−56, p=.011); APK 150.8 → 129.3 MB; smoke + extra flows pass, no reflection errors | see git log |
+| 1 | UI | Bottom-notification actions back to bottom-left / bottom-right (a wrapping row, not a column) | layout — both platforms | `45d7a5ca3` |
+| 2 | Launch | Token-list entries share per-chain config instead of rebuilding it for each of ~21k tokens | app-init phase 354 → 303 ms (−51); JS heap −6 MB | `9e3a08ba9` |
+| 3 | Render | `GetPrecision`/`GetName` look tokens up directly instead of copying three token tables (~21k entries) per call | 6.4 ms → 0.00004 ms per call (benchmark); neutral on this wallet, which holds no token wallets | `bf0d22535` |
+| 4 | Launch | MoonPay embedded check (session request, x25519 keys, invisible WebView) waits for startup to settle | route phase 168 → 91 ms (−77, p<.001); TTFD median 3913 → 3697 ms (−217, p=.016) | `870a28f08` |
+| 6 | Launch | Stop binding the OEM camera-extensions jar: on Motorola, ART rejected the app's compiled code on every launch ("Found duplicate classes, falling back to extracting from APK") | TTFD 3673 → 2521 ms (−1151, −31%); JS entry −944 ms. New installs immediately; existing installs after the next reboot | `baf97a53e` |
+| 7 | Render | Remember sorted wallet-id lists (localeCompare/ICU sort repeated every Home render) | Home first render 397 → 359 ms (−38, p=.003), funded wallet | `c5c825248` |
+| 8 | Network | BWS request signing reuses the parsed request key (3 EC multiplications → 1); signatures byte-identical | 2.32 → 0.66 ms/signature (V8); JS profile: signing 212 → 84 ms in Home commit → splash | `c0387542a` |
+| 9 | Network | External-services/swap-currency prefetch (~0.5 MB) waits until startup settles | requests before first draw 4 → 2 (p<.001) | `a75217248` |
+| 10 | Memory | Shop's remote images decode at display size on Android (`resizeMethod="resize"`) | Shop tab native 336 → 202 MB, graphics 180 → 57 MB (−257 MB; memtabs, 3× each) | `3cc22f766` |
+| 11 | Launch | VisionCamera's native modules are created on first use (Scan), not while the React host starts | camera init gone from launch; RN start → JS entry 683 → 661 ms (p=.005); first Scan open unchanged (~0.8 s) | `67b05a843` |
+| 12 | Launch | Cached token lists apply in ~8 ms slices that yield, so app init and routing no longer wait behind 21k tokens | TTFD 2945 → 2474 ms (−471, −16%, p<.001); app-init sync 308 → 1.4 ms; heap at first draw 44 → 32 MB | `5b3790423` |
+| 13 | Frames | Shop mounts gift-card rows as the user scrolls (was: every card at once) | tab switching: worst frame 625 → 186 ms, UI time over budget 1.7 s → 0.78 s (−52%); idle-batch variant rejected (same total work) | `48ffc11f1` |
+| 14 | Launch | Native component view configs computed on first use: app wraps 57 eager packages as on-demand + RN `UIManager.js` stops spreading (which invoked every lazy getter) | bundle exec 595 → 405 ms (−32%); RN start → JS entry −188 ms; ~150 ms reappears when Home first renders its components; TTFD −55 ms (n.s.) | `7472fde77` |
+| 5 | Frames | …and then a further 5 quiet seconds, so its WebView (Chromium init on the UI thread) no longer lands on the first look at Home | first 8 s: frame time over budget 1438 → 873 ms, long frames 12 → 9 (Perfetto); requests before first draw 5 → 4 | `a160cad12` |
+| 15 | Launch | A balance mismatch that survived a completed populate is stamped (time + snapshot checkpoint); drift-only changes to it are skipped for 6 h, history changes still repopulate | launches > 10.5 s JS CPU 5/40 → 0/20; populates 2/10 → 0/26 launches; worst JS CPU 13.0 → 9.3 s; medians unchanged (tail fix) | `70f98162b` |
+| 16 | Correctness | Live token price replaced by BWS's when > 20% away from a ≤ 30 min old BWS price (aUSDC: Moralis $0.6165 vs BWS $0.9999) | header $262.60 → $268.77; Last Day −4.26% → −0.14%; chart cliff gone; TTFD n.s. | `49f1a6921` |
+| 17 | UI | "Some assets not charted" note + sheet listing them; key-row % on the chart's wallet set | sheet's six assets ($135.55) + chart ($133.00) = header ($268.54); key row = chart = −0.22%; TTFD n.s. | `df9865e03` |
+| 18 | Render | Rate-request sort builds each key once (was: two key builds + ICU localeCompare per comparison) | JS profile: 39 ms → absent in Home commit → splash; V8 bench 1.01 → 0.07 ms; wall-clock NEUTRAL (−40 ms, p=.27) — kept per the profiler-attributed rule | `3334f3b4d` |
+| 19 | Launch | **Baseline profile** for startup + main tabs (21,786 methods / 6,072 classes from ART's runtime profile on the test device; `perf/loop/baseline-profile.sh`). simpleperf showed the UI thread mostly in ART's interpreter: the APK shipped only AndroidX's 3.9 KB profile | plain install vs profile applied (as Play does), same APK, 10 runs each: **TTFD 2370 → 1891 ms (−20%)**, JIT CPU 2135 → 90 ms, process CPU 20.9 → 16.2 s, UI CPU −635 ms (all p<.001). Full runtime-profile compile: 2643 → 1832 ms; full AOT 1964 ms | `116bb38cf` |
+| 20 | Render | In-memory identifier signatures sorted by code unit (`compareCodeUnits`) instead of ICU `localeCompare` | JS profile: PortfolioBalance:408 28 ms + balanceChartData:213 21 ms → absent; Home render→commit JS 70 → 52 ms; wall-clock NEUTRAL (TTFD −30 ms, p=.09) — kept per the profiler-attributed rule | `92d1a1d9b` |
+| 21 | Launch | Startup device-integrity *report* (jail-monkey sync TurboModule checks on the JS thread) runs when startup settles; sensitive actions still re-check every time | wallet-secrets phase 119 → 2.9 ms; **TTFD 1827 → 1737 ms (−90, p<.001)**. compare.js REJECT on js_heap_mb_ttfd (+8 MB) / modules_ttfd (+51) overridden: TTFD snapshots; at settle heap, modules, requests, actions, store all identical | `82657f0d2` |
+| 22 | Launch | Keychain read of the store encryption key starts from the first module index.js imports, overlapping bundle evaluation | store creation 121 → 87.5 ms (−34, p<.001); store ready −22 ms; TTFD −26 ms (n.s.) | `ba70477fa` |
+| 23 | Frames | Home's GlobalSelect (Receive/Send) and KeyOverview preloads wait for startup settled + 2 s | SVG roots mounted 2.5 s after the first: 88 → 37 (GlobalSelect 49, KeyOverview 13 moved later, still preloaded by 12 s); long frames at ~2.4–2.9 s gone; over budget first 6 s 420 → 353 ms; TTFD n.s. | `b23db0610` |
+| 24 | Launch | **R8 on by default** for release (no obfuscation: no Sentry mapping upload) | TTFD 1697 → 1641 ms (−56, p=.011); APK 150.8 → 129.3 MB; smoke + extra flows pass, no reflection errors | `8cffca60f` |
+
+## Review follow-ups
+
+A full read-only review of the branch led to these changes (all measured
+together: A/B/A/B against the #24 build, 20 cold starts each, TTFD 1669 →
+1663 ms, n.s. — no cost):
+
+| Change | Why | Commit |
+|---|---|---|
+| Perf builds must use the debug keystore; `<profileable android:enabled>` gated too | `perfBuild` could reach a Play-signed build via gradle.properties | `7085eb550` |
+| Mismatch throttle 6 h → 1 h; user refresh bypasses it | a real transfer on a wallet with a verified mismatch looks like drift | `e9be651c4` |
+| Held tokens applied before the sliced token-list pass | Home could render before a held 1inch token's metadata existed | `c43a27b48` |
+| Price-guard reference ≤ 10 min (cache 5 min) | a ~45 min old reference could override a real fast move | `ffc85c004` |
+| BWC request-key cache cleared on key deletion | parsed request keys outlived the key | `0421d9c83` |
+| View managers per React context | latent: cached for the first context only | `50f0fd8ae` |
+| MoonPay check starts at once when Buy/Sell opens early | Buy/Sell inside the startup window waited on the deferred check | `6d27d1e5c` |
+| react-native-performance linked, PerfMarks compiled, only in perf builds | harness instrumentation shipped in normal builds | `e6f8453ca` |
+| Chart signature memoised; `bp_js_entry` comment corrected | per-render scan; misleading comment | `46d3397fc`, `4cfe00733` |
+| compare.js judges `*_ttfd` snapshots at settle | codifies the #21 override | `8ca8dfe8d` |
+
+An apparent +60 ms TTFD after these changes was device drift: the
+alternating A/B above shows none.
 
 ## Candidates (ranked by expected win × confidence)
 
