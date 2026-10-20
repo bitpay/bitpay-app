@@ -454,8 +454,20 @@ async function cmdRun(args) {
     warnings.push(msg);
   }
 
-  log('\nInstalling artifact...');
-  const installResult = android.install(info.serial, artifactPath);
+  // BP_PERF_SKIP_INSTALL=1 measures the build already on the device as it is
+  // — e.g. after `cmd package compile`, which a reinstall would undo.
+  const skipInstall = process.env.BP_PERF_SKIP_INSTALL === '1';
+  if (skipInstall) {
+    const msg =
+      'BP_PERF_SKIP_INSTALL=1: measuring the installed build; the --artifact APK was not installed.';
+    warn(msg);
+    warnings.push(msg);
+  } else {
+    log('\nInstalling artifact...');
+  }
+  const installResult = skipInstall
+    ? {reinstalled: false}
+    : android.install(info.serial, artifactPath);
 
   if (installResult.reinstalled) {
     const msg =
