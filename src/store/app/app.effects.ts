@@ -257,7 +257,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
 
-    dispatch(reportDeviceIntegrity());
+    // Root / hook detection runs synchronous native checks on the JS thread
+    // (filesystem probes, a hooking-framework scan). This call only reports
+    // the result (Sentry tags, analytics), so it waits until the first screen
+    // is up. Sensitive actions re-check on their own, every time
+    // (assertDeviceIntegrityForSensitiveAction), so protection is unchanged.
+    whenStartupSettled(() => dispatch(reportDeviceIntegrity()));
 
     await dispatch(
       migrateWalletSecrets(

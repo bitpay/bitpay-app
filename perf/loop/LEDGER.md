@@ -48,6 +48,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | 18 | Render | Rate-request sort builds each key once (was: two key builds + ICU localeCompare per comparison) | JS profile: 39 ms → absent in Home commit → splash; V8 bench 1.01 → 0.07 ms; wall-clock NEUTRAL (−40 ms, p=.27) — kept per the profiler-attributed rule | see git log |
 | 19 | Launch | **Baseline profile** for startup + main tabs (21,786 methods / 6,072 classes from ART's runtime profile on the test device; `perf/loop/baseline-profile.sh`). simpleperf showed the UI thread mostly in ART's interpreter: the APK shipped only AndroidX's 3.9 KB profile | plain install vs profile applied (as Play does), same APK, 10 runs each: **TTFD 2370 → 1891 ms (−20%)**, JIT CPU 2135 → 90 ms, process CPU 20.9 → 16.2 s, UI CPU −635 ms (all p<.001). Full runtime-profile compile: 2643 → 1832 ms; full AOT 1964 ms | `d41c4754c` |
 | 20 | Render | In-memory identifier signatures sorted by code unit (`compareCodeUnits`) instead of ICU `localeCompare` | JS profile: PortfolioBalance:408 28 ms + balanceChartData:213 21 ms → absent; Home render→commit JS 70 → 52 ms; wall-clock NEUTRAL (TTFD −30 ms, p=.09) — kept per the profiler-attributed rule | see git log |
+| 21 | Launch | Startup device-integrity *report* (jail-monkey sync TurboModule checks on the JS thread) runs when startup settles; sensitive actions still re-check every time | wallet-secrets phase 119 → 2.9 ms; **TTFD 1827 → 1737 ms (−90, p<.001)**. compare.js REJECT on js_heap_mb_ttfd (+8 MB) / modules_ttfd (+51) overridden: TTFD snapshots; at settle heap, modules, requests, actions, store all identical | see git log |
 
 ## Candidates (ranked by expected win × confidence)
 
@@ -75,7 +76,7 @@ module init before first draw · JS heap 44 → 52 MB · 5 requests, 512 KB.
 | C21 | `changelly/getCurrencies` 474 KB at startup | fixed (#9); still re-downloaded once per launch (memory-only cache) — persisting with the 4 h TTL would save the bandwidth | partly done |
 | C19 | Big UI-thread frames around the splash: three of 110–270 ms at ~2.0–2.5 s; inside them `Record View#draw()` ≈255 ms over 4 frames and Fabric mount (`animation`) ≈350 ms | Perfetto, current build. **Ablation** (Home chart removed, diagnostic build only): time over frame budget 718–849 → 598–625 ms, so the Skia balance chart costs ~120–150 ms of first-frame jank; the largest frames remain, i.e. Home's own mount | open — chart first-draw is the attributable part |
 | C29 | Chromium loads at ~1.5 s on an OkHttp thread: RN's cookie jar initialises WebView `CookieManager` on the first request | by design (Cloudflare challenge shares cookies between WebView and native requests) | won't fix |
-| C7 | wallet secrets migration, 184 ms every launch | name suggests a one-time migration | open |
+| C7 | fixed (#21) — "wallet secrets" phase was the jail-monkey integrity report, not the migration | | done |
 | C8 | SUCCESS_APP_INIT → route, 176 ms | | open |
 | C9 | `changelly/getCurrencies` 475 KB POST every launch | `prefetchExternalServicesData` after init | open |
 | C10 | LaunchActivity trampoline, 84 ms | also an Android Vitals anti-pattern | open |
