@@ -110,9 +110,9 @@ def enableSeparateBuildPerCPUArchitecture = false
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-// Off for shipping builds. -PenableR8=true turns it on for experiments (the
-// perf loop measures it with PERF_GRADLE_ARGS=-PenableR8=true).
-def enableProguardInReleaseBuilds = (findProperty('enableR8') == 'true')
+// R8 shrinks and optimises release builds (no obfuscation: see
+// proguard-rules.pro). -PenableR8=false turns it off.
+def enableProguardInReleaseBuilds = (findProperty('enableR8') != 'false')
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
