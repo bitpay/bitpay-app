@@ -211,6 +211,24 @@ function restoreDevice(serial, restore = {}) {
 }
 
 /**
+ * `adb install` ignores the APK's baseline profile, so the app would start
+ * from interpreted code and JIT — a state no Play user is in. Apply it the
+ * way Play does at install (and Macrobenchmark does in tests): ask the app's
+ * ProfileInstaller to write it, then compile speed-profile.
+ * BP_PERF_COMPILE=none measures the bare adb-install state instead.
+ */
+function applyShippedProfile(serial) {
+  if (process.env.BP_PERF_COMPILE === 'none') {
+    return;
+  }
+  adbShell(
+    serial,
+    `am broadcast -a androidx.profileinstaller.action.INSTALL_PROFILE -n ${APP_ID}/androidx.profileinstaller.ProfileInstallReceiver`,
+  );
+  adbShell(serial, `cmd package compile -m speed-profile -f ${APP_ID}`);
+}
+
+/**
  * Returns {reinstalled: true} when the existing package had to be removed
  * first — the caller should treat app state as wiped, which matters for
  * scenarios that assume an onboarded wallet.
@@ -226,6 +244,7 @@ function install(serial, apkPath) {
   let res = attempt();
 
   if (res.code === 0) {
+    applyShippedProfile(serial);
     return {reinstalled: false};
   }
 
@@ -240,6 +259,7 @@ function install(serial, apkPath) {
     res = attempt();
 
     if (res.code === 0) {
+      applyShippedProfile(serial);
       return {reinstalled: true};
     }
   }
