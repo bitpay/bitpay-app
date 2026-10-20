@@ -12,8 +12,19 @@
 # grouped as e.g. "nav_start:SwapCryptoRoot → span_end:SwapCurrencies".
 
 set -uo pipefail
-# Hold the shared phone for the whole run (see device-lock.sh).
+# Build first (no device needed), then hold the shared phone for the rest
+# (see device-lock.sh): re-exec under the lock with --no-build.
 if [ -z "${BP_DEVICE_LOCKED:-}" ]; then
+  if [[ " $* " != *" --no-build "* ]]; then
+    ROOT0="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+    echo "▸ profiling build"
+    if ! (cd "$ROOT0" && BP_PERF_PROFILE=1 yarn -s build:android:perf \
+        > "$ROOT0/perf/loop/state/flowprofile-build.log" 2>&1); then
+      echo "BUILD FAILED — see perf/loop/state/flowprofile-build.log" >&2
+      exit 1
+    fi
+    set -- "$@" --no-build
+  fi
   export BP_DEVICE_LOCKED=1
   exec "$(dirname "${BASH_SOURCE[0]}")/device-lock.sh" "$0" "$@"
 fi
@@ -27,12 +38,11 @@ ACTION=com.bitpay.wallet.PERF_JS_PROFILE
 
 FLOW=""
 RUNS=3
-BUILD=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --flow) FLOW="$2"; shift ;;
     --runs) RUNS="$2"; shift ;;
-    --no-build) BUILD=0 ;;
+    --no-build) ;;
     *) echo "unknown option: $1" >&2; exit 64 ;;
   esac
   shift
@@ -44,13 +54,6 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 OUT="$STATE/flowprofile-$STAMP-${FLOW%.yaml}"
 mkdir -p "$OUT"
 
-if [ "$BUILD" = 1 ]; then
-  echo "▸ profiling build"
-  if ! BP_PERF_PROFILE=1 yarn -s build:android:perf > "$OUT/build.log" 2>&1; then
-    echo "BUILD FAILED — see $OUT/build.log" >&2
-    exit 1
-  fi
-fi
 cp android/app/build/generated/sourcemaps/react/release/index.android.bundle.map "$OUT/bundle.map"
 adb install -r "$APK" > /dev/null
 if [ "${BP_PERF_COMPILE:-}" != none ]; then
