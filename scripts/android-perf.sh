@@ -36,7 +36,15 @@ if [ ! -f "$REPO_ROOT/.env.production" ]; then
   exit 1
 fi
 
+# React Native caches the autolinking result and only refreshes it when a
+# lockfile changes; react-native.config.js links react-native-performance
+# only when BP_PERF_BUILD=1. Clear the cache before this build and after it,
+# so neither a perf build nor the next normal build reuses the other's.
+AUTOLINKING_CACHE="$REPO_ROOT/android/build/generated/autolinking"
+rm -rf "$AUTOLINKING_CACHE"
+
 restore_env() {
+  rm -rf "$AUTOLINKING_CACHE"
   for env_file in "${ENV_FILES[@]}"; do
     if [ -f "$env_file.perf-backup" ]; then
       mv "$env_file.perf-backup" "$env_file"

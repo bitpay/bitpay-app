@@ -4,9 +4,9 @@ import android.os.Process
 import com.oblador.performance.RNPerformance
 
 /**
- * Native startup marks for the perf harness. Inert unless the APK was built
- * with -PperfBuild=true (scripts/android-perf.sh), so production startup is
- * unchanged.
+ * Native startup marks for the perf harness. Compiled only into perf builds
+ * (-PperfBuild=true, scripts/android-perf.sh); every other build gets the
+ * no-op in src/noperf/java and does not link react-native-performance.
  *
  * Marks use SystemClock.uptimeMillis(), the same clock as the JS-side marks,
  * so the harness can lay native and JS phases on one timeline.

@@ -139,6 +139,13 @@ def reactNativeArchitectures() {
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 android {
+    // Perf-harness native code (PerfMarks) only in perf builds; everything
+    // else compiles a no-op with the same API.
+    sourceSets {
+        main {
+            java.srcDirs += (findProperty('perfBuild') == 'true') ? 'src/perf/java' : 'src/noperf/java'
+        }
+    }
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion

@@ -10,8 +10,14 @@ module.exports = {
     // React Native 0.87 (ReactMarker::StartupLogger dropped its *EndTime
     // getters). src/perf/PerfMonitor.ts only requires it in IS_PERF builds,
     // which are never made for iOS.
+    // On Android it is linked only into perf builds (scripts/android-perf.sh
+    // exports BP_PERF_BUILD=1 and clears the autolinking cache), so shipping
+    // builds carry no harness instrumentation.
     'react-native-performance': {
-      platforms: {ios: null},
+      platforms:
+        process.env.BP_PERF_BUILD === '1'
+          ? {ios: null}
+          : {ios: null, android: null},
     },
   },
 };
