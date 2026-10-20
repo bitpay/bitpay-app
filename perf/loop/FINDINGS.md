@@ -1,4 +1,4 @@
-# Performance loop — ledger
+# Performance loop — findings
 
 Device: **Motorola one 5G ace** (Android 11, arm64, 5.5 GB), onboarded test
 wallet. Every number is a median of 10 cold starts of `startup-load`; a change

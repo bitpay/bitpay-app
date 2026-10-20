@@ -2,7 +2,7 @@
 
 A repeatable loop that finds a bottleneck on a real Android device, works out
 why, tries fixes until one measurably helps, and commits it. Everything lands
-on one branch (`misc-updates`), one commit per fix; `LEDGER.md` is the
+on one branch (`misc-updates`), one commit per fix; `FINDINGS.md` is the
 running record and becomes the PR description.
 
 ## Setup (once per device)
@@ -20,7 +20,7 @@ be a test-only phrase. Perf builds are signed with the debug keystore, so
 
 ## One iteration
 
-1. **Pick** the top open candidate in `LEDGER.md` (largest expected win ×
+1. **Pick** the top open candidate in `FINDINGS.md` (largest expected win ×
    confidence). If none is open, read the latest profile
    (`node perf/loop/profile.js perf/loop/state/accepted.json`) and add the
    biggest unexplained gap, heaviest module, largest request or action storm.
@@ -53,7 +53,7 @@ be a test-only phrase. Perf builds are signed with the debug keystore, so
      stopping: it raises the false-positive rate a little. Use it to settle a
      close call, say so in the ledger, and don't pool more than once per
      change.
-5. **Record** in `LEDGER.md`: hypothesis, evidence, each attempt and its
+5. **Record** in `FINDINGS.md`: hypothesis, evidence, each attempt and its
    numbers, the verdict, the commit.
 
 Every five kept fixes, also run `--scenarios nav-tabs,scroll-home` so a startup

@@ -9,7 +9,7 @@
 #
 # --accept promotes this run to the accepted baseline (do that only after
 # committing the change it measured). The accepted run is local state, kept in
-# perf/loop/state/ (gitignored); LEDGER.md is the committed record.
+# perf/loop/state/ (gitignored); FINDINGS.md is the committed record.
 #
 # Exit code is compare.js's verdict: 0 KEEP, 2 NEUTRAL, 1 REJECT.
 
