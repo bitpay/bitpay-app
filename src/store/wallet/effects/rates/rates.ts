@@ -30,6 +30,12 @@ import {IsERCToken} from '../../utils/currency';
 import {UpdateAllKeyAndWalletStatusContext} from '../status/status';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import {loadRuntimeFiatRateSeriesCache} from '../../../../portfolio/ui/fiatRateSeries';
+import {
+  guardTokenUsdPrice,
+  loadTokenPriceReferences,
+  type TokenPriceRef,
+} from './tokenPriceGuard';
 import type {Key, Wallet} from '../../wallet.models';
 
 const ratesRequestsInFlight = new WeakMap<object, Promise<Rates>>();
@@ -267,6 +273,9 @@ export const getTokenRates =
           },
         );
 
+        const pricedTokens: Array<
+          TokenPriceRef & {tokenInfo: UnifiedTokenPriceObj; key: string}
+        > = [];
         for (const {chain, data} of priceResults) {
           data.forEach((tokenInfo: UnifiedTokenPriceObj) => {
             const {
@@ -274,53 +283,72 @@ export const getTokenRates =
               tokenAddress,
               '24hrPercentChange': percentChange,
             } = tokenInfo;
-            const lastUpdate = Date.now();
-
             if (!usdPrice || !tokenAddress || percentChange == null) {
               return;
             }
-            const formattedTokenAddress = addTokenChainSuffix(
-              tokenAddress,
-              chain,
-            );
+            const key = addTokenChainSuffix(tokenAddress, chain);
+            const symbol = tokensOptsByAddress[key]?.symbol;
             // only save token rates if exist in tokens list
-            if (tokensOptsByAddress[formattedTokenAddress]) {
-              tokenRates[formattedTokenAddress] = [];
-              tokenLastDayRates[formattedTokenAddress] = [];
-
-              altCurrencies.forEach((altCurrency: string) => {
-                const rate =
-                  dispatch(
-                    calculateUsdToAltFiat(
-                      usdPrice,
-                      altCurrency,
-                      decimalPrecision,
-                      shouldSkipLogging,
-                    ),
-                  ) || 0;
-                tokenRates[formattedTokenAddress].push({
-                  code: altCurrency.toUpperCase(),
-                  fetchedOn: lastUpdate,
-                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                  rate,
-                  ts: lastUpdate,
-                });
-                const sign = Number(percentChange) >= 0 ? 1 : -1;
-                const lastDayRate =
-                  rate / (1 + (sign * Math.abs(Number(percentChange))) / 100);
-                const yesterday = moment
-                  .unix(lastUpdate)
-                  .subtract(1, 'days')
-                  .unix();
-                tokenLastDayRates[formattedTokenAddress].push({
-                  code: altCurrency.toUpperCase(),
-                  fetchedOn: yesterday,
-                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                  rate: lastDayRate,
-                  ts: yesterday,
-                });
-              });
+            if (symbol) {
+              pricedTokens.push({chain, tokenAddress, symbol, tokenInfo, key});
             }
+          });
+        }
+
+        const references = await loadTokenPriceReferences({
+          tokens: pricedTokens,
+          loadSeries: loadRuntimeFiatRateSeriesCache,
+        });
+
+        for (const token of pricedTokens) {
+          const guarded = guardTokenUsdPrice({
+            usdPrice: Number(token.tokenInfo.usdPrice),
+            percentChange: Number(token.tokenInfo['24hrPercentChange']),
+            reference: references.get(token),
+          });
+          if (guarded.replaced) {
+            logManager.warn(
+              `getTokenRates: ${token.key} live price ${token.tokenInfo.usdPrice} USD is far from BitPay's ${guarded.usdPrice} USD; using BitPay's`,
+            );
+          }
+          const usdPrice = guarded.usdPrice;
+          const percentChange = guarded.percentChange;
+          const lastUpdate = Date.now();
+          const formattedTokenAddress = token.key;
+          tokenRates[formattedTokenAddress] = [];
+          tokenLastDayRates[formattedTokenAddress] = [];
+
+          altCurrencies.forEach((altCurrency: string) => {
+            const rate =
+              dispatch(
+                calculateUsdToAltFiat(
+                  usdPrice,
+                  altCurrency,
+                  decimalPrecision,
+                  shouldSkipLogging,
+                ),
+              ) || 0;
+            tokenRates[formattedTokenAddress].push({
+              code: altCurrency.toUpperCase(),
+              fetchedOn: lastUpdate,
+              name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+              rate,
+              ts: lastUpdate,
+            });
+            const sign = Number(percentChange) >= 0 ? 1 : -1;
+            const lastDayRate =
+              rate / (1 + (sign * Math.abs(Number(percentChange))) / 100);
+            const yesterday = moment
+              .unix(lastUpdate)
+              .subtract(1, 'days')
+              .unix();
+            tokenLastDayRates[formattedTokenAddress].push({
+              code: altCurrency.toUpperCase(),
+              fetchedOn: yesterday,
+              name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+              rate: lastDayRate,
+              ts: yesterday,
+            });
           });
         }
 

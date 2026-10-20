@@ -105,6 +105,7 @@ Baselines from here on include it.
 | B3 | Solana wallet (0.564 SOL) quarantined: reconstructed snapshot differs from live balance by 0.876× | PortfolioDebug | open — history engine |
 | B4 | Aave v3 aTokens quarantined: rebasing balances (interest without transfers) can never match a transfer-replay history | PortfolioDebug: aLINK rows 0, "differs by 1x" | open — needs rebasing-token handling |
 | B5 | Chainlink (2.90 LINK) and USDC (2.32) on ETH: "invalid history: negative balance after tx …" | PortfolioDebug — tx history is missing inbound transfers | open — BWS history / replay |
+| B6 | **The chart's end-of-line cliff is a wrong live price, not excluded wallets.** Arbitrum Aave v3 aUSDC (`0x724dc807…`): Moralis live price **$0.6165**, BWS `v4/fiatrates` **$0.9999** for the same token at the same time. History uses BWS, the live terminal point / header / asset row use Moralis, so the last chart point fell $14.00 → $9.08 and "Last Day" read −4.26% (the whole −$5.65) | temporary diagnostic in a perf build: per-wallet last-step fiat delta (only this wallet moved > $0.03); `buildCurrentRatesByAssetId` → `currentRate 0.616498`; `curl` of both services | **user chose: guard live token prices** — use BWS when Moralis is > 20% off a ≤ 30 min old BWS price (in progress) |
 
 ## Harness built during the loop
 
