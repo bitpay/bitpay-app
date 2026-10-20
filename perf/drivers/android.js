@@ -520,7 +520,7 @@ function readMemoryMb(serial) {
   const javaHeap = (out.match(/Java Heap:\s*(\d+)/) || [])[1];
   const nativeHeap = (out.match(/Native Heap:\s*(\d+)/) || [])[1];
   // App summary's "Unknown" row: bimodal per process on the test phone
-  // (~136 or ~290 MB at launch, whatever the build), see LEDGER-trade.md.
+  // (~136 or ~290 MB at launch, whatever the build), see perf/loop/FINDINGS-trade.md.
   const unknown = (out.match(/^\s*Unknown:\s*(\d+)/m) || [])[1];
 
   const toMb = kb => (kb ? Number((Number(kb) / 1024).toFixed(1)) : null);
