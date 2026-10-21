@@ -42,6 +42,10 @@ const valid: Array<[string, string]> = [
   ['BOM', '\ufefftext'],
   ['legitimate U+FFFD', 'a\ufffdb'],
   ['valid surrogate pair', '\ud83d\ude00'],
+  [
+    'multibyte character straddling the 8192-byte chunk boundary',
+    'a'.repeat(8191) + 'é',
+  ],
 ];
 const malformedUtf8: Array<[string, number[]]> = [
   ['isolated continuation 80', [0x80]],

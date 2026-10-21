@@ -60,7 +60,10 @@ export const encodeFileText = (text: string): string => {
   const bytes = Buffer.from(text, 'utf8');
   let binary = '';
   for (let i = 0; i < bytes.length; i += 8192) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    binary += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, i + 8192) as unknown as number[],
+    );
   }
   return btoa(binary);
 };
