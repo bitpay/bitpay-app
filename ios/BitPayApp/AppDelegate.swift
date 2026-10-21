@@ -273,12 +273,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         }
 
         let window = UIWindow(windowScene: scene)
+        if let rootViewController = self.window?.rootViewController {
+            self.window?.rootViewController = nil
+            window.rootViewController = rootViewController
+        } else {
+            reactNativeFactory?.startReactNative(
+                withModuleName: "BitPay",
+                in: window,
+                launchOptions: launchOptions(from: connectionOptions)
+            )
+        }
         self.window = window
-        reactNativeFactory?.startReactNative(
-            withModuleName: "BitPay",
-            in: window,
-            launchOptions: launchOptions(from: connectionOptions)
-        )
         window.makeKeyAndVisible()
         return window
     }
