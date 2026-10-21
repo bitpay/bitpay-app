@@ -27,6 +27,7 @@ import {safeVaultError, vaultError} from './vault-diagnostics';
 import * as initLogs from './log/initLogs';
 import {LogActions} from './log';
 import {modernBackupDirectory, modernFiles} from './vault-backup-paths';
+import {decodeFileText, encodeFileText} from './vault-file-codec';
 
 const legacyBase = RNFS.CachesDirectoryPath + '/bitpay/redux/persist-root.json';
 const legacyFiles = {
@@ -63,7 +64,9 @@ const legacyPair = () => {
   return {data, crc: data + '.crc'};
 };
 const readFile = async (path: string) =>
-  (await RNFS.exists(path)) ? RNFS.readFile(path, 'utf8') : null;
+  (await RNFS.exists(path))
+    ? decodeFileText(await RNFS.readFile(path, 'base64'))
+    : null;
 const readString = (storage: MMKV, key: string): string | null => {
   const raw = storage.getString(key);
   if (raw === undefined && storage.contains(key)) throw new Error();
@@ -166,7 +169,7 @@ const io: TransferIO = {
     if (slot === 'root') modernStorage.set(ROOT, raw);
     else {
       await RNFS.mkdir(modernBackupDirectory);
-      await RNFS.writeFile(modernFiles[slot], raw, 'utf8');
+      await RNFS.writeFile(modernFiles[slot], encodeFileText(raw), 'base64');
     }
   },
   removeDestination: async slot => {

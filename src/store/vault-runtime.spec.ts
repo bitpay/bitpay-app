@@ -128,11 +128,12 @@ jest.mock('react-native-fs', () => ({
       .slice(position, position + length)
       .toString('base64');
   },
-  readFile: async (p: string) => {
+  readFile: async (p: string, encoding: string) => {
     mockFileReads.push(p);
     if (mockForbidLegacy && !p.includes('/redux-v2/'))
       throw new Error('legacy content read forbidden');
     const value = mockFiles.get(p);
+    if (encoding === 'base64') return Buffer.from(value!).toString('base64');
     return Buffer.isBuffer(value)
       ? new (require('util').TextDecoder)('utf-8', {fatal: true}).decode(value)
       : value;
@@ -144,9 +145,14 @@ jest.mock('react-native-fs', () => ({
       .update(mockFiles.get(p))
       .digest('hex');
   },
-  writeFile: async (p: string, value: string) => {
+  writeFile: async (p: string, value: string, encoding: string) => {
     mockEvents.push('file:write');
-    mockFiles.set(p, value);
+    mockFiles.set(
+      p,
+      encoding === 'base64'
+        ? Buffer.from(value, 'base64').toString('utf8')
+        : value,
+    );
     if (p === mockPartialWritePath) {
       mockFiles.set(p, Buffer.from([0xc3, 0x28])); // invalid UTF-8, not just truncated JSON
       mockEvents.push('file:partial-write:' + p);
@@ -1111,4 +1117,20 @@ it('D16: reports a labelled rejection through the real runtime, transfer and cod
   expect(mockStores.get('mmkv.default')!.get('persist:root') === raw).toBe(
     true,
   );
+});
+
+it('D19: preserves the unreadable required-copy classification through base64', async () => {
+  seed();
+  const modernPath = '/cache/bitpay/redux-v2/persist-root.json';
+  mockFiles.set('/cache/bitpay/redux/persist-root.json', fixture.raw);
+  mockPartialWritePath = modernPath;
+  mockRejectPartialWrite = false;
+  const readFile = jest.spyOn(require('react-native-fs'), 'readFile');
+  const diagnostic = await start().then(
+    () => null,
+    (error: Error) => require('./vault-diagnostics').vaultDiagnostic(error),
+  );
+  expect(diagnostic).toEqual({code: 'STARTUP_FAILURE', phase: 'startup'});
+  expect(readFile).toHaveBeenCalledWith(modernPath, 'base64');
+  readFile.mockRestore();
 });
