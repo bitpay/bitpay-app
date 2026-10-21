@@ -1380,32 +1380,36 @@ export const serverAssistedImport = async (
     try {
       const events = new EventEmitter();
 
-      // Queue ensures every event is shown for at least MIN_DISPLAY_MS
+      // Paces progress messages so each stays readable for MIN_DISPLAY_MS while
+      // the import runs. The result never waits on it: on done/error the queue
+      // is dropped, and its pending timer cancelled so a stale message cannot
+      // re-show the modal after the caller has hidden it.
       const MIN_DISPLAY_MS = 1000;
       const eventQueue: Array<{evt: string; data?: any}> = [];
       let draining = false;
-      let onQueueEmpty: (() => void) | null = null;
+      let settled = false;
+      let drainTimer: ReturnType<typeof setTimeout> | null = null;
 
       const drainQueue = () => {
+        drainTimer = null;
         const item = eventQueue.shift();
         if (!item) {
           draining = false;
-          onQueueEmpty?.();
-          onQueueEmpty = null;
           return;
         }
         draining = true;
         ongoingProcessManager.show(item.evt as any, item.data);
-        setTimeout(drainQueue, MIN_DISPLAY_MS);
+        drainTimer = setTimeout(drainQueue, MIN_DISPLAY_MS);
       };
 
-      const waitForQueue = (): Promise<void> => {
-        if (!draining && eventQueue.length === 0) {
-          return Promise.resolve();
+      const stopQueue = () => {
+        settled = true;
+        eventQueue.length = 0;
+        draining = false;
+        if (drainTimer) {
+          clearTimeout(drainTimer);
+          drainTimer = null;
         }
-        return new Promise<void>(res => {
-          onQueueEmpty = res;
-        });
       };
 
       const VISIBLE_EVENTS = new Set([
@@ -1420,7 +1424,7 @@ export const serverAssistedImport = async (
 
       importProgressEvents.forEach(evt => {
         events.on(evt, (data?: any) => {
-          if (!VISIBLE_EVENTS.has(evt)) {
+          if (settled || !VISIBLE_EVENTS.has(evt)) {
             return;
           }
           eventIterations[evt] = (eventIterations[evt] ?? 0) + 1;
@@ -1437,9 +1441,8 @@ export const serverAssistedImport = async (
 
       events.on(
         'done',
-        async ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
-          // Wait for all queued messages to display before resolving
-          await waitForQueue();
+        ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
+          stopQueue();
 
           let wallets = clients;
           if (wallets.length === 0) {
@@ -1462,8 +1465,8 @@ export const serverAssistedImport = async (
         },
       );
 
-      events.on('error', async (err: Error) => {
-        await waitForQueue();
+      events.on('error', (err: Error) => {
+        stopQueue();
         reject(err);
       });
 
