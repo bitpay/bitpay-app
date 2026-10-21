@@ -766,10 +766,29 @@ export default () => {
                   new Promise(resolve =>
                     Braze.getInitialURL(deepLink => resolve(deepLink)),
                   );
+                const waitForStartupGateRouting = () =>
+                  new Promise<void>(resolve => {
+                    const isRouted = () =>
+                      navigationRef.getCurrentRoute()?.name !== 'StartupGate';
+                    if (isRouted()) {
+                      resolve();
+                      return;
+                    }
+                    const unsubscribe = navigationRef.addListener(
+                      'state',
+                      () => {
+                        if (isRouted()) {
+                          unsubscribe();
+                          resolve();
+                        }
+                      },
+                    );
+                  });
                 const [url, brazeUrl] = await Promise.all([
                   Linking.getInitialURL(),
                   getBrazeInitialUrl(),
                 ]);
+                await waitForStartupGateRouting();
                 await sleep(10);
                 urlEventHandler({url: url || brazeUrl});
               }
