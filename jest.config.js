@@ -1,6 +1,6 @@
 module.exports = {
-  preset: 'react-native',
-  resolver: 'react-native-worklets/jest/resolver',
+  preset: '@react-native/jest-preset',
+  resolver: '<rootDir>/test/reanimatedResolver.js',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: [
     '<rootDir>/node_modules/react-native-gesture-handler/jestSetup.js',
@@ -8,10 +8,9 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|@sentry|uuid|victory|(victory(-.*))|lodash-es))',
+    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|\@react-navigation|(react-navigation(-.*))|\@sentry|\@shopify/flash-list|uuid|victory|(victory(-.*))|lodash-es))',
   ],
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest',
     '^.+\\.svg$': 'jest-transform-stub',
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
@@ -23,10 +22,6 @@ module.exports = {
     '\\.(css|less)$': '<rootDir>/test/mock.js',
     '@/(.*)': '<rootDir>/src/$1',
     '@test/(.*)': '<rootDir>/test/$1',
-    // Redirect bare styled-components to the native version (some files import
-    // 'styled-components' instead of 'styled-components/native', which breaks in tests)
-    '^styled-components$':
-      '<rootDir>/node_modules/styled-components/native/dist/styled-components.native.cjs.js',
     // Force ESM-only crypto packages to CJS builds
     '^uuid$': require.resolve('uuid'),
     '^paillier-bigint$':
@@ -36,6 +31,10 @@ module.exports = {
     '^@env$': '<rootDir>/test/mock.js',
     '^@sumsub/react-native-mobilesdk-module$':
       '<rootDir>/test/mocks/sumsubSdkMock.js',
+    '^@silencelaboratories/dkls-wasm-ll-web$':
+      '<rootDir>/shims/silence-dkls-web.js',
+    '^@silencelaboratories/dkls-wasm-ll-node$':
+      '<rootDir>/test/mocks/dklsWasmNodeMock.js',
   },
   roots: ['<rootDir>/src/'],
   collectCoverageFrom: [

@@ -1883,9 +1883,28 @@ describe('incomingData', () => {
     expect(navigationResetSpy).toHaveBeenCalled();
   });
 
-  it('Should handle buyCrypto URI with non-UTXO coin (no chain) — coin becomes undefined', async () => {
-    // eth is not a UTXO chain, so without chain param the coin should be dropped
-    const data = 'bitpay://buy?coin=eth&amount=50';
+  it.each([
+    ['bitpay://buy?coin=xrp', 'xrp'],
+    ['bitpay://buy-crypto?coin=xrp&amount=100', 'xrp'],
+    ['bitpay://buy?coin=eth&amount=50', 'eth'],
+    ['bitpay://buy?coin=sol', 'sol'],
+  ])(
+    'Should handle buyCrypto URI with native non-UTXO coin (no chain) — chain becomes coin: %s',
+    async (data, coin) => {
+      const store = configureTestStore({});
+      const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+      const promiseResult = await store.dispatch(incomingData(data));
+      expect(promiseResult).toBe(true);
+      const resetCall = navigationResetSpy.mock.calls[0][0] as any;
+      const params = resetCall?.routes?.[1]?.params;
+      expect(params?.currencyAbbreviation).toBe(coin);
+      expect(params?.chain).toBe(coin);
+    },
+  );
+
+  it('Should handle buyCrypto URI with token coin (no chain) — coin becomes undefined', async () => {
+    // usdc exists on several chains, so without chain param the coin should be dropped
+    const data = 'bitpay://buy?coin=usdc&amount=50';
     const store = configureTestStore({});
     const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
     const promiseResult = await store.dispatch(incomingData(data));
@@ -1893,6 +1912,19 @@ describe('incomingData', () => {
     const resetCall = navigationResetSpy.mock.calls[0][0] as any;
     const params = resetCall?.routes?.[1]?.params;
     expect(params?.currencyAbbreviation).toBeUndefined();
+    expect(params?.chain).toBeUndefined();
+  });
+
+  it('Should handle sellCrypto URI with native non-UTXO coin but no chain — chain becomes coin', async () => {
+    const data = 'bitpay://sell?coin=xrp&amount=50';
+    const store = configureTestStore({});
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    const resetCall = navigationResetSpy.mock.calls[0][0] as any;
+    const params = resetCall?.routes?.[1]?.params;
+    expect(params?.currencyAbbreviation).toBe('xrp');
+    expect(params?.chain).toBe('xrp');
   });
 
   it('Should handle sellCrypto URI with UTXO coin but no chain — chain becomes coin', async () => {

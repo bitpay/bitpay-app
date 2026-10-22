@@ -9,7 +9,7 @@ import {
   Circle,
   LinearGradient,
 } from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 
 const MoonpayConnectSvg: React.FC<{
   isDark: boolean;

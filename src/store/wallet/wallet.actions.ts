@@ -171,6 +171,8 @@ export const updateWalletTxHistory = (payload: {
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
+    fetchedAt?: number;
+    hasConfirmingTxsAt?: number;
   };
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
@@ -184,6 +186,8 @@ export const updateAccountTxHistory = (payload: {
       transactions: any[];
       loadMore: boolean;
       hasConfirmingTxs: boolean;
+      fetchedAt?: number;
+      hasConfirmingTxsAt?: number;
     };
   };
 }): WalletActionType => ({
@@ -265,6 +269,7 @@ export const setSvmAddressCreationFixComplete = (): WalletActionType => ({
 export const successUpdateWalletBalancesAndStatus = (payload: {
   keyBalances: {
     keyId: string;
+    cacheKey?: string;
     totalBalance: number;
     totalBalanceLastDay: number;
   }[];
@@ -295,5 +300,10 @@ export const removePendingJoinerSession = () => ({
 
 export const setTssEnabled = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_TSS_ENABLED,
+  payload,
+});
+
+export const setShowTestnetWallets = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_SHOW_TESTNET_WALLETS,
   payload,
 });

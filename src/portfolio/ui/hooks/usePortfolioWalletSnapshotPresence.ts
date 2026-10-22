@@ -13,6 +13,10 @@ type PortfolioWalletSnapshotPresenceState = {
   checked: boolean;
 };
 
+type SnapshotPresenceRequestState = PortfolioWalletSnapshotPresenceState & {
+  requestKey: string;
+};
+
 type CachedSnapshotPresence = {
   hasAnySnapshots: boolean;
   hasAllSnapshots: boolean;
@@ -43,6 +47,38 @@ const snapshotPresenceByWalletIdsKey = new Map<
   string,
   CachedSnapshotPresence
 >();
+const MAX_SNAPSHOT_PRESENCE_CACHE_ENTRIES = 50;
+
+const getCachedSnapshotPresence = (
+  walletIdsKey: string,
+): CachedSnapshotPresence | undefined => {
+  const cached = snapshotPresenceByWalletIdsKey.get(walletIdsKey);
+  if (!cached) {
+    return undefined;
+  }
+
+  snapshotPresenceByWalletIdsKey.delete(walletIdsKey);
+  snapshotPresenceByWalletIdsKey.set(walletIdsKey, cached);
+  return cached;
+};
+
+const cacheSnapshotPresence = (
+  walletIdsKey: string,
+  presence: CachedSnapshotPresence,
+): void => {
+  snapshotPresenceByWalletIdsKey.delete(walletIdsKey);
+  snapshotPresenceByWalletIdsKey.set(walletIdsKey, presence);
+
+  while (
+    snapshotPresenceByWalletIdsKey.size > MAX_SNAPSHOT_PRESENCE_CACHE_ENTRIES
+  ) {
+    const oldestKey = snapshotPresenceByWalletIdsKey.keys().next().value;
+    if (oldestKey === undefined) {
+      break;
+    }
+    snapshotPresenceByWalletIdsKey.delete(oldestKey);
+  }
+};
 
 function snapshotIndexHasRows(
   index: SnapshotIndexV2 | null | undefined,
@@ -67,39 +103,46 @@ export default function usePortfolioWalletSnapshotPresence(args: {
   wallets: Wallet[];
   enabled?: boolean;
 }): PortfolioWalletSnapshotPresenceState {
+  const enabled = args.enabled !== false;
   const committedPortfolioRevisionToken = useAppSelector(({PORTFOLIO}) => {
-    return buildCommittedPortfolioRevisionToken({
-      lastPopulatedAt: PORTFOLIO.lastPopulatedAt,
-    });
+    return enabled
+      ? buildCommittedPortfolioRevisionToken({
+          lastPopulatedAt: PORTFOLIO.lastPopulatedAt,
+        })
+      : '';
   });
 
   const walletIds = getSortedUniqueWalletIds(args.wallets);
   const walletIdsKey = walletIds.join('|');
   const cachedSnapshotPresence = walletIdsKey
-    ? snapshotPresenceByWalletIdsKey.get(walletIdsKey)
+    ? getCachedSnapshotPresence(walletIdsKey)
     : undefined;
 
-  const [state, setState] = useState<PortfolioWalletSnapshotPresenceState>(
-    getCachedSnapshotPresenceState(cachedSnapshotPresence, false),
-  );
+  const requestKey = enabled ? walletIdsKey : '';
+  const [state, setState] = useState<SnapshotPresenceRequestState>({
+    ...getCachedSnapshotPresenceState(cachedSnapshotPresence, false),
+    requestKey,
+  });
 
   useEffect(() => {
-    if (args.enabled === false) {
-      setState(getEmptySnapshotPresenceState());
+    if (!enabled) {
+      setState({...getEmptySnapshotPresenceState(), requestKey});
       return;
     }
 
     const requestedWalletIds = walletIdsKey ? walletIdsKey.split('|') : [];
 
     if (!requestedWalletIds.length) {
-      setState(getEmptySnapshotPresenceState());
+      setState({...getEmptySnapshotPresenceState(), requestKey});
       return;
     }
 
     let cancelled = false;
-    const cachedPresenceForRequest =
-      snapshotPresenceByWalletIdsKey.get(walletIdsKey);
-    setState(getCachedSnapshotPresenceState(cachedPresenceForRequest, true));
+    const cachedPresenceForRequest = getCachedSnapshotPresence(walletIdsKey);
+    setState({
+      ...getCachedSnapshotPresenceState(cachedPresenceForRequest, true),
+      requestKey,
+    });
 
     Promise.all(
       requestedWalletIds.map(async walletId => {
@@ -122,7 +165,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
           presenceByWalletId[walletId] = !!results[index];
           return presenceByWalletId;
         }, {});
-        snapshotPresenceByWalletIdsKey.set(walletIdsKey, {
+        cacheSnapshotPresence(walletIdsKey, {
           hasAnySnapshots,
           hasAllSnapshots,
           hasSnapshotsByWalletId,
@@ -133,6 +176,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
           hasSnapshotsByWalletId,
           loading: false,
           checked: true,
+          requestKey,
         });
       })
       .catch(() => {
@@ -140,15 +184,22 @@ export default function usePortfolioWalletSnapshotPresence(args: {
           return;
         }
 
-        setState(
-          getCachedSnapshotPresenceState(cachedPresenceForRequest, false),
-        );
+        setState({
+          ...getCachedSnapshotPresenceState(cachedPresenceForRequest, false),
+          requestKey,
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [args.enabled, committedPortfolioRevisionToken, walletIdsKey]);
+  }, [committedPortfolioRevisionToken, enabled, requestKey, walletIdsKey]);
+
+  if (state.requestKey !== requestKey) {
+    return requestKey
+      ? getCachedSnapshotPresenceState(cachedSnapshotPresence, true)
+      : getEmptySnapshotPresenceState();
+  }
 
   return state;
 }

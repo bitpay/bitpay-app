@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import styled from 'styled-components/native';
+import {View, StyleSheet} from 'react-native';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -16,18 +16,30 @@ import {SendToPillContainer} from '../../wallet/screens/send/confirm/Shared';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {useLogger} from '../../../utils/hooks';
 
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-`;
+const styles = StyleSheet.create({
+  balanceColumn: {
+    alignItems: 'flex-end',
+  },
+  currencyColumn: {
+    marginLeft: 2,
+    maxWidth: '35%',
+  },
+  checkBoxContainer: {
+    marginRight: 12,
+  },
+});
 
-const CurrencyColumn = styled.View`
-  margin-left: 2px;
-  max-width: 35%;
-`;
+const BalanceColumn = ({children}: {children: React.ReactNode}) => (
+  <Column style={styles.balanceColumn}>{children}</Column>
+);
 
-const CheckBoxContainer = styled.View`
-  margin-right: 12px;
-`;
+const CurrencyColumn = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.currencyColumn}>{children}</View>
+);
+
+const CheckBoxContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.checkBoxContainer}>{children}</View>
+);
 
 interface WalletBoxProps {
   onPress: (keyId: string, wallet: ZenLedgerWalletObj) => void;

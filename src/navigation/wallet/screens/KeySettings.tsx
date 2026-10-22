@@ -17,9 +17,14 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {View, ScrollView, FlatList} from 'react-native';
+import {
+  View,
+  ScrollView,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
 import {
   ActiveOpacity,
   Hr,
@@ -51,7 +56,6 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import {
-  buildAccountList,
   buildWalletObj,
   checkPrivateKeyEncrypted,
   mapAbbreviationAndName,
@@ -64,75 +68,136 @@ import {
 import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
+import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
 
-const WalletSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
-const WalletSettingsListContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  walletSettingsContainer: {
+    flex: 1,
+  },
+  walletSettingsListContainer: {
+    padding: SCREEN_GUTTER,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  walletHeaderContainer: {
+    paddingTop: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletNameContainer: {
+    paddingTop: 10,
+    paddingRight: 0,
+    paddingBottom: 20,
+    paddingLeft: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  verticalPadding: {
+    paddingVertical: SCREEN_GUTTER,
+    paddingHorizontal: 0,
+  },
+  addWalletText: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  searchComponentContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+});
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
-`;
+const WalletSettingsContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.walletSettingsContainer, style]} {...rest} />
+);
 
-const WalletHeaderContainer = styled.View`
-  padding-top: 15px;
-  flex-direction: row;
-  align-items: center;
-`;
+const WalletSettingsListContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.walletSettingsListContainer, style]} {...rest} />
+);
 
-const WalletNameContainer = styled(TouchableOpacity)`
-  padding: 10px 0 20px 0;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const Title: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.title, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const WalletHeaderContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.walletHeaderContainer, style]} {...rest} />;
 
-const WalletSettingsTitle = styled(SettingTitle)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const WalletNameContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.walletNameContainer, style]} {...rest} />
+);
 
-const AddWalletText = styled(Link)`
-  font-size: 18px;
-  font-weight: 500;
-  margin: 10px 0;
-`;
+const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const SearchComponentContainer = styled.View`
-  margin: 20px 0;
-`;
+const WalletSettingsTitle: React.FC<
+  React.ComponentProps<typeof SettingTitle>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <SettingTitle
+      style={[{color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
+
+const AddWalletText: React.FC<React.ComponentProps<typeof Link>> = ({
+  style,
+  ...rest
+}) => <Link style={[styles.addWalletText, style]} {...rest} />;
+
+const SearchComponentContainer: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.searchComponentContainer, style]} {...rest} />;
 
 const KeySettings = () => {
   const {t} = useTranslation();
   const {
-    params: {key, context},
+    params: {keyId, context},
   } = useRoute<RouteProp<WalletGroupParamList, 'KeySettings'>>();
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const [searchVal, setSearchVal] = useState('');
@@ -140,198 +205,221 @@ const KeySettings = () => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
-  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const memorizedAccountList = useMemo(() => {
-    return buildAccountList(_key, defaultAltCurrency.isoCode, rates, dispatch, {
-      skipFiatCalculations: true,
-    });
-  }, [dispatch, _key, defaultAltCurrency.isoCode, rates]);
+  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
+  const memorizedAccountList = useMemo(
+    () =>
+      resolveKeySettingsAccountList({
+        key: _key,
+        defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+        dispatch,
+      }),
+    [defaultAltCurrency.isoCode, dispatch, _key],
+  );
 
   const accountInfo = useAppSelector(
-    ({WALLET}) => WALLET.keys[key.id]?.evmAccountsInfo,
+    ({WALLET}) => WALLET.keys[keyId]?.evmAccountsInfo,
   );
   const {keyName} = _key || {};
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
-      navigation.navigate('CreateEncryptPassword', {key: _key});
+      navigation.navigate('CreateEncryptPassword', {keyId});
       scrollViewRef?.current?.scrollToEnd({animated: false});
     }
-  }, [context, _key, navigation]);
+  }, [context, keyId, navigation]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Key Settings')}</HeaderTitle>,
     });
-  });
+  }, [navigation, t]);
 
-  const buildEncryptModalConfig = (
-    cta: (decryptedKey: {
-      mnemonic: string;
-      mnemonicHasPassphrase: boolean;
-      xPrivKey: string;
-    }) => void,
-  ) => {
-    return {
-      onSubmitHandler: async (encryptPassword: string) => {
-        try {
-          dispatch(checkEncryptedKeysForEddsaMigration(_key, encryptPassword));
-          const decryptedKey = _key.methods!.get(encryptPassword);
-          dispatch(AppActions.dismissDecryptPasswordModal());
-          await sleep(300);
-          cta(decryptedKey);
-        } catch (e: any) {
-          const errStr = e instanceof Error ? e.message : JSON.stringify(e);
-          logManager.error('[KeySettings] Decrypt Error', errStr);
-          await dispatch(AppActions.dismissDecryptPasswordModal());
-          await sleep(500); // Wait to close Decrypt Password modal
-          dispatch(showBottomNotificationModal(WrongPasswordError()));
-        }
-      },
-      description: t('To continue please enter your encryption password.'),
-      onCancelHandler: () => null,
-    };
-  };
-
-  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
-
-  const startSyncWallets = async (mnemonic: string) => {
-    if (_key.isPrivKeyEncrypted) {
-      // To close decrypt modal
-      await sleep(500);
-    }
-    showOngoingProcess('SYNCING_WALLETS');
-    const opts = {
-      words: normalizeMnemonic(mnemonic),
-      mnemonic,
-    };
-    try {
-      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
-        opts,
-      );
-
-      if (_syncKey.fingerPrint === _key.properties!.fingerPrint) {
-        // Filter for new wallets
-        _syncWallets = _syncWallets
-          .filter(
-            sw =>
-              sw.isComplete() &&
-              !sw.pendingTssSession &&
-              !_key.wallets.some(ew => ew.id === sw.credentials.walletId),
-          )
-          .map(syncWallet => {
-            // update to keyId
-            syncWallet.credentials.keyId = _key.properties!.id;
-            const {currencyAbbreviation, currencyName} = dispatch(
-              mapAbbreviationAndName(
-                syncWallet.credentials.coin,
-                syncWallet.credentials.chain,
-                syncWallet.credentials.token?.address,
-              ),
+  const buildEncryptModalConfig = useCallback(
+    (
+      cta: (decryptedKey: {
+        mnemonic: string;
+        mnemonicHasPassphrase: boolean;
+        xPrivKey: string;
+      }) => void,
+    ) => {
+      return {
+        onSubmitHandler: async (encryptPassword: string) => {
+          try {
+            dispatch(
+              checkEncryptedKeysForEddsaMigration(_key, encryptPassword),
             );
-            return merge(
-              syncWallet,
-              buildWalletObj(
-                {
-                  ...syncWallet.credentials,
-                  currencyAbbreviation,
-                  currencyName,
-                } as any,
-                _tokenOptionsByAddress,
-              ),
-            );
+            const decryptedKey = _key.methods!.get(encryptPassword);
+            dispatch(AppActions.dismissDecryptPasswordModal());
+            await sleep(300);
+            cta(decryptedKey);
+          } catch (e: any) {
+            const errStr = e instanceof Error ? e.message : JSON.stringify(e);
+            logManager.error('[KeySettings] Decrypt Error', errStr);
+            await dispatch(AppActions.dismissDecryptPasswordModal());
+            await sleep(500);
+            dispatch(showBottomNotificationModal(WrongPasswordError()));
+          }
+        },
+        description: t('To continue please enter your encryption password.'),
+        onCancelHandler: () => null,
+      };
+    },
+    [_key, dispatch, t],
+  );
+
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const startSyncWallets = useCallback(
+    async (mnemonic: string) => {
+      const tokenOptionsForSync = {
+        ...BitpaySupportedTokenOptsByAddress,
+        ...tokenOptionsByAddress,
+        ...customTokenOptionsByAddress,
+      };
+
+      if (_key.isPrivKeyEncrypted) {
+        await sleep(500);
+      }
+      showOngoingProcess('SYNCING_WALLETS');
+      const opts = {
+        words: normalizeMnemonic(mnemonic),
+        mnemonic,
+      };
+      try {
+        let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+          opts,
+        );
+
+        if (_syncKey.fingerPrint === _key.properties!.fingerPrint) {
+          _syncWallets = _syncWallets
+            .filter(
+              sw =>
+                sw.isComplete() &&
+                !sw.pendingTssSession &&
+                !_key.wallets.some(ew => ew.id === sw.credentials.walletId),
+            )
+            .map(syncWallet => {
+              syncWallet.credentials.keyId = _key.properties!.id;
+              const {currencyAbbreviation, currencyName} = dispatch(
+                mapAbbreviationAndName(
+                  syncWallet.credentials.coin,
+                  syncWallet.credentials.chain,
+                  syncWallet.credentials.token?.address,
+                ),
+              );
+              return merge(
+                syncWallet,
+                buildWalletObj(
+                  {
+                    ...syncWallet.credentials,
+                    currencyAbbreviation,
+                    currencyName,
+                  } as any,
+                  tokenOptionsForSync,
+                ),
+              );
+            });
+
+          await fixWalletAddresses({
+            appDispatch: dispatch,
+            wallets: _syncWallets,
           });
 
-        // workaround for fixing wallets without receive address
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: _syncWallets,
-        });
+          let message;
 
-        let message;
+          const syncWalletsLength = _syncWallets.length;
+          if (syncWalletsLength) {
+            message =
+              syncWalletsLength === 1
+                ? t('New wallet found')
+                : t('wallets found', {syncWalletsLength});
+            dispatch(syncWallets({keyId: _key.id, wallets: _syncWallets}));
+          } else {
+            message = t('Your key is already synced');
+          }
 
-        const syncWalletsLength = _syncWallets.length;
-        if (syncWalletsLength) {
-          message =
-            syncWalletsLength === 1
-              ? t('New wallet found')
-              : t('wallets found', {syncWalletsLength});
-          dispatch(syncWallets({keyId: _key.id, wallets: _syncWallets}));
+          hideOngoingProcess();
+          await sleep(500);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'success',
+              title: t('Sync wallet'),
+              message,
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('OK'),
+                  action: () => {},
+                  primary: true,
+                },
+              ],
+            }),
+          );
         } else {
-          message = t('Your key is already synced');
+          hideOngoingProcess();
+          await sleep(500);
+          await dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg: t('Failed to Sync wallets'),
+              }),
+            ),
+          );
         }
-
-        hideOngoingProcess();
-        await sleep(500);
-        dispatch(
-          showBottomNotificationModal({
-            type: 'success',
-            title: t('Sync wallet'),
-            message,
-            enableBackdropDismiss: true,
-            actions: [
-              {
-                text: t('OK'),
-                action: () => {},
-                primary: true,
-              },
-            ],
-          }),
-        );
-      } else {
+      } catch (e) {
         hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
             CustomErrorMessage({
-              errMsg: t('Failed to Sync wallets'),
+              errMsg: BWCErrorMessage(e),
+              title: t('Error'),
             }),
           ),
         );
       }
-    } catch (e) {
-      hideOngoingProcess();
-      await sleep(500);
-      await dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            errMsg: BWCErrorMessage(e),
-            title: t('Error'),
-          }),
-        ),
-      );
-    }
-  };
+    },
+    [
+      _key,
+      customTokenOptionsByAddress,
+      dispatch,
+      hideOngoingProcess,
+      showOngoingProcess,
+      t,
+      tokenOptionsByAddress,
+    ],
+  );
 
-  const onPressItem = (item: AccountRowProps) => {
-    haptic('impactLight');
-    if (IsVMChain(item.chains[0])) {
-      navigation.navigate('AccountSettings', {
-        key: _key,
-        selectedAccountAddress: item.receiveAddress,
-        context: 'keySettings',
-        isSvmAccount: IsSVMChain(item.chains[0]),
-      });
-    } else {
-      const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;
-      const {
-        credentials: {walletId},
-      } = fullWalletObj;
-      if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
-        return;
+  const onPressItem = useCallback(
+    (item: AccountRowProps) => {
+      haptic('impactLight');
+      if (IsVMChain(item.chains[0])) {
+        navigation.navigate('AccountSettings', {
+          keyId,
+          selectedAccountAddress: item.receiveAddress,
+          context: 'keySettings',
+          isSvmAccount: IsSVMChain(item.chains[0]),
+        });
+      } else {
+        const fullWalletObj = _key.wallets.find(
+          wallet => wallet.id === item.wallets[0].id,
+        )!;
+        const {
+          credentials: {walletId},
+        } = fullWalletObj;
+        if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
+          return;
+        }
+        navigation.navigate('WalletSettings', {
+          keyId,
+          walletId,
+        });
       }
-      navigation.navigate('WalletSettings', {
-        key: _key,
-        walletId,
-      });
-    }
-  };
+    },
+    [_key, keyId, navigation],
+  );
 
   const renderListHeaderComponent = useCallback(() => {
     return (
@@ -341,7 +429,7 @@ const KeySettings = () => {
           onPress={() => {
             haptic('impactLight');
             navigation.navigate('UpdateKeyOrWalletName', {
-              key: _key,
+              keyId,
               context: 'key',
             });
           }}>
@@ -379,7 +467,16 @@ const KeySettings = () => {
         </SearchComponentContainer>
       </>
     );
-  }, [_key, keyName]);
+  }, [
+    keyId,
+    keyName,
+    memorizedAccountList,
+    navigation,
+    searchResults,
+    searchVal,
+    t,
+    theme.dark,
+  ]);
 
   const renderListFooterComponent = useCallback(() => {
     return (
@@ -401,8 +498,8 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={async () => {
-                const fullWalletObj = key.wallets?.[0];
-                if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+                const fullWalletObj = _key.wallets?.[0];
+                if (fullWalletObj?.pendingTssSession && _key.tssSession) {
                   dispatch(
                     showBottomNotificationModal(
                       CustomErrorMessage({
@@ -421,8 +518,7 @@ const KeySettings = () => {
                   return;
                 }
                 navigation.navigate('BackupOnboarding', {
-                  key: _key,
-                  buildEncryptModalConfig,
+                  keyId: _key.id,
                 });
               }}>
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
@@ -440,7 +536,7 @@ const KeySettings = () => {
 
             <Hr />
 
-            {!key?.wallets?.[0]?.pendingTssSession ? (
+            {!_key.wallets?.[0]?.pendingTssSession ? (
               <>
                 <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
                   <WalletSettingsTitle>
@@ -491,7 +587,7 @@ const KeySettings = () => {
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
                       navigation.navigate('ClearEncryptPassword', {
-                        keyId: key.id,
+                        keyId,
                       });
                     }}>
                     <WalletSettingsTitle>
@@ -599,26 +695,34 @@ const KeySettings = () => {
             style={{marginBottom: 50}}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('DeleteKey', {keyId: key.id});
+              navigation.navigate('DeleteKey', {keyId});
             }}>
             <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </>
     );
-  }, [_key]);
+  }, [
+    _key,
+    buildEncryptModalConfig,
+    dispatch,
+    keyId,
+    navigation,
+    startSyncWallets,
+    t,
+    theme.dark,
+  ]);
 
   const memoizedRenderItem = useCallback(
-    ({item, index}: {item: AccountRowProps; index: number}) => {
+    ({item}: {item: AccountRowProps}) => {
       return (
         <AccountSettingsRow
-          key={index.toString()}
           id={item.id}
           accountItem={item}
           accountInfo={accountInfo}
           onPress={() => {
-            const fullWalletObj = key?.wallets?.[0];
-            if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+            const fullWalletObj = _key.wallets?.[0];
+            if (fullWalletObj?.pendingTssSession && _key.tssSession) {
               dispatch(
                 showBottomNotificationModal(
                   CustomErrorMessage({
@@ -635,7 +739,7 @@ const KeySettings = () => {
         />
       );
     },
-    [_key],
+    [_key, accountInfo, dispatch, onPressItem, t],
   );
 
   return (
@@ -649,6 +753,7 @@ const KeySettings = () => {
               ? memorizedAccountList
               : searchResults
           }
+          keyExtractor={item => item.id}
           renderItem={memoizedRenderItem}
         />
       </WalletSettingsListContainer>

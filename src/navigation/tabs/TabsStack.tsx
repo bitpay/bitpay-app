@@ -1,12 +1,11 @@
 import React from 'react';
-import {View, TouchableOpacity} from 'react-native';
+import {StyleSheet, View, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
-import {CardStackParamList} from '../card/CardStack';
 import SettingsStack from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
@@ -16,8 +15,6 @@ import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
 import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
 import BillsIcon from '../../../assets/img/tab-icons/bills.svg';
 import BillsFocusedIcon from '../../../assets/img/tab-icons/bills-focused.svg';
-import CardIcon from '../../../assets/img/tab-icons/card.svg';
-import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
@@ -26,9 +23,9 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 
 import BillStack from './shop/bill/BillStack';
-import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {Analytics} from '../../store/analytics/analytics.effects';
+import {ThemeRelay} from '../../contexts';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -37,25 +34,37 @@ const Icons: Record<string, React.FC<SvgProps>> = {
   ShopFocused: ShopFocusedIcon,
   Bills: BillsIcon,
   BillsFocused: BillsFocusedIcon,
-  Card: CardIcon,
-  CardFocused: CardFocusedIcon,
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
   TransactButton: TransactButtonIcon,
 };
 
-const IconContainer = styled.View``;
+const styles = StyleSheet.create({
+  untappedIconDot: {
+    height: 5,
+    width: 5,
+    backgroundColor: '#ff647c',
+    position: 'absolute',
+    zIndex: 2,
+    right: -7,
+    top: -4,
+    borderRadius: 5,
+  },
+});
 
-const UntappedIconDot = styled.View`
-  height: 5px;
-  width: 5px;
-  background-color: #ff647c;
-  position: absolute;
-  z-index: 2;
-  right: -7px;
-  top: -4px;
-  border-radius: 5px;
-`;
+const TransactionButton = () => null;
+
+const DefaultTabBarButton = (props: any) => (
+  <TouchableOpacity {...props} activeOpacity={1} />
+);
+
+const TransactTabBarIcon = () => <TransactModal />;
+
+const TransactTabBarButton = (props: any) => <View {...props} />;
+
+const tabScreenLayout = ({children}: {children: React.ReactElement}) => (
+  <ThemeRelay>{children}</ThemeRelay>
+);
 
 export enum TabsScreens {
   HOME = 'Home',
@@ -63,7 +72,6 @@ export enum TabsScreens {
   TRANSACT_BUTTON = 'TransactButton',
   BILLS = 'Bills',
   SETTINGS = 'Settings',
-  CARD = 'Card',
   CAMERA = 'Camera',
 }
 
@@ -76,7 +84,6 @@ export type TabsStackParamList = {
   Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
   Bills: undefined;
-  Card: NavigatorScreenParams<CardStackParamList> | undefined;
   Settings: undefined;
   Camera: undefined;
 };
@@ -89,21 +96,21 @@ const TabsStack = () => {
   const insets = useSafeAreaInsets();
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
-  const TransactionButton = () => null;
+
   return (
     <Tab.Navigator
       initialRouteName={TabsScreens.HOME}
+      screenLayout={tabScreenLayout}
       screenOptions={({route}) => ({
         headerShown: false,
+        freezeOnBlur: true,
         tabBarStyle: {
           backgroundColor: theme.colors.background,
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 8,
         },
-        tabBarButton: props => (
-          <TouchableOpacity {...(props as any)} activeOpacity={1} />
-        ),
+        tabBarButton: DefaultTabBarButton,
         tabBarShowLabel: false,
         tabBarIcon: ({focused}) => {
           let {name: icon} = route;
@@ -113,12 +120,12 @@ const TabsStack = () => {
           const Icon = Icons[icon];
 
           return (
-            <IconContainer>
+            <View>
               {icon === 'Bills' && !hasViewedBillsTab ? (
-                <UntappedIconDot />
+                <View style={styles.untappedIconDot} />
               ) : null}
               <Icon />
-            </IconContainer>
+            </View>
           );
         },
       })}>
@@ -140,8 +147,8 @@ const TabsStack = () => {
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
         options={{
-          tabBarIcon: () => <TransactModal />,
-          tabBarButton: props => <View {...props} />,
+          tabBarIcon: TransactTabBarIcon,
+          tabBarButton: TransactTabBarButton,
         }}
       />
       <Tab.Screen

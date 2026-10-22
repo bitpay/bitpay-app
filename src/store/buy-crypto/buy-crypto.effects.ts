@@ -10,9 +10,11 @@ import {BuyCryptoLimits, MoonpayEmbeddedCredentials} from './buy-crypto.models';
 import {Analytics} from '../analytics/analytics.effects';
 import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {logManager} from '../../managers/LogManager';
+import {moonpayGetPaymentMethodsEmbedded} from './effects/moonpay/moonpay';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {MoonpayClientCredentials} from '../../navigation/services/utils/moonpayFrameCrypto';
 import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
+import {Rates} from '../rate/rate.models';
 
 // ---------------------------------------------------------------------------
 // MoonPay Embedded — module-level cache
@@ -89,6 +91,97 @@ export const setMoonpayEmbeddedEnabled = (enabled: boolean): void => {
   _moonpayEmbeddedEnabled = enabled;
 };
 
+// Whether this device can use Apple Pay for the embedded flow. Set by
+// MoonpayEmbeddedCredentialManager, which runs the native check.
+let _moonpayEmbeddedApplePaySupported: boolean = false;
+
+export const getMoonpayEmbeddedApplePaySupported = (): boolean =>
+  _moonpayEmbeddedApplePaySupported;
+
+export const setMoonpayEmbeddedApplePaySupported = (
+  supported: boolean,
+): void => {
+  _moonpayEmbeddedApplePaySupported = supported;
+};
+
+// Whether Google Pay can run in the embedded flow on this device (Android).
+// Whether the device can actually complete a payment is decided inside the
+// WebView by the Payment Request API, which the frame reports back.
+let _moonpayEmbeddedGooglePaySupported: boolean = false;
+
+// Whether MoonPay offers Google Pay to this customer, from the payment methods
+// endpoint. Undefined until it has been read: it needs credentials, so it
+// cannot be known before connecting, and treating unknown as unavailable would
+// send every customer to the standard flow until it resolves.
+let _moonpayEmbeddedGooglePayActive: boolean | undefined;
+
+export const getMoonpayEmbeddedGooglePaySupported = (): boolean =>
+  _moonpayEmbeddedGooglePaySupported &&
+  _moonpayEmbeddedGooglePayActive !== false;
+
+export const setMoonpayEmbeddedGooglePaySupported = (
+  supported: boolean,
+): void => {
+  _moonpayEmbeddedGooglePaySupported = supported;
+};
+
+// Whether MoonPay allows SEPA to run headless for this customer.
+// MoonPay reports it per account in the payment methods endpoint (capabilities.requiresWidget).
+let _moonpayEmbeddedSepaSupported: boolean = false;
+
+export const getMoonpayEmbeddedSepaSupported = (): boolean =>
+  _moonpayEmbeddedSepaSupported;
+
+export const setMoonpayEmbeddedSepaSupported = (supported: boolean): void => {
+  _moonpayEmbeddedSepaSupported = supported;
+};
+
+/**
+ * Asks MoonPay which embedded payment methods this customer can use and caches
+ * the answers. It needs credentials, so it can only run once they exist.
+ */
+export const resolveMoonpayEmbeddedCapabilities = async (
+  accessToken: string,
+): Promise<void> => {
+  try {
+    const data = await moonpayGetPaymentMethodsEmbedded({accessToken});
+    const sepaConfig = data?.paymentMethodConfigs?.find(
+      config => config.type === 'sepa',
+    );
+    const supported =
+      !!sepaConfig?.availability?.active &&
+      sepaConfig?.capabilities?.requiresWidget === false;
+
+    setMoonpayEmbeddedSepaSupported(supported);
+    logManager.debug(
+      `[MoonpayEmbedded]: SEPA headless supported: ${supported}`,
+    );
+
+    // Google Pay is only ruled out when MoonPay says so explicitly: an absent
+    // config means this response says nothing about it, and the frame is the
+    // one that decides whether the device can run it.
+    const googlePayConfig = data?.paymentMethodConfigs?.find(
+      config => config.type === 'google_pay',
+    );
+    _moonpayEmbeddedGooglePayActive = googlePayConfig
+      ? googlePayConfig.availability?.active !== false &&
+        googlePayConfig.capabilities?.requiresWidget !== true
+      : undefined;
+    logManager.debug(
+      `[MoonpayEmbedded]: Google Pay offered by MoonPay: ${_moonpayEmbeddedGooglePayActive}`,
+    );
+  } catch (err) {
+    setMoonpayEmbeddedSepaSupported(false);
+    // Left as unknown on purpose: a failed read is not MoonPay declining it.
+    _moonpayEmbeddedGooglePayActive = undefined;
+    logManager.debug(
+      `[MoonpayEmbedded]: could not resolve embedded capabilities. ${
+        err instanceof Error ? err.message : JSON.stringify(err)
+      }`,
+    );
+  }
+};
+
 // Listener registered by MoonpayEmbeddedCredentialManager to trigger a recheck
 // from anywhere in the app (e.g. after an unlink reset completes).
 let _moonpayEmbeddedRecheckListener: (() => void) | undefined;
@@ -115,7 +208,7 @@ export const calculateAltFiatToUsd =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.RATE.rates;
+    const allRates: Rates = state.RATE.rates;
 
     if (altFiatCurrency.toUpperCase() === 'USD') {
       return altFiatAmount;
@@ -149,7 +242,7 @@ export const calculateUsdToAltFiat =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.RATE.rates;
+    const allRates: Rates = state.RATE.rates;
 
     const rateBtcUsd = allRates.btc.find(r => {
       return r.code === 'USD';
@@ -183,7 +276,7 @@ export const calculateAnyFiatToAltFiat =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.RATE.rates;
+    const allRates: Rates = state.RATE.rates;
 
     if (fromFiatCurrency.toUpperCase() === toFiatCurrency.toUpperCase()) {
       return fromFiatAmount;

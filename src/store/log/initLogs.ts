@@ -2,6 +2,7 @@ import {LogEntry, sanitizeLogMessage} from './log.models';
 import type {AddLog} from './log.types';
 import {logManager} from '../../managers/LogManager';
 import {storage} from '../index';
+import {isSessionLogsEnabled} from '../../utils/sessionLogs';
 
 // For storing logs before the store is initialized
 const initLogs: AddLog[] = [];
@@ -16,6 +17,10 @@ const MAX_PERSISTED_LOGS = 500;
 // the cap and the redaction can't diverge between the two paths
 export const appendPersistedLog = (entry: LogEntry): LogEntry => {
   const sanitized = {...entry, message: sanitizeLogMessage(entry.message)};
+
+  if (!isSessionLogsEnabled()) {
+    return sanitized;
+  }
 
   // Session Log reads logManager, not LOG.logs — without this, persisted logs
   // are missing from both on-screen sections and from the exported current

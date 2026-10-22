@@ -171,9 +171,21 @@ export const buyCryptoReducer = (
           state.moonpay[moonpayIncomingData.externalId].crypto_amount =
             moonpayIncomingData.cryptoAmount;
         }
-        if (moonpayIncomingData.fiatBaseAmount) {
-          state.moonpay[moonpayIncomingData.externalId].fiat_base_amount =
-            moonpayIncomingData.fiatBaseAmount;
+        if (moonpayIncomingData.fiatTotalAmount) {
+          state.moonpay[moonpayIncomingData.externalId].fiat_total_amount =
+            moonpayIncomingData.fiatTotalAmount;
+        }
+        if (moonpayIncomingData.sepaDetails) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_details =
+            moonpayIncomingData.sepaDetails;
+        }
+        if (moonpayIncomingData.sepaStages) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_stages =
+            moonpayIncomingData.sepaStages;
+        }
+        if (moonpayIncomingData.sepaPurchaseReported) {
+          state.moonpay[moonpayIncomingData.externalId].sepa_purchase_reported =
+            moonpayIncomingData.sepaPurchaseReported;
         }
 
         return {

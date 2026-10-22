@@ -1,39 +1,31 @@
-import {CardContainer, CardGutter} from '../styled/Containers';
-import styled from 'styled-components/native';
+import {CardContainer} from '../styled/Containers';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import {StyleProp, ViewStyle} from 'react-native';
+import {StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
 
-const CardHeader = styled.View`
-  min-height: 30px;
-  padding: ${CardGutter};
-`;
-
-const CardBody = styled.View`
-  flex-grow: 1;
-  padding: 0 ${CardGutter};
-`;
-
-const CardFooter = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 30px;
-  padding: ${CardGutter};
-  width: 100%;
-`;
-
-const BackgroundImage = styled.View`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: auto;
-  width: auto;
-  border-radius: 27px;
-  overflow: hidden;
-`;
+const styles = StyleSheet.create({
+  cardHeader: {minHeight: 30, padding: 15},
+  cardBody: {flexGrow: 1, paddingVertical: 0, paddingHorizontal: 15},
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    minHeight: 30,
+    padding: 15,
+    width: '100%',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 'auto',
+    width: 'auto',
+    borderRadius: 27,
+    overflow: 'hidden',
+  },
+});
 
 export interface CardProps {
   header?: ReactNode;
@@ -46,10 +38,12 @@ export interface CardProps {
 const Card = ({header, body, footer, backgroundImg, style}: CardProps) => {
   return (
     <CardContainer style={(style as object) || {}}>
-      {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
-      {header && <CardHeader>{header}</CardHeader>}
-      {body && <CardBody>{body}</CardBody>}
-      {footer && <CardFooter>{footer}</CardFooter>}
+      {backgroundImg && (
+        <View style={styles.backgroundImage}>{backgroundImg()}</View>
+      )}
+      {header && <View style={styles.cardHeader}>{header}</View>}
+      {body && <View style={styles.cardBody}>{body}</View>}
+      {footer && <View style={styles.cardFooter}>{footer}</View>}
     </CardContainer>
   );
 };

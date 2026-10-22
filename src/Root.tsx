@@ -24,6 +24,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import CloudflareChallengeModal from './components/modal/cloudflare-challenge/CloudflareChallenge';
+import FocusGatedReduxScreen from './components/focus-gated-redux-screen/FocusGatedReduxScreen';
 import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
@@ -39,6 +40,7 @@ import {
   useUrlEventHandler,
 } from './utils/hooks';
 import i18n from 'i18next';
+import {useTranslation} from 'react-i18next';
 
 import BitpayIdGroup, {
   BitpayIdGroupParamList,
@@ -93,18 +95,12 @@ import MerchantGroup, {
   MerchantGroupParamList,
 } from './navigation/tabs/shop/merchant/MerchantGroup';
 import PinModal from './components/modal/pin/PinModal';
-import CoinbaseGroup, {
-  CoinbaseGroupParamList,
-} from './navigation/coinbase/CoinbaseGroup';
 import {APP_ANALYTICS_ENABLED} from './constants/config';
 import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {
   DebugScreenParamList,
   DebugScreens,
 } from './navigation/Debug';
-import CardActivationGroup, {
-  CardActivationGroupParamList,
-} from './navigation/card-activation/CardActivationGroup';
 import {
   createWalletsForAccounts,
   fixWalletAddresses,
@@ -136,7 +132,6 @@ import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-//import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
 import {KeyMethods} from './store/wallet/wallet.models';
 import {
@@ -147,6 +142,10 @@ import {
   successGetReceiveAddress,
 } from './store/wallet/wallet.actions';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
+import {getReduxPerformanceSnapshot} from './store/performanceDiagnostics';
+import {logReactProfiler} from './utils/reactPerformanceProfiler';
+import {PERF_DEBUG, performanceLog} from './utils/performanceDebug';
+import PerformanceProfiler from './components/performance/PerformanceProfiler';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
 import AllAssets from './navigation/tabs/home/screens/AllAssets';
@@ -190,10 +189,8 @@ export type RootStackParamList = {
   MerchantGroupParamList &
   BitpayIdGroupParamList &
   ScanGroupParamList &
-  CoinbaseGroupParamList &
   ExternalServicesGroupParamList &
   SwapCryptoGroupParamList &
-  CardActivationGroupParamList &
   OnboardingGroupParamList &
   AuthGroupParamList &
   GiftCardGroupParamList &
@@ -222,7 +219,6 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingGroupParamList &
     BitpayIdGroupParamList &
     WalletGroupParamList &
-    CardActivationGroupParamList &
     GiftCardGroupParamList &
     MerchantGroupParamList &
     BillGroupParamList &
@@ -230,7 +226,6 @@ export type NavScreenParams = NavigatorScreenParams<
     ContactsGroupParamList &
     ExternalServicesSettingsGroupParamList &
     AboutGroupParamList &
-    CoinbaseGroupParamList &
     ExternalServicesGroupParamList &
     SwapCryptoGroupParamList &
     ScanGroupParamList &
@@ -278,7 +273,7 @@ export const getNavigationTabName = () => {
     TabsScreens.HOME,
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
-    TabsScreens.CARD,
+    TabsScreens.BILLS,
     TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
@@ -290,6 +285,23 @@ export const getNavigationTabName = () => {
 };
 
 export const Root = createNativeStackNavigator<RootStackParamList>();
+
+const focusGatedScreenLayout = ({
+  children,
+  route,
+}: {
+  children: React.ReactElement;
+  route: {name: string; params?: {_preloadContent?: boolean}};
+}) => (
+  <FocusGatedReduxScreen
+    renderWhenUnfocused={route.params?._preloadContent === true}>
+    <PerformanceProfiler
+      id={`screen:${route.name}`}
+      onRender={logReactProfiler}>
+      {children}
+    </PerformanceProfiler>
+  </FocusGatedReduxScreen>
+);
 
 const StartupGate = () => {
   const navigation = useNavigation<any>();
@@ -329,6 +341,7 @@ const StartupGate = () => {
 };
 
 export default () => {
+  useTranslation();
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
   const linking = useDeeplinks();
@@ -337,6 +350,8 @@ export default () => {
   const lastSystemEnabledRef = useRef<boolean | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const splashHiddenRef = useRef(false);
+  const lastNavStartTsRef = useRef<number | null>(null);
+  const lastTransitionStartTsRef = useRef<number | null>(null);
   const launchPopulateStartedRef = useRef(false);
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
@@ -370,6 +385,21 @@ export default () => {
   const pushNotificationsRef = useRef(notificationsState.pushNotifications);
   const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+
+  useEffect(() => {
+    if (!PERF_DEBUG) {
+      return;
+    }
+    const snapshot = getReduxPerformanceSnapshot();
+
+    performanceLog(
+      `[PERF-ROOT] render action:${
+        snapshot?.actionType ?? 'unknown'
+      } dispatchMs:${snapshot?.dispatchDurationMs ?? -1} changedSlices:${
+        snapshot?.changedSlices.join(',') || 'none'
+      }`,
+    );
+  });
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -1005,6 +1035,10 @@ export default () => {
           onStateChange={state => {
             debouncedOnStateChange(state);
 
+            if (PERF_DEBUG) {
+              lastNavStartTsRef.current = Date.now();
+            }
+
             if (splashHiddenRef.current) {
               return;
             }
@@ -1028,6 +1062,39 @@ export default () => {
             }
           }}>
           <Root.Navigator
+            screenLayout={focusGatedScreenLayout}
+            screenListeners={{
+              transitionStart: e => {
+                if (!PERF_DEBUG || e.data.closing) {
+                  return;
+                }
+                lastTransitionStartTsRef.current = performance.now();
+                const routeName = navigationRef.getCurrentRoute()?.name;
+
+                performanceLog(`[PERF-NAV] ${routeName} transitionStart`);
+              },
+              transitionEnd: e => {
+                if (!PERF_DEBUG || e.data.closing) {
+                  return;
+                }
+                const startTs = lastNavStartTsRef.current;
+                if (startTs === null) {
+                  return;
+                }
+                const deltaMs = Date.now() - startTs;
+                const transitionStartTs = lastTransitionStartTsRef.current;
+                const transitionDeltaMs =
+                  transitionStartTs === null
+                    ? -1
+                    : Math.round((performance.now() - transitionStartTs) * 10) /
+                      10;
+                const routeName = navigationRef.getCurrentRoute()?.name;
+
+                performanceLog(
+                  `[PERF-NAV] ${routeName} transitionEnd stateDeltaMs:${deltaMs} transitionDeltaMs:${transitionDeltaMs}`,
+                );
+              },
+            }}
             screenOptions={{
               ...baseNavigatorOptions,
               headerShown: false,
@@ -1082,7 +1149,6 @@ export default () => {
             {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root, theme})}
             {WalletGroup({Wallet: Root, theme})}
-            {CardActivationGroup({CardActivation: Root, theme})}
             {ScanGroup({Scan: Root, theme})}
             {GiftCardGroup({GiftCard: Root, theme})}
             {MerchantGroup({Merchant: Root, theme})}
@@ -1099,26 +1165,68 @@ export default () => {
               theme,
             })}
             {AboutGroup({About: Root, theme})}
-            {CoinbaseGroup({Coinbase: Root, theme})}
             {ExternalServicesGroup({ExternalServices: Root, theme})}
             {SwapCryptoGroup({SwapCrypto: Root, theme})}
             {WalletConnectGroup({WalletConnect: Root, theme})}
             {ZenLedgerGroup({ZenLedger: Root, theme})}
             {SecurityGroup({Security: Root, theme})}
           </Root.Navigator>
-          <OnGoingProcessModal />
-          <InAppNotification />
-          <BottomNotificationModal />
-          <CloudflareChallengeModal />
-          <DecryptEnterPasswordModal />
-          <BlurContainer />
-          <PinModal />
-          <BiometricModal />
-          {/* <ImportLedgerWalletModal /> */}
-          <WalletConnectStartModal />
-          <ChainSelectorModal />
-          <PaymentSent />
-          <MoonpayEmbeddedCredentialManager />
+          <PerformanceProfiler
+            id="overlay:ongoing-process"
+            onRender={logReactProfiler}>
+            <OnGoingProcessModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:in-app-notification"
+            onRender={logReactProfiler}>
+            <InAppNotification />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:bottom-notification"
+            onRender={logReactProfiler}>
+            <BottomNotificationModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:cloudflare-challenge"
+            onRender={logReactProfiler}>
+            <CloudflareChallengeModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:decrypt-password"
+            onRender={logReactProfiler}>
+            <DecryptEnterPasswordModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler id="overlay:blur" onRender={logReactProfiler}>
+            <BlurContainer />
+          </PerformanceProfiler>
+          <PerformanceProfiler id="overlay:pin" onRender={logReactProfiler}>
+            <PinModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:biometric"
+            onRender={logReactProfiler}>
+            <BiometricModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:wallet-connect"
+            onRender={logReactProfiler}>
+            <WalletConnectStartModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:chain-selector"
+            onRender={logReactProfiler}>
+            <ChainSelectorModal />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:payment-sent"
+            onRender={logReactProfiler}>
+            <PaymentSent />
+          </PerformanceProfiler>
+          <PerformanceProfiler
+            id="overlay:moonpay-credentials"
+            onRender={logReactProfiler}>
+            <MoonpayEmbeddedCredentialManager />
+          </PerformanceProfiler>
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

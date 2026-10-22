@@ -434,6 +434,9 @@ export function buildHydratedSeriesFromBalanceChartViewModel(
     graphPoints,
     analysisPoints,
     pointByTimestamp,
+    walletFiatBalanceByWalletId: viewModel.walletFiatBalanceByWalletId,
+    walletRemainingCostBasisFiatByWalletId:
+      viewModel.walletRemainingCostBasisFiatByWalletId,
     ...extrema,
   };
 }

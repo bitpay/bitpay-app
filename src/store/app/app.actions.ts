@@ -1,4 +1,4 @@
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {EventSubscription} from 'react-native';
 import {ContentCard} from '@braze/react-native-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
@@ -8,6 +8,7 @@ import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
+  AppColorScheme,
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -19,11 +20,6 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
-
-export const importLedgerModalToggled = (show: boolean): AppActionType => ({
-  type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
-  payload: show,
-});
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -119,7 +115,7 @@ export const showChainSelectorModal = (
   payload: config,
 });
 
-export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
+export const setColorScheme = (scheme: AppColorScheme): AppActionType => ({
   type: AppActionTypes.SET_COLOR_SCHEME,
   payload: scheme,
 });

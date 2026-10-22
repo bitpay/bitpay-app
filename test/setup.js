@@ -41,15 +41,13 @@ jest.mock('react-native/Libraries/Utilities/Platform', () => {
   return {...Platform, default: Platform};
 });
 
+jest.mock('react-native-worklets', () =>
+  require('react-native-worklets/lib/module/mock'),
+);
 jest.mock('react-native-reanimated', () =>
   require('react-native-reanimated/mock'),
 );
 global.__reanimatedWorkletInit = jest.fn();
-jest.mock(
-  'react-native/Libraries/Animated/NativeAnimatedHelper',
-  () => ({}),
-  {virtual: true},
-);
 
 jest.mock('react-native-permissions', () =>
   require('react-native-permissions/mock'),
@@ -203,12 +201,6 @@ jest.mock('axios');
 
 jest.mock('i18next', () => ({
   t: key => key,
-}));
-
-jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({
-  default: {
-    open: jest.fn(() => Promise.resolve('mocked transport instance')),
-  },
 }));
 
 // SafeAreaView is deprecated in RN 0.82 and fails to load its native deps in tests.

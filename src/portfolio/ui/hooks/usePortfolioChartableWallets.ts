@@ -3,6 +3,7 @@ import type {Wallet} from '../../../store/wallet/wallet.models';
 import {useAppSelector} from '../../../utils/hooks';
 
 type WalletMarkerMap = {[walletId: string]: unknown} | undefined;
+const EMPTY_DISABLED_WALLET_MARKERS: WalletMarkerMap = {};
 
 const addMarkedWalletIds = (
   out: Set<string>,
@@ -21,11 +22,13 @@ export default function usePortfolioChartableWallets(args: {
   wallets: Wallet[];
 }): Wallet[] {
   const enabled = args.enabled !== false;
-  const invalidDecimalsByWalletId = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.invalidDecimalsByWalletId,
+  const invalidDecimalsByWalletId = useAppSelector(({PORTFOLIO}) =>
+    enabled
+      ? PORTFOLIO.invalidDecimalsByWalletId
+      : EMPTY_DISABLED_WALLET_MARKERS,
   );
-  const quarantinesByWalletId = useAppSelector(
-    ({PORTFOLIO}) => PORTFOLIO.quarantinesByWalletId,
+  const quarantinesByWalletId = useAppSelector(({PORTFOLIO}) =>
+    enabled ? PORTFOLIO.quarantinesByWalletId : EMPTY_DISABLED_WALLET_MARKERS,
   );
 
   return useMemo(() => {

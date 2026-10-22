@@ -129,7 +129,8 @@ export const BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   },
   sol: {
     [Network.mainnet]: 'solscan.io/',
-    [Network.testnet]: 'solscan.io/', // For testnet we have to add ?cluster=testnet => https://solscan.io/?cluster=testnet
+    // Same domain for devnet: GetBlockExplorerLink adds ?cluster=devnet.
+    [Network.testnet]: 'solscan.io/',
   },
 };
 

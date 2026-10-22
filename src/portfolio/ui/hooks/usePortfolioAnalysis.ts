@@ -13,6 +13,7 @@ export type UsePortfolioAnalysisResult = ReturnType<
   typeof usePortfolioAnalysis
 >;
 
+const MAX_COMMITTED_ANALYSIS_CACHE_ENTRIES = 50;
 const committedAnalysisCache = new Map<string, PnlAnalysisResult>();
 
 function getCommittedAnalysisCacheKey(args: {
@@ -27,7 +28,30 @@ function getCommittedAnalysisCacheKey(args: {
 function getCommittedAnalysisCacheValue(
   cacheKey: string,
 ): PnlAnalysisResult | undefined {
-  return committedAnalysisCache.get(cacheKey);
+  const cached = committedAnalysisCache.get(cacheKey);
+  if (!cached) {
+    return undefined;
+  }
+
+  committedAnalysisCache.delete(cacheKey);
+  committedAnalysisCache.set(cacheKey, cached);
+  return cached;
+}
+
+function setCommittedAnalysisCacheValue(
+  cacheKey: string,
+  value: PnlAnalysisResult,
+): void {
+  committedAnalysisCache.delete(cacheKey);
+  committedAnalysisCache.set(cacheKey, value);
+
+  while (committedAnalysisCache.size > MAX_COMMITTED_ANALYSIS_CACHE_ENTRIES) {
+    const oldestKey = committedAnalysisCache.keys().next().value;
+    if (oldestKey === undefined) {
+      break;
+    }
+    committedAnalysisCache.delete(oldestKey);
+  }
 }
 
 export function clearPortfolioAnalysisCommittedCacheForTests(): void {
@@ -78,6 +102,7 @@ export function usePortfolioAnalysis(args: {
 
   useEffect(() => {
     if (!hasCommittedPortfolioBaseline) {
+      committedAnalysisCache.clear();
       setCommittedDataState(prev =>
         prev.cacheKey === '' && prev.value === undefined
           ? prev
@@ -124,7 +149,7 @@ export function usePortfolioAnalysis(args: {
       return;
     }
 
-    committedAnalysisCache.set(committedDataCacheKey, query.data);
+    setCommittedAnalysisCacheValue(committedDataCacheKey, query.data);
     setCommittedDataState(prev =>
       prev.cacheKey === committedDataCacheKey && prev.value === query.data
         ? prev

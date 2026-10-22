@@ -1,5 +1,5 @@
 import {Effect} from '../../../index';
-import {WalletStatus} from '../../wallet.models';
+import {Key, Wallet, WalletStatus} from '../../wallet.models';
 import {successUpdateWalletBalancesAndStatus} from '../../wallet.actions';
 import _ from 'lodash';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
@@ -11,6 +11,8 @@ import {
   updateKeyStatus,
 } from './status';
 import {logManager} from '../../../../managers/LogManager';
+import {mapWithConcurrency} from '../../../../utils/concurrency';
+import {WALLET_REQUEST_CONCURRENCY} from '../../../../constants/wallet';
 
 export const clearWalletBalances =
   (): Effect<Promise<void>> => async (dispatch, getState) => {
@@ -96,6 +98,7 @@ export const getUpdatedWalletBalances =
         walletId: string;
         status: WalletStatus;
       }[];
+      error?: unknown;
     }>
   > =>
   async (dispatch, getState) => {
@@ -135,15 +138,41 @@ export const getUpdatedWalletBalances =
       }
     }
 
-    // Process regular keys
-    for (const key of keys) {
-      const keyBalance = await dispatch(
-        updateKeyStatus({
-          key,
-          force,
-          dataOnly: true,
-        }),
+    const keyStatusResults = await mapWithConcurrency(
+      keys,
+      WALLET_REQUEST_CONCURRENCY,
+      async key => {
+        try {
+          const keyBalance = await dispatch(
+            updateKeyStatus({
+              key,
+              force,
+              dataOnly: true,
+            }),
+          );
+          return {key, keyBalance, failed: false, error: undefined as unknown};
+        } catch (error) {
+          return {key, keyBalance: undefined, failed: true, error};
+        }
+      },
+    );
+
+    let firstKeyError: unknown;
+    for (const {key, failed, error} of keyStatusResults) {
+      if (!failed) {
+        continue;
+      }
+      const keyError =
+        error ?? new Error(`Failed to update status for key ${key.id}`);
+      firstKeyError = firstKeyError ?? keyError;
+      const errorStr =
+        keyError instanceof Error ? keyError.message : JSON.stringify(keyError);
+      logManager.warn(
+        `Error updating key status for key ${key.id}: ${errorStr}`,
       );
+    }
+
+    for (const {key, keyBalance} of keyStatusResults) {
       if (keyBalance) {
         keyBalances.push({
           keyId: keyBalance.keyId,
@@ -164,9 +193,13 @@ export const getUpdatedWalletBalances =
       }
     }
 
-    // Process read-only keys
-    for (const key of readOnlyKeys) {
-      for (const wallet of key.wallets) {
+    const readOnlyWallets = readOnlyKeys.flatMap((key: Key) =>
+      key.wallets.map((wallet: Wallet) => ({key, wallet})),
+    );
+    const readOnlyResults = await mapWithConcurrency(
+      readOnlyWallets,
+      WALLET_REQUEST_CONCURRENCY,
+      async ({key, wallet}) => {
         try {
           const status = await dispatch(
             updateWalletStatus({
@@ -176,22 +209,26 @@ export const getUpdatedWalletBalances =
               lastDayRates,
             }),
           );
-          walletBalances.push({
-            keyId: key.id,
-            walletId: wallet.id,
-            status,
-          });
+          return {keyId: key.id, walletId: wallet.id, status};
         } catch (error) {
           logManager.error(
             `Error updating wallet status for read-only wallet ${wallet.id}: ${error}`,
           );
+          return undefined;
         }
+      },
+    );
+
+    for (const result of readOnlyResults) {
+      if (result) {
+        walletBalances.push(result);
       }
     }
 
     return {
       keyBalances,
       walletBalances,
+      error: firstKeyError,
     };
   };
 
@@ -235,6 +272,9 @@ export const getAndDispatchUpdatedWalletBalances =
           walletBalances: balances.walletBalances,
         }),
       );
+      if (balances.error) {
+        throw balances.error;
+      }
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error(

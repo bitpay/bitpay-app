@@ -1,7 +1,13 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {BaseText, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
   CtaContainerAbsolute,
@@ -9,7 +15,7 @@ import {
   ScreenGutter,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {View} from 'react-native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {shareNative} from '../../../../utils/share';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
@@ -23,7 +29,6 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {LogActions} from '../../../../store/log';
 import {FlashList} from '@shopify/flash-list';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {logManager} from '../../../../managers/LogManager';
@@ -37,32 +42,74 @@ export type AllAddressesParamList = {
   tokenAddress: string | undefined;
 };
 
-const AddressesContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const gutter = parseInt(ScreenGutter, 10);
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  addressesContainer: {
+    flex: 1,
+  },
+  verticalPadding: {
+    padding: gutter,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    paddingTop: 20,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 15,
+  },
+  copyRow: {
+    flexDirection: 'row',
+  },
+  copyImgContainerRight: {
+    justifyContent: 'center',
+  },
+});
 
-const Title = styled(BaseText)`
-  font-weight: bold;
-  font-size: 18px;
-  padding: 20px 0px 0px 15px;
-  color: ${({theme}) => theme.colors.text};
-`;
+const AddressesContainer: React.FC<
+  React.ComponentProps<typeof SafeAreaView>
+> = ({style, ...rest}) => (
+  <SafeAreaView style={[styles.addressesContainer, style]} {...rest} />
+);
 
-const SubText = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const CopyRow = styled(TouchableOpacity)`
-  flex-direction: row;
-`;
+const Title: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.title, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
-const CopyImgContainerRight = styled.View`
-  justify-content: center;
-`;
+const SubText: React.FC<React.ComponentProps<typeof H7>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <H7 style={[{color: theme.dark ? White : SlateDark}, style]} {...rest} />
+  );
+};
+
+const CopyRow: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
+  style,
+  ...rest
+}) => <TouchableOpacity style={[styles.copyRow, style]} {...rest} />;
+
+const CopyImgContainerRight: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => <View style={[styles.copyImgContainerRight, style]} {...rest} />;
 
 const AllAddresses = () => {
   const {t} = useTranslation();
@@ -80,20 +127,23 @@ const AllAddresses = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const combinedAddresses = [
-    ...(usedAddresses?.length
-      ? [
-          {type: 'sectionHeader', title: t('Addresses with balance')},
-          ...usedAddresses,
-        ]
-      : []),
-    ...(unusedAddresses?.length
-      ? [
-          {type: 'sectionHeader', title: t('Unused addresses')},
-          ...unusedAddresses,
-        ]
-      : []),
-  ];
+  const combinedAddresses = useMemo(
+    () => [
+      ...(usedAddresses?.length
+        ? [
+            {type: 'sectionHeader', title: t('Addresses with balance')},
+            ...usedAddresses,
+          ]
+        : []),
+      ...(unusedAddresses?.length
+        ? [
+            {type: 'sectionHeader', title: t('Unused addresses')},
+            ...unusedAddresses,
+          ]
+        : []),
+    ],
+    [t, unusedAddresses, usedAddresses],
+  );
 
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [copiedAddress, setCopiedAddress] = useState('');
@@ -107,13 +157,13 @@ const AllAddresses = () => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('All Addresses')}</HeaderTitle>,
     });
-  });
+  }, [navigation, t]);
 
-  const copyText = (text: string) => {
+  const copyText = useCallback((text: string) => {
     haptic('impactLight');
     Clipboard.setString(text);
     setCopiedAddress(text);
-  };
+  }, []);
 
   const sendAddresses = async () => {
     try {
@@ -221,7 +271,14 @@ const AllAddresses = () => {
         );
       }
     },
-    [copiedAddress],
+    [
+      chain,
+      copiedAddress,
+      copyText,
+      currencyAbbreviation,
+      dispatch,
+      tokenAddress,
+    ],
   );
 
   return (
@@ -231,7 +288,6 @@ const AllAddresses = () => {
           data={combinedAddresses}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderItem}
-          estimatedItemSize={90}
           onEndReachedThreshold={0.3}
           contentContainerStyle={{paddingBottom: 150}}
         />

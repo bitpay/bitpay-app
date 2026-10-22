@@ -1,12 +1,10 @@
-import Transport from '@ledgerhq/hw-transport';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {View, StyleSheet} from 'react-native';
 import {
   useNavigation,
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
-import styled from 'styled-components/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {
@@ -16,7 +14,6 @@ import {
 } from '../../../../../utils/hooks';
 import {BaseText, H4} from '../../../../../components/styled/Text';
 import {
-  Key,
   Recipient,
   TransactionProposal,
   TxDetails,
@@ -26,7 +23,6 @@ import {
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
-  buildTxDetails,
   createPayProTxProposal,
   handleCreateTxProposalError,
   handleSendError,
@@ -57,7 +53,6 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {URL} from '../../../../../constants';
 import {
@@ -65,33 +60,11 @@ import {
   GiftCardCoupon,
   Invoice,
 } from '../../../../../store/shop/shop.models';
-import {WalletRowProps} from '../../../../../components/list/WalletRow';
-import {
-  CoinbaseAccountProps,
-  CoinbaseErrorMessages,
-} from '../../../../../api/coinbase/coinbase.types';
-import {startGetRates} from '../../../../../store/wallet/effects';
-import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
 import {GiftCardGroupParamList} from '../../../../tabs/shop/gift-card/GiftCardGroup';
-import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 import GiftCardTerms from '../../../../tabs/shop/components/GiftCardTerms';
-import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../../components/modal/import-ledger-wallet/utils';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {
   getBoostAmount,
   getBoostedAmount,
@@ -116,9 +89,7 @@ export interface GiftCardConfirmParamList {
   txDetails?: TxDetails;
 }
 
-const BoostAppliedText = styled(BaseText)`
-  margin-left: 10px;
-`;
+const styles = StyleSheet.create({boostAppliedText: {marginLeft: 10}});
 
 enum GiftCardInvoiceCreationErrors {
   couponExpired = 'This promotion is no longer available.',
@@ -144,7 +115,7 @@ const GiftCardHeader = ({
         <DetailRow>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <H4>{formatFiatAmount(boostedAmount, cardConfig.currency)}</H4>
-            <BoostAppliedText>
+            <BaseText style={styles.boostAppliedText}>
               {hasVisibleBoost(cardConfig) ? (
                 <>
                   <GiftCardDiscountText
@@ -156,7 +127,7 @@ const GiftCardHeader = ({
                   />
                 </>
               ) : null}
-            </BoostAppliedText>
+            </BaseText>
           </View>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
@@ -197,8 +168,6 @@ const Confirm = () => {
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [wallet, setWallet] = useState(_wallet);
-  const [coinbaseAccount, setCoinbaseAccount] =
-    useState<CoinbaseAccountProps>();
   const [invoice, setInvoice] = useState<Invoice>();
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
@@ -207,12 +176,6 @@ const Confirm = () => {
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
@@ -243,17 +206,13 @@ const Confirm = () => {
         BuildPayProWalletSelectorList({
           keys,
           network: appNetwork,
-          invoice,
-          skipThreshold: true,
         }),
       ),
-    [dispatch, keys, appNetwork, invoice],
+    [dispatch, keys, appNetwork],
   );
 
   const getTransactionCurrency = () => {
-    return wallet
-      ? wallet.currencyAbbreviation.toUpperCase()
-      : coinbaseAccount!.currency.code;
+    return wallet!.currencyAbbreviation.toUpperCase();
   };
 
   useEffect(() => {
@@ -269,50 +228,6 @@ const Confirm = () => {
     }
     setWalletSelectorVisible(true);
   };
-
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
-  }, []);
 
   const createGiftCardInvoice = async ({
     clientId,
@@ -415,36 +330,6 @@ const Confirm = () => {
     );
   };
 
-  const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
-    const transactionCurrency = dispatch(
-      getTransactionCurrencyForPayInvoice(
-        selectedCoinbaseAccount.currency.code,
-      ),
-    );
-    try {
-      const {invoice: newInvoice} = await createGiftCardInvoice({
-        clientId: selectedCoinbaseAccount.id,
-        transactionCurrency,
-      });
-      const rates = await dispatch(startGetRates({}));
-      const newTxDetails = await dispatch(
-        buildTxDetails({
-          invoice: newInvoice,
-          wallet: walletRowProps,
-          rates,
-          defaultAltCurrencyIsoCode: cardConfig.currency,
-        }),
-      );
-      updateTxDetails(newTxDetails);
-      setInvoice(newInvoice);
-      setCoinbaseAccount(selectedCoinbaseAccount);
-      hideOngoingProcess();
-    } catch (err) {
-      handleCreateGiftCardInvoiceOrTxpError(err);
-    }
-  };
-
   const onWalletSelect = async (selectedWallet: Wallet) => {
     try {
       const {invoice: newInvoice, invoiceId} = await createGiftCardInvoice({
@@ -486,83 +371,30 @@ const Confirm = () => {
     }
   };
 
-  const sendPaymentAndRedeemGiftCard = async ({
-    twoFactorCode,
-    transport,
-  }: {
-    twoFactorCode?: string;
-    transport?: Transport;
-  }) => {
-    const isUsingHardwareWallet = !!transport;
-
+  const sendPaymentAndRedeemGiftCard = async () => {
     try {
-      if (isUsingHardwareWallet) {
-        if (txp && wallet && recipient) {
-          const {chain, network} = wallet.credentials;
-          const configFn = currencyConfigs[chain];
-          if (!configFn) {
-            throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-          }
-          const params = configFn(network);
-          await prepareLedgerApp(
-            params.appName,
-            transportRef,
-            setHardwareWalletTransport,
-            onDisconnect,
-            setPromptOpenAppState,
-          );
-          setConfirmHardwareState('sending');
-          await sleep(500);
-          await dispatch(
-            startSendPayment({
-              txp,
-              key,
-              wallet,
-              recipient,
-              transport,
-            }),
-          );
-          setConfirmHardwareState('complete');
-          await sleep(1000);
-          setConfirmHardwareWalletVisible(false);
-        } else {
-          throw new Error('missing txp, wallet, or recipient');
-        }
-      } else {
-        dispatch(
-          ShopActions.updatedGiftCardStatus({
-            invoiceId: invoice!.id,
-            status: 'PENDING',
-            network: appNetwork,
+      dispatch(
+        ShopActions.updatedGiftCardStatus({
+          invoiceId: invoice!.id,
+          status: 'PENDING',
+          network: appNetwork,
+        }),
+      );
+      if (txp && wallet && recipient) {
+        await dispatch(
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
           }),
         );
-        txp && wallet && recipient
-          ? await dispatch(
-              startSendPayment({
-                txp,
-                key,
-                wallet,
-                recipient,
-                ...(isTSSWallet(wallet) && {tssCallbacks}),
-                ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-              }),
-            )
-          : await dispatch(
-              coinbasePayInvoice(
-                invoice!.id,
-                coinbaseAccount!.currency.code,
-                twoFactorCode,
-              ),
-            );
       }
 
       await redeemGiftCardAndNavigateToGiftCardDetails();
     } catch (err: any) {
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
       dispatch(
         ShopActions.updatedGiftCardStatus({
           invoiceId: invoice!.id,
@@ -571,13 +403,8 @@ const Confirm = () => {
         }),
       );
       await sleep(400);
-      const twoFactorRequired =
-        coinbaseAccount &&
-        err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
       try {
-        twoFactorRequired
-          ? await request2FA()
-          : await handlePaymentFailure(err);
+        await handlePaymentFailure(err);
       } finally {
         setDisableSwipeSendButton(false);
       }
@@ -615,26 +442,6 @@ const Confirm = () => {
     );
   };
 
-  const showError = ({
-    error,
-    defaultErrorMessage,
-    onDismiss,
-  }: {
-    error?: any;
-    defaultErrorMessage: string;
-    onDismiss?: () => Promise<void>;
-  }) => {
-    dispatch(
-      AppActions.showBottomNotificationModal(
-        CustomErrorMessage({
-          title: t('Error'),
-          errMsg: error?.message || defaultErrorMessage,
-          action: () => onDismiss && onDismiss(),
-        }),
-      ),
-    );
-  };
-
   const handlePaymentFailure = async (error: any) => {
     const handled = dispatch(
       handleSendError({error, onDismiss: () => openWalletSelector()}),
@@ -654,42 +461,8 @@ const Confirm = () => {
       updateTxp(undefined);
       setWallet(undefined);
       setInvoice(undefined);
-      setCoinbaseAccount(undefined);
     }
     toggleThenUntoggle(setResetSwipeButton);
-  };
-
-  const request2FA = async () => {
-    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
-      onSubmit: async (twoFactorCode: string) => {
-        try {
-          await sendPaymentAndRedeemGiftCard({twoFactorCode});
-        } catch (error: any) {
-          hideOngoingProcess();
-          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-          error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
-            ? showError({defaultErrorMessage: invalid2faMessage})
-            : handlePaymentFailure(error);
-          throw error;
-        }
-      },
-    });
-    toggleThenUntoggle(setResetSwipeButton);
-  };
-
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = async (args: {transport: Transport}) => {
-    const {transport} = args;
-
-    transport.on('disconnect', disconnectFnRef.current);
-
-    setHardwareWalletTransport(transport);
-    sendPaymentAndRedeemGiftCard({transport});
   };
 
   const onSwipeComplete = async () => {
@@ -698,26 +471,7 @@ const Confirm = () => {
     }
     setDisableSwipeSendButton(true);
     logger.debug('Swipe completed. Making payment...');
-    if (key?.hardwareSource) {
-      await onSwipeCompleteHardwareWallet(key);
-    } else {
-      await sendPaymentAndRedeemGiftCard({});
-    }
-  };
-
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        sendPaymentAndRedeemGiftCard({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      showError({
-        defaultErrorMessage: t('Unsupported hardware wallet'),
-      });
-    }
+    await sendPaymentAndRedeemGiftCard();
   };
 
   useEffect(() => {
@@ -741,9 +495,9 @@ const Confirm = () => {
     <ConfirmContainer>
       <DetailsList>
         <MemoizedGiftCardHeader amount={amount} cardConfig={cardConfig} />
-        {wallet || coinbaseAccount ? (
+        {wallet ? (
           <>
-            <Header hr>Summary</Header>
+            <Header hr>{t('Summary')}</Header>
             {wallet && isTSSWallet(wallet) && (
               <TSSProgressTracker
                 status={tssStatus}
@@ -771,7 +525,7 @@ const Confirm = () => {
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
               getBoostAmount(cardConfig, amount) ? (
                 <Amount
-                  description={'Subtotal'}
+                  description={t('Subtotal')}
                   amount={{
                     fiatAmount: formatFiatAmount(amount, cardConfig.currency),
                     cryptoAmount: '',
@@ -781,7 +535,7 @@ const Confirm = () => {
                 />
               ) : (
                 <Amount
-                  description={'Discount'}
+                  description={t('Discount')}
                   amount={{
                     fiatAmount: `— ${formatFiatAmount(
                       unsoldGiftCard.totalDiscount,
@@ -821,7 +575,7 @@ const Confirm = () => {
           </>
         ) : null}
       </DetailsList>
-      {wallet || coinbaseAccount ? (
+      {wallet ? (
         <>
           <SwipeButton
             title={t('Slide to send')}
@@ -831,31 +585,14 @@ const Confirm = () => {
         </>
       ) : null}
 
-      {key?.hardwareSource && wallet ? (
-        <ConfirmHardwareWalletModal
-          isVisible={isConfirmHardwareWalletModalVisible}
-          state={confirmHardwareState}
-          hardwareSource={key.hardwareSource}
-          transport={hardwareWalletTransport}
-          currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
-          onBackdropPress={() => {
-            setConfirmHardwareWalletVisible(false);
-            setResetSwipeButton(true);
-            setConfirmHardwareState(null);
-          }}
-          onPaired={onHardwareWalletPaired}
-        />
-      ) : null}
-
       <WalletSelector
         isVisible={walletSelectorVisible}
         setWalletSelectorVisible={setWalletSelectorVisible}
         walletsAndAccounts={memoizedKeysAndWalletsList}
         onWalletSelect={onWalletSelect}
-        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
         onBackdropPress={async () => {
           setWalletSelectorVisible(false);
-          if (!wallet && !coinbaseAccount) {
+          if (!wallet) {
             await sleep(100);
             navigation.goBack();
           }

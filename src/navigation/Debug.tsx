@@ -1,5 +1,16 @@
 import React from 'react';
-import {Alert, Platform, Button} from 'react-native';
+import {useTranslation} from 'react-i18next';
+import {
+  Alert,
+  Platform,
+  Button,
+  View,
+  ScrollView as RNScrollView,
+  Text,
+  TextProps,
+  ScrollViewProps,
+  StyleSheet,
+} from 'react-native';
 import Mailer from 'react-native-mail';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppDispatch, useAppSelector} from '../utils/hooks';
@@ -7,13 +18,14 @@ import {LogLevel} from '../store/log/log.models';
 import {RootStackParamList} from '../Root';
 import {RootState} from '../store';
 import {BaseText} from '../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme} from '../contexts';
 import {Caution, Slate30, SlateDark, White} from '../styles/colors';
 import {isAndroidStoragePermissionGranted} from '../utils/helper-methods';
 import RNFS from 'react-native-fs';
 import {ShareOptions} from 'react-native-share';
 import {shareFile as shareFileUtil} from '../utils/share';
 import DeviceInfo from 'react-native-device-info';
+import {withTemporarySessionLogFile} from '../utils/sessionLogs';
 const IS_DESKTOP = DeviceInfo.getDeviceType();
 
 export enum DebugScreens {
@@ -26,39 +38,92 @@ export type DebugScreenParamList = {
   };
 };
 
-const DebugContainer = styled.View`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  debugContainer: {
+    flex: 1,
+  },
+  buttonContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+  },
+  scrollView: {
+    marginVertical: 20,
+    marginHorizontal: 15,
+  },
+  titleError: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    paddingTop: 50,
+    paddingRight: 15,
+    paddingBottom: 8,
+    paddingLeft: 15,
+  },
+  descriptionError: {
+    fontSize: 14,
+    color: Caution,
+    paddingHorizontal: 15,
+  },
+  logError: {
+    fontSize: 14,
+  },
+});
 
-const ButtonContainer = styled.View`
-  padding: 20px 15px;
-`;
+const DebugContainer = ({children}: {children?: React.ReactNode}) => (
+  <View style={styles.debugContainer}>{children}</View>
+);
 
-const ScrollView = styled.ScrollView`
-  margin: 20px 15px;
-`;
+const ButtonContainer = ({children}: {children?: React.ReactNode}) => (
+  <View style={styles.buttonContainer}>{children}</View>
+);
 
-const TitleError = styled(BaseText)`
-  font-size: 18px;
-  font-weight: bold;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  padding: 50px 15px 8px 15px;
-`;
+const ScrollView = ({children, style, ...rest}: ScrollViewProps) => (
+  <RNScrollView style={[styles.scrollView, style]} {...rest}>
+    {children}
+  </RNScrollView>
+);
 
-const DescriptionError = styled(BaseText)`
-  font-size: 14px;
-  color: ${Caution};
-  padding: 0 15px;
-`;
+const TitleError = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => {
+    const theme = useTheme();
+    return (
+      <BaseText
+        ref={ref}
+        style={[
+          styles.titleError,
+          {color: theme.dark ? White : SlateDark},
+          style,
+        ]}
+        {...rest}
+      />
+    );
+  },
+);
 
-const LogError = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
+const DescriptionError = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <BaseText ref={ref} style={[styles.descriptionError, style]} {...rest} />
+  ),
+);
+
+const LogError = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.logError,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
 const DebugScreen: React.FC<
   NativeStackScreenProps<RootStackParamList, 'Debug'>
 > = ({route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logs = useAppSelector(({LOG}: RootState) => LOG.logs);
   const {name} = route.params || {name: ''};
@@ -88,30 +153,32 @@ const DebugScreen: React.FC<
           ? RNFS.LibraryDirectoryPath
           : RNFS.TemporaryDirectoryPath;
       const txtFilename = 'App-logs';
-      let filePath = `${rootPath}/${txtFilename}`;
 
-      await RNFS.mkdir(filePath);
+      await withTemporarySessionLogFile(
+        rootPath,
+        txtFilename,
+        data,
+        async filePath => {
+          const opts: ShareOptions = {
+            title: txtFilename,
+            url: `file://${filePath}`,
+            subject: 'App Logs',
+          };
 
-      filePath += '.txt';
-      const opts: ShareOptions = {
-        title: txtFilename,
-        url: `file://${filePath}`,
-        subject: 'App Logs',
-      };
-
-      await RNFS.writeFile(filePath, data, 'utf8');
-      await dispatch(shareFileUtil(opts));
+          await dispatch(shareFileUtil(opts));
+        },
+      );
     } catch (error: any) {
       Alert.alert(
-        'Error',
+        t('Error'),
         error.message,
         [
           {
-            text: 'Ok',
+            text: t('Ok'),
             onPress: () => console.log('OK: Email Error Response'),
           },
           {
-            text: 'Cancel',
+            text: t('Cancel'),
             onPress: () => console.log('CANCEL: Email Error Response'),
           },
         ],
@@ -133,11 +200,11 @@ const DebugScreen: React.FC<
           event,
           [
             {
-              text: 'Ok',
+              text: t('Ok'),
               onPress: () => console.log('OK: Email Error Response'),
             },
             {
-              text: 'Cancel',
+              text: t('Cancel'),
               onPress: () => console.log('CANCEL: Email Error Response'),
             },
           ],
@@ -149,11 +216,11 @@ const DebugScreen: React.FC<
 
   const showDisclaimer = (data: string, option: 'email' | 'share') => {
     Alert.alert(
-      'Warning',
-      'Be careful, this could contain sensitive private data.',
+      t('Warning'),
+      t('Be careful, this could contain sensitive private data.'),
       [
         {
-          text: 'Continue',
+          text: t('Continue'),
           onPress: () => {
             switch (option) {
               case 'share':
@@ -165,7 +232,7 @@ const DebugScreen: React.FC<
             }
           },
         },
-        {text: 'Cancel'},
+        {text: t('Cancel')},
       ],
       {cancelable: true},
     );
@@ -173,21 +240,21 @@ const DebugScreen: React.FC<
 
   return (
     <DebugContainer>
-      <TitleError>Oops, something went wrong.</TitleError>
+      <TitleError>{t('Oops, something went wrong.')}</TitleError>
       <DescriptionError>{name}</DescriptionError>
       <ScrollView>
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
         <Button
-          title="Share Logs"
+          title={t('Share Logs')}
           onPress={() => showDisclaimer(logStr, 'share')}
         />
       </ButtonContainer>
       {!IS_DESKTOP && (
         <ButtonContainer>
           <Button
-            title="Send Logs By Email"
+            title={t('Send Logs By Email')}
             onPress={() => showDisclaimer(logStr, 'email')}
           />
         </ButtonContainer>

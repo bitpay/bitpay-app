@@ -1,8 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -23,10 +23,12 @@ import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-const NotificationsContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: stretch;
-`;
+const styles = StyleSheet.create({
+  notificationsContainer: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+});
 
 const NotificationImage = {
   light: (
@@ -80,7 +82,7 @@ const NotificationsScreen = ({
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip"
+            accessibilityLabel={t('Skip')}
             buttonType={'pill'}
             touchableLibrary={'react-native'}
             onPress={onSkipPressRef.current}>
@@ -122,7 +124,9 @@ const NotificationsScreen = ({
   };
 
   return (
-    <NotificationsContainer testID="set-notifications-view">
+    <SafeAreaView
+      style={styles.notificationsContainer}
+      testID="set-notifications-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -150,7 +154,7 @@ const NotificationsScreen = ({
           <ActionContainer>
             <Button
               testID="allow-button"
-              accessibilityLabel="Allow notifications"
+              accessibilityLabel={t('Allow notifications')}
               buttonStyle={'primary'}
               onPress={() => onSetNotificationsPress(true)}>
               {t('Allow')}
@@ -159,7 +163,7 @@ const NotificationsScreen = ({
           <ActionContainer>
             <Button
               testID="deny-button"
-              accessibilityLabel="Deny notifications"
+              accessibilityLabel={t('Deny notifications')}
               buttonStyle={'secondary'}
               onPress={() => onSetNotificationsPress(false)}>
               {t('Deny')}
@@ -167,7 +171,7 @@ const NotificationsScreen = ({
           </ActionContainer>
         </CtaContainer>
       </ScrollView>
-    </NotificationsContainer>
+    </SafeAreaView>
   );
 };
 

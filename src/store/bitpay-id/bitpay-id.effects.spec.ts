@@ -2,7 +2,7 @@
  * Tests for bitpay-id.effects.ts
  *
  * Covers:
- *   - startFetchSession (success + failure)
+ *   - startFetchSession (success + failure + stale-cookie clear when paired)
  *   - startBitPayIdStoreInit (dispatches SUCCESS_INITIALIZE_STORE)
  *   - startBitPayIdAnalyticsInit (Braze merge branch, no-op when user is falsy)
  *   - checkLoginWithPasskey (no email, passkey false, passkey true, error 1001, other error)
@@ -10,10 +10,10 @@
  *   - startTwoFactorAuth (success, failure)
  *   - startDisconnectBitPayId (authenticated + unauthenticated paths)
  *   - startFetchBasicInfo (success, failure)
- *   - startFetchDoshToken (success, failure)
  */
 
 import configureTestStore from '@test/store';
+import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
 import {Network} from '../../constants';
 import {BitPayIdActionTypes} from './bitpay-id.types';
 import {
@@ -26,7 +26,6 @@ import {
   startTwoFactorAuth,
   startDisconnectBitPayId,
   startFetchBasicInfo,
-  startFetchDoshToken,
 } from './bitpay-id.effects';
 
 // ---------------------------------------------------------------------------
@@ -53,11 +52,6 @@ jest.mock('../../managers/CloudflareChallengeManager', () => ({
   cloudflareChallengeManager: {
     present: jest.fn(),
   },
-}));
-
-jest.mock('../../lib/dosh', () => ({
-  __esModule: true,
-  default: {clearUser: jest.fn()},
 }));
 
 jest.mock('../../lib/Mixpanel', () => ({
@@ -104,15 +98,6 @@ jest.mock('../shop', () => ({
   },
 }));
 
-jest.mock('../card', () => ({
-  CardEffects: {
-    startCardStoreInit: jest.fn(() => ({type: 'CARD/INIT'})),
-  },
-  CardActions: {
-    isJoinedWaitlist: jest.fn(() => ({type: 'CARD/WAITLIST'})),
-  },
-}));
-
 jest.mock('../../utils/passkey', () => ({
   getPasskeyStatus: jest.fn(),
   signInWithPasskey: jest.fn(),
@@ -142,7 +127,6 @@ jest.mock('../../api/user', () => ({
   default: {
     fetchInitialUserData: jest.fn(),
     fetchBasicInfo: jest.fn(),
-    fetchDoshToken: jest.fn(),
   },
 }));
 
@@ -201,7 +185,6 @@ const makeUser = (overrides = {}): any => ({
 
 const makeInitialData = (userOverrides = {}): any => ({
   basicInfo: makeUser(userOverrides),
-  doshToken: null,
 });
 
 const baseStore = () =>
@@ -255,6 +238,69 @@ describe('startFetchSession', () => {
     // The fetchSessionStatus transitions to 'loading' and then fails → check state
     // failedFetchSession sets fetchSessionStatus to 'failed'
     expect(store.getState().BITPAY_ID.fetchSessionStatus).toBe('failed');
+  });
+
+  it('clears cookies and re-fetches when a paired user has a dead session', async () => {
+    (MockAuthApi.fetchSession as jest.Mock)
+      .mockResolvedValueOnce(makeSession({isAuthenticated: false}))
+      .mockResolvedValueOnce(
+        makeSession({csrfToken: 'fresh-token', isAuthenticated: false}),
+      );
+
+    const store = baseStore();
+    await store.dispatch(startFetchSession());
+
+    expect(clearAllCookiesEverywhere).toHaveBeenCalledTimes(1);
+    expect(MockAuthApi.fetchSession).toHaveBeenCalledTimes(2);
+    // The stored csrfToken must come from the session fetched after the clear.
+    expect(store.getState().BITPAY_ID.session.csrfToken).toBe('fresh-token');
+  });
+
+  it('does NOT clear cookies when the user is not paired', async () => {
+    (MockAuthApi.fetchSession as jest.Mock).mockResolvedValueOnce(
+      makeSession({isAuthenticated: false}),
+    );
+
+    const store = configureTestStore({
+      BITPAY_ID: {
+        session: makeSession(),
+        apiToken: {[Network.mainnet]: ''},
+      },
+      APP: {network: Network.mainnet},
+    });
+    await store.dispatch(startFetchSession());
+
+    expect(clearAllCookiesEverywhere).not.toHaveBeenCalled();
+    expect(MockAuthApi.fetchSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT clear cookies when the session is authenticated', async () => {
+    (MockAuthApi.fetchSession as jest.Mock).mockResolvedValueOnce(
+      makeSession({isAuthenticated: true}),
+    );
+
+    const store = baseStore();
+    await store.dispatch(startFetchSession());
+
+    expect(clearAllCookiesEverywhere).not.toHaveBeenCalled();
+    expect(MockAuthApi.fetchSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('still re-fetches when clearing cookies throws', async () => {
+    (clearAllCookiesEverywhere as jest.Mock).mockRejectedValueOnce(
+      new Error('cookie store unavailable'),
+    );
+    (MockAuthApi.fetchSession as jest.Mock)
+      .mockResolvedValueOnce(makeSession({isAuthenticated: false}))
+      .mockResolvedValueOnce(
+        makeSession({csrfToken: 'fresh-token', isAuthenticated: false}),
+      );
+
+    const store = baseStore();
+    await store.dispatch(startFetchSession());
+
+    expect(MockAuthApi.fetchSession).toHaveBeenCalledTimes(2);
+    expect(store.getState().BITPAY_ID.session.csrfToken).toBe('fresh-token');
   });
 });
 
@@ -619,6 +665,23 @@ describe('startTwoFactorAuth', () => {
     // upperFirst('Bad two-factor code') = 'Bad two-factor code'
     expect(errMsg).toBe('Bad two-factor code');
   });
+
+  it('never surfaces an HTML response body as the error message', async () => {
+    const axiosErr: any = {
+      isAxiosError: true,
+      response: {
+        status: 403,
+        data: '<!DOCTYPE html><html><head><title>Just a moment...</title>',
+      },
+      message: 'Request failed with status code 403',
+    };
+    (MockAuthApi.submitTwoFactor as jest.Mock).mockRejectedValueOnce(axiosErr);
+    const store = baseStore();
+    await store.dispatch(startTwoFactorAuth('000000'));
+    expect(store.getState().BITPAY_ID.twoFactorAuthError).toBe(
+      'Request failed with status code 403',
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -701,34 +764,5 @@ describe('startFetchBasicInfo', () => {
       store.dispatch(startFetchBasicInfo('token-abc')),
     ).rejects.toThrow('fetch failed');
     expect(store.getState().BITPAY_ID.fetchBasicInfoStatus).toBe('failed');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// startFetchDoshToken
-// ---------------------------------------------------------------------------
-
-describe('startFetchDoshToken', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('dispatches successFetchDoshToken with the returned token', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockResolvedValueOnce('dosh-xyz');
-
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-
-    expect(store.getState().BITPAY_ID.doshToken[Network.mainnet]).toBe(
-      'dosh-xyz',
-    );
-  });
-
-  it('dispatches failedFetchDoshToken when API call fails', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockRejectedValueOnce(
-      new Error('dosh error'),
-    );
-
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-    expect(store.getState().BITPAY_ID.fetchDoshTokenStatus).toBe('failed');
   });
 });

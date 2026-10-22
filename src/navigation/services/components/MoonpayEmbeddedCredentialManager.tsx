@@ -29,12 +29,18 @@ import {
   registerMoonpayEmbeddedRecheckListener,
   setMoonpayEmbeddedAnonymousCredentials,
   setMoonpayEmbeddedCredentials,
+  resolveMoonpayEmbeddedCapabilities,
+  setMoonpayEmbeddedApplePaySupported,
+  setMoonpayEmbeddedGooglePaySupported,
   setMoonpayEmbeddedEnabled,
   setMoonpayEmbeddedStatus,
 } from '../../../store/buy-crypto/buy-crypto.effects';
 import {MoonPayCheckFrame} from './MoonpayEmbeddedCheckConnection';
 import {MoonPayResetFrame} from './MoonPayResetFrame';
-import {moonpayEnv} from '../buy-crypto/utils/moonpay-utils';
+import {
+  isAnyMoonpayEmbeddedPaymentMethodEnabled,
+  moonpayEnv,
+} from '../buy-crypto/utils/moonpay-utils';
 import {MoonpayClientCredentials} from '../utils/moonpayFrameCrypto';
 import {logManager} from '../../../managers/LogManager';
 import {
@@ -86,18 +92,45 @@ export function MoonpayEmbeddedCredentialManager() {
   const embeddedBuyDisabled =
     cachedConfig?.buyCrypto?.moonpay?.config?.embeddedBuyDisabled;
 
-  const localConditionsMet =
-    Platform.OS === 'ios' && country === 'US' && !!userEid && applePaySupported;
+  // Apple Pay embedded additionally needs native wallet support.
+  const applePaySupportConditionsMet =
+    Platform.OS === 'ios' && applePaySupported;
 
+  // Google Pay embedded is Android only. Whether the device can actually run it
+  // is decided inside the WebView by the Payment Request API, which the frame
+  // reports back as 'unsupported' when it is missing.
+  const googlePaySupportConditionsMet = Platform.OS === 'android';
+
+  // Embedded buy is available for all Moonpay supported countries except UK.
+  const localConditionsMet = !!country && country !== 'GB';
+
+  // No point connecting if the global switch is off, or if every specific
+  // embedded payment method (Apple Pay, Google Pay, Cards, SEPA) has been
+  // disabled by config (or, for the wallets, unsupported on this device).
   const moonpayEmbeddedEnabled =
-    localConditionsMet && (!cachedConfigObj || embeddedBuyDisabled !== true);
+    localConditionsMet &&
+    !!userEid &&
+    (!cachedConfigObj ||
+      (embeddedBuyDisabled !== true &&
+        isAnyMoonpayEmbeddedPaymentMethodEnabled(cachedConfig?.buyCrypto, {
+          applePaySupported: applePaySupportConditionsMet,
+          googlePaySupported: googlePaySupportConditionsMet,
+        })));
 
   // -------------------------------------------------------------------------
-  // Keep module-level cache in sync with the derived flag
+  // Keep module-level cache in sync with the derived flags
   // -------------------------------------------------------------------------
   useEffect(() => {
     setMoonpayEmbeddedEnabled(moonpayEmbeddedEnabled);
   }, [moonpayEmbeddedEnabled]);
+
+  useEffect(() => {
+    setMoonpayEmbeddedApplePaySupported(applePaySupportConditionsMet);
+  }, [applePaySupportConditionsMet]);
+
+  useEffect(() => {
+    setMoonpayEmbeddedGooglePaySupported(googlePaySupportConditionsMet);
+  }, [googlePaySupportConditionsMet]);
 
   // -------------------------------------------------------------------------
   // Register recheck listener so external screens (e.g. MoonpayConnectionSettings)
@@ -332,6 +365,7 @@ export function MoonpayEmbeddedCredentialManager() {
         setMoonpayEmbeddedCredentials(credentials);
         setMoonpayEmbeddedStatus('active');
         scheduleRefresh(credentials);
+        resolveMoonpayEmbeddedCapabilities(credentials.accessToken);
       }}
       onConnectionRequired={anonymousCredentials => {
         logManager.debug(

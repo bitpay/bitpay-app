@@ -1,10 +1,20 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {SvgProps} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import type {TFunction} from 'i18next';
+import {
+  ScrollView as RNScrollView,
+  ScrollViewProps,
+  StyleSheet,
+  Text,
+  TextProps,
+  View,
+  ViewProps,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useTheme} from '../../../contexts';
 import {H2, H3, Paragraph} from '../../../components/styled/Text';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   Caution25,
@@ -25,64 +35,125 @@ import IconKycStatusPending from '../../../../assets/img/kyc_status_pending.svg'
 import IconKycStatusDenied from '../../../../assets/img/kyc_status_denied.svg';
 import IconKycGetVerified from '../../../../assets/img/kyc_get_verified.svg';
 
-const Container = styled(SafeAreaView)`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    paddingVertical: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
+    flex: 1,
+    paddingVertical: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  iconStatus: {
+    marginBottom: 8,
+  },
+  title: {
+    textAlign: 'left',
+  },
+  body: {
+    textAlign: 'left',
+    fontWeight: '400',
+  },
+  buttonContainer: {
+    marginTop: 32,
+  },
+  getVerifiedTitle: {
+    fontSize: 31,
+    lineHeight: 38,
+    textAlign: 'left',
+    fontWeight: '700',
+    marginBottom: 32,
+  },
+  illustrationContainer: {
+    borderRadius: 32,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+});
+
+const Container = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.container, style]} {...rest} />
+);
 
 // flexGrow keeps the status states' button pinned to the bottom when the
 // content is shorter than the viewport
-const ScrollContainer = styled.ScrollView.attrs({
-  contentContainerStyle: {flexGrow: 1},
-})`
-  padding: 0 ${ScreenGutter};
-`;
+const ScrollContainer = ({style, ...rest}: ScrollViewProps) => (
+  <RNScrollView
+    style={[styles.scrollContainer, style]}
+    contentContainerStyle={styles.scrollContent}
+    {...rest}
+  />
+);
 
-const Content = styled.View`
-  flex: 1;
-  padding: 0 ${ScreenGutter};
-`;
+const Content = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.content, style]} {...rest} />
+);
 
-const IconStatus = styled.View`
-  margin-bottom: 8px;
-`;
+const IconStatus = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.iconStatus, style]} {...rest} />
+);
 
-const Title = styled(H3)`
-  text-align: left;
-`;
+const Title = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => (
+  <H3 ref={ref} style={[styles.title, style]} {...rest} />
+));
 
-const Body = styled(Paragraph)`
-  text-align: left;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-  font-weight: 400;
-`;
+const Body = React.forwardRef<Text, TextProps>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[
+        styles.body,
+        {color: theme.dark ? NeutralSlate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 
-const ButtonContainer = styled.View`
-  margin-top: 32px;
-`;
+const ButtonContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.buttonContainer, style]} {...rest} />
+);
 
-const GetVerifiedTitle = styled(H2)`
-  font-size: 31px;
-  line-height: 38px;
-  text-align: left;
-  font-weight: 700;
-  margin-bottom: 32px;
-`;
+const GetVerifiedTitle = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <H2 ref={ref} style={[styles.getVerifiedTitle, style]} {...rest} />
+  ),
+);
 
-const IllustrationContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
-  border-radius: 32px;
-  padding: 24px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
-`;
+const IllustrationContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.illustrationContainer,
+        {backgroundColor: theme.dark ? LightBlack : LightBlue},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 // notStarted renders onboarding; every other state uses STATE_CONFIG below.
 type KycStateConfig = {
   icon: React.FC<SvgProps>;
   iconBg: string;
-  titleKey: string;
-  bodyKey: string;
+  getTitle: (t: TFunction) => string;
+  getBody: (t: TFunction) => string;
 };
 
 const STATE_CONFIG: Record<
@@ -92,36 +163,44 @@ const STATE_CONFIG: Record<
   inProgress: {
     icon: IconKycStatusPending,
     iconBg: Warning25,
-    titleKey: 'Finish verifying your identity',
-    bodyKey:
-      'You have a verification in progress. Click the button below to pick up where you left off.',
+    getTitle: t => t('Finish verifying your identity'),
+    getBody: t =>
+      t(
+        'You have a verification in progress. Click the button below to pick up where you left off.',
+      ),
   },
   actionRequired: {
     icon: IconKycStatusDenied,
     iconBg: Caution25,
-    titleKey: 'Action required on your application',
-    bodyKey: 'Click the button below to resume your application.',
+    getTitle: t => t('Action required on your application'),
+    getBody: t => t('Click the button below to resume your application.'),
   },
   denied: {
     icon: IconKycStatusDenied,
     iconBg: Caution25,
-    titleKey: 'Application Denied',
-    bodyKey:
-      'Your account was denied. You will not be able to use BitPay products or services.',
+    getTitle: t => t('Application Denied'),
+    getBody: t =>
+      t(
+        'Your account was denied. You will not be able to use BitPay products or services.',
+      ),
   },
   inReview: {
     icon: IconKycStatusPending,
     iconBg: Warning25,
-    titleKey: 'Application in Review',
-    bodyKey:
-      'Your application is in review, please wait for an email to get your updated status.',
+    getTitle: t => t('Application in Review'),
+    getBody: t =>
+      t(
+        'Your application is in review, please wait for an email to get your updated status.',
+      ),
   },
   success: {
     icon: IconKycStatusVerified,
     iconBg: Success25,
-    titleKey: 'Application Success',
-    bodyKey:
-      'Your account was approved! You may now continue to use BitPay products and services.',
+    getTitle: t => t('Application Success'),
+    getBody: t =>
+      t(
+        'Your account was approved! You may now continue to use BitPay products and services.',
+      ),
   },
 };
 
@@ -144,8 +223,18 @@ export const VerifyIdentityScreen: React.FC = () => {
     }
   }, [dispatch, user]);
 
-  const handleResume = () => {
-    dispatch(SumSubEffects.startKycVerification());
+  // Without the ongoing process modal there is nothing suppressing input while
+  // the token is minted; a loading state keeps a second tap from opening a
+  // second attempt (RN-2906).
+  const [buttonState, setButtonState] = useState<ButtonState>(null);
+
+  const handleResume = async () => {
+    setButtonState('loading');
+    try {
+      await dispatch(SumSubEffects.startKycVerification());
+    } finally {
+      setButtonState(null);
+    }
   };
 
   if (state === 'notStarted') {
@@ -163,29 +252,35 @@ export const VerifyIdentityScreen: React.FC = () => {
           </Body>
 
           <ButtonContainer>
-            <Button onPress={handleResume}>{t('Verify My Identity')}</Button>
+            <Button state={buttonState} onPress={handleResume}>
+              {t('Verify My Identity')}
+            </Button>
           </ButtonContainer>
         </ScrollContainer>
       </Container>
     );
   }
 
-  const {icon: Icon, titleKey, bodyKey} = STATE_CONFIG[state];
+  const {icon: Icon, getTitle, getBody} = STATE_CONFIG[state];
 
   return (
     <Container>
       <ScrollContainer>
         <Content>
           <IconStatus>{Icon && <Icon />}</IconStatus>
-          <Title>{t(titleKey)}</Title>
-          <Body>{t(bodyKey)}</Body>
+          <Title>{getTitle(t)}</Title>
+          <Body>{getBody(t)}</Body>
         </Content>
 
         <ButtonContainer>
           {state === 'inProgress' ? (
-            <Button onPress={handleResume}>{t('Continue Verification')}</Button>
+            <Button state={buttonState} onPress={handleResume}>
+              {t('Continue Verification')}
+            </Button>
           ) : state === 'actionRequired' ? (
-            <Button onPress={handleResume}>{t('Resume Application')}</Button>
+            <Button state={buttonState} onPress={handleResume}>
+              {t('Resume Application')}
+            </Button>
           ) : (
             <Button onPress={goHome}>{t('Go Home')}</Button>
           )}

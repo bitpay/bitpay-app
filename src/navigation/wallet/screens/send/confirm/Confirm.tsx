@@ -1,21 +1,9 @@
-import Transport from '@ledgerhq/hw-transport';
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useLayoutEffect,
-  useRef,
-} from 'react';
+import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp, StackActions} from '@react-navigation/core';
+import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../../../WalletGroup';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
-  useAppDispatch,
-  useAppSelector,
-  useMount,
-} from '../../../../../utils/hooks';
-import {
-  Key,
   Recipient,
   TransactionProposal,
   TxDetails,
@@ -68,7 +56,7 @@ import {
   InfoTitle,
   Link,
 } from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {useTranslation} from 'react-i18next';
 import {
   ActiveOpacity,
@@ -78,7 +66,7 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Platform} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   GetFeeOptions,
@@ -97,19 +85,6 @@ import prompt from 'react-native-prompt-android';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../../components/modal/import-ledger-wallet/utils';
-import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {RootStacks} from '../../../../../Root';
@@ -117,9 +92,28 @@ import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const styles = StyleSheet.create({
+  verticalPadding: {
+    paddingVertical: parseInt(ScreenGutter, 10),
+    paddingHorizontal: 0,
+  },
+  setting: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    height: 58,
+  },
+  settingTitle: {
+    flexGrow: 1,
+    flexShrink: 1,
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    letterSpacing: 0,
+    textAlign: 'left',
+    marginRight: 5,
+  },
+});
 
 export interface SolanaPayOpts {
   reference?: string | null;
@@ -142,24 +136,24 @@ export interface ConfirmParamList {
   solanaPayOpts?: SolanaPayOpts;
 }
 
-export const Setting = styled(TouchableOpacity)`
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  height: 58px;
-`;
+export const Setting: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.setting, style]} {...rest} />
+);
 
-export const SettingTitle = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-  flex-grow: 1;
-  flex-shrink: 1;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-align: left;
-  margin-right: 5px;
-`;
+export const SettingTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.settingTitle, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
@@ -193,12 +187,6 @@ const Confirm = () => {
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
   const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
     useState(false);
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
   const showErrorMessage = useCallback(
@@ -264,62 +252,6 @@ const Confirm = () => {
       ),
     });
   }, [navigation, speedup, t]);
-
-  useMount(() => {
-    return () => {
-      if (hardwareWalletTransport) {
-        try {
-          hardwareWalletTransport.close();
-        } catch (err) {
-          // swallow
-        }
-      }
-    };
-  });
-
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
-  }, []);
 
   const isTxLevelAvailable = () => {
     const includedChains = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
@@ -434,53 +366,18 @@ const Confirm = () => {
     hidePaymentSent();
   };
 
-  const startSendingPayment = async ({
-    transport,
-  }: {transport?: Transport} = {}) => {
-    const isUsingHardwareWallet = !!transport;
-
+  const startSendingPayment = async () => {
     try {
-      if (isUsingHardwareWallet) {
-        const {chain, network} = wallet.credentials;
-        const configFn = currencyConfigs[chain];
-        if (!configFn) {
-          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-        }
-        const params = configFn(network);
-        await prepareLedgerApp(
-          params.appName,
-          transportRef,
-          setHardwareWalletTransport,
-          onDisconnect,
-          setPromptOpenAppState,
-        );
-        setConfirmHardwareState('sending');
-        await sleep(500);
-        await dispatch(
-          startSendPayment({
-            txp,
-            key,
-            wallet,
-            recipient,
-            transport,
-          }),
-        );
-        setConfirmHardwareState('complete');
-        await sleep(1000);
-        setConfirmHardwareWalletVisible(false);
-      } else {
-        const result = await dispatch(
-          startSendPayment({
-            txp,
-            key,
-            wallet,
-            recipient,
-            transport,
-            ...(isTSSWallet(wallet) && {tssCallbacks}),
-            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-          }),
-        );
-      }
+      await dispatch(
+        startSendPayment({
+          txp,
+          key,
+          wallet,
+          recipient,
+          ...(isTSSWallet(wallet) && {tssCallbacks}),
+          ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
+        }),
+      );
 
       await sleep(300);
       showPaymentSent({
@@ -489,63 +386,51 @@ const Confirm = () => {
         onCloseModal,
       });
       await sleep(300);
-      if (recipient.type === 'coinbase') {
-        navigation.dispatch(StackActions.popToTop());
-        navigation.dispatch(StackActions.push('CoinbaseRoot'));
+      if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 2,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.ACCOUNT_DETAILS,
+                params: {
+                  keyId: wallet.keyId,
+                  selectedAccountAddress: wallet.receiveAddress,
+                },
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
+                },
+              },
+            ],
+          }),
+        );
       } else {
-        if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
                 },
-                {
-                  name: WalletScreens.ACCOUNT_DETAILS,
-                  params: {
-                    keyId: wallet.keyId,
-                    selectedAccountAddress: wallet.receiveAddress,
-                  },
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        } else {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        }
+              },
+            ],
+          }),
+        );
       }
     } catch (err) {
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -569,43 +454,8 @@ const Confirm = () => {
     }
   };
 
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        startSendingPayment({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      showErrorMessage(
-        CustomErrorMessage({
-          errMsg: 'Unsupported hardware wallet',
-          title: t('Uh oh, something went wrong'),
-        }),
-      );
-    }
-  };
-
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = (args: {transport: Transport}) => {
-    const {transport} = args;
-    transport.on('disconnect', disconnectFnRef.current);
-    setHardwareWalletTransport(transport);
-    startSendingPayment({transport});
-  };
-
   const onSwipeComplete = async () => {
-    if (key.hardwareSource) {
-      await onSwipeCompleteHardwareWallet(key);
-    } else {
-      await startSendingPayment();
-    }
+    await startSendingPayment();
   };
 
   useEffect(() => {
@@ -668,10 +518,7 @@ const Confirm = () => {
     });
   }
 
-  if (
-    recipient.type &&
-    (recipient.type === 'coinbase' || recipient.type === 'contact')
-  ) {
+  if (recipient.type === 'contact') {
     recipientData = {
       recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
@@ -721,7 +568,7 @@ const Confirm = () => {
             {solanaPayOpts ? (
               <>
                 <Hr style={{marginBottom: 15}} />
-                <H6>{'SolanaPay Data'}</H6>
+                <H6>{t('SolanaPay Data')}</H6>
                 {solanaPayOpts?.label ? (
                   <SharedDetailRow
                     height={40}
@@ -846,10 +693,10 @@ const Confirm = () => {
                     )}
                   </InfoDescription>
 
-                  <VerticalPadding>
+                  <View style={styles.verticalPadding}>
                     <TouchableOpacity
                       testID="confirm-destination-tag-learn-more-button"
-                      accessibilityLabel="Confirm destination tag learn more button"
+                      accessibilityLabel={t('Learn more about destination tag')}
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
                         haptic('impactLight');
@@ -859,7 +706,7 @@ const Confirm = () => {
                       }}>
                       <Link>{t('Learn More')}</Link>
                     </TouchableOpacity>
-                  </VerticalPadding>
+                  </View>
                 </Info>
               </>
             ) : null}
@@ -944,22 +791,6 @@ const Confirm = () => {
           onSwipeComplete={onSwipeComplete}
         />
       </ConfirmContainer>
-
-      {key?.hardwareSource && wallet ? (
-        <ConfirmHardwareWalletModal
-          isVisible={isConfirmHardwareWalletModalVisible}
-          state={confirmHardwareState}
-          hardwareSource={key.hardwareSource}
-          transport={hardwareWalletTransport}
-          currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
-          onBackdropPress={() => {
-            setConfirmHardwareWalletVisible(false);
-            setResetSwipeButton(true);
-            setConfirmHardwareState(null);
-          }}
-          onPaired={onHardwareWalletPaired}
-        />
-      ) : null}
     </>
   );
 };

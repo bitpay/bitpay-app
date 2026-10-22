@@ -16,6 +16,7 @@ import {
   createWalletWithOpts,
   detectAndCreateTokensForEachEvmWallet,
   addWallet,
+  getMissingTestnetAccountCurrencies,
 } from './create';
 import {Network} from '../../../../constants';
 
@@ -110,6 +111,7 @@ jest.mock('../../utils/currency', () => ({
   IsERCToken: jest.fn(() => false),
   IsSegwitCoin: jest.fn((coin: string) => coin === 'btc'),
   IsSVMChain: jest.fn(() => false),
+  IsEVMChain: jest.fn((chain: string) => ['eth', 'matic'].includes(chain)),
   IsVMChain: jest.fn((chain: string) =>
     ['eth', 'matic', 'sol'].includes(chain),
   ),
@@ -656,6 +658,53 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
   });
 });
 
+describe('detectAndCreateTokensForEachEvmWallet – SVM token wallet lookup', () => {
+  beforeEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    const {IsSVMChain} = require('../../utils/currency');
+    IsSVMChain.mockReturnValue(false);
+  });
+
+  it('links an already created SVM token wallet whose mint is not lowercased', async () => {
+    const {IsVMChain, IsERCToken, IsSVMChain} = require('../../utils/currency');
+    IsVMChain.mockReturnValue(true);
+    IsSVMChain.mockReturnValue(true);
+    IsERCToken.mockImplementation(
+      (currencyAbbreviation: string) => currencyAbbreviation === 'usdc',
+    );
+
+    const mint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+    const {
+      getSVMTokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
+    getSVMTokenBalanceByWallet.mockReturnValue(() =>
+      Promise.resolve([{mint, amount: '1000000', decimals: 6}]),
+    );
+
+    const wallet = makeMockWallet({
+      id: 'wallet-1',
+      chain: 'sol',
+      currencyAbbreviation: 'sol',
+      tokens: [],
+    });
+    const tokenWallet = makeMockWallet({
+      id: `wallet-1-${mint}`,
+      chain: 'sol',
+      currencyAbbreviation: 'usdc',
+    });
+    const key: any = {id: 'key-1', wallets: [wallet, tokenWallet]};
+
+    const store = configureTestStore(baseState);
+    await store.dispatch(detectAndCreateTokensForEachEvmWallet({key}));
+
+    expect(wallet.tokens).toEqual([`wallet-1-${mint}`]);
+
+    const {startUpdateWalletStatus} = require('../status/status');
+    expect(startUpdateWalletStatus).not.toHaveBeenCalled();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // addWallet – token wallet path (isToken=true)
 // ---------------------------------------------------------------------------
@@ -743,5 +792,93 @@ describe('addWallet – token path', () => {
     );
 
     expect(result).toBeDefined();
+  });
+});
+
+describe('detectAndCreateTokensForEachEvmWallet – testnet wallets', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('does not copy mainnet tokens onto an EVM testnet wallet', async () => {
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
+    const wallet = makeMockWallet({network: Network.testnet});
+    const key: any = {id: 'key-1', wallets: [wallet]};
+
+    const store = configureTestStore(baseState);
+    await store.dispatch(detectAndCreateTokensForEachEvmWallet({key}));
+
+    expect(getERC20TokenBalanceByWallet).not.toHaveBeenCalled();
+  });
+
+  it('still checks the mainnet wallet that shares the address', async () => {
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
+    const mainnetWallet = makeMockWallet({id: 'mainnet-eth'});
+    const testnetWallet = makeMockWallet({
+      id: 'sepolia-eth',
+      network: Network.testnet,
+    });
+    const key: any = {id: 'key-1', wallets: [mainnetWallet, testnetWallet]};
+
+    const store = configureTestStore(baseState);
+    await store.dispatch(detectAndCreateTokensForEachEvmWallet({key}));
+
+    expect(getERC20TokenBalanceByWallet).toHaveBeenCalledTimes(1);
+    expect(getERC20TokenBalanceByWallet).toHaveBeenCalledWith({
+      chain: 'eth',
+      address: '0xMockAddress',
+    });
+  });
+});
+
+describe('getMissingTestnetAccountCurrencies', () => {
+  const evmChains = ['eth', 'matic', 'arb', 'base', 'op'];
+
+  it('lists every EVM chain the account has no testnet wallet for', () => {
+    const key: any = {
+      wallets: [
+        makeMockWallet({id: 'eth-main', chain: 'eth'}),
+        makeMockWallet({id: 'eth-test', chain: 'eth', network: 'testnet'}),
+        // Another account's testnet wallet does not count.
+        makeMockWallet({
+          id: 'matic-other',
+          chain: 'matic',
+          network: 'testnet',
+          receiveAddress: '0xOtherAccount',
+        }),
+      ],
+    };
+
+    const missing = getMissingTestnetAccountCurrencies(
+      key,
+      '0xMockAddress',
+      false,
+    ).map(({chain}) => chain);
+
+    expect(missing).toEqual(evmChains.filter(chain => chain !== 'eth'));
+  });
+
+  it('returns nothing once every chain has a testnet wallet', () => {
+    const key: any = {
+      wallets: evmChains.map(chain =>
+        makeMockWallet({id: `${chain}-test`, chain, network: 'testnet'}),
+      ),
+    };
+
+    expect(
+      getMissingTestnetAccountCurrencies(key, '0xMockAddress', false),
+    ).toEqual([]);
+  });
+
+  it('offers Solana devnet for a Solana account', () => {
+    expect(
+      getMissingTestnetAccountCurrencies(
+        {wallets: []} as any,
+        'SolAddress',
+        true,
+      ).map(({chain}) => chain),
+    ).toEqual(['sol']);
   });
 });

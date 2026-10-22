@@ -126,12 +126,6 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       ),
       cta: () => setMultisigModalType('join'),
     },
-    {
-      id: 'coinbase',
-      title: t('Coinbase Account'),
-      description: t('Connect your Coinbase account'),
-      cta: () => navigation.navigate('CoinbaseRoot'),
-    },
   ];
 
   const showErrorModal = (e: string) => {

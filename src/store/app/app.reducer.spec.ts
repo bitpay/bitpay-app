@@ -48,7 +48,6 @@ describe('appReducer — default state', () => {
     expect(state.hasViewedZenLedgerWarning).toBe(false);
     expect(state.hasViewedBillsTab).toBe(false);
     expect(state.dismissedMarketingCardIds).toEqual([]);
-    expect(state.isImportLedgerModalVisible).toBe(false);
     expect(state.inAppBrowserOpen).toBe(false);
     expect(state.tokensDataLoaded).toBe(false);
     expect(state.showArchaxBanner).toBe(false);
@@ -58,29 +57,6 @@ describe('appReducer — default state', () => {
     const state = freshState();
     const next = appReducer(state, {type: 'COMPLETELY_UNKNOWN'} as any);
     expect(next).toBe(state);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// IMPORT_LEDGER_MODAL_TOGGLED
-// ---------------------------------------------------------------------------
-
-describe('IMPORT_LEDGER_MODAL_TOGGLED', () => {
-  it('sets isImportLedgerModalVisible to true', () => {
-    const state = appReducer(freshState(), {
-      type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
-      payload: true,
-    });
-    expect(state.isImportLedgerModalVisible).toBe(true);
-  });
-
-  it('sets isImportLedgerModalVisible to false', () => {
-    const base: AppState = {...freshState(), isImportLedgerModalVisible: true};
-    const state = appReducer(base, {
-      type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
-      payload: false,
-    });
-    expect(state.isImportLedgerModalVisible).toBe(false);
   });
 });
 
@@ -269,12 +245,18 @@ describe('SHOW_BOTTOM_NOTIFICATION_MODAL', () => {
 });
 
 describe('DISMISS_BOTTOM_NOTIFICATION_MODAL', () => {
-  it('dismisses the modal', () => {
-    const base: AppState = {...freshState(), showBottomNotificationModal: true};
+  it('dismisses the modal and preserves its config during the close animation', () => {
+    const config = {title: 'Test'} as any;
+    const base: AppState = {
+      ...freshState(),
+      showBottomNotificationModal: true,
+      bottomNotificationModalConfig: config,
+    };
     const state = appReducer(base, {
       type: AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL,
     });
     expect(state.showBottomNotificationModal).toBe(false);
+    expect(state.bottomNotificationModalConfig).toBe(config);
   });
 });
 
@@ -288,6 +270,15 @@ describe('RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG', () => {
       type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
     });
     expect(state.bottomNotificationModalConfig).toBeUndefined();
+  });
+
+  it('preserves the state reference when the config is already empty', () => {
+    const base = freshState();
+    const state = appReducer(base, {
+      type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
+    });
+
+    expect(state).toBe(base);
   });
 });
 
@@ -981,6 +972,16 @@ describe('misc flags', () => {
       payload: true,
     });
     expect(state.showArchaxBanner).toBe(true);
+  });
+
+  it('SHOW_ARCHAX_BANNER preserves the state reference when unchanged', () => {
+    const base = {...freshState(), showArchaxBanner: true};
+    const state = appReducer(base, {
+      type: AppActionTypes.SHOW_ARCHAX_BANNER,
+      payload: true,
+    });
+
+    expect(state).toBe(base);
   });
 });
 

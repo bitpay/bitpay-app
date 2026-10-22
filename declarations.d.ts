@@ -13,8 +13,6 @@ declare module '@env' {
   export const BRAZE_EXPORT_API_KEY: string;
   export const BRAZE_MERGE_AND_DELETE_API_KEY: string;
   export const BRAZE_REST_API_ENDPOINT: string;
-  export const COINBASE_CLIENT_ID: string;
-  export const COINBASE_CLIENT_SECRET: string;
   export const DISABLE_DEVELOPMENT_LOGGING: string;
   export const DOSH_APP_ID: string;
   export const DOSH_WHITELIST: string;
@@ -95,3 +93,7 @@ declare module '@sumsub/react-native-mobilesdk-module' {
 
   export default SNSMobileSDK;
 }
+
+// moment's per-locale files are imported only for their side effect of
+// registering the locale (src/utils/momentLocales.ts).
+declare module 'moment/locale/*';

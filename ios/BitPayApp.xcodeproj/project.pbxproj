@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B17FA8700A11CE0000000001 /* BitPayFabricModalPresenter.mm in Sources */ = {isa = PBXBuildFile; fileRef = B17FA8700A11CE0000000002 /* BitPayFabricModalPresenter.mm */; };
 		03632D4B8959429DA3B141C2 /* Archivo-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EF767449FFE9477D8B33CD84 /* Archivo-Medium.ttf */; };
 		06BC8C600A86B5001B6303AC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */; };
 		0F819B33648D4741AAFCAD09 /* Archivo-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4BD0D9E39B2B473191E700CE /* Archivo-ExtraBold.ttf */; };
@@ -15,8 +16,6 @@
 		4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.mm */; };
 		523EFC4FD62CB0CD2FBD02FC /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */; };
 		52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */; };
-		5B31AAFE2786387B002765E1 /* RCTDosh.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.mm */; };
-		5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
 		5B5631782838854000C395A8 /* PassKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5631772838854000C395A8 /* PassKit.framework */; };
 		5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5BCF1C342740B8B2006D872E /* BootSplash.storyboard */; };
 		5BEA4BF02838402700AB2121 /* RCTPaymentPass.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.mm */; };
@@ -34,6 +33,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B17FA8700A11CE0000000002 /* BitPayFabricModalPresenter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BitPayFabricModalPresenter.mm; sourceTree = "<group>"; };
+		B17FA8700A11CE0000000003 /* BitPayFabricModalPresenter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitPayFabricModalPresenter.h; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* BitPayApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BitPayApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BitPayApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BitPayApp/Info.plist; sourceTree = "<group>"; };
@@ -44,9 +45,6 @@
 		4221E54904CA4996330CEB54 /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
 		4BD0D9E39B2B473191E700CE /* Archivo-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-ExtraBold.ttf"; path = "../assets/fonts/Archivo-ExtraBold.ttf"; sourceTree = "<group>"; };
 		4DCF32F2D2364E70AD2F1E68 /* Archivo-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Thin.ttf"; path = "../assets/fonts/Archivo-Thin.ttf"; sourceTree = "<group>"; };
-		5B31AAFC2786381C002765E1 /* RCTDosh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDosh.h; sourceTree = "<group>"; };
-		5B31AAFD2786387B002765E1 /* RCTDosh.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTDosh.mm; sourceTree = "<group>"; };
-		5B31AB5E2786515A002765E1 /* Dosh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dosh.swift; sourceTree = "<group>"; };
 		5B5631772838854000C395A8 /* PassKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PassKit.framework; path = System/Library/Frameworks/PassKit.framework; sourceTree = SDKROOT; };
 		5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BitPayApp-Bridging-Header.h"; sourceTree = "<group>"; };
 		5BC9567927AF3C6A00ACED07 /* BitPayAppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = BitPayAppDebug.entitlements; path = BitPayApp/BitPayAppDebug.entitlements; sourceTree = "<group>"; };
@@ -90,6 +88,8 @@
 		13B07FAE1A68108700A75B9A /* BitPayApp */ = {
 			isa = PBXGroup;
 			children = (
+				B17FA8700A11CE0000000002 /* BitPayFabricModalPresenter.mm */,
+				B17FA8700A11CE0000000003 /* BitPayFabricModalPresenter.h */,
 				EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */,
 				ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */,
 				ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */,
@@ -103,9 +103,6 @@
 				6D615C4729725FD70063DB8E /* RCTTimer.mm */,
 				CA5471E01A2B3C4D5E6F7003 /* RCTCrashTest.h */,
 				CA5471E01A2B3C4D5E6F7002 /* RCTCrashTest.mm */,
-				5B31AAFC2786381C002765E1 /* RCTDosh.h */,
-				5B31AAFD2786387B002765E1 /* RCTDosh.mm */,
-				5B31AB5E2786515A002765E1 /* Dosh.swift */,
 				4054F0E629AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.h */,
 				4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.mm */,
 				5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */,
@@ -370,8 +367,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B17FA8700A11CE0000000001 /* BitPayFabricModalPresenter.mm in Sources */,
 				4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.mm in Sources */,
-				5B31AAFE2786387B002765E1 /* RCTDosh.mm in Sources */,
 				EC0FDD6A2CC92E90009E1B35 /* InAppMessageModule.mm in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				6D7C95E72E9007E200F0D481 /* RCTPushPermissionManager.mm in Sources */,
@@ -379,7 +376,6 @@
 				6D615C4929725FD70063DB8E /* RCTTimer.mm in Sources */,
 				CA5471E01A2B3C4D5E6F7001 /* RCTCrashTest.mm in Sources */,
 				ECCB92782860B25D00F9CF8B /* SilentPushEvent.mm in Sources */,
-				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
 				52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -404,8 +400,6 @@
 				DEVELOPMENT_TEAM = 884JRH5R93;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = BitPayApp/Info.plist;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app requires permanent access to Bluetooth for establishing secure connections with Ledger Nano devices.";
-				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app requires access to Bluetooth for establishing secure connections with Ledger Nano devices, enabling seamless interaction and management of cryptocurrency transactions.";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -447,7 +441,6 @@
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 884JRH5R93;
 				INFOPLIST_FILE = BitPayApp/Info.plist;
-				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app requires access to Bluetooth for establishing secure connections with Ledger Nano devices, enabling seamless interaction and management of cryptocurrency transactions.";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -548,7 +541,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(inherited)",
 					"-DRCT_NEW_ARCH_ENABLED=1",
@@ -557,12 +553,15 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "-no-verify-emitted-module-interface";
+				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				USE_HERMES = true;
 			};
 			name = Debug;
@@ -636,7 +635,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(inherited)",
 					"-DRCT_NEW_ARCH_ENABLED=1",
@@ -645,11 +647,14 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "-no-verify-emitted-module-interface";
+				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};

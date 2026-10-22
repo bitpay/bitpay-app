@@ -3,7 +3,6 @@ import {
   KeyMethods,
   KeyOptions,
   KeyProperties,
-  SupportedHardwareSource,
   Wallet,
 } from '../../wallet.models';
 import {Effect, storage} from '../../../index';
@@ -21,6 +20,7 @@ import {
   isMatchedWallet,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
+import {getBaseWalletIdFromTokenWalletId} from '../../utils/token-wallet-id';
 import {LogActions} from '../../../../store/log';
 import {
   deleteKey,
@@ -57,16 +57,6 @@ import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
-import {
-  accessTokenSuccess,
-  coinbaseGetAccountsAndBalance,
-  coinbaseGetUser,
-} from '../../../coinbase';
-import {
-  CoinbaseEnvironment,
-  CoinbaseTokenProps,
-} from '../../../../api/coinbase/coinbase.types';
-import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
 import {hashPinLegacy} from '../../../../utils/pin';
 import {navigationRef} from '../../../../Root';
 import {
@@ -89,16 +79,7 @@ import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
-import {credentialsFromExtendedPublicKey} from '../../../../utils/wallet-hardware';
-import {
-  BitpaySupportedCoins,
-  getBaseVMAccountCreationCoinsAndTokens,
-} from '../../../../constants/currencies';
-import {
-  GetName,
-  IsSegwitCoin,
-  isSingleAddressChain,
-} from '../../utils/currency';
+import {getBaseVMAccountCreationCoinsAndTokens} from '../../../../constants/currencies';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   createWalletsForAccounts,
@@ -671,35 +652,6 @@ export const startMigration =
         logManager.info('Failed to migrate bitpay id: ' + errorStr);
       }
 
-      // coinbase
-      try {
-        logManager.info('[startMigration] - Migrating Coinbase tokens');
-        const account = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'coinbase-production',
-            'utf8',
-          ),
-        ) as {token: CoinbaseTokenProps};
-        dispatch(
-          accessTokenSuccess(CoinbaseEnvironment.production, account.token),
-        );
-        await dispatch(coinbaseGetUser());
-        await dispatch(coinbaseUpdateExchangeRate());
-        await dispatch(coinbaseGetAccountsAndBalance());
-        dispatch(
-          setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
-        );
-        logManager.info('Successfully migrated Coinbase account');
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        logManager.info('Failed to migrate Coinbase account: ' + errorStr);
-      }
-
       dispatch(setOnboardingCompleted());
       dispatch(setWalletTermsAccepted());
 
@@ -1015,207 +967,6 @@ export const startImportMnemonic =
       } catch (e) {
         dispatch(failedImport());
         reject(e);
-      }
-    });
-  };
-
-export const startImportFromHardwareWallet =
-  ({
-    key,
-    hardwareSource,
-    xPubKey,
-    publicKey,
-    accountPath,
-    coin,
-    chain,
-    derivationStrategy,
-    accountNumber,
-    network,
-  }: {
-    key: Key;
-    hardwareSource: SupportedHardwareSource;
-    xPubKey?: string;
-    publicKey?: string;
-    accountPath: string;
-    coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge' | 'matic';
-    chain:
-      | 'btc'
-      | 'eth'
-      | 'xrp'
-      | 'bch'
-      | 'ltc'
-      | 'doge'
-      | 'matic'
-      | 'arb'
-      | 'op'
-      | 'base';
-    derivationStrategy: string;
-    accountNumber: number;
-    network: Network;
-  }): Effect<Promise<Wallet>> =>
-  async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
-      if (!hardwareSource) {
-        return reject(new Error('Invalid hardware wallet source'));
-      }
-
-      if (!BitpaySupportedCoins[coin.toLowerCase()]) {
-        return reject(new Error(`Unsupported currency: ${coin}`));
-      }
-
-      const useNativeSegwit =
-        IsSegwitCoin(coin) &&
-        (accountPath.includes('84') || accountPath.includes('49'));
-
-      const walletExists = key?.wallets.some(
-        w =>
-          w.credentials.rootPath === accountPath &&
-          w.currencyAbbreviation === coin &&
-          w.chain === chain &&
-          w.credentials.account === accountNumber &&
-          w.credentials.network === network,
-      );
-
-      if (walletExists) {
-        return reject(new Error('The wallet is already in the app.'));
-      }
-
-      const hwKeyId = key.id;
-      const name = dispatch(GetName(coin, chain));
-      const credentials = credentialsFromExtendedPublicKey(
-        coin,
-        chain,
-        accountNumber,
-        accountPath,
-        name,
-        derivationStrategy,
-        useNativeSegwit,
-        network,
-        hwKeyId,
-        xPubKey,
-        publicKey,
-      );
-      const bwcClient = BWC.getClient(credentials);
-      const walletName = BitpaySupportedCoins[coin.toLowerCase()].name;
-
-      // check if wallet exists in BWS
-      const status = await new Promise<any>((res, rej) => {
-        bwcClient.getStatus({network}, async (err: any, result: any) => {
-          err ? rej(err) : res(result);
-        });
-      }).catch(() => null);
-
-      const walletAlreadyExistedOnBws = status?.wallet?.id;
-      if (walletAlreadyExistedOnBws) {
-        // wallet exists, update the wallet ID
-        bwcClient.credentials.walletId = status.wallet.id;
-      } else {
-        try {
-          const copayerName = 'me';
-          const m = 1;
-          const n = 1;
-          const singleAddress = undefined;
-
-          const createWalletOpts = {
-            network,
-            useNativeSegwit,
-            coin,
-            chain,
-            walletPrivKey: credentials.walletPrivKey,
-            singleAddress,
-          };
-
-          await new Promise((resolve, reject) =>
-            bwcClient.createWallet(
-              walletName,
-              copayerName,
-              m,
-              n,
-              createWalletOpts,
-              (err: any, result: any) => {
-                err ? reject(err) : resolve(result);
-              },
-            ),
-          );
-        } catch (err) {
-          if (
-            err instanceof Error &&
-            err.name === 'bwc.ErrorCOPAYER_REGISTERED'
-          ) {
-            logManager.debug(
-              'Created wallet, but copayer already registered in BWS',
-            );
-          } else {
-            return reject(err);
-          }
-        }
-      }
-
-      await new Promise((resolve, reject) =>
-        bwcClient.openWallet({}, (err: any, result: any) => {
-          err ? reject(err) : resolve(result);
-        }),
-      );
-
-      const {currencyAbbreviation, currencyName} = dispatch(
-        mapAbbreviationAndName(
-          bwcClient.credentials.coin,
-          bwcClient.credentials.chain,
-          bwcClient.credentials.token?.address,
-        ),
-      );
-
-      const wallet = merge(
-        bwcClient,
-        buildWalletObj({
-          ...bwcClient.credentials,
-          currencyAbbreviation,
-          currencyName,
-          walletName,
-          keyId: key.id,
-          isHardwareWallet: true,
-          hardwareData: {
-            accountPath,
-          },
-        }),
-      ) as Wallet;
-
-      if (walletAlreadyExistedOnBws) {
-        return resolve(wallet);
-      } else {
-        // since we are importing a wallet that was created outside of BWS,
-        // we need to do an initial scan to find any used addresses
-        bwcClient.startScan(
-          {
-            includeCopayerBranches: false,
-            startingStep: 10,
-          },
-          async (err: any) => {
-            if (err) {
-              const errMsg =
-                err instanceof Error ? err.message : JSON.stringify(err);
-              logManager.error(
-                'An error occurred while starting an address scan:',
-                errMsg,
-              );
-            }
-            if (key?.id && !isSingleAddressChain(wallet.credentials.chain)) {
-              const status = await new Promise<any>((res, rej) => {
-                bwcClient.getStatus(
-                  {network: wallet.network},
-                  async (err: any, result: any) => {
-                    err ? rej(err) : res(result);
-                  },
-                );
-              }).catch(() => null);
-              if (!status?.wallet?.singleAddress) {
-                // set scanning (for UI scanning label on wallet details )
-                wallet.isScanning = true;
-              }
-            }
-            return resolve(wallet);
-          },
-        );
       }
     });
   };
@@ -1629,32 +1380,36 @@ export const serverAssistedImport = async (
     try {
       const events = new EventEmitter();
 
-      // Queue ensures every event is shown for at least MIN_DISPLAY_MS
+      // Paces progress messages so each stays readable for MIN_DISPLAY_MS while
+      // the import runs. The result never waits on it: on done/error the queue
+      // is dropped, and its pending timer cancelled so a stale message cannot
+      // re-show the modal after the caller has hidden it.
       const MIN_DISPLAY_MS = 1000;
       const eventQueue: Array<{evt: string; data?: any}> = [];
       let draining = false;
-      let onQueueEmpty: (() => void) | null = null;
+      let settled = false;
+      let drainTimer: ReturnType<typeof setTimeout> | null = null;
 
       const drainQueue = () => {
+        drainTimer = null;
         const item = eventQueue.shift();
         if (!item) {
           draining = false;
-          onQueueEmpty?.();
-          onQueueEmpty = null;
           return;
         }
         draining = true;
         ongoingProcessManager.show(item.evt as any, item.data);
-        setTimeout(drainQueue, MIN_DISPLAY_MS);
+        drainTimer = setTimeout(drainQueue, MIN_DISPLAY_MS);
       };
 
-      const waitForQueue = (): Promise<void> => {
-        if (!draining && eventQueue.length === 0) {
-          return Promise.resolve();
+      const stopQueue = () => {
+        settled = true;
+        eventQueue.length = 0;
+        draining = false;
+        if (drainTimer) {
+          clearTimeout(drainTimer);
+          drainTimer = null;
         }
-        return new Promise<void>(res => {
-          onQueueEmpty = res;
-        });
       };
 
       const VISIBLE_EVENTS = new Set([
@@ -1669,7 +1424,7 @@ export const serverAssistedImport = async (
 
       importProgressEvents.forEach(evt => {
         events.on(evt, (data?: any) => {
-          if (!VISIBLE_EVENTS.has(evt)) {
+          if (settled || !VISIBLE_EVENTS.has(evt)) {
             return;
           }
           eventIterations[evt] = (eventIterations[evt] ?? 0) + 1;
@@ -1686,9 +1441,8 @@ export const serverAssistedImport = async (
 
       events.on(
         'done',
-        async ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
-          // Wait for all queued messages to display before resolving
-          await waitForQueue();
+        ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
+          stopQueue();
 
           let wallets = clients;
           if (wallets.length === 0) {
@@ -1711,8 +1465,8 @@ export const serverAssistedImport = async (
         },
       );
 
-      events.on('error', async (err: Error) => {
-        await waitForQueue();
+      events.on('error', (err: Error) => {
+        stopQueue();
         reject(err);
       });
 
@@ -1727,10 +1481,20 @@ export const serverAssistedImport = async (
   });
 };
 
-const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
+export const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
   tokens.forEach(token => {
-    // find the associated wallet to add tokens too
-    const associatedWalletId = token.credentials.walletId.split('-0x')[0];
+    const tokenAddress = token.credentials.token?.address;
+    const associatedWalletId = tokenAddress
+      ? getBaseWalletIdFromTokenWalletId(
+          token.credentials.walletId,
+          tokenAddress,
+        )
+      : undefined;
+
+    if (!associatedWalletId) {
+      return;
+    }
+
     wallets = wallets.map((wallet: Wallet) => {
       if (wallet.credentials.walletId === associatedWalletId) {
         // push token walletId as reference - this is used later to build out nested overview lists

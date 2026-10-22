@@ -1,9 +1,9 @@
 import React, {useEffect} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillGroupParamList} from '../BillGroup';
-import {ScrollView} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {LightBlack, LinkBlue, Slate10} from '../../../../../styles/colors';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -22,33 +22,73 @@ import {ShopEffects} from '../../../../../store/shop';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {formatUSPhone} from '../utils';
 
-const AccountBox = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  flex-direction: row;
-  align-items: center;
-  padding: 12px 16px;
-  margin-top: 20px;
-  border-radius: 12px;
-`;
+const styles = StyleSheet.create({
+  accountBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 20,
+    borderRadius: 12,
+  },
+  accountName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  accountPhone: {
+    fontWeight: '400',
+    marginTop: 2,
+  },
+  accountBoxBody: {
+    flexGrow: 1,
+  },
+  unlinkButton: {
+    fontSize: 16,
+    color: LinkBlue,
+  },
+});
 
-const AccountName = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 500;
-`;
+const AccountBox = ({style, ...rest}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.accountBox,
+        {backgroundColor: theme.dark ? LightBlack : Slate10},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AccountPhone = styled(AccountName)`
-  font-weight: 400;
-  margin-top: 2px;
-`;
+const AccountName = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.accountName, style]} {...rest} />
+);
 
-const AccountBoxBody = styled.View`
-  flex-grow: 1;
-`;
+const AccountPhone = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof AccountName>) => (
+  <AccountName style={[styles.accountPhone, style]} {...rest} />
+);
 
-const UnlinkButton = styled(BaseText)`
-  font-size: 16px;
-  color: ${LinkBlue};
-`;
+const AccountBoxBody = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.accountBoxBody, style]} {...rest} />
+);
+
+const UnlinkButton = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => (
+  <BaseText style={[styles.unlinkButton, style]} {...rest} />
+);
 
 const BillSettings = ({
   navigation,

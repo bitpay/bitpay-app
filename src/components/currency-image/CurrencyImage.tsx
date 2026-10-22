@@ -1,11 +1,9 @@
 // renders svg if supported currency or cached png if custom token
 import React, {ReactElement, useEffect, useMemo, useState} from 'react';
-import {StyleSheet} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {ImageRequireSource} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import styled from 'styled-components/native';
 import DefaultImage from '../../../assets/img/currencies/default.svg';
-import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 import ProfileIcon from '../avatar/ProfileIcon';
 import Blockie from '../blockie/Blockie';
 
@@ -21,19 +19,15 @@ interface CurrencyImageProps {
   };
 }
 
-const CurrencyImageContainer = styled.View`
-  position: relative;
-`;
-
-const BadgeContainer = styled.View<{size?: number}>`
-  height: ${({size = 54}) => size}%;
-  width: ${({size = 54}) => size}%;
-  position: absolute;
-  right: -2px;
-  bottom: 0;
-`;
-
 const styles = StyleSheet.create({
+  currencyImageContainer: {
+    position: 'relative',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    right: -2,
+    bottom: 0,
+  },
   badge: {
     height: '100%',
     width: '100%',
@@ -59,7 +53,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
   const badge = useMemo(
     () =>
       badgeSrc || badgeUri ? (
-        <BadgeContainer>
+        <View style={[styles.badgeContainer, {height: '54%', width: '54%'}]}>
           {badgeSrc ? (
             <FastImage
               style={styles.badge}
@@ -80,13 +74,13 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
               badgeUri(styles.badge)
             )
           ) : null}
-        </BadgeContainer>
+        </View>
       ) : null,
     [badgeSrc, badgeUri],
   );
 
   return (
-    <CurrencyImageContainer>
+    <View style={styles.currencyImageContainer}>
       {blockie ? (
         <Blockie size={blockie.size ?? size} seed={blockie.seed ?? 'random'} />
       ) : (!img && !imgSrc) || imageError ? (
@@ -101,9 +95,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
           onError={() => setImageError(true)}
         />
       ) : typeof img === 'string' ? (
-        img === 'coinbase' ? (
-          <CoinbaseSvg width="20" height="20" />
-        ) : img === 'contact' ? (
+        img === 'contact' ? (
           <ProfileIcon size={20} />
         ) : (
           <FastImage
@@ -121,6 +113,6 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
       )}
 
       {badge}
-    </CurrencyImageContainer>
+    </View>
   );
 };

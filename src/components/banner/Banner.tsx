@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../contexts';
 import Info from '../icons/info/Info';
 import {
   Caution,
@@ -25,51 +26,40 @@ import {SvgProps} from 'react-native-svg';
 
 const BANNER_HEIGHT = 80;
 
-const BannerContainer = styled.View<{
-  height?: number;
-  containerBgColor?: string;
-}>`
-  background-color: ${({theme: {dark}, containerBgColor}) =>
-    containerBgColor ? containerBgColor : dark ? LightBlack : NeutralSlate};
-  border-radius: 10px;
-  margin: 10px 0;
-  padding: 10px 12px;
-  align-items: flex-start;
-  justify-content: space-between;
-  min-height: ${({height}) => height || BANNER_HEIGHT}px;
-`;
-
-const Description = styled.View`
-  margin: 0 10px;
-  flex: 1;
-`;
-
-const BannerRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const TitleText = styled(BaseText)<{titleFontSize?: number}>`
-  font-size: ${({titleFontSize}) => titleFontSize || 16}px;
-  font-weight: 500;
-  line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  padding-bottom: 6px;
-`;
-
-const DescriptionText = styled(BaseText)<{descriptionFontSize?: number}>`
-  font-size: ${({descriptionFontSize}) => descriptionFontSize || 13}px;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-`;
-
-const LinkText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-`;
+const styles = StyleSheet.create({
+  bannerContainer: {
+    borderRadius: 10,
+    marginVertical: 10,
+    marginHorizontal: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  description: {
+    marginVertical: 0,
+    marginHorizontal: 10,
+    flex: 1,
+  },
+  bannerRow: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  titleText: {
+    fontWeight: '500',
+    lineHeight: 24,
+    paddingBottom: 6,
+  },
+  descriptionText: {
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+});
 
 interface BannerProps {
   title?: string;
@@ -126,47 +116,84 @@ const Banner = ({
   titleFontSize,
   descriptionFontSize,
 }: BannerProps) => {
+  const theme = useTheme();
   const bgColor = getBgColor(type);
   const containerBgColor = hasBackgroundColor
     ? getContainerBgColor(type)
     : undefined;
 
   return (
-    <BannerContainer height={height} containerBgColor={containerBgColor}>
-      <BannerRow>
+    <View
+      style={[
+        styles.bannerContainer,
+        {
+          backgroundColor: containerBgColor
+            ? containerBgColor
+            : theme.dark
+            ? LightBlack
+            : NeutralSlate,
+          minHeight: height || BANNER_HEIGHT,
+        },
+      ]}>
+      <Row style={styles.bannerRow}>
         {icon ? React.createElement(icon) : <Info bgColor={bgColor} />}
-        <Description>
+        <View style={styles.description}>
           {title ? (
-            <TitleText
-              titleFontSize={titleFontSize}
-              style={containerBgColor ? {color: getBgColor(type)} : {}}>
+            <BaseText
+              style={[
+                styles.titleText,
+                {
+                  fontSize: titleFontSize || 16,
+                  color: theme.dark ? White : Black,
+                },
+                containerBgColor ? {color: getBgColor(type)} : {},
+              ]}>
               {title}
-            </TitleText>
+            </BaseText>
           ) : null}
           {description ? (
-            <DescriptionText
-              descriptionFontSize={descriptionFontSize}
-              style={containerBgColor ? {color: Black} : {}}>
+            <BaseText
+              style={[
+                styles.descriptionText,
+                {
+                  fontSize: descriptionFontSize || 13,
+                  color: theme.dark ? Slate30 : SlateDark,
+                },
+                containerBgColor ? {color: Black} : {},
+              ]}>
               {description}
-            </DescriptionText>
+            </BaseText>
           ) : null}
           {transComponent ? (
-            <DescriptionText descriptionFontSize={descriptionFontSize}>
+            <BaseText
+              style={[
+                styles.descriptionText,
+                {
+                  fontSize: descriptionFontSize || 13,
+                  color: theme.dark ? Slate30 : SlateDark,
+                },
+              ]}>
               {transComponent}
-            </DescriptionText>
+            </BaseText>
           ) : null}
           {link ? (
             <ActionContainer>
               <TouchableOpacity
                 activeOpacity={ActiveOpacity}
                 onPress={link.onPress}>
-                <LinkText>{link.text}</LinkText>
+                <BaseText
+                  style={[
+                    styles.linkText,
+                    {color: theme.dark ? LinkBlue : Action},
+                  ]}>
+                  {link.text}
+                </BaseText>
               </TouchableOpacity>
             </ActionContainer>
           ) : null}
-        </Description>
-      </BannerRow>
-    </BannerContainer>
+        </View>
+      </Row>
+    </View>
   );
 };
 

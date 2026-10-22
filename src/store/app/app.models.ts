@@ -1,3 +1,12 @@
+// Persisted app preference: 'unspecified' means follow the operating system.
+// null/undefined are accepted for older saved settings.
+export type AppColorScheme =
+  | 'light'
+  | 'dark'
+  | 'unspecified'
+  | null
+  | undefined;
+
 export interface AppIdentity {
   /**
    * Timestamp when this identity was generated, in seconds.

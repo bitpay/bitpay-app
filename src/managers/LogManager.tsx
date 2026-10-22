@@ -1,6 +1,7 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {LogEntry, LogLevel} from '../store/log/log.models';
 import * as Sentry from '@sentry/react-native';
+import {isSessionLogsEnabled} from '../utils/sessionLogs';
 
 export type LogData = {
   logs: LogEntry[];
@@ -12,6 +13,7 @@ class LogManager {
   private listeners: Set<(data: LogData) => void> = new Set();
   private logs: LogEntry[] = [];
   private maxLogs: number = 1000;
+  private notificationScheduled = false;
 
   private constructor() {}
 
@@ -23,13 +25,17 @@ class LogManager {
   }
 
   addLog(log: LogEntry) {
+    if (!isSessionLogsEnabled()) {
+      return;
+    }
+
     this.logs.push(log);
 
     if (this.logs.length > this.maxLogs) {
       this.logs = this.logs.slice(-this.maxLogs);
     }
 
-    this.notifyListeners();
+    this.scheduleNotifyListeners();
   }
 
   getLogs(): LogEntry[] {
@@ -45,7 +51,7 @@ class LogManager {
 
   clearLogs() {
     this.logs = [];
-    this.notifyListeners();
+    this.scheduleNotifyListeners();
   }
 
   subscribe(listener: (data: LogData) => void): () => void {
@@ -56,9 +62,17 @@ class LogManager {
     };
   }
 
-  private notifyListeners() {
-    const data = this.getLogData();
-    this.listeners.forEach(listener => listener(data));
+  private scheduleNotifyListeners() {
+    if (this.notificationScheduled || this.listeners.size === 0) {
+      return;
+    }
+
+    this.notificationScheduled = true;
+    Promise.resolve().then(() => {
+      this.notificationScheduled = false;
+      const data = this.getLogData();
+      this.listeners.forEach(listener => listener(data));
+    });
   }
 
   private _logWithSentryMessage(

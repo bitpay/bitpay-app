@@ -1,16 +1,15 @@
 import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {
-  CTA_RESERVED,
   CtaContainerAbsolute,
   HeaderRightContainer,
   isNarrowHeight,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -24,10 +23,14 @@ import {Slate30, SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import SuccessIcon from '../../../../assets/img/success.svg';
-import {KeyboardAvoidingView, Platform, View} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useHeaderHeight} from '@react-navigation/elements';
 
 type VerifyPhraseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -38,54 +41,60 @@ export interface VerifyPhraseParamList {
   keyId: string;
   words: string[];
   context: string;
-  key: Key;
+  key?: Key;
   walletTermsAccepted: boolean;
 }
 
-interface WordItem {
-  word: string;
-  isActive: boolean;
-}
+const styles = StyleSheet.create({
+  verifyPhraseForm: {
+    paddingHorizontal: 20,
+  },
+  verifyPhraseField: {
+    marginBottom: 20,
+  },
+  headerContainer: {
+    margin: 10,
+  },
+  headerText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  validationBadge: {
+    position: 'absolute',
+    right: 13,
+    top: '50%',
+  },
+  verifyPhraseContainer: {
+    flex: 1,
+  },
+  headerContainerLargeMargin: {
+    margin: 25,
+  },
+  verifyPhraseFormFlex: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+});
 
-const VerifyPhraseForm = styled.View`
-  padding: 0 20px;
-`;
-
-const VerifyPhraseField = styled.View`
-  margin-bottom: 20px;
-`;
-
-const HeaderContainer = styled.View`
-  margin: 10px;
-`;
-
-const HeaderText = styled(BaseText)`
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-`;
-
-const ValidationBadge = styled.View`
-  position: absolute;
-  right: 13px;
-  top: 50%;
-`;
-
-const VerifyPhraseContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const HeaderContainerLargeMargin = styled.View`
-  margin: 25px;
-`;
-
-const VerifyPhraseFormFlex = styled.View`
-  flex: 1;
-  padding: 0 20px;
-`;
+const HeaderText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[
+        styles.headerText,
+        {color: theme.dark ? Slate30 : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const schema = yup.object().shape({
   word1: yup.string().required().trim(),
@@ -94,7 +103,7 @@ const schema = yup.object().shape({
 });
 
 const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
@@ -118,26 +127,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const {errors} = formState;
 
   const {params} = route;
-  const {words, keyId, context, key, walletTermsAccepted} = params;
+  const storedKey = useAppSelector(({WALLET}) => WALLET.keys[params.keyId]);
+  const {words, keyId, context, walletTermsAccepted} = params;
+  const key = params.key ?? storedKey;
 
   const [word1Validation, setWord1Validation] = useState(false);
   const [word2Validation, setWord2Validation] = useState(false);
   const [word3Validation, setWord3Validation] = useState(false);
-
-  const ordinalNumbers: string[] = [
-    'first',
-    'second',
-    'third',
-    'fourth',
-    'fifth',
-    'sixth',
-    'seventh',
-    'eighth',
-    'ninth',
-    'tenth',
-    'eleventh',
-    'twelfth',
-  ];
 
   const getOrdinalSuffixStr = (index: number): string => {
     const suffixes = ['st', 'nd', 'rd', 'th']; // Handles up to 10th
@@ -150,7 +146,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     word: string;
     index: number;
     indexStr: string;
-    ordinalSrt: string;
   }[] => {
     const randomIndices: number[] = [];
     while (randomIndices.length < 3) {
@@ -163,9 +158,11 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       word: words[index],
       index,
       indexStr: getOrdinalSuffixStr(index),
-      ordinalSrt: ordinalNumbers[index],
     }));
   };
+
+  const getWordPosition = (word: {index: number; indexStr: string}) =>
+    i18n.resolvedLanguage === 'en' ? word.indexStr : word.index + 1;
 
   const [randomWords, setRandomWords] = useState(generateRandomWords());
 
@@ -202,7 +199,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                   context,
                   navigation,
                   walletTermsAccepted,
-                  key: {...key, backupComplete: true},
+                  key: key ? {...key, backupComplete: true} : undefined,
                 }),
               primary: true,
             },
@@ -214,13 +211,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         if (word.toLowerCase() !== randomWords[index].word.toLowerCase()) {
           switch (index) {
             case 0:
-              setError('word1', {type: 'manual', message: 'Incorrect word'});
+              setError('word1', {type: 'manual', message: t('Incorrect word')});
               break;
             case 1:
-              setError('word2', {type: 'manual', message: 'Incorrect word'});
+              setError('word2', {type: 'manual', message: t('Incorrect word')});
               break;
             case 2:
-              setError('word3', {type: 'manual', message: 'Incorrect word'});
+              setError('word3', {type: 'manual', message: t('Incorrect word')});
               break;
           }
         }
@@ -297,7 +294,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       <HeaderRightContainer>
         <Button
           testID="cancel-button"
-          accessibilityLabel="Cancel"
+          accessibilityLabel={t('Cancel')}
           buttonType={'pill'}
           onPress={onPressHeaderCancelRef.current}>
           {t('Cancel')}
@@ -326,31 +323,28 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         keyboardShouldPersistTaps="handled"
         extraHeight={0}
         extraScrollHeight={scrollExtraHeight}>
-        <HeaderContainer>
+        <View style={styles.headerContainer}>
           <HeaderText>
             {t(
-              'Verify you saved your recovery phrase correctly by writing in ' +
-                'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
-                'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
+              'Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.',
               {
-                first: randomWords[0].ordinalSrt,
-                firstNumber: randomWords[0].indexStr,
-                second: randomWords[1].ordinalSrt,
-                secondNumber: randomWords[1].indexStr,
-                third: randomWords[2].ordinalSrt,
-                thirdNumber: randomWords[2].indexStr,
+                first: randomWords[0].index + 1,
+                second: randomWords[1].index + 1,
+                third: randomWords[2].index + 1,
               },
             )}
           </HeaderText>
-        </HeaderContainer>
-        <VerifyPhraseForm>
-          <VerifyPhraseField>
+        </View>
+        <View style={styles.verifyPhraseForm}>
+          <View style={styles.verifyPhraseField}>
             <Controller
               key={'word1'}
               control={control}
               render={({field}) => (
                 <BoxInput
-                  label={randomWords[0].indexStr + ' Word'}
+                  label={t('{{position}} Word', {
+                    position: getWordPosition(randomWords[0]),
+                  })}
                   onBlur={field.onBlur}
                   error={errors.word1?.message}
                   disabled={word1Validation}
@@ -368,18 +362,20 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               name={'word1'}
             />
             {word1Validation ? (
-              <ValidationBadge>
+              <View style={styles.validationBadge}>
                 <SuccessIcon />
-              </ValidationBadge>
+              </View>
             ) : null}
-          </VerifyPhraseField>
-          <VerifyPhraseField>
+          </View>
+          <View style={styles.verifyPhraseField}>
             <Controller
               key={'word2'}
               control={control}
               render={({field}) => (
                 <BoxInput
-                  label={randomWords[1].indexStr + ' Word'}
+                  label={t('{{position}} Word', {
+                    position: getWordPosition(randomWords[1]),
+                  })}
                   onBlur={field.onBlur}
                   error={errors.word2?.message}
                   disabled={word2Validation}
@@ -397,18 +393,20 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               name={'word2'}
             />
             {word2Validation ? (
-              <ValidationBadge>
+              <View style={styles.validationBadge}>
                 <SuccessIcon />
-              </ValidationBadge>
+              </View>
             ) : null}
-          </VerifyPhraseField>
-          <VerifyPhraseField>
+          </View>
+          <View style={styles.verifyPhraseField}>
             <Controller
               key={'word3'}
               control={control}
               render={({field}) => (
                 <BoxInput
-                  label={randomWords[2].indexStr + ' Word'}
+                  label={t('{{position}} Word', {
+                    position: getWordPosition(randomWords[2]),
+                  })}
                   onBlur={field.onBlur}
                   error={errors.word3?.message}
                   disabled={word3Validation}
@@ -426,49 +424,48 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               name={'word3'}
             />
             {word3Validation ? (
-              <ValidationBadge>
+              <View style={styles.validationBadge}>
                 <SuccessIcon />
-              </ValidationBadge>
+              </View>
             ) : null}
-          </VerifyPhraseField>
-        </VerifyPhraseForm>
+          </View>
+        </View>
       </KeyboardAwareScrollView>
       <CtaContainerAbsolute testID="cta-container">
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
-          Confirm
+          {t('Confirm')}
         </Button>
       </CtaContainerAbsolute>
     </KeyboardAvoidingView>
   ) : (
-    <VerifyPhraseContainer testID="verify-phrase-container">
-      <HeaderContainerLargeMargin>
+    <SafeAreaView
+      testID="verify-phrase-container"
+      style={styles.verifyPhraseContainer}>
+      <View style={styles.headerContainerLargeMargin}>
         <HeaderText>
           {t(
-            'Verify you saved your recovery phrase correctly by writing in ' +
-              'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
-              'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
+            'Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.',
             {
-              first: randomWords[0].ordinalSrt,
-              firstNumber: randomWords[0].indexStr,
-              second: randomWords[1].ordinalSrt,
-              secondNumber: randomWords[1].indexStr,
-              third: randomWords[2].ordinalSrt,
-              thirdNumber: randomWords[2].indexStr,
+              first: randomWords[0].index + 1,
+              second: randomWords[1].index + 1,
+              third: randomWords[2].index + 1,
             },
           )}
         </HeaderText>
-      </HeaderContainerLargeMargin>
+      </View>
 
-      <VerifyPhraseFormFlex>
-        <VerifyPhraseField>
+      <View style={styles.verifyPhraseFormFlex}>
+        <View style={styles.verifyPhraseField}>
           <Controller
             key={'word1'}
             control={control}
             render={({field}) => (
               <BoxInput
-                label={randomWords[0].indexStr + ' Word'}
+                label={t('{{position}} Word', {
+                  position: getWordPosition(randomWords[0]),
+                })}
                 onBlur={field.onBlur}
                 error={errors.word1?.message}
                 disabled={word1Validation}
@@ -486,19 +483,21 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             name={'word1'}
           />
           {word1Validation ? (
-            <ValidationBadge>
+            <View style={styles.validationBadge}>
               <SuccessIcon />
-            </ValidationBadge>
+            </View>
           ) : null}
-        </VerifyPhraseField>
+        </View>
 
-        <VerifyPhraseField>
+        <View style={styles.verifyPhraseField}>
           <Controller
             key={'word2'}
             control={control}
             render={({field}) => (
               <BoxInput
-                label={randomWords[1].indexStr + ' Word'}
+                label={t('{{position}} Word', {
+                  position: getWordPosition(randomWords[1]),
+                })}
                 onBlur={field.onBlur}
                 error={errors.word2?.message}
                 disabled={word2Validation}
@@ -516,19 +515,21 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             name={'word2'}
           />
           {word2Validation ? (
-            <ValidationBadge>
+            <View style={styles.validationBadge}>
               <SuccessIcon />
-            </ValidationBadge>
+            </View>
           ) : null}
-        </VerifyPhraseField>
+        </View>
 
-        <VerifyPhraseField>
+        <View style={styles.verifyPhraseField}>
           <Controller
             key={'word3'}
             control={control}
             render={({field}) => (
               <BoxInput
-                label={randomWords[2].indexStr + ' Word'}
+                label={t('{{position}} Word', {
+                  position: getWordPosition(randomWords[2]),
+                })}
                 onBlur={field.onBlur}
                 error={errors.word3?.message}
                 disabled={word3Validation}
@@ -546,21 +547,21 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             name={'word3'}
           />
           {word3Validation ? (
-            <ValidationBadge>
+            <View style={styles.validationBadge}>
               <SuccessIcon />
-            </ValidationBadge>
+            </View>
           ) : null}
-        </VerifyPhraseField>
-      </VerifyPhraseFormFlex>
+        </View>
+      </View>
 
       <CtaContainerAbsolute testID="cta-container">
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
-          Confirm
+          {t('Confirm')}
         </Button>
       </CtaContainerAbsolute>
-    </VerifyPhraseContainer>
+    </SafeAreaView>
   );
 };
 

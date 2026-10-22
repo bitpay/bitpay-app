@@ -1,20 +1,20 @@
 diff --git a/node_modules/react-native-os/android/build.gradle b/node_modules/react-native-os/android/build.gradle
-index 7055b60..1e08eaa 100644
+index 7055b60..3467fd0 100644
 --- a/node_modules/react-native-os/android/build.gradle
 +++ b/node_modules/react-native-os/android/build.gradle
-@@ -4,7 +4,7 @@ def safeExtGet(prop, fallback) {
- 
- buildscript {
-     repositories {
+@@ -7 +7 @@ buildscript {
 -        jcenter()
 +        mavenCentral()
-     }
- 
-     dependencies {
-@@ -44,5 +44,5 @@ repositories {
- }
- 
- dependencies {
+@@ -31 +31 @@ android {
+-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
++            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+@@ -47 +47 @@ dependencies {
 -    compile 'com.facebook.react:react-native:+'
 +    implementation 'com.facebook.react:react-native:+'
- }
+diff --git a/node_modules/react-native-os/ios/RNOS.m b/node_modules/react-native-os/ios/RNOS.m
+index f24b100..c8559f9 100644
+--- a/node_modules/react-native-os/ios/RNOS.m
++++ b/node_modules/react-native-os/ios/RNOS.m
+@@ -11,2 +10,0 @@
+-#import "RCTAssert.h"
+-

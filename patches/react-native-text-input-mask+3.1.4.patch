@@ -2,38 +2,49 @@ diff --git a/node_modules/react-native-text-input-mask/android/build.gradle b/no
 index c94f33f..449778c 100644
 --- a/node_modules/react-native-text-input-mask/android/build.gradle
 +++ b/node_modules/react-native-text-input-mask/android/build.gradle
-@@ -27,10 +27,10 @@ android {
- 
- buildscript {
-     ext {
+@@ -30 +30 @@ buildscript {
 -        kotlinVersion = '1.4.31'
 +        kotlinVersion = '1.6.10'
-     }
-     repositories {
+@@ -33 +33 @@ buildscript {
 -        jcenter()
 +        mavenCentral()
-         google()
-         mavenCentral()
-     }
-@@ -41,7 +41,7 @@ buildscript {
- }
- 
- repositories {
+@@ -44 +44 @@ repositories {
 -    jcenter()
 +    mavenCentral()
-     google()
-     mavenCentral()
-     maven {
+diff --git a/node_modules/react-native-text-input-mask/ios/RNTextInputMask-Bridging-Header.h b/node_modules/react-native-text-input-mask/ios/RNTextInputMask-Bridging-Header.h
+index cd8845d..1b2625b 100644
+--- a/node_modules/react-native-text-input-mask/ios/RNTextInputMask-Bridging-Header.h
++++ b/node_modules/react-native-text-input-mask/ios/RNTextInputMask-Bridging-Header.h
+@@ -4 +4 @@
+-#import <React/RCTBaseTextInputView.h>
++#import <React/RCTBackedTextInputDelegate.h>
 diff --git a/node_modules/react-native-text-input-mask/ios/TextInputMask.swift b/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
-index 7626c50..8131a1a 100644
+index 7626c50..846eef7 100644
 --- a/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
 +++ b/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
-@@ -12,7 +12,7 @@ class TextInputMask: NSObject, RCTBridgeModule, MaskedTextFieldDelegateListener
-     }
- 
-     var methodQueue: DispatchQueue {
+@@ -15 +15 @@ class TextInputMask: NSObject, RCTBridgeModule, MaskedTextFieldDelegateListener
 -        bridge.uiManager.methodQueue
 +        return bridge?.uiManager?.methodQueue ?? DispatchQueue.main
-     }
- 
-     var bridge: RCTBridge!
+@@ -39,2 +39,2 @@ class TextInputMask: NSObject, RCTBridgeModule, MaskedTextFieldDelegateListener
+-                guard let view = viewRegistry?[reactNode] as? RCTBaseTextInputView else { return }
+-                let textView = view.backedTextInputView as! RCTUITextField
++                guard let view = viewRegistry?[reactNode] as? UIView,
++                      let textView = view.firstSubview(ofType: RCTUITextField.self) else { return }
+@@ -50,6 +50 @@ class TextInputMask: NSObject, RCTBridgeModule, MaskedTextFieldDelegateListener
+-                    let textField = textView as! UITextField
+-                    view.onChange?([
+-                        "text": textField.text,
+-                        "target": view.reactTag,
+-                        "eventCount": view.nativeEventCount,
+-                    ])
++                    textView.textInputDelegate?.textInputDidChange()
+@@ -69,0 +65,9 @@ class MaskedRCTBackedTextFieldDelegateAdapter : RCTBackedTextFieldDelegateAdapte
++private extension UIView {
++    func firstSubview<T: UIView>(ofType type: T.Type) -> T? {
++        if let match = self as? T {
++            return match
++        }
++        return subviews.lazy.compactMap { $0.firstSubview(ofType: type) }.first
++    }
++}
++

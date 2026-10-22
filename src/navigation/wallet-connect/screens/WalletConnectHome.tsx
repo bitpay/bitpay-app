@@ -1,6 +1,10 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
-import styled from 'styled-components/native';
 import {
   H5,
   H7,
@@ -35,9 +39,20 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {FlatList, Platform} from 'react-native';
+import {
+  Platform,
+  View,
+  Text,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  isSameAddress,
+  matchesRequestToken,
+  sleep,
+} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -47,8 +62,8 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
+import {matchesAccountRoute} from '../walletConnectRouting';
 import {
-  getAddressFrom,
   walletConnectV2OnDeleteSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
@@ -92,58 +107,147 @@ export type WalletConnectHomeParamList = {
   notificationRequestId?: number;
 };
 
-const SummaryContainer = styled.View<{hasRequest: boolean}>`
-  padding-bottom: ${({hasRequest}) => (hasRequest ? '0px' : '80px')};
-`;
+const styles = StyleSheet.create({
+  summaryContainerWithRequest: {
+    paddingBottom: 0,
+  },
+  summaryContainerWithoutRequest: {
+    paddingBottom: 80,
+  },
+  noteContainer: {
+    borderRadius: 40,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  noteContainerDappUri: {
+    maxWidth: 175,
+  },
+  noteContainerDefault: {
+    maxWidth: 126,
+  },
+  noteLabel: {
+    marginLeft: 5,
+  },
+  prContainer: {
+    flex: 1,
+  },
+  clipboardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  balanceColumn: {
+    alignItems: 'flex-end',
+    marginRight: 10,
+  },
+  verifyIconContainer: {
+    padding: 10,
+    borderRadius: 50,
+  },
+});
 
-export const NoteContainer = styled(TouchableOpacity)<{isDappUri?: boolean}>`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-radius: 40px;
-  max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
-  justify-content: center;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 20px;
-`;
+const SummaryContainer = ({
+  hasRequest,
+  children,
+}: {
+  hasRequest: boolean;
+  children: React.ReactNode;
+}) => (
+  <View
+    style={
+      hasRequest
+        ? styles.summaryContainerWithRequest
+        : styles.summaryContainerWithoutRequest
+    }>
+    {children}
+  </View>
+);
 
-export const NoteLabel = styled(H7)`
-  margin-left: 5px;
-`;
+export const NoteContainer = ({
+  isDappUri,
+  disabled,
+  onPress,
+  children,
+}: {
+  isDappUri?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.noteContainer,
+        isDappUri ? styles.noteContainerDappUri : styles.noteContainerDefault,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const PRContainer = styled.View`
-  flex: 1;
-`;
+export const NoteLabel = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof H7>
+>(({style, ...rest}, ref) => (
+  <H7 ref={ref} style={[styles.noteLabel, style]} {...rest} />
+));
+NoteLabel.displayName = 'NoteLabel';
 
-export const ClipboardContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-`;
+const PRContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.prContainer}>{children}</View>
+);
 
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-  margin-right: 10px;
-`;
+export const ClipboardContainer = ({children}: {children: React.ReactNode}) => (
+  <View style={styles.clipboardContainer}>{children}</View>
+);
 
-const VerifyIconContainer = styled(TouchableOpacity)`
-  padding: 10px;
-  border-radius: 50px;
-`;
+const BalanceColumn = ({children}: {children: React.ReactNode}) => (
+  <Column style={styles.balanceColumn}>{children}</Column>
+);
+
+const VerifyIconContainer = ({
+  style,
+  onPress,
+  children,
+}: {
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => (
+  <TouchableOpacity
+    style={[styles.verifyIconContainer, style]}
+    onPress={onPress}>
+    {children}
+  </TouchableOpacity>
+);
 
 const processRequest = (request: WCV2RequestType, keys: Keys) => {
   const {senderAddress, swapFromCurrencyAbbreviation, swapFromChain} = request;
+
+  const {network} =
+    WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId] || {};
 
   let wallet = Object.values(keys)
     .flatMap(key => key.wallets)
     .find(
       wallet =>
-        wallet.receiveAddress?.toLowerCase() === senderAddress!.toLowerCase() &&
+        isSameAddress(wallet.receiveAddress, senderAddress) &&
         wallet.chain === swapFromChain &&
-        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+        wallet.network === network &&
+        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+        matchesRequestToken(wallet, request),
     );
 
   let _swapFromCurrencyAbbreviation = swapFromCurrencyAbbreviation;
+  let summary = {};
 
   if (!wallet) {
     wallet = Object.values(keys)
@@ -153,12 +257,20 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
     _swapFromCurrencyAbbreviation =
       // @ts-ignore
       BitpaySupportedCoins[swapFromChain]?.coin?.toLowerCase();
+
+    summary = {
+      recipientAddress: undefined,
+      senderContractAddress: undefined,
+      swapFormatAmount: undefined,
+      swapFiatAmount: undefined,
+    };
   }
 
   const {img, badgeImg} = wallet || {};
 
   return {
     ...request,
+    ...summary,
     swapFromCurrencyAbbreviation: _swapFromCurrencyAbbreviation,
     currencyImg: img,
     badgeImg,
@@ -169,7 +281,7 @@ const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const [imageError, setImageError] = useState(false);
@@ -198,13 +310,9 @@ const WalletConnectHome = () => {
   );
   let requestsV2: WCV2RequestType[] = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
-      .filter((request: WCV2RequestType) => {
-        const addressFrom = getAddressFrom(request)?.toLowerCase();
-        const filterWithAddress = addressFrom
-          ? addressFrom === selectedAccountAddress?.toLowerCase()
-          : true; // if address exist in request check if it matches with connected wallets addresses
-        return request.topic === topic && filterWithAddress;
-      })
+      .filter((request: WCV2RequestType) =>
+        matchesAccountRoute(request, {selectedAccountAddress, topic}),
+      )
       .reverse(),
   );
 
@@ -333,10 +441,16 @@ const WalletConnectHome = () => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
+      const {method} = request.params.request;
+      const isSvmRequest = Object.values(SOLANA_SIGNING_METHODS).includes(
+        method,
+      );
       const {to: toAddress} = request?.params?.request?.params?.[0] ?? {};
 
       const recipient = {
-        address: toAddress || request.recipientAddress,
+        address: isSvmRequest
+          ? request.recipientAddress
+          : toAddress || request.recipientAddress,
       };
 
       if (!recipient.address) {
@@ -438,12 +552,14 @@ const WalletConnectHome = () => {
       }
       const {swapFromCurrencyAbbreviation} = requestV2;
       const {chainId} = requestV2.params;
-      const chain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+      const {chain, network} = WALLET_CONNECT_SUPPORTED_CHAINS[chainId] || {};
       const wallet = keyFullWalletObjs.find(
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === chain &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+          wallet.network === network &&
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(wallet, requestV2),
       );
       if (!wallet) {
         showErrorMessage(
@@ -509,11 +625,15 @@ const WalletConnectHome = () => {
         createdOn,
       } = item;
 
+      const {network} =
+        WALLET_CONNECT_SUPPORTED_CHAINS[item.params.chainId] || {};
       const wallet = keyFullWalletObjs.find(
         wallet =>
           wallet.receiveAddress === selectedAccountAddress &&
           wallet.chain === swapFromChain &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+          wallet.network === network &&
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(wallet, item),
       );
       if (!wallet) {
         return <></>;
@@ -659,12 +779,13 @@ const WalletConnectHome = () => {
           <HeaderTitle>{t('Pending Request')}</HeaderTitle>
           <Hr />
           {requestsV2 && requestsV2.length > 0 ? (
-            <FlatList
-              contentContainerStyle={{paddingTop: 20, paddingBottom: 100}}
-              data={requestsV2}
-              keyExtractor={(_item, index) => index.toString()}
-              renderItem={renderItem}
-            />
+            <View style={{paddingBottom: 100, paddingTop: 20}}>
+              {requestsV2.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {renderItem({index, item})}
+                </React.Fragment>
+              ))}
+            </View>
           ) : (
             <ItemContainer>
               <ItemTitleContainer>

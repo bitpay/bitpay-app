@@ -8,10 +8,9 @@ import {KycInfo} from './sumsub.reducer';
 import {showBottomNotificationModal} from '../app/app.actions';
 import {CustomErrorMessage} from '../../navigation/wallet/components/ErrorMessages';
 import {deriveKycUiState} from './sumsub.selectors';
-import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {sleep} from '../../utils/helper-methods';
 
-const MODAL_HANDOFF_DELAY = 600;
+export const MODAL_HANDOFF_DELAY = 600;
 
 // Fetches the backend KYC object and stores it verbatim. No-op when logged out.
 export const startGetKycStatus =
@@ -78,13 +77,7 @@ export const startKycVerification =
       SumSubApi.fetchAccessToken(apiToken);
 
     try {
-      ongoingProcessManager.show('GENERAL_AWAITING');
-      let accessToken: string | null;
-      try {
-        accessToken = await getAccessToken();
-      } finally {
-        ongoingProcessManager.hide();
-      }
+      const accessToken = await getAccessToken();
 
       if (!accessToken) {
         dispatch(
@@ -92,7 +85,6 @@ export const startKycVerification =
             '[SumSub] No access token returned — KYC not available for this user.',
           ),
         );
-        await sleep(MODAL_HANDOFF_DELAY);
         dispatch(
           showBottomNotificationModal(
             CustomErrorMessage({
@@ -135,12 +127,14 @@ export const startKycVerification =
 
       if (result.status === 'Failed') {
         const errMsg =
-          result.errorMsg || 'The verification process encountered an error.';
+          result.errorMsg ||
+          t('The verification process encountered an error.');
         dispatch(
           LogActions.error(
             `[SumSub] SDK failed — errorType: ${result.errorType}, errorMsg: ${result.errorMsg}`,
           ),
         );
+        await sleep(MODAL_HANDOFF_DELAY);
         dispatch(showBottomNotificationModal(CustomErrorMessage({errMsg})));
         return;
       }

@@ -1,3 +1,4 @@
+import {t} from 'i18next';
 import {Effect} from '../../..';
 import {logManager} from '../../../../managers/LogManager';
 import {GetPrecision} from '../../utils/currency';
@@ -202,7 +203,10 @@ export const GetExcludedUtxosMessage =
       const amountBelowFeeStr = dispatch(
         SatToUnit(sendMaxInfo.amountBelowFee, coin, chain, tokenAddress),
       );
-      const message = `A total of ${amountBelowFeeStr} ${coin.toUpperCase()} were excluded. These funds come from UTXOs smaller than the network fee provided.`;
+      const message = t(
+        'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
+        {amountBelowFeeStr, currencyAbbreviation: coin.toUpperCase()},
+      );
       warningMsg.push(message);
     }
 
@@ -210,7 +214,10 @@ export const GetExcludedUtxosMessage =
       const amountAboveMaxSizeStr = dispatch(
         SatToUnit(sendMaxInfo.amountAboveMaxSize, coin, chain, tokenAddress),
       );
-      const message = `A total of ${amountAboveMaxSizeStr} ${coin.toUpperCase()} were excluded. The maximum size allowed for a transaction was exceeded.`;
+      const message = t(
+        'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
+        {amountAboveMaxSizeStr, currencyAbbreviation: coin.toUpperCase()},
+      );
       warningMsg.push(message);
     }
     return warningMsg.join('\n');

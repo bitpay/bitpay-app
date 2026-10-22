@@ -192,25 +192,29 @@ const mockGetVisibleWalletsFromKeys = jest.requireMock(
 ).getVisibleWalletsFromKeys as jest.Mock;
 
 let latestResult: ReturnType<typeof usePortfolioAssetRows> | undefined;
-const UNAVAILABLE_SUMMARY_READY_REVISION_SIG = 'unavailable-pnl:ready';
+let hookRenderCount = 0;
 const UNAVAILABLE_SUMMARY_PENDING_REVISION_SIG = 'unavailable-pnl:pending';
 
 const HookHarness = ({
   assetKeys,
   externalRefreshToken,
+  enabled = true,
   gainLossMode = '1D',
   keyId,
 }: {
   assetKeys?: string[];
   externalRefreshToken?: string | number;
+  enabled?: boolean;
   gainLossMode?: GainLossMode;
   keyId?: string;
 }) => {
+  hookRenderCount += 1;
   latestResult = usePortfolioAssetRows({
     gainLossMode,
     keyId,
     assetKeys,
     externalRefreshToken,
+    enabled,
   });
   return null;
 };
@@ -429,6 +433,7 @@ describe('usePortfolioAssetRows', () => {
 
   beforeEach(() => {
     latestResult = undefined;
+    hookRenderCount = 0;
     clearPortfolioAssetGroupPopulateCacheForTests();
     mockState = {
       PORTFOLIO: {
@@ -893,6 +898,31 @@ describe('usePortfolioAssetRows', () => {
         }),
       ]);
     });
+  });
+
+  it('retains its last model and stops listening to cache clears while disabled', async () => {
+    const view = render(<HookHarness assetKeys={['btc']} />);
+
+    await waitFor(() => {
+      expect(latestResult?.visibleItems).toEqual([
+        expect.objectContaining({
+          key: 'btc',
+        }),
+      ]);
+    });
+
+    const activeResult = latestResult;
+    view.rerender(<HookHarness assetKeys={['btc']} enabled={false} />);
+
+    expect(latestResult).toBe(activeResult);
+    const renderCountAfterDisable = hookRenderCount;
+
+    act(() => {
+      clearAssetPnlSummaryCache();
+    });
+
+    expect(hookRenderCount).toBe(renderCountAfterDisable);
+    expect(latestResult).toBe(activeResult);
   });
 
   it('uses a detail-chart seeded refreshed summary after focus refresh updates historical deps', async () => {

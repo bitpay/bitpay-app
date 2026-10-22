@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {EventSubscription} from 'react-native';
 import {ContentCard} from '@braze/react-native-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -13,6 +13,7 @@ import {
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
+  AppColorScheme,
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -51,7 +52,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showPinModal',
   'selectedLocalChainFilterOption',
   'tokensDataLoaded',
-  'isImportLedgerModalVisible',
   'showArchaxBanner',
   'hasViewedTSSOnboarding',
   'showKycGetVerifiedModal',
@@ -134,7 +134,7 @@ export interface AppState {
   currentSalt: string | undefined;
   pinBannedUntil: number | undefined;
   showBlur: boolean;
-  colorScheme: ColorSchemeName;
+  colorScheme: AppColorScheme;
   defaultLanguage: string;
   showPortfolioValue: boolean;
   hideAllBalances: boolean;
@@ -170,7 +170,6 @@ export interface AppState {
   hasViewedZenLedgerWarning: boolean;
   hasViewedBillsTab: boolean;
   hasViewedTSSOnboarding: boolean;
-  isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
@@ -274,7 +273,6 @@ const initialState: AppState = {
   hasViewedZenLedgerWarning: false,
   hasViewedBillsTab: false,
   hasViewedTSSOnboarding: false,
-  isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
@@ -288,12 +286,6 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
-    case AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED:
-      return {
-        ...state,
-        isImportLedgerModalVisible: action.payload,
-      };
-
     case AppActionTypes.NETWORK_CHANGED:
       return {
         ...state,
@@ -391,10 +383,12 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
-        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
+      if (state.bottomNotificationModalConfig === undefined) {
+        return state;
+      }
       return {
         ...state,
         bottomNotificationModalConfig: undefined,
@@ -820,6 +814,9 @@ export const appReducer = (
       };
 
     case AppActionTypes.SHOW_ARCHAX_BANNER:
+      if (state.showArchaxBanner === action.payload) {
+        return state;
+      }
       return {
         ...state,
         showArchaxBanner: action.payload,

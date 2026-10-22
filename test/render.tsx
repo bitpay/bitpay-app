@@ -1,6 +1,6 @@
 import React from 'react';
 import {render, RenderOptions} from '@testing-library/react-native';
-import {ThemeProvider} from 'styled-components/native';
+import {ThemeProvider} from '../src/contexts';
 import {BitPayLightTheme} from '../src/themes/bitpay';
 
 const AllTheProviders = ({children}: {children: React.ReactNode}) => {

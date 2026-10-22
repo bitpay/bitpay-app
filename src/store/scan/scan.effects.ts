@@ -93,6 +93,7 @@ import {
 } from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {
+  BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
   BitpaySupportedSvmCoins,
 } from '../../constants/currencies';
@@ -101,7 +102,6 @@ import {openExternalUrl, submitDeviceEvent} from '../app/app.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
-import {IsUtxoChain} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {MoonpaySellIncomingData} from '../sell-crypto/models/moonpay-sell.models';
@@ -879,7 +879,10 @@ const handleSolanaPay =
               showBottomNotificationModal({
                 type: 'warning',
                 title: t('SolanaPay Error'),
-                message: `It was not possible to obtain the necessary data for the SPL Token: ${splTokenAddress}`,
+                message: t(
+                  'It was not possible to obtain the necessary data for the SPL Token: {{token}}',
+                  {token: splTokenAddress},
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
@@ -911,7 +914,10 @@ const handleSolanaPay =
             showBottomNotificationModal({
               type: 'warning',
               title: t('SolanaPay Error'),
-              message: `It was not possible to obtain the necessary data for the SPL Token: ${splTokenAddress}`,
+              message: t(
+                'It was not possible to obtain the necessary data for the SPL Token: {{token}}',
+                {token: splTokenAddress},
+              ),
               enableBackdropDismiss: true,
               actions: [
                 {
@@ -1463,6 +1469,11 @@ const handleLitecoinUri =
     }
   };
 
+// A bare `coin` deeplink param only implies its chain for native coins (btc, eth, xrp, sol...).
+// Tokens like usdc exist on several chains, so they still need an explicit `chain`.
+const getNativeCoinChain = (coin: string): string | undefined =>
+  BitpaySupportedCoins[coin]?.coin === coin ? coin : undefined;
+
 const handleBuyCryptoUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
@@ -1490,9 +1501,8 @@ const handleBuyCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoChain(coin)) {
-        chain = coin;
-      } else {
+      chain = getNativeCoinChain(coin);
+      if (!chain) {
         coin = undefined;
       }
     }
@@ -1561,9 +1571,8 @@ const handleSellCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoChain(coin)) {
-        chain = coin;
-      } else {
+      chain = getNativeCoinChain(coin);
+      if (!chain) {
         coin = undefined;
       }
     }

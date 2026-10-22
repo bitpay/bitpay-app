@@ -2,7 +2,6 @@ import {
   getActionFromState,
   getStateFromPath,
   LinkingOptions,
-  PathConfig,
 } from '@react-navigation/native';
 import {useMemo, useRef} from 'react';
 import {DeviceEventEmitter, Linking, NativeModules} from 'react-native';
@@ -13,11 +12,8 @@ import {
   APP_UNIVERSAL_LINK_DOMAINS,
 } from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdGroup';
-import {CardScreens} from '../../navigation/card/CardStack';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
-import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseGroup';
 import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
-import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
 import {
@@ -41,21 +37,9 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
     },
     [BitpayIdScreens.PAIRING]: 'id/pair',
     [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
-    [RootStacks.TABS]: {
-      screens: {
-        [TabsScreens.CARD]: {
-          path: 'wallet-card',
-          initialRouteName: CardScreens.HOME,
-          screens: {
-            [CardScreens.PAIRING]: 'pairing',
-          },
-        },
-      },
-    } as PathConfig<TabsStackParamList>,
     [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
     [ExternalServicesScreens.ROOT_BUY_AND_SELL]: {path: 'buy/:amount?'},
     [SwapCryptoScreens.SWAP_CRYPTO_ROOT]: 'swap',
-    [CoinbaseScreens.ROOT]: 'coinbase',
   },
 });
 
@@ -140,12 +124,14 @@ export const useUrlEventHandler = () => {
 export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
   const logger = useLogger();
-  const {
-    biometricLockActive,
-    pinLockActive,
-    lockAuthorizedUntil,
-    inAppBrowserOpen,
-  } = useAppSelector(({APP}) => APP);
+  const biometricLockActive = useAppSelector(
+    ({APP}) => APP.biometricLockActive,
+  );
+  const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
+  const lockAuthorizedUntil = useAppSelector(
+    ({APP}) => APP.lockAuthorizedUntil,
+  );
+  const inAppBrowserOpen = useAppSelector(({APP}) => APP.inAppBrowserOpen);
 
   const memoizedSubscribe = useMemo<
     LinkingOptions<RootStackParamList>['subscribe']
@@ -245,13 +231,14 @@ export const useDeeplinks = () => {
     ],
   );
 
-  const linkingOptions: LinkingOptions<RootStackParamList> = {
-    prefixes: [APP_DEEPLINK_PREFIX],
-    subscribe: memoizedSubscribe,
-    config: getLinkingConfig(),
-  };
-
-  return linkingOptions;
+  return useMemo<LinkingOptions<RootStackParamList>>(
+    () => ({
+      prefixes: [APP_DEEPLINK_PREFIX],
+      subscribe: memoizedSubscribe,
+      config: getLinkingConfig(),
+    }),
+    [memoizedSubscribe],
+  );
 };
 
 export default useDeeplinks;

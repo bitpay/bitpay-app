@@ -4,7 +4,7 @@ import '@ethersproject/shims';
 // import 'fast-text-encoding';
 import './shim';
 import '@walletconnect/react-native-compat';
-import {AppRegistry, Alert, StatusBar, Appearance, LogBox} from 'react-native';
+import {AppRegistry, Alert, StatusBar, LogBox} from 'react-native';
 import {IS_MAESTRO} from '@env';
 
 if (IS_MAESTRO === 'true') {
@@ -34,16 +34,16 @@ import {
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {ThemeProvider} from 'styled-components/native';
 import {
   PaymentSentProvider,
   OngoingProcessProvider,
   BottomSheetProvider,
   TokenProvider,
-  LogProvider,
+  ThemeProvider,
 } from './src/contexts';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';
+import {useResolvedColorScheme} from './src/utils/hooks/useResolvedColorScheme';
 import {DklsWorkerHost} from './src/dkls/DklsWorker';
 import * as Sentry from '@sentry/react-native';
 
@@ -214,31 +214,7 @@ const ReduxProvider = () => {
 
 const AppWrapper = () => {
   const colorScheme = useAppSelector(({APP}) => APP.colorScheme);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const updateTheme = () => {
-      if (colorScheme === 'dark') {
-        setIsDark(true);
-      } else if (colorScheme === 'light') {
-        setIsDark(false);
-      } else {
-        setIsDark(Appearance.getColorScheme() === 'dark');
-      }
-    };
-
-    updateTheme();
-
-    const subscription = Appearance.addChangeListener(
-      ({colorScheme: newScheme}) => {
-        if (!colorScheme || colorScheme === 'unspecified') {
-          setIsDark(newScheme === 'dark');
-        }
-      },
-    );
-
-    return () => subscription.remove();
-  }, [colorScheme]);
+  const isDark = useResolvedColorScheme(colorScheme) === 'dark';
 
   const theme = isDark ? BitPayDarkTheme : BitPayLightTheme;
 
@@ -248,25 +224,21 @@ const AppWrapper = () => {
         <StatusBar
           animated
           barStyle={isDark ? 'light-content' : 'dark-content'}
-          backgroundColor="transparent"
-          translucent
         />
         <GestureHandlerRootView style={{flex: 1}}>
           <TokenProvider>
-            <LogProvider>
-              <OngoingProcessProvider>
-                <BottomSheetModalProvider>
-                  <BottomSheetProvider>
-                    <PaymentSentProvider>
-                      <DklsWorkerHost />
-                      <AppInitialization>
-                        <Root />
-                      </AppInitialization>
-                    </PaymentSentProvider>
-                  </BottomSheetProvider>
-                </BottomSheetModalProvider>
-              </OngoingProcessProvider>
-            </LogProvider>
+            <OngoingProcessProvider>
+              <BottomSheetModalProvider>
+                <BottomSheetProvider>
+                  <PaymentSentProvider>
+                    <DklsWorkerHost />
+                    <AppInitialization>
+                      <Root />
+                    </AppInitialization>
+                  </PaymentSentProvider>
+                </BottomSheetProvider>
+              </BottomSheetModalProvider>
+            </OngoingProcessProvider>
           </TokenProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>

@@ -1,7 +1,6 @@
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import styled from 'styled-components/native';
 import {
   BaseText,
   H4,
@@ -22,7 +21,7 @@ import {
   ItemNoteContainer,
   ItemTitleContainer,
 } from '../styled/WalletConnectContainers';
-import {ScrollView, View} from 'react-native';
+import {ScrollView, View, SafeAreaView, StyleSheet} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import FastImage from 'react-native-fast-image';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -34,10 +33,11 @@ import {sleep} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {walletConnectV2OnDeleteSession} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {
-  getAddressFrom,
-  walletConnectV2OnDeleteSession,
-} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+  getSessionAddresses,
+  matchesAccountRoute,
+} from '../walletConnectRouting';
 import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {SearchIconContainer} from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
@@ -64,36 +64,59 @@ import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg
 import InfoSvg from '../../../../assets/img/info.svg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const WalletConnectConnectionsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-const AddConnectionContainer = styled(TouchableOpacity)``;
+const styles = StyleSheet.create({
+  walletConnectConnectionsContainer: {
+    flex: 1,
+  },
+  emptyListContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  accountSettingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    gap: 8,
+    borderRadius: 50,
+  },
+  badge: {
+    position: 'absolute',
+    borderRadius: 8,
+    width: 10,
+    height: 10,
+    right: 0,
+    top: 1,
+    backgroundColor: '#ff647c',
+  },
+});
 
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
+const AccountSettingsContainer = ({
+  children,
+  activeOpacity,
+  onPress,
+}: {
+  children: React.ReactNode;
+  activeOpacity?: number;
+  onPress?: () => void;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      activeOpacity={activeOpacity}
+      onPress={onPress}
+      style={[
+        styles.accountSettingsContainer,
+        {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const AccountSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  padding: 8px 10px;
-  gap: 8px;
-  border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? SlateDark : NeutralSlate)};
-`;
-
-const Badge = styled.View`
-  position: absolute;
-  border-radius: 8px;
-  width: 10px;
-  height: 10px;
-  right: 0px;
-  top: 1px;
-  background: #ff647c;
-`;
+const Badge = () => <View style={styles.badge} />;
 
 export type WalletConnectConnectionsParamList = {
   showSuccessPopup?: boolean;
@@ -115,8 +138,7 @@ const WalletConnectConnections = () => {
   const [selectedSession, setSelectedSession] = useState<
     WCV2SessionType | undefined
   >();
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const [searchVal, setSearchVal] = useState('');
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
@@ -128,7 +150,7 @@ const WalletConnectConnections = () => {
   );
 
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
 
   useEffect(() => {
@@ -203,13 +225,13 @@ const WalletConnectConnections = () => {
     navigation.setOptions({
       headerRight: () => {
         return (
-          <AddConnectionContainer
+          <TouchableOpacity
             touchableLibrary={'react-native-gesture-handler'}
             onPress={() => {
               navigation.navigate('WalletConnectRoot', {});
             }}>
             <AddConnection opacity={1} />
-          </AddConnectionContainer>
+          </TouchableOpacity>
         );
       },
     });
@@ -228,11 +250,7 @@ const WalletConnectConnections = () => {
       <>
         {sessions.map((session, index) => {
           const {peer} = session;
-          const sessionsAddresses = session.accounts.map(account => {
-            const index = account.indexOf(':', account.indexOf(':') + 1);
-            const address = account.substring(index + 1);
-            return address;
-          });
+          const sessionsAddresses = getSessionAddresses(session);
           return (
             <View style={{marginVertical: 15}} key={index.toString()}>
               <ConnectionItem
@@ -253,14 +271,12 @@ const WalletConnectConnections = () => {
                       return;
                     }
 
-                    const filteredRequests = requests.filter(request => {
-                      const requestAddress =
-                        getAddressFrom(request)?.toLowerCase();
-                      return (
-                        request.topic === session.topic &&
-                        requestAddress === account.receiveAddress.toLowerCase()
-                      );
-                    });
+                    const filteredRequests = requests.filter(request =>
+                      matchesAccountRoute(request, {
+                        selectedAccountAddress: account.receiveAddress,
+                        topic: session.topic,
+                      }),
+                    );
                     return (
                       <AccountSettingsContainer
                         key={account.receiveAddress}
@@ -292,22 +308,14 @@ const WalletConnectConnections = () => {
   };
 
   const _setAllKeysAndSelectedWallets = () => {
-    const sessionsAddresses = sessions
-      .map(session =>
-        session.accounts.map(account => {
-          const index = account.indexOf(':', account.indexOf(':') + 1);
-          const address = account.substring(index + 1);
-          return address;
-        }),
-      )
-      .flat();
+    const sessionsAddresses = sessions.map(getSessionAddresses).flat();
 
     const formattedKeys = Object.values(keys)
       .map(key => {
         const accountList = buildAccountList(
           key,
           defaultAltCurrency.isoCode,
-          rates,
+          {},
           dispatch,
           {
             filterByCustomWallets: key.wallets.filter(({receiveAddress}) => {
@@ -420,7 +428,7 @@ const WalletConnectConnections = () => {
   };
 
   return (
-    <WalletConnectConnectionsContainer>
+    <SafeAreaView style={styles.walletConnectConnectionsContainer}>
       <ScrollView>
         <View style={{marginTop: 20, padding: 16, marginBottom: 100}}>
           <HeaderTitle>{t('Connections')}</HeaderTitle>
@@ -466,10 +474,10 @@ const WalletConnectConnections = () => {
             />
           ) : null}
           {!sessions.length ? (
-            <EmptyListContainer>
+            <View style={styles.emptyListContainer}>
               <H5>{t("It's a ghost town in here")}</H5>
               <GhostSvg style={{marginTop: 20}} />
-            </EmptyListContainer>
+            </View>
           ) : null}
         </View>
       </ScrollView>
@@ -516,7 +524,7 @@ const WalletConnectConnections = () => {
           </SheetContainer>
         </SheetModal>
       ) : null}
-    </WalletConnectConnectionsContainer>
+    </SafeAreaView>
   );
 };
 

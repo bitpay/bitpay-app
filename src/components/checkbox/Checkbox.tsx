@@ -1,9 +1,10 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {View} from 'react-native';
 import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
-import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
-import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {Action, SlateDark} from '../../styles/colors';
+import {useTheme} from '../../contexts';
 
 interface Props {
   onPress: () => any;
@@ -13,6 +14,7 @@ interface Props {
   radioHeight?: number;
   checkHeight?: number;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 interface BorderProps {
@@ -21,22 +23,40 @@ interface BorderProps {
   radio?: boolean;
 }
 
-const Border = styled.View<BorderProps>`
-  border: 1px solid
-    ${({checked, disabled, theme}) => {
-      if (disabled) {
-        return 'transparent';
-      }
-
-      return checked ? Action : theme?.dark ? SlateDark : '#E5E5F2';
-    }};
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-radius: ${({radio}) => (radio ? '50px' : '5px')};
-`;
+const Border: React.FC<BorderProps & React.ComponentProps<typeof View>> = ({
+  checked,
+  disabled,
+  radio,
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  const borderColor = disabled
+    ? 'transparent'
+    : checked
+    ? Action
+    : theme?.dark
+    ? SlateDark
+    : '#E5E5F2';
+  return (
+    <View
+      style={[
+        {
+          borderWidth: 1,
+          borderColor,
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          borderRadius: radio ? 50 : 5,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const baseCheckboxStyles = {
   borderRadius: 5,
@@ -57,7 +77,9 @@ const Checkbox: React.FC<Props> = ({
   radioHeight,
   checkHeight,
   testID,
+  accessibilityLabel,
 }) => {
+  const {t} = useTranslation();
   const radioStyles = radioHeight
     ? {height: radioHeight, width: radioHeight}
     : baseRadioStyles;
@@ -66,7 +88,6 @@ const Checkbox: React.FC<Props> = ({
 
   return (
     <RoundedCheckbox
-      key={Math.floor(Math.random() * 500)}
       onPress={() => !disabled && onPress()}
       active={checked}
       uncheckedColor={
@@ -78,7 +99,7 @@ const Checkbox: React.FC<Props> = ({
       }}
       // @ts-ignore --> testing
       testID={testID || 'checkbox'}
-      accessibilityLabel="Checkbox"
+      accessibilityLabel={accessibilityLabel || t('Checkbox')}
       outerStyle={{
         ...baseStyles,
         borderColor: 'transparent',

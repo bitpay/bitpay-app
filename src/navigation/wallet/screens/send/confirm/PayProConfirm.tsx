@@ -1,11 +1,10 @@
-import Transport from '@ledgerhq/hw-transport';
-import {RouteProp, StackActions} from '@react-navigation/core';
+import {RouteProp} from '@react-navigation/core';
 import {
   useNavigation,
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
 import {
@@ -15,7 +14,6 @@ import {
 } from '../../../../../utils/hooks';
 import SecureLockIcon from '../../../../../../assets/img/secure-lock.svg';
 import {
-  Key,
   Recipient,
   TransactionProposal,
   TxDetails,
@@ -26,7 +24,6 @@ import {
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
-  buildTxDetails,
   createPayProTxProposal,
   handleCreateTxProposalError,
   handleSendError,
@@ -35,7 +32,6 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, toggleThenUntoggle} from '../../../../../utils/helper-methods';
-import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   GetFeeUnits,
@@ -66,37 +62,16 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
 import {
   GetFeeOptions,
   getFeeRatePerKb,
 } from '../../../../../store/wallet/effects/fee/fee';
-import {WalletRowProps} from '../../../../../components/list/WalletRow';
 import {Invoice} from '../../../../../store/shop/shop.models';
-import {startGetRates} from '../../../../../store/wallet/effects';
-import {
-  CoinbaseAccountProps,
-  CoinbaseErrorMessages,
-} from '../../../../../api/coinbase/coinbase.types';
-import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {TxDescription} from './TxDescription';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../../components/modal/import-ledger-wallet/utils';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {RootStacks} from '../../../../../Root';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
@@ -136,8 +111,6 @@ const PayProConfirm = () => {
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
 
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
-  const [coinbaseAccount, setCoinbaseAccount] =
-    useState<CoinbaseAccountProps>();
   const [wallet, setWallet] = useState(_wallet);
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
@@ -147,12 +120,6 @@ const PayProConfirm = () => {
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
   const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
     useState(false);
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
@@ -184,61 +151,15 @@ const PayProConfirm = () => {
           keys,
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           payProOptions,
-          invoice,
-          skipThreshold: true,
         }),
       ),
-    [defaultAltCurrency.isoCode, dispatch, keys, payProOptions, invoice],
+    [defaultAltCurrency.isoCode, dispatch, keys, payProOptions],
   );
 
   const reshowWalletSelector = async () => {
     await sleep(400);
     setWalletSelectorVisible(true);
   };
-
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
-  }, []);
 
   const createTxp = async (selectedWallet: Wallet) => {
     showOngoingProcess('CREATING_TXP');
@@ -301,117 +222,25 @@ const PayProConfirm = () => {
     setWalletSelectorVisible(true);
   };
 
-  const handleTxpError = async (err: any) => {
-    await sleep(400);
-    hideOngoingProcess();
-    const onDismiss = () => reshowWalletSelector();
-    const errorMessageConfig = await dispatch(
-      handleCreateTxProposalError(err, onDismiss),
-    );
-    dispatch(
-      AppActions.showBottomNotificationModal({
-        ...errorMessageConfig,
-        message:
-          err.response?.data?.message ||
-          err.message ||
-          errorMessageConfig.message,
-      }),
-    );
-  };
-
-  const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    showOngoingProcess('CREATING_TXP');
-    const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
-    try {
-      const rates = await dispatch(startGetRates({}));
-      const newTxDetails = await dispatch(
-        buildTxDetails({
-          invoice,
-          wallet: walletRowProps,
-          rates,
-          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-        }),
-      );
-      updateTxDetails(newTxDetails);
-      updateTxp(undefined);
-      setCoinbaseAccount(selectedCoinbaseAccount);
-      await sleep(400);
-      hideOngoingProcess();
-      dispatch(
-        Analytics.track('Start Merchant Purchase', {
-          merchantBrand: invoice.merchantName,
-        }),
-      );
-    } catch (err) {
-      handleTxpError(err);
-    }
-  };
-
   const onWalletSelect = async (selectedWallet: Wallet) => {
     setWalletSelectorVisible(false);
     // not ideal - will dive into why the timeout has to be this long
     await sleep(400);
     createTxp(selectedWallet);
   };
-  const startSendingPayment = async ({
-    twoFactorCode,
-    transport,
-  }: {
-    twoFactorCode?: string;
-    transport?: Transport;
-  }) => {
-    const isUsingHardwareWallet = !!transport;
-
+  const startSendingPayment = async () => {
     try {
-      if (isUsingHardwareWallet) {
-        if (txp && wallet && recipient) {
-          const {chain, network} = wallet.credentials;
-          const configFn = currencyConfigs[chain];
-          if (!configFn) {
-            throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-          }
-          const params = configFn(network);
-          await prepareLedgerApp(
-            params.appName,
-            transportRef,
-            setHardwareWalletTransport,
-            onDisconnect,
-            setPromptOpenAppState,
-          );
-          setConfirmHardwareState('sending');
-          await sleep(500);
-          await dispatch(
-            startSendPayment({
-              txp,
-              key,
-              wallet,
-              recipient,
-              transport,
-            }),
-          );
-          setConfirmHardwareState('complete');
-          await sleep(1000);
-          setConfirmHardwareWalletVisible(false);
-        }
-      } else {
-        txp && wallet && recipient
-          ? await dispatch(
-              startSendPayment({
-                txp,
-                key,
-                wallet,
-                recipient,
-                ...(isTSSWallet(wallet) && {tssCallbacks}),
-                ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-              }),
-            )
-          : await dispatch(
-              coinbasePayInvoice(
-                invoice!.id,
-                coinbaseAccount!.currency.code,
-                twoFactorCode,
-              ),
-            );
+      if (txp && wallet && recipient) {
+        await dispatch(
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
+          }),
+        );
       }
 
       dispatch(
@@ -439,114 +268,53 @@ const PayProConfirm = () => {
 
       await sleep(1000);
 
-      if (coinbaseAccount) {
-        navigation.dispatch(StackActions.popToTop());
-        navigation.dispatch(StackActions.pop(3));
-        navigation.navigate('CoinbaseAccount', {
-          accountId: coinbaseAccount.id,
-          refresh: true,
-        });
+      if (IsVMChain(wallet!.chain) && wallet!.receiveAddress) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 2,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.ACCOUNT_DETAILS,
+                params: {
+                  keyId: wallet!.keyId,
+                  selectedAccountAddress: wallet!.receiveAddress,
+                },
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
+                },
+              },
+            ],
+          }),
+        );
       } else {
-        if (IsVMChain(wallet!.chain) && wallet!.receiveAddress) {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
                 },
-                {
-                  name: WalletScreens.ACCOUNT_DETAILS,
-                  params: {
-                    keyId: wallet!.keyId,
-                    selectedAccountAddress: wallet!.receiveAddress,
-                  },
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        } else {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        }
+              },
+            ],
+          }),
+        );
       }
     } catch (err: any) {
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
-      const twoFactorRequired =
-        coinbaseAccount &&
-        err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
-      twoFactorRequired ? await request2FA() : await handlePaymentFailure(err);
+      await handlePaymentFailure(err);
     }
-  };
-
-  const showErrorMessage = useCallback(
-    async ({
-      error,
-      defaultErrorMessage,
-      onDismiss,
-    }: {
-      error?: any;
-      defaultErrorMessage: string;
-      onDismiss?: () => Promise<void>;
-    }) => {
-      await sleep(500);
-      dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            title: t('Error'),
-            errMsg: error?.message || defaultErrorMessage,
-            action: () => onDismiss && onDismiss(),
-          }),
-        ),
-      );
-    },
-    [dispatch],
-  );
-
-  const request2FA = async () => {
-    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
-      onSubmit: async twoFactorCode => {
-        try {
-          await startSendingPayment({twoFactorCode});
-        } catch (error: any) {
-          hideOngoingProcess();
-          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-          error?.message?.includes(invalid2faMessage)
-            ? showErrorMessage({defaultErrorMessage: invalid2faMessage})
-            : handlePaymentFailure(error);
-          throw error;
-        }
-      },
-    });
-    toggleThenUntoggle(setResetSwipeButton);
   };
 
   const handlePaymentFailure = async (error: any) => {
@@ -567,7 +335,6 @@ const PayProConfirm = () => {
       updateTxDetails(undefined);
       updateTxp(undefined);
       setWallet(undefined);
-      setCoinbaseAccount(undefined);
     }
     toggleThenUntoggle(setResetSwipeButton);
     dispatch(
@@ -594,44 +361,8 @@ const PayProConfirm = () => {
     );
   };
 
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = (args: {transport: Transport}) => {
-    const {transport} = args;
-
-    transport.on('disconnect', disconnectFnRef.current);
-
-    setHardwareWalletTransport(transport);
-    setConfirmHardwareState('sending');
-    startSendingPayment({transport});
-  };
-
   const onSwipeComplete = async () => {
-    if (key?.hardwareSource) {
-      await onSwipeCompleteHardwareWallet(key);
-    } else {
-      await startSendingPayment({});
-    }
-  };
-
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        startSendingPayment({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      showErrorMessage({
-        defaultErrorMessage: t('Unsupported hardware wallet'),
-        onDismiss: () => reshowWalletSelector(),
-      });
-    }
+    await startSendingPayment();
   };
 
   const onCloseModal = async () => {
@@ -656,7 +387,7 @@ const PayProConfirm = () => {
         contentContainerStyle={{paddingBottom: 50}}
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
-          <Header hr>Summary</Header>
+          <Header hr>{t('Summary')}</Header>
           {wallet && isTSSWallet(wallet) && (
             <TSSProgressTracker
               status={tssStatus}
@@ -689,7 +420,7 @@ const PayProConfirm = () => {
             }}
             hr
           />
-          {wallet || coinbaseAccount ? (
+          {wallet ? (
             <>
               <SendingFrom
                 sender={sendingFrom!}
@@ -709,7 +440,7 @@ const PayProConfirm = () => {
                 />
               ) : null}
               <Amount
-                description={'SubTotal'}
+                description={t('SubTotal')}
                 amount={subTotal}
                 height={83}
                 hr
@@ -751,7 +482,7 @@ const PayProConfirm = () => {
               ) : null}
               {wallet ? (
                 <Amount
-                  description={'Total'}
+                  description={t('Total')}
                   amount={total}
                   height={
                     IsERCToken(wallet.currencyAbbreviation, wallet.chain)
@@ -773,39 +504,23 @@ const PayProConfirm = () => {
           setWalletSelectorVisible={setWalletSelectorVisible}
           walletsAndAccounts={memoizedKeysAndWalletsList}
           onWalletSelect={onWalletSelect}
-          onCoinbaseAccountSelect={onCoinbaseAccountSelect}
           supportedTransactionCurrencies={
             invoice.supportedTransactionCurrencies
           }
           onBackdropPress={async () => {
             setWalletSelectorVisible(false);
-            if (!wallet && !coinbaseAccount) {
+            if (!wallet) {
               await sleep(100);
               navigation.goBack();
             }
           }}
         />
-        {key?.hardwareSource && wallet ? (
-          <ConfirmHardwareWalletModal
-            isVisible={isConfirmHardwareWalletModalVisible}
-            state={confirmHardwareState}
-            hardwareSource={key.hardwareSource}
-            transport={hardwareWalletTransport}
-            currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
-            onBackdropPress={() => {
-              setConfirmHardwareWalletVisible(false);
-              setResetSwipeButton(true);
-              setConfirmHardwareState(null);
-            }}
-            onPaired={onHardwareWalletPaired}
-          />
-        ) : null}
       </ConfirmScrollView>
-      {wallet || coinbaseAccount ? (
+      {wallet ? (
         <>
           <SwipeButton
             disabled={disableSwipeSendButton}
-            title={'Slide to send'}
+            title={t('Slide to send')}
             forceReset={resetSwipeButton}
             onSwipeComplete={onSwipeComplete}
           />
