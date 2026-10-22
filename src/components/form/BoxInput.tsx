@@ -26,6 +26,7 @@ import {
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useLatestCallback} from '../../utils/hooks/useLatestCallback';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 
@@ -230,7 +231,6 @@ interface BoxInputProps extends TextInputProps {
   type?: InputType;
   disabled?: boolean;
   paddingRight?: number;
-  sensitive?: boolean;
 }
 
 const BoxInput = React.forwardRef<
@@ -250,13 +250,11 @@ const BoxInput = React.forwardRef<
       disabled,
       keyboardType,
       paddingRight,
-      sensitive,
       ...props
     },
     ref,
   ) => {
     const isPassword = type === 'password';
-    const clearOnBackground = isPassword || sensitive;
     const isSearch = type === 'search';
     const [isFocused, setIsFocused] = useState(false);
     const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
@@ -291,17 +289,16 @@ const BoxInput = React.forwardRef<
       );
     }
 
+    const clearText = useLatestCallback(() => props.onChangeText?.(''));
+
     useEffect(() => {
       const sub = AppState.addEventListener('change', state => {
-        if (
-          clearOnBackground &&
-          (state === 'inactive' || state === 'background')
-        ) {
-          props.onChangeText?.('');
+        if (isPassword && (state === 'inactive' || state === 'background')) {
+          clearText();
         }
       });
       return () => sub.remove();
-    }, [clearOnBackground, props]);
+    }, [isPassword, clearText]);
 
     return (
       <>
