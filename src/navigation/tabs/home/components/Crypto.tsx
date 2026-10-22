@@ -10,7 +10,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import Carousel from 'react-native-reanimated-carousel';
+import {Carousel} from 'react-native-reanimated-carousel';
 import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
@@ -852,17 +852,11 @@ const Crypto = ({active = true}: CryptoProps) => {
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer>
           <Carousel
-            loop={false}
-            autoFillData={false}
-            vertical={false}
-            style={{width: WIDTH}}
-            width={HOME_CARD_WIDTH + 16}
-            height={carouselHeight}
-            autoPlay={false}
+            style={{width: WIDTH, height: carouselHeight}}
+            itemSize={HOME_CARD_WIDTH + 16}
             data={cardsList.list}
-            scrollAnimationDuration={0}
+            animation={{type: 'timing', duration: 0}}
             renderItem={renderCarouselItem}
-            enabled={true}
           />
         </CarouselContainer>
       ) : (
