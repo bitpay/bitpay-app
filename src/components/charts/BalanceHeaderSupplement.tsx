@@ -32,7 +32,8 @@ const BalanceHeaderSupplement = ({
           deltaFiatFormatted={changeRowData?.deltaFiatFormatted}
           rangeLabel={changeRowData?.rangeLabel}
           maskDeltaWhenBalancesHidden
-          style={[changeRowStyle, !changeRowData ? {opacity: 0} : undefined]}
+          visible={!!changeRowData}
+          style={changeRowStyle}
         />
       ) : null}
 

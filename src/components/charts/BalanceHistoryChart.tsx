@@ -31,8 +31,17 @@ import useBalanceChartDisplayModel, {
   type BalanceChartCallbackAnalysisPoint,
 } from './useBalanceChartDisplayModel';
 import type {ChangeRowData} from './balanceHistoryChartSelection';
-
-const ZERO_BALANCE_AXIS_LABEL_FADE_MS = 180;
+import {ZERO_BALANCE_AXIS_LABEL_FADE_MS} from './chartLayout';
+import BalanceChartSkeleton, {
+  BalanceChartErrorCaption,
+  BalanceChartPopulateCaption,
+  type BalanceChartSkeletonVariant,
+} from './BalanceChartSkeleton';
+import {useAppDispatch} from '../../utils/hooks';
+import {maybePopulatePortfolioForWallets} from '../../store/portfolio';
+import type {PortfolioPopulateProgress} from '../../utils/portfolio/assets';
+import {formatUnknownError} from '../../utils/errors/formatUnknownError';
+import {logManager} from '../../managers/LogManager';
 
 export type BalanceHistoryChartProps = {
   enabled?: boolean;
@@ -66,6 +75,25 @@ export type BalanceHistoryChartProps = {
     point?: BalanceChartCallbackAnalysisPoint,
   ) => void;
   onRenderableSeriesChange?: (hasRenderableSeries: boolean) => void;
+  /**
+   * Reports when the chart is showing its own error state (no line, query
+   * failed). Screens that hide the chart behind a loading placeholder use it
+   * to reveal the chart so the Retry action is reachable.
+   */
+  onErrorStateChange?: (showErrorState: boolean) => void;
+  /** Populate wallet counts for this chart's scope, shown under the skeleton. */
+  populateProgress?: PortfolioPopulateProgress;
+  /**
+   * Loading skeleton animation. Screens that keep this chart mounted invisibly
+   * behind their own loading placeholder pass `static` so only one ghost line
+   * animates. The error state is always static.
+   */
+  skeletonVariant?: BalanceChartSkeletonVariant;
+  /**
+   * Hide the skeleton caption (populate counts, error message + Retry), e.g.
+   * while the Home chart is collapsed to a non-interactive thumbnail.
+   */
+  hideSkeletonCaption?: boolean;
   axisLabelOpacity?: number | NumberSharedValue;
   onSelectedTimeframeChange?: (timeframe: FiatRateInterval) => void;
   onSelectionActiveChange?: (active: boolean) => void;
@@ -108,12 +136,17 @@ const BalanceHistoryChart = ({
   onChangeRowData,
   onDisplayedAnalysisPointChange,
   onRenderableSeriesChange,
+  onErrorStateChange,
+  populateProgress,
+  skeletonVariant = 'drawing',
+  hideSkeletonCaption = false,
   axisLabelOpacity = 1,
   onSelectedTimeframeChange,
   onSelectionActiveChange,
 }: BalanceHistoryChartProps): React.ReactElement | null => {
   const {t} = useTranslation();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const activeScope = usePortfolioBalanceChartScope({
     enabled,
     wallets,
@@ -148,12 +181,96 @@ const BalanceHistoryChart = ({
     onRenderableSeriesChange?.(displayModel.hasRenderableSeries);
   }, [displayModel.hasRenderableSeries, onRenderableSeriesChange]);
 
+  React.useEffect(() => {
+    onErrorStateChange?.(displayModel.showErrorState);
+  }, [displayModel.showErrorState, onErrorStateChange]);
+
+  const walletsRef = React.useRef(wallets);
+  walletsRef.current = wallets;
+  const retryDisplayModelQuery = displayModel.retry;
+  const onRetry = React.useCallback(() => {
+    retryDisplayModelQuery();
+    // Same scoped populate the Key/Account/Wallet pull-to-refresh runs. It is
+    // a no-op when the scope's history is already current.
+    const walletIds = (walletsRef.current || [])
+      .map(wallet => wallet?.id)
+      .filter((walletId): walletId is string => !!walletId);
+    if (!walletIds.length) {
+      return;
+    }
+    Promise.resolve(
+      dispatch(
+        maybePopulatePortfolioForWallets({
+          walletIds,
+          quoteCurrency,
+          forceRetryQuarantined: true,
+        }) as any,
+      ),
+    ).catch(error => {
+      logManager.warn(
+        `[portfolio] Failed balance chart retry populate: ${formatUnknownError(
+          error,
+        )}`,
+      );
+    });
+  }, [dispatch, quoteCurrency, retryDisplayModelQuery]);
+
+  const hasPopulateCaption =
+    !hideSkeletonCaption &&
+    displayModel.showSkeleton &&
+    !!populateProgress?.total;
+  const populateCompleted = hasPopulateCaption
+    ? populateProgress?.completed ?? 0
+    : 0;
+  const populateTotal = hasPopulateCaption ? populateProgress?.total ?? 0 : 0;
+  const chartPlaceholder = React.useMemo(() => {
+    if (displayModel.showErrorState) {
+      return (
+        <BalanceChartSkeleton
+          variant="static"
+          isLoading={false}
+          caption={
+            hideSkeletonCaption ? undefined : (
+              <BalanceChartErrorCaption onRetry={onRetry} />
+            )
+          }
+        />
+      );
+    }
+    if (displayModel.showSkeleton) {
+      return (
+        <BalanceChartSkeleton
+          variant={skeletonVariant}
+          caption={
+            populateTotal > 0 ? (
+              <BalanceChartPopulateCaption
+                completed={populateCompleted}
+                total={populateTotal}
+              />
+            ) : undefined
+          }
+        />
+      );
+    }
+    return null;
+  }, [
+    displayModel.showErrorState,
+    displayModel.showSkeleton,
+    hideSkeletonCaption,
+    onRetry,
+    populateCompleted,
+    populateTotal,
+    skeletonVariant,
+  ]);
+
   const {MaxAxisLabel, MinAxisLabel} = useStableBalanceHistoryChartAxisLabels({
     activeSeries: displayModel.visibleSeries,
     axisLabelOpacity,
     quoteCurrency: displayModel.visibleQuoteCurrency,
   });
-  const shouldHideAxisLabels = isZeroBalanceSeries(displayModel.visibleSeries);
+  const shouldHideAxisLabels =
+    !displayModel.hasRenderableSeries ||
+    isZeroBalanceSeries(displayModel.visibleSeries);
   const zeroBalanceAxisLabelOpacity = useDerivedValue(() =>
     withTiming(shouldHideAxisLabels ? 0 : 1, {
       duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS,
@@ -212,7 +329,9 @@ const BalanceHistoryChart = ({
   if (
     !preChartContent &&
     (!displayModel.hasAnyWallets ||
-      (!displayModel.hasRenderableSeries && !displayModel.shouldShowLoader))
+      (!displayModel.hasRenderableSeries &&
+        !displayModel.showSkeleton &&
+        !displayModel.showErrorState))
   ) {
     return null;
   }
@@ -227,10 +346,8 @@ const BalanceHistoryChart = ({
           }
           rangeLabel={displayModel.displayedChangeRowData?.rangeLabel}
           maskDeltaWhenBalancesHidden
-          style={[
-            changeRowStyle,
-            !displayModel.displayedChangeRowData ? {opacity: 0} : null,
-          ]}
+          visible={!!displayModel.displayedChangeRowData}
+          style={changeRowStyle}
         />
       ) : null}
 
@@ -254,8 +371,9 @@ const BalanceHistoryChart = ({
         firstPointGuideLineOpacity={
           zeroBalanceAxisLabelOpacity as NumberSharedValue
         }
-        isLoading={displayModel.shouldShowLoader}
+        isLoading={displayModel.showSkeleton || displayModel.isRefreshing}
         hideLineWhileLoading={!displayModel.hasRenderableSeries}
+        placeholder={chartPlaceholder}
         enablePanGesture={
           !displayModel.isLoading &&
           !disablePanGesture &&

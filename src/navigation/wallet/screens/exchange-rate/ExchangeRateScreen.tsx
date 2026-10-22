@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import type {GraphPoint} from 'react-native-graph';
 import {useTheme} from '../../../../contexts';
+import BalanceChartSkeleton from '../../../../components/charts/BalanceChartSkeleton';
 import ChartSelectionDot from '../../../../components/charts/ChartSelectionDot';
 import InteractiveLineChart from '../../../../components/charts/InteractiveLineChart';
 import TimeframeSelector from '../../../../components/charts/TimeframeSelector';
@@ -482,6 +483,13 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
             SelectionDot={ChartSelectionDot}
             color={shared.chartLineColor}
             isLoading={isChartLoading}
+            // No line yet: show the ghost-line skeleton. With a line, the
+            // chart dims it and morphs to the new range instead.
+            placeholder={
+              isChartLoading && chartPoints.length < 2 ? (
+                <BalanceChartSkeleton />
+              ) : undefined
+            }
           />
 
           <UkExchangeRateDisclosures />

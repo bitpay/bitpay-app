@@ -2289,5 +2289,10 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Prüfen Sie, ob Sie Ihre Wiederherstellungsphrase korrekt notiert haben, indem Sie die Wörter {{first}}, {{second}} und {{third}} Ihrer Wiederherstellungsphrase eingeben.",
   "Show balances": "Guthaben anzeigen",
   "Hide balances": "Guthaben ausblenden",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Dieses Konto konnte nicht auf ausstehende Transaktionen geprüft werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Dieses Konto konnte nicht auf ausstehende Transaktionen geprüft werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "Loading balance history": "Guthabenverlauf wird geladen",
+  "Updating history · {{completed}} of {{count}} wallets_one": "Verlauf wird aktualisiert · {{completed}} von {{count}} Wallet",
+  "Updating history · {{completed}} of {{count}} wallets_other": "Verlauf wird aktualisiert · {{completed}} von {{count}} Wallets",
+  "Couldn't load balance history.": "Guthabenverlauf konnte nicht geladen werden.",
+  "Retry": "Erneut versuchen"
 }
