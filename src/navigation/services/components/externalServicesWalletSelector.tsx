@@ -41,6 +41,7 @@ import GlobalSelect, {
   ToWalletSelectorCustomCurrency,
 } from '../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../utils/external-services-utils';
+import {getLastPurchaseWalletIdForRequest} from '../buy-crypto/utils/buy-crypto-utils';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {
   ExternalServicesContext,
@@ -349,7 +350,13 @@ const ExternalServicesWalletSelector: React.FC<
       return;
     }
 
-    if (preSetWallet?.id || buyCryptoOpts?.lastPurchaseData?.walletId) {
+    const lastPurchaseWalletId = getLastPurchaseWalletIdForRequest(
+      buyCryptoOpts?.lastPurchaseData,
+      fromCurrencyAbbreviation,
+      fromChain,
+    );
+
+    if (preSetWallet?.id || lastPurchaseWalletId) {
       // Selected wallet from Wallet Details
       let fromWalletData;
       let allWallets: Wallet[] = [];
@@ -358,8 +365,7 @@ const ExternalServicesWalletSelector: React.FC<
         allWallets = [...allWallets, ...key.wallets];
       });
 
-      const walletIdToFind =
-        preSetWallet?.id || buyCryptoOpts?.lastPurchaseData?.walletId;
+      const walletIdToFind = preSetWallet?.id || lastPurchaseWalletId;
       fromWalletData = allWallets.find(wallet => wallet.id === walletIdToFind);
       if (fromWalletData) {
         setWallet(fromWalletData);
