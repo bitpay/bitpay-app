@@ -24,19 +24,35 @@ import {
   toggleHideAccount,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {getDecryptPassword} from '../../../store/wallet/effects';
+import {
+  addTestnetWalletsToAccount,
+  getMissingTestnetAccountCurrencies,
+} from '../../../store/wallet/effects/create/create';
+import {selectShowTestnetWallets} from '../../../store/wallet/utils/testnet';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {sleep} from '../../../utils/helper-methods';
+import {getProtocolName, sleep} from '../../../utils/helper-methods';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
 import {Key} from '../../../store/wallet/wallet.models';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
-import {IsVMChain} from '../../../store/wallet/utils/currency';
+import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
+import {
+  SupportedEvmCurrencyOptions,
+  SupportedSvmCurrencyOptions,
+} from '../../../constants/SupportedCurrencyOptions';
 import {
   TouchableOpacity,
   TouchableOpacityProps,
@@ -71,6 +87,14 @@ const styles = StyleSheet.create({
   searchComponentContainer: {
     marginTop: 5,
     marginBottom: 20,
+  },
+  addTestnetWalletsText: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  addTestnetWalletsNetworks: {
+    fontSize: 14,
+    marginTop: 4,
   },
   assetsHeaderContainer: {
     paddingTop: parseInt(ScreenGutter, 10),
@@ -167,6 +191,72 @@ const AccountSettings = () => {
     () => key.wallets.some(w => !w.hideWallet && IsVMChain(w.chain)),
     [key],
   );
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
+  const accountIsSvm =
+    isSvmAccount ?? IsSVMChain(accountItem.chains?.[0] ?? '');
+  const missingTestnetCurrencies = useMemo(
+    () =>
+      getMissingTestnetAccountCurrencies(
+        key,
+        accountItem.receiveAddress,
+        accountIsSvm,
+      ),
+    [key, accountItem.receiveAddress, accountIsSvm],
+  );
+  const canAddTestnetWallets =
+    showTestnetWallets &&
+    !key.isReadOnly &&
+    !isTSSKey(key) &&
+    !!key.methods &&
+    missingTestnetCurrencies.length > 0;
+  // e.g. "Ethereum Sepolia, Polygon Amoy, Base Sepolia"
+  const missingTestnetNetworkNames = missingTestnetCurrencies
+    .map(({chain}) => {
+      const chainName = [
+        ...SupportedEvmCurrencyOptions,
+        ...SupportedSvmCurrencyOptions,
+      ].find(option => option.chain === chain)?.chainName;
+      return `${chainName ?? chain.toUpperCase()} ${getProtocolName(
+        chain,
+        'testnet',
+      )}`;
+    })
+    .join(', ');
+
+  const onAddTestnetWallets = async () => {
+    haptic('impactLight');
+    try {
+      let password: string | undefined;
+      if (key.isPrivKeyEncrypted) {
+        password = await dispatch(getDecryptPassword(Object.assign({}, key)));
+      }
+      showOngoingProcess('ADDING_WALLET');
+      await dispatch(
+        addTestnetWalletsToAccount({
+          key,
+          accountNumber: accountItem.accountNumber,
+          receiveAddress: accountItem.receiveAddress,
+          isSvmAccount: accountIsSvm,
+          password,
+        }),
+      );
+      hideOngoingProcess();
+    } catch (err: any) {
+      hideOngoingProcess();
+      await sleep(500);
+      dispatch(
+        showBottomNotificationModal(
+          err?.message === 'invalid password'
+            ? WrongPasswordError()
+            : CustomErrorMessage({
+                errMsg: BWCErrorMessage(err),
+                title: t('Error'),
+              }),
+        ),
+      );
+    }
+  };
+
   useEffect(() => {
     const newHideAccount =
       key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false;
@@ -329,6 +419,26 @@ const AccountSettings = () => {
         ) : null}
 
         <Hr />
+
+        {canAddTestnetWallets ? (
+          <>
+            <WalletNameContainer
+              testID="account-settings-add-testnet-wallets"
+              activeOpacity={ActiveOpacity}
+              onPress={onAddTestnetWallets}>
+              <View style={styles.addTestnetWalletsText}>
+                <AccountSettingsTitle>
+                  {t('Add Testnet Wallets')}
+                </AccountSettingsTitle>
+                <InfoDescription style={styles.addTestnetWalletsNetworks}>
+                  {missingTestnetNetworkNames}
+                </InfoDescription>
+              </View>
+              <ChevronRightSvg height={16} />
+            </WalletNameContainer>
+            <Hr />
+          </>
+        ) : null}
 
         <View style={styles.assetsHeaderContainer}>
           <Title>{t('Wallets')}</Title>

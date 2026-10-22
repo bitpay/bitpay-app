@@ -90,6 +90,7 @@ import {
 import {clearWalletPortfolioDataWithRuntime} from './portfolio';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {invalidateWalletDerivedCachesForAction} from './wallet/utils/walletDerivedCacheLifecycle';
+import {syncTestnetWalletsVisibility} from './wallet/utils/testnet';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
 
@@ -760,6 +761,11 @@ const getStore = async () => {
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+  // Registered before the Provider subscribes, so list helpers see the new
+  // testnet visibility by the time components re-render.
+  store.subscribe(() =>
+    syncTestnetWalletsVisibility(store.getState() as unknown as RootState),
+  );
   // Enable direct log dispatching now that the store exists
   storeDispatch = store.dispatch;
 
@@ -805,6 +811,8 @@ export function configureTestStore(initialState: any) {
     traceLimit: 25,
   })(applyMiddleware(...middlewares));
   const store = createStore(rootReducer, initialState, middlewareEnhancers);
+  syncTestnetWalletsVisibility(store.getState());
+  store.subscribe(() => syncTestnetWalletsVisibility(store.getState()));
   return store as Store<RootState, AnyAction> & {
     dispatch: AppDispatch;
   };

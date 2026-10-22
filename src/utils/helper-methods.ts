@@ -1780,7 +1780,7 @@ export async function sendSolanaTx(
   const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/tx/send`;
   const payload = {
     rawTx,
-    network: 'mainnet',
+    network: _network,
     chain: 'SOL',
   };
 

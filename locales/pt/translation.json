@@ -2298,5 +2298,12 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "Confirme que anotou corretamente sua frase de recuperação escrevendo as palavras {{first}}, {{second}} e {{third}} da sua frase de recuperação.",
   "Show balances": "Mostrar saldos",
   "Hide balances": "Ocultar saldos",
-  "Could not check this account for pending transactions. Check your connection and try again.": "Não foi possível verificar se esta conta tem transações pendentes. Verifique sua conexão e tente novamente."
+  "Could not check this account for pending transactions. Check your connection and try again.": "Não foi possível verificar se esta conta tem transações pendentes. Verifique sua conexão e tente novamente.",
+  "Testnet mode unlocked": "Modo testnet desbloqueado",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "As carteiras e redes de testnet agora são exibidas. Você pode desativá-las abaixo.",
+  "Show Testnet Wallets": "Mostrar carteiras de testnet",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Se ativado, as carteiras de testnet são exibidas em todo o aplicativo e você pode criar carteiras e tokens de testnet. As moedas de testnet não têm valor. Se desativado, as carteiras de testnet ficam ocultas, mas não são excluídas.",
+  "NETWORK": "REDE",
+  "Select a Network": "Selecione uma rede",
+  "Add Testnet Wallets": "Adicionar carteiras de testnet"
 }

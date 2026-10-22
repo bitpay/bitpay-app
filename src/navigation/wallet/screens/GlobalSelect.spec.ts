@@ -7,6 +7,7 @@ import {
   resolveCustomGlobalSelectList,
   shouldShowGlobalSelectEmptyState,
 } from './GlobalSelect';
+import {syncTestnetWalletsVisibility} from '../../../store/wallet/utils/testnet';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -198,7 +199,35 @@ describe('custom modal list preloading', () => {
     expect(preloaded.data[0].availableWallets).toEqual([visibleWallet]);
   });
 
+  const setTestnetMode = (showTestnetWallets: boolean) =>
+    syncTestnetWalletsVisibility({
+      APP: {network: 'livenet'},
+      WALLET: {keys: {}, showTestnetWallets},
+    } as any);
+
+  afterEach(() => setTestnetMode(false));
+
+  it('leaves testnet wallets out while testnet mode is off', () => {
+    setTestnetMode(false);
+    const visibleWallet = makeWallet();
+    const preloaded = preloadCustomGlobalSelectList({
+      keys: {
+        'key-1': {
+          wallets: [
+            visibleWallet,
+            makeWallet({id: 'testnet-wallet', network: 'testnet'}),
+          ],
+        },
+      } as any,
+      customToSelectCurrencies: [btc],
+      livenetOnly: false,
+    });
+
+    expect(preloaded.data[0].availableWallets).toEqual([visibleWallet]);
+  });
+
   it('includes visible testnet wallets when the modal allows them', () => {
+    setTestnetMode(true);
     const visibleWallet = makeWallet();
     const testnetWallet = makeWallet({
       id: 'testnet-wallet',

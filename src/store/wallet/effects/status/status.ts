@@ -186,6 +186,67 @@ export const getBulkStatus = (
   });
 };
 
+/**
+ * BWS fails the whole bulk request when any one wallet fails to authenticate,
+ * so a broken testnet wallet would stop every balance on its key from
+ * updating. When a key mixes networks and the bulk call fails, retry each
+ * network on its own and keep whatever succeeds.
+ */
+export const getBulkStatusByNetwork = async (
+  bulkClient: BulkClient,
+  credentials: Array<{network: string; copayerId: string}>,
+  walletOptions: Record<string, {tokenAddresses: string[] | undefined}>,
+): Promise<BulkStatus[]> => {
+  try {
+    return (await getBulkStatus(
+      bulkClient,
+      credentials,
+      walletOptions,
+    )) as BulkStatus[];
+  } catch (err) {
+    const networks = [...new Set(credentials.map(c => c.network))];
+    if (networks.length < 2) {
+      throw err;
+    }
+    const results = await Promise.allSettled(
+      networks.map(network => {
+        const networkCredentials = credentials.filter(
+          c => c.network === network,
+        );
+        const networkWalletOptions = Object.fromEntries(
+          networkCredentials.map(c => [
+            c.copayerId,
+            walletOptions[c.copayerId],
+          ]),
+        );
+        return getBulkStatus(
+          bulkClient,
+          networkCredentials,
+          networkWalletOptions,
+        ) as Promise<BulkStatus[]>;
+      }),
+    );
+    const succeeded = results.flatMap(result =>
+      result.status === 'fulfilled' ? result.value : [],
+    );
+    if (!succeeded.length) {
+      throw err;
+    }
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        logManager.warn(
+          `[getBulkStatusByNetwork] ${networks[index]} status failed: ${
+            result.reason instanceof Error
+              ? result.reason.message
+              : JSON.stringify(result.reason)
+          }`,
+        );
+      }
+    });
+    return succeeded;
+  }
+};
+
 export const updateKeyStatus =
   ({
     key,
@@ -285,11 +346,11 @@ export const updateKeyStatus =
         : [];
 
       try {
-        const bulkStatus = (await getBulkStatus(
+        const bulkStatus = await getBulkStatusByNetwork(
           bulkClient,
           credentials,
           walletOptions,
-        )) as BulkStatus[];
+        );
 
         if (
           credentialsWithoutWalletKey.some(

@@ -2271,5 +2271,12 @@
   "Verify you saved your recovery phrase correctly by entering words {{first}}, {{second}} and {{third}} of your recovery phrase.": "リカバリーフレーズを正しく保存できたか確認するため、フレーズの {{first}}、{{second}}、{{third}} 番目の単語を入力してください。",
   "Show balances": "残高を表示",
   "Hide balances": "残高を非表示",
-  "Could not check this account for pending transactions. Check your connection and try again.": "このアカウントの保留中の取引を確認できませんでした。接続を確認して、もう一度お試しください。"
+  "Could not check this account for pending transactions. Check your connection and try again.": "このアカウントの保留中の取引を確認できませんでした。接続を確認して、もう一度お試しください。",
+  "Testnet mode unlocked": "テストネットモードが有効になりました",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "テストネットのウォレットとネットワークが表示されるようになりました。下でオフにできます。",
+  "Show Testnet Wallets": "テストネットウォレットを表示",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "有効にすると、テストネットウォレットがアプリ全体に表示され、テストネットのウォレットとトークンを作成できます。テストネットのコインには価値がありません。無効にすると、テストネットウォレットは非表示になりますが、削除はされません。",
+  "NETWORK": "ネットワーク",
+  "Select a Network": "ネットワークを選択",
+  "Add Testnet Wallets": "テストネットウォレットを追加"
 }

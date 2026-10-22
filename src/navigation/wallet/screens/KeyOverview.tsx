@@ -169,6 +169,12 @@ import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterIntera
 import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
 import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
+import {Network} from '../../../constants';
+import {
+  getAccountChainsOnNetwork,
+  isHiddenByTestnetMode,
+  isKeyVisibleForTestnetMode,
+} from '../../../store/wallet/utils/testnet';
 
 const EMPTY_ACCOUNT_LIST: AccountRowProps[] = [];
 
@@ -364,7 +370,12 @@ const OtherKeyDropdownOptions: React.FC<{
   return (
     <>
       {Object.values(keys)
-        .filter(key => key.backupComplete && key.id !== currentKeyId)
+        .filter(
+          key =>
+            key.backupComplete &&
+            key.id !== currentKeyId &&
+            isKeyVisibleForTestnetMode(key),
+        )
         .map(key => (
           <DropdownOption
             key={key.id}
@@ -923,17 +934,23 @@ const KeyOverview = () => {
 
   const pendingTxpCount =
     key?.wallets.reduce(
-      (count, wallet) => count + (wallet.pendingTxps?.length || 0),
+      (count, wallet) =>
+        isHiddenByTestnetMode(wallet)
+          ? count
+          : count + (wallet.pendingTxps?.length || 0),
       0,
     ) || 0;
 
   const missingChainsAccountsCount = useMemo(() => {
     const supportedEvmChainCount = Object.keys(BitpaySupportedEvmCoins).length;
 
-    return memoizedAccountList.reduce((count, {chains}) => {
+    return memoizedAccountList.reduce((count, {chains, wallets}) => {
       return (
         count +
-        (IsEVMChain(chains[0]) && chains.length !== supportedEvmChainCount
+        (IsEVMChain(chains[0]) &&
+        // handleAddEvmChain adds mainnet wallets, so count mainnet chains.
+        getAccountChainsOnNetwork(wallets, Network.mainnet).length !==
+          supportedEvmChainCount
           ? 1
           : 0)
       );

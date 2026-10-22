@@ -84,6 +84,10 @@ import {IsSVMChain, IsVMChain} from '../../../../store/wallet/utils/currency';
 import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../../utils/performanceDebug';
 import {getSinglePreloadCandidate} from '../../../../utils/navigationPreload';
+import {
+  isKeyVisibleForTestnetMode,
+  selectShowTestnetWallets,
+} from '../../../../store/wallet/utils/testnet';
 
 const styles = StyleSheet.create({
   cryptoContainer: {
@@ -523,7 +527,14 @@ const Crypto = ({active = true}: CryptoProps) => {
   const portfolioChartsRequested = showPortfolioValue === true;
   const portfolioChartsEnabled =
     active && portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
-  const keyList = useMemo(() => Object.values(keys), [keys]);
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
+  const keyList = useMemo(
+    () =>
+      Object.values(keys).filter(key =>
+        isKeyVisibleForTestnetMode(key, showTestnetWallets),
+      ),
+    [keys, showTestnetWallets],
+  );
   const hasKeys = keyList.length;
   const legacyKeyPercentagesEnabled =
     active && !portfolioChartsRequested && !hideAllBalances;

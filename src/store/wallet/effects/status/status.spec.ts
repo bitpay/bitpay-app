@@ -262,6 +262,7 @@ import {
   buildFiatBalance,
   buildPendingTxps,
   getBulkStatus,
+  getBulkStatusByNetwork,
   GetWalletBalance,
   getTokenContractInfo,
   startUpdateWalletStatus,
@@ -306,6 +307,82 @@ describe('getBulkStatus', () => {
     await getBulkStatus(bulkClient, ['cred1'], {
       w1: {tokenAddresses: undefined},
     });
+    expect(bulkClient.getStatusAll).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('getBulkStatusByNetwork', () => {
+  const mainnetCred = {copayerId: 'c-main', network: 'livenet'};
+  const testnetCred = {copayerId: 'c-test', network: 'testnet'};
+  const walletOptions = {
+    'c-main': {tokenAddresses: ['0xusdc']},
+    'c-test': {tokenAddresses: undefined},
+  };
+
+  it('makes one request when it succeeds', async () => {
+    const bulkClient = {
+      getStatusAll: jest.fn((_creds, _opts, cb) =>
+        cb(null, [{walletId: 'main'}, {walletId: 'test'}]),
+      ),
+    };
+    const result = await getBulkStatusByNetwork(
+      bulkClient as any,
+      [mainnetCred, testnetCred],
+      walletOptions,
+    );
+    expect(result).toHaveLength(2);
+    expect(bulkClient.getStatusAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps mainnet balances when the testnet wallets fail', async () => {
+    const bulkClient = {
+      getStatusAll: jest.fn((creds: any[], opts, cb) => {
+        if (creds.some(c => c.network === 'testnet')) {
+          return cb(new Error('testnet wallet not found'));
+        }
+        cb(null, [{walletId: 'main', opts}]);
+      }),
+    };
+    const result = await getBulkStatusByNetwork(
+      bulkClient as any,
+      [mainnetCred, testnetCred],
+      walletOptions,
+    );
+
+    expect(result).toEqual([
+      {
+        walletId: 'main',
+        opts: expect.objectContaining({
+          wallets: {'c-main': {tokenAddresses: ['0xusdc']}},
+        }),
+      },
+    ]);
+    // the combined request, then one per network
+    expect(bulkClient.getStatusAll).toHaveBeenCalledTimes(3);
+  });
+
+  it('rethrows when every network fails', async () => {
+    const error = new Error('BWS down');
+    const bulkClient = {
+      getStatusAll: jest.fn((_creds, _opts, cb) => cb(error)),
+    };
+    await expect(
+      getBulkStatusByNetwork(
+        bulkClient as any,
+        [mainnetCred, testnetCred],
+        walletOptions,
+      ),
+    ).rejects.toBe(error);
+  });
+
+  it('does not retry a single-network key', async () => {
+    const error = new Error('BWS down');
+    const bulkClient = {
+      getStatusAll: jest.fn((_creds, _opts, cb) => cb(error)),
+    };
+    await expect(
+      getBulkStatusByNetwork(bulkClient as any, [mainnetCred], walletOptions),
+    ).rejects.toBe(error);
     expect(bulkClient.getStatusAll).toHaveBeenCalledTimes(1);
   });
 });

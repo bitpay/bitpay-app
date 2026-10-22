@@ -96,6 +96,7 @@ import {
   scheduleAfterTransitionAndIdle,
 } from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -140,6 +141,7 @@ const selectHomeFlowPreloadEligibility = createSelector(
           wallet =>
             !wallet.hideWallet &&
             !wallet.hideWalletByAccount &&
+            !isHiddenByTestnetMode(wallet) &&
             typeof wallet.isComplete === 'function' &&
             wallet.isComplete() &&
             !wallet.pendingTssSession &&
@@ -158,7 +160,9 @@ const selectPendingTransactionProposalCount = createSelector(
         count +
         key.wallets.reduce(
           (walletCount, wallet) =>
-            walletCount + (wallet.pendingTxps?.length || 0),
+            isHiddenByTestnetMode(wallet)
+              ? walletCount
+              : walletCount + (wallet.pendingTxps?.length || 0),
           0,
         ),
       0,

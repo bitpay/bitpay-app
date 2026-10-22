@@ -80,6 +80,7 @@ import {
 } from '@solana/kit';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {isHiddenByTestnetMode} from '../wallet/utils/testnet';
 
 const BWC = BwcProvider.getInstance();
 
@@ -337,9 +338,12 @@ export const walletConnectV2SubscribeToEvents =
           )}`,
         );
 
-        const isChainSupported = Object.keys(
-          WALLET_CONNECT_SUPPORTED_CHAINS,
-        ).includes(event.params.chainId);
+        const requestedChain =
+          WALLET_CONNECT_SUPPORTED_CHAINS[event.params.chainId];
+        // A testnet session made earlier stops answering once testnet mode
+        // is off, because its wallets are hidden.
+        const isChainSupported =
+          !!requestedChain && !isHiddenByTestnetMode(requestedChain);
         const isMethodSupported = Object.values({
           ...EIP155_SIGNING_METHODS,
           ...SOLANA_SIGNING_METHODS,

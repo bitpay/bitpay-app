@@ -27,6 +27,7 @@ import {ExternalServicesScreens} from '../../../navigation/services/ExternalServ
 import {Keys} from '../../../store/wallet/wallet.reducer';
 import ArchaxFooter from '../../archax/archax-footer';
 import {isEuCountry} from '../../../store/location/location.effects';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 const styles = StyleSheet.create({
   transactButton: {
@@ -121,6 +122,7 @@ const TransactMenuContent = React.memo(
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
+          !isHiddenByTestnetMode(wallet) &&
           wallet.isComplete() &&
           !wallet.pendingTssSession,
       );
