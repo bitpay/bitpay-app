@@ -12,6 +12,7 @@ import {
   TransakIncomingData,
   WyrePaymentData,
   TransakAccessTokenPayload,
+  TransakHeadlessUserAuthPayload,
 } from './buy-crypto.models';
 import {RampIncomingData, RampPaymentData} from './models/ramp.models';
 import {BuyCryptoStateOpts} from './buy-crypto.reducer';
@@ -146,6 +147,14 @@ export const updateAccessTokenTransak = (
   payload: TransakAccessTokenPayload,
 ): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK,
+  payload,
+});
+
+// userAuth undefined clears the stored session.
+export const updateHeadlessUserAuthTransak = (
+  payload: TransakHeadlessUserAuthPayload,
+): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK,
   payload,
 });
 
