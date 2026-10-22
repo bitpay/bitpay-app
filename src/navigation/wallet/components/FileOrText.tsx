@@ -363,7 +363,7 @@ const FileOrText = () => {
 
   const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
-    clearSensitive();
+    setValue('password', '');
     Keyboard.dismiss();
 
     let opts: Partial<KeyOptions> = {};
