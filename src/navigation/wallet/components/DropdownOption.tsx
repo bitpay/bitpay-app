@@ -28,6 +28,7 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from '@components/base/TouchableOpacity';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 interface Props {
   optionId: string;
@@ -120,7 +121,10 @@ const DropdownOption = ({
 }: Props) => {
   const {t} = useTranslation();
   const _wallets = wallets.filter(
-    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+    wallet =>
+      !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
+      !isHiddenByTestnetMode(wallet),
   );
   const walletInfo = _wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(_wallets);

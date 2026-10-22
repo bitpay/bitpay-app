@@ -135,7 +135,10 @@ import TransactionRow from '../../../components/list/TransactionRow';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {
+  GetBlockExplorerLink,
+  IsERCToken,
+} from '../../../store/wallet/utils/currency';
 import {
   INITIAL_CACHED_TX_HYDRATION_LIMIT,
   flattenTransactionGroups,
@@ -1456,16 +1459,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
       if (SUPPORTED_VM_TOKENS.includes(chain)) {
-        url =
-          fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`
-            : `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+        url = GetBlockExplorerLink(
+          fullWalletObj.network,
+          chain,
+          `address/${address}`,
+        );
       }
       if (IsERCToken(coin, chain)) {
-        url =
-          fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
-            : `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+        url = GetBlockExplorerLink(
+          fullWalletObj.network,
+          chain,
+          `address/${address}`,
+          '#tokentxns',
+        );
       }
 
       if (url) {

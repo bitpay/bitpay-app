@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import {StyleSheet, View} from 'react-native';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {Carousel, CarouselRef} from 'react-native-reanimated-carousel';
 import throttle from 'lodash.throttle';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -204,7 +204,7 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
   const theme = useTheme();
   const ruleIconColor = theme.dark ? LinkBlue : Action;
   const dispatch = useAppDispatch();
-  const ref = useRef<ICarouselInstance>(null);
+  const ref = useRef<CarouselRef>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const steps: TSSStep[] = useMemo(
@@ -487,17 +487,11 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
           </View>
           <View style={styles.cardBody}>
             <Carousel
-              loop={false}
-              vertical={false}
-              width={CONTENT_WIDTH}
-              height={CAROUSEL_HEIGHT}
-              autoPlay={false}
+              style={{width: CONTENT_WIDTH, height: CAROUSEL_HEIGHT}}
               data={steps}
-              pagingEnabled={true}
-              snapEnabled={true}
               ref={ref}
-              scrollAnimationDuration={600}
-              onProgressChange={(_, index) => {
+              animation={{type: 'timing', duration: 600}}
+              onProgressChange={index => {
                 if (Math.round(index) !== activeSlideIndex) {
                   throttleOnActiveSlideChange(index);
                 }

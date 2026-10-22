@@ -42,7 +42,6 @@ import {
   sellCryptoReducer,
   sellCryptoReduxPersistBlackList,
 } from './sell-crypto/sell-crypto.reducer';
-import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
 import {
   locationReducer,
   locationReduxPersistBlackList,
@@ -91,6 +90,7 @@ import {
 import {clearWalletPortfolioDataWithRuntime} from './portfolio';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {invalidateWalletDerivedCachesForAction} from './wallet/utils/walletDerivedCacheLifecycle';
+import {syncTestnetWalletsVisibility} from './wallet/utils/testnet';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
 
@@ -358,9 +358,30 @@ const registerPersistFlushOnBackground = (persistor: {
   );
 };
 
+// Slices that no longer exist but can still be in state persisted by older
+// app versions. Dropping them before the merge keeps combineReducers from
+// warning about unexpected keys, and the next write leaves them out.
+const REMOVED_PERSISTED_SLICES = ['CARD'];
+
+const reconcilePersistedState: typeof autoMergeLevel2 = (
+  inboundState,
+  originalState,
+  reducedState,
+  config,
+) => {
+  const inbound = {...inboundState} as Record<string, unknown>;
+  REMOVED_PERSISTED_SLICES.forEach(slice => delete inbound[slice]);
+  return autoMergeLevel2(
+    inbound as typeof inboundState,
+    originalState,
+    reducedState,
+    config,
+  );
+};
+
 const basePersistConfig = {
   storage: reduxStorage,
-  stateReconciler: autoMergeLevel2,
+  stateReconciler: reconcilePersistedState,
   writeFailHandler: reportPersistWriteError,
 };
 
@@ -368,7 +389,6 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   APP: appReduxPersistBlackList,
   BITPAY_ID: bitPayIdReduxPersistBlackList,
   BUY_CRYPTO: buyCryptoReduxPersistBlackList,
-  CARD: cardReduxPersistBlacklist,
   LOCATION: locationReduxPersistBlackList,
   LOG: logReduxPersistBlackList,
   SELL_CRYPTO: sellCryptoReduxPersistBlackList,
@@ -396,7 +416,6 @@ const reducers = {
   APP: appReducer,
   BITPAY_ID: bitPayIdReducer,
   BUY_CRYPTO: buyCryptoReducer,
-  CARD: cardReducer,
   LOCATION: locationReducer,
   LOG: logReducer,
   SELL_CRYPTO: sellCryptoReducer,
@@ -485,7 +504,6 @@ const logger = createLogger({
       },
       BITPAY_ID: {
         ...state.BITPAY_ID,
-        doshToken: null,
         apiToken: null,
       },
     };
@@ -743,6 +761,11 @@ const getStore = async () => {
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+  // Registered before the Provider subscribes, so list helpers see the new
+  // testnet visibility by the time components re-render.
+  store.subscribe(() =>
+    syncTestnetWalletsVisibility(store.getState() as unknown as RootState),
+  );
   // Enable direct log dispatching now that the store exists
   storeDispatch = store.dispatch;
 
@@ -788,6 +811,8 @@ export function configureTestStore(initialState: any) {
     traceLimit: 25,
   })(applyMiddleware(...middlewares));
   const store = createStore(rootReducer, initialState, middlewareEnhancers);
+  syncTestnetWalletsVisibility(store.getState());
+  store.subscribe(() => syncTestnetWalletsVisibility(store.getState()));
   return store as Store<RootState, AnyAction> & {
     dispatch: AppDispatch;
   };

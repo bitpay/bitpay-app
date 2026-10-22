@@ -98,6 +98,7 @@ export const getUpdatedWalletBalances =
         walletId: string;
         status: WalletStatus;
       }[];
+      error?: unknown;
     }>
   > =>
   async (dispatch, getState) => {
@@ -140,17 +141,36 @@ export const getUpdatedWalletBalances =
     const keyStatusResults = await mapWithConcurrency(
       keys,
       WALLET_REQUEST_CONCURRENCY,
-      async key => ({
-        key,
-        keyBalance: await dispatch(
-          updateKeyStatus({
-            key,
-            force,
-            dataOnly: true,
-          }),
-        ),
-      }),
+      async key => {
+        try {
+          const keyBalance = await dispatch(
+            updateKeyStatus({
+              key,
+              force,
+              dataOnly: true,
+            }),
+          );
+          return {key, keyBalance, failed: false, error: undefined as unknown};
+        } catch (error) {
+          return {key, keyBalance: undefined, failed: true, error};
+        }
+      },
     );
+
+    let firstKeyError: unknown;
+    for (const {key, failed, error} of keyStatusResults) {
+      if (!failed) {
+        continue;
+      }
+      const keyError =
+        error ?? new Error(`Failed to update status for key ${key.id}`);
+      firstKeyError = firstKeyError ?? keyError;
+      const errorStr =
+        keyError instanceof Error ? keyError.message : JSON.stringify(keyError);
+      logManager.warn(
+        `Error updating key status for key ${key.id}: ${errorStr}`,
+      );
+    }
 
     for (const {key, keyBalance} of keyStatusResults) {
       if (keyBalance) {
@@ -208,6 +228,7 @@ export const getUpdatedWalletBalances =
     return {
       keyBalances,
       walletBalances,
+      error: firstKeyError,
     };
   };
 
@@ -251,6 +272,9 @@ export const getAndDispatchUpdatedWalletBalances =
           walletBalances: balances.walletBalances,
         }),
       );
+      if (balances.error) {
+        throw balances.error;
+      }
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error(

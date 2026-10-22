@@ -129,6 +129,26 @@ export const GetBlockExplorerUrl = (
     : BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet;
 };
 
+/**
+ * Full explorer link for a path such as `tx/<txid>` or `address/<address>`.
+ * Solscan serves every Solana cluster from one domain and selects the cluster
+ * with a query param, so testnet SVM links need `?cluster=devnet` or they open
+ * the mainnet page.
+ */
+export const GetBlockExplorerLink = (
+  network: string = 'livenet',
+  chain: string,
+  path: string,
+  fragment: string = '',
+): string => {
+  const cluster =
+    network !== 'livenet' && IsSVMChain(chain) ? '?cluster=devnet' : '';
+  return `https://${GetBlockExplorerUrl(
+    network,
+    chain,
+  )}${path}${cluster}${fragment}`;
+};
+
 export const GetFeeUnits = (
   chain: string,
 ): {

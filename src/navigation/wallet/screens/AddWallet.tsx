@@ -45,6 +45,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {selectShowTestnetWallets} from '../../../store/wallet/utils/testnet';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
@@ -211,6 +212,7 @@ const AddWallet = ({
   const [isRegtest, setIsRegtest] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
   const singleAddressCurrency =
     BitpaySupportedCoins[currencyAbbreviation?.toLowerCase() as string]
       ?.properties?.singleAddress;
@@ -491,7 +493,7 @@ const AddWallet = ({
             </AdvancedOptions>
           )}
 
-          {showOptions && (
+          {showOptions && showTestnetWallets && (
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-testnet-toggle"

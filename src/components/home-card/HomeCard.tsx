@@ -9,7 +9,7 @@ import {
   White,
 } from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
-import {ActiveOpacity, Row} from '../styled/Containers';
+import {ActiveOpacity} from '../styled/Containers';
 import Card from '../card/Card';
 import Percentage from '../percentage/Percentage';
 import {StyleSheet, View} from 'react-native';
@@ -49,6 +49,9 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginTop: 15,
     marginBottom: 1,
+  },
+  cardBadges: {
+    marginTop: 15,
   },
   cardBodyDesc: {
     fontWeight: '500',
@@ -136,10 +139,14 @@ const HomeCard: React.FC<HomeCardProps> = ({
 
   const BodyComp = (
     <View>
-      {tssMetadata ? (
-        <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'card'} />
+      {tssMetadata || isMultisig ? (
+        <View style={styles.cardBadges}>
+          {tssMetadata ? (
+            <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'card'} />
+          ) : null}
+          {isMultisig ? <MultisigBadge size={'card'} /> : null}
+        </View>
       ) : null}
-      {isMultisig ? <MultisigBadge size={'card'} /> : null}
       {title && (
         <BaseText
           style={[
@@ -150,9 +157,9 @@ const HomeCard: React.FC<HomeCardProps> = ({
         </BaseText>
       )}
       {needsBackup && !pendingTssSession ? (
-        <Row>
+        <View>
           <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-        </Row>
+        </View>
       ) : !hideKeyBalance ? (
         <>
           {value && (

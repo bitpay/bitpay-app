@@ -68,10 +68,6 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This app requires permanent access to Bluetooth for establishing secure connections with Ledger Nano devices.</string>
-	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>This app requires access to Bluetooth for establishing secure connections with Ledger Nano devices, enabling seamless interaction and management of cryptocurrency transactions.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need permission to access your camera to scan QR codes and verify your identity.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -96,6 +92,23 @@
 		<string>Archivo-Regular.ttf</string>
 		<string>Archivo-Thin.ttf</string>
 	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

@@ -55,6 +55,7 @@ import {
 } from '../../../navigation/wallet/screens/AccountDetails';
 import cloneDeep from 'lodash.clonedeep';
 import {logManager} from '../../../managers/LogManager';
+import {areTestnetWalletsVisible, isTestnetWallet} from './testnet';
 
 export const mapAbbreviationAndName =
   (
@@ -989,6 +990,10 @@ export const isWalletVisibleForKey = (
     return false;
   }
 
+  if (!areTestnetWalletsVisible() && isTestnetWallet(wallet)) {
+    return false;
+  }
+
   const isComplete =
     typeof wallet?.credentials?.isComplete === 'function'
       ? wallet.credentials.isComplete()
@@ -1065,6 +1070,12 @@ export const buildAccountList = (
 
   wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && !isWalletVisibleForKey(key, wallet)) {
+      return;
+    }
+
+    // Settings screens list hidden wallets so they can be unhidden, but a
+    // testnet wallet stays out of every list while testnet mode is off.
+    if (!areTestnetWalletsVisible() && isTestnetWallet(wallet)) {
       return;
     }
 
