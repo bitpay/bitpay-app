@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useState} from 'react';
+import React, {useRef, useEffect, useState, useSyncExternalStore} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {WebView, WebViewMessageEvent} from 'react-native-webview';
 import {DKLS_JS_BASE64} from './vendor/dkls-wasm-js-base64';
@@ -11,13 +11,78 @@ type Pending = {
   reject: (e: any) => void;
 };
 
+const BOOT_TIMEOUT_MS = 20000;
+
 let _post: ((data: any) => void) | null = null;
 let _isReady = false;
 let _readyResolve: (() => void) | null = null;
-const _readyPromise: Promise<void> = new Promise(res => (_readyResolve = res));
+let _readyReject: ((e: Error) => void) | null = null;
+let _bootTimer: ReturnType<typeof setTimeout> | null = null;
+let _readyPromise: Promise<void>;
+const resetReadiness = () => {
+  _readyPromise = new Promise<void>((res, rej) => {
+    _readyResolve = res;
+    _readyReject = rej;
+  });
+  _readyPromise.catch(() => {});
+};
+resetReadiness();
 const _outQueue: string[] = [];
 const pendings = new Map<number, Pending>();
 let seq = 1;
+
+let _mountRequested = false;
+let _bootAttempt = 0;
+const _mountListeners = new Set<() => void>();
+
+const clearBootTimer = () => {
+  if (_bootTimer) {
+    clearTimeout(_bootTimer);
+    _bootTimer = null;
+  }
+};
+
+const failBoot = (reason: string) => {
+  if (_isReady || !_readyReject) {
+    return;
+  }
+  clearBootTimer();
+  const reject = _readyReject;
+  _readyResolve = null;
+  _readyReject = null;
+  // Unmount the failed WebView and start over on the next call, so one
+  // failed boot doesn't disable TSS until the app restarts. Calls already
+  // waiting hold the old promise and are rejected below.
+  resetReadiness();
+  _mountRequested = false;
+  _bootAttempt++;
+  _mountListeners.forEach(listener => listener());
+  reject(new Error(`DKLS worker failed to start: ${reason}`));
+};
+
+export function requestDklsWorkerMount(): void {
+  if (_mountRequested) {
+    return;
+  }
+  _mountRequested = true;
+  _mountListeners.forEach(listener => listener());
+}
+
+const subscribeDklsMount = (listener: () => void): (() => void) => {
+  _mountListeners.add(listener);
+  return () => {
+    _mountListeners.delete(listener);
+  };
+};
+
+// A monotonic generation for useSyncExternalStore: 0 while unmounted, and a
+// fresh positive value each time a boot fails and the worker is re-requested.
+// Keying the WebView on it forces a brand-new instance even when a failed boot
+// and the next mount request land in the same render batch — a boolean snapshot
+// would read false→true as "no change" and leave the dead WebView mounted with
+// no boot timer, so the new call would never settle.
+const getDklsMountGeneration = (): number =>
+  _mountRequested ? _bootAttempt + 1 : 0;
 
 const processArgs = (args: any): any => {
   if (!Array.isArray(args)) return args;
@@ -47,6 +112,7 @@ const processArgs = (args: any): any => {
 };
 
 export async function callWorker<T = any>(msg: any): Promise<T> {
+  requestDklsWorkerMount();
   const id = ++seq;
   const processedMsg = {
     ...msg,
@@ -98,7 +164,7 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
   });
 }
 
-export const DklsWorkerHost = () => {
+const DklsWorkerWebView = () => {
   const [bootHtml] = useState(() => {
     return `
 <!doctype html>
@@ -709,8 +775,10 @@ export const DklsWorkerHost = () => {
       ) {
         if (!_isReady) {
           _isReady = true;
+          clearBootTimer();
           _readyResolve?.();
           _readyResolve = null;
+          _readyReject = null;
           if (_outQueue.length && _post) {
             for (const p of _outQueue.splice(0)) _post(p);
           }
@@ -744,8 +812,18 @@ export const DklsWorkerHost = () => {
     if (_outQueue.length && _post) {
       for (const p of _outQueue.splice(0)) _post(p);
     }
+    // The boot timeout runs only while the WebView is mounted, so a mount
+    // request with no host rendered (e.g. in tests) leaves no timer behind.
+    if (!_isReady) {
+      clearBootTimer();
+      _bootTimer = setTimeout(
+        () => failBoot(`no boot signal within ${BOOT_TIMEOUT_MS}ms`),
+        BOOT_TIMEOUT_MS,
+      );
+    }
     return () => {
       _post = null;
+      clearBootTimer();
     };
   }, []);
 
@@ -766,13 +844,30 @@ export const DklsWorkerHost = () => {
         incognito
         mixedContentMode="never"
         onLoad={() => console.log('[DKLS HOST] webview onLoad')}
-        onError={e => console.log('[DKLS HOST] onError', e?.nativeEvent)}
+        onError={e =>
+          failBoot(`webview error: ${e?.nativeEvent?.description || 'unknown'}`)
+        }
         onHttpError={e =>
-          console.log('[DKLS HOST] onHttpError', e?.nativeEvent)
+          failBoot(
+            `webview http error: ${e?.nativeEvent?.statusCode ?? 'unknown'}`,
+          )
         }
       />
     </View>
   );
+};
+
+export const DklsWorkerHost = () => {
+  const mountGeneration = useSyncExternalStore(
+    subscribeDklsMount,
+    getDklsMountGeneration,
+  );
+
+  if (!mountGeneration) {
+    return null;
+  }
+
+  return <DklsWorkerWebView key={mountGeneration} />;
 };
 
 const styles = StyleSheet.create({
