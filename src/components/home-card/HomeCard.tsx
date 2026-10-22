@@ -9,7 +9,7 @@ import {
   White,
 } from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
-import {ActiveOpacity, Row} from '../styled/Containers';
+import {ActiveOpacity} from '../styled/Containers';
 import Card from '../card/Card';
 import Percentage from '../percentage/Percentage';
 import {StyleSheet, View} from 'react-native';
@@ -150,9 +150,9 @@ const HomeCard: React.FC<HomeCardProps> = ({
         </BaseText>
       )}
       {needsBackup && !pendingTssSession ? (
-        <Row>
+        <View>
           <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-        </Row>
+        </View>
       ) : !hideKeyBalance ? (
         <>
           {value && (
