@@ -5304,6 +5304,18 @@
     Base64 "~0.2.0"
     inherits "~2.0.1"
 
+"@transak/ui-components-core@0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@transak/ui-components-core/-/ui-components-core-0.6.0.tgz#f4c992a3cba1c1c7b85356471aadfc8ed298451e"
+  integrity sha512-SHIf5PcAtivh5xiKiRAB++WRazwGG/lRgKG16geEKUNZEX+PG5N39bX/vG4HL+ntQldFyLhGLRC6unFRB6cScw==
+
+"@transak/ui-components-rn@0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@transak/ui-components-rn/-/ui-components-rn-0.6.0.tgz#f4db7229b95c614f8c155fc8396bb8e22778ae53"
+  integrity sha512-8R1KsEDbgZcQBQ8DNj7LbdHNihVGT+I9MprtW9lf1ORaA6B62WivzP3Gh45MilHFiYrAO4EcPB/cNYvbujOqAQ==
+  dependencies:
+    "@transak/ui-components-core" "0.6.0"
+
 "@trysound/sax@0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@trysound/sax/-/sax-0.2.0.tgz#cccaab758af56761eb7bf37af6f03f326dd798ad"
