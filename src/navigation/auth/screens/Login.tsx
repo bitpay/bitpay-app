@@ -26,11 +26,7 @@ import {navigationRef, RootStacks} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useSensitiveRefClear,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
@@ -164,11 +160,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const captchaRef = useRef<CaptchaRef>(null);
   const {onLoginSuccess} = route.params || {};
 
-  const {clearSensitive} = useSensitiveRefClear([passwordRef]);
-
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (loginStatus) {
+      setValue('password', '');
+    }
+  }, [loginStatus, setValue]);
 
   useEffect(() => {
     if (loginStatus === 'success') {
@@ -242,7 +242,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const onSubmit = handleSubmit(
     async ({email, password}) => {
       Keyboard.dismiss();
-      clearSensitive();
       if (session.captchaDisabled) {
         dispatch(BitPayIdEffects.startLogin({email, password}));
       } else {

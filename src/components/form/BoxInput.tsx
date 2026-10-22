@@ -26,6 +26,7 @@ import {
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useLatestCallback} from '../../utils/hooks/useLatestCallback';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 
@@ -288,14 +289,16 @@ const BoxInput = React.forwardRef<
       );
     }
 
+    const clearText = useLatestCallback(() => props.onChangeText?.(''));
+
     useEffect(() => {
       const sub = AppState.addEventListener('change', state => {
         if (isPassword && (state === 'inactive' || state === 'background')) {
-          props.onChangeText?.('');
+          clearText();
         }
       });
       return () => sub.remove();
-    }, [isPassword, props]);
+    }, [isPassword, clearText]);
 
     return (
       <>
