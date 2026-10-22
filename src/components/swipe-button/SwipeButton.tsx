@@ -82,7 +82,7 @@ const SwipeButtonOverlay: React.FC<{
       duration: 180,
       easing: Easing.inOut(Easing.ease),
     });
-  }, [isVisible]);
+  }, [isVisible, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -164,7 +164,7 @@ const SwipeButton = ({
             setState('loading');
             try {
               await onSwipeComplete();
-            } catch (_) {
+            } catch {
             } finally {
               setState(null);
             }

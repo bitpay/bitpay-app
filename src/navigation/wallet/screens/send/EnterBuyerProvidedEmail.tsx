@@ -56,7 +56,7 @@ const EnterBuyerProvidedEmail: React.FC = () => {
         setButtonState('loading');
         await dispatch(setBuyerProvidedEmail(route.params.data, email));
         setButtonState('success');
-      } catch (e) {
+      } catch {
         setButtonState('failed');
 
         dispatch(

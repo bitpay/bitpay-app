@@ -244,6 +244,7 @@ const ThorswapDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest swap status; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

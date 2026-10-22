@@ -3,7 +3,6 @@ import {fireEvent, render} from '@test/render';
 import FeatureCard from './FeatureCard';
 
 jest.mock('react-native-linear-gradient', () => {
-  const React = require('react');
   const {View} = require('react-native');
   return ({children, ...rest}: any) => <View {...rest}>{children}</View>;
 });

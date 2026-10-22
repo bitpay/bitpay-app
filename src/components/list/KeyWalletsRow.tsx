@@ -340,7 +340,7 @@ const KeyWalletsRow = ({
                       )
                       .map(
                         ({
-                          chain,
+                          chain: assetChain,
                           chainImg,
                           chainName,
                           chainAssetsList,
@@ -350,7 +350,7 @@ const KeyWalletsRow = ({
                           chainName: string;
                           chainAssetsList: WalletRowProps[];
                         }) => (
-                          <View key={chain}>
+                          <View key={assetChain}>
                             <View style={styles.accountChainTitleContainer}>
                               <View style={styles.currencyImageContainer}>
                                 <CurrencyImage img={chainImg} size={20} />
@@ -397,7 +397,8 @@ const KeyWalletsRow = ({
               )
                 .flat()
                 .filter(
-                  wallet => wallet?.chain && wallet.chain === chain,
+                  accountWallet =>
+                    accountWallet?.chain && accountWallet.chain === chain,
                 ).length;
               return (
                 <UtxoAccountContainer

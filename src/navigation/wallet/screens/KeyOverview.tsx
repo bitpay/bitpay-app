@@ -1891,6 +1891,7 @@ const KeyOverview = () => {
     shouldPreserveStaleKeyBalanceChart,
     shouldRenderZeroKeyBalanceChart,
     shouldShowKeyChartLoader,
+    shouldShowLegacyChangeRowSkeleton,
     t,
     timeframeSelectorWidth,
     totalBalance,

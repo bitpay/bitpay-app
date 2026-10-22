@@ -11,7 +11,6 @@ import {
   Wallet,
   TransactionOptionsContext,
   ProposalErrorHandlerContext,
-  KeyMethods,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -90,7 +89,7 @@ import {
   submitDeviceEvent,
 } from '../../../app/app.effects';
 import _ from 'lodash';
-import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import ReactNativeBiometrics from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {DeviceEventEmitter, Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
@@ -163,7 +162,6 @@ export const createProposalAndBuildTxDetails =
             feeLevel: cachedFeeLevel,
             useUnconfirmedFunds,
             queuedTransactions,
-            enableReplaceByFee,
           },
         } = getState();
 
@@ -1445,7 +1443,7 @@ export const publishAndSign =
             onRoundUpdate: (round, type) =>
               logManager.debug(`[TSS] Round ${round} ${type}`),
             onError: err => logManager.error(`[TSS] Error: ${err.message}`),
-            onComplete: sig => logManager.debug(`[TSS] Complete`),
+            onComplete: () => logManager.debug(`[TSS] Complete`),
           };
         }
         if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
@@ -1531,7 +1529,7 @@ export const publishAndSign =
             tssCallbacks?.onStatusChange('broadcasting');
             try {
               broadcastedTx = await broadcastTx(wallet, signedTx);
-            } catch (_) {
+            } catch {
               // Another copayer may have already broadcasted — poll for confirmed state.
               broadcastedTx = await pollTxpUntilBroadcast(wallet, signedTx.id);
             }
@@ -2188,7 +2186,7 @@ export const handleCreateTxProposalError =
             ],
           });
       }
-    } catch (err2) {
+    } catch {
       return GeneralError();
     }
   };

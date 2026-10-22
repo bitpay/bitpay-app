@@ -314,7 +314,7 @@ const BuyGiftCard = ({
         ...(visibleCoupon && {visibleCoupon}),
       }),
     );
-  }, [cardConfig, cardConfig.name, dispatch]);
+  }, [cardConfig, cardConfig.name, dispatch, visibleCoupon]);
 
   const showActivationFeeSheet = (
     activationFee: number,

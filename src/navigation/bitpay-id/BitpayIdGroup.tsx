@@ -53,7 +53,7 @@ export enum BitpayIdScreens {
 }
 
 const ProfileHeaderRight = () => {
-  const {t} = useTranslation();
+  const {t: translate} = useTranslation();
   const dispatch = useAppDispatch();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -73,7 +73,7 @@ const ProfileHeaderRight = () => {
               screen: 'Home',
             });
           }}>
-          {t('Log Out')}
+          {translate('Log Out')}
         </Button>
       ) : (
         <Button
@@ -82,7 +82,7 @@ const ProfileHeaderRight = () => {
             haptic('impactLight');
             navigationRef.navigate('Login');
           }}>
-          {t('Log In')}
+          {translate('Log In')}
         </Button>
       )}
     </HeaderRightContainer>

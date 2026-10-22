@@ -408,6 +408,7 @@ const InteractiveLineChart = ({
   //   - layout happens after a theme switch (handles detach/reattach cases).
   const pointsForGraph = React.useMemo(
     () => points.slice(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- extra deps are intentional cache-busters that force a new points reference to redraw after theme/focus/layout changes (see comment above)
     [points, styleSignature, focusRefreshNonce, layoutRefreshNonce],
   );
   const flatYRange = React.useMemo(

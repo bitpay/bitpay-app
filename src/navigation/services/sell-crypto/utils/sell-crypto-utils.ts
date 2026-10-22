@@ -53,13 +53,14 @@ export const getSellEnabledPaymentMethods = (
 
   const isPaymentMethodEnabled = (
     paymentMethod: WithdrawalMethod,
-    locationCountry: string | undefined,
-    userCountry: string | undefined,
+    targetLocationCountry: string | undefined,
+    targetUserCountry: string | undefined,
   ) => {
     return !!(
-      (locationCountry &&
-        paymentMethod.supportedCountries?.includes(locationCountry)) ||
-      (userCountry && paymentMethod.supportedCountries?.includes(userCountry))
+      (targetLocationCountry &&
+        paymentMethod.supportedCountries?.includes(targetLocationCountry)) ||
+      (targetUserCountry &&
+        paymentMethod.supportedCountries?.includes(targetUserCountry))
     );
   };
 
@@ -89,50 +90,53 @@ export const getSellEnabledPaymentMethods = (
 
   // Helper function to check if a payment method is supported by a specific exchange
   const isSupportedByExchange = (
-    exchange: SellCryptoExchangeKey,
+    targetExchange: SellCryptoExchangeKey,
     method: WithdrawalMethod,
-    coin: string,
-    chain: string,
-    currency: string,
-    locationCountry: string | undefined,
-    userCountry: string | undefined,
+    targetCoin: string,
+    targetChain: string,
+    targetCurrency: string,
+    targetLocationCountry: string | undefined,
+    targetUserCountry: string | undefined,
   ) => {
     return (
       !isPaymentMethodDisabledForPartner(
-        sellCryptoConfig?.[exchange],
+        sellCryptoConfig?.[targetExchange],
         method.method,
       ) &&
       isWithdrawalMethodSupported(
-        exchange,
+        targetExchange,
         method,
-        coin,
-        chain,
-        currency,
-        locationCountry,
-        userCountry,
+        targetCoin,
+        targetChain,
+        targetCurrency,
+        targetLocationCountry,
+        targetUserCountry,
       )
     );
   };
 
   // Determine supported exchanges for a payment method
   const getSupportedExchanges = (
-    exchange: SellCryptoExchangeKey | undefined,
+    targetExchange: SellCryptoExchangeKey | undefined,
     method: WithdrawalMethod,
-    coin: string,
-    chain: string,
-    currency: string,
-    locationCountry: string | undefined,
-    userCountry: string | undefined,
+    targetCoin: string,
+    targetChain: string,
+    targetCurrency: string,
+    targetLocationCountry: string | undefined,
+    targetUserCountry: string | undefined,
   ) => {
-    if (exchange && SellCryptoSupportedExchanges.includes(exchange)) {
+    if (
+      targetExchange &&
+      SellCryptoSupportedExchanges.includes(targetExchange)
+    ) {
       return isSupportedByExchange(
-        exchange,
+        targetExchange,
         method,
-        coin,
-        chain,
-        currency,
-        locationCountry,
-        userCountry,
+        targetCoin,
+        targetChain,
+        targetCurrency,
+        targetLocationCountry,
+        targetUserCountry,
       );
     }
 
@@ -141,29 +145,29 @@ export const getSellEnabledPaymentMethods = (
       isSupportedByExchange(
         'moonpay',
         method,
-        coin,
-        chain,
-        currency,
-        locationCountry,
-        userCountry,
+        targetCoin,
+        targetChain,
+        targetCurrency,
+        targetLocationCountry,
+        targetUserCountry,
       ) ||
       isSupportedByExchange(
         'ramp',
         method,
-        coin,
-        chain,
-        currency,
-        locationCountry,
-        userCountry,
+        targetCoin,
+        targetChain,
+        targetCurrency,
+        targetLocationCountry,
+        targetUserCountry,
       ) ||
       isSupportedByExchange(
         'simplex',
         method,
-        coin,
-        chain,
-        currency,
-        locationCountry,
-        userCountry,
+        targetCoin,
+        targetChain,
+        targetCurrency,
+        targetLocationCountry,
+        targetUserCountry,
       )
     );
   };

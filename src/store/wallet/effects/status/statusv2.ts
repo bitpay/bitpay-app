@@ -75,7 +75,6 @@ export const clearWalletBalances =
 
 export const getUpdatedWalletBalances =
   ({
-    context,
     force,
     createTokenWalletWithFunds,
     chain,
@@ -129,7 +128,7 @@ export const getUpdatedWalletBalances =
               tokenAddress,
             }),
           );
-        } catch (error) {
+        } catch {
           logManager.info(
             'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
           );
@@ -227,7 +226,7 @@ export const getAndDispatchUpdatedWalletBalances =
     tokenAddress?: string;
     skipRateUpdate?: boolean;
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     try {
       // Update rates if needed
       if (!skipRateUpdate) {
