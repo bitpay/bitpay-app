@@ -9,6 +9,16 @@ import {tokenManager} from '../../../../managers/TokenManager';
 
 // ---------- module-level mocks ----------
 
+// In-memory MMKV for the token-list cache; cleared before each test.
+const mockMmkvStore = new Map<string, string>();
+jest.mock('react-native-mmkv', () => ({
+  MMKV: jest.fn().mockImplementation(() => ({
+    getString: (k: string) => mockMmkvStore.get(k),
+    set: (k: string, v: string) => mockMmkvStore.set(k, v),
+    delete: (k: string) => mockMmkvStore.delete(k),
+  })),
+}));
+
 jest.mock('../../../../managers/LogManager', () => ({
   logManager: {
     info: jest.fn(),
@@ -104,6 +114,7 @@ const makeToken = (overrides: Record<string, any> = {}) => ({
 describe('startGetTokenOptions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMmkvStore.clear();
   });
 
   it('calls tokenManager.setTokenOptions after a successful response with an array of tokens', async () => {
@@ -223,6 +234,202 @@ describe('startGetTokenOptions', () => {
     expect(values[0].coin).toBe('myt');
     expect(values[0].unitInfo.unitDecimals).toBe(8);
     expect(values[0].properties.isCustom).toBe(true);
+  });
+});
+
+describe('startGetTokenOptions – token list cache', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const cache = (chain: string, tokens: any[], savedAt = Date.now()) =>
+    mockMmkvStore.set(chain, JSON.stringify({savedAt, tokens}));
+  const cachedChain = (chain: string) =>
+    JSON.parse(mockMmkvStore.get(chain) as string);
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+  const addressesIn = (call: number) =>
+    Object.keys(
+      mockedSetTokenOptions.mock.calls[call][0].tokenOptionsByAddress,
+    );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMmkvStore.clear();
+  });
+
+  it('uses fresh cached lists without any network request', async () => {
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})]);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})]);
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    expect(mockedAxios.get).not.toHaveBeenCalled();
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    expect(addressesIn(0)).toHaveLength(2);
+    expect(AppActions.appTokensDataLoaded).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes fetched lists to the cache', async () => {
+    mockedAxios.get.mockResolvedValue({data: [makeToken()]});
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    expect(cachedChain('eth').tokens).toHaveLength(1);
+    expect(cachedChain('matic').tokens).toHaveLength(1);
+  });
+
+  it('refreshes stale lists in the background, keeping the cached list for a chain that fails', async () => {
+    const old = Date.now() - 2 * DAY;
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})], old);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})], old);
+    mockedAxios.get.mockImplementation((url: string) =>
+      url.endsWith('/eth')
+        ? Promise.reject(new Error('network error'))
+        : Promise.resolve({data: [makeToken({address: '0xm2', symbol: 'M2'})]}),
+    );
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    // Cached lists are applied before any network result.
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    await flush();
+
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(2);
+    expect(addressesIn(1).sort()).toEqual(['0xe1_e', '0xm2_m'].sort());
+    await flush(); // let the deferred cache write for the refreshed chain run
+    expect(cachedChain('eth').savedAt).toBe(old);
+    expect(cachedChain('matic').tokens[0].address).toBe('0xm2');
+    expect(AppActions.appTokensDataLoaded).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the cached lists when every background refresh request fails', async () => {
+    const old = Date.now() - 2 * DAY;
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})], old);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})], old);
+    mockedAxios.get.mockRejectedValue(new Error('network error'));
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    expect(cachedChain('eth').savedAt).toBe(old);
+  });
+
+  it('treats a cache entry dated in the future as stale', async () => {
+    const future = Date.now() + DAY;
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})], future);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})], future);
+    mockedAxios.get.mockResolvedValue({data: [makeToken()]});
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+  });
+
+  it('fetches when a chain is missing from the cache, falling back to cache for a failed chain', async () => {
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})]);
+    mockedAxios.get.mockImplementation((url: string) =>
+      url.endsWith('/eth')
+        ? Promise.reject(new Error('network error'))
+        : Promise.resolve({data: [makeToken({address: '0xm1', symbol: 'M1'})]}),
+    );
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(1);
+    expect(addressesIn(0)).toHaveLength(2);
+  });
+
+  it('drops malformed tokens before caching or applying them', async () => {
+    mockedAxios.get.mockResolvedValue({
+      data: [makeToken(), {address: '0xbad', symbol: 'BAD'}],
+    });
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    expect(cachedChain('eth').tokens).toHaveLength(1);
+    expect(addressesIn(0)).toHaveLength(2);
+    expect(failedGetTokenOptions).not.toHaveBeenCalled();
+  });
+
+  it('discards a cache that fails to apply and fetches fresh lists', async () => {
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})]);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})]);
+    mockedSetTokenOptions.mockImplementationOnce(() => {
+      throw new Error('bad cached data');
+    });
+    mockedAxios.get.mockResolvedValue({
+      data: [makeToken({address: '0xf1', symbol: 'F1'})],
+    });
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(mockedSetTokenOptions).toHaveBeenCalledTimes(2);
+    await flush();
+    expect(cachedChain('eth').tokens[0].address).toBe('0xf1');
+    expect(failedGetTokenOptions).not.toHaveBeenCalled();
+  });
+
+  it('ignores an unreadable cache entry and fetches', async () => {
+    mockMmkvStore.set('eth', 'not json');
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})]);
+    mockedAxios.get.mockResolvedValue({data: [makeToken()]});
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(cachedChain('eth').tokens).toHaveLength(1);
+  });
+
+  it('treats a response with no usable tokens as a failed fetch, keeping the cache', async () => {
+    const old = Date.now() - 2 * DAY;
+    cache('eth', [makeToken({address: '0xe1', symbol: 'E1'})], old);
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})], old);
+    // eth refreshes cleanly; matic returns a non-empty list where every entry
+    // is malformed, so it must not overwrite matic's good cache with [].
+    mockedAxios.get.mockImplementation((url: string) =>
+      url.endsWith('/matic')
+        ? Promise.resolve({data: [{address: '0xbad', symbol: 'BAD'}]})
+        : Promise.resolve({data: [makeToken({address: '0xe2', symbol: 'E2'})]}),
+    );
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+    await flush();
+
+    expect(cachedChain('matic').tokens[0].address).toBe('0xm1');
+    expect(cachedChain('matic').savedAt).toBe(old);
+    expect(cachedChain('eth').tokens[0].address).toBe('0xe2');
+  });
+
+  it('treats a cache entry whose tokens are all malformed as missing and fetches', async () => {
+    mockMmkvStore.set(
+      'eth',
+      JSON.stringify({savedAt: Date.now(), tokens: [{address: '0xbad'}]}),
+    );
+    cache('matic', [makeToken({address: '0xm1', symbol: 'M1'})]);
+    mockedAxios.get.mockResolvedValue({data: [makeToken()]});
+
+    const store = configureTestStore({});
+    await store.dispatch(startGetTokenOptions());
+    await flush();
+
+    // The unusable eth cache is ignored, so a network fetch is required.
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(cachedChain('eth').tokens).toHaveLength(1);
   });
 });
 
