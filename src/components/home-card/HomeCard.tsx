@@ -50,6 +50,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 1,
   },
+  cardBadges: {
+    marginTop: 15,
+  },
   cardBodyDesc: {
     fontWeight: '500',
     fontSize: 18,
@@ -136,10 +139,14 @@ const HomeCard: React.FC<HomeCardProps> = ({
 
   const BodyComp = (
     <View>
-      {tssMetadata ? (
-        <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'card'} />
+      {tssMetadata || isMultisig ? (
+        <View style={styles.cardBadges}>
+          {tssMetadata ? (
+            <ThresholdBadge m={tssMetadata.m} n={tssMetadata.n} size={'card'} />
+          ) : null}
+          {isMultisig ? <MultisigBadge size={'card'} /> : null}
+        </View>
       ) : null}
-      {isMultisig ? <MultisigBadge size={'card'} /> : null}
       {title && (
         <BaseText
           style={[
