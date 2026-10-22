@@ -1,10 +1,12 @@
 import {t} from 'i18next';
 import {
   TransakFiatCurrency,
+  TransakHeadlessUserAuthData,
   TransakPaymentOption,
   TransakPaymentType,
   TransakStatusKey,
 } from '../../../../store/buy-crypto/buy-crypto.models';
+import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod, PaymentMethodKey} from '../constants/BuyCryptoConstants';
@@ -347,6 +349,69 @@ export const getTransakSelectedPaymentMethodData = (
 
 export const getPassthroughUri = (): string => {
   return __DEV__ ? PASSTHROUGH_URI_DEV : PASSTHROUGH_URI_PROD;
+};
+
+// Transak headless
+
+export const transakHeadlessEnvironment: 'STAGING' | 'PRODUCTION' =
+  transakEnv === 'production' ? 'PRODUCTION' : 'STAGING';
+
+// Opt-in: headless only works once Transak has enabled it for our API key and
+// whitelisted the BWS IPs, so it stays off until the config turns it on.
+export const isTransakHeadlessPaymentMethodEnabled = (
+  method: PaymentMethodKey | undefined,
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+  country: string | undefined,
+): boolean => {
+  if (buyCryptoConfig?.transak?.config?.headlessBuyEnabled !== true) {
+    return false;
+  }
+  // UK customers must go through Transak's FCA journey, which only the widget
+  // implements (headless orders fail with 4016).
+  if (country === 'GB') {
+    return false;
+  }
+  return method === 'creditCard' || method === 'debitCard';
+};
+
+// A session about to expire is treated as expired: Transak cannot refresh an
+// expired session, and a purchase must not fail halfway because of it.
+export const isTransakHeadlessUserAuthValid = (
+  userAuth: TransakHeadlessUserAuthData | undefined,
+): userAuth is TransakHeadlessUserAuthData =>
+  !!userAuth?.accessToken && userAuth.expiresAt - Date.now() > 10 * 60 * 1000;
+
+const TRANSAK_HEADLESS_RESULT_PARAM = 'headlessResult';
+
+// After 3DS Transak redirects to these. The in-app WebView intercepts them; if
+// one is ever opened in a browser, the passthrough page still sends the
+// customer back to the app with the partnerOrderId, as the widget flow does.
+export const getTransakHeadlessRedirectUrls = (
+  transakExternalId: string,
+): {successUrl: string; failureUrl: string} => {
+  const buildUrl = (result: 'success' | 'failure') =>
+    `${getPassthroughUri()}?${new URLSearchParams({
+      partnerOrderId: transakExternalId,
+      [TRANSAK_HEADLESS_RESULT_PARAM]: result,
+    }).toString()}`;
+  return {successUrl: buildUrl('success'), failureUrl: buildUrl('failure')};
+};
+
+export const getTransakHeadlessRedirectResult = (
+  url: string,
+): 'success' | 'failure' | undefined => {
+  if (
+    !url.startsWith(getPassthroughUri()) &&
+    !url.startsWith('bitpay://transak')
+  ) {
+    return undefined;
+  }
+  try {
+    const result = new URL(url).searchParams.get(TRANSAK_HEADLESS_RESULT_PARAM);
+    return result === 'success' || result === 'failure' ? result : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 export const getTransakCoinFormat = (coin: string): string => {

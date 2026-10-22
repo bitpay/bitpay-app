@@ -793,6 +793,7 @@ export interface TransakPaymentData {
   order_id?: string;
   payment_method?: PaymentMethodKey;
   transaction_id?: string;
+  is_headless?: boolean;
 }
 
 export interface TransakIncomingData {
@@ -1136,4 +1137,107 @@ export interface TransakOrderDetailsData {
     walletAddress: string;
     walletLink: string;
   };
+}
+
+// Transak headless (Whitelabel API, proxied by BWS)
+
+export type TransakEnv = 'sandbox' | 'production';
+
+// Transak user session from the email OTP login. Valid for 30 days and only
+// renewable with a new OTP once expired.
+export interface TransakHeadlessUserAuthData {
+  accessToken: string;
+  expiresAt: number; // ms
+  email: string;
+}
+
+export interface TransakHeadlessUserAuthPayload {
+  env: TransakEnv;
+  userAuth: TransakHeadlessUserAuthData | undefined;
+}
+
+export interface TransakHeadlessSendOtpData {
+  isTncAccepted?: boolean;
+  stateToken: string;
+  email: string;
+  expiresIn?: number; // seconds
+}
+
+export interface TransakHeadlessVerifyOtpData {
+  accessToken: string;
+  ttl: number; // seconds
+  created?: string;
+}
+
+export interface TransakHeadlessGetQuoteRequestData {
+  env: TransakEnv;
+  fiatCurrency: string;
+  cryptoCurrency: string;
+  network: string;
+  paymentMethod: TransakPaymentType;
+  fiatAmount: number;
+  partnerCustomerId?: string;
+  partnerOrderId?: string;
+}
+
+export interface TransakHeadlessQuoteData {
+  quoteId: string;
+  conversionPrice: number;
+  fiatCurrency?: string;
+  cryptoCurrency?: string;
+  paymentMethod?: string;
+  fiatAmount: number;
+  cryptoAmount: number;
+  isBuyOrSell?: 'BUY' | 'SELL';
+  network: string;
+  feeDecimal?: number;
+  totalFee: number;
+  feeBreakdown?: {name: string; value: number; id: string}[];
+  nonce?: number;
+  slippage?: number;
+}
+
+export type TransakHeadlessKycStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'APPROVED'
+  | 'ADDITIONAL_FORMS_REQUIRED';
+
+export interface TransakHeadlessKycRequirementData {
+  isAllowedToPlaceOrder: boolean;
+  status: TransakHeadlessKycStatus | string;
+  kycType?: 'SIMPLE' | 'STANDARD' | 'ENHANCED' | string;
+}
+
+export interface TransakHeadlessSavedCard {
+  paymentIdentifierId: string;
+  bin?: string;
+  last4: string;
+  scheme?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+}
+
+export interface TransakHeadlessCardSessionData {
+  sessionId: string;
+  expiresAt?: string;
+}
+
+export interface TransakHeadlessOrderData {
+  orderId: string;
+  status: TransakStatusKey;
+  fiatCurrency?: string;
+  cryptoCurrency?: string;
+  paymentMethod?: string;
+  network?: string;
+  fiatAmount?: number;
+  cryptoAmount?: number;
+  totalFeeInFiat?: number;
+  walletAddress?: string;
+  paymentDetails?: {
+    redirectUrl?: string;
+    [key: string]: any;
+  }[];
+  txHash?: string;
+  transactionLink?: string;
 }

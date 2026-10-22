@@ -5,6 +5,7 @@ import {
   SardinePaymentData,
   SimplexPaymentData,
   TransakAccessTokenData,
+  TransakHeadlessUserAuthData,
   TransakPaymentData,
   WyrePaymentData,
 } from './buy-crypto.models';
@@ -34,6 +35,10 @@ export interface BuyCryptoState {
   wyre: {[key in string]: WyrePaymentData};
   tokens: {
     transak: {[key in 'sandbox' | 'production']?: TransakAccessTokenData};
+    // Missing on states persisted before Transak headless existed.
+    transakHeadlessUser?: {
+      [key in 'sandbox' | 'production']?: TransakHeadlessUserAuthData;
+    };
   };
 }
 
@@ -51,6 +56,7 @@ const initialState: BuyCryptoState = {
   wyre: {},
   tokens: {
     transak: {},
+    transakHeadlessUser: {},
   },
 };
 
@@ -415,6 +421,18 @@ export const buyCryptoReducer = (
               accessToken: action.payload.accessToken,
               expiresAt: action.payload.expiresAt,
             },
+          },
+        },
+      };
+
+    case BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK:
+      return {
+        ...state,
+        tokens: {
+          ...state.tokens,
+          transakHeadlessUser: {
+            ...state.tokens.transakHeadlessUser,
+            [action.payload.env]: action.payload.userAuth,
           },
         },
       };

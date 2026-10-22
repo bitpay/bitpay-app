@@ -9,6 +9,7 @@ import {
   SimplexIncomingData,
   TransakPaymentData,
   TransakIncomingData,
+  TransakHeadlessUserAuthPayload,
   WyrePaymentData,
 } from './buy-crypto.models';
 import {BuyCryptoStateOpts} from './buy-crypto.reducer';
@@ -37,6 +38,7 @@ export enum BuyCryptoActionTypes {
   SUCCESS_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_WYRE',
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
   ACCESS_TOKEN_TRANSAK = 'BUY_CRYPTO/ACCESS_TOKEN_TRANSAK',
+  HEADLESS_USER_AUTH_TRANSAK = 'BUY_CRYPTO/HEADLESS_USER_AUTH_TRANSAK',
 }
 
 interface updateBuyCryptoOpts {
@@ -181,6 +183,11 @@ interface updateAccessTokenTransak {
   };
 }
 
+interface updateHeadlessUserAuthTransak {
+  type: typeof BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK;
+  payload: TransakHeadlessUserAuthPayload;
+}
+
 interface successPaymentRequestWyre {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE;
   payload: {
@@ -216,5 +223,6 @@ export type BuyCryptoActionType =
   | updatePaymentRequestTransak
   | removePaymentRequestTransak
   | updateAccessTokenTransak
+  | updateHeadlessUserAuthTransak
   | successPaymentRequestWyre
   | removePaymentRequestWyre;
