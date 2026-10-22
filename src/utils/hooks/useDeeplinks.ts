@@ -234,6 +234,7 @@ export const useDeeplinks = () => {
   return useMemo<LinkingOptions<RootStackParamList>>(
     () => ({
       prefixes: [APP_DEEPLINK_PREFIX],
+      getInitialURL: () => null,
       subscribe: memoizedSubscribe,
       config: getLinkingConfig(),
     }),
