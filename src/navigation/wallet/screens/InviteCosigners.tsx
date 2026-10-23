@@ -685,6 +685,15 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     }
   }, [pendingJoinCode, currentStep]);
 
+  useEffect(() => {
+    if (tssSession?.status === 'ceremony_in_progress') {
+      handleStartCeremony();
+    }
+    return () => {
+      dispatch(cancelTSSCeremony(keyId));
+    };
+  }, []);
+
   if (!tssSession) {
     return null;
   }
@@ -788,15 +797,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       }
     }
   };
-
-  useEffect(() => {
-    if (tssSession?.status === 'ceremony_in_progress') {
-      handleStartCeremony();
-    }
-    return () => {
-      dispatch(cancelTSSCeremony(keyId));
-    };
-  }, []);
 
   const handleStartCeremony = async () => {
     setIsCeremonyStarted(true);
@@ -1152,9 +1152,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           title: t('Delete'),
           description: t('Permanently deletes all wallets using this key.'),
           onPress: () => {
-            dispatch(cancelTSSCeremony(keyId));
-            setIsCeremonyStarted(false);
-            setIsCeremonyInRounds(false);
             navigation.navigate('DeleteKey', {keyId});
           },
         },
