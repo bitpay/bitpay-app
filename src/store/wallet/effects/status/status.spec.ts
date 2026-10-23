@@ -1517,3 +1517,115 @@ describe('updateKeyStatus — SOL token address normalisation', () => {
     expect(result === undefined || typeof result === 'object').toBe(true);
   });
 });
+
+describe('promise settlement', () => {
+  /**
+   * Resolves to 'resolved' | 'rejected' | 'pending'. A promise that never
+   * settles reports 'pending' instead of stalling the test for the full
+   * jest timeout.
+   */
+  const settlement = async (promise: Promise<unknown>, ms = 500) => {
+    let timer: ReturnType<typeof setTimeout>;
+    const pending = new Promise<string>(resolve => {
+      timer = setTimeout(() => resolve('pending'), ms);
+    });
+    try {
+      return await Promise.race([
+        promise.then(
+          () => 'resolved',
+          () => 'rejected',
+        ),
+        pending,
+      ]);
+    } finally {
+      clearTimeout(timer!);
+    }
+  };
+
+  it('rejects updateKeyStatus when the wallet filter throws', async () => {
+    const wallet = makeWallet({
+      credentials: {
+        copayerId: 'copayer-1',
+        token: null,
+        multisigEthInfo: null,
+        isComplete: () => {
+          throw new Error('credentials unavailable');
+        },
+      },
+    });
+    const key = makeKey([wallet]);
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': key},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    const result = store.dispatch(
+      updateKeyStatus({key, force: true, dataOnly: true}),
+    );
+
+    expect(await settlement(result)).toBe('rejected');
+    await expect(result).rejects.toThrow('credentials unavailable');
+  });
+
+  it('rejects updateWalletStatus when getStatus throws synchronously', async () => {
+    const wallet = makeWallet();
+    wallet.getStatus = jest.fn(() => {
+      throw new Error('getStatus unavailable');
+    });
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': makeKey([wallet])},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    const result = store.dispatch(
+      updateWalletStatus({
+        wallet,
+        defaultAltCurrencyIsoCode: 'USD',
+        rates: {},
+        lastDayRates: {},
+      }),
+    );
+
+    expect(await settlement(result)).toBe('rejected');
+    await expect(result).rejects.toThrow('getStatus unavailable');
+  });
+
+  it('rejects updateWalletStatus when the cached-balance fallback throws', async () => {
+    // No cached balance to fall back on, so buildFiatBalance throws inside the
+    // getStatus error branch.
+    const wallet = makeWallet({balance: undefined});
+    wallet.getStatus = jest.fn((_opts: any, cb: any) =>
+      cb(new Error('network down'), null),
+    );
+    const store = configureTestStore({
+      WALLET: {
+        balanceCacheKey: {},
+        useUnconfirmedFunds: false,
+        keys: {'key-1': makeKey([wallet])},
+      },
+      APP: {defaultAltCurrency: {isoCode: 'USD'}},
+      RATE: {rates: {}, lastDayRates: {}},
+    });
+
+    const result = store.dispatch(
+      updateWalletStatus({
+        wallet,
+        defaultAltCurrencyIsoCode: 'USD',
+        rates: {},
+        lastDayRates: {},
+      }),
+    );
+
+    expect(await settlement(result)).toBe('rejected');
+  });
+});
