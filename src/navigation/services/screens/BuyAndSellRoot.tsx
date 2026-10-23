@@ -127,9 +127,12 @@ import {
   SimplexPaymentData,
   TransakAccessTokenData,
   TransakGetSignedUrlRequestData,
+  TransakHeadlessGetQuoteRequestData,
+  TransakHeadlessUserAuthData,
   TransakPaymentData,
   TransakSignedUrlData,
 } from '../../../store/buy-crypto/buy-crypto.models';
+import {prepareTransakHeadlessCheckout} from '../../../store/buy-crypto/effects/transak/transak-headless';
 import cloneDeep from 'lodash.clonedeep';
 import {
   banxaEnv,
@@ -179,6 +182,8 @@ import {
   getTransakChainFormat,
   getTransakCoinFormat,
   getTransakPaymentMethodFormat,
+  isTransakHeadlessPaymentMethodEnabled,
+  isTransakHeadlessUserAuthValid,
   transakEnv,
 } from '../buy-crypto/utils/transak-utils';
 import {
@@ -696,6 +701,10 @@ const BuyAndSellRoot = ({
   const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
     ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
+  const transakHeadlessUserAuth: TransakHeadlessUserAuthData | undefined =
+    useAppSelector(
+      ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transakHeadlessUser?.[transakEnv],
+    );
   const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.opts,
   );
@@ -3427,12 +3436,13 @@ const BuyAndSellRoot = ({
     if (offer.errorMsg || offer.outOfLimitMsg) {
       return;
     }
-    continueToTransak(offer, paymentMethod);
+    continueToTransak(offer, paymentMethod, false);
   };
 
   const continueToTransak = async (
     offer: CryptoOffer,
     paymentMethod: PaymentMethod,
+    skipHeadless?: boolean,
   ) => {
     if (!selectedWallet) {
       return;
@@ -3450,6 +3460,27 @@ const BuyAndSellRoot = ({
       const reason = 'createWalletAddress Error';
       showError(title, msg, reason);
       return;
+    }
+
+    // Headless keeps the whole card payment in the app. Whenever it cannot run
+    // (no session and the customer skips, KYC not approved, Transak errors...)
+    // the purchase continues below with the standard Transak widget.
+    if (
+      !skipHeadless &&
+      isTransakHeadlessPaymentMethodEnabled(
+        paymentMethod?.method,
+        buyCryptoConfig,
+        locationData?.countryShortCode,
+      )
+    ) {
+      const startedHeadless = await continueToTransakHeadless(
+        offer,
+        paymentMethod,
+        address,
+      );
+      if (startedHeadless) {
+        return;
+      }
     }
 
     const destinationChain = selectedWallet.chain;
@@ -3607,6 +3638,183 @@ const BuyAndSellRoot = ({
     await sleep(500);
     setOpeningBrowser(false);
     navigation.goBack();
+  };
+
+  // Returns whether the headless flow took over the purchase: either its
+  // onboarding or its checkout is on screen. If not, the caller goes on with
+  // the Transak widget.
+  const continueToTransakHeadless = async (
+    offer: CryptoOffer,
+    paymentMethod: PaymentMethod,
+    address: string,
+  ): Promise<boolean> => {
+    if (!selectedWallet) {
+      return false;
+    }
+    const wallet = selectedWallet;
+    const transakExternalId = uuid.v4().toString();
+    const quoteRequestData: TransakHeadlessGetQuoteRequestData = {
+      env: transakEnv,
+      fiatCurrency: offer.fiatCurrency.toUpperCase(),
+      cryptoCurrency: getTransakCoinFormat(
+        wallet.currencyAbbreviation.toLowerCase(),
+      ),
+      network: getTransakChainFormat(wallet.chain) ?? 'mainnet',
+      paymentMethod: 'credit_debit_card',
+      fiatAmount: offer.fiatAmount,
+      partnerCustomerId: wallet.id,
+      partnerOrderId: transakExternalId,
+    };
+
+    const startCheckout = async (
+      userAuth: TransakHeadlessUserAuthData,
+    ): Promise<'started' | 'unauthorized' | 'unavailable'> => {
+      const preparation = await prepareTransakHeadlessCheckout(
+        wallet,
+        quoteRequestData,
+        userAuth.accessToken,
+      );
+      if (preparation.status !== 'ready') {
+        logger.debug(
+          `[TransakHeadlessBuy] cannot run headless: ${
+            preparation.status === 'unavailable'
+              ? preparation.reason
+              : 'session rejected'
+          }`,
+        );
+        if (preparation.status === 'unauthorized') {
+          dispatch(
+            BuyCryptoActions.updateHeadlessUserAuthTransak({
+              env: transakEnv,
+              userAuth: undefined,
+            }),
+          );
+        }
+        return preparation.status;
+      }
+
+      dispatch(
+        Analytics.track('Requested Crypto Purchase', {
+          exchange: 'transak',
+          fiatAmount: offer.fiatAmount,
+          fiatCurrency: offer.fiatCurrency,
+          paymentMethod: paymentMethod.method,
+          coin: wallet.currencyAbbreviation.toLowerCase(),
+          chain: wallet.chain?.toLowerCase(),
+          isHeadless: true,
+        }),
+      );
+
+      const checkoutParams = {
+        wallet,
+        toAddress: address,
+        offer,
+        paymentMethod,
+        userAuth,
+        transakExternalId,
+        quoteRequestData,
+        preparation,
+        onFallback: (reason: string) => {
+          logger.debug(
+            `[TransakHeadlessBuy] checkout fallback (${reason}), continuing with the Transak widget.`,
+          );
+          fallbackToTransakWidget(offer, paymentMethod);
+        },
+      };
+
+      // Replace the onboarding (if any) so going back from the checkout
+      // returns to the offers.
+      navigation.dispatch(state => {
+        const routes = state.routes.filter(
+          r =>
+            r.name !== ExternalServicesScreens.TRANSAK_BUY_HEADLESS_ONBOARDING,
+        );
+        if (routes.length === state.routes.length) {
+          return CommonActions.navigate({
+            name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT,
+            params: checkoutParams,
+          });
+        }
+        const newRoutes = [
+          ...routes,
+          {
+            name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT,
+            params: checkoutParams,
+          },
+        ];
+        return CommonActions.reset({
+          ...state,
+          routes: newRoutes,
+          index: newRoutes.length - 1,
+        });
+      });
+      setOpeningBrowser(false);
+      return 'started';
+    };
+
+    if (isTransakHeadlessUserAuthValid(transakHeadlessUserAuth)) {
+      const result = await startCheckout(transakHeadlessUserAuth);
+      if (result !== 'unauthorized') {
+        return result === 'started';
+      }
+      // The stored session is no longer accepted: sign in again below.
+    }
+
+    navigation.navigate(
+      ExternalServicesScreens.TRANSAK_BUY_HEADLESS_ONBOARDING,
+      {
+        wallet,
+        country: locationData?.countryShortCode,
+        initialEmail: user?.email,
+        onConnect: async (userAuth: TransakHeadlessUserAuthData) => {
+          dispatch(
+            BuyCryptoActions.updateHeadlessUserAuthTransak({
+              env: transakEnv,
+              userAuth,
+            }),
+          );
+          const result = await startCheckout(userAuth);
+          if (result !== 'started') {
+            fallbackToTransakWidget(offer, paymentMethod);
+          }
+        },
+        onSkip: (manualSkip: boolean) => {
+          logger.debug(
+            `[TransakHeadlessBuy] ${
+              manualSkip ? 'User skipped' : 'Skipped'
+            } the Transak sign in, continuing with the Transak widget.`,
+          );
+          fallbackToTransakWidget(offer, paymentMethod);
+        },
+      },
+    );
+    setOpeningBrowser(false);
+    return true;
+  };
+
+  // Leaves the headless screen on top and continues with the Transak widget.
+  const fallbackToTransakWidget = async (
+    offer: CryptoOffer,
+    paymentMethod: PaymentMethod,
+  ) => {
+    hasInitializedRef.current = true;
+    navigation.goBack();
+    // Wait for the back-transition: the transitionEnd listener resets
+    // buttonState and openingBrowser on every transition. Race against a
+    // timeout in case transitionEnd never fires.
+    await Promise.race([
+      new Promise<void>(resolve => {
+        const unsubscribe = navigation.addListener('transitionEnd', () => {
+          unsubscribe();
+          resolve();
+        });
+      }),
+      new Promise<void>(resolve => setTimeout(resolve, 2500)),
+    ]);
+    setButtonState('loading');
+    setOpeningBrowser(true);
+    await sleep(1000);
+    continueToTransak(offer, paymentMethod, true);
   };
 
   const goToSellCheckout = (

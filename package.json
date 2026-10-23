@@ -80,6 +80,7 @@
     "@sumsub/fisherman": "2.1.0",
     "@sumsub/react-native-mobilesdk-module": "1.45.1",
     "@tradle/react-native-http": "2.0.1",
+    "@transak/ui-components-rn": "0.6.0",
     "@walletconnect/jsonrpc-types": "1.0.4",
     "@walletconnect/react-native-compat": "2.21.8",
     "asyncstorage-down": "4.2.0",
