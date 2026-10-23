@@ -187,6 +187,11 @@ jest.mock('../wallet/wallet.actions', () => ({
 }));
 jest.mock('../wallet', () => ({WalletActions: {}}));
 
+jest.mock('../vault-runtime', () => ({
+  readVaultTransferRecord: jest.fn(() => null),
+  vaultLegacySourceExists: jest.fn(),
+}));
+
 jest.mock('../analytics/analytics.effects', () => ({
   Analytics: {
     initialize: jest.fn(() => ({type: 'ANALYTICS_INITIALIZE'})),

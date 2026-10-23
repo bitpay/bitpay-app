@@ -2305,5 +2305,8 @@
   "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Если включено, кошельки тестовой сети отображаются во всём приложении, и вы можете создавать кошельки и токены тестовой сети. Монеты тестовой сети не имеют ценности. Если отключено, кошельки тестовой сети скрываются, но не удаляются.",
   "NETWORK": "СЕТЬ",
   "Select a Network": "Выберите сеть",
-  "Add Testnet Wallets": "Добавить кошельки тестовой сети"
+  "Add Testnet Wallets": "Добавить кошельки тестовой сети",
+  "Wallet data could not be opened": "Не удалось открыть данные кошелька",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ваши локальные данные сохранены. Повторите попытку или обратитесь в службу поддержки. Не удаляйте приложение и не очищайте его данные. Справочный код: {{id}}.",
+  "Retry": "Повторить"
 }

@@ -11,11 +11,8 @@ import {
 } from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
-import {getUniqueId} from 'react-native-device-info';
-import * as Keychain from 'react-native-keychain';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
-import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
 import {
@@ -29,6 +26,11 @@ import {
   transformPortfolioPopulateStatus,
   encryptSpecificFields,
 } from './transforms/transforms';
+import {
+  deserializeModernPersistValue,
+  encryptPersistValue,
+} from './transforms/encrypt';
+import {createRehydrationFailureMiddleware} from './persistence-guard';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
@@ -101,7 +103,6 @@ import {
   setActivePersistor,
 } from './persistor';
 import {rehydrateWalletSecrets} from './wallet-secrets/wallet-secrets.effects';
-import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {logManager} from '../managers/LogManager';
@@ -115,7 +116,10 @@ import {
 } from './performanceDiagnostics';
 import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
 
-export const storage = new MMKV();
+import {modernStorage as storage, requireVaultActive} from './vault-storage';
+import {prepareModernVault} from './vault-runtime';
+import {unencryptedPersistStores} from './transforms/persist-encryption';
+export {storage};
 
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
@@ -204,6 +208,7 @@ const removePortfolioChartsPersistRoot = (
 
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
+    requireVaultActive();
     const setItemStartedAt = PERF_DEBUG ? performance.now() : 0;
     const valueToStore =
       key === 'persist:root' && typeof value === 'string'
@@ -263,6 +268,7 @@ export const reduxStorage: Storage = {
     }
   },
   getItem: key => {
+    requireVaultActive();
     try {
       const value = storage.getString(key);
       if (value == null && key === 'persist:root') {
@@ -308,6 +314,7 @@ export const reduxStorage: Storage = {
     }
   },
   removeItem: key => {
+    requireVaultActive();
     try {
       storage.delete(key);
     } catch (err) {
@@ -510,9 +517,15 @@ const logger = createLogger({
   },
 });
 
-const getStore = async () => {
+const initializeStore = async () => {
+  let rehydrationFailure: Error | null = null;
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
 
+  middlewares.push(
+    createRehydrationFailureMiddleware(error => {
+      rehydrationFailure ??= error;
+    }),
+  );
   const reduxPerformanceMiddleware: Middleware =
     store => next => (action: AnyAction) => {
       if (!PERF_DEBUG || typeof action?.type !== 'string') {
@@ -602,7 +615,7 @@ const getStore = async () => {
     // middlewares.push(inmmutableMiddleware);
   }
 
-  const secretKey = await getEncryptionKey().catch(() => getUniqueId());
+  const secretKey = await getEncryptionKey();
 
   const instrumentPersistTransform = (name: string, transform: any) => {
     if (!PERF_DEBUG) {
@@ -663,32 +676,44 @@ const getStore = async () => {
       ),
       instrumentPersistTransform(
         'encryptTransform',
-        encryptTransform({
-          secretKey,
-          onError: err => {
-            pausePersistor(err);
-            const errStr =
-              err instanceof Error ? err.message : JSON.stringify(err);
+        createTransform<any, any, RootState>(
+          (inboundState, key) => {
+            if (typeof key === 'string' && unencryptedPersistStores.has(key)) {
+              return JSON.stringify(inboundState);
+            }
 
-            store.dispatch(
-              LogActions.persistLog(
-                LogActions.error(`Encrypt transform failed - ${errStr}`),
-              ),
+            return encryptPersistValue(
+              inboundState,
+              secretKey,
+              `persist:${String(key)}`,
             );
-            Sentry.captureException(err, {
-              level: 'error',
-            });
           },
-          unencryptedStores: [
-            'APP',
-            'MARKET_STATS',
-            'PORTFOLIO',
-            'RATE',
-            'SHOP',
-            'SHOP_CATALOG',
-            'WALLET',
-          ],
-        }),
+          (outboundState, key) => {
+            try {
+              return deserializeModernPersistValue(
+                outboundState,
+                secretKey,
+                String(key),
+                typeof key === 'string' && unencryptedPersistStores.has(key),
+              );
+            } catch (err) {
+              pausePersistor(err);
+              const errStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              store.dispatch(
+                LogActions.persistLog(
+                  LogActions.error(
+                    `Decrypt persist transform failed - ${errStr}`,
+                  ),
+                ),
+              );
+              Sentry.captureException(err, {
+                level: 'error',
+              });
+              throw err;
+            }
+          },
+        ),
       ),
     ],
   };
@@ -707,7 +732,9 @@ const getStore = async () => {
           action.payload?.WALLET?.secretsMigrated &&
           !action.payload.WALLET_SECRETS
         ) {
-          pausePersistor(new Error('Persisted wallet secrets are missing'));
+          const error = new Error('Persisted wallet secrets are missing');
+          rehydrationFailure ??= error;
+          pausePersistor(error);
         }
       }
       if (PERF_DEBUG && action && typeof action.type === 'string') {
@@ -773,11 +800,21 @@ const getStore = async () => {
   storeDispatch(LogActions.clear());
   initLogs.drainAndDispatch(storeDispatch);
 
-  const persistor = persistStore(store, null, () => {
-    (store.dispatch as AppDispatch)(rehydrateWalletSecrets());
+  let resolveBootstrap: () => void = () => {};
+  const bootstrapped = new Promise<void>(resolve => {
+    resolveBootstrap = resolve;
   });
+  const persistor = persistStore(store, undefined, resolveBootstrap);
   setActivePersistor(persistor);
 
+  await bootstrapped;
+  if (rehydrationFailure) {
+    persistor.pause();
+    Sentry.captureException(rehydrationFailure, {level: 'error'});
+    throw rehydrationFailure;
+  }
+
+  (store.dispatch as AppDispatch)(rehydrateWalletSecrets());
   activePersistor = persistor;
   registerPersistFlushOnBackground(persistor);
 
@@ -802,6 +839,14 @@ export type Effect<ReturnType = void> = ThunkAction<
   Action<string>
 >;
 
+let storeInitialization: ReturnType<typeof initializeStore> | undefined;
+const getStore = () => {
+  storeInitialization ??= initializeStore().catch(error => {
+    storeInitialization = undefined;
+    throw error;
+  });
+  return storeInitialization;
+};
 export default getStore;
 
 export function configureTestStore(initialState: any) {
@@ -818,54 +863,4 @@ export function configureTestStore(initialState: any) {
   };
 }
 
-export async function getEncryptionKey(): Promise<string> {
-  const encryptionKeyId = 'bitpay-app-encryption-key';
-
-  try {
-    logManager.info('getEncryptionKey: attempting to retrieve from Keychain');
-    const existingKey = await Keychain.getGenericPassword({
-      service: encryptionKeyId,
-    });
-
-    if (existingKey && existingKey.password) {
-      logManager.info('getEncryptionKey: found existing key in Keychain');
-      return existingKey.password;
-    }
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: Keychain get failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-    throw err;
-  }
-
-  logManager.warn('getEncryptionKey: generating new key (no existing key)');
-  const newKey = getUniqueId();
-
-  try {
-    // Save to keychain
-    await Keychain.setGenericPassword(encryptionKeyId, newKey, {
-      service: encryptionKeyId,
-    });
-    logManager.info('getEncryptionKey: stored new key in Keychain');
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: Keychain set failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-  }
-
-  return newKey;
-}
+export const getEncryptionKey = prepareModernVault;

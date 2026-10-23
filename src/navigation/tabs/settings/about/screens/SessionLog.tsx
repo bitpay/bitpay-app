@@ -48,7 +48,7 @@ import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
 import ShareIcon from '../../../../../../assets/img/share-icon.svg';
 import ShareIconWhite from '../../../../../../assets/img/share-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
-import {storage} from '../../../../../store';
+import {sessionLogsStorage as storage} from '../../../../../utils/sessionLogs';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {isAndroidStoragePermissionGranted} from '../../../../../utils/helper-methods';
 import {ShareOptions} from 'react-native-share';

@@ -42,6 +42,7 @@ import {
   reportDeviceIntegrityToSentry,
 } from '../../utils/deviceIntegrity';
 import {Analytics} from '../analytics/analytics.effects';
+import {reportVaultMigrationStatus} from '../vault-telemetry';
 import {BitPayIdEffects} from '../bitpay-id';
 import {SumSubEffects} from '../sumsub';
 import {zenledgerInitialize} from '../zenledger';
@@ -400,6 +401,7 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   }
   logManager.debug('[initAnalytics] Braze EID: ', eid);
   await dispatch(Analytics.identify(eid));
+  dispatch(reportVaultMigrationStatus());
 
   if (!appInstalled) {
     dispatch(trackAppInstalled(Math.floor(Date.now() / 1000)));

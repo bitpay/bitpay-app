@@ -9,12 +9,26 @@ const mockExists = jest.fn();
 const mockUnlink = jest.fn();
 const mockWriteFile = jest.fn();
 
+const mockMmkvStores = new Map<string, Map<string, boolean>>([
+  ['bitpay.session-logs.v1', mockMmkvStore],
+]);
 jest.mock('react-native-mmkv', () => ({
-  MMKV: jest.fn().mockImplementation(() => ({
-    getBoolean: jest.fn((key: string) => mockMmkvStore.get(key)),
-    set: mockSet,
-    delete: mockDelete,
-  })),
+  MMKV: jest.fn().mockImplementation((options?: {id?: string}) => {
+    const id = options?.id ?? 'mmkv.default';
+    if (!mockMmkvStores.has(id)) mockMmkvStores.set(id, new Map());
+    const values = mockMmkvStores.get(id)!;
+    return {
+      getBoolean: jest.fn((key: string) => values.get(key)),
+      set:
+        id === 'bitpay.session-logs.v1'
+          ? mockSet
+          : jest.fn((key, value) => values.set(key, value)),
+      delete:
+        id === 'bitpay.session-logs.v1'
+          ? mockDelete
+          : jest.fn(key => values.delete(key)),
+    };
+  }),
 }));
 
 jest.mock('react-native-fs', () => ({
@@ -37,7 +51,7 @@ describe('sessionLogs', () => {
 
   afterEach(() => {
     global.__DEV__ = originalDev;
-    mockMmkvStore.clear();
+    mockMmkvStores.forEach(values => values.clear());
     mockSet.mockClear();
     mockDelete.mockClear();
     mockExists.mockReset();
