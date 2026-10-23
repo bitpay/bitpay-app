@@ -74,7 +74,10 @@ export const isEqual = (value: unknown, other: unknown): boolean => {
   if (!isObjectLike(value) || !isObjectLike(other)) {
     return false;
   }
-  if (Object.getPrototypeOf(value) !== Object.getPrototypeOf(other)) {
+  if (
+    !(isPlainObject(value) && isPlainObject(other)) &&
+    Object.getPrototypeOf(value) !== Object.getPrototypeOf(other)
+  ) {
     return false;
   }
   if (value instanceof Date) {

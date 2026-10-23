@@ -1,4 +1,4 @@
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../utils/object';
 import {decodeSnapshot, reencryptSnapshot, verifySnapshot} from './vault-codec';
 import {
   safeVaultError,

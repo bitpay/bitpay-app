@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../utils/object';
 
 jest.mock('react-native', () => ({
   Platform: {OS: 'android'},

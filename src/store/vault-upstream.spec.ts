@@ -1,4 +1,4 @@
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../utils/object';
 import type {RootState} from './index';
 import {createStoreModel} from '../../test/vault/store-model';
 

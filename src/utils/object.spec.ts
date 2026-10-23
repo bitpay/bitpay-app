@@ -82,6 +82,12 @@ describe('isEqual', () => {
     expect(isEqual(new Date(1), new Date(2))).toBe(false);
     expect(isEqual(NaN, NaN)).toBe(true);
   });
+
+  it('compares null-prototype objects with plain objects by value', () => {
+    const decoded = Object.assign(Object.create(null), {sat: 1});
+    expect(isEqual(decoded, {sat: 1})).toBe(true);
+    expect(isEqual(decoded, {sat: 2})).toBe(false);
+  });
 });
 
 describe('merge', () => {
