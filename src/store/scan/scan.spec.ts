@@ -15,6 +15,10 @@ import {
   BitpaySupportedSvmCoins,
 } from '@/constants/currencies';
 import {startCreateKey} from '../wallet/effects';
+import {waitFor} from '@testing-library/react-native';
+import BitPayIdApi from '../../api/bitpay';
+import {Network} from '../../constants';
+import {Wallet} from '../wallet/wallet.models';
 
 /**
  * incomingData Tests
@@ -1656,6 +1660,69 @@ describe('incomingData', () => {
     });
   });
 
+  it.each([
+    ['a BTC address', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'],
+    ['an EVM address', '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'],
+    ['a Bitcoin URI', 'bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'],
+    [
+      'a Bitcoin URI with amount',
+      'bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?amount=1.0000',
+    ],
+    [
+      'a Bitcoin Cash URI',
+      'bitcoincash:qr00upv8qjgkym8zng3f663n9qte9ljuqqcs8eep5w',
+    ],
+    [
+      'a Bitcoin Cash URI with a legacy address',
+      'bitcoincash:CcnxtMfvBHGTwoKGPSuezEuYNpGPJH6tjN',
+    ],
+    ['an Ethereum URI', 'ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'],
+    [
+      'an Ethereum URI with value',
+      'ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
+    ],
+    [
+      'a Matic URI with value',
+      'matic:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
+    ],
+    ['an Arbitrum URI', 'arbitrum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'],
+    ['a Base URI', 'base:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'],
+    [
+      'an Optimism URI with value',
+      'optimism:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
+    ],
+    ['a Ripple URI', 'ripple:rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR'],
+    [
+      'a Ripple URI with amount',
+      'ripple:rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR?amount=15',
+    ],
+    ['a Dogecoin URI', 'dogecoin:D6NoBXsE7YMy6mS9H31ds9svGNn7qpjiew'],
+    ['a Litecoin URI', 'litecoin:LMbBz1rbFoXfBTBEdtTGHq1mk4r6iKnHze'],
+    [
+      'a BitPay URI with amount',
+      'bitpay:1HZJoc4ZKMvyAYcYCU1vbmwm3KzZq34EmU?coin=btc&chain=btc&amount=0.0002&message=asd',
+    ],
+    ['a Solana Pay URI', 'solana:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'],
+  ])(
+    'Should keep the account scope for %s when no wallet is selected',
+    async (_label, data) => {
+      const selectedAccountAddress =
+        '0x1111111111111111111111111111111111111111';
+      const store = configureTestStore({});
+      const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+
+      const handled = await store.dispatch(
+        incomingData(data, {selectedAccountAddress}),
+      );
+
+      expect(handled).toBe(true);
+      expect(navigationSpy).toHaveBeenLastCalledWith(
+        'GlobalSelect',
+        expect.objectContaining({context: 'scanner', selectedAccountAddress}),
+      );
+    },
+  );
+
   it('Should handle SolanaPay URI (solana: prefix intercepts IsValidSolUri)', async () => {
     // solana: URIs always match IsValidSolanaPay when the address is valid (PublicKey mock never throws),
     // so they are dispatched to handleSolanaPay, not handleSolUri
@@ -1671,6 +1738,33 @@ describe('incomingData', () => {
     expect(loggerSpy).toHaveBeenNthCalledWith(
       1,
       '[scan] Incoming-data: SolanaPay URI',
+    );
+  });
+
+  it('Should keep Solana Pay options when the amount is entered later', async () => {
+    const store = configureTestStore({});
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+
+    await store.dispatch(
+      incomingData(
+        'solana:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v?reference=REF&memo=MEMO&label=Shop&message=Thanks',
+      ),
+    );
+
+    expect(navigationSpy).toHaveBeenCalledWith(
+      'GlobalSelect',
+      expect.objectContaining({
+        recipient: expect.objectContaining({
+          opts: expect.objectContaining({
+            solanaPayOpts: {
+              reference: 'REF',
+              memo: 'MEMO',
+              label: 'Shop',
+              message: 'Thanks',
+            },
+          }),
+        }),
+      }),
     );
   });
 
@@ -1937,6 +2031,264 @@ describe('incomingData', () => {
     const params = resetCall?.routes?.[1]?.params;
     expect(params?.chain).toBe('btc');
   });
+});
+
+describe('PayPro account scope', () => {
+  const selectedAccountAddress = '0x1111111111111111111111111111111111111111';
+  const wallet = {
+    id: 'selected-wallet',
+    receiveAddress: selectedAccountAddress,
+  } as Wallet;
+  const invoiceUrl = 'https://bitpay.com/i/TestInvoiceId123';
+  const embeddedPayProUris = [
+    `bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?r=${invoiceUrl}`,
+    `bitcoincash:qr00upv8qjgkym8zng3f663n9qte9ljuqqcs8eep5w?r=${invoiceUrl}`,
+    `bitcoincash:CcnxtMfvBHGTwoKGPSuezEuYNpGPJH6tjN?r=${invoiceUrl}`,
+    `dogecoin:D6NoBXsE7YMy6mS9H31ds9svGNn7qpjiew?r=${invoiceUrl}`,
+    `litecoin:LMbBz1rbFoXfBTBEdtTGHq1mk4r6iKnHze?r=${invoiceUrl}`,
+  ];
+  const invoice = {
+    id: 'TestInvoiceId123',
+    price: 10,
+    currency: 'USD',
+    status: 'new',
+    buyerProvidedInfo: {},
+  };
+  const payProOptions: PayPro.PayProOptions = {
+    paymentId: '10',
+    time: '10',
+    expires: '2019-11-05T16:29:31.754Z',
+    memo: 'test memo',
+    payProUrl: invoiceUrl,
+    paymentOptions: [],
+    verified: true,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest
+      .spyOn(PayPro, 'GetPayProOptions')
+      .mockImplementation(() => () => Promise.resolve(payProOptions));
+    (axios.get as jest.Mock).mockReset().mockResolvedValue({
+      data: {data: invoice},
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it.each([
+    `bitcoin:?r=${invoiceUrl}`,
+    `ethereum:?r=${invoiceUrl}`,
+    `bitpay:?r=${invoiceUrl}`,
+    ...embeddedPayProUris,
+  ])('keeps the selected account for %s', async data => {
+    const store = configureTestStore({});
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+
+    await store.dispatch(incomingData(data, {selectedAccountAddress}));
+
+    await waitFor(() =>
+      expect(navigationSpy).toHaveBeenCalledWith('PayProConfirm', {
+        payProOptions,
+        invoice,
+        selectedAccountAddress,
+      }),
+    );
+  });
+
+  it.each(embeddedPayProUris)(
+    'keeps the wallet selector for embedded PayPro URI %s',
+    async data => {
+      const store = configureTestStore({});
+      const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+
+      await store.dispatch(incomingData(data, {wallet}));
+
+      await waitFor(() =>
+        expect(navigationSpy).toHaveBeenCalledWith('PayProConfirm', {
+          payProOptions,
+          invoice,
+          wallet: undefined,
+        }),
+      );
+    },
+  );
+
+  it.each([invoiceUrl, `bitcoin:?r=${invoiceUrl}`])(
+    'keeps the existing wallet preselection for %s',
+    async data => {
+      const store = configureTestStore({});
+      const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+      if (data === invoiceUrl) {
+        (axios.get as jest.Mock).mockResolvedValueOnce({data: {invoice}});
+      }
+
+      await store.dispatch(incomingData(data, {wallet}));
+
+      await waitFor(() =>
+        expect(navigationSpy).toHaveBeenCalledWith(
+          'PayProConfirm',
+          expect.objectContaining({payProOptions, wallet}),
+        ),
+      );
+    },
+  );
+
+  it.each([
+    invoiceUrl,
+    `${invoiceUrl}?c=u`,
+    'https://bitpay.com/invoice?v=3&id=TestInvoiceId123',
+  ])('keeps the selected account when opening invoice %s', async data => {
+    const store = configureTestStore({});
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    (axios.get as jest.Mock).mockResolvedValueOnce({
+      data: {invoice: {...invoice, buyerProvidedEmail: 'test@example.com'}},
+    });
+
+    await store.dispatch(incomingData(data, {selectedAccountAddress}));
+
+    await waitFor(() =>
+      expect(navigationSpy).toHaveBeenCalledWith(
+        'PayProConfirm',
+        expect.objectContaining({payProOptions, selectedAccountAddress}),
+      ),
+    );
+  });
+
+  it('keeps the selected account after unlocking an invoice', async () => {
+    const state = configureTestStore({}).getState();
+    const store = configureTestStore({
+      BITPAY_ID: {
+        ...state.BITPAY_ID,
+        apiToken: {
+          ...state.BITPAY_ID.apiToken,
+          [Network.mainnet]: 'test-token',
+        },
+      },
+    });
+    const request = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: [{facade: 'userShopper', token: 'shopper-token'}],
+      })
+      .mockResolvedValueOnce({data: {data: {meetsRequiredTier: true}}});
+    jest
+      .spyOn(BitPayIdApi, 'getInstance')
+      .mockReturnValue({request} as unknown as BitPayIdApi);
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+
+    await store.dispatch(incomingData(invoiceUrl, {selectedAccountAddress}));
+
+    await waitFor(() =>
+      expect(navigationSpy).toHaveBeenCalledWith('PayProConfirm', {
+        payProOptions,
+        invoice,
+        selectedAccountAddress,
+      }),
+    );
+    expect(request).toHaveBeenCalledWith('unlockInvoice', 'shopper-token', {
+      invoiceId: invoice.id,
+    });
+  });
+
+  it('keeps the selected account when invoice data cannot be fetched', async () => {
+    const store = configureTestStore({});
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    (axios.get as jest.Mock).mockRejectedValueOnce(new Error('unavailable'));
+
+    await store.dispatch(
+      incomingData(`${invoiceUrl}?c=u`, {selectedAccountAddress}),
+    );
+
+    await waitFor(() =>
+      expect(navigationSpy).toHaveBeenCalledWith(
+        'PayProConfirm',
+        expect.objectContaining({selectedAccountAddress}),
+      ),
+    );
+  });
+
+  it.each([undefined, selectedAccountAddress])(
+    'keeps account scope %s and the wallet selector after login',
+    async accountAddress => {
+      const store = configureTestStore({});
+      const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+      (axios.get as jest.Mock).mockRejectedValueOnce(new Error('unavailable'));
+
+      await store.dispatch(
+        incomingData(invoiceUrl, {
+          wallet,
+          selectedAccountAddress: accountAddress,
+        }),
+      );
+
+      await waitFor(() =>
+        expect(navigationSpy).toHaveBeenCalledWith('Login', {
+          onLoginSuccess: expect.any(Function),
+        }),
+      );
+      (axios.get as jest.Mock).mockResolvedValueOnce({data: {invoice}});
+      const [, {onLoginSuccess}] = navigationSpy.mock.calls[0] as unknown as [
+        string,
+        {onLoginSuccess: () => void},
+      ];
+      onLoginSuccess();
+
+      await waitFor(() =>
+        expect(navigationSpy).toHaveBeenCalledWith(
+          'PayProConfirm',
+          expect.objectContaining({
+            wallet: undefined,
+            selectedAccountAddress: accountAddress,
+          }),
+        ),
+      );
+    },
+  );
+
+  it.each([undefined, selectedAccountAddress])(
+    'keeps account scope %s and the wallet selector through the buyer email step',
+    async accountAddress => {
+      const store = configureTestStore({});
+      const data = `${invoiceUrl}?c=u`;
+      const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+      const dispatchSpy = jest.spyOn(Root.navigationRef, 'dispatch');
+      (axios.get as jest.Mock).mockResolvedValueOnce({data: {invoice}});
+
+      await store.dispatch(
+        incomingData(data, {wallet, selectedAccountAddress: accountAddress}),
+      );
+
+      await waitFor(() =>
+        expect(navigationSpy).toHaveBeenCalledWith('EnterBuyerProvidedEmail', {
+          data,
+          selectedAccountAddress: accountAddress,
+        }),
+      );
+      (axios.post as jest.Mock).mockResolvedValue({data: {status: 'success'}});
+
+      await store.dispatch(
+        setBuyerProvidedEmail(data, 'test@example.com', accountAddress),
+      );
+
+      await waitFor(() =>
+        expect(dispatchSpy).toHaveBeenCalledWith({
+          type: 'REPLACE',
+          payload: {
+            name: 'PayProConfirm',
+            params: {
+              payProOptions,
+              invoice,
+              wallet: undefined,
+              selectedAccountAddress: accountAddress,
+            },
+          },
+        }),
+      );
+    },
+  );
 });
 
 describe('setBuyerProvidedEmail', () => {

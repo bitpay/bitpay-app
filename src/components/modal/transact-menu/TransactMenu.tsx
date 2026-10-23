@@ -198,7 +198,7 @@ const TransactMenuContent = React.memo(
           title: t('Send'),
           description: t('Send crypto to another wallet'),
           onPress: () => {
-            navigation.navigate('GlobalSelect', {context: 'send'});
+            navigation.navigate('GlobalSendTo');
           },
         },
         {

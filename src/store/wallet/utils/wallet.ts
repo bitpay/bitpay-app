@@ -602,25 +602,47 @@ export const BuildPayProWalletSelectorList =
     network,
     payProOptions,
     defaultAltCurrencyIsoCode = 'USD',
+    selectedAccountAddress,
   }: {
     keys: {[key in string]: Key};
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
+    selectedAccountAddress?: string;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
     const {
       RATE: {rates},
     } = getState();
+    const filteredKeys = selectedAccountAddress
+      ? Object.fromEntries(
+          Object.entries(keys).map(([keyId, key]) => [
+            keyId,
+            {
+              ...key,
+              wallets: key.wallets.filter(
+                wallet => wallet.receiveAddress === selectedAccountAddress,
+              ),
+            },
+          ]),
+        )
+      : keys;
     const keyWallets = BuildKeysAndWalletsList({
-      keys,
+      keys: filteredKeys,
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
     });
-    return {keyWallets};
+    return {
+      keyWallets: selectedAccountAddress
+        ? keyWallets.filter(
+            ({accounts, mergedUtxoAndEvmAccounts}) =>
+              accounts.length > 0 || mergedUtxoAndEvmAccounts.length > 0,
+          )
+        : keyWallets,
+    };
   };
 
 // These 2 functions were taken from

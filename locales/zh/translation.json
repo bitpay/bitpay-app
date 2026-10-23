@@ -2281,5 +2281,6 @@
   "Add Testnet Wallets": "添加测试网钱包",
   "Wallet data could not be opened": "无法打开钱包数据",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "您的本地数据已保留。请重试或联系支持团队。请勿卸载应用或清除其数据。参考代码：{{id}}。",
-  "Retry": "重试"
+  "Retry": "重试",
+  "There are no wallets with enough funds on the {{network}} network.": "{{network}} 网络上没有资金充足的钱包。"
 }

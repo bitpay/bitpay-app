@@ -1,9 +1,19 @@
 import React from 'react';
 import {View} from 'react-native';
+import {StackActions} from '@react-navigation/native';
 import {render} from '@test/render';
 import Contacts from './Contacts';
 
 const mockContacts: Array<Record<string, string>> = [];
+const mockParentDispatch = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useFocusEffect: (effect: () => void) => {
+    const {useEffect} = require('react');
+    useEffect(effect, [effect]);
+  },
+}));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({t: (value: string) => value}),
@@ -54,7 +64,12 @@ const renderContacts = (count: number) => {
   return render(
     <View>
       <Contacts
-        navigation={{navigate: jest.fn()} as any}
+        navigation={
+          {
+            navigate: jest.fn(),
+            getParent: () => ({dispatch: mockParentDispatch}),
+          } as any
+        }
         route={{key: 'Contacts', name: 'Contacts'} as any}
       />
     </View>,
@@ -86,5 +101,26 @@ describe('Settings Contacts preview', () => {
   it('links to the full list only when there are more than six', () => {
     expect(renderContacts(6).queryByText('View All Contacts')).toBeNull();
     expect(renderContacts(7).getByText('View All Contacts')).toBeTruthy();
+  });
+});
+
+describe('Settings Contacts', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('opens Add Contact instead of an empty section', () => {
+    const {queryByText} = renderContacts(0);
+
+    expect(mockParentDispatch).toHaveBeenCalledWith(
+      StackActions.replace('ContactsAdd'),
+    );
+    expect(queryByText('Add Contact')).toBeNull();
+  });
+
+  it('stays on the section when there are contacts', () => {
+    renderContacts(1);
+
+    expect(mockParentDispatch).not.toHaveBeenCalled();
   });
 });

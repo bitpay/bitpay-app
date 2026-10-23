@@ -9,6 +9,24 @@ import {
 } from '../../../../store/wallet/utils/wallet';
 import type {AppDispatch} from '../../../../utils/hooks';
 import type {KeyWalletsRowProps} from '../../../../components/list/KeyWalletsRow';
+import type {ContactRowProps} from '../../../../components/list/ContactRow';
+import type {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
+import type {Effect} from '../../../../store';
+import type {Wallet} from '../../../../store/wallet/wallet.models';
+import type {GlobalSelectParamList} from '../GlobalSelect';
+import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
+import {IsEVMChain, IsSVMChain} from '../../../../store/wallet/utils/currency';
+import {
+  IsBitPayInvoiceWebUrl,
+  IsValidSolanaPay,
+  ValidDataTypes,
+  ValidateCoinAddress,
+  ValidateURI,
+} from '../../../../store/wallet/utils/validations';
+import {BitPayIdEffects} from '../../../../store/bitpay-id';
+import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
+
+const SENDABLE_DATA_TYPES = ['PayPro', 'InvoiceUri', ...ValidDataTypes];
 
 type SendToKeyAccountLogger = {
   error: (message: string) => void;
@@ -118,6 +136,62 @@ export const useSendToKeyAccounts = ({
       searchInput,
     ],
   );
+
+export const getContactSendRecipient = (
+  contact: ContactRowProps,
+): NonNullable<GlobalSelectParamList['recipient']> => ({
+  name: contact.name,
+  address:
+    contact.coin === 'bch'
+      ? ToCashAddress(contact.address, false)
+      : contact.address,
+  currency: contact.coin,
+  chain: contact.chain,
+  network: contact.network,
+  destinationTag: contact.tag || contact.destinationTag,
+  opts: {
+    showEVMWalletsAndTokens: IsEVMChain(contact.chain),
+    showSVMWalletsAndTokens: IsSVMChain(contact.chain),
+  },
+});
+
+export const findEmailReceivingAddress = (
+  receivingAddresses: ReceivingAddress[],
+  currencyAbbreviation: string,
+  chain: string,
+): ReceivingAddress | undefined =>
+  receivingAddresses.find(
+    ({coin, chain: addressChain}) =>
+      currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
+      chain.toLowerCase() === addressChain.toLowerCase(),
+  );
+
+export const getEmailRecipientAddress =
+  (email: string, wallet: Wallet): Effect<Promise<string | undefined>> =>
+  async dispatch => {
+    const receivingAddresses = await dispatch(
+      BitPayIdEffects.startFetchReceivingAddresses({
+        email,
+        currency: getCurrencyCodeFromCoinAndChain(
+          wallet.currencyAbbreviation,
+          wallet.chain,
+        ),
+      }),
+    ).catch(() => []);
+    const address = findEmailReceivingAddress(
+      receivingAddresses,
+      wallet.currencyAbbreviation,
+      wallet.chain,
+    )?.address;
+    return address && ValidateCoinAddress(address, wallet.chain, wallet.network)
+      ? address
+      : undefined;
+  };
+
+export const isSendableData = (data: string): boolean =>
+  IsBitPayInvoiceWebUrl(data) ||
+  IsValidSolanaPay(data) ||
+  SENDABLE_DATA_TYPES.includes(ValidateURI(data)?.type);
 
 export const useDebouncedSendToValidation = (
   validate: (text: string) => void,

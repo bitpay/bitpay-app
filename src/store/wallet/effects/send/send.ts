@@ -2575,7 +2575,11 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
+      if (assetContext) {
+        navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
+      } else {
+        navigationRef.navigate('GlobalSendTo');
+      }
     }
   };
 

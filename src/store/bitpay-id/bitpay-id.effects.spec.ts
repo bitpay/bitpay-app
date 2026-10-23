@@ -27,6 +27,7 @@ import {
   startTwoFactorAuth,
   startDisconnectBitPayId,
   startFetchBasicInfo,
+  startFetchReceivingAddresses,
 } from './bitpay-id.effects';
 
 // ---------------------------------------------------------------------------
@@ -143,6 +144,7 @@ jest.mock('../../api/bitpay', () => ({
 
 import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
+import BitPayIdApi from '../../api/bitpay';
 import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
 import {CloudflareChallengeError} from '../../utils/cloudflare';
 import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
@@ -152,6 +154,7 @@ import {BrazeWrapper} from '../../lib/Braze';
 
 const MockAuthApi = AuthApi as jest.Mocked<typeof AuthApi>;
 const MockUserApi = UserApi as jest.Mocked<typeof UserApi>;
+const MockBitPayIdApi = BitPayIdApi as jest.Mocked<typeof BitPayIdApi>;
 const MockGetPasskeyStatus = getPasskeyStatus as jest.Mock;
 const MockSignInWithPasskey = signInWithPasskey as jest.Mock;
 const MockCloudflarePresent = cloudflareChallengeManager.present as jest.Mock;
@@ -814,5 +817,57 @@ describe('startFetchBasicInfo', () => {
       store.dispatch(startFetchBasicInfo('token-abc')),
     ).rejects.toThrow('fetch failed');
     expect(store.getState().BITPAY_ID.fetchBasicInfoStatus).toBe('failed');
+  });
+});
+
+describe('startFetchReceivingAddresses', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  const receivingAddress = (address: string) => ({
+    id: address,
+    currency: 'BTC',
+    address,
+    usedFor: {payToEmail: true},
+  });
+
+  const signedInStore = () =>
+    configureTestStore({
+      BITPAY_ID: {
+        apiToken: {[Network.mainnet]: 'token-abc'},
+        user: {[Network.mainnet]: makeUser()},
+      },
+      APP: {network: Network.mainnet},
+    });
+
+  it('stores the receiving addresses of the signed-in user', async () => {
+    (MockBitPayIdApi.apiCall as jest.Mock).mockResolvedValueOnce([
+      receivingAddress('own-address'),
+    ]);
+
+    const store = signedInStore();
+    await store.dispatch(startFetchReceivingAddresses());
+
+    expect(
+      store.getState().BITPAY_ID.receivingAddresses[Network.mainnet],
+    ).toEqual([expect.objectContaining({address: 'own-address'})]);
+  });
+
+  it('returns the addresses looked up by email without storing them as the user own', async () => {
+    (MockBitPayIdApi.apiCall as jest.Mock)
+      .mockResolvedValueOnce([receivingAddress('own-address')])
+      .mockResolvedValueOnce([receivingAddress('recipient-address')]);
+
+    const store = signedInStore();
+    await store.dispatch(startFetchReceivingAddresses());
+    const recipientAddresses = await store.dispatch(
+      startFetchReceivingAddresses({email: 'bob@example.com', currency: 'BTC'}),
+    );
+
+    expect(recipientAddresses).toEqual([
+      expect.objectContaining({address: 'recipient-address'}),
+    ]);
+    expect(
+      store.getState().BITPAY_ID.receivingAddresses[Network.mainnet],
+    ).toEqual([expect.objectContaining({address: 'own-address'})]);
   });
 });

@@ -2299,5 +2299,6 @@
   "Add Testnet Wallets": "Testnet-Wallets hinzufügen",
   "Wallet data could not be opened": "Wallet-Daten konnten nicht geöffnet werden",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ihre lokalen Daten wurden beibehalten. Versuchen Sie es erneut oder wenden Sie sich an den Support. Deinstallieren Sie die App nicht und löschen Sie ihre Daten nicht. Referenz: {{id}}.",
-  "Retry": "Erneut versuchen"
+  "Retry": "Erneut versuchen",
+  "There are no wallets with enough funds on the {{network}} network.": "Es gibt keine Wallets mit ausreichend Guthaben im {{network}}-Netzwerk."
 }

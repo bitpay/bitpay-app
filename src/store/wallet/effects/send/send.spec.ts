@@ -26,8 +26,10 @@ import {
   createTxProposal,
   HARDWARE_WALLET_SIGNING_UNSUPPORTED,
   publishAndSign,
+  sendCrypto,
   startSendPayment,
 } from './send';
+import * as Root from '../../../../Root';
 import {ethers} from 'ethers';
 import {abiERC20} from '../../../../navigation/wallet-connect/constants/abis/abi-erc20';
 
@@ -319,5 +321,55 @@ describe('buildTransactionProposal for a native SOL send', () => {
     const txp: any = await buildSolProposal();
 
     expect(txp.memo).toBeUndefined();
+  });
+});
+
+describe('sendCrypto', () => {
+  const getState = () =>
+    ({
+      WALLET: {
+        keys: {
+          'key-1': {
+            backupComplete: true,
+            wallets: [
+              {
+                hideWallet: false,
+                hideWalletByAccount: false,
+                isComplete: () => true,
+                pendingTssSession: false,
+                balance: {sat: 1},
+              },
+            ],
+          },
+        },
+      },
+    } as any);
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('opens the global Send To screen when no asset is preselected', () => {
+    const navigateSpy = jest
+      .spyOn(Root.navigationRef, 'navigate')
+      .mockImplementation(() => undefined);
+
+    sendCrypto('HomeRoot')(jest.fn(), getState, undefined);
+
+    expect(navigateSpy).toHaveBeenCalledWith('GlobalSendTo');
+  });
+
+  it('keeps the wallet selector when an asset is preselected', () => {
+    const navigateSpy = jest
+      .spyOn(Root.navigationRef, 'navigate')
+      .mockImplementation(() => undefined);
+    const assetContext = {currencyAbbreviation: 'btc', chain: 'btc'};
+
+    sendCrypto('ExchangeRate', assetContext)(jest.fn(), getState, undefined);
+
+    expect(navigateSpy).toHaveBeenCalledWith('GlobalSelect', {
+      context: 'send',
+      assetContext,
+    });
   });
 });

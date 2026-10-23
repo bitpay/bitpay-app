@@ -2308,5 +2308,6 @@
   "Add Testnet Wallets": "Agregar billeteras de testnet",
   "Wallet data could not be opened": "No se pudieron abrir los datos de la billetera",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Sus datos locales se conservaron. Vuelva a intentarlo o póngase en contacto con el soporte. No desinstale la aplicación ni borre sus datos. Referencia: {{id}}.",
-  "Retry": "Reintentar"
+  "Retry": "Reintentar",
+  "There are no wallets with enough funds on the {{network}} network.": "No hay billeteras con fondos suficientes en la red {{network}}."
 }

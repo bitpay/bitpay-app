@@ -199,7 +199,11 @@ const SendToAddress = () => {
         const extractedAmount = ExtractUriAmount(data.data);
         const addr = ExtractBitPayUriAddress(text);
         context === 'selectInputs'
-          ? goToSelectInputsView({address: addr})
+          ? goToSelectInputsView(
+              addr === sendTo?.address
+                ? {...sendTo, address: addr}
+                : {address: addr},
+            )
           : addRecipient({
               address: addr,
               amount: extractedAmount ? Number(extractedAmount[1]) : undefined,
