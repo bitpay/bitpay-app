@@ -5,7 +5,6 @@ import {
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
-import cloneDeep from 'lodash.clonedeep';
 import {RampAssetInfo} from '../../../../store/buy-crypto/models/ramp.models';
 import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 
@@ -101,7 +100,7 @@ export const getRampSellSupportedCurrencies = (): string[] => {
 };
 
 export const rampCoinMapping = (coin: string): string => {
-  let _coin = cloneDeep(coin);
+  let _coin = coin;
 
   if (_coin?.toLowerCase() === 'usdc.e') {
     _coin = 'usdce';
@@ -110,7 +109,7 @@ export const rampCoinMapping = (coin: string): string => {
 };
 
 export const getCoinFromRampCoinFormat = (coin: string): string => {
-  let _coin = cloneDeep(coin).toLowerCase();
+  let _coin = coin.toLowerCase();
 
   if (_coin?.toLowerCase() === 'usdce') {
     _coin = 'usdc.e';
@@ -123,8 +122,8 @@ export const getRampCoinFormat = (
   chain: string | undefined,
 ): string => {
   coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
-  const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
-  const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
+  const _coin = coin ? coin.toUpperCase() : undefined;
+  const _chain = chain ? chain.toUpperCase() : undefined;
 
   let formattedCoin: string = `${_chain}_${_coin}`;
   return formattedCoin;
@@ -148,7 +147,7 @@ export const getChainFromRampChainFormat = (
 };
 
 export const getRampChainFormat = (chain: string): string | undefined => {
-  const _chain = chain ? cloneDeep(chain).toLowerCase() : undefined;
+  const _chain = chain ? chain.toLowerCase() : undefined;
 
   let formattedChain: string | undefined;
   switch (_chain) {
@@ -295,11 +294,9 @@ export const getRampSellCoinFormat = (
   chain: string | undefined,
 ): string => {
   coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
-  const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
+  const _coin = coin ? coin.toUpperCase() : undefined;
   const rampChainFormat = chain ? getRampChainFormat(chain) : undefined;
-  const _chain = rampChainFormat
-    ? cloneDeep(rampChainFormat).toUpperCase()
-    : undefined;
+  const _chain = rampChainFormat ? rampChainFormat.toUpperCase() : undefined;
 
   if (_coin === 'WETH' && _chain === 'MATIC') {
     return 'MATIC_ETH';
@@ -364,7 +361,7 @@ export const getPayoutMethodKeyFromRampType = (
 export const getSellStatusFromRampStatus = (
   rampStatus: string,
 ): RampSellOrderStatus => {
-  const status = cloneDeep(rampStatus)?.toLowerCase() || '';
+  const status = rampStatus?.toLowerCase() || '';
 
   return status as RampSellOrderStatus;
 };

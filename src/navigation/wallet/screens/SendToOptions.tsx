@@ -17,7 +17,6 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import WalletIcons from '../components/WalletIcons';
-import _ from 'lodash';
 import AmountModal from '../../../components/amount/AmountModal';
 import {
   createProposalAndBuildTxDetails,
@@ -246,7 +245,10 @@ const SendToOptions = () => {
   const goToConfirmView = useCallback(async () => {
     try {
       showOngoingProcess('LOADING');
-      const amount = _.sumBy(recipientList, 'amount');
+      const amount = recipientList.reduce(
+        (sum, recipient) => sum + (recipient.amount ?? 0),
+        0,
+      );
       const tx = {
         wallet,
         recipient: recipientList[0],

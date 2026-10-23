@@ -1,5 +1,5 @@
 import Aes from 'crypto-js/aes.js';
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../utils/object';
 import {decodeDetails, vaultDiagnostic} from './vault-diagnostics';
 import * as encryption from './transforms/encrypt';
 import {createTransform} from 'redux-persist';

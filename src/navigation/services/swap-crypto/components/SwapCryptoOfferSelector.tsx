@@ -10,7 +10,7 @@ import {
   StackActions,
   useIsFocused,
 } from '@react-navigation/native';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../../utils/object';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {BaseText} from '../../../../components/styled/Text';
 import {useLogger} from '../../../../utils/hooks/useLogger';
@@ -22,7 +22,6 @@ import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
 import {SwapCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
-import _ from 'lodash';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
 import SwapCryptoOfferSelectorModal from './SwapCryptoOfferSelectorModal';
@@ -699,11 +698,11 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         offers.thorswap.amountReceiving = bestRoute.expectedOutput;
 
         if (
-          bestRoute.fees[cloneDeep(chainFrom).toUpperCase()] &&
-          bestRoute.fees[cloneDeep(chainFrom).toUpperCase()][0]
+          bestRoute.fees[chainFrom.toUpperCase()] &&
+          bestRoute.fees[chainFrom.toUpperCase()][0]
         ) {
           offers.thorswap.fee = Number(
-            bestRoute.fees[cloneDeep(chainFrom).toUpperCase()][0].totalFee,
+            bestRoute.fees[chainFrom.toUpperCase()][0].totalFee,
           );
         }
 
@@ -954,7 +953,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         offerName: offer.name || '',
         spenderKey: spenderData.key!,
         address: spenderData.address || '',
-        amount: cloneDeep(amountFrom).toString(),
+        amount: amountFrom.toString(),
       },
     });
   };
@@ -1269,10 +1268,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     if (swapLimits) {
       const maxWalletAmount = Number(
         // @ts-ignore
-        cloneDeep(selectedWalletFrom.balance?.cryptoSpendable)?.replaceAll(
-          ',',
-          '',
-        ),
+        selectedWalletFrom.balance?.cryptoSpendable?.replaceAll(',', ''),
       );
       if (
         (swapLimits.minAmount && amountFrom < swapLimits.minAmount) ||
@@ -1326,10 +1322,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     }
     const maxWalletAmount = Number(
       // @ts-ignore
-      cloneDeep(selectedWalletFrom.balance?.cryptoSpendable)?.replaceAll(
-        ',',
-        '',
-      ),
+      selectedWalletFrom.balance?.cryptoSpendable?.replaceAll(',', ''),
     );
     if (
       (swapLimits.minAmount && amountFrom < swapLimits.minAmount) ||
@@ -1375,14 +1368,14 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       setOffersLoading?.(false);
       return;
     }
-    const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
+    const _selectedOffer = [...filteredOffers].reduce((prev, curr) =>
       parseFloat(curr.amountReceiving || '0') >
       parseFloat(prev.amountReceiving || '0')
         ? curr
         : prev,
     );
 
-    const amountReceiving = Number(cloneDeep(_selectedOffer.amountReceiving));
+    const amountReceiving = Number(_selectedOffer.amountReceiving);
     if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
       setSelectedOffer(_selectedOffer);
       onSelectOffer?.(_selectedOffer);
@@ -1441,10 +1434,11 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
                 return;
               }
               const maxWalletAmount = Number(
-                cloneDeep(
-                  selectedWalletFrom.balance?.cryptoSpendable,
-                  // @ts-ignore
-                )?.replaceAll(',', ''),
+                // @ts-ignore
+                selectedWalletFrom.balance?.cryptoSpendable?.replaceAll(
+                  ',',
+                  '',
+                ),
               );
               if (
                 swapLimits &&

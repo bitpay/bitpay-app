@@ -1,7 +1,7 @@
 // Adapted from the pinned reference's pure codec; no coordinator/recovery code.
 import crypto from 'crypto';
 import bs58 from 'bs58';
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../utils/object';
 import {Network} from '../constants';
 import {decodeDetails, vaultDiagnostic, vaultError} from './vault-diagnostics';
 import {

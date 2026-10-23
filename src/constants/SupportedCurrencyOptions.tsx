@@ -23,7 +23,7 @@ import ArbIcon from '../../assets/img/currencies/arb.svg';
 import PyusdIcon from '../../assets/img/currencies/pyusd.svg';
 import UsdtIcon from '../../assets/img/currencies/usdt.svg';
 import {ImageSourcePropType} from 'react-native';
-import {orderBy} from 'lodash';
+import {orderBy} from '../utils/array';
 
 export interface SupportedCurrencyOption {
   id: string;

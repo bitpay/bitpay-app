@@ -12,7 +12,7 @@ import {
   GetFeeOptions,
 } from '../../../../store/wallet/effects/fee/fee';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import * as _ from 'lodash';
+import {minBy} from '../../../../utils/array';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {
   CustomErrorMessage,
@@ -355,7 +355,7 @@ const TransactionLevel = ({
       );
       _speedUpMinFeePerKb = feeLevelsAllowed.length
         ? // @ts-ignore
-          _.minBy(feeLevelsAllowed, 'feePerKb').feePerKb
+          minBy(feeLevelsAllowed, 'feePerKb').feePerKb
         : customFeePerKB;
       setSpeedUpMinFeePerKb(_speedUpMinFeePerKb);
     } else {
@@ -433,7 +433,7 @@ const TransactionLevel = ({
         network,
       });
 
-      if (_.isEmpty(_feeLevels)) {
+      if (!_feeLevels?.length) {
         dispatch(
           showBottomNotificationModal(
             CustomErrorMessage({errMsg: t('Could not get fee levels')}),

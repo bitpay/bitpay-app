@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import {StyleSheet, View} from 'react-native';
 import {Carousel, CarouselRef} from 'react-native-reanimated-carousel';
-import throttle from 'lodash.throttle';
+import {throttle} from '../../../utils/debounce';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';

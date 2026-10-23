@@ -1,5 +1,5 @@
 import {navigationRef} from '../../../Root';
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../../../utils/object';
 import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
 import {shallowEqual} from 'react-redux';
 import {useTranslation} from 'react-i18next';

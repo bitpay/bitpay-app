@@ -10,7 +10,7 @@ import {mapWithConcurrency} from '../../../../utils/concurrency';
 import {WALLET_REQUEST_CONCURRENCY} from '../../../../constants/wallet';
 import {Credentials} from '@bitpay-labs/bitcore-wallet-client';
 import {BwcProvider} from '../../../../lib/bwc';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {
   buildKeyObj,
   buildWalletObj,
@@ -53,7 +53,6 @@ import {
   IsVMChain,
 } from '../../utils/currency';
 import {createWalletAddress} from '../address/address';
-import cloneDeep from 'lodash.clonedeep';
 import {
   MoralisErc20TokenBalanceByWalletData,
   MoralisSVMTokenBalanceByWalletData,
@@ -69,7 +68,6 @@ import {
 } from '../status/status';
 import {isTestnetWallet} from '../../utils/testnet';
 import {addCustomTokenOption} from '../currencies/currencies';
-import {uniq} from 'lodash';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import {Analytics} from '../../../analytics/analytics.effects';
@@ -277,7 +275,7 @@ export const addWallet =
             logManager.debug(
               `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
             );
-            const tokenChain = cloneDeep(currency.chain).toLowerCase();
+            const tokenChain = currency.chain.toLowerCase();
             const tokenAdressWithChain = addTokenChainSuffix(
               currency.tokenAddress,
               tokenChain,
@@ -295,7 +293,7 @@ export const addWallet =
               );
               if (enableCustomTokens) {
                 const opts = {
-                  tokenAddress: cloneDeep(currency.tokenAddress),
+                  tokenAddress: currency.tokenAddress,
                   chain: tokenChain,
                 };
 
@@ -316,16 +314,16 @@ export const addWallet =
                 const customToken: Token = {
                   symbol: tokenContractInfo?.symbol
                     ? tokenContractInfo.symbol.toLowerCase()
-                    : cloneDeep(currency.currencyAbbreviation).toLowerCase(),
+                    : currency.currencyAbbreviation.toLowerCase(),
                   name:
                     tokenContractInfo?.name ??
-                    cloneDeep(currency.currencyAbbreviation).toUpperCase(),
+                    currency.currencyAbbreviation.toUpperCase(),
                   decimals: tokenContractInfo?.decimals
                     ? Number(tokenContractInfo.decimals)
-                    : cloneDeep(Number(currency.decimals)),
+                    : Number(currency.decimals),
                   address: IsSVMChain(tokenChain)
-                    ? cloneDeep(currency.tokenAddress)
-                    : cloneDeep(currency.tokenAddress)?.toLowerCase(), // Solana addresses are case sensitive
+                    ? currency.tokenAddress
+                    : currency.tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
                 };
 
                 tokenOptsByAddress[tokenAdressWithChain] = customToken;
@@ -345,8 +343,8 @@ export const addWallet =
           newWallet.receiveAddress = associatedWallet?.receiveAddress;
           newWallet.tokenAddress =
             currency.chain && IsSVMChain(currency.chain)
-              ? cloneDeep(currency.tokenAddress)
-              : cloneDeep(currency.tokenAddress)?.toLowerCase();
+              ? currency.tokenAddress
+              : currency.tokenAddress?.toLowerCase();
         } else {
           newWallet = (await dispatch(
             createWallet({
@@ -1133,7 +1131,7 @@ export const detectAndCreateTokensForEachEvmWallet =
             );
 
             (w.tokens || []).push(existingTokenWallet.id);
-            w.tokens = uniq(w.tokens);
+            w.tokens = Array.from(new Set(w.tokens));
 
             await dispatch(
               successUpdateKey({

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import moment from 'moment';
-import {keyBy} from 'lodash';
 import {ShopActions} from '.';
 import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
@@ -99,7 +98,9 @@ export const startSyncGiftCards =
       if (!unsyncedGiftCards.length) {
         return;
       }
-      const giftCardMap = keyBy(savedGiftCards, giftCard => giftCard.invoiceId);
+      const giftCardMap = Object.fromEntries(
+        savedGiftCards.map(giftCard => [giftCard.invoiceId, giftCard]),
+      );
       const giftCards = unsyncedGiftCards.reduce(
         (newSavedGiftCards, unsyncedGiftCard) =>
           giftCardMap[unsyncedGiftCard.invoiceId]

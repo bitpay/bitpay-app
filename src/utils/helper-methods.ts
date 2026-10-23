@@ -11,7 +11,6 @@ import {
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {BASE_BITCORE_URL, PROTOCOL_NAME} from '../constants/config';
-import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
@@ -707,11 +706,13 @@ export const transformAmount = (
     nStr = nStr.replace('.', decimal);
     var x = nStr.split(decimal);
     var x0 = x[0];
-    var x1 = x[1];
+    var x1 = x[1] || '';
 
-    x1 = _.dropRightWhile(x1, (n, i) => {
-      return n == '0' && i >= minDecimals;
-    }).join('');
+    let end = x1.length;
+    while (end > 0 && x1[end - 1] == '0' && end - 1 >= minDecimals) {
+      end--;
+    }
+    x1 = x1.slice(0, end);
     var x2 = x.length > 1 ? decimal + x1 : '';
 
     x0 = x0.replace(/\B(?=(\d{3})+(?!\d))/g, thousands);

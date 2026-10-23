@@ -7,7 +7,6 @@ import {
   ExtractBitPayUriAddress,
   GetPayProUrl,
 } from '../wallet/utils/decode-uri';
-import isEqual from 'lodash.isequal';
 import {
   IsValidBitcoinAddress,
   IsValidBitcoinCashAddress,
@@ -2751,7 +2750,7 @@ const findWallet = (
       hash.update(w.credentials.walletId);
       walletIdHash = hash.digest('hex');
     }
-    return isEqual(walletIdHashed, walletIdHash);
+    return walletIdHashed === walletIdHash;
   });
 
   return wallet;

@@ -1,5 +1,5 @@
 import Aes from 'crypto-js/aes.js';
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../utils/object';
 import {decodeSnapshot, encodeSnapshot} from './vault-codec';
 import {
   transferVault,

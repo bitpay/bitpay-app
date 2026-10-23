@@ -1,4 +1,4 @@
-import merge from 'lodash.merge';
+import {merge} from '../../utils/object';
 import {createTransform} from 'redux-persist';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {BwcProvider} from '../../lib/bwc';

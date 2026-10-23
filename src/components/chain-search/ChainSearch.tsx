@@ -5,17 +5,17 @@ import {
   SearchRoundContainer,
   SearchRoundInput,
 } from '../../components/styled/Containers';
-import _ from 'lodash';
+import {groupBy} from '../../utils/array';
 import {Action, LightBlue, Slate, White} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../utils/debounce';
 import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
 import {WC_SUPPORTED_CHAINS} from '../../constants/WalletConnectV2';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../utils/object';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from '../../contexts';
 import {ignoreGlobalListContextList} from '../../components/modal/chain-selector/ChainSelector';
@@ -305,11 +305,11 @@ const SearchComponent = <T extends SearchableItem>({
                 wallet => wallet.chain === selectedChainFilterOption,
               );
               data.total = data.availableWallets.length;
-              data.availableWalletsByKey = _.groupBy(
+              data.availableWalletsByKey = groupBy(
                 data.availableWallets,
                 'keyId',
               );
-              data.availableWalletsByChain = _.groupBy(
+              data.availableWalletsByChain = groupBy(
                 data.availableWallets,
                 'chain',
               );

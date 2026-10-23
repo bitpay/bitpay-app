@@ -21,7 +21,7 @@ import {
 import {GetProtocolPrefix} from '../../utils/currency';
 import {AppActions} from '../../../app';
 import {buildWalletObj, mapAbbreviationAndName} from '../../utils/wallet';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 

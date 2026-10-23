@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef} from 'react';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../../utils/debounce';
 import type {Network} from '../../../../constants';
 import type {Key} from '../../../../store/wallet/wallet.models';
 import type {Rates} from '../../../../store/rate/rate.models';

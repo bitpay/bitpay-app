@@ -44,7 +44,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {groupBy, unionBy, isEmpty} from 'lodash';
+import {groupBy, uniqBy} from '../../../utils/array';
 import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {
   Action,
@@ -107,7 +107,6 @@ import {
   ignoreGlobalListContextList,
   NetworkName,
 } from '../../../components/modal/chain-selector/ChainSelector';
-import uniqBy from 'lodash.uniqby';
 import {CreateOptions} from '../../../store/wallet/effects';
 import {
   SupportedChainOption,
@@ -130,7 +129,7 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
 import {Keys} from '../../../store/wallet/wallet.reducer';
 import {SolanaPayOpts} from './send/confirm/Confirm';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../utils/object';
 import Icons from '../components/WalletIcons';
 import {AppActions} from '../../../store/app';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
@@ -609,7 +608,7 @@ const buildSelectableCurrenciesList = (
         availableWalletsByKey: {},
       };
 
-      coinEntry.availableWallets = unionBy(
+      coinEntry.availableWallets = uniqBy(
         [...coinEntry.availableWallets, ...filteredWallets],
         c => c.id,
       );
@@ -2238,7 +2237,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }, [navigation, wallets, useAsModal]);
 
   useEffect(() => {
-    if (isEmpty(selectedEVMAccount)) {
+    if (Object.keys(selectedEVMAccount).length === 0) {
       return;
     }
 

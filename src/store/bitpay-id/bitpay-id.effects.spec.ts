@@ -21,6 +21,7 @@ import {
   startBitPayIdStoreInit,
   startBitPayIdAnalyticsInit,
   checkLoginWithPasskey,
+  startCreateAccount,
   startLogin,
   startSubmitForgotPasswordEmail,
   startTwoFactorAuth,
@@ -575,6 +576,55 @@ describe('startLogin (Cloudflare challenge handling)', () => {
     // friendly error is the correct outcome.
     expect(MockCloudflarePresent).not.toHaveBeenCalled();
     expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+  });
+});
+
+describe('API error messages that are not strings', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  const axiosErrWithObjectMessage: any = {
+    isAxiosError: true,
+    response: {status: 400, data: {message: {code: 'invalid'}}},
+    message: 'Request failed with status code 400',
+  };
+
+  it('startCreateAccount still fails with a string error', async () => {
+    (MockAuthApi.register as jest.Mock).mockRejectedValueOnce(
+      axiosErrWithObjectMessage,
+    );
+
+    const store = baseStore();
+    await store.dispatch(
+      startCreateAccount({
+        givenName: 'Alice',
+        familyName: 'Doe',
+        email: 'alice@example.com',
+        password: 'hunter2',
+        agreedToTOSandPP: true,
+        agreedToMarketingCommunications: false,
+      }),
+    );
+
+    expect(store.getState().BITPAY_ID.createAccountStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.createAccountError).toBe(
+      '[object Object]',
+    );
+  });
+
+  it('startLogin still fails with a string error', async () => {
+    MockGetPasskeyStatus.mockResolvedValueOnce({passkey: false});
+    (MockAuthApi.login as jest.Mock).mockRejectedValueOnce(
+      axiosErrWithObjectMessage,
+    );
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.loginError).toBe('[object Object]');
   });
 });
 

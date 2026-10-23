@@ -1,4 +1,3 @@
-import {upperFirst} from 'lodash';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -53,7 +52,8 @@ import {
   safeErrorMessage,
 } from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
-import {sleep} from '../../utils/helper-methods';
+import {sleep, titleCasing} from '../../utils/helper-methods';
+import {toStringOrEmpty} from '../../utils/text';
 
 interface StartLoginParams {
   email?: string;
@@ -241,7 +241,11 @@ export const startCreateAccount =
         errMsg = JSON.stringify(err);
       }
 
-      dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
+      dispatch(
+        BitPayIdActions.failedCreateAccount(
+          titleCasing(toStringOrEmpty(errMsg)),
+        ),
+      );
       logManager.error(
         '[startCreateAccount] Failed to create account.',
         errMsg,
@@ -433,11 +437,13 @@ export const startLogin =
           'We could not verify your connection. Please try again in a moment.',
         );
       } else if (isAxiosError<LoginErrorResponse>(err)) {
-        errMsg = upperFirst(
-          err.response?.data?.message ||
-            safeErrorMessage(err.response?.data, '') ||
-            err.message ||
-            t('An unexpected error occurred.'),
+        errMsg = titleCasing(
+          toStringOrEmpty(
+            err.response?.data?.message ||
+              safeErrorMessage(err.response?.data, '') ||
+              err.message ||
+              t('An unexpected error occurred.'),
+          ),
         );
       } else {
         // Never surface a raw response body — it may be an HTML error page.
@@ -484,7 +490,7 @@ export const startTwoFactorAuth =
       let errMsg;
 
       if (isAxiosError<string>(err)) {
-        errMsg = upperFirst(
+        errMsg = titleCasing(
           safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
@@ -523,13 +529,13 @@ export const startTwoFactorPairing =
       let errMsg;
 
       if (isAxiosError<any>(err)) {
-        errMsg = upperFirst(
+        errMsg = titleCasing(
           safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
       } else if (err instanceof Error) {
-        errMsg = upperFirst(err.message);
+        errMsg = titleCasing(err.message);
       } else {
         errMsg = err.message || JSON.stringify(err);
       }

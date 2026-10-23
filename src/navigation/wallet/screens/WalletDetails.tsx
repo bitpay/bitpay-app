@@ -7,7 +7,6 @@ import {
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
-import _ from 'lodash';
 import React, {
   ReactElement,
   useCallback,
@@ -173,7 +172,7 @@ import {
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
@@ -1094,9 +1093,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         walletId,
       );
       formattedPendingTxps.forEach((txp: any) => {
-        const action: any = _.find(txp.actions, {
-          copayerId: fullWalletObj.credentials.copayerId,
-        });
+        const action: any = txp.actions?.find(
+          (txpAction: any) =>
+            txpAction.copayerId === fullWalletObj.credentials.copayerId,
+        );
 
         if (
           ((!action || action.type === 'failed') && txp.status === 'pending') ||

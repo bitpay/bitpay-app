@@ -122,7 +122,7 @@ import AccountListRow, {
 } from '../../../components/list/AccountListRow';
 import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
-import _ from 'lodash';
+import {merge} from '../../../utils/object';
 import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
@@ -1304,7 +1304,7 @@ const KeyOverview = () => {
                 syncWallet.credentials.token?.address,
               ),
             );
-            return _.merge(
+            return merge(
               syncWallet,
               buildWalletObj(
                 {
@@ -1401,7 +1401,7 @@ const KeyOverview = () => {
       password,
     );
 
-    if (_.isEmpty(wallets)) {
+    if (wallets.length === 0) {
       if (!key.isPrivKeyEncrypted) {
         await startSyncWallets(key.properties!.mnemonic);
       } else {

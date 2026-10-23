@@ -1,7 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import _ from 'lodash';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../../utils/array';
 import {
   SafeAreaView,
   ScrollView as RNScrollView,
@@ -218,8 +217,11 @@ const getReceivingAddressKey = (coin: string, chain: string) => {
 };
 
 const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
-  return _.keyBy(receivingAddresses, ({coin, chain}) =>
-    getReceivingAddressKey(coin, chain),
+  return Object.fromEntries(
+    receivingAddresses.map(receivingAddress => [
+      getReceivingAddressKey(receivingAddress.coin, receivingAddress.chain),
+      receivingAddress,
+    ]),
   );
 };
 
@@ -277,7 +279,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   const [walletSelectorCurrency, setWalletSelectorCurrency] = useState('BTC');
   const [walletSelectorChain, setWalletSelectorChain] = useState<string>('BTC');
   const [activeAddresses, setActiveAddresses] = useState<
-    _.Dictionary<ReceivingAddress>
+    Record<string, ReceivingAddress>
   >(createAddressMap(receivingAddresses));
 
   const initialAddressMap = useMemo(
@@ -309,7 +311,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
 
     return false;
   }, [initialAddressMap, activeAddresses]);
-  const uniqueActiveWallets = _.uniqBy(
+  const uniqueActiveWallets = uniqBy(
     Object.values(keys)
       .flatMap(key => key.wallets)
       .filter(

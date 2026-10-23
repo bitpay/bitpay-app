@@ -3,7 +3,6 @@ import {BanxaPaymentMethod} from '../../../../store/buy-crypto/buy-crypto.models
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
-import cloneDeep from 'lodash.clonedeep';
 
 export const banxaEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -276,7 +275,7 @@ export const getBanxaChainFormat = (chain: string): string | undefined => {
     return undefined;
   }
 
-  let formattedChain: string | undefined = cloneDeep(chain)?.toUpperCase();
+  let formattedChain: string | undefined = chain?.toUpperCase();
 
   switch (formattedChain) {
     case 'OP':

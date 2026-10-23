@@ -65,7 +65,7 @@ import {
   normalizeMnemonic,
   serverAssistedImport,
 } from '../../../store/wallet/effects';
-import merge from 'lodash.merge';
+import {merge} from '../../../utils/object';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';

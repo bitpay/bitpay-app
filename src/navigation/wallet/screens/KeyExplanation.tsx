@@ -18,7 +18,7 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {useTranslation} from 'react-i18next';
 import {useSharedValue} from 'react-native-reanimated';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
-import throttle from 'lodash.throttle';
+import {throttle} from '../../../utils/debounce';
 
 type KeyExplanationScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
