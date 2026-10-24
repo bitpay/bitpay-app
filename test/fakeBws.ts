@@ -93,8 +93,8 @@ const routes: Array<
   [
     'post',
     /^\/v1\/tss\/keygen\/([^/]+)\/secret$/,
-    ([, id], {secret}) => {
-      getSession('keygen', id).secret = secret;
+    ([, id], {secret, secrets}) => {
+      Object.assign(getSession('keygen', id), {secret, secrets});
       return {};
     },
   ],
@@ -102,11 +102,11 @@ const routes: Array<
     'get',
     /^\/v1\/tss\/keygen\/([^/]+)\/secret$/,
     ([, id]) => {
-      const {secret} = getSession('keygen', id);
+      const {secret, secrets = {}} = getSession('keygen', id);
       if (!secret) {
         throw bwsError('TSS_BWS_JOIN_SECRET_NOT_FOUND');
       }
-      return {secret};
+      return {secret, secrets};
     },
   ],
   [
@@ -216,6 +216,12 @@ const routes: Array<
     /^\/v4\/addresses\/$/,
     (_match, _body, copayerId) => {
       const wallet = walletOf(copayerId);
+      if (
+        Constants.EVM_CHAINS.includes(wallet.chain) &&
+        wallet.addresses.length
+      ) {
+        return wallet.addresses[0];
+      }
       const path = `m/0/${wallet.addresses.length}`;
       const address = {
         ...deriveWalletAddress(wallet, path),

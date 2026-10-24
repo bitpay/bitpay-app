@@ -138,6 +138,43 @@ describe('TSS wallet flow against the real bitcore-wallet-client', () => {
     );
   });
 
+  it('saves the same BWS wallet for every EVM chain in both keys', () => {
+    expect(
+      creatorKey.wallets.map((w: any) => [
+        w.credentials.chain,
+        w.credentials.coin,
+      ]),
+    ).toEqual([
+      ['eth', 'eth'],
+      ['matic', 'matic'],
+      ['arb', 'eth'],
+      ['base', 'eth'],
+      ['op', 'eth'],
+    ]);
+    expect(joinerKey.wallets.map((w: any) => w.credentials.walletId)).toEqual(
+      creatorKey.wallets.map((w: any) => w.credentials.walletId),
+    );
+    for (const wallet of [...creatorKey.wallets, ...joinerKey.wallets]) {
+      expect(wallet.isComplete()).toBe(true);
+      expect(wallet.credentials.walletPrivKey).toBeTruthy();
+    }
+  });
+
+  it('gives every chain wallet the address of the shared key', async () => {
+    for (const [store, key] of [
+      [creatorStore, creatorKey],
+      [joinerStore, joinerKey],
+    ]) {
+      const addresses = await Promise.all(
+        key.wallets.map((wallet: any) =>
+          store.dispatch(createWalletAddress({wallet, newAddress: false})),
+        ),
+      );
+
+      expect(new Set(addresses)).toEqual(new Set([addresses[0]]));
+    }
+  });
+
   it('lets each party read a receive address from its saved wallet', async () => {
     for (const [store, key] of [
       [creatorStore, creatorKey],
