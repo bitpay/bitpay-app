@@ -14,14 +14,18 @@ const styles = StyleSheet.create({
   percentageContainer: {
     fontSize: 13,
     lineHeight: 18,
+    flexShrink: 1,
   },
   percentageRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   rangeLabel: {
     fontSize: 13,
     lineHeight: 18,
+    flexShrink: 1,
     fontWeight: '400',
     marginLeft: 5,
   },

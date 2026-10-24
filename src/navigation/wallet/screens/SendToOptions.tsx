@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 55,
+    minHeight: 55,
   },
   recipientContainer: {
     flexDirection: 'row',

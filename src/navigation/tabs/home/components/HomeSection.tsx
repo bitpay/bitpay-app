@@ -40,6 +40,8 @@ const styles = StyleSheet.create({
   header: {
     display: 'flex',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 0,
     marginRight: parseInt(ScreenGutter, 10),
     marginBottom: 0,
@@ -49,6 +51,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     flexShrink: 1,
   },

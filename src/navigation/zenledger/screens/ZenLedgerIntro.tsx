@@ -7,7 +7,13 @@ import {Black, LightBlack, SlateDark, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
 import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {Platform, View, SafeAreaView, StyleSheet} from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  View,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
@@ -35,6 +41,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: screenGutter,
     flex: 1,
+  },
+  zenLedgerIntroContent: {
+    paddingBottom: 220,
   },
   zenLedgerBottomContainer: {
     position: 'absolute',
@@ -174,7 +183,9 @@ const ZenLedgerIntro: React.FC = () => {
   return (
     <SafeAreaView style={styles.zenledgerContainer}>
       <ZenLedgerBackground>
-        <View style={styles.zenLedgerIntroContainer}>
+        <ScrollView
+          style={styles.zenLedgerIntroContainer}
+          contentContainerStyle={styles.zenLedgerIntroContent}>
           <View style={styles.zenLedgerLogoContainer}>
             <ZenLedgerLogo />
           </View>
@@ -195,7 +206,7 @@ const ZenLedgerIntro: React.FC = () => {
               />
             </View>
           </View>
-        </View>
+        </ScrollView>
         <ZenLedgerBottomContainer>
           <TextAlign align={'center'}>
             <H4>{t('Already imported?')}</H4>

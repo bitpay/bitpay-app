@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   feeLevelStep: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
+    minHeight: 40,
   },
   feeLevelStepCircleBase: {
     borderColor: White,

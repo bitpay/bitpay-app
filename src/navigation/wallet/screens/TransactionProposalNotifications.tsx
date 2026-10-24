@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
   transactionSectionHeaderContainer: {
     padding: gutter,
-    height: 55,
+    minHeight: 55,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',

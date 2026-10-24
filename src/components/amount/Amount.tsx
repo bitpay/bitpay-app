@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   viewContainer: {
-    height: '100%',
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -116,6 +116,7 @@ const AmountText: React.FC<
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         styles.amountText,
         {fontSize: bigAmount ? 35 : 50, color: theme.colors.text},
@@ -154,6 +155,7 @@ const CurrencyText: React.FC<
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         styles.currencyText,
         {fontSize: bigAmount ? 12 : 20, color: theme.colors.text},

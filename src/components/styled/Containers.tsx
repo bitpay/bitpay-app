@@ -4,6 +4,7 @@ import {
   Text,
   Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   View,
   TextInput,
@@ -47,12 +48,14 @@ const phase0Styles = StyleSheet.create({
     display: 'flex',
   },
   titleContainer: {
-    width: WIDTH * 0.75,
+    minWidth: WIDTH * 0.75,
+    maxWidth: '100%',
   },
   textContainer: {
     marginTop: 10,
     padding: 10,
-    width: WIDTH * 0.9,
+    minWidth: WIDTH * 0.9,
+    maxWidth: '100%',
   },
   ctaContainer: {
     paddingVertical: 10,
@@ -120,10 +123,10 @@ export const ActionContainer = React.forwardRef<
 ActionContainer.displayName = 'ActionContainer';
 
 const styles = StyleSheet.create({
-  headerRightContainer: {height: 40},
+  headerRightContainer: {minHeight: 40, justifyContent: 'center'},
   headerTitleContainer: {marginTop: 10, padding: 10},
   screenContainer: {flex: 1},
-  subTextContainer: {width: WIDTH * 0.8, marginTop: 10},
+  subTextContainer: {minWidth: WIDTH * 0.8, maxWidth: '100%', marginTop: 10},
   ctaContainerAbsoluteBase: {
     padding: 15,
     position: 'absolute',
@@ -146,6 +149,10 @@ const styles = StyleSheet.create({
     marginVertical: 0,
     marginHorizontal: 6,
   },
+  rowContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
   rowContainerWithoutBorders: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -166,7 +173,6 @@ const styles = StyleSheet.create({
     width: 50,
     display: 'flex',
     justifyContent: 'center',
-    alignSelf: 'center',
     borderRadius: 8,
     marginRight: 3,
   },
@@ -182,10 +188,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'nowrap',
     minHeight: 58,
-    paddingTop: 10,
-    paddingBottom: 10,
-    paddingLeft: 15,
-    paddingRight: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
   },
   settingTitle: {
     flexGrow: 1,
@@ -197,12 +201,13 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginRight: 5,
   },
-  settingDescription: {fontSize: 14},
+  settingDescription: {fontSize: 14, flexShrink: 1},
   settingView: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 58,
+    minHeight: 58,
+    paddingVertical: 8,
   },
   info: {borderRadius: 8, padding: 15, marginBottom: 15},
   infoTriangle: {
@@ -223,7 +228,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   advancedOptionsButton: {
-    height: 60,
+    minHeight: 60,
     padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -234,7 +239,7 @@ const styles = StyleSheet.create({
   advancedOptions: {borderStyle: 'solid', borderTopWidth: 1},
   importContainer: {paddingVertical: 10, paddingHorizontal: 0},
   importTextInput: {
-    height: 80,
+    minHeight: 80,
     borderWidth: 0.75,
     borderColor: Slate,
     borderTopRightRadius: 4,
@@ -260,6 +265,7 @@ const styles = StyleSheet.create({
   },
   optionContainer: {flex: 1},
   optionListContainer: {flex: 1, paddingHorizontal: 12, marginTop: 30},
+  optionListContent: {paddingBottom: 30},
   optionList: {
     height: 'auto',
     borderRadius: 12,
@@ -283,7 +289,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     borderRightWidth: 1,
-    height: 32,
+    minHeight: 32,
     backgroundColor: 'transparent',
   },
   searchRoundContainer: {
@@ -293,7 +299,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 100,
     alignItems: 'center',
-    height: 50,
+    minHeight: 50,
   },
   searchRoundInput: {
     flex: 1,
@@ -310,15 +316,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#9ba3ae',
     borderRadius: 4,
+    paddingVertical: 8,
     paddingHorizontal: 10,
-    height: 55,
+    minHeight: 55,
     alignItems: 'center',
     flexDirection: 'row',
   },
   copyImgContainer: {
     borderRightWidth: 1,
     paddingRight: 10,
-    height: 25,
+    minHeight: 25,
     justifyContent: 'center',
   },
   noResultsContainer: {
@@ -334,8 +341,9 @@ const styles = StyleSheet.create({
   proposalBadgeContainer: {
     backgroundColor: Action,
     borderRadius: 10,
-    height: 30,
-    width: 30,
+    minHeight: 30,
+    minWidth: 30,
+    paddingHorizontal: 6,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -348,7 +356,7 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 2.4,
     gap: 4,
-    height: 22,
+    minHeight: 22,
   },
   badgeContainerTouchable: {
     flexDirection: 'row',
@@ -358,7 +366,7 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 2.4,
     gap: 4,
-    height: 20,
+    minHeight: 20,
   },
   emptyListContainer: {
     justifyContent: 'space-between',
@@ -601,16 +609,19 @@ interface RowContainerProps {
   isLast?: boolean;
   noBorder?: boolean;
   isDisabled?: boolean;
+  /** Stack the row's columns vertically — see useIsLargeFont. */
+  stacked?: boolean;
 }
 
 export const RowContainer: React.FC<
   RowContainerProps & React.ComponentProps<typeof TouchableOpacity>
-> = ({isLast, noBorder, isDisabled, style, ...rest}) => {
+> = ({isLast, noBorder, isDisabled, stacked, style, ...rest}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
       style={[
         styles.rowContainer,
+        stacked && styles.rowContainerStacked,
         {
           borderBottomColor: theme.dark ? LightBlack : LightBlue,
           borderBottomWidth: isLast || noBorder ? 0 : 1,
@@ -983,10 +994,15 @@ export const OptionContainer = React.forwardRef<
 OptionContainer.displayName = 'OptionContainer';
 
 export const OptionListContainer = React.forwardRef<
-  View,
-  React.ComponentProps<typeof View>
+  ScrollView,
+  React.ComponentProps<typeof ScrollView>
 >(({style, ...rest}, ref) => (
-  <View ref={ref} style={[styles.optionListContainer, style]} {...rest} />
+  <ScrollView
+    ref={ref}
+    style={[styles.optionListContainer, style]}
+    contentContainerStyle={styles.optionListContent}
+    {...rest}
+  />
 ));
 OptionListContainer.displayName = 'OptionListContainer';
 

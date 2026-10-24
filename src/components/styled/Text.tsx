@@ -431,6 +431,7 @@ export const HeaderTitle = React.forwardRef<Text, HeadingProps & TextProps>(
       <Text
         ref={ref}
         numberOfLines={numberOfLines}
+        maxFontSizeMultiplier={1.4}
         style={[
           styles.base,
           styles.h5,
@@ -533,6 +534,7 @@ export const Balance = React.forwardRef<Text, BalanceProps & TextProps>(
     return (
       <Text
         ref={ref}
+        maxFontSizeMultiplier={1.5}
         style={[
           styles.base,
           styles.balance,
