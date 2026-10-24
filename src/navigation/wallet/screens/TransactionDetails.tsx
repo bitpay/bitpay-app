@@ -68,7 +68,7 @@ import {
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
+import {FromBaseUnits} from '../../../store/wallet/effects/amount/amount';
 import {
   Recipient,
   TransactionDetailsBuilt,
@@ -472,15 +472,12 @@ const TransactionDetailsContent = ({
         txp.outputs.forEach((output: any) => {
           recipientList!.push({
             address: output.toAddress,
-            amount: Number(
-              dispatch(
-                FormatAmount(
-                  currencyAbbreviation,
-                  chain,
-                  tokenAddress,
-                  output.amount,
-                  true,
-                ),
+            amount: dispatch(
+              FromBaseUnits(
+                output.amount,
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
               ),
             ),
           });
@@ -490,15 +487,12 @@ const TransactionDetailsContent = ({
         wallet,
         walletId,
         context: 'fromReplaceByFee' as TransactionOptionsContext,
-        amount: Number(
-          dispatch(
-            FormatAmount(
-              currencyAbbreviation,
-              chain,
-              tokenAddress,
-              transaction.amount,
-              true,
-            ),
+        amount: dispatch(
+          FromBaseUnits(
+            transaction.amount,
+            currencyAbbreviation,
+            chain,
+            tokenAddress,
           ),
         ),
         toAddress,
