@@ -1,8 +1,18 @@
 import React from 'react';
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  useWindowDimensions,
+  Platform,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
+import {
+  NavigatorScreenParams,
+  useTheme as useNavigationTheme,
+} from '@react-navigation/native';
+import {useTheme} from '../../contexts';
 
 import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
@@ -26,6 +36,13 @@ import BillStack from './shop/bill/BillStack';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {Analytics} from '../../store/analytics/analytics.effects';
 import {ThemeRelay} from '../../contexts';
+import FloatingTabBarBackground from './FloatingTabBarBackground';
+import {
+  FLOATING_TAB_BAR_HEIGHT,
+  FLOATING_TAB_BAR_BORDER,
+  getFloatingTabBarBottomOffset,
+  getFloatingTabBarWidth,
+} from './floatingTabBar';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -40,6 +57,9 @@ const Icons: Record<string, React.FC<SvgProps>> = {
 };
 
 const styles = StyleSheet.create({
+  tabButtonCentered: {
+    justifyContent: 'center',
+  },
   untappedIconDot: {
     height: 5,
     width: 5,
@@ -52,15 +72,23 @@ const styles = StyleSheet.create({
   },
 });
 
+const IS_IOS = Platform.OS === 'ios';
+
 const TransactionButton = () => null;
 
-const DefaultTabBarButton = (props: any) => (
-  <TouchableOpacity {...props} activeOpacity={1} />
+const DefaultTabBarButton = ({style, ...props}: any) => (
+  <TouchableOpacity
+    {...props}
+    style={[style, IS_IOS && styles.tabButtonCentered]}
+    activeOpacity={1}
+  />
 );
 
 const TransactTabBarIcon = () => <TransactModal />;
 
-const TransactTabBarButton = (props: any) => <View {...props} />;
+const TransactTabBarButton = ({style, ...props}: any) => (
+  <View {...props} style={[style, IS_IOS && styles.tabButtonCentered]} />
+);
 
 const tabScreenLayout = ({children}: {children: React.ReactElement}) => (
   <ThemeRelay>{children}</ThemeRelay>
@@ -92,8 +120,11 @@ export const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const {dark} = useTheme();
+  const navTheme = useNavigationTheme();
   const insets = useSafeAreaInsets();
+  const {width: windowWidth} = useWindowDimensions();
+  const barSideInset = (windowWidth - getFloatingTabBarWidth(windowWidth)) / 2;
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
 
@@ -104,12 +135,32 @@ const TabsStack = () => {
       screenOptions={({route}) => ({
         headerShown: false,
         freezeOnBlur: true,
-        tabBarStyle: {
-          backgroundColor: theme.colors.background,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 8,
-        },
+        tabBarBackground: IS_IOS
+          ? () => <FloatingTabBarBackground />
+          : undefined,
+        tabBarStyle: IS_IOS
+          ? {
+              position: 'absolute',
+              start: barSideInset,
+              end: barSideInset,
+              bottom: getFloatingTabBarBottomOffset(insets.bottom),
+              height: FLOATING_TAB_BAR_HEIGHT,
+              paddingBottom: 0,
+              paddingTop: 0,
+              borderRadius: FLOATING_TAB_BAR_HEIGHT / 2,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: dark
+                ? FLOATING_TAB_BAR_BORDER.dark
+                : FLOATING_TAB_BAR_BORDER.light,
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }
+          : {
+              backgroundColor: navTheme.colors.background,
+              height: 60 + insets.bottom,
+              paddingBottom: insets.bottom,
+              paddingTop: 8,
+            },
         tabBarButton: DefaultTabBarButton,
         tabBarShowLabel: false,
         tabBarIcon: ({focused}) => {

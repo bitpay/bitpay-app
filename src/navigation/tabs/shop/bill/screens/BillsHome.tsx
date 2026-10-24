@@ -11,6 +11,7 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {sleep} from '../../../../../utils/helper-methods';
 import {withErrorFallback} from '../../../../../navigation/tabs/TabScreenErrorFallback';
 import TabContainer from '../../../../../navigation/tabs/TabContainer';
+import useFloatingTabBarInset from '../../../useFloatingTabBarInset';
 import {HeaderContainer} from '../../../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../../../components/styled/Text';
 
@@ -19,6 +20,7 @@ const BillsHome = ({}: NativeStackScreenProps<
   BillScreens.BILLS_HOME
 >) => {
   const theme = useTheme();
+  const tabBarInset = useFloatingTabBarInset();
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const appNetwork = useAppSelector(({APP}) => APP.network);
@@ -43,6 +45,8 @@ const BillsHome = ({}: NativeStackScreenProps<
         </HeaderTitle>
       </HeaderContainer>
       <ScrollView
+        contentContainerStyle={{paddingBottom: tabBarInset}}
+        scrollIndicatorInsets={{bottom: tabBarInset}}
         refreshControl={
           user ? (
             <RefreshControl
