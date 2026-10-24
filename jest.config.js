@@ -1,3 +1,6 @@
+// babel.config.js skips the dotenv plugin only when NODE_ENV is 'test'
+process.env.NODE_ENV = 'test';
+
 module.exports = {
   preset: '@react-native/jest-preset',
   resolver: '<rootDir>/test/reanimatedResolver.js',
