@@ -2,7 +2,7 @@ import 'intl';
 import 'intl/locale-data/jsonp/en';
 import {t} from 'i18next';
 import moment from 'moment';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../utils/array';
 import {countries} from 'countries-list';
 
 import {

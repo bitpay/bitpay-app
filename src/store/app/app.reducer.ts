@@ -20,7 +20,7 @@ import {
   InAppNotificationContextType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../utils/array';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';
@@ -52,7 +52,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showPinModal',
   'selectedLocalChainFilterOption',
   'tokensDataLoaded',
-  'isImportLedgerModalVisible',
   'showArchaxBanner',
   'hasViewedTSSOnboarding',
   'showKycGetVerifiedModal',
@@ -99,6 +98,7 @@ export interface AppState {
    */
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
+  vaultMigrationStatusSignature?: string;
   appInstalled: boolean;
   userFeedback: FeedbackType;
   onboardingCompleted: boolean;
@@ -171,7 +171,6 @@ export interface AppState {
   hasViewedZenLedgerWarning: boolean;
   hasViewedBillsTab: boolean;
   hasViewedTSSOnboarding: boolean;
-  isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
@@ -275,7 +274,6 @@ const initialState: AppState = {
   hasViewedZenLedgerWarning: false,
   hasViewedBillsTab: false,
   hasViewedTSSOnboarding: false,
-  isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
@@ -289,12 +287,6 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
-    case AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED:
-      return {
-        ...state,
-        isImportLedgerModalVisible: action.payload,
-      };
-
     case AppActionTypes.NETWORK_CHANGED:
       return {
         ...state,
@@ -333,6 +325,9 @@ export const appReducer = (
           firstOpenEventComplete: true,
         },
       };
+
+    case AppActionTypes.SET_VAULT_MIGRATION_STATUS_REPORTED:
+      return {...state, vaultMigrationStatusSignature: action.payload};
 
     case AppActionTypes.SET_APP_FIRST_OPEN_DATE:
       return {

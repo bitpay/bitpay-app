@@ -71,6 +71,7 @@ const AccountHeader = ({
       <H7
         ellipsizeMode="tail"
         numberOfLines={1}
+        maxFontSizeMultiplier={1.4}
         style={{flexShrink: 1, fontSize: 13, letterSpacing: 0}}>
         {accountName ||
           `${IsSVMChain(wallet.chain) ? 'Solana Account' : 'EVM Account'}${

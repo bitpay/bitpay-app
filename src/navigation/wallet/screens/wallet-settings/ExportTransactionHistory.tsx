@@ -10,7 +10,6 @@ import {
 } from '../../../../store/wallet/effects/transactions/transactions';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {WalletGroupParamList} from '../../WalletGroup';
-import _ from 'lodash';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import RNFS from 'react-native-fs';
@@ -109,7 +108,7 @@ const ExportTransactionHistory = () => {
       }
       const transactions = acc;
 
-      if (_.isEmpty(transactions)) {
+      if (!transactions?.length) {
         logManager.warn(
           '[buildCVSFile]: Failed to generate CSV: no transactions',
         );

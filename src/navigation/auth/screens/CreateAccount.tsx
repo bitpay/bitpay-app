@@ -15,11 +15,7 @@ import yup from '../../../lib/yup';
 import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useSensitiveRefClear,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   isCommonWeakPassword,
   isLowEntropy,
@@ -83,7 +79,6 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const dispatch = useAppDispatch();
   const [isRecaptchaVisible, setRecaptchaVisible] = useState(false);
   const captchaRef = useRef<CaptchaRef>(null);
-  const {clearSensitive} = useSensitiveRefClear([passwordRef]);
 
   const passwordComplexityRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
@@ -148,6 +143,12 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
       dispatch(BitPayIdActions.updateCreateAccountStatus(null));
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (createAccountStatus) {
+      setValue('password', '');
+    }
+  }, [createAccountStatus, setValue]);
 
   useEffect(() => {
     if (createAccountStatus === 'success') {
@@ -222,7 +223,6 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
           agreedToMarketingCommunications,
         }),
       );
-      clearSensitive();
       dispatch(
         Analytics.track('Clicked Create Account', {
           context: context || 'Unknown',

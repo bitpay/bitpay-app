@@ -5,17 +5,17 @@ import {
   SearchRoundContainer,
   SearchRoundInput,
 } from '../../components/styled/Containers';
-import _ from 'lodash';
+import {groupBy} from '../../utils/array';
 import {Action, LightBlue, Slate, White} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../utils/debounce';
 import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
 import {WC_SUPPORTED_CHAINS} from '../../constants/WalletConnectV2';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../utils/object';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from '../../contexts';
 import {ignoreGlobalListContextList} from '../../components/modal/chain-selector/ChainSelector';
@@ -39,11 +39,13 @@ const styles = StyleSheet.create({
   },
   searchFilterContainer: {
     minWidth: 60,
-    maxWidth: 130,
+    maxWidth: 150,
+    flexShrink: 1,
+    paddingVertical: 4,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    height: 32,
+    minHeight: 32,
     marginTop: 'auto' as any,
     marginRight: 8,
     marginBottom: 'auto' as any,
@@ -77,6 +79,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '400',
     minWidth: 70,
+    flexShrink: 1,
   },
   searchFilterIconContainer: {
     marginRight: 12,
@@ -131,6 +134,7 @@ export const SearchFilterLabel: React.FC<
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.4}
       style={[
         styles.searchFilterLabel,
         {color: theme.dark ? White : Action},
@@ -305,11 +309,11 @@ const SearchComponent = <T extends SearchableItem>({
                 wallet => wallet.chain === selectedChainFilterOption,
               );
               data.total = data.availableWallets.length;
-              data.availableWalletsByKey = _.groupBy(
+              data.availableWalletsByKey = groupBy(
                 data.availableWallets,
                 'keyId',
               );
-              data.availableWalletsByChain = _.groupBy(
+              data.availableWalletsByChain = groupBy(
                 data.availableWallets,
                 'chain',
               );
@@ -537,7 +541,7 @@ const SearchComponent = <T extends SearchableItem>({
             style={
               selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
             }>
-            <SearchFilterLabel numberOfLines={1} ellipsizeMode="tail">
+            <SearchFilterLabel numberOfLines={2} ellipsizeMode="tail">
               {selectedChainFilterOption && currencyInfo
                 ? currencyInfo.name
                 : t('All Networks')}

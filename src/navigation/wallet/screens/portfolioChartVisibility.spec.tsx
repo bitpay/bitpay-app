@@ -278,11 +278,14 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('lodash.debounce', () => (fn: (...args: any[]) => any) => {
-  const debounced = (...args: any[]) => fn(...args);
-  debounced.cancel = jest.fn();
-  return debounced;
-});
+jest.mock('../../../utils/debounce', () => ({
+  ...jest.requireActual('../../../utils/debounce'),
+  debounce: (fn: (...args: any[]) => any) => {
+    const debounced = (...args: any[]) => fn(...args);
+    debounced.cancel = jest.fn();
+    return debounced;
+  },
+}));
 
 jest.mock('../../../utils/hooks', () => ({
   useAppDispatch: () => mockDispatch,
@@ -1468,7 +1471,7 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('preloads the Receive and Send selectors after Home is idle', async () => {
+  it('preloads only the Receive selector after Home is idle', async () => {
     resetState(false, {completedFullPopulate: true});
     mockWallet.isComplete = jest.fn(() => true);
     mockState.APP.appIsLoading = false;
@@ -1508,11 +1511,7 @@ describe('portfolio chart visibility guards', () => {
       context: 'receive',
       _preloadContent: true,
     });
-
-    expect(mockNavigation.preload).toHaveBeenCalledWith('GlobalSelect', {
-      context: 'send',
-      _preloadContent: true,
-    });
+    expect(mockNavigation.preload).toHaveBeenCalledTimes(1);
   });
 
   it('mounts the Home portfolio balance chart with a loader while its initial populate scope is still running', async () => {

@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {Carousel, CarouselRef} from 'react-native-reanimated-carousel';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -18,7 +18,7 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {useTranslation} from 'react-i18next';
 import {useSharedValue} from 'react-native-reanimated';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
-import throttle from 'lodash.throttle';
+import {throttle} from '../../../utils/debounce';
 
 type KeyExplanationScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -103,7 +103,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const themeType = useThemeType();
-  const ref = useRef<ICarouselInstance>(null);
+  const ref = useRef<CarouselRef>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const keyExplanationSlides = [
@@ -144,17 +144,11 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
     <SafeAreaView style={styles.keyExplanationContainer}>
       <SafeAreaView>
         <Carousel
-          loop={false}
-          vertical={false}
-          width={WIDTH}
-          height={Math.round(WIDTH) * 1.5}
-          autoPlay={false}
+          style={{width: WIDTH, height: Math.round(WIDTH) * 1.5}}
           data={keyExplanationSlides}
-          pagingEnabled={true}
-          snapEnabled={true}
           ref={ref}
-          scrollAnimationDuration={1000}
-          onProgressChange={(_, index) => {
+          animation={{type: 'timing', duration: 1000}}
+          onProgressChange={index => {
             if (Math.round(index) !== activeSlideIndex) {
               throttleOnActiveSlideChange(index);
             }

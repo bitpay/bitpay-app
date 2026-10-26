@@ -6,7 +6,7 @@
  *   - startMigrationMMKVStorage : thunk that reads/writes AsyncStorage (mocked)
  *   - startMigration      : thunk — test the "no directory" / "no keys" early-
  *                           exit paths that trigger navigation without needing BWS
- *   - startImportFromHardwareWallet: basic validation paths (no key / bad coin)
+ *   - serverAssistedImport : progress-message queue never delays the result
  *   - getMissingVmAccounts (private) : indirectly via startImportMnemonic flow
  */
 
@@ -17,8 +17,10 @@ import {
   normalizeMnemonic,
   startMigrationMMKVStorage,
   startMigration,
-  startImportFromHardwareWallet,
+  serverAssistedImport,
 } from './import';
+import {BwcProvider} from '../../../../lib/bwc';
+import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 
 // ---------------------------------------------------------------------------
 // Mocks – must appear before any imports that trigger module evaluation
@@ -132,16 +134,6 @@ jest.mock('../../utils/wallet', () => ({
   })),
   findKeyByKeyId: jest.fn(() => ({id: 'k1', wallets: []})),
   isCacheKeyStale: jest.fn(() => true),
-}));
-
-// wallet-hardware utils
-jest.mock('../../../../utils/wallet-hardware', () => ({
-  credentialsFromExtendedPublicKey: jest.fn(() =>
-    JSON.stringify({
-      walletId: 'test-wallet-id',
-      walletPrivKey: 'test-priv-key',
-    }),
-  ),
 }));
 
 // currency utils
@@ -292,61 +284,21 @@ describe('linkTokenToWallet', () => {
 describe('startMigrationMMKVStorage', () => {
   const {storage} = require('../../../index');
   const RNRestart = require('react-native-restart');
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([]);
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-    (AsyncStorage.multiRemove as jest.Mock).mockResolvedValue(undefined);
+    require('../../../vault-storage').activateVaultStorage();
   });
-
-  it('does not restart when persist:root key is absent from AsyncStorage', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-      'some-other-key',
-    ]);
+  it('satisfies the existing UI gate from committed activation without touching old sources', async () => {
     const store = configureTestStore({});
     await store.dispatch(startMigrationMMKVStorage());
-    expect(RNRestart.restart).not.toHaveBeenCalled();
-  });
-
-  it('sets migrationMMKVStorageComplete=true in state when persist:root is not in AsyncStorage', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([]);
-    const store = configureTestStore({});
-    await store.dispatch(startMigrationMMKVStorage());
-    // The action should be reflected in the APP state
-    const appState = (store.getState() as any).APP;
-    expect(appState.migrationMMKVStorageComplete).toBe(true);
-  });
-
-  it('calls storage.set and RNRestart.restart when persist:root exists', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-      'persist:root',
-      'other',
-    ]);
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue('{"APP":{}}');
-    const store = configureTestStore({});
-    await store.dispatch(startMigrationMMKVStorage());
-    expect(storage.set).toHaveBeenCalledWith('persist:root', '{"APP":{}}');
-    expect(RNRestart.restart).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not call storage.set when persist:root value is null', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue(['persist:root']);
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-    const store = configureTestStore({});
-    await store.dispatch(startMigrationMMKVStorage());
-    expect(storage.set).not.toHaveBeenCalled();
-  });
-
-  it('handles AsyncStorage.getAllKeys rejection gracefully (no throw)', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockRejectedValueOnce(
-      new Error('storage error'),
+    expect((store.getState() as any).APP.migrationMMKVStorageComplete).toBe(
+      true,
     );
-    const store = configureTestStore({});
-    // Should not throw
-    await expect(
-      store.dispatch(startMigrationMMKVStorage()),
-    ).resolves.not.toThrow();
+    expect(AsyncStorage.getItem).not.toHaveBeenCalled();
+    expect(AsyncStorage.getAllKeys).not.toHaveBeenCalled();
+    expect(AsyncStorage.multiRemove).not.toHaveBeenCalled();
+    expect(storage.set).not.toHaveBeenCalled();
+    expect(RNRestart.restart).not.toHaveBeenCalled();
   });
 });
 
@@ -399,63 +351,87 @@ describe('startMigration – early-exit paths', () => {
 });
 
 // ---------------------------------------------------------------------------
-// startImportFromHardwareWallet – validation paths (no real BWS calls)
+// serverAssistedImport – progress messages are paced but never delay the result
 // ---------------------------------------------------------------------------
-describe('startImportFromHardwareWallet – validation paths', () => {
-  const baseArgs = {
-    key: {
-      id: 'hw-key-id',
-      wallets: [],
-    } as any,
-    hardwareSource: 'ledger' as any,
-    xPubKey: 'xpub-test',
-    accountPath: "m/44'/0'/0'",
-    coin: 'btc' as const,
-    chain: 'btc' as const,
-    derivationStrategy: 'BIP44',
-    accountNumber: 0,
-    network: 'livenet' as any,
-  };
+
+describe('serverAssistedImport – progress queue', () => {
+  const bwcImport = BwcProvider.API.serverAssistedImport as jest.Mock;
+  let emitter: any;
+  let show: jest.SpyInstance;
+
+  const wallet = (walletId: string) => ({credentials: {walletId}} as any);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.useFakeTimers();
+    show = jest.spyOn(ongoingProcessManager, 'show').mockImplementation();
+    bwcImport.mockImplementation((_opts, _clientOpts, events) => {
+      emitter = events;
+    });
   });
 
-  it('rejects when hardwareSource is falsy', async () => {
-    const store = configureTestStore({});
-    const args = {...baseArgs, hardwareSource: '' as any};
-    await expect(
-      store.dispatch(startImportFromHardwareWallet(args)),
-    ).rejects.toThrow('Invalid hardware wallet source');
+  afterEach(() => {
+    show.mockRestore();
+    bwcImport.mockReset();
+    jest.useRealTimers();
   });
 
-  it('rejects when coin is not in BitpaySupportedCoins', async () => {
-    const store = configureTestStore({});
-    const args = {...baseArgs, coin: 'INVALIDCOIN' as any};
-    await expect(
-      store.dispatch(startImportFromHardwareWallet(args)),
-    ).rejects.toThrow('Unsupported currency');
+  const emitProgress = () => {
+    emitter.emit('findingCopayers', 16);
+    emitter.emit('foundCopayers', 2);
+    emitter.emit('findingCopayers', 2);
+    emitter.emit('foundCopayers', 0);
+    emitter.emit('gettingStatuses');
+    emitter.emit('gatheringWalletsInfos', 2);
+  };
+
+  it('paces queued messages one per second while the import runs', () => {
+    serverAssistedImport({words: 'w'});
+    emitProgress();
+
+    expect(show).toHaveBeenCalledTimes(1);
+    expect(show).toHaveBeenLastCalledWith('findingCopayers', expect.anything());
+    jest.advanceTimersByTime(1000);
+    expect(show).toHaveBeenCalledTimes(2);
+    expect(show).toHaveBeenLastCalledWith('foundCopayers', expect.anything());
   });
 
-  it('rejects when the wallet already exists in the key', async () => {
-    const store = configureTestStore({});
-    const existingWallet = {
-      credentials: {
-        rootPath: "m/44'/0'/0'",
-        account: 0,
-        network: 'livenet',
-        coin: 'btc',
-        chain: 'btc',
-      },
-      currencyAbbreviation: 'btc',
-      chain: 'btc',
-    };
-    const args = {
-      ...baseArgs,
-      key: {id: 'hw-key-id', wallets: [existingWallet]} as any,
-    };
-    await expect(
-      store.dispatch(startImportFromHardwareWallet(args)),
-    ).rejects.toThrow('already in the app');
+  it('resolves on done without waiting for queued messages', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitProgress();
+    emitter.emit('done', {key: {id: 'k'}, clients: [wallet('a'), wallet('a')]});
+
+    await expect(result).resolves.toEqual({
+      key: {id: 'k'},
+      wallets: [wallet('a')],
+    });
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no queued message after done, so the modal cannot reappear', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitProgress();
+    emitter.emit('done', {key: {id: 'k'}, clients: [wallet('a')]});
+    await result;
+
+    emitter.emit('gettingStatuses');
+    jest.advanceTimersByTime(60000);
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects on error without waiting for queued messages', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitProgress();
+    emitter.emit('error', new Error('boom'));
+
+    await expect(result).rejects.toThrow('boom');
+    jest.advanceTimersByTime(60000);
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it('still rejects with WALLET_DOES_NOT_EXIST when nothing was found', async () => {
+    const result = serverAssistedImport({words: 'w'});
+    emitter.emit('done', {key: {id: 'k'}, clients: []});
+
+    await expect(result).rejects.toThrow('WALLET_DOES_NOT_EXIST');
   });
 });

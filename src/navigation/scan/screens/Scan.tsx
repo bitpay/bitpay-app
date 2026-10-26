@@ -6,7 +6,7 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import {incomingData} from '../../../store/scan/scan.effects';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {ScanGroupParamList, ScanScreens} from '../ScanGroup';

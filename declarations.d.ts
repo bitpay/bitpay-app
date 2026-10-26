@@ -93,3 +93,7 @@ declare module '@sumsub/react-native-mobilesdk-module' {
 
   export default SNSMobileSDK;
 }
+
+// moment's per-locale files are imported only for their side effect of
+// registering the locale (src/utils/momentLocales.ts).
+declare module 'moment/locale/*';

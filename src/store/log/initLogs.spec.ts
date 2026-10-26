@@ -9,10 +9,9 @@ const mockStorage = {
 
 const mockLogManager = {addLog: jest.fn()};
 
-jest.mock('../index', () => ({
-  get storage() {
-    return mockStorage;
-  },
+let mockActive = true;
+jest.mock('../vault-storage', () => ({
+  isVaultActive: () => mockActive,
 }));
 
 jest.mock('../../managers/LogManager', () => ({
@@ -22,6 +21,9 @@ jest.mock('../../managers/LogManager', () => ({
 }));
 
 jest.mock('../../utils/sessionLogs', () => ({
+  get sessionLogsStorage() {
+    return mockStorage;
+  },
   isSessionLogsEnabled: jest.fn(),
 }));
 
@@ -42,6 +44,7 @@ const getFreshModule = () => {
 describe('initLogs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockActive = true;
     (isSessionLogsEnabled as jest.Mock).mockReturnValue(true);
     mockStorage.getString.mockReturnValue(undefined);
   });
@@ -129,6 +132,7 @@ describe('initLogs', () => {
 describe('persist:logs writers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockActive = true;
   });
 
   it('caps the reducer path at 500 too, so the two writers agree', () => {
@@ -155,4 +159,19 @@ describe('persist:logs writers', () => {
       entry('Backup write failed - ENOENT').payload,
     );
   });
+});
+
+it('holds direct log and drain writes until activation, then flushes only modern logs', () => {
+  mockActive = false;
+  jest.clearAllMocks();
+  const {appendPersistedLog, drainAndDispatch} = getFreshModule();
+  const dispatch = jest.fn();
+  appendPersistedLog(entry('preparing').payload);
+  drainAndDispatch(dispatch);
+  expect(mockStorage.set).not.toHaveBeenCalled();
+  expect(mockStorage.getString).not.toHaveBeenCalled();
+  expect(dispatch).not.toHaveBeenCalled();
+  mockActive = true;
+  drainAndDispatch(dispatch);
+  expect(dispatch).toHaveBeenCalledTimes(1);
 });

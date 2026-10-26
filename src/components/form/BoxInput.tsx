@@ -26,6 +26,7 @@ import {
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useLatestCallback} from '../../utils/hooks/useLatestCallback';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 
@@ -61,10 +62,12 @@ const styles = StyleSheet.create({
   separator: {
     borderRightWidth: 1,
     borderStyle: 'solid',
-    height: SEPARATOR_HEIGHT,
+    alignSelf: 'stretch',
+    minHeight: SEPARATOR_HEIGHT,
+    marginVertical: 9,
   },
   input: {
-    height: INPUT_HEIGHT,
+    minHeight: INPUT_HEIGHT,
     padding: 10,
     flexGrow: 1,
     flexShrink: 1,
@@ -85,7 +88,7 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     alignItems: 'center',
-    height: INPUT_HEIGHT,
+    minHeight: INPUT_HEIGHT,
     minWidth: INPUT_HEIGHT,
     justifyContent: 'center',
   },
@@ -288,14 +291,16 @@ const BoxInput = React.forwardRef<
       );
     }
 
+    const clearText = useLatestCallback(() => props.onChangeText?.(''));
+
     useEffect(() => {
       const sub = AppState.addEventListener('change', state => {
         if (isPassword && (state === 'inactive' || state === 'background')) {
-          props.onChangeText?.('');
+          clearText();
         }
       });
       return () => sub.remove();
-    }, [isPassword, props]);
+    }, [isPassword, clearText]);
 
     return (
       <>

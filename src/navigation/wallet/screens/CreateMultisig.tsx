@@ -41,6 +41,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {requestDklsWorkerMount} from '../../../dkls/DklsWorker';
 import {
   startCreateKeyMultisig,
   startCreateTSSKey,
@@ -54,7 +55,8 @@ import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {selectShowTestnetWallets} from '../../../store/wallet/utils/testnet';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -137,8 +139,8 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 42,
-    height: 42,
+    minWidth: 42,
+    minHeight: 42,
     margin: 10,
     borderRadius: 30,
     borderWidth: 1,
@@ -324,6 +326,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {currency, chain, key, context} = route.params;
   const segwitSupported = IsSegwitCoin(currency);
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [regtestEnabled, setRegtestEnabled] = useState(false);
@@ -352,6 +355,12 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     name: 'totalCopayers',
     defaultValue: 3,
   });
+
+  useEffect(() => {
+    if (isTSS) {
+      requestDklsWorkerMount();
+    }
+  }, [isTSS]);
 
   useEffect(() => {
     if (watchedRequiredSignatures !== watchedTotalCopayers) {
@@ -814,7 +823,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-            {showOptions && (
+            {showOptions && showTestnetWallets && (
               <AdvancedOptions>
                 <RowContainer
                   onPress={toggleTestnet}

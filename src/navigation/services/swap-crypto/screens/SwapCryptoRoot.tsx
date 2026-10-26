@@ -10,8 +10,7 @@ import {
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme as useStyledTheme} from '../../../../contexts';
 import {CommonActions, RouteProp} from '@react-navigation/core';
-import _ from 'lodash';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../../utils/object';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
@@ -127,7 +126,7 @@ import {
   parseAmountToStringIfBN,
   SatToUnit,
 } from '../../../../store/wallet/effects/amount/amount';
-import {orderBy} from 'lodash';
+import {maxBy, minBy, orderBy, uniqBy} from '../../../../utils/array';
 import {
   addWallet,
   AddWalletData,
@@ -207,22 +206,8 @@ import {createWalletAddress} from '../../../../store/wallet/effects/address/addr
 import {BwcProvider} from '../../../../lib/bwc';
 import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
 import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import Transport from '@ledgerhq/hw-transport';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
-import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import {Network} from '../../../../constants';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../components/modal/import-ledger-wallet/utils';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../../tabs/settings/external-services/ExternalServicesGroup';
@@ -322,7 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 48,
+    minHeight: 48,
   },
   offerSelectorContainer: {
     borderWidth: 1,
@@ -498,56 +483,6 @@ const SwapCryptoRoot: React.FC = () => {
   const [exchangeTxId, setExchangeTxId] = useState<string>();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
-
-  // Hardware wallet
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
-  }, []);
 
   // Threshold Signature Scheme (TSS)
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
@@ -794,10 +729,8 @@ const SwapCryptoRoot: React.FC = () => {
         const msg = t(
           'Our providers have temporarily disabled exchanges involving coin(chain). Please try a different currency.',
           {
-            coin: `${cloneDeep(
-              selectedWallet.currencyAbbreviation,
-            ).toUpperCase()}`,
-            chain: `${cloneDeep(selectedWallet.chain).toUpperCase()}`,
+            coin: `${selectedWallet.currencyAbbreviation.toUpperCase()}`,
+            chain: `${selectedWallet.chain.toUpperCase()}`,
           },
         );
         logger.warn('It was not possible to set the selected wallet');
@@ -944,7 +877,7 @@ const SwapCryptoRoot: React.FC = () => {
       }
     });
 
-    possibleCoinsTo = _.uniqBy(possibleCoinsTo, 'symbol');
+    possibleCoinsTo = uniqBy(possibleCoinsTo, 'symbol');
 
     // Only includes coins already included in swapCryptoSupportedCoinsFrom
     possibleCoinsTo = possibleCoinsTo.filter(coin =>
@@ -1101,12 +1034,12 @@ const SwapCryptoRoot: React.FC = () => {
             limit => limit.minAmount === undefined,
           )
             ? undefined
-            : _.minBy(allLimits, 'minAmount')?.minAmount;
+            : minBy(allLimits, 'minAmount')?.minAmount;
           const maxMaxAmount = allLimits.find(
             limit => limit.maxAmount === undefined,
           )
             ? undefined
-            : _.maxBy(allLimits, 'maxAmount')?.maxAmount;
+            : maxBy(allLimits, 'maxAmount')?.maxAmount;
 
           setSwapLimits({
             minAmount: minMinAmount,
@@ -1303,7 +1236,7 @@ const SwapCryptoRoot: React.FC = () => {
     const changellySupportedSvmChains =
       getChangellySupportedChains('svm') ?? [];
     const currencyBlockchain = currency.blockchain
-      ? cloneDeep(currency.blockchain).toLowerCase()
+      ? currency.blockchain.toLowerCase()
       : undefined;
 
     return (
@@ -1549,7 +1482,7 @@ const SwapCryptoRoot: React.FC = () => {
             },
           );
 
-      supportedCoinsWithFixRateEnabled = _.uniqBy(
+      supportedCoinsWithFixRateEnabled = uniqBy(
         supportedCoinsWithFixRateEnabled,
         'symbol',
       );
@@ -1780,7 +1713,7 @@ const SwapCryptoRoot: React.FC = () => {
             );
           }
 
-          allSupportedCoins = _.uniqBy(allSupportedCoins, 'symbol');
+          allSupportedCoins = uniqBy(allSupportedCoins, 'symbol');
         }
 
         // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
@@ -2067,9 +2000,9 @@ const SwapCryptoRoot: React.FC = () => {
         toWalletSelected.currencyAbbreviation.toLowerCase(),
         toWalletSelected.chain,
       ),
-      addressTo: cloneDeep(addressTo),
-      refundAddress: cloneDeep(addressFrom),
-      fixedRateId: cloneDeep(_fixedRateId),
+      addressTo: addressTo,
+      refundAddress: addressFrom,
+      fixedRateId: _fixedRateId,
     };
 
     try {
@@ -2539,8 +2472,7 @@ const SwapCryptoRoot: React.FC = () => {
       t(
         'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
         {
-          chain:
-            dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
+          chain: dispatch(GetName(chain, chain)) || chain.toUpperCase(),
           fee,
           coin: coin.toUpperCase(),
         },
@@ -2645,55 +2577,24 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
-  const makePayment = async ({transport}: {transport?: Transport}) => {
+  const makePayment = async () => {
     if (!fromWalletSelected || !ctxp) {
       throw new Error(`No necessary data to make the payment`);
     }
 
     const key = keys[fromWalletSelected.keyId];
-    const isUsingHardwareWallet = !!transport;
 
     try {
-      if (isUsingHardwareWallet) {
-        const {chain, network} = fromWalletSelected.credentials;
-        const configFn = currencyConfigs[chain];
-        if (!configFn) {
-          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-        }
-        const params = configFn(network as Network);
-        await prepareLedgerApp(
-          params.appName,
-          transportRef,
-          setHardwareWalletTransport,
-          onDisconnect,
-          setPromptOpenAppState,
-        );
-        setConfirmHardwareState('sending');
-        await sleep(500);
-        await dispatch(
-          publishAndSign({
-            txp: ctxp! as TransactionProposal,
-            key,
-            wallet: fromWalletSelected,
-            transport,
-            ataOwnerAddress,
-          }),
-        );
-        setConfirmHardwareState('complete');
-        await sleep(1000);
-        setConfirmHardwareWalletVisible(false);
-      } else {
-        const broadcastedTx = await dispatch(
-          publishAndSign({
-            txp: ctxp! as TransactionProposal,
-            key,
-            wallet: fromWalletSelected,
-            ataOwnerAddress,
-            ...(isTSSWallet(fromWalletSelected) && {tssCallbacks}),
-            ...(isTSSWallet(fromWalletSelected) && {setShowTSSProgressModal}),
-          }),
-        );
-      }
+      const broadcastedTx = await dispatch(
+        publishAndSign({
+          txp: ctxp! as TransactionProposal,
+          key,
+          wallet: fromWalletSelected,
+          ataOwnerAddress,
+          ...(isTSSWallet(fromWalletSelected) && {tssCallbacks}),
+          ...(isTSSWallet(fromWalletSelected) && {setShowTSSProgressModal}),
+        }),
+      );
       saveChangellyTx();
 
       showPaymentSent({
@@ -2720,11 +2621,6 @@ const SwapCryptoRoot: React.FC = () => {
         }),
       );
     } catch (err: any) {
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -2766,48 +2662,13 @@ const SwapCryptoRoot: React.FC = () => {
     hidePaymentSent();
   };
 
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = (args: {transport: Transport}) => {
-    const {transport} = args;
-
-    transport.on('disconnect', disconnectFnRef.current);
-
-    setHardwareWalletTransport(transport);
-    makePayment({transport});
-  };
-
   const onSwipeComplete = async () => {
     try {
       logger.debug('Swipe completed. Making payment...');
-      const key = keys[fromWalletSelected!.keyId];
-      if (key.hardwareSource) {
-        await onSwipeCompleteHardwareWallet(key);
-      } else {
-        await makePayment({});
-      }
+      await makePayment();
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error('onSwipeComplete Error: ' + errMsg);
-    }
-  };
-
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        await makePayment({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      const msg = t('Uh oh, something went wrong. Please try again later');
-      const reason = 'Unsupported hardware wallet';
-      showError({msg, reason, goBack: true, fireAnalytics: true});
     }
   };
 
@@ -2999,7 +2860,7 @@ const SwapCryptoRoot: React.FC = () => {
                           />
                           <WalletSelectorName
                             ellipsizeMode="tail"
-                            numberOfLines={1}
+                            numberOfLines={2}
                             style={{marginRight: 12}}>
                             {fromWalletSelected.walletName
                               ? fromWalletSelected.walletName
@@ -3009,7 +2870,7 @@ const SwapCryptoRoot: React.FC = () => {
                       ) : (
                         <WalletSelectorName
                           ellipsizeMode="tail"
-                          numberOfLines={1}
+                          numberOfLines={2}
                           style={{fontWeight: '500', color: White}}>
                           {t('Choose Wallet')}
                         </WalletSelectorName>
@@ -3088,13 +2949,13 @@ const SwapCryptoRoot: React.FC = () => {
                                   textLength={
                                     !amountFrom || amountFrom === 0
                                       ? 4
-                                      : cloneDeep(amountFrom)
+                                      : amountFrom
                                           .toFixed(6)
                                           .replace(/\.?0+$/, '')?.length
                                   }>
                                   {!amountFrom || amountFrom === 0
                                     ? '0'
-                                    : cloneDeep(amountFrom)
+                                    : amountFrom
                                         .toFixed(6)
                                         .replace(/\.?0+$/, '')}
                                 </AmountText>
@@ -3165,9 +3026,7 @@ const SwapCryptoRoot: React.FC = () => {
                             {!amountFrom || amountFrom === 0
                               ? '0.00' +
                                 ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`
-                              : cloneDeep(amountFrom)
-                                  .toFixed(6)
-                                  .replace(/\.?0+$/, '') +
+                              : amountFrom.toFixed(6).replace(/\.?0+$/, '') +
                                 ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`}
                           </DataText>
                         ) : (
@@ -3282,7 +3141,7 @@ const SwapCryptoRoot: React.FC = () => {
                       />
                       <WalletSelectorName
                         ellipsizeMode="tail"
-                        numberOfLines={1}
+                        numberOfLines={2}
                         style={{marginRight: 12}}>
                         {toWalletSelected.walletName
                           ? toWalletSelected.walletName
@@ -3292,7 +3151,7 @@ const SwapCryptoRoot: React.FC = () => {
                   ) : (
                     <WalletSelectorName
                       ellipsizeMode="tail"
-                      numberOfLines={1}
+                      numberOfLines={2}
                       style={{fontWeight: '500', color: White}}>
                       {t('Choose Crypto')}
                     </WalletSelectorName>
@@ -3630,23 +3489,6 @@ const SwapCryptoRoot: React.FC = () => {
             </>
           ) : null}
         </ScrollView>
-
-        {fromWalletSelected &&
-        keys[fromWalletSelected.keyId]?.hardwareSource ? (
-          <ConfirmHardwareWalletModal
-            isVisible={isConfirmHardwareWalletModalVisible}
-            state={confirmHardwareState}
-            hardwareSource={keys[fromWalletSelected.keyId].hardwareSource!}
-            transport={hardwareWalletTransport}
-            currencyLabel={BitpaySupportedCoins[fromWalletSelected.chain]?.name}
-            onBackdropPress={() => {
-              setConfirmHardwareWalletVisible(false);
-              setResetSwipeButton(true);
-              setConfirmHardwareState(null);
-            }}
-            onPaired={onHardwareWalletPaired}
-          />
-        ) : null}
 
         {!paymentExpired ? (
           <>

@@ -1,11 +1,10 @@
-import Transport from '@ledgerhq/hw-transport';
 import {RouteProp} from '@react-navigation/core';
 import {
   useNavigation,
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
 import {
@@ -15,7 +14,6 @@ import {
 } from '../../../../../utils/hooks';
 import SecureLockIcon from '../../../../../../assets/img/secure-lock.svg';
 import {
-  Key,
   Recipient,
   TransactionProposal,
   TxDetails,
@@ -34,7 +32,6 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, toggleThenUntoggle} from '../../../../../utils/helper-methods';
-import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   GetFeeUnits,
@@ -65,7 +62,6 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
 import {
@@ -76,19 +72,6 @@ import {Invoice} from '../../../../../store/shop/shop.models';
 import {TxDescription} from './TxDescription';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
-import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../../components/modal/import-ledger-wallet/utils';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {RootStacks} from '../../../../../Root';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
@@ -99,6 +82,7 @@ import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
+  selectedAccountAddress?: string;
   recipient?: Recipient;
   txp?: TransactionProposal;
   txDetails?: TxDetails;
@@ -121,6 +105,7 @@ const PayProConfirm = () => {
     txDetails: _txDetails,
     txp: _txp,
     invoice,
+    selectedAccountAddress,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -137,12 +122,6 @@ const PayProConfirm = () => {
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
   const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
     useState(false);
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
@@ -174,59 +153,22 @@ const PayProConfirm = () => {
           keys,
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           payProOptions,
+          selectedAccountAddress,
         }),
       ),
-    [defaultAltCurrency.isoCode, dispatch, keys, payProOptions],
+    [
+      defaultAltCurrency.isoCode,
+      dispatch,
+      keys,
+      payProOptions,
+      selectedAccountAddress,
+    ],
   );
 
   const reshowWalletSelector = async () => {
     await sleep(400);
     setWalletSelectorVisible(true);
   };
-
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
-  }, []);
 
   const createTxp = async (selectedWallet: Wallet) => {
     showOngoingProcess('CREATING_TXP');
@@ -295,41 +237,9 @@ const PayProConfirm = () => {
     await sleep(400);
     createTxp(selectedWallet);
   };
-  const startSendingPayment = async ({transport}: {transport?: Transport}) => {
-    const isUsingHardwareWallet = !!transport;
-
+  const startSendingPayment = async () => {
     try {
-      if (isUsingHardwareWallet) {
-        if (txp && wallet && recipient) {
-          const {chain, network} = wallet.credentials;
-          const configFn = currencyConfigs[chain];
-          if (!configFn) {
-            throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-          }
-          const params = configFn(network);
-          await prepareLedgerApp(
-            params.appName,
-            transportRef,
-            setHardwareWalletTransport,
-            onDisconnect,
-            setPromptOpenAppState,
-          );
-          setConfirmHardwareState('sending');
-          await sleep(500);
-          await dispatch(
-            startSendPayment({
-              txp,
-              key,
-              wallet,
-              recipient,
-              transport,
-            }),
-          );
-          setConfirmHardwareState('complete');
-          await sleep(1000);
-          setConfirmHardwareWalletVisible(false);
-        }
-      } else if (txp && wallet && recipient) {
+      if (txp && wallet && recipient) {
         await dispatch(
           startSendPayment({
             txp,
@@ -412,38 +322,9 @@ const PayProConfirm = () => {
         );
       }
     } catch (err: any) {
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
       await handlePaymentFailure(err);
     }
   };
-
-  const showErrorMessage = useCallback(
-    async ({
-      error,
-      defaultErrorMessage,
-      onDismiss,
-    }: {
-      error?: any;
-      defaultErrorMessage: string;
-      onDismiss?: () => Promise<void>;
-    }) => {
-      await sleep(500);
-      dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            title: t('Error'),
-            errMsg: error?.message || defaultErrorMessage,
-            action: () => onDismiss && onDismiss(),
-          }),
-        ),
-      );
-    },
-    [dispatch],
-  );
 
   const handlePaymentFailure = async (error: any) => {
     const handled = dispatch(
@@ -489,44 +370,8 @@ const PayProConfirm = () => {
     );
   };
 
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = (args: {transport: Transport}) => {
-    const {transport} = args;
-
-    transport.on('disconnect', disconnectFnRef.current);
-
-    setHardwareWalletTransport(transport);
-    setConfirmHardwareState('sending');
-    startSendingPayment({transport});
-  };
-
   const onSwipeComplete = async () => {
-    if (key?.hardwareSource) {
-      await onSwipeCompleteHardwareWallet(key);
-    } else {
-      await startSendingPayment({});
-    }
-  };
-
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        startSendingPayment({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      showErrorMessage({
-        defaultErrorMessage: t('Unsupported hardware wallet'),
-        onDismiss: () => reshowWalletSelector(),
-      });
-    }
+    await startSendingPayment();
   };
 
   const onCloseModal = async () => {
@@ -679,21 +524,6 @@ const PayProConfirm = () => {
             }
           }}
         />
-        {key?.hardwareSource && wallet ? (
-          <ConfirmHardwareWalletModal
-            isVisible={isConfirmHardwareWalletModalVisible}
-            state={confirmHardwareState}
-            hardwareSource={key.hardwareSource}
-            transport={hardwareWalletTransport}
-            currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
-            onBackdropPress={() => {
-              setConfirmHardwareWalletVisible(false);
-              setResetSwipeButton(true);
-              setConfirmHardwareState(null);
-            }}
-            onPaired={onHardwareWalletPaired}
-          />
-        ) : null}
       </ConfirmScrollView>
       {wallet ? (
         <>

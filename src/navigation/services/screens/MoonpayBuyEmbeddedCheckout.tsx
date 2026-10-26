@@ -115,7 +115,6 @@ import {AppEffects} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import MoonpayLogo from '../../../components/icons/external-services/moonpay/moonpay-logo';
 import {SpinnerContainer} from '../swap-crypto/styled/SwapCryptoRoot.styled';
-import cloneDeep from 'lodash.clonedeep';
 import {BuyCryptoActions} from '../../../store/buy-crypto';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {CryptoOffer} from '../components/externalServicesOfferSelector';
@@ -228,7 +227,7 @@ const styles = StyleSheet.create({
   webViewModalHeader: {
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    height: 50,
+    minHeight: 50,
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 15,
@@ -1004,8 +1003,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         reason: reason ? `[${reason}]: ${msg}` : msg,
         paymentMethod: paymentMethod?.method || '',
         amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-        coin: cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() || '',
-        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+        coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+        chain: wallet?.chain?.toLowerCase() || '',
         fiatCurrency: offer?.fiatCurrency || '',
       }),
     );
@@ -1051,7 +1050,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   ) => {
     const externalTransactionId = externalTransactionIdRef.current;
     const destinationChain = wallet.chain;
-    const coin = cloneDeep(wallet.currencyAbbreviation).toLowerCase();
+    const coin = wallet.currencyAbbreviation.toLowerCase();
     const cryptoAmountReceiving = embeddedQuoteData?.destination?.amount
       ? Number(embeddedQuoteData.destination.amount)
       : Number(offer.amountReceiving);
@@ -1274,8 +1273,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         reason: 'Challenge cancelled by user',
         paymentMethod: paymentMethod?.method || '',
         amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-        coin: cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() || '',
-        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+        coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+        chain: wallet?.chain?.toLowerCase() || '',
         fiatCurrency: offer?.fiatCurrency || '',
       }),
     );
@@ -1333,8 +1332,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           reason: 'Time to make the payment expired',
           paymentMethod: paymentMethod?.method || '',
           amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-          coin: cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() || '',
-          chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+          coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+          chain: wallet?.chain?.toLowerCase() || '',
           fiatCurrency: offer?.fiatCurrency || '',
         }),
       );
@@ -1528,7 +1527,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
           <ItemDivisor />
           <RowDataContainer style={{paddingTop: 10, paddingBottom: 10}}>
             <RowLabel>{t('Destination')}</RowLabel>
-            <SelectedOptionContainer style={{height: 30}}>
+            <SelectedOptionContainer style={{minHeight: 30}}>
               <SelectedOptionCol>
                 <CurrencyImage
                   img={wallet.img}
@@ -1780,11 +1779,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                         paymentMethod: paymentMethod?.method || '',
                         amount:
                           Number((offer as CryptoOffer)?.fiatAmount) || '',
-                        coin:
-                          cloneDeep(
-                            wallet?.currencyAbbreviation,
-                          )?.toLowerCase() || '',
-                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                        chain: wallet?.chain?.toLowerCase() || '',
                         fiatCurrency: offer?.fiatCurrency || '',
                       }),
                     );
@@ -1844,11 +1840,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                         paymentMethod: paymentMethod?.method || '',
                         amount:
                           Number((offer as CryptoOffer)?.fiatAmount) || '',
-                        coin:
-                          cloneDeep(
-                            wallet?.currencyAbbreviation,
-                          )?.toLowerCase() || '',
-                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                        chain: wallet?.chain?.toLowerCase() || '',
                         fiatCurrency: offer?.fiatCurrency || '',
                       }),
                     );
@@ -1956,11 +1949,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                       context: 'MoonpayBuyEmbeddedCheckout',
                       paymentMethod: paymentMethod?.method || '',
                       amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                      coin:
-                        cloneDeep(
-                          wallet?.currencyAbbreviation,
-                        )?.toLowerCase() || '',
-                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                      chain: wallet?.chain?.toLowerCase() || '',
                       fiatCurrency: offer?.fiatCurrency || '',
                     }),
                   );
@@ -1982,11 +1972,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                       reason: 'Google Pay sheet dismissed by user',
                       paymentMethod: paymentMethod?.method || '',
                       amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                      coin:
-                        cloneDeep(
-                          wallet?.currencyAbbreviation,
-                        )?.toLowerCase() || '',
-                      chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                      coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                      chain: wallet?.chain?.toLowerCase() || '',
                       fiatCurrency: offer?.fiatCurrency || '',
                     }),
                   );
@@ -2062,10 +2049,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                     context: 'MoonpayBuyEmbeddedCheckout',
                     paymentMethod: paymentMethod?.method || '',
                     amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                    coin:
-                      cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
-                      '',
-                    chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                    coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                    chain: wallet?.chain?.toLowerCase() || '',
                     fiatCurrency: offer?.fiatCurrency || '',
                   }),
                 );
@@ -2086,10 +2071,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                     reason: 'Apple Pay sheet dismissed by user',
                     paymentMethod: paymentMethod?.method || '',
                     amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
-                    coin:
-                      cloneDeep(wallet?.currencyAbbreviation)?.toLowerCase() ||
-                      '',
-                    chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                    coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                    chain: wallet?.chain?.toLowerCase() || '',
                     fiatCurrency: offer?.fiatCurrency || '',
                   }),
                 );
@@ -2165,11 +2148,8 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                         paymentMethod: paymentMethod?.method || '',
                         amount:
                           Number((offer as CryptoOffer)?.fiatAmount) || '',
-                        coin:
-                          cloneDeep(
-                            wallet?.currencyAbbreviation,
-                          )?.toLowerCase() || '',
-                        chain: cloneDeep(wallet?.chain)?.toLowerCase() || '',
+                        coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                        chain: wallet?.chain?.toLowerCase() || '',
                         fiatCurrency: offer?.fiatCurrency || '',
                         transactionId: payload.transaction.id,
                         transactionStatus: payload.transaction.status,

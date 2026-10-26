@@ -7,13 +7,18 @@ interface OnboardingImageProps extends FastImageProps {
   heightPct?: number;
 }
 
+// FastImage defaults to `cover`, which crops any image whose aspect ratio
+// differs from its box (the light and dark artwork for a slide share one box
+// but are not the same shape). `contain` always shows the whole image.
 export const OnboardingImage: React.FC<OnboardingImageProps> = ({
   widthPct,
   heightPct,
   style,
+  resizeMode = FastImage.resizeMode.contain,
   ...rest
 }) => (
   <FastImage
+    resizeMode={resizeMode}
     style={[
       {
         height: HEIGHT * (widthPct ? widthPct : 0.3),

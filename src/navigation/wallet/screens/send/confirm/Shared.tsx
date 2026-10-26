@@ -96,6 +96,7 @@ const sharedStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailRow: {
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -109,7 +110,7 @@ const sharedStyles = StyleSheet.create({
     paddingHorizontal: gutter,
   },
   sendToPillContainer: {
-    height: 37,
+    minHeight: 37,
   },
 });
 
@@ -147,7 +148,7 @@ export const DetailContainer: React.FC<
         ? sharedStyles.detailContainerWithMinHeight
         : sharedStyles.detailContainerDefault,
       minHeight ? {minHeight} : null,
-      height ? {height} : null,
+      height ? {minHeight: height} : null,
       style,
     ]}
     {...rest}
@@ -160,7 +161,7 @@ export const PressableDetailContainer: React.FC<
   <TouchableOpacity
     style={[
       sharedStyles.pressableDetailContainer,
-      height ? {height} : null,
+      height ? {minHeight: height} : null,
       style,
     ]}
     {...rest}
@@ -248,7 +249,7 @@ export const SendingTo: React.FC<SendingToProps> = ({
     }
     const timer = setTimeout(() => {
       setCopied(false);
-    }, 1000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [copied]);
@@ -294,12 +295,12 @@ export const SendingTo: React.FC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description =
-      recipientName ||
-      recipientEmail ||
-      formatCryptoAddress(
-        (recipientFullAddress || '').replace('bitcoincash:', ''),
-      );
+    const shortAddress = formatCryptoAddress(
+      (recipientFullAddress || '').replace('bitcoincash:', ''),
+    );
+    description = copied
+      ? shortAddress
+      : recipientName || recipientEmail || shortAddress;
   }
 
   return (

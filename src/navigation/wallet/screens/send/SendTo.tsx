@@ -57,10 +57,7 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {
-  dismissBottomNotificationModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {
   useAppDispatch,
   useAppSelector,
@@ -69,6 +66,7 @@ import {
 import {
   BchLegacyAddressInfo,
   CustomErrorMessage,
+  EmailUnableToReceiveCrypto,
   Mismatch,
 } from '../../components/ErrorMessages';
 import {
@@ -101,6 +99,7 @@ import {logManager} from '../../../../managers/LogManager';
 import {openExternalUrl} from '../../../../store/app/app.effects';
 import {
   BuildKeyAccountRow,
+  findEmailReceivingAddress,
   useDebouncedSendToValidation,
   useSendToKeyAccounts,
 } from './sendTo.utils';
@@ -134,7 +133,6 @@ const styles = StyleSheet.create({
   },
   emailTextContainer: {justifyContent: 'center'},
   emailText: {fontWeight: '600'},
-  infoSheetMessage: {paddingVertical: 20},
 });
 
 export const ContactTitleContainer: React.FC<
@@ -170,11 +168,50 @@ export const ContactTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
   );
 };
 
-const isEmailAddress = (text: string) => {
+export const isEmailAddress = (text: string) => {
   if (!text.includes('@')) {
     return false;
   }
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
+};
+
+export const SendToEmailRow = ({
+  email,
+  onPress,
+}: {
+  email: string;
+  onPress: () => void;
+}) => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      testID="send-to-email-send-button"
+      accessibilityLabel={t('Send')}
+      activeOpacity={ActiveOpacity}
+      onPress={onPress}>
+      <View style={styles.emailContainer}>
+        <View
+          style={[
+            styles.emailIconContainer,
+            {backgroundColor: theme.dark ? Midnight : '#EDF0FE'},
+          ]}>
+          <SendLightSvg />
+        </View>
+        <View style={styles.emailTextContainer}>
+          <Paragraph>
+            <Trans
+              i18nKey="SendToEmail"
+              values={{email}}
+              components={[<Paragraph style={styles.emailText} />]}
+              tOptions={{interpolation: {escapeValue: true}}}
+              shouldUnescape
+            />
+          </Paragraph>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 };
 
 const MemoizedKeyWalletsRow = React.memo(KeyWalletsRow);
@@ -701,28 +738,26 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
   ]);
 
   useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-
     let clearSearchTimeout: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = navigation.addListener('blur', () => {
+    const cancelClearSearch = () => clearTimeout(clearSearchTimeout);
+    const unsubscribeBlur = navigation.addListener('blur', () => {
       debouncedValidateSearchInput.cancel();
       setSearchIsEmailAddress(false);
       emailAddressSearchPromiseRef.current = Promise.resolve([]);
+      cancelClearSearch();
       clearSearchTimeout = setTimeout(() => {
         setSearchInput('');
         setWalletSearchInput('');
       }, 300);
     });
+    const unsubscribeFocus = navigation.addListener('focus', cancelClearSearch);
 
     return () => {
-      unsubscribe();
-      if (clearSearchTimeout) {
-        clearTimeout(clearSearchTimeout);
-      }
+      unsubscribeBlur();
+      unsubscribeFocus();
+      cancelClearSearch();
     };
-  }, [debouncedValidateSearchInput, isFocused, navigation]);
+  }, [debouncedValidateSearchInput, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -749,18 +784,14 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
         </SearchContainer>
 
         {searchIsEmailAddress ? (
-          <TouchableOpacity
-            testID="send-to-email-send-button"
-            accessibilityLabel={t('Send')}
-            activeOpacity={ActiveOpacity}
+          <SendToEmailRow
+            email={searchInput.toLowerCase()}
             onPress={async () => {
               const email = searchInput.toLowerCase();
-              const emailReceivingAddresses =
-                await emailAddressSearchPromiseRef.current;
-              const addressMatchingCurrency = emailReceivingAddresses.find(
-                ({coin, chain: addressChain}) =>
-                  currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
-                  chain.toLowerCase() === addressChain.toLowerCase(),
+              const addressMatchingCurrency = findEmailReceivingAddress(
+                await emailAddressSearchPromiseRef.current,
+                currencyAbbreviation,
+                chain,
               );
               addressMatchingCurrency
                 ? validateAndNavigateToConfirmRef.current(
@@ -768,59 +799,12 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
                     {email},
                   )
                 : dispatch(
-                    showBottomNotificationModal({
-                      type: 'warning',
-                      title: t('Unable to Send to Contact'),
-                      message: '',
-                      message2: (
-                        <View style={styles.infoSheetMessage}>
-                          <Paragraph>
-                            <Trans
-                              i18nKey="EmailUnableToReceiveCrypto"
-                              values={{email}}
-                              components={[
-                                <Paragraph style={styles.emailText} />,
-                              ]}
-                              tOptions={{interpolation: {escapeValue: true}}}
-                              shouldUnescape
-                            />
-                          </Paragraph>
-                        </View>
-                      ),
-                      enableBackdropDismiss: true,
-                      actions: [
-                        {
-                          text: 'OK',
-                          action: async () => {
-                            dispatch(dismissBottomNotificationModal());
-                          },
-                          primary: true,
-                        },
-                      ],
-                    }),
+                    showBottomNotificationModal(
+                      EmailUnableToReceiveCrypto(email),
+                    ),
                   );
-            }}>
-            <View style={styles.emailContainer}>
-              <View
-                style={[
-                  styles.emailIconContainer,
-                  {backgroundColor: theme.dark ? Midnight : '#EDF0FE'},
-                ]}>
-                <SendLightSvg />
-              </View>
-              <View style={styles.emailTextContainer}>
-                <Paragraph>
-                  <Trans
-                    i18nKey="SendToEmail"
-                    values={{email: searchInput.toLowerCase()}}
-                    components={[<Paragraph style={styles.emailText} />]}
-                    tOptions={{interpolation: {escapeValue: true}}}
-                    shouldUnescape
-                  />
-                </Paragraph>
-              </View>
-            </View>
-          </TouchableOpacity>
+            }}
+          />
         ) : null}
 
         <PerformanceProfiler id="SendTo:contacts" onRender={logReactProfiler}>

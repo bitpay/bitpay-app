@@ -6,16 +6,14 @@ import {logReducer} from './log.reducer';
 jest.mock('../../utils/sessionLogs', () => ({
   isSessionLogsEnabled: jest.fn(),
   PERSISTED_SESSION_LOGS_STORAGE_KEY: 'persist:logs',
+  sessionLogsStorage: {getString: jest.fn(), set: jest.fn()},
 }));
 
-jest.mock('../index', () => ({
-  storage: {
-    getString: jest.fn(),
-    set: jest.fn(),
-  },
-}));
+jest.mock('../vault-storage', () => ({isVaultActive: () => true}));
 
-const {storage: mockStorage} = jest.requireMock('../index');
+const {sessionLogsStorage: mockStorage} = jest.requireMock(
+  '../../utils/sessionLogs',
+);
 
 describe('logReducer', () => {
   const logEntry = {

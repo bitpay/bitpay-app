@@ -5,6 +5,7 @@ import {GetContactName} from '../../store/wallet/effects/transactions/transactio
 import {ContactRowProps} from './ContactRow';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {Dimensions, StyleSheet, View} from 'react-native';
+import {useIsLargeFont} from '../../utils/hooks/useFontScale';
 
 const {width} = Dimensions.get('window');
 
@@ -31,6 +32,17 @@ const styles = StyleSheet.create({
     marginLeft: 'auto' as any,
     display: 'flex',
     justifyContent: 'center',
+  },
+  stackedFull: {
+    maxWidth: '100%',
+  },
+  valueStacked: {
+    textAlign: 'left',
+  },
+  stackedTail: {
+    alignSelf: 'stretch',
+    marginTop: 6,
+    marginLeft: 0,
   },
   value: {
     textAlign: 'right',
@@ -87,10 +99,12 @@ const TransactionProposalRow = ({
     }
   }
 
+  const stacked = useIsLargeFont();
   return (
     <TouchableOpacity
       style={[
         styles.transactionContainer,
+        stacked && {flexDirection: 'column'},
         {width: withCheckBox ? width - 80 : '100%'},
       ]}
       onPress={onPressTransaction}>
@@ -98,24 +112,32 @@ const TransactionProposalRow = ({
 
       <View>
         <BaseText
-          style={styles.description}
-          numberOfLines={message ? 2 : labelLines}
+          style={[styles.description, stacked && styles.stackedFull]}
+          numberOfLines={stacked ? undefined : message ? 2 : labelLines}
           ellipsizeMode={'tail'}>
           {message ? message : label}
         </BaseText>
         {creator && (
           <ListItemSubText
-            style={styles.creator}
-            numberOfLines={1}
+            style={[styles.creator, stacked && styles.stackedFull]}
+            numberOfLines={stacked ? 2 : 1}
             ellipsizeMode={'tail'}>
             {t('Created by ', {creator})}
           </ListItemSubText>
         )}
       </View>
 
-      <View style={styles.tailContainer}>
-        {value && <BaseText style={styles.value}>{value}</BaseText>}
-        {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}
+      <View style={[styles.tailContainer, stacked && styles.stackedTail]}>
+        {value && (
+          <BaseText style={[styles.value, stacked && styles.valueStacked]}>
+            {value}
+          </BaseText>
+        )}
+        {time && (
+          <ListItemSubText textAlign={stacked ? 'left' : 'right'}>
+            {time}
+          </ListItemSubText>
+        )}
       </View>
     </TouchableOpacity>
   );

@@ -5,7 +5,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import debounce from 'lodash.debounce';
+import {debounce} from './utils/debounce';
 import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useRef} from 'react';
 import {useStore} from 'react-redux';
@@ -101,9 +101,6 @@ import DebugScreen, {
   DebugScreenParamList,
   DebugScreens,
 } from './navigation/Debug';
-import CardActivationGroup, {
-  CardActivationGroupParamList,
-} from './navigation/card-activation/CardActivationGroup';
 import {
   createWalletsForAccounts,
   fixWalletAddresses,
@@ -135,7 +132,6 @@ import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-//import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
 import {KeyMethods} from './store/wallet/wallet.models';
 import {
@@ -195,7 +191,6 @@ export type RootStackParamList = {
   ScanGroupParamList &
   ExternalServicesGroupParamList &
   SwapCryptoGroupParamList &
-  CardActivationGroupParamList &
   OnboardingGroupParamList &
   AuthGroupParamList &
   GiftCardGroupParamList &
@@ -224,7 +219,6 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingGroupParamList &
     BitpayIdGroupParamList &
     WalletGroupParamList &
-    CardActivationGroupParamList &
     GiftCardGroupParamList &
     MerchantGroupParamList &
     BillGroupParamList &
@@ -279,7 +273,7 @@ export const getNavigationTabName = () => {
     TabsScreens.HOME,
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
-    TabsScreens.CARD,
+    TabsScreens.BILLS,
     TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
@@ -772,10 +766,29 @@ export default () => {
                   new Promise(resolve =>
                     Braze.getInitialURL(deepLink => resolve(deepLink)),
                   );
+                const waitForStartupGateRouting = () =>
+                  new Promise<void>(resolve => {
+                    const isRouted = () =>
+                      navigationRef.getCurrentRoute()?.name !== 'StartupGate';
+                    if (isRouted()) {
+                      resolve();
+                      return;
+                    }
+                    const unsubscribe = navigationRef.addListener(
+                      'state',
+                      () => {
+                        if (isRouted()) {
+                          unsubscribe();
+                          resolve();
+                        }
+                      },
+                    );
+                  });
                 const [url, brazeUrl] = await Promise.all([
                   Linking.getInitialURL(),
                   getBrazeInitialUrl(),
                 ]);
+                await waitForStartupGateRouting();
                 await sleep(10);
                 urlEventHandler({url: url || brazeUrl});
               }
@@ -1155,7 +1168,6 @@ export default () => {
             {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root, theme})}
             {WalletGroup({Wallet: Root, theme})}
-            {CardActivationGroup({CardActivation: Root, theme})}
             {ScanGroup({Scan: Root, theme})}
             {GiftCardGroup({GiftCard: Root, theme})}
             {MerchantGroup({Merchant: Root, theme})}
@@ -1214,7 +1226,6 @@ export default () => {
             onRender={logReactProfiler}>
             <BiometricModal />
           </PerformanceProfiler>
-          {/* <ImportLedgerWalletModal /> */}
           <PerformanceProfiler
             id="overlay:wallet-connect"
             onRender={logReactProfiler}>

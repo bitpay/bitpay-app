@@ -9,7 +9,7 @@ import {
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import {orderBy, uniqBy} from 'lodash';
+import {maxBy, minBy, orderBy, uniqBy} from '../../../utils/array';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import {
   BuyCryptoExchangeKey,
@@ -130,7 +130,7 @@ import {
   TransakPaymentData,
   TransakSignedUrlData,
 } from '../../../store/buy-crypto/buy-crypto.models';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../utils/object';
 import {
   banxaEnv,
   getBanxaChainFormat,
@@ -227,7 +227,6 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from '../../../components/base/TouchableOpacity';
-import _ from 'lodash';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {
   WithdrawalMethod,
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
   webViewModalHeader: {
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    height: 50,
+    minHeight: 50,
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 15,
@@ -435,6 +434,7 @@ const AmountText: React.FC<TextProps & {bigAmount?: boolean}> = ({
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         styles.amountText,
         {fontSize: bigAmount ? 35 : 50, color: theme.colors.text},
@@ -491,6 +491,7 @@ const CurrencyText: React.FC<TextProps & {bigAmount?: boolean}> = ({
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.3}
       style={[
         styles.currencyText,
         {fontSize: bigAmount ? 12 : 20, color: theme.colors.text},
@@ -1126,9 +1127,7 @@ const BuyAndSellRoot = ({
 
   const getWarnMsg = useMemo<string | undefined>(() => {
     let msg: string | undefined;
-    const cryptoCurrencyAbbreviation = cloneDeep(
-      selectedWallet?.currencyAbbreviation,
-    );
+    const cryptoCurrencyAbbreviation = selectedWallet?.currencyAbbreviation;
 
     if (+amountConfig.amount > 0) {
       if (limits.min && +amountConfig.amount < limits.min) {
@@ -1140,7 +1139,7 @@ const BuyAndSellRoot = ({
         } else if (context !== 'buyCrypto' && cryptoCurrencyAbbreviation) {
           msg = t('MinAmountWarnMsg', {
             min: limits.min,
-            currency: cloneDeep(cryptoCurrencyAbbreviation).toUpperCase(),
+            currency: cryptoCurrencyAbbreviation.toUpperCase(),
           });
         }
       } else if (
@@ -1164,7 +1163,7 @@ const BuyAndSellRoot = ({
         } else if (context !== 'buyCrypto' && cryptoCurrencyAbbreviation) {
           msg = t('MaxAmountWarnMsg', {
             max: limits.max,
-            currency: cloneDeep(cryptoCurrencyAbbreviation).toUpperCase(),
+            currency: cryptoCurrencyAbbreviation.toUpperCase(),
           });
         }
       }
@@ -1322,9 +1321,8 @@ const BuyAndSellRoot = ({
             ? orderedArray.indexOf(symbol)
             : orderedArray.length;
         },
-        'name',
       ],
-      ['asc', 'asc'],
+      ['asc'],
     );
 
     try {
@@ -1530,7 +1528,7 @@ const BuyAndSellRoot = ({
       env: rampSellEnv,
       flow: 'sell',
       // TODO: review if "fiatCurrency" is correct in currencyCode
-      currencyCode: cloneDeep(fiatCurrency).toUpperCase(),
+      currencyCode: fiatCurrency.toUpperCase(),
       withDisabled: false,
       withHidden: false,
       useIp: true,
@@ -2123,12 +2121,12 @@ const BuyAndSellRoot = ({
             limit => limit.minAmount === undefined,
           )
             ? undefined
-            : _.minBy(allLimits, 'minAmount')?.minAmount;
+            : minBy(allLimits, 'minAmount')?.minAmount;
           const maxMaxAmount = allLimits.find(
             limit => limit.maxAmount === undefined,
           )
             ? undefined
-            : _.maxBy(allLimits, 'maxAmount')?.maxAmount;
+            : maxBy(allLimits, 'maxAmount')?.maxAmount;
 
           setSellLimits({
             limits: {
@@ -2344,7 +2342,7 @@ const BuyAndSellRoot = ({
 
   useEffect(() => {
     if (context === 'sellCrypto' && selectedWallet?.currencyAbbreviation) {
-      const cryptoCurrency = cloneDeep(selectedWallet.currencyAbbreviation);
+      const cryptoCurrency = selectedWallet.currencyAbbreviation;
       setSwapCurrenciesList([
         ...new Set([formatCurrencyAbbreviation(cryptoCurrency), fiatCurrency]),
       ]);
@@ -2393,10 +2391,8 @@ const BuyAndSellRoot = ({
           sellGetLimits();
         }
 
-        const currency = cloneDeep(
-          selectedWallet.currencyAbbreviation,
-        ).toUpperCase();
-        const fromChain = cloneDeep(selectedWallet.chain);
+        const currency = selectedWallet.currencyAbbreviation.toUpperCase();
+        const fromChain = selectedWallet.chain;
 
         setUsingCurrency(currency);
         setUsingCurrencyIsFiat(false);
@@ -2546,7 +2542,7 @@ const BuyAndSellRoot = ({
 
     const destinationChain = selectedWallet.chain;
     const banxaExternalId = uuid.v4().toString();
-    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
+    const coin = selectedWallet.currencyAbbreviation.toLowerCase();
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -2563,7 +2559,7 @@ const BuyAndSellRoot = ({
       env: banxaEnv,
       account_reference: user?.eid ?? selectedWallet.id,
       source: offer.fiatCurrency,
-      source_amount: cloneDeep(offer.fiatAmount).toString(),
+      source_amount: offer.fiatAmount.toString(),
       target: getBanxaCoinFormat(coin),
       wallet_address: address,
       blockchain: getBanxaChainFormat(selectedWallet.chain),
@@ -2667,7 +2663,7 @@ const BuyAndSellRoot = ({
 
     const destinationChain = selectedWallet.chain;
     const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
-    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
+    const coin = selectedWallet.currencyAbbreviation.toLowerCase();
 
     if (!skipEmbedded) {
       // Embedded only works through MoonPay's connect flow.
@@ -2946,7 +2942,7 @@ const BuyAndSellRoot = ({
     }
 
     const destinationChain = selectedWallet.chain;
-    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
+    const coin = selectedWallet.currencyAbbreviation.toLowerCase();
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -3058,8 +3054,8 @@ const BuyAndSellRoot = ({
 
     const destinationChain = selectedWallet.chain;
     const rampExternalId = uuid.v4().toString();
-    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
-    const chain = cloneDeep(selectedWallet.chain);
+    const coin = selectedWallet.currencyAbbreviation.toLowerCase();
+    const chain = selectedWallet.chain;
 
     const newData: RampPaymentData = {
       address,
@@ -3183,8 +3179,8 @@ const BuyAndSellRoot = ({
 
     const destinationChain = selectedWallet.chain;
     const sardineExternalId = uuid.v4().toString();
-    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
-    const chain = cloneDeep(selectedWallet.chain);
+    const coin = selectedWallet.currencyAbbreviation.toLowerCase();
+    const chain = selectedWallet.chain;
 
     let authTokenData;
     try {
@@ -3359,9 +3355,7 @@ const BuyAndSellRoot = ({
         };
 
         const destinationChain = selectedWallet.chain;
-        const coin = cloneDeep(
-          selectedWallet.currencyAbbreviation,
-        ).toLowerCase();
+        const coin = selectedWallet.currencyAbbreviation.toLowerCase();
 
         const newData: SimplexPaymentData = {
           address,
@@ -3454,8 +3448,8 @@ const BuyAndSellRoot = ({
 
     const destinationChain = selectedWallet.chain;
     const transakExternalId = uuid.v4().toString();
-    const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
-    const chain = cloneDeep(selectedWallet.chain);
+    const coin = selectedWallet.currencyAbbreviation.toLowerCase();
+    const chain = selectedWallet.chain;
 
     const nowTimestamp = (Date.now() / 1000) | 0;
     let _accessToken = accessTokenTransak?.accessToken;
@@ -3704,7 +3698,7 @@ const BuyAndSellRoot = ({
       lockAmount: true,
       colorCode: Action,
       theme: theme.dark ? 'dark' : 'light',
-      quoteCurrencyCode: cloneDeep(offer.fiatCurrency)?.toLowerCase(),
+      quoteCurrencyCode: offer.fiatCurrency?.toLowerCase(),
       showWalletAddressForm: false,
     };
 
@@ -3739,8 +3733,8 @@ const BuyAndSellRoot = ({
     const newData: MoonpaySellOrderData = {
       env: __DEV__ ? 'dev' : 'prod',
       wallet_id: selectedWallet.id,
-      coin: cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase(),
-      chain: cloneDeep(selectedWallet.chain).toLowerCase(),
+      coin: selectedWallet.currencyAbbreviation.toUpperCase(),
+      chain: selectedWallet.chain.toLowerCase(),
       external_id: externalTransactionId,
       created_on: Date.now(),
       crypto_amount: offer.sellAmount || +curValRef.current,
@@ -3932,10 +3926,8 @@ const BuyAndSellRoot = ({
               env: __DEV__ ? 'dev' : 'prod',
               wallet_id: selectedWallet.id,
               address_to: '',
-              coin: cloneDeep(
-                selectedWallet.currencyAbbreviation,
-              ).toUpperCase(),
-              chain: cloneDeep(selectedWallet.chain).toLowerCase(),
+              coin: selectedWallet.currencyAbbreviation.toUpperCase(),
+              chain: selectedWallet.chain.toLowerCase(),
               created_on: Date.now(),
               crypto_amount: offer.sellAmount || +curValRef.current,
               fiat_receiving_amount: Number(offer.amountReceiving),
@@ -3945,7 +3937,7 @@ const BuyAndSellRoot = ({
                 : fiatCurrency,
               payment_method: (selectedPaymentMethod as WithdrawalMethod)
                 ?.method,
-              external_id: cloneDeep(offer.externalId)!,
+              external_id: offer.externalId!,
               sale_view_token: orderData.saleViewToken,
               quote_id: orderData.sale?.id,
               status: 'createdOrder',
@@ -3954,20 +3946,18 @@ const BuyAndSellRoot = ({
 
             if (
               IsERCToken(
-                cloneDeep(selectedWallet.currencyAbbreviation),
-                cloneDeep(selectedWallet.chain),
+                selectedWallet.currencyAbbreviation,
+                selectedWallet.chain,
               )
             ) {
               if (
                 orderData.sale?.crypto?.assetInfo?.address &&
                 selectedWallet.tokenAddress
               ) {
-                const contractAddressFromRamp = cloneDeep(
-                  orderData.sale.crypto.assetInfo.address,
-                ).toLowerCase();
-                const contractAddress = cloneDeep(
-                  selectedWallet.tokenAddress,
-                ).toLowerCase();
+                const contractAddressFromRamp =
+                  orderData.sale.crypto.assetInfo.address.toLowerCase();
+                const contractAddress =
+                  selectedWallet.tokenAddress.toLowerCase();
                 if (contractAddress !== contractAddressFromRamp) {
                   logger.warn(
                     `The contract address from Ramp: ${contractAddressFromRamp} is different from the selected wallet: ${contractAddress}. The sale process is going to be cancelled.`,
@@ -3995,14 +3985,10 @@ const BuyAndSellRoot = ({
                 orderData.sale?.crypto?.assetInfo?.chain
               ) {
                 const orderCoin = getCoinFromRampCoinFormat(
-                  cloneDeep(
-                    orderData.sale.crypto.assetInfo.symbol,
-                  ).toLowerCase(),
+                  orderData.sale.crypto.assetInfo.symbol.toLowerCase(),
                 );
                 const orderChain = getChainFromRampChainFormat(
-                  cloneDeep(
-                    orderData.sale.crypto.assetInfo.chain,
-                  ).toLowerCase(),
+                  orderData.sale.crypto.assetInfo.chain.toLowerCase(),
                 );
                 if (
                   orderCoin !==
@@ -4109,7 +4095,7 @@ const BuyAndSellRoot = ({
               parsedEventData.payload as RampSellSendCryptoPayload;
 
             const dataToUpdate: RampSellIncomingData = {
-              rampExternalId: cloneDeep(offer.externalId)!,
+              rampExternalId: offer.externalId!,
               depositWalletAddress: sendCryptoPayload?.address,
             };
 
@@ -4132,7 +4118,7 @@ const BuyAndSellRoot = ({
               toAddress: sendCryptoPayload?.address,
               amount: offer.sellAmount!,
               showNewQuoteInfo: !!(offer.sellAmount !== +curValRef.current),
-              sellCryptoExternalId: cloneDeep(offer.externalId)!,
+              sellCryptoExternalId: offer.externalId!,
               paymentMethod: (selectedPaymentMethod as WithdrawalMethod)
                 ?.method,
               useSendMax: IsERCToken(
@@ -4305,9 +4291,8 @@ const BuyAndSellRoot = ({
         errorMsg: msg || 'unknown',
         paymentMethod: selectedPaymentMethod?.method || '',
         amount: Number((selectedOffer as CryptoOffer)?.fiatAmount) || '',
-        coin:
-          cloneDeep(selectedWallet?.currencyAbbreviation)?.toLowerCase() || '',
-        chain: cloneDeep(selectedWallet?.chain)?.toLowerCase() || '',
+        coin: selectedWallet?.currencyAbbreviation?.toLowerCase() || '',
+        chain: selectedWallet?.chain?.toLowerCase() || '',
         fiatCurrency: selectedOffer?.fiatCurrency || '',
       }),
     );

@@ -35,10 +35,9 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {IsERCToken, IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
-import _ from 'lodash';
 import {createWalletAddress} from '../address/address';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
-import uniqBy from 'lodash.uniqby';
+import {partition, uniqBy} from '../../../../utils/array';
 import {logManager} from '../../../../managers/LogManager';
 import {type BulkClient} from '@bitpay-labs/bitcore-wallet-client/src/lib/bulkclient';
 export const startUpdateWalletStatus =
@@ -186,6 +185,67 @@ export const getBulkStatus = (
   });
 };
 
+/**
+ * BWS fails the whole bulk request when any one wallet fails to authenticate,
+ * so a broken testnet wallet would stop every balance on its key from
+ * updating. When a key mixes networks and the bulk call fails, retry each
+ * network on its own and keep whatever succeeds.
+ */
+export const getBulkStatusByNetwork = async (
+  bulkClient: BulkClient,
+  credentials: Array<{network: string; copayerId: string}>,
+  walletOptions: Record<string, {tokenAddresses: string[] | undefined}>,
+): Promise<BulkStatus[]> => {
+  try {
+    return (await getBulkStatus(
+      bulkClient,
+      credentials,
+      walletOptions,
+    )) as BulkStatus[];
+  } catch (err) {
+    const networks = [...new Set(credentials.map(c => c.network))];
+    if (networks.length < 2) {
+      throw err;
+    }
+    const results = await Promise.allSettled(
+      networks.map(network => {
+        const networkCredentials = credentials.filter(
+          c => c.network === network,
+        );
+        const networkWalletOptions = Object.fromEntries(
+          networkCredentials.map(c => [
+            c.copayerId,
+            walletOptions[c.copayerId],
+          ]),
+        );
+        return getBulkStatus(
+          bulkClient,
+          networkCredentials,
+          networkWalletOptions,
+        ) as Promise<BulkStatus[]>;
+      }),
+    );
+    const succeeded = results.flatMap(result =>
+      result.status === 'fulfilled' ? result.value : [],
+    );
+    if (!succeeded.length) {
+      throw err;
+    }
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        logManager.warn(
+          `[getBulkStatusByNetwork] ${networks[index]} status failed: ${
+            result.reason instanceof Error
+              ? result.reason.message
+              : JSON.stringify(result.reason)
+          }`,
+        );
+      }
+    });
+    return succeeded;
+  }
+};
+
 export const updateKeyStatus =
   ({
     key,
@@ -215,252 +275,248 @@ export const updateKeyStatus =
     >
   > =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
-      const {APP, RATE, WALLET} = getState();
-      const {defaultAltCurrency} = APP;
-      const {balanceCacheKey} = WALLET;
-      const {rates, lastDayRates} = RATE;
-      const scopedBalanceCacheKey = accountAddress
-        ? `${key.id}:${accountAddress}`
-        : key.id;
-      const hasFreshScopedBalance =
-        !isCacheKeyStale(
-          balanceCacheKey[scopedBalanceCacheKey],
-          BALANCE_CACHE_DURATION,
-        ) ||
-        (!!accountAddress &&
-          !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION));
+    const {APP, RATE, WALLET} = getState();
+    const {defaultAltCurrency} = APP;
+    const {balanceCacheKey} = WALLET;
+    const {rates, lastDayRates} = RATE;
+    const scopedBalanceCacheKey = accountAddress
+      ? `${key.id}:${accountAddress}`
+      : key.id;
+    const hasFreshScopedBalance =
+      !isCacheKeyStale(
+        balanceCacheKey[scopedBalanceCacheKey],
+        BALANCE_CACHE_DURATION,
+      ) ||
+      (!!accountAddress &&
+        !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION));
 
-      if (hasFreshScopedBalance && !force) {
-        logManager.debug(`Key: ${key.id} - skipping balance update`);
-        return resolve(undefined);
+    if (hasFreshScopedBalance && !force) {
+      logManager.debug(`Key: ${key.id} - skipping balance update`);
+      return undefined;
+    }
+
+    const walletOptions = {} as Record<
+      string,
+      {
+        tokenAddresses: string[] | undefined;
       }
+    >;
 
-      const walletOptions = {} as Record<
-        string,
-        {
-          tokenAddresses: string[] | undefined;
+    let walletsToUpdate = [...key.wallets];
+    if (accountAddress) {
+      walletsToUpdate = walletsToUpdate.filter(
+        wallet => wallet.receiveAddress === accountAddress,
+      );
+    }
+
+    // remove token wallets from getStatusAll
+    const noTokenWallets = walletsToUpdate.filter(wallet => {
+      return (
+        !wallet.credentials.token &&
+        !wallet.credentials.multisigEthInfo &&
+        wallet.credentials.isComplete() &&
+        !wallet.pendingTssSession
+      );
+    });
+
+    const normalizeTokenAddresses = (wallet: any): string[] | undefined => {
+      const tokens: string[] | undefined = wallet.tokens;
+      if (!tokens?.length) return undefined;
+
+      return tokens
+        .map(t => getTokenAddressFromTokenWalletId(wallet.id, t))
+        .filter((t): t is string => !!t);
+    };
+
+    const credentials = noTokenWallets.map(wallet => {
+      const tokenAddresses = normalizeTokenAddresses(wallet);
+      walletOptions[wallet.credentials.copayerId] = {tokenAddresses};
+      return wallet.credentials;
+    });
+
+    if (!credentials.length) {
+      return undefined;
+    }
+
+    const {bulkClient} = BwcProvider.getInstance().getClient();
+    const credentialsWithoutWalletKey = dataOnly
+      ? credentials.filter(credential => !credential.walletPrivKey)
+      : [];
+
+    try {
+      const bulkStatus = await getBulkStatusByNetwork(
+        bulkClient,
+        credentials,
+        walletOptions,
+      );
+
+      if (
+        credentialsWithoutWalletKey.some(credential => credential.walletPrivKey)
+      ) {
+        const currentKey = getState().WALLET.keys[key.id];
+        if (currentKey) {
+          dispatch(successUpdateKey({key: currentKey}));
         }
-      >;
-
-      let walletsToUpdate = [...key.wallets];
-      if (accountAddress) {
-        walletsToUpdate = walletsToUpdate.filter(
-          wallet => wallet.receiveAddress === accountAddress,
-        );
       }
 
-      // remove token wallets from getStatusAll
-      const noTokenWallets = walletsToUpdate.filter(wallet => {
-        return (
-          !wallet.credentials.token &&
-          !wallet.credentials.multisigEthInfo &&
-          wallet.credentials.isComplete() &&
-          !wallet.pendingTssSession
-        );
-      });
+      const walletUpdates: Array<{
+        walletId: string;
+        balance: any;
+        pendingTxps: any[];
+        singleAddress: boolean;
+      }> = [];
 
-      const normalizeTokenAddresses = (wallet: any): string[] | undefined => {
-        const tokens: string[] | undefined = wallet.tokens;
-        if (!tokens?.length) return undefined;
+      const updateBalance = (
+        wallet: Wallet,
+        newBalance: WalletBalance,
+        pendingTxps: any[],
+      ) => {
+        if (dataOnly) {
+          walletUpdates.push({
+            walletId: wallet.id,
+            balance: newBalance,
+            pendingTxps,
+            singleAddress: !!wallet.singleAddress,
+          });
+        } else {
+          wallet.balance = newBalance;
+        }
 
-        return tokens
-          .map(t => getTokenAddressFromTokenWalletId(wallet.id, t))
-          .filter((t): t is string => !!t);
+        return newBalance;
       };
 
-      const credentials = noTokenWallets.map(wallet => {
-        const tokenAddresses = normalizeTokenAddresses(wallet);
-        walletOptions[wallet.credentials.copayerId] = {tokenAddresses};
-        return wallet.credentials;
-      });
+      const balances = uniqBy(key.wallets, 'id').map(wallet => {
+        const {balance: cachedBalance, pendingTxps} = wallet;
 
-      if (!credentials.length) {
-        return resolve(undefined);
-      }
+        if (!bulkStatus) {
+          const newBalance = {
+            ...cachedBalance,
+            ...dispatch(
+              buildFiatBalance({
+                wallet,
+                cryptoBalance: cachedBalance,
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                rates,
+                lastDayRates,
+              }),
+            ),
+          } as WalletBalance;
 
-      const {bulkClient} = BwcProvider.getInstance().getClient();
-      const credentialsWithoutWalletKey = dataOnly
-        ? credentials.filter(credential => !credential.walletPrivKey)
-        : [];
-
-      try {
-        const bulkStatus = (await getBulkStatus(
-          bulkClient,
-          credentials,
-          walletOptions,
-        )) as BulkStatus[];
-
-        if (
-          credentialsWithoutWalletKey.some(
-            credential => credential.walletPrivKey,
-          )
-        ) {
-          const currentKey = getState().WALLET.keys[key.id];
-          if (currentKey) {
-            dispatch(successUpdateKey({key: currentKey}));
-          }
+          return updateBalance(wallet, newBalance, pendingTxps);
         }
 
-        const walletUpdates: Array<{
-          walletId: string;
-          balance: any;
-          pendingTxps: any[];
-          singleAddress: boolean;
-        }> = [];
+        const {status, success} =
+          findByTokenWalletId(bulkStatus, wallet.id, bStatus =>
+            typeof bStatus.tokenAddress === 'string'
+              ? buildTokenWalletId(bStatus.walletId, bStatus.tokenAddress)
+              : bStatus.walletId,
+          ) || {};
 
-        const updateBalance = (
-          wallet: Wallet,
-          newBalance: WalletBalance,
-          pendingTxps: any[],
-        ) => {
-          if (dataOnly) {
-            walletUpdates.push({
-              walletId: wallet.id,
-              balance: newBalance,
-              pendingTxps,
-              singleAddress: !!wallet.singleAddress,
-            });
-          } else {
-            wallet.balance = newBalance;
-          }
+        const amountHasChanged =
+          status?.balance?.availableAmount !== cachedBalance?.satAvailable;
+        const totalAmountHasChanged =
+          status?.balance?.totalAmount !== cachedBalance?.sat;
+        const hasNewPendingTxps =
+          status?.pendingTxps && status?.pendingTxps.length > 0;
+        const hasPendingTxps = pendingTxps?.length > 0;
+        const shouldUpdateStatus =
+          amountHasChanged ||
+          totalAmountHasChanged ||
+          hasNewPendingTxps ||
+          hasPendingTxps;
 
-          return newBalance;
-        };
-
-        const balances = uniqBy(key.wallets, 'id').map(wallet => {
-          const {balance: cachedBalance, pendingTxps} = wallet;
-
-          if (!bulkStatus) {
-            const newBalance = {
-              ...cachedBalance,
-              ...dispatch(
-                buildFiatBalance({
-                  wallet,
-                  cryptoBalance: cachedBalance,
-                  defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                  rates,
-                  lastDayRates,
-                }),
-              ),
-            } as WalletBalance;
-
-            return updateBalance(wallet, newBalance, pendingTxps);
-          }
-
-          const {status, success} =
-            findByTokenWalletId(bulkStatus, wallet.id, bStatus =>
-              typeof bStatus.tokenAddress === 'string'
-                ? buildTokenWalletId(bStatus.walletId, bStatus.tokenAddress)
-                : bStatus.walletId,
-            ) || {};
-
-          const amountHasChanged =
-            status?.balance?.availableAmount !== cachedBalance?.satAvailable;
-          const totalAmountHasChanged =
-            status?.balance?.totalAmount !== cachedBalance?.sat;
-          const hasNewPendingTxps =
-            status?.pendingTxps && status?.pendingTxps.length > 0;
-          const hasPendingTxps = pendingTxps?.length > 0;
-          const shouldUpdateStatus =
-            amountHasChanged ||
-            totalAmountHasChanged ||
-            hasNewPendingTxps ||
-            hasPendingTxps;
-
-          if (status && success && shouldUpdateStatus) {
-            const cryptoBalance = dispatch(
-              buildBalance({
-                wallet,
-                status,
-              }),
-            );
-
-            let newBalance = {
-              ...cryptoBalance,
-              ...dispatch(
-                buildFiatBalance({
-                  wallet,
-                  cryptoBalance,
-                  defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                  rates,
-                  lastDayRates,
-                }),
-              ),
-            } as WalletBalance;
-
-            const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
-
-            // Collect wallet updates instead of applying them
-            walletUpdates.push({
-              walletId: wallet.id,
-              balance: newBalance,
-              pendingTxps: newPendingTxps,
-              singleAddress: status.wallet?.singleAddress,
-            });
-
-            if (!dataOnly) {
-              // properties to update
-              wallet.balance = newBalance;
-              wallet.pendingTxps = newPendingTxps;
-              wallet.singleAddress = status.wallet?.singleAddress;
-            }
-
-            logManager.info(
-              `Wallet to be updated: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
-            );
-
-            return newBalance;
-          } else {
-            const newBalance = {
-              ...cachedBalance,
-              ...dispatch(
-                buildFiatBalance({
-                  wallet,
-                  cryptoBalance: cachedBalance,
-                  defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                  rates,
-                  lastDayRates,
-                }),
-              ),
-            } as WalletBalance;
-
-            return updateBalance(wallet, newBalance, pendingTxps);
-          }
-        });
-
-        logManager.info(`Key: ${key.id} - status updated`);
-
-        if (!dataOnly) {
-          dispatch(
-            successUpdateKey({
-              key,
+        if (status && success && shouldUpdateStatus) {
+          const cryptoBalance = dispatch(
+            buildBalance({
+              wallet,
+              status,
             }),
           );
-        }
 
-        return resolve({
-          keyId: key.id,
-          cacheKey: scopedBalanceCacheKey,
-          totalBalance: getTotalFiatBalance(balances),
-          totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
-          walletUpdates,
-        });
-      } catch (err) {
-        if (err) {
-          let errorStr;
-          if (err instanceof Error) {
-            errorStr = err.message;
-          } else {
-            errorStr = JSON.stringify(err);
+          let newBalance = {
+            ...cryptoBalance,
+            ...dispatch(
+              buildFiatBalance({
+                wallet,
+                cryptoBalance,
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                rates,
+                lastDayRates,
+              }),
+            ),
+          } as WalletBalance;
+
+          const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
+
+          // Collect wallet updates instead of applying them
+          walletUpdates.push({
+            walletId: wallet.id,
+            balance: newBalance,
+            pendingTxps: newPendingTxps,
+            singleAddress: status.wallet?.singleAddress,
+          });
+
+          if (!dataOnly) {
+            // properties to update
+            wallet.balance = newBalance;
+            wallet.pendingTxps = newPendingTxps;
+            wallet.singleAddress = status.wallet?.singleAddress;
           }
-          logManager.error(
-            `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
+
+          logManager.info(
+            `Wallet to be updated: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
           );
+
+          return newBalance;
+        } else {
+          const newBalance = {
+            ...cachedBalance,
+            ...dispatch(
+              buildFiatBalance({
+                wallet,
+                cryptoBalance: cachedBalance,
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                rates,
+                lastDayRates,
+              }),
+            ),
+          } as WalletBalance;
+
+          return updateBalance(wallet, newBalance, pendingTxps);
         }
-        return reject(err);
+      });
+
+      logManager.info(`Key: ${key.id} - status updated`);
+
+      if (!dataOnly) {
+        dispatch(
+          successUpdateKey({
+            key,
+          }),
+        );
       }
-    });
+
+      return {
+        keyId: key.id,
+        cacheKey: scopedBalanceCacheKey,
+        totalBalance: getTotalFiatBalance(balances),
+        totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
+        walletUpdates,
+      };
+    } catch (err) {
+      if (err) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        logManager.error(
+          `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
+        );
+      }
+      throw err;
+    }
   };
 
 export const startUpdateAllWalletStatusForKeys =
@@ -665,7 +721,10 @@ export const startUpdateAllKeyAndWalletStatus =
           return resolve();
         }
 
-        const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
+        const [readOnlyKeys, keys] = partition(
+          Object.values(_keys),
+          'isReadOnly',
+        );
 
         if (createTokenWalletWithFunds) {
           logManager.debug(
@@ -732,113 +791,107 @@ export const updateWalletStatus =
   }): Effect<Promise<WalletStatus>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
-      const {
-        balance: cachedBalance,
-        credentials: {token, multisigEthInfo},
-        pendingTxps: cachedPendingTxps,
-        singleAddress: cachedSingleAddress,
-        receiveAddress,
-      } = wallet;
-      const walletPrivKey = wallet.credentials.walletPrivKey;
+      try {
+        const {
+          balance: cachedBalance,
+          credentials: {token, multisigEthInfo},
+          pendingTxps: cachedPendingTxps,
+          singleAddress: cachedSingleAddress,
+          receiveAddress,
+        } = wallet;
+        const walletPrivKey = wallet.credentials.walletPrivKey;
 
-      if (!receiveAddress) {
-        try {
+        const cachedStatus = () => ({
+          balance: {
+            ...cachedBalance,
+            ...dispatch(
+              buildFiatBalance({
+                wallet,
+                cryptoBalance: cachedBalance,
+                defaultAltCurrencyIsoCode,
+                rates,
+                lastDayRates,
+              }),
+            ),
+          },
+          pendingTxps: cachedPendingTxps,
+          singleAddress: !!cachedSingleAddress,
+        });
+
+        if (!receiveAddress) {
           const walletAddress = (await dispatch<any>(
             createWalletAddress({wallet, newAddress: true}),
           )) as string;
           logManager.info(
             `new address generated [updateWalletStatus]: ${walletAddress}`,
           );
-        } catch (error) {
-          return reject(error);
         }
-      }
-      wallet.getStatus(
-        {
-          twoStep: true,
-          tokenAddress: token ? token.address : null,
-          multisigContractAddress: multisigEthInfo
-            ? multisigEthInfo.multisigContractAddress
-            : null,
-          network: wallet.network,
-        },
-        (err: any, status: Status) => {
-          if (err) {
-            const errStr =
-              err instanceof Error ? err.message : JSON.stringify(err);
-            logManager.error(`error [updateWalletStatus]: ${errStr}`);
-            return resolve({
-              balance: {
-                ...cachedBalance,
-                ...dispatch(
-                  buildFiatBalance({
-                    wallet,
-                    cryptoBalance: cachedBalance,
-                    defaultAltCurrencyIsoCode,
-                    rates,
-                    lastDayRates,
-                  }),
-                ),
-              },
-              pendingTxps: cachedPendingTxps,
-              singleAddress: !!cachedSingleAddress,
-            });
-          }
-          try {
-            if (!walletPrivKey && wallet.credentials.walletPrivKey) {
-              const currentKey = getState().WALLET.keys[wallet.keyId];
-              if (currentKey) {
-                dispatch(successUpdateKey({key: currentKey}));
+
+        wallet.getStatus(
+          {
+            twoStep: true,
+            tokenAddress: token ? token.address : null,
+            multisigContractAddress: multisigEthInfo
+              ? multisigEthInfo.multisigContractAddress
+              : null,
+            network: wallet.network,
+          },
+          (err: any, status: Status) => {
+            try {
+              if (err) {
+                const errStr =
+                  err instanceof Error ? err.message : JSON.stringify(err);
+                logManager.error(`error [updateWalletStatus]: ${errStr}`);
+                return resolve(cachedStatus());
               }
-            }
-            const cryptoBalance = dispatch(
-              buildBalance({
-                wallet,
-                status,
-              }),
-            );
-
-            let newBalance = {
-              ...cryptoBalance,
-              ...dispatch(
-                buildFiatBalance({
-                  wallet,
-                  cryptoBalance,
-                  defaultAltCurrencyIsoCode,
-                  rates,
-                  lastDayRates,
-                }),
-              ),
-            } as WalletBalance;
-
-            const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
-            const singleAddress = status.wallet?.singleAddress;
-
-            resolve({
-              balance: newBalance,
-              pendingTxps: newPendingTxps,
-              singleAddress,
-            });
-          } catch (err2) {
-            resolve({
-              balance: {
-                ...cachedBalance,
-                ...dispatch(
-                  buildFiatBalance({
+              try {
+                if (!walletPrivKey && wallet.credentials.walletPrivKey) {
+                  const currentKey = getState().WALLET.keys[wallet.keyId];
+                  if (currentKey) {
+                    dispatch(successUpdateKey({key: currentKey}));
+                  }
+                }
+                const cryptoBalance = dispatch(
+                  buildBalance({
                     wallet,
-                    cryptoBalance: cachedBalance,
-                    defaultAltCurrencyIsoCode,
-                    rates,
-                    lastDayRates,
+                    status,
                   }),
-                ),
-              },
-              pendingTxps: cachedPendingTxps,
-              singleAddress: !!cachedSingleAddress,
-            });
-          }
-        },
-      );
+                );
+
+                let newBalance = {
+                  ...cryptoBalance,
+                  ...dispatch(
+                    buildFiatBalance({
+                      wallet,
+                      cryptoBalance,
+                      defaultAltCurrencyIsoCode,
+                      rates,
+                      lastDayRates,
+                    }),
+                  ),
+                } as WalletBalance;
+
+                const newPendingTxps = dispatch(
+                  buildPendingTxps({wallet, status}),
+                );
+                const singleAddress = status.wallet?.singleAddress;
+
+                resolve({
+                  balance: newBalance,
+                  pendingTxps: newPendingTxps,
+                  singleAddress,
+                });
+              } catch (err2) {
+                resolve(cachedStatus());
+              }
+            } catch (callbackError) {
+              reject(callbackError);
+            }
+          },
+        );
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 

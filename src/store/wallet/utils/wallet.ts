@@ -47,14 +47,13 @@ import {
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import {toStringOrEmpty} from '../../../utils/text';
-import {find, isEqual} from 'lodash';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
   AssetsByChainData,
   AssetsByChainListProps,
 } from '../../../navigation/wallet/screens/AccountDetails';
-import cloneDeep from 'lodash.clonedeep';
 import {logManager} from '../../../managers/LogManager';
+import {areTestnetWalletsVisible, isTestnetWallet} from './testnet';
 
 export const mapAbbreviationAndName =
   (
@@ -159,7 +158,7 @@ export const buildWalletObj = (
   let updatedCurrencyAbbreviation = currencyAbbreviation;
   // Only for USDC.e
   const usdcToken = '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
-  if (token?.address && cloneDeep(token.address)?.toLowerCase() === usdcToken) {
+  if (token?.address && token.address?.toLowerCase() === usdcToken) {
     const tokenAddressSuffix = addTokenChainSuffix(token.address, chain);
     updatedCurrencyAbbreviation =
       BitpaySupportedMaticTokens[tokenAddressSuffix].coin;
@@ -603,25 +602,47 @@ export const BuildPayProWalletSelectorList =
     network,
     payProOptions,
     defaultAltCurrencyIsoCode = 'USD',
+    selectedAccountAddress,
   }: {
     keys: {[key in string]: Key};
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
+    selectedAccountAddress?: string;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
     const {
       RATE: {rates},
     } = getState();
+    const filteredKeys = selectedAccountAddress
+      ? Object.fromEntries(
+          Object.entries(keys).map(([keyId, key]) => [
+            keyId,
+            {
+              ...key,
+              wallets: key.wallets.filter(
+                wallet => wallet.receiveAddress === selectedAccountAddress,
+              ),
+            },
+          ]),
+        )
+      : keys;
     const keyWallets = BuildKeysAndWalletsList({
-      keys,
+      keys: filteredKeys,
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
     });
-    return {keyWallets};
+    return {
+      keyWallets: selectedAccountAddress
+        ? keyWallets.filter(
+            ({accounts, mergedUtxoAndEvmAccounts}) =>
+              accounts.length > 0 || mergedUtxoAndEvmAccounts.length > 0,
+          )
+        : keyWallets,
+    };
   };
 
 // These 2 functions were taken from
@@ -775,7 +796,7 @@ export const findWalletByIdHashed = (
   let walletIdHash;
   return new Promise(resolve => {
     getAllWalletClients(keys).then(wallets => {
-      const wallet = find(wallets, w => {
+      const wallet = wallets.find(w => {
         if (
           (tokenAddress && tokenAddress !== 'null') ||
           (multisigContractAddress && multisigContractAddress !== 'null')
@@ -794,7 +815,7 @@ export const findWalletByIdHashed = (
           hash.update(w.credentials.walletId);
           walletIdHash = hash.digest('hex');
         }
-        return isEqual(walletIdHashed, walletIdHash);
+        return walletIdHashed === walletIdHash;
       });
 
       return resolve({wallet, keyId: wallet?.keyId});
@@ -989,6 +1010,10 @@ export const isWalletVisibleForKey = (
     return false;
   }
 
+  if (!areTestnetWalletsVisible() && isTestnetWallet(wallet)) {
+    return false;
+  }
+
   const isComplete =
     typeof wallet?.credentials?.isComplete === 'function'
       ? wallet.credentials.isComplete()
@@ -1065,6 +1090,12 @@ export const buildAccountList = (
 
   wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && !isWalletVisibleForKey(key, wallet)) {
+      return;
+    }
+
+    // Settings screens list hidden wallets so they can be unhidden, but a
+    // testnet wallet stays out of every list while testnet mode is off.
+    if (!areTestnetWalletsVisible() && isTestnetWallet(wallet)) {
       return;
     }
 

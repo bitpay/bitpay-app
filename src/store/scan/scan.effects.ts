@@ -7,7 +7,6 @@ import {
   ExtractBitPayUriAddress,
   GetPayProUrl,
 } from '../wallet/utils/decode-uri';
-import isEqual from 'lodash.isequal';
 import {
   IsValidBitcoinAddress,
   IsValidBitcoinCashAddress,
@@ -93,6 +92,7 @@ import {
 } from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {
+  BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
   BitpaySupportedSvmCoins,
 } from '../../constants/currencies';
@@ -101,7 +101,6 @@ import {openExternalUrl, submitDeviceEvent} from '../app/app.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
-import {IsUtxoChain} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {MoonpaySellIncomingData} from '../sell-crypto/models/moonpay-sell.models';
@@ -139,6 +138,7 @@ export const incomingData =
       name?: string;
       email?: string;
       destinationTag?: number;
+      selectedAccountAddress?: string;
     },
   ): Effect<Promise<boolean>> =>
   async dispatch => {
@@ -154,16 +154,28 @@ export const incomingData =
         data = `${origin}/i/${invoiceId}`;
       }
       if (IsValidBitPayInvoice(data)) {
-        dispatch(handleUnlock(data, opts?.wallet));
+        dispatch(
+          handleUnlock(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
       }
       // Paypro
       else if (IsValidPayPro(data)) {
-        dispatch(goToPayPro(data, undefined, undefined, opts?.wallet));
+        dispatch(
+          goToPayPro(
+            data,
+            undefined,
+            undefined,
+            opts?.wallet,
+            opts?.selectedAccountAddress,
+          ),
+        );
         // Plain Address (Bitcoin)
       }
       // SolanaPay
       else if (IsValidSolanaPay(data)) {
-        dispatch(handleSolanaPay(data, opts?.wallet));
+        dispatch(
+          handleSolanaPay(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'btc', chain || 'btc', opts));
@@ -189,40 +201,70 @@ export const incomingData =
         dispatch(handlePlainAddress(data, coin || 'ltc', chain || 'ltc', opts));
         // Bitcoin  URI
       } else if (IsValidBitcoinUri(data)) {
-        dispatch(handleBitcoinUri(data, opts?.wallet));
+        dispatch(
+          handleBitcoinUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Bitcoin Cash URI
       } else if (IsValidBitcoinCashUri(data)) {
-        dispatch(handleBitcoinCashUri(data, opts?.wallet));
+        dispatch(
+          handleBitcoinCashUri(
+            data,
+            opts?.wallet,
+            opts?.selectedAccountAddress,
+          ),
+        );
         // Bitcoin Cash URI using Bitcoin Core legacy address
       } else if (IsValidBitcoinCashUriWithLegacyAddress(data)) {
-        dispatch(handleBitcoinCashUriLegacyAddress(data, opts?.wallet));
+        dispatch(
+          handleBitcoinCashUriLegacyAddress(
+            data,
+            opts?.wallet,
+            opts?.selectedAccountAddress,
+          ),
+        );
         // Ethereum URI
       } else if (IsValidEthereumUri(data)) {
-        dispatch(handleEthereumUri(data, opts?.wallet));
+        dispatch(
+          handleEthereumUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Matic URI
       } else if (IsValidMaticUri(data)) {
-        dispatch(handleMaticUri(data, opts?.wallet));
+        dispatch(
+          handleMaticUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Arb URI
       } else if (IsValidArbUri(data)) {
-        dispatch(handleArbUri(data, opts?.wallet));
+        dispatch(
+          handleArbUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Base URI
       } else if (IsValidBaseUri(data)) {
-        dispatch(handleBaseUri(data, opts?.wallet));
+        dispatch(
+          handleBaseUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Op URI
       } else if (IsValidOpUri(data)) {
-        dispatch(handleOpUri(data, opts?.wallet));
+        dispatch(handleOpUri(data, opts?.wallet, opts?.selectedAccountAddress));
       } // SOL URI
       else if (IsValidSolUri(data)) {
-        dispatch(handleSolUri(data, opts?.wallet));
+        dispatch(
+          handleSolUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
-        dispatch(handleRippleUri(data, opts?.wallet));
+        dispatch(
+          handleRippleUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Dogecoin URI
       } else if (IsValidDogecoinUri(data)) {
-        dispatch(handleDogecoinUri(data, opts?.wallet));
+        dispatch(
+          handleDogecoinUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Litecoin URI
       } else if (IsValidLitecoinUri(data)) {
-        dispatch(handleLitecoinUri(data, opts?.wallet));
+        dispatch(
+          handleLitecoinUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
         dispatch(handleWalletConnectUri(data));
@@ -255,7 +297,9 @@ export const incomingData =
         dispatch(handleTransakUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
-        dispatch(handleBitPayUri(data, opts?.wallet));
+        dispatch(
+          handleBitPayUri(data, opts?.wallet, opts?.selectedAccountAddress),
+        );
         // Check Private Key
       } else if (IsValidPrivateKey(data)) {
         dispatch(handlePrivateKey(data));
@@ -303,6 +347,7 @@ const goToPayPro =
     replaceNavigationRoute?: boolean,
     invoice?: Invoice,
     wallet?: Wallet,
+    selectedAccountAddress?: string,
   ): Effect =>
   async dispatch => {
     ongoingProcessManager.hide();
@@ -340,6 +385,7 @@ const goToPayPro =
             payProOptions,
             invoice: _invoice,
             wallet,
+            selectedAccountAddress,
           }),
         );
         return;
@@ -348,6 +394,7 @@ const goToPayPro =
         payProOptions,
         invoice: _invoice,
         wallet,
+        selectedAccountAddress,
       });
     } catch (e: any) {
       ongoingProcessManager.hide();
@@ -370,7 +417,7 @@ const goToPayPro =
   };
 
 const handleUnlock =
-  (data: string, wallet?: Wallet): Effect =>
+  (data: string, wallet?: Wallet, selectedAccountAddress?: string): Effect =>
   async dispatch => {
     logManager.info('[scan] Incoming-data: BitPay invoice');
 
@@ -381,7 +428,9 @@ const handleUnlock =
     const result = await dispatch(unlockInvoice(invoiceId, network));
 
     if (result === 'unlockSuccess') {
-      dispatch(goToPayPro(data, undefined, undefined, wallet));
+      dispatch(
+        goToPayPro(data, undefined, undefined, wallet, selectedAccountAddress),
+      );
       return;
     }
 
@@ -414,20 +463,41 @@ const handleUnlock =
             buyer?.email ||
             status !== 'new'
           ) {
-            dispatch(goToPayPro(data, undefined, undefined, wallet));
+            dispatch(
+              goToPayPro(
+                data,
+                undefined,
+                undefined,
+                wallet,
+                selectedAccountAddress,
+              ),
+            );
           } else {
-            navigationRef.navigate('EnterBuyerProvidedEmail', {data});
+            navigationRef.navigate('EnterBuyerProvidedEmail', {
+              data,
+              selectedAccountAddress,
+            });
           }
         } else {
           const _invoice = invoice?.invoice || invoice;
-          dispatch(goToPayPro(data, undefined, _invoice, wallet));
+          dispatch(
+            goToPayPro(
+              data,
+              undefined,
+              _invoice,
+              wallet,
+              selectedAccountAddress,
+            ),
+          );
         }
         return;
       }
     } catch {}
 
     if (context === 'u') {
-      dispatch(goToPayPro(data, undefined, undefined, wallet));
+      dispatch(
+        goToPayPro(data, undefined, undefined, wallet, selectedAccountAddress),
+      );
       return;
     }
 
@@ -436,7 +506,7 @@ const handleUnlock =
         navigationRef.navigate('Login', {
           onLoginSuccess: () => {
             navigationRef.navigate('Tabs', {screen: 'Home'});
-            dispatch(incomingData(data));
+            dispatch(incomingData(data, {selectedAccountAddress}));
           },
         });
         break;
@@ -541,6 +611,7 @@ const goToConfirm =
     recipient,
     amount,
     wallet,
+    selectedAccountAddress,
     setButtonState,
     opts,
   }: {
@@ -555,6 +626,7 @@ const goToConfirm =
     };
     amount: number;
     wallet?: Wallet;
+    selectedAccountAddress?: string;
     setButtonState?: (state: ButtonState) => void;
     opts?: {
       sendMax?: boolean | undefined;
@@ -568,6 +640,7 @@ const goToConfirm =
       if (!wallet) {
         navigationRef.navigate('GlobalSelect', {
           context: 'scanner',
+          selectedAccountAddress,
           recipient: {
             ...recipient,
             ...{
@@ -642,6 +715,7 @@ export const goToAmount =
     chain,
     recipient,
     wallet,
+    selectedAccountAddress,
     opts,
   }: {
     coin: string;
@@ -656,6 +730,7 @@ export const goToAmount =
       destinationTag?: number;
     };
     wallet?: Wallet;
+    selectedAccountAddress?: string;
     opts?: {
       message?: string;
       feePerKb?: number;
@@ -666,6 +741,7 @@ export const goToAmount =
     if (!wallet) {
       navigationRef.navigate('GlobalSelect', {
         context: 'scanner',
+        selectedAccountAddress,
         recipient: {
           ...recipient,
           ...{
@@ -676,6 +752,7 @@ export const goToAmount =
                 !!BitpaySupportedSvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if SVM address show all svm wallets and tokens in next view
               message: opts?.message || '',
               feePerKb: opts?.feePerKb,
+              solanaPayOpts: opts?.solanaPayOpts,
             },
           },
         },
@@ -735,7 +812,11 @@ const goToAddKey =
   };
 
 const handleBitPayUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   (dispatch, getState) => {
     logManager.info('[scan] Incoming-data: BitPay URI', data);
 
@@ -789,7 +870,16 @@ const handleBitPayUri =
       };
 
       if (!params.get('amount')) {
-        dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
+        dispatch(
+          goToAmount({
+            coin,
+            chain,
+            recipient,
+            wallet,
+            selectedAccountAddress,
+            opts: {message},
+          }),
+        );
       } else {
         const amount = Number(params.get('amount'));
         dispatch(
@@ -797,6 +887,7 @@ const handleBitPayUri =
             recipient,
             amount,
             wallet,
+            selectedAccountAddress,
             opts: {message, feePerKb},
           }),
         );
@@ -805,7 +896,11 @@ const handleBitPayUri =
   };
 
 const handleSolanaPay =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   async (dispatch, getState) => {
     logManager.info('[scan] Incoming-data: SolanaPay URI');
 
@@ -948,6 +1043,7 @@ const handleSolanaPay =
           chain,
           recipient,
           wallet,
+          selectedAccountAddress,
           opts: {
             message: message ?? undefined,
             solanaPayOpts: {
@@ -994,6 +1090,7 @@ const handleSolanaPay =
             recipient,
             amount: Number(amount),
             wallet,
+            selectedAccountAddress,
             opts: {
               message: message ?? undefined,
               solanaPayOpts: {
@@ -1031,7 +1128,11 @@ const handleSolanaPay =
   };
 
 const handleBitcoinUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Bitcoin URI');
     const coin = 'btc';
@@ -1047,19 +1148,48 @@ const handleBitcoinUri =
       network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
-      dispatch(goToPayPro(parsed.r));
+      dispatch(
+        goToPayPro(
+          parsed.r,
+          undefined,
+          undefined,
+          undefined,
+          selectedAccountAddress,
+        ),
+      );
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     } else {
       const amount = Number(
         dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
-      dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     }
   };
 
 const handleBitcoinCashUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: BitcoinCash URI');
     const coin = 'bch';
@@ -1081,19 +1211,48 @@ const handleBitcoinCashUri =
       network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
-      dispatch(goToPayPro(parsed.r));
+      dispatch(
+        goToPayPro(
+          parsed.r,
+          undefined,
+          undefined,
+          undefined,
+          selectedAccountAddress,
+        ),
+      );
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     } else {
       const amount = Number(
         dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
-      dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     }
   };
 
 const handleBitcoinCashUriLegacyAddress =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info(
       '[scan] Incoming-data: BitcoinCash URI with legacy address',
@@ -1129,19 +1288,48 @@ const handleBitcoinCashUriLegacyAddress =
       network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
-      dispatch(goToPayPro(parsed.r));
+      dispatch(
+        goToPayPro(
+          parsed.r,
+          undefined,
+          undefined,
+          undefined,
+          selectedAccountAddress,
+        ),
+      );
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     } else {
       const amount = Number(
         dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
-      dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     }
   };
 
 const handleEthereumUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Ethereum URI');
     const coin = 'eth';
@@ -1160,7 +1348,16 @@ const handleEthereumUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {feePerKb},
+        }),
+      );
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
@@ -1173,6 +1370,7 @@ const handleEthereumUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
           opts: {feePerKb},
         }),
       );
@@ -1180,7 +1378,11 @@ const handleEthereumUri =
   };
 
 const handleMaticUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Matic URI');
     const coin = 'pol';
@@ -1199,7 +1401,16 @@ const handleMaticUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {feePerKb},
+        }),
+      );
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
@@ -1212,6 +1423,7 @@ const handleMaticUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
           opts: {feePerKb},
         }),
       );
@@ -1219,7 +1431,11 @@ const handleMaticUri =
   };
 
 const handleArbUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Arb URI');
     const coin = 'eth';
@@ -1238,7 +1454,16 @@ const handleArbUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {feePerKb},
+        }),
+      );
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
@@ -1251,6 +1476,7 @@ const handleArbUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
           opts: {feePerKb},
         }),
       );
@@ -1258,7 +1484,11 @@ const handleArbUri =
   };
 
 const handleBaseUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Base URI');
     const coin = 'eth';
@@ -1277,7 +1507,16 @@ const handleBaseUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {feePerKb},
+        }),
+      );
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
@@ -1290,6 +1529,7 @@ const handleBaseUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
           opts: {feePerKb},
         }),
       );
@@ -1297,7 +1537,11 @@ const handleBaseUri =
   };
 
 const handleOpUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Op URI');
     const coin = 'eth';
@@ -1316,7 +1560,16 @@ const handleOpUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {feePerKb},
+        }),
+      );
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
@@ -1329,6 +1582,7 @@ const handleOpUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
           opts: {feePerKb},
         }),
       );
@@ -1336,7 +1590,11 @@ const handleOpUri =
   };
 
 const handleSolUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Sol URI');
     const coin = 'sol';
@@ -1355,7 +1613,16 @@ const handleSolUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {feePerKb},
+        }),
+      );
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
@@ -1368,6 +1635,7 @@ const handleSolUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
           opts: {feePerKb},
         }),
       );
@@ -1375,7 +1643,11 @@ const handleSolUri =
   };
 
 const handleRippleUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Ripple URI');
     const coin = 'xrp';
@@ -1396,7 +1668,9 @@ const handleRippleUri =
       destinationTag: destinationTag ? Number(destinationTag) : undefined,
     };
     if (!amountParam.exec(data)) {
-      dispatch(goToAmount({coin, chain, recipient, wallet}));
+      dispatch(
+        goToAmount({coin, chain, recipient, wallet, selectedAccountAddress}),
+      );
     } else {
       const parsedAmount = amountParam.exec(data)![1];
       const amount = Number(parsedAmount);
@@ -1405,13 +1679,18 @@ const handleRippleUri =
           recipient,
           amount,
           wallet,
+          selectedAccountAddress,
         }),
       );
     }
   };
 
 const handleDogecoinUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Dogecoin URI');
     const coin = 'doge';
@@ -1429,19 +1708,48 @@ const handleDogecoinUri =
     };
 
     if (parsed.r) {
-      dispatch(goToPayPro(parsed.r));
+      dispatch(
+        goToPayPro(
+          parsed.r,
+          undefined,
+          undefined,
+          undefined,
+          selectedAccountAddress,
+        ),
+      );
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     } else {
       const amount = Number(
         dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
-      dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     }
   };
 
 const handleLitecoinUri =
-  (data: string, wallet?: Wallet): Effect<void> =>
+  (
+    data: string,
+    wallet?: Wallet,
+    selectedAccountAddress?: string,
+  ): Effect<void> =>
   dispatch => {
     logManager.info('[scan] Incoming-data: Litecoin URI');
     const coin = 'ltc';
@@ -1458,16 +1766,46 @@ const handleLitecoinUri =
       network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
-      dispatch(goToPayPro(parsed.r));
+      dispatch(
+        goToPayPro(
+          parsed.r,
+          undefined,
+          undefined,
+          undefined,
+          selectedAccountAddress,
+        ),
+      );
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     } else {
       const amount = Number(
         dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
-      dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          selectedAccountAddress,
+          opts: {message},
+        }),
+      );
     }
   };
+
+// A bare `coin` deeplink param only implies its chain for native coins (btc, eth, xrp, sol...).
+// Tokens like usdc exist on several chains, so they still need an explicit `chain`.
+const getNativeCoinChain = (coin: string): string | undefined =>
+  BitpaySupportedCoins[coin]?.coin === coin ? coin : undefined;
 
 const handleBuyCryptoUri =
   (data: string): Effect<void> =>
@@ -1496,9 +1834,8 @@ const handleBuyCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoChain(coin)) {
-        chain = coin;
-      } else {
+      chain = getNativeCoinChain(coin);
+      if (!chain) {
         coin = undefined;
       }
     }
@@ -1567,9 +1904,8 @@ const handleSellCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoChain(coin)) {
-        chain = coin;
-      } else {
+      chain = getNativeCoinChain(coin);
+      if (!chain) {
         coin = undefined;
       }
     }
@@ -2663,6 +2999,7 @@ const handlePlainAddress =
       name?: string;
       email?: string;
       destinationTag?: number;
+      selectedAccountAddress?: string;
     },
   ): Effect<void> =>
   dispatch => {
@@ -2682,7 +3019,15 @@ const handlePlainAddress =
       network,
       destinationTag: opts?.destinationTag,
     };
-    dispatch(goToAmount({coin, chain, recipient, wallet: opts?.wallet}));
+    dispatch(
+      goToAmount({
+        coin,
+        chain,
+        recipient,
+        wallet: opts?.wallet,
+        selectedAccountAddress: opts?.selectedAccountAddress,
+      }),
+    );
   };
 
 const goToImport =
@@ -2748,14 +3093,18 @@ const findWallet = (
       hash.update(w.credentials.walletId);
       walletIdHash = hash.digest('hex');
     }
-    return isEqual(walletIdHashed, walletIdHash);
+    return walletIdHashed === walletIdHash;
   });
 
   return wallet;
 };
 
 export const setBuyerProvidedEmail =
-  (data: string, email: string): Effect<Promise<void>> =>
+  (
+    data: string,
+    email: string,
+    selectedAccountAddress?: string,
+  ): Effect<Promise<void>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -2773,7 +3122,15 @@ export const setBuyerProvidedEmail =
           {headers: NO_CACHE_HEADERS},
         );
         if (status === 'success') {
-          dispatch(goToPayPro(data, true));
+          dispatch(
+            goToPayPro(
+              data,
+              true,
+              undefined,
+              undefined,
+              selectedAccountAddress,
+            ),
+          );
           return resolve();
         } else {
           return reject();

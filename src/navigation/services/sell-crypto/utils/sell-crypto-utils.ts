@@ -13,7 +13,6 @@ import {
   getSimplexSellSupportedCurrencies,
   simplexSellSupportedFiatCurrencies,
 } from './simplex-sell-utils';
-import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {
   PaymentMethodsConfig,
@@ -169,9 +168,8 @@ export const getSellEnabledPaymentMethods = (
   };
 
   // Filter enabled payment methods
-  const EnabledWithdrawalMethods = pickBy(
-    WithdrawalMethodsAvailable,
-    method => {
+  const EnabledWithdrawalMethods = Object.fromEntries(
+    Object.entries(WithdrawalMethodsAvailable).filter(([, method]) => {
       if (paymentMethodsConfig?.[method.method]?.disabled) {
         return false;
       }
@@ -187,7 +185,7 @@ export const getSellEnabledPaymentMethods = (
           userCountry,
         )
       );
-    },
+    }),
   );
 
   return EnabledWithdrawalMethods;

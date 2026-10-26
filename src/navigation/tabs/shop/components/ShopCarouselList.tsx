@@ -1,6 +1,6 @@
 import React from 'react';
 import {TouchableHighlight, View} from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import {Carousel} from 'react-native-reanimated-carousel';
 import {
   CardConfig,
   DirectIntegrationApiObject,
@@ -98,17 +98,12 @@ export default ({
         gestureChain.activeOffsetX([-10, 10]);
         gestureChain.failOffsetY([-10, 10]);
       }}
-      loop={false}
-      autoFillData={false}
-      vertical={false}
-      style={{width: screenWidth}}
-      width={isSingleSlide ? screenWidth : carouselItemWidth}
-      height={numRows * itemHeight}
-      autoPlay={false}
+      style={{width: screenWidth, height: numRows * itemHeight}}
+      itemSize={isSingleSlide ? screenWidth : carouselItemWidth}
       data={slides}
-      windowSize={windowSize}
-      scrollAnimationDuration={1000}
-      enabled={!isSingleSlide}
+      renderWindowSize={windowSize}
+      animation={{type: 'timing', duration: 1000}}
+      scrollEnabled={!isSingleSlide}
       renderItem={({
         item,
         index,

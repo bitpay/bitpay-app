@@ -87,7 +87,7 @@ const SendToContact = () => {
   return (
     <>
       <View style={styles.sendToContactContainer}>
-        <SearchContainer style={{height: 54}}>
+        <SearchContainer style={{minHeight: 54}}>
           <SearchInput
             placeholder={t('Search contact')}
             placeholderTextColor={placeHolderTextColor}

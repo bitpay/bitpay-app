@@ -16,6 +16,7 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useTheme} from '../../../contexts';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {requestDklsWorkerMount} from '../../../dkls/DklsWorker';
 import {
   generateJoinerSessionId,
   joinTSSWithCode,
@@ -348,6 +349,10 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const activeKeyIdRef = useRef<string | null>(resumeKeyId || null);
   // new-join only
   const cancelOnCreateRef = useRef(false);
+
+  useEffect(() => {
+    requestDklsWorkerMount();
+  }, []);
 
   useEffect(() => {
     return () => {

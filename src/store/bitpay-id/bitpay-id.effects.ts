@@ -1,4 +1,3 @@
-import {upperFirst} from 'lodash';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -7,7 +6,6 @@ import {
 import UserApi from '../../api/user';
 import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
-import Dosh from '../../lib/dosh';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {BrazeWrapper} from '../../lib/Braze';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
@@ -19,7 +17,6 @@ import {
   submitDeviceEvent,
 } from '../app/app.effects';
 import {DeviceEvent} from '../../lib/sumsub/deviceIntelligence';
-import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {ShopActions, ShopEffects} from '../shop';
 import {SumSubActions, SumSubEffects} from '../sumsub';
@@ -55,7 +52,8 @@ import {
   safeErrorMessage,
 } from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
-import {sleep} from '../../utils/helper-methods';
+import {sleep, titleCasing} from '../../utils/helper-methods';
+import {toStringOrEmpty} from '../../utils/text';
 
 interface StartLoginParams {
   email?: string;
@@ -243,7 +241,11 @@ export const startCreateAccount =
         errMsg = JSON.stringify(err);
       }
 
-      dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
+      dispatch(
+        BitPayIdActions.failedCreateAccount(
+          titleCasing(toStringOrEmpty(errMsg)),
+        ),
+      );
       logManager.error(
         '[startCreateAccount] Failed to create account.',
         errMsg,
@@ -387,7 +389,6 @@ export const startLogin =
         }),
       );
 
-      dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
       return true;
     } catch (err: any) {
@@ -436,11 +437,13 @@ export const startLogin =
           'We could not verify your connection. Please try again in a moment.',
         );
       } else if (isAxiosError<LoginErrorResponse>(err)) {
-        errMsg = upperFirst(
-          err.response?.data?.message ||
-            safeErrorMessage(err.response?.data, '') ||
-            err.message ||
-            t('An unexpected error occurred.'),
+        errMsg = titleCasing(
+          toStringOrEmpty(
+            err.response?.data?.message ||
+              safeErrorMessage(err.response?.data, '') ||
+              err.message ||
+              t('An unexpected error occurred.'),
+          ),
         );
       } else {
         // Never surface a raw response body — it may be an HTML error page.
@@ -487,7 +490,7 @@ export const startTwoFactorAuth =
       let errMsg;
 
       if (isAxiosError<string>(err)) {
-        errMsg = upperFirst(
+        errMsg = titleCasing(
           safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
@@ -526,13 +529,13 @@ export const startTwoFactorPairing =
       let errMsg;
 
       if (isAxiosError<any>(err)) {
-        errMsg = upperFirst(
+        errMsg = titleCasing(
           safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
       } else if (err instanceof Error) {
-        errMsg = upperFirst(err.message);
+        errMsg = titleCasing(err.message);
       } else {
         errMsg = err.message || JSON.stringify(err);
       }
@@ -664,7 +667,6 @@ export const startPairAndLoadUser =
         }),
       );
 
-      dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(SumSubEffects.startGetKycStatus());
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>
@@ -735,17 +737,6 @@ export const startDisconnectBitPayId =
       );
     }
 
-    try {
-      Dosh.clearUser();
-    } catch (err: any) {
-      // log but swallow this error
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      logManager.debug(
-        '[startDisconnectBitPayId] An error occurred while clearing Dosh user.',
-        errMsg,
-      );
-    }
-
     // Braze doesn't recommend changeUser to a new EID
     // Keep tracking current EID as part of logout
     // until login with a different user or uninstall the app
@@ -763,7 +754,6 @@ export const startDisconnectBitPayId =
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     dispatch(SumSubActions.resetKyc(APP.network));
     dispatch(resetKycGetVerifiedModal());
-    dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));
     dispatch(setEmailNotificationsAccepted(false, null)); // Only uncheck accepted, keep subscription status
@@ -796,24 +786,6 @@ export const startFetchBasicInfo =
       throw err;
     }
   };
-
-export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
-  try {
-    const {APP, BITPAY_ID} = getState();
-    const doshToken = await UserApi.fetchDoshToken(
-      BITPAY_ID.apiToken[APP.network],
-    );
-
-    dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-    logManager.error(
-      '[startFetchDoshToken] Failed to fetch dosh token.',
-      errMsg,
-    );
-    dispatch(BitPayIdActions.failedFetchDoshToken());
-  }
-};
 
 export const startFetchSecuritySettings =
   (): Effect<Promise<SecuritySettings>> => async (dispatch, getState) =>
@@ -907,12 +879,14 @@ export const startFetchReceivingAddresses =
               chain,
             };
           });
-        dispatch(
-          BitPayIdActions.successFetchReceivingAddresses(
-            APP.network,
-            receivingAddresses,
-          ),
-        );
+        if (!params) {
+          dispatch(
+            BitPayIdActions.successFetchReceivingAddresses(
+              APP.network,
+              receivingAddresses,
+            ),
+          );
+        }
         return receivingAddresses;
       } catch (err: any) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);

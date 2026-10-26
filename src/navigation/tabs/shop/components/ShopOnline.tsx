@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../../utils/debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {StyleSheet, View} from 'react-native';

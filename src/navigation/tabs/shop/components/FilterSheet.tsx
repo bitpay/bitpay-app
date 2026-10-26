@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   pill: {
-    height: 40,
+    minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,

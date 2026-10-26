@@ -30,6 +30,7 @@ export enum AppActionTypes {
   APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
+  SET_VAULT_MIGRATION_STATUS_REPORTED = 'APP/SET_VAULT_MIGRATION_STATUS_REPORTED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
   SHOW_WALLET_CONNECT_START_MODAL = 'APP/SHOW_WALLET_CONNECT_START_MODAL',
@@ -97,17 +98,11 @@ export enum AppActionTypes {
   SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
   SET_HAS_VIEWED_TSS_ONBOARDING = 'APP/SET_HAS_VIEWED_TSS_ONBOARDING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
-  IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
   SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
   RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
-}
-
-interface ImportLedgerModalToggled {
-  type: typeof AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED;
-  payload: boolean;
 }
 
 interface NetworkChanged {
@@ -143,6 +138,11 @@ interface setAppFirstOpenEventComplete {
 interface setAppFirstOpenDate {
   type: typeof AppActionTypes.SET_APP_FIRST_OPEN_DATE;
   payload: number;
+}
+
+interface SetVaultMigrationStatusReported {
+  type: typeof AppActionTypes.SET_VAULT_MIGRATION_STATUS_REPORTED;
+  payload: string;
 }
 
 interface SetOnboardingCompleted {
@@ -480,6 +480,7 @@ export type AppActionType =
   | AppIsReadyForDeeplinking
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
+  | SetVaultMigrationStatusReported
   | setUserFeedback
   | SetOnboardingCompleted
   | setAppInstalled
@@ -539,7 +540,6 @@ export type AppActionType =
   | SetHasViewedBillsTab
   | SetHasViewedTSSOnboarding
   | InAppBrowserOpen
-  | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
   | SetLocalAssetsDropdown

@@ -7,7 +7,7 @@ import {
 import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
-import uniqBy from 'lodash.uniqby';
+import {partition, uniqBy} from '../../../../utils/array';
 import {SAFE_CONFIRMATIONS} from '../../../../constants/wallet';
 import {
   IsCustomERCToken,
@@ -22,7 +22,7 @@ import {
   WithinSameMonth,
 } from '../../utils/time';
 import moment, {MomentInput} from 'moment';
-import 'moment/min/locales';
+import '../../../../utils/momentLocales';
 import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
@@ -39,7 +39,6 @@ import {
 } from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
-import {partition} from 'lodash';
 import {
   BitpaySupportedCoins,
   SUPPORTED_VM_TOKENS,

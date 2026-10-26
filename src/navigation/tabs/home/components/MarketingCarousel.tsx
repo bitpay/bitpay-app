@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {Carousel, CarouselRef} from 'react-native-reanimated-carousel';
 import {
   StyleSheet,
   TouchableOpacity as RNTouchableOpacity,
@@ -79,7 +79,7 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
     new Map(),
   );
   const theme = useTheme();
-  const carouselRef = useRef<ICarouselInstance>(null);
+  const carouselRef = useRef<CarouselRef>(null);
   const dispatch = useAppDispatch();
   const urlEventHandler = useUrlEventHandler();
   const loggedImpressionsRef = useRef(new Set<string>());
@@ -225,17 +225,11 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
           gestureChain.activeOffsetX([-10, 10]);
           gestureChain.failOffsetY([-10, 10]);
         }}
-        loop={false}
-        vertical={false}
-        width={cardWidth}
-        height={cardHeight}
-        autoPlay={false}
-        style={{width: WIDTH}}
+        itemSize={cardWidth}
+        style={{width: WIDTH, height: cardHeight}}
         data={slides}
-        pagingEnabled
-        snapEnabled
-        scrollAnimationDuration={carouselScrollDuration}
-        onProgressChange={(_, absoluteProgress) => {
+        animation={{type: 'timing', duration: carouselScrollDuration}}
+        onProgressChange={absoluteProgress => {
           const nextIndex = Math.min(
             slides.length - 1,
             Math.max(0, Math.round(absoluteProgress)),

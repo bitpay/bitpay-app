@@ -10,7 +10,6 @@
  *   - startTwoFactorAuth (success, failure)
  *   - startDisconnectBitPayId (authenticated + unauthenticated paths)
  *   - startFetchBasicInfo (success, failure)
- *   - startFetchDoshToken (success, failure)
  */
 
 import configureTestStore from '@test/store';
@@ -22,12 +21,13 @@ import {
   startBitPayIdStoreInit,
   startBitPayIdAnalyticsInit,
   checkLoginWithPasskey,
+  startCreateAccount,
   startLogin,
   startSubmitForgotPasswordEmail,
   startTwoFactorAuth,
   startDisconnectBitPayId,
   startFetchBasicInfo,
-  startFetchDoshToken,
+  startFetchReceivingAddresses,
 } from './bitpay-id.effects';
 
 // ---------------------------------------------------------------------------
@@ -54,11 +54,6 @@ jest.mock('../../managers/CloudflareChallengeManager', () => ({
   cloudflareChallengeManager: {
     present: jest.fn(),
   },
-}));
-
-jest.mock('../../lib/dosh', () => ({
-  __esModule: true,
-  default: {clearUser: jest.fn()},
 }));
 
 jest.mock('../../lib/Mixpanel', () => ({
@@ -105,15 +100,6 @@ jest.mock('../shop', () => ({
   },
 }));
 
-jest.mock('../card', () => ({
-  CardEffects: {
-    startCardStoreInit: jest.fn(() => ({type: 'CARD/INIT'})),
-  },
-  CardActions: {
-    isJoinedWaitlist: jest.fn(() => ({type: 'CARD/WAITLIST'})),
-  },
-}));
-
 jest.mock('../../utils/passkey', () => ({
   getPasskeyStatus: jest.fn(),
   signInWithPasskey: jest.fn(),
@@ -143,7 +129,6 @@ jest.mock('../../api/user', () => ({
   default: {
     fetchInitialUserData: jest.fn(),
     fetchBasicInfo: jest.fn(),
-    fetchDoshToken: jest.fn(),
   },
 }));
 
@@ -159,6 +144,7 @@ jest.mock('../../api/bitpay', () => ({
 
 import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
+import BitPayIdApi from '../../api/bitpay';
 import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
 import {CloudflareChallengeError} from '../../utils/cloudflare';
 import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
@@ -168,6 +154,7 @@ import {BrazeWrapper} from '../../lib/Braze';
 
 const MockAuthApi = AuthApi as jest.Mocked<typeof AuthApi>;
 const MockUserApi = UserApi as jest.Mocked<typeof UserApi>;
+const MockBitPayIdApi = BitPayIdApi as jest.Mocked<typeof BitPayIdApi>;
 const MockGetPasskeyStatus = getPasskeyStatus as jest.Mock;
 const MockSignInWithPasskey = signInWithPasskey as jest.Mock;
 const MockCloudflarePresent = cloudflareChallengeManager.present as jest.Mock;
@@ -202,7 +189,6 @@ const makeUser = (overrides = {}): any => ({
 
 const makeInitialData = (userOverrides = {}): any => ({
   basicInfo: makeUser(userOverrides),
-  doshToken: null,
 });
 
 const baseStore = () =>
@@ -596,6 +582,55 @@ describe('startLogin (Cloudflare challenge handling)', () => {
   });
 });
 
+describe('API error messages that are not strings', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  const axiosErrWithObjectMessage: any = {
+    isAxiosError: true,
+    response: {status: 400, data: {message: {code: 'invalid'}}},
+    message: 'Request failed with status code 400',
+  };
+
+  it('startCreateAccount still fails with a string error', async () => {
+    (MockAuthApi.register as jest.Mock).mockRejectedValueOnce(
+      axiosErrWithObjectMessage,
+    );
+
+    const store = baseStore();
+    await store.dispatch(
+      startCreateAccount({
+        givenName: 'Alice',
+        familyName: 'Doe',
+        email: 'alice@example.com',
+        password: 'hunter2',
+        agreedToTOSandPP: true,
+        agreedToMarketingCommunications: false,
+      }),
+    );
+
+    expect(store.getState().BITPAY_ID.createAccountStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.createAccountError).toBe(
+      '[object Object]',
+    );
+  });
+
+  it('startLogin still fails with a string error', async () => {
+    MockGetPasskeyStatus.mockResolvedValueOnce({passkey: false});
+    (MockAuthApi.login as jest.Mock).mockRejectedValueOnce(
+      axiosErrWithObjectMessage,
+    );
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.loginError).toBe('[object Object]');
+  });
+});
+
 // ---------------------------------------------------------------------------
 // startSubmitForgotPasswordEmail
 // ---------------------------------------------------------------------------
@@ -785,31 +820,54 @@ describe('startFetchBasicInfo', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// startFetchDoshToken
-// ---------------------------------------------------------------------------
-
-describe('startFetchDoshToken', () => {
+describe('startFetchReceivingAddresses', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('dispatches successFetchDoshToken with the returned token', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockResolvedValueOnce('dosh-xyz');
-
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-
-    expect(store.getState().BITPAY_ID.doshToken[Network.mainnet]).toBe(
-      'dosh-xyz',
-    );
+  const receivingAddress = (address: string) => ({
+    id: address,
+    currency: 'BTC',
+    address,
+    usedFor: {payToEmail: true},
   });
 
-  it('dispatches failedFetchDoshToken when API call fails', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockRejectedValueOnce(
-      new Error('dosh error'),
+  const signedInStore = () =>
+    configureTestStore({
+      BITPAY_ID: {
+        apiToken: {[Network.mainnet]: 'token-abc'},
+        user: {[Network.mainnet]: makeUser()},
+      },
+      APP: {network: Network.mainnet},
+    });
+
+  it('stores the receiving addresses of the signed-in user', async () => {
+    (MockBitPayIdApi.apiCall as jest.Mock).mockResolvedValueOnce([
+      receivingAddress('own-address'),
+    ]);
+
+    const store = signedInStore();
+    await store.dispatch(startFetchReceivingAddresses());
+
+    expect(
+      store.getState().BITPAY_ID.receivingAddresses[Network.mainnet],
+    ).toEqual([expect.objectContaining({address: 'own-address'})]);
+  });
+
+  it('returns the addresses looked up by email without storing them as the user own', async () => {
+    (MockBitPayIdApi.apiCall as jest.Mock)
+      .mockResolvedValueOnce([receivingAddress('own-address')])
+      .mockResolvedValueOnce([receivingAddress('recipient-address')]);
+
+    const store = signedInStore();
+    await store.dispatch(startFetchReceivingAddresses());
+    const recipientAddresses = await store.dispatch(
+      startFetchReceivingAddresses({email: 'bob@example.com', currency: 'BTC'}),
     );
 
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-    expect(store.getState().BITPAY_ID.fetchDoshTokenStatus).toBe('failed');
+    expect(recipientAddresses).toEqual([
+      expect.objectContaining({address: 'recipient-address'}),
+    ]);
+    expect(
+      store.getState().BITPAY_ID.receivingAddresses[Network.mainnet],
+    ).toEqual([expect.objectContaining({address: 'own-address'})]);
   });
 });

@@ -1,4 +1,4 @@
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../../utils/object';
 import {
   Key,
   PendingJoinerSession,
@@ -44,6 +44,11 @@ export interface WalletState {
   svmAddressFixComplete: boolean;
   pendingJoinerSession: PendingJoinerSession | null;
   tssEnabled: boolean;
+  /**
+   * Testnet mode. `null` until the user unlocks it with the title taps in
+   * Settings > Crypto; once set the toggle stays visible there.
+   */
+  showTestnetWallets: boolean | null;
   secretsMigrated: boolean;
 }
 
@@ -81,6 +86,7 @@ export const initialState: WalletState = {
   svmAddressFixComplete: false,
   pendingJoinerSession: null,
   tssEnabled: false,
+  showTestnetWallets: null,
   secretsMigrated: false,
 };
 
@@ -780,6 +786,19 @@ export const walletReducer = (
         ...state,
         tssEnabled: action.payload,
       };
+
+    case WalletActionTypes.SET_SHOW_TESTNET_WALLETS: {
+      // New key and wallets references so lists memoized on them re-filter.
+      const keys: WalletState['keys'] = {};
+      Object.entries(state.keys).forEach(([id, key]) => {
+        keys[id] = {...key, wallets: [...key.wallets]};
+      });
+      return {
+        ...state,
+        keys,
+        showTestnetWallets: action.payload,
+      };
+    }
 
     default:
       return state;
