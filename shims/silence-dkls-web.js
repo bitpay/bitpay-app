@@ -5,13 +5,14 @@ const preview = (v) => {
 };
 
 export default async function init() {
-  console.log('[DKLS shim] init()');
-  const r = await callWorker({ type: 'init' });
-  console.log('[DKLS shim] init() ok ->', r);
+  await callWorker({ type: 'init' });
 }
 
 async function toHandleJSON(m) {
   if (!m) return m;
+  if (m instanceof Message) {
+    return { payload: m._payload, from_id: m._from_id, to_id: m._to_id };
+  }
   if (m && typeof m._id === 'number' && !m._ready) {
     return { _id: m._id };
   }
@@ -76,12 +77,17 @@ function wrapAs(Cls, objId) {
   return o;
 }
 
+function wrapMessage(res) {
+  return new Message(res.payload, res.from_id, res.to_id);
+}
+
 function toU8(x) {
   if (x == null) return undefined;
   if (x instanceof Uint8Array) return x;
   if (Array.isArray(x)) return new Uint8Array(x);
   
   if (typeof x === "object") {
+    if (typeof x.__dklsBytes === 'string') return Buffer.from(x.__dklsBytes, 'base64');
     const keys = Object.keys(x);
     const isArrayLike = keys.length > 0 && keys.every((k, i) => k === String(i));
     
@@ -111,12 +117,11 @@ export class KeygenSession {
   }
 
   static async fromBytes(bytes) {
-    const bytesArray = bytes instanceof Uint8Array ? Array.from(bytes) : bytes;
     const { objId } = await callWorker({
       type: 'staticConstruct',
       className: 'KeygenSession',
       method: 'fromBytes',
-      args: [bytesArray],
+      args: [bytes],
     });
     return wrapAs(KeygenSession, objId);
   }
@@ -140,7 +145,7 @@ export class KeygenSession {
   async createFirstMessage() {
     await this._ready;
     const res = await this._proxy.call('createFirstMessage');
-    return (res && res.objId) ? wrapAs(Message, res.objId) : res;
+    return res ? wrapMessage(res) : res;
   }
 
   async handleMessages(msgs, commitments, seed) {
@@ -155,8 +160,8 @@ export class KeygenSession {
     
     const res = await this._proxy.call('handleMessages', safeMsgs, safeCommitments, seed);
     
-    if (Array.isArray(res) && res.length && res[0]?.objId !== undefined) {
-      return res.map(r => wrapAs(Message, r.objId));
+    if (Array.isArray(res)) {
+      return res.map(wrapMessage);
     }
     return res;
   }
@@ -193,7 +198,7 @@ export class SignSession {
   async createFirstMessage() {
     await this._ready;
     const res = await this._proxy.call('createFirstMessage');
-    return (res && res.objId) ? wrapAs(Message, res.objId) : res;
+    return res ? wrapMessage(res) : res;
   }
 
   async handleMessages(msgs, commitments, seed) {
@@ -207,8 +212,8 @@ export class SignSession {
     
     const res = await this._proxy.call('handleMessages', safeMsgs, safeCommitments, seed);
     
-    if (Array.isArray(res) && res.length && res[0]?.objId !== undefined) {
-      return res.map(r => wrapAs(Message, r.objId));
+    if (Array.isArray(res)) {
+      return res.map(wrapMessage);
     }
     return res;
   }
@@ -216,12 +221,13 @@ export class SignSession {
   async lastMessage(message_hash) {
     await this._ready;
     const r = await this._proxy.call('lastMessage', message_hash);
-    return r;
+    return r ? wrapMessage(r) : r;
   }
 
   async combine(msgs) {
     await this._ready;
-    const r = await this._proxy.call('combine', msgs);
+    const safeMsgs = await normalizeMsgsForBridge(msgs);
+    const r = await this._proxy.call('combine', safeMsgs);
     return r;
   }
 }
@@ -232,38 +238,24 @@ export class Message {
       ? payload 
       : Array.isArray(payload)
         ? new Uint8Array(payload)
-        : new Uint8Array(payload || []);
+        : toU8(payload || []);
     
-    this._ready = callWorker({
-      type: 'construct',
-      className: 'Message',
-      args: [Array.from(u8), from_id, to_id],
-    }).then(({ objId }) => {
-      this._proxy = wrap(objId);
-      this._objId = objId;
-      this.toJSON = () => {
-        const id = this._objId ?? (this._proxy && this._proxy._id);
-        return { _id: id };
-      };
-      return this._proxy;
-    });
+    this._ready = Promise.resolve();
+    this._payload = u8;
+    this._from_id = from_id;
+    this._to_id = to_id;
 
     this._isFreed = false;
   }
 
   async payload() { 
-    await this._ready; 
-    const p = await this._proxy.call('payload');
-    return p instanceof Uint8Array ? p : new Uint8Array(p || []);
+    return this._payload;
   }
   
-  async from_id() { await this._ready; return this._proxy.call('from_id'); }
-  async to_id()   { await this._ready; return this._proxy.call('to_id'); }
+  async from_id() { return this._from_id; }
+  async to_id()   { return this._to_id; }
   async free() { 
-    await this._ready;
-    if (this._isFreed) return;
     this._isFreed = true;
-    return this._proxy.free(); 
   }
 }
 
@@ -278,12 +270,11 @@ export class Keyshare {
   }
 
   static async fromBytes(bytes) {
-    const bytesArray = bytes instanceof Uint8Array ? Array.from(bytes) : bytes;
     const { objId } = await callWorker({
       type: 'staticConstruct',
       className: 'Keyshare',
       method: 'fromBytes',
-      args: [bytesArray],
+      args: [bytes],
     });
     return wrapAs(Keyshare, objId);
   }
@@ -336,12 +327,11 @@ export class SignSessionOTVariant {
   }
 
   static async fromBytes(bytes) {
-    const bytesArray = bytes instanceof Uint8Array ? Array.from(bytes) : bytes;
     const { objId } = await callWorker({
       type: 'staticConstruct',
       className: 'SignSessionOTVariant',
       method: 'fromBytes',
-      args: [bytesArray],
+      args: [bytes],
     });
     return wrapAs(SignSessionOTVariant, objId);
   }
@@ -355,7 +345,7 @@ export class SignSessionOTVariant {
   async createFirstMessage() {
     await this._ready;
     const res = await this._proxy.call('createFirstMessage');
-    return (res && res.objId) ? wrapAs(Message, res.objId) : res;
+    return res ? wrapMessage(res) : res;
   }
 
   async handleMessages(msgs) {
@@ -363,8 +353,8 @@ export class SignSessionOTVariant {
     const safeMsgs = await normalizeMsgsForBridge(msgs);
     const res = await this._proxy.call('handleMessages', safeMsgs);
     
-    if (Array.isArray(res) && res.length && res[0]?.objId !== undefined) {
-      return res.map(r => wrapAs(Message, r.objId));
+    if (Array.isArray(res)) {
+      return res.map(wrapMessage);
     }
     return res;
   }
@@ -373,7 +363,7 @@ export class SignSessionOTVariant {
     await this._ready;
     const messageHashArray = message_hash instanceof Uint8Array ? Array.from(message_hash) : message_hash;
     const res = await this._proxy.call('lastMessage', messageHashArray);
-    return (res && res.objId) ? wrapAs(Message, res.objId) : res;
+    return res ? wrapMessage(res) : res;
   }
 
   async combine(msgs) {
