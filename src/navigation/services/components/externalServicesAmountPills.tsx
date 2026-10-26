@@ -89,7 +89,7 @@ const AmountPill: React.FC<
             : NeutralSlate,
           minWidth: showMaxPill && !hideFiatPills ? '23%' : '31%',
           maxWidth: showMaxPill && !hideFiatPills ? 187 : 250,
-          height: isSmallScreen ? 30 : 46,
+          minHeight: isSmallScreen ? 30 : 46,
         },
         style,
       ]}
@@ -110,6 +110,10 @@ const AmountPillText: React.FC<
   const theme = useTheme();
   return (
     <BaseText
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.6}
+      maxFontSizeMultiplier={1.5}
       style={[
         styles.amountPillText,
         {

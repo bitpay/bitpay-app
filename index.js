@@ -1,5 +1,5 @@
 // First: starts the Keychain read the store waits for (src/startup).
-import './src/startup/encryptionKeyPrefetch';
+import './src/startup/startEncryptionKeyPrefetch';
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
 import {install as installQuickCrypto} from 'react-native-quick-crypto';
 import '@ethersproject/shims';
@@ -18,7 +18,7 @@ if (IS_MAESTRO === 'true') {
 // (Root and the graph it pulls in) has been evaluated, not before them: the
 // "RN start -> JS entry" phase includes that module graph. To run something
 // before it, put it in a side-effect module imported first (see
-// src/startup/encryptionKeyPrefetch.ts).
+// src/startup/startEncryptionKeyPrefetch.ts).
 mark('bp_js_entry');
 import Root from './src/Root';
 import React, {useState, useEffect} from 'react';
@@ -29,6 +29,8 @@ import {
 } from 'react-native-exception-handler';
 import {name as appName} from './app.json';
 import getStore from './src/store';
+import {reportVaultStartupFailure} from './src/store/vault-diagnostics';
+import {vaultStartupAlert} from './src/store/vault-startup-alert';
 import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import 'react-native-url-polyfill/auto'; // https://github.com/facebook/react-native/issues/23922#issuecomment-648096619
@@ -156,6 +158,7 @@ const ReduxProvider = () => {
   }, [isPrimary]);
 
   const [storeReady, setStoreReady] = useState(false);
+  const [startupAttempt, setStartupAttempt] = useState(0);
   const [{store: reduxStore, persistor: reduxPersistor}, setStore] = useState({
     store: null,
     persistor: null,
@@ -167,24 +170,42 @@ const ReduxProvider = () => {
     }
 
     let cancelled = false;
+    let disposeAlert;
 
-    getStore().then(({store, persistor}) => {
-      if (cancelled) {
-        return;
-      }
+    getStore()
+      .then(({store, persistor}) => {
+        if (cancelled) {
+          // Store initialization is shared across Activity/provider remounts.
+          // A departing subscriber must not pause that shared persistor.
+          return;
+        }
 
-      mark('bp_store_ready');
-      setStore({store, persistor});
-      setStoreReady(true);
-      setJSExceptionHandler(makeErrorHandler(store), true);
-      // executeDefaultHandler=true chains to Sentry's UncaughtExceptionHandler so native crashes are captured
-      setNativeExceptionHandler(makeNativeExceptionHandler(store), true, true);
-    });
+        mark('bp_store_ready');
+        setStore({store, persistor});
+        setStoreReady(true);
+        setJSExceptionHandler(makeErrorHandler(store), true);
+        // executeDefaultHandler=true chains to Sentry's UncaughtExceptionHandler so native crashes are captured
+        setNativeExceptionHandler(
+          makeNativeExceptionHandler(store),
+          true,
+          true,
+        );
+      })
+      .catch(error => {
+        if (cancelled) {
+          return;
+        }
+        reportVaultStartupFailure(error);
+        disposeAlert = vaultStartupAlert(error, () =>
+          setStartupAttempt(attempt => attempt + 1),
+        );
+      });
 
     return () => {
       cancelled = true;
+      disposeAlert?.();
     };
-  }, [isPrimary]);
+  }, [isPrimary, startupAttempt]);
 
   if (!isPrimary || !storeReady) {
     return null;

@@ -49,7 +49,7 @@ import {SupportedChainsOptions} from '../../../constants/SupportedCurrencyOption
 import {CurrencyImage} from '../../currency-image/CurrencyImage';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import SheetModal from '../base/sheet/SheetModal';

@@ -7,10 +7,9 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 import {ShopScrollContext} from '../shopScroll';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../../utils/debounce';
 import {useTheme} from '../../../../contexts';
-import pickBy from 'lodash.pickby';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../../../utils/array';
 import {Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useForm, Controller} from 'react-hook-form';
@@ -159,15 +158,14 @@ const getSelectedGiftCards = (
 ) => {
   return getNumSelectedCategories(selectedCategoryMap)
     ? uniqBy(
-        Object.keys(pickBy(selectedCategoryMap, selected => selected)).reduce(
-          (giftCards, categoryName) => {
+        Object.keys(selectedCategoryMap)
+          .filter(categoryName => selectedCategoryMap[categoryName])
+          .reduce((giftCards, categoryName) => {
             const categoryObj = categories.find(
               category => category.displayName === categoryName,
             ) as CategoryWithGiftCards;
             return [...giftCards, ...categoryObj.giftCards];
-          },
-          [] as CardConfig[],
-        ),
+          }, [] as CardConfig[]),
         'name',
       )
     : availableGiftCards;

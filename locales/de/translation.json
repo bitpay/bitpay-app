@@ -2294,5 +2294,16 @@
   "Updating history · {{completed}} of {{count}} wallets_one": "Verlauf wird aktualisiert · {{completed}} von {{count}} Wallet",
   "Updating history · {{completed}} of {{count}} wallets_other": "Verlauf wird aktualisiert · {{completed}} von {{count}} Wallets",
   "Couldn't load balance history.": "Guthabenverlauf konnte nicht geladen werden.",
-  "Retry": "Erneut versuchen"
+  "Retry": "Erneut versuchen",
+  "Testnet mode unlocked": "Testnet-Modus freigeschaltet",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "Testnet-Wallets und -Netzwerke werden jetzt angezeigt. Sie können sie unten wieder ausschalten.",
+  "Show Testnet Wallets": "Testnet-Wallets anzeigen",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Wenn aktiviert, werden Testnet-Wallets in der gesamten App angezeigt und Sie können Testnet-Wallets und -Token erstellen. Testnet-Coins haben keinen Wert. Wenn deaktiviert, werden Testnet-Wallets ausgeblendet, aber nicht gelöscht.",
+  "NETWORK": "NETZWERK",
+  "Select a Network": "Netzwerk auswählen",
+  "Add Testnet Wallets": "Testnet-Wallets hinzufügen",
+  "Wallet data could not be opened": "Wallet-Daten konnten nicht geöffnet werden",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ihre lokalen Daten wurden beibehalten. Versuchen Sie es erneut oder wenden Sie sich an den Support. Deinstallieren Sie die App nicht und löschen Sie ihre Daten nicht. Referenz: {{id}}.",
+  "There are no wallets with enough funds on the {{network}} network.": "Es gibt keine Wallets mit ausreichend Guthaben im {{network}}-Netzwerk.",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Wenn Sie die BitPay-App löschen oder Ihr Gerät verlieren, benötigen Sie Ihre Wiederherstellungsphrase, um wieder Zugriff auf Ihr Guthaben zu erhalten."
 }

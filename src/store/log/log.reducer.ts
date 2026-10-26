@@ -2,9 +2,10 @@ import moment from 'moment';
 import {LogEntry, sanitizeLogMessage} from './log.models';
 import {LogActionType, LogActionTypes} from './log.types';
 import {appendPersistedLog} from './initLogs';
-import {storage} from '../index';
+import {isVaultActive} from '../vault-storage';
 import {
   isSessionLogsEnabled,
+  sessionLogsStorage as storage,
   PERSISTED_SESSION_LOGS_STORAGE_KEY,
 } from '../../utils/sessionLogs';
 
@@ -59,9 +60,9 @@ export const logReducer = (
       // Store persisted logs in a different entry in storage
       // to avoid losing them if anything happens to persist:root
       try {
-        const persistLogs = storage.getString(
-          PERSISTED_SESSION_LOGS_STORAGE_KEY,
-        );
+        const persistLogs = isVaultActive()
+          ? storage.getString('persist:logs')
+          : undefined;
         if (persistLogs) {
           storage.set(
             PERSISTED_SESSION_LOGS_STORAGE_KEY,

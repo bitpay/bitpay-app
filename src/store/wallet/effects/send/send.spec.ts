@@ -26,8 +26,10 @@ import {
   createTxProposal,
   HARDWARE_WALLET_SIGNING_UNSUPPORTED,
   publishAndSign,
+  sendCrypto,
   startSendPayment,
 } from './send';
+import * as Root from '../../../../Root';
 import {ethers} from 'ethers';
 import {abiERC20} from '../../../../navigation/wallet-connect/constants/abis/abi-erc20';
 
@@ -279,5 +281,95 @@ describe('hardware wallet keys', () => {
       ),
     ).rejects.toThrow(HARDWARE_WALLET_SIGNING_UNSUPPORTED);
     expect(wallet.publishTxProposal).not.toHaveBeenCalled();
+  });
+});
+
+const SOL_RECIPIENT = '2or9p8ZY6yWi3pd28Qg2oiNEDycbKSm73NkGDtwF1LcT';
+const SOLANA_PAY_MEMO =
+  'v43SXMgaP9xHQawB5AGy4VZDQaYmoFYYCsJs7SzxgcEDAyrSRrx3BBNBTJFH';
+
+const buildSolProposal = (extra: any = {}) =>
+  dispatch(
+    buildTransactionProposal({
+      chain: 'sol',
+      currency: 'sol',
+      amount: 66896000,
+      toAddress: SOL_RECIPIENT,
+      ...extra,
+    } as any),
+  );
+
+describe('buildTransactionProposal for a native SOL send', () => {
+  it('carries the Solana Pay memo into the proposal', async () => {
+    const txp: any = await buildSolProposal({
+      solanaPayOpts: {memo: SOLANA_PAY_MEMO},
+    });
+
+    expect(txp.memo).toBe(SOLANA_PAY_MEMO);
+  });
+
+  it('keeps a memo set on the transaction over the Solana Pay one', async () => {
+    const txp: any = await buildSolProposal({
+      memo: 'from-the-transaction',
+      solanaPayOpts: {memo: SOLANA_PAY_MEMO},
+    });
+
+    expect(txp.memo).toBe('from-the-transaction');
+  });
+
+  it('adds no memo to a plain send', async () => {
+    const txp: any = await buildSolProposal();
+
+    expect(txp.memo).toBeUndefined();
+  });
+});
+
+describe('sendCrypto', () => {
+  const getState = () =>
+    ({
+      WALLET: {
+        keys: {
+          'key-1': {
+            backupComplete: true,
+            wallets: [
+              {
+                hideWallet: false,
+                hideWalletByAccount: false,
+                isComplete: () => true,
+                pendingTssSession: false,
+                balance: {sat: 1},
+              },
+            ],
+          },
+        },
+      },
+    } as any);
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('opens the global Send To screen when no asset is preselected', () => {
+    const navigateSpy = jest
+      .spyOn(Root.navigationRef, 'navigate')
+      .mockImplementation(() => undefined);
+
+    sendCrypto('HomeRoot')(jest.fn(), getState, undefined);
+
+    expect(navigateSpy).toHaveBeenCalledWith('GlobalSendTo');
+  });
+
+  it('keeps the wallet selector when an asset is preselected', () => {
+    const navigateSpy = jest
+      .spyOn(Root.navigationRef, 'navigate')
+      .mockImplementation(() => undefined);
+    const assetContext = {currencyAbbreviation: 'btc', chain: 'btc'};
+
+    sendCrypto('ExchangeRate', assetContext)(jest.fn(), getState, undefined);
+
+    expect(navigateSpy).toHaveBeenCalledWith('GlobalSelect', {
+      context: 'send',
+      assetContext,
+    });
   });
 });

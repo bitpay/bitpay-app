@@ -27,7 +27,10 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('lodash.clonedeep', () => (value: unknown) => mockCloneDeep(value));
+jest.mock('../../utils/object', () => ({
+  ...jest.requireActual('../../utils/object'),
+  cloneDeep: (value: unknown) => mockCloneDeep(value),
+}));
 
 jest.mock('../styled/Containers', () => {
   const ReactLib = require('react');

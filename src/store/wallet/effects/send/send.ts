@@ -88,7 +88,6 @@ import {
   openUrlWithInAppBrowser,
   submitDeviceEvent,
 } from '../../../app/app.effects';
-import _ from 'lodash';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {DeviceEventEmitter, Platform} from 'react-native';
@@ -120,6 +119,7 @@ import {
   startTSSSigning,
   pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
+import {isHiddenByTestnetMode} from '../../utils/testnet';
 
 const HAS_CONFIRMING_TXS_MAX_AGE_MS = 10 * 1000;
 
@@ -991,7 +991,7 @@ export const buildTransactionProposal =
               wallet.chain,
             );
 
-            if (!_.isEmpty(warningMsg)) {
+            if (warningMsg) {
               dispatch(
                 showBottomNotificationModal(
                   ExcludedUtxosWarning({
@@ -1260,6 +1260,12 @@ export const buildTransactionProposal =
               }
             }
           }
+        }
+
+        // A Solana Pay memo says what the payment is for (BitPay matches SOL
+        // invoice payments by it), so native SOL sends need it as much as SPL.
+        if (solanaPayOpts?.memo && IsSVMChain(txp.chain!) && !txp.memo) {
+          txp.memo = solanaPayOpts.memo;
         }
 
         resolve(txp);
@@ -2512,6 +2518,7 @@ export const sendCrypto =
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
+          !isHiddenByTestnetMode(wallet) &&
           wallet.isComplete() &&
           !wallet.pendingTssSession,
       )
@@ -2566,7 +2573,11 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
+      if (assetContext) {
+        navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
+      } else {
+        navigationRef.navigate('GlobalSendTo');
+      }
     }
   };
 

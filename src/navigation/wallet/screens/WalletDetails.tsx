@@ -7,7 +7,6 @@ import {
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
-import _ from 'lodash';
 import React, {
   ReactElement,
   useCallback,
@@ -135,7 +134,10 @@ import TransactionRow from '../../../components/list/TransactionRow';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {
+  GetBlockExplorerLink,
+  IsERCToken,
+} from '../../../store/wallet/utils/currency';
 import {
   INITIAL_CACHED_TX_HYDRATION_LIMIT,
   flattenTransactionGroups,
@@ -170,7 +172,7 @@ import {
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
@@ -232,7 +234,7 @@ const styles = StyleSheet.create({
   },
   transactionSectionHeaderContainer: {
     padding: gutter,
-    height: 55,
+    minHeight: 55,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -254,7 +256,7 @@ const styles = StyleSheet.create({
     padding: gutter,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 75,
+    minHeight: 75,
   },
   description: {
     overflow: 'hidden',
@@ -1098,9 +1100,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         walletId,
       );
       formattedPendingTxps.forEach((txp: any) => {
-        const action: any = _.find(txp.actions, {
-          copayerId: fullWalletObj.credentials.copayerId,
-        });
+        const action: any = txp.actions?.find(
+          (txpAction: any) =>
+            txpAction.copayerId === fullWalletObj.credentials.copayerId,
+        );
 
         if (
           ((!action || action.type === 'failed') && txp.status === 'pending') ||
@@ -1469,16 +1472,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
       if (SUPPORTED_VM_TOKENS.includes(walletChain)) {
-        url =
-          fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[walletChain].paymentInfo.blockExplorerUrls}address/${address}`
-            : `https://${BitpaySupportedCoins[walletChain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+        url = GetBlockExplorerLink(
+          fullWalletObj.network,
+          walletChain,
+          `address/${address}`,
+        );
       }
       if (IsERCToken(coin, walletChain)) {
-        url =
-          fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[walletChain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
-            : `https://${BitpaySupportedCoins[walletChain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+        url = GetBlockExplorerLink(
+          fullWalletObj.network,
+          walletChain,
+          `address/${address}`,
+          '#tokentxns',
+        );
       }
 
       if (url) {

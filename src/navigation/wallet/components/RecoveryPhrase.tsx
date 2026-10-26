@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   currencyContainer: {
     paddingHorizontal: 20,
-    height: 55,
+    minHeight: 55,
     borderWidth: 1,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,

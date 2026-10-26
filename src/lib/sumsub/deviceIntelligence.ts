@@ -78,28 +78,53 @@ async function mintToken(
 }
 
 let fisherman: Fisherman | null = null;
+let fishermanInitPromise: Promise<Fisherman> | null = null;
 
 // Init once, then just swap the token — re-initializing re-fetches the DI config.
+// The in-flight promise is shared so a hung first init can't trigger a second one.
 async function ensureFisherman(token: string): Promise<Fisherman> {
   if (fisherman) {
     fishermanUpdateAccessToken(token);
     return fisherman;
   }
 
-  fisherman = await fishermanInit({token});
-  return fisherman;
+  if (!fishermanInitPromise) {
+    fishermanInitPromise = fishermanInit({token})
+      .then(instance => (fisherman = instance))
+      .catch(err => {
+        fishermanInitPromise = null;
+        throw err;
+      });
+  }
+  return fishermanInitPromise;
 }
 
-async function runDeviceEvent({
-  network,
-  apiToken,
-  event,
-  ...applicant
-}: DeviceEventParams): Promise<string | undefined> {
+// Bumped per event: a timed-out run that resumes late sees it was superseded and bails.
+let generation = 0;
+
+class SupersededError extends Error {
+  constructor() {
+    super('Device Intelligence event superseded');
+  }
+}
+
+async function runDeviceEvent(
+  {network, apiToken, event, ...applicant}: DeviceEventParams,
+  myGeneration: number,
+): Promise<string | undefined> {
+  const assertCurrent = () => {
+    if (myGeneration !== generation) {
+      throw new SupersededError();
+    }
+  };
+
   const token = await mintToken(network, apiToken);
+  assertCurrent();
   const active = await ensureFisherman(token);
+  assertCurrent();
 
   const {visitorId} = await active.fingerprint();
+  assertCurrent();
   // Params go flat (not wrapped in `input`): this is the /api/v2 RPC, not /api/v2/graphql.
   await rpc(network, apiToken, SUBMIT_EVENT_METHOD, {
     accessToken: token,
@@ -108,6 +133,20 @@ async function runDeviceEvent({
   });
   return visitorId;
 }
+
+export const DEVICE_EVENT_TIMEOUT_MS = 30000;
+
+// A hung request or fingerprint would otherwise block the queue forever.
+const withTimeout = <T>(promise: Promise<T>): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Device Intelligence event timed out')),
+      DEVICE_EVENT_TIMEOUT_MS,
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
 
 // fisherman is a singleton, so events are serialized to avoid stomping the shared token.
 let eventQueue: Promise<unknown> = Promise.resolve();
@@ -119,7 +158,9 @@ let eventQueue: Promise<unknown> = Promise.resolve();
 export const submitDeviceEvent = (
   params: DeviceEventParams,
 ): Promise<string | undefined> => {
-  const result = eventQueue.then(() => runDeviceEvent(params));
+  const result = eventQueue.then(() =>
+    withTimeout(runDeviceEvent(params, ++generation)),
+  );
   eventQueue = result.catch(() => undefined);
   return result;
 };

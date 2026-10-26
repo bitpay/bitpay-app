@@ -9,6 +9,7 @@ import {
   getPortfolioWalletsInputSignature,
   usePortfolioStoredWalletAnalysisScope,
 } from './usePortfolioStoredWalletAnalysisScope';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 function arePercentageMapsEqual(
   left: Record<string, number | null>,
@@ -25,7 +26,10 @@ function arePercentageMapsEqual(
 
 const getVisibleKeyWallets = (key: Key): Wallet[] => {
   return (key.wallets || []).filter(
-    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+    wallet =>
+      !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
+      !isHiddenByTestnetMode(wallet),
   );
 };
 

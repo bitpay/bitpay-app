@@ -16,7 +16,6 @@ import {
   CommonActions,
 } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import cloneDeep from 'lodash.clonedeep';
 import {
   useAppDispatch,
   useAppSelector,
@@ -539,13 +538,13 @@ const SimplexSellCheckout: React.FC = () => {
         env: __DEV__ ? 'dev' : 'prod',
         wallet_id: wallet.id,
         address_to: toAddressValue ?? '',
-        coin: cloneDeep(wallet.currencyAbbreviation).toUpperCase(),
-        chain: cloneDeep(wallet.chain).toLowerCase(),
+        coin: wallet.currencyAbbreviation.toUpperCase(),
+        chain: wallet.chain.toLowerCase(),
         external_id: externalId,
         created_on: Date.now(),
         crypto_amount: amountExpected,
         fiat_currency: simplexQuoteOffer.fiatCurrency
-          ? cloneDeep(simplexQuoteOffer.fiatCurrency).toUpperCase()
+          ? simplexQuoteOffer.fiatCurrency.toUpperCase()
           : '',
         payment_method: paymentMethod ?? '',
         fiat_receiving_amount: Number(simplexQuoteOffer.quoteData.fiat_amount),
@@ -570,7 +569,7 @@ const SimplexSellCheckout: React.FC = () => {
           amount: amountExpected,
           fiatAmount: Number(simplexQuoteOffer.quoteData?.fiat_amount) || '',
           fiatCurrency: simplexQuoteOffer.fiatCurrency
-            ? cloneDeep(simplexQuoteOffer.fiatCurrency).toLocaleLowerCase()
+            ? simplexQuoteOffer.fiatCurrency.toLocaleLowerCase()
             : '',
           exchangeRate:
             (simplexQuoteOffer.quoteData?.fiat_amount &&
@@ -679,8 +678,7 @@ const SimplexSellCheckout: React.FC = () => {
       t(
         'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
         {
-          chain:
-            dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
+          chain: dispatch(GetName(chain, chain)) || chain.toUpperCase(),
           fee: sendMaxFee,
           coin: coin.toUpperCase(),
         },
@@ -749,7 +747,7 @@ const SimplexSellCheckout: React.FC = () => {
         fromChain: wallet.chain?.toLowerCase() || '',
         fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
         fiatCurrency: simplexQuoteOffer.fiatCurrency
-          ? cloneDeep(simplexQuoteOffer.fiatCurrency).toUpperCase()
+          ? simplexQuoteOffer.fiatCurrency.toUpperCase()
           : '',
       }),
     );
@@ -877,7 +875,7 @@ const SimplexSellCheckout: React.FC = () => {
           fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
           fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
           fiatCurrency: simplexQuoteOffer.fiatCurrency
-            ? cloneDeep(simplexQuoteOffer.fiatCurrency).toUpperCase()
+            ? simplexQuoteOffer.fiatCurrency.toUpperCase()
             : '',
         }),
       );

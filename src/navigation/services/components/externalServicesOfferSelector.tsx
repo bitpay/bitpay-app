@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import SelectorArrowRight from '../../../../assets/img/selector-arrow-right.svg';
 import {useNavigation, StackActions} from '@react-navigation/native';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../utils/object';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
@@ -128,7 +128,6 @@ import {
   RampQuoteRequestData,
   RampQuoteResultForPaymentMethod,
 } from '../../../store/buy-crypto/models/ramp.models';
-import _ from 'lodash';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import OfferSelectorModal from './OfferSelectorModal';
@@ -2507,7 +2506,7 @@ const ExternalServicesOfferSelector: React.FC<
             sellOffers.ramp.outOfLimitMsg = undefined;
             sellOffers.ramp.errorMsg = undefined;
             sellOffers.ramp.quoteData = data;
-            sellOffers.ramp.sellAmount = cloneDeep(amount); // paymentMethodData.fiatValue;
+            sellOffers.ramp.sellAmount = amount; // paymentMethodData.fiatValue;
             sellOffers.ramp.fee =
               Number(paymentMethodData.baseRampFee ?? 0) +
               Number(paymentMethodData.appliedFee);
@@ -2711,7 +2710,7 @@ const ExternalServicesOfferSelector: React.FC<
             sellOffers.simplex.outOfLimitMsg = undefined;
             sellOffers.simplex.errorMsg = undefined;
             sellOffers.simplex.quoteData = data;
-            sellOffers.simplex.sellAmount = cloneDeep(amount);
+            sellOffers.simplex.sellAmount = amount;
             sellOffers.simplex.fee = Number(data.fiat_amount) * 0.05;
 
             const precision = dispatch(
@@ -3086,7 +3085,7 @@ const ExternalServicesOfferSelector: React.FC<
         }
         return;
       }
-      const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
+      const _selectedOffer = [...filteredOffers].reduce((prev, curr) =>
         parseFloat(curr.amountReceiving || '0') >
         parseFloat(prev.amountReceiving || '0')
           ? curr
@@ -3194,14 +3193,14 @@ const ExternalServicesOfferSelector: React.FC<
         }
         return;
       }
-      const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
+      const _selectedOffer = [...filteredOffers].reduce((prev, curr) =>
         parseFloat(curr.amountReceiving || '0') >
         parseFloat(prev.amountReceiving || '0')
           ? curr
           : prev,
       );
 
-      const amountReceiving = Number(cloneDeep(_selectedOffer.amountReceiving));
+      const amountReceiving = Number(_selectedOffer.amountReceiving);
       if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
         setSelectedOffer(_selectedOffer);
         onSelectOffer?.(_selectedOffer);

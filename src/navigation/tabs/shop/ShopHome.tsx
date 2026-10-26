@@ -1,4 +1,4 @@
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Keyboard,

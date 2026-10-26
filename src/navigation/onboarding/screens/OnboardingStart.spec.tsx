@@ -189,6 +189,30 @@ describe('OnboardingStart performance boundaries', () => {
     });
   });
 
+  it('grows the carousel to fit the tallest slide', () => {
+    renderScreen();
+    const carouselHeight = () =>
+      [mockLatestCarouselProps?.style]
+        .flat(Infinity)
+        .reduce((height, style) => style?.height ?? height, undefined);
+    const minHeight = carouselHeight();
+    const slide = mockLatestCarouselProps?.renderItem({
+      item: mockLatestCarouselProps?.data[2],
+      index: 2,
+    });
+    const onSlideLayout = slide.props.children.props.onLayout;
+
+    act(() => {
+      onSlideLayout({nativeEvent: {layout: {height: minHeight + 120.4}}});
+    });
+    expect(carouselHeight()).toBe(Math.ceil(minHeight + 120.4));
+
+    act(() => {
+      onSlideLayout({nativeEvent: {layout: {height: 10}}});
+    });
+    expect(carouselHeight()).toBe(Math.ceil(minHeight + 120.4));
+  });
+
   it('does not re-render the carousel when CTA layout updates its spacer', () => {
     const {getByTestId} = renderScreen();
     const initialData = mockLatestCarouselProps?.data;

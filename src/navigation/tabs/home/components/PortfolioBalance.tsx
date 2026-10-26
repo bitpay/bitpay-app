@@ -134,9 +134,12 @@ const headerStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexShrink: 1,
+    paddingRight: 48,
   },
   portfolioBalanceTitle: {
     marginRight: 3,
+    flexShrink: 1,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -197,6 +200,7 @@ const PortfolioBalanceText: React.FC<{
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.5}
       style={[
         headerStyles.portfolioBalanceText,
         {
@@ -211,7 +215,9 @@ const PortfolioBalanceText: React.FC<{
 };
 
 const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({children}) => (
-  <H2 style={headerStyles.hiddenBalance}>{children}</H2>
+  <H2 maxFontSizeMultiplier={1.5} style={headerStyles.hiddenBalance}>
+    {children}
+  </H2>
 );
 
 const PortfolioBalanceChangeRowContainer: React.FC<

@@ -1,7 +1,7 @@
 import {Effect} from '../../../index';
 import {Key, Wallet, WalletStatus} from '../../wallet.models';
 import {successUpdateWalletBalancesAndStatus} from '../../wallet.actions';
-import _ from 'lodash';
+import {partition} from '../../../../utils/array';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import {WalletActions} from '../..';
 import {startGetRates} from '../rates/rates';
@@ -97,6 +97,7 @@ export const getUpdatedWalletBalances =
         walletId: string;
         status: WalletStatus;
       }[];
+      error?: unknown;
     }>
   > =>
   async (dispatch, getState) => {
@@ -106,7 +107,7 @@ export const getUpdatedWalletBalances =
       RATE: {rates, lastDayRates},
     } = getState();
 
-    const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
+    const [readOnlyKeys, keys] = partition(Object.values(_keys), 'isReadOnly');
     const keyBalances: {
       keyId: string;
       totalBalance: number;
@@ -148,24 +149,25 @@ export const getUpdatedWalletBalances =
               dataOnly: true,
             }),
           );
-          return {key, keyBalance};
+          return {key, keyBalance, failed: false, error: undefined as unknown};
         } catch (error) {
-          return {key, keyBalance: undefined, error};
+          return {key, keyBalance: undefined, failed: true, error};
         }
       },
     );
 
-    // One key failing must not discard the balances already fetched for the
-    // others. The refresh as a whole fails only when every key failed.
-    const failedKeys = keyStatusResults.filter(result => 'error' in result);
-    if (failedKeys.length > 0 && failedKeys.length === keys.length) {
-      throw failedKeys[0].error;
-    }
-    for (const {key, error} of failedKeys) {
+    let firstKeyError: unknown;
+    for (const {key, failed, error} of keyStatusResults) {
+      if (!failed) {
+        continue;
+      }
+      const keyError =
+        error ?? new Error(`Failed to update status for key ${key.id}`);
+      firstKeyError = firstKeyError ?? keyError;
       const errorStr =
-        error instanceof Error ? error.message : JSON.stringify(error);
-      logManager.error(
-        `Error updating key status for key ${key.id}, keeping the other keys' balances: ${errorStr}`,
+        keyError instanceof Error ? keyError.message : JSON.stringify(keyError);
+      logManager.warn(
+        `Error updating key status for key ${key.id}: ${errorStr}`,
       );
     }
 
@@ -225,6 +227,7 @@ export const getUpdatedWalletBalances =
     return {
       keyBalances,
       walletBalances,
+      error: firstKeyError,
     };
   };
 
@@ -272,6 +275,9 @@ export const getAndDispatchUpdatedWalletBalances =
           walletBalances: balances.walletBalances,
         }),
       );
+      if (balances.error) {
+        throw balances.error;
+      }
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error(

@@ -5,7 +5,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import debounce from 'lodash.debounce';
+import {debounce} from './utils/debounce';
 import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useRef} from 'react';
 import {useStore} from 'react-redux';
@@ -779,10 +779,29 @@ export default () => {
                   new Promise(resolve =>
                     Braze.getInitialURL(deepLink => resolve(deepLink)),
                   );
+                const waitForStartupGateRouting = () =>
+                  new Promise<void>(resolve => {
+                    const isRouted = () =>
+                      navigationRef.getCurrentRoute()?.name !== 'StartupGate';
+                    if (isRouted()) {
+                      resolve();
+                      return;
+                    }
+                    const unsubscribe = navigationRef.addListener(
+                      'state',
+                      () => {
+                        if (isRouted()) {
+                          unsubscribe();
+                          resolve();
+                        }
+                      },
+                    );
+                  });
                 const [url, brazeUrl] = await Promise.all([
                   Linking.getInitialURL(),
                   getBrazeInitialUrl(),
                 ]);
+                await waitForStartupGateRouting();
                 await sleep(10);
                 urlEventHandler({url: url || brazeUrl});
               }

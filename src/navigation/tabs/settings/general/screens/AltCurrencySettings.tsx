@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useTheme} from '../../../../../contexts';
 import {RootState} from '../../../../../store';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../../../utils/debounce';
 import AltCurrenciesRow, {
   AltCurrenciesRowProps,
 } from '../../../../../components/list/AltCurrenciesRow';

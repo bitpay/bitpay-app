@@ -1,5 +1,6 @@
 import type {Key, Wallet} from '../wallet.models';
 import {restoreAccountListIcons} from './accountListIcons';
+import {areTestnetWalletsVisible} from './testnet';
 
 type AccountListSnapshot = {
   signature: string;
@@ -394,6 +395,8 @@ export const buildAccountListSignature = ({
 }): string => {
   let hash = hashValue(5381, quoteCurrency);
   hash = hashValue(hash, ratesRevision);
+  // Lists drop testnet wallets while testnet mode is off.
+  hash = hashValue(hash, areTestnetWalletsVisible());
 
   for (let index = 0; index < extra.length; index++) {
     hash = hashValue(hash, extra[index]);

@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    height: 75,
+    minHeight: 75,
   },
   walletLeft: {
     flex: 1,

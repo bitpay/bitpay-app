@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    height: 58,
+    minHeight: 58,
   },
   settingTitle: {
     flexGrow: 1,
@@ -530,6 +530,7 @@ const Confirm = () => {
     recipientData = {
       recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
+      recipientFullAddress: sendingTo.recipientFullAddress,
       img: recipient.type,
       recipientChain: recipient.chain,
       recipientType: recipient.type,

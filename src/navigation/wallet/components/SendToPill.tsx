@@ -63,7 +63,7 @@ export const PillContainer = React.forwardRef<
             : accent === 'action'
             ? LightBlue
             : NeutralSlate,
-          height: (height ? height : '100%') as any,
+          minHeight: (height ? height : 37) as any,
         },
         typeof style === 'function' ? style(state) : style,
       ]}

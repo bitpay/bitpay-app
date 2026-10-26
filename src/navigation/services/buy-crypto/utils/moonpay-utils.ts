@@ -1,5 +1,4 @@
 import {t} from 'i18next';
-import cloneDeep from 'lodash.clonedeep';
 import {
   MoonpayCardBrand,
   MoonpayPaymentType,
@@ -227,7 +226,7 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   currency: string,
   chain: string,
 ): string => {
-  let coin = cloneDeep(currency).toLowerCase();
+  let coin = currency.toLowerCase();
   coin = externalServicesCoinMapping(coin);
 
   switch (chain) {

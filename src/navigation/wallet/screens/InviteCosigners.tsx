@@ -83,6 +83,9 @@ import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import Settings from '../../../components/settings/Settings';
+import OptionsSheet from '../components/OptionsSheet';
+import Icons from '../components/WalletIcons';
 
 const styles = StyleSheet.create({
   container: {
@@ -239,8 +242,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   helpStepBubble: {
-    width: 18,
-    height: 18,
+    minWidth: 18,
+    minHeight: 18,
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
@@ -649,6 +652,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
   const [addCoSignerError, setAddCoSignerError] = useState<string | null>(null);
+  const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   useAndroidBackHandler(() => isCeremonyStarted);
 
@@ -656,8 +660,11 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     navigation.setOptions({
       gestureEnabled: !isCeremonyStarted,
       headerLeft: isCeremonyStarted ? () => null : undefined,
+      headerRight: isCeremonyComplete
+        ? () => null
+        : () => <Settings onPress={() => setShowKeyOptions(true)} />,
     });
-  }, [isCeremonyStarted, navigation]);
+  }, [isCeremonyStarted, isCeremonyComplete, navigation]);
 
   useEffect(() => {
     requestDklsWorkerMount();
@@ -671,6 +678,17 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       return () => clearTimeout(timer);
     }
   }, [pendingJoinCode, currentStep]);
+
+  useEffect(() => {
+    if (tssSession?.status === 'ceremony_in_progress') {
+      // eslint-disable-next-line react-hooks/immutability -- the effect must sit above the early return; it runs after render, once handleStartCeremony is initialized
+      handleStartCeremony();
+    }
+    return () => {
+      dispatch(cancelTSSCeremony(keyId));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount (resume an in-progress ceremony); cleanup cancels it on unmount
+  }, []);
 
   if (!tssSession) {
     return null;
@@ -820,18 +838,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       );
     }
   };
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- known bug (RN-3026): called after the early return above
-  useEffect(() => {
-    if (tssSession?.status === 'ceremony_in_progress') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- resumes an in-progress ceremony on mount (imperative async flow)
-      handleStartCeremony();
-    }
-    return () => {
-      dispatch(cancelTSSCeremony(keyId));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount (resume an in-progress ceremony); cleanup cancels it on unmount
-  }, [dispatch]);
 
   const getModalTitle = () => {
     // if (currentStep === 3) {
@@ -1132,13 +1138,31 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     });
   };
 
+  const keyOptionsSheet = (
+    <OptionsSheet
+      isVisible={showKeyOptions}
+      title={t('Key Options')}
+      options={[
+        {
+          img: <Icons.Delete />,
+          title: t('Delete'),
+          description: t('Permanently deletes all wallets using this key.'),
+          onPress: () => {
+            navigation.navigate('DeleteKey', {keyId});
+          },
+        },
+      ]}
+      closeModal={() => setShowKeyOptions(false)}
+    />
+  );
+
   if (isCeremonyStarted) {
     return (
       <Container>
         <Content
           contentContainerStyle={{flex: 1, justifyContent: 'flex-start'}}>
           <TopSection>
-            <TopSectionContainer style={{height: 190}}>
+            <TopSectionContainer style={{minHeight: 190}}>
               <StatusContainer>
                 {isCeremonyComplete ? (
                   <>
@@ -1180,6 +1204,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
             </ButtonContainer>
           )}
         </Content>
+        {keyOptionsSheet}
       </Container>
     );
   }
@@ -1281,6 +1306,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           </ModalContent>
         </ModalContainer>
       </Modal>
+
+      {keyOptionsSheet}
     </Container>
   );
 };

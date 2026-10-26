@@ -13,7 +13,7 @@ import {useTheme} from '../../contexts';
 import {Slate, Slate30} from '../../styles/colors';
 import AngleRightSvg from '../../../assets/img/angle-right.svg';
 import {Img} from '../../navigation/tabs/home/components/Wallet';
-import _ from 'lodash';
+import {orderBy} from '../../utils/array';
 
 interface Props {
   item: GlobalSelectObj;
@@ -73,7 +73,7 @@ interface CurrencyBadgeListProps {
 }
 
 const CurrencyBadgeList: React.FC<CurrencyBadgeListProps> = ({chainsImg}) => {
-  const chainValues = _.orderBy(Object.values(chainsImg), 'priority', 'asc');
+  const chainValues = orderBy(Object.values(chainsImg), 'priority', 'asc');
   const images = chainValues
     .map(({badgeUri, badgeImg}) => badgeUri || badgeImg)
     .filter(

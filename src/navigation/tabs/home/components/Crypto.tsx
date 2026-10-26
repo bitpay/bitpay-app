@@ -10,7 +10,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import Carousel from 'react-native-reanimated-carousel';
+import {Carousel} from 'react-native-reanimated-carousel';
 import {useTheme} from '../../../../contexts';
 import {
   ActiveOpacity,
@@ -34,7 +34,7 @@ import {
   getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
-import _ from 'lodash';
+import {orderBy} from '../../../../utils/array';
 import {
   AppDispatch,
   useAppDispatch,
@@ -85,6 +85,10 @@ import {scheduleAfterTransitionAndIdle} from '../../../../utils/scheduleAfterInt
 import {performanceLog} from '../../../../utils/performanceDebug';
 import {getSinglePreloadCandidate} from '../../../../utils/navigationPreload';
 import {useStartupSettled} from '../../../../utils/startupSignals';
+import {
+  isKeyVisibleForTestnetMode,
+  selectShowTestnetWallets,
+} from '../../../../store/wallet/utils/testnet';
 
 /** After startup settles, before the key-screen preload may run. */
 const HOME_DESTINATION_PRELOAD_STARTUP_DELAY_MS = 2000;
@@ -467,7 +471,7 @@ export const createHomeCardList = ({
   const order = homeCarouselConfig.map(item => item.id);
 
   return {
-    list: [..._.sortBy(list, item => _.indexOf(order, item.id))],
+    list: [...orderBy(list, item => order.indexOf(item.id))],
     defaults,
   };
 };
@@ -527,7 +531,14 @@ const Crypto = ({active = true}: CryptoProps) => {
   const portfolioChartsRequested = showPortfolioValue === true;
   const portfolioChartsEnabled =
     active && portfolioChartsRequested && hasCompletedFullPortfolioPopulate;
-  const keyList = useMemo(() => Object.values(keys), [keys]);
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
+  const keyList = useMemo(
+    () =>
+      Object.values(keys).filter(key =>
+        isKeyVisibleForTestnetMode(key, showTestnetWallets),
+      ),
+    [keys, showTestnetWallets],
+  );
   const hasKeys = keyList.length;
   const legacyKeyPercentagesEnabled =
     active && !portfolioChartsRequested && !hideAllBalances;
@@ -870,17 +881,11 @@ const Crypto = ({active = true}: CryptoProps) => {
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer>
           <Carousel
-            loop={false}
-            autoFillData={false}
-            vertical={false}
-            style={{width: WIDTH}}
-            width={HOME_CARD_WIDTH + 16}
-            height={carouselHeight}
-            autoPlay={false}
+            style={{width: WIDTH, height: carouselHeight}}
+            itemSize={HOME_CARD_WIDTH + 16}
             data={cardsList.list}
-            scrollAnimationDuration={0}
+            animation={{type: 'timing', duration: 0}}
             renderItem={renderCarouselItem}
-            enabled={true}
           />
         </CarouselContainer>
       ) : (

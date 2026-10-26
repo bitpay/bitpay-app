@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     maxWidth: 215,
-    height: 72,
+    minHeight: 72,
     marginRight: 20,
     position: 'relative',
     left: parseInt(ScreenGutter, 10),

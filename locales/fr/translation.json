@@ -2304,5 +2304,16 @@
   "Updating history · {{completed}} of {{count}} wallets_many": "Mise à jour de l'historique · {{completed}} sur {{count}} portefeuilles",
   "Updating history · {{completed}} of {{count}} wallets_other": "Mise à jour de l'historique · {{completed}} sur {{count}} portefeuilles",
   "Couldn't load balance history.": "Impossible de charger l'historique du solde.",
-  "Retry": "Réessayer"
+  "Retry": "Réessayer",
+  "Testnet mode unlocked": "Mode testnet déverrouillé",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "Les portefeuilles et réseaux testnet sont désormais affichés. Vous pouvez les désactiver ci-dessous.",
+  "Show Testnet Wallets": "Afficher les portefeuilles testnet",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Si activé, les portefeuilles testnet sont affichés dans toute l’application et vous pouvez créer des portefeuilles et des jetons testnet. Les cryptomonnaies testnet n’ont aucune valeur. Si désactivé, les portefeuilles testnet sont masqués mais pas supprimés.",
+  "NETWORK": "RÉSEAU",
+  "Select a Network": "Sélectionner un réseau",
+  "Add Testnet Wallets": "Ajouter des portefeuilles testnet",
+  "Wallet data could not be opened": "Impossible d'ouvrir les données du portefeuille",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Vos données locales ont été conservées. Réessayez ou contactez l'assistance. Ne désinstallez pas l'application et n'effacez pas ses données. Référence : {{id}}.",
+  "There are no wallets with enough funds on the {{network}} network.": "Aucun portefeuille ne dispose de fonds suffisants sur le réseau {{network}}.",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Si vous supprimez l'application BitPay ou si vous perdez votre appareil, vous aurez besoin de votre phrase de récupération pour accéder à nouveau à vos fonds."
 }

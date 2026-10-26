@@ -302,3 +302,8 @@ export const setTssEnabled = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_TSS_ENABLED,
   payload,
 });
+
+export const setShowTestnetWallets = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_SHOW_TESTNET_WALLETS,
+  payload,
+});

@@ -17,7 +17,11 @@ import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import ChevronUpSvgDark from '../../../assets/img/chevron-up-darkmode.svg';
 import {useTheme} from '../../contexts';
 import {setLocalAssetsDropdown} from '../../store/app/app.actions';
-import {useAppDispatch, useAppSelector} from '../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useIsLargeFont,
+} from '../../utils/hooks';
 
 const styles = StyleSheet.create({
   currencyImageContainer: {
@@ -72,6 +76,7 @@ export const AssetsByChainHeader = memo(
   }: AssetsByChainHeaderProps) => {
     const {chain, chainName, fiatBalanceFormat, chainImg} = accountItem;
     const theme = useTheme();
+    const stacked = useIsLargeFont();
 
     if (!showNetworkHeader) {
       return null;
@@ -81,19 +86,24 @@ export const AssetsByChainHeader = memo(
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={() => onToggle(chain, !expanded)}
+        stacked={stacked}
         style={{borderBottomWidth: 0, paddingBottom: 0}}>
         <View style={styles.currencyImageContainer}>
           <CurrencyImage img={chainImg} size={20} />
         </View>
         <Column>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
+          <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
             {chainName}
           </H5>
         </Column>
-        <Column style={{alignItems: 'flex-end'}}>
+        <Column
+          style={{
+            alignItems: stacked ? 'flex-start' : 'flex-end',
+            alignSelf: stacked ? 'stretch' : 'auto',
+          }}>
           <Row style={styles.chainAssetsContainer}>
             {!hideBalance ? (
-              <H5 numberOfLines={1} ellipsizeMode="tail">
+              <H5 numberOfLines={stacked ? 2 : 1} ellipsizeMode="tail">
                 {fiatBalanceFormat}
               </H5>
             ) : (

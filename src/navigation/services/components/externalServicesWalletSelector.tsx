@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {StyleSheet, Text, View, ViewProps} from 'react-native';
 import {useTheme} from '../../../contexts';
-import {orderBy} from 'lodash';
+import {orderBy} from '../../../utils/array';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../store';
@@ -41,6 +41,7 @@ import GlobalSelect, {
   ToWalletSelectorCustomCurrency,
 } from '../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../utils/external-services-utils';
+import {getLastPurchaseWalletIdForRequest} from '../buy-crypto/utils/buy-crypto-utils';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {
   ExternalServicesContext,
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletSelector: {
-    height: 36,
+    minHeight: 36,
     borderRadius: 27.5,
     display: 'flex',
     flexDirection: 'row',
@@ -349,7 +350,13 @@ const ExternalServicesWalletSelector: React.FC<
       return;
     }
 
-    if (preSetWallet?.id || buyCryptoOpts?.lastPurchaseData?.walletId) {
+    const lastPurchaseWalletId = getLastPurchaseWalletIdForRequest(
+      buyCryptoOpts?.lastPurchaseData,
+      fromCurrencyAbbreviation,
+      fromChain,
+    );
+
+    if (preSetWallet?.id || lastPurchaseWalletId) {
       // Selected wallet from Wallet Details
       let fromWalletData;
       let allWallets: Wallet[] = [];
@@ -358,8 +365,7 @@ const ExternalServicesWalletSelector: React.FC<
         allWallets = [...allWallets, ...key.wallets];
       });
 
-      const walletIdToFind =
-        preSetWallet?.id || buyCryptoOpts?.lastPurchaseData?.walletId;
+      const walletIdToFind = preSetWallet?.id || lastPurchaseWalletId;
       fromWalletData = allWallets.find(wallet => wallet.id === walletIdToFind);
       if (fromWalletData) {
         setWallet(fromWalletData);

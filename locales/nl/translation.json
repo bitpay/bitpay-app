@@ -2294,5 +2294,16 @@
   "Updating history · {{completed}} of {{count}} wallets_one": "Geschiedenis bijwerken · {{completed}} van {{count}} wallet",
   "Updating history · {{completed}} of {{count}} wallets_other": "Geschiedenis bijwerken · {{completed}} van {{count}} wallets",
   "Couldn't load balance history.": "Saldogeschiedenis kon niet worden geladen.",
-  "Retry": "Opnieuw proberen"
+  "Retry": "Opnieuw proberen",
+  "Testnet mode unlocked": "Testnetmodus ontgrendeld",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "Testnet-wallets en -netwerken worden nu weergegeven. U kunt ze hieronder uitschakelen.",
+  "Show Testnet Wallets": "Testnet-wallets weergeven",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Indien ingeschakeld, worden testnet-wallets overal in de app weergegeven en kunt u testnet-wallets en -tokens aanmaken. Testnetmunten hebben geen waarde. Indien uitgeschakeld, worden testnet-wallets verborgen maar niet verwijderd.",
+  "NETWORK": "NETWERK",
+  "Select a Network": "Selecteer een netwerk",
+  "Add Testnet Wallets": "Testnet-wallets toevoegen",
+  "Wallet data could not be opened": "De walletgegevens konden niet worden geopend",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Uw lokale gegevens zijn behouden. Probeer het opnieuw of neem contact op met de ondersteuning. De-installeer de app niet en wis de gegevens ervan niet. Referentie: {{id}}.",
+  "There are no wallets with enough funds on the {{network}} network.": "Er zijn geen wallets met voldoende saldo op het {{network}}-netwerk.",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen."
 }

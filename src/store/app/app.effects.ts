@@ -2,7 +2,7 @@ import {mark as perfMark} from '../../perf/PerfMonitor';
 import {whenStartupSettled} from '../../utils/startupSignals';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
-import {debounce} from 'lodash';
+import {debounce} from '../../utils/debounce';
 import {
   DeviceEventEmitter,
   EmitterSubscription,
@@ -44,6 +44,7 @@ import {
   reportDeviceIntegrityToSentry,
 } from '../../utils/deviceIntegrity';
 import {Analytics} from '../analytics/analytics.effects';
+import {reportVaultMigrationStatus} from '../vault-telemetry';
 import {BitPayIdEffects} from '../bitpay-id';
 import {SumSubEffects} from '../sumsub';
 import {zenledgerInitialize} from '../zenledger';
@@ -423,6 +424,7 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   }
   logManager.debug('[initAnalytics] Braze EID: ', eid);
   await dispatch(Analytics.identify(eid));
+  dispatch(reportVaultMigrationStatus());
 
   if (!appInstalled) {
     dispatch(trackAppInstalled(Math.floor(Date.now() / 1000)));

@@ -2275,5 +2275,16 @@
   "Loading balance history": "正在加载余额历史",
   "Updating history · {{completed}} of {{count}} wallets_other": "正在更新历史 · 已完成 {{completed}}/{{count}} 个钱包",
   "Couldn't load balance history.": "无法加载余额历史。",
-  "Retry": "重试"
+  "Retry": "重试",
+  "Testnet mode unlocked": "测试网模式已解锁",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "现在会显示测试网钱包和网络。您可以在下方将其关闭。",
+  "Show Testnet Wallets": "显示测试网钱包",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "启用后，测试网钱包会在整个应用中显示，您可以创建测试网钱包和代币。测试网币没有价值。停用后，测试网钱包会被隐藏，但不会被删除。",
+  "NETWORK": "网络",
+  "Select a Network": "选择网络",
+  "Add Testnet Wallets": "添加测试网钱包",
+  "Wallet data could not be opened": "无法打开钱包数据",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "您的本地数据已保留。请重试或联系支持团队。请勿卸载应用或清除其数据。参考代码：{{id}}。",
+  "There are no wallets with enough funds on the {{network}} network.": "{{network}} 网络上没有资金充足的钱包。",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "如果您删除了 BitPay 应用或丢失了设备，您将需要使用恢复短语才能重新存取资金。"
 }

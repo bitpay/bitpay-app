@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   },
   addressTextContainer: {
     borderRadius: 40,
-    height: 37,
+    minHeight: 37,
     width: 150,
     marginLeft: 2,
     justifyContent: 'center',

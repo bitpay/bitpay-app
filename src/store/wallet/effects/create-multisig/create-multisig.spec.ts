@@ -652,6 +652,37 @@ describe('addCoSignerToTSS', () => {
       'collecting_copayers',
     );
   });
+
+  it('does not restore a deleted key when restoreSession finishes', async () => {
+    const keyId = 'key-deleted-during-invite';
+    const store = configureTestStore({
+      WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
+    });
+    let finishRestore!: () => void;
+    lastKeyGen.restoreSession.mockImplementationOnce(
+      () => new Promise<void>(resolve => (finishRestore = resolve)),
+    );
+
+    const resultPromise = store.dispatch(
+      addCoSignerToTSS({
+        keyId,
+        joinerSessionId: encodeJoinerSessionId({pubKey: 'p1'}),
+        partyId: 1,
+      }),
+    );
+    resultPromise.catch(() => {});
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishRestore();
+
+    await expect(resultPromise).rejects.toThrow(
+      'Key not found or no TSS session',
+    );
+    expect(
+      store
+        .getActions()
+        .filter((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
+  });
 });
 
 // ─── generateJoinerSessionId / clearPendingJoinerSession / validateJoinCode ─
@@ -808,6 +839,216 @@ describe('startTSSCeremony', () => {
     store.dispatch(cancelTSSCeremony(keyId));
 
     await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+  });
+
+  it('does not restore a deleted key when restoreSession finishes', async () => {
+    const keyId = 'ceremony-deleted-during-restore';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    let finishRestore!: () => void;
+    lastKeyGen.restoreSession.mockImplementationOnce(
+      () => new Promise<void>(resolve => (finishRestore = resolve)),
+    );
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishRestore();
+    await tick();
+
+    // Let an unguarded ceremony settle too, so the regression cannot leak it.
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(lastKeyGen.subscribe).not.toHaveBeenCalled();
+    expect(
+      store
+        .getActions()
+        .filter((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
+  });
+
+  it('does not complete a cancelled ceremony while the wallet refresh is pending', async () => {
+    const keyId = 'ceremony-cancelled-during-refresh';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    let finishRefresh!: (err: Error | null, status: any) => void;
+    lastWalletClient.getStatus.mockImplementationOnce((_opts: any, cb: any) => {
+      finishRefresh = cb;
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await tick();
+
+    store.dispatch(cancelTSSCeremony(keyId));
+    finishRefresh(null, {
+      wallet: {
+        id: DEFAULT_BWS_WALLET_ID,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+        publicKeyRing: [{xPubKey: 'a'}, {xPubKey: 'b'}, {xPubKey: 'c'}],
+      },
+    });
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(createWalletAddress).not.toHaveBeenCalled();
+    expect(store.getState().WALLET.keys[keyId]).toBeDefined();
+    expect(
+      store
+        .getActions()
+        .filter(
+          (a: any) =>
+            a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            a.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(0);
+  });
+
+  it('does not complete a deleted key while the first address is pending', async () => {
+    const keyId = 'ceremony-deleted-during-address';
+    const store = configureTestStore({
+      APP: {
+        notificationsAccepted: true,
+        emailNotifications: {accepted: true, email: 'user@example.com'},
+        brazeEid: 'braze-42',
+        defaultLanguage: 'en',
+      },
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {subscribePushNotifications, subscribeEmailNotifications} =
+      jest.requireMock('../../../app/app.effects');
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    let finishAddress!: (address: string) => void;
+    createWalletAddress.mockImplementationOnce(
+      () => () =>
+        new Promise<string>(resolve => {
+          finishAddress = resolve;
+        }),
+    );
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await tick();
+
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishAddress('mock-address-1');
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(subscribePushNotifications).not.toHaveBeenCalled();
+    expect(subscribeEmailNotifications).not.toHaveBeenCalled();
+    expect(
+      store
+        .getActions()
+        .filter(
+          (a: any) =>
+            a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            a.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(0);
+  });
+
+  it('keeps a restarted ceremony active when the cancelled attempt finishes', async () => {
+    const keyId = 'ceremony-restarted-during-refresh';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const firstKeyGen = lastKeyGen;
+    let finishFirstRefresh!: (err: Error | null, status: any) => void;
+    lastWalletClient.getStatus.mockImplementationOnce((_opts: any, cb: any) => {
+      finishFirstRefresh = cb;
+    });
+
+    const firstPromise = store.dispatch(startTSSCeremony(keyId));
+    const firstOutcome = firstPromise.then(
+      (key: any) => ({key, error: undefined}),
+      (error: Error) => ({key: undefined, error}),
+    );
+    await tick();
+    firstKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    firstKeyGen.emit('complete');
+    await tick();
+
+    store.dispatch(cancelTSSCeremony(keyId));
+    const secondKeyGen = createFakeKeyGen();
+    createKeyGenMock.mockReturnValueOnce(secondKeyGen);
+    mockBwcInstance.getClient.mockReturnValueOnce(createFakeWalletClient());
+    const secondPromise = store.dispatch(startTSSCeremony(keyId));
+    const secondOutcome = secondPromise.then(
+      (key: any) => ({key, error: undefined}),
+      (error: Error) => ({key: undefined, error}),
+    );
+    await tick();
+
+    finishFirstRefresh(null, {
+      wallet: {
+        id: DEFAULT_BWS_WALLET_ID,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+        publicKeyRing: [{xPubKey: 'a'}, {xPubKey: 'b'}, {xPubKey: 'c'}],
+      },
+    });
+    const firstResult = await firstOutcome;
+    const secondUnsubscribeCalls = secondKeyGen.unsubscribe.mock.calls.length;
+
+    secondKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    secondKeyGen.emit('complete');
+    const secondResult = await secondOutcome;
+
+    expect(firstResult.error?.message).toBe('CEREMONY_CANCELLED');
+    expect(secondUnsubscribeCalls).toBe(0);
+    expect(secondResult.error).toBeUndefined();
+    expect(secondResult.key.tssSession.status).toBe('complete');
+    expect(
+      store
+        .getActions()
+        .filter(
+          (a: any) =>
+            a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            a.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(1);
   });
 
   it('marks the tssSession as ceremony_in_progress as soon as the ceremony registers', async () => {
@@ -968,6 +1209,29 @@ describe('startTSSCeremony', () => {
 
     await expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
     expect(lastKeyGen.unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects with CEREMONY_CANCELLED and clears the timeout when cancelled after round 2 is ready', async () => {
+    jest.useFakeTimers();
+    const keyId = 'ceremony-cancelled-after-round-2';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start', n: 3}),
+        },
+      },
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+
+    lastKeyGen.emit('roundready', 1);
+    lastKeyGen.emit('roundready', 2);
+    store.dispatch(cancelTSSCeremony(keyId));
+
+    expect(jest.getTimerCount()).toBe(0);
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
   });
 
   it('rejects with CEREMONY_STUCK after 10 consecutive TSS_ROUND_ALREADY_DONE errors', async () => {
@@ -1192,6 +1456,43 @@ describe('startTSSCeremony', () => {
       expect.anything(),
       expect.objectContaining({email: 'user@example.com'}),
     );
+  });
+
+  it('does not refresh, subscribe notifications or create an address when cancelled on complete', async () => {
+    const keyId = 'ceremony-cancelled-on-complete';
+    const store = configureTestStore({
+      APP: {
+        notificationsAccepted: true,
+        emailNotifications: {accepted: true, email: 'user@example.com'},
+        brazeEid: 'braze-42',
+        defaultLanguage: 'en',
+      },
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {subscribePushNotifications, subscribeEmailNotifications} =
+      jest.requireMock('../../../app/app.effects');
+    const {createWalletAddress} = jest.requireMock('../address/address');
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    store.dispatch(cancelTSSCeremony(keyId));
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(lastWalletClient.getStatus).not.toHaveBeenCalled();
+    expect(subscribePushNotifications).not.toHaveBeenCalled();
+    expect(subscribeEmailNotifications).not.toHaveBeenCalled();
+    expect(createWalletAddress).not.toHaveBeenCalled();
   });
 
   it('logs a warning and keeps retrying when getStatus reports an error during refreshWalletWithRetry', async () => {

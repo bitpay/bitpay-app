@@ -60,7 +60,6 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
-import cloneDeep from 'lodash.clonedeep';
 import {RootState} from '../../../../../store';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
@@ -164,7 +163,7 @@ const BanxaDetails: React.FC = () => {
           `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiat_amount}`,
         );
         paymentRequest.fiat_total_amount = orderData.fiat_amount;
-        let fiatBaseAmount: number = cloneDeep(orderData.fiat_amount);
+        let fiatBaseAmount: number = orderData.fiat_amount;
         if (
           orderData.payment_fee &&
           typeof orderData.payment_fee === 'number' &&

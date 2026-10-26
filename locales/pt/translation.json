@@ -2304,5 +2304,16 @@
   "Updating history · {{completed}} of {{count}} wallets_many": "Atualizando histórico · {{completed}} de {{count}} carteiras",
   "Updating history · {{completed}} of {{count}} wallets_other": "Atualizando histórico · {{completed}} de {{count}} carteiras",
   "Couldn't load balance history.": "Não foi possível carregar o histórico de saldo.",
-  "Retry": "Tentar novamente"
+  "Retry": "Tentar novamente",
+  "Testnet mode unlocked": "Modo testnet desbloqueado",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "As carteiras e redes de testnet agora são exibidas. Você pode desativá-las abaixo.",
+  "Show Testnet Wallets": "Mostrar carteiras de testnet",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Se ativado, as carteiras de testnet são exibidas em todo o aplicativo e você pode criar carteiras e tokens de testnet. As moedas de testnet não têm valor. Se desativado, as carteiras de testnet ficam ocultas, mas não são excluídas.",
+  "NETWORK": "REDE",
+  "Select a Network": "Selecione uma rede",
+  "Add Testnet Wallets": "Adicionar carteiras de testnet",
+  "Wallet data could not be opened": "Não foi possível abrir os dados da carteira",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Seus dados locais foram preservados. Tente novamente ou entre em contato com o suporte. Não desinstale o aplicativo nem apague os dados dele. Referência: {{id}}.",
+  "There are no wallets with enough funds on the {{network}} network.": "Não há carteiras com saldo suficiente na rede {{network}}.",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Se você excluir o aplicativo BitPay ou perder seu dispositivo, precisará da sua frase de recuperação para acessar seus fundos novamente."
 }

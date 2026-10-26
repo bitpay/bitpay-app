@@ -2305,5 +2305,16 @@
   "Updating history · {{completed}} of {{count}} wallets_many": "Обновление истории · {{completed}} из {{count}} кошельков",
   "Updating history · {{completed}} of {{count}} wallets_other": "Обновление истории · {{completed}} из {{count}} кошелька",
   "Couldn't load balance history.": "Не удалось загрузить историю баланса.",
-  "Retry": "Повторить"
+  "Retry": "Повторить",
+  "Testnet mode unlocked": "Режим тестовой сети разблокирован",
+  "Testnet wallets and networks are now shown. You can turn them off below.": "Кошельки и сети тестовой сети теперь отображаются. Их можно отключить ниже.",
+  "Show Testnet Wallets": "Показывать кошельки тестовой сети",
+  "If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.": "Если включено, кошельки тестовой сети отображаются во всём приложении, и вы можете создавать кошельки и токены тестовой сети. Монеты тестовой сети не имеют ценности. Если отключено, кошельки тестовой сети скрываются, но не удаляются.",
+  "NETWORK": "СЕТЬ",
+  "Select a Network": "Выберите сеть",
+  "Add Testnet Wallets": "Добавить кошельки тестовой сети",
+  "Wallet data could not be opened": "Не удалось открыть данные кошелька",
+  "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ваши локальные данные сохранены. Повторите попытку или обратитесь в службу поддержки. Не удаляйте приложение и не очищайте его данные. Справочный код: {{id}}.",
+  "There are no wallets with enough funds on the {{network}} network.": "Нет кошельков с достаточным количеством средств в сети {{network}}.",
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Если вы удалите приложение BitPay или потеряете устройство, для получения доступа к вашим средствам вам потребуется ввести фразу восстановления."
 }

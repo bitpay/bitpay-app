@@ -25,8 +25,6 @@ import {
 } from 'react-native';
 import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import _ from 'lodash';
-import cloneDeep from 'lodash.clonedeep';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
@@ -193,12 +191,11 @@ const SwapCryptoApproveErc20: React.FC = () => {
       );
       const knownContract = spenderDataWhitelist.find(contract => {
         return (
-          contract?.address?.toLowerCase() ===
-          cloneDeep(spenderData.address).toLowerCase()
+          contract?.address?.toLowerCase() === spenderData.address.toLowerCase()
         );
       });
 
-      if (!_.isEmpty(knownContract)) {
+      if (knownContract) {
         logger.debug(
           'Spender address verified: ' + JSON.stringify(knownContract),
         );
