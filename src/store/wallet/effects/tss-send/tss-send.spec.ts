@@ -1130,10 +1130,12 @@ describe('startTSSSigning', () => {
     expect(wallet.pushSignatures.mock.calls[0][1]).toHaveLength(2);
   });
 
-  it('pushSignatures: swallows race-condition error codes and resolves with the original txp', async () => {
+  it('pushSignatures: resolves with the current proposal when a race-condition code leaves it accepted', async () => {
     const store = configureTestStore();
     const raceErr: any = new Error('copayer already voted');
     raceErr.code = 'COPAYER_VOTED';
+    const acceptedTxp = {id: 'txp-1', status: 'accepted'};
+    jest.requireMock('../send/send').getTx.mockResolvedValueOnce(acceptedTxp);
     const wallet = makeTssWallet({
       pushSignatures: jest.fn((_txp: any, _sigs: any, cb: any) =>
         cb(raceErr, undefined),
@@ -1149,13 +1151,17 @@ describe('startTSSSigning', () => {
     driveToComplete(tssSignInstances[0]);
 
     const result = await resultPromise;
-    expect(result).toBe(txp);
+    expect(result).toBe(acceptedTxp);
   });
 
-  it('pushSignatures: swallows race-condition errors identified by bwc.Error name (no code)', async () => {
+  it('pushSignatures: recognizes race-condition errors by bwc.Error name (no code)', async () => {
     const store = configureTestStore();
     const raceErr: any = new Error('tx not accepted');
     raceErr.name = 'bwc.ErrorTX_NOT_ACCEPTED'; // BWS-style error: name, no code
+    const broadcastedTxp = {id: 'txp-1', status: 'broadcasted'};
+    jest
+      .requireMock('../send/send')
+      .getTx.mockResolvedValueOnce(broadcastedTxp);
     const wallet = makeTssWallet({
       pushSignatures: jest.fn((_txp: any, _sigs: any, cb: any) =>
         cb(raceErr, undefined),
@@ -1171,7 +1177,32 @@ describe('startTSSSigning', () => {
     driveToComplete(tssSignInstances[0]);
 
     const result = await resultPromise;
-    expect(result).toBe(txp);
+    expect(result).toBe(broadcastedTxp);
+  });
+
+  it('pushSignatures: rethrows a race-condition error while the proposal is still pending', async () => {
+    const store = configureTestStore();
+    const raceErr: any = new Error('bad signatures');
+    raceErr.code = 'BAD_SIGNATURES';
+    const wallet = makeTssWallet({
+      pushSignatures: jest.fn((_txp: any, _sigs: any, cb: any) =>
+        cb(raceErr, undefined),
+      ),
+    });
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    const resultPromise = store.dispatch(
+      startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+    );
+    await tick(20);
+    driveToComplete(tssSignInstances[0]);
+
+    await expect(resultPromise).rejects.toThrow('bad signatures');
+    expect(jest.requireMock('../send/send').getTx).toHaveBeenCalledWith(
+      wallet,
+      txp.id,
+    );
   });
 
   it('pushSignatures: rethrows non-race-condition errors', async () => {
