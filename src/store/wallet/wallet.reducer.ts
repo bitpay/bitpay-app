@@ -43,7 +43,6 @@ export interface WalletState {
   accountSvmCreationMigrationComplete: boolean;
   svmAddressFixComplete: boolean;
   pendingJoinerSession: PendingJoinerSession | null;
-  tssEnabled: boolean;
   /**
    * Testnet mode. `null` until the user unlocks it with the title taps in
    * Settings > Crypto; once set the toggle stays visible there.
@@ -85,7 +84,6 @@ export const initialState: WalletState = {
   accountSvmCreationMigrationComplete: false,
   svmAddressFixComplete: false,
   pendingJoinerSession: null,
-  tssEnabled: false,
   showTestnetWallets: null,
   secretsMigrated: false,
 };
@@ -779,12 +777,6 @@ export const walletReducer = (
       return {
         ...state,
         secretsMigrated: action.payload,
-      };
-
-    case WalletActionTypes.SET_TSS_ENABLED:
-      return {
-        ...state,
-        tssEnabled: action.payload,
       };
 
     case WalletActionTypes.SET_SHOW_TESTNET_WALLETS: {

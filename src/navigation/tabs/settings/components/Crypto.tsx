@@ -20,7 +20,6 @@ import {
   setCustomizeNonce,
   setQueuedTransactions,
   setShowTestnetWallets,
-  setTssEnabled,
   setUseUnconfirmedFunds,
 } from '../../../../store/wallet/wallet.actions';
 import {
@@ -44,11 +43,6 @@ const Crypto = () => {
   const queuedTransactions = useAppSelector(
     ({WALLET}) => WALLET.queuedTransactions,
   );
-  const tssEnabled = useAppSelector(({WALLET}) => WALLET.tssEnabled);
-  const isInternalUser = useAppSelector(({APP, BITPAY_ID}) => {
-    const user = BITPAY_ID.user[APP.network];
-    return !!user?.email?.endsWith('@bitpay.com');
-  });
   const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
   const testnetModeUnlocked = useAppSelector(selectTestnetModeUnlocked);
   const navigation = useNavigation();
@@ -154,18 +148,6 @@ const Crypto = () => {
     [applyShowTestnetWallets, dispatch],
   );
 
-  const handleToggleTssEnabled = useCallback(
-    (value: boolean) => {
-      dispatch(setTssEnabled(value));
-      dispatch(
-        Analytics.track('Set TSS Enabled', {
-          tssEnabled: value,
-        }),
-      );
-    },
-    [dispatch],
-  );
-
   return (
     <SettingsComponent>
       <Setting
@@ -237,26 +219,6 @@ const Crypto = () => {
             <InfoDescription>
               {t(
                 'If enabled, testnet wallets are shown throughout the app and you can create testnet wallets and tokens. Testnet coins have no value. If disabled, testnet wallets are hidden but not deleted.',
-              )}
-            </InfoDescription>
-          </Info>
-        </>
-      ) : null}
-      {isInternalUser ? (
-        <>
-          <Hr />
-          <Setting activeOpacity={1}>
-            <SettingTitle>{t('Enable TSS Wallets')}</SettingTitle>
-            <ToggleSwitch
-              onChange={handleToggleTssEnabled}
-              isEnabled={tssEnabled}
-            />
-          </Setting>
-          <Info>
-            <InfoTriangle />
-            <InfoDescription>
-              {t(
-                'If enabled, you will be able to create and join TSS (Threshold Signature Scheme) wallets. This is an experimental feature.',
               )}
             </InfoDescription>
           </Info>
