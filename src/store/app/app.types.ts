@@ -1,10 +1,11 @@
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {EventSubscription} from 'react-native';
 import {ContentCard} from '@braze/react-native-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
+  AppColorScheme,
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -200,7 +201,7 @@ interface ClearChainSelectorModalOptions {
 
 interface SetColorScheme {
   type: typeof AppActionTypes.SET_COLOR_SCHEME;
-  payload: ColorSchemeName;
+  payload: AppColorScheme;
 }
 
 interface SuccessGenerateAppIdentity {

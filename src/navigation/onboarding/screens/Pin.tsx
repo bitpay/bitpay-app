@@ -1,9 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useLayoutEffect, useRef} from 'react';
-import {ScrollView} from 'react-native';
+import React, {useLayoutEffect, useRef, useState} from 'react';
+import {ScrollView, SafeAreaView, StyleSheet} from 'react-native';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -25,6 +24,8 @@ import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {sleep} from '../../../utils/helper-methods';
+import EnableLockWarningModal from '../../tabs/settings/security/components/EnableLockWarningModal';
 
 const PinImage = {
   light: (
@@ -46,10 +47,12 @@ const PinImage = {
     />
   ),
 };
-const PinContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: stretch;
-`;
+const styles = StyleSheet.create({
+  pinContainer: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+});
 
 const PinScreen = ({
   navigation,
@@ -58,6 +61,8 @@ const PinScreen = ({
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const themeType = useThemeType();
+  const [lockWarningModalVisible, setLockWarningModalVisible] = useState(false);
+  const shouldEnableBiometricRef = useRef(false);
 
   useAndroidBackHandler(() => true);
 
@@ -80,7 +85,7 @@ const PinScreen = ({
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip"
+            accessibilityLabel={t('Skip')}
             buttonType={'pill'}
             touchableLibrary={'react-native'}
             onPress={onSkipPressRef.current}>
@@ -94,6 +99,10 @@ const PinScreen = ({
   const onSetPinPress = () => {
     haptic('impactLight');
     dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
+  };
+
+  const hideLockWarningModal = () => {
+    setLockWarningModalVisible(false);
   };
 
   const onSetBiometricPress = async () => {
@@ -115,8 +124,9 @@ const PinScreen = ({
         dispatch(
           showBottomNotificationModal(
             BiometricErrorNotification(
-              'Biometric method is not available on this device: ' +
-                biometryType,
+              t('Biometric method is not available on this device: {{type}}', {
+                type: biometryType,
+              }),
             ),
           ),
         );
@@ -128,8 +138,29 @@ const PinScreen = ({
     }
   };
 
+  const onPressBiometric = () => {
+    haptic('impactLight');
+    shouldEnableBiometricRef.current = true;
+    setLockWarningModalVisible(true);
+  };
+
+  const onPressLockWarningConfirm = async () => {
+    if (!shouldEnableBiometricRef.current) {
+      return;
+    }
+    hideLockWarningModal();
+    await sleep(500);
+    shouldEnableBiometricRef.current = false;
+    await onSetBiometricPress();
+  };
+
+  const onCloseLockWarningModal = () => {
+    shouldEnableBiometricRef.current = false;
+    hideLockWarningModal();
+  };
+
   return (
-    <PinContainer testID="security-view">
+    <SafeAreaView style={styles.pinContainer} testID="security-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -153,7 +184,7 @@ const PinScreen = ({
           <ActionContainer>
             <Button
               testID="pin-button"
-              accessibilityLabel="Set PIN"
+              accessibilityLabel={t('Set PIN')}
               onPress={() => onSetPinPress()}
               buttonStyle={'primary'}>
               {t('PIN')}
@@ -162,8 +193,8 @@ const PinScreen = ({
           <ActionContainer>
             <Button
               testID="biometric-button"
-              accessibilityLabel="Set biometric login"
-              onPress={() => onSetBiometricPress()}
+              accessibilityLabel={t('Set biometric login')}
+              onPress={onPressBiometric}
               buttonStyle={'secondary'}>
               {t('Biometric')}
             </Button>
@@ -171,15 +202,20 @@ const PinScreen = ({
           <ActionContainer>
             <Button
               testID="skip-security-button"
-              accessibilityLabel="Skip security setup"
+              accessibilityLabel={t('Skip security setup')}
               onPress={onSkipPressRef.current}
               buttonStyle={'cancel'}>
               {t('Maybe Later')}
             </Button>
           </ActionContainer>
         </CtaContainer>
+        <EnableLockWarningModal
+          isVisible={lockWarningModalVisible}
+          onBackdropPress={onCloseLockWarningModal}
+          onConfirm={onPressLockWarningConfirm}
+        />
       </ScrollView>
-    </PinContainer>
+    </SafeAreaView>
   );
 };
 

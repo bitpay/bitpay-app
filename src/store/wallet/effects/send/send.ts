@@ -41,7 +41,12 @@ import {
   GetMinFee,
   getFeeRatePerKb,
 } from '../fee/fee';
-import {GetInput} from '../transactions/transactions';
+import {
+  GetInput,
+  GetTransactionHistory,
+  TX_HISTORY_LIMIT,
+} from '../transactions/transactions';
+import {updateWalletTxHistory} from '../../wallet.actions';
 import {
   checkEncryptedKeysForEddsaMigration,
   createAtaAndSend,
@@ -137,6 +142,8 @@ import {
   pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
 
+const HAS_CONFIRMING_TXS_MAX_AGE_MS = 10 * 1000;
+
 export const createProposalAndBuildTxDetails =
   (
     tx: TransactionOptions,
@@ -191,19 +198,91 @@ export const createProposalAndBuildTxDetails =
 
         if (
           chain === 'eth' &&
-          wallet.transactionHistory?.hasConfirmingTxs &&
-          context !== 'speedupEth'
+          context !== 'speedupEth' &&
+          wallet.transactionHistory?.hasConfirmingTxs
         ) {
-          if (!queuedTransactions) {
+          const cachedHistory = wallet.transactionHistory;
+          let hasConfirmingTxs = true;
+          let verified = true;
+          const isFresh =
+            !!cachedHistory.hasConfirmingTxsAt &&
+            Date.now() - cachedHistory.hasConfirmingTxsAt <
+              HAS_CONFIRMING_TXS_MAX_AGE_MS;
+
+          if (!isFresh) {
+            const isToken = IsERCToken(currencyAbbreviation, chain);
+            try {
+              const verificationWallet = isToken
+                ? getFullLinkedWallet(keys[wallet.keyId], wallet)
+                : wallet;
+
+              if (!verificationWallet) {
+                verified = false;
+              } else {
+                const {CONTACT} = getState();
+                const refreshed = await dispatch(
+                  GetTransactionHistory({
+                    wallet: verificationWallet,
+                    transactionsHistory: [],
+                    limit: TX_HISTORY_LIMIT,
+                    refresh: true,
+                    contactList: CONTACT.list,
+                  }),
+                );
+
+                const recomputedFromFreshPage = !!refreshed.hasConfirmingTxsAt;
+
+                if (recomputedFromFreshPage) {
+                  hasConfirmingTxs = !!refreshed.hasConfirmingTxs;
+                  if (isToken) {
+                    dispatch(
+                      updateWalletTxHistory({
+                        walletId: wallet.id,
+                        keyId: wallet.keyId,
+                        transactionHistory: {
+                          ...cachedHistory,
+                          hasConfirmingTxs,
+                          hasConfirmingTxsAt: refreshed.hasConfirmingTxsAt,
+                        },
+                      }),
+                    );
+                  }
+                } else {
+                  verified = false;
+                }
+              }
+            } catch (err) {
+              verified = false;
+              logManager.warn(
+                `Could not re-verify pending ETH txs before send: ${
+                  err instanceof Error ? err.message : String(err)
+                }`,
+              );
+            }
+          }
+
+          if (!verified) {
             return reject({
               err: new Error(
                 t(
-                  'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+                  'Could not check this account for pending transactions. Check your connection and try again.',
                 ),
               ),
             });
-          } else {
-            await dispatch(setEthAddressNonce(wallet, tx));
+          }
+
+          if (hasConfirmingTxs) {
+            if (!queuedTransactions) {
+              return reject({
+                err: new Error(
+                  t(
+                    'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+                  ),
+                ),
+              });
+            } else {
+              await dispatch(setEthAddressNonce(wallet, tx));
+            }
           }
         }
 
@@ -380,7 +459,9 @@ const setEthAddressNonce =
           }`,
         );
 
-        tx.nonce = suggestedNonce;
+        if (tx.nonce == null) {
+          tx.nonce = suggestedNonce;
+        }
 
         return resolve();
       } catch (error: any) {
@@ -548,7 +629,7 @@ export const buildTxDetails =
         coin = proposal.coin;
         chain = proposal.chain;
         amount = proposal.amount;
-        fee = proposal.fee || 0; // proposal fee is zero for coinbase
+        fee = proposal.fee || 0;
         memo = proposal.memo;
       }
 
@@ -784,7 +865,7 @@ const getRateStr =
 /*
  * txp options object for wallet.createTxProposal
  * */
-const buildTransactionProposal =
+export const buildTransactionProposal =
   (tx: Partial<TransactionOptions>): Effect<Promise<object>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -811,10 +892,6 @@ const buildTransactionProposal =
           if (tx.recipient?.type === 'wallet') {
             customData = {
               toWalletName: tx.recipient.name || null,
-            };
-          } else if (tx.recipient?.type === 'coinbase') {
-            customData = {
-              service: 'coinbase',
             };
           } else if (tx.recipient?.email) {
             customData = {
@@ -1218,6 +1295,15 @@ const buildTransactionProposal =
     });
   };
 
+// BWC defaults BCH proposals to schnorr, but TSS produces ECDSA signatures.
+const withTssBchSigningMethod = <T extends Partial<TransactionProposal>>(
+  wallet: Wallet,
+  txp: T,
+): T =>
+  wallet.tssKeyId && wallet.credentials.chain === 'bch'
+    ? {...txp, signingMethod: 'ecdsa'}
+    : txp;
+
 export const startSendPayment =
   ({
     txp,
@@ -1240,7 +1326,7 @@ export const startSendPayment =
     return new Promise(async (resolve, reject) => {
       try {
         wallet.createTxProposal(
-          {...txp, dryRun: false},
+          withTssBchSigningMethod(wallet, {...txp, dryRun: false}),
           async (err: Error, proposal: TransactionProposal) => {
             if (err) {
               return reject(err);
@@ -1729,7 +1815,7 @@ export const createTxProposal =
   (dispatch, getState) => {
     return new Promise((resolve, reject) => {
       wallet.createTxProposal(
-        txp,
+        withTssBchSigningMethod(wallet, txp),
         (err: Error, createdTxp: TransactionProposal) => {
           if (err) {
             return reject({

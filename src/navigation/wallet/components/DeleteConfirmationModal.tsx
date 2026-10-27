@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../contexts';
 import {SheetContainer} from '../../../components/styled/Containers';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import CautionSvg from '../../../../assets/img/error.svg';
@@ -16,31 +17,26 @@ interface ConfirmationModalProps {
   onPressCancel: () => void;
 }
 
-const Header = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Title = styled(H4)`
-  margin-left: 10px;
-`;
-
-const DeleteModalParagraph = styled(Paragraph)`
-  margin: 15px 0 20px;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-`;
-
-const ActionsContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  border-top-color: #ebebeb;
-  border-top-width: 1px;
-  padding-top: 20px;
-`;
-
-const SecondaryActionText = styled(Link)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  title: {
+    marginLeft: 10,
+  },
+  deleteModalParagraph: {
+    marginTop: 15,
+    marginBottom: 20,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopColor: '#ebebeb',
+    borderTopWidth: 1,
+    paddingTop: 20,
+  },
+});
 
 const DeleteConfirmationModal = ({
   description,
@@ -49,20 +45,27 @@ const DeleteConfirmationModal = ({
   onPressCancel,
 }: ConfirmationModalProps) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   return (
     <SheetModal
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={onPressCancel}>
       <SheetContainer>
-        <Header>
+        <View style={styles.header}>
           <CautionSvg />
-          <Title>{t('Warning!')}</Title>
-        </Header>
+          <H4 style={styles.title}>{t('Warning!')}</H4>
+        </View>
 
-        <DeleteModalParagraph>{description}</DeleteModalParagraph>
+        <Paragraph
+          style={[
+            styles.deleteModalParagraph,
+            {color: theme.dark ? White : SlateDark},
+          ]}>
+          {description}
+        </Paragraph>
 
-        <ActionsContainer>
+        <View style={styles.actionsContainer}>
           <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
@@ -75,9 +78,11 @@ const DeleteConfirmationModal = ({
               haptic('impactLight');
               onPressCancel();
             }}>
-            <SecondaryActionText>{t('NEVERMIND')}</SecondaryActionText>
+            <Link style={{color: theme.dark ? White : SlateDark}}>
+              {t('NEVERMIND')}
+            </Link>
           </TouchableOpacity>
-        </ActionsContainer>
+        </View>
       </SheetContainer>
     </SheetModal>
   );

@@ -25,6 +25,21 @@ export type WCV2RequestWalletsType = {
   display_name: string;
 };
 
+export type TokenApproval = {
+  functionName:
+    | 'approve'
+    | 'approveAndCall'
+    | 'increaseAllowance'
+    | 'setApprovalForAll'
+    | 'permit';
+  spender: string;
+  amount?: string;
+  approved?: boolean;
+  owner?: string;
+  deadline?: string;
+  isUnlimited: boolean;
+};
+
 export type WCV2RequestType =
   WalletKitTypes.EventArguments['session_request'] & {
     createdOn?: number;
@@ -42,6 +57,8 @@ export type WCV2RequestType =
     badgeImg?: string | ((props?: any) => ReactElement);
     currencyImg?: string | ((props?: any) => ReactElement);
     decodedInstructions: any;
+    tokenApproval?: TokenApproval;
+    tokenApprovalDecodeError?: boolean;
   };
 
 export type WCV2SessionType = SessionTypes.Struct & {

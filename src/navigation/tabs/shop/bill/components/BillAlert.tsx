@@ -1,5 +1,7 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {useTranslation} from 'react-i18next';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../../contexts';
 import {Link, Paragraph} from '../../../../../components/styled/Text';
 import {
   LightBlack,
@@ -12,42 +14,85 @@ import InfoSvg from '../../../home/components/InfoSvg';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {openExternalUrl} from '../../../../../store/app/app.effects';
 
-const AlertContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  flex-direction: row;
-  padding: 16px 16px 17px 14px;
-  border-radius: 8px;
-`;
+const styles = StyleSheet.create({
+  alertContainer: {
+    flexDirection: 'row',
+    paddingTop: 16,
+    paddingRight: 16,
+    paddingBottom: 17,
+    paddingLeft: 14,
+    borderRadius: 8,
+  },
+  alertBody: {
+    marginLeft: 14,
+  },
+  alertText: {
+    fontSize: 14,
+    paddingRight: 25,
+    lineHeight: 19,
+  },
+  alertLink: {
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  alertHeader: {
+    fontWeight: '500',
+    marginBottom: 3,
+  },
+  iconContainer: {
+    alignSelf: 'center',
+  },
+});
 
-const AlertBody = styled.View`
-  margin-left: 14px;
-`;
+const AlertContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.alertContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const AlertText = styled(Paragraph)`
-  font-size: 14px;
-  padding-right: 25px;
-  line-height: 19px;
-`;
+const AlertBody = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.alertBody, style]} {...rest} />
+);
 
-const AlertLink = styled(Link)`
-  font-size: 14px;
-  line-height: 19px;
-`;
+const AlertText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.alertText, style]} {...rest} />
+);
 
-const AlertHeader = styled(Paragraph)`
-  font-weight: 500;
-  margin-bottom: 3px;
-`;
+const AlertLink = ({style, ...rest}: React.ComponentProps<typeof Link>) => (
+  <Link style={[styles.alertLink, style]} {...rest} />
+);
 
-const IconContainer = styled.View`
-  align-self: center;
-`;
+const AlertHeader = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof Paragraph>) => (
+  <Paragraph style={[styles.alertHeader, style]} {...rest} />
+);
+
+const IconContainer = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.iconContainer, style]} {...rest} />
+);
 
 export default ({
   variant = 'noLateFees',
 }: {
   variant?: 'noLateFees' | 'servicePaused';
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   return (
@@ -67,9 +112,9 @@ export default ({
         {variant === 'servicePaused' ? (
           <>
             <AlertText>
-              Bill Pay service has been temporarily paused. At this time, we are
-              unable to provide a confirmed timeline for when the Bill Pay
-              service will resume.
+              {t(
+                'Bill Pay service has been temporarily paused. At this time, we are unable to provide a confirmed timeline for when the Bill Pay service will resume.',
+              )}
               <AlertLink
                 onPress={() =>
                   dispatch(
@@ -78,17 +123,18 @@ export default ({
                     ),
                   )
                 }>
-                {' Learn more'}
+                {' '}
+                {t('Learn more')}
               </AlertLink>
             </AlertText>
           </>
         ) : (
           <>
-            <AlertHeader>No late fees</AlertHeader>
+            <AlertHeader>{t('No late fees')}</AlertHeader>
             <AlertText style={{marginBottom: 4}}>
-              Your bank will give you credit for making this payment within one
-              business day, but it may take 3-7 business days for it to show up
-              on your bank statement.
+              {t(
+                'Your bank will give you credit for making this payment within one business day, but it may take 3-7 business days for it to show up on your bank statement.',
+              )}
             </AlertText>
           </>
         )}

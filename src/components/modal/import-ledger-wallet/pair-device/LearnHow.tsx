@@ -1,4 +1,7 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {BaseText, H3, Paragraph} from '../../../styled/Text';
 import Button from '../../../button/Button';
 import {
@@ -18,86 +21,91 @@ interface Props {
   onContinue: () => void;
 }
 
-const InstructionsCard = styled.View`
-  border-radius: 12px;
-  background-color: ${({theme}) => (theme.dark ? SlateDark : NeutralSlate)};
-  padding: 24px;
-  margin-top: 32px;
-`;
-
-const InstructionsRow = styled.View<{isFirst: boolean}>`
-  display: flex;
-  flex-direction: row;
-  margin-top: ${({isFirst}) => (isFirst ? 0 : 24)}px;
-`;
-
-const InstructionNumberColumn = styled.View`
-  flex-grow: 0;
-`;
-
-const InstructionNumberIcon = styled.View`
-  background-color: ${LightBlue};
-  border-radius: 40px;
-  height: 25px;
-  width: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-`;
-
-const InstructionNumberText = styled(BaseText)`
-  color: ${Action};
-`;
-
-const InstructionsTextColumn = styled.View`
-  flex: 1;
-`;
-
-const InstructionsText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-`;
-
-const INSTRUCTIONS = [
-  'Connect and unlock your Ledger device.',
-  'Open your preferred compatible wallet.',
-  'Navigate to Settings, then Blind Signing.',
-  'Toggle settings so Blind Signing is Enabled.',
-];
+const styles = StyleSheet.create({
+  instructionsCard: {
+    borderRadius: 12,
+    padding: 24,
+    marginTop: 32,
+  },
+  instructionsRow: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  instructionNumberColumn: {
+    flexGrow: 0,
+  },
+  instructionNumberIcon: {
+    backgroundColor: LightBlue,
+    borderRadius: 40,
+    height: 25,
+    width: 25,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  instructionNumberText: {
+    color: Action,
+  },
+  instructionsTextColumn: {
+    flex: 1,
+  },
+  instructionsText: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+});
 
 export const LearnHow: React.FC<Props> = props => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  const instructions = [
+    t('Connect and unlock your Ledger device.'),
+    t('Open your preferred compatible wallet.'),
+    t('Navigate to Settings, then Blind Signing.'),
+    t('Toggle settings so Blind Signing is Enabled.'),
+  ];
+
   return (
     <Wrapper>
       <Header>
-        <H3>Enable Blind Signing</H3>
+        <H3>{t('Enable Blind Signing')}</H3>
       </Header>
 
       <DescriptionRow>
         <Paragraph>
-          Enabling blind signing allows you to manage and sign transactions from
-          your Ledger wallet using the BitPay app.
+          {t(
+            'Enabling blind signing allows you to manage and sign transactions from your Ledger wallet using the BitPay app.',
+          )}
         </Paragraph>
       </DescriptionRow>
 
-      <InstructionsCard>
-        {INSTRUCTIONS.map((inst, idx) => (
-          <InstructionsRow key={idx} isFirst={idx <= 0}>
-            <InstructionNumberColumn>
-              <InstructionNumberIcon>
-                <InstructionNumberText>{idx + 1}</InstructionNumberText>
-              </InstructionNumberIcon>
-            </InstructionNumberColumn>
+      <View
+        style={[
+          styles.instructionsCard,
+          {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+        ]}>
+        {instructions.map((inst, idx) => (
+          <View
+            key={idx}
+            style={[styles.instructionsRow, idx <= 0 ? null : {marginTop: 24}]}>
+            <View style={styles.instructionNumberColumn}>
+              <View style={styles.instructionNumberIcon}>
+                <BaseText style={styles.instructionNumberText}>
+                  {idx + 1}
+                </BaseText>
+              </View>
+            </View>
 
-            <InstructionsTextColumn>
-              <InstructionsText>{inst}</InstructionsText>
-            </InstructionsTextColumn>
-          </InstructionsRow>
+            <View style={styles.instructionsTextColumn}>
+              <BaseText style={styles.instructionsText}>{inst}</BaseText>
+            </View>
+          </View>
         ))}
-      </InstructionsCard>
+      </View>
 
       <ActionsRow>
-        <Button onPress={props.onContinue}>Continue</Button>
+        <Button onPress={props.onContinue}>{t('Continue')}</Button>
       </ActionsRow>
     </Wrapper>
   );

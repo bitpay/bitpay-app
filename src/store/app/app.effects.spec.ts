@@ -1,5 +1,7 @@
 const mockStartWalletStoreInit = jest.fn();
 const mockGetLocationData = jest.fn();
+const mockCleanupDisabledSessionLogs = jest.fn(() => Promise.resolve());
+const mockHasSessionLogsCleanupRun = jest.fn(() => false);
 
 jest.mock('react-native', () => ({
   DeviceEventEmitter: {
@@ -23,6 +25,14 @@ jest.mock('@braze/react-native-sdk', () => ({
 }));
 
 jest.mock('react-native-bootsplash', () => ({hide: jest.fn()}));
+jest.mock('../wallet-secrets/wallet-secrets.effects', () => ({
+  migrateWalletSecrets: jest.fn(() => async () => {}),
+}));
+jest.mock('../persistor', () => ({flushPersistor: jest.fn()}));
+jest.mock('../backup/fs-backup', () => ({
+  removePersistRootBackups: jest.fn(() => Promise.resolve()),
+  resumePersistRootBackups: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('react-native-in-app-review', () => ({}));
 jest.mock('react-native-inappbrowser-reborn', () => ({
   __esModule: true,
@@ -81,7 +91,7 @@ jest.mock('../../constants/device-emitter-events', () => ({
     APP_READY_FOR_DEEPLINKS: 'APP_READY_FOR_DEEPLINKS',
   },
 }));
-jest.mock('../../constants/shortcuts', () => ({ShortcutList: []}));
+jest.mock('../../constants/shortcuts', () => ({getShortcutList: () => []}));
 jest.mock('../../constants/currencies', () => ({
   getBaseEVMAccountCreationCoinsAndTokens: jest.fn(() => []),
   getBaseSVMAccountCreationCoinsAndTokens: jest.fn(() => []),
@@ -96,7 +106,10 @@ jest.mock('../../navigation/card-activation/CardActivationGroup', () => ({
 }));
 jest.mock('../../navigation/tabs/TabsStack', () => ({TabsScreens: {}}));
 jest.mock('../../navigation/wallet/WalletGroup', () => ({
-  WalletScreens: {WALLET_DETAILS: 'WalletDetails'},
+  WalletScreens: {
+    ACCOUNT_DETAILS: 'AccountDetails',
+    WALLET_DETAILS: 'WalletDetails',
+  },
 }));
 jest.mock('../../navigation/tabs/shop/merchant/MerchantGroup', () => ({
   MerchantScreens: {},
@@ -131,6 +144,9 @@ jest.mock('../../utils/helper-methods', () => ({
   sleep: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('../../utils/hooks', () => ({}));
+jest.mock('../wallet/utils/currency', () => ({
+  IsSVMChain: jest.fn(() => false),
+}));
 
 jest.mock('../wallet/effects', () => ({
   startAddEDDSAKey: jest.fn(() => ({type: 'START_ADD_EDDSA_KEY'})),
@@ -187,9 +203,6 @@ jest.mock('../bitpay-id', () => ({BitPayIdEffects: {}}));
 jest.mock('../card', () => ({CardActions: {}, CardEffects: {}}));
 jest.mock('../sumsub', () => ({
   SumSubEffects: {startGetKycStatus: jest.fn(() => ({type: 'GET_KYC_STATUS'}))},
-}));
-jest.mock('../coinbase', () => ({
-  coinbaseInitialize: jest.fn(() => ({type: 'COINBASE_INITIALIZE'})),
 }));
 jest.mock('../zenledger', () => ({
   zenledgerInitialize: jest.fn(() => ({type: 'ZENLEDGER_INITIALIZE'})),
@@ -308,18 +321,33 @@ jest.mock('../../managers/LogManager', () => ({
     warn: jest.fn(),
   },
 }));
+jest.mock('../../utils/sessionLogs', () => ({
+  cleanupDisabledSessionLogs: (...args: any[]) =>
+    mockCleanupDisabledSessionLogs(...args),
+  hasSessionLogsCleanupRun: (...args: any[]) =>
+    mockHasSessionLogsCleanupRun(...args),
+}));
 
 import {
   incomingLink,
   openExternalUrl,
   openUrlWithInAppBrowser,
   startAppInit,
+  TOKEN_WALLET_LOOKUP_INTERVAL,
+  TOKEN_WALLET_LOOKUP_TIMEOUT,
 } from './app.effects';
 import {logManager} from '../../managers/LogManager';
+import {sleep} from '../../utils/helper-methods';
 import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {navigationRef} from '../../Root';
 import {findWalletByIdHashed} from '../wallet/utils/wallet';
+import {migrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
+import {flushPersistor} from '../persistor';
+import {
+  removePersistRootBackups,
+  resumePersistRootBackups,
+} from '../backup/fs-backup';
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -371,8 +399,18 @@ const makeState = () =>
   } as any);
 
 describe('startAppInit', () => {
+  const originalDev = global.__DEV__;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    global.__DEV__ = false;
+    mockHasSessionLogsCleanupRun.mockReturnValue(false);
+    mockStartWalletStoreInit.mockResolvedValue({walletInitSuccess: true});
+    mockGetLocationData.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    global.__DEV__ = originalDev;
   });
 
   it('does not wait for wallet store init before completing app init', async () => {
@@ -394,6 +432,60 @@ describe('startAppInit', () => {
     expect(mockStartWalletStoreInit).toHaveBeenCalledTimes(1);
     expect(actions).toContainEqual({type: 'SUCCESS_APP_INIT'});
     expect(actions).toContainEqual({type: 'APP_INIT_COMPLETED'});
+
+    walletInit.resolve({walletInitSuccess: true});
+    locationData.resolve();
+    await initPromise;
+
+    expect(mockCleanupDisabledSessionLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not clean session logs again after the production cleanup has run', async () => {
+    mockHasSessionLogsCleanupRun.mockReturnValue(true);
+    const dispatch = jest.fn(action => action);
+
+    await startAppInit()(dispatch, jest.fn(makeState), undefined as any);
+
+    expect(mockCleanupDisabledSessionLogs).not.toHaveBeenCalled();
+  });
+
+  it('does not run the production session log cleanup in DEV', async () => {
+    global.__DEV__ = true;
+    const dispatch = jest.fn(action => action);
+
+    await startAppInit()(dispatch, jest.fn(makeState), undefined as any);
+
+    expect(mockHasSessionLogsCleanupRun).not.toHaveBeenCalled();
+    expect(mockCleanupDisabledSessionLogs).not.toHaveBeenCalled();
+  });
+
+  it('migrates the wallet secrets before starting the wallet store', async () => {
+    const migration = deferred<void>();
+    const walletInit = deferred<{walletInitSuccess: boolean}>();
+    const locationData = deferred<void>();
+    mockStartWalletStoreInit.mockReturnValue(walletInit.promise);
+    mockGetLocationData.mockReturnValue(locationData.promise);
+    (migrateWalletSecrets as jest.Mock).mockReturnValueOnce(migration.promise);
+
+    const initPromise = startAppInit()(
+      jest.fn(action => action) as any,
+      jest.fn(makeState),
+      undefined as any,
+    );
+    await flushMicrotasks();
+
+    expect(mockStartWalletStoreInit).not.toHaveBeenCalled();
+    migration.resolve();
+    await flushMicrotasks();
+    expect(mockStartWalletStoreInit).toHaveBeenCalledTimes(1);
+    expect(migrateWalletSecrets).toHaveBeenCalledWith(
+      flushPersistor,
+      removePersistRootBackups,
+      resumePersistRootBackups,
+    );
+    expect(
+      (migrateWalletSecrets as jest.Mock).mock.invocationCallOrder[0],
+    ).toBeLessThan(mockStartWalletStoreInit.mock.invocationCallOrder[0]);
 
     walletInit.resolve({walletInitSuccess: true});
     locationData.resolve();
@@ -568,7 +660,10 @@ describe('openExternalUrl', () => {
 
 describe('incomingLink', () => {
   const walletId = 'wallet-1';
-  const baseWallet = {credentials: {walletId, copayerId: 'copayer-1'}};
+  const baseWallet = {
+    credentials: {walletId, copayerId: 'copayer-1', chain: 'eth'},
+    receiveAddress: '0xBaseAddress',
+  };
   const tokenWallet = {
     credentials: {walletId: `${walletId}-0xtoken`, copayerId: 'copayer-1'},
   };
@@ -586,8 +681,11 @@ describe('incomingLink', () => {
       WALLET: {keys: {'key-1': key}},
     } as any);
 
-  const runIncomingLink = async (url: string) => {
-    const getState = jest.fn(makeDeeplinkState);
+  const runIncomingLink = async (
+    url: string,
+    stateFactory = makeDeeplinkState,
+  ) => {
+    const getState = jest.fn(stateFactory);
     const dispatch: any = jest.fn(action =>
       typeof action === 'function' ? action(dispatch, getState) : action,
     );
@@ -631,6 +729,39 @@ describe('incomingLink', () => {
     });
   });
 
+  it('opens the token wallet whose mint casing matches the notification', async () => {
+    const mint = 'So11111111111111111111111111111111111111112';
+    const lookalikeTokenWallet = {
+      credentials: {
+        walletId: `${walletId}-${mint.toLowerCase()}`,
+        copayerId: 'copayer-1',
+      },
+    };
+    const svmTokenWallet = {
+      credentials: {walletId: `${walletId}-${mint}`, copayerId: 'copayer-1'},
+    };
+    const svmKey = {
+      id: 'key-1',
+      wallets: [baseWallet, lookalikeTokenWallet, svmTokenWallet],
+    };
+
+    await runIncomingLink(
+      `bitpay://wallet?walletId=hashed&tokenAddress=${mint}&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-7`,
+      () =>
+        ({
+          ...makeDeeplinkState(),
+          WALLET: {keys: {'key-1': svmKey}},
+        } as any),
+    );
+
+    expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+      key: svmKey,
+      walletId: svmTokenWallet.credentials.walletId,
+      copayerId: 'copayer-1',
+      txid: 'tx-7',
+    });
+  });
+
   it('opens the wallet details with no transaction when the notification carries no txid', async () => {
     await runIncomingLink(
       'bitpay://wallet?walletId=hashed&tokenAddress=null&copayerId=hashedCopayer&notification_type=NewOutgoingTx&txid=null',
@@ -653,5 +784,91 @@ describe('incomingLink', () => {
     await runIncomingLink('bitpay://wallet?walletId=hashed&txid=tx-3');
 
     expect(navigationRef.navigate).not.toHaveBeenCalled();
+  });
+
+  describe('when the token wallet has not been created yet', () => {
+    const baseOnlyKey = {id: 'key-1', wallets: [baseWallet]};
+    const maxLookups =
+      TOKEN_WALLET_LOOKUP_TIMEOUT / TOKEN_WALLET_LOOKUP_INTERVAL;
+
+    const flushLookups = async () => {
+      for (let i = 0; i <= maxLookups * 4; i++) {
+        await flushMicrotasks();
+      }
+    };
+
+    it('waits for the token wallet to be created and then opens it', async () => {
+      let stateReads = 0;
+
+      const handled = await runIncomingLink(
+        'bitpay://wallet?walletId=hashed&tokenAddress=0xTokEn&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-4',
+        () => {
+          stateReads += 1;
+          return {
+            ...makeDeeplinkState(),
+            WALLET: {keys: {'key-1': stateReads > 6 ? key : baseOnlyKey}},
+          } as any;
+        },
+      );
+      await flushLookups();
+
+      expect(handled).toBe(true);
+      expect(sleep).toHaveBeenCalledWith(TOKEN_WALLET_LOOKUP_INTERVAL);
+      expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+        key,
+        walletId: tokenWallet.credentials.walletId,
+        copayerId: 'copayer-1',
+        txid: 'tx-4',
+      });
+    });
+
+    it('opens the account instead of the base wallet when the token wallet never shows up', async () => {
+      await runIncomingLink(
+        'bitpay://wallet?walletId=hashed&tokenAddress=0xTokEn&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-5',
+        () =>
+          ({
+            ...makeDeeplinkState(),
+            WALLET: {keys: {'key-1': baseOnlyKey}},
+          } as any),
+      );
+      await flushLookups();
+
+      expect(sleep).toHaveBeenCalledTimes(maxLookups);
+      expect(navigationRef.navigate).toHaveBeenCalledWith('AccountDetails', {
+        keyId: 'key-1',
+        selectedAccountAddress: '0xBaseAddress',
+        isSvmAccount: false,
+      });
+    });
+
+    it('opens the base wallet when the account has no receive address yet', async () => {
+      const addressLessWallet = {credentials: baseWallet.credentials};
+      const addressLessKey = {id: 'key-1', wallets: [addressLessWallet]};
+      (findWalletByIdHashed as jest.Mock).mockResolvedValue({
+        wallet: addressLessWallet,
+        keyId: 'key-1',
+      });
+
+      await runIncomingLink(
+        'bitpay://wallet?walletId=hashed&tokenAddress=0xTokEn&copayerId=hashedCopayer&notification_type=NewIncomingTx&txid=tx-6',
+        () =>
+          ({
+            ...makeDeeplinkState(),
+            WALLET: {keys: {'key-1': addressLessKey}},
+          } as any),
+      );
+      await flushLookups();
+
+      expect(navigationRef.navigate).toHaveBeenCalledWith('WalletDetails', {
+        key: addressLessKey,
+        walletId,
+        copayerId: 'copayer-1',
+        txid: 'tx-6',
+      });
+      expect(navigationRef.navigate).not.toHaveBeenCalledWith(
+        'AccountDetails',
+        expect.anything(),
+      );
+    });
   });
 });

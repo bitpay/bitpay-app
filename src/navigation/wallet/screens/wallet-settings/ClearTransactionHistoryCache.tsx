@@ -1,10 +1,10 @@
 import {CommonActions} from '@react-navigation/native';
 import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import Button, {ButtonState} from '../../../../components/button/Button';
-import {ScreenGutter} from '../../../../components/styled/Containers';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {WalletGroupParamList, WalletScreens} from '../../WalletGroup';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {sleep} from '../../../../utils/helper-methods';
@@ -20,24 +20,24 @@ import {RootStacks} from '../../../../Root';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
+import {findWalletById} from '../../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 
-const ClearTransactionHistoryCacheContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const ScrollView = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
-const ClearTransactionHistoryCacheDescription = styled(Paragraph)`
-  margin-bottom: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const ButtonContainer = styled.View`
-  margin-top: 20px;
-`;
+const styles = StyleSheet.create({
+  clearTransactionHistoryCacheContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  clearTransactionHistoryCacheDescription: {
+    marginBottom: 15,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+});
 
 type ClearTransactionHistoryCacheProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -49,17 +49,20 @@ const ClearTransactionHistoryCache: React.FC<
   ClearTransactionHistoryCacheProps
 > = ({navigation, route}) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
-  const {wallet, key} = route.params;
+  const {keyId, walletId, copayerId} = route.params;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
+  const wallet = findWalletById(key.wallets, walletId, copayerId) as Wallet;
 
   const clearCache = async () => {
     setButtonState('loading');
 
     const walletClient = BWC.getClient(JSON.stringify(wallet.credentials));
 
-    walletClient.clearCache(async (err: any) => {
+    walletClient.clearCache({tokenAddress: wallet.tokenAddress}, async err => {
       if (err) {
         setButtonState('failed');
         showErrorMessage(
@@ -106,7 +109,7 @@ const ClearTransactionHistoryCache: React.FC<
           name: WalletScreens.WALLET_DETAILS,
           params: {
             walletId: wallet.id,
-            key,
+            copayerId,
             skipInitializeHistory: false,
           },
         };
@@ -136,21 +139,25 @@ const ClearTransactionHistoryCache: React.FC<
   );
 
   return (
-    <ClearTransactionHistoryCacheContainer>
-      <ScrollView>
-        <ClearTransactionHistoryCacheDescription>
+    <SafeAreaView style={styles.clearTransactionHistoryCacheContainer}>
+      <ScrollView style={styles.scrollView}>
+        <Paragraph
+          style={[
+            styles.clearTransactionHistoryCacheDescription,
+            {color: theme.dark ? White : SlateDark},
+          ]}>
           {t(
             'The transaction history and every new incoming transaction are cached in the app. Clearing the cache cleans up the transaction history and synchronizes again from the server.',
           )}
-        </ClearTransactionHistoryCacheDescription>
+        </Paragraph>
 
-        <ButtonContainer>
+        <View style={styles.buttonContainer}>
           <Button onPress={() => clearCache()} state={buttonState}>
             {t('Clear cache')}
           </Button>
-        </ButtonContainer>
+        </View>
       </ScrollView>
-    </ClearTransactionHistoryCacheContainer>
+    </SafeAreaView>
   );
 };
 

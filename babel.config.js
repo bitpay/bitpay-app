@@ -7,7 +7,6 @@ const plugins = [
   'babel-plugin-transform-import-meta',
   '@babel/plugin-proposal-export-namespace-from',
   '@babel/plugin-transform-shorthand-properties',
-  '@babel/plugin-transform-arrow-functions',
   '@babel/plugin-proposal-optional-chaining',
   '@babel/plugin-proposal-nullish-coalescing-operator',
   '@babel/plugin-transform-template-literals',

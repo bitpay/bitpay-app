@@ -8,7 +8,6 @@ import React, {
   useState,
 } from 'react';
 import {useTranslation} from 'react-i18next';
-import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
@@ -18,7 +17,15 @@ import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
-import {BackHandler, SafeAreaView} from 'react-native';
+import {
+  BackHandler,
+  SafeAreaView,
+  View,
+  ViewProps,
+  Text,
+  TextProps,
+  StyleSheet,
+} from 'react-native';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
@@ -44,16 +51,31 @@ type VerifyEmailScreenProps = NativeStackScreenProps<
   AuthScreens.VERIFY_EMAIL
 >;
 
-const VerifyEmailParagraph = styled(AuthFormParagraph)`
-  text-align: center;
-  padding: 0 ${ScreenGutter};
-`;
+const styles = StyleSheet.create({
+  verifyEmailParagraph: {
+    textAlign: 'center',
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+    width: '100%',
+  },
+});
 
-const LogoContainer = styled.View`
-  align-items: center;
-  margin-bottom: 32px;
-  width: 100%;
-`;
+const VerifyEmailParagraph = React.forwardRef<Text, TextProps>(
+  ({style, ...rest}, ref) => (
+    <AuthFormParagraph
+      ref={ref}
+      style={[styles.verifyEmailParagraph, style]}
+      {...rest}
+    />
+  ),
+);
+
+const LogoContainer = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.logoContainer, style]} {...rest} />
+);
 
 const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const {t} = useTranslation();
@@ -130,14 +152,14 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
       <TouchableOpacity
         touchableLibrary={'react-native-gesture-handler'}
         testID="cancel-button"
-        accessibilityLabel="Go back"
+        accessibilityLabel={t('Go back')}
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
         onPress={onPressBackButtonRef.current}>
         <Back opacity={1} />
       </TouchableOpacity>
     );
-  }, []);
+  }, [t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -219,7 +241,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const GoBackLink = () => (
     <Link
       testID="go-back-link-button"
-      accessibilityLabel="Go back"
+      accessibilityLabel={t('Go back')}
       onPress={() => goToPreviousScreen()}>
       {t('Go Back')}
     </Link>
@@ -242,7 +264,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
           <>
             <VerifyEmailParagraph>
               {t(
-                `We sent a verification email to ${email}. Open the link inside to continue.`,
+                'We sent a verification email to {{email}}. Open the link inside to continue.',
                 {
                   email: email || t('your email address'),
                 },
@@ -253,7 +275,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
               {t("Email didn't arrive?")}{' '}
               <Link
                 testID="resend-link-button"
-                accessibilityLabel="Resend verification email"
+                accessibilityLabel={t('Resend verification email')}
                 onPress={() => resendVerificationEmail()}>
                 {t('Resend link')}
               </Link>

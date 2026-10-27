@@ -32,6 +32,11 @@ import {CardScreens} from '../../navigation/card/CardStack';
 import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
+import {IsSVMChain} from '../wallet/utils/currency';
+import {
+  buildTokenWalletId,
+  findByTokenWalletId,
+} from '../wallet/utils/token-wallet-id';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {
@@ -43,7 +48,6 @@ import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
 import {SumSubEffects} from '../sumsub';
 import {Card} from '../card/card.models';
-import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {
@@ -58,6 +62,12 @@ import {
   startGetRates,
 } from '../wallet/effects';
 import {startWalletStoreInit} from '../wallet/effects/init/init';
+import {migrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
+import {flushPersistor} from '../persistor';
+import {
+  removePersistRootBackups,
+  resumePersistRootBackups,
+} from '../backup/fs-backup';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -80,7 +90,6 @@ import {
 } from '../wallet/utils/wallet';
 import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
-  startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
   FormatKeyBalances,
 } from '../wallet/effects/status/status';
@@ -121,7 +130,7 @@ import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantGroup
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
-import {ShortcutList} from '../../constants/shortcuts';
+import {getShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
@@ -150,6 +159,10 @@ import {isNotMobile} from '../../components/styled/Containers';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
 import {NotificationsSettingsScreens} from '../../navigation/tabs/settings/notifications/NotificationsGroup';
 import {logManager} from '../../managers/LogManager';
+import {
+  cleanupDisabledSessionLogs,
+  hasSessionLogsCleanupRun,
+} from '../../utils/sessionLogs';
 import {
   initializeSslPinning,
   isSslPinningAvailable,
@@ -243,6 +256,14 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(reportDeviceIntegrity());
 
+    await dispatch(
+      migrateWalletSecrets(
+        flushPersistor,
+        removePersistRootBackups,
+        resumePersistRootBackups,
+      ),
+    );
+
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());
       void Promise.resolve(walletStoreInitResult).catch(error => {
@@ -311,6 +332,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       logManager.info('success [setPolygonMigrationComplete]');
     }
 
+    if (!__DEV__ && !hasSessionLogsCleanupRun()) {
+      await cleanupDisabledSessionLogs();
+    }
+
     dispatch(migrateShopCatalog());
 
     const identity = dispatch(initializeAppIdentity());
@@ -327,9 +352,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (getState().WALLET_CONNECT_V2?.sessions?.length > 0) {
       dispatch(walletConnectV2Init());
     }
-
-    // Update Coinbase
-    dispatch(coinbaseInitialize());
 
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
@@ -371,7 +393,7 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
 
   if (onboardingCompleted) {
     QuickActions.clearShortcutItems();
-    QuickActions.setShortcutItems(ShortcutList);
+    QuickActions.setShortcutItems(getShortcutList());
   }
   await dispatch(Analytics.initialize());
 
@@ -1029,23 +1051,6 @@ export const setEmailNotifications =
     });
   };
 
-const _startUpdateAllKeyAndWalletStatus = debounce(
-  async (dispatch, chain, tokenAddress) => {
-    dispatch(
-      startUpdateAllKeyAndWalletStatus({
-        context: 'newBlockEvent',
-        force: true,
-        createTokenWalletWithFunds: false,
-        chain,
-        tokenAddress,
-      }),
-    );
-    DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
-  },
-  5000,
-  {leading: true, trailing: false},
-);
-
 const _createWalletAddress = debounce(
   async (dispatch, wallet) => {
     dispatch(createWalletAddress({wallet, newAddress: true}));
@@ -1098,10 +1103,7 @@ export const handleBwsEvent =
         return;
       }
 
-      if (
-        !wallet.credentials.walletId &&
-        response.notification_type !== 'NewBlock'
-      ) {
+      if (!wallet.credentials.walletId) {
         return;
       }
 
@@ -1115,16 +1117,6 @@ export const handleBwsEvent =
           break;
         case 'NewAddress':
           _createWalletAddress(dispatch, wallet);
-          break;
-        case 'NewBlock':
-          if (response.network && response.network === 'livenet') {
-            // Chain and tokenAddress are passed to check if a new token received funds on that network and create the wallet if necessary
-            _startUpdateAllKeyAndWalletStatus(
-              dispatch,
-              response.chain,
-              response.tokenAddress,
-            );
-          }
           break;
         case 'TxProposalAcceptedBy':
         case 'TxProposalRejectedBy':
@@ -1161,7 +1153,6 @@ export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
     );
     dispatch(FormatKeyBalances());
     await dispatch(updatePortfolioBalance());
-    await dispatch(coinbaseInitialize());
     // Reset Default Language
     await dispatch(AppActions.setDefaultLanguage('en'));
     await dispatch(WalletActions.setUseUnconfirmedFunds(false));
@@ -1270,6 +1261,9 @@ export const incomingShopLink =
     return {merchantName};
   };
 
+export const TOKEN_WALLET_LOOKUP_TIMEOUT = 3000;
+export const TOKEN_WALLET_LOOKUP_INTERVAL = 500;
+
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
@@ -1332,25 +1326,63 @@ export const incomingLink =
             return;
           }
 
-          const key = keys[keyId];
           const tokenAddress =
             params.tokenAddress && params.tokenAddress !== 'null'
               ? params.tokenAddress
               : undefined;
           const txid =
             params.txid && params.txid !== 'null' ? params.txid : undefined;
-          const tokenWalletId =
-            `${wallet.credentials.walletId}-${tokenAddress}`.toLowerCase();
-          const targetWallet =
-            (tokenAddress &&
-              key.wallets.find(
-                (w: Wallet) =>
-                  w.credentials.walletId.toLowerCase() === tokenWalletId,
-              )) ||
-            wallet;
+
+          let targetWallet = wallet;
+
+          if (tokenAddress) {
+            const tokenWalletId = buildTokenWalletId(
+              wallet.credentials.walletId,
+              tokenAddress,
+            );
+            const findTokenWallet = () =>
+              findByTokenWalletId(
+                getState().WALLET.keys[keyId]?.wallets,
+                tokenWalletId,
+                (w: Wallet) => w.credentials.walletId,
+              );
+
+            let tokenWallet = findTokenWallet();
+
+            for (
+              let waited = 0;
+              !tokenWallet && waited < TOKEN_WALLET_LOOKUP_TIMEOUT;
+              waited += TOKEN_WALLET_LOOKUP_INTERVAL
+            ) {
+              await sleep(TOKEN_WALLET_LOOKUP_INTERVAL);
+              tokenWallet = findTokenWallet();
+            }
+
+            if (!tokenWallet) {
+              const selectedAccountAddress = wallet.receiveAddress;
+
+              if (selectedAccountAddress) {
+                logManager.info(
+                  'Deeplink: token wallet not found. Opening the account.',
+                );
+                navigationRef.navigate(WalletScreens.ACCOUNT_DETAILS, {
+                  keyId,
+                  selectedAccountAddress,
+                  isSvmAccount: IsSVMChain(wallet.credentials.chain),
+                });
+                return;
+              }
+
+              logManager.info(
+                'Deeplink: token wallet not found and the wallet has no receive address. Opening the wallet.',
+              );
+            } else {
+              targetWallet = tokenWallet;
+            }
+          }
 
           navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
-            key,
+            key: getState().WALLET.keys[keyId] || keys[keyId],
             walletId: targetWallet.credentials.walletId,
             copayerId: targetWallet.credentials.copayerId,
             txid,

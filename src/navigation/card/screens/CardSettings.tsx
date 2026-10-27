@@ -1,7 +1,13 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, View} from 'react-native';
+import {
+  ScrollView,
+  View,
+  ViewProps,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 import Animated, {
   Easing,
   FadeOutLeft,
@@ -11,7 +17,6 @@ import Animated, {
 } from 'react-native-reanimated';
 // import {SharedElement} from 'react-navigation-shared-element';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {CARD_WIDTH} from '../../../constants/config.card';
@@ -29,28 +34,48 @@ export type CardSettingsParamList = {
 
 type CardSettingsProps = NativeStackScreenProps<CardStackParamList, 'Settings'>;
 
-const CardSettingsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  cardSettingsContainer: {
+    flex: 1,
+  },
+  cardSettingsView: {
+    paddingTop: 0,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+    paddingBottom: parseInt(ScreenGutter, 10),
+  },
+  cardSettingsHeader: {
+    alignContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: parseInt(ScreenGutter, 10),
+  },
+  cardTypeButtons: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexGrow: 0,
+  },
+});
 
-const CardSettingsView = styled.View`
-  padding: 0 ${ScreenGutter} ${ScreenGutter};
-`;
+const CardSettingsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.cardSettingsContainer, style]} {...rest} />
+);
 
-const CardSettingsHeader = styled.View`
-  align-content: center;
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-bottom: ${ScreenGutter};
-`;
+const CardSettingsView = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardSettingsView, style]} {...rest} />
+);
 
-const CardTypeButtons = styled.View`
-  display: flex;
-  flex-direction: row;
-  flex-grow: 0;
-`;
+const CardSettingsHeader = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardSettingsHeader, style]} {...rest} />
+);
+
+const CardTypeButtons = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.cardTypeButtons, style]} {...rest} />
+);
 
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   const [animationsEnabled, setAnimationsEnabled] = useState<boolean>();

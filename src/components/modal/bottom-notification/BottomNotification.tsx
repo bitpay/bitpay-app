@@ -1,10 +1,11 @@
-import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
-import {Platform} from 'react-native';
+import React, {ReactNode, useMemo, useCallback} from 'react';
+import {StyleSheet, useWindowDimensions, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
+import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
-import styled, {css} from 'styled-components/native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch, useSelector, useStore} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {
@@ -24,10 +25,9 @@ import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import WaitSvg from '../../../../assets/img/wait.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {Theme, useNavigation, useTheme} from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
 import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
-import {HEIGHT} from '../../styled/Containers';
 import {TouchableOpacity} from '../../base/TouchableOpacity';
 
 export interface BottomNotificationConfig {
@@ -60,82 +60,110 @@ const notificationType = {
   wait: <WaitSvg {...svgProps} />,
 };
 
-const BottomNotificationContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  padding: 25px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  max-height: ${HEIGHT - 100}px;
-`;
+const styles = StyleSheet.create({
+  bottomNotificationContainer: {
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    flexGrow: 0,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  imageContainer: {
+    marginRight: 10,
+  },
+  title: {
+    flexShrink: 1,
+  },
+  messageContainer: {
+    marginTop: 15,
+    marginRight: 0,
+    marginBottom: 20,
+    marginLeft: 0,
+  },
+  bottomNotificationHr: {
+    borderBottomWidth: 1,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  ctaContainer: {
+    flexDirection: 'column',
+  },
+  actionButton: {
+    minHeight: 48,
+    width: '100%',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  bottomNotificationCta: {
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 24,
+    letterSpacing: 0.5,
+    textAlign: 'left',
+  },
+  bottomNotificationMessageContainer: {
+    paddingTop: 15,
+  },
+});
 
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-right: 25px;
-`;
-
-const ImageContainer = styled.View`
-  margin-right: 10px;
-`;
-
-const MessageContainer = styled.View`
-  margin: 15px 0 20px 0;
-`;
-
-export const BottomNotificationHr = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebebeb')};
-  border-bottom-width: 1px;
-  margin: 20px 0;
-`;
-
-const CtaContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  ${({platform}: {platform: string}) =>
-    platform === 'ios' &&
-    css`
-      margin-bottom: 10px;
-    `}
-`;
-
-export const BottomNotificationCta = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: 0.5px;
-  text-align: left;
-  color: ${({primary, theme: {dark}}: {primary?: boolean; theme: Theme}) =>
-    dark
-      ? primary
-        ? LinkBlue
-        : Slate
-      : primary
-      ? NotificationPrimary
-      : Black};
-`;
-
-export const ScrollableBottomNotificationMessageContainer = styled(ScrollView)`
-  padding-top: 15px;
-`;
-
-const BottomNotification = React.memo(() => {
+export const BottomNotificationHr: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => {
   const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.bottomNotificationHr,
+        {borderBottomColor: theme.dark ? SlateDark : '#ebebeb'},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+export const BottomNotificationCta: React.FC<
+  {primary?: boolean} & React.ComponentProps<typeof BaseText>
+> = ({primary, style, ...rest}) => {
+  const theme = useTheme();
+  const dark = theme.dark;
+  const color = dark
+    ? primary
+      ? LinkBlue
+      : Slate
+    : primary
+    ? NotificationPrimary
+    : Black;
+  return (
+    <BaseText
+      style={[styles.bottomNotificationCta, {color}, style]}
+      {...rest}
+    />
+  );
+};
+
+export const BottomNotificationMessageContainer: React.FC<
+  React.ComponentProps<typeof View>
+> = ({style, ...rest}) => (
+  <View style={[styles.bottomNotificationMessageContainer, style]} {...rest} />
+);
+
+const BottomNotificationContent = React.memo(() => {
+  const theme = useTheme();
+  const {height} = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
-  const navigation = useNavigation();
-  const rootState = useSelector((state: RootState) => state);
+  const store = useStore<RootState>();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
   );
   const config = useSelector(
     ({APP}: RootState) => APP.bottomNotificationModalConfig,
   );
-
-  useEffect(() => {
-    return navigation.addListener('blur', () =>
-      dispatch(resetBottomNotificationModalConfig()),
-    );
-  }, [navigation, dispatch]);
 
   const {
     type,
@@ -148,6 +176,9 @@ const BottomNotification = React.memo(() => {
     onBackdropDismiss,
   } = config || {};
 
+  const NotificationScrollView =
+    modalLibrary === 'modal' ? ScrollView : BottomSheetScrollView;
+
   const handleBackdropPress = useCallback(() => {
     if (enableBackdropDismiss) {
       dispatch(AppActions.dismissBottomNotificationModal());
@@ -157,6 +188,12 @@ const BottomNotification = React.memo(() => {
       }
     }
   }, [enableBackdropDismiss, dispatch, onBackdropDismiss]);
+
+  const handleModalHide = useCallback(() => {
+    if (!store.getState().APP.showBottomNotificationModal) {
+      dispatch(resetBottomNotificationModalConfig());
+    }
+  }, [dispatch, store]);
 
   const markdownStyle = useMemo(
     () => ({
@@ -180,7 +217,7 @@ const BottomNotification = React.memo(() => {
           dispatch(AppActions.dismissBottomNotificationModal());
           await sleep(0);
           try {
-            await action(rootState);
+            await action(store.getState());
           } catch (e) {
             console.error('[BottomNotification] action error:', e);
           }
@@ -188,7 +225,7 @@ const BottomNotification = React.memo(() => {
 
         return (
           <TouchableOpacity
-            style={{minHeight: 30, minWidth: 60}}
+            style={styles.actionButton}
             key={index}
             testID={`bottom-notification-${
               primary ? 'primary' : 'secondary'
@@ -203,7 +240,7 @@ const BottomNotification = React.memo(() => {
           </TouchableOpacity>
         );
       }),
-    [actions, dispatch, rootState],
+    [actions, dispatch, store],
   );
 
   return (
@@ -211,23 +248,49 @@ const BottomNotification = React.memo(() => {
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
-      onBackdropPress={handleBackdropPress}>
-      <BottomNotificationContainer>
-        <Row>
-          <ImageContainer>{iconElement}</ImageContainer>
-          <H4>{title}</H4>
-        </Row>
+      onModalHide={handleModalHide}
+      onBackdropPress={handleBackdropPress}
+      backgroundColor={theme.dark ? LightBlack : White}>
+      <NotificationScrollView
+        testID="bottom-notification-content"
+        style={[
+          styles.bottomNotificationContainer,
+          {
+            backgroundColor: theme.dark ? LightBlack : White,
+            maxHeight: height - insets.top - insets.bottom - 20,
+          },
+        ]}
+        contentContainerStyle={{
+          padding: 25,
+          paddingBottom: Math.max(25, insets.bottom),
+        }}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.row}>
+          <View style={styles.imageContainer}>{iconElement}</View>
+          <H4 style={styles.title}>{title}</H4>
+        </View>
         {message ? (
-          <MessageContainer>
+          <View style={styles.messageContainer}>
             <Markdown style={markdownStyle}>{message}</Markdown>
-          </MessageContainer>
+          </View>
         ) : null}
         {message2 ? message2 : null}
         <BottomNotificationHr />
-        <CtaContainer platform={Platform.OS}>{actionButtons}</CtaContainer>
-      </BottomNotificationContainer>
+        <View style={styles.ctaContainer}>{actionButtons}</View>
+      </NotificationScrollView>
     </SheetModal>
   );
+});
+
+const BottomNotification = React.memo(() => {
+  const isVisible = useSelector(
+    ({APP}: RootState) => APP.showBottomNotificationModal,
+  );
+  const config = useSelector(
+    ({APP}: RootState) => APP.bottomNotificationModalConfig,
+  );
+
+  return isVisible || config ? <BottomNotificationContent /> : null;
 });
 
 export default BottomNotification;

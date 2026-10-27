@@ -3,8 +3,13 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard, SafeAreaView, TextInput} from 'react-native';
-import styled from 'styled-components/native';
+import {
+  Keyboard,
+  SafeAreaView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import Button from '../../../../../components/button/Button';
 import BoxInput from '../../../../../components/form/BoxInput';
 import yup from '../../../../../lib/yup';
@@ -15,11 +20,9 @@ import AuthFormContainer, {
 } from '../../../../auth/components/AuthFormContainer';
 import {WalletGroupParamList} from '../../../WalletGroup';
 
-const COINBASE_SMS_2FA_CODE_LENGTH = 7;
+const SMS_2FA_CODE_LENGTH = 7;
 
-const PrimaryActionContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const styles = StyleSheet.create({primaryActionContainer: {marginBottom: 20}});
 
 export interface PayProConfirmTwoFactorParamList {
   onSubmit: (code: string) => Promise<void>;
@@ -78,8 +81,7 @@ const PayProConfirmTwoFactor = ({
                 onBlur={onBlur}
                 onChangeText={(text: string) => {
                   onChange(text);
-                  const codeLength =
-                    twoFactorCodeLength || COINBASE_SMS_2FA_CODE_LENGTH;
+                  const codeLength = twoFactorCodeLength || SMS_2FA_CODE_LENGTH;
                   if (text.length === codeLength) {
                     submitForm(text);
                   }
@@ -103,11 +105,11 @@ const PayProConfirmTwoFactor = ({
         </AuthRowContainer>
 
         <AuthActionsContainer>
-          <PrimaryActionContainer>
+          <View style={styles.primaryActionContainer}>
             <Button onPress={onFormSubmit} disabled={submitDisabled}>
               {t('Continue')}
             </Button>
-          </PrimaryActionContainer>
+          </View>
         </AuthActionsContainer>
       </AuthFormContainer>
     </SafeAreaView>

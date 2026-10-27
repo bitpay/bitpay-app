@@ -1,7 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
-import styled from 'styled-components/native';
+import {View, ViewProps, StyleSheet} from 'react-native';
 import Spinner from '../../../../components/spinner/Spinner';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {AppActions} from '../../../../store/app';
@@ -32,14 +33,21 @@ const StatusTextMap: Record<number, string> = {
   [StatusCodes.UNKNOWN_ERROR]: 'Unknown error',
 };
 
-const SpinnerWrapper = styled.View`
-  align-items: center;
-  margin-top: 24px;
-`;
+const styles = StyleSheet.create({
+  spinnerWrapper: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+});
+
+const SpinnerWrapper = ({style, ...rest}: ViewProps) => (
+  <View style={[styles.spinnerWrapper, style]} {...rest} />
+);
 
 const ResetPinScreen: React.FC<
   NativeStackScreenProps<CardStackParamList, CardScreens.RESET_PIN>
 > = ({navigation, route}) => {
+  const {t} = useTranslation();
   const {id} = route.params;
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);
@@ -100,14 +108,14 @@ const ResetPinScreen: React.FC<
           dispatch(
             AppActions.showBottomNotificationModal({
               type: 'error',
-              title: 'Reset Failed',
+              title: t('Reset Failed'),
               message: `status code (${statusCode}): ${
                 StatusTextMap[statusCode] || 'Unknown status code'
               }`,
               enableBackdropDismiss: false,
               actions: [
                 {
-                  text: 'OK',
+                  text: t('OK'),
                   action: () => {
                     goBackToSettingsScreen();
                   },
@@ -131,12 +139,12 @@ const ResetPinScreen: React.FC<
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'error',
-          title: 'Error',
-          message: 'An unexpected error occurred. Please try again later.',
+          title: t('Error'),
+          message: t('An unexpected error occurred. Please try again later.'),
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 goBackToSettingsScreen();
               },
@@ -174,13 +182,14 @@ const ResetPinScreen: React.FC<
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'error',
-          title: 'Error',
-          message:
+          title: t('Error'),
+          message: t(
             'Unable to fetch PIN reset request token. Please try again later.',
+          ),
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 goBackToSettingsScreen();
                 dispatch(CardActions.resetPinChangeRequestInfo(id));
@@ -190,7 +199,7 @@ const ResetPinScreen: React.FC<
         }),
       );
     }
-  }, [dispatch, goBackToSettingsScreen, fetchUriStatus, id]);
+  }, [dispatch, goBackToSettingsScreen, fetchUriStatus, id, t]);
 
   useEffect(() => {
     if (confirmPinChangeStatus === 'failed') {
@@ -198,14 +207,14 @@ const ResetPinScreen: React.FC<
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'error',
-          title: 'Error',
+          title: t('Error'),
           message:
             confirmPinChangeErrorRef.current ||
-            'An unexpected error occurred. Please try again later.',
+            t('An unexpected error occurred. Please try again later.'),
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 goBackToSettingsScreen();
               },
@@ -223,12 +232,12 @@ const ResetPinScreen: React.FC<
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'success',
-          title: 'Reset Success',
-          message: 'PIN was successfully reset.',
+          title: t('Reset Success'),
+          message: t('PIN was successfully reset.'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => clearStatus(),
             },
           ],
@@ -238,7 +247,7 @@ const ResetPinScreen: React.FC<
 
       goBackToSettingsScreen();
     }
-  }, [dispatch, goBackToSettingsScreen, confirmPinChangeStatus, id]);
+  }, [dispatch, goBackToSettingsScreen, confirmPinChangeStatus, id, t]);
 
   return (
     <>

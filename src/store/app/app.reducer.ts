@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {EventSubscription} from 'react-native';
 import {ContentCard} from '@braze/react-native-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -13,6 +13,7 @@ import {
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
+  AppColorScheme,
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -134,7 +135,7 @@ export interface AppState {
   currentSalt: string | undefined;
   pinBannedUntil: number | undefined;
   showBlur: boolean;
-  colorScheme: ColorSchemeName;
+  colorScheme: AppColorScheme;
   defaultLanguage: string;
   showPortfolioValue: boolean;
   hideAllBalances: boolean;
@@ -391,10 +392,12 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
-        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
+      if (state.bottomNotificationModalConfig === undefined) {
+        return state;
+      }
       return {
         ...state,
         bottomNotificationModalConfig: undefined,
@@ -820,6 +823,9 @@ export const appReducer = (
       };
 
     case AppActionTypes.SHOW_ARCHAX_BANNER:
+      if (state.showArchaxBanner === action.payload) {
+        return state;
+      }
       return {
         ...state,
         showArchaxBanner: action.payload,

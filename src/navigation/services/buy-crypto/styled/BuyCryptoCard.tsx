@@ -1,4 +1,6 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {StyleSheet, Text, View} from 'react-native';
+import {useTheme} from '../../../../contexts';
 import {
   LightBlack,
   NeutralSlate,
@@ -10,72 +12,215 @@ import {
 import {BaseText} from '../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-export const BuyCryptoItemCard = styled(TouchableOpacity)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 9px;
-  margin: 8px 16px;
-  padding: 14px;
-`;
+const styles = StyleSheet.create({
+  buyCryptoItemCard: {
+    borderWidth: 1,
+    borderRadius: 9,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    padding: 14,
+  },
+  buyCryptoExpandibleCard: {
+    borderWidth: 1,
+    borderRadius: 9,
+    marginTop: 20,
+    marginRight: 15,
+    marginBottom: 0,
+    marginLeft: 15,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+  },
+  actionsContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedOptionContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 40,
+    paddingHorizontal: 14,
+    paddingVertical: 0,
+    borderRadius: 12,
+  },
+  selectedOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  selectedOptionCol: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dataText: {
+    fontSize: 18,
+    maxWidth: 160,
+  },
+  coinIconContainer: {
+    width: 30,
+    height: 25,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemDivisor: {
+    borderBottomWidth: 1,
+  },
+  buyCryptoItemTitle: {
+    marginTop: 0,
+    marginRight: 0,
+    marginBottom: 18,
+    marginLeft: 0,
+    lineHeight: 18,
+  },
+});
 
-export const BuyCryptoExpandibleCard = styled(TouchableOpacity)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
-  border-radius: 9px;
-  margin: 20px 15px 0px 15px;
-  padding: 18px 14px;
-`;
+export const BuyCryptoItemCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.buyCryptoItemCard,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const ActionsContainer = styled.View`
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-  align-items: center;
-`;
+export const BuyCryptoExpandibleCard: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.buyCryptoExpandibleCard,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-export const SelectedOptionContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 40px;
-  padding: 0px 14px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
-`;
+export const ActionsContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.actionsContainer, style]} {...rest} />
+));
+ActionsContainer.displayName = 'ActionsContainer';
 
-export const SelectedOptionText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  font-weight: 500;
-`;
+export const SelectedOptionContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.selectedOptionContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SelectedOptionContainer.displayName = 'SelectedOptionContainer';
 
-export const SelectedOptionCol = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+export const SelectedOptionText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.selectedOptionText,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+SelectedOptionText.displayName = 'SelectedOptionText';
 
-export const DataText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 18px;
-  max-width: 160px;
-`;
+export const SelectedOptionCol = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.selectedOptionCol, style]} {...rest} />
+));
+SelectedOptionCol.displayName = 'SelectedOptionCol';
 
-export const CoinIconContainer = styled.View`
-  width: 30px;
-  height: 25px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
+export const DataText = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof BaseText>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[styles.dataText, {color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+});
+DataText.displayName = 'DataText';
 
-export const ItemDivisor = styled.View<{selected?: boolean}>`
-  border-bottom-color: ${({theme: {dark}, selected}) =>
-    dark ? LightBlack : Slate};
-  border-bottom-width: 1px;
-`;
+export const CoinIconContainer = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View>
+>(({style, ...rest}, ref) => (
+  <View ref={ref} style={[styles.coinIconContainer, style]} {...rest} />
+));
+CoinIconContainer.displayName = 'CoinIconContainer';
 
-export const BuyCryptoItemTitle = styled.Text`
-  margin: 0 0 18px 0;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  line-height: 18px;
-`;
+export const ItemDivisor = React.forwardRef<
+  View,
+  React.ComponentProps<typeof View> & {selected?: boolean}
+>(({style, selected: _selected, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <View
+      ref={ref}
+      style={[
+        styles.itemDivisor,
+        {borderBottomColor: theme.dark ? LightBlack : Slate},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+ItemDivisor.displayName = 'ItemDivisor';
+
+export const BuyCryptoItemTitle = React.forwardRef<
+  Text,
+  React.ComponentProps<typeof Text>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Text
+      ref={ref}
+      style={[
+        styles.buyCryptoItemTitle,
+        {color: theme.dark ? White : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+BuyCryptoItemTitle.displayName = 'BuyCryptoItemTitle';

@@ -1,7 +1,8 @@
 import TransportHID from '@ledgerhq/react-native-hid';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import {useTranslation} from 'react-i18next';
+import {StyleSheet, View} from 'react-native';
 import ConnectToLedgerSvg from '../../../../../assets/img/connect-to-ledger.svg';
 import {H4, Paragraph} from '../../../styled/Text';
 import {useMount} from '../../../../utils/hooks';
@@ -20,11 +21,14 @@ interface Props {
   onConnectHid: () => void;
 }
 
-const HeaderImageWrapper = styled.View`
-  margin-bottom: 32px;
-`;
+const styles = StyleSheet.create({
+  headerImageWrapper: {
+    marginBottom: 32,
+  },
+});
 
 export const LedgerIntro: React.FC<Props> = props => {
+  const {t} = useTranslation();
   const [supportedTypes, setSupportedTypes] = useState<{
     ble: boolean;
     hid: boolean;
@@ -46,22 +50,25 @@ export const LedgerIntro: React.FC<Props> = props => {
   return (
     <>
       <Header>
-        <HeaderImageWrapper>
+        <View style={styles.headerImageWrapper}>
           <ConnectToLedgerSvg />
-        </HeaderImageWrapper>
+        </View>
 
-        <H4 style={{fontWeight: '500'}}>Connect to Ledger Wallet</H4>
+        <H4 style={{fontWeight: '500'}}>{t('Connect to Ledger Wallet')}</H4>
       </Header>
 
       <DescriptionRow>
         {noSupportedTransportTypes ? (
           <Paragraph style={{textAlign: 'center'}}>
-            This device does not support communication with Ledger wallets.
+            {t(
+              'This device does not support communication with Ledger wallets.',
+            )}
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            Manage your Ledger with BitPay. To continue, ensure your Ledger
-            device is unlocked.
+            {t(
+              'Manage your Ledger with BitPay. To continue, ensure your Ledger device is unlocked.',
+            )}
           </Paragraph>
         )}
       </DescriptionRow>
@@ -70,12 +77,12 @@ export const LedgerIntro: React.FC<Props> = props => {
         <ActionsRow>
           {supportedTypes.ble ? (
             <ViaBluetoothButton onPress={props.onConnectBle}>
-              Connect via Bluetooth
+              {t('Connect via Bluetooth')}
             </ViaBluetoothButton>
           ) : null}
           {supportedTypes.hid ? (
             <ViaUsbButton secondary={true} onPress={props.onConnectHid}>
-              Connect via USB
+              {t('Connect via USB')}
             </ViaUsbButton>
           ) : null}
         </ActionsRow>

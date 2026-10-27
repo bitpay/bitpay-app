@@ -1,4 +1,6 @@
-import styled from 'styled-components/native';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {StyleSheet, View} from 'react-native';
 import BluetoothIconSvg from '../../../../../assets/img/icon-bluetooth.svg';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import UsbIconSvg from '../../../../../assets/img/icon-usb.svg';
@@ -17,11 +19,15 @@ interface Props {
   currencyLabel: string;
 }
 
-const IconWrapper = styled.View`
-  padding: 28px;
-`;
+const styles = StyleSheet.create({
+  iconWrapper: {
+    padding: 28,
+  },
+});
 
 export const ConfirmLedgerSending: React.FC<Props> = props => {
+  const {t} = useTranslation();
+
   return (
     <Wrapper>
       <Header
@@ -30,7 +36,7 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           justifyContent: 'flex-end',
           display: 'flex',
         }}>
-        <H3>Approving...</H3>
+        <H3>{t('Approving...')}</H3>
       </Header>
 
       <DescriptionRow
@@ -41,13 +47,14 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           style={{
             textAlign: 'center',
           }}>
-          Approve the transaction from your ledger device. Ensure it's unlocked
-          and set to the appropriate currency application.
+          {t(
+            "Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.",
+          )}
         </Paragraph>
       </DescriptionRow>
 
       <IconRow>
-        <IconWrapper>
+        <View style={styles.iconWrapper}>
           {props.connectionMethod === 'ble' ? (
             <BluetoothIconSvg height={60} width={60} />
           ) : props.connectionMethod === 'hid' ? (
@@ -55,11 +62,11 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           ) : (
             <LedgerLogoIconSvg height={60} width={60} />
           )}
-        </IconWrapper>
+        </View>
       </IconRow>
 
       <ActionsRow>
-        <Button state={'loading'}>Sending...</Button>
+        <Button state={'loading'}>{t('Sending...')}</Button>
       </ActionsRow>
     </Wrapper>
   );

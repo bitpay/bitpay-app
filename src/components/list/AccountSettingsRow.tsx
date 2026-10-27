@@ -1,4 +1,5 @@
 import React, {memo} from 'react';
+import {StyleSheet} from 'react-native';
 import {
   CurrencyImageContainer,
   ActiveOpacity,
@@ -8,7 +9,6 @@ import {
 import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import Blockie from '../blockie/Blockie';
-import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
 import {IsVMChain} from '../../store/wallet/utils/currency';
@@ -21,17 +21,19 @@ interface Props {
   accountInfo?: {[key: string]: {hideAccount: boolean; name: string}};
 }
 
-const HiddenColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const AccountSettingsContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  display: flex;
-  padding: 8px 0px;
-  gap: 8px;
-`;
+const styles = StyleSheet.create({
+  hiddenColumn: {
+    alignItems: 'flex-end',
+  },
+  accountSettingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    display: 'flex',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    gap: 8,
+  },
+});
 
 const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
   const {accountName, receiveAddress, wallets, isMultiNetworkSupported} =
@@ -44,7 +46,8 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
     : wallets[0].hideWallet;
 
   return (
-    <AccountSettingsContainer
+    <TouchableOpacity
+      style={styles.accountSettingsContainer}
       activeOpacity={ActiveOpacity}
       onPress={() => onPress()}>
       <CurrencyImageContainer style={{height: 40, width: 40}}>
@@ -65,13 +68,13 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
       </Column>
 
       {isHidden ? (
-        <HiddenColumn>
+        <Column style={styles.hiddenColumn}>
           <HiddenContainer>
             <H7>{t('Hidden')}</H7>
           </HiddenContainer>
-        </HiddenColumn>
+        </Column>
       ) : null}
-    </AccountSettingsContainer>
+    </TouchableOpacity>
   );
 };
 

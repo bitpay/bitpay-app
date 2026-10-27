@@ -1,0 +1,7 @@
+diff --git a/node_modules/react-native-rate/ios/RNRate.m b/node_modules/react-native-rate/ios/RNRate.m
+index d1e6cb4..a24e1e9 100644
+--- a/node_modules/react-native-rate/ios/RNRate.m
++++ b/node_modules/react-native-rate/ios/RNRate.m
+@@ -2,2 +1,0 @@
+-#import "RCTBridgeModule.h"
+-#import "React/RCTConvert.h"

@@ -6,7 +6,11 @@
 //
 
 #import <React/RCTBridgeModule.h>
-#import "BitPayApp-Swift.h"
+#import <UIKit/UIKit.h>
+
+@protocol BitPayAppLoadState <NSObject>
+- (void)setBitPayAppLoaded:(BOOL)loaded;
+@end
 
 @interface InAppMessageModule : NSObject <RCTBridgeModule>
 @end
@@ -16,14 +20,14 @@ RCT_EXPORT_MODULE();
 
 RCT_EXPORT_METHOD(notifyReactNativeAppLoaded) {
   dispatch_async(dispatch_get_main_queue(), ^{
-    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+    id<BitPayAppLoadState> appDelegate = (id<BitPayAppLoadState>)[UIApplication sharedApplication].delegate;
     [appDelegate setBitPayAppLoaded:YES];
   });
 }
 
 RCT_EXPORT_METHOD(notifyReactNativeAppPaused) {
   dispatch_async(dispatch_get_main_queue(), ^{
-    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+    id<BitPayAppLoadState> appDelegate = (id<BitPayAppLoadState>)[UIApplication sharedApplication].delegate;
     [appDelegate setBitPayAppLoaded:NO];
   });
 }

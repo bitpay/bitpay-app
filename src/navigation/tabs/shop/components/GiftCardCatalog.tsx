@@ -1,9 +1,9 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import pickBy from 'lodash.pickby';
 import uniqBy from 'lodash.uniqby';
-import {Platform, View} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useForm, Controller} from 'react-hook-form';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
@@ -46,12 +46,19 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {isGiftCardDisplayable} from '../../../../lib/gift-cards/gift-card';
 import {GhostWhite} from '../../../../styles/colors';
 
-const ZeroState = styled.View`
-  justify-content: center;
-  align-items: center;
-  padding: 100px 50px 0;
-  text-align: center;
-`;
+const styles = StyleSheet.create({
+  zeroState: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+    paddingHorizontal: 50,
+    paddingBottom: 0,
+  },
+});
+
+const ZeroState = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.zeroState, style]} {...rest} />
+);
 
 const Curations = ({
   curations,

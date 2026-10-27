@@ -1,7 +1,5 @@
-import React, {useEffect} from 'react';
-import {useDispatch} from 'react-redux';
+import React from 'react';
 import {HeaderTitle} from '../../components/styled/Text';
-import {BitPayIdActions} from '../../store/bitpay-id';
 import CreateAccountScreen, {
   CreateAccountScreenParamList,
 } from './screens/CreateAccount';
@@ -21,12 +19,12 @@ import VerifyEmailScreen, {
 import ForgotPassword, {
   ForgotPasswordParamList,
 } from './screens/ForgotPassword';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Root} from '../../Root';
 import {useStackScreenOptions} from '../utils/headerHelpers';
 import {Theme} from '@react-navigation/native';
 import SecureAccount from './screens/SecureAccount';
-import {useAppSelector} from '../../utils/hooks';
 
 interface AuthProps {
   Auth: typeof Root;
@@ -56,18 +54,7 @@ export type AuthGroupParamList = {
 };
 
 const AuthGroup = ({Auth, theme}: AuthProps) => {
-  const {t} = useTranslation();
   const commonOptions = useStackScreenOptions(theme);
-  const dispatch = useDispatch();
-  const loginStatus = useAppSelector(({BITPAY_ID}) => BITPAY_ID.loginStatus);
-  const isTwoFactorPending = loginStatus === 'twoFactorPending';
-  const isEmailAuthPending = loginStatus === 'emailAuthenticationPending';
-
-  useEffect(() => {
-    return () => {
-      dispatch(BitPayIdActions.resetAuthStack());
-    };
-  }, [dispatch]);
 
   return (
     <Auth.Group screenOptions={commonOptions}>
@@ -92,39 +79,31 @@ const AuthGroup = ({Auth, theme}: AuthProps) => {
           headerTitle: () => <HeaderTitle>{t('Verify Email')}</HeaderTitle>,
         }}
       />
-      {isTwoFactorPending && (
-        <>
-          <Auth.Screen
-            name={AuthScreens.TWO_FACTOR_AUTH}
-            component={TwoFactorAuthentication}
-            options={{
-              headerTitle: () => (
-                <HeaderTitle>{t('2-Step Verification')}</HeaderTitle>
-              ),
-            }}
-          />
-          <Auth.Screen
-            name={AuthScreens.TWO_FACTOR_PAIR}
-            component={TwoFactorPairing}
-            options={{
-              headerTitle: () => (
-                <HeaderTitle>{t('Additional Verification')}</HeaderTitle>
-              ),
-            }}
-          />
-        </>
-      )}
-      {isEmailAuthPending && (
-        <Auth.Screen
-          name={AuthScreens.EMAIL_AUTH}
-          component={EmailAuthentication}
-          options={{
-            headerTitle: () => (
-              <HeaderTitle>{t('Check Your Inbox')}</HeaderTitle>
-            ),
-          }}
-        />
-      )}
+      <Auth.Screen
+        name={AuthScreens.TWO_FACTOR_AUTH}
+        component={TwoFactorAuthentication}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('2-Step Verification')}</HeaderTitle>
+          ),
+        }}
+      />
+      <Auth.Screen
+        name={AuthScreens.TWO_FACTOR_PAIR}
+        component={TwoFactorPairing}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Additional Verification')}</HeaderTitle>
+          ),
+        }}
+      />
+      <Auth.Screen
+        name={AuthScreens.EMAIL_AUTH}
+        component={EmailAuthentication}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Check Your Inbox')}</HeaderTitle>,
+        }}
+      />
       <Auth.Screen
         name={AuthScreens.FORGOT_PASSWORD}
         component={ForgotPassword}

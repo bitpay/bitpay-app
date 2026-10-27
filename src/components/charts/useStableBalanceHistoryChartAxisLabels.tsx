@@ -44,5 +44,6 @@ export const useStableBalanceHistoryChartAxisLabels = (args: {
     },
     quoteCurrencyRef,
     contentOpacityRef: axisLabelOpacityRef,
+    maskWhenBalancesHidden: true,
   });
 };

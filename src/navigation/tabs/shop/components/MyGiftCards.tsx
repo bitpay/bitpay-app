@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import GiftCardCreditsItem from './GiftCardCreditsItem';
@@ -21,26 +21,52 @@ import {
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
-  margin-bottom: -10px;
-  padding-horizontal: 3px;
-`;
+const styles = StyleSheet.create({
+  myGiftCardsHeaderContainer: {
+    marginBottom: -10,
+    paddingHorizontal: 3,
+  },
+  noGiftCards: {
+    borderWidth: 1,
+    borderColor: '#f5f7f8',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginVertical: 10,
+    marginHorizontal: horizontalPadding,
+  },
+});
 
-const NoGiftCards = styled.View`
-  border: 1px solid #f5f7f8;
-  border-radius: 30px;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-  margin: 10px ${horizontalPadding}px;
-`;
+const MyGiftCardsHeaderContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SectionHeaderContainer>) => (
+  <SectionHeaderContainer
+    style={[styles.myGiftCardsHeaderContainer, style]}
+    {...rest}
+  />
+);
 
-const NoGiftCardsText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-`;
+const NoGiftCards = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.noGiftCards, style]} {...rest} />
+);
+
+const NoGiftCardsText = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof BaseText>) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[{color: theme.dark ? White : SlateDark}, style]}
+      {...rest}
+    />
+  );
+};
 
 const giftCardHeight = 67;
 

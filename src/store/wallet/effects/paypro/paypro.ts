@@ -163,7 +163,7 @@ export const HandlePayPro =
         network,
         payProUrl: url,
         requiredFeeRate,
-        minerFee, // For payments with Coinbase accounts
+        minerFee,
       };
       return confirmScreenParams;
     } catch (err) {

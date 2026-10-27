@@ -34,7 +34,6 @@ const ChartSelectionDot = ({
         velocity: 0,
       });
     },
-    [innerRadius, outerRadius],
   );
 
   return (

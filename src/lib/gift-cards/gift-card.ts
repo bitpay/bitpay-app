@@ -1,5 +1,6 @@
 import 'intl';
 import 'intl/locale-data/jsonp/en';
+import {t} from 'i18next';
 import moment from 'moment';
 import uniqBy from 'lodash.uniqby';
 import {countries} from 'countries-list';
@@ -207,7 +208,7 @@ export function getGiftCardCurations(
         ) as CardConfig,
     );
   const recentlyPurchasedCuration: GiftCardCuration = {
-    displayName: 'Recently Purchased',
+    displayName: t('Recently Purchased'),
     giftCards: recentlyPurchasedBrands,
   };
   const remoteCurations = Object.keys(directory.curated)

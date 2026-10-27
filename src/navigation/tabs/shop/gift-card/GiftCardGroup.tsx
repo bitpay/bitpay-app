@@ -1,5 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {t as i18nextT} from 'i18next';
+const t = i18nextT as (key: string) => string;
 import {Theme} from '@react-navigation/native';
 import {useStackScreenOptions} from '../../../utils/headerHelpers';
 import {HeaderTitle} from '../../../../components/styled/Text';
@@ -68,7 +69,6 @@ export enum GiftCardScreens {
 
 const GiftCardGroup = ({GiftCard, theme}: GiftCardProps) => {
   const commonOptions = useStackScreenOptions(theme);
-  const {t} = useTranslation();
   return (
     <GiftCard.Group screenOptions={commonOptions}>
       <GiftCard.Screen
