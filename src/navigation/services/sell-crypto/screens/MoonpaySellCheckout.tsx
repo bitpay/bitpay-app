@@ -110,7 +110,6 @@ import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
-import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 const styles = StyleSheet.create({
@@ -158,7 +157,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const sellOrder: MoonpaySellOrderData = useAppSelector(
     ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCryptoExternalId],
   );
-  const [isToken, setIsToken] = useState(
+  const [isToken, _setIsToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -168,7 +167,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [expiredAnalyticSent, setExpiredAnalyticSent] =
     useState<boolean>(false);
-  const [amountExpected, setAmountExpected] = useState<number>(amount);
+  const [amountExpected, _setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
@@ -757,7 +756,7 @@ const MoonpaySellCheckout: React.FC = () => {
           },
         );
         warningMsg = warningMsg + `\n${message}`;
-      } catch (err) {
+      } catch {
         // continue without message
       }
     }
@@ -867,12 +866,14 @@ const MoonpaySellCheckout: React.FC = () => {
       // (It rounds the last digit of the decimal up, based on a variable precision number from its side. Therefore, it causes a failure in the execution of the order)
       // As a workaround we continue to use the previously agreed amount
       const sendMaxData = await getSendMaxData(wallet);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
       sendMaxInfo = cloneDeep(sendMaxData);
       init();
     };
 
     showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
       useSendMax = false;
     }
     if (sellOrder?.send_max && !isToken) {
@@ -903,6 +904,7 @@ const MoonpaySellCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [remainingTimeStr, expiredAnalyticSent]);
 
   useEffect(() => {

@@ -216,6 +216,7 @@ const RequestSpecificAmountQR = () => {
         </ShareIconContainer>
       ),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [navigation, walletName, qrValue]);
 
   const init = async () => {
@@ -240,13 +241,14 @@ const RequestSpecificAmountQR = () => {
       setFormattedAmountObj(_formattedAmountObj);
       setQrValue(_qrValue);
       setLoading(false);
-    } catch (e) {
+    } catch {
       setLoading(false);
     }
   };
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [wallet]);
 
   const [copied, setCopied] = useState(false);

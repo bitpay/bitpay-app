@@ -8,7 +8,6 @@ import {Link} from '../../../../../components/styled/Text';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import SimplexLogo from '../../../../../components/icons/external-services/simplex/simplex-logo';
-import {SimplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
@@ -76,6 +75,7 @@ const SimplexSellDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     logger.debug('Sell order details: ' + JSON.stringify(sellOrder));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {

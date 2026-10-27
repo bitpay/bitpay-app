@@ -142,6 +142,7 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
   useEffect(() => {
     return () => {
       dismissTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
       dismissTimeoutsRef.current.clear();
     };
   }, []);

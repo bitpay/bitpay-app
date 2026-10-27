@@ -1,5 +1,4 @@
 import React from 'react';
-import {View} from 'react-native';
 import {render} from '@test/render';
 import Loader from './Loader';
 

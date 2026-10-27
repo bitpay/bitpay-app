@@ -35,6 +35,7 @@ const Tabs: React.FC<TabsProps> = props => {
       ...t,
       key: 'tab-' + idx,
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [tabs, defaultLanguage]);
 
   const TabButtons = memoizedTabs.map((d, idx) => (

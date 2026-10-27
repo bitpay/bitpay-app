@@ -14,7 +14,7 @@ import {PaymentMethod} from '../../constants/BuyCryptoConstants';
 const BanxaTerms: React.FC<{
   paymentMethod: PaymentMethod;
   country?: string;
-}> = ({paymentMethod, country = 'US'}) => {
+}> = ({paymentMethod, country: _country = 'US'}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
 

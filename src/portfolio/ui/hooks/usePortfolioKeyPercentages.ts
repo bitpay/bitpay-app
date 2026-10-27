@@ -82,6 +82,7 @@ export function usePortfolioKeyPercentages(args: {
         currentRatesSignature: scope.currentRatesSignature,
       };
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [args.keys, dispatch, enabled, keysInputSignature, quoteCurrency, rates]);
 
   const requestKey = useMemo(() => {

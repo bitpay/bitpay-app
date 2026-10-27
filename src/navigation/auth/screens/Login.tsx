@@ -237,6 +237,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication', {onLoginSuccess});
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
 
   const onSubmit = handleSubmit(

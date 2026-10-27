@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global Buffer */
 
 /**
  * generate-dkls-vendor.js

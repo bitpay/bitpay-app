@@ -47,7 +47,6 @@ jest.mock('../../../../utils/helper-methods', () => ({
   getAccount: jest.fn(() => 0),
   getErrorString: jest.fn((e: any) => String(e)),
   isL2Chain: jest.fn(() => false),
-  sleep: jest.fn(() => Promise.resolve()),
   getRateByCurrencyName: jest.fn(() => undefined),
   formatFiatAmount: jest.fn(() => '0.00'),
 }));
@@ -144,7 +143,7 @@ const mockBwcClient = {
     token: undefined,
     walletId: 'mock-wallet-id',
     rootPath: undefined,
-    getTokenCredentials: jest.fn((tokenOpts: any, chain: string) => ({
+    getTokenCredentials: jest.fn((_tokenOpts: any, _chain: string) => ({
       walletId: 'mock-token-wallet-id',
       token: {address: '0xTokenAddress'},
     })),
@@ -243,7 +242,7 @@ const makeMockWallet = (overrides: Record<string, any> = {}): any => ({
     token: undefined,
     walletId: 'mock-wallet-1',
     rootPath: undefined,
-    getTokenCredentials: jest.fn((tokenOpts: any) => ({
+    getTokenCredentials: jest.fn((_tokenOpts: any) => ({
       walletId: `mock-wallet-1-0xtoken`,
       token: {address: '0xToken'},
     })),

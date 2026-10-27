@@ -250,7 +250,6 @@ describe('upsertFiatRateSeriesCache', () => {
       });
 
       // Only one fiat should remain
-      const definedEntries = Object.values(result).filter(Boolean);
       const definedFiatCodes = new Set(
         Object.keys(result)
           .filter(k => result[k] !== undefined)

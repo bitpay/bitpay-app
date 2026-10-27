@@ -407,7 +407,7 @@ const MoonpayBuyEmbeddedOnboarding = ({
       });
       const connectUrl = `${MOONPAY_DEFAULT_FRAME_ORIGIN}/platform/v1/connect?${connectParams.toString()}`;
 
-      setConnectModalWebView(current => ({
+      setConnectModalWebView(_current => ({
         open: true,
         url: connectUrl,
       }));
@@ -529,7 +529,7 @@ const MoonpayBuyEmbeddedOnboarding = ({
                 `[MoonpayConnectFrame] complete: status=active, has accessToken=${!!decrypted.accessToken}`,
               );
 
-              setConnectModalWebView(current => ({
+              setConnectModalWebView(_current => ({
                 open: false,
                 url: undefined,
               }));

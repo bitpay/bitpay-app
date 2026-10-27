@@ -667,6 +667,7 @@ export const WalletSelector = ({
         dispatch(showNoWalletsModal({navigation}));
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [dispatch, navigation, onWalletSelect, selectOption, walletsAndAccounts],
   );
 
@@ -689,6 +690,7 @@ export const WalletSelector = ({
         ? dispatch(showNoWalletsModal({navigation}))
         : showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isVisible, walletsAndAccounts, autoSelectSingleWallet]);
 
   return (

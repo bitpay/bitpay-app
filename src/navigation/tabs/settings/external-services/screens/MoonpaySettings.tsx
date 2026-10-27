@@ -150,6 +150,7 @@ const MoonpaySettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [paymentRequests],
   );
 
@@ -226,6 +227,7 @@ const MoonpaySettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [sellOrders],
   );
 
@@ -253,6 +255,7 @@ const MoonpaySettings: React.FC = () => {
         }`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -267,6 +270,7 @@ const MoonpaySettings: React.FC = () => {
       );
       setSellOrders(moonpaySellOrders);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

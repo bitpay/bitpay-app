@@ -303,7 +303,7 @@ export const addWallet =
                     associatedWallet,
                     opts,
                   );
-                } catch (err) {
+                } catch {
                   logManager.debug(
                     `Error in getTokenContractInfo for opts: ${JSON.stringify(
                       opts,
@@ -758,7 +758,7 @@ const createTokenWallet =
     tokenAddress: string,
     tokenOptsByAddress: {[key in string]: Token},
   ): Effect<Promise<API>> =>
-  async (dispatch): Promise<API> => {
+  async (_dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
       try {
         const bwcClient = BWC.getClient();
@@ -858,7 +858,7 @@ const createTokenWallet =
 
 export const startCreateKeyWithOpts =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  async (dispatch, _getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
         const _key = BWC.createKey({
@@ -990,7 +990,7 @@ export const getDecryptPassword =
 export const detectAndCreateTokensForEachEvmWallet =
   ({
     key,
-    force,
+    force: _force,
     chain,
     tokenAddress,
   }: {
@@ -1168,7 +1168,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                   }),
                 );
               }
-            } catch (err) {
+            } catch {
               logManager.debug(
                 `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
               );

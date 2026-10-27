@@ -79,7 +79,7 @@ export const IsValidSolanaPay = (data: string): boolean => {
     new PublicKey(recipientPart); // throws if it is not valid
 
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -575,7 +575,7 @@ export const IsValidPrivateKey = (data: string): boolean => {
       try {
         provider.PrivateKey(privateKey, network);
         return true;
-      } catch (err) {}
+      } catch {}
     }
 
     return false;
@@ -597,7 +597,7 @@ export const IsValidPrivateKey = (data: string): boolean => {
     if (checkPrivateKey(data, 'testnet')) {
       return true;
     }
-  } catch (err) {}
+  } catch {}
   return false;
 };
 

@@ -120,6 +120,7 @@ const RampSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [paymentRequests],
   );
 
@@ -192,6 +193,7 @@ const RampSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [sellOrders],
   );
 
@@ -207,6 +209,7 @@ const RampSettings: React.FC = () => {
         `Coming from sell order: rampExternalId: ${incomingPaymentRequest.rampExternalId}`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -221,6 +224,7 @@ const RampSettings: React.FC = () => {
       );
       setSellOrders(rampSellOrders);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

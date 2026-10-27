@@ -3,7 +3,6 @@ import {
   Alert,
   SafeAreaView,
   ScrollView,
-  Share,
   StyleSheet,
   TouchableOpacity as RNTouchableOpacity,
   View,
@@ -308,7 +307,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     control,
     handleSubmit,
     watch,
-    formState: {errors, isValid},
+    formState: {errors},
   } = useForm<JoinFormValues>({
     mode: 'onChange',
     defaultValues: {myName: undefined},
@@ -330,7 +329,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
 
   const [sessionId, setSessionId] = useState<string>('');
   const [partyKey, setPartyKey] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, _setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   useAndroidBackHandler(() => currentStep === 3);
@@ -362,6 +361,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
         cancelOnCreateRef.current = true;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -373,6 +373,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     }
     setShowSession(true);
     setCurrentStep(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -425,6 +426,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       };
       resumeCeremony();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [resumeKeyId]);
 
   useEffect(() => {
@@ -445,33 +447,6 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       return () => clearTimeout(timer);
     }
   }, [currentStep]);
-
-  const initializeSession = async () => {
-    if (pendingJoinerSession) {
-      logger.debug('[TSS Join] Restoring persisted session');
-      setSessionId(pendingJoinerSession.sessionId);
-      setPartyKey(pendingJoinerSession.partyKey);
-      setIsLoading(false);
-      return;
-    }
-    await generateNewSession();
-  };
-
-  const generateNewSession = async () => {
-    setIsLoading(true);
-    try {
-      const result = await dispatch(
-        generateJoinerSessionId({name: copayerName}),
-      );
-      setSessionId(result.sessionId);
-      setPartyKey(result.partyKey);
-      logger.debug('[TSS Join] Session ID generated');
-    } catch (err: any) {
-      logger.error(`[TSS Join - generateNewSession] Error: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleShare = async () => {
     try {

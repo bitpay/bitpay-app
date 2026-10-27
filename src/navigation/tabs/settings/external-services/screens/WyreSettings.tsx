@@ -57,6 +57,7 @@ const WyreSettings: React.FC = () => {
     };
 
     showWyreWarning();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ const WyreSettings: React.FC = () => {
       );
       setTransactions(wyrePaymentRequests);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

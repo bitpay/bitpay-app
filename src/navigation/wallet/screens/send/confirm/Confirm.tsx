@@ -486,6 +486,7 @@ const Confirm = () => {
 
   useEffect(() => {
     checkHighFees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [fee]);
 
   let recipientData, recipientListData;
@@ -533,16 +534,6 @@ const Confirm = () => {
   } else {
     recipientData = sendingTo;
   }
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <>

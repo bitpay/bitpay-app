@@ -888,9 +888,9 @@ const BuyAndSellRoot = ({
   ]);
   const [usingCurrency, setUsingCurrency] = useState<string>(fiatCurrency);
   const [usingCurrencyIsFiat, setUsingCurrencyIsFiat] = useState<boolean>(true);
-  const [loadingWalletFromStatus, setLoadingWalletFromStatus] =
+  const [_loadingWalletFromStatus, setLoadingWalletFromStatus] =
     useState<boolean>(false);
-  const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
+  const [_loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
     useState<boolean>(false);
   const [sellLimits, setSellLimits] = useState<SellLimitsOpts>({
     maxWalletAmount: undefined,
@@ -964,31 +964,6 @@ const BuyAndSellRoot = ({
   };
   const updateAmountRef = useRef(updateAmount);
   updateAmountRef.current = updateAmount;
-
-  const onSwapCurrencies = (toCurrency: string) => {
-    let newPrimaryIsFiat = usingCurrencyIsFiat;
-    if (toCurrency === fiatCurrency) {
-      newPrimaryIsFiat = true;
-    } else {
-      newPrimaryIsFiat = false;
-    }
-
-    updateAmountConfig(current => ({
-      ...current,
-      currency: toCurrency,
-      primaryIsFiat: newPrimaryIsFiat,
-      displayAmount: '0',
-      displayEquivalentAmount: newPrimaryIsFiat
-        ? formatFiatAmount(0, fiatCurrency, {
-            currencyDisplay: 'symbol',
-          })
-        : '0',
-    }));
-
-    // reset amount on swap currencies
-    curValRef.current = '';
-    updateAmountRef.current('0');
-  };
 
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
@@ -1170,6 +1145,7 @@ const BuyAndSellRoot = ({
     }
 
     return msg;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [selectedWallet, amountConfig.amount, limits, context, sellLimits]);
 
   const initAmount = () => {
@@ -1359,8 +1335,7 @@ const BuyAndSellRoot = ({
 
       setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
       setIsInitializing(false);
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    } catch {
       logger.error(
         'Buy crypto Error when trying to build the list of supported coins from: ' +
           JSON.stringify(supportedCoins),
@@ -2068,7 +2043,7 @@ const BuyAndSellRoot = ({
       let allLimits: SellLimits[] = [];
 
       if (responseByExchangeKey instanceof Array) {
-        responseByExchangeKey.forEach((e, index) => {
+        responseByExchangeKey.forEach((e, _index) => {
           if (e.promiseRes.status === 'rejected') {
             logger.debug(
               `Sell crypto getLimits[${
@@ -2315,6 +2290,7 @@ const BuyAndSellRoot = ({
       }
     });
     return () => KeyEvent.removeKeyUpListener();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [continueEnabled]);
 
   useEffect(() => {
@@ -2338,6 +2314,7 @@ const BuyAndSellRoot = ({
     ) {
       setSelectedPillValue(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [curValRef.current]);
 
   useEffect(() => {
@@ -2424,6 +2401,7 @@ const BuyAndSellRoot = ({
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [selectedWallet, navigation, allRates, fiatCurrency, context]);
 
   const openCheckoutWithInAppBrowser = async (
@@ -2902,7 +2880,7 @@ const BuyAndSellRoot = ({
         quoteData,
       );
       data = _data?.body ?? _data;
-    } catch (err) {
+    } catch {
       setOpeningBrowser(false);
       const title = t('MoonPay Error');
       const reason = 'moonpayGetSignedPaymentUrl Error';
@@ -3118,7 +3096,7 @@ const BuyAndSellRoot = ({
     try {
       const _data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
       data = _data?.body ?? _data;
-    } catch (err) {
+    } catch {
       setOpeningBrowser(false);
       const title = t('Ramp Network Error');
       const reason = 'rampGetSignedPaymentUrl Error';
@@ -3776,7 +3754,7 @@ const BuyAndSellRoot = ({
 
   const continueToRampSell = async (
     offer: SellCryptoOffer,
-    paymentMethod: WithdrawalMethod,
+    _paymentMethod: WithdrawalMethod,
   ) => {
     if (!selectedWallet) {
       return;

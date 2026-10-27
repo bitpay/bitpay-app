@@ -351,7 +351,7 @@ function getViewModelGraphPointValue(
 }
 
 function makeViewModelGraphPoint(
-  args: LineChartPointFactoryArgs<BalanceChartGraphPointDto, GraphPoint>,
+  args: LineChartPointFactoryArgs<BalanceChartGraphPointDto>,
 ): GraphPoint {
   return {
     date: new Date(args.timestamp),

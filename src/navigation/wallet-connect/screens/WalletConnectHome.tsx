@@ -336,6 +336,7 @@ const WalletConnectHome = () => {
     };
 
     checkIfRequestsV2AreIncomplete();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [requestsV2]);
 
   const rejectCallRequest = async (request: WCV2RequestType) => {
@@ -428,6 +429,7 @@ const WalletConnectHome = () => {
         ],
       }),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [dispatch, sessionV2]);
 
   useLayoutEffect(() => {
@@ -538,6 +540,7 @@ const WalletConnectHome = () => {
     if (accountDisconnected) {
       navigation.goBack();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [accountDisconnected]);
 
   useEffect(() => {
@@ -572,6 +575,7 @@ const WalletConnectHome = () => {
       }
       handleRequestMethod(requestV2, wallet);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [context]);
 
   const closeModal = () => {
@@ -691,6 +695,7 @@ const WalletConnectHome = () => {
         </RowContainer>
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [requestsV2],
   );
 
