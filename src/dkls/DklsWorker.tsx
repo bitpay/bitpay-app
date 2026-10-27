@@ -12,6 +12,8 @@ type Pending = {
 };
 
 const BOOT_TIMEOUT_MS = 20000;
+const RPC_TIMEOUT_MS = 60000;
+const OBJECT_IDS_PER_WORKER = 2 ** 32;
 
 let _post: ((data: any) => void) | null = null;
 let _isReady = false;
@@ -42,22 +44,27 @@ const clearBootTimer = () => {
   }
 };
 
+const failWorker = (error: Error) => {
+  clearBootTimer();
+  const reject = _readyReject;
+  _isReady = false;
+  _readyResolve = null;
+  _readyReject = null;
+  resetReadiness();
+  _outQueue.length = 0;
+  _mountRequested = false;
+  _bootAttempt++;
+  _mountListeners.forEach(listener => listener());
+  reject?.(error);
+  pendings.forEach(pending => pending.reject(error));
+  pendings.clear();
+};
+
 const failBoot = (reason: string) => {
   if (_isReady || !_readyReject) {
     return;
   }
-  clearBootTimer();
-  const reject = _readyReject;
-  _readyResolve = null;
-  _readyReject = null;
-  // Unmount the failed WebView and start over on the next call, so one
-  // failed boot doesn't disable TSS until the app restarts. Calls already
-  // waiting hold the old promise and are rejected below.
-  resetReadiness();
-  _mountRequested = false;
-  _bootAttempt++;
-  _mountListeners.forEach(listener => listener());
-  reject(new Error(`DKLS worker failed to start: ${reason}`));
+  failWorker(new Error(`DKLS worker failed to start: ${reason}`));
 };
 
 export function requestDklsWorkerMount(): void {
@@ -141,11 +148,22 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
   if (!_isReady) {
     if (WORKER_LOGS_ENABLED) console.log('[Dkls RN] waiting _readyPromise…');
     await _readyPromise;
+    if (!_isReady) {
+      throw new Error('DKLS worker restarted');
+    }
   }
 
   return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () =>
+        failWorker(
+          new Error(`DKLS worker did not reply within ${RPC_TIMEOUT_MS}ms`),
+        ),
+      RPC_TIMEOUT_MS,
+    );
     pendings.set(id, {
       resolve: v => {
+        clearTimeout(timer);
         const dt = Date.now() - t0;
         if (WORKER_LOGS_ENABLED)
           console.log('[Dkls RN←WV] ok', {
@@ -156,6 +174,7 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
         resolve(v);
       },
       reject: e => {
+        clearTimeout(timer);
         const dt = Date.now() - t0;
         if (WORKER_LOGS_ENABLED)
           console.log('[Dkls RN←WV] ERR', {id, dt, err: String(e)});
@@ -269,13 +288,14 @@ const DklsWorkerWebView = () => {
 
         function enqueue(objId, task) {
           const chain = (inFlight.get(objId) || Promise.resolve()).then(task, task);
-          inFlight.set(objId, chain.finally(() => {
-            if (inFlight.get(objId) === chain) inFlight.delete(objId);
-          }));
+          const tail = chain.catch(() => {}).then(() => {
+            if (inFlight.get(objId) === tail) inFlight.delete(objId);
+          });
+          inFlight.set(objId, tail);
           return chain;
         }
 
-        let nextId = 1;
+        let nextId = ${_bootAttempt * OBJECT_IDS_PER_WORKER + 1};
         let dklsMod = null;
 
         const DKLS_JS_B64 = ${JSON.stringify(DKLS_JS_BASE64)};
@@ -393,10 +413,12 @@ const DklsWorkerWebView = () => {
 
             if (type === "free") {
               const { objId } = data;
-              if (!objects.has(objId)) {
+              const obj = objects.get(objId);
+              if (!obj) {
                 return reply(id, true, "already_freed");
               }
               objects.delete(objId);
+              if (obj.__wbg_ptr) obj.free();
               return reply(id, true, "freed");
             }
 
@@ -669,7 +691,7 @@ const DklsWorkerWebView = () => {
       }
       pendings.delete(id);
       if (ok) p.resolve(result);
-      else p.reject(result);
+      else p.reject(new Error(result));
     } catch (e) {
       if (WORKER_LOGS_ENABLED)
         console.log(
@@ -700,6 +722,9 @@ const DklsWorkerWebView = () => {
     return () => {
       _post = null;
       clearBootTimer();
+      if (_isReady) {
+        failWorker(new Error('DKLS worker unmounted'));
+      }
     };
   }, []);
 
@@ -727,6 +752,12 @@ const DklsWorkerWebView = () => {
           failBoot(
             `webview http error: ${e?.nativeEvent?.statusCode ?? 'unknown'}`,
           )
+        }
+        onContentProcessDidTerminate={() =>
+          failWorker(new Error('DKLS worker process terminated'))
+        }
+        onRenderProcessGone={() =>
+          failWorker(new Error('DKLS worker process terminated'))
         }
       />
     </View>

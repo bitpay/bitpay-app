@@ -64,9 +64,14 @@ export const createDklsWebViewHost = (reply: (data: string) => void) => {
     switch (type) {
       case 'init':
         return 'ok';
-      case 'free':
+      case 'free': {
+        const obj = objects.get(objId);
         objects.delete(objId);
+        if (obj?.__wbg_ptr) {
+          obj.free();
+        }
         return 'freed';
+      }
       case 'construct': {
         const a = deproxy(args);
         if (className === 'KeygenSession' && a.length >= 4) {

@@ -66,6 +66,14 @@ const mountWebViewScript = async () => {
   const script = html
     .slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'))
     .replace('await import(jsBlobUrl)', 'await importModule()');
+  let webModule: any;
+  const maps: Array<Map<unknown, unknown>> = [];
+  class TrackedMap extends Map<unknown, unknown> {
+    constructor() {
+      super();
+      maps.push(this);
+    }
+  }
   const timers: any[] = [];
   const track =
     (schedule: any) =>
@@ -84,6 +92,7 @@ const mountWebViewScript = async () => {
     'URL',
     'setTimeout',
     'setInterval',
+    'Map',
     script,
   )(
     {
@@ -100,19 +109,29 @@ const mountWebViewScript = async () => {
         new Uint8Array(nodeBuffer.from(url.split(',')[1], 'base64')).buffer,
     }),
     {log: () => {}},
-    async () => loadWebModule(),
+    async () => (webModule = loadWebModule()),
     {createObjectURL: () => 'blob:dkls', revokeObjectURL: () => {}},
     track(setTimeout),
     track(setInterval),
+    TrackedMap,
   );
   return Object.assign(
     () => {
       timers.forEach(clearTimeout);
       act(() => renderer.unmount());
     },
-    {requests},
+    {requests, webModule: () => webModule, maps},
   );
 };
+
+const constructKeygenSession = async (callWorker: any): Promise<number> =>
+  (
+    await callWorker({
+      type: 'construct',
+      className: 'KeygenSession',
+      args: [2, 2, 0],
+    })
+  ).objId;
 
 const toOtherParties = (messages: any[], partyId: number) =>
   JSON.parse(JSON.stringify(messages.filter(m => m.partyId !== partyId))).map(
@@ -197,6 +216,76 @@ describe('TSS ceremony through the production WebView script', () => {
           ),
         ),
       ).toBe(true);
+    } finally {
+      unmount();
+    }
+  });
+
+  it('frees live WASM objects once and skips ones a call already consumed', async () => {
+    const unmount = await mountWebViewScript();
+    try {
+      const {callWorker} = require('./DklsWorker');
+      await callWorker({type: 'init'});
+      const free = jest.spyOn(
+        unmount.webModule().KeygenSession.prototype,
+        'free',
+      );
+      const live = await constructKeygenSession(callWorker);
+      const consumed = await constructKeygenSession(callWorker);
+      await expect(
+        callWorker({type: 'call', objId: consumed, method: 'keyshare'}),
+      ).rejects.toThrow('keygen-in-progress');
+
+      expect(await callWorker({type: 'free', objId: live})).toBe('freed');
+      expect(await callWorker({type: 'free', objId: live})).toBe(
+        'already_freed',
+      );
+      expect(await callWorker({type: 'free', objId: consumed})).toBe('freed');
+      expect(await callWorker({type: 'free', objId: consumed})).toBe(
+        'already_freed',
+      );
+      expect(free).toHaveBeenCalledTimes(1);
+    } finally {
+      unmount();
+    }
+  });
+
+  it('empties the call queue after calls resolve or reject', async () => {
+    const unmount = await mountWebViewScript();
+    try {
+      const {callWorker} = require('./DklsWorker');
+      const live = await constructKeygenSession(callWorker);
+      const consumed = await constructKeygenSession(callWorker);
+      await callWorker({type: 'call', objId: live, method: 'toBytes'});
+      await expect(
+        callWorker({type: 'call', objId: consumed, method: 'keyshare'}),
+      ).rejects.toThrow('keygen-in-progress');
+      await new Promise(resolve => setImmediate(resolve));
+
+      const [, inFlight] = unmount.maps;
+      expect(inFlight.size).toBe(0);
+    } finally {
+      unmount();
+    }
+  });
+
+  it('never hands out an object id from a previous worker', async () => {
+    const {callWorker} = require('./DklsWorker');
+    const unmountFirst = await mountWebViewScript();
+    const stale = await constructKeygenSession(callWorker);
+    unmountFirst();
+
+    const unmount = await mountWebViewScript();
+    try {
+      const fresh = await constructKeygenSession(callWorker);
+
+      expect(fresh).not.toBe(stale);
+      await expect(
+        callWorker({type: 'call', objId: stale, method: 'toBytes'}),
+      ).rejects.toThrow(`Unknown objId ${stale}`);
+      expect(await callWorker({type: 'free', objId: stale})).toBe(
+        'already_freed',
+      );
     } finally {
       unmount();
     }
