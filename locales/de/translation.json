@@ -2305,5 +2305,8 @@
   "Wallet data could not be opened": "Wallet-Daten konnten nicht geöffnet werden",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ihre lokalen Daten wurden beibehalten. Versuchen Sie es erneut oder wenden Sie sich an den Support. Deinstallieren Sie die App nicht und löschen Sie ihre Daten nicht. Referenz: {{id}}.",
   "There are no wallets with enough funds on the {{network}} network.": "Es gibt keine Wallets mit ausreichend Guthaben im {{network}}-Netzwerk.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Wenn Sie die BitPay-App löschen oder Ihr Gerät verlieren, benötigen Sie Ihre Wiederherstellungsphrase, um wieder Zugriff auf Ihr Guthaben zu erhalten."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Wenn Sie die BitPay-App löschen oder Ihr Gerät verlieren, benötigen Sie Ihre Wiederherstellungsphrase, um wieder Zugriff auf Ihr Guthaben zu erhalten.",
+  "Some assets not charted": "Einige Assets nicht im Diagramm",
+  "Not all assets are charted": "Nicht alle Assets sind im Diagramm",
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin."
 }

@@ -2286,5 +2286,8 @@
   "Wallet data could not be opened": "无法打开钱包数据",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "您的本地数据已保留。请重试或联系支持团队。请勿卸载应用或清除其数据。参考代码：{{id}}。",
   "There are no wallets with enough funds on the {{network}} network.": "{{network}} 网络上没有资金充足的钱包。",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "如果您删除了 BitPay 应用或丢失了设备，您将需要使用恢复短语才能重新存取资金。"
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "如果您删除了 BitPay 应用或丢失了设备，您将需要使用恢复短语才能重新存取资金。",
+  "Some assets not charted": "部分资产未显示在图表中",
+  "Not all assets are charted": "并非所有资产都显示在图表中",
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "由于无法重建这些资产的历史记录，图表及其变化暂未包含这些资产。您的投资组合余额仍包含它们。"
 }
