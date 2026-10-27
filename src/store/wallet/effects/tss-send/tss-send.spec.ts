@@ -91,6 +91,10 @@ jest.mock('../send/send', () => ({
   getTx: jest.fn(() => Promise.resolve({status: 'pending'})),
 }));
 
+jest.mock('../../../../utils/deviceIntegrity', () => ({
+  assertDeviceIntegrityForSensitiveAction: jest.fn(),
+}));
+
 // ─── Fake BWC primitives ────────────────────────────────────────────────────
 
 let tssSignInstances: any[] = [];
@@ -1534,6 +1538,39 @@ describe('joinTSSSigningSession', () => {
 
     driveToComplete(tssSignInstances[0]);
     await resultPromise;
+  });
+
+  it('rejects before any authentication or signing when the device fails the integrity check', async () => {
+    const store = configureTestStore({APP: {biometricLockActive: true}});
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet], isPrivKeyEncrypted: true});
+
+    const {assertDeviceIntegrityForSensitiveAction} = jest.requireMock(
+      '../../../../utils/deviceIntegrity',
+    );
+    assertDeviceIntegrityForSensitiveAction.mockImplementationOnce(() => {
+      throw new Error('device compromised');
+    });
+    const {checkBiometricForSending} = jest.requireMock('../send/send');
+
+    await expect(
+      store.dispatch(
+        joinTSSSigningSession({
+          key,
+          wallet,
+          txp: makeTxp(),
+          callbacks: noopCallbacks(),
+          setShowTSSProgressModal: jest.fn(),
+        }),
+      ),
+    ).rejects.toThrow('device compromised');
+
+    expect(assertDeviceIntegrityForSensitiveAction).toHaveBeenCalledWith(
+      'crypto-sign',
+    );
+    expect(checkBiometricForSending).not.toHaveBeenCalled();
+    expect(findShowDecryptAction(store)).toBeUndefined();
+    expect(tssSignInstances).toHaveLength(0);
   });
 
   it('rethrows without ever calling startTSSSigning when the biometric check fails', async () => {

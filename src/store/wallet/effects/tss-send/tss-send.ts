@@ -24,6 +24,7 @@ import {checkEncryptPassword} from '../../utils/wallet';
 import {broadcastTx, checkBiometricForSending, getTx} from '../send/send';
 import {getErrorName} from '../../../../constants/BWCError';
 import {requestDklsWorkerMount} from '../../../../dkls/DklsWorker';
+import {assertDeviceIntegrityForSensitiveAction} from '../../../../utils/deviceIntegrity';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TSS_SESSION_PREFIX = 'TSS_SIGN_SESSION_';
@@ -742,6 +743,7 @@ export const joinTSSSigningSession =
     setShowTSSProgressModal: (show: boolean) => void;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
+    assertDeviceIntegrityForSensitiveAction('crypto-sign');
     requestDklsWorkerMount();
     const {APP} = getState();
     const {key, wallet, txp, callbacks, setShowTSSProgressModal} = opts;
