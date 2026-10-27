@@ -692,6 +692,14 @@ export const startTSSSigning =
           if (!RACE_CONDITION_CODES.has(errCode)) {
             throw error;
           }
+          const currentTxp = await getTx(wallet, txp.id);
+          if (
+            currentTxp.status !== 'accepted' &&
+            currentTxp.status !== 'broadcasted'
+          ) {
+            throw error;
+          }
+          signedTXP = currentTxp;
         }
 
         logManager.debug('[TSS Sign] TSS signing completed successfully');
