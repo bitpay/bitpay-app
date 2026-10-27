@@ -487,7 +487,7 @@ export type GlobalSelectParamList = {
       solanaPayOpts?: SolanaPayOpts;
     };
   };
-  amount?: number;
+  amount?: number | string;
   selectedAccountAddress?: string;
   assetContext?: AssetContext;
 };
@@ -1548,7 +1548,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         opts,
       }: {
         wallet: Wallet;
-        amount: number;
+        amount: number | string;
         sendTo: {
           name: string | undefined;
           type: string;
@@ -1656,7 +1656,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             email,
           };
 
-          if (!amount) {
+          if (!Number(amount)) {
             navigation.navigate(WalletScreens.AMOUNT, {
               wallet,
               sendTo,
@@ -1673,7 +1673,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 dispatch(
                   createProposalAndNavigate({
                     wallet,
-                    amount: Number(selectedAmount),
+                    amount: selectedAmount,
                     sendTo,
                     setButtonState,
                     opts: {...opts, ...amountOpts},
@@ -1685,7 +1685,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             dispatch(
               createProposalAndNavigate({
                 wallet,
-                amount: Number(amount),
+                amount,
                 sendTo,
                 opts,
               }),

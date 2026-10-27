@@ -73,7 +73,7 @@ import {
   handleCreateTxProposalError,
 } from '../wallet/effects/send/send';
 import {Key, Token, Wallet} from '../wallet/wallet.models';
-import {FormatAmount} from '../wallet/effects/amount/amount';
+import {FromBaseUnits} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
 import {
   BitcoreLibs,
@@ -623,7 +623,7 @@ const goToConfirm =
       destinationTag?: number;
       network?: Network;
     };
-    amount: number;
+    amount: number | string;
     wallet?: Wallet;
     selectedAccountAddress?: string;
     setButtonState?: (state: ButtonState) => void;
@@ -767,7 +767,7 @@ export const goToAmount =
         dispatch(
           goToConfirm({
             recipient,
-            amount: Number(amount),
+            amount,
             wallet,
             setButtonState,
             opts: {...opts, ...amountOpts},
@@ -1087,7 +1087,7 @@ const handleSolanaPay =
         dispatch(
           goToConfirm({
             recipient,
-            amount: Number(amount),
+            amount: amount!,
             wallet,
             selectedAccountAddress,
             opts: {
@@ -1168,8 +1168,8 @@ const handleBitcoinUri =
         }),
       );
     } else {
-      const amount = Number(
-        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
+      const amount = dispatch(
+        FromBaseUnits(parsed.amount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1231,8 +1231,8 @@ const handleBitcoinCashUri =
         }),
       );
     } else {
-      const amount = Number(
-        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
+      const amount = dispatch(
+        FromBaseUnits(parsed.amount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1308,8 +1308,8 @@ const handleBitcoinCashUriLegacyAddress =
         }),
       );
     } else {
-      const amount = Number(
-        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
+      const amount = dispatch(
+        FromBaseUnits(parsed.amount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1359,10 +1359,8 @@ const handleEthereumUri =
       );
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(
-        dispatch(
-          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
-        ),
+      const amount = dispatch(
+        FromBaseUnits(parsedAmount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1412,10 +1410,8 @@ const handleMaticUri =
       );
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(
-        dispatch(
-          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
-        ),
+      const amount = dispatch(
+        FromBaseUnits(parsedAmount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1465,10 +1461,8 @@ const handleArbUri =
       );
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(
-        dispatch(
-          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
-        ),
+      const amount = dispatch(
+        FromBaseUnits(parsedAmount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1518,10 +1512,8 @@ const handleBaseUri =
       );
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(
-        dispatch(
-          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
-        ),
+      const amount = dispatch(
+        FromBaseUnits(parsedAmount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1571,10 +1563,8 @@ const handleOpUri =
       );
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(
-        dispatch(
-          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
-        ),
+      const amount = dispatch(
+        FromBaseUnits(parsedAmount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1624,10 +1614,8 @@ const handleSolUri =
       );
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(
-        dispatch(
-          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
-        ),
+      const amount = dispatch(
+        FromBaseUnits(parsedAmount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1728,8 +1716,8 @@ const handleDogecoinUri =
         }),
       );
     } else {
-      const amount = Number(
-        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
+      const amount = dispatch(
+        FromBaseUnits(parsed.amount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({
@@ -1786,8 +1774,8 @@ const handleLitecoinUri =
         }),
       );
     } else {
-      const amount = Number(
-        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
+      const amount = dispatch(
+        FromBaseUnits(parsed.amount, coin, chain, undefined),
       );
       dispatch(
         goToConfirm({

@@ -382,7 +382,7 @@ const PayProConfirm = () => {
     }
     setShowHighFeeWarningMessage(
       feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[txWallet.chain] &&
-        proposal.amount !== 0,
+        Number(proposal.amount) !== 0,
     );
   };
 

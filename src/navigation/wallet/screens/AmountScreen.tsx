@@ -1,5 +1,11 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import {useTranslation} from 'react-i18next';
 import {SafeAreaView, StyleSheet} from 'react-native';
 import Amount from '../../../components/amount/Amount';
@@ -92,6 +98,7 @@ const AmountScreen: React.FC<
   const {t} = useTranslation();
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [isSendMax, setIsSendMax] = useState(false);
 
   const {
     wallet,
@@ -108,6 +115,7 @@ const AmountScreen: React.FC<
   } = route.params || {};
 
   const onSendMaxPressed = () => {
+    setIsSendMax(true);
     return onAmountSelected?.('', setButtonState, {sendMax: true});
   };
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
@@ -115,12 +123,24 @@ const AmountScreen: React.FC<
     onSendMaxPressedRef.current = onSendMaxPressed;
   });
 
+  useEffect(() => {
+    if (buttonState === 'failed') {
+      setIsSendMax(false);
+    }
+  }, [buttonState]);
+
+  useEffect(
+    () => navigation.addListener('focus', () => setIsSendMax(false)),
+    [navigation],
+  );
+
   const getHeaderRight = useCallback(
     () => (
       <HeaderContainer style={{flexDirection: 'row'}}>
         <Button
           buttonType="pill"
           buttonStyle="cancel"
+          disabled={isSendMax}
           onPress={() => onSendMaxPressedRef.current()}
           style={{marginRight: chain && IsUtxoChain(chain) && wallet ? 10 : 0}}>
           {t('Send Max')}
@@ -134,7 +154,7 @@ const AmountScreen: React.FC<
         )}
       </HeaderContainer>
     ),
-    [chain, sendTo?.address, t, wallet],
+    [chain, isSendMax, sendTo?.address, t, wallet],
   );
 
   const assetOptions: Array<Option> =
@@ -170,6 +190,7 @@ const AmountScreen: React.FC<
       <WalletScreenContainer hasHeaderTitle={!!headerTitle}>
         <Amount
           buttonState={buttonState}
+          isSendMax={isSendMax}
           context={context}
           cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
           customAmountSublabel={customAmountSublabel}

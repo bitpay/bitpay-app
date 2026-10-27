@@ -963,7 +963,7 @@ describe('incomingData', () => {
       {
         uri: 'ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
         stateParams: {
-          amount: 1.543,
+          amount: '1.543',
           context: 'scanner',
           recipient: {
             address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
@@ -983,7 +983,7 @@ describe('incomingData', () => {
       {
         uri: 'ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000?gasPrice=0000400000000000000',
         stateParams: {
-          amount: 1.543,
+          amount: '1.543',
           context: 'scanner',
           recipient: {
             address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
@@ -1029,7 +1029,7 @@ describe('incomingData', () => {
       {
         uri: 'matic:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
         stateParams: {
-          amount: 1.543,
+          amount: '1.543',
           context: 'scanner',
           recipient: {
             address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
@@ -1049,7 +1049,7 @@ describe('incomingData', () => {
       {
         uri: 'matic:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000?gasPrice=0000400000000000000',
         stateParams: {
-          amount: 1.543,
+          amount: '1.543',
           context: 'scanner',
           recipient: {
             address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
@@ -1166,12 +1166,12 @@ describe('incomingData', () => {
     const expected = [
       {
         log: '[scan] Incoming-data: BitcoinCash URI',
-        amount: 1,
+        amount: '1',
         network: 'livenet',
       },
       {
         log: '[scan] Incoming-data: BitcoinCash URI',
-        amount: 12,
+        amount: '12',
         network: 'testnet',
       },
     ];
@@ -1225,8 +1225,8 @@ describe('incomingData', () => {
     const expected = [
       {amount: undefined},
       {amount: undefined},
-      {amount: 1},
-      {amount: 1},
+      {amount: '1'},
+      {amount: '1'},
     ];
     const store = configureTestStore({});
     const loggerSpy = jest.spyOn(logManager, 'info');

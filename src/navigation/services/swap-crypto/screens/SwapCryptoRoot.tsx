@@ -125,6 +125,7 @@ import {
   GetExcludedUtxosMessage,
   parseAmountToStringIfBN,
   SatToUnit,
+  ToBaseUnits,
 } from '../../../../store/wallet/effects/amount/amount';
 import {maxBy, minBy, orderBy, uniqBy} from '../../../../utils/array';
 import {
@@ -2179,10 +2180,7 @@ const SwapCryptoRoot: React.FC = () => {
           fromWalletSelected.tokenAddress,
         ),
       );
-      // To Sat
-      const depositSat = Number(
-        (amountFrom * precision!.unitToSatoshi).toFixed(0),
-      );
+      const depositSat = ToBaseUnits(amountFrom, precision!.unitDecimals);
 
       try {
         const newCtxp = await createTx(
@@ -2298,7 +2296,7 @@ const SwapCryptoRoot: React.FC = () => {
   const createTx = async (
     wallet: Wallet,
     txPayinAddress: string,
-    depositSat: number,
+    depositSat: string,
     destTag?: string,
   ): Promise<TransactionProposal> => {
     if (!fromWalletSelected || !toWalletSelected) {

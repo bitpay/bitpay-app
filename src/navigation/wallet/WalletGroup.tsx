@@ -165,7 +165,7 @@ export type WalletGroupParamList = {
   ShareJoinCode: {keyId: string; partyId: number; joinCode: string};
   JoinTSSWallet: {copayerName?: string; keyId?: string};
   AddingOptions: AddingOptionsParamList;
-  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
+  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: string};
   TransactionDetails: {
     keyId: string;
     walletId: string;

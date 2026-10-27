@@ -43,6 +43,7 @@ import {
   GetExcludedUtxosMessage,
   parseAmountToStringIfBN,
   SatToUnit,
+  ToBaseUnits,
 } from '../../../../store/wallet/effects/amount/amount';
 import {
   formatCryptoAddress,
@@ -385,10 +386,7 @@ const MoonpaySellCheckout: React.FC = () => {
         wallet.tokenAddress,
       ),
     );
-    // To Sat
-    const depositSat = Number(
-      (amountExpected * precision!.unitToSatoshi).toFixed(0),
-    );
+    const depositSat = ToBaseUnits(amountExpected, precision!.unitDecimals);
 
     if (
       wallet.currencyAbbreviation.toLowerCase() === 'bch' &&
@@ -442,7 +440,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const createTx = async (
     txWallet: Wallet,
     txToAddress: string,
-    depositSat: number,
+    depositSat: string,
     destTag?: string,
   ): Promise<TransactionProposal> => {
     try {

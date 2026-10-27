@@ -81,6 +81,7 @@ import {
   IsERCToken,
   IsVMChain,
 } from '../../../../../store/wallet/utils/currency';
+import {ToBaseUnits} from '../../../../../store/wallet/effects/amount/amount';
 import prompt from 'react-native-prompt-android';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
@@ -128,7 +129,7 @@ export interface ConfirmParamList {
   recipientList?: Recipient[];
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
-  amount: number;
+  amount: number | string;
   speedup?: boolean;
   sendMax?: boolean;
   inputs?: Utxo[];
@@ -246,7 +247,7 @@ const Confirm = () => {
   const [memo, setMemo] = useState<string | undefined>();
   const {currencyAbbreviation, chain, tokenAddress} = wallet;
   const feeOptions = GetFeeOptions(chain);
-  const {unitToSatoshi} =
+  const {unitDecimals} =
     dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
 
   useLayoutEffect(() => {
@@ -484,7 +485,8 @@ const Confirm = () => {
       feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee?.feeLevel});
     }
     setShowHighFeeWarningMessage(
-      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[chain] && txp.amount !== 0,
+      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[chain] &&
+        Number(txp.amount) !== 0,
     );
   };
 
@@ -498,7 +500,7 @@ const Confirm = () => {
 
   if (recipientList) {
     recipientListData = recipientList.map(r => {
-      const amountSat = Number(r.amount! * unitToSatoshi!);
+      const amountSat = Number(ToBaseUnits(r.amount!, unitDecimals!));
       return {
         recipientName: r.name,
         recipientAddress: r.address,
