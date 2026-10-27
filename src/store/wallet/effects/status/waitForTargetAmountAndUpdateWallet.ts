@@ -62,12 +62,9 @@ const getComparableTotalAmount = ({
   }
 
   if (['xrp', 'sol'].includes(wallet.chain)) {
-    const lockedConfirmedAmount = status?.balance?.lockedConfirmedAmount;
-    if (
-      typeof lockedConfirmedAmount === 'number' &&
-      Number.isFinite(lockedConfirmedAmount)
-    ) {
-      return totalAmount - lockedConfirmedAmount;
+    const reserve = status?.balance?.reserve ?? 0;
+    if (typeof reserve === 'number' && Number.isFinite(reserve)) {
+      return Math.max(0, totalAmount - reserve);
     }
   }
 

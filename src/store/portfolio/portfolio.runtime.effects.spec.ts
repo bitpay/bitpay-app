@@ -187,6 +187,7 @@ import {
   buildAssetPnlSummaryCacheKey,
   clearAssetPnlSummaryCacheForTests,
   getAssetPnlSummaryCacheEntry,
+  getAssetPnlSummaryCacheClearEpoch,
   seedAssetPnlSummaryCache,
 } from '../../portfolio/ui/assetPnlSummaryCache';
 
@@ -649,6 +650,7 @@ describe('portfolio runtime effects lock deferral', () => {
   it('redacts wallet ids from sentry wallet storage clearing failures', async () => {
     const state = makeState();
     const {dispatch, dispatched} = makeStore(state);
+    const cacheClearEpoch = getAssetPnlSummaryCacheClearEpoch();
     mockRuntimeClient.clearWallet.mockRejectedValueOnce(
       new Error('clear failed for wallet-2'),
     );
@@ -666,6 +668,7 @@ describe('portfolio runtime effects lock deferral', () => {
     expect(String(warning![0] || '')).toContain('wallet-2');
     expect(String(warning![1] || '')).toContain('[redacted]');
     expect(String(warning![1] || '')).not.toContain('wallet-2');
+    expect(getAssetPnlSummaryCacheClearEpoch()).toBe(cacheClearEpoch + 1);
     expect(dispatched).toContainEqual({
       payload: {walletIds: ['wallet-2']},
       type: 'CLEAR_WALLET_PORTFOLIO_STATE',

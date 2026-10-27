@@ -10,3 +10,4 @@ export const HIGH_FEE_LIMIT: {[key in string]: number} = {
   btc: 100, // sat/byte
   eth: 200, // Gwei
 };
+export const WALLET_REQUEST_CONCURRENCY = 5;

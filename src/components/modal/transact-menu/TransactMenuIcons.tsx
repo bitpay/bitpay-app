@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {Action, LinkBlue, White} from '../../../styles/colors';
 import {changeOpacity} from '../../../utils/helper-methods';
 import {BitPayTheme} from '../../../themes/bitpay';

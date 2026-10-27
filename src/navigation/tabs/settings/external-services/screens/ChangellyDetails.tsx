@@ -3,7 +3,7 @@ import {RefreshControl, Text} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from '../../../../../contexts';
 import moment from 'moment';
 import {Br} from '../../../../../components/styled/Containers';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
@@ -230,7 +230,7 @@ const ChangellyDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="changelly-copy-deposit-address-button"
-              accessibilityLabel="Changelly copy deposit address button"
+              accessibilityLabel={t('Copy deposit address')}
               onPress={() => {
                 copyText(swapTx.addressTo);
                 setCopiedDepositAddress(true);
@@ -302,7 +302,7 @@ const ChangellyDetails: React.FC = () => {
                 <CopiedContainer>
                   <TouchableOpacity
                     testID="changelly-copy-support-email-button"
-                    accessibilityLabel="Changelly copy support email button"
+                    accessibilityLabel={t('Copy support email')}
                     style={{maxWidth: '90%'}}
                     onPress={() => {
                       copyText('security@changelly.com');
@@ -326,7 +326,7 @@ const ChangellyDetails: React.FC = () => {
                 <CopiedContainer>
                   <TouchableOpacity
                     testID="changelly-copy-transaction-id-tip-button"
-                    accessibilityLabel="Changelly copy transaction id tip button"
+                    accessibilityLabel={t('Copy transaction ID')}
                     style={{maxWidth: '90%'}}
                     onPress={() => {
                       copyText(swapTx.exchangeTxId);
@@ -353,7 +353,7 @@ const ChangellyDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="changelly-copy-payin-address-button"
-              accessibilityLabel="Changelly copy payin address button"
+              accessibilityLabel={t('Copy pay-in address')}
               onPress={() => {
                 copyText(swapTx.payinAddress);
                 setCopiedPayinAddress(true);
@@ -374,7 +374,7 @@ const ChangellyDetails: React.FC = () => {
             <ColumnDataContainer>
               <TouchableOpacity
                 testID="changelly-copy-payin-extra-id-button"
-                accessibilityLabel="Changelly copy payin extra id button"
+                accessibilityLabel={t('Copy pay-in extra ID')}
                 onPress={() => {
                   copyText(swapTx.payinExtraId!);
                   setCopiedPayinExtraId(true);
@@ -395,7 +395,7 @@ const ChangellyDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="changelly-copy-refund-address-button"
-              accessibilityLabel="Changelly copy refund address button"
+              accessibilityLabel={t('Copy refund address')}
               onPress={() => {
                 copyText(swapTx.refundAddress);
                 setCopiedRefundAddress(true);
@@ -415,7 +415,7 @@ const ChangellyDetails: React.FC = () => {
           <ColumnDataContainer>
             <TouchableOpacity
               testID="changelly-copy-exchange-transaction-id-button"
-              accessibilityLabel="Changelly copy exchange transaction id button"
+              accessibilityLabel={t('Copy exchange transaction ID')}
               onPress={() => {
                 copyText(swapTx.exchangeTxId);
                 setCopiedExchangeTxId(true);
@@ -434,7 +434,7 @@ const ChangellyDetails: React.FC = () => {
 
           <RemoveCta
             testID="changelly-remove-swap-button"
-            accessibilityLabel="Changelly remove swap button"
+            accessibilityLabel={t('Remove swap')}
             onPress={async () => {
               haptic('impactLight');
               dispatch(

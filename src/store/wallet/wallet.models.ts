@@ -151,6 +151,8 @@ export interface WalletObj {
     transactions: any[];
     loadMore: boolean;
     hasConfirmingTxs: boolean;
+    fetchedAt?: number;
+    hasConfirmingTxsAt?: number;
   };
   hideWallet?: boolean;
   hideWalletByAccount?: boolean;
@@ -218,6 +220,7 @@ export interface Balance {
   byAddress: {address: string; path: string; amount: number}[];
   lockedAmount: number;
   lockedConfirmedAmount: number;
+  reserve?: number;
   totalAmount: number;
   totalConfirmedAmount: number;
 }

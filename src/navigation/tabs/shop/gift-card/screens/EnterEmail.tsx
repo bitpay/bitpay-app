@@ -3,8 +3,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard} from 'react-native';
-import styled from 'styled-components/native';
+import {Keyboard, StyleSheet, View} from 'react-native';
 import Button from '../../../../../components/button/Button';
 import BoxInput from '../../../../../components/form/BoxInput';
 import yup from '../../../../../lib/yup';
@@ -16,9 +15,18 @@ import AuthFormContainer, {
 import {GiftCardGroupParamList} from '../GiftCardGroup';
 import {ScreenContainer} from '../../components/styled/ShopTabComponents';
 
-const PrimaryActionContainer = styled.View`
-  margin-bottom: 20px;
-`;
+const styles = StyleSheet.create({
+  primaryActionContainer: {
+    marginBottom: 20,
+  },
+});
+
+const PrimaryActionContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.primaryActionContainer, style]} {...rest} />
+);
 
 interface EmailFormFieldValues {
   email: string;

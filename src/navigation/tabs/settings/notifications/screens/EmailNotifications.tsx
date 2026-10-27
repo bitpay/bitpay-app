@@ -1,7 +1,6 @@
-import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import React, {useCallback} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {setEmailNotifications} from '../../../../../store/app/app.effects';
 import {SettingsContainer} from '../../SettingsRoot';
@@ -14,58 +13,87 @@ import {
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 
-const EmailNotificationsContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+const styles = StyleSheet.create({
+  emailNotificationsContainer: {
+    flex: 1,
+  },
+  settingRow: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    flexDirection: 'column',
+    paddingVertical: 8,
+  },
+  settingRowContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 58,
+  },
+  settingsComponent: {
+    flex: 1,
+    marginTop: 15,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  settingRowContent: {
+    flex: 1,
+  },
+  settingTitle: {
+    flexGrow: 0,
+  },
+});
 
-const SettingRow = styled.View`
-  flex-grow: 1;
-  justify-content: center;
-  flex-direction: column;
-  padding: 8px 0;
-`;
+const EmailNotificationsContainer = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof SafeAreaView>) => (
+  <SafeAreaView style={[styles.emailNotificationsContainer, style]} {...rest} />
+);
 
-const SettingRowContainer = styled(TouchableOpacity)<{isDisabled?: boolean}>`
-  align-items: center;
-  flex-direction: row;
-  min-height: 58px;
-  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
-`;
+const SettingRow = ({style, ...rest}: React.ComponentProps<typeof View>) => (
+  <View style={[styles.settingRow, style]} {...rest} />
+);
 
-const SettingsComponent = styled.ScrollView`
-  flex: 1;
-  margin-top: 15px;
-  padding: 0 ${ScreenGutter};
-`;
+const SettingRowContainer = ({
+  isDisabled,
+  style,
+  ...rest
+}: {isDisabled?: boolean} & React.ComponentProps<typeof TouchableOpacity>) => (
+  <TouchableOpacity
+    style={[
+      styles.settingRowContainer,
+      isDisabled ? styles.disabled : null,
+      style,
+    ]}
+    {...rest}
+  />
+);
+
+const SettingsComponent = ({
+  style,
+  ...rest
+}: React.ComponentProps<typeof ScrollView>) => (
+  <ScrollView style={[styles.settingsComponent, style]} {...rest} />
+);
 
 const EmailNotifications = () => {
   const {t} = useTranslation();
   const network = useAppSelector(({APP}) => APP.network);
   const emailNotifications = useAppSelector(({APP}) => APP.emailNotifications);
-  const [notificationsAccepted, setNotificationsAccepted] = useState(
-    !!emailNotifications?.accepted,
-  );
-
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const [currentEmail, setCurrentEmail] = useState(
-    user?.email || emailNotifications?.email,
-  );
-
   const dispatch = useAppDispatch();
+  const notificationsAccepted = !!emailNotifications?.accepted;
+  const currentEmail = user?.email || emailNotifications?.email;
 
-  const onPress = () => {
-    const accepted = !notificationsAccepted;
-
-    if (!accepted) {
-      dispatch(setEmailNotifications(accepted, null));
-      setNotificationsAccepted(accepted);
-    } else if (user) {
-      const {email} = user;
-      setCurrentEmail(email);
-      dispatch(setEmailNotifications(accepted, email));
-      setNotificationsAccepted(accepted);
+  const onPress = useCallback(() => {
+    if (!user) {
+      return;
     }
-  };
+
+    const accepted = !notificationsAccepted;
+    dispatch(setEmailNotifications(accepted, accepted ? user.email : null));
+  }, [dispatch, notificationsAccepted, user]);
 
   return (
     <EmailNotificationsContainer>
@@ -75,8 +103,8 @@ const EmailNotifications = () => {
             disabled={!user}
             isDisabled={!user}
             onPress={onPress}>
-            <SettingRow style={{flex: 1}}>
-              <SettingTitle style={{flexGrow: 0}}>
+            <SettingRow style={styles.settingRowContent}>
+              <SettingTitle style={styles.settingTitle}>
                 {t('Enable Email Notifications')}
               </SettingTitle>
               {currentEmail ? (
@@ -95,4 +123,4 @@ const EmailNotifications = () => {
   );
 };
 
-export default EmailNotifications;
+export default React.memo(EmailNotifications);

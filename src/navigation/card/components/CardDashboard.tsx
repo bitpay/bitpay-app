@@ -2,10 +2,9 @@ import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import React, {useCallback, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList} from 'react-native';
+import {FlatList, View, ViewProps} from 'react-native';
 // import {SharedElement} from 'react-navigation-shared-element';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import styled from 'styled-components/native';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
@@ -46,11 +45,11 @@ interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
 }
 
-const CardsRowContainer = styled.View``;
+const CardsRowContainer = (props: ViewProps) => <View {...props} />;
 
-const CardOffersContainer = styled.View``;
+const CardOffersContainer = (props: ViewProps) => <View {...props} />;
 
-const BelowCarouselSpacer = styled.View``;
+const BelowCarouselSpacer = (props: ViewProps) => <View {...props} />;
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();

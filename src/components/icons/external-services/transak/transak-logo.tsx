@@ -9,7 +9,7 @@ import {
   LinearGradient,
   Stop,
 } from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../../contexts';
 import {White} from '../../../../styles/colors';
 
 const TransakLogoSvg: React.FC<{

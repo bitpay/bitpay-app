@@ -1,3 +1,10 @@
+diff --git a/node_modules/react-native-keyevent/android/build.gradle b/node_modules/react-native-keyevent/android/build.gradle
+index accea2e..6ed1850 100644
+--- a/node_modules/react-native-keyevent/android/build.gradle
++++ b/node_modules/react-native-keyevent/android/build.gradle
+@@ -4 +4 @@ android {
+-    compileSdkVersion 31
++    compileSdkVersion rootProject.ext.compileSdkVersion
 diff --git a/node_modules/react-native-keyevent/ios/RNKeyEvent.m b/node_modules/react-native-keyevent/ios/RNKeyEvent.m
 index 8c6eaea..922f15c 100644
 --- a/node_modules/react-native-keyevent/ios/RNKeyEvent.m

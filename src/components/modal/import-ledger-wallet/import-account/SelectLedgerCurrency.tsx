@@ -4,7 +4,8 @@ import AppEth from '@ledgerhq/hw-app-eth';
 import Xrp from '@ledgerhq/hw-app-xrp';
 import Transport from '@ledgerhq/hw-transport';
 import React, {useRef, useState} from 'react';
-import styled from 'styled-components/native';
+import {useTranslation} from 'react-i18next';
+import {Platform, ScrollView, StyleSheet, View} from 'react-native';
 import {
   CurrencyColumn,
   CurrencyImageContainer,
@@ -46,7 +47,6 @@ import {
 } from '../../../../store/wallet/wallet.actions';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
 import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
-import {Platform} from 'react-native';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import BitpaySvg from '../../../../../assets/img/wallet/transactions/bitpay.svg';
@@ -256,14 +256,14 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
   },
 };
 
-const CurrencyListContainer = styled.View`
-  flex-direction: column;
-  align-items: center;
-  margin-top: 24px;
-  margin-bottom: 24px;
-`;
-
-const ScrollView = styled.ScrollView``;
+const styles = StyleSheet.create({
+  currencyListContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 24,
+  },
+});
 
 const CHAINS = [
   {
@@ -334,6 +334,7 @@ const TESTNET_SUPPORT_MAP = CHAINS.reduce<Record<string, boolean>>((acc, c) => {
 }, {});
 
 export const SelectLedgerCurrency: React.FC<Props> = props => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -917,7 +918,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
   const importLedgerAccount = async (chain: string, network: Network) => {
     const configFn = currencyConfigs[chain];
     if (!configFn) {
-      setError(`Unsupported chain: ${chain.toUpperCase()}`);
+      setError(t('Unsupported chain: {{chain}}', {chain: chain.toUpperCase()}));
       return;
     }
     const params = configFn(network);
@@ -947,13 +948,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           {isLoading ? (
             <>
               {isPromptOpenApp ? (
-                <H4>Approve BitPay</H4>
+                <H4>{t('Approve BitPay')}</H4>
               ) : (
-                <H4>Scanning addresses</H4>
+                <H4>{t('Scanning addresses')}</H4>
               )}
             </>
           ) : (
-            <H4>Choose Crypto to Import</H4>
+            <H4>{t('Choose Crypto to Import')}</H4>
           )}
         </Header>
 
@@ -966,11 +967,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             <DescriptionRow>
               {isPromptOpenApp ? (
                 <Paragraph style={{textAlign: 'center'}}>
-                  Approve the app BitPay so wallets can be added to your device.
+                  {t(
+                    'Approve the app BitPay so wallets can be added to your device.',
+                  )}
                 </Paragraph>
               ) : (
                 <Paragraph style={{textAlign: 'center'}}>
-                  Please wait...
+                  {t('Please wait...')}
                 </Paragraph>
               )}
             </DescriptionRow>
@@ -984,12 +987,14 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           </>
         ) : (
           <>
-            <CurrencyListContainer>
+            <View style={styles.currencyListContainer}>
               {CHAINS.map((c, index) => (
                 <RowContainerWithoutBorders
                   onPress={() => onContinue(c.chain)}
                   testID={`ledger-select-currency-${c.chain}-button`}
-                  accessibilityLabel={`${c.label} currency`}
+                  accessibilityLabel={t('{{currency}} currency', {
+                    currency: c.label,
+                  })}
                   key={index}>
                   <CurrencyImageContainer>
                     <CurrencyImage img={c.img} />
@@ -1014,13 +1019,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
                   <Hr />
                 </RowContainerWithoutBorders>
               ))}
-            </CurrencyListContainer>
+            </View>
             <Button
               buttonType={'link'}
               testID="ledger-add-by-derivation-path-button"
-              accessibilityLabel="Add by derivation path"
+              accessibilityLabel={t('Add By Derivation Path')}
               onPress={props.onAddByDerivationPathSelected}>
-              Add by Derivation Path
+              {t('Add by Derivation Path')}
             </Button>
           </>
         )}

@@ -1,4 +1,5 @@
 import React, {useRef} from 'react';
+import {useTranslation} from 'react-i18next';
 import Button, {ButtonState} from '../../../button/Button';
 import BoxInput from '../../../form/BoxInput';
 import {useState} from 'react';
@@ -34,7 +35,6 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import styled from 'styled-components/native';
 import {
   EVMAccountParams,
   UtxoAccountParams,
@@ -66,6 +66,7 @@ interface Props {
 }
 
 export const AddByDerivationPath: React.FC<Props> = props => {
+  const {t} = useTranslation();
   const defaultCoin =
     props.selectedChain === 'btc'
       ? `defaultLedger${props.selectedChain.toUpperCase()}`
@@ -396,7 +397,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
   const importLedgerAccount = async (chain: string, network: Network) => {
     const configFn = currencyConfigs[chain];
     if (!configFn) {
-      setError(`Unsupported chain: ${chain.toUpperCase()}`);
+      setError(t('Unsupported chain: {{chain}}', {chain: chain.toUpperCase()}));
       return;
     }
     const params = configFn(network);
@@ -423,9 +424,9 @@ export const AddByDerivationPath: React.FC<Props> = props => {
     <Wrapper>
       <Header>
         {isPromptOpenApp ? (
-          <H4>Approve BitPay</H4>
+          <H4>{t('Approve BitPay')}</H4>
         ) : (
-          <H4>Add By Derivation Path</H4>
+          <H4>{t('Add By Derivation Path')}</H4>
         )}
       </Header>
 
@@ -436,12 +437,15 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       <DescriptionRow style={{marginTop: 12}}>
         {isPromptOpenApp ? (
           <Paragraph style={{textAlign: 'center'}}>
-            Approve the app BitPay so wallets can be added to your device.
+            {t(
+              'Approve the app BitPay so wallets can be added to your device.',
+            )}
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            Verify the derivation path of the wallet you are attempting to
-            import within your Ledger Live App.
+            {t(
+              'Verify the derivation path of the wallet you are attempting to import within your Ledger Live App.',
+            )}
           </Paragraph>
         )}
       </DescriptionRow>
@@ -449,7 +453,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       <DescriptionRow>
         <BoxInput
           testID="derivation-path-box-input"
-          accessibilityLabel="Derivation path"
+          accessibilityLabel={t('Derivation Path')}
           label={undefined}
           onChangeText={setDerivationPath}
           defaultValue={derivationPath}
@@ -460,18 +464,18 @@ export const AddByDerivationPath: React.FC<Props> = props => {
         <Button
           state={continueButtonState}
           testID="ledger-derivation-path-continue-button"
-          accessibilityLabel="Continue"
+          accessibilityLabel={t('Continue')}
           onPress={onContinue}>
-          Continue
+          {t('Continue')}
         </Button>
       </ActionsRow>
       <ActionsRow>
         <Button
           buttonType={'link'}
           testID="ledger-derivation-path-go-back-button"
-          accessibilityLabel="Go back"
+          accessibilityLabel={t('Go back')}
           onPress={props.onAddByDerivationPathSelected}>
-          Go Back
+          {t('Go Back')}
         </Button>
       </ActionsRow>
     </Wrapper>

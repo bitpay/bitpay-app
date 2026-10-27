@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from 'react-native-modal';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '../../../contexts';
 import {WIDTH} from '../../../components/styled/Containers';
 import {
   Black,
@@ -12,27 +12,65 @@ import {
 import {useTranslation} from 'react-i18next';
 import {H4, Paragraph, TextAlign} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {View} from 'react-native';
+import {View, ViewProps, StyleSheet} from 'react-native';
 
-const ModalContainer = styled.View`
-  justify-content: center;
-  width: ${WIDTH - 30}px;
-  max-width: 400px;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-  border-radius: 10px;
-  padding: 22px 24px;
-  overflow: hidden;
-`;
+const styles = StyleSheet.create({
+  modalContainer: {
+    justifyContent: 'center',
+    width: WIDTH - 30,
+    maxWidth: 400,
+    borderRadius: 10,
+    paddingVertical: 22,
+    paddingHorizontal: 24,
+    overflow: 'hidden',
+  },
+  description: {
+    marginTop: 16,
+    marginBottom: 28,
+    marginHorizontal: 0,
+    textAlign: 'center',
+  },
+  secondaryAction: {
+    marginTop: 10,
+  },
+});
 
-const Description = styled(Paragraph)`
-  margin: 16px 0 28px;
-  text-align: center;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-`;
+const ModalContainer = ({style, ...rest}: ViewProps) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.modalContainer,
+        {backgroundColor: theme.dark ? Black : White},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
-const SecondaryAction = styled(Button)`
-  margin-top: 10px;
-`;
+const Description = React.forwardRef<
+  React.ComponentRef<typeof Paragraph>,
+  React.ComponentProps<typeof Paragraph>
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <Paragraph
+      ref={ref}
+      style={[
+        styles.description,
+        {color: theme.dark ? NeutralSlate : SlateDark},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
+
+const SecondaryAction: React.FC<React.ComponentProps<typeof Button>> = ({
+  style,
+  ...rest
+}) => <Button style={[styles.secondaryAction, style]} {...rest} />;
 
 const TwoFactorRequiredModal = ({
   onClose,

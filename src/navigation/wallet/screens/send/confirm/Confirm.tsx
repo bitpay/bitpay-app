@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp, StackActions} from '@react-navigation/core';
+import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../../../WalletGroup';
 import {
   useAppDispatch,
@@ -68,7 +68,7 @@ import {
   InfoTitle,
   Link,
 } from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import {useTheme} from '../../../../../contexts';
 import {useTranslation} from 'react-i18next';
 import {
   ActiveOpacity,
@@ -78,7 +78,7 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Platform} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   GetFeeOptions,
@@ -117,9 +117,28 @@ import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const styles = StyleSheet.create({
+  verticalPadding: {
+    paddingVertical: parseInt(ScreenGutter, 10),
+    paddingHorizontal: 0,
+  },
+  setting: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    height: 58,
+  },
+  settingTitle: {
+    flexGrow: 1,
+    flexShrink: 1,
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    letterSpacing: 0,
+    textAlign: 'left',
+    marginRight: 5,
+  },
+});
 
 export interface SolanaPayOpts {
   reference?: string | null;
@@ -142,24 +161,24 @@ export interface ConfirmParamList {
   solanaPayOpts?: SolanaPayOpts;
 }
 
-export const Setting = styled(TouchableOpacity)`
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  height: 58px;
-`;
+export const Setting: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({style, ...rest}) => (
+  <TouchableOpacity style={[styles.setting, style]} {...rest} />
+);
 
-export const SettingTitle = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-  flex-grow: 1;
-  flex-shrink: 1;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-align: left;
-  margin-right: 5px;
-`;
+export const SettingTitle: React.FC<React.ComponentProps<typeof BaseText>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      style={[styles.settingTitle, {color: theme.colors.text}, style]}
+      {...rest}
+    />
+  );
+};
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
@@ -489,56 +508,49 @@ const Confirm = () => {
         onCloseModal,
       });
       await sleep(300);
-      if (recipient.type === 'coinbase') {
-        navigation.dispatch(StackActions.popToTop());
-        navigation.dispatch(StackActions.push('CoinbaseRoot'));
+      if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 2,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.ACCOUNT_DETAILS,
+                params: {
+                  keyId: wallet.keyId,
+                  selectedAccountAddress: wallet.receiveAddress,
+                },
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
+                },
+              },
+            ],
+          }),
+        );
       } else {
-        if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: WalletScreens.WALLET_DETAILS,
+                params: {
+                  walletId: wallet!.id,
                 },
-                {
-                  name: WalletScreens.ACCOUNT_DETAILS,
-                  params: {
-                    keyId: wallet.keyId,
-                    selectedAccountAddress: wallet.receiveAddress,
-                  },
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        } else {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: WalletScreens.WALLET_DETAILS,
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              ],
-            }),
-          );
-        }
+              },
+            ],
+          }),
+        );
       }
     } catch (err) {
       if (isUsingHardwareWallet) {
@@ -580,7 +592,7 @@ const Confirm = () => {
     } else {
       showErrorMessage(
         CustomErrorMessage({
-          errMsg: 'Unsupported hardware wallet',
+          errMsg: t('Unsupported hardware wallet'),
           title: t('Uh oh, something went wrong'),
         }),
       );
@@ -668,10 +680,7 @@ const Confirm = () => {
     });
   }
 
-  if (
-    recipient.type &&
-    (recipient.type === 'coinbase' || recipient.type === 'contact')
-  ) {
+  if (recipient.type === 'contact') {
     recipientData = {
       recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
@@ -721,7 +730,7 @@ const Confirm = () => {
             {solanaPayOpts ? (
               <>
                 <Hr style={{marginBottom: 15}} />
-                <H6>{'SolanaPay Data'}</H6>
+                <H6>{t('SolanaPay Data')}</H6>
                 {solanaPayOpts?.label ? (
                   <SharedDetailRow
                     height={40}
@@ -846,10 +855,10 @@ const Confirm = () => {
                     )}
                   </InfoDescription>
 
-                  <VerticalPadding>
+                  <View style={styles.verticalPadding}>
                     <TouchableOpacity
                       testID="confirm-destination-tag-learn-more-button"
-                      accessibilityLabel="Confirm destination tag learn more button"
+                      accessibilityLabel={t('Learn more about destination tag')}
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
                         haptic('impactLight');
@@ -859,7 +868,7 @@ const Confirm = () => {
                       }}>
                       <Link>{t('Learn More')}</Link>
                     </TouchableOpacity>
-                  </VerticalPadding>
+                  </View>
                 </Info>
               </>
             ) : null}

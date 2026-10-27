@@ -127,7 +127,8 @@ export const startKycVerification =
 
       if (result.status === 'Failed') {
         const errMsg =
-          result.errorMsg || 'The verification process encountered an error.';
+          result.errorMsg ||
+          t('The verification process encountered an error.');
         dispatch(
           LogActions.error(
             `[SumSub] SDK failed — errorType: ${result.errorType}, errorMsg: ${result.errorMsg}`,

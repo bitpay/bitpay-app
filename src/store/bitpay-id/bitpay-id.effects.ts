@@ -51,6 +51,7 @@ import {
   asCloudflareChallenge,
   challengeOriginFor,
   isCloudflareChallengeError,
+  looksLikeHtml,
   safeErrorMessage,
 } from '../../utils/cloudflare';
 import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
@@ -148,10 +149,27 @@ export const startBitPayIdStoreInit =
 export const startFetchSession =
   (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
-      const {APP} = getState();
+      const {APP, BITPAY_ID} = getState();
       dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
 
-      const session = await AuthApi.fetchSession(APP.network);
+      let session = await AuthApi.fetchSession(APP.network);
+
+      // A paired user with a dead web session leaves only stale cookies on
+      // disk. Drop them, then re-fetch: the csrfToken just read is bound to the
+      // cookie being cleared, so storing it would orphan every consumer.
+      if (!session.isAuthenticated && BITPAY_ID.apiToken[APP.network]) {
+        try {
+          await clearAllCookiesEverywhere();
+        } catch (err: any) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logManager.debug(
+            '[startFetchSession] An error occurred while clearing cookies.',
+            errMsg,
+          );
+        }
+        session = await AuthApi.fetchSession(APP.network);
+      }
 
       dispatch(BitPayIdActions.successFetchSession(session));
     } catch {
@@ -470,7 +488,7 @@ export const startTwoFactorAuth =
 
       if (isAxiosError<string>(err)) {
         errMsg = upperFirst(
-          err.response?.data ||
+          safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
@@ -509,7 +527,7 @@ export const startTwoFactorPairing =
 
       if (isAxiosError<any>(err)) {
         errMsg = upperFirst(
-          err.response?.data ||
+          safeErrorMessage(err.response?.data, '') ||
             err.message ||
             t('An unexpected error occurred.'),
         );
@@ -576,7 +594,10 @@ export const startDeeplinkPairing =
       let errMsg;
 
       if (isAxiosError(err)) {
-        errMsg = JSON.stringify(err.response?.data || err.message);
+        errMsg = JSON.stringify(
+          (!looksLikeHtml(err.response?.data) && err.response?.data) ||
+            err.message,
+        );
       } else if (err instanceof Error) {
         errMsg = err.message;
       } else {

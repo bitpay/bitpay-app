@@ -2,7 +2,8 @@ import Transport from '@ledgerhq/hw-transport';
 import TransportHID from '@ledgerhq/react-native-hid';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import {useTranslation} from 'react-i18next';
+import {StyleSheet, View} from 'react-native';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useAppDispatch, useMount} from '../../../../utils/hooks';
@@ -27,17 +28,16 @@ interface PairHardwareWalletModalProps {
   currencyLabel: string;
 }
 
-const Bold = styled.Text`
-  font-weight: 600;
-`;
-
-const IconWrapper = styled.View`
-  padding: 28px;
-`;
+const styles = StyleSheet.create({
+  iconWrapper: {
+    padding: 28,
+  },
+});
 
 export const ConfirmLedgerStart: React.FC<
   PairHardwareWalletModalProps
 > = props => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const [supportedTypes, setSupportedTypes] = useState<{
     ble: boolean;
@@ -67,8 +67,11 @@ export const ConfirmLedgerStart: React.FC<
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         setStatus({
           status: 'failed',
-          message: `An error occurred while checking hardware wallet connection support: ${errMsg}`,
-          title: 'Connection Failed',
+          message: t(
+            'An error occurred while checking hardware wallet connection support: {{errMsg}}',
+            {errMsg},
+          ),
+          title: t('Connection Failed'),
         });
         logManager.error(
           `An error occurred while checking hardware wallet transport support: ${errMsg}`,
@@ -79,9 +82,10 @@ export const ConfirmLedgerStart: React.FC<
   const onPressConnectBle = async () => {
     setStatus({
       status: 'searching',
-      message:
+      message: t(
         'Double-check that Bluetooth is enabled and your hardware wallet is unlocked to proceed.',
-      title: 'Searching for Devices',
+      ),
+      title: t('Searching for Devices'),
     });
     setConnecting(true);
     setTransportType('ble');
@@ -94,8 +98,8 @@ export const ConfirmLedgerStart: React.FC<
     if (!isAuthorized) {
       setStatus({
         status: 'failed',
-        message: 'App is not authorized to use Bluetooth.',
-        title: 'Connection Failed',
+        message: t('App is not authorized to use Bluetooth.'),
+        title: t('Connection Failed'),
       });
       await sleep(7000);
       return;
@@ -115,17 +119,18 @@ export const ConfirmLedgerStart: React.FC<
     if (transport) {
       setStatus({
         status: 'success',
-        message: 'Your Ledger device was successfully connected.',
-        title: 'Successful Connection',
+        message: t('Your Ledger device was successfully connected.'),
+        title: t('Successful Connection'),
       });
       await sleep(7000);
       props.onPaired(transport);
     } else {
       setStatus({
         status: 'failed',
-        message:
+        message: t(
           'Ledger device not found. Please restart your Bluetooth and check the device is in range.',
-        title: 'Connection Failed',
+        ),
+        title: t('Connection Failed'),
       });
       await sleep(7000);
     }
@@ -135,9 +140,10 @@ export const ConfirmLedgerStart: React.FC<
   const onPressConnectHid = async () => {
     setStatus({
       status: 'searching',
-      message:
+      message: t(
         'Double-check that the USB cable is securely connected and your hardware wallet is unlocked to proceed.',
-      title: 'Searching for Devices',
+      ),
+      title: t('Searching for Devices'),
     });
     setConnecting(true);
     setTransportType('hid');
@@ -159,16 +165,16 @@ export const ConfirmLedgerStart: React.FC<
     if (transport) {
       setStatus({
         status: 'success',
-        message: 'Your Ledger device was successfully connected.',
-        title: 'Successful Connection',
+        message: t('Your Ledger device was successfully connected.'),
+        title: t('Successful Connection'),
       });
       await sleep(7000);
       props.onPaired(transport);
     } else {
       setStatus({
         status: 'failed',
-        message: `Unable to connect via USB: ${errorMsg}`,
-        title: 'Connection Failed',
+        message: t('Unable to connect via USB: {{errorMsg}}', {errorMsg}),
+        title: t('Connection Failed'),
       });
       await sleep(7000);
     }
@@ -182,17 +188,19 @@ export const ConfirmLedgerStart: React.FC<
       ) : (
         <Wrapper>
           <Header>
-            <IconWrapper>
+            <View style={styles.iconWrapper}>
               <LedgerLogoIconSvg height={60} width={60} />
-            </IconWrapper>
+            </View>
 
-            <H3>Approve on your Ledger</H3>
+            <H3>{t('Approve on your Ledger')}</H3>
           </Header>
 
           {noSupportedTransportTypes ? (
             <DescriptionRow>
               <Paragraph>
-                Connecting via Bluetooth or USB not supported by this device.
+                {t(
+                  'Connecting via Bluetooth or USB not supported by this device.',
+                )}
               </Paragraph>
             </DescriptionRow>
           ) : (
@@ -202,8 +210,9 @@ export const ConfirmLedgerStart: React.FC<
                   style={{
                     textAlign: 'center',
                   }}>
-                  Approve the transaction from your ledger device. Ensure it's
-                  unlocked and set to the appropriate currency application.
+                  {t(
+                    "Approve the transaction from your ledger device. Ensure it's unlocked and set to the appropriate currency application.",
+                  )}
                 </Paragraph>
               </DescriptionRow>
 
@@ -211,12 +220,12 @@ export const ConfirmLedgerStart: React.FC<
                 <ActionsRow>
                   {supportedTypes.ble ? (
                     <ViaBluetoothButton onPress={onPressConnectBle}>
-                      Approve via Bluetooth
+                      {t('Approve via Bluetooth')}
                     </ViaBluetoothButton>
                   ) : null}
                   {supportedTypes.hid ? (
                     <ViaUsbButton secondary onPress={onPressConnectHid}>
-                      Approve via USB
+                      {t('Approve via USB')}
                     </ViaUsbButton>
                   ) : null}
                 </ActionsRow>

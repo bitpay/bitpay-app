@@ -7,7 +7,6 @@ import {
   InfoTitle,
   Link,
 } from '../../../components/styled/Text';
-import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   AdvancedOptionsButton,
@@ -34,8 +33,11 @@ import {Controller, useForm, useWatch} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
-import {View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 import {getProtocolName, sleep} from '../../../utils/helper-methods';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
@@ -50,6 +52,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {
   IsSegwitCoin,
@@ -73,57 +76,107 @@ export type AddWalletParamList = {
   currencyName: string;
 };
 
-const CreateWalletContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
-const ButtonContainer = styled.View`
-  margin-top: 40px;
-`;
-
-const schema = yup.object().shape({
-  walletName: yup.string().required('Wallet name is required').trim(),
+const styles = StyleSheet.create({
+  createWalletContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    marginTop: 20,
+    paddingHorizontal: parseInt(ScreenGutter, 10),
+  },
+  buttonContainer: {
+    marginTop: 40,
+  },
+  checkBoxContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  optionTitle: {
+    fontSize: 16,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+  },
+  walletAdvancedOptionsContainer: {
+    marginTop: 20,
+  },
+  verticalPadding: {
+    paddingVertical: parseInt(ScreenGutter, 10),
+  },
+  addPillContainer: {
+    flexDirection: 'row',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    height: '100%',
+    maxWidth: 200,
+  },
 });
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-`;
+const ScrollView: React.FC<
+  React.ComponentProps<typeof KeyboardAwareScrollView>
+> = ({style, ...props}) => (
+  <KeyboardAwareScrollView style={[styles.scrollView, style]} {...props} />
+);
 
-const OptionTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
+const schema = yup.object().shape({
+  walletName: yup
+    .string()
+    .required(() => i18next.t('Wallet name is required'))
+    .trim(),
+});
 
-const RowContainer = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  padding: 18px;
-`;
+const CheckBoxContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.checkBoxContainer}>{children}</View>;
 
-const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
-  margin-top: 20px;
-`;
+const OptionTitle: React.FC<React.ComponentProps<typeof BaseText>> = props => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      {...props}
+      style={[
+        styles.optionTitle,
+        {color: theme.dark ? White : SlateDark},
+        props.style,
+      ]}
+    />
+  );
+};
 
-const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
-`;
+const RowContainer: React.FC<TouchableOpacityProps> = ({style, ...props}) => (
+  <TouchableOpacity style={[styles.rowContainer, style]} {...props} />
+);
 
-export const AddPillContainer = styled(View)`
-  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
-  flex-direction: row;
-  border-radius: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 11px;
-  height: 100%;
-  max-width: 200px;
-`;
+const WalletAdvancedOptionsContainer: React.FC<{
+  children?: React.ReactNode;
+}> = ({children}) => (
+  <AdvancedOptionsContainer style={styles.walletAdvancedOptionsContainer}>
+    {children}
+  </AdvancedOptionsContainer>
+);
+
+const VerticalPadding: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => <View style={styles.verticalPadding}>{children}</View>;
+
+export const AddPillContainer: React.FC<{children?: React.ReactNode}> = ({
+  children,
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.addPillContainer,
+        {backgroundColor: theme.dark ? SlateDark : NeutralSlate},
+      ]}>
+      {children}
+    </View>
+  );
+};
 
 const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
@@ -141,7 +194,7 @@ const AddWallet = ({
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {currencyAbbreviation, currencyName, key: _key} = route.params;
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = keys[_key.id];
   const filteredWallets = key.wallets.filter(
     ({currencyAbbreviation: c}) => currencyAbbreviation === c && IsUtxoChain(c),
@@ -311,7 +364,6 @@ const AddWallet = ({
                 name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet.id,
-                  key,
                   skipInitializeHistory: false, // new wallet might have transactions
                 },
               },
@@ -357,7 +409,7 @@ const AddWallet = ({
   };
 
   return (
-    <CreateWalletContainer>
+    <SafeAreaView style={styles.createWalletContainer}>
       <ScrollView>
         {currencyAbbreviation && currencyName ? (
           <Controller
@@ -365,7 +417,7 @@ const AddWallet = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={`${currencyAbbreviation.toUpperCase()} Wallet`}
-                label={'WALLET NAME'}
+                label={t('WALLET NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.walletName?.message}
@@ -379,7 +431,7 @@ const AddWallet = ({
         <WalletAdvancedOptionsContainer>
           <AdvancedOptionsButton
             testID="add-wallet-advanced-options-toggle-button"
-            accessibilityLabel="Add wallet advanced options toggle button"
+            accessibilityLabel={t('Show Advanced Options')}
             onPress={() => {
               Haptic('impactLight');
               setShowOptions(!showOptions);
@@ -405,7 +457,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-segwit-toggle"
-                accessibilityLabel="Use native SegWit"
+                accessibilityLabel={t('Use native SegWit')}
                 onPress={() => toggleUseNativeSegwit()}>
                 <Column>
                   <OptionTitle>Segwit</OptionTitle>
@@ -424,7 +476,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-taproot-toggle"
-                accessibilityLabel="Use Taproot"
+                accessibilityLabel={t('Use Taproot')}
                 onPress={() => toggleUseTaproot()}>
                 <Column>
                   <OptionTitle>Taproot</OptionTitle>
@@ -443,7 +495,7 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-testnet-toggle"
-                accessibilityLabel="Use testnet"
+                accessibilityLabel={t('Use testnet')}
                 activeOpacity={1}
                 onPress={() => {
                   setIsTestnet(!isTestnet);
@@ -478,13 +530,13 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-single-address-toggle"
-                accessibilityLabel="Single address mode"
+                accessibilityLabel={t('Single address mode')}
                 activeOpacity={1}
                 onPress={() => {
                   setSingleAddress(!singleAddress);
                 }}>
                 <Column>
-                  <OptionTitle>Single Address</OptionTitle>
+                  <OptionTitle>{t('Single Address')}</OptionTitle>
                 </Column>
                 <CheckBoxContainer>
                   <Checkbox
@@ -506,24 +558,27 @@ const AddWallet = ({
                         <InfoSvg />
                       </InfoImageContainer>
 
-                      <InfoTitle>Single Address Wallet</InfoTitle>
+                      <InfoTitle>{t('Single Address Wallet')}</InfoTitle>
                     </InfoHeader>
                     <InfoDescription>
-                      The single address feature will force the wallet to only
-                      use one address rather than generating new addresses.
+                      {t(
+                        'The single address feature will force the wallet to only use one address rather than generating new addresses.',
+                      )}
                     </InfoDescription>
 
                     <VerticalPadding>
                       <TouchableOpacity
                         testID="add-wallet-single-address-learn-more-button"
-                        accessibilityLabel="Add wallet single address learn more button"
+                        accessibilityLabel={t(
+                          'Learn more about single address mode',
+                        )}
                         onPress={() => {
                           Haptic('impactLight');
                           dispatch(
                             openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
                           );
                         }}>
-                        <Link>Learn More</Link>
+                        <Link>{t('Learn More')}</Link>
                       </TouchableOpacity>
                     </VerticalPadding>
                   </Info>
@@ -533,18 +588,18 @@ const AddWallet = ({
           )}
         </WalletAdvancedOptionsContainer>
 
-        <ButtonContainer>
+        <View style={styles.buttonContainer}>
           <Button
             testID="add-wallet-submit-button"
-            accessibilityLabel="Add wallet submit button"
+            accessibilityLabel={t('Add Wallet')}
             disabled={!walletNameValue || isSubmitting}
             onPress={add}
             buttonStyle={'primary'}>
             {t('Add Wallet')}
           </Button>
-        </ButtonContainer>
+        </View>
       </ScrollView>
-    </CreateWalletContainer>
+    </SafeAreaView>
   );
 };
 

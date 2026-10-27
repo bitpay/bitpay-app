@@ -1,3 +1,4 @@
+import {isSessionLogsEnabled} from '../../utils/sessionLogs';
 import {LogLevel} from './log.models';
 import {LogActionTypes, AddLog} from './log.types';
 
@@ -20,6 +21,10 @@ jest.mock('../../managers/LogManager', () => ({
   },
 }));
 
+jest.mock('../../utils/sessionLogs', () => ({
+  isSessionLogsEnabled: jest.fn(),
+}));
+
 const entry = (message: string): AddLog => ({
   type: LogActionTypes.ADD_PERSISTED_LOG,
   payload: {level: LogLevel.Error, message, timestamp: '2026-09-02T11:20:59Z'},
@@ -37,6 +42,7 @@ const getFreshModule = () => {
 describe('initLogs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (isSessionLogsEnabled as jest.Mock).mockReturnValue(true);
     mockStorage.getString.mockReturnValue(undefined);
   });
 
@@ -96,6 +102,17 @@ describe('initLogs', () => {
     expect(written).toHaveLength(500);
     expect(written[0].message).toBe('old 1');
     expect(written[499].message).toBe('newest');
+  });
+
+  it('does not write persist:logs when session logs are disabled', () => {
+    const {add, drainAndDispatch} = getFreshModule();
+    drainAndDispatch(jest.fn());
+    (isSessionLogsEnabled as jest.Mock).mockReturnValue(false);
+
+    add(entry('disabled'));
+
+    expect(mockStorage.set).not.toHaveBeenCalled();
+    expect(mockLogManager.addLog).not.toHaveBeenCalled();
   });
 
   it('swallows MMKV failures so logging never breaks the caller', () => {

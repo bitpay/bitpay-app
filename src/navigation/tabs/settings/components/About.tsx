@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import {SettingsComponent} from '../SettingsRoot';
 import {
   ActiveOpacity,
@@ -11,7 +11,7 @@ import {useNavigation} from '@react-navigation/native';
 import {URL} from '../../../../constants';
 import {APP_VERSION} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {Alert, StyleSheet, View} from 'react-native';
 import {
   openUrlWithInAppBrowser,
   shareApp,
@@ -21,6 +21,17 @@ import {GIT_COMMIT_HASH} from '@env';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {triggerJsCrash, triggerNativeCrash} from '../../../../lib/crash-test';
+import * as LogActions from '../../../../store/log/log.actions';
+import {logManager} from '../../../../managers/LogManager';
+import {
+  clearStoredSessionLogs,
+  getSessionLogsProdEnabled,
+  SESSION_LOGS_EASTER_EGG_TAP_COUNT,
+  setSessionLogsProdEnabled as setSessionLogsProdEnabledStorage,
+} from '../../../../utils/sessionLogs';
+import {useTheme} from '../../../../contexts';
+import {BaseText} from '../../../../components/styled/Text';
+import {Action, Air, Midnight, White} from '../../../../styles/colors';
 
 interface LinkSetting {
   key: string;
@@ -28,10 +39,84 @@ interface LinkSetting {
   link: string;
 }
 
+const styles = StyleSheet.create({
+  infoPill: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderRadius: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  infoPillText: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22.03,
+    textAlign: 'center',
+  },
+});
+
+const InfoPill = ({children}: React.PropsWithChildren) => {
+  const theme = useTheme();
+  const backgroundColor = theme.dark ? Midnight : Air;
+
+  return (
+    <View
+      style={[
+        styles.infoPill,
+        {backgroundColor, borderColor: backgroundColor},
+      ]}>
+      <BaseText
+        style={[styles.infoPillText, {color: theme.dark ? White : Action}]}>
+        {children}
+      </BaseText>
+    </View>
+  );
+};
+
 const About = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const [sessionLogsProdEnabled, setSessionLogsProdEnabled] = useState(() =>
+    getSessionLogsProdEnabled(),
+  );
+  const [versionTapCount, setVersionTapCount] = useState(0);
+
+  const showSessionLogs = __DEV__ || sessionLogsProdEnabled;
+
+  const onVersionPress = useCallback(() => {
+    if (__DEV__) {
+      return;
+    }
+
+    setVersionTapCount(currentCount => {
+      const nextCount = currentCount + 1;
+
+      if (nextCount < SESSION_LOGS_EASTER_EGG_TAP_COUNT) {
+        return nextCount;
+      }
+
+      const nextSessionLogsProdEnabled = !sessionLogsProdEnabled;
+      setSessionLogsProdEnabledStorage(nextSessionLogsProdEnabled);
+      setSessionLogsProdEnabled(nextSessionLogsProdEnabled);
+
+      if (!nextSessionLogsProdEnabled) {
+        logManager.clearLogs();
+        dispatch(LogActions.clear());
+        void clearStoredSessionLogs();
+      }
+
+      Alert.alert(
+        t(
+          nextSessionLogsProdEnabled
+            ? 'Session logs activated'
+            : 'Session logs disabled',
+        ),
+      );
+
+      return 0;
+    });
+  }, [dispatch, sessionLogsProdEnabled, t]);
 
   const LINKS: LinkSetting[] = [
     {
@@ -57,10 +142,10 @@ const About = () => {
   ];
   return (
     <SettingsComponent style={{marginBottom: 10}}>
-      <Setting>
+      <Setting onPress={onVersionPress}>
         <SettingTitle>{t('Version')}</SettingTitle>
 
-        <Button buttonType="pill">{APP_VERSION}</Button>
+        <InfoPill>{APP_VERSION}</InfoPill>
       </Setting>
 
       <Hr />
@@ -70,7 +155,7 @@ const About = () => {
           <Setting>
             <SettingTitle>{t('Commit Hash')}</SettingTitle>
 
-            <Button buttonType="pill">{GIT_COMMIT_HASH}</Button>
+            <InfoPill>{GIT_COMMIT_HASH}</InfoPill>
           </Setting>
           <Hr />
         </>
@@ -83,12 +168,16 @@ const About = () => {
 
       <Hr />
 
-      <Setting onPress={() => navigation.navigate('SessionLogs')}>
-        <SettingTitle>{t('Session Log')}</SettingTitle>
-        <AngleRight />
-      </Setting>
+      {showSessionLogs ? (
+        <>
+          <Setting onPress={() => navigation.navigate('SessionLogs')}>
+            <SettingTitle>{t('Session Log')}</SettingTitle>
+            <AngleRight />
+          </Setting>
 
-      <Hr />
+          <Hr />
+        </>
+      ) : null}
 
       <Setting onPress={() => navigation.navigate('SendFeedback')}>
         <SettingTitle>{t('Send Feedback')}</SettingTitle>

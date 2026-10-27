@@ -4,6 +4,8 @@ import {
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
+import {mapWithConcurrency} from '../../../../utils/concurrency';
+import {WALLET_REQUEST_CONCURRENCY} from '../../../../constants/wallet';
 import {Credentials} from '@bitpay-labs/bitcore-wallet-client';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
@@ -13,6 +15,10 @@ import {
   checkEncryptPassword,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
+import {
+  buildTokenWalletId,
+  findByTokenWalletId,
+} from '../../utils/token-wallet-id';
 import {
   successAddWallet,
   successCreateKey,
@@ -920,9 +926,10 @@ export const detectAndCreateTokensForEachEvmWallet =
           !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
         const notAlreadyCreated =
           !tokenAddress ||
-          !w.tokens ||
-          !cloneDeep(w.tokens).some(t =>
-            t?.toLowerCase().includes(tokenAddress.toLowerCase()),
+          !findByTokenWalletId(
+            w.tokens,
+            buildTokenWalletId(w.id, tokenAddress),
+            t => t,
           );
         return _IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
@@ -931,8 +938,13 @@ export const detectAndCreateTokensForEachEvmWallet =
         'Number of VM wallets to check: ' + vmWalletsToCheck?.length,
       );
 
-      for (const [index, w] of vmWalletsToCheck.entries()) {
-        if (w.chain && w.receiveAddress) {
+      const detectedTokensByWallet = await mapWithConcurrency(
+        vmWalletsToCheck,
+        WALLET_REQUEST_CONCURRENCY,
+        async (w, index) => {
+          if (!w.chain || !w.receiveAddress) {
+            return {w, filteredTokens: []};
+          }
           logManager.debug(
             `Checking tokens for wallet[${index}]: ${w.id} - ${w.receiveAddress}`,
           );
@@ -947,22 +959,25 @@ export const detectAndCreateTokensForEachEvmWallet =
                 }),
               );
 
-            filteredTokens = moralisSVMWithBalanceData.filter(svmToken => {
-              return (
-                (!w.tokens ||
-                  !cloneDeep(w.tokens).some(token =>
-                    token.includes(svmToken.mint),
-                  )) &&
-                svmToken.amount &&
-                svmToken.decimals &&
-                parseFloat(svmToken.amount) / Math.pow(10, svmToken.decimals) >=
-                  1e-7
-              );
-            });
-            filteredTokens = filteredTokens.map(token => ({
-              ...token,
-              token_address: token.mint,
-            }));
+            filteredTokens = moralisSVMWithBalanceData
+              .filter(svmToken => {
+                return (
+                  !findByTokenWalletId(
+                    w.tokens,
+                    buildTokenWalletId(w.id, svmToken.mint),
+                    token => token,
+                  ) &&
+                  svmToken.amount &&
+                  svmToken.decimals &&
+                  parseFloat(svmToken.amount) /
+                    Math.pow(10, svmToken.decimals) >=
+                    1e-7
+                );
+              })
+              .map(token => ({
+                ...token,
+                token_address: token.mint,
+              }));
           } else {
             const erc20WithBalanceData: MoralisErc20TokenBalanceByWalletData[] =
               await dispatch(
@@ -973,12 +988,12 @@ export const detectAndCreateTokensForEachEvmWallet =
               );
 
             filteredTokens = erc20WithBalanceData.filter(erc20Token => {
-              // Filter by: token already created in the key (present in w.tokens), possible spam and significant balance
               return (
-                (!w.tokens ||
-                  !cloneDeep(w.tokens).some(token =>
-                    token.includes(erc20Token.token_address),
-                  )) &&
+                !findByTokenWalletId(
+                  w.tokens,
+                  buildTokenWalletId(w.id, erc20Token.token_address),
+                  token => token,
+                ) &&
                 !erc20Token.possible_spam &&
                 erc20Token.verified_contract &&
                 erc20Token.balance &&
@@ -994,69 +1009,72 @@ export const detectAndCreateTokensForEachEvmWallet =
             'Number of tokens to create: ' + filteredTokens?.length,
           );
 
-          let account: number | undefined;
-          let customAccount = false;
-          if (w.credentials.rootPath) {
-            account = getAccount(w.credentials.rootPath);
-            customAccount = true;
-          }
+          return {w, filteredTokens};
+        },
+      );
 
-          for (const [index, tokenToAdd] of filteredTokens.entries()) {
-            const existingTokenWallet = key.wallets.filter(wallet => {
-              return (
-                wallet.id ===
-                `${w.id}-${cloneDeep(tokenToAdd.token_address).toLowerCase()}`
-              );
-            });
-            if (existingTokenWallet[0]) {
-              // workaround for cases where the token was already created but for some reason was not included in the list of tokens in the associated wallet
-              logManager.debug(
-                `Token ${tokenToAdd.symbol} (${tokenToAdd.token_address}) already created for this wallet. Adding to tokens list in the associated wallet`,
-              );
+      for (const {w, filteredTokens} of detectedTokensByWallet) {
+        let account: number | undefined;
+        let customAccount = false;
+        if (w.credentials.rootPath) {
+          account = getAccount(w.credentials.rootPath);
+          customAccount = true;
+        }
 
-              (w.tokens || []).push(existingTokenWallet[0].id);
-              w.tokens = uniq(w.tokens);
+        for (const [index, tokenToAdd] of filteredTokens.entries()) {
+          const existingTokenWallet = findByTokenWalletId(
+            key.wallets,
+            buildTokenWalletId(w.id, tokenToAdd.token_address),
+            wallet => wallet.id,
+          );
+          if (existingTokenWallet) {
+            // workaround for cases where the token was already created but for some reason was not included in the list of tokens in the associated wallet
+            logManager.debug(
+              `Token ${tokenToAdd.symbol} (${tokenToAdd.token_address}) already created for this wallet. Adding to tokens list in the associated wallet`,
+            );
 
-              await dispatch(
-                successUpdateKey({
-                  key,
-                }),
-              );
-            } else {
-              try {
-                const newTokenWallet: AddWalletData = {
-                  key,
-                  associatedWallet: w,
-                  currency: {
-                    chain: w.chain,
-                    currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
-                    isToken: true,
-                    tokenAddress: tokenToAdd.token_address,
-                    decimals: tokenToAdd.decimals,
-                  },
-                  options: {
-                    network: Network.mainnet,
-                    ...(account !== undefined && {
-                      account,
-                      customAccount,
-                    }),
-                  },
-                };
-                const newWallet = await dispatch(addWallet(newTokenWallet));
-                if (newWallet) {
-                  await dispatch(
-                    startUpdateWalletStatus({
-                      key,
-                      wallet: newWallet,
-                      force: true,
-                    }),
-                  );
-                }
-              } catch (err) {
-                logManager.debug(
-                  `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
+            (w.tokens || []).push(existingTokenWallet.id);
+            w.tokens = uniq(w.tokens);
+
+            await dispatch(
+              successUpdateKey({
+                key,
+              }),
+            );
+          } else {
+            try {
+              const newTokenWallet: AddWalletData = {
+                key,
+                associatedWallet: w,
+                currency: {
+                  chain: w.chain,
+                  currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
+                  isToken: true,
+                  tokenAddress: tokenToAdd.token_address,
+                  decimals: tokenToAdd.decimals,
+                },
+                options: {
+                  network: Network.mainnet,
+                  ...(account !== undefined && {
+                    account,
+                    customAccount,
+                  }),
+                },
+              };
+              const newWallet = await dispatch(addWallet(newTokenWallet));
+              if (newWallet) {
+                await dispatch(
+                  startUpdateWalletStatus({
+                    key,
+                    wallet: newWallet,
+                    force: true,
+                  }),
                 );
               }
+            } catch (err) {
+              logManager.debug(
+                `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
+              );
             }
           }
         }

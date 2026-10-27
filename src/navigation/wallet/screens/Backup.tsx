@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import styled from 'styled-components/native';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
@@ -56,10 +56,12 @@ export type BackupParamList = {
   key: Key;
 };
 
-const BackupContainer = styled.SafeAreaView`
-  flex: 1;
-  align-items: center;
-`;
+const styles = StyleSheet.create({
+  backupContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+});
 
 type BackupNavigation = {
   navigate: (...args: any[]) => void;
@@ -80,9 +82,9 @@ export const backupRedirect = ({
   if (context === 'onboarding') {
     navigation.navigate('TermsOfUse');
   } else if (context === 'keySettings') {
-    navigation.navigate('KeySettings', {key});
+    navigation.navigate('KeySettings', {keyId: key?.id});
   } else if (context === 'settings') {
-    navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
+    navigation.navigate('Tabs', {screen: 'Settings'});
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
   } else if (!walletTermsAccepted) {
@@ -134,7 +136,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
         <HeaderRightContainer>
           <Button
             testID="skip-button"
-            accessibilityLabel="Skip backup"
+            accessibilityLabel={t('Skip backup')}
             buttonType={'pill'}
             onPress={async () => {
               haptic('impactLight');
@@ -176,7 +178,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
   useAndroidBackHandler(() => true);
 
   return (
-    <BackupContainer testID="backup-container">
+    <SafeAreaView testID="backup-container" style={styles.backupContainer}>
       <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
@@ -195,13 +197,13 @@ const BackupScreen = ({route}: BackupScreenProps) => {
       <CtaContainer>
         <Button
           testID="go-to-backup-button"
-          accessibilityLabel="Backup your recovery phrase"
+          accessibilityLabel={t('Backup your Recovery Phrase')}
           buttonStyle={'primary'}
           onPress={gotoBackup}>
           {t('Backup your Recovery Phrase')}
         </Button>
       </CtaContainer>
-    </BackupContainer>
+    </SafeAreaView>
   );
 };
 

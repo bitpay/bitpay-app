@@ -1,5 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {
   ActionContainer,
@@ -23,13 +22,21 @@ import {
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
 import {HeaderTitle} from '../styled/WalletConnectText';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import {useAppDispatch} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  getUnrecognizedSolanaInstructions,
+  sleep,
+} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
@@ -41,14 +48,11 @@ import {
   walletConnectV2ApproveCallRequest,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
-import {View} from 'react-native';
+import {getMessageView, getRequestSummary} from './walletConnectRequestSummary';
+import {View, StyleSheet} from 'react-native';
 import Blockie from '../../../components/blockie/Blockie';
+import Banner from '../../../components/banner/Banner';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {
-  EIP155_SIGNING_METHODS,
-  SOLANA_SIGNING_METHODS,
-} from '../../../constants/WalletConnectV2';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
@@ -57,50 +61,66 @@ export type WalletConnectRequestDetailsParamList = {
   topic?: string;
 };
 
-const RequestDetailsContainer = styled.View``;
+const styles = StyleSheet.create({
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 16,
+  },
+  addressTextContainer: {
+    borderRadius: 40,
+    height: 37,
+    width: 150,
+    marginLeft: 2,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  messageTitleContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+  },
+  messageNoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  infoSubTitle: {
+    fontStyle: 'italic',
+  },
+});
 
-const AddressContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 16px 0;
-`;
+const AddressTextContainer = ({
+  disabled,
+  onPress,
+  children,
+}: {
+  disabled?: boolean;
+  onPress?: () => void;
+  children: React.ReactNode;
+}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.addressTextContainer,
+        {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
+      ]}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
-const AddressTextContainer = styled(TouchableOpacity)`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  border-radius: 40px;
-  height: 37px;
-  width: 150px;
-  margin-left: 2px;
-  justify-content: center;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 20px;
-`;
-
-const MessageTitleContainer = styled.View`
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 16px 0;
-`;
-
-const MessageNoteContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-`;
-
-const MessageTextContainer = styled(TouchableOpacity)`
-  align-items: flex-start;
-  max-width: 242px;
-  justify-content: center;
-  margin-left: 2px;
-`;
-
-const InfoSubTitle = styled(InfoTitle)`
-  font-style: italic;
-`;
+const InfoSubTitle = ({children}: {children: React.ReactNode}) => (
+  <InfoTitle style={styles.infoSubTitle}>{children}</InfoTitle>
+);
 
 const WalletConnectRequestDetails = () => {
   const {t} = useTranslation();
@@ -109,7 +129,7 @@ const WalletConnectRequestDetails = () => {
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<any>('');
   const [isMethodSupported, setIsMethodSupported] = useState<boolean>();
   const [methodNotSupportedMsg, setMethodNotSupportedMsg] = useState<string>();
   const [approveButtonState, setApproveButtonState] = useState<ButtonState>();
@@ -117,81 +137,46 @@ const WalletConnectRequestDetails = () => {
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
   const request = _request.params.request;
+  const decodedInstructions = _request.decodedInstructions;
+  const unrecognizedInstructions = useMemo(
+    () => getUnrecognizedSolanaInstructions(decodedInstructions),
+    [decodedInstructions],
+  );
 
   useEffect(() => {
     if (!request) {
       return;
     }
-    let _chainId: number;
-    let chain: string | undefined;
-    switch (request.method) {
-      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
-      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
-      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
-      case EIP155_SIGNING_METHODS.ETH_SIGN:
-        setAddress(request.params[0]);
-        setMessage(request.params[1]);
-        setIsMethodSupported(true);
-        break;
-      case EIP155_SIGNING_METHODS.PERSONAL_SIGN:
-        setAddress(request.params[1]);
-        setMessage(request.params[0]);
-        setIsMethodSupported(true);
-        break;
-      case 'wallet_switchEthereumChain':
-        _chainId = parseInt(request.params[0].chainId, 16);
-        chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
-          key => EVM_BLOCKCHAIN_ID[key] === _chainId,
-        );
-        setIsMethodSupported(!!chain);
-        if (!chain) {
-          const msg = t('WCNotSupportedChainMsg', {peerName});
-          setMethodNotSupportedMsg(msg);
-        }
-        setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
-        break;
-      case 'wallet_addEthereumChain':
-        _chainId = parseInt(request.params[0].chainId, 16);
-        chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
-          key => EVM_BLOCKCHAIN_ID[key] === _chainId,
-        );
-        setIsMethodSupported(!!chain);
-        if (!chain) {
-          const msg = t('WCNotSupportedChainMsg', {peerName});
-          setMethodNotSupportedMsg(msg);
-        }
-        setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
-        break;
+    const summary = getRequestSummary(_request);
 
-      case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
-        setAddress(request.params.pubkey);
-        setMessage(request.params.message);
-        setIsMethodSupported(true);
-        break;
+    setAddress(summary.address || '');
+    setIsMethodSupported(summary.isMethodSupported);
 
-      case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
-      case SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION:
-        const senderData = request.params?.instructions?.[0].keys?.find(
-          (instruction: {
-            pubkey: string;
-            isSigner: boolean;
-            isWritable: boolean;
-          }) => instruction.isSigner,
-        );
-        setAddress(senderData?.pubkey);
-        setMessage(request.params.transaction);
-        setIsMethodSupported(true);
-        break;
-
-      default:
-        const defaultErrorMsg = t(
-          'Sorry, we currently do not support this method.',
-        );
-        setIsMethodSupported(false);
-        setMethodNotSupportedMsg(defaultErrorMsg);
-        break;
+    if (summary.kind === 'switchChain') {
+      setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
+      if (!summary.isMethodSupported) {
+        setMethodNotSupportedMsg(t('WCNotSupportedChainMsg', {peerName}));
+      }
+      return;
     }
+
+    if (summary.kind === 'unsupportedMethod') {
+      setMethodNotSupportedMsg(
+        t('Sorry, we currently do not support this method.'),
+      );
+      return;
+    }
+
+    if (summary.kind === 'undecodable') {
+      setMethodNotSupportedMsg(
+        t('This request could not be decoded and cannot be approved.'),
+      );
+      return;
+    }
+
+    setMessage(summary.message);
   }, [
+    _request,
     request,
     peerName,
     setAddress,
@@ -297,7 +282,7 @@ const WalletConnectRequestDetails = () => {
     const renderObject = (obj: any, indent = 0) => {
       return Object.keys(obj).map(key => {
         const value = obj[key];
-        if (typeof value === 'object' && value !== null) {
+        if (typeof value === 'object' && value !== null && indent < 12) {
           return (
             <View key={key} style={{paddingLeft: indent * 10}}>
               <BaseText style={{paddingVertical: 5}}>
@@ -306,13 +291,22 @@ const WalletConnectRequestDetails = () => {
               {renderObject(value, indent + 1)}
             </View>
           );
+        } else if (typeof value === 'object' && value !== null) {
+          return (
+            <BaseText
+              key={key}
+              style={{paddingLeft: indent * 10, paddingVertical: 5}}>
+              <BaseText style={{fontWeight: 'bold'}}>{key}:</BaseText>{' '}
+              {JSON.stringify(value)}
+            </BaseText>
+          );
         } else {
           return (
             <BaseText
               key={key}
               style={{paddingLeft: indent * 10, paddingVertical: 5}}>
               <BaseText style={{fontWeight: 'bold'}}>{key}:</BaseText>{' '}
-              {value.toString()}
+              {String(value)}
             </BaseText>
           );
         }
@@ -322,30 +316,28 @@ const WalletConnectRequestDetails = () => {
     return <View>{renderObject(messageObj)}</View>;
   };
 
-  const renderMessage = (message: string) => {
-    try {
-      const parsedMessage = JSON.parse(message);
-      if (parsedMessage?.message) {
-        return parseAndDisplayMessage(parsedMessage.message);
-      }
-      return message;
-    } catch (error) {
-      return (
-        <TouchableOpacity
-          disabled={clipboardObj.copied}
-          onPress={() => {
-            copyToClipboard(message, 'message');
-          }}>
-          <BaseText style={{paddingVertical: 5}}>{message}</BaseText>
-        </TouchableOpacity>
-      );
+  const renderMessage = (message: any) => {
+    const view = getMessageView(message, request.method);
+
+    if (view.kind === 'fields') {
+      return parseAndDisplayMessage(view.value);
     }
+
+    return (
+      <TouchableOpacity
+        disabled={clipboardObj.copied}
+        onPress={() => {
+          copyToClipboard(view.value, 'message');
+        }}>
+        <BaseText style={{paddingVertical: 5}}>{view.value}</BaseText>
+      </TouchableOpacity>
+    );
   };
 
   return (
     <WalletConnectContainer>
       <ScrollView>
-        <RequestDetailsContainer>
+        <View>
           {isMethodSupported ? (
             <>
               <HeaderTitle>{t('Summary')}</HeaderTitle>
@@ -356,7 +348,7 @@ const WalletConnectRequestDetails = () => {
                     <ItemTitleContainer>
                       <H7>{t('Address')}</H7>
                     </ItemTitleContainer>
-                    <AddressContainer>
+                    <View style={styles.addressContainer}>
                       {clipboardObj.copied &&
                       clipboardObj.type === 'address' ? (
                         <CopiedSvg width={17} />
@@ -376,22 +368,36 @@ const WalletConnectRequestDetails = () => {
                           {address}
                         </H7>
                       </AddressTextContainer>
-                    </AddressContainer>
+                    </View>
                   </ItemContainer>
                   <Hr />
                 </>
               ) : null}
-              <MessageTitleContainer>
+              {unrecognizedInstructions.length > 0 ? (
+                <Banner
+                  height={100}
+                  type={'warning'}
+                  title={t('Unrecognized instructions')}
+                  description={t(
+                    'This transaction contains instructions we cannot decode. Approve it only if you fully trust this site.',
+                  )}
+                />
+              ) : null}
+              <View style={styles.messageTitleContainer}>
                 <ItemTitleContainer>
-                  <H7>{t('Message')}</H7>
+                  <H7>
+                    {decodedInstructions ? t('Instructions') : t('Message')}
+                  </H7>
                   <View style={{paddingLeft: 10}}>
                     {clipboardObj.copied && clipboardObj.type === 'message' ? (
                       <CopiedSvg width={17} />
                     ) : null}
                   </View>
                 </ItemTitleContainer>
-                {renderMessage(message)}
-              </MessageTitleContainer>
+                {decodedInstructions
+                  ? parseAndDisplayMessage(decodedInstructions)
+                  : renderMessage(message)}
+              </View>
             </>
           ) : (
             <Info>
@@ -408,16 +414,16 @@ const WalletConnectRequestDetails = () => {
                 <ItemTitleContainer>
                   <H7>{t('Date')}</H7>
                 </ItemTitleContainer>
-                <MessageNoteContainer>
+                <View style={styles.messageNoteContainer}>
                   <H7 numberOfLines={1} ellipsizeMode={'middle'}>
                     {GetAmFormatDate(request?.createdOn)}
                   </H7>
-                </MessageNoteContainer>
+                </View>
               </ItemContainer>
               <Hr />
             </>
           ) : null}
-        </RequestDetailsContainer>
+        </View>
         <CtaContainer>
           <ActionContainer>
             <Button
