@@ -37,6 +37,7 @@ import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import useFloatingTabBarInset from '../useFloatingTabBarInset';
 import {isEuCountry} from '../../../store/location/location.effects';
 
 export enum ShopTabs {
@@ -187,6 +188,7 @@ const ShopHome: React.FC<
   const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const tabBarInset = useFloatingTabBarInset();
   useScrollToTop(scrollViewRef);
 
   const availableGiftCards = useMemo(
@@ -332,6 +334,8 @@ const ShopHome: React.FC<
       </HeaderContainer>
       <ScrollView
         ref={scrollViewRef}
+        contentContainerStyle={{paddingBottom: tabBarInset}}
+        scrollIndicatorInsets={{bottom: tabBarInset}}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={Keyboard.dismiss}
