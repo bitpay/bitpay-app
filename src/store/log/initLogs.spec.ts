@@ -90,6 +90,21 @@ describe('initLogs', () => {
     ]);
   });
 
+  it('redacts private keys on every line before persisting a log', () => {
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(
+        'walletPrivKey=fake-wallet-key\n{"xPrivKey":"fake-xprv"}\nsafe line\n{"XPRIVKEY":"fake-xprv-2"}\nwalletprivkey=fake-wallet-key-2',
+      ).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(JSON.parse(written)[0].message).toBe(
+      'walletPrivKey:[...]\n{"[...]\nsafe line\n{"[...]\nwalletPrivKey:[...]',
+    );
+  });
+
   it('keeps only the newest 500 entries', () => {
     const {add, drainAndDispatch} = getFreshModule();
     drainAndDispatch(jest.fn());
