@@ -1640,7 +1640,7 @@ describe('joinTSSWithCode — fresh join', () => {
     expect(finalKey.tssSession!.status).toBe('complete');
   });
 
-  it('BUG: leaves tssKeyId undefined when refreshWalletWithRetry exhausts all retries — even though the wallet is no longer flagged pendingTssSession', async () => {
+  it('rejects with CEREMONY_TIMEOUT and keeps the key pending when refreshWalletWithRetry exhausts all retries', async () => {
     jest.useFakeTimers();
     const store = configureTestStore();
 
@@ -1664,17 +1664,18 @@ describe('joinTSSWithCode — fresh join', () => {
     });
     lastKeyGen.emit('complete');
 
+    const outcome = expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
     for (let i = 0; i < 5; i++) {
       await advanceAndFlush(1000);
     }
 
-    const finalKey = await resultPromise;
-
+    await outcome;
     expect(lastWalletClient.getStatus).toHaveBeenCalledTimes(5);
-    // The ceremony "completes" and drops the pending flag, yet tssKeyId is gone.
-    expect(finalKey.wallets[0].pendingTssSession).toBeUndefined();
-    expect(finalKey.tssSession!.status).toBe('complete');
-    expect(finalKey.wallets[0].tssKeyId).toBeUndefined();
+    expect(
+      store
+        .getActions()
+        .some((a: any) => a.payload?.key?.tssSession?.status === 'complete'),
+    ).toBe(false);
   });
 
   it('rejects with CEREMONY_STUCK after 20 consecutive TSS_ROUND_ALREADY_DONE errors', async () => {
