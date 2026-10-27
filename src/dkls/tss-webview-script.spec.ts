@@ -155,7 +155,7 @@ describe('TSS ceremony through the production WebView script', () => {
     global.Buffer = nodeBuffer;
   });
 
-  it('generates and signs 2-of-2 with base64 bytes and local messages', async () => {
+  it('generates and signs 2-of-2 with base64 bytes and local messages, freeing every signing session', async () => {
     const unmount = await mountWebViewScript();
     try {
       const {callWorker} = require('./DklsWorker');
@@ -216,6 +216,18 @@ describe('TSS ceremony through the production WebView script', () => {
           ),
         ),
       ).toBe(true);
+      const [objects] = unmount.maps;
+      expect(
+        [...objects.values()].filter(
+          (o: any) =>
+            o instanceof unmount.webModule().SignSessionOTVariant &&
+            o.__wbg_ptr,
+        ),
+      ).toEqual([]);
+      const freedIds = unmount.requests
+        .filter(request => request.type === 'free')
+        .map(request => request.objId);
+      expect(new Set(freedIds).size).toBe(freedIds.length);
     } finally {
       unmount();
     }
