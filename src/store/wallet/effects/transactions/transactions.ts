@@ -235,7 +235,7 @@ const ProcessTx =
                   tokenSymbol || coin,
                   chain,
                   tokenAddress,
-                  Number(o.amount),
+                  o.amount,
                 ),
               );
               return total + BigInt(o.amount);
@@ -280,12 +280,7 @@ const ProcessTx =
 
     if (tx.coin === wallet.currencyAbbreviation) {
       tx.amountStr = dispatch(
-        FormatAmountStr(
-          tokenSymbol || coin,
-          chain,
-          tokenAddress,
-          Number(tx.amount),
-        ),
+        FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
       );
     }
 
@@ -417,7 +412,7 @@ const ProcessNewTxs =
 
         // Scam transactions
         const isERCToken = IsERCToken(tx.coin, tx.chain);
-        if (isERCToken && tx.amount === 0) {
+        if (isERCToken && Number(tx.amount) === 0) {
           continue;
         }
 
@@ -1015,8 +1010,11 @@ export const IsInvalid = (action: string | undefined): boolean => {
   return action === 'invalid';
 };
 
-export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
-  return amount === 0 && SUPPORTED_VM_TOKENS.includes(chain);
+export const IsZeroAmountEVM = (
+  amount: number | string,
+  chain: string,
+): boolean => {
+  return Number(amount) === 0 && SUPPORTED_VM_TOKENS.includes(chain);
 };
 
 export const TxForPaymentFeeEVM = (
@@ -1374,6 +1372,34 @@ export const buildTransactionDetails =
             ? fees
             : fee;
 
+        const amountTokenAddress = tokenSymbol
+          ? tokenAddress
+          : wallet.tokenAddress;
+
+        if (transaction.amountStr) {
+          _transaction.amountStr = dispatch(
+            FormatAmountStr(
+              tokenSymbol || coin,
+              chain,
+              amountTokenAddress,
+              amount,
+              true,
+            ),
+          );
+        }
+
+        if (_fee != null) {
+          _transaction.feeStr = dispatch(
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              undefined,
+              _fee,
+              true,
+            ),
+          );
+        }
+
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 
         const rates = await dispatch(startGetRates({}));
@@ -1388,6 +1414,15 @@ export const buildTransactionDetails =
         if (hasMultiplesOutputs) {
           if (action !== 'received') {
             _transaction.outputs = _transaction.outputs.map((o: any) => {
+              o.amountStr = dispatch(
+                FormatAmountStr(
+                  tokenSymbol || coin,
+                  chain,
+                  amountTokenAddress,
+                  o.amount,
+                  true,
+                ),
+              );
               o.alternativeAmountStr = formatFiatAmount(
                 dispatch(
                   toFiat(
