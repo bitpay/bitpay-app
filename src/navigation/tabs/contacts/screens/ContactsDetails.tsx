@@ -3,6 +3,7 @@ import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useAppSelector} from '../../../../utils/hooks';
 import {useTheme} from '../../../../contexts';
 import {useNavigation} from '@react-navigation/core';
+import {StackActions} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
@@ -32,7 +33,6 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {getContactSendRecipient} from '../../../wallet/screens/send/sendTo.utils';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
@@ -199,12 +199,18 @@ const ContactsDetails = ({
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {contact: _contact} = route.params;
-  const [contact, setContact] = useState(_contact);
+  const contact =
+    useAppSelector(({CONTACT}) =>
+      CONTACT.list.find(c => c.address === _contact.address),
+    ) ?? _contact;
 
   const [copied, setCopied] = useState(false);
   const [copiedContractAddress, setCopiedContractAddress] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
 
+  const isLastContact = useAppSelector(
+    ({CONTACT}) => CONTACT.list.length === 1,
+  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const contactOptions: Array<ModalOpt> = [];
   let availableWallets = Object.values(keys)
@@ -246,9 +252,6 @@ const ContactsDetails = ({
       navigation.navigate('ContactsAdd', {
         contact,
         context: 'edit',
-        onEditComplete: (c: ContactRowProps) => {
-          setContact(c);
-        },
       });
     },
   });
@@ -306,6 +309,10 @@ const ContactsDetails = ({
   const deleteContactView = async () => {
     await sleep(500);
     dispatch(deleteContact(contact.address));
+    if (isLastContact) {
+      navigation.dispatch(StackActions.popTo('SettingsHome'));
+      return;
+    }
     navigation.goBack();
   };
 
