@@ -10,19 +10,6 @@ import {
   BWC_TIMEOUT,
 } from '../constants/config';
 
-interface KeyOpts {
-  seedType: string;
-  seedData?: any;
-  passphrase?: string; // seed passphrase
-  password?: string; // encrypting password
-  sjclOpts?: any; // options to SJCL encrypt
-  use0forBCH?: boolean;
-  useLegacyPurpose?: boolean;
-  useLegacyCoinType?: boolean;
-  nonCompliantDerivation?: boolean;
-  language?: string;
-}
-
 export class BwcProvider {
   static instance: BwcProvider;
   static API = BWC;

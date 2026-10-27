@@ -116,6 +116,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         routes: routesStack,
       }),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [navigation]);
 
   // Like goToPreviousScreen, but routes a KYC-eligible user into VerifyIdentity.
@@ -180,6 +181,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     if (email && csrfToken) {
       AuthApi.sendVerificationEmail(network, csrfToken);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   // start polling session until verified

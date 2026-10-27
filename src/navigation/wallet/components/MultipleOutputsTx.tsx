@@ -9,7 +9,6 @@ import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {H7} from '../../../components/styled/Text';
 import CardSvg from '../../../../assets/img/wallet/transactions/card.svg';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SendToPill from './SendToPill';
 import {

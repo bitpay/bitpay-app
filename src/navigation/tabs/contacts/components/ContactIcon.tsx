@@ -1,11 +1,10 @@
-import React, {ReactElement, useMemo} from 'react';
+import React, {useMemo} from 'react';
 import {StyleSheet, View} from 'react-native';
 
 import Avatar from '../../../../components/avatar/Avatar';
 
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
 import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
@@ -26,12 +25,6 @@ interface ContactIconProps {
   badge?: JSX.Element;
   tokenAddress?: string;
   address?: string;
-}
-
-interface BadgeProps {
-  img: string | ((props?: any) => ReactElement);
-  badgeImg: string | ((props?: any) => ReactElement);
-  size?: number;
 }
 
 const styles = StyleSheet.create({

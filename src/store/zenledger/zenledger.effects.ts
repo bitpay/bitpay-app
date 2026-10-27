@@ -34,7 +34,7 @@ const tokenExpired = (token: ZenledgerTokenProps): boolean => {
 };
 
 export const zenledgerInitialize =
-  (): Effect<Promise<any>> => async dispatch => {
+  (): Effect<Promise<any>> => async _dispatch => {
     logManager.info('zenledgerInitialize: starting...');
     if (!checkCredentials()) {
       logManager.error('zenledgerInitialize: credentials not found');

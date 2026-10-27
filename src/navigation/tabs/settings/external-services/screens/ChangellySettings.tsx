@@ -42,6 +42,7 @@ const ChangellySettings: React.FC = () => {
       ) as changellyTxData[];
       setSwapTxs(changellyTransactions.sort((a, b) => b.date - a.date));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

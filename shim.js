@@ -1,3 +1,4 @@
+/* global btoa, atob */
 import { Crypto } from '@peculiar/webcrypto';
 import { install as installEd25519 } from '@solana/webcrypto-ed25519-polyfill';
 import * as RNWasm from 'react-native-webassembly';

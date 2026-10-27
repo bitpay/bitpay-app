@@ -104,6 +104,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
         intervals: [...FIAT_RATE_SERIES_CACHED_INTERVALS],
         hasValidNormalizedCoin: shared.hasValidNormalizedCoin,
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [
       shared.hasValidNormalizedCoin,
       shared.historicalRateIdentity.chain,

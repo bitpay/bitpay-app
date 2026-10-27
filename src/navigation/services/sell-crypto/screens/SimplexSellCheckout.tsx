@@ -113,7 +113,6 @@ import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
-import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 const styles = StyleSheet.create({
@@ -199,7 +198,6 @@ const SimplexSellCheckout: React.FC = () => {
   });
   const {
     control,
-    handleSubmit,
     setError,
     clearErrors,
     setValue,
@@ -214,7 +212,7 @@ const SimplexSellCheckout: React.FC = () => {
 
   const [toAddressValue, setToAddressValue] = useState<string | undefined>();
   const [validAddress, setValidAddress] = useState(false);
-  const [isToken, setIsToken] = useState(
+  const [isToken, _setIsToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -223,7 +221,7 @@ const SimplexSellCheckout: React.FC = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [expiredAnalyticSent, setExpiredAnalyticSent] =
     useState<boolean>(false);
-  const [amountExpected, setAmountExpected] = useState<number>(amount);
+  const [amountExpected, _setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
@@ -778,6 +776,7 @@ const SimplexSellCheckout: React.FC = () => {
 
   useEffect(() => {
     if (isToken) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
       useSendMax = false;
     }
 
@@ -854,6 +853,7 @@ const SimplexSellCheckout: React.FC = () => {
           return;
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [validAddress, toAddressValue]);
 
   useEffect(() => {
@@ -873,6 +873,7 @@ const SimplexSellCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [remainingTimeStr, expiredAnalyticSent]);
 
   useEffect(() => {

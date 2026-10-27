@@ -61,7 +61,6 @@ import {
   TransakStatusKey,
 } from '../buy-crypto/buy-crypto.models';
 import {RampIncomingData} from '../buy-crypto/models/ramp.models';
-import {LogActions} from '../log';
 import {showBottomNotificationModal} from '../app/app.actions';
 import {
   getCurrencyAbbreviation,
@@ -598,10 +597,10 @@ const unlockInvoice =
         }
 
         return 'unlockSuccess';
-      } catch (e) {
+      } catch {
         return 'invalidInvoice';
       }
-    } catch (e) {
+    } catch {
       return 'somethingWentWrong';
     }
   };
@@ -779,8 +778,8 @@ export const goToAmount =
   };
 
 const handlePrivateKey =
-  (scannedPrivateKey: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  (scannedPrivateKey: string, _wallet?: Wallet): Effect<void> =>
+  (_dispatch, _getState) => {
     logManager.info('[scan] Incoming-data: private key');
     navigationRef.navigate(WalletScreens.PAPER_WALLET, {
       scannedPrivateKey,
@@ -2537,7 +2536,7 @@ const handleRampUri =
 
 const handleSardineUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  (dispatch, _getState) => {
     logManager.info('Incoming-data (redirect): Sardine URL: ' + data);
 
     data = data.replace('?order_id', '&order_id');
@@ -3020,7 +3019,7 @@ const handlePlainAddress =
 
 const goToImport =
   (importQrCodeData: string): Effect<void> =>
-  (dispatch, getState) => {
+  (_dispatch, _getState) => {
     logManager.info('[scan] Incoming-data (redirect): QR code export feature');
     navigationRef.navigate(WalletScreens.IMPORT, {
       importQrCodeData,
@@ -3123,7 +3122,7 @@ export const setBuyerProvidedEmail =
         } else {
           return reject();
         }
-      } catch (e) {
+      } catch {
         return reject();
       }
     });

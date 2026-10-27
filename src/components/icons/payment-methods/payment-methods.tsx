@@ -12,6 +12,7 @@ const PaymentMethodIcon: React.FC<{
   iconOnly?: boolean;
 }> = ({paymentMethodId, width, height, iconOnly}) => {
   const renderSvg = (id: PaymentMethodKey | WithdrawalMethodKey) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- known issue — hook called from a render helper; behaviour unchanged, refactor tracked separately
     const theme = useTheme();
     switch (id) {
       case 'ach':

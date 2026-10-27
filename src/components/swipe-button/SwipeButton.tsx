@@ -82,6 +82,7 @@ const SwipeButtonOverlay: React.FC<{
       duration: 180,
       easing: Easing.inOut(Easing.ease),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isVisible]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -164,7 +165,7 @@ const SwipeButton = ({
             setState('loading');
             try {
               await onSwipeComplete();
-            } catch (_) {
+            } catch {
             } finally {
               setState(null);
             }

@@ -162,7 +162,6 @@ jest.mock('../address/address', () => ({
 
 import {BwcProvider} from '../../../../lib/bwc';
 import {isCacheKeyStale} from '../../utils/wallet';
-import {convertToFiat} from '../../../../utils/helper-methods';
 
 /** Minimal WalletBalance used as cached balance in tests */
 const makeCachedBalance = (sat = 1_000_000) => ({

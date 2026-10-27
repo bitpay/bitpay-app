@@ -251,7 +251,7 @@ describe('PortfolioPopulateService', () => {
           },
         })),
       getPopulateJobStatus: jest.fn().mockImplementation(
-        async ({jobId}: {jobId: string}) =>
+        async ({jobId: _jobId}: {jobId: string}) =>
           new Promise(resolve => {
             resolveStart = resolve;
           }),

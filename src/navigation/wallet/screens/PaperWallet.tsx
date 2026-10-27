@@ -284,6 +284,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       await sleep(1000);
       navigation.goBack();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [dispatch],
   );
 
@@ -461,7 +462,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         try {
           provider.getProvider().PrivateKey(privateKey, network);
           return network;
-        } catch (err) {
+        } catch {
           // Continue to the next iteration if an error occurs
         }
       }
@@ -635,6 +636,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       }
     };
     _scan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   const openKeyWalletSelector = () => {

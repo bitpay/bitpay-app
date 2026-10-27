@@ -20,7 +20,7 @@ type NormalizedPoint = {
 const getTimestamp = (point: RawPoint): unknown => point?.ts;
 const getValue = (point: RawPoint): unknown => point?.value;
 const makePoint = (
-  args: LineChartPointFactoryArgs<RawPoint, NormalizedPoint>,
+  args: LineChartPointFactoryArgs<RawPoint>,
 ): NormalizedPoint => ({
   ts: args.timestamp,
   value: args.value,

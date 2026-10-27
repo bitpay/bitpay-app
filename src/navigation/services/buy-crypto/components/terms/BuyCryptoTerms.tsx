@@ -112,7 +112,7 @@ const BuyCryptoTerms: React.FC<{
 
   const getLinks = (
     exchangeKey: BuyCryptoExchangeKey,
-    pm: PaymentMethod | undefined,
+    _pm: PaymentMethod | undefined,
   ) => {
     switch (exchangeKey) {
       case 'banxa':

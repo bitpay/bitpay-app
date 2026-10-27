@@ -69,14 +69,6 @@ import {
   getBase64Encoder,
   getTransactionDecoder,
   getCompiledTransactionMessageDecoder,
-  getBase58Encoder,
-  createKeyPairFromPrivateKeyBytes,
-  signTransaction,
-  getBase64EncodedWireTransaction,
-  partiallySignTransaction,
-  signBytes,
-  getBase58Decoder,
-  ReadonlyUint8Array,
 } from '@solana/kit';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
@@ -308,7 +300,7 @@ export const walletConnectV2RejectSessionProposal =
         '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
       );
       dispatch(sessionProposal());
-    } catch (e) {
+    } catch {
       logManager.error(
         '[WC-V2/walletConnectV2RejectSessionProposal]: an error occurred while rejecting session.',
       );
@@ -557,7 +549,7 @@ export const walletConnectV2SubscribeToEvents =
               proposal,
             )}`,
           );
-        } catch (error) {}
+        } catch {}
       },
     );
     web3wallet.on(
@@ -577,7 +569,7 @@ export const walletConnectV2SubscribeToEvents =
           if (request) {
             await dispatch(walletConnectV2RejectCallRequest(request));
           }
-        } catch (error) {}
+        } catch {}
       },
     );
   };

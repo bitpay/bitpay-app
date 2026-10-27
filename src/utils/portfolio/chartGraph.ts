@@ -22,7 +22,7 @@ function getGraphPointValue(point: GraphPoint): unknown {
 }
 
 function makeGraphPoint(
-  args: LineChartPointFactoryArgs<GraphPoint, GraphPoint>,
+  args: LineChartPointFactoryArgs<GraphPoint>,
 ): GraphPoint {
   'worklet';
 

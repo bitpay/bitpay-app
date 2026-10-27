@@ -58,7 +58,6 @@ const BottomAmountModal: React.FC<BottomAmountModalProps> = props => {
     onBackdropPress,
     onSendMaxPressed,
     isVisible,
-    modalTitle,
     limitsOpts,
     initialAmount,
     onAmountChange,
