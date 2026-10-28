@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
+import {StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Key} from '../../../store/wallet/wallet.models';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
@@ -11,6 +12,86 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {setHasViewedTSSOnboarding} from '../../../store/app/app.actions';
+import {useTheme} from '../../../contexts';
+import {
+  BaseText,
+  OptionDescription,
+  OptionTitle,
+} from '../../../components/styled/Text';
+import {Action, LightBlue, Midnight, White} from '../../../styles/colors';
+import AngleRight from '../../../../assets/img/angle-right.svg';
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  optionContent: {
+    flex: 1,
+    marginRight: 8,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    borderRadius: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    marginBottom: 8,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
+    textTransform: 'uppercase',
+  },
+  footnote: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 8,
+  },
+  chevron: {
+    justifyContent: 'center',
+  },
+});
+
+const SharedWalletTypeOption = ({isTSS}: {isTSS?: boolean}) => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  return (
+    <>
+      <View style={styles.optionContent}>
+        {isTSS ? (
+          <View
+            style={[
+              styles.badge,
+              {backgroundColor: theme.dark ? Midnight : LightBlue},
+            ]}>
+            <BaseText
+              style={[styles.badgeText, {color: theme.dark ? White : Action}]}>
+              {t('Beta')}
+            </BaseText>
+          </View>
+        ) : null}
+        <OptionTitle>
+          {isTSS ? t('Threshold Signature Wallet') : t('Multisignature Wallet')}
+        </OptionTitle>
+        <OptionDescription>
+          {isTSS
+            ? t('One key, split across co-signers.')
+            : t('Each co-signer holds their own key.')}
+        </OptionDescription>
+        <OptionDescription style={styles.footnote}>
+          {isTSS
+            ? t('Sign together, online · BitPay only · Can’t edit later')
+            : t('Sign anytime')}
+        </OptionDescription>
+      </View>
+      <View style={styles.chevron}>
+        <AngleRight />
+      </View>
+    </>
+  );
+};
 
 export type MultisigModalType = 'create' | 'join';
 
@@ -119,12 +200,8 @@ const MultisigOptions = ({
   const createOptions: Option[] = useMemo(
     () => [
       {
-        title: t('Multisignature Wallet'),
-        description: t(
-          'Each co-signer/device has a unique private key/recovery phrase, and all signatures are recorded directly on the blockchain.',
-        ),
+        optionElement: () => <SharedWalletTypeOption />,
         cardStyle: true,
-        showChevron: true,
         onPress: () => {
           dispatch(
             Analytics.track('Clicked Create Multisig Wallet', {
@@ -141,24 +218,8 @@ const MultisigOptions = ({
       ...(tssEnabled
         ? [
             {
-              title: t('Threshold signature wallet'),
-              description: t(
-                'A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
-              ),
-              badge: t('Beta'),
-              subDescriptionItems: [
-                {
-                  icon: 'clock',
-                  text: t('Requires all signers online to sign.'),
-                },
-                {icon: 'warning', text: t('Not portable to other platforms.')},
-                {
-                  icon: 'info',
-                  text: t('This wallet cannot be modified after creation.'),
-                },
-              ],
+              optionElement: () => <SharedWalletTypeOption isTSS />,
               cardStyle: true,
-              showChevron: true,
               onPress: () => {
                 dispatch(
                   Analytics.track('Clicked Create TSS Wallet', {
@@ -181,7 +242,6 @@ const MultisigOptions = ({
         : []),
     ],
     [
-      t,
       dispatch,
       navigation,
       walletKey,
@@ -195,12 +255,8 @@ const MultisigOptions = ({
   const joinOptions: Option[] = useMemo(
     () => [
       {
-        title: t('Multisignature Wallet'),
-        description: t(
-          'Each co-signer/device has a unique private key/recovery phrase, and all signatures are recorded directly on the blockchain.',
-        ),
+        optionElement: () => <SharedWalletTypeOption />,
         cardStyle: true,
-        showChevron: true,
         onPress: () => {
           dispatch(
             Analytics.track('Clicked Join Multisig Wallet', {
@@ -214,24 +270,8 @@ const MultisigOptions = ({
       ...(tssEnabled
         ? [
             {
-              title: t('Threshold signature wallet'),
-              description: t(
-                'A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
-              ),
-              badge: t('Beta'),
-              subDescriptionItems: [
-                {
-                  icon: 'clock',
-                  text: t('Requires all signers online to sign.'),
-                },
-                {icon: 'warning', text: t('Not portable to other platforms.')},
-                {
-                  icon: 'info',
-                  text: t('This wallet cannot be modified after creation.'),
-                },
-              ],
+              optionElement: () => <SharedWalletTypeOption isTSS />,
               cardStyle: true,
-              showChevron: true,
               onPress: () => {
                 dispatch(
                   Analytics.track('Clicked Join TSS Wallet', {
@@ -251,7 +291,6 @@ const MultisigOptions = ({
         : []),
     ],
     [
-      t,
       dispatch,
       navigation,
       walletKey,
@@ -273,7 +312,7 @@ const MultisigOptions = ({
     if (isNonTSSKeyFlow) {
       return t('What would you like to do?');
     }
-    return t('What type of shared wallet?');
+    return t('Shared Wallet Type');
   };
 
   if (!tssEnabled && !isNonTSSKeyFlow && modalType) {
@@ -285,6 +324,7 @@ const MultisigOptions = ({
       <OptionsSheet
         isVisible={isVisible}
         title={getTitle()}
+        titleStyle={isNonTSSKeyFlow ? undefined : styles.title}
         onBack={closeModal}
         options={getOptions()}
         closeModal={closeModal}

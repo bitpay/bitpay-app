@@ -1,10 +1,26 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '../../../contexts';
-import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
+import {
+  Caution,
+  SlateDark,
+  White,
+  Action,
+  Slate30,
+  LightBlack,
+  LightBlue,
+  Midnight,
+  Feather,
+  Disabled,
+  DisabledDark,
+  DisabledText,
+  DisabledTextDark,
+} from '../../../styles/colors';
 import {
   BaseText,
+  H5,
+  H6,
   Link,
   InfoTitle,
   InfoHeader,
@@ -124,38 +140,10 @@ const styles = StyleSheet.create({
     paddingVertical: SCREEN_GUTTER,
     paddingHorizontal: 0,
   },
-  optionContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   counterContainer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  roundButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 42,
-    minHeight: 42,
-    margin: 10,
-    borderRadius: 30,
-    borderWidth: 1,
-  },
-  removeAddButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 20,
-    height: 20,
-    borderRadius: 30,
-    borderWidth: 1,
-  },
-  counterNumber: {
-    fontSize: 16,
   },
   rowContainer: {
     flexDirection: 'row',
@@ -167,7 +155,61 @@ const styles = StyleSheet.create({
   },
   ctaContainer: {
     paddingVertical: 10,
-    paddingHorizontal: 0,
+    paddingHorizontal: 15,
+  },
+  signingRulesTitle: {
+    marginTop: 30,
+    marginBottom: 12,
+  },
+  signingRulesCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  signingRule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    marginHorizontal: 16,
+  },
+  signingRuleLabel: {
+    flex: 1,
+    marginRight: 8,
+    fontSize: 16,
+  },
+  signingRuleButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  signingRuleValue: {
+    minWidth: 44,
+    textAlign: 'center',
+  },
+  signingRuleDivider: {
+    height: 1,
+    marginHorizontal: 16,
+  },
+  signingRulesSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  signerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    marginRight: 4,
+  },
+  signingRulesSummaryText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
 
@@ -215,89 +257,10 @@ const VerticalPadding: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <View style={[styles.verticalPadding, style]} {...rest} />;
 
-const OptionContainer: React.FC<React.ComponentProps<typeof View>> = ({
-  style,
-  ...rest
-}) => <View style={[styles.optionContainer, style]} {...rest} />;
-
 const CounterContainer: React.FC<React.ComponentProps<typeof View>> = ({
   style,
   ...rest
 }) => <View style={[styles.counterContainer, style]} {...rest} />;
-
-const RoundButton: React.FC<React.ComponentProps<typeof View>> = ({
-  style,
-  ...rest
-}) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.roundButton,
-        {borderColor: theme.dark ? White : Action},
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
-interface DisableableProps {
-  isDisabled?: boolean;
-}
-
-const RemoveButton: React.FC<
-  DisableableProps & React.ComponentProps<typeof TouchableOpacity>
-> = ({isDisabled, style, ...rest}) => {
-  const theme = useTheme();
-  return (
-    <TouchableOpacity
-      style={[
-        styles.removeAddButton,
-        {
-          borderColor: isDisabled ? Slate : theme.dark ? White : Action,
-        },
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
-export const AddButton: React.FC<
-  DisableableProps & React.ComponentProps<typeof TouchableOpacity>
-> = ({isDisabled, style, ...rest}) => {
-  const theme = useTheme();
-  return (
-    <TouchableOpacity
-      style={[
-        styles.removeAddButton,
-        {
-          borderColor: isDisabled ? Slate : theme.dark ? White : Action,
-        },
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
-const CounterNumber: React.FC<React.ComponentProps<typeof Text>> = ({
-  style,
-  ...rest
-}) => {
-  const theme = useTheme();
-  return (
-    <Text
-      style={[
-        styles.counterNumber,
-        {color: theme.dark ? White : Action},
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
 
 const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
   style,
@@ -313,6 +276,145 @@ const CtaContainer: React.FC<React.ComponentProps<typeof _CtaContainer>> = ({
   style,
   ...rest
 }) => <_CtaContainer style={[styles.ctaContainer, style]} {...rest} />;
+
+const SigningRulesCard: React.FC<React.ComponentProps<typeof View>> = ({
+  style,
+  ...rest
+}) => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.signingRulesCard,
+        {borderColor: theme.dark ? LightBlack : Slate30},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+const SigningRuleDivider: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.signingRuleDivider,
+        {backgroundColor: theme.dark ? LightBlack : Slate30},
+      ]}
+    />
+  );
+};
+
+const SigningRuleButton: React.FC<
+  React.ComponentProps<typeof TouchableOpacity>
+> = ({disabled, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      disabled={disabled}
+      style={[
+        styles.signingRuleButton,
+        {
+          backgroundColor: disabled
+            ? theme.dark
+              ? DisabledDark
+              : Disabled
+            : theme.dark
+            ? Midnight
+            : LightBlue,
+        },
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
+
+interface SigningRuleProps {
+  testID: string;
+  label: string;
+  value: number;
+  canRemove: boolean;
+  canAdd: boolean;
+  onRemove: () => void;
+  onAdd: () => void;
+}
+
+const SigningRule: React.FC<SigningRuleProps> = ({
+  testID,
+  label,
+  value,
+  canRemove,
+  canAdd,
+  onRemove,
+  onAdd,
+}) => {
+  const theme = useTheme();
+  const disabledIconColor = theme.dark ? DisabledTextDark : DisabledText;
+  return (
+    <View style={styles.signingRule}>
+      <BaseText style={styles.signingRuleLabel}>{label}</BaseText>
+      <CounterContainer>
+        <SigningRuleButton
+          testID={`${testID}-remove-button`}
+          disabled={!canRemove}
+          onPress={onRemove}>
+          <MinusIcon color={canRemove ? undefined : disabledIconColor} />
+        </SigningRuleButton>
+        <H5 bold style={styles.signingRuleValue}>
+          {value}
+        </H5>
+        <SigningRuleButton
+          testID={`${testID}-add-button`}
+          disabled={!canAdd}
+          onPress={onAdd}>
+          <PlusIcon color={canAdd ? undefined : disabledIconColor} />
+        </SigningRuleButton>
+      </CounterContainer>
+    </View>
+  );
+};
+
+interface SigningRulesSummaryProps {
+  requiredSignatures: number;
+  totalCopayers: number;
+  summary: string;
+}
+
+const SigningRulesSummary: React.FC<SigningRulesSummaryProps> = ({
+  requiredSignatures,
+  totalCopayers,
+  summary,
+}) => {
+  const theme = useTheme();
+  const dotColor = theme.dark ? White : Action;
+  return (
+    <View
+      style={[
+        styles.signingRulesSummary,
+        {backgroundColor: theme.dark ? LightBlack : Feather},
+      ]}>
+      {Array.from({length: totalCopayers}, (_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.signerDot,
+            {borderColor: dotColor},
+            index < requiredSignatures && {backgroundColor: dotColor},
+          ]}
+        />
+      ))}
+      <BaseText
+        style={[
+          styles.signingRulesSummaryText,
+          {color: theme.dark ? Slate30 : SlateDark},
+        ]}>
+        {summary}
+      </BaseText>
+    </View>
+  );
+};
 
 type CreateMultisigProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -355,6 +457,22 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     name: 'totalCopayers',
     defaultValue: 3,
   });
+  const canRemoveSignature = watchedRequiredSignatures > 1;
+  const canAddSignature =
+    watchedRequiredSignatures < 3 &&
+    watchedRequiredSignatures < watchedTotalCopayers;
+  const canRemoveCopayer = watchedTotalCopayers > 2;
+  const canAddCopayer = watchedTotalCopayers < 6;
+
+  const setRequiredSignatures = (value: number) =>
+    setValue('requiredSignatures', value, {shouldValidate: true});
+
+  const setTotalCopayers = (value: number) => {
+    setValue('totalCopayers', value, {shouldValidate: true});
+    if (getValues('requiredSignatures') > value) {
+      setRequiredSignatures(value);
+    }
+  };
 
   useEffect(() => {
     if (isTSS) {
@@ -630,13 +748,16 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
 
   return (
     <MultisigContainer>
-      <ScrollViewContainer>
+      <ScrollViewContainer
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled">
         <InputContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                label={t('WALLET NAME')}
+                label={t('Wallet Name')}
+                placeholder={t('e.g. Family Savings')}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
@@ -653,7 +774,8 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                label={t('YOUR NAME')}
+                label={t('Your Name')}
+                placeholder={t('Visible to co-signers')}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
@@ -665,109 +787,54 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           />
         </InputContainer>
 
-        <Controller
-          control={control}
-          render={({field: {value}}) => (
-            <>
-              <OptionContainer>
-                <OptionTitle>{t('Required number of signatures')}</OptionTitle>
-                <CounterContainer>
-                  <RemoveButton
-                    isDisabled={value <= 1}
-                    onPress={() => {
-                      const newValue = value - 1;
-                      if (newValue >= 1) {
-                        setValue('requiredSignatures', newValue, {
-                          shouldValidate: true,
-                        });
-                      }
-                    }}>
-                    <MinusIcon color={value <= 1 ? Slate : undefined} />
-                  </RemoveButton>
-                  <RoundButton>
-                    <CounterNumber>{value}</CounterNumber>
-                  </RoundButton>
-                  <AddButton
-                    isDisabled={
-                      value >= 3 || value >= getValues('totalCopayers')
-                    }
-                    onPress={() => {
-                      const newValue = value + 1;
-                      const totalCopayers = getValues('totalCopayers');
-                      if (newValue <= 3 && newValue <= totalCopayers) {
-                        setValue('requiredSignatures', newValue, {
-                          shouldValidate: true,
-                        });
-                      }
-                    }}>
-                    <PlusIcon
-                      color={
-                        value >= 3 || value >= getValues('totalCopayers')
-                          ? Slate
-                          : undefined
-                      }
-                    />
-                  </AddButton>
-                </CounterContainer>
-              </OptionContainer>
-            </>
-          )}
-          name="requiredSignatures"
-          defaultValue={2}
-        />
+        <H6 style={styles.signingRulesTitle}>{t('Signing Rules')}</H6>
+        <SigningRulesCard>
+          <Controller
+            control={control}
+            render={({field: {value}}) => (
+              <SigningRule
+                testID="required-signatures"
+                label={t('Required to sign')}
+                value={value}
+                canRemove={canRemoveSignature}
+                canAdd={canAddSignature}
+                onRemove={() => setRequiredSignatures(value - 1)}
+                onAdd={() => setRequiredSignatures(value + 1)}
+              />
+            )}
+            name="requiredSignatures"
+            defaultValue={2}
+          />
+          <SigningRuleDivider />
+          <Controller
+            control={control}
+            render={({field: {value}}) => (
+              <SigningRule
+                testID="total-copayers"
+                label={t('Total co-signers')}
+                value={value}
+                canRemove={canRemoveCopayer}
+                canAdd={canAddCopayer}
+                onRemove={() => setTotalCopayers(value - 1)}
+                onAdd={() => setTotalCopayers(value + 1)}
+              />
+            )}
+            name="totalCopayers"
+            defaultValue={3}
+          />
+          <SigningRulesSummary
+            requiredSignatures={watchedRequiredSignatures}
+            totalCopayers={watchedTotalCopayers}
+            summary={t('Any {{m}} of {{n}} can approve', {
+              m: watchedRequiredSignatures,
+              n: watchedTotalCopayers,
+            })}
+          />
+        </SigningRulesCard>
 
         {errors?.requiredSignatures?.message && (
           <ErrorText>{errors?.requiredSignatures?.message}</ErrorText>
         )}
-
-        <Controller
-          control={control}
-          render={({field: {value}}) => (
-            <OptionContainer>
-              <Column>
-                <OptionTitle>{t('Total number of co-signers')}</OptionTitle>
-              </Column>
-              <CounterContainer>
-                <RemoveButton
-                  isDisabled={value <= 2}
-                  onPress={() => {
-                    const newValue = value - 1;
-                    if (newValue >= 2) {
-                      setValue('totalCopayers', newValue, {
-                        shouldValidate: true,
-                      });
-                      const requiredSignatures =
-                        getValues('requiredSignatures');
-                      if (requiredSignatures > newValue) {
-                        setValue('requiredSignatures', newValue, {
-                          shouldValidate: true,
-                        });
-                      }
-                    }
-                  }}>
-                  <MinusIcon color={value <= 2 ? Slate : undefined} />
-                </RemoveButton>
-                <RoundButton>
-                  <CounterNumber>{value}</CounterNumber>
-                </RoundButton>
-                <AddButton
-                  isDisabled={value >= 6}
-                  onPress={() => {
-                    const newValue = value + 1;
-                    if (newValue <= 6) {
-                      setValue('totalCopayers', newValue, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}>
-                  <PlusIcon color={value >= 6 ? Slate : undefined} />
-                </AddButton>
-              </CounterContainer>
-            </OptionContainer>
-          )}
-          name="totalCopayers"
-          defaultValue={3}
-        />
 
         {errors?.totalCopayers?.message && (
           <ErrorText>{errors?.totalCopayers?.message}</ErrorText>
@@ -908,21 +975,21 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
 
         <Banner
           type={'info'}
-          title={t("Don't lose access")}
+          title={t('Back up your wallet')}
           description={t(
-            "Your shared wallet uses an M-of-N setup. If the required number of co-signers are lost or unavailable, you will not be able to sign transactions or recover assets. Back up your wallet securely. BitPay can't recover your wallet or access your private keys.",
+            'If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them.',
+            {count: watchedTotalCopayers - watchedRequiredSignatures + 1},
           )}
         />
-
-        <CtaContainer>
-          <Button
-            buttonStyle={'primary'}
-            disabled={isSubmitting}
-            onPress={handleSubmit(onSubmit)}>
-            {t('Create Wallet')}
-          </Button>
-        </CtaContainer>
       </ScrollViewContainer>
+      <CtaContainer>
+        <Button
+          buttonStyle={'primary'}
+          disabled={isSubmitting}
+          onPress={handleSubmit(onSubmit)}>
+          {t('Create Wallet')}
+        </Button>
+      </CtaContainer>
     </MultisigContainer>
   );
 };

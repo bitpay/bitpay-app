@@ -98,9 +98,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
     {
       id: 'import',
       title: t('Import Key'),
-      description: t(
-        'Recover an existing key by entering your 12-word passphrase to access your wallets and accounts',
-      ),
+      description: t('Use a recovery phrase or file you already have'),
       cta: () => {
         dispatch(
           Analytics.track('Clicked Import Key', {

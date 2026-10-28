@@ -665,7 +665,8 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
             }}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                label={t('YOUR NAME')}
+                label={t('Your Name')}
+                placeholder={t('Visible to co-signers')}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
