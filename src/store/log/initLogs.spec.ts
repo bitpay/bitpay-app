@@ -105,6 +105,21 @@ describe('initLogs', () => {
     );
   });
 
+  it('redacts extended private keys logged without a field name', () => {
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(
+        'xprv9s21ZrQH143KfakeKey\nderive failed for tprv8ZgxMBicQKsPfakeKey at m/0',
+      ).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(JSON.parse(written)[0].message).toBe(
+      '[...]\nderive failed for [...] at m/0',
+    );
+  });
+
   it('keeps only the newest 500 entries', () => {
     const {add, drainAndDispatch} = getFreshModule();
     drainAndDispatch(jest.fn());
