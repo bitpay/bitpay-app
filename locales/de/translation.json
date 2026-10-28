@@ -2308,5 +2308,22 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Wenn Sie die BitPay-App löschen oder Ihr Gerät verlieren, benötigen Sie Ihre Wiederherstellungsphrase, um wieder Zugriff auf Ihr Guthaben zu erhalten.",
   "Some assets not charted": "Einige Assets nicht im Diagramm",
   "Not all assets are charted": "Nicht alle Assets sind im Diagramm",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin.",
+  "Each co-signer holds their own key.": "Jeder Mitunterzeichner besitzt einen eigenen Schlüssel.",
+  "Sign anytime": "Jederzeit signieren",
+  "One key, split across co-signers.": "Ein Schlüssel, aufgeteilt auf die Mitunterzeichner.",
+  "Sign together, online · BitPay only · Can’t edit later": "Gemeinsam online signieren · Nur BitPay · Später nicht änderbar",
+  "Shared Wallet Type": "Art des gemeinsamen Wallets",
+  "Use a recovery phrase or file you already have": "Verwenden Sie eine vorhandene Wiederherstellungsphrase oder Datei",
+  "Wallet Name": "Wallet-Name",
+  "e.g. Family Savings": "z. B. Familienersparnisse",
+  "Your Name": "Ihr Name",
+  "Visible to co-signers": "Für Mitunterzeichner sichtbar",
+  "Signing Rules": "Signaturregeln",
+  "Required to sign": "Erforderliche Signaturen",
+  "Total co-signers": "Mitunterzeichner insgesamt",
+  "Any {{m}} of {{n}} can approve": "Die Freigabe durch {{m}} der {{n}} genügt",
+  "Back up your wallet": "Sichern Sie Ihr Wallet",
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Wenn {{count}} Mitunterzeichner den Zugriff verliert, kann das Guthaben nicht mehr bewegt werden. BitPay kann es nicht wiederherstellen.",
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Wenn {{count}} Mitunterzeichner den Zugriff verlieren, kann das Guthaben nicht mehr bewegt werden. BitPay kann es nicht wiederherstellen."
 }
