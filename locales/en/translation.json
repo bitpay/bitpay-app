@@ -2301,5 +2301,22 @@
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.",
   "Retry": "Retry",
   "There are no wallets with enough funds on the {{network}} network.": "There are no wallets with enough funds on the {{network}} network.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.",
+  "Each co-signer holds their own key.": "Each co-signer holds their own key.",
+  "Sign anytime": "Sign anytime",
+  "One key, split across co-signers.": "One key, split across co-signers.",
+  "Sign together, online · BitPay only · Can’t edit later": "Sign together, online · BitPay only · Can’t edit later",
+  "Shared Wallet Type": "Shared Wallet Type",
+  "Use a recovery phrase or file you already have": "Use a recovery phrase or file you already have",
+  "Wallet Name": "Wallet Name",
+  "e.g. Family Savings": "e.g. Family Savings",
+  "Your Name": "Your Name",
+  "Visible to co-signers": "Visible to co-signers",
+  "Signing Rules": "Signing Rules",
+  "Required to sign": "Required to sign",
+  "Total co-signers": "Total co-signers",
+  "Any {{m}} of {{n}} can approve": "Any {{m}} of {{n}} can approve",
+  "Back up your wallet": "Back up your wallet",
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "If {{count}} co-signer loses access, funds can’t be moved. BitPay can’t recover them.",
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them."
 }

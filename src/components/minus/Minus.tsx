@@ -16,8 +16,8 @@ interface Props {
 const Minus: React.FC<MinusProps> = ({color}) => {
   const fill = color || SlateDark;
   return (
-    <Svg width="10px" height="1px" viewBox="0 0 16 2">
-      <Path stroke={fill} strokeWidth={3} d="M16,0 L0,0" />
+    <Svg width="10px" height="10px" viewBox="0 0 16 16">
+      <Path stroke={fill} strokeWidth={3} d="M16,8 L0,8" />
     </Svg>
   );
 };
