@@ -7,8 +7,12 @@
  * No Redux store or middleware is needed — reducers are pure functions.
  */
 
-import {appReducer, AppState} from './app.reducer';
+import {appReducer, appReduxPersistBlackList, AppState} from './app.reducer';
 import {AppActionTypes} from './app.types';
+import {
+  setShowKycGetVerifiedModal,
+  resetKycGetVerifiedModal,
+} from './app.actions';
 import {Network} from '../../constants';
 
 // ---------------------------------------------------------------------------
@@ -1060,5 +1064,82 @@ describe('appReducer — KYC home banner', () => {
       type: AppActionTypes.RESET_KYC_HOME_BANNER,
     });
     expect(reset.kycHomeBannerDismissed).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Get Verified (KYC) modal — show once per account, not on every launch
+// ---------------------------------------------------------------------------
+
+/**
+ * Before: the "already shown" flag (kycGetVerifiedModalShown) sat on the
+ * redux-persist blacklist, so it reset to false on every launch and the modal
+ * re-appeared each time the app started. After: we remember which accounts have
+ * seen it, persisted and keyed by BitPay ID eid, so it shows once per account
+ * and a different account is never suppressed by a previous one's dismissal.
+ */
+describe('appReducer — Get Verified modal', () => {
+  it('persists the per-account "shown" list (not blacklisted)', () => {
+    // The fix: this is what makes it stick across launches.
+    expect(appReduxPersistBlackList).not.toContain(
+      'kycGetVerifiedModalShownEids',
+    );
+    // The transient "is the modal open right now" flag stays blacklisted.
+    expect(appReduxPersistBlackList).toContain('showKycGetVerifiedModal');
+    // The old, every-launch boolean is gone.
+    expect(appReduxPersistBlackList).not.toContain('kycGetVerifiedModalShown');
+  });
+
+  it('starts with an empty shown list', () => {
+    expect(freshState().kycGetVerifiedModalShownEids).toEqual([]);
+  });
+
+  it('records the account eid when the modal is shown', () => {
+    const state = appReducer(
+      freshState(),
+      setShowKycGetVerifiedModal(true, 'eid-A'),
+    );
+    expect(state.showKycGetVerifiedModal).toBe(true);
+    expect(state.kycGetVerifiedModalShownEids).toEqual(['eid-A']);
+  });
+
+  it('does not record the same account twice', () => {
+    let state = appReducer(
+      freshState(),
+      setShowKycGetVerifiedModal(true, 'eid-A'),
+    );
+    state = appReducer(state, setShowKycGetVerifiedModal(false));
+    state = appReducer(state, setShowKycGetVerifiedModal(true, 'eid-A'));
+    expect(state.kycGetVerifiedModalShownEids).toEqual(['eid-A']);
+  });
+
+  it('keeps accounts independent — a different eid is still shown', () => {
+    let state = appReducer(
+      freshState(),
+      setShowKycGetVerifiedModal(true, 'eid-A'),
+    );
+    state = appReducer(state, setShowKycGetVerifiedModal(true, 'eid-B'));
+    expect(state.kycGetVerifiedModalShownEids).toEqual(['eid-A', 'eid-B']);
+  });
+
+  it('hiding the modal (no eid) leaves the shown list untouched', () => {
+    let state = appReducer(
+      freshState(),
+      setShowKycGetVerifiedModal(true, 'eid-A'),
+    );
+    state = appReducer(state, setShowKycGetVerifiedModal(false));
+    expect(state.showKycGetVerifiedModal).toBe(false);
+    expect(state.kycGetVerifiedModalShownEids).toEqual(['eid-A']);
+  });
+
+  it('logout (reset) hides the modal but keeps the per-account memory', () => {
+    let state = appReducer(
+      freshState(),
+      setShowKycGetVerifiedModal(true, 'eid-A'),
+    );
+    state = appReducer(state, resetKycGetVerifiedModal());
+    expect(state.showKycGetVerifiedModal).toBe(false);
+    // Survives logout, so re-login to the same account does not re-prompt.
+    expect(state.kycGetVerifiedModalShownEids).toEqual(['eid-A']);
   });
 });

@@ -438,10 +438,11 @@ export const resetKycHomeBanner = (): AppActionType => ({
 });
 
 export const setShowKycGetVerifiedModal = (
-  payload: boolean,
+  show: boolean,
+  eid?: string,
 ): AppActionType => ({
   type: AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL,
-  payload,
+  payload: {show, eid},
 });
 
 export const resetKycGetVerifiedModal = (): AppActionType => ({

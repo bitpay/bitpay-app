@@ -55,7 +55,9 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showArchaxBanner',
   'hasViewedTSSOnboarding',
   'showKycGetVerifiedModal',
-  'kycGetVerifiedModalShown',
+  // NOTE: kycGetVerifiedModalShownEids is intentionally NOT blacklisted — it must
+  // persist so the Get Verified modal shows once per account instead of on every
+  // app launch.
 ];
 
 export type ModalId =
@@ -177,7 +179,10 @@ export interface AppState {
   dismissedMarketingCardIds: string[];
   kycHomeBannerDismissed: boolean;
   showKycGetVerifiedModal: boolean;
-  kycGetVerifiedModalShown: boolean;
+  // Account eids (BitPay ID) that have already been shown the Get Verified modal.
+  // Keyed by eid and persisted, so the prompt appears once per account and a
+  // different account is never suppressed by a previous one's dismissal.
+  kycGetVerifiedModalShownEids: string[];
 }
 
 const initialState: AppState = {
@@ -282,7 +287,7 @@ const initialState: AppState = {
   dismissedMarketingCardIds: [],
   kycHomeBannerDismissed: false,
   showKycGetVerifiedModal: false,
-  kycGetVerifiedModalShown: false,
+  kycGetVerifiedModalShownEids: [],
 };
 
 export const appReducer = (
@@ -853,16 +858,23 @@ export const appReducer = (
     case AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL:
       return {
         ...state,
-        showKycGetVerifiedModal: action.payload,
-        kycGetVerifiedModalShown:
-          action.payload || state.kycGetVerifiedModalShown,
+        showKycGetVerifiedModal: action.payload.show,
+        // Remember this account was shown the modal (on show, so a crash before
+        // dismiss doesn't re-prompt). Deduped; other accounts are untouched.
+        kycGetVerifiedModalShownEids:
+          action.payload.show &&
+          action.payload.eid &&
+          !state.kycGetVerifiedModalShownEids.includes(action.payload.eid)
+            ? [...state.kycGetVerifiedModalShownEids, action.payload.eid]
+            : state.kycGetVerifiedModalShownEids,
       };
 
     case AppActionTypes.RESET_KYC_GET_VERIFIED_MODAL:
+      // Only hides the modal. The per-account "shown" list deliberately survives
+      // logout (like the KYC banner ack), so re-login doesn't re-prompt.
       return {
         ...state,
         showKycGetVerifiedModal: false,
-        kycGetVerifiedModalShown: false,
       };
 
     default:

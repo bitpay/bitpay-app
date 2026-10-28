@@ -473,7 +473,8 @@ interface ResetKycHomeBanner {
 
 interface SetShowKycGetVerifiedModal {
   type: typeof AppActionTypes.SET_SHOW_KYC_GET_VERIFIED_MODAL;
-  payload: boolean;
+  // eid is the account being shown the modal; passed only when show is true.
+  payload: {show: boolean; eid?: string};
 }
 
 interface ResetKycGetVerifiedModal {

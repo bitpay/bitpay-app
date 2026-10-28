@@ -122,7 +122,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
   const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
   const appLocked = showPinModal || showBiometricModal;
-  const kycModalShown = useAppSelector(({APP}) => APP.kycGetVerifiedModalShown);
+  const currentEid = useAppSelector(
+    ({BITPAY_ID, APP}) => BITPAY_ID.user?.[APP.network]?.eid ?? null,
+  );
+  const kycModalShownEids = useAppSelector(
+    ({APP}) => APP.kycGetVerifiedModalShownEids,
+  );
 
   const portfolioAllocationTotalFiat = useMemo(() => {
     return getPortfolioAllocationTotalFiat({
@@ -271,16 +276,20 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
-  // Get Verified modal
+  // Get Verified modal — shown once per account, not on every app launch. The
+  // "already shown" memory is keyed by the account's eid and persisted, so a
+  // different account that signs in later still sees it.
   useEffect(() => {
-    if (canStartKyc && isFocused && !appLocked && !kycModalShown) {
+    const alreadyShown =
+      !!currentEid && kycModalShownEids.includes(currentEid);
+    if (canStartKyc && isFocused && !appLocked && !!currentEid && !alreadyShown) {
       const timer = setTimeout(
-        () => dispatch(setShowKycGetVerifiedModal(true)),
+        () => dispatch(setShowKycGetVerifiedModal(true, currentEid)),
         1000,
       );
       return () => clearTimeout(timer);
     }
-  }, [dispatch, canStartKyc, isFocused, appLocked, kycModalShown]);
+  }, [dispatch, canStartKyc, isFocused, appLocked, currentEid, kycModalShownEids]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
