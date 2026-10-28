@@ -132,7 +132,6 @@ const headerStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexShrink: 1,
-    paddingRight: 48,
   },
   portfolioBalanceTitle: {
     marginRight: 3,
@@ -670,6 +669,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       ) : null}
       <PortfolioTopContent $leftAligned={shouldLeftAlignTopSection}>
         <PortfolioBalanceHeader
+          style={{paddingRight: shouldLeftAlignTopSection ? 48 : 0}}
           activeOpacity={ActiveOpacity}
           testID="portfolio-balance-info-button"
           accessibilityLabel={t('Portfolio balance info')}
