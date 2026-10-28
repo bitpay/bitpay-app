@@ -1,11 +1,23 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import {ShopScrollContext} from '../shopScroll';
 import {debounce} from '../../../../utils/debounce';
 import {useTheme} from '../../../../contexts';
 import {uniqBy} from '../../../../utils/array';
 import {Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useForm, Controller} from 'react-hook-form';
-import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  HEIGHT,
+  WIDTH,
+} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {
   BaseText,
@@ -106,6 +118,29 @@ const Curations = ({
     </>
   );
 };
+// "All Gift Cards" mounted every card at once — hundreds of rows, each with
+// a remote image — so opening Shop produced two 500–600 ms UI-thread frames on
+// a mid-range phone, almost all of it recording the draw of those views. Mount
+// only the rows the user can have scrolled to, plus a buffer: enough to cover
+// the scrolled distance and the viewport as if the list started at the top of
+// the scroll content (it starts lower, so this errs towards rendering early).
+// The scroll height is computed from the full count, so layout never moves.
+const GIFT_CARD_ITEM_HEIGHT = 87; // matches ShopHome's height estimate
+const GIFT_CARD_RENDER_BUFFER = 20;
+const noopSubscribe = () => () => {};
+
+const useRenderedGiftCardCount = (total: number): number => {
+  const signal = useContext(ShopScrollContext);
+  // Bucketed so a scroll only re-renders the list when it needs more rows.
+  const rowsReached = useSyncExternalStore(
+    signal?.subscribe ?? noopSubscribe,
+    () =>
+      Math.ceil(((signal?.get() ?? 0) + HEIGHT) / GIFT_CARD_ITEM_HEIGHT / 10) *
+      10,
+  );
+  return Math.min(total, rowsReached + GIFT_CARD_RENDER_BUFFER);
+};
+
 interface CategoryWithGiftCards extends Category {
   giftCards: CardConfig[];
 }
@@ -170,6 +205,9 @@ export default ({
   );
   const [selectedGiftCards, setSelectedGiftCards] =
     useState(availableGiftCards);
+  const renderedGiftCardCount = useRenderedGiftCardCount(
+    selectedGiftCards.length,
+  );
   const numSelectedCategories = getNumSelectedCategories(selectedCategoryMap);
   const {control} = useForm();
   const activeGiftCards = purchasedGiftCards.filter(
@@ -358,18 +396,20 @@ export default ({
                 </SectionHeaderContainer>
               </SectionContainer>
               <SearchResults>
-                {selectedGiftCards.map((cardConfig: CardConfig) => (
-                  <ListItemTouchableHighlight
-                    key={cardConfig.name}
-                    onPress={() => {
-                      navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
-                        cardConfig,
-                      });
-                    }}
-                    underlayColor={underlayColor}>
-                    <GiftCardItem cardConfig={cardConfig} />
-                  </ListItemTouchableHighlight>
-                ))}
+                {selectedGiftCards
+                  .slice(0, renderedGiftCardCount)
+                  .map((cardConfig: CardConfig) => (
+                    <ListItemTouchableHighlight
+                      key={cardConfig.name}
+                      onPress={() => {
+                        navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                          cardConfig,
+                        });
+                      }}
+                      underlayColor={underlayColor}>
+                      <GiftCardItem cardConfig={cardConfig} />
+                    </ListItemTouchableHighlight>
+                  ))}
               </SearchResults>
             </HideableView>
           </>

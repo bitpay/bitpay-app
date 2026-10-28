@@ -22,10 +22,12 @@ jest.mock('../../utils/portfolio/assets', () => ({
 }));
 
 import {
+  PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
   PORTFOLIO_QUARANTINE_RETRY_INTERVAL_MS,
   buildPortfolioExcessiveBalanceMismatchMarker,
   getPortfolioPopulateDecisionForWallet,
   getPortfolioPopulateDecisionsForWallets,
+  stampMismatchVerifiedAfterPopulate,
 } from './portfolioStaleness';
 import {SNAPSHOT_INVALID_HISTORY_RETRY_INTERVAL_MS} from '../core/pnl/invalidHistory';
 
@@ -396,6 +398,268 @@ describe('portfolioStaleness', () => {
     expect(decision.shouldPopulate).toBe(true);
     expect(decision.reason).toBe('balance_mismatch');
     expect(decision.mismatch?.deltaAtomic).toBe('-50000000');
+  });
+
+  describe('after a populate that could not resolve the mismatch', () => {
+    const verifiedAt = 1_000_000;
+    const indexAt = (nextSkip: number) => ({
+      walletId: 'wallet-1',
+      checkpoint: {nextSkip},
+    });
+    // The live balance moved since the populate (interest on a rebasing
+    // token), so the delta differs, but the rebuilt history did not.
+    const driftedSincePopulate = (overrides: Record<string, unknown> = {}) =>
+      previousMismatch({
+        currentAtomic: '140000000',
+        deltaAtomic: '-40000000',
+        currentWalletBalance: '1.4',
+        delta: '-0.4',
+        verifiedAfterPopulateAt: verifiedAt,
+        verifiedCheckpointNextSkip: 40,
+        verifiedDeltaAtomic: '-40000000',
+        ...overrides,
+      });
+
+    it('skips populate when only the live balance drifted', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(false);
+      expect(decision.reason).toBe('unchanged_balance_mismatch');
+      // The new delta is recorded, and the verification carried forward so
+      // later launches keep skipping until the recheck interval passes.
+      expect(decision.mismatch).toMatchObject({
+        deltaAtomic: '-50000000',
+        verifiedAfterPopulateAt: verifiedAt,
+        verifiedCheckpointNextSkip: 40,
+        verifiedDeltaAtomic: '-40000000',
+      });
+    });
+
+    it('populates again once the recheck interval has passed', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+      expect(decision.mismatch?.verifiedAfterPopulateAt).toBeUndefined();
+    });
+
+    it('populates when the computed balance changed', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({computedAtomic: '90000000'}),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('populates when the snapshot checkpoint moved', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(41),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('populates on a user refresh even while only the live balance drifted', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+        forceRetryQuarantined: true,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    // The skipped decision's mismatch is what gets persisted and passed back
+    // as previousMismatch on the next check, so these replay that sequence
+    // rather than starting from a hand-built record.
+    const persistSkippedDrift = async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+      const skipped = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate(),
+        nowMs: verifiedAt + 60_000,
+      });
+      expect(skipped.shouldPopulate).toBe(false);
+      expect(skipped.mismatch?.deltaAtomic).toBe('-50000000');
+      return {client, persisted: skipped.mismatch};
+    };
+
+    it('populates on a user refresh after a drift skip was persisted', async () => {
+      const {client, persisted} = await persistSkippedDrift();
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: persisted,
+        nowMs: verifiedAt + 120_000,
+        forceRetryQuarantined: true,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('populates after the recheck interval once a drift skip was persisted', async () => {
+      const {client, persisted} = await persistSkippedDrift();
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: persisted,
+        nowMs: verifiedAt + PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('keeps skipping repeated drift checks inside the recheck interval', async () => {
+      const {client, persisted} = await persistSkippedDrift();
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: persisted,
+        nowMs: verifiedAt + 120_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(false);
+      expect(decision.reason).toBe('unchanged_balance_mismatch');
+      expect(decision.mismatch).toMatchObject({
+        verifiedAfterPopulateAt: verifiedAt,
+        verifiedDeltaAtomic: '-40000000',
+      });
+    });
+
+    it('skips after the recheck interval while the delta is still the one populate left', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({
+          verifiedDeltaAtomic: '-50000000',
+        }),
+        nowMs: verifiedAt + PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
+      });
+
+      expect(decision.shouldPopulate).toBe(false);
+      expect(decision.reason).toBe('unchanged_balance_mismatch');
+    });
+
+    it('does not treat a verified record without its populate delta as unchanged', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({
+          deltaAtomic: '-50000000',
+          verifiedDeltaAtomic: undefined,
+        }),
+        nowMs: verifiedAt + PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
+
+    it('records the delta populate left when stamping verification', () => {
+      expect(
+        stampMismatchVerifiedAfterPopulate(
+          previousMismatch(),
+          indexAt(40) as any,
+          verifiedAt,
+        ),
+      ).toMatchObject({
+        deltaAtomic: '-50000000',
+        verifiedAfterPopulateAt: verifiedAt,
+        verifiedCheckpointNextSkip: 40,
+        verifiedDeltaAtomic: '-50000000',
+      });
+    });
+
+    it('repopulates through the persisted mismatch map after a refresh', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+      const nowSpy = jest.spyOn(Date, 'now');
+      try {
+        nowSpy.mockReturnValue(verifiedAt + 60_000);
+        const first = await getPortfolioPopulateDecisionsForWallets({
+          client,
+          wallets: [wallet],
+          getUnitDecimals: () => 8,
+          previousMismatchByWalletId: {'wallet-1': driftedSincePopulate()},
+        });
+        expect(first.walletIdsToPopulate).toEqual([]);
+
+        nowSpy.mockReturnValue(verifiedAt + 120_000);
+        const refreshed = await getPortfolioPopulateDecisionsForWallets({
+          client,
+          wallets: [wallet],
+          getUnitDecimals: () => 8,
+          previousMismatchByWalletId: first.mismatchByWalletId,
+          forceRetryQuarantined: true,
+        });
+        expect(refreshed.walletIdsToPopulate).toEqual(['wallet-1']);
+      } finally {
+        nowSpy.mockRestore();
+      }
+    });
+
+    it('keeps the old behaviour for mismatches recorded before verification existed', async () => {
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({
+          verifiedAfterPopulateAt: undefined,
+          verifiedCheckpointNextSkip: undefined,
+        }),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
+    });
   });
 
   it('suppresses auto-populate when invalid history is still under cooldown', async () => {

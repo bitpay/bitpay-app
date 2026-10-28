@@ -15,6 +15,30 @@ import {
 } from '../../../utils/helper-methods';
 import {tokenManager} from '../../../managers/TokenManager';
 
+/**
+ * Look a token up the way `{...tokenDataByAddress, ...custom,
+ * ...BitpaySupportedTokens}[key]` did — later sources win, own properties
+ * only — without copying ~21k 1inch entries into a new object on every call.
+ * GetPrecision runs for every formatted balance, so the copy was paid per
+ * wallet per render.
+ */
+const lookupTokenData = (
+  key: string,
+  customTokenDataByAddress: {[key: string]: any} | undefined,
+): any => {
+  const sources = [
+    BitpaySupportedTokens,
+    customTokenDataByAddress,
+    tokenManager.getTokenOptions().tokenDataByAddress,
+  ];
+  for (const source of sources) {
+    if (source && Object.prototype.hasOwnProperty.call(source, key)) {
+      return (source as any)[key];
+    }
+  }
+  return undefined;
+};
+
 export const GetProtocolPrefix = (
   network: string = 'livenet',
   chain: string,
@@ -47,15 +71,8 @@ export const GetPrecision =
     const {
       WALLET: {customTokenDataByAddress},
     } = getState();
-    const {tokenDataByAddress} = tokenManager.getTokenOptions();
-
-    const tokens = {
-      ...tokenDataByAddress,
-      ...customTokenDataByAddress,
-      ...BitpaySupportedTokens,
-    };
     const currencyName = getCurrencyAbbreviation(tokenAddress, chain);
-    return tokens[currencyName]?.unitInfo;
+    return lookupTokenData(currencyName, customTokenDataByAddress)?.unitInfo;
   };
 
 export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
@@ -182,18 +199,12 @@ export const GetName =
     const {
       WALLET: {customTokenDataByAddress},
     } = getState();
-    const {tokenDataByAddress} = tokenManager.getTokenOptions();
-    const tokens = {
-      ...tokenDataByAddress,
-      ...customTokenDataByAddress,
-      ...BitpaySupportedTokens,
-    };
     if (tokenAddress) {
       const currencyName = getCurrencyAbbreviation(
         tokenAddress ? tokenAddress : currencyAbbreviation,
         chain,
       );
-      return tokens[currencyName]?.name;
+      return lookupTokenData(currencyName, customTokenDataByAddress)?.name;
     } else {
       const coin = SupportedCoinsOptions.find(
         ({chain: _chain}) => _chain === chain,

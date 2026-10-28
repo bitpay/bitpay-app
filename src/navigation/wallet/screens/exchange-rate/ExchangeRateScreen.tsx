@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import type {GraphPoint} from 'react-native-graph';
 import {useTheme} from '../../../../contexts';
+import BalanceChartSkeleton from '../../../../components/charts/BalanceChartSkeleton';
 import ChartSelectionDot from '../../../../components/charts/ChartSelectionDot';
 import InteractiveLineChart from '../../../../components/charts/InteractiveLineChart';
 import TimeframeSelector from '../../../../components/charts/TimeframeSelector';
@@ -46,6 +47,12 @@ type ExchangeRateScreenProps = {
 };
 
 const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
+  // React Compiler opt-out: displayDataRef / quoteCurrencyRef /
+  // currencyAbbreviationRef are written during render because the axis label
+  // components from useStableChartAxisLabels read them while rendering in the
+  // same pass. Moving the writes into an effect would render the min/max
+  // labels with the previous chart data, so keep the render-time writes.
+  'use no memo';
   const {t} = useTranslation();
   const theme = useTheme();
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
@@ -55,6 +62,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
   const [displayData, setDisplayData] =
     useState<ChartDataType>(defaultDisplayData);
   const displayDataRef = useRef(displayData);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   displayDataRef.current = displayData;
   const gestureStarted = useRef(false);
   const [selectedPoint, setSelectedPoint] = useState<
@@ -104,6 +112,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
         intervals: [...FIAT_RATE_SERIES_CACHED_INTERVALS],
         hasValidNormalizedCoin: shared.hasValidNormalizedCoin,
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on historicalRateIdentity's only fields (chain, tokenAddress) instead of object identity
     [
       shared.hasValidNormalizedCoin,
       shared.historicalRateIdentity.chain,
@@ -211,6 +220,7 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
       typeof pointsForChartRaw !== 'undefined' &&
       typeof derivedDisplayData !== 'undefined'
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- displayData intentionally lags derived data and is kept while the series cache reloads
       setDisplayData(derivedDisplayData);
       setIsChartLoading(false);
       return;
@@ -343,12 +353,15 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
 
   const chartPoints = displayData.data;
   const currencyAbbreviationRef = useRef(shared.currencyAbbreviation);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   currencyAbbreviationRef.current = shared.currencyAbbreviation;
   const quoteCurrencyRef = useRef(shared.resolvedQuoteCurrency);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   quoteCurrencyRef.current = shared.resolvedQuoteCurrency;
 
   useEffect(() => {
     gestureStarted.current = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the scrub selection after the new chart points commit, alongside the gesture ref reset
     setSelectedPoint(undefined);
   }, [chartPoints]);
 
@@ -482,6 +495,13 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
             SelectionDot={ChartSelectionDot}
             color={shared.chartLineColor}
             isLoading={isChartLoading}
+            // No line yet: show the ghost-line skeleton. With a line, the
+            // chart dims it and morphs to the new range instead.
+            placeholder={
+              isChartLoading && chartPoints.length < 2 ? (
+                <BalanceChartSkeleton />
+              ) : undefined
+            }
           />
 
           <UkExchangeRateDisclosures />

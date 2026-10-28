@@ -16,11 +16,17 @@ interface CurrencySelectionSearchInputProps {
 const CurrencySelectionSearchInput: React.FC<
   CurrencySelectionSearchInputProps
 > = props => {
+  // React Compiler opt-out: the debounced search reads queryRef.current when it
+  // fires to skip stale searches after the query was cleared. The compiler
+  // cannot prove a ref-reading callback passed to debounce() isn't invoked
+  // during render, and avoiding the ref would change which searches fire.
+  'use no memo';
   const theme = useTheme();
   const {t} = useTranslation();
   const {debounceWait, onSearch} = props;
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   queryRef.current = query;
 
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
@@ -34,6 +40,7 @@ const CurrencySelectionSearchInput: React.FC<
       return fn;
     }
 
+    // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
     return debounce((text: string) => {
       if (queryRef.current) {
         fn(text);

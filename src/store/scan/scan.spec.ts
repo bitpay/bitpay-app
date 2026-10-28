@@ -2,7 +2,7 @@ import * as appActions from '../app/app.actions';
 import {logManager} from '../../managers/LogManager';
 import * as Root from '../../Root';
 import * as PayPro from '../wallet/effects/paypro/paypro';
-import {incomingData, setBuyerProvidedEmail, goToAmount} from './scan.effects';
+import {incomingData, setBuyerProvidedEmail} from './scan.effects';
 import configureTestStore from '@test/store';
 import axios from 'axios';
 import {BwcProvider} from '@/lib/bwc';
@@ -1356,7 +1356,7 @@ describe('incomingData', () => {
   it('Should handle any type of address/coin using BitPay URI', async () => {
     const extractAddress = (data: string) => {
       const address = data.replace(/^[a-z]+:/i, '').replace(/\?.*/, '');
-      const params = /([\?\&]+[a-z]+=(\d+([\,\.]\d+)?))+/i;
+      const params = /([?&]+[a-z]+=(\d+([,.]\d+)?))+/i;
       return address.replace(params, '');
     };
 

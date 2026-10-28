@@ -1,3 +1,6 @@
+/** Fade used for chart chrome (axis labels, change row) appearing/hiding. */
+export const ZERO_BALANCE_AXIS_LABEL_FADE_MS = 180;
+
 const AXIS_LABEL_HORIZONTAL_PADDING = 5;
 
 export const getChartAxisLabelPointRatio = (

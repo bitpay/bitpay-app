@@ -48,6 +48,24 @@
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:networkSecurityConfig="@xml/network_security_config"
       android:requestLegacyExternalStorage="true">
+      <profileable android:shell="${perfProfileableShell}" android:enabled="${perfProfileableShell}" tools:targetApi="29" />
+
+        <!--
+          CameraX (via react-native-vision-camera) declares the optional OEM
+          camera-extensions library, which binds the vendor's jar onto the
+          app's class path. Motorola's jar bundles androidx classes that
+          collide with the app's own, and its runtime path differs from the
+          one dexopt recorded, so ART rejects the app's compiled code ("Found
+          duplicate classes, falling back to extracting from APK") and every
+          launch runs from raw dex: ~630 ms more before Application.onCreate,
+          then interpreted/JIT code and runtime class verification throughout.
+          The QR scanner uses no HDR/low-light vendor extensions, and CameraX
+          treats a missing extensions library as "no extensions", exactly as
+          on the many devices that ship none.
+        -->
+        <uses-library
+            android:name="androidx.camera.extensions.impl"
+            tools:node="remove" />
 
         <activity
           android:name=".LaunchActivity"

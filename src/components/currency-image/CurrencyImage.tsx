@@ -31,6 +31,13 @@ const styles = StyleSheet.create({
   badge: {
     height: '100%',
     width: '100%',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  // Remote token logos are often square artwork; clip every asset icon to a
+  // circle so they match the bundled (already round) currency icons.
+  roundClip: {
+    overflow: 'hidden',
   },
 });
 
@@ -79,37 +86,42 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
     [badgeSrc, badgeUri],
   );
 
+  const image =
+    (!img && !imgSrc) || imageError ? (
+      <DefaultImage {...dimensions} />
+    ) : typeof img === 'function' ? (
+      img(dimensions)
+    ) : imgSrc ? (
+      <FastImage
+        style={dimensions}
+        source={imgSrc}
+        resizeMode={FastImage.resizeMode.cover}
+        onError={() => setImageError(true)}
+      />
+    ) : typeof img === 'string' && img !== 'contact' ? (
+      <FastImage
+        style={dimensions}
+        source={{
+          uri: img,
+          priority: FastImage.priority.normal,
+        }}
+        resizeMode={FastImage.resizeMode.contain}
+        onError={() => setImageError(true)}
+      />
+    ) : (
+      <DefaultImage {...dimensions} />
+    );
+
   return (
     <View style={styles.currencyImageContainer}>
       {blockie ? (
         <Blockie size={blockie.size ?? size} seed={blockie.seed ?? 'random'} />
-      ) : (!img && !imgSrc) || imageError ? (
-        <DefaultImage {...dimensions} />
-      ) : typeof img === 'function' ? (
-        img(dimensions)
-      ) : imgSrc ? (
-        <FastImage
-          style={dimensions}
-          source={imgSrc}
-          resizeMode={FastImage.resizeMode.cover}
-          onError={() => setImageError(true)}
-        />
-      ) : typeof img === 'string' ? (
-        img === 'contact' ? (
-          <ProfileIcon size={20} />
-        ) : (
-          <FastImage
-            style={dimensions}
-            source={{
-              uri: img,
-              priority: FastImage.priority.normal,
-            }}
-            resizeMode={FastImage.resizeMode.contain}
-            onError={() => setImageError(true)}
-          />
-        )
+      ) : img === 'contact' && !imgSrc ? (
+        <ProfileIcon size={20} />
       ) : (
-        <DefaultImage {...dimensions} />
+        <View style={[styles.roundClip, dimensions, {borderRadius: size / 2}]}>
+          {image}
+        </View>
       )}
 
       {badge}

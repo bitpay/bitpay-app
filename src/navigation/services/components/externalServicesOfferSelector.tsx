@@ -555,8 +555,6 @@ const ExternalServicesOfferSelector: React.FC<
   buyCryptoConfig,
   sellCryptoConfig,
   preLoadSellPartnersData,
-  useSendMax,
-  sendMaxInfo,
   preSetPartner,
   preLoadPartnersData,
   refreshTrigger,
@@ -570,7 +568,7 @@ const ExternalServicesOfferSelector: React.FC<
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
@@ -843,7 +841,7 @@ const ExternalServicesOfferSelector: React.FC<
 
   // Get Buy Quotes
 
-  const getBanxaQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getBanxaQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Banxa getting quote');
 
     if (buyCryptoConfig?.banxa?.disabled) {
@@ -997,18 +995,18 @@ const ExternalServicesOfferSelector: React.FC<
           target: getBanxaCoinFormat(coin),
           source_amount: offers.banxa.fiatAmount,
           payment_method_id: offers.banxa.paymentMethodId,
-          account_reference: user?.eid ?? selectedWallet.id,
-          blockchain: getBanxaChainFormat(selectedWallet.chain),
+          account_reference: user?.eid ?? quoteWallet.id,
+          blockchain: getBanxaChainFormat(quoteWallet.chain),
         };
 
         const BANXA_TIMEOUT = 8000; // 8 seconds
-        const timeoutPromise = new Promise((_, reject) =>
+        const timeoutPromise = new Promise((_resolve, reject) =>
           setTimeout(
             () => reject(new Error(t('Banxa request timed out'))),
             BANXA_TIMEOUT,
           ),
         );
-        const requestPromise = selectedWallet.banxaGetQuote(requestData);
+        const requestPromise = quoteWallet.banxaGetQuote(requestData);
         const _data = await Promise.race([requestPromise, timeoutPromise]);
         const quoteData: BanxaQuoteData = (_data as any)?.body ?? _data;
         if (quoteData?.data?.prices?.[0]?.coin_amount) {
@@ -1022,7 +1020,7 @@ const ExternalServicesOfferSelector: React.FC<
           offers.banxa.buyAmount = offers.banxa.amountCost - offers.banxa.fee;
 
           const precision = dispatch(
-            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            GetPrecision(coin, chain, quoteWallet.tokenAddress),
           );
           if (offers.banxa.buyAmount && coin && precision) {
             offers.banxa.fiatMoney = Number(
@@ -1079,7 +1077,7 @@ const ExternalServicesOfferSelector: React.FC<
     setFinishedBanxa(true);
   };
 
-  const getMoonpayQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getMoonpayQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Moonpay getting quote');
 
     if (buyCryptoConfig?.moonpay?.disabled) {
@@ -1097,13 +1095,16 @@ const ExternalServicesOfferSelector: React.FC<
       ? fiatCurrency
       : 'USD';
 
-    let _paymentMethod: MoonpayPaymentType | undefined =
+    let moonpayPaymentMethod: MoonpayPaymentType | undefined =
       getMoonpayPaymentMethodFormat(paymentMethod?.method);
 
-    if (_paymentMethod === 'sepa_bank_transfer' || _paymentMethod === 'sepa') {
+    if (
+      moonpayPaymentMethod === 'sepa_bank_transfer' ||
+      moonpayPaymentMethod === 'sepa'
+    ) {
       // Moonpay only accepts EUR as a base currency for SEPA payments
       offers.moonpay.fiatCurrency = 'EUR';
-    } else if (_paymentMethod === 'cash_app') {
+    } else if (moonpayPaymentMethod === 'cash_app') {
       // Moonpay only accepts USD as a base currency for Cash App payments
       offers.moonpay.fiatCurrency = 'USD';
     }
@@ -1122,10 +1123,10 @@ const ExternalServicesOfferSelector: React.FC<
     const currencyLimitsrequestData: MoonpayGetCurrencyLimitsRequestData = {
       currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
         coin.toLowerCase(),
-        selectedWallet.chain,
+        quoteWallet.chain,
       ),
       baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
-      paymentMethod: _paymentMethod,
+      paymentMethod: moonpayPaymentMethod,
       areFeesIncluded: true,
       env: moonpayEnv,
     };
@@ -1160,7 +1161,7 @@ const ExternalServicesOfferSelector: React.FC<
         setFinishedMoonpay(true);
         return;
       }
-    } catch (err) {
+    } catch {
       logger.warn(
         `It was not possible to get currency limits for Moonpay with the following values: ${JSON.stringify(
           currencyLimitsrequestData,
@@ -1182,7 +1183,7 @@ const ExternalServicesOfferSelector: React.FC<
     if (
       preferMoonpayApplePay &&
       isMoonpayEmbeddedPaymentMethod &&
-      selectedWallet
+      quoteWallet
     ) {
       const embeddedStatus = getMoonpayEmbeddedStatus();
       const cachedCredentials = getMoonpayEmbeddedCredentials();
@@ -1192,7 +1193,7 @@ const ExternalServicesOfferSelector: React.FC<
         isMoonpayEmbeddedCredentialsValid() &&
         cachedCredentials
       ) {
-        let _paymentMethod: MoonpayPaymentType | undefined =
+        let embeddedPaymentMethod: MoonpayPaymentType | undefined =
           getMoonpayPaymentMethodFormat(
             (paymentMethod?.method as PaymentMethodKey) ?? 'applePay',
             true,
@@ -1200,7 +1201,7 @@ const ExternalServicesOfferSelector: React.FC<
         let toAddress: string = '';
         try {
           toAddress = (await dispatch<any>(
-            createWalletAddress({wallet: selectedWallet, newAddress: false}),
+            createWalletAddress({wallet: quoteWallet, newAddress: false}),
           )) as string;
         } catch (err) {
           const errMsg =
@@ -1221,17 +1222,17 @@ const ExternalServicesOfferSelector: React.FC<
             accessToken: cachedCredentials.accessToken,
             destinationAddress: toAddress,
             currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
-              selectedWallet.currencyAbbreviation.toLowerCase(),
-              selectedWallet.chain,
+              quoteWallet.currencyAbbreviation.toLowerCase(),
+              quoteWallet.chain,
             ),
             baseCurrencyAmount: offers.moonpay.fiatAmount,
             baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
-            paymentMethod: _paymentMethod,
+            paymentMethod: embeddedPaymentMethod,
             areFeesIncluded: true,
           };
 
           const MOONPAY_TIMEOUT = 8000; // 8 seconds
-          const timeoutPromise = new Promise((_, reject) =>
+          const timeoutPromise = new Promise((_resolve, reject) =>
             setTimeout(
               () => reject(new Error(t('Moonpay request timed out'))),
               MOONPAY_TIMEOUT,
@@ -1295,7 +1296,7 @@ const ExternalServicesOfferSelector: React.FC<
               offers.moonpay.amountReceiving =
                 embeddedQuoteData.destination.amount;
               const precision = dispatch(
-                GetPrecision(coin, chain, selectedWallet.tokenAddress),
+                GetPrecision(coin, chain, quoteWallet.tokenAddress),
               );
               if (offers.moonpay.buyAmount && coin && precision) {
                 offers.moonpay.fiatMoney = Number(
@@ -1335,7 +1336,6 @@ const ExternalServicesOfferSelector: React.FC<
           showMoonpayError(_err, reason);
           return;
         }
-        return;
       }
     }
 
@@ -1344,24 +1344,24 @@ const ExternalServicesOfferSelector: React.FC<
       const requestData = {
         currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
           coin.toLowerCase(),
-          selectedWallet.chain,
+          quoteWallet.chain,
         ),
         baseCurrencyAmount: offers.moonpay.fiatAmount,
         // extraFeePercentage: 0, // min: 0 max: 10. If not provided, will use the default value set to our account.
         baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
-        paymentMethod: _paymentMethod,
+        paymentMethod: moonpayPaymentMethod,
         areFeesIncluded: true,
         env: moonpayEnv,
       };
 
       const MOONPAY_TIMEOUT = 8000; // 8 seconds
-      const timeoutPromise = new Promise((_, reject) =>
+      const timeoutPromise = new Promise((_resolve, reject) =>
         setTimeout(
           () => reject(new Error(t('Moonpay request timed out'))),
           MOONPAY_TIMEOUT,
         ),
       );
-      const requestPromise = selectedWallet.moonpayGetQuote(requestData);
+      const requestPromise = quoteWallet.moonpayGetQuote(requestData);
       const _data = await Promise.race([requestPromise, timeoutPromise]);
       const data: any = (_data as any)?.body ?? _data;
 
@@ -1402,7 +1402,7 @@ const ExternalServicesOfferSelector: React.FC<
             Number(data.totalAmount) - Number(data.baseCurrencyAmount);
 
           const precision = dispatch(
-            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            GetPrecision(coin, chain, quoteWallet.tokenAddress),
           );
           if (offers.moonpay.buyAmount && coin && precision) {
             offers.moonpay.fiatMoney = Number(
@@ -1462,7 +1462,7 @@ const ExternalServicesOfferSelector: React.FC<
     setFinishedMoonpay(true);
   };
 
-  const getRampQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getRampQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Ramp getting quote');
 
     if (buyCryptoConfig?.ramp?.disabled) {
@@ -1536,7 +1536,7 @@ const ExternalServicesOfferSelector: React.FC<
           return;
         }
       }
-    } catch (err) {
+    } catch {
       logger.warn(
         'Ramp warning: Could not get assets data from Ramp. Continue anyways',
       );
@@ -1551,13 +1551,13 @@ const ExternalServicesOfferSelector: React.FC<
       };
 
       const RAMP_TIMEOUT = 8000; // 8 seconds
-      const timeoutPromise = new Promise((_, reject) =>
+      const timeoutPromise = new Promise((_resolve, reject) =>
         setTimeout(
           () => reject(new Error(t('Ramp request timed out'))),
           RAMP_TIMEOUT,
         ),
       );
-      const requestPromise = selectedWallet.rampGetQuote(requestData);
+      const requestPromise = quoteWallet.rampGetQuote(requestData);
       const _data: any = await Promise.race([requestPromise, timeoutPromise]);
       const data: RampQuoteRequestData = _data?.body ?? _data;
 
@@ -1623,7 +1623,7 @@ const ExternalServicesOfferSelector: React.FC<
           offers.ramp.fee = Number(paymentMethodData.appliedFee);
 
           const precision = dispatch(
-            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            GetPrecision(coin, chain, quoteWallet.tokenAddress),
           );
           let decimals: number | undefined;
 
@@ -1699,7 +1699,7 @@ const ExternalServicesOfferSelector: React.FC<
     setFinishedRamp(true);
   };
 
-  const getSardineQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getSardineQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Sardine getting quote');
 
     if (buyCryptoConfig?.sardine?.disabled) {
@@ -1738,7 +1738,7 @@ const ExternalServicesOfferSelector: React.FC<
         min: sardineCurrencyLimitsData.minAmount,
         max: sardineCurrencyLimitsData.maxAmount,
       };
-    } catch (err) {
+    } catch {
       offers.sardine.amountLimits = dispatch(
         getBuyCryptoFiatLimits('sardine', offers.sardine.fiatCurrency),
       );
@@ -1769,7 +1769,7 @@ const ExternalServicesOfferSelector: React.FC<
         const requestData: SardineGetQuoteRequestData = {
           env: sardineEnv,
           asset_type: getSardineCoinFormat(coin),
-          network: getSardineChainFormat(selectedWallet.chain) ?? '',
+          network: getSardineChainFormat(quoteWallet.chain) ?? '',
           total: offers.sardine.fiatAmount.toString(),
           currency: offers.sardine.fiatCurrency.toUpperCase(),
           paymentType:
@@ -1779,13 +1779,13 @@ const ExternalServicesOfferSelector: React.FC<
         };
 
         const SARDINE_TIMEOUT = 8000; // 8 seconds
-        const timeoutPromise = new Promise((_, reject) =>
+        const timeoutPromise = new Promise((_resolve, reject) =>
           setTimeout(
             () => reject(new Error(t('Sardine request timed out'))),
             SARDINE_TIMEOUT,
           ),
         );
-        const requestPromise = selectedWallet.sardineGetQuote(requestData);
+        const requestPromise = quoteWallet.sardineGetQuote(requestData);
         const _data = await Promise.race([requestPromise, timeoutPromise]);
         const data: any = (_data as any)?.body ?? _data;
 
@@ -1798,7 +1798,7 @@ const ExternalServicesOfferSelector: React.FC<
           offers.sardine.fee = data.total - data.subtotal;
 
           const precision = dispatch(
-            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            GetPrecision(coin, chain, quoteWallet.tokenAddress),
           );
           if (offers.sardine.buyAmount && coin && precision) {
             offers.sardine.fiatMoney = Number(
@@ -1855,7 +1855,7 @@ const ExternalServicesOfferSelector: React.FC<
     setFinishedSardine(true);
   };
 
-  const getSimplexQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getSimplexQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Simplex getting quote');
 
     if (buyCryptoConfig?.simplex?.disabled) {
@@ -1923,11 +1923,11 @@ const ExternalServicesOfferSelector: React.FC<
 
       try {
         const requestData: SimplexGetQuoteRequestData = {
-          digital_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
+          digital_currency: getSimplexCoinFormat(coin, quoteWallet.chain),
           fiat_currency: offers.simplex.fiatCurrency.toUpperCase(),
           requested_currency: offers.simplex.fiatCurrency.toUpperCase(),
           requested_amount: offers.simplex.fiatAmount,
-          end_user_id: selectedWallet.id,
+          end_user_id: quoteWallet.id,
           env: simplexEnv,
         };
 
@@ -1936,13 +1936,13 @@ const ExternalServicesOfferSelector: React.FC<
         }
 
         const SIMPLEX_TIMEOUT = 8000; // 8 seconds
-        const timeoutPromise = new Promise((_, reject) =>
+        const timeoutPromise = new Promise((_resolve, reject) =>
           setTimeout(
             () => reject(new Error(t('Simplex request timed out'))),
             SIMPLEX_TIMEOUT,
           ),
         );
-        const requestPromise = selectedWallet.simplexGetQuote(requestData);
+        const requestPromise = quoteWallet.simplexGetQuote(requestData);
         const _data = await Promise.race([requestPromise, timeoutPromise]);
         const data: any = (_data as any)?.body ?? _data;
 
@@ -1956,7 +1956,7 @@ const ExternalServicesOfferSelector: React.FC<
             data.fiat_money.total_amount - data.fiat_money.base_amount;
 
           const precision = dispatch(
-            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            GetPrecision(coin, chain, quoteWallet.tokenAddress),
           );
           if (offers.simplex.buyAmount && coin && precision) {
             offers.simplex.fiatMoney = Number(
@@ -2013,7 +2013,7 @@ const ExternalServicesOfferSelector: React.FC<
     setFinishedSimplex(true);
   };
 
-  const getTransakQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getTransakQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Transak getting quote');
 
     if (buyCryptoConfig?.transak?.disabled) {
@@ -2075,7 +2075,7 @@ const ExternalServicesOfferSelector: React.FC<
         min: transakSelectedPaymentMethodData.minAmount,
         max: transakSelectedPaymentMethodData.maxAmount,
       };
-    } catch (err) {
+    } catch {
       offers.transak.amountLimits = dispatch(
         getBuyCryptoFiatLimits(
           'transak',
@@ -2111,7 +2111,7 @@ const ExternalServicesOfferSelector: React.FC<
           env: transakEnv,
           fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
           cryptoCurrency: getTransakCoinFormat(coin),
-          network: getTransakChainFormat(selectedWallet.chain) ?? 'mainnet', // TODO: review 'mainnet'
+          network: getTransakChainFormat(quoteWallet.chain) ?? 'mainnet', // TODO: review 'mainnet'
           paymentMethod:
             offers.transak.paymentMethodKey ??
             getTransakPaymentMethodFormat(paymentMethod?.method) ??
@@ -2120,13 +2120,13 @@ const ExternalServicesOfferSelector: React.FC<
         };
 
         const TRANSAK_TIMEOUT = 8000; // 8 seconds
-        const timeoutPromise = new Promise((_, reject) =>
+        const timeoutPromise = new Promise((_resolve, reject) =>
           setTimeout(
             () => reject(new Error(t('Transak request timed out'))),
             TRANSAK_TIMEOUT,
           ),
         );
-        const requestPromise = selectedWallet.transakGetQuote(requestData);
+        const requestPromise = quoteWallet.transakGetQuote(requestData);
         const _data = await Promise.race([requestPromise, timeoutPromise]);
         const data: TransakQuoteData = (_data as any)?.body ?? _data;
 
@@ -2141,7 +2141,7 @@ const ExternalServicesOfferSelector: React.FC<
             transakQuoteData.fiatAmount - transakQuoteData.totalFee;
 
           const precision = dispatch(
-            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            GetPrecision(coin, chain, quoteWallet.tokenAddress),
           );
           if (offers.transak.buyAmount && coin && precision) {
             offers.transak.fiatMoney = Number(
@@ -2219,7 +2219,7 @@ const ExternalServicesOfferSelector: React.FC<
 
   // Get Sell Quotes
 
-  const getMoonpaySellQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getMoonpaySellQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Moonpay getting sell quote');
 
     if (sellCryptoConfig?.moonpay?.disabled) {
@@ -2246,15 +2246,15 @@ const ExternalServicesOfferSelector: React.FC<
     const requestData: MoonpayGetSellQuoteRequestData = {
       env: moonpaySellEnv,
       currencyAbbreviation: getMoonpaySellFixedCurrencyAbbreviation(
-        selectedWallet.currencyAbbreviation,
-        selectedWallet.chain,
+        quoteWallet.currencyAbbreviation,
+        quoteWallet.chain,
       ),
       quoteCurrencyCode: sellOffers.moonpay.fiatCurrency.toLowerCase(),
       baseCurrencyAmount: sellOffers.moonpay.sellAmount || amount,
       payoutMethod: getMoonpaySellPayoutMethodFormat(withdrawalMethod?.method),
     };
 
-    selectedWallet
+    quoteWallet
       .moonpayGetSellQuote(requestData)
       .then(_data => {
         const data = _data?.body ?? _data;
@@ -2295,7 +2295,7 @@ const ExternalServicesOfferSelector: React.FC<
               Number(data.extraFeeAmount) + Number(data.feeAmount);
 
             const precision = dispatch(
-              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+              GetPrecision(coin, chain, quoteWallet.tokenAddress),
             );
             if (sellOffers.moonpay.sellAmount && coin && precision) {
               sellOffers.moonpay.fiatMoney = Number(
@@ -2378,7 +2378,7 @@ const ExternalServicesOfferSelector: React.FC<
     setUpdateViewSell(Math.random());
   };
 
-  const getRampSellQuote = async (selectedWallet: Wallet): Promise<void> => {
+  const getRampSellQuote = async (quoteWallet: Wallet): Promise<void> => {
     logger.debug('Ramp getting sell quote');
 
     if (sellCryptoConfig?.ramp?.disabled) {
@@ -2404,14 +2404,14 @@ const ExternalServicesOfferSelector: React.FC<
     const requestData: RampGetSellQuoteRequestData = {
       env: rampSellEnv,
       cryptoAssetSymbol: getRampSellCoinFormat(
-        selectedWallet.currencyAbbreviation,
-        getRampChainFormat(selectedWallet.chain),
+        quoteWallet.currencyAbbreviation,
+        getRampChainFormat(quoteWallet.chain),
       ),
       fiatCurrency: sellOffers.ramp.fiatCurrency.toUpperCase(),
     };
 
     const precision = dispatch(
-      GetPrecision(coin, chain, selectedWallet.tokenAddress),
+      GetPrecision(coin, chain, quoteWallet.tokenAddress),
     );
     if (precision) {
       requestData.cryptoAmount = ToBaseUnits(amount, precision.unitDecimals);
@@ -2423,7 +2423,7 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
-    selectedWallet
+    quoteWallet
       .rampGetSellQuote(requestData)
       .then((_data: any) => {
         const data: RampGetSellQuoteData = _data?.body ?? _data;
@@ -2512,15 +2512,15 @@ const ExternalServicesOfferSelector: React.FC<
 
             sellOffers.ramp.externalId = uuid.v4().toString();
 
-            const precision = dispatch(
-              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            const quotePrecision = dispatch(
+              GetPrecision(coin, chain, quoteWallet.tokenAddress),
             );
             let decimals: number | undefined;
 
             if (data.asset.decimals && data.asset.decimals > 0) {
               decimals = data.asset.decimals;
-            } else if (precision?.unitDecimals) {
-              decimals = precision.unitDecimals;
+            } else if (quotePrecision?.unitDecimals) {
+              decimals = quotePrecision.unitDecimals;
             }
             sellOffers.ramp.decimals = decimals;
 
@@ -2625,7 +2625,7 @@ const ExternalServicesOfferSelector: React.FC<
     setUpdateViewSell(Math.random());
   };
 
-  const getSimplexSellQuote = (selectedWallet: Wallet): void => {
+  const getSimplexSellQuote = (quoteWallet: Wallet): void => {
     logger.debug('Simplex getting sell quote');
 
     if (sellCryptoConfig?.simplex?.disabled) {
@@ -2695,13 +2695,13 @@ const ExternalServicesOfferSelector: React.FC<
       const requestData: SimplexGetSellQuoteRequestData = {
         env: simplexSellEnv,
         userCountry: __DEV__ ? 'LT' : userCountry || 'US',
-        base_currency: getSimplexSellCoinFormat(coin, selectedWallet.chain),
+        base_currency: getSimplexSellCoinFormat(coin, quoteWallet.chain),
         base_amount: getSimplexBaseAmountFormat(amount), // base_amount should be integer, which counts millionths of a whole currency unit.
         quote_currency: sellOffers.simplex.fiatCurrency.toUpperCase(),
         pp_payment_method: 'sepa', // pp_payment_method = "sepa" (this does not impact user payment method but is needed to get a quote, no impact on price) | TODO: use simplexPaymentMethod,
       };
 
-      selectedWallet
+      quoteWallet
         .simplexGetSellQuote(requestData)
         .then(_data => {
           const data: SimplexGetSellQuoteData = _data?.body ?? _data;
@@ -2713,7 +2713,7 @@ const ExternalServicesOfferSelector: React.FC<
             sellOffers.simplex.fee = Number(data.fiat_amount) * 0.05;
 
             const precision = dispatch(
-              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+              GetPrecision(coin, chain, quoteWallet.tokenAddress),
             );
             if (sellOffers.simplex.sellAmount && coin && precision) {
               sellOffers.simplex.fiatMoney = Number(
@@ -2818,7 +2818,7 @@ const ExternalServicesOfferSelector: React.FC<
     );
   };
 
-  const getBuyCryptoQuotes = (selectedWallet: Wallet) => {
+  const getBuyCryptoQuotes = (quoteWallet: Wallet) => {
     const showedOffersCount = Object.values(cloneDeep(offers)).filter(
       offer => offer.showOffer,
     ).length;
@@ -2833,44 +2833,44 @@ const ExternalServicesOfferSelector: React.FC<
       // Reset finished states before starting new quotes
       if (offers.banxa.showOffer) {
         setFinishedBanxa(false);
-        getBanxaQuote(selectedWallet);
+        getBanxaQuote(quoteWallet);
       } else {
         setFinishedBanxa(null); // Not participating
       }
       if (offers.moonpay.showOffer) {
         setFinishedMoonpay(false);
-        getMoonpayQuote(selectedWallet);
+        getMoonpayQuote(quoteWallet);
       } else {
         setFinishedMoonpay(null); // Not participating
       }
       if (offers.ramp.showOffer) {
         setFinishedRamp(false);
-        getRampQuote(selectedWallet);
+        getRampQuote(quoteWallet);
       } else {
         setFinishedRamp(null); // Not participating
       }
       if (offers.sardine.showOffer) {
         setFinishedSardine(false);
-        getSardineQuote(selectedWallet);
+        getSardineQuote(quoteWallet);
       } else {
         setFinishedSardine(null); // Not participating
       }
       if (offers.simplex.showOffer) {
         setFinishedSimplex(false);
-        getSimplexQuote(selectedWallet);
+        getSimplexQuote(quoteWallet);
       } else {
         setFinishedSimplex(null); // Not participating
       }
       if (offers.transak.showOffer) {
         setFinishedTransak(false);
-        getTransakQuote(selectedWallet);
+        getTransakQuote(quoteWallet);
       } else {
         setFinishedTransak(null); // Not participating
       }
     }
   };
 
-  const getSellCryptoQuotes = (selectedWallet: Wallet) => {
+  const getSellCryptoQuotes = (quoteWallet: Wallet) => {
     const showedOffersCount = Object.values(cloneDeep(sellOffers)).filter(
       offer => offer.showOffer,
     ).length;
@@ -2885,19 +2885,19 @@ const ExternalServicesOfferSelector: React.FC<
       // Reset finished states before starting new quotes
       if (sellOffers.moonpay.showOffer) {
         setFinishedMoonpay(false);
-        getMoonpaySellQuote(selectedWallet);
+        getMoonpaySellQuote(quoteWallet);
       } else {
         setFinishedMoonpay(null); // Not participating
       }
       if (sellOffers.ramp.showOffer) {
         setFinishedRamp(false);
-        getRampSellQuote(selectedWallet);
+        getRampSellQuote(quoteWallet);
       } else {
         setFinishedRamp(null); // Not participating
       }
       if (sellOffers.simplex.showOffer) {
         setFinishedSimplex(false);
-        getSimplexSellQuote(selectedWallet);
+        getSimplexSellQuote(quoteWallet);
       } else {
         setFinishedSimplex(null); // Not participating
       }
@@ -3004,6 +3004,7 @@ const ExternalServicesOfferSelector: React.FC<
         clearTimeout(timeoutRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-quotes only when wallet, amount, limits, payment/withdrawal method or refreshTrigger change; callbacks and context are read at that time
   }, [
     selectedWallet,
     amount,
@@ -3124,6 +3125,7 @@ const ExternalServicesOfferSelector: React.FC<
     }, 3500);
 
     return () => clearTimeout(offersTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-evaluates buy offers only when the payment method or a partner's finished state changes; other values are read at that time
   }, [
     paymentMethod,
     finishedBanxa,
@@ -3229,6 +3231,7 @@ const ExternalServicesOfferSelector: React.FC<
     }, 3500);
 
     return () => clearTimeout(offersTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-evaluates sell offers only when the withdrawal method or a partner's finished state changes; other values are read at that time
   }, [
     withdrawalMethod,
     finishedMoonpay,
@@ -3360,11 +3363,11 @@ const ExternalServicesOfferSelector: React.FC<
               onSelectPaymentMethod?.(pm);
             }
           }}
-          offerSelectorOnDismiss={selectedOffer => {
-            if (selectedOffer) {
+          offerSelectorOnDismiss={dismissedOffer => {
+            if (dismissedOffer) {
               if (context === 'buyCrypto') {
                 setOfferSelectorText(
-                  selectedOffer.label +
+                  dismissedOffer.label +
                     ' ' +
                     t('using') +
                     ' ' +
@@ -3372,15 +3375,15 @@ const ExternalServicesOfferSelector: React.FC<
                 );
               } else if (context === 'sellCrypto') {
                 setOfferSelectorText(
-                  selectedOffer.label +
+                  dismissedOffer.label +
                     ' ' +
                     t('paid to') +
                     ' ' +
                     withdrawalMethod?.label,
                 );
               }
-              setSelectedOffer(selectedOffer);
-              onSelectOffer?.(selectedOffer);
+              setSelectedOffer(dismissedOffer);
+              onSelectOffer?.(dismissedOffer);
             }
             setOfferSelectorModalVisible(false);
           }}

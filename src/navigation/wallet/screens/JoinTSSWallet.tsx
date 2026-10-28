@@ -3,7 +3,6 @@ import {
   Alert,
   SafeAreaView,
   ScrollView,
-  Share,
   StyleSheet,
   TouchableOpacity as RNTouchableOpacity,
   View,
@@ -300,6 +299,11 @@ type Props = NativeStackScreenProps<
 >;
 
 const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
+  // React Compiler opt-out: react-hook-form's `watch()` returns values the
+  // compiler cannot memoize safely (it already skips this component for that
+  // reason). Switching to `useWatch` would change the re-render subscription,
+  // so keep the existing behaviour explicit until that is done deliberately.
+  'use no memo';
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
@@ -308,11 +312,13 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     control,
     handleSubmit,
     watch,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reading isValid subscribes react-hook-form to validity updates; kept to preserve render behaviour
     formState: {errors, isValid},
   } = useForm<JoinFormValues>({
     mode: 'onChange',
     defaultValues: {myName: undefined},
   });
+  // eslint-disable-next-line react-hooks/incompatible-library -- see 'use no memo' above
   const myNameValue = watch('myName');
   const isFormValid = myNameValue?.trim().length > 0;
 
@@ -330,7 +336,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
 
   const [sessionId, setSessionId] = useState<string>('');
   const [partyKey, setPartyKey] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   useAndroidBackHandler(() => currentStep === 3);
@@ -362,7 +368,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
         cancelOnCreateRef.current = true;
       }
     };
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (resumeKeyId || !pendingJoinerSession) return;
@@ -373,6 +379,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     }
     setShowSession(true);
     setCurrentStep(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to restore a persisted joiner session
   }, []);
 
   useEffect(() => {
@@ -425,7 +432,8 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       };
       resumeCeremony();
     }
-  }, [resumeKeyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when resumeKeyId changes; t is omitted so a language change cannot restart the ceremony
+  }, [resumeKeyId, dispatch, logger, navigation]);
 
   useEffect(() => {
     if (sessionId && currentStep === 0) {
@@ -445,33 +453,6 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       return () => clearTimeout(timer);
     }
   }, [currentStep]);
-
-  const initializeSession = async () => {
-    if (pendingJoinerSession) {
-      logger.debug('[TSS Join] Restoring persisted session');
-      setSessionId(pendingJoinerSession.sessionId);
-      setPartyKey(pendingJoinerSession.partyKey);
-      setIsLoading(false);
-      return;
-    }
-    await generateNewSession();
-  };
-
-  const generateNewSession = async () => {
-    setIsLoading(true);
-    try {
-      const result = await dispatch(
-        generateJoinerSessionId({name: copayerName}),
-      );
-      setSessionId(result.sessionId);
-      setPartyKey(result.partyKey);
-      logger.debug('[TSS Join] Session ID generated');
-    } catch (err: any) {
-      logger.error(`[TSS Join - generateNewSession] Error: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleShare = async () => {
     try {

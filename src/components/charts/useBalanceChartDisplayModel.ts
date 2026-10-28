@@ -68,8 +68,21 @@ export type BalanceChartDisplayModel = {
   visibleTimeframe: FiatRateInterval;
   visibleQuoteCurrency: string;
   isLoading: boolean;
-  pendingOverlayVisible: boolean;
-  shouldShowLoader: boolean;
+  /**
+   * No line can be shown yet and data is still on its way: render the ghost
+   * line skeleton in place of the chart.
+   */
+  showSkeleton: boolean;
+  /**
+   * A previous line is on screen while a different series is pending (after
+   * PENDING_CHART_OVERLAY_DELAY_MS, so quick cached switches do not flicker):
+   * dim the existing line and block gestures, no overlay.
+   */
+  isRefreshing: boolean;
+  /** The chart query failed and there is no line to fall back to. */
+  showErrorState: boolean;
+  /** Re-runs the chart query for the current scope/timeframe. */
+  retry: () => void;
   error?: Error;
   selectedPoint?: GraphPoint;
   displayedAnalysisPoint?: PnlAnalysisPoint;
@@ -277,7 +290,21 @@ export function useBalanceChartDisplayModel({
     hasAnyWallets && !renderZeroBalanceWhenNoSnapshots && !cachedVisibleState,
   );
   const [pendingOverlayVisible, setPendingOverlayVisible] = useState(false);
-  const [error, setError] = useState<Error | undefined>();
+  // Errors are tagged with the scope/quote they were raised for, so a stale
+  // refresh error can never surface for a different scope (e.g. in the render
+  // where the scope changes, before the query effect clears it).
+  const [errorState, setErrorState] = useState<
+    {error: Error; ownerKey: string} | undefined
+  >();
+  const setError = useCallback(
+    (nextError: Error | undefined, ownerKey?: string) => {
+      setErrorState(
+        nextError && ownerKey ? {error: nextError, ownerKey} : undefined,
+      );
+    },
+    [],
+  );
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const activeRequestIdRef = useRef(0);
   const gestureStartedRef = useRef(false);
@@ -528,9 +555,9 @@ export function useBalanceChartDisplayModel({
       return;
     }
 
-    const chartQueryArgs = chartQueryArgsRef.current;
+    const latestChartQueryArgs = chartQueryArgsRef.current;
 
-    if (!chartQueryArgs.wallets.length) {
+    if (!latestChartQueryArgs.wallets.length) {
       setLoading(false);
       setError(undefined);
       setVisibleState(undefined);
@@ -555,7 +582,7 @@ export function useBalanceChartDisplayModel({
         return;
       }
 
-      runPortfolioBalanceChartViewModelQuery(chartQueryArgs)
+      runPortfolioBalanceChartViewModelQuery(latestChartQueryArgs)
         .then(viewModel => {
           if (cancelled || activeRequestIdRef.current !== requestId) {
             return;
@@ -571,12 +598,12 @@ export function useBalanceChartDisplayModel({
 
           commitVisibleSeries({
             series: hydratedSeries,
-            timeframe: chartQueryArgs.timeframe,
+            timeframe: latestChartQueryArgs.timeframe,
             queryRevisionKey,
-            quoteCurrency: chartQueryArgs.quoteCurrency,
+            quoteCurrency: latestChartQueryArgs.quoteCurrency,
             scopeId,
-            walletIds: chartQueryArgs.walletIds,
-            balanceOffset: chartQueryArgs.balanceOffset,
+            walletIds: latestChartQueryArgs.walletIds,
+            balanceOffset: latestChartQueryArgs.balanceOffset,
             cachedAt: Date.now(),
             persistable: true,
           });
@@ -588,7 +615,10 @@ export function useBalanceChartDisplayModel({
           }
 
           setLoading(false);
-          setError(err instanceof Error ? err : new Error(String(err)));
+          setError(
+            err instanceof Error ? err : new Error(String(err)),
+            `${scopeId}|${chartQueryArgs.quoteCurrency}`,
+          );
         });
     };
 
@@ -601,7 +631,10 @@ export function useBalanceChartDisplayModel({
             }
 
             setLoading(false);
-            setError(err instanceof Error ? err : new Error(String(err)));
+            setError(
+              err instanceof Error ? err : new Error(String(err)),
+              `${scopeId}|${chartQueryArgs.quoteCurrency}`,
+            );
           },
         })
       : undefined;
@@ -624,6 +657,8 @@ export function useBalanceChartDisplayModel({
     preserveVisibleSeriesWhileNotReady,
     queryRevisionKey,
     renderZeroBalanceWhenNoSnapshots,
+    retryNonce,
+    setError,
     shouldWaitForHistoricalRates,
     scopeId,
     sortedWalletIds,
@@ -816,11 +851,23 @@ export function useBalanceChartDisplayModel({
     };
   }, [shouldDelayPendingOverlay]);
 
-  const shouldShowLoader =
-    (!isBalanceChartDataReadyToQuery && !hasRenderableSeries) ||
-    pendingOverlayVisible ||
-    (!hasRenderableSeries &&
-      (loading || (showLoaderWhenNoSnapshots && hasAnyWallets)));
+  const visibleError =
+    isBalanceChartDataReadyToQuery &&
+    errorState?.ownerKey === `${scopeId}|${committedQueryQuoteCurrency}`
+      ? errorState.error
+      : undefined;
+  const showErrorState = !hasRenderableSeries && !!visibleError;
+  const showSkeleton =
+    !hasRenderableSeries &&
+    !showErrorState &&
+    (!isBalanceChartDataReadyToQuery ||
+      loading ||
+      (showLoaderWhenNoSnapshots && hasAnyWallets));
+  const isRefreshing = hasRenderableSeries && pendingOverlayVisible;
+
+  const retry = useCallback(() => {
+    setRetryNonce(nonce => nonce + 1);
+  }, []);
 
   const onGestureStarted = useCallback(() => {
     if (!hasRenderableSeries) {
@@ -900,9 +947,11 @@ export function useBalanceChartDisplayModel({
       (!hasRenderableSeries &&
         !isBalanceChartDataReadyToQuery &&
         !canInteractWithVisibleSeries),
-    pendingOverlayVisible,
-    shouldShowLoader,
-    error: isBalanceChartDataReadyToQuery ? error : undefined,
+    showSkeleton,
+    isRefreshing,
+    showErrorState,
+    retry,
+    error: visibleError,
     selectedPoint: displayedSelectedPoint,
     displayedAnalysisPoint,
     displayedChangeRowData,

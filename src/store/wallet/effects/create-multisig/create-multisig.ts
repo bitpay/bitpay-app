@@ -129,7 +129,6 @@ export const startCreateKeyMultisig =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {keys},
         } = getState();
 
         const _key = BWC.createKey({
@@ -607,8 +606,8 @@ export const startTSSCeremony =
         const walletPrivKey = new Bitcore.PrivateKey().toString();
 
         await Promise.race([
-          new Promise<void>((resolve, reject) => {
-            rejectCeremony = reject;
+          new Promise<void>((resolveCeremony, rejectKeyGen) => {
+            rejectCeremony = rejectKeyGen;
             let roundsStarted = false;
             let stuckErrorCount = 0;
             tssKeyGen
@@ -616,7 +615,7 @@ export const startTSSCeremony =
                 if (!roundsStarted && r === 2) {
                   roundsStarted = true;
                   ceremonyTimeoutId = setTimeout(
-                    () => reject(new Error('CEREMONY_TIMEOUT')),
+                    () => rejectCeremony(new Error('CEREMONY_TIMEOUT')),
                     getCeremonyTimeoutMs(key.tssSession!.n),
                   );
                 }
@@ -645,7 +644,7 @@ export const startTSSCeremony =
                       },
                     }),
                   );
-                } catch (e) {}
+                } catch {}
               })
               .on('roundsubmitted', (r: number) => {
                 stuckErrorCount = 0;
@@ -668,7 +667,7 @@ export const startTSSCeremony =
                       },
                     }),
                   );
-                } catch (e) {}
+                } catch {}
               })
               .on('wallet', (w: any) => {
                 logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
@@ -692,7 +691,7 @@ export const startTSSCeremony =
                       activeCeremonies.delete(keyId);
                       clearCeremonyStats(keyId);
                       tssKeyGen.unsubscribe();
-                      reject(new Error('CEREMONY_STUCK'));
+                      rejectCeremony(new Error('CEREMONY_STUCK'));
                       return;
                     }
                   }
@@ -709,11 +708,11 @@ export const startTSSCeremony =
                 activeCeremonies.delete(keyId);
                 clearCeremonyStats(keyId);
                 tssKeyGen.unsubscribe();
-                reject(toCeremonyError(e));
+                rejectCeremony(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Ceremony complete]`);
-                resolve();
+                resolveCeremony();
               });
 
             logManager.info(
@@ -843,7 +842,9 @@ export const startTSSCeremony =
                   key.tssSession!.n
                 } copayers found, retrying in ${delayMs}ms...`,
               );
-              await new Promise(resolve => setTimeout(resolve, delayMs));
+              await new Promise(resolveDelay =>
+                setTimeout(resolveDelay, delayMs),
+              );
             } else {
               logManager.warn(
                 `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
@@ -938,7 +939,7 @@ export const generateJoinerSessionId =
   (opts?: {
     name?: string;
   }): Effect<Promise<{sessionId: string; partyKey: any}>> =>
-  async (dispatch, getState): Promise<{sessionId: string; partyKey: any}> => {
+  async (dispatch): Promise<{sessionId: string; partyKey: any}> => {
     try {
       const partyKey = BWC.createKey({seedType: 'new'});
 
@@ -979,12 +980,12 @@ export const clearPendingJoinerSession = (): Effect<void> => dispatch => {
 export const validateJoinCode =
   (joinCode: string, partyKey: any): Effect<void> =>
   () => {
-    const BWC = BwcProvider.getInstance();
-    const restoredKey = BWC.createKey({
+    const bwc = BwcProvider.getInstance();
+    const restoredKey = bwc.createKey({
       seedType: 'object',
       seedData: partyKey,
     });
-    const tempTssKeyGen = BWC.createKeyGen({
+    const tempTssKeyGen = bwc.createKeyGen({
       coin: 'btc',
       chain: 'btc',
       network: 'livenet',
@@ -1235,7 +1236,7 @@ export const joinTSSWithCode =
         let walletFromBWS: any;
 
         await Promise.race([
-          new Promise<void>((resolve, reject) => {
+          new Promise<void>((resolveCeremony, rejectCeremony) => {
             let roundsStarted = false;
             let stuckErrorCount = 0;
             tssKeyGen
@@ -1243,7 +1244,7 @@ export const joinTSSWithCode =
                 if (!roundsStarted && r === 2) {
                   roundsStarted = true;
                   joinTimeoutId = setTimeout(
-                    () => reject(new Error('CEREMONY_TIMEOUT')),
+                    () => rejectCeremony(new Error('CEREMONY_TIMEOUT')),
                     getCeremonyTimeoutMs(tssSession.n),
                   );
                 }
@@ -1274,7 +1275,7 @@ export const joinTSSWithCode =
                       }),
                     );
                   }
-                } catch (e) {}
+                } catch {}
               })
               .on('roundsubmitted', (r: number) => {
                 stuckErrorCount = 0;
@@ -1299,7 +1300,7 @@ export const joinTSSWithCode =
                       }),
                     );
                   }
-                } catch (e) {}
+                } catch {}
               })
               .on('wallet', (w: any) => {
                 logManager.debug(`[TSS Join wallet] ${w?.id}`);
@@ -1333,7 +1334,7 @@ export const joinTSSWithCode =
                       activeCeremonies.delete(key.id);
                       clearCeremonyStats(key.id);
                       tssKeyGen.unsubscribe();
-                      reject(new Error('CEREMONY_STUCK'));
+                      rejectCeremony(new Error('CEREMONY_STUCK'));
                       return;
                     }
                   }
@@ -1350,11 +1351,11 @@ export const joinTSSWithCode =
                 activeCeremonies.delete(key.id);
                 clearCeremonyStats(key.id);
                 tssKeyGen.unsubscribe();
-                reject(toCeremonyError(e));
+                rejectCeremony(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Join complete]`);
-                resolve();
+                resolveCeremony();
               });
 
             logManager.info(
@@ -1480,7 +1481,9 @@ export const joinTSSWithCode =
               logManager.debug(
                 `[TSS Ceremony] Only ${currentCopayersCount}/${tssSession.n} copayers found, retrying in ${delayMs}ms...`,
               );
-              await new Promise(resolve => setTimeout(resolve, delayMs));
+              await new Promise(resolveDelay =>
+                setTimeout(resolveDelay, delayMs),
+              );
             } else {
               logManager.warn(
                 `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${tssSession.n} copayers found. Continuing anyway...`,

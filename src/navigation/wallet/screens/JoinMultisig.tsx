@@ -24,7 +24,7 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
@@ -119,9 +119,9 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
   );
 
   const onSubmit = (formData: {invitationCode: string; myName: string}) => {
-    const {invitationCode, myName} = formData;
+    const {invitationCode: formInvitationCode, myName} = formData;
     let opts: Partial<KeyOptions> = {};
-    opts.invitationCode = invitationCode;
+    opts.invitationCode = formInvitationCode;
     opts.myName = myName;
 
     JoinMultisigWallet(opts);

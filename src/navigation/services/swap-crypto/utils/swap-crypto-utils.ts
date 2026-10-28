@@ -13,7 +13,7 @@ export const SwapCryptoSupportedExchanges: SwapCryptoExchangeKey[] = [
 export const isCoinSupportedToSwap = (
   coin: string,
   chain: string,
-  country?: string,
+  _country?: string,
 ): boolean => {
   return (
     isCoinSupportedBy('changelly', coin, chain) ||
@@ -46,7 +46,7 @@ export const isPairSupported = (
   coinTo: string,
   chainTo: string,
   supportedCoins?: SwapCryptoCoin[] | undefined,
-  country?: string,
+  _country?: string,
 ): boolean => {
   if (!exchange && !supportedCoins) {
     return false;

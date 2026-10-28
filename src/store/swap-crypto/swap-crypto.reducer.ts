@@ -21,12 +21,12 @@ export const swapCryptoReducer = (
 ): SwapCryptoState => {
   switch (action.type) {
     case SwapCryptoActionTypes.SUCCESS_TX_CHANGELLY:
-      const {changellyTxData} = action.payload;
+      const {changellyTxData: changellyTx} = action.payload;
       return {
         ...state,
         changelly: {
           ...state.changelly,
-          [changellyTxData.exchangeTxId]: changellyTxData,
+          [changellyTx.exchangeTxId]: changellyTx,
         },
       };
 
@@ -40,12 +40,12 @@ export const swapCryptoReducer = (
       };
 
     case SwapCryptoActionTypes.SUCCESS_TX_THORSWAP:
-      const {thorswapTxData} = action.payload;
+      const {thorswapTxData: thorswapTx} = action.payload;
       return {
         ...state,
         thorswap: {
           ...state.thorswap,
-          [thorswapTxData.orderId]: thorswapTxData,
+          [thorswapTx.orderId]: thorswapTx,
         },
       };
 

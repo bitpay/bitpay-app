@@ -4,6 +4,23 @@ import {Text} from 'react-native';
 import ChartAxisLabel from './ChartAxisLabel';
 import {ThemeProvider} from '../../contexts';
 
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
+
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 let mockState: any;
@@ -24,7 +41,7 @@ jest.mock('react-native-reanimated', () => {
     default: {View, createAnimatedComponent},
     createAnimatedComponent,
     useAnimatedStyle: (fn: () => unknown) => fn(),
-    useSharedValue: (value: unknown) => ({value}),
+    useSharedValue: (value: unknown) => mockSharedValue(value),
     withSpring: (value: unknown) => value,
     withTiming: (value: unknown) => value,
     View,

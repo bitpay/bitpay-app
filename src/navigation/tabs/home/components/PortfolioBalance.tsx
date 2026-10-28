@@ -22,6 +22,7 @@ import BalanceHistoryChart, {
   type BalanceHistoryChartProps,
 } from '../../../../components/charts/BalanceHistoryChart';
 import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../../components/charts/fiatTimeframes';
+import {ZERO_BALANCE_AXIS_LABEL_FADE_MS} from '../../../../components/charts/chartLayout';
 import {useHasCachedBalanceHistoryChartSeries} from '../../../../components/charts/balanceHistoryChartSeriesCache';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useTranslation} from 'react-i18next';
@@ -61,6 +62,8 @@ import type {Rates} from '../../../../store/rate/rate.models';
 import CollapseContentButton from './CollapseContentButton';
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 import BalanceVisibilityButton from '../../../../components/balance/BalanceVisibilityButton';
+import {getUnchartedWallets} from '../../../../portfolio/ui/selectors/getUnchartedWallets';
+import {compareCodeUnits} from '../../../../utils/compareCodeUnits';
 
 const portfolioStyles = StyleSheet.create({
   portfolioContainer: {
@@ -150,8 +153,19 @@ const headerStyles = StyleSheet.create({
   },
   portfolioBalanceChangeRowContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  unchartedNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  unchartedNoteText: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginRight: 3,
   },
 });
 
@@ -207,9 +221,9 @@ const HiddenBalance: React.FC<{children?: React.ReactNode}> = ({children}) => (
 );
 
 const PortfolioBalanceChangeRowContainer: React.FC<
-  React.ComponentProps<typeof View>
+  React.ComponentProps<typeof Animated.View>
 > = ({style, ...rest}) => (
-  <View
+  <Animated.View
     style={[headerStyles.portfolioBalanceChangeRowContainer, style]}
     {...rest}
   />
@@ -220,6 +234,37 @@ type PortfolioBalanceChangeRowProps = {
   deltaFiatFormatted?: string;
   rangeLabel?: string;
   style?: StyleProp<ViewStyle>;
+  visible?: boolean;
+  /** Shown after the change, e.g. the note that some assets aren't charted. */
+  trailing?: React.ReactNode;
+};
+
+const UnchartedAssetsNote = ({
+  onPress,
+}: {
+  onPress: () => void;
+}): React.ReactElement => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  return (
+    <TouchableOpacity
+      activeOpacity={ActiveOpacity}
+      testID="portfolio-uncharted-assets-button"
+      accessibilityRole="button"
+      accessibilityLabel={t('Some assets not charted')}
+      hitSlop={{top: 8, bottom: 8, left: 4, right: 8}}
+      style={headerStyles.unchartedNote}
+      onPress={onPress}>
+      <BaseText
+        style={[
+          headerStyles.unchartedNoteText,
+          {color: theme.dark ? White : SlateDark},
+        ]}>
+        {t('Some assets not charted')}
+      </BaseText>
+      <InfoSvg width={13} height={13} />
+    </TouchableOpacity>
+  );
 };
 
 const PortfolioBalanceChangeRow = ({
@@ -227,17 +272,23 @@ const PortfolioBalanceChangeRow = ({
   deltaFiatFormatted,
   rangeLabel,
   style,
+  visible = true,
+  trailing,
 }: PortfolioBalanceChangeRowProps): React.ReactElement => {
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const displayedDelta =
     hideAllBalances && deltaFiatFormatted
       ? HIDDEN_BALANCE_MASK
       : deltaFiatFormatted;
+  const opacity = useDerivedValue(() =>
+    withTiming(visible ? 1 : 0, {duration: ZERO_BALANCE_AXIS_LABEL_FADE_MS}),
+  );
+  const fadeStyle = useAnimatedStyle(() => ({opacity: opacity.value}));
 
   return (
     <PortfolioBalanceChangeRowContainer
       testID="portfolio-balance-change-row"
-      style={style}>
+      style={[style, fadeStyle]}>
       <Percentage
         percentageDifference={percent}
         hideArrow
@@ -246,6 +297,7 @@ const PortfolioBalanceChangeRow = ({
         rangeLabel={rangeLabel}
         fractionDigits={2}
       />
+      {trailing}
     </PortfolioBalanceChangeRowContainer>
   );
 };
@@ -308,7 +360,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const visibleKeyIdsSig = visibleKeys
     .map(key => String(key?.id || ''))
     .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b))
+    .sort(compareCodeUnits)
     .join(',');
 
   const walletsAcrossKeys: Wallet[] = useMemo(() => {
@@ -360,7 +412,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const chartWalletIdsSig = chartWalletsAcrossKeys
     .map(wallet => String(wallet?.id || ''))
     .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b))
+    .sort(compareCodeUnits)
     .join(',');
   const balanceChartsEnabled =
     balanceChartReadiness.shouldMountBalanceChart || hasCachedHomeChart;
@@ -381,33 +433,33 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   useEffect(() => {
     setIsChartCollapsed(shouldApplyChartCollapse);
     cancelAnimation(collapseProgress);
-    collapseProgress.value = shouldApplyChartCollapse ? 1 : 0;
+    collapseProgress.set(shouldApplyChartCollapse ? 1 : 0);
   }, [collapseProgress, shouldApplyChartCollapse]);
 
   const buttonAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity:
-        interpolate(collapseProgress.value, [0, 1], [1, 0]) *
-        collapseButtonPressOpacity.value,
+        interpolate(collapseProgress.get(), [0, 1], [1, 0]) *
+        collapseButtonPressOpacity.get(),
     };
   });
 
   const chartScale = useDerivedValue(() => {
-    return interpolate(collapseProgress.value, [0, 1], [1, collapsedScale]);
+    return interpolate(collapseProgress.get(), [0, 1], [1, collapsedScale]);
   });
 
   const chartSpacerAnimatedStyle = useAnimatedStyle(() => {
     return {
-      height: interpolate(collapseProgress.value, [0, 1], [fullChartHeight, 0]),
+      height: interpolate(collapseProgress.get(), [0, 1], [fullChartHeight, 0]),
     };
   });
 
   const axisLabelOpacity = useDerivedValue(() => {
-    return interpolate(collapseProgress.value, [0, 0.08, 1], [1, 0, 0]);
+    return interpolate(collapseProgress.get(), [0, 0.08, 1], [1, 0, 0]);
   });
 
   const timeframeSelectorOpacity = useDerivedValue(() => {
-    return interpolate(collapseProgress.value, [0, 0.28, 1], [1, 0, 0]);
+    return interpolate(collapseProgress.get(), [0, 0.28, 1], [1, 0, 0]);
   });
 
   // Fine-tune the final collapsed Y alignment so the mini chart sits perfectly
@@ -441,7 +493,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       : fallbackCollapsedTranslateY;
 
   const chartWrapperAnimatedStyle = useAnimatedStyle(() => {
-    const progress = collapseProgress.value;
+    const progress = collapseProgress.get();
     return {
       transform: [
         {
@@ -450,7 +502,7 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
         {
           translateY: interpolate(progress, [0, 1], [0, collapsedTranslateY]),
         },
-        {scale: chartScale.value},
+        {scale: chartScale.get()},
       ],
     };
   });
@@ -472,21 +524,23 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       }
 
       cancelAnimation(collapseProgress);
-      collapseProgress.value = withTiming(
-        toCollapsed ? 1 : 0,
-        {
-          duration: 360,
-          easing: Easing.inOut(Easing.cubic),
-        },
-        finished => {
-          if (!finished) {
-            return;
-          }
-          runOnJS(persistHomeChartCollapsePreference)(toCollapsed);
-          if (!toCollapsed) {
-            runOnJS(setIsChartCollapsed)(false);
-          }
-        },
+      collapseProgress.set(
+        withTiming(
+          toCollapsed ? 1 : 0,
+          {
+            duration: 360,
+            easing: Easing.inOut(Easing.cubic),
+          },
+          finished => {
+            if (!finished) {
+              return;
+            }
+            runOnJS(persistHomeChartCollapsePreference)(toCollapsed);
+            if (!toCollapsed) {
+              runOnJS(setIsChartCollapsed)(false);
+            }
+          },
+        ),
       );
     },
     [canCollapseChart, collapseProgress, persistHomeChartCollapsePreference],
@@ -495,19 +549,23 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   const onCollapseButtonPressIn = useCallback(() => {
     setIsCollapseButtonActive(true);
     cancelAnimation(collapseButtonPressOpacity);
-    collapseButtonPressOpacity.value = withTiming(ActiveOpacity, {
-      duration: 80,
-      easing: Easing.linear,
-    });
+    collapseButtonPressOpacity.set(
+      withTiming(ActiveOpacity, {
+        duration: 80,
+        easing: Easing.linear,
+      }),
+    );
   }, [collapseButtonPressOpacity]);
 
   const onCollapseButtonPressOut = useCallback(() => {
     setIsCollapseButtonActive(false);
     cancelAnimation(collapseButtonPressOpacity);
-    collapseButtonPressOpacity.value = withTiming(1, {
-      duration: 120,
-      easing: Easing.linear,
-    });
+    collapseButtonPressOpacity.set(
+      withTiming(1, {
+        duration: 120,
+        easing: Easing.linear,
+      }),
+    );
   }, [collapseButtonPressOpacity]);
 
   const onCollapseChartPress = useCallback(() => {
@@ -542,6 +600,15 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
       hasCachedHomeChart,
     resetKey: chartLifecycleKey,
   });
+  const [chartedWalletIds, setChartedWalletIds] = useState<
+    ReadonlySet<string> | undefined
+  >(undefined);
+  const onChartedWalletIdsChange = useCallback(
+    (walletIds: string[] | undefined) => {
+      setChartedWalletIds(walletIds ? new Set(walletIds) : undefined);
+    },
+    [],
+  );
   const commonBalanceHistoryChartProps: BalanceHistoryChartProps = {
     enabled: active,
     wallets: chartWalletsAcrossKeys,
@@ -562,6 +629,13 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     onDisplayedAnalysisPointChange:
       balanceChartSurface.chartCallbacks.onDisplayedAnalysisPointChange,
     onRenderableSeriesChange: setChartHasRenderableSeries,
+    onChartedWalletIdsChange,
+    // Collapsed, the chart is a scaled-down thumbnail under the expand button:
+    // captions would be unreadable and Retry untappable.
+    populateProgress: isChartCollapsed
+      ? undefined
+      : balanceChartReadiness.populateProgress,
+    hideSkeletonCaption: isChartCollapsed,
   };
   const hasInitializedChartLifecycleRef = React.useRef(false);
 
@@ -612,6 +686,52 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
     balanceChartsEnabled && balanceChartSurface.changeRowData
       ? balanceChartSurface.changeRowData
       : lastDayChangeRowData;
+
+  // The header shows every visible wallet; the chart and its change can only
+  // cover wallets with usable history. Say so, and which ones, rather than
+  // let the gap read as a loss.
+  const unchartedWallets = useMemo(
+    () =>
+      balanceChartsEnabled
+        ? getUnchartedWallets({wallets: walletsAcrossKeys, chartedWalletIds})
+        : [],
+    [balanceChartsEnabled, chartedWalletIds, walletsAcrossKeys],
+  );
+
+  const showUnchartedAssetsModal = () => {
+    const lines = unchartedWallets.map(wallet => {
+      const symbol = String(wallet.currencyAbbreviation || '').toUpperCase();
+      const name = wallet.walletName || wallet.currencyName || symbol;
+      const chain = String(wallet.chain || '').toUpperCase();
+      const fiat = hideAllBalances
+        ? HIDDEN_BALANCE_MASK
+        : formatFiatAmount(
+            Number(wallet.balance?.fiat) || 0,
+            defaultAltCurrency.isoCode,
+            {currencyDisplay: 'symbol'},
+          );
+      return `- ${name} (${symbol}${
+        chain && chain !== symbol ? ` · ${chain}` : ''
+      }): ${fiat}`;
+    });
+    dispatch(
+      showBottomNotificationModal({
+        type: 'info',
+        title: t('Not all assets are charted'),
+        message: `${t(
+          "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.",
+        )}\n\n${lines.join('\n')}`,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('GOT IT'),
+            action: () => null,
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   const showPortfolioBalanceInfoModal = () => {
     dispatch(
@@ -705,16 +825,17 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
           percent={displayedChangeRowData?.percent ?? 0}
           deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
           rangeLabel={displayedChangeRowData?.rangeLabel}
-          style={[
-            {
-              width: '100%',
-              justifyContent: shouldLeftAlignTopSection
-                ? 'flex-start'
-                : 'center',
-              paddingLeft: shouldLeftAlignTopSection ? 12 : 0,
-            },
-            !displayedChangeRowData ? {opacity: 0} : null,
-          ]}
+          visible={!!displayedChangeRowData}
+          trailing={
+            unchartedWallets.length && displayedChangeRowData ? (
+              <UnchartedAssetsNote onPress={showUnchartedAssetsModal} />
+            ) : null
+          }
+          style={{
+            width: '100%',
+            justifyContent: shouldLeftAlignTopSection ? 'flex-start' : 'center',
+            paddingLeft: shouldLeftAlignTopSection ? 12 : 0,
+          }}
         />
       ) : null}
 

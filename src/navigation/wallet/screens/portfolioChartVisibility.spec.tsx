@@ -16,6 +16,23 @@ import {
   writeAccountListSnapshot,
 } from '../../../store/wallet/utils/accountListCache';
 
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
+
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 jest.mock('react-native-worklets', () => ({
@@ -52,8 +69,11 @@ jest.mock('react-native-reanimated', () => {
     ),
     runOnJS: (fn: (...args: any[]) => any) => fn,
     useAnimatedStyle: (fn: () => unknown) => fn(),
-    useDerivedValue: (fn: () => unknown) => ({value: fn()}),
-    useSharedValue: (value: unknown) => ({value}),
+    useDerivedValue: (fn: () => unknown) => {
+      const value = fn();
+      return {value, get: () => value};
+    },
+    useSharedValue: (value: unknown) => mockSharedValue(value),
     withDelay: (_delay: number, value: unknown) => value,
     withSequence: (...values: unknown[]) => values[values.length - 1],
     withTiming: (
@@ -529,6 +549,7 @@ const mockLegacyLastDayPnl = (currentFiat: unknown, lastDayFiat: unknown) => {
 };
 
 jest.mock('../../../utils/portfolio/assets', () => ({
+  getPopulateProgressForWallets: jest.fn(() => undefined),
   buildLegacyLastDayRateRequestsForWallets: jest.fn(
     ({wallets}: {wallets?: any[]}) =>
       (wallets || [])
@@ -1477,6 +1498,10 @@ describe('portfolio chart visibility guards', () => {
     mockWallet.isComplete = jest.fn(() => true);
     mockState.APP.appIsLoading = false;
     mockIsFocused = true;
+    // Home holds this preload until startup has settled, plus a delay.
+    const startupSignals = require('../../../utils/startupSignals');
+    startupSignals.resetStartupSignalsForTests();
+    startupSignals.markFirstScreenShown();
 
     await act(async () => {
       renderWithTheme(
@@ -1494,6 +1519,13 @@ describe('portfolio chart visibility guards', () => {
       callback();
       return 1;
     };
+
+    await act(async () => {
+      // Settles startup, then runs out HOME_FLOW_PRELOAD_STARTUP_DELAY_MS.
+      jest.advanceTimersByTime(2000);
+      await Promise.resolve();
+    });
+    expect(mockNavigation.preload).not.toHaveBeenCalled();
 
     await act(async () => {
       mockTransitionEndListener?.({data: {closing: false}});

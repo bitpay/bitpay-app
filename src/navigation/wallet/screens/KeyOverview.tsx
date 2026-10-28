@@ -755,6 +755,13 @@ const KeyOverviewAllocationGainLossFooter = React.memo(
 );
 
 const KeyOverview = () => {
+  // React Compiler opt-out: this screen hand-tunes its own memoization around
+  // module-level account-list snapshot caches and refs that are read/written
+  // inside useMemo/render (snapshot hydration flags, PERF_DEBUG timing via
+  // performance.now(), latest-value refs, imperatively built keyOptions). The
+  // compiler cannot see those caches; opting out keeps current behaviour
+  // (it also bails here today on try/finally).
+  'use no memo';
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
   const {id, context, _preloadContent = false} = route.params;
@@ -812,6 +819,7 @@ const KeyOverview = () => {
   const allocationFooterVisibilityCheckInFlightRef = useRef(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the lazy allocation load when the viewed key id changes
     setShouldLoadAllocationGainLoss(false);
     allocationFooterVisibilityCheckInFlightRef.current = false;
   }, [id]);
@@ -874,6 +882,7 @@ const KeyOverview = () => {
       return lastAccountListSnapshot ?? EMPTY_ACCOUNT_LIST;
     }
 
+    // eslint-disable-next-line react-hooks/purity -- see 'use no memo' above
     const startedAt = PERF_DEBUG ? performance.now() : 0;
     let didBuild = false;
     const accountList = resolveAccountListSnapshot({
@@ -894,12 +903,16 @@ const KeyOverview = () => {
     });
 
     if (PERF_DEBUG) {
+      // eslint-disable-next-line react-hooks/purity -- see 'use no memo' above
+      const durationMs = Math.round((performance.now() - startedAt) * 10) / 10;
+      // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
+      const wasPreloaded = wasPreloadedRef.current;
       performanceLog(
         `[PERF-KEY-OVERVIEW] accountList source:${
           didBuild ? 'build' : 'cache'
-        } rows:${accountList.length} durationMs:${
-          Math.round((performance.now() - startedAt) * 10) / 10
-        } preloaded:${wasPreloadedRef.current}`,
+        } rows:${
+          accountList.length
+        } durationMs:${durationMs} preloaded:${wasPreloaded}`,
       );
     }
 
@@ -918,6 +931,7 @@ const KeyOverview = () => {
     defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
     dispatch,
   });
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   keySettingsPreloadInputsRef.current = {
     key,
     defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
@@ -959,6 +973,7 @@ const KeyOverview = () => {
 
   const hasMissingEvmNetworks = missingChainsAccountsCount > 0;
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
   const onPressTxpBadge = useCallback(() => {
     if (!key?.id) {
       return;
@@ -1119,6 +1134,7 @@ const KeyOverview = () => {
     shouldRenderZeroBalanceChart: shouldRenderZeroKeyBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleKeyBalanceChart,
     isBalanceChartDataReadyToQuery: isKeyBalanceChartDataReadyToQuery,
+    populateProgress: keyChartPopulateProgress,
     chartableWallets: chartableVisibleKeyWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: keyBalanceChartWallets,
@@ -1459,6 +1475,7 @@ const KeyOverview = () => {
     });
   }
 
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   keyOptions.push({
     img: <Icons.Settings />,
     title: t('Key Settings'),
@@ -1696,12 +1713,14 @@ const KeyOverview = () => {
   );
 
   const onPressItemRef = useRef(onPressItem);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   onPressItemRef.current = onPressItem;
   const stableOnPressItem = useCallback(
     (item: AccountRowProps) => onPressItemRef.current(item),
     [],
   );
   const preloadDetailsRef = useRef(preloadDetails);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   preloadDetailsRef.current = preloadDetails;
   const stablePreloadDetails = useCallback(
     (item: AccountRowProps) => preloadDetailsRef.current(item),
@@ -1725,6 +1744,7 @@ const KeyOverview = () => {
     [key.wallets, memoizedAccountList],
   );
   const singlePreloadableDetailsItemRef = useRef(singlePreloadableDetailsItem);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   singlePreloadableDetailsItemRef.current = singlePreloadableDetailsItem;
   const singlePreloadableDetailsIdentity = singlePreloadableDetailsItem
     ? [
@@ -1830,7 +1850,9 @@ const KeyOverview = () => {
                 }
               />
               {shouldShowKeyChartPlaceholder ? (
-                <BalanceChartLoadingPlaceholder />
+                <BalanceChartLoadingPlaceholder
+                  populateProgress={keyChartPopulateProgress}
+                />
               ) : null}
               {shouldRenderKeyBalanceChart ? (
                 <View
@@ -1838,6 +1860,12 @@ const KeyOverview = () => {
                     shouldShowKeyChartPlaceholder
                       ? styles.hiddenChart
                       : undefined
+                  }
+                  accessibilityElementsHidden={shouldShowKeyChartPlaceholder}
+                  importantForAccessibility={
+                    shouldShowKeyChartPlaceholder
+                      ? 'no-hide-descendants'
+                      : 'auto'
                   }>
                   <BalanceHistoryChart
                     wallets={chartableVisibleKeyWallets}
@@ -1862,6 +1890,13 @@ const KeyOverview = () => {
                       balanceChartSurface.chartCallbacks.onChangeRowData
                     }
                     onRenderableSeriesChange={onKeyChartRenderableSeriesChange}
+                    populateProgress={keyChartPopulateProgress}
+                    // Only the visible placeholder animates while this chart is hidden.
+                    skeletonVariant={
+                      shouldShowKeyChartPlaceholder ? 'static' : 'drawing'
+                    }
+                    // Reveal the chart's own error state (with Retry).
+                    onErrorStateChange={onKeyChartRenderableSeriesChange}
                   />
                 </View>
               ) : null}
@@ -1889,10 +1924,12 @@ const KeyOverview = () => {
         </WalletListHeader>
       </PerformanceProfiler>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- known bug (RN-3026): missing shouldShowLegacyChangeRowSkeleton
   }, [
     chartableVisibleKeyWallets,
     dispatch,
     balanceChartSurface,
+    keyChartPopulateProgress,
     keyHeaderChangeRowData,
     hasCachedKeyChart,
     hideAllBalances,

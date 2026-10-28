@@ -81,6 +81,7 @@ const SendToContact = () => {
         />
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context is a route param; memoized only on wallet and the setters, as before
     [wallet, setRecipientListContext, setRecipientAmountContext],
   );
 

@@ -110,7 +110,9 @@ def enableSeparateBuildPerCPUArchitecture = false
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false
+// R8 shrinks and optimises release builds (no obfuscation: see
+// proguard-rules.pro). -PenableR8=false turns it off.
+def enableProguardInReleaseBuilds = (findProperty('enableR8') != 'false')
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -136,7 +138,26 @@ def reactNativeArchitectures() {
 }
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
+// react-native-dotenv bakes .env values into the JS bundle, but the React
+// Native plugin only tracks JS/TS sources as bundle inputs. Without these, an
+// .env change (including IS_PERF from scripts/android-perf.sh) leaves the
+// bundle task UP-TO-DATE and the APK ships the previous build's bundle.
+tasks.withType(com.facebook.react.tasks.BundleHermesCTask).configureEach {
+    inputs.files(rootProject.file("../.env.production"), rootProject.file("../.env.development"))
+        .withPropertyName("dotenvFiles")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property("perfBuild", findProperty('perfBuild') == 'true')
+    inputs.property("bpPerfBuildEnv", System.getenv('BP_PERF_BUILD') ?: '')
+}
+
 android {
+    // Perf-harness native code (PerfMarks) only in perf builds; everything
+    // else compiles a no-op with the same API.
+    sourceSets {
+        main {
+            java.srcDirs += (findProperty('perfBuild') == 'true') ? 'src/perf/java' : 'src/noperf/java'
+        }
+    }
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -150,6 +171,23 @@ android {
         versionCode 91212452
         versionName "14.48.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
+        // A perf build allows screenshots (no FLAG_SECURE) and is profileable, so
+        // it must never be signed with the Play upload key: refuse the build if
+        // perfBuild arrives (gradle.properties, ORG_GRADLE_PROJECT_*) without
+        // the debug keystore that scripts/android-perf.sh pins.
+        if (project.findProperty('perfBuild') == 'true' &&
+            project.findProperty('APP_UPLOAD_STORE_FILE') != 'debug.keystore') {
+            throw new GradleException(
+                'perfBuild=true is only allowed with APP_UPLOAD_STORE_FILE=debug.keystore (scripts/android-perf.sh)')
+        }
+        // Set only by scripts/android-perf.sh (-PperfBuild=true). Production builds
+        // never pass it, so it is false there and nothing perf-specific ships.
+        buildConfigField "boolean", "PERF_BUILD", (project.findProperty('perfBuild') == 'true').toString()
+        // Profiling perf builds (BP_PERF_PROFILE=1): Hermes sampling profiler on.
+        buildConfigField "boolean", "PERF_PROFILE", (project.findProperty('perfProfile') == 'true').toString()
+        // Perf builds only: lets simpleperf sample the app's Java/native stacks
+        // from the shell. "false" (every other build) is the platform default.
+        manifestPlaceholders += [perfProfileableShell: (project.findProperty('perfBuild') == 'true').toString()]
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
         }

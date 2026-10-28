@@ -61,7 +61,6 @@ import {
   TransakStatusKey,
 } from '../buy-crypto/buy-crypto.models';
 import {RampIncomingData} from '../buy-crypto/models/ramp.models';
-import {LogActions} from '../log';
 import {showBottomNotificationModal} from '../app/app.actions';
 import {
   getCurrencyAbbreviation,
@@ -329,7 +328,7 @@ const getParameterByName = (name: string, url: string): string | undefined => {
   if (!url) {
     return undefined;
   }
-  name = name.replace(/[\[\]]/g, '\\$&');
+  name = name.replace(/[[\]]/g, '\\$&');
   const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
   const results = regex.exec(url);
   if (!results) {
@@ -598,10 +597,10 @@ const unlockInvoice =
         }
 
         return 'unlockSuccess';
-      } catch (e) {
+      } catch {
         return 'invalidInvoice';
       }
-    } catch (e) {
+    } catch {
       return 'somethingWentWrong';
     }
   };
@@ -779,8 +778,8 @@ export const goToAmount =
   };
 
 const handlePrivateKey =
-  (scannedPrivateKey: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  (scannedPrivateKey: string, _wallet?: Wallet): Effect<void> =>
+  () => {
     logManager.info('[scan] Incoming-data: private key');
     navigationRef.navigate(WalletScreens.PAPER_WALLET, {
       scannedPrivateKey,
@@ -991,13 +990,13 @@ const handleSolanaPay =
             return;
           }
 
-          (coin = contractInfo.symbol?.toLowerCase()),
-            (tokenContractInfo = {
-              symbol: coin,
-              name: contractInfo.name,
-              address: splTokenAddress,
-              decimals: contractInfo.decimals,
-            });
+          coin = contractInfo.symbol?.toLowerCase();
+          tokenContractInfo = {
+            symbol: coin,
+            name: contractInfo.name,
+            address: splTokenAddress,
+            decimals: contractInfo.decimals,
+          };
         } catch (err) {
           const errorMsg =
             err instanceof Error ? err.message : JSON.stringify(err);
@@ -1058,23 +1057,23 @@ const handleSolanaPay =
     } else {
       logManager.debug('[SolanaPay] Validating amount...');
       const isValidSolanaPayAmount = (
-        amount: string | null | undefined,
+        amountStr: string | null | undefined,
       ): boolean => {
-        if (!amount || typeof amount !== 'string') {
+        if (!amountStr || typeof amountStr !== 'string') {
           return false;
         }
         // validate positive decimal number
         const decimalPattern = /^\d+(\.\d+)?$/;
-        if (!decimalPattern.test(amount)) {
+        if (!decimalPattern.test(amountStr)) {
           return false;
         }
-        const parsed = parseFloat(amount);
-        if (isNaN(parsed) || parsed <= 0) {
+        const parsedAmount = parseFloat(amountStr);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
           return false;
         }
         // validate 9 decimals max
-        const decimalPlaces = amount.includes('.')
-          ? amount.split('.')[1].length
+        const decimalPlaces = amountStr.includes('.')
+          ? amountStr.split('.')[1].length
           : 0;
         if (decimalPlaces > 9) {
           return false;
@@ -1334,8 +1333,8 @@ const handleEthereumUri =
     logManager.info('[scan] Incoming-data: Ethereum URI');
     const coin = 'eth';
     const chain = 'eth';
-    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
-    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    const value = /[?&]value=(\d+([,.]\d+)?)/i;
+    const gasPrice = /[?&]gasPrice=(\d+([,.]\d+)?)/i;
     let feePerKb;
     if (gasPrice.exec(data)) {
       feePerKb = Number(gasPrice.exec(data)![1]);
@@ -1385,8 +1384,8 @@ const handleMaticUri =
     logManager.info('[scan] Incoming-data: Matic URI');
     const coin = 'pol';
     const chain = 'matic';
-    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
-    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    const value = /[?&]value=(\d+([,.]\d+)?)/i;
+    const gasPrice = /[?&]gasPrice=(\d+([,.]\d+)?)/i;
     let feePerKb;
     if (gasPrice.exec(data)) {
       feePerKb = Number(gasPrice.exec(data)![1]);
@@ -1436,8 +1435,8 @@ const handleArbUri =
     logManager.info('[scan] Incoming-data: Arb URI');
     const coin = 'eth';
     const chain = 'arb';
-    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
-    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    const value = /[?&]value=(\d+([,.]\d+)?)/i;
+    const gasPrice = /[?&]gasPrice=(\d+([,.]\d+)?)/i;
     let feePerKb;
     if (gasPrice.exec(data)) {
       feePerKb = Number(gasPrice.exec(data)![1]);
@@ -1487,8 +1486,8 @@ const handleBaseUri =
     logManager.info('[scan] Incoming-data: Base URI');
     const coin = 'eth';
     const chain = 'base';
-    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
-    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    const value = /[?&]value=(\d+([,.]\d+)?)/i;
+    const gasPrice = /[?&]gasPrice=(\d+([,.]\d+)?)/i;
     let feePerKb;
     if (gasPrice.exec(data)) {
       feePerKb = Number(gasPrice.exec(data)![1]);
@@ -1538,8 +1537,8 @@ const handleOpUri =
     logManager.info('[scan] Incoming-data: Op URI');
     const coin = 'eth';
     const chain = 'op';
-    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
-    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    const value = /[?&]value=(\d+([,.]\d+)?)/i;
+    const gasPrice = /[?&]gasPrice=(\d+([,.]\d+)?)/i;
     let feePerKb;
     if (gasPrice.exec(data)) {
       feePerKb = Number(gasPrice.exec(data)![1]);
@@ -1589,8 +1588,8 @@ const handleSolUri =
     logManager.info('[scan] Incoming-data: Sol URI');
     const coin = 'sol';
     const chain = 'sol';
-    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
-    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    const value = /[?&]value=(\d+([,.]\d+)?)/i;
+    const gasPrice = /[?&]gasPrice=(\d+([,.]\d+)?)/i;
     let feePerKb;
     if (gasPrice.exec(data)) {
       feePerKb = Number(gasPrice.exec(data)![1]);
@@ -1640,8 +1639,8 @@ const handleRippleUri =
     logManager.info('[scan] Incoming-data: Ripple URI');
     const coin = 'xrp';
     const chain = 'xrp';
-    const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
-    const tagParam = /[\?\&]dt=(\d+([\,\.]\d+)?)/i;
+    const amountParam = /[?&]amount=(\d+([,.]\d+)?)/i;
+    const tagParam = /[?&]dt=(\d+([,.]\d+)?)/i;
     let destinationTag;
 
     if (tagParam.exec(data)) {
@@ -2537,7 +2536,7 @@ const handleRampUri =
 
 const handleSardineUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     logManager.info('Incoming-data (redirect): Sardine URL: ' + data);
 
     data = data.replace('?order_id', '&order_id');
@@ -3020,7 +3019,7 @@ const handlePlainAddress =
 
 const goToImport =
   (importQrCodeData: string): Effect<void> =>
-  (dispatch, getState) => {
+  () => {
     logManager.info('[scan] Incoming-data (redirect): QR code export feature');
     navigationRef.navigate(WalletScreens.IMPORT, {
       importQrCodeData,
@@ -3123,7 +3122,7 @@ export const setBuyerProvidedEmail =
         } else {
           return reject();
         }
-      } catch (e) {
+      } catch {
         return reject();
       }
     });

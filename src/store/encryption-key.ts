@@ -6,9 +6,14 @@ import {vaultError, safeVaultError} from './vault-diagnostics';
 export const LEGACY_KEY_SERVICE = 'bitpay-app-encryption-key';
 export const VAULT_KEY_SERVICE = 'bitpay-app-vault-key-v1';
 
-export const readVaultKey = async () => {
+export const readVaultKey = async (
+  // A read of this same entry already in flight (see
+  // src/startup/encryptionKeyPrefetch.ts); its outcome is handled as our own.
+  pending?: ReturnType<typeof Keychain.getGenericPassword>,
+) => {
   try {
-    return await Keychain.getGenericPassword({service: VAULT_KEY_SERVICE});
+    return await (pending ??
+      Keychain.getGenericPassword({service: VAULT_KEY_SERVICE}));
   } catch (error) {
     throw safeVaultError(
       error,

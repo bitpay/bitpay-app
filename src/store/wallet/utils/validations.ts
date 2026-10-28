@@ -76,10 +76,11 @@ export const IsValidSolanaPay = (data: string): boolean => {
     }
 
     // Try creating a PublicKey with recipientPart to make sure it's a valid Solana address.
+    // eslint-disable-next-line no-new -- constructor is used only for validation (throws if the address is invalid)
     new PublicKey(recipientPart); // throws if it is not valid
 
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -575,7 +576,7 @@ export const IsValidPrivateKey = (data: string): boolean => {
       try {
         provider.PrivateKey(privateKey, network);
         return true;
-      } catch (err) {}
+      } catch {}
     }
 
     return false;
@@ -597,7 +598,7 @@ export const IsValidPrivateKey = (data: string): boolean => {
     if (checkPrivateKey(data, 'testnet')) {
       return true;
     }
-  } catch (err) {}
+  } catch {}
   return false;
 };
 
@@ -608,9 +609,9 @@ export const IsValidAddKeyPath = (data: string) => {
 export const IsValidImportPrivateKey = (data: string): boolean => {
   return !!(
     data &&
-    (data.substring(0, 2) == '1|' ||
-      data.substring(0, 2) == '2|' ||
-      data.substring(0, 2) == '3|')
+    (data.substring(0, 2) === '1|' ||
+      data.substring(0, 2) === '2|' ||
+      data.substring(0, 2) === '3|')
   );
 };
 

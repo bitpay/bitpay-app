@@ -129,6 +129,7 @@ const TransakDetails: React.FC = () => {
       return;
     }
 
+    // eslint-disable-next-line no-bitwise -- `| 0` truncates the seconds timestamp to an integer
     const nowTimestamp = (Date.now() / 1000) | 0;
     let _accessToken = accessTokenTransak?.accessToken;
     let _expiresAt = accessTokenTransak?.expiresAt;
@@ -328,6 +329,7 @@ const TransakDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getOrderDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest order details; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

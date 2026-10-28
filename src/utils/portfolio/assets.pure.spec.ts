@@ -121,6 +121,7 @@ import {
   walletsHaveNonZeroLiveBalance,
   canNavigateToExchangeRateForAssetRowItem,
   getPopulateLoadingByAssetKey,
+  getPopulateProgressForWallets,
   hasCompletedPopulateForWallets,
   findSupportedCurrencyOptionForAsset,
   type AssetRowItem,
@@ -419,6 +420,64 @@ describe('buildWalletIdsByAssetGroupKey', () => {
     const result = buildWalletIdsByAssetGroupKey(wallets);
     expect(result.eth).toEqual(['w2']);
     expect(result['']).toBeUndefined();
+  });
+});
+
+// ─── getPopulateProgressForWallets ───────────────────────────────────────────
+
+describe('getPopulateProgressForWallets', () => {
+  it('returns undefined when no populate is running', () => {
+    expect(
+      getPopulateProgressForWallets({
+        populateStatus: {
+          inProgress: false,
+          walletStatusById: {w1: 'done'},
+          walletsTotal: 1,
+          walletsCompleted: 1,
+        } as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when none of the wallets are in the populate scope', () => {
+    expect(
+      getPopulateProgressForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {other: 'in_progress'},
+          walletsTotal: 1,
+          walletsCompleted: 0,
+        } as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBeUndefined();
+  });
+
+  it('counts only the scoped wallets, treating done and error as completed', () => {
+    expect(
+      getPopulateProgressForWallets({
+        populateStatus: {
+          inProgress: true,
+          currentWalletId: 'w3',
+          walletStatusById: {
+            w1: 'done',
+            w2: 'error',
+            w3: 'in_progress',
+            outside: 'done',
+          },
+          walletsTotal: 4,
+          walletsCompleted: 3,
+        } as any,
+        wallets: [
+          makeWallet('w1'),
+          makeWallet('w2'),
+          makeWallet('w3'),
+          makeWallet('w1'),
+          makeWallet('not-populating'),
+        ],
+      }),
+    ).toEqual({completed: 2, total: 3});
   });
 });
 

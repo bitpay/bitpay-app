@@ -3,15 +3,37 @@ import TestRenderer, {act} from 'react-test-renderer';
 import {View} from 'react-native';
 import {ThemeProvider} from '../../contexts';
 import type {BitPayTheme} from '../../themes/bitpay';
-import InteractiveLineChart from './InteractiveLineChart';
+import InteractiveLineChart, {
+  CHART_LINE_DIM_MS,
+  CHART_LINE_REVEAL_MS,
+  REFRESHING_LINE_OPACITY,
+} from './InteractiveLineChart';
 import {SlateDark} from '../../styles/colors';
 import {withTiming} from 'react-native-reanimated';
 import {GRAPH_DRAWABLE_EPSILON} from '../../portfolio/core/lineChartMath';
+
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 let mockLatestLineGraphProps: any;
 let mockLineGraphRenderCount = 0;
+let mockTimingCallbacks: Array<(finished: boolean) => void> = [];
 
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
@@ -44,10 +66,28 @@ jest.mock('react-native-reanimated', () => {
     },
     useDerivedValue: (fn: () => unknown, ...dependencies: unknown[]) => {
       expect(dependencies).toHaveLength(0);
-      return {value: fn()};
+      const value = fn();
+      return {value, get: () => value};
     },
-    useSharedValue: (value: unknown) => ReactLib.useRef({value}).current,
-    withTiming: jest.fn((value: unknown) => value),
+    useSharedValue: (value: unknown) =>
+      ReactLib.useRef(mockSharedValue(value)).current,
+    cancelAnimation: jest.fn(),
+    runOnJS:
+      (fn: (...args: unknown[]) => unknown) =>
+      (...args: unknown[]) =>
+        fn(...args),
+    withTiming: jest.fn(
+      (
+        value: unknown,
+        _config?: unknown,
+        callback?: (finished: boolean) => void,
+      ) => {
+        if (callback) {
+          mockTimingCallbacks.push(callback);
+        }
+        return value;
+      },
+    ),
   };
 });
 
@@ -74,8 +114,6 @@ jest.mock('react-native-svg', () => {
     Line: (props: any) => ReactLib.createElement(RNView, props),
   };
 });
-
-jest.mock('../loader/Loader', () => () => null);
 
 const theme = {
   dark: false,
@@ -135,7 +173,7 @@ describe('InteractiveLineChart', () => {
               color="#000000"
               gradientFillColors={['#ffffff', '#ffffff']}
               animated={false}
-              strokeScale={{value: 0.5} as any}
+              strokeScale={mockSharedValue(0.5) as any}
             />
           </View>
         </ThemeProvider>,
@@ -157,7 +195,7 @@ describe('InteractiveLineChart', () => {
               color="#000000"
               gradientFillColors={['#ffffff', '#ffffff']}
               animated
-              strokeScale={{value: 0.5} as any}
+              strokeScale={mockSharedValue(0.5) as any}
             />
           </View>
         </ThemeProvider>,
@@ -215,7 +253,7 @@ describe('InteractiveLineChart', () => {
     )[0];
     expect(guideLine.props.animatedProps.strokeWidth).toBe(4);
 
-    const sharedScale = {value: 0.5};
+    const sharedScale = mockSharedValue(0.5);
     act(() => renderer.update(renderChart(sharedScale, 3, 0.8)));
     expect(mockLatestLineGraphProps.lineThickness.value).toBeCloseTo(
       3 / Math.pow(0.5, 0.9),
@@ -617,6 +655,113 @@ describe('InteractiveLineChart', () => {
       expect(latestOnPointSelected).toHaveBeenCalledWith(points[0]);
       expect(latestOnGestureStart).toHaveBeenCalledTimes(1);
       expect(latestOnGestureEnd).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe('loading states', () => {
+    const findLineLayer = (renderer: TestRenderer.ReactTestRenderer) =>
+      renderer.root.findAll(
+        node =>
+          typeof node.type !== 'string' &&
+          Array.isArray(node.props.style) &&
+          node.props.style.some(
+            (styleItem: any) =>
+              styleItem?.position === 'absolute' &&
+              styleItem?.justifyContent === 'center',
+          ),
+      )[0];
+    const findHostByTestId = (
+      renderer: TestRenderer.ReactTestRenderer,
+      testID: string,
+    ) =>
+      renderer.root.findAll(
+        node => typeof node.type === 'string' && node.props.testID === testID,
+      );
+    const renderChart = (
+      props: Partial<React.ComponentProps<typeof InteractiveLineChart>> = {},
+    ) => (
+      <ThemeProvider theme={theme as BitPayTheme}>
+        <View>
+          <InteractiveLineChart
+            points={points}
+            color="#000000"
+            gradientFillColors={['#ffffff', '#ffffff']}
+            {...props}
+          />
+        </View>
+      </ThemeProvider>
+    );
+
+    beforeEach(() => {
+      mockTimingCallbacks = [];
+      (withTiming as jest.Mock).mockClear();
+    });
+
+    it('dims an existing line while refreshing instead of showing an overlay', () => {
+      let renderer!: TestRenderer.ReactTestRenderer;
+      act(() => {
+        renderer = TestRenderer.create(renderChart());
+      });
+      expect(findLineLayer(renderer).props.pointerEvents).toBe('auto');
+
+      act(() => renderer.update(renderChart({isLoading: true})));
+
+      expect(withTiming).toHaveBeenCalledWith(
+        REFRESHING_LINE_OPACITY,
+        expect.objectContaining({duration: CHART_LINE_DIM_MS}),
+      );
+      // The old line stays mounted (react-native-graph morphs it into the
+      // next series) and gestures are blocked.
+      expect(renderer.root.findAllByType('LineGraph' as any)).toHaveLength(1);
+      expect(findLineLayer(renderer).props.pointerEvents).toBe('none');
+      expect(
+        findHostByTestId(renderer, 'interactive-line-chart-placeholder'),
+      ).toHaveLength(0);
+
+      act(() => renderer.update(renderChart({isLoading: false})));
+      expect(withTiming).toHaveBeenLastCalledWith(
+        1,
+        expect.objectContaining({duration: CHART_LINE_REVEAL_MS}),
+      );
+      act(() => renderer.unmount());
+    });
+
+    it('renders the placeholder in place of the line and crossfades it out when data arrives', () => {
+      const placeholder = <View testID="test-skeleton" />;
+      let renderer!: TestRenderer.ReactTestRenderer;
+      act(() => {
+        renderer = TestRenderer.create(
+          renderChart({
+            points: [],
+            isLoading: true,
+            hideLineWhileLoading: true,
+            placeholder,
+          }),
+        );
+      });
+
+      expect(findHostByTestId(renderer, 'test-skeleton')).toHaveLength(1);
+      expect(findLineLayer(renderer).props.pointerEvents).toBe('none');
+
+      act(() => renderer.update(renderChart({placeholder: null})));
+
+      // Still mounted while it fades out over the reveal duration.
+      expect(findHostByTestId(renderer, 'test-skeleton')).toHaveLength(1);
+      expect(withTiming).toHaveBeenCalledWith(
+        0,
+        expect.objectContaining({duration: CHART_LINE_REVEAL_MS}),
+        expect.any(Function),
+      );
+      expect(withTiming).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({duration: CHART_LINE_REVEAL_MS}),
+      );
+      expect(findLineLayer(renderer).props.pointerEvents).toBe('auto');
+
+      act(() => {
+        mockTimingCallbacks.forEach(callback => callback(true));
+      });
+      expect(findHostByTestId(renderer, 'test-skeleton')).toHaveLength(0);
+      act(() => renderer.unmount());
     });
   });
 });

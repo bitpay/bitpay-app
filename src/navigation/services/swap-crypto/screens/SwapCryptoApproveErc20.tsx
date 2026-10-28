@@ -191,7 +191,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
       );
       const knownContract = spenderDataWhitelist.find(contract => {
         return (
-          contract?.address?.toLowerCase() == spenderData.address.toLowerCase()
+          contract?.address?.toLowerCase() === spenderData.address.toLowerCase()
         );
       });
 
@@ -278,8 +278,8 @@ const SwapCryptoApproveErc20: React.FC = () => {
     logger.debug(`Approve calldata: ${approveData}`);
 
     try {
-      const ctxp = await createTx(approveData);
-      setCtxp(ctxp);
+      const newCtxp = await createTx(approveData);
+      setCtxp(newCtxp);
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
@@ -373,6 +373,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
     setIsLoading(true);
     encodeErc20DataAndCreateTx();
     getSpenderData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount
   }, []);
 
   useEffect(() => {
@@ -568,7 +569,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
             try {
               logger.debug('Swipe completed. Making payment...');
               makePayment();
-            } catch (err) {}
+            } catch {}
           }}
           forceReset={resetSwipeButton}
         />

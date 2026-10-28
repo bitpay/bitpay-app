@@ -83,6 +83,7 @@ export function MoonPayCheckFrame({
           break;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- channelId is useState with no setter, so it never changes after mount
     [
       keyPair,
       onActive,

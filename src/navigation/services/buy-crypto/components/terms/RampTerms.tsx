@@ -65,7 +65,7 @@ const RampTerms: React.FC<{
           haptic('impactLight');
           dispatch(
             openUrlWithInAppBrowser(
-              country == 'US'
+              country === 'US'
                 ? 'https://rampnetwork.com/terms-of-service/#us-terms-of-service'
                 : 'https://rampnetwork.com/terms-of-service/#global-terms-of-service',
             ),

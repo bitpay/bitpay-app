@@ -2,6 +2,23 @@ import React from 'react';
 import {act, fireEvent, render} from '@test/render';
 import OnboardingStart from './OnboardingStart';
 
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
+
 const mockDispatch = jest.fn();
 const mockAnalyticsTrack = jest.fn(
   (event: string, properties: Record<string, unknown>) => ({
@@ -91,7 +108,9 @@ jest.mock('react-native-reanimated', () => {
       },
     },
     useSharedValue: (initialValue: number) => {
-      const progressValue = ReactLib.useRef({value: initialValue}).current;
+      const progressValue = ReactLib.useRef(
+        mockSharedValue(initialValue),
+      ).current;
       mockProgressValue = progressValue;
       return progressValue;
     },

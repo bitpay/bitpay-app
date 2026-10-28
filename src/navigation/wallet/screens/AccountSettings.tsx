@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -191,6 +191,22 @@ const AccountSettings = () => {
     () => key.wallets.some(w => !w.hideWallet && IsVMChain(w.chain)),
     [key],
   );
+  // Re-sync hideAccount when the key or account changes (adjust-state-during-
+  // render pattern instead of an effect, so there is no extra commit with the
+  // stale value).
+  const [prevHideAccountSource, setPrevHideAccountSource] = useState({
+    key,
+    receiveAddress: accountItem.receiveAddress,
+  });
+  if (
+    prevHideAccountSource.key !== key ||
+    prevHideAccountSource.receiveAddress !== accountItem.receiveAddress
+  ) {
+    setPrevHideAccountSource({key, receiveAddress: accountItem.receiveAddress});
+    setHideAccount(
+      key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false,
+    );
+  }
   const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
   const accountIsSvm =
     isSvmAccount ?? IsSVMChain(accountItem.chains?.[0] ?? '');
@@ -257,12 +273,6 @@ const AccountSettings = () => {
     }
   };
 
-  useEffect(() => {
-    const newHideAccount =
-      key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false;
-    setHideAccount(newHideAccount);
-  }, [accountItem.receiveAddress, key]);
-
   const onPressItem = (isComplete: boolean | undefined, walletId: string) => {
     // Ignore if wallet is not complete
     if (!isComplete) {
@@ -275,7 +285,7 @@ const AccountSettings = () => {
     });
   };
 
-  const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
+  const renderWalletList = (wallets: WalletRowProps[]) => {
     return (
       <View style={{paddingBottom: 50}}>
         {wallets.map(
@@ -464,13 +474,11 @@ const AccountSettings = () => {
           />
         </View>
 
-        <WalletList
-          wallets={
-            !searchVal && !selectedChainFilterOption
-              ? accountItem.wallets
-              : searchResults
-          }
-        />
+        {renderWalletList(
+          !searchVal && !selectedChainFilterOption
+            ? accountItem.wallets
+            : searchResults,
+        )}
       </ScrollView>
     </SafeAreaView>
   );

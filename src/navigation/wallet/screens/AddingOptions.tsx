@@ -31,7 +31,6 @@ import {
   getBaseSVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
-import {LogActions} from '../../../store/log';
 import {
   getEvmGasWallets,
   getSvmGasWallets,
@@ -47,6 +46,11 @@ export type AddingOptionsParamList = {
 };
 
 const AddingOptions: React.FC = () => {
+  // React Compiler opt-out: the add-account handler intentionally mutates the
+  // `key` route param in place (key.properties / key.wallets) before
+  // dispatching it, so other holders of the same object see the update.
+  // Copying it to satisfy the compiler would change that behaviour.
+  'use no memo';
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -205,6 +209,7 @@ const AddingOptions: React.FC = () => {
               showOngoingProcess('ADDING_WALLET');
               await sleep(500);
               key.methods.addKeyByAlgorithm('EDDSA', {password});
+              // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
               key.properties = key.methods.toObj();
             } catch (err) {
               hideOngoingProcess();

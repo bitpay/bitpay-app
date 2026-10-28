@@ -78,14 +78,16 @@ const SwipeButtonOverlay: React.FC<{
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
-    opacity.value = withTiming(isVisible ? 1 : 0, {
-      duration: 180,
-      easing: Easing.inOut(Easing.ease),
-    });
-  }, [isVisible]);
+    opacity.set(
+      withTiming(isVisible ? 1 : 0, {
+        duration: 180,
+        easing: Easing.inOut(Easing.ease),
+      }),
+    );
+  }, [isVisible, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: opacity.get(),
   }));
 
   const getBackgroundColor = () => {
@@ -164,7 +166,7 @@ const SwipeButton = ({
             setState('loading');
             try {
               await onSwipeComplete();
-            } catch (_) {
+            } catch {
             } finally {
               setState(null);
             }

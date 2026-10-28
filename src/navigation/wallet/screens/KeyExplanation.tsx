@@ -1,10 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {Carousel, CarouselRef} from 'react-native-reanimated-carousel';
 import Button from '../../../components/button/Button';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
   CtaContainerAbsolute,
@@ -152,7 +151,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
             if (Math.round(index) !== activeSlideIndex) {
               throttleOnActiveSlideChange(index);
             }
-            progressValue.value = index;
+            progressValue.set(index);
           }}
           renderItem={slideProps => <OnboardingSlide {...slideProps} />}
         />

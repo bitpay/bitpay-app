@@ -8,7 +8,6 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
-import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';

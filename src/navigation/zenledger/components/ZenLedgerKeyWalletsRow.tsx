@@ -158,6 +158,7 @@ const ZenLedgerKeyWalletsRow = ({
         </NoGutter>
       ) : null;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hideBalance (APP.hideAllBalances) is not toggled from the ZenLedger flow; callback is rebuilt whenever the parent's inline onPress changes
     [onPress, onDropdownPress],
   );
 
@@ -196,14 +197,18 @@ const ZenLedgerKeyWalletsRow = ({
                   data={wallets}
                   keyExtractor={(_item, index) => index.toString()}
                   renderItem={({
-                    item,
+                    item: walletItem,
                     index,
                   }: {
                     item: ZenLedgerWalletObj;
                     index: number;
                   }) => {
-                    const isLast = index === wallets.length - 1;
-                    return renderItem({item, keyId, isLast});
+                    const isLastWallet = index === wallets.length - 1;
+                    return renderItem({
+                      item: walletItem,
+                      keyId,
+                      isLast: isLastWallet,
+                    });
                   }}
                 />
               </View>
@@ -212,6 +217,7 @@ const ZenLedgerKeyWalletsRow = ({
         </KeyWalletsRowContainer>
       ) : null;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- renderItem only changes with onPress/onDropdownPress (already deps) or hideBalance (see renderItem)
     [onPress, onDropdownPress, t],
   );
 

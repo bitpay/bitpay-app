@@ -1,4 +1,5 @@
 import React from 'react';
+import {markOnce as perfMarkOnce} from '../../perf/PerfMonitor';
 import {StyleSheet, View, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -91,6 +92,7 @@ export type TabsStackParamList = {
 export const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
+  perfMarkOnce('bp_tabs_render');
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -134,11 +136,15 @@ const TabsStack = () => {
         component={HomeRoot}
         options={{
           headerShown: false,
+          tabBarButtonTestID: 'tab-home',
         }}
       />
       <Tab.Screen
         name={TabsScreens.SHOP}
         component={ShopRoot}
+        options={{
+          tabBarButtonTestID: 'tab-shop',
+        }}
         listeners={() => ({
           tabPress: () => dispatch(Analytics.track('Shop - Clicked Shop Tab')),
         })}
@@ -154,12 +160,21 @@ const TabsStack = () => {
       <Tab.Screen
         name={TabsScreens.BILLS}
         component={BillStack}
+        options={{
+          tabBarButtonTestID: 'tab-bills',
+        }}
         listeners={() => ({
           tabPress: () =>
             dispatch(Analytics.track('Bill Pay - Clicked Bill Pay')),
         })}
       />
-      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsStack} />
+      <Tab.Screen
+        name={TabsScreens.SETTINGS}
+        component={SettingsStack}
+        options={{
+          tabBarButtonTestID: 'tab-settings',
+        }}
+      />
     </Tab.Navigator>
   );
 };
