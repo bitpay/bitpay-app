@@ -20,6 +20,7 @@ export interface SnapshotBalanceMismatch {
   /** See PortfolioSnapshotBalanceMismatch in portfolio/service. */
   verifiedAfterPopulateAt?: number;
   verifiedCheckpointNextSkip?: number | null;
+  verifiedDeltaAtomic?: string;
 }
 
 export interface InvalidDecimalsMarker {

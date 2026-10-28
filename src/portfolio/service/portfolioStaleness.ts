@@ -30,6 +30,12 @@ export type PortfolioSnapshotBalanceMismatch = {
   verifiedAfterPopulateAt?: number;
   /** The snapshot index checkpoint (nextSkip) at that populate. */
   verifiedCheckpointNextSkip?: number | null;
+  /**
+   * The delta that populate left behind. Drift skips record each newer
+   * delta in `deltaAtomic`, so this is what "unchanged" is measured against
+   * once the drift throttle stops applying.
+   */
+  verifiedDeltaAtomic?: string;
 };
 
 /**
@@ -63,6 +69,7 @@ export const stampMismatchVerifiedAfterPopulate = (
   ...mismatch,
   verifiedAfterPopulateAt: at,
   verifiedCheckpointNextSkip: checkpointNextSkip(index),
+  verifiedDeltaAtomic: mismatch.deltaAtomic,
 });
 
 export type PortfolioPopulateDecisionReason =
@@ -400,8 +407,20 @@ const buildBalanceMismatchDecision = (args: {
           ...args.mismatch,
           verifiedAfterPopulateAt: previous.verifiedAfterPopulateAt,
           verifiedCheckpointNextSkip: previous.verifiedCheckpointNextSkip,
+          verifiedDeltaAtomic: previous.verifiedDeltaAtomic,
         }
       : args.mismatch;
+
+  // A drift skip overwrites deltaAtomic with the newer delta, so for a
+  // verified mismatch compare against the delta the populate left behind.
+  // Otherwise the skipped delta reads as unchanged and blocks the repopulate
+  // that the recheck interval or a user refresh is meant to allow. A verified
+  // record without verifiedDeltaAtomic has no trustworthy anchor, so only
+  // the drift throttle applies to it.
+  const lastPopulatedDeltaAtomic =
+    previous?.verifiedAfterPopulateAt !== undefined
+      ? previous.verifiedDeltaAtomic
+      : previous?.deltaAtomic;
 
   // A completed populate already failed to reproduce this balance, and the
   // history is unchanged since: only the live balance has drifted, so a
@@ -417,7 +436,8 @@ const buildBalanceMismatchDecision = (args: {
 
   if (
     driftOnlyAfterVerifiedPopulate ||
-    previous?.deltaAtomic === args.mismatch.deltaAtomic
+    (lastPopulatedDeltaAtomic !== undefined &&
+      lastPopulatedDeltaAtomic === args.mismatch.deltaAtomic)
   ) {
     return buildPortfolioPopulateDecision(
       args.walletId,

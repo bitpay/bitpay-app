@@ -29,6 +29,7 @@ jest.mock('../../portfolio/service', () => ({
       ...mismatch,
       verifiedAfterPopulateAt: at,
       verifiedCheckpointNextSkip: index?.checkpoint?.nextSkip ?? null,
+      verifiedDeltaAtomic: mismatch.deltaAtomic,
     }),
   ),
   buildPortfolioExcessiveBalanceMismatchMarker: jest.fn(
@@ -1012,6 +1013,8 @@ describe('portfolio runtime effects lock deferral', () => {
           ...refreshedMismatch,
           verifiedAfterPopulateAt: expect.any(Number),
           verifiedCheckpointNextSkip: null,
+          // The anchor later drift checks compare against.
+          verifiedDeltaAtomic: refreshedMismatch.deltaAtomic,
         },
       },
       type: 'SET_MISMATCHES',
