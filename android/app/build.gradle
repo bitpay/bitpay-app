@@ -138,6 +138,18 @@ def reactNativeArchitectures() {
 }
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
+// react-native-dotenv bakes .env values into the JS bundle, but the React
+// Native plugin only tracks JS/TS sources as bundle inputs. Without these, an
+// .env change (including IS_PERF from scripts/android-perf.sh) leaves the
+// bundle task UP-TO-DATE and the APK ships the previous build's bundle.
+tasks.withType(com.facebook.react.tasks.BundleHermesCTask).configureEach {
+    inputs.files(rootProject.file("../.env.production"), rootProject.file("../.env.development"))
+        .withPropertyName("dotenvFiles")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property("perfBuild", findProperty('perfBuild') == 'true')
+    inputs.property("bpPerfBuildEnv", System.getenv('BP_PERF_BUILD') ?: '')
+}
+
 android {
     // Perf-harness native code (PerfMarks) only in perf builds; everything
     // else compiles a no-op with the same API.

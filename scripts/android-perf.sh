@@ -43,8 +43,20 @@ fi
 AUTOLINKING_CACHE="$REPO_ROOT/android/build/generated/autolinking"
 rm -rf "$AUTOLINKING_CACHE"
 
+# The release bundle task's packaged outputs (BundleHermesCTask), shared with
+# normal release builds. Gradle tracks the env files as bundle inputs too
+# (android/app/build.gradle); removing the perf bundle here as well means a
+# later release cannot package it however this script exits. The source map
+# is left alone: it is never packaged, and perf/loop/jsprofile.sh reads it
+# after this script returns.
+BUNDLE_OUTPUTS=(
+  "$REPO_ROOT/android/app/build/generated/assets/react/release"
+  "$REPO_ROOT/android/app/build/generated/res/react/release"
+)
+
 restore_env() {
-  rm -rf "$AUTOLINKING_CACHE"
+  # Never let a failed delete stop the env files being restored.
+  rm -rf "$AUTOLINKING_CACHE" "${BUNDLE_OUTPUTS[@]}" || true
   for env_file in "${ENV_FILES[@]}"; do
     if [ -f "$env_file.perf-backup" ]; then
       mv "$env_file.perf-backup" "$env_file"
@@ -66,8 +78,7 @@ done
 # inputs, so a patched dependency (patch-package) leaves the task UP-TO-DATE
 # and the APK ships the old JS. Removing the bundle output forces it to rerun;
 # Metro's own cache keeps that cheap.
-rm -rf "$REPO_ROOT/android/app/build/generated/assets/createBundleReleaseJsAndAssets" \
-       "$REPO_ROOT/android/app/build/generated/assets/react/release"
+rm -rf "${BUNDLE_OUTPUTS[@]}"
 
 echo "Building instrumented release APK (IS_PERF=true)..."
 # Subshell so the cd cannot leak into the trap's execution context.
