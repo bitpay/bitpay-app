@@ -848,8 +848,9 @@ export const startTSSCeremony =
               logManager.warn(
                 `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
                   key.tssSession!.n
-                } copayers found. Continuing anyway...`,
+                } copayers found.`,
               );
+              throw new Error('CEREMONY_TIMEOUT');
             }
           }
         };
@@ -1483,8 +1484,9 @@ export const joinTSSWithCode =
               await new Promise(resolve => setTimeout(resolve, delayMs));
             } else {
               logManager.warn(
-                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${tssSession.n} copayers found. Continuing anyway...`,
+                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${tssSession.n} copayers found.`,
               );
+              throw new Error('CEREMONY_TIMEOUT');
             }
           }
         };
