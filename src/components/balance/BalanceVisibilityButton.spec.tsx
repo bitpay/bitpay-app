@@ -39,30 +39,32 @@ describe('BalanceVisibilityButton', () => {
     });
   });
 
-  it('describes whether the press will hide or show balances', () => {
+  it('hints whether the press will hide or show balances without replacing the balance label', () => {
     const onToggle = jest.fn();
     const {getByTestId, rerender} = render(
       <BalanceVisibilityButton
         testID="balance-visibility-button"
         hidden={false}
-        onToggle={onToggle}
-      />,
+        onToggle={onToggle}>
+        <Text>$100.00</Text>
+      </BalanceVisibilityButton>,
     );
 
-    expect(
-      getByTestId('balance-visibility-button').props.accessibilityLabel,
-    ).toBe('Hide balances');
+    const button = getByTestId('balance-visibility-button');
+    expect(button.props.accessibilityLabel).toBeUndefined();
+    expect(button.props.accessibilityHint).toBe('Hide balances');
 
     rerender(
       <BalanceVisibilityButton
         testID="balance-visibility-button"
         hidden
-        onToggle={onToggle}
-      />,
+        onToggle={onToggle}>
+        <Text>****</Text>
+      </BalanceVisibilityButton>,
     );
 
     expect(
-      getByTestId('balance-visibility-button').props.accessibilityLabel,
+      getByTestId('balance-visibility-button').props.accessibilityHint,
     ).toBe('Show balances');
   });
 });
