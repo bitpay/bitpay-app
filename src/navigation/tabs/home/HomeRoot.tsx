@@ -465,6 +465,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const canStartKyc = useAppSelector(SumSubSelectors.selectCanStartKyc);
+  const kycModalDismissed = useAppSelector(
+    SumSubSelectors.selectGetVerifiedDismissed,
+  );
   const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
   const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
   const appLocked = showPinModal || showBiometricModal;
@@ -538,14 +541,27 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
   // Get Verified modal
   useEffect(() => {
-    if (canStartKyc && isHomeFocused && !appLocked && !kycModalShown) {
+    if (
+      canStartKyc &&
+      !kycModalDismissed &&
+      isHomeFocused &&
+      !appLocked &&
+      !kycModalShown
+    ) {
       const timer = setTimeout(
         () => dispatch(setShowKycGetVerifiedModal(true)),
         1000,
       );
       return () => clearTimeout(timer);
     }
-  }, [dispatch, canStartKyc, isHomeFocused, appLocked, kycModalShown]);
+  }, [
+    dispatch,
+    canStartKyc,
+    kycModalDismissed,
+    isHomeFocused,
+    appLocked,
+    kycModalShown,
+  ]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
