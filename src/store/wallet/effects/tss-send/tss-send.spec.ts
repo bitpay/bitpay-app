@@ -895,6 +895,53 @@ describe('startTSSSigning', () => {
     );
   });
 
+  it('resolves with the broadcasted proposal when start() fails because the other co-signers already filled the session', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+    const broadcastedTxp = {id: 'txp-1', status: 'broadcasted'};
+    jest
+      .requireMock('../send/send')
+      .getTx.mockResolvedValueOnce(broadcastedTxp);
+
+    configureNextTssSign(instance => {
+      instance.start.mockRejectedValue(
+        new Error(
+          'TSS_MAX_PARTICIPANTS_REACHED: Maximum number of participants reached',
+        ),
+      );
+    });
+
+    const result = await store.dispatch(
+      startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+    );
+    expect(result).toBe(broadcastedTxp);
+  });
+
+  it('rejects with an actionable message when the other co-signers filled the session and the proposal is never broadcast', async () => {
+    const store = configureTestStore();
+    const wallet = makeTssWallet();
+    const key = makeTssKeyObj({wallets: [wallet]});
+    const txp = makeTxp();
+
+    configureNextTssSign(instance => {
+      instance.start.mockRejectedValue(
+        new Error(
+          'TSS_MAX_PARTICIPANTS_REACHED: Maximum number of participants reached',
+        ),
+      );
+    });
+
+    await expect(
+      store.dispatch(
+        startTSSSigning({key, wallet, txp, callbacks: noopCallbacks()}),
+      ),
+    ).rejects.toThrow(
+      'Other co-signers are already signing this proposal. Check its status in a few minutes.',
+    );
+  });
+
   it('recovers from a mid-session TSS_ROUND_ALREADY_DONE error event via getSignatureFromServer', async () => {
     const store = configureTestStore();
     const wallet = makeTssWallet();
