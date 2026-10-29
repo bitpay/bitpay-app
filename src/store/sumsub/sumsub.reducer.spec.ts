@@ -38,7 +38,11 @@ const seed = (partial: Partial<SumSubState>): SumSubState => ({
   kyc: {...emptyMap},
   sdkStatus: {...emptyMap},
   bannerAck: {...emptyMap},
-  getVerifiedDismissed: {...emptyMap},
+  getVerifiedDismissed: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+    [Network.regtest]: [],
+  },
   statusFetched: {...unfetchedMap},
   ...partial,
 });
@@ -138,8 +142,47 @@ describe('sumSubReducer', () => {
       setGetVerifiedDismissed(Network.mainnet, 'eid-1'),
     );
     const state = sumSubReducer(dismissed, resetKyc(Network.mainnet));
-    expect(state.getVerifiedDismissed[Network.mainnet]).toBe('eid-1');
-    expect(state.getVerifiedDismissed[Network.testnet]).toBeNull();
+    expect(state.getVerifiedDismissed[Network.mainnet]).toEqual(['eid-1']);
+    expect(state.getVerifiedDismissed[Network.testnet]).toEqual([]);
+  });
+
+  it('keeps every dismissing account instead of overwriting the previous one', () => {
+    let state = sumSubReducer(
+      undefined,
+      setGetVerifiedDismissed(Network.mainnet, 'eid-1'),
+    );
+    state = sumSubReducer(
+      state,
+      setGetVerifiedDismissed(Network.mainnet, 'eid-2'),
+    );
+    expect(state.getVerifiedDismissed[Network.mainnet]).toEqual([
+      'eid-1',
+      'eid-2',
+    ]);
+  });
+
+  it('does not record the same account twice', () => {
+    const once = sumSubReducer(
+      undefined,
+      setGetVerifiedDismissed(Network.mainnet, 'eid-1'),
+    );
+    const twice = sumSubReducer(
+      once,
+      setGetVerifiedDismissed(Network.mainnet, 'eid-1'),
+    );
+    expect(twice.getVerifiedDismissed[Network.mainnet]).toEqual(['eid-1']);
+    expect(twice.getVerifiedDismissed[Network.mainnet]).toBe(
+      once.getVerifiedDismissed[Network.mainnet],
+    );
+  });
+
+  it('rehydrates a persisted state without getVerifiedDismissed', () => {
+    const legacy = {} as SumSubState;
+    const state = sumSubReducer(
+      legacy,
+      setGetVerifiedDismissed(Network.mainnet, 'eid-1'),
+    );
+    expect(state.getVerifiedDismissed[Network.mainnet]).toEqual(['eid-1']);
   });
 
   it('does not mutate the previous state', () => {

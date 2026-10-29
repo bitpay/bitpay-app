@@ -25,10 +25,10 @@ export interface SumSubState {
   bannerAck: {
     [key in Network]: KycBannerAck | null;
   };
-  // `eid` that dismissed the Get Verified modal. Survives logout, like
+  // `eid`s that dismissed the Get Verified modal. Survives logout, like
   // `bannerAck`, so the same account is not prompted again after a re-login.
   getVerifiedDismissed: {
-    [key in Network]: string | null;
+    [key in Network]: string[];
   };
   // Whether `getKycStatus` has answered since the app started. Not persisted:
   // a rehydrated `kyc` can be stale (the status may have moved on server-side
@@ -56,9 +56,9 @@ const initialState: SumSubState = {
     [Network.regtest]: null,
   },
   getVerifiedDismissed: {
-    [Network.mainnet]: null,
-    [Network.testnet]: null,
-    [Network.regtest]: null,
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+    [Network.regtest]: [],
   },
   statusFetched: {
     [Network.mainnet]: false,
@@ -127,7 +127,14 @@ export const sumSubReducer = (
         ...state,
         getVerifiedDismissed: {
           ...state.getVerifiedDismissed,
-          [action.payload.network]: action.payload.eid,
+          [action.payload.network]: state.getVerifiedDismissed[
+            action.payload.network
+          ].includes(action.payload.eid)
+            ? state.getVerifiedDismissed[action.payload.network]
+            : [
+                ...state.getVerifiedDismissed[action.payload.network],
+                action.payload.eid,
+              ],
         },
       };
 
