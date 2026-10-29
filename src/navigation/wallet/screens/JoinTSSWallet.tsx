@@ -312,6 +312,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     control,
     handleSubmit,
     watch,
+    resetField,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reading isValid subscribes react-hook-form to validity updates; kept to preserve render behaviour
     formState: {errors, isValid},
   } = useForm<JoinFormValues>({
@@ -591,6 +592,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
             setSessionId('');
             setPartyKey(null);
             setLocalCopayerName('');
+            resetField('myName');
             setShowSession(false);
             setCurrentStep(0);
             setInviteCode('');
