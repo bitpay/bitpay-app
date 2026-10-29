@@ -308,6 +308,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     control,
     handleSubmit,
     watch,
+    resetField,
     formState: {errors, isValid},
   } = useForm<JoinFormValues>({
     mode: 'onChange',
@@ -610,6 +611,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
             setSessionId('');
             setPartyKey(null);
             setLocalCopayerName('');
+            resetField('myName');
             setShowSession(false);
             setCurrentStep(0);
             setInviteCode('');
