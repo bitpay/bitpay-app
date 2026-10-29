@@ -454,15 +454,15 @@ export const addCoSignerToTSS =
       await tssKeyGen.restoreSession({session: key.tssSession.sessionExport});
       logManager.debug(`[TSS] Session restored with ID: ${tssKeyGen.id}`);
 
-      if (!getState().WALLET.keys[opts.keyId]) {
-        throw new Error('Key not found or no TSS session');
-      }
-
-      const joinCode = tssKeyGen.createJoinCode({
+      const joinCode = await tssKeyGen.createJoinCode({
         partyId: opts.partyId,
         partyPubKey: joinerData.pubKey,
         opts: {encoding: 'base64'},
       });
+
+      if (!getState().WALLET.keys[opts.keyId]) {
+        throw new Error('Key not found or no TSS session');
+      }
 
       logManager.debug(`[TSS] Created joinCode for party ${opts.partyId}`);
 

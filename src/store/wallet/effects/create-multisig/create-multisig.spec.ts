@@ -146,7 +146,7 @@ function createFakeKeyGen(overrides: any = {}) {
     restoreSession: jest.fn(() => Promise.resolve()),
     exportSession: jest.fn(() => 'exported-session-string'),
     checkJoinCode: jest.fn(() => ({chain: 'btc', network: 'livenet'})),
-    createJoinCode: jest.fn(() => 'join-code-abc'),
+    createJoinCode: jest.fn(() => Promise.resolve('join-code-abc')),
     getTssKey: jest.fn(() => createFakeTssKey()),
   };
   return Object.assign(fake, overrides);
@@ -540,7 +540,7 @@ describe('addCoSignerToTSS', () => {
     const store = configureTestStore({
       WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
     });
-    lastKeyGen.createJoinCode.mockReturnValue('the-join-code');
+    lastKeyGen.createJoinCode.mockResolvedValue('the-join-code');
 
     const {joinCode} = await store.dispatch(
       addCoSignerToTSS({
@@ -673,6 +673,38 @@ describe('addCoSignerToTSS', () => {
     resultPromise.catch(() => {});
     store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
     finishRestore();
+
+    await expect(resultPromise).rejects.toThrow(
+      'Key not found or no TSS session',
+    );
+    expect(
+      store
+        .getActions()
+        .filter((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
+  });
+
+  it('does not restore a deleted key when createJoinCode finishes', async () => {
+    const keyId = 'key-deleted-during-register';
+    const store = configureTestStore({
+      WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
+    });
+    let finishJoinCode!: (code: string) => void;
+    lastKeyGen.createJoinCode.mockImplementationOnce(
+      () => new Promise<string>(resolve => (finishJoinCode = resolve)),
+    );
+
+    const resultPromise = store.dispatch(
+      addCoSignerToTSS({
+        keyId,
+        joinerSessionId: encodeJoinerSessionId({pubKey: 'p1'}),
+        partyId: 1,
+      }),
+    );
+    resultPromise.catch(() => {});
+    await tick();
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishJoinCode('the-join-code');
 
     await expect(resultPromise).rejects.toThrow(
       'Key not found or no TSS session',
