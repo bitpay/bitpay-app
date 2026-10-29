@@ -848,8 +848,9 @@ export const startTSSCeremony =
               logManager.warn(
                 `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
                   key.tssSession!.n
-                } copayers found. Continuing anyway...`,
+                } copayers found.`,
               );
+              throw new Error('CEREMONY_TIMEOUT');
             }
           }
         };

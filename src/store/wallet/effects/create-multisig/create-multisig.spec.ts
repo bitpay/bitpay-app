@@ -1149,7 +1149,7 @@ describe('startTSSCeremony', () => {
     expect(publicKeyRingAtAddressCreation).toHaveLength(3);
   });
 
-  it('continues (without throwing) when refreshWalletWithRetry exhausts all retries', async () => {
+  it('rejects with CEREMONY_TIMEOUT and keeps the key pending when refreshWalletWithRetry exhausts all retries', async () => {
     jest.useFakeTimers();
     const keyId = 'ceremony-retry-exhausted';
     const store = configureTestStore({
@@ -1158,7 +1158,6 @@ describe('startTSSCeremony', () => {
       },
     });
 
-    // Server never reports the full copayer set on any status refresh.
     lastWalletClient.getStatus = jest.fn((_opts: any, cb: any) =>
       cb(null, {
         wallet: {id: DEFAULT_BWS_WALLET_ID, copayers: [{id: 'c1'}]},
@@ -1177,15 +1176,18 @@ describe('startTSSCeremony', () => {
     });
     lastKeyGen.emit('complete');
 
+    const outcome = expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
     for (let i = 0; i < 5; i++) {
       await advanceAndFlush(1000);
     }
 
-    const finalKey = await resultPromise;
-
-    // The leader attaches tssKeyId (addWalletInfo) before the retry loop runs.
-    expect(finalKey.wallets[0].tssKeyId).toBe('server-assigned-tss-key-id');
+    await outcome;
     expect(lastWalletClient.getStatus).toHaveBeenCalledTimes(5);
+    expect(
+      store
+        .getActions()
+        .some((a: any) => a.payload?.key?.tssSession?.status === 'complete'),
+    ).toBe(false);
   });
 
   it('rejects with CEREMONY_TIMEOUT if the ceremony never completes after round 2 is ready', async () => {
