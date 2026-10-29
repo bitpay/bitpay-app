@@ -34,7 +34,7 @@ type BalanceVisibilityButtonProps = Omit<
 const BalanceVisibilityButton: React.FC<BalanceVisibilityButtonProps> = ({
   hidden,
   onToggle,
-  accessibilityLabel,
+  accessibilityHint,
   activeOpacity = ActiveOpacity,
   hitSlop = balanceVisibilityHitSlop,
   style,
@@ -46,8 +46,8 @@ const BalanceVisibilityButton: React.FC<BalanceVisibilityButtonProps> = ({
   return (
     <TouchableOpacity
       {...props}
-      accessibilityLabel={
-        accessibilityLabel ?? (hidden ? t('Show balances') : t('Hide balances'))
+      accessibilityHint={
+        accessibilityHint ?? (hidden ? t('Show balances') : t('Hide balances'))
       }
       accessibilityRole="button"
       activeOpacity={activeOpacity}
