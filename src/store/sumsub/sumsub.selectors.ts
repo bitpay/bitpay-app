@@ -136,6 +136,12 @@ export const selectKycBannerState = (state: RootState): KycUiState | null => {
   return uiState;
 };
 
+export const selectGetVerifiedDismissed = (state: RootState): boolean => {
+  const network = state.APP.network;
+  const eid = state.BITPAY_ID?.user?.[network]?.eid;
+  return !!eid && state.SUMSUB?.getVerifiedDismissed?.[network] === eid;
+};
+
 export const selectCanStartKyc = (state: RootState): boolean =>
   selectKycStatusFetched(state) &&
   isKycEligibleToStart(

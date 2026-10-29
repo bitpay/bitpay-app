@@ -4,7 +4,12 @@
 
 import {Network} from '../../constants';
 import {KycInfo, sumSubReducer, SumSubState} from './sumsub.reducer';
-import {setKyc, setSdkStatus, resetKyc} from './sumsub.actions';
+import {
+  setKyc,
+  setSdkStatus,
+  resetKyc,
+  setGetVerifiedDismissed,
+} from './sumsub.actions';
 import {SumSubActionTypes} from './sumsub.types';
 
 const emptyMap = {
@@ -33,6 +38,7 @@ const seed = (partial: Partial<SumSubState>): SumSubState => ({
   kyc: {...emptyMap},
   sdkStatus: {...emptyMap},
   bannerAck: {...emptyMap},
+  getVerifiedDismissed: {...emptyMap},
   statusFetched: {...unfetchedMap},
   ...partial,
 });
@@ -124,6 +130,16 @@ describe('sumSubReducer', () => {
     expect(state.kyc[Network.mainnet]).toBe(approved);
     expect(state.sdkStatus[Network.mainnet]).toBeNull();
     expect(state.statusFetched[Network.mainnet]).toBe(true);
+  });
+
+  it('keeps the Get Verified dismissal across a KYC reset, per network', () => {
+    const dismissed = sumSubReducer(
+      undefined,
+      setGetVerifiedDismissed(Network.mainnet, 'eid-1'),
+    );
+    const state = sumSubReducer(dismissed, resetKyc(Network.mainnet));
+    expect(state.getVerifiedDismissed[Network.mainnet]).toBe('eid-1');
+    expect(state.getVerifiedDismissed[Network.testnet]).toBeNull();
   });
 
   it('does not mutate the previous state', () => {

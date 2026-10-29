@@ -25,6 +25,11 @@ export interface SumSubState {
   bannerAck: {
     [key in Network]: KycBannerAck | null;
   };
+  // `eid` that dismissed the Get Verified modal. Survives logout, like
+  // `bannerAck`, so the same account is not prompted again after a re-login.
+  getVerifiedDismissed: {
+    [key in Network]: string | null;
+  };
   // Whether `getKycStatus` has answered since the app started. Not persisted:
   // a rehydrated `kyc` can be stale (the status may have moved on server-side
   // while the app was closed), and prompting to start KYC off a stale
@@ -46,6 +51,11 @@ const initialState: SumSubState = {
     [Network.regtest]: null,
   },
   bannerAck: {
+    [Network.mainnet]: null,
+    [Network.testnet]: null,
+    [Network.regtest]: null,
+  },
+  getVerifiedDismissed: {
     [Network.mainnet]: null,
     [Network.testnet]: null,
     [Network.regtest]: null,
@@ -73,6 +83,9 @@ export const sumSubReducer = (
   }
   if (!state.bannerAck) {
     state = {...state, bannerAck: initialState.bannerAck};
+  }
+  if (!state.getVerifiedDismissed) {
+    state = {...state, getVerifiedDismissed: initialState.getVerifiedDismissed};
   }
   if (!state.statusFetched) {
     state = {...state, statusFetched: initialState.statusFetched};
@@ -106,6 +119,15 @@ export const sumSubReducer = (
         bannerAck: {
           ...state.bannerAck,
           [action.payload.network]: action.payload.ack,
+        },
+      };
+
+    case SumSubActionTypes.SET_GET_VERIFIED_DISMISSED:
+      return {
+        ...state,
+        getVerifiedDismissed: {
+          ...state.getVerifiedDismissed,
+          [action.payload.network]: action.payload.eid,
         },
       };
 

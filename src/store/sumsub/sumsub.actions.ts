@@ -30,6 +30,14 @@ export const setKycBannerAck = (
   payload: {network, ack},
 });
 
+export const setGetVerifiedDismissed = (
+  network: Network,
+  eid: string,
+): SumSubActionType => ({
+  type: SumSubActionTypes.SET_GET_VERIFIED_DISMISSED,
+  payload: {network, eid},
+});
+
 export const resetKyc = (network: Network): SumSubActionType => ({
   type: SumSubActionTypes.RESET_KYC,
   payload: {network},
