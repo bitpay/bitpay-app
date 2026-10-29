@@ -2301,5 +2301,6 @@
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Uw lokale gegevens zijn behouden. Probeer het opnieuw of neem contact op met de ondersteuning. De-installeer de app niet en wis de gegevens ervan niet. Referentie: {{id}}.",
   "Retry": "Opnieuw proberen",
   "There are no wallets with enough funds on the {{network}} network.": "Er zijn geen wallets met voldoende saldo op het {{network}}-netwerk.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen.",
+  "Other co-signers are already signing this proposal. Check its status in a few minutes.": "Andere medeondertekenaars ondertekenen dit voorstel al. Controleer de status over een paar minuten."
 }

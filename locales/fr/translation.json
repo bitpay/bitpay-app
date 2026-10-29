@@ -2310,5 +2310,6 @@
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Vos données locales ont été conservées. Réessayez ou contactez l'assistance. Ne désinstallez pas l'application et n'effacez pas ses données. Référence : {{id}}.",
   "Retry": "Réessayer",
   "There are no wallets with enough funds on the {{network}} network.": "Aucun portefeuille ne dispose de fonds suffisants sur le réseau {{network}}.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Si vous supprimez l'application BitPay ou si vous perdez votre appareil, vous aurez besoin de votre phrase de récupération pour accéder à nouveau à vos fonds."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Si vous supprimez l'application BitPay ou si vous perdez votre appareil, vous aurez besoin de votre phrase de récupération pour accéder à nouveau à vos fonds.",
+  "Other co-signers are already signing this proposal. Check its status in a few minutes.": "D'autres cosignataires signent déjà cette proposition. Vérifiez son statut dans quelques minutes."
 }
