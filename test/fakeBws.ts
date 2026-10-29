@@ -98,6 +98,7 @@ const routes: Array<
       return {};
     },
   ],
+  ['post', /^\/v1\/tss\/keygen\/([^/]+)\/register$/, () => ({})],
   [
     'get',
     /^\/v1\/tss\/keygen\/([^/]+)\/secret$/,
