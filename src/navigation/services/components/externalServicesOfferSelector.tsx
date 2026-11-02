@@ -568,7 +568,6 @@ const ExternalServicesOfferSelector: React.FC<
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );

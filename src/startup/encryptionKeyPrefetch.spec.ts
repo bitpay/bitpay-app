@@ -40,10 +40,26 @@ describe('encryptionKeyPrefetch', () => {
   });
 
   it('passes a failed read to the consumer without an unhandled rejection', async () => {
-    mockGetGenericPassword.mockRejectedValue(new Error('keystore'));
-    require('./startEncryptionKeyPrefetch');
-    const prefetch = require('./encryptionKeyPrefetch');
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+    let prefetch: typeof import('./encryptionKeyPrefetch');
+    try {
+      mockGetGenericPassword.mockRejectedValue(new Error('keystore'));
+      require('./startEncryptionKeyPrefetch');
+      prefetch = require('./encryptionKeyPrefetch');
 
+      // Do NOT take the promise yet. If the internal `.catch` guard is missing,
+      // the rejected read has no handler and Node reports it here. (This is the
+      // part the previous assertion missed: `await ...rejects` attached a
+      // handler itself, so it passed with or without the guard.)
+      await new Promise(resolve => setImmediate(resolve));
+      expect(unhandled).toHaveLength(0);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+    }
+
+    // The consumer still receives the rejection when it does take the read.
     await expect(prefetch.takePrefetchedEncryptionKey()).rejects.toThrow(
       'keystore',
     );

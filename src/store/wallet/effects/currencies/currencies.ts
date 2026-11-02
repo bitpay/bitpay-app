@@ -401,8 +401,8 @@ type ChainTokenTemplate = Pick<
   'feeCurrency' | 'properties' | 'paymentInfo' | 'feeInfo'
 >;
 const chainTokenTemplates: {[chain: string]: ChainTokenTemplate} = {};
-const getChainTokenTemplate = (chain: string): ChainTokenTemplate =>
-  (chainTokenTemplates[chain] ??= {
+const buildChainTokenTemplate = (chain: string): ChainTokenTemplate => {
+  const template = {
     feeCurrency: getEVMFeeCurrency(chain),
     properties: {
       hasMultiSig: false,
@@ -430,7 +430,23 @@ const getChainTokenTemplate = (chain: string): ChainTokenTemplate =>
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
-  } as ChainTokenTemplate);
+  } as ChainTokenTemplate;
+  if (__DEV__) {
+    // These sub-objects are shared by reference across a chain's ~21k tokens
+    // (see populateTokenInfo). Freeze them in dev so an accidental in-place
+    // mutation of this read-only config throws at the offending write instead
+    // of silently corrupting every token on the chain. Production is
+    // unaffected.
+    Object.freeze(template.properties);
+    Object.freeze(template.paymentInfo?.protocolPrefix);
+    Object.freeze(template.paymentInfo);
+    Object.freeze(template.feeInfo);
+    Object.freeze(template);
+  }
+  return template;
+};
+const getChainTokenTemplate = (chain: string): ChainTokenTemplate =>
+  (chainTokenTemplates[chain] ??= buildChainTokenTemplate(chain));
 
 /** Tests that swap the explorer or coin config must drop the cached templates. */
 export const clearChainTokenTemplatesForTests = (): void => {

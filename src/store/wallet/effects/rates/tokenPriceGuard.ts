@@ -4,13 +4,14 @@ import type {FiatRateCacheRequest} from '../../../../portfolio/core/fiatRatesSha
 
 /**
  * Live token prices come from a third-party price API (Moralis). For some
- * tokens it disagrees badly with BitPay's own rates service, which the
- * portfolio history already uses: Aave v3 aUSDC on Arbitrum priced at
- * $0.6165 while BWS has it at $0.9999. The wrong price flowed into every
- * balance (header, asset rows) and made the balance chart end in a cliff.
+ * tokens it disagrees badly with the rate-series reference the portfolio
+ * history already uses (BWS /v4/fiatrates, sourced upstream from CoinGecko):
+ * Aave v3 aUSDC on Arbitrum priced at $0.6165 while the reference has it at
+ * $0.9999. The wrong price flowed into every balance (header, asset rows) and
+ * made the balance chart end in a cliff.
  *
- * When BWS has a recent price for the same token and the live price is
- * further than this from it, the BWS price is used instead.
+ * When the reference has a recent price for the same token and the live price
+ * is further than this from it, the reference price is used instead.
  */
 export const TOKEN_PRICE_MAX_DEVIATION = 0.2;
 
@@ -104,10 +105,16 @@ export const guardTokenUsdPrice = (args: {
 };
 
 /**
- * BWS prices for the given tokens, from the portfolio's rate-series cache
- * (the Home chart reads the same 1D series, so this is usually a cache hit).
- * Tokens without a recent reference are left out. Resolves to whatever is
- * available — possibly nothing — and never rejects or waits past the timeout.
+ * Reference prices for the given tokens, from the portfolio's rate-series
+ * cache (the Home chart reads the same 1D series, so this is usually a cache
+ * hit). Tokens without a recent reference are left out. Resolves to whatever
+ * is available — possibly nothing — and never rejects or waits past the
+ * timeout.
+ *
+ * Meant to run off the rates critical path (see refreshTokenPriceReferences):
+ * requests on the rate runtime are serialized, so awaiting this on every
+ * startGetRates would stall the refresh by up to the timeout whenever a token
+ * series is not already cached.
  */
 export const loadTokenPriceReferences = async (args: {
   tokens: TokenPriceRef[];
@@ -162,4 +169,66 @@ export const loadTokenPriceReferences = async (args: {
     }
   }
   return references;
+};
+
+/**
+ * References held between rates passes so the guard can run synchronously
+ * without awaiting BWS on the critical path. A reference survives across
+ * refreshes even when a later refresh can't reach its series, so a single slow
+ * or missing load never drops the ones already known (the all-or-nothing the
+ * batched load has on its own is absorbed here).
+ */
+const referenceCache = new Map<
+  string,
+  {reference: TokenPriceReference; at: number}
+>();
+let refreshInFlight = false;
+
+/** A cached reference for the token, or undefined if none is recent enough. */
+export const getCachedTokenPriceReference = (
+  token: TokenPriceRef,
+  nowMs: number = Date.now(),
+): TokenPriceReference | undefined => {
+  const entry = referenceCache.get(getTokenPriceReferenceKey(token));
+  if (!entry || nowMs - entry.at > TOKEN_PRICE_REFERENCE_MAX_AGE_MS) {
+    return undefined;
+  }
+  return entry.reference;
+};
+
+/**
+ * Loads references for the given tokens and stores them for
+ * getCachedTokenPriceReference to read. Fire-and-forget from the rates path: a
+ * rates refresh guards against whatever is already cached and calls this to
+ * converge, so a slow or missing BWS series never stalls the refresh. At most
+ * one load runs at a time.
+ */
+export const refreshTokenPriceReferences = async (args: {
+  tokens: TokenPriceRef[];
+  loadSeries: (args: {
+    quoteCurrency: string;
+    requests: FiatRateCacheRequest[];
+    maxAgeMs?: number;
+  }) => Promise<{[key in string]?: FiatRateSeries}>;
+  nowMs?: () => number;
+  timeoutMs?: number;
+}): Promise<void> => {
+  if (refreshInFlight || !args.tokens.length) {
+    return;
+  }
+  refreshInFlight = true;
+  try {
+    const references = await loadTokenPriceReferences(args);
+    const at = (args.nowMs ?? Date.now)();
+    for (const [token, reference] of references) {
+      referenceCache.set(getTokenPriceReferenceKey(token), {reference, at});
+    }
+  } finally {
+    refreshInFlight = false;
+  }
+};
+
+export const resetTokenPriceReferenceCacheForTests = (): void => {
+  referenceCache.clear();
+  refreshInFlight = false;
 };

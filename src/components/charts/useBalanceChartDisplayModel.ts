@@ -617,7 +617,7 @@ export function useBalanceChartDisplayModel({
           setLoading(false);
           setError(
             err instanceof Error ? err : new Error(String(err)),
-            `${scopeId}|${chartQueryArgs.quoteCurrency}`,
+            `${scopeId}|${latestChartQueryArgs.quoteCurrency}`,
           );
         });
     };
@@ -633,7 +633,7 @@ export function useBalanceChartDisplayModel({
             setLoading(false);
             setError(
               err instanceof Error ? err : new Error(String(err)),
-              `${scopeId}|${chartQueryArgs.quoteCurrency}`,
+              `${scopeId}|${latestChartQueryArgs.quoteCurrency}`,
             );
           },
         })

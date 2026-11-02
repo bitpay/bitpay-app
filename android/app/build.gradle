@@ -111,8 +111,12 @@ def enableSeparateBuildPerCPUArchitecture = false
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
 // R8 shrinks and optimises release builds (no obfuscation: see
-// proguard-rules.pro). -PenableR8=false turns it off.
-def enableProguardInReleaseBuilds = (findProperty('enableR8') != 'false')
+// proguard-rules.pro). It is opt-in while the reflective-dependency audit
+// (EventBus, Braze, AppsFlyer, Sumsub, androidx.credentials, Mixpanel), a
+// release-R8 CI build, and Sentry mapping upload are still outstanding:
+// -PenableR8=true turns it on. See the follow-up tracked for enabling it by
+// default.
+def enableProguardInReleaseBuilds = (findProperty('enableR8') == 'true')
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)

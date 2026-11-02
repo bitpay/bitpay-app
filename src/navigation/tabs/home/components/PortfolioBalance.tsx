@@ -699,10 +699,18 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
   );
 
   const showUnchartedAssetsModal = () => {
+    // The body renders as Markdown and wallet/currency names are user-set, so
+    // escape Markdown-significant characters — otherwise a name like
+    // "[x](https://…)" would render as a tappable link.
+    const escapeMarkdown = (value: string): string =>
+      value.replace(/[\\`*_{}[\]()#+\-.!>|~]/g, '\\$&');
     const lines = unchartedWallets.map(wallet => {
-      const symbol = String(wallet.currencyAbbreviation || '').toUpperCase();
-      const name = wallet.walletName || wallet.currencyName || symbol;
-      const chain = String(wallet.chain || '').toUpperCase();
+      const rawSymbol = String(wallet.currencyAbbreviation || '').toUpperCase();
+      const symbol = escapeMarkdown(rawSymbol);
+      const name = escapeMarkdown(
+        wallet.walletName || wallet.currencyName || rawSymbol,
+      );
+      const chain = escapeMarkdown(String(wallet.chain || '').toUpperCase());
       const fiat = hideAllBalances
         ? HIDDEN_BALANCE_MASK
         : formatFiatAmount(

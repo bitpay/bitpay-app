@@ -22,7 +22,9 @@ import {tokenManager} from '../../../managers/TokenManager';
  * GetPrecision runs for every formatted balance, so the copy was paid per
  * wallet per render.
  */
-const lookupTokenData = (
+// Exported for tests: the public callers append a chain suffix to the key, so
+// only a direct call can exercise the inherited-key (hasOwnProperty) guard.
+export const lookupTokenData = (
   key: string,
   customTokenDataByAddress: {[key: string]: any} | undefined,
 ): any => {

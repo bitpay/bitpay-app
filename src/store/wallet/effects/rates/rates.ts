@@ -32,8 +32,9 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import {loadRuntimeFiatRateSeriesCache} from '../../../../portfolio/ui/fiatRateSeries';
 import {
+  getCachedTokenPriceReference,
   guardTokenUsdPrice,
-  loadTokenPriceReferences,
+  refreshTokenPriceReferences,
   type TokenPriceRef,
 } from './tokenPriceGuard';
 import type {Key, Wallet} from '../../wallet.models';
@@ -287,28 +288,43 @@ export const getTokenRates =
               return;
             }
             const key = addTokenChainSuffix(tokenAddress, chain);
-            const symbol = tokensOptsByAddress[key]?.symbol;
-            // only save token rates if exist in tokens list
-            if (symbol) {
-              pricedTokens.push({chain, tokenAddress, symbol, tokenInfo, key});
+            const opt = tokensOptsByAddress[key];
+            // only save token rates if the token is in the tokens list
+            if (opt) {
+              pricedTokens.push({
+                chain,
+                tokenAddress,
+                symbol: opt.symbol ?? '',
+                tokenInfo,
+                key,
+              });
             }
           });
         }
 
-        const references = await loadTokenPriceReferences({
-          tokens: pricedTokens,
+        // The deviation guard needs a symbol to look up the reference series;
+        // tokens in the list without one still get their live rate, just
+        // unguarded.
+        const referenceTokens = pricedTokens.filter(token => !!token.symbol);
+        // Guard against already-cached references, and refresh them in the
+        // background. Kept off the await path: rate-runtime requests are
+        // serialized, so awaiting a cold token's series would stall the whole
+        // rates refresh. A token is guarded from the pass after its reference
+        // first lands.
+        refreshTokenPriceReferences({
+          tokens: referenceTokens,
           loadSeries: loadRuntimeFiatRateSeriesCache,
-        });
+        }).catch(() => {});
 
         for (const token of pricedTokens) {
           const guarded = guardTokenUsdPrice({
             usdPrice: Number(token.tokenInfo.usdPrice),
             percentChange: Number(token.tokenInfo['24hrPercentChange']),
-            reference: references.get(token),
+            reference: getCachedTokenPriceReference(token),
           });
           if (guarded.replaced) {
             logManager.warn(
-              `getTokenRates: ${token.key} live price ${token.tokenInfo.usdPrice} USD is far from BitPay's ${guarded.usdPrice} USD; using BitPay's`,
+              `getTokenRates: ${token.key} live price ${token.tokenInfo.usdPrice} USD is far from the reference ${guarded.usdPrice} USD; using the reference`,
             );
           }
           const usdPrice = guarded.usdPrice;

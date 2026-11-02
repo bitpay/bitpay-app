@@ -98,6 +98,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     minHeight: 48,
+    // minWidth keeps a short label (e.g. "OK") a 48dp-wide touch target; the
+    // row still wraps a long label onto its own line via maxWidth.
+    minWidth: 48,
     maxWidth: '100%',
     justifyContent: 'center',
     paddingVertical: 10,

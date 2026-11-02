@@ -1,8 +1,11 @@
 import {
   TOKEN_PRICE_REFERENCE_MAX_AGE_MS,
+  getCachedTokenPriceReference,
   getTokenPriceReferenceFromSeries,
   guardTokenUsdPrice,
   loadTokenPriceReferences,
+  refreshTokenPriceReferences,
+  resetTokenPriceReferenceCacheForTests,
 } from './tokenPriceGuard';
 import {getFiatRateSeriesCacheKey} from '../../../../portfolio/core/fiatRatesShared';
 
@@ -127,6 +130,46 @@ describe('tokenPriceGuard', () => {
       const loadSeries = jest.fn();
       await loadTokenPriceReferences({tokens: [], loadSeries});
       expect(loadSeries).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reference cache', () => {
+    const cacheKey = getFiatRateSeriesCacheKey('USD', aUsdc.symbol, '1D', {
+      chain: aUsdc.chain,
+      tokenAddress: aUsdc.tokenAddress,
+    });
+    beforeEach(() => resetTokenPriceReferenceCacheForTests());
+
+    it('serves a refreshed reference and treats an old one as absent', async () => {
+      await refreshTokenPriceReferences({
+        tokens: [aUsdc],
+        loadSeries: jest.fn().mockResolvedValue({[cacheKey]: series([1])}),
+        nowMs: () => now,
+      });
+      expect(getCachedTokenPriceReference(aUsdc, now)?.usdPrice).toBe(1);
+      expect(
+        getCachedTokenPriceReference(
+          aUsdc,
+          now + TOKEN_PRICE_REFERENCE_MAX_AGE_MS + 1,
+        ),
+      ).toBeUndefined();
+    });
+
+    it('keeps a cached reference when a later refresh finds nothing', async () => {
+      await refreshTokenPriceReferences({
+        tokens: [aUsdc],
+        loadSeries: jest.fn().mockResolvedValue({[cacheKey]: series([1])}),
+        nowMs: () => now,
+      });
+      // A later refresh that times out must not drop what is already cached —
+      // the all-or-nothing the batched load has on its own is absorbed here.
+      await refreshTokenPriceReferences({
+        tokens: [aUsdc],
+        loadSeries: () => new Promise(() => {}),
+        timeoutMs: 5,
+        nowMs: () => now,
+      });
+      expect(getCachedTokenPriceReference(aUsdc, now)?.usdPrice).toBe(1);
     });
   });
 });

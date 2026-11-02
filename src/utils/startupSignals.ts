@@ -29,13 +29,20 @@ const settle = () => {
   listeners.forEach(listener => listener());
 };
 
-const afterIdle = (cb: () => void) => {
+/** Schedules `cb` for the next idle moment; returns a canceller. */
+const afterIdle = (cb: () => void): (() => void) => {
   const idle = (global as any).requestIdleCallback;
+  const cancelIdle = (global as any).cancelIdleCallback;
   if (typeof idle === 'function') {
-    idle(cb, {timeout: SETTLE_IDLE_TIMEOUT_MS});
-  } else {
-    setTimeout(cb, 0);
+    const handle = idle(cb, {timeout: SETTLE_IDLE_TIMEOUT_MS});
+    return () => {
+      if (typeof cancelIdle === 'function') {
+        cancelIdle(handle);
+      }
+    };
   }
+  const handle = setTimeout(cb, 0);
+  return () => clearTimeout(handle);
 };
 
 const fallbackTimer = setTimeout(settle, FALLBACK_SETTLE_MS);
@@ -75,18 +82,23 @@ export const useStartupSettled = (extraDelayMs = 0): boolean => {
       return;
     }
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelIdle: (() => void) | undefined;
     const unsubscribe = whenStartupSettled(() => {
       if (!extraDelayMs) {
         setValue(true);
         return;
       }
-      timer = setTimeout(() => afterIdle(() => setValue(true)), extraDelayMs);
+      timer = setTimeout(() => {
+        cancelIdle = afterIdle(() => setValue(true));
+      }, extraDelayMs);
     });
     return () => {
       unsubscribe();
       if (timer) {
         clearTimeout(timer);
       }
+      // Cancel a still-pending idle callback so it can't setValue after unmount.
+      cancelIdle?.();
     };
   }, [value, extraDelayMs]);
   return value;

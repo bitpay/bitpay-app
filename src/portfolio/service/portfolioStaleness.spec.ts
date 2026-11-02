@@ -407,16 +407,17 @@ describe('portfolioStaleness', () => {
       checkpoint: {nextSkip},
     });
     // The live balance moved since the populate (interest on a rebasing
-    // token), so the delta differs, but the rebuilt history did not.
+    // token), so the delta drifted by a tiny fraction of the balance — well
+    // under the transfer threshold — but the rebuilt history did not.
     const driftedSincePopulate = (overrides: Record<string, unknown> = {}) =>
       previousMismatch({
-        currentAtomic: '140000000',
-        deltaAtomic: '-40000000',
-        currentWalletBalance: '1.4',
-        delta: '-0.4',
+        currentAtomic: '149990000',
+        deltaAtomic: '-49990000',
+        currentWalletBalance: '1.4999',
+        delta: '-0.4999',
         verifiedAfterPopulateAt: verifiedAt,
         verifiedCheckpointNextSkip: 40,
-        verifiedDeltaAtomic: '-40000000',
+        verifiedDeltaAtomic: '-49990000',
         ...overrides,
       });
 
@@ -432,15 +433,37 @@ describe('portfolioStaleness', () => {
       });
 
       expect(decision.shouldPopulate).toBe(false);
-      expect(decision.reason).toBe('unchanged_balance_mismatch');
+      expect(decision.reason).toBe('drift_within_recheck_interval');
       // The new delta is recorded, and the verification carried forward so
       // later launches keep skipping until the recheck interval passes.
       expect(decision.mismatch).toMatchObject({
         deltaAtomic: '-50000000',
         verifiedAfterPopulateAt: verifiedAt,
         verifiedCheckpointNextSkip: 40,
-        verifiedDeltaAtomic: '-40000000',
+        verifiedDeltaAtomic: '-49990000',
       });
+    });
+
+    it('populates when the live balance jumped beyond the drift bound (a real transfer)', async () => {
+      // A genuine incoming transfer, not interest: the delta moved far more
+      // than a rebasing token drifts in the interval. The computed balance and
+      // checkpoint are still unchanged (no populate has run since), so the old
+      // throttle — which only compared those — could not tell this from drift
+      // and wrongly skipped. The drift bound catches it.
+      const client = decisionClient({
+        latestSnapshot: snapshot('100000000'),
+        snapshotIndex: indexAt(40),
+      });
+
+      const decision = await getWalletDecision(client, {
+        previousMismatch: driftedSincePopulate({
+          verifiedDeltaAtomic: '-40000000',
+        }),
+        nowMs: verifiedAt + 60_000,
+      });
+
+      expect(decision.shouldPopulate).toBe(true);
+      expect(decision.reason).toBe('balance_mismatch');
     });
 
     it('populates again once the recheck interval has passed', async () => {
@@ -556,10 +579,10 @@ describe('portfolioStaleness', () => {
       });
 
       expect(decision.shouldPopulate).toBe(false);
-      expect(decision.reason).toBe('unchanged_balance_mismatch');
+      expect(decision.reason).toBe('drift_within_recheck_interval');
       expect(decision.mismatch).toMatchObject({
         verifiedAfterPopulateAt: verifiedAt,
-        verifiedDeltaAtomic: '-40000000',
+        verifiedDeltaAtomic: '-49990000',
       });
     });
 

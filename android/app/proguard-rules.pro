@@ -9,7 +9,7 @@
 
 # Add any project specific keep options here:
 
-# --- R8 (on for release builds; -PenableR8=false turns it off) ------------
+# --- R8 (opt-in; -PenableR8=true turns it on for release builds) ----------
 # Shrink and optimise, but keep names: Sentry gets Java stack traces as-is
 # (no ProGuard mapping upload is set up), and reflection by name keeps
 # working. Turn obfuscation on only together with mapping upload.
@@ -27,3 +27,15 @@
 # Firebase / ML Kit discover ComponentRegistrars by name and call their
 # no-arg constructors (ML Kit barcode scanning on the Scan screen).
 -keep class * implements com.google.firebase.components.ComponentRegistrar { <init>(); }
+
+# EventBus (org.greenrobot) dispatches to @Subscribe methods reflectively.
+# react-native-inappbrowser-reborn's RNInAppBrowser.onEvent is the only
+# subscriber and the library ships no consumer rules, so R8 would strip the
+# method and EventBus.register() would throw — breaking the in-app browser
+# (and hanging every later open() call). Keep subscriber methods and the
+# ThreadMode enum it reflects over. This covers the one audited reflective
+# dependency; the rest of the audit is tracked before R8 is enabled by default.
+-keepclassmembers class * {
+    @org.greenrobot.eventbus.Subscribe <methods>;
+}
+-keep enum org.greenrobot.eventbus.ThreadMode { *; }

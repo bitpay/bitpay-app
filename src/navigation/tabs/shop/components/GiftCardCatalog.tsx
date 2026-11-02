@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -131,12 +132,23 @@ const noopSubscribe = () => () => {};
 
 const useRenderedGiftCardCount = (total: number): number => {
   const signal = useContext(ShopScrollContext);
-  // Bucketed so a scroll only re-renders the list when it needs more rows.
+  // High-water mark, bucketed: once rows have been rendered they stay mounted,
+  // so scrolling back up never unmounts (and later re-mounts) them. getSnapshot
+  // only ever grows, so a scroll-up doesn't re-render the list either — only
+  // reaching a new bucket further down does.
+  const maxRowsReachedRef = useRef(0);
+  const getRowsReached = useCallback(() => {
+    const current =
+      Math.ceil(((signal?.get() ?? 0) + HEIGHT) / GIFT_CARD_ITEM_HEIGHT / 10) *
+      10;
+    if (current > maxRowsReachedRef.current) {
+      maxRowsReachedRef.current = current;
+    }
+    return maxRowsReachedRef.current;
+  }, [signal]);
   const rowsReached = useSyncExternalStore(
     signal?.subscribe ?? noopSubscribe,
-    () =>
-      Math.ceil(((signal?.get() ?? 0) + HEIGHT) / GIFT_CARD_ITEM_HEIGHT / 10) *
-      10,
+    getRowsReached,
   );
   return Math.min(total, rowsReached + GIFT_CARD_RENDER_BUFFER);
 };

@@ -1,4 +1,9 @@
-import {GetBlockExplorerLink, GetName, GetPrecision} from './currency';
+import {
+  GetBlockExplorerLink,
+  GetName,
+  GetPrecision,
+  lookupTokenData,
+} from './currency';
 import {BitpaySupportedTokens} from '../../../constants/currencies';
 
 const mockTokenDataByAddress: {[key: string]: any} = {};
@@ -66,6 +71,18 @@ describe('token lookups in GetPrecision / GetName', () => {
   it('returns undefined for an unknown token and never reads inherited keys', () => {
     expect(run(GetPrecision('x', 'eth', '0xnope'))).toBeUndefined();
     expect(run(GetName('x', 'eth', 'constructor'))).toBeUndefined();
+  });
+
+  it('lookupTokenData ignores inherited Object.prototype keys', () => {
+    // These exist on every object's prototype; `key in source` would return
+    // them, so this fails if the hasOwnProperty guard is dropped. The public
+    // callers can't reach it (they append a chain suffix to the key).
+    mockTokenDataByAddress['0xreal_e'] = {name: 'Real'};
+    expect(lookupTokenData('constructor', {})).toBeUndefined();
+    expect(lookupTokenData('toString', undefined)).toBeUndefined();
+    expect(lookupTokenData('hasOwnProperty', {})).toBeUndefined();
+    // A genuine own key still resolves.
+    expect(lookupTokenData('0xreal_e', {})).toEqual({name: 'Real'});
   });
 
   it('uses the chain coin when there is no token address', () => {

@@ -213,17 +213,18 @@ const ReduxProvider = () => {
 
   return (
     <Provider store={reduxStore}>
-      <PersistGate loading={null} persistor={reduxPersistor}>
-        {storeRehydrated => {
-          if (storeRehydrated) {
-            // redux-persist rehydration runs an encryption transform over the
-            // persisted state — historically one of the larger startup costs,
-            // so it gets its own mark.
-            mark('bp_store_rehydrated');
-            return <AppWrapper />;
-          }
-          return null;
-        }}
+      <PersistGate
+        loading={null}
+        persistor={reduxPersistor}
+        onBeforeLift={() => {
+          // redux-persist rehydration runs an encryption transform over the
+          // persisted state — historically one of the larger startup costs, so
+          // it gets its own mark. onBeforeLift fires once when rehydration
+          // completes, before the gated children render, so this marks at the
+          // right moment and does not duplicate on later re-renders.
+          mark('bp_store_rehydrated');
+        }}>
+        {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
       </PersistGate>
     </Provider>
   );
