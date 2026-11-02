@@ -2688,12 +2688,15 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
-  moonpayCheckoutKeyRef.current = [
+  // Built from this render's values, so a callback from an older render
+  // (like the approval's onDismiss) can tell its inputs are out of date
+  const moonpayCheckoutKey = [
     fromWalletSelected?.id,
     toWalletSelected?.id,
     amountFrom,
     selectedOffer?.key,
   ].join('|');
+  moonpayCheckoutKeyRef.current = moonpayCheckoutKey;
 
   const createMoonpayTransaction = async () => {
     if (
@@ -2704,8 +2707,13 @@ const SwapCryptoRoot: React.FC = () => {
     ) {
       return;
     }
+    const checkoutKey = moonpayCheckoutKey;
+    if (checkoutKey !== moonpayCheckoutKeyRef.current) {
+      // Inputs changed since this closure was made. Leave the current checkout alone
+      logger.debug('Moonpay Swap: not starting a checkout for old inputs');
+      return;
+    }
     const checkoutGen = ++moonpayCheckoutGenRef.current;
-    const checkoutKey = moonpayCheckoutKeyRef.current;
     const isStale = () =>
       checkoutGen !== moonpayCheckoutGenRef.current ||
       checkoutKey !== moonpayCheckoutKeyRef.current;
@@ -2824,11 +2832,11 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
-    const mismatch = getMoonpaySwapActionMismatch(
-      requestData,
-      actionData,
-      !fromWalletSelected.tokenAddress,
-    );
+    const mismatch = getMoonpaySwapActionMismatch(requestData, actionData, {
+      chain: fromWalletSelected.chain,
+      isNative: !fromWalletSelected.tokenAddress,
+      decimals: precisionFrom.unitDecimals,
+    });
     if (mismatch) {
       logger.error(`Moonpay Swap getAction ${mismatch} does not match request`);
       showError({
@@ -2857,12 +2865,15 @@ const SwapCryptoRoot: React.FC = () => {
         logger.debug(
           `Moonpay Swap: allowance (${allowance}) is lower than the swap amount (${actionData.amountInMax.amount}). Asking for approval`,
         );
-        askMoonpayApproval(actionData.tx.to, moonpayAddressFrom, actionData);
+        askMoonpayApproval(
+          actionData.tx.to,
+          moonpayAddressFrom,
+          actionData,
+          precisionFrom.unitDecimals,
+        );
         return;
       }
     }
-
-    setMoonpayActionData(actionData);
 
     const amountReceiving = moonpaySwapToUnitAmount(actionData.amountOut);
     setAmountTo(amountReceiving);
@@ -2900,6 +2911,9 @@ const SwapCryptoRoot: React.FC = () => {
     const totalExchangeFee = getMoonpaySwapSourceTokenFee(actionData);
     let totalExchangeFeeFiat: string | undefined;
     try {
+      if (totalExchangeFee === undefined) {
+        throw new Error('Moonpay Swap fee is not in the source token');
+      }
       totalExchangeFeeFiat = formatFiatAmount(
         dispatch(
           toFiat(
@@ -2939,9 +2953,13 @@ const SwapCryptoRoot: React.FC = () => {
           fromWalletSelected.chain.toLowerCase() === 'bch'
             ? BWC.getBitcoreCash().Address(actionData.tx.to).toString(true)
             : actionData.tx.to;
-        // (destinationTag) Used for coins like XRP. Sending without a tag
-        // MoonPay asked for would leave the deposit uncredited, so stop
-        if (actionData.tx.toExtra && !/^\d+$/.test(actionData.tx.toExtra)) {
+        // (destinationTag) Only XRP sends carry the memo. Sending without a
+        // memo MoonPay asked for would leave the deposit uncredited, so stop
+        if (
+          actionData.tx.toExtra &&
+          (fromWalletSelected.chain.toLowerCase() !== 'xrp' ||
+            !/^\d+$/.test(actionData.tx.toExtra))
+        ) {
           throw new Error(
             `Unsupported Moonpay Swap deposit memo for ${fromWalletSelected.chain}`,
           );
@@ -2962,6 +2980,8 @@ const SwapCryptoRoot: React.FC = () => {
       if (isStale()) {
         return;
       }
+      // Set together so a swipe never pairs one checkout's txId with another's proposal
+      setMoonpayActionData(actionData);
       setCtxp(ctxp);
       const minerFee = ctxp.fee;
       let minerFeeFiat: string | undefined;
@@ -3216,16 +3236,18 @@ const SwapCryptoRoot: React.FC = () => {
     spenderAddress: string,
     ownerAddress: string,
     actionData: MoonpaySwapActionData,
+    walletDecimals: number,
   ) => {
     if (!fromWalletSelected) {
       return;
     }
     hideOngoingProcess();
     const coin = fromWalletSelected.currencyAbbreviation.toUpperCase();
-    // Exact decimal string: a float here can approve a few wei too little
+    // Exact decimal string: a float here can approve a few wei too little.
+    // The approve screen parses it with the wallet's decimals, so format with those
     const amountToApprove = ethers.utils.formatUnits(
       actionData.amountInMax.amount,
-      actionData.amountInMax.decimals,
+      walletDecimals,
     );
     dispatch(
       showBottomNotificationModal({
@@ -3265,6 +3287,10 @@ const SwapCryptoRoot: React.FC = () => {
                     spenderAddress,
                     BigInt(actionData.amountInMax.amount),
                   );
+                  if (moonpayCheckoutKey !== moonpayCheckoutKeyRef.current) {
+                    // The swap changed while the approval confirmed. Its own checkout takes over
+                    return;
+                  }
                   if (!approved) {
                     showError({
                       title: t('Approve method Error'),
@@ -3310,20 +3336,33 @@ const SwapCryptoRoot: React.FC = () => {
     if (!moonpayActionData.requiresRegisterTransaction) {
       return;
     }
-    try {
-      const _data = await fromWalletSelected.moonpaySwapRegisterTxs({
-        env: moonpaySwapEnv,
-        txId: moonpayActionData.txId,
-        txHash,
-      });
-      logger.debug(
-        'Moonpay Swap registerTxs result: ' +
-          JSON.stringify((_data as any)?.body ?? _data),
-      );
-    } catch (err) {
-      // MoonPay can still find the transaction on-chain. Don't fail the swap
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error('Moonpay Swap registerTxs Error: ' + errMsg);
+    // swaps.xyz needs the hash to credit a deposit, so retry before giving up.
+    // BWS rejects a registration swaps.xyz answered with success: false
+    const MAX_TRIES = 4;
+    for (let i = 1; i <= MAX_TRIES; i++) {
+      try {
+        const _data = await fromWalletSelected.moonpaySwapRegisterTxs({
+          env: moonpaySwapEnv,
+          txId: moonpayActionData.txId,
+          txHash,
+        });
+        const result = (_data as any)?.body ?? _data;
+        if (Array.isArray(result) && result.every(r => r?.success)) {
+          logger.debug(
+            'Moonpay Swap registerTxs result: ' + JSON.stringify(result),
+          );
+          return;
+        }
+        throw new Error('Registration not accepted: ' + JSON.stringify(result));
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(
+          `Moonpay Swap registerTxs Error (${i}/${MAX_TRIES}): ${errMsg}`,
+        );
+      }
+      if (i < MAX_TRIES) {
+        await sleep(2000 * 2 ** (i - 1));
+      }
     }
   };
 
@@ -3472,8 +3511,8 @@ const SwapCryptoRoot: React.FC = () => {
         const txHash = (broadcastedTx as Partial<TransactionProposal>)?.txid;
         saveMoonpayTx(txHash);
         if (txHash) {
-          // Save first and don't hold the success screen: registration only
-          // speeds up tracking, and registerMoonpayTx never throws
+          // Save first and don't hold the success screen. registerMoonpayTx
+          // retries in the background and never throws
           registerMoonpayTx(txHash);
         }
       } else {
@@ -4357,11 +4396,14 @@ const SwapCryptoRoot: React.FC = () => {
                               <>{txData.totalExchangeFeeFiat}</>
                             ) : (
                               <>
-                                {Number(txData.totalExchangeFee).toFixed(6)}{' '}
-                                {(
-                                  txData.totalExchangeFeeCoin ??
-                                  toWalletSelected.currencyAbbreviation
-                                ).toUpperCase()}
+                                {txData.totalExchangeFee === undefined
+                                  ? '-'
+                                  : `${Number(txData.totalExchangeFee).toFixed(
+                                      6,
+                                    )} ${(
+                                      txData.totalExchangeFeeCoin ??
+                                      toWalletSelected.currencyAbbreviation
+                                    ).toUpperCase()}`}
                               </>
                             )}
                           </OfferSelectorText>

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {RefreshControl, Text} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
@@ -82,6 +82,10 @@ const MoonpaySwapDetails: React.FC = () => {
     statusDescription: undefined,
   });
   const [refreshing, setRefreshing] = useState(false);
+  // Status calls can overlap (on open and on pull to refresh). Only the latest
+  // may write, and none once the swap has been removed
+  const statusRequestRef = useRef(0);
+  const removedRef = useRef(false);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedPayinAddress, setCopiedPayinAddress] = useState(false);
   const [copiedPayinExtraId, setCopiedPayinExtraId] = useState(false);
@@ -130,8 +134,12 @@ const MoonpaySwapDetails: React.FC = () => {
       return;
     }
 
+    const requestId = ++statusRequestRef.current;
     try {
       const _raw = await selectedWallet.moonpaySwapGetStatus(reqData);
+      if (requestId !== statusRequestRef.current || removedRef.current) {
+        return;
+      }
       const statusData: MoonpaySwapStatusData = (_raw as any)?.body ?? _raw;
       const moonpayError = getMoonpaySwapError(statusData);
       if (moonpayError || !statusData?.status) {
@@ -403,6 +411,7 @@ const MoonpaySwapDetails: React.FC = () => {
                       text: t('REMOVE'),
                       action: () => {
                         dispatch(dismissBottomNotificationModal());
+                        removedRef.current = true;
                         dispatch(
                           SwapCryptoActions.removeTxMoonpay({
                             txId: swapTx.txId,

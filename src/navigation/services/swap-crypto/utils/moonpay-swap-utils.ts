@@ -106,37 +106,76 @@ export const isMoonpaySwapDepositTx = (
   !(tx as MoonpaySwapEvmTransaction).data &&
   !!(tx as MoonpaySwapDepositTransaction).to;
 
-// MoonPay quotes its fees in the source token. Skip any that aren't, since
-// they'd be priced at the source token's rate
+const isSameMoonpaySwapToken = (
+  token: Partial<Pick<MoonpaySwapPaymentData, 'chainId' | 'address'>>,
+  chainId: number,
+  address: string,
+): boolean =>
+  token?.chainId === chainId &&
+  token.address?.toLowerCase() === address.toLowerCase();
+
+// MoonPay quotes its fees in the source token, the only one the total can be
+// priced in. Returns undefined if a fee is charged in another token, so the
+// total isn't understated
 export const getMoonpaySwapSourceTokenFee = (
   data: Pick<
     MoonpaySwapQuoteData,
     'amountIn' | 'applicationFee' | 'protocolFee' | 'bridgeFee'
   >,
-): number =>
-  [data.applicationFee, data.protocolFee, data.bridgeFee]
-    .filter(
-      fee =>
-        fee?.amount &&
-        fee.chainId === data.amountIn.chainId &&
-        fee.address?.toLowerCase() === data.amountIn.address?.toLowerCase(),
-    )
-    .reduce((sum, fee) => sum + moonpaySwapToUnitAmount(fee!), 0);
+): number | undefined => {
+  const fees = [data.applicationFee, data.protocolFee, data.bridgeFee].filter(
+    fee => fee?.amount && fee.amount !== '0',
+  );
+  const isSourceToken = (fee: MoonpaySwapPaymentData | undefined) =>
+    isSameMoonpaySwapToken(
+      fee!,
+      data.amountIn.chainId,
+      data.amountIn.address ?? '',
+    );
+  if (!fees.every(isSourceToken)) {
+    return undefined;
+  }
+  return fees.reduce((sum, fee) => sum + moonpaySwapToUnitAmount(fee!), 0);
+};
 
 // The transaction is signed as returned, so make sure swaps.xyz built it for
-// the amount and chain that were requested. Returns what didn't match
+// the request and the source wallet. Returns what didn't match
 export const getMoonpaySwapActionMismatch = (
-  request: Pick<MoonpaySwapActionRequestData, 'amount' | 'srcChainId'>,
-  action: Pick<MoonpaySwapActionData, 'amountIn' | 'amountInMax' | 'tx'>,
-  isNativeSource: boolean,
+  request: Pick<
+    MoonpaySwapActionRequestData,
+    'amount' | 'srcChainId' | 'srcToken' | 'dstChainId' | 'dstToken'
+  >,
+  action: Pick<
+    MoonpaySwapActionData,
+    'amountIn' | 'amountInMax' | 'amountOut' | 'tx'
+  >,
+  source: {chain: string; isNative: boolean; decimals: number},
 ): string | undefined => {
   try {
     const amount = BigInt(request.amount);
-    if (BigInt(action.amountIn?.amount) !== amount) {
-      return 'amountIn';
+    for (const key of ['amountIn', 'amountInMax'] as const) {
+      const amountIn = action[key];
+      if (BigInt(amountIn?.amount) !== amount) {
+        return key;
+      }
+      // The approval amount is read back with the wallet's decimals
+      if (amountIn.decimals !== source.decimals) {
+        return key + ' decimals';
+      }
+      if (
+        !isSameMoonpaySwapToken(amountIn, request.srcChainId, request.srcToken)
+      ) {
+        return key + ' token';
+      }
     }
-    if (BigInt(action.amountInMax?.amount) !== amount) {
-      return 'amountInMax';
+    if (
+      !isSameMoonpaySwapToken(
+        action.amountOut,
+        request.dstChainId,
+        request.dstToken,
+      )
+    ) {
+      return 'amountOut token';
     }
     if (
       action.tx?.chainId !== undefined &&
@@ -144,11 +183,25 @@ export const getMoonpaySwapActionMismatch = (
     ) {
       return 'chainId';
     }
-    if (
-      (isNativeSource || isMoonpaySwapDepositTx(action.tx)) &&
-      BigInt(action.tx.value) !== amount
-    ) {
-      return 'value';
+    // Pick the transaction shape from the source chain, not from the response
+    if (isMoonpaySwapDepositFlow(source.chain)) {
+      if (!isMoonpaySwapDepositTx(action.tx)) {
+        return 'tx';
+      }
+      if (BigInt(action.tx.value) !== amount) {
+        return 'value';
+      }
+    } else {
+      if (!isMoonpaySwapEvmTx(action.tx) || !action.tx.to) {
+        return 'tx';
+      }
+      // An ERC20 moves in calldata, so the native value must be zero
+      if (
+        BigInt(action.tx.value || '0') !==
+        (source.isNative ? amount : BigInt(0))
+      ) {
+        return 'value';
+      }
     }
   } catch (err) {
     return 'unreadable amounts';

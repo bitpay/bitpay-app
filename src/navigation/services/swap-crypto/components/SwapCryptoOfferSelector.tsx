@@ -68,6 +68,7 @@ import {
 } from '../utils/thorswap-utils';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
+import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import {
@@ -376,6 +377,11 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
+  // Same rule as SwapCryptoRoot: a MoonPay deposit can't wait on multisig
+  // co-signers, so only single-signer and TSS wallets get a MoonPay offer
+  const isUnsupportedMoonpayMultisig =
+    selectedWalletFrom.credentials?.n > 1 && !isTSSWallet(selectedWalletFrom);
+
   SwapCryptoSupportedExchanges.forEach((exchange: SwapCryptoExchangeKey) => {
     if (offersDefault[exchange]) {
       let supportedCoins: SwapCryptoCoin[] | undefined;
@@ -417,6 +423,9 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
           ) &&
           (!swapCryptoConfig?.[exchange] ||
             !swapCryptoConfig?.[exchange]?.removed);
+      }
+      if (exchange === 'moonpay' && isUnsupportedMoonpayMultisig) {
+        offersDefault.moonpay.showOffer = false;
       }
     }
     if (exchange === 'thorswap') {
@@ -952,6 +961,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
               max,
               coin,
             });
+      clearMoonpayQuote();
       setFinishedMoonpay(true);
       return;
     }
@@ -971,46 +981,43 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       return;
     }
 
-    // getAction always sends refundTo, and swaps.xyz picks a route with a
-    // different minimum when it is set, so quote with it too
-    let refundTo: string;
-    try {
-      refundTo = (await dispatch<any>(
+    const getQuote = async () => {
+      // getAction always sends refundTo, and swaps.xyz picks a route with a
+      // different minimum when it is set, so quote with it too
+      const refundTo = (await dispatch<any>(
         createWalletAddress({wallet: selectedWalletFrom, newAddress: false}),
       )) as string;
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      const reason = 'createWalletAddress Error';
-      logger.error(`${reason}: ${errMsg}`);
-      showMoonpayError(err, reason);
-      return;
-    }
 
-    const requestData: MoonpaySwapQuoteRequestData = {
-      env: moonpaySwapEnv,
-      refundTo,
-      srcChainId,
-      srcToken: getMoonpaySwapTokenAddress(selectedWalletFrom.tokenAddress),
-      dstChainId,
-      dstToken: getMoonpaySwapTokenAddress(selectedWalletTo.tokenAddress),
-      amount: ToBaseUnits(amountFrom, precisionFrom.unitDecimals),
-      swapDirection: 'exact-amount-in',
-      slippage:
-        (offers.moonpay.slippage ?? MOONPAY_SWAP_DEFAULT_SLIPPAGE) * 100, // bps
-      returnDepositAddress: isMoonpaySwapDepositFlow(selectedWalletFrom.chain),
+      const requestData: MoonpaySwapQuoteRequestData = {
+        env: moonpaySwapEnv,
+        refundTo,
+        srcChainId,
+        srcToken: getMoonpaySwapTokenAddress(selectedWalletFrom.tokenAddress),
+        dstChainId,
+        dstToken: getMoonpaySwapTokenAddress(selectedWalletTo.tokenAddress),
+        amount: ToBaseUnits(amountFrom, precisionFrom.unitDecimals),
+        swapDirection: 'exact-amount-in',
+        slippage:
+          (offers.moonpay.slippage ?? MOONPAY_SWAP_DEFAULT_SLIPPAGE) * 100, // bps
+        returnDepositAddress: isMoonpaySwapDepositFlow(
+          selectedWalletFrom.chain,
+        ),
+      };
+      return selectedWalletFrom.moonpaySwapGetQuote(requestData);
     };
 
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
+      // Every offer waits for the slowest exchange, so the address lookup
+      // shares the quote's deadline
       const MOONPAY_TIMEOUT = 20000; // 20 seconds
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(
           () => reject(new Error(t('MoonPay request timed out'))),
           MOONPAY_TIMEOUT,
-        ),
-      );
-      const requestPromise =
-        selectedWalletFrom.moonpaySwapGetQuote(requestData);
-      const _data = await Promise.race([requestPromise, timeoutPromise]);
+        );
+      });
+      const _data = await Promise.race([getQuote(), timeoutPromise]);
       const moonpayQuoteData: MoonpaySwapQuoteData =
         (_data as any)?.body ?? _data;
 
@@ -1019,6 +1026,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         const msg = getMoonpaySwapErrorMessage(moonpayError, coinFrom);
         if (['AMOUNT_TOO_LOW', 'AMOUNT_TOO_HIGH'].includes(moonpayError.code)) {
           offers.moonpay.outOfLimitMsg = msg;
+          clearMoonpayQuote();
           setFinishedMoonpay(true);
           return;
         }
@@ -1102,7 +1110,21 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     } catch (err) {
       const reason = 'moonpaySwapGetQuote Error';
       showMoonpayError(err, reason);
+    } finally {
+      clearTimeout(timeoutId);
     }
+  };
+
+  // A rejected amount must not leave the previous quote behind to be picked
+  const clearMoonpayQuote = () => {
+    offers.moonpay.amountReceiving = undefined;
+    offers.moonpay.amountReceivingFiat = undefined;
+    offers.moonpay.quoteData = undefined;
+    offers.moonpay.fee = undefined;
+    offers.moonpay.rate = undefined;
+    offers.moonpay.rateFiat = undefined;
+    offers.moonpay.estimatedMinAmountReceiving = undefined;
+    offers.moonpay.expanded = false;
   };
 
   const showMoonpayError = (err?: any, reason?: string) => {

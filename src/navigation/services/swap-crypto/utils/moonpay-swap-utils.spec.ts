@@ -85,11 +85,22 @@ describe('moonpay-swap-utils', () => {
   });
 
   describe('getMoonpaySwapActionMismatch', () => {
-    const request = {amount: '53573342', srcChainId: 1399811149};
+    const SOL = MOONPAY_SWAP_NATIVE_TOKEN_ADDRESS;
+    const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
     // From the Solana to Base swap run on 2026-11-02
+    const solRequest = {
+      amount: '53573342',
+      srcChainId: 1399811149,
+      srcToken: SOL,
+      dstChainId: 8453,
+      dstToken: BASE_USDC,
+    };
+    const solSource = {chain: 'sol', isNative: true, decimals: 9};
+    const sol = {chainId: 1399811149, address: SOL, decimals: 9};
     const deposit = {
-      amountIn: {amount: '53573342'},
-      amountInMax: {amount: '53573342'},
+      amountIn: {...sol, amount: '53573342'},
+      amountInMax: {...sol, amount: '53573342'},
+      amountOut: {chainId: 8453, address: BASE_USDC, decimals: 6},
       tx: {
         to: '3eonEkA9xc7XFmrNMD1iEjo4tGUD1mMjZNXRkk2VF6Wk',
         value: '53573342',
@@ -98,71 +109,168 @@ describe('moonpay-swap-utils', () => {
         chainKey: 'solana_mainnet',
       },
     } as any;
+
+    const erc20Request = {
+      amount: '1500000',
+      srcChainId: 8453,
+      srcToken: BASE_USDC,
+      dstChainId: 8453,
+      dstToken: SOL,
+    };
+    const erc20Source = {chain: 'base', isNative: false, decimals: 6};
+    const usdc = {chainId: 8453, address: BASE_USDC, decimals: 6};
     const erc20 = {
-      amountIn: {amount: '1500000'},
-      amountInMax: {amount: '1500000'},
+      amountIn: {...usdc, amount: '1500000'},
+      amountInMax: {...usdc, amount: '1500000'},
+      amountOut: {chainId: 8453, address: SOL, decimals: 18},
       tx: {to: '0xrouter', data: '0x1234', value: '0', chainId: 8453},
     } as any;
 
     it('accepts an action built for the request', () => {
-      expect(getMoonpaySwapActionMismatch(request, deposit, true)).toBe(
-        undefined,
-      );
+      expect(
+        getMoonpaySwapActionMismatch(solRequest, deposit, solSource),
+      ).toBeUndefined();
+      expect(
+        getMoonpaySwapActionMismatch(erc20Request, erc20, erc20Source),
+      ).toBeUndefined();
+      // Token addresses are compared without case
       expect(
         getMoonpaySwapActionMismatch(
-          {amount: '1500000', srcChainId: 8453},
+          {...erc20Request, srcToken: BASE_USDC.toLowerCase()},
           erc20,
-          false,
+          erc20Source,
         ),
-      ).toBe(undefined);
+      ).toBeUndefined();
     });
 
     it('rejects a different amount', () => {
       expect(
         getMoonpaySwapActionMismatch(
-          request,
-          {...deposit, amountIn: {amount: '60000000'}},
-          true,
+          solRequest,
+          {...deposit, amountIn: {...sol, amount: '60000000'}},
+          solSource,
         ),
       ).toBe('amountIn');
       expect(
         getMoonpaySwapActionMismatch(
-          {amount: '1500000', srcChainId: 8453},
-          {...erc20, amountInMax: {amount: '2000000'}},
-          false,
+          erc20Request,
+          {...erc20, amountInMax: {...usdc, amount: '2000000'}},
+          erc20Source,
         ),
       ).toBe('amountInMax');
+    });
+
+    it('rejects decimals that differ from the wallet', () => {
+      // The approval amount is formatted from these, so 18 decimals on a
+      // 6-decimal token would approve far more than the swap
+      expect(
+        getMoonpaySwapActionMismatch(
+          erc20Request,
+          {...erc20, amountInMax: {...usdc, decimals: 5, amount: '1500000'}},
+          erc20Source,
+        ),
+      ).toBe('amountInMax decimals');
+    });
+
+    it('rejects a route for other tokens or chains', () => {
+      expect(
+        getMoonpaySwapActionMismatch(
+          erc20Request,
+          {
+            ...erc20,
+            amountIn: {...usdc, address: '0xother', amount: '1500000'},
+          },
+          erc20Source,
+        ),
+      ).toBe('amountIn token');
+      expect(
+        getMoonpaySwapActionMismatch(
+          erc20Request,
+          {...erc20, amountOut: {...erc20.amountOut, chainId: 1}},
+          erc20Source,
+        ),
+      ).toBe('amountOut token');
     });
 
     it('rejects a deposit for a different value or chain', () => {
       expect(
         getMoonpaySwapActionMismatch(
-          request,
+          solRequest,
           {...deposit, tx: {...deposit.tx, value: '60000000'}},
-          true,
+          solSource,
         ),
       ).toBe('value');
       expect(
         getMoonpaySwapActionMismatch(
-          request,
+          solRequest,
           {...deposit, tx: {...deposit.tx, chainId: 1}},
-          true,
+          solSource,
         ),
       ).toBe('chainId');
+    });
+
+    it('requires native value 0 on an ERC20 swap', () => {
+      expect(
+        getMoonpaySwapActionMismatch(
+          erc20Request,
+          {...erc20, tx: {...erc20.tx, value: '1000000000000000'}},
+          erc20Source,
+        ),
+      ).toBe('value');
+    });
+
+    it('requires the native value of a native EVM swap to be the amount', () => {
+      const ethRequest = {...erc20Request, srcToken: SOL, dstToken: BASE_USDC};
+      const eth = {chainId: 8453, address: SOL, decimals: 18};
+      const ethAction = {
+        amountIn: {...eth, amount: '1500000'},
+        amountInMax: {...eth, amount: '1500000'},
+        amountOut: {...usdc},
+        tx: {to: '0xrouter', data: '0x1234', value: '1500000', chainId: 8453},
+      } as any;
+      const ethSource = {chain: 'base', isNative: true, decimals: 18};
+      expect(
+        getMoonpaySwapActionMismatch(ethRequest, ethAction, ethSource),
+      ).toBeUndefined();
+      expect(
+        getMoonpaySwapActionMismatch(
+          ethRequest,
+          {...ethAction, tx: {...ethAction.tx, value: '0'}},
+          ethSource,
+        ),
+      ).toBe('value');
+    });
+
+    it('picks the transaction shape from the source chain', () => {
+      // An EVM source without calldata would otherwise be sent as a plain transfer
+      expect(
+        getMoonpaySwapActionMismatch(
+          erc20Request,
+          {...erc20, tx: {to: '0xrouter', value: '0', chainId: 8453}},
+          erc20Source,
+        ),
+      ).toBe('tx');
+      expect(
+        getMoonpaySwapActionMismatch(
+          solRequest,
+          {...deposit, tx: {...deposit.tx, data: '0x1234'}},
+          solSource,
+        ),
+      ).toBe('tx');
     });
 
     it('rejects amounts it cannot read', () => {
       expect(
         getMoonpaySwapActionMismatch(
-          request,
-          {...deposit, amountIn: {amount: '1.5'}},
-          true,
+          solRequest,
+          {...deposit, amountIn: {...sol, amount: '1.5'}},
+          solSource,
         ),
       ).toBe('unreadable amounts');
     });
   });
 
-  it('adds up only the fees charged in the source token', () => {
+  describe('getMoonpaySwapSourceTokenFee', () => {
     const usdc = {
       chainId: 8453,
       address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
@@ -171,18 +279,35 @@ describe('moonpay-swap-utils', () => {
     const fees = {
       amountIn: {...usdc, amount: '5000000'},
       applicationFee: {...usdc, amount: '50000'},
-      protocolFee: {...usdc, address: usdc.address.toLowerCase(), amount: '0'},
+      protocolFee: {
+        ...usdc,
+        address: usdc.address.toLowerCase(),
+        amount: '20000',
+      },
       bridgeFee: {
         chainId: 8453,
         address: '0x0000000000000000000000000000000000000000',
         decimals: 18,
-        amount: '1000000000000000',
+        amount: '0',
       },
     } as any;
-    expect(getMoonpaySwapSourceTokenFee(fees)).toBeCloseTo(0.05);
-    expect(
-      getMoonpaySwapSourceTokenFee({...fees, bridgeFee: undefined}),
-    ).toBeCloseTo(0.05);
+
+    it('adds up the fees charged in the source token', () => {
+      expect(getMoonpaySwapSourceTokenFee(fees)).toBeCloseTo(0.07);
+      expect(
+        getMoonpaySwapSourceTokenFee({...fees, bridgeFee: undefined}),
+      ).toBeCloseTo(0.07);
+    });
+
+    it('gives no total when a fee is charged in another token', () => {
+      // Dropping it would understate the fee
+      expect(
+        getMoonpaySwapSourceTokenFee({
+          ...fees,
+          bridgeFee: {...fees.bridgeFee, amount: '1000000000000000'},
+        }),
+      ).toBeUndefined();
+    });
   });
 
   it('converts base units to unit amounts', () => {

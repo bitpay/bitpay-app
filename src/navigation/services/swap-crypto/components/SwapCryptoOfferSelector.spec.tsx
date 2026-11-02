@@ -112,41 +112,47 @@ const makeWallet = (currencyAbbreviation: string, chain: string, quote: any) =>
     moonpaySwapGetQuote: jest.fn().mockResolvedValue({body: quote}),
   } as any);
 
+const selector = (
+  walletFrom: any,
+  walletTo: any,
+  amountFrom: number,
+  onSelectOffer: (offer: SwapCryptoOffer | undefined) => void,
+) => (
+  <SwapCryptoOfferSelector
+    amountFrom={amountFrom}
+    coinFrom={walletFrom.currencyAbbreviation}
+    chainFrom={walletFrom.chain}
+    coinTo={walletTo.currencyAbbreviation}
+    chainTo={walletTo.chain}
+    selectedWalletFrom={walletFrom}
+    selectedWalletTo={walletTo}
+    swapCryptoConfig={undefined}
+    preSetPartner={'moonpay'}
+    preLoadPartnersData={
+      {
+        changelly: {key: 'changelly', supportedCoins: []},
+        thorswap: {key: 'thorswap', supportedCoins: []},
+        moonpay: {
+          key: 'moonpay',
+          showOffer: true,
+          disabled: false,
+          supportedCoins: [coin('eth', 'eth'), coin('btc', 'btc')],
+          limits: {min: 0.00000001, max: undefined},
+        },
+      } as any
+    }
+    onSelectOffer={onSelectOffer}
+    setOffersLoading={jest.fn()}
+    swapLimits={{minAmount: 0.00000001}}
+  />
+);
+
 const renderSelector = (
   walletFrom: any,
   walletTo: any,
   amountFrom: number,
   onSelectOffer: (offer: SwapCryptoOffer | undefined) => void,
-) =>
-  render(
-    <SwapCryptoOfferSelector
-      amountFrom={amountFrom}
-      coinFrom={walletFrom.currencyAbbreviation}
-      chainFrom={walletFrom.chain}
-      coinTo={walletTo.currencyAbbreviation}
-      chainTo={walletTo.chain}
-      selectedWalletFrom={walletFrom}
-      selectedWalletTo={walletTo}
-      swapCryptoConfig={undefined}
-      preSetPartner={'moonpay'}
-      preLoadPartnersData={
-        {
-          changelly: {key: 'changelly', supportedCoins: []},
-          thorswap: {key: 'thorswap', supportedCoins: []},
-          moonpay: {
-            key: 'moonpay',
-            showOffer: true,
-            disabled: false,
-            supportedCoins: [coin('eth', 'eth'), coin('btc', 'btc')],
-            limits: {min: 0.00000001, max: undefined},
-          },
-        } as any
-      }
-      onSelectOffer={onSelectOffer}
-      setOffersLoading={jest.fn()}
-      swapLimits={{minAmount: 0.00000001}}
-    />,
-  );
+) => render(selector(walletFrom, walletTo, amountFrom, onSelectOffer));
 
 // The selector debounces quotes by 100ms. Let that timer and the quote promise
 // settle inside act so React flushes the resulting state updates
@@ -237,6 +243,62 @@ describe('SwapCryptoOfferSelector - MoonPay', () => {
         'There are currently no offers that satisfy your request. Please try again later.',
       ),
     ).toBeTruthy();
+    expect(onSelectOffer).not.toHaveBeenCalledWith(
+      expect.objectContaining({key: 'moonpay'}),
+    );
+  });
+
+  it('drops the previous quote when MoonPay rejects a new amount', async () => {
+    const walletFrom = makeWallet('eth', 'eth', ethToBtcQuote);
+    const walletTo = makeWallet('btc', 'btc', undefined);
+    const onSelectOffer = jest.fn();
+
+    const {rerender} = renderSelector(
+      walletFrom,
+      walletTo,
+      0.05,
+      onSelectOffer,
+    );
+    await flushQuotes();
+    await waitFor(() =>
+      expect(onSelectOffer).toHaveBeenLastCalledWith(
+        expect.objectContaining({key: 'moonpay'}),
+      ),
+    );
+
+    // The rejection arrives after the offers were reset for the new amount
+    walletFrom.moonpaySwapGetQuote.mockImplementation(
+      () =>
+        new Promise(resolve =>
+          setTimeout(() => resolve({body: amountTooLowQuote}), 1000),
+        ),
+    );
+    onSelectOffer.mockClear();
+    rerender(selector(walletFrom, walletTo, 0.0000001, onSelectOffer));
+    await flushQuotes();
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    });
+    await flushQuotes();
+    await flushQuotes();
+
+    expect(walletFrom.moonpaySwapGetQuote).toHaveBeenCalledTimes(2);
+    expect(onSelectOffer).toHaveBeenLastCalledWith(undefined);
+    expect(onSelectOffer).not.toHaveBeenCalledWith(
+      expect.objectContaining({key: 'moonpay'}),
+    );
+  });
+
+  it('does not quote MoonPay for a multisig wallet', async () => {
+    const walletFrom = makeWallet('eth', 'eth', ethToBtcQuote);
+    walletFrom.credentials = {m: 2, n: 3};
+    const walletTo = makeWallet('btc', 'btc', undefined);
+    const onSelectOffer = jest.fn();
+
+    renderSelector(walletFrom, walletTo, 0.05, onSelectOffer);
+    await flushQuotes();
+
+    expect(walletFrom.moonpaySwapGetQuote).not.toHaveBeenCalled();
     expect(onSelectOffer).not.toHaveBeenCalledWith(
       expect.objectContaining({key: 'moonpay'}),
     );
