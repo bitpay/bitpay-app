@@ -2,11 +2,13 @@ import {t} from 'i18next';
 import {IsEVMChain} from '../../../../store/wallet/utils/currency';
 import {
   MoonpaySwapActionData,
+  MoonpaySwapActionRequestData,
   MoonpaySwapDepositTransaction,
   MoonpaySwapEnv,
   MoonpaySwapError,
   MoonpaySwapEvmTransaction,
   MoonpaySwapPaymentData,
+  MoonpaySwapQuoteData,
   MoonpaySwapStatus,
 } from '../../../../store/swap-crypto/models/moonpay-swap.models';
 import {Status} from './thorswap-utils';
@@ -103,6 +105,56 @@ export const isMoonpaySwapDepositTx = (
 ): tx is MoonpaySwapDepositTransaction =>
   !(tx as MoonpaySwapEvmTransaction).data &&
   !!(tx as MoonpaySwapDepositTransaction).to;
+
+// MoonPay quotes its fees in the source token. Skip any that aren't, since
+// they'd be priced at the source token's rate
+export const getMoonpaySwapSourceTokenFee = (
+  data: Pick<
+    MoonpaySwapQuoteData,
+    'amountIn' | 'applicationFee' | 'protocolFee' | 'bridgeFee'
+  >,
+): number =>
+  [data.applicationFee, data.protocolFee, data.bridgeFee]
+    .filter(
+      fee =>
+        fee?.amount &&
+        fee.chainId === data.amountIn.chainId &&
+        fee.address?.toLowerCase() === data.amountIn.address?.toLowerCase(),
+    )
+    .reduce((sum, fee) => sum + moonpaySwapToUnitAmount(fee!), 0);
+
+// The transaction is signed as returned, so make sure swaps.xyz built it for
+// the amount and chain that were requested. Returns what didn't match
+export const getMoonpaySwapActionMismatch = (
+  request: Pick<MoonpaySwapActionRequestData, 'amount' | 'srcChainId'>,
+  action: Pick<MoonpaySwapActionData, 'amountIn' | 'amountInMax' | 'tx'>,
+  isNativeSource: boolean,
+): string | undefined => {
+  try {
+    const amount = BigInt(request.amount);
+    if (BigInt(action.amountIn?.amount) !== amount) {
+      return 'amountIn';
+    }
+    if (BigInt(action.amountInMax?.amount) !== amount) {
+      return 'amountInMax';
+    }
+    if (
+      action.tx?.chainId !== undefined &&
+      action.tx.chainId !== request.srcChainId
+    ) {
+      return 'chainId';
+    }
+    if (
+      (isNativeSource || isMoonpaySwapDepositTx(action.tx)) &&
+      BigInt(action.tx.value) !== amount
+    ) {
+      return 'value';
+    }
+  } catch (err) {
+    return 'unreadable amounts';
+  }
+  return undefined;
+};
 
 export const moonpaySwapToUnitAmount = (
   payment: Pick<MoonpaySwapPaymentData, 'amount' | 'decimals'>,

@@ -52,12 +52,30 @@ jest.mock('../../../../components/modal/base/sheet/SheetModal', () => ({
 // Captured from https://api-v2.swaps.xyz/api/getQuote: 0.05 ETH (Ethereum) -> BTC
 const ethToBtcQuote = {
   vmId: 'evm',
-  amountIn: {amount: '50000000000000000', decimals: 18, symbol: 'ETH'},
+  amountIn: {
+    amount: '50000000000000000',
+    decimals: 18,
+    symbol: 'ETH',
+    chainId: 1,
+    address: '0x0000000000000000000000000000000000000000',
+  },
   amountInMax: {amount: '50000000000000000', decimals: 18, symbol: 'ETH'},
   amountOut: {amount: '142580', decimals: 8, symbol: 'BTC'},
   amountOutMin: {amount: '142580', decimals: 8, symbol: 'BTC'},
-  protocolFee: {amount: '0', decimals: 18, symbol: 'ETH'},
-  applicationFee: {amount: '500000000000000', decimals: 18, symbol: 'ETH'},
+  protocolFee: {
+    amount: '0',
+    decimals: 18,
+    symbol: 'ETH',
+    chainId: 1,
+    address: '0x0000000000000000000000000000000000000000',
+  },
+  applicationFee: {
+    amount: '500000000000000',
+    decimals: 18,
+    symbol: 'ETH',
+    chainId: 1,
+    address: '0x0000000000000000000000000000000000000000',
+  },
   exchangeRate: 0.028516,
   estimatedTxTime: 25,
   estimatedPriceImpact: -0.008651,

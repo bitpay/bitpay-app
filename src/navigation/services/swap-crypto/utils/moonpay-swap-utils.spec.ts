@@ -1,5 +1,7 @@
 import {
   getChainFromMoonpaySwapChainId,
+  getMoonpaySwapActionMismatch,
+  getMoonpaySwapSourceTokenFee,
   getEstimatedTimeStrFromSeconds,
   getMoonpaySwapChainId,
   getMoonpaySwapError,
@@ -80,6 +82,107 @@ describe('moonpay-swap-utils', () => {
     expect(isMoonpaySwapDepositTx(evmTx)).toBe(false);
     expect(isMoonpaySwapEvmTx(depositTx)).toBe(false);
     expect(isMoonpaySwapDepositTx(depositTx)).toBe(true);
+  });
+
+  describe('getMoonpaySwapActionMismatch', () => {
+    const request = {amount: '53573342', srcChainId: 1399811149};
+    // From the Solana to Base swap run on 2026-11-02
+    const deposit = {
+      amountIn: {amount: '53573342'},
+      amountInMax: {amount: '53573342'},
+      tx: {
+        to: '3eonEkA9xc7XFmrNMD1iEjo4tGUD1mMjZNXRkk2VF6Wk',
+        value: '53573342',
+        toExtra: null,
+        chainId: 1399811149,
+        chainKey: 'solana_mainnet',
+      },
+    } as any;
+    const erc20 = {
+      amountIn: {amount: '1500000'},
+      amountInMax: {amount: '1500000'},
+      tx: {to: '0xrouter', data: '0x1234', value: '0', chainId: 8453},
+    } as any;
+
+    it('accepts an action built for the request', () => {
+      expect(getMoonpaySwapActionMismatch(request, deposit, true)).toBe(
+        undefined,
+      );
+      expect(
+        getMoonpaySwapActionMismatch(
+          {amount: '1500000', srcChainId: 8453},
+          erc20,
+          false,
+        ),
+      ).toBe(undefined);
+    });
+
+    it('rejects a different amount', () => {
+      expect(
+        getMoonpaySwapActionMismatch(
+          request,
+          {...deposit, amountIn: {amount: '60000000'}},
+          true,
+        ),
+      ).toBe('amountIn');
+      expect(
+        getMoonpaySwapActionMismatch(
+          {amount: '1500000', srcChainId: 8453},
+          {...erc20, amountInMax: {amount: '2000000'}},
+          false,
+        ),
+      ).toBe('amountInMax');
+    });
+
+    it('rejects a deposit for a different value or chain', () => {
+      expect(
+        getMoonpaySwapActionMismatch(
+          request,
+          {...deposit, tx: {...deposit.tx, value: '60000000'}},
+          true,
+        ),
+      ).toBe('value');
+      expect(
+        getMoonpaySwapActionMismatch(
+          request,
+          {...deposit, tx: {...deposit.tx, chainId: 1}},
+          true,
+        ),
+      ).toBe('chainId');
+    });
+
+    it('rejects amounts it cannot read', () => {
+      expect(
+        getMoonpaySwapActionMismatch(
+          request,
+          {...deposit, amountIn: {amount: '1.5'}},
+          true,
+        ),
+      ).toBe('unreadable amounts');
+    });
+  });
+
+  it('adds up only the fees charged in the source token', () => {
+    const usdc = {
+      chainId: 8453,
+      address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      decimals: 6,
+    };
+    const fees = {
+      amountIn: {...usdc, amount: '5000000'},
+      applicationFee: {...usdc, amount: '50000'},
+      protocolFee: {...usdc, address: usdc.address.toLowerCase(), amount: '0'},
+      bridgeFee: {
+        chainId: 8453,
+        address: '0x0000000000000000000000000000000000000000',
+        decimals: 18,
+        amount: '1000000000000000',
+      },
+    } as any;
+    expect(getMoonpaySwapSourceTokenFee(fees)).toBeCloseTo(0.05);
+    expect(
+      getMoonpaySwapSourceTokenFee({...fees, bridgeFee: undefined}),
+    ).toBeCloseTo(0.05);
   });
 
   it('converts base units to unit amounts', () => {

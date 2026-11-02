@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {ethers} from 'ethers';
 import {
   ActivityIndicator,
   ScrollView,
@@ -182,6 +183,8 @@ import {
   getChainFromMoonpaySwapChainId,
   getMoonpaySwapChainId,
   getMoonpaySwapError,
+  getMoonpaySwapActionMismatch,
+  getMoonpaySwapSourceTokenFee,
   getMoonpaySwapErrorMessage,
   getMoonpaySwapTokenAddress,
   isMoonpaySwapDepositFlow,
@@ -525,6 +528,10 @@ const SwapCryptoRoot: React.FC = () => {
   // MoonPay
   const [moonpayActionData, setMoonpayActionData] =
     useState<MoonpaySwapActionData>();
+  // A MoonPay checkout drops its results if a newer one started, or if the
+  // pair, amount or offer changed while it waited on the network
+  const moonpayCheckoutGenRef = useRef(0);
+  const moonpayCheckoutKeyRef = useRef('');
 
   // Threshold Signature Scheme (TSS)
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
@@ -712,6 +719,7 @@ const SwapCryptoRoot: React.FC = () => {
       setSelectedOffer(undefined);
       setCtxp(undefined);
       setTxData(undefined);
+      setMoonpayActionData(undefined);
 
       if (fromPill) {
         hideModal('amount');
@@ -916,7 +924,22 @@ const SwapCryptoRoot: React.FC = () => {
             ),
         );
 
-        if (exchange.showOffer && isCoinPresentedInExchange) {
+        // A MoonPay deposit has to be broadcast and registered right away, so
+        // it can't wait on multisig co-signers. TSS wallets sign immediately
+        const isUnsupportedMultisig =
+          exchange.key === 'moonpay' &&
+          fromWallet.credentials?.n > 1 &&
+          !isTSSWallet(fromWallet);
+
+        // Start from the BWS config on every pick: showOffer is overwritten
+        // here, so reading it back would keep an exchange hidden for good
+        const isRemovedByConfig = !!swapCryptoConfig?.[exchange.key]?.removed;
+
+        if (
+          !isRemovedByConfig &&
+          isCoinPresentedInExchange &&
+          !isUnsupportedMultisig
+        ) {
           possibleCoinsTo = possibleCoinsTo.concat(exchange.supportedCoins);
           swapCryptoExchangesDefault[exchange.key].showOffer = true;
         } else {
@@ -2665,6 +2688,13 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
+  moonpayCheckoutKeyRef.current = [
+    fromWalletSelected?.id,
+    toWalletSelected?.id,
+    amountFrom,
+    selectedOffer?.key,
+  ].join('|');
+
   const createMoonpayTransaction = async () => {
     if (
       !fromWalletSelected ||
@@ -2674,6 +2704,11 @@ const SwapCryptoRoot: React.FC = () => {
     ) {
       return;
     }
+    const checkoutGen = ++moonpayCheckoutGenRef.current;
+    const checkoutKey = moonpayCheckoutKeyRef.current;
+    const isStale = () =>
+      checkoutGen !== moonpayCheckoutGenRef.current ||
+      checkoutKey !== moonpayCheckoutKeyRef.current;
 
     dispatch(
       Analytics.track('Requested Swap Crypto', {
@@ -2745,6 +2780,9 @@ const SwapCryptoRoot: React.FC = () => {
       const _data = await fromWalletSelected.moonpaySwapGetAction(requestData);
       actionData = (_data as any)?.body ?? _data;
     } catch (err) {
+      if (isStale()) {
+        return;
+      }
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       const reason = 'moonpaySwapGetAction Catch Error';
       logger.error('Moonpay Swap getAction Error: ' + errMsg);
@@ -2755,6 +2793,11 @@ const SwapCryptoRoot: React.FC = () => {
         goBack: true,
         fireAnalytics: true,
       });
+      return;
+    }
+
+    if (isStale()) {
+      logger.debug('Moonpay Swap: dropping a stale checkout');
       return;
     }
 
@@ -2781,6 +2824,22 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
+    const mismatch = getMoonpaySwapActionMismatch(
+      requestData,
+      actionData,
+      !fromWalletSelected.tokenAddress,
+    );
+    if (mismatch) {
+      logger.error(`Moonpay Swap getAction ${mismatch} does not match request`);
+      showError({
+        msg: t('Could not get crypto offer. Please try again later.'),
+        reason: 'moonpaySwapGetAction Error. Mismatched ' + mismatch,
+        goBack: true,
+        fireAnalytics: true,
+      });
+      return;
+    }
+
     // ERC20 swaps pull the funds through the router, which needs an allowance first
     if (
       isMoonpaySwapEvmTx(actionData.tx) &&
@@ -2791,6 +2850,9 @@ const SwapCryptoRoot: React.FC = () => {
         moonpayAddressFrom,
         actionData.tx.to,
       );
+      if (isStale()) {
+        return;
+      }
       if (allowance < BigInt(actionData.amountInMax.amount)) {
         logger.debug(
           `Moonpay Swap: allowance (${allowance}) is lower than the swap amount (${actionData.amountInMax.amount}). Asking for approval`,
@@ -2835,13 +2897,7 @@ const SwapCryptoRoot: React.FC = () => {
       );
     }
 
-    // MoonPay charges its fees in the source token
-    const totalExchangeFee =
-      moonpaySwapToUnitAmount(actionData.applicationFee) +
-      moonpaySwapToUnitAmount(actionData.protocolFee) +
-      (actionData.bridgeFee
-        ? moonpaySwapToUnitAmount(actionData.bridgeFee)
-        : 0);
+    const totalExchangeFee = getMoonpaySwapSourceTokenFee(actionData);
     let totalExchangeFeeFiat: string | undefined;
     try {
       totalExchangeFeeFiat = formatFiatAmount(
@@ -2903,6 +2959,9 @@ const SwapCryptoRoot: React.FC = () => {
           `Unsupported Moonpay Swap transaction type: ${actionData.vmId}`,
         );
       }
+      if (isStale()) {
+        return;
+      }
       setCtxp(ctxp);
       const minerFee = ctxp.fee;
       let minerFeeFiat: string | undefined;
@@ -2959,6 +3018,9 @@ const SwapCryptoRoot: React.FC = () => {
         );
       }
     } catch (err: any) {
+      if (isStale()) {
+        return;
+      }
       const reason = 'createTx Error';
       if (err.code) {
         showError({
@@ -3018,7 +3080,8 @@ const SwapCryptoRoot: React.FC = () => {
         const estimatedGas = await getEstimateGas({
           wallet,
           network: wallet.network,
-          value: Number(tx.value),
+          // Keep wei as a string: Number() loses precision on large values
+          value: tx.value,
           from,
           to: tx.to,
           data: tx.data,
@@ -3159,7 +3222,11 @@ const SwapCryptoRoot: React.FC = () => {
     }
     hideOngoingProcess();
     const coin = fromWalletSelected.currencyAbbreviation.toUpperCase();
-    const amountToApprove = moonpaySwapToUnitAmount(actionData.amountInMax);
+    // Exact decimal string: a float here can approve a few wei too little
+    const amountToApprove = ethers.utils.formatUnits(
+      actionData.amountInMax.amount,
+      actionData.amountInMax.decimals,
+    );
     dispatch(
       showBottomNotificationModal({
         type: 'info',
@@ -3218,7 +3285,7 @@ const SwapCryptoRoot: React.FC = () => {
                   offerName: 'MoonPay',
                   spenderKey: 'MoonPay',
                   address: spenderAddress,
-                  amount: amountToApprove.toString(),
+                  amount: amountToApprove,
                 },
               });
             },

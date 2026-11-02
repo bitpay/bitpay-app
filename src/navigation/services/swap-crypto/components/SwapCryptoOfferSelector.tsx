@@ -84,6 +84,7 @@ import {
   MOONPAY_SWAP_DEFAULT_SLIPPAGE,
   moonpaySwapEnv,
   moonpaySwapToUnitAmount,
+  getMoonpaySwapSourceTokenFee,
 } from '../utils/moonpay-swap-utils';
 
 const styles = StyleSheet.create({
@@ -933,14 +934,24 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       (offers.moonpay.amountLimits?.max &&
         amountFrom > offers.moonpay.amountLimits.max)
     ) {
-      offers.moonpay.outOfLimitMsg = t(
-        'There are no MoonPay offers available, as the current swap limits for this exchange must be between {{min}} {{coin}} and {{max}} {{coin}}',
-        {
-          min: offers.moonpay.amountLimits.min,
-          max: offers.moonpay.amountLimits.max,
-          coin: coinFrom.toUpperCase(),
-        },
-      );
+      const {min, max} = offers.moonpay.amountLimits;
+      const coin = coinFrom.toUpperCase();
+      // Deposit routes can have only one of the two limits
+      offers.moonpay.outOfLimitMsg =
+        min && max
+          ? t(
+              'There are no MoonPay offers available, as the current swap limits for this exchange must be between {{min}} {{coin}} and {{max}} {{coin}}',
+              {min, max, coin},
+            )
+          : min && amountFrom < min
+          ? t('The minimum amount for this swap is {{min}} {{coin}}.', {
+              min,
+              coin,
+            })
+          : t('The maximum amount for this swap is {{max}} {{coin}}.', {
+              max,
+              coin,
+            });
       setFinishedMoonpay(true);
       return;
     }
@@ -1032,9 +1043,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       offers.moonpay.errorMsg = undefined;
       offers.moonpay.quoteData = moonpayQuoteData;
       offers.moonpay.amountReceiving = amountReceiving.toString();
-      offers.moonpay.fee =
-        moonpaySwapToUnitAmount(moonpayQuoteData.applicationFee) +
-        moonpaySwapToUnitAmount(moonpayQuoteData.protocolFee);
+      offers.moonpay.fee = getMoonpaySwapSourceTokenFee(moonpayQuoteData);
       offers.moonpay.estimatedTime = getEstimatedTimeStrFromSeconds(
         moonpayQuoteData.estimatedTxTime,
       );
