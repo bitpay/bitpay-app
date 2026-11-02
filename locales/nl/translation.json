@@ -2301,5 +2301,11 @@
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Uw lokale gegevens zijn behouden. Probeer het opnieuw of neem contact op met de ondersteuning. De-installeer de app niet en wis de gegevens ervan niet. Referentie: {{id}}.",
   "Retry": "Opnieuw proberen",
   "There are no wallets with enough funds on the {{network}} network.": "Er zijn geen wallets met voldoende saldo op het {{network}}-netwerk.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen.",
+  "The minimum amount for this swap is {{min}} {{coin}}.": "Het minimumbedrag voor deze ruil is {{min}} {{coin}}.",
+  "The maximum amount for this swap is {{max}} {{coin}}.": "Het maximumbedrag voor deze ruil is {{max}} {{coin}}.",
+  "The swap could not be completed. Your funds are being refunded.": "De ruil kon niet worden voltooid. Uw tegoed wordt terugbetaald.",
+  "The swap could not be completed. Please contact MoonPay support.": "De ruil kon niet worden voltooid. Neem contact op met de ondersteuning van MoonPay.",
+  "There are no MoonPay offers available, as the current swap limits for this exchange must be between {{min}} {{coin}} and {{max}} {{coin}}": "Er zijn geen MoonPay-aanbiedingen beschikbaar, omdat de huidige wissellimieten van deze exchange tussen {{min}} {{coin}} en {{max}} {{coin}} moeten liggen",
+  "MoonPay request timed out": "Time-out bij het MoonPay-verzoek"
 }

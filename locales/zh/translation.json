@@ -2283,5 +2283,11 @@
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "您的本地数据已保留。请重试或联系支持团队。请勿卸载应用或清除其数据。参考代码：{{id}}。",
   "Retry": "重试",
   "There are no wallets with enough funds on the {{network}} network.": "{{network}} 网络上没有资金充足的钱包。",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "如果您删除了 BitPay 应用或丢失了设备，您将需要使用恢复短语才能重新存取资金。"
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "如果您删除了 BitPay 应用或丢失了设备，您将需要使用恢复短语才能重新存取资金。",
+  "The minimum amount for this swap is {{min}} {{coin}}.": "此兑换的最低金额为 {{min}} {{coin}}。",
+  "The maximum amount for this swap is {{max}} {{coin}}.": "此兑换的最高金额为 {{max}} {{coin}}。",
+  "The swap could not be completed. Your funds are being refunded.": "无法完成兑换。您的资金正在退款中。",
+  "The swap could not be completed. Please contact MoonPay support.": "无法完成兑换。请联系 MoonPay 支持团队。",
+  "There are no MoonPay offers available, as the current swap limits for this exchange must be between {{min}} {{coin}} and {{max}} {{coin}}": "没有可用的 MoonPay 报价，因为该交易所当前的兑换限额必须介于 {{min}} {{coin}} 和 {{max}} {{coin}} 之间",
+  "MoonPay request timed out": "MoonPay 请求超时"
 }

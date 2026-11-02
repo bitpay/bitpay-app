@@ -14,6 +14,7 @@ import {
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import ChangellyLogo from '../../../../../components/icons/external-services/changelly/changelly-logo';
 import ThorswapLogo from '../../../../../components/icons/external-services/thorswap/thorswap-logo';
+import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {SwapCryptoExchangeKey} from '../../../../services/swap-crypto/utils/swap-crypto-utils';
 import {ExternalServicesSettingsScreens} from '../ExternalServicesGroup';
@@ -53,6 +54,7 @@ const SwapHistorySelector = () => {
   const thorswapHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
   );
+  const moonpayHistory = useAppSelector(({SWAP_CRYPTO}) => SWAP_CRYPTO.moonpay);
 
   type ExchangeData = {
     key: SwapCryptoExchangeKey;
@@ -83,6 +85,16 @@ const SwapHistorySelector = () => {
         thorswapHistory && Object.values(thorswapHistory).length > 0
       ),
       txCount: thorswapHistory ? Object.values(thorswapHistory).length : 0,
+    },
+    moonpay: {
+      key: 'moonpay',
+      exchangeName: 'MoonPay',
+      logo: <MoonpayLogo iconOnly={true} widthIcon={30} heightIcon={25} />,
+      screenHistory: ExternalServicesSettingsScreens.MOONPAY_SWAP_SETTINGS,
+      showExchange: !!(
+        moonpayHistory && Object.values(moonpayHistory).length > 0
+      ),
+      txCount: moonpayHistory ? Object.values(moonpayHistory).length : 0,
     },
   };
 

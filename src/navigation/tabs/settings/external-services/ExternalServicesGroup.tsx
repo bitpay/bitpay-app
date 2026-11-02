@@ -24,6 +24,8 @@ import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
 import ThorswapSettings from './screens/ThorswapSettings';
 import ThorswapDetails from './screens/ThorswapDetails';
+import MoonpaySwapSettings from './screens/MoonpaySwapSettings';
+import MoonpaySwapDetails from './screens/MoonpaySwapDetails';
 import {
   BanxaIncomingData,
   BanxaPaymentData,
@@ -41,7 +43,10 @@ import {MoonpaySellOrderData} from '../../../../store/sell-crypto/models/moonpay
 import {RampSellOrderData} from '../../../../store/sell-crypto/models/ramp-sell.models';
 import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
-import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
+import {
+  moonpaySwapTxData,
+  thorswapTxData,
+} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
 import {useStackScreenOptions} from '../../../utils/headerHelpers';
 import SwapHistorySelector from './screens/SwapHistorySelector';
@@ -131,6 +136,10 @@ export type ExternalServicesSettingsGroupParamList = {
   ThorswapDetails: {
     swapTx: thorswapTxData;
   };
+  MoonpaySwapSettings: undefined;
+  MoonpaySwapDetails: {
+    swapTx: moonpaySwapTxData;
+  };
 };
 
 export enum ExternalServicesSettingsScreens {
@@ -156,6 +165,8 @@ export enum ExternalServicesSettingsScreens {
   CHANGELLY_DETAILS = 'ChangellyDetails',
   THORSWAP_SETTINGS = 'ThorswapSettings',
   THORSWAP_DETAILS = 'ThorswapDetails',
+  MOONPAY_SWAP_SETTINGS = 'MoonpaySwapSettings',
+  MOONPAY_SWAP_DETAILS = 'MoonpaySwapDetails',
 }
 
 const ExternalServicesSettingsGroup = ({
@@ -323,6 +334,20 @@ const ExternalServicesSettingsGroup = ({
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.THORSWAP_DETAILS}
         component={ThorswapDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.MOONPAY_SWAP_SETTINGS}
+        component={MoonpaySwapSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Moonpay')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.MOONPAY_SWAP_DETAILS}
+        component={MoonpaySwapDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}

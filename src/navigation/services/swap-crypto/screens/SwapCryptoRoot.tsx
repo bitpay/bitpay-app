@@ -116,6 +116,7 @@ import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
 import {
   createTxProposal,
+  getEstimateGas,
   getSendMaxInfo,
   handleCreateTxProposalError,
   publishAndSign,
@@ -176,8 +177,32 @@ import {
   SwapCryptoExchangeKey,
   SwapCryptoSupportedExchanges,
 } from '../utils/swap-crypto-utils';
+import {moonpaySwapGetTokenList} from '../../../../store/swap-crypto/effects/moonpay-swap/moonpay-swap';
+import {
+  getChainFromMoonpaySwapChainId,
+  getMoonpaySwapChainId,
+  getMoonpaySwapError,
+  getMoonpaySwapErrorMessage,
+  getMoonpaySwapTokenAddress,
+  isMoonpaySwapDepositFlow,
+  isMoonpaySwapDepositTx,
+  isMoonpaySwapEvmTx,
+  MOONPAY_SWAP_DEFAULT_SLIPPAGE,
+  moonpaySwapEnv,
+  moonpaySwapToUnitAmount,
+} from '../utils/moonpay-swap-utils';
+import {
+  MoonpaySwapActionData,
+  MoonpaySwapActionRequestData,
+  MoonpaySwapEvmTransaction,
+  MoonpaySwapPathsData,
+  MoonpaySwapStatus,
+  MoonpaySwapTokenListByChain,
+} from '../../../../store/swap-crypto/models/moonpay-swap.models';
+import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
 import {
   changellyTxData,
+  moonpaySwapTxData,
   SwapCryptoLimits,
 } from '../../../../store/swap-crypto/swap-crypto.models';
 import {H7} from '../../../../components/styled/Text';
@@ -258,6 +283,7 @@ export interface SwapCryptoCoin {
   supportedBy?: {
     changelly?: boolean;
     thorswap?: boolean;
+    moonpay?: boolean;
   };
 }
 
@@ -288,6 +314,14 @@ const swapCryptoExchangesDefault: PreLoadPartnersData = {
   },
   thorswap: {
     key: 'thorswap',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: undefined,
+  },
+  moonpay: {
+    key: 'moonpay',
     showOffer: true,
     supportedCoins: undefined,
     disabled: false,
@@ -457,6 +491,9 @@ const SwapCryptoRoot: React.FC = () => {
   // Refs to capture raw API responses during conventional fetch (for cache write-back)
   const changellyRawRef = useRef<ChangellyCurrency[] | undefined>(undefined);
   const thorswapRawRef = useRef<ThorswapCurrency[] | undefined>(undefined);
+  const moonpayRawRef = useRef<MoonpaySwapTokenListByChain | undefined>(
+    undefined,
+  );
 
   // Checkout props
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
@@ -484,6 +521,10 @@ const SwapCryptoRoot: React.FC = () => {
   const [exchangeTxId, setExchangeTxId] = useState<string>();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
+
+  // MoonPay
+  const [moonpayActionData, setMoonpayActionData] =
+    useState<MoonpaySwapActionData>();
 
   // Threshold Signature Scheme (TSS)
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
@@ -700,7 +741,10 @@ const SwapCryptoRoot: React.FC = () => {
       amountTo > 0 &&
       !offersLoading &&
       !!selectedOffer &&
-      (selectedOffer.key !== 'changelly' || (!!exchangeTxId && !!termsAccepted))
+      (selectedOffer.key !== 'changelly' ||
+        (!!exchangeTxId && !!termsAccepted)) &&
+      (selectedOffer.key !== 'moonpay' ||
+        (!!moonpayActionData && !!ctxp && !loadingCreateTx))
     );
   }, [
     toWalletSelected,
@@ -711,6 +755,9 @@ const SwapCryptoRoot: React.FC = () => {
     selectedOffer,
     termsAccepted,
     exchangeTxId,
+    moonpayActionData,
+    ctxp,
+    loadingCreateTx,
   ]);
 
   const setSelectedWallet = async (supportedCoins: SwapCryptoCoin[]) => {
@@ -880,9 +927,13 @@ const SwapCryptoRoot: React.FC = () => {
 
     possibleCoinsTo = uniqBy(possibleCoinsTo, 'symbol');
 
-    // Only includes coins already included in swapCryptoSupportedCoinsFrom
+    // Only includes coins already included in swapCryptoSupportedCoinsFrom.
+    // Compare by symbol: swapCryptoSupportedCoinsFrom keeps a single exchange's
+    // object for coins that several exchanges support
     possibleCoinsTo = possibleCoinsTo.filter(coin =>
-      swapCryptoSupportedCoinsFrom.includes(coin),
+      swapCryptoSupportedCoinsFrom.some(
+        supportedCoin => supportedCoin.symbol === coin.symbol,
+      ),
     );
 
     // Remove coinsFrom from possible coinsTo
@@ -970,6 +1021,8 @@ const SwapCryptoRoot: React.FC = () => {
           return changellyGetLimits(fromWalletSelected, toWalletSelected);
         case 'thorswap':
           return thorswapGetLimits();
+        case 'moonpay':
+          return moonpayGetLimits(fromWalletSelected, toWalletSelected);
         default:
           return Promise.reject('No getLimits function for this partner');
       }
@@ -1015,6 +1068,17 @@ const SwapCryptoRoot: React.FC = () => {
                 break;
               case 'thorswap':
                 swapCryptoExchangesDefault.thorswap.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SwapLimits);
+                break;
+              case 'moonpay':
+                swapCryptoExchangesDefault.moonpay.limits = {
                   min: e.promiseRes.value?.minAmount
                     ? Number(e.promiseRes.value.minAmount)
                     : undefined,
@@ -1123,6 +1187,60 @@ const SwapCryptoRoot: React.FC = () => {
 
     logger.debug('[Thorswap] Min amount: No limit - Max amount: No limit');
     return Promise.resolve(thorswapSwapLimits);
+  };
+
+  const moonpayGetLimits = async (
+    fromWallet: Wallet,
+    toWallet: Wallet,
+  ): Promise<SwapLimits> => {
+    const srcChainId = getMoonpaySwapChainId(fromWallet.chain);
+    const dstChainId = getMoonpaySwapChainId(toWallet.chain);
+    const precisionFrom = dispatch(
+      GetPrecision(
+        fromWallet.currencyAbbreviation,
+        fromWallet.chain,
+        fromWallet.tokenAddress,
+      ),
+    );
+    if (!srcChainId || !dstChainId || !precisionFrom) {
+      return Promise.reject('[Moonpay Swap] Unsupported chain');
+    }
+
+    const _data = await fromWallet.moonpaySwapGetPaths({
+      env: moonpaySwapEnv,
+      srcChainId,
+      srcToken: getMoonpaySwapTokenAddress(fromWallet.tokenAddress),
+      dstChainId,
+      dstToken: getMoonpaySwapTokenAddress(toWallet.tokenAddress),
+    });
+    const pathsData: MoonpaySwapPathsData = (_data as any)?.body ?? _data;
+
+    const moonpayError = getMoonpaySwapError(pathsData);
+    if (moonpayError || !pathsData?.paths?.length) {
+      return Promise.reject(
+        '[Moonpay Swap] getPaths Error: ' +
+          (moonpayError?.message ?? 'No paths available'),
+      );
+    }
+
+    // Swaps between named VMs (EVM, Solana) take any amount, so swaps.xyz only
+    // returns limits for deposit routes. Use the smallest unit as the minimum
+    // so the amount screen keeps working when MoonPay is the only partner
+    const moonpaySwapLimits: SwapLimits = {
+      minAmount: pathsData.srcToken?.minAmount
+        ? Number(pathsData.srcToken.minAmount)
+        : 1 / precisionFrom.unitToSatoshi,
+      maxAmount: pathsData.srcToken?.maxAmount
+        ? Number(pathsData.srcToken.maxAmount)
+        : undefined,
+    };
+
+    logger.debug(
+      `[Moonpay Swap] Min amount: ${
+        moonpaySwapLimits.minAmount
+      } - Max amount: ${moonpaySwapLimits.maxAmount ?? 'No limit'}`,
+    );
+    return moonpaySwapLimits;
   };
 
   const getSendMaxData = (): Promise<any> => {
@@ -1514,6 +1632,84 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
+  const getMoonpayCurrencies = async (
+    cachedRawCurrencies?: MoonpaySwapTokenListByChain,
+  ) => {
+    let moonpayTokenList: MoonpaySwapTokenListByChain;
+
+    if (cachedRawCurrencies && Object.keys(cachedRawCurrencies).length) {
+      moonpayTokenList = cachedRawCurrencies;
+    } else {
+      moonpayTokenList = await moonpaySwapGetTokenList({env: moonpaySwapEnv});
+    }
+
+    // Store raw data for cache write-back
+    moonpayRawRef.current = moonpayTokenList;
+
+    const supportedCoins: SwapCryptoCoin[] = [];
+    Object.entries(moonpayTokenList ?? {}).forEach(([chainId, tokenList]) => {
+      const chain = getChainFromMoonpaySwapChainId(Number(chainId));
+      if (!chain || !SupportedChains.includes(chain)) {
+        return;
+      }
+      (tokenList?.tokens ?? []).forEach(token => {
+        let currencyAbbreviation: string | undefined;
+        let name: string | undefined;
+        let tokenAddress: string | undefined;
+        if (token.isNative) {
+          currencyAbbreviation = BitpaySupportedCoins[chain]?.coin;
+          name = BitpaySupportedCoins[chain]?.name;
+        } else {
+          // Match by contract address so tokens sharing a ticker (USDC / USDC.e) are not mixed up
+          const tokenKey = addTokenChainSuffix(token.address, chain);
+          const appToken =
+            BitpaySupportedTokens[tokenKey] ?? tokenDataByAddress[tokenKey];
+          if (!appToken) {
+            return;
+          }
+          currencyAbbreviation = appToken.coin.toLowerCase();
+          name = appToken.name;
+          tokenAddress = token.address;
+        }
+        if (!currencyAbbreviation) {
+          return;
+        }
+        supportedCoins.push({
+          currencyAbbreviation,
+          symbol: getExternalServiceSymbol(currencyAbbreviation, chain),
+          name: name ?? token.name,
+          chain,
+          protocol: chain,
+          logoUri: getLogoUri(currencyAbbreviation, chain),
+          badgeUri: getBadgeImg(currencyAbbreviation, chain),
+          tokenAddress,
+          supportedBy: {moonpay: true},
+        });
+      });
+    });
+
+    const supportedCoinsUnique = uniqBy(supportedCoins, 'symbol');
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    return orderBy(
+      supportedCoinsUnique,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+  };
+
   const openWalletBalanceModal = () => {
     if (!fromWalletSelected) {
       return;
@@ -1628,6 +1824,10 @@ const SwapCryptoRoot: React.FC = () => {
           return getThorswapCurrencies(
             isCacheFresh ? prefetchedOpts?.thorswapRawCurrencies : undefined,
           );
+        case 'moonpay':
+          return getMoonpayCurrencies(
+            isCacheFresh ? prefetchedOpts?.moonpayRawCurrencies : undefined,
+          );
         default:
           return Promise.resolve([]);
       }
@@ -1674,6 +1874,13 @@ const SwapCryptoRoot: React.FC = () => {
                   );
                   swapCryptoExchangesDefault.thorswap.showOffer = false;
                   break;
+                case 'moonpay':
+                  logger.debug(
+                    'getMoonpayCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  swapCryptoExchangesDefault.moonpay.showOffer = false;
+                  break;
                 default:
                   logger.debug('Error: ' + e.promiseRes.reason.message);
                   break;
@@ -1688,6 +1895,10 @@ const SwapCryptoRoot: React.FC = () => {
               case 'thorswap':
                 swapCryptoExchangesDefault.thorswap.supportedCoins = e
                   .promiseRes.value as SwapCryptoCoin[];
+                break;
+              case 'moonpay':
+                swapCryptoExchangesDefault.moonpay.supportedCoins = e.promiseRes
+                  .value as SwapCryptoCoin[];
                 break;
               default:
                 break;
@@ -1748,6 +1959,7 @@ const SwapCryptoRoot: React.FC = () => {
               swapCryptoConfig,
               changellyRawCurrencies: changellyRawRef.current,
               thorswapRawCurrencies: thorswapRawRef.current,
+              moonpayRawCurrencies: moonpayRawRef.current,
               fetchedAt: Date.now(),
             });
           }
@@ -2306,6 +2518,7 @@ const SwapCryptoRoot: React.FC = () => {
     payinAddress: string,
     depositSat: string,
     destTag?: string,
+    service: 'changelly' | 'moonpaySwap' = 'changelly',
   ): Promise<TransactionProposal> => {
     if (!fromWalletSelected || !toWalletSelected) {
       return Promise.reject(
@@ -2335,8 +2548,8 @@ const SwapCryptoRoot: React.FC = () => {
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
         customData: {
-          changelly: payinAddress,
-          service: 'changelly',
+          [service]: payinAddress,
+          service,
         },
       };
 
@@ -2443,12 +2656,607 @@ const SwapCryptoRoot: React.FC = () => {
         err instanceof Error
           ? err.message
           : err?.err?.message ?? JSON.stringify(err);
-      const log = `changellyCheckout createTxProposal error: ${errStr}`;
+      const log = `${service}Checkout createTxProposal error: ${errStr}`;
       logger.error(log);
       const errorMessageConfig = await dispatch(
         handleCreateTxProposalError(err, undefined, 'swap'),
       );
       return Promise.reject(errorMessageConfig);
+    }
+  };
+
+  const createMoonpayTransaction = async () => {
+    if (
+      !fromWalletSelected ||
+      !toWalletSelected ||
+      !amountFrom ||
+      !selectedOffer
+    ) {
+      return;
+    }
+
+    dispatch(
+      Analytics.track('Requested Swap Crypto', {
+        exchange: 'moonpay',
+        amountFrom: amountFrom,
+        amountTo: selectedOffer.amountReceiving || '',
+        coinFrom: fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+        chainFrom: fromWalletSelected.chain?.toLowerCase() || '',
+        coinTo: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+        chainTo: toWalletSelected.chain?.toLowerCase() || '',
+      }),
+    );
+
+    let moonpayAddressFrom: string;
+    let moonpayAddressTo: string;
+    try {
+      moonpayAddressFrom = (await dispatch<any>(
+        createWalletAddress({wallet: fromWalletSelected, newAddress: false}),
+      )) as string;
+      moonpayAddressTo = (await dispatch<any>(
+        createWalletAddress({wallet: toWalletSelected, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('createMoonpayTransaction: ' + errMsg);
+      hideOngoingProcess();
+      await sleep(400);
+      return;
+    }
+
+    const srcChainId = getMoonpaySwapChainId(fromWalletSelected.chain);
+    const dstChainId = getMoonpaySwapChainId(toWalletSelected.chain);
+    const precisionFrom = dispatch(
+      GetPrecision(
+        fromWalletSelected.currencyAbbreviation,
+        fromWalletSelected.chain,
+        fromWalletSelected.tokenAddress,
+      ),
+    );
+    if (!srcChainId || !dstChainId || !precisionFrom) {
+      const reason = 'createMoonpayTransaction Error. Unsupported chain.';
+      showError({
+        msg: t('Could not get crypto offer. Please try again later.'),
+        reason,
+        goBack: true,
+        fireAnalytics: true,
+      });
+      return;
+    }
+
+    const slippage = selectedOffer.slippage ?? MOONPAY_SWAP_DEFAULT_SLIPPAGE;
+    const requestData: MoonpaySwapActionRequestData = {
+      env: moonpaySwapEnv,
+      sender: moonpayAddressFrom,
+      recipient: moonpayAddressTo,
+      refundTo: moonpayAddressFrom,
+      srcChainId,
+      srcToken: getMoonpaySwapTokenAddress(fromWalletSelected.tokenAddress),
+      dstChainId,
+      dstToken: getMoonpaySwapTokenAddress(toWalletSelected.tokenAddress),
+      amount: ToBaseUnits(amountFrom, precisionFrom.unitDecimals),
+      swapDirection: 'exact-amount-in',
+      slippage: slippage * 100, // bps
+      returnDepositAddress: isMoonpaySwapDepositFlow(fromWalletSelected.chain),
+    };
+
+    let actionData: MoonpaySwapActionData;
+    try {
+      const _data = await fromWalletSelected.moonpaySwapGetAction(requestData);
+      actionData = (_data as any)?.body ?? _data;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      const reason = 'moonpaySwapGetAction Catch Error';
+      logger.error('Moonpay Swap getAction Error: ' + errMsg);
+      showError({
+        msg: t('Could not get crypto offer. Please try again later.'),
+        reason,
+        errorMsgLog: errMsg,
+        goBack: true,
+        fireAnalytics: true,
+      });
+      return;
+    }
+
+    const moonpayError = getMoonpaySwapError(actionData);
+    if (moonpayError || !actionData?.tx || !actionData?.txId) {
+      const reason =
+        'moonpaySwapGetAction Error. ' +
+        (moonpayError?.code ?? 'Necessary data not included.');
+      logger.error(
+        'Moonpay Swap getAction Error: ' + JSON.stringify(moonpayError),
+      );
+      showError({
+        msg: moonpayError
+          ? getMoonpaySwapErrorMessage(
+              moonpayError,
+              fromWalletSelected.currencyAbbreviation,
+            )
+          : t('Could not get crypto offer. Please try again later.'),
+        reason,
+        errorMsgLog: moonpayError?.message,
+        goBack: true,
+        fireAnalytics: true,
+      });
+      return;
+    }
+
+    // ERC20 swaps pull the funds through the router, which needs an allowance first
+    if (
+      isMoonpaySwapEvmTx(actionData.tx) &&
+      actionData.requiresTokenApproval &&
+      fromWalletSelected.tokenAddress
+    ) {
+      const allowance = await getMoonpayTokenAllowance(
+        moonpayAddressFrom,
+        actionData.tx.to,
+      );
+      if (allowance < BigInt(actionData.amountInMax.amount)) {
+        logger.debug(
+          `Moonpay Swap: allowance (${allowance}) is lower than the swap amount (${actionData.amountInMax.amount}). Asking for approval`,
+        );
+        askMoonpayApproval(actionData.tx.to, moonpayAddressFrom, actionData);
+        return;
+      }
+    }
+
+    setMoonpayActionData(actionData);
+
+    const amountReceiving = moonpaySwapToUnitAmount(actionData.amountOut);
+    setAmountTo(amountReceiving);
+    selectedOffer.amountReceiving = amountReceiving
+      .toFixed(4)
+      .replace(/\.?0+$/, '');
+
+    const precisionTo = dispatch(
+      GetPrecision(
+        toWalletSelected.currencyAbbreviation,
+        toWalletSelected.chain,
+        toWalletSelected.tokenAddress,
+      ),
+    );
+    if (precisionTo) {
+      selectedOffer.amountReceivingFiat = formatFiatAmount(
+        dispatch(
+          toFiat(
+            amountReceiving * precisionTo.unitToSatoshi,
+            defaultAltCurrency.isoCode,
+            toWalletSelected.currencyAbbreviation,
+            toWalletSelected.chain,
+            rates,
+            toWalletSelected.tokenAddress,
+          ),
+        ),
+        defaultAltCurrency.isoCode,
+        {
+          currencyDisplay:
+            defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+        },
+      );
+    }
+
+    // MoonPay charges its fees in the source token
+    const totalExchangeFee =
+      moonpaySwapToUnitAmount(actionData.applicationFee) +
+      moonpaySwapToUnitAmount(actionData.protocolFee) +
+      (actionData.bridgeFee
+        ? moonpaySwapToUnitAmount(actionData.bridgeFee)
+        : 0);
+    let totalExchangeFeeFiat: string | undefined;
+    try {
+      totalExchangeFeeFiat = formatFiatAmount(
+        dispatch(
+          toFiat(
+            totalExchangeFee * precisionFrom.unitToSatoshi,
+            defaultAltCurrency.isoCode,
+            fromWalletSelected.currencyAbbreviation,
+            fromWalletSelected.chain,
+            rates,
+            fromWalletSelected.tokenAddress,
+          ),
+        ),
+        defaultAltCurrency.isoCode,
+        {
+          currencyDisplay:
+            defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+        },
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('toFiat Error for totalExchangeFeeFiat: ' + errMsg);
+      // continue anyways
+    }
+
+    let moonpayPayinAddress: string;
+    let moonpayPayinExtraId: string | undefined;
+    try {
+      let ctxp: TransactionProposal;
+      if (isMoonpaySwapEvmTx(actionData.tx)) {
+        moonpayPayinAddress = actionData.tx.to;
+        ctxp = await createMoonpayEvmTx(
+          fromWalletSelected,
+          actionData.tx,
+          moonpayAddressFrom,
+        );
+      } else if (isMoonpaySwapDepositTx(actionData.tx)) {
+        moonpayPayinAddress =
+          fromWalletSelected.chain.toLowerCase() === 'bch'
+            ? BWC.getBitcoreCash().Address(actionData.tx.to).toString(true)
+            : actionData.tx.to;
+        // (destinationTag) Used for coins like XRP. Sending without a tag
+        // MoonPay asked for would leave the deposit uncredited, so stop
+        if (actionData.tx.toExtra && !/^\d+$/.test(actionData.tx.toExtra)) {
+          throw new Error(
+            `Unsupported Moonpay Swap deposit memo for ${fromWalletSelected.chain}`,
+          );
+        }
+        moonpayPayinExtraId = actionData.tx.toExtra || undefined;
+        ctxp = await createTx(
+          fromWalletSelected,
+          moonpayPayinAddress,
+          actionData.tx.value,
+          moonpayPayinExtraId,
+          'moonpaySwap',
+        );
+      } else {
+        throw new Error(
+          `Unsupported Moonpay Swap transaction type: ${actionData.vmId}`,
+        );
+      }
+      setCtxp(ctxp);
+      const minerFee = ctxp.fee;
+      let minerFeeFiat: string | undefined;
+
+      try {
+        if (minerFee >= 0) {
+          minerFeeFiat = formatFiatAmount(
+            dispatch(
+              toFiat(
+                minerFee,
+                defaultAltCurrency.isoCode,
+                BitpaySupportedCoins[fromWalletSelected.chain]?.feeCurrency,
+                fromWalletSelected.chain,
+                rates,
+                undefined,
+              ),
+            ),
+            defaultAltCurrency.isoCode,
+            {
+              currencyDisplay:
+                defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+            },
+          );
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('toFiat Error for minerFee: ' + errMsg);
+        // continue anyways
+      }
+
+      const _txData = {
+        addressFrom: moonpayAddressFrom,
+        addressTo: moonpayAddressTo,
+        payinExtraId: moonpayPayinExtraId,
+        status: MoonpaySwapStatus.notYetCreated,
+        payinAddress: moonpayPayinAddress,
+        totalExchangeFee,
+        totalExchangeFeeFiat,
+        totalExchangeFeeCoin: fromWalletSelected.currencyAbbreviation,
+        minerFee,
+        minerFeeFiat,
+      };
+      setTxData(_txData);
+
+      setLoadingCreateTx(false);
+      hideOngoingProcess();
+      await sleep(400);
+
+      if (useSendMax) {
+        showSendMaxWarning(
+          ctxp.coin,
+          ctxp.chain,
+          fromWalletSelected.tokenAddress,
+        );
+      }
+    } catch (err: any) {
+      const reason = 'createTx Error';
+      if (err.code) {
+        showError({
+          title: err.title,
+          msg: err.message,
+          reason,
+          errorMsgLog: err.code,
+          actions: err.actions,
+          goBack: true,
+          fireAnalytics: true,
+        });
+        return;
+      }
+
+      let msg = t('Error creating transaction');
+      let errorMsgLog;
+
+      if (typeof err === 'string') {
+        msg = msg + `: ${err}`;
+        errorMsgLog = err;
+      } else if (typeof err?.message === 'string') {
+        msg = msg + `: ${err.message}`;
+        errorMsgLog = err.message;
+      }
+
+      showError({
+        msg,
+        reason,
+        errorMsgLog,
+        goBack: true,
+        fireAnalytics: true,
+      });
+    }
+  };
+
+  const createMoonpayEvmTx = async (
+    wallet: Wallet,
+    tx: MoonpaySwapEvmTransaction,
+    from: string,
+  ): Promise<TransactionProposal> => {
+    if (!toWalletSelected) {
+      return Promise.reject(
+        'createMoonpayEvmTx: toWalletSelected is undefined',
+      );
+    }
+    try {
+      const message =
+        wallet.currencyAbbreviation.toUpperCase() +
+        ' ' +
+        t('to') +
+        ' ' +
+        toWalletSelected.currencyAbbreviation.toUpperCase();
+
+      // swaps.xyz does not include gas. Estimate it and add 25%, like the THORSwap checkout did
+      let gasLimit: number | undefined;
+      try {
+        const estimatedGas = await getEstimateGas({
+          wallet,
+          network: wallet.network,
+          value: Number(tx.value),
+          from,
+          to: tx.to,
+          data: tx.data,
+          chain: wallet.chain,
+        });
+        gasLimit = Math.ceil(Number(estimatedGas) * 1.25);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.warn(
+          'Moonpay Swap gas estimation failed. Letting BWS estimate it: ' +
+            errMsg,
+        );
+      }
+
+      const outputs = [
+        {
+          toAddress: tx.to,
+          amount: tx.value,
+          message: message,
+          data: tx.data,
+          ...(gasLimit && {gasLimit}),
+        },
+      ];
+
+      let txp: Partial<TransactionProposal> = {
+        toAddress: tx.to,
+        amount: tx.value,
+        chain: wallet.chain,
+        outputs,
+        message: message,
+        customData: {
+          moonpaySwap: tx.to,
+          service: 'moonpaySwap',
+        },
+      };
+
+      // ERC20 funds are moved in calldata. The proposal is a contract call, not a token transfer
+      if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+        txp.isTokenSwap = true;
+      }
+
+      if (['eth', 'matic'].includes(wallet.chain)) {
+        txp.feeLevel = 'priority';
+      } // Avoid expired order due to slow TX confirmation
+
+      const ctxp = await dispatch(createTxProposal(wallet, txp));
+      return Promise.resolve(ctxp);
+    } catch (err: any) {
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
+      const log = `moonpaySwapCheckout createTxProposal error: ${errStr}`;
+      logger.error(log);
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err, undefined, 'swap'),
+      );
+      return Promise.reject(errorMessageConfig);
+    }
+  };
+
+  const getMoonpayTokenAllowance = async (
+    ownerAddress: string,
+    spenderAddress: string,
+  ): Promise<bigint> => {
+    if (!fromWalletSelected?.tokenAddress) {
+      return BigInt(0);
+    }
+    const reqData: {
+      chain: string;
+      ownerAddress: string;
+      cursor?: string | null;
+    } = {
+      chain: fromWalletSelected.chain,
+      ownerAddress,
+      cursor: null,
+    };
+
+    try {
+      // Approvals are paginated. Keep fetching until the spender shows up
+      while (true) {
+        const approvesData = await dispatch(getERC20TokenAllowance(reqData));
+        const spenderData = Array.isArray(approvesData?.result)
+          ? approvesData.result.find(
+              s =>
+                s.spender?.address?.toLowerCase() ===
+                  spenderAddress.toLowerCase() &&
+                s.token?.address?.toLowerCase() ===
+                  fromWalletSelected.tokenAddress?.toLowerCase(),
+            )
+          : undefined;
+        if (spenderData) {
+          return BigInt(spenderData.value ?? '0');
+        }
+        if (!approvesData?.cursor) {
+          return BigInt(0);
+        }
+        reqData.cursor = approvesData.cursor;
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.debug('Moonpay Swap getTokenAllowance Error: ' + errMsg);
+      return BigInt(0);
+    }
+  };
+
+  const waitForMoonpayApproval = async (
+    ownerAddress: string,
+    spenderAddress: string,
+    amountRequired: bigint,
+  ): Promise<boolean> => {
+    const MAX_TRIES = 36; // ~3 minutes
+    for (let i = 0; i < MAX_TRIES; i++) {
+      const allowance = await getMoonpayTokenAllowance(
+        ownerAddress,
+        spenderAddress,
+      );
+      if (allowance >= amountRequired) {
+        return true;
+      }
+      logger.debug(
+        `Moonpay Swap: waiting approve tx confirmation. Checking again in 5000ms... (${
+          i + 1
+        }/${MAX_TRIES})`,
+      );
+      await sleep(5000);
+    }
+    return false;
+  };
+
+  const askMoonpayApproval = (
+    spenderAddress: string,
+    ownerAddress: string,
+    actionData: MoonpaySwapActionData,
+  ) => {
+    if (!fromWalletSelected) {
+      return;
+    }
+    hideOngoingProcess();
+    const coin = fromWalletSelected.currencyAbbreviation.toUpperCase();
+    const amountToApprove = moonpaySwapToUnitAmount(actionData.amountInMax);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'info',
+        title: t('Approve Swap'),
+        message: t(
+          'To complete the swap, you will need to allow the exchange ({{exchange}}) to spend your {{coin}}.',
+          {exchange: 'MoonPay', coin},
+        ),
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('Approve'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+              navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_APPROVE, {
+                context: 'swapCrypto',
+                onDismiss: async (approveTxSent, err) => {
+                  if (err) {
+                    await sleep(1000);
+                    showError({
+                      title: t('Approve method Error'),
+                      msg: err,
+                      reason: 'Moonpay Swap approve Error',
+                      goBack: true,
+                      fireAnalytics: true,
+                    });
+                    return;
+                  }
+                  if (!approveTxSent?.txid) {
+                    navigation.goBack();
+                    return;
+                  }
+                  setLoadingCreateTx(true);
+                  const approved = await waitForMoonpayApproval(
+                    ownerAddress,
+                    spenderAddress,
+                    BigInt(actionData.amountInMax.amount),
+                  );
+                  if (!approved) {
+                    showError({
+                      title: t('Approve method Error'),
+                      msg: t(
+                        'Could not get crypto offer. Please try again later.',
+                      ),
+                      reason: 'Moonpay Swap approve tx not confirmed in time',
+                      goBack: true,
+                      fireAnalytics: true,
+                    });
+                    return;
+                  }
+                  createMoonpayTransaction();
+                },
+                wallet: fromWalletSelected,
+                spenderData: {
+                  offerKey: 'moonpay',
+                  offerName: 'MoonPay',
+                  spenderKey: 'MoonPay',
+                  address: spenderAddress,
+                  amount: amountToApprove.toString(),
+                },
+              });
+            },
+            primary: true,
+          },
+          {
+            text: t('Cancel'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+              navigation.goBack();
+            },
+          },
+        ],
+      }),
+    );
+  };
+
+  const registerMoonpayTx = async (txHash: string) => {
+    if (!fromWalletSelected || !moonpayActionData) {
+      return;
+    }
+    if (!moonpayActionData.requiresRegisterTransaction) {
+      return;
+    }
+    try {
+      const _data = await fromWalletSelected.moonpaySwapRegisterTxs({
+        env: moonpaySwapEnv,
+        txId: moonpayActionData.txId,
+        txHash,
+      });
+      logger.debug(
+        'Moonpay Swap registerTxs result: ' +
+          JSON.stringify((_data as any)?.body ?? _data),
+      );
+    } catch (err) {
+      // MoonPay can still find the transaction on-chain. Don't fail the swap
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Moonpay Swap registerTxs Error: ' + errMsg);
     }
   };
 
@@ -2593,7 +3401,17 @@ const SwapCryptoRoot: React.FC = () => {
           ...(isTSSWallet(fromWalletSelected) && {setShowTSSProgressModal}),
         }),
       );
-      saveChangellyTx();
+      if (selectedOffer?.key === 'moonpay') {
+        const txHash = (broadcastedTx as Partial<TransactionProposal>)?.txid;
+        saveMoonpayTx(txHash);
+        if (txHash) {
+          // Save first and don't hold the success screen: registration only
+          // speeds up tracking, and registerMoonpayTx never throws
+          registerMoonpayTx(txHash);
+        }
+      } else {
+        saveChangellyTx();
+      }
 
       showPaymentSent({
         onCloseModal,
@@ -2613,7 +3431,10 @@ const SwapCryptoRoot: React.FC = () => {
               params: {screen: TabsScreens.HOME},
             },
             {
-              name: ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
+              name:
+                selectedOffer?.key === 'moonpay'
+                  ? ExternalServicesSettingsScreens.MOONPAY_SWAP_SETTINGS
+                  : ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
             },
           ],
         }),
@@ -2720,6 +3541,60 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
+  const saveMoonpayTx = (txHash: string | undefined) => {
+    if (!toWalletSelected || !fromWalletSelected) {
+      logger.error(
+        'saveMoonpayTx: toWalletSelected or fromWalletSelected is undefined',
+      );
+      return;
+    }
+    if (!txData || !moonpayActionData) {
+      logger.error('saveMoonpayTx: txData is undefined');
+      return;
+    }
+    const newData: moonpaySwapTxData = {
+      txId: moonpayActionData.txId,
+      txHash: txHash ?? '',
+      date: Date.now(),
+      amountTo: amountTo!,
+      coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
+      chainTo: toWalletSelected.chain.toLowerCase(),
+      addressTo: txData.addressTo,
+      walletIdTo: toWalletSelected.id,
+      // amountFrom comes from a fiat conversion and can carry 18 decimals
+      amountFrom: Number(amountFrom!.toFixed(8)),
+      coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
+      chainFrom: fromWalletSelected.chain.toLowerCase(),
+      refundAddress: txData.addressFrom,
+      payinAddress: txData.payinAddress,
+      payinExtraId: txData.payinExtraId,
+      totalExchangeFee: txData.totalExchangeFee,
+      slippage: selectedOffer?.slippage,
+      status: MoonpaySwapStatus.submitted,
+      isTSSWallet: isTSSWallet(fromWalletSelected),
+      env: __DEV__ ? 'dev' : 'prod',
+    };
+
+    dispatch(
+      SwapCryptoActions.successTxMoonpay({
+        moonpaySwapTxData: newData,
+      }),
+    );
+
+    logger.debug('Saved swap with: ' + JSON.stringify(newData));
+
+    dispatch(
+      Analytics.track('Successful Crypto Swap', {
+        fromCoin: fromWalletSelected.currencyAbbreviation,
+        fromChain: fromWalletSelected.chain || '',
+        toCoin: toWalletSelected.currencyAbbreviation,
+        toChain: toWalletSelected.chain || '',
+        amountFrom: amountFrom,
+        exchange: 'moonpay',
+      }),
+    );
+  };
+
   useEffect(() => {
     init();
 
@@ -2748,6 +3623,10 @@ const SwapCryptoRoot: React.FC = () => {
         countDownRef.current = null;
       }
       setLoadingCreateTx(true);
+      // Never keep the previous partner's proposal around for the new offer
+      setCtxp(undefined);
+      setTxData(undefined);
+      setMoonpayActionData(undefined);
       logger.debug(`${selectedOffer.key} offer selected. Creating Tx...`);
       switch (selectedOffer.key) {
         case 'changelly':
@@ -2755,6 +3634,10 @@ const SwapCryptoRoot: React.FC = () => {
           return;
 
         case 'thorswap':
+          return;
+
+        case 'moonpay':
+          createMoonpayTransaction();
           return;
       }
     }
@@ -3179,7 +4062,8 @@ const SwapCryptoRoot: React.FC = () => {
                 offersLoading ||
                 // Next line is a workaround
                 // The `getQuote` received amount from changelly is not exactly the same as the amount after `createFixTransaction`. This prevents an exchange of amounts between when the quote is obtained and when the transaction is successfully created.
-                (selectedOffer?.key === 'changelly' &&
+                (!!selectedOffer &&
+                  ['changelly', 'moonpay'].includes(selectedOffer.key) &&
                   (loadingCreateTx || !txData)) ? (
                   <SpinnerContainer style={{height: 40}}>
                     <ActivityIndicator color={ProgressBlue} />
@@ -3259,7 +4143,8 @@ const SwapCryptoRoot: React.FC = () => {
                   <SelectedOptionCol justifyContent="right">
                     {offersLoading ||
                     // Next line is a workaround
-                    (selectedOffer?.key === 'changelly' &&
+                    (!!selectedOffer &&
+                      ['changelly', 'moonpay'].includes(selectedOffer.key) &&
                       (loadingCreateTx || !txData)) ? (
                       <SwapCryptoTxDataSkeleton />
                     ) : (
@@ -3406,7 +4291,10 @@ const SwapCryptoRoot: React.FC = () => {
                             ) : (
                               <>
                                 {Number(txData.totalExchangeFee).toFixed(6)}{' '}
-                                {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                                {(
+                                  txData.totalExchangeFeeCoin ??
+                                  toWalletSelected.currencyAbbreviation
+                                ).toUpperCase()}
                               </>
                             )}
                           </OfferSelectorText>
@@ -3415,32 +4303,38 @@ const SwapCryptoRoot: React.FC = () => {
                         )}
                       </OfferSelectorContainerRight>
                     </OfferSelectorItemRow>
-                    <ItemDivisor />
-                    <OfferSelectorItemRow>
-                      <OfferSelectorContainerLeft>
-                        <OfferSelectorText>{t('Expires')}</OfferSelectorText>
-                      </OfferSelectorContainerLeft>
-                      <OfferSelectorContainerRight>
-                        {txData &&
-                        !loadingCreateTx &&
-                        !offersLoading &&
-                        !!remainingTimeStr ? (
-                          <OfferSelectorText
-                            style={{
-                              textAlign: 'right',
-                              color: paymentExpired
-                                ? Caution
-                                : theme.dark
-                                ? Slate30
-                                : SlateDark,
-                            }}>
-                            {remainingTimeStr}
-                          </OfferSelectorText>
-                        ) : (
-                          <SwapCryptoTxDataSkeleton />
-                        )}
-                      </OfferSelectorContainerRight>
-                    </OfferSelectorItemRow>
+                    {selectedOffer?.key !== 'moonpay' ? (
+                      <>
+                        <ItemDivisor />
+                        <OfferSelectorItemRow>
+                          <OfferSelectorContainerLeft>
+                            <OfferSelectorText>
+                              {t('Expires')}
+                            </OfferSelectorText>
+                          </OfferSelectorContainerLeft>
+                          <OfferSelectorContainerRight>
+                            {txData &&
+                            !loadingCreateTx &&
+                            !offersLoading &&
+                            !!remainingTimeStr ? (
+                              <OfferSelectorText
+                                style={{
+                                  textAlign: 'right',
+                                  color: paymentExpired
+                                    ? Caution
+                                    : theme.dark
+                                    ? Slate30
+                                    : SlateDark,
+                                }}>
+                                {remainingTimeStr}
+                              </OfferSelectorText>
+                            ) : (
+                              <SwapCryptoTxDataSkeleton />
+                            )}
+                          </OfferSelectorContainerRight>
+                        </OfferSelectorItemRow>
+                      </>
+                    ) : null}
                   </>
                 ) : null}
               </OfferSelectorContainer>
