@@ -2308,5 +2308,8 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen.",
   "Some assets not charted": "Sommige assets niet in de grafiek",
   "Not all assets are charted": "Niet alle assets staan in de grafiek",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "De grafiek en de verandering ervan bevatten deze assets nog niet, omdat hun geschiedenis niet kon worden hersteld. Je walletsaldo bevat ze nog steeds."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "De grafiek en de verandering ervan bevatten deze assets nog niet, omdat hun geschiedenis niet kon worden hersteld. Je walletsaldo bevat ze nog steeds.",
+  "Connect BitPay ID": "BitPay ID koppelen",
+  "A link is asking to connect a BitPay ID and replace the account currently signed in on this device. Only continue if you started this action yourself.": "Een link vraagt om een BitPay ID te koppelen en het account waarmee u momenteel op dit apparaat bent aangemeld te vervangen. Ga alleen verder als u deze actie zelf hebt gestart.",
+  "A link is asking to connect a BitPay ID to this app. Only continue if you started this action yourself.": "Een link vraagt om een BitPay ID aan deze app te koppelen. Ga alleen verder als u deze actie zelf hebt gestart."
 }

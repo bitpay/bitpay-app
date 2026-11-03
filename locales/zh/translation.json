@@ -2289,5 +2289,8 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "如果您删除了 BitPay 应用或丢失了设备，您将需要使用恢复短语才能重新存取资金。",
   "Some assets not charted": "部分资产未显示在图表中",
   "Not all assets are charted": "并非所有资产都显示在图表中",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "由于无法重建这些资产的历史记录，图表及其变化暂未包含这些资产。您的投资组合余额仍包含它们。"
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "由于无法重建这些资产的历史记录，图表及其变化暂未包含这些资产。您的投资组合余额仍包含它们。",
+  "Connect BitPay ID": "连接 BitPay ID",
+  "A link is asking to connect a BitPay ID and replace the account currently signed in on this device. Only continue if you started this action yourself.": "某个链接请求连接 BitPay ID，并替换此设备上当前已登录的账户。仅当您自己发起了此操作时才继续。",
+  "A link is asking to connect a BitPay ID to this app. Only continue if you started this action yourself.": "某个链接请求将 BitPay ID 连接到此应用。仅当您自己发起了此操作时才继续。"
 }

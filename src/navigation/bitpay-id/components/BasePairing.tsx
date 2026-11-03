@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
 import {SafeAreaView, View, ViewProps, StyleSheet} from 'react-native';
@@ -50,15 +50,50 @@ const BasePairing = (props: BasePairingParamList) => {
     ({BITPAY_ID}) => BITPAY_ID.pairingBitPayIdError || '',
   );
 
-  useEffect(() => {
-    if (secret) {
-      dispatch(BitPayIdEffects.startDeeplinkPairing(secret, code));
-    } else {
-      const done = () => {
-        onFailure?.();
-        onComplete?.();
-      };
+  const hasSession = useSelector<RootState, boolean>(
+    ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
+  );
+  const prompted = useRef(false);
 
+  useEffect(() => {
+    if (prompted.current) {
+      return;
+    }
+    prompted.current = true;
+
+    const done = () => {
+      onFailure?.();
+      onComplete?.();
+    };
+
+    if (secret) {
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          title: t('Connect BitPay ID'),
+          message: hasSession
+            ? t(
+                'A link is asking to connect a BitPay ID and replace the account currently signed in on this device. Only continue if you started this action yourself.',
+              )
+            : t(
+                'A link is asking to connect a BitPay ID to this app. Only continue if you started this action yourself.',
+              ),
+          type: 'warning',
+          actions: [
+            {
+              text: t('Connect'),
+              action: () =>
+                dispatch(BitPayIdEffects.startDeeplinkPairing(secret, code)),
+            },
+            {
+              text: t('Cancel'),
+              action: done,
+            },
+          ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: done,
+        }),
+      );
+    } else {
       dispatch(
         AppActions.showBottomNotificationModal({
           title: t('Pairing failed'),
@@ -75,7 +110,7 @@ const BasePairing = (props: BasePairingParamList) => {
         }),
       );
     }
-  }, [dispatch, onFailure, onComplete, secret, code, t]);
+  }, [dispatch, onFailure, onComplete, secret, code, hasSession, t]);
 
   useEffect(() => {
     if (pairingStatus) {

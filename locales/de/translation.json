@@ -2308,5 +2308,8 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Wenn Sie die BitPay-App löschen oder Ihr Gerät verlieren, benötigen Sie Ihre Wiederherstellungsphrase, um wieder Zugriff auf Ihr Guthaben zu erhalten.",
   "Some assets not charted": "Einige Assets nicht im Diagramm",
   "Not all assets are charted": "Nicht alle Assets sind im Diagramm",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin.",
+  "Connect BitPay ID": "BitPay ID verbinden",
+  "A link is asking to connect a BitPay ID and replace the account currently signed in on this device. Only continue if you started this action yourself.": "Ein Link fordert dazu auf, eine BitPay ID zu verbinden und das aktuell auf diesem Gerät angemeldete Konto zu ersetzen. Fahren Sie nur fort, wenn Sie diese Aktion selbst gestartet haben.",
+  "A link is asking to connect a BitPay ID to this app. Only continue if you started this action yourself.": "Ein Link fordert dazu auf, eine BitPay ID mit dieser App zu verbinden. Fahren Sie nur fort, wenn Sie diese Aktion selbst gestartet haben."
 }
