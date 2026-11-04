@@ -681,6 +681,9 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
         </PortfolioBalanceHeader>
         <BalanceVisibilityButton
           testID="portfolio-balance-toggle"
+          style={
+            shouldLeftAlignTopSection ? {alignItems: 'flex-start'} : undefined
+          }
           hidden={hideAllBalances}
           onToggle={() => {
             dispatch(toggleHideAllBalances());
