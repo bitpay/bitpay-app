@@ -2310,5 +2310,11 @@
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Ваши локальные данные сохранены. Повторите попытку или обратитесь в службу поддержки. Не удаляйте приложение и не очищайте его данные. Справочный код: {{id}}.",
   "Retry": "Повторить",
   "There are no wallets with enough funds on the {{network}} network.": "Нет кошельков с достаточным количеством средств в сети {{network}}.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Если вы удалите приложение BitPay или потеряете устройство, для получения доступа к вашим средствам вам потребуется ввести фразу восстановления."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Если вы удалите приложение BitPay или потеряете устройство, для получения доступа к вашим средствам вам потребуется ввести фразу восстановления.",
+  "The minimum amount for this swap is {{min}} {{coin}}.": "Минимальная сумма для этого обмена — {{min}} {{coin}}.",
+  "The maximum amount for this swap is {{max}} {{coin}}.": "Максимальная сумма для этого обмена — {{max}} {{coin}}.",
+  "The swap could not be completed. Your funds are being refunded.": "Не удалось завершить обмен. Ваши средства возвращаются.",
+  "The swap could not be completed. Please contact MoonPay support.": "Не удалось завершить обмен. Обратитесь в поддержку MoonPay.",
+  "There are no MoonPay offers available, as the current swap limits for this exchange must be between {{min}} {{coin}} and {{max}} {{coin}}": "Предложения MoonPay недоступны, так как текущие лимиты обмена на этой бирже должны быть в диапазоне от {{min}} {{coin}} до {{max}} {{coin}}",
+  "MoonPay request timed out": "Истекло время ожидания запроса к MoonPay"
 }

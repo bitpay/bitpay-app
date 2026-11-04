@@ -646,7 +646,9 @@ const TransactionDetailsContent = ({
 
           {currencyAbbreviation === 'btc' &&
           (!txs.customData?.service ||
-            !['changelly', 'thorswap'].includes(txs.customData.service)) && // It is not advisable to accelerate transactions that involve Swap operations.
+            !['changelly', 'thorswap', 'moonpaySwap'].includes(
+              txs.customData.service,
+            )) && // It is not advisable to accelerate transactions that involve Swap operations.
           (IsSent(txs.action) || IsMoved(txs.action)) &&
           (!txs.confirmations || txs.confirmations === 0) ? (
             <Banner

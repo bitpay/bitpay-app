@@ -475,7 +475,7 @@ export const getNonce = (
 export const getEstimateGas = (params: {
   wallet: Wallet;
   network: string;
-  value: number;
+  value: number | string;
   from: string;
   data: string;
   to: string;

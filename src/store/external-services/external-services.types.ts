@@ -41,6 +41,7 @@ export type SwapCryptoConfig = {
   disabledMessage?: string;
   changelly?: ExchangeConfig;
   thorswap?: ExchangeConfig;
+  moonpay?: ExchangeConfig;
 };
 
 export type ConfigPaymentMethodKey =

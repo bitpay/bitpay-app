@@ -14,6 +14,7 @@ import {useStackScreenOptions} from '../../utils/headerHelpers';
 import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
 import {
   changellyTxData,
+  moonpaySwapTxData,
   thorswapTxData,
 } from '../../../store/swap-crypto/swap-crypto.models';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
@@ -48,9 +49,15 @@ const SwapHistoryHeaderRight = () => {
   const thorswapHistory: thorswapTxData = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
   );
+  const moonpayHistory: {[txId: string]: moonpaySwapTxData} = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.moonpay,
+  );
 
   type SwapTxs = {
-    [key in SwapCryptoExchangeKey]: changellyTxData[] | thorswapTxData[];
+    [key in SwapCryptoExchangeKey]:
+      | changellyTxData[]
+      | thorswapTxData[]
+      | moonpaySwapTxData[];
   };
   type SwapHistoryData = {
     path: SwapHistoryPath;
@@ -60,6 +67,7 @@ const SwapHistoryHeaderRight = () => {
   const swapTxs: SwapTxs = {
     changelly: Object.values(changellyHistory),
     thorswap: Object.values(thorswapHistory),
+    moonpay: Object.values(moonpayHistory),
   };
 
   const getHistoryData = (transactions: SwapTxs): SwapHistoryData => {
@@ -110,6 +118,11 @@ const SwapHistoryHeaderRight = () => {
             case 'thorswap':
               navigationRef.navigate(
                 ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
+              );
+              break;
+            case 'moonpay':
+              navigationRef.navigate(
+                ExternalServicesSettingsScreens.MOONPAY_SWAP_SETTINGS,
               );
               break;
             default:

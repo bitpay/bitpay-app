@@ -15,6 +15,8 @@ import {
 import {changellyGetCurrencies} from '../swap-crypto/effects/changelly/changelly';
 import {thorswapGetCurrencies} from '../swap-crypto/effects/thorswap/thorswap';
 import {thorswapEnv} from '../../navigation/services/swap-crypto/utils/thorswap-utils';
+import {moonpaySwapGetTokenList} from '../swap-crypto/effects/moonpay-swap/moonpay-swap';
+import {moonpaySwapEnv} from '../../navigation/services/swap-crypto/utils/moonpay-swap-utils';
 
 const bwsUri = BASE_BWS_URL;
 
@@ -150,20 +152,28 @@ export const prefetchExternalServicesData =
         swapCryptoConfig?.thorswap?.removed ||
         swapCryptoConfig?.thorswap?.disabled
       );
+      const fetchMoonpay = !(
+        swapCryptoConfig?.moonpay?.removed ||
+        swapCryptoConfig?.moonpay?.disabled
+      );
 
       // 3. Fetch raw currencies in parallel
-      const [changellyResult, thorswapResult] = await Promise.allSettled([
-        fetchChangelly
-          ? changellyGetCurrencies(true).then(data => data?.result)
-          : Promise.resolve(undefined),
-        fetchThorswap
-          ? thorswapGetCurrencies({
-              env: thorswapEnv,
-              categories: 'all',
-              includeDetails: true,
-            })
-          : Promise.resolve(undefined),
-      ]);
+      const [changellyResult, thorswapResult, moonpayResult] =
+        await Promise.allSettled([
+          fetchChangelly
+            ? changellyGetCurrencies(true).then(data => data?.result)
+            : Promise.resolve(undefined),
+          fetchThorswap
+            ? thorswapGetCurrencies({
+                env: thorswapEnv,
+                categories: 'all',
+                includeDetails: true,
+              })
+            : Promise.resolve(undefined),
+          fetchMoonpay
+            ? moonpaySwapGetTokenList({env: moonpaySwapEnv})
+            : Promise.resolve(undefined),
+        ]);
 
       setSwapCryptoPrefetchedData({
         swapCryptoConfig,
@@ -174,6 +184,10 @@ export const prefetchExternalServicesData =
         thorswapRawCurrencies:
           thorswapResult.status === 'fulfilled'
             ? thorswapResult.value
+            : undefined,
+        moonpayRawCurrencies:
+          moonpayResult.status === 'fulfilled'
+            ? moonpayResult.value
             : undefined,
         fetchedAt: Date.now(),
       });

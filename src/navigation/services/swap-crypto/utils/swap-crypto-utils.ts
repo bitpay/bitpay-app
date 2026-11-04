@@ -2,12 +2,14 @@ import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {isCoinSupportedByChangelly} from './changelly-utils';
 import {isCoinSupportedByThorswap} from './thorswap-utils';
+import {isCoinSupportedByMoonpaySwap} from './moonpay-swap-utils';
 
-export type SwapCryptoExchangeKey = 'changelly' | 'thorswap';
+export type SwapCryptoExchangeKey = 'changelly' | 'thorswap' | 'moonpay';
 
 export const SwapCryptoSupportedExchanges: SwapCryptoExchangeKey[] = [
   'changelly',
   'thorswap',
+  'moonpay',
 ];
 
 export const isCoinSupportedToSwap = (
@@ -17,7 +19,8 @@ export const isCoinSupportedToSwap = (
 ): boolean => {
   return (
     isCoinSupportedBy('changelly', coin, chain) ||
-    isCoinSupportedBy('thorswap', coin, chain)
+    isCoinSupportedBy('thorswap', coin, chain) ||
+    isCoinSupportedBy('moonpay', coin, chain)
   );
 };
 
@@ -34,6 +37,11 @@ const isCoinSupportedBy = (
       );
     case 'thorswap':
       return isCoinSupportedByThorswap(coin.toLowerCase(), chain.toLowerCase());
+    case 'moonpay':
+      return isCoinSupportedByMoonpaySwap(
+        coin.toLowerCase(),
+        chain.toLowerCase(),
+      );
     default:
       return false;
   }

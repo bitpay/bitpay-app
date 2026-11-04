@@ -137,7 +137,7 @@ export interface SwapCryptoApproveErc20Params {
   spenderData: {
     offerKey: string;
     offerName: string;
-    spenderKey: ThorswapProvider;
+    spenderKey: ThorswapProvider | string;
     address: string;
     amount: string;
   };
@@ -394,8 +394,9 @@ const SwapCryptoApproveErc20: React.FC = () => {
   }, [resetSwipeButton]);
 
   const exchangeName =
-    spenderData.spenderKey && ThorswapProviderNames[spenderData.spenderKey]
-      ? ThorswapProviderNames[spenderData.spenderKey]
+    spenderData.spenderKey &&
+    ThorswapProviderNames[spenderData.spenderKey as ThorswapProvider]
+      ? ThorswapProviderNames[spenderData.spenderKey as ThorswapProvider]
       : spenderData.spenderKey;
   const coinName = wallet.currencyAbbreviation.toUpperCase();
 

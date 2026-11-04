@@ -1,5 +1,9 @@
 import {SwapCryptoActionType, SwapCryptoActionTypes} from './swap-crypto.types';
-import {changellyTxData, thorswapTxData} from './swap-crypto.models';
+import {
+  changellyTxData,
+  moonpaySwapTxData,
+  thorswapTxData,
+} from './swap-crypto.models';
 
 type SwapCryptoReduxPersistBlackList = string[];
 export const swapCryptoReduxPersistBlackList: SwapCryptoReduxPersistBlackList =
@@ -8,11 +12,13 @@ export const swapCryptoReduxPersistBlackList: SwapCryptoReduxPersistBlackList =
 export interface SwapCryptoState {
   changelly: {[key in string]: changellyTxData};
   thorswap: {[key in string]: thorswapTxData};
+  moonpay: {[key in string]: moonpaySwapTxData};
 }
 
 const initialState: SwapCryptoState = {
   changelly: {},
   thorswap: {},
+  moonpay: {},
 };
 
 export const swapCryptoReducer = (
@@ -56,6 +62,25 @@ export const swapCryptoReducer = (
       return {
         ...state,
         thorswap: {...thorswapTxList},
+      };
+
+    case SwapCryptoActionTypes.SUCCESS_TX_MOONPAY:
+      const {moonpaySwapTxData} = action.payload;
+      return {
+        ...state,
+        moonpay: {
+          ...state.moonpay,
+          [moonpaySwapTxData.txId]: moonpaySwapTxData,
+        },
+      };
+
+    case SwapCryptoActionTypes.REMOVE_TX_MOONPAY:
+      const {txId} = action.payload;
+      const moonpayTxList = {...state.moonpay};
+      delete moonpayTxList[txId];
+      return {
+        ...state,
+        moonpay: {...moonpayTxList},
       };
 
     default:

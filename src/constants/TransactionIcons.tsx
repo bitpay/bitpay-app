@@ -370,6 +370,12 @@ export const TransactionIcons: {[index in string]: ReactElement} = {
       height={TRANSACTION_ICON_SIZE}
     />
   ),
+  moonpaySwap: (
+    <SwapTxIconSvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
+  ),
   moonpay: (
     <SellTxIcon width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE}>
       <TxSellIcon size={TRANSACTION_ICON_SIZE} />
