@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const ONE_INCH_ABI = [
   {
     inputs: [

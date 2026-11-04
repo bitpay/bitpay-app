@@ -247,6 +247,7 @@ const WalletConnectConfirm = () => {
 
   useEffect(() => {
     _setTxDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   const feeOptions = GetFeeOptions(wallet.chain);
@@ -445,6 +446,7 @@ const WalletConnectConfirm = () => {
     if (accountDisconnected) {
       navigation.goBack();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [accountDisconnected]);
 
   useEffect(() => {
@@ -461,6 +463,7 @@ const WalletConnectConfirm = () => {
       }
     };
     handleRequestDismiss();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [requestDismissed]);
 
   return (

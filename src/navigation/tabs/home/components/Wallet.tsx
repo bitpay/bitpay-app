@@ -22,7 +22,6 @@ import {getRemainingWalletCount} from '../../../../store/wallet/utils/wallet';
 import {
   ActiveOpacity,
   Column,
-  Row,
   ScreenGutter,
 } from '../../../../components/styled/Containers';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';

@@ -84,27 +84,6 @@ const AmountContainer: React.FC<ViewProps> = ({style, ...rest}) => (
   <SafeAreaView style={[styles.amountContainer, style]} {...rest} />
 );
 
-const TestContainer: React.FC<ViewProps & {isSmallScreen?: boolean}> = ({
-  style,
-  isSmallScreen,
-  ...rest
-}) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.testContainer,
-        {
-          marginTop: isSmallScreen ? 0 : 20,
-          backgroundColor: theme.dark ? '#121212' : White,
-        },
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
 const TestText = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
   ({style, ...rest}, ref) => {
     const theme = useTheme();
@@ -221,7 +200,7 @@ export interface BottomAmountProps {
 
 const BottomAmount: React.FC<BottomAmountProps> = ({
   amountEnteredIsFiat,
-  initialAmount,
+  initialAmount: _initialAmount,
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,
@@ -250,15 +229,16 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     }
 
     return defaultAltCurrency.isoCode;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [context, defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
 
   const [continueEnabled, setContinueEnabled] = useState(false);
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
-  const [primaryIsFiat, setPrimaryIsFiat] = useState(amountEnteredIsFiat);
-  const [displayAmount, setDisplayAmount] = useState('0');
-  const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState(
+  const [primaryIsFiat, _setPrimaryIsFiat] = useState(amountEnteredIsFiat);
+  const [_displayAmount, setDisplayAmount] = useState('0');
+  const [_displayEquivalentAmount, setDisplayEquivalentAmount] = useState(
     !amountEnteredIsFiat
       ? formatFiatAmount(0, fiatCurrency, {
           currencyDisplay: 'symbol',
@@ -266,12 +246,12 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       : '0',
   );
   const [amount, setAmount] = useState('0');
-  const [useSendMax, setUseSendMax] = useState(false);
+  const [_useSendMax, setUseSendMax] = useState(false);
   const [limits, setLimits] = useState<Limits>({
     min: undefined,
     max: undefined,
   });
-  const [isAmountValid, setIsAmountValid] = useState(false);
+  const [_isAmountValid, setIsAmountValid] = useState(false);
 
   const updateAmount = (
     _val: string,
@@ -388,6 +368,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     }
     curValRef.current = newValue;
     updateAmountRef.current(newValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   const swapCryptoSendMax = () => {
@@ -451,7 +432,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     limitsOpts?.maxWalletAmount,
   ]);
 
-  const getWarnMsg = useMemo<React.ReactNode>(() => {
+  useMemo<React.ReactNode>(() => {
     let msg: string | undefined;
     if (+amount > 0) {
       if (
@@ -464,6 +445,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     }
 
     return msg ? <WarnMsgText>{msg}</WarnMsgText> : <></>;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [amount, limits, context]);
 
   const init = () => {
@@ -521,6 +503,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       logger.error(`[Amount] could not initialize view: ${errStr}`);
     }
     initLimits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -540,6 +523,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       }
     });
     return () => KeyEvent.removeKeyUpListener();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [continueEnabled]);
 
   return (

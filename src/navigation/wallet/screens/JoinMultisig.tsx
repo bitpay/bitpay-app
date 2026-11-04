@@ -24,7 +24,7 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';

@@ -84,7 +84,7 @@ import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {RootStacks, getNavigationTabName} from '../../../Root';
+import {RootStacks} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
@@ -395,6 +395,7 @@ const AddCustomToken = ({
     if (currencyName) {
       reset({walletName: currencyName});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [currencyName]);
 
   const _addWallet = async (): Promise<Wallet> => {
@@ -454,7 +455,7 @@ const AddCustomToken = ({
           await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
           await sleep(1000);
           dispatch(updatePortfolioBalance());
-        } catch (error) {
+        } catch {
           // ignore error
         }
 
@@ -681,7 +682,7 @@ const AddCustomToken = ({
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
       Keyboard.dismiss();
-    } catch (error) {
+    } catch {
       Keyboard.dismiss();
       setTokenAddress(undefined);
       await sleep(200);

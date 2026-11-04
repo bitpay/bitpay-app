@@ -446,13 +446,6 @@ const ModalTitle = ({
   );
 };
 
-const HeaderButton = ({
-  style,
-  ...rest
-}: React.ComponentProps<typeof RNTouchableOpacity>) => (
-  <RNTouchableOpacity style={[styles.headerButton, style]} {...rest} />
-);
-
 const PlaceholderView = ({
   style,
   ...rest
@@ -525,10 +518,6 @@ const StatusContainer = ({
   ...rest
 }: React.ComponentProps<typeof View>) => (
   <View style={[styles.statusContainer, style]} {...rest} />
-);
-
-const QRCodeWrapper = ({style, ...rest}: React.ComponentProps<typeof View>) => (
-  <View style={[styles.qrCodeWrapper, style]} {...rest} />
 );
 
 const ShareButton = ({
@@ -697,13 +686,14 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     return () => {
       dispatch(cancelTSSCeremony(keyId));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   if (!tssSession) {
     return null;
   }
 
-  const {m, n, walletName, copayers = []} = tssSession;
+  const {copayers = []} = tssSession;
   const allInvited = copayers.every(c => c.status === 'invited');
 
   const handleOpenModal = (copayer: TSSCopayerInfo) => {

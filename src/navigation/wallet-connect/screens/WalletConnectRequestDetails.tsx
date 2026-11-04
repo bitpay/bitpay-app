@@ -125,7 +125,7 @@ const InfoSubTitle = ({children}: {children: React.ReactNode}) => (
 const WalletConnectRequestDetails = () => {
   const {t} = useTranslation();
   const {
-    params: {request: _request, wallet, peerName, topic},
+    params: {request: _request, wallet, peerName},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');

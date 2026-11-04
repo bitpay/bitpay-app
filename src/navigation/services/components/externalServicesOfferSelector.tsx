@@ -555,8 +555,8 @@ const ExternalServicesOfferSelector: React.FC<
   buyCryptoConfig,
   sellCryptoConfig,
   preLoadSellPartnersData,
-  useSendMax,
-  sendMaxInfo,
+  useSendMax: _useSendMax,
+  sendMaxInfo: _sendMaxInfo,
   preSetPartner,
   preLoadPartnersData,
   refreshTrigger,
@@ -570,7 +570,7 @@ const ExternalServicesOfferSelector: React.FC<
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
@@ -1160,7 +1160,7 @@ const ExternalServicesOfferSelector: React.FC<
         setFinishedMoonpay(true);
         return;
       }
-    } catch (err) {
+    } catch {
       logger.warn(
         `It was not possible to get currency limits for Moonpay with the following values: ${JSON.stringify(
           currencyLimitsrequestData,
@@ -1335,7 +1335,6 @@ const ExternalServicesOfferSelector: React.FC<
           showMoonpayError(_err, reason);
           return;
         }
-        return;
       }
     }
 
@@ -1536,7 +1535,7 @@ const ExternalServicesOfferSelector: React.FC<
           return;
         }
       }
-    } catch (err) {
+    } catch {
       logger.warn(
         'Ramp warning: Could not get assets data from Ramp. Continue anyways',
       );
@@ -1738,7 +1737,7 @@ const ExternalServicesOfferSelector: React.FC<
         min: sardineCurrencyLimitsData.minAmount,
         max: sardineCurrencyLimitsData.maxAmount,
       };
-    } catch (err) {
+    } catch {
       offers.sardine.amountLimits = dispatch(
         getBuyCryptoFiatLimits('sardine', offers.sardine.fiatCurrency),
       );
@@ -2075,7 +2074,7 @@ const ExternalServicesOfferSelector: React.FC<
         min: transakSelectedPaymentMethodData.minAmount,
         max: transakSelectedPaymentMethodData.maxAmount,
       };
-    } catch (err) {
+    } catch {
       offers.transak.amountLimits = dispatch(
         getBuyCryptoFiatLimits(
           'transak',
@@ -3004,6 +3003,7 @@ const ExternalServicesOfferSelector: React.FC<
         clearTimeout(timeoutRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [
     selectedWallet,
     amount,
@@ -3124,6 +3124,7 @@ const ExternalServicesOfferSelector: React.FC<
     }, 3500);
 
     return () => clearTimeout(offersTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [
     paymentMethod,
     finishedBanxa,
@@ -3229,6 +3230,7 @@ const ExternalServicesOfferSelector: React.FC<
     }, 3500);
 
     return () => clearTimeout(offersTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [
     withdrawalMethod,
     finishedMoonpay,

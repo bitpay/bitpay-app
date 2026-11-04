@@ -17,12 +17,6 @@ import {
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
-import BanxaLogo from '../../../../components/icons/external-services/banxa/banxa-logo';
-import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
-import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
-import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
-import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
-import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import {
   Action,
   Black,
@@ -317,72 +311,6 @@ const PaymentMethodsModal = ({
         ],
       }),
     );
-  };
-
-  const getPartnerLogo = (
-    exchange: BuyCryptoExchangeKey,
-    iconOnly?: boolean,
-  ): React.JSX.Element | null => {
-    switch (exchange) {
-      case 'banxa':
-        return (
-          <BanxaLogo
-            key={exchange}
-            iconOnly={iconOnly}
-            width={35}
-            height={20}
-          />
-        );
-      case 'moonpay':
-        return (
-          <MoonpayLogo
-            key={exchange}
-            iconOnly={iconOnly}
-            widthIcon={20}
-            heightIcon={20}
-          />
-        );
-      case 'ramp':
-        return (
-          <View key={exchange} style={{marginRight: iconOnly ? 0 : 10}}>
-            <RampLogo
-              key={exchange}
-              iconOnly={iconOnly}
-              width={iconOnly ? 30 : 60}
-              height={iconOnly ? 30 : 40}
-            />
-          </View>
-        );
-      case 'sardine':
-        return (
-          <SardineLogo
-            key={exchange}
-            iconOnly={iconOnly}
-            width={30}
-            height={20}
-          />
-        );
-      case 'simplex':
-        return (
-          <SimplexLogo
-            key={exchange}
-            iconOnly={iconOnly}
-            widthIcon={20}
-            heightIcon={20}
-          />
-        );
-      case 'transak':
-        return (
-          <TransakLogo
-            key={exchange}
-            iconOnly={iconOnly}
-            width={30}
-            height={17}
-          />
-        );
-      default:
-        return null;
-    }
   };
 
   return (

@@ -683,7 +683,7 @@ export const GetAccountTransactionHistory =
     };
     sortedCompleteHistory: any[];
   }> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, _reject) => {
       let allTransactions = [] as any[];
       const transactionPromises = wallets.map(async wallet => {
         try {
@@ -1615,7 +1615,7 @@ export const GetInput = async (wallet: Wallet, txid: string) => {
       }
     });
     return input;
-  } catch (err) {
+  } catch {
     return;
   }
 };

@@ -12,7 +12,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import Button from '../../../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
-import {LogActions} from '../../../../../store/log';
 import {
   Action,
   Feather,
@@ -451,6 +450,7 @@ const PasskeyScreen: React.FC = () => {
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   const fetchCredentials = useCallback(async () => {
@@ -477,10 +477,12 @@ const PasskeyScreen: React.FC = () => {
       setFetchingCredentials(false);
       logManager.error('[PasskeyScreen] ', err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [dispatch, user, fetchingCredentials, session, network]);
 
   useEffect(() => {
     fetchCredentials();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [user]);
 
   const renderPasskey = ({item, index}) => {

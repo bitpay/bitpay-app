@@ -47,7 +47,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const logger = useLogger();
+  useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const [multisigModalType, setMultisigModalType] =
     useState<MultisigModalType>(null);

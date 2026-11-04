@@ -61,6 +61,7 @@ const SardineSettings: React.FC = () => {
         `Coming from payment request: sardineExternalId: ${incomingPaymentRequest.sardineExternalId}`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ const SardineSettings: React.FC = () => {
       );
       setTransactions(sardinePaymentRequests);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

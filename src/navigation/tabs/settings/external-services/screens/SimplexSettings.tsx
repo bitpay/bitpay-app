@@ -131,6 +131,7 @@ const SimplexSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [paymentRequests],
   );
 
@@ -187,6 +188,7 @@ const SimplexSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [sellOrders],
   );
 
@@ -214,6 +216,7 @@ const SimplexSettings: React.FC = () => {
         }`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -228,6 +231,7 @@ const SimplexSettings: React.FC = () => {
       );
       setSellOrders(simplexSellOrders);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

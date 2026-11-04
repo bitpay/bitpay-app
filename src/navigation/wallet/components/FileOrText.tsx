@@ -307,7 +307,7 @@ const FileOrText = () => {
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
         populateImportedKeyPortfolio({dispatch, key, logger});
-      } catch (error) {
+      } catch {
         // ignore error
       }
 
@@ -434,7 +434,7 @@ const FileOrText = () => {
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
         populateImportedKeyPortfolio({dispatch, key, logger});
-      } catch (error) {}
+      } catch {}
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 

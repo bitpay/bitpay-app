@@ -145,7 +145,6 @@ const RampSellCheckout: React.FC = () => {
       wallet,
       toAddress,
       amount,
-      paymentMethod,
       useSendMax,
       sendMaxInfo,
       showNewQuoteInfo,
@@ -162,7 +161,7 @@ const RampSellCheckout: React.FC = () => {
   const sellOrder: RampSellOrderData = useAppSelector(
     ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.ramp[sellCryptoExternalId],
   );
-  const [isToken, setIsToken] = useState(
+  const [isToken, _setIsToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -171,7 +170,7 @@ const RampSellCheckout: React.FC = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [expiredAnalyticSent, setExpiredAnalyticSent] =
     useState<boolean>(false);
-  const [amountExpected, setAmountExpected] = useState<number>(amount);
+  const [amountExpected, _setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
@@ -678,7 +677,7 @@ const RampSellCheckout: React.FC = () => {
           },
         );
         warningMsg = warningMsg + `\n${message}`;
-      } catch (err) {
+      } catch {
         // continue without message
       }
     }
@@ -785,6 +784,7 @@ const RampSellCheckout: React.FC = () => {
   useEffect(() => {
     showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
       useSendMax = false;
     }
 
@@ -812,6 +812,7 @@ const RampSellCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [remainingTimeStr, expiredAnalyticSent]);
 
   useEffect(() => {

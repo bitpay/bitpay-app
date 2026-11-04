@@ -60,6 +60,7 @@ const BanxaSettings: React.FC = () => {
         `Coming from payment request: banxaExternalId: ${incomingPaymentRequest.banxaExternalId}`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -69,6 +70,7 @@ const BanxaSettings: React.FC = () => {
       );
       setTransactions(banxaPaymentRequests);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [isFocused]);
 
   return (

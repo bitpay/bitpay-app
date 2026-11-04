@@ -660,7 +660,7 @@ export const startUpdateAllWalletStatusForKey =
     if (createTokenWalletWithFunds) {
       try {
         await dispatch(detectAndCreateTokensForEachEvmWallet({key}));
-      } catch (error) {
+      } catch {
         logManager.info(
           'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
         );
@@ -734,7 +734,7 @@ export const startUpdateAllKeyAndWalletStatus =
               tokenAddress ? ' Contract address: ' + tokenAddress + '. ' : ''
             }`,
           );
-          for (const [index, k] of keys.entries()) {
+          for (const [_index, k] of keys.entries()) {
             try {
               await dispatch(
                 detectAndCreateTokensForEachEvmWallet({
@@ -743,7 +743,7 @@ export const startUpdateAllKeyAndWalletStatus =
                   tokenAddress,
                 }),
               );
-            } catch (error) {
+            } catch {
               logManager.info(
                 'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
               );
@@ -881,7 +881,7 @@ export const updateWalletStatus =
                   pendingTxps: newPendingTxps,
                   singleAddress,
                 });
-              } catch (err2) {
+              } catch {
                 resolve(cachedStatus());
               }
             } catch (callbackError) {
@@ -1267,7 +1267,7 @@ export const startFormatBalanceAllWalletsForKey =
 
             wallet.balance = {...wallet.balance, ...newBalance};
             return newBalance;
-          } catch (error) {
+          } catch {
             return {
               ...cachedBalance,
               ...dispatch(

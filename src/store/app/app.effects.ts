@@ -627,7 +627,7 @@ const createBrazeEid = (): Effect<string | undefined> => dispatch => {
  * Requests a refresh for Braze content.
  * @returns void
  */
-export const requestBrazeContentRefresh = (): Effect => async dispatch => {
+export const requestBrazeContentRefresh = (): Effect => async _dispatch => {
   if (Analytics.isMergingUser()) {
     logManager.debug('Skipping Braze content refresh during user merge.');
     return;
@@ -823,7 +823,7 @@ const trackAppInstalled =
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  _dispatch => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
@@ -846,7 +846,7 @@ export const subscribePushNotifications =
 
 export const unSubscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  _dispatch => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
         logManager.error(
@@ -866,7 +866,7 @@ export const subscribeEmailNotifications =
     walletClient: any,
     prefs: {email: string; language: string; unit: string},
   ): Effect<Promise<void>> =>
-  async dispatch => {
+  async _dispatch => {
     walletClient.savePreferences(prefs, (err: any) => {
       if (err) {
         logManager.error(
@@ -883,7 +883,7 @@ export const subscribeEmailNotifications =
 
 export const unSubscribeEmailNotifications =
   (walletClient: any): Effect<Promise<void>> =>
-  async dispatch => {
+  async _dispatch => {
     walletClient.savePreferences({email: ''}, (err: any) => {
       if (err) {
         logManager.error(
@@ -1485,7 +1485,7 @@ export const checkFaceIdPermissions = async () => {
 
 export const isVersionUpdated =
   (currentVersion: string, savedVersion: string): Effect<Promise<boolean>> =>
-  async dispatch => {
+  async _dispatch => {
     const verifyTagFormat = (tag: string) => {
       const regex = /^v?\d+\.\d+\.\d+$/i;
       return regex.exec(tag);
@@ -1567,7 +1567,7 @@ export const shortcutListener =
  * @returns
  */
 export const requestInAppReview =
-  (): Effect<Promise<void>> => async dispatch => {
+  (): Effect<Promise<void>> => async _dispatch => {
     try {
       // Whether the device supports app ratings
       const isAvailable = InAppReview.isAvailable();

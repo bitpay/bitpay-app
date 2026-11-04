@@ -77,7 +77,6 @@ import {useOngoingProcess} from '../../../../../contexts';
 import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
-import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 
 export interface GiftCardConfirmParamList {
   amount: number;

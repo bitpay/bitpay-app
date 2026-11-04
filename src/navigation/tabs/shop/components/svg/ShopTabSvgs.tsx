@@ -150,7 +150,7 @@ export const SearchSvg = ({
   );
 };
 
-export const InfoSvg = ({theme}: {theme: Theme}) => {
+export const InfoSvg = ({theme: _theme}: {theme: Theme}) => {
   const color = Action;
   return (
     <Svg width="17" height="17" viewBox="0 0 17 17" fill="none">

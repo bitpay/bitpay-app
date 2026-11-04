@@ -31,7 +31,6 @@ import {
   getBaseSVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
-import {LogActions} from '../../../store/log';
 import {
   getEvmGasWallets,
   getSvmGasWallets,

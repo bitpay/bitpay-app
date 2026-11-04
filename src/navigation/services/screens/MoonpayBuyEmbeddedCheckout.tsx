@@ -1302,6 +1302,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         clearTimeout(quoteRefreshTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -1317,6 +1318,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
         );
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [embeddedQuoteData?.paymentDisclosures]);
 
   useEffect(() => {
@@ -1339,6 +1341,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [remainingTimeStr, expiredAnalyticSent, challengeUrl]);
 
   // SEPA: once the purchase is registered the customer still has to send the

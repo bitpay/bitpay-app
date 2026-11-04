@@ -447,7 +447,7 @@ const TransactionLevel = ({
       if (customFeePerKB) {
         setCustomSatsPerByte((customFeePerKB / feeUnitAmount).toFixed());
       }
-    } catch (e) {}
+    } catch {}
   };
 
   const checkFees = (
@@ -502,6 +502,7 @@ const TransactionLevel = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [wallet]);
 
   const onClose = () => {

@@ -95,10 +95,7 @@ function getBalanceChartGraphPointValue(
 }
 
 function makeBalanceChartGraphPoint(
-  args: LineChartPointFactoryArgs<
-    BalanceChartGraphPointDto,
-    BalanceChartGraphPointDto
-  >,
+  args: LineChartPointFactoryArgs<BalanceChartGraphPointDto>,
 ): BalanceChartGraphPointDto {
   'worklet';
 

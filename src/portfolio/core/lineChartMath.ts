@@ -1,6 +1,6 @@
 export const GRAPH_DRAWABLE_EPSILON = 0.0001;
 
-export type LineChartPointFactoryArgs<TInput, TOutput> = {
+export type LineChartPointFactoryArgs<TInput> = {
   source: TInput;
   index: number;
   timestamp: number;
@@ -10,7 +10,7 @@ export type LineChartPointFactoryArgs<TInput, TOutput> = {
 export type NormalizeLineChartPointsOptions<TInput, TOutput> = {
   getTimestamp: (point: TInput, index: number) => unknown;
   getValue: (point: TInput, index: number) => unknown;
-  makePoint: (args: LineChartPointFactoryArgs<TInput, TOutput>) => TOutput;
+  makePoint: (args: LineChartPointFactoryArgs<TInput>) => TOutput;
   fallbackTimestamp?: number;
 };
 

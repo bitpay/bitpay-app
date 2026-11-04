@@ -129,7 +129,6 @@ export const startCreateKeyMultisig =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {keys},
         } = getState();
 
         const _key = BWC.createKey({
@@ -645,7 +644,7 @@ export const startTSSCeremony =
                       },
                     }),
                   );
-                } catch (e) {}
+                } catch {}
               })
               .on('roundsubmitted', (r: number) => {
                 stuckErrorCount = 0;
@@ -668,7 +667,7 @@ export const startTSSCeremony =
                       },
                     }),
                   );
-                } catch (e) {}
+                } catch {}
               })
               .on('wallet', (w: any) => {
                 logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
@@ -938,7 +937,7 @@ export const generateJoinerSessionId =
   (opts?: {
     name?: string;
   }): Effect<Promise<{sessionId: string; partyKey: any}>> =>
-  async (dispatch, getState): Promise<{sessionId: string; partyKey: any}> => {
+  async (dispatch, _getState): Promise<{sessionId: string; partyKey: any}> => {
     try {
       const partyKey = BWC.createKey({seedType: 'new'});
 
@@ -1274,7 +1273,7 @@ export const joinTSSWithCode =
                       }),
                     );
                   }
-                } catch (e) {}
+                } catch {}
               })
               .on('roundsubmitted', (r: number) => {
                 stuckErrorCount = 0;
@@ -1299,7 +1298,7 @@ export const joinTSSWithCode =
                       }),
                     );
                   }
-                } catch (e) {}
+                } catch {}
               })
               .on('wallet', (w: any) => {
                 logManager.debug(`[TSS Join wallet] ${w?.id}`);

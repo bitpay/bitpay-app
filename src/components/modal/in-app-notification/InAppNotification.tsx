@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
-import {Action, Black, LightBlack, White} from '../../../styles/colors';
+import {Action, LightBlack, White} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';

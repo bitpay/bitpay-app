@@ -236,6 +236,7 @@ const MoonpaySellDetails: React.FC = () => {
     getSellTransactionDetails();
     getWallet();
     logger.debug('Sell order details: ' + JSON.stringify(sellOrder));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -562,7 +563,7 @@ const MoonpaySellDetails: React.FC = () => {
                               );
                               updateStatusDescription();
                             }
-                          } catch (err) {
+                          } catch {
                             await sleep(500);
                             dispatch(
                               showBottomNotificationModal({

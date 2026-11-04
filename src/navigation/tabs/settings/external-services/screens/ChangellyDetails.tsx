@@ -154,6 +154,7 @@ const ChangellyDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {

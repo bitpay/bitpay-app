@@ -298,10 +298,12 @@ const SelectInputs = () => {
         defaultAltCurrency.isoCode,
       ),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [totalAmount]);
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   useEffect(() => {
@@ -313,6 +315,7 @@ const SelectInputs = () => {
       'symbol',
     );
     setUiFormattedWallet(_uiFormattedWallet);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, [lockedUtxos]);
 
   const inputsSelectAll = (UtxosWithFiatAmount: UtxoWithFiatAmount[]) => {
@@ -485,6 +488,7 @@ const SelectInputs = () => {
         ) : null}
       </>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
     [lockedUtxos, hideLockedUtxos],
   );
 

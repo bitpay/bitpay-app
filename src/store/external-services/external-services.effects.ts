@@ -115,7 +115,7 @@ export const prefetchExternalServicesData =
         try {
           const config = await dispatch(getExternalServicesConfig());
           swapCryptoConfig = config?.swapCrypto;
-        } catch (err) {
+        } catch {
           logManager.debug(
             '[prefetchExternalServices] Config fetch failed, continuing with currencies only',
           );
@@ -191,7 +191,7 @@ export const prefetchExternalServicesData =
 
 export const getSpenderApprovalWhitelist =
   (): Effect<Promise<any>> =>
-  async (dispatch): Promise<any> => {
+  async (_dispatch): Promise<any> => {
     try {
       const config = {
         headers: {

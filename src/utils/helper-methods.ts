@@ -24,7 +24,6 @@ import {checkEncryptPassword, toFiat} from '../store/wallet/utils/wallet';
 import {FormatAmount} from '../store/wallet/effects/amount/amount';
 import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
 import {ethers} from 'ethers';
-import EtherscanAPI from '../api/etherscan';
 import {
   EIP155_SIGNING_METHODS,
   SOLANA_SIGNING_METHODS,
@@ -1247,7 +1246,7 @@ export const processSwapRequest =
     const {chainId} = params;
     const {method} = params.request;
 
-    const {to, data, from, value} = params.request.params[0];
+    const {data, from, value} = params.request.params[0];
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
 
     if (data === '0x') {
@@ -1341,51 +1340,6 @@ export const processSwapRequest =
     }
   };
 
-const fetchContractAbi = async (
-  dispatch: any,
-  chainId: string,
-  address: string,
-) => {
-  const getAbiFromAddress = async (address: string): Promise<any> => {
-    const abi = await dispatch(EtherscanAPI.getContractAbi(chainId, address));
-    if (!abi || abi === 'Contract source code not verified') {
-      throw new Error('No ABI found');
-    }
-    try {
-      return JSON.parse(abi);
-    } catch {
-      throw new Error('Failed to parse ABI');
-    }
-  };
-
-  let parsedAbi = await getAbiFromAddress(address);
-
-  const isProxyContract = parsedAbi.some(
-    (item: any) => item.name === 'implementation',
-  );
-
-  if (isProxyContract) {
-    logManager.debug('Detected EIP-1967 proxy contract');
-
-    // EIP-1967 implementation slot
-    const implementationSlot =
-      '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
-
-    // Retrieve the address at the implementation slot
-    const paddedImplementationAddress = await EtherscanAPI.getStorageAt(
-      chainId,
-      address,
-      implementationSlot,
-    );
-    const implementationAddress = `0x${paddedImplementationAddress.slice(-40)}`;
-
-    // Fetch and parse the ABI from the implementation contract
-    parsedAbi = await getAbiFromAddress(implementationAddress);
-  }
-
-  return parsedAbi;
-};
-
 // ethers reads hex strings, decimal strings and numbers; parseInt would read a
 // decimal string as hexadecimal and report an amount the signer never sees
 export const getTransactionValue = (value?: unknown): string | undefined => {
@@ -1442,13 +1396,13 @@ const handlePayTransaction = async (
 
   const [
     valueBN,
-    gasPriceBN,
-    expirationBN,
-    payload,
-    hash,
-    v,
-    r,
-    s,
+    _gasPriceBN,
+    _expirationBN,
+    _payload,
+    _hash,
+    _v,
+    _r,
+    _s,
     tokenContract,
   ] = transactionData.args;
 
@@ -1618,7 +1572,7 @@ export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
 };
 
 export const isAndroidStoragePermissionGranted = (
-  dispatch: AppDispatch,
+  _dispatch: AppDispatch,
 ): Promise<boolean> => {
   return new Promise(async (resolve, reject) => {
     try {

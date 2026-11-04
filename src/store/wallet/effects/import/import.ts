@@ -115,7 +115,7 @@ const getMissingVmAccounts = (
 };
 
 const BWC = BwcProvider.getInstance();
-const BwcConstants = BWC.getConstants();
+BWC.getConstants();
 
 const cordovaStoragePath =
   Platform.OS === 'ios'
@@ -491,7 +491,7 @@ export const startMigration =
           .map(res => {
             try {
               return JSON.parse(res);
-            } catch (err) {}
+            } catch {}
             return {};
           })
           .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
@@ -541,7 +541,7 @@ export const startMigration =
                 'utf8',
               ),
             );
-          } catch (e) {}
+          } catch {}
         };
 
         const [phone, phoneCountryInfo] = await Promise.all([
@@ -741,7 +741,7 @@ export const migrateKeyAndWallets =
                 cordovaStoragePath + `hideWallet-${id}`,
                 'utf8',
               )) === 'true';
-          } catch (e) {
+          } catch {
             // not found. Continue anyway
           }
 
@@ -1247,12 +1247,11 @@ const createKeyAndCredentials = async (
 
 const createKeyAndCredentialsWithFile = async (
   decryptBackupText: string,
-  opts: Partial<KeyOptions>,
+  _opts: Partial<KeyOptions>,
 ): Promise<any> => {
   const bwcClient = BWC.getClient(undefined);
   let credentials;
   let key;
-  let addressBook;
 
   const data = JSON.parse(decryptBackupText);
   if (data.credentials) {
@@ -1266,7 +1265,7 @@ const createKeyAndCredentialsWithFile = async (
         if (!key.fingerPrintEDDSA) {
           try {
             key.addKeyByAlgorithm('EDDSA');
-          } catch (err) {
+          } catch {
             // If the chain is not Solana, the EDDSA key can be migrated later
             if (credentials.chain === 'sol') {
               throw new Error(t('Unable to add EDDSA key. Check input file.'));
@@ -1274,7 +1273,6 @@ const createKeyAndCredentialsWithFile = async (
           }
         }
       }
-      addressBook = data.addressBook;
     } catch (err: any) {
       if (err && err.message === 'Bad Key version') {
         // Workaround for bad generated files. Fixed: https://github.com/bitpay/wallet/pull/11872
@@ -1287,7 +1285,7 @@ const createKeyAndCredentialsWithFile = async (
         if (!key.fingerPrintEDDSA) {
           try {
             key.addKeyByAlgorithm('EDDSA');
-          } catch (err) {
+          } catch {
             // If the chain is not Solana, the EDDSA key can be migrated later
             if (credentials.chain === 'sol') {
               throw new Error(t('Unable to add EDDSA key. Check input file.'));
@@ -1314,8 +1312,7 @@ const createKeyAndCredentialsWithFile = async (
       let migrated = BWC.upgradeCredentialsV1(data);
       credentials = migrated.credentials;
       key = migrated.key;
-      addressBook = data.addressBook ? data.addressBook : {};
-    } catch (error) {
+    } catch {
       throw new Error(t('Old format. Could not import. Check input file.'));
     }
   }

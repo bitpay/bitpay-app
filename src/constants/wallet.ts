@@ -1,5 +1,3 @@
-import {BitpaySupportedCoins} from './currencies';
-
 export const BALANCE_CACHE_DURATION = 5 * 60; // 5 minutes
 export const RATES_CACHE_DURATION = 5 * 60; // 5 minutes
 export const SOFT_CONFIRMATION_LIMIT: number = 12;

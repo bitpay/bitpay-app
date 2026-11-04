@@ -55,7 +55,7 @@ describe('DklsWorkerHost', () => {
       await act(async () => {
         call = callWorker({type: 'init'});
       });
-      const outcome = expect(call).rejects.toThrow(
+      const outcome = await expect(call).rejects.toThrow(
         'DKLS worker failed to start',
       );
 
@@ -103,7 +103,7 @@ describe('DklsWorkerHost', () => {
       await act(async () => {
         first = callWorker({type: 'init'});
       });
-      const firstOutcome = expect(first).rejects.toThrow(
+      const firstOutcome = await expect(first).rejects.toThrow(
         'DKLS worker failed to start',
       );
       await act(async () => {

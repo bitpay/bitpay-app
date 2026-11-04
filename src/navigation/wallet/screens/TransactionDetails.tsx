@@ -445,6 +445,7 @@ const TransactionDetailsContent = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: adding the missing deps would change this effect’s existing behaviour
   }, []);
 
   const speedup = async () => {

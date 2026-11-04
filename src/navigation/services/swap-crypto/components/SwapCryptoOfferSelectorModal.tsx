@@ -546,8 +546,8 @@ const SwapCryptoOfferSelectorModal: React.FC<
   amountFrom,
   showOffersLoading,
   selectedOffer,
-  country,
-  preSetPartner,
+  country: _country,
+  preSetPartner: _preSetPartner,
   offerSelectorOnDismiss,
 }) => {
   const {t} = useTranslation();
@@ -556,7 +556,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
   const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>(
     {},
   );
-  const [forceRerender, setForceRerender] = useState(0);
+  const [_forceRerender, setForceRerender] = useState(0);
   useEffect(() => {
     setForceRerender(f => f + 1);
   }, [amountFrom, selectedOffer?.amountReceiving]);

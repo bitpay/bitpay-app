@@ -29,7 +29,6 @@ export const startJoinMultisig =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {keys},
         } = getState();
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
