@@ -34,7 +34,32 @@ export const normalizeBalanceChartOffset = (value: unknown): number => {
   return toFiniteNumber(value, 0);
 };
 
+// Sorting with localeCompare goes through ICU collation, which is costly on
+// Android Hermes, and the same wallet lists are re-sorted on every render of
+// the Home chart (~80 ms of a funded wallet's first render). Remember recent
+// results by input; the order itself is unchanged, so chart scope ids — and
+// the persisted chart caches keyed by them — stay the same.
+const SORTED_WALLET_IDS_CACHE_MAX = 64;
+const sortedWalletIdsCache = new Map<string, string[]>();
+
 export const getSortedUniqueWalletIds = (walletIds: string[]): string[] => {
+  const key = (walletIds || []).join('\u0000');
+  const cached = sortedWalletIdsCache.get(key);
+  if (cached) {
+    return cached.slice();
+  }
+  const sorted = sortUniqueWalletIds(walletIds);
+  if (sortedWalletIdsCache.size >= SORTED_WALLET_IDS_CACHE_MAX) {
+    const oldest = sortedWalletIdsCache.keys().next().value;
+    if (oldest !== undefined) {
+      sortedWalletIdsCache.delete(oldest);
+    }
+  }
+  sortedWalletIdsCache.set(key, sorted);
+  return sorted.slice();
+};
+
+const sortUniqueWalletIds = (walletIds: string[]): string[] => {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const walletId of walletIds || []) {

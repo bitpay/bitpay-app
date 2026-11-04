@@ -1,0 +1,31 @@
+diff --git a/node_modules/react-native/Libraries/ReactNative/UIManager.js b/node_modules/react-native/Libraries/ReactNative/UIManager.js
+index a97c6a7..d8fdf5b 100644
+--- a/node_modules/react-native/Libraries/ReactNative/UIManager.js
++++ b/node_modules/react-native/Libraries/ReactNative/UIManager.js
+@@ -23,9 +23,7 @@ const UIManagerImpl: UIManagerJSInterface =
+     ? require('./BridgelessUIManager').default
+     : require('./PaperUIManager').default;
+ 
+-// $FlowFixMe[cannot-spread-interface]
+-const UIManager: UIManagerJSInterface = {
+-  ...UIManagerImpl,
++const UIManagerOverrides = {
+   /**
+    * Determines the location on screen, width, and height of the given view and
+    * returns the values via an async callback. If successful, the callback will
+@@ -243,4 +241,15 @@ const UIManager: UIManagerJSInterface = {
+   },
+ };
+ 
++// Copy property descriptors rather than spreading: a spread invokes every
++// getter, and BridgelessUIManager defines a lazy getter per view manager so
++// that each one's config is computed only when its component is first used.
++// Spreading forced all of them at module init (~200+ ms before index.js on a
++// mid-range Android phone). The overrides above still win, as with the spread.
++// $FlowFixMe[unclear-type]
++const UIManager: UIManagerJSInterface = (Object.defineProperties({}, {
++  ...Object.getOwnPropertyDescriptors(UIManagerImpl),
++  ...Object.getOwnPropertyDescriptors(UIManagerOverrides),
++}): any);
++
+ export default UIManager;

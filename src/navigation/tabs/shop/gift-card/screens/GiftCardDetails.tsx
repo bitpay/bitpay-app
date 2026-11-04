@@ -339,16 +339,16 @@ const GiftCardDetails = ({
 
   const showCopiedNotification = (
     copiedValue: string,
-    cardConfig: CardConfig,
+    copiedCardConfig: CardConfig,
     customMessage?: string,
   ) => {
     const redeemInstructions =
       customMessage ||
-      cardConfig.redeemInstructions ||
+      copiedCardConfig.redeemInstructions ||
       t(
         'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
         {
-          website: cardConfig.website,
+          website: copiedCardConfig.website,
         },
       );
     const containsHtml =

@@ -1,9 +1,5 @@
 import { callWorker } from '../src/dkls/DklsWorker';
 
-const preview = (v) => {
-  try { return JSON.stringify(v).slice(0, 200); } catch { return String(v).slice(0,200); }
-};
-
 export default async function init() {
   console.log('[DKLS shim] init()');
   const r = await callWorker({ type: 'init' });

@@ -427,7 +427,7 @@ const RecoveryPhrase = () => {
     isMultisig: false,
   });
   const wordsRef = useRef<TextInput>(null);
-  const sensitiveInputRefs = useRef([wordsRef]).current;
+  const [sensitiveInputRefs] = useState(() => [wordsRef]);
   const {clearSensitive} = useSensitiveRefClear(sensitiveInputRefs);
 
   const {

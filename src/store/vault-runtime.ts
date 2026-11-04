@@ -28,6 +28,7 @@ import * as initLogs from './log/initLogs';
 import {LogActions} from './log';
 import {modernBackupDirectory, modernFiles} from './vault-backup-paths';
 import {decodeFileText, encodeFileText} from './vault-file-codec';
+import {takePrefetchedEncryptionKey} from '../startup/encryptionKeyPrefetch';
 
 const legacyBase = RNFS.CachesDirectoryPath + '/bitpay/redux/persist-root.json';
 const legacyFiles = {
@@ -193,7 +194,9 @@ const io: TransferIO = {
     return [...new Set(candidates)];
   },
   modernKey: async create => {
-    const entry = await readVaultKey();
+    // The first call takes the read index.js started at launch. Safe only
+    // here: this is the vault key's sole writer, and it reads first.
+    const entry = await readVaultKey(takePrefetchedEncryptionKey());
     if (entry) return validatedVaultKey(entry);
     if (!create) return validatedVaultKey(false);
     try {

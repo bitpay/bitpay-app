@@ -15,7 +15,7 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch, useLogger} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {startCreateKey} from '../../../store/wallet/effects';
@@ -47,7 +47,6 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const [multisigModalType, setMultisigModalType] =
     useState<MultisigModalType>(null);

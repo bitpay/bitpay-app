@@ -888,10 +888,8 @@ const BuyAndSellRoot = ({
   ]);
   const [usingCurrency, setUsingCurrency] = useState<string>(fiatCurrency);
   const [usingCurrencyIsFiat, setUsingCurrencyIsFiat] = useState<boolean>(true);
-  const [loadingWalletFromStatus, setLoadingWalletFromStatus] =
-    useState<boolean>(false);
-  const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
-    useState<boolean>(false);
+  const [, setLoadingWalletFromStatus] = useState<boolean>(false);
+  const [, setLoadingEnterAmountBtn] = useState<boolean>(false);
   const [sellLimits, setSellLimits] = useState<SellLimitsOpts>({
     maxWalletAmount: undefined,
     limits: {
@@ -964,31 +962,6 @@ const BuyAndSellRoot = ({
   };
   const updateAmountRef = useRef(updateAmount);
   updateAmountRef.current = updateAmount;
-
-  const onSwapCurrencies = (toCurrency: string) => {
-    let newPrimaryIsFiat = usingCurrencyIsFiat;
-    if (toCurrency === fiatCurrency) {
-      newPrimaryIsFiat = true;
-    } else {
-      newPrimaryIsFiat = false;
-    }
-
-    updateAmountConfig(current => ({
-      ...current,
-      currency: toCurrency,
-      primaryIsFiat: newPrimaryIsFiat,
-      displayAmount: '0',
-      displayEquivalentAmount: newPrimaryIsFiat
-        ? formatFiatAmount(0, fiatCurrency, {
-            currencyDisplay: 'symbol',
-          })
-        : '0',
-    }));
-
-    // reset amount on swap currencies
-    curValRef.current = '';
-    updateAmountRef.current('0');
-  };
 
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
@@ -1170,7 +1143,8 @@ const BuyAndSellRoot = ({
     }
 
     return msg;
-  }, [selectedWallet, amountConfig.amount, limits, context, sellLimits]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputed on wallet/amount/limits/context changes; fiatCurrency is read at that time
+  }, [selectedWallet, amountConfig.amount, limits, context, sellLimits, t]);
 
   const initAmount = () => {
     if (!usingCurrency) {
@@ -1360,6 +1334,7 @@ const BuyAndSellRoot = ({
       setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
       setIsInitializing(false);
     } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so the JSON.stringify(err) evaluation (which can throw) is unchanged
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(
         'Buy crypto Error when trying to build the list of supported coins from: ' +
@@ -2068,7 +2043,7 @@ const BuyAndSellRoot = ({
       let allLimits: SellLimits[] = [];
 
       if (responseByExchangeKey instanceof Array) {
-        responseByExchangeKey.forEach((e, index) => {
+        responseByExchangeKey.forEach(e => {
           if (e.promiseRes.status === 'rejected') {
             logger.debug(
               `Sell crypto getLimits[${
@@ -2315,6 +2290,7 @@ const BuyAndSellRoot = ({
       }
     });
     return () => KeyEvent.removeKeyUpListener();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-subscribes only when continueEnabled changes; onCellPress is a memoised keypad handler
   }, [continueEnabled]);
 
   useEffect(() => {
@@ -2338,6 +2314,7 @@ const BuyAndSellRoot = ({
     ) {
       setSelectedPillValue(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-checks only when the typed value changes; selectedPillValue is read at that time
   }, [curValRef.current]);
 
   useEffect(() => {
@@ -2392,19 +2369,19 @@ const BuyAndSellRoot = ({
         }
 
         const currency = selectedWallet.currencyAbbreviation.toUpperCase();
-        const fromChain = selectedWallet.chain;
+        const walletChain = selectedWallet.chain;
 
         setUsingCurrency(currency);
         setUsingCurrencyIsFiat(false);
 
         // if added for dev (hot reload)
         if (
-          getRateByCurrencyName(allRates, currency.toLowerCase(), fromChain)
+          getRateByCurrencyName(allRates, currency.toLowerCase(), walletChain)
         ) {
           const rateByCurrencyName = getRateByCurrencyName(
             allRates,
             currency.toLowerCase(),
-            fromChain,
+            walletChain,
             selectedWallet.tokenAddress, // TODO: review this
           );
           const fiatRateData = rateByCurrencyName.find(
@@ -2413,7 +2390,7 @@ const BuyAndSellRoot = ({
 
           if (!fiatRateData) {
             logger.warn(
-              `There is no fiatRateData for: ${currency.toLowerCase()} (${fromChain}) and ${fiatCurrency}. Setting rate to 0.`,
+              `There is no fiatRateData for: ${currency.toLowerCase()} (${walletChain}) and ${fiatCurrency}. Setting rate to 0.`,
             );
             setRate(0);
             return;
@@ -2424,7 +2401,8 @@ const BuyAndSellRoot = ({
         }
       }
     }
-  }, [selectedWallet, navigation, allRates, fiatCurrency, context]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the selected wallet, rates, fiat currency or context change; sellCryptoSupportedCoins and the helper functions are read at that time
+  }, [selectedWallet, navigation, allRates, fiatCurrency, context, logger]);
 
   const openCheckoutWithInAppBrowser = async (
     url: string,
@@ -2902,7 +2880,7 @@ const BuyAndSellRoot = ({
         quoteData,
       );
       data = _data?.body ?? _data;
-    } catch (err) {
+    } catch {
       setOpeningBrowser(false);
       const title = t('MoonPay Error');
       const reason = 'moonpayGetSignedPaymentUrl Error';
@@ -3118,7 +3096,7 @@ const BuyAndSellRoot = ({
     try {
       const _data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
       data = _data?.body ?? _data;
-    } catch (err) {
+    } catch {
       setOpeningBrowser(false);
       const title = t('Ramp Network Error');
       const reason = 'rampGetSignedPaymentUrl Error';
@@ -3451,6 +3429,7 @@ const BuyAndSellRoot = ({
     const coin = selectedWallet.currencyAbbreviation.toLowerCase();
     const chain = selectedWallet.chain;
 
+    // eslint-disable-next-line no-bitwise -- truncates the millisecond timestamp to whole seconds
     const nowTimestamp = (Date.now() / 1000) | 0;
     let _accessToken = accessTokenTransak?.accessToken;
     let _expiresAt = accessTokenTransak?.expiresAt;
@@ -3776,7 +3755,7 @@ const BuyAndSellRoot = ({
 
   const continueToRampSell = async (
     offer: SellCryptoOffer,
-    paymentMethod: WithdrawalMethod,
+    _paymentMethod: WithdrawalMethod,
   ) => {
     if (!selectedWallet) {
       return;

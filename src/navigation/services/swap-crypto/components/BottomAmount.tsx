@@ -84,27 +84,6 @@ const AmountContainer: React.FC<ViewProps> = ({style, ...rest}) => (
   <SafeAreaView style={[styles.amountContainer, style]} {...rest} />
 );
 
-const TestContainer: React.FC<ViewProps & {isSmallScreen?: boolean}> = ({
-  style,
-  isSmallScreen,
-  ...rest
-}) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.testContainer,
-        {
-          marginTop: isSmallScreen ? 0 : 20,
-          backgroundColor: theme.dark ? '#121212' : White,
-        },
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
 const TestText = React.forwardRef<Text, React.ComponentProps<typeof BaseText>>(
   ({style, ...rest}, ref) => {
     const theme = useTheme();
@@ -221,7 +200,6 @@ export interface BottomAmountProps {
 
 const BottomAmount: React.FC<BottomAmountProps> = ({
   amountEnteredIsFiat,
-  initialAmount,
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,
@@ -235,7 +213,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
   onSubmit,
 }) => {
   const dispatch = useAppDispatch();
-  const {t} = useTranslation();
+  useTranslation();
   const logger = useLogger();
   const defaultAltCurrency: AltCurrenciesRowProps = useAppSelector(
     ({APP}) => APP.defaultAltCurrency,
@@ -250,15 +228,15 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     }
 
     return defaultAltCurrency.isoCode;
-  }, [context, defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
+  }, [defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
 
   const [continueEnabled, setContinueEnabled] = useState(false);
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
-  const [primaryIsFiat, setPrimaryIsFiat] = useState(amountEnteredIsFiat);
-  const [displayAmount, setDisplayAmount] = useState('0');
-  const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState(
+  const [primaryIsFiat] = useState(amountEnteredIsFiat);
+  const [, setDisplayAmount] = useState('0');
+  const [, setDisplayEquivalentAmount] = useState(
     !amountEnteredIsFiat
       ? formatFiatAmount(0, fiatCurrency, {
           currencyDisplay: 'symbol',
@@ -266,12 +244,12 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       : '0',
   );
   const [amount, setAmount] = useState('0');
-  const [useSendMax, setUseSendMax] = useState(false);
+  const [, setUseSendMax] = useState(false);
   const [limits, setLimits] = useState<Limits>({
     min: undefined,
     max: undefined,
   });
-  const [isAmountValid, setIsAmountValid] = useState(false);
+  const [, setIsAmountValid] = useState(false);
 
   const updateAmount = (
     _val: string,
@@ -388,6 +366,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     }
     curValRef.current = newValue;
     updateAmountRef.current(newValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- memoised once (KeyEvent listener and keypad call it); primaryIsFiat never changes (no setter) and amount updates go through updateAmountRef
   }, []);
 
   const swapCryptoSendMax = () => {
@@ -451,21 +430,6 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
     limitsOpts?.maxWalletAmount,
   ]);
 
-  const getWarnMsg = useMemo<React.ReactNode>(() => {
-    let msg: string | undefined;
-    if (+amount > 0) {
-      if (
-        (!limits?.min || (limits.min && +amount >= limits.min)) &&
-        limitsOpts?.maxWalletAmount &&
-        +amount > Number(limitsOpts.maxWalletAmount)
-      ) {
-        msg = t('Not enough funds');
-      }
-    }
-
-    return msg ? <WarnMsgText>{msg}</WarnMsgText> : <></>;
-  }, [amount, limits, context]);
-
   const init = () => {
     updateAmount('0', false, true);
 
@@ -521,7 +485,8 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       logger.error(`[Amount] could not initialize view: ${errStr}`);
     }
     initLimits();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount
+  }, [logger]);
 
   useEffect(() => {
     KeyEvent.onKeyUpListener((keyEvent: any) => {
@@ -540,6 +505,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       }
     });
     return () => KeyEvent.removeKeyUpListener();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-subscribes only when continueEnabled changes; onCellPress is memoised once and onSubmit is read at subscription time
   }, [continueEnabled]);
 
   return (

@@ -6,6 +6,23 @@ import ChartAxisLabel from './ChartAxisLabel';
 import ChartSelectionDot from './ChartSelectionDot';
 import PaginationItem from '../pagination-dots/PaginationDots';
 
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
+
 // Metro uses this source entrypoint; requireActual avoids type-checking the
 // dependency's unrelated internal TypeScript as part of the app's test project.
 const {AnimatedLineGraph} = jest.requireActual(
@@ -19,7 +36,11 @@ const mockReactions = new Set<{
   react: (value: unknown, previous: unknown) => void;
   previous: unknown;
 }>();
-const mockPan = {isActive: {value: false}, x: {value: 0}, gesture: {}};
+const mockPan = {
+  isActive: mockSharedValue(false),
+  x: mockSharedValue(0),
+  gesture: {},
+};
 
 jest.mock('react-native-reanimated', () => {
   const ReactLib = require('react');
@@ -32,7 +53,8 @@ jest.mock('react-native-reanimated', () => {
     default: {View: NativeView, createAnimatedComponent: (value: any) => value},
     interpolate,
     Extrapolate: {CLAMP: 'clamp'},
-    useSharedValue: (value: unknown) => ReactLib.useRef({value}).current,
+    useSharedValue: (value: unknown) =>
+      ReactLib.useRef(mockSharedValue(value)).current,
     useAnimatedStyle: (updater: () => unknown, ...deps: unknown[]) => {
       expect(deps).toHaveLength(0);
       return updater();
@@ -43,6 +65,7 @@ jest.mock('react-native-reanimated', () => {
         get value() {
           return updater();
         },
+        get: () => updater(),
       };
     },
     useAnimatedReaction: (
@@ -146,7 +169,7 @@ describe('native Reanimated hook contract', () => {
     expect(opacity()).toBe(0.25);
     view.rerender(<ChartAxisLabel {...props} contentOpacity={0.75} />);
     expect(opacity()).toBe(0.75);
-    const sharedOpacity = {value: 0.4} as any;
+    const sharedOpacity = mockSharedValue(0.4) as any;
     view.rerender(<ChartAxisLabel {...props} contentOpacity={sharedOpacity} />);
     expect(opacity()).toBe(0.4);
     sharedOpacity.value = 0.9;
@@ -155,7 +178,7 @@ describe('native Reanimated hook contract', () => {
   });
 
   it('opens and closes the selection dot from shared activation changes', () => {
-    const isActive = {value: false} as any;
+    const isActive = mockSharedValue(false) as any;
     const view = render(
       <ChartSelectionDot
         isActive={isActive}
@@ -179,7 +202,11 @@ describe('native Reanimated hook contract', () => {
 
   it('updates pagination positioning including wraparound', () => {
     const renderItem = (value: number) => (
-      <PaginationItem index={0} length={3} animValue={{value} as any} />
+      <PaginationItem
+        index={0}
+        length={3}
+        animValue={mockSharedValue(value) as any}
+      />
     );
     const view = render(renderItem(0));
     const position = () => {

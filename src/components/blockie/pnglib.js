@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise, no-shadow, no-array-constructor, no-new-object -- vendored PNG encoder (pnglib), kept as upstream wrote it */
 module.exports = function (width, height, depth) {
   // helper functions for that ctx
   function write(buffer, offs) {

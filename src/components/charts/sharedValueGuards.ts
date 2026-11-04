@@ -15,8 +15,12 @@ export const isNumberSharedValue = (
     return false;
   }
 
-  const sharedValue = value as {value?: unknown};
-  return (
-    typeof sharedValue.value === 'number' && Number.isFinite(sharedValue.value)
-  );
+  // Callers read these via `.get()` (React Compiler friendly), so require it.
+  const sharedValue = value as {get?: unknown};
+  if (typeof sharedValue.get !== 'function') {
+    return false;
+  }
+
+  const current: unknown = (sharedValue.get as () => unknown)();
+  return typeof current === 'number' && Number.isFinite(current);
 };

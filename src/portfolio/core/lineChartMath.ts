@@ -1,5 +1,6 @@
 export const GRAPH_DRAWABLE_EPSILON = 0.0001;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- TOutput is kept so the existing two-argument usages keep compiling
 export type LineChartPointFactoryArgs<TInput, TOutput> = {
   source: TInput;
   index: number;

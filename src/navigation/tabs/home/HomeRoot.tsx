@@ -1,4 +1,5 @@
 import {useIsFocused, useScrollToTop, useTheme} from '@react-navigation/native';
+import {markOnce as perfMarkOnce} from '../../../perf/PerfMonitor';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
@@ -93,7 +94,11 @@ import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import {useStartupSettled} from '../../../utils/startupSignals';
 import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
+
+/** After startup settles, before the Receive preload may run. */
+const HOME_FLOW_PRELOAD_STARTUP_DELAY_MS = 2000;
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -444,6 +449,8 @@ const HomeExchangeRatesSection = React.memo(
 );
 
 const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
+  perfMarkOnce('bp_home_render');
+  useEffect(() => perfMarkOnce('bp_home_commit'), []);
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
@@ -661,6 +668,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
       _preloadContent: true,
     });
   }, [canPreloadReceive, navigation]);
+  // Preloading Receive renders the wallet picker (a list of wallets with
+  // their icons) on the UI thread. On a cold start it fired during the first
+  // look at Home; hold it until startup has settled.
+  const startupSettledForPreload = useStartupSettled(
+    HOME_FLOW_PRELOAD_STARTUP_DELAY_MS,
+  );
   const wasHomeFocusedRef = useRef(false);
 
   useEffect(() => {
@@ -679,7 +692,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   }, []);
 
   useEffect(() => {
-    if (!isHomeFocused || appIsLoading) {
+    if (!isHomeFocused || appIsLoading || !startupSettledForPreload) {
       return;
     }
 
@@ -701,7 +714,13 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         homeFlowPreloadTaskRef.current = undefined;
       }
     };
-  }, [appIsLoading, isHomeFocused, navigation, preloadReceiveFlow]);
+  }, [
+    appIsLoading,
+    isHomeFocused,
+    navigation,
+    preloadReceiveFlow,
+    startupSettledForPreload,
+  ]);
 
   const receiveLinkingButton = useMemo(
     () => ({
@@ -746,6 +765,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           <View onLayout={onHomeViewportLayout} style={styles.viewport}>
             <ScrollView
               ref={scrollViewRef}
+              testID="home-scroll-view"
               onScroll={onHomeScroll}
               scrollEventThrottle={32}
               // Prevent iOS from injecting automatic top insets which creates a gap

@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   SafeAreaView as RNSafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -46,10 +45,6 @@ import {
   Small,
   TextAlign,
 } from '../../../components/styled/Text';
-import {
-  TermsContainerOffer,
-  TermsText,
-} from '../buy-crypto/styled/BuyCryptoTerms';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import PaymentMethodsModal from '../buy-crypto/components/PaymentMethodModal';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -475,20 +470,6 @@ const BestOfferTagContainer: React.FC<ViewProps> = ({style, ...rest}) => (
   <View style={[styles.bestOfferTagContainer, style]} {...rest} />
 );
 
-const BestOfferTag: React.FC<ViewProps> = ({style, ...rest}) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.bestOfferTag,
-        {backgroundColor: theme.dark ? '#2FCFA4' : '#cbf3e8'},
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
-
 const BestOfferTagText = React.forwardRef<
   Text,
   React.ComponentProps<typeof Small>
@@ -728,7 +709,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const logger = useLogger();
+  useLogger();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -736,7 +717,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
 
-  const [updateView, setUpdateView] = useState<number>(0);
+  const [, setUpdateView] = useState<number>(0);
 
   useEffect(() => {
     setUpdateView(Math.random());

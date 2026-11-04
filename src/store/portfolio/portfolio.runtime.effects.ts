@@ -13,6 +13,7 @@ import {
   buildPortfolioExcessiveBalanceMismatchMarker,
   getPortfolioPopulateDecisionsForWallets,
   getPortfolioInvalidDecimalsMessage,
+  stampMismatchVerifiedAfterPopulate,
   type PortfolioPopulateDecision,
   type PortfolioSnapshotBalanceMismatch,
   type PortfolioUnitDecimalsResolution,
@@ -726,6 +727,7 @@ const isSettledInitialBaselineNoopDecision = (
 ): boolean =>
   decision.reason === 'up_to_date' ||
   decision.reason === 'unchanged_balance_mismatch' ||
+  decision.reason === 'drift_within_recheck_interval' ||
   decision.reason === 'zero_balance_no_history' ||
   decision.reason === 'invalid_history' ||
   decision.reason === 'invalid_decimals' ||
@@ -991,7 +993,13 @@ const buildSnapshotBalanceHealthUpdatesAfterPopulate = async (args: {
         previousQuarantine?.reason === 'excessive_balance_mismatch'
           ? previousQuarantine
           : undefined;
-      updates.mismatchByWalletId[decision.walletId] = decision.mismatch;
+      // This mismatch survived the populate that just completed.
+      updates.mismatchByWalletId[decision.walletId] =
+        stampMismatchVerifiedAfterPopulate(
+          decision.mismatch,
+          decision.index,
+          detectedAt,
+        );
       updates.quarantinesByWalletId[decision.walletId] =
         buildPortfolioExcessiveBalanceMismatchMarker({
           mismatch: decision.mismatch,

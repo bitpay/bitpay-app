@@ -22,6 +22,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Platform} from 'react-native';
 import ApplePushProvisioningModule from '../../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {useAppSelector} from '../../../utils/hooks';
+import {useStartupSettled} from '../../../utils/startupSignals';
 import {
   clearMoonpayEmbeddedCredentials,
   getMoonpayEmbeddedStatus,
@@ -52,6 +53,17 @@ import {getCachedExternalServicesConfig} from '../../../store/external-services/
 import {ExternalServicesConfig} from '../../../store/external-services/external-services.types';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {RootState} from '../../../store';
+import {navigationRef} from '../../NavigationService';
+
+/** How long after startup settles the connection check may start. */
+const MOONPAY_CHECK_DELAY_MS = 5000;
+
+/**
+ * ExternalServicesScreens.ROOT_BUY_AND_SELL (Buy and Sell share it). A
+ * string here: importing the enum would pull ExternalServicesGroup -> Root
+ * into this module.
+ */
+const BUY_AND_SELL_ROUTE = 'BuyAndSellRoot';
 
 /** Refresh credentials this many ms before expiry. */
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 min
@@ -83,6 +95,32 @@ export function MoonpayEmbeddedCredentialManager() {
     undefined,
   );
   const userEid = user?.eid ?? anonymousEid;
+  // The check mounts an invisible WebView (on Android, the process's first
+  // WebView initialises Chromium on the UI thread — 300 ms frames on a
+  // mid-range phone), generates an x25519 key pair and makes a network
+  // round-trip. None of it is needed for the first screen, and run right as
+  // that screen appears it janks the user's first look, so it waits a few
+  // quiet seconds past startup. Buy/Sell already handles a check in flight.
+  const startupSettled = useStartupSettled(MOONPAY_CHECK_DELAY_MS);
+  // ...unless the user opens Buy/Sell inside that window: then the check is
+  // what they are waiting for, so it starts at once.
+  const [buySellOpened, setBuySellOpened] = useState(false);
+  useEffect(() => {
+    if (startupSettled || buySellOpened) {
+      return;
+    }
+    const check = () => {
+      const route = navigationRef.isReady()
+        ? navigationRef.getCurrentRoute()?.name
+        : undefined;
+      if (route === BUY_AND_SELL_ROUTE) {
+        setBuySellOpened(true);
+      }
+    };
+    check();
+    return navigationRef.addListener('state', check);
+  }, [startupSettled, buySellOpened]);
+  const checkAllowed = startupSettled || buySellOpened;
 
   // If no cached external services config exists yet, use local conditions.
   // Once the config is available, disable embedded MoonPay if embeddedBuyDisabled is true.
@@ -204,7 +242,9 @@ export function MoonpayEmbeddedCredentialManager() {
   // Create a session token and render the check frame
   // -------------------------------------------------------------------------
   useEffect(() => {
-    if (!moonpayEmbeddedEnabled || !userEid) return;
+    // Enabled is published immediately (above) so Buy/Sell sees the usual
+    // "check pending" state; only the check itself waits for startup.
+    if (!moonpayEmbeddedEnabled || !userEid || !checkAllowed) return;
 
     // Skip if we already have valid credentials
     if (isMoonpayEmbeddedCredentialsValid()) return;
@@ -312,7 +352,13 @@ export function MoonpayEmbeddedCredentialManager() {
     // when wallet availability changes (false→true), not on every Redux action
     // that produces a new allKeys reference (balance updates, etc.).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moonpayEmbeddedEnabled, userEid, checkTrigger, hasEligibleWallet]);
+  }, [
+    moonpayEmbeddedEnabled,
+    userEid,
+    checkTrigger,
+    hasEligibleWallet,
+    checkAllowed,
+  ]);
 
   // -------------------------------------------------------------------------
   // Cleanup timer on unmount

@@ -48,7 +48,8 @@ const GiftCardDeeplinkScreen = ({
         },
       });
     }
-  }, [navigation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot deeplink redirect on mount; isEuLocation is read at that time
+  }, [dispatch, navigation]);
 
   return <></>;
 };

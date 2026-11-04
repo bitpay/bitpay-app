@@ -11,8 +11,8 @@ const PaymentMethodIcon: React.FC<{
   height?: number;
   iconOnly?: boolean;
 }> = ({paymentMethodId, width, height, iconOnly}) => {
+  const theme = useTheme();
   const renderSvg = (id: PaymentMethodKey | WithdrawalMethodKey) => {
-    const theme = useTheme();
     switch (id) {
       case 'ach':
       case 'gbpBankTransfer':

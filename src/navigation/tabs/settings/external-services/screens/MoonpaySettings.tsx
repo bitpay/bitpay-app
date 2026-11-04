@@ -150,7 +150,7 @@ const MoonpaySettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
-    [paymentRequests],
+    [paymentRequests, navigation, t],
   );
 
   const memoizedSellCryptoHistory = useCallback(
@@ -226,7 +226,7 @@ const MoonpaySettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
-    [sellOrders],
+    [sellOrders, navigation, t],
   );
 
   useEffect(() => {
@@ -253,6 +253,7 @@ const MoonpaySettings: React.FC = () => {
         }`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
 
   useEffect(() => {
@@ -267,6 +268,7 @@ const MoonpaySettings: React.FC = () => {
       );
       setSellOrders(moonpaySellOrders);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
   }, [isFocused]);
 
   return (

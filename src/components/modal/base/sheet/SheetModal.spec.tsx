@@ -18,7 +18,7 @@ let mockNextAnimationFrameId = 1;
 
 jest.mock('@gorhom/bottom-sheet', () => {
   const MockReact = require('react');
-  const {View} = require('react-native');
+  const {View: RNView} = require('react-native');
 
   const BottomSheetModal = MockReact.forwardRef((props: any, ref: any) => {
     mockBottomSheetModalProps = props;
@@ -32,7 +32,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
       style: {},
     });
     return MockReact.createElement(
-      View,
+      RNView,
       {testID: 'bottom-sheet-modal'},
       backdrop,
       props.children,
@@ -41,14 +41,14 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
   const BottomSheetBackdrop = (props: any) => {
     mockBottomSheetBackdropProps = props;
-    return MockReact.createElement(View, {
+    return MockReact.createElement(RNView, {
       testID: 'gorhom-backdrop',
       accessible: props.accessible,
     });
   };
 
   const BottomSheetView = ({children}: any) =>
-    MockReact.createElement(View, {testID: 'bottom-sheet-view'}, children);
+    MockReact.createElement(RNView, {testID: 'bottom-sheet-view'}, children);
 
   return {BottomSheetBackdrop, BottomSheetModal, BottomSheetView};
 });
@@ -94,21 +94,21 @@ jest.mock('react-native-gesture-handler', () => {
 });
 
 jest.mock('react-native-safe-area-context', () => {
-  const {View} = require('react-native');
+  const {View: RNView} = require('react-native');
 
   return {
-    SafeAreaView: View,
+    SafeAreaView: RNView,
     useSafeAreaInsets: () => ({bottom: 0, left: 0, right: 0, top: 0}),
   };
 });
 
 jest.mock('../BaseModal', () => {
   const MockReact = require('react');
-  const {View} = require('react-native');
+  const {View: RNView} = require('react-native');
   return (props: any) => {
     mockBaseModalProps = props;
     return MockReact.createElement(
-      View,
+      RNView,
       {
         testID: 'legacy-modal',
         accessibilityState: {expanded: props.isVisible},

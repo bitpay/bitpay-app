@@ -330,6 +330,10 @@ const TransactionDetailsContent = ({
   wallet,
   historyTarget,
 }: TransactionDetailsContentProps) => {
+  // React Compiler opt-out: saveTxDescription intentionally mutates the
+  // `transaction` prop in place (note/uiDescription) so the shared history
+  // object reflects the edit; the compiler assumes props are immutable.
+  'use no memo';
   const logger = useLogger();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
@@ -444,7 +448,9 @@ const TransactionDetailsContent = ({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async mount-time load; state is only set after awaits
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to load the transaction details
   }, []);
 
   const speedup = async () => {
@@ -576,6 +582,7 @@ const TransactionDetailsContent = ({
 
     try {
       await EditTxNote(wallet, {txid: txs.txid, body: newTxDescription});
+      // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
       transaction.note = {
         body: newTxDescription,
       };

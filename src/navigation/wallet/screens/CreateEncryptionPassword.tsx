@@ -97,6 +97,10 @@ interface EncryptPasswordFieldValues {
 }
 
 const CreateEncryptionPassword = () => {
+  // React Compiler opt-out: onSubmit intentionally mutates the Redux `key`
+  // object in place (key.isPrivKeyEncrypted) after dispatching it; replacing
+  // that with a copy/new action would change behaviour, so keep it uncompiled.
+  'use no memo';
   const {t} = useTranslation();
   const navigation = useNavigation();
   const {
@@ -142,6 +146,7 @@ const CreateEncryptionPassword = () => {
           }
         });
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
+        // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
         key.isPrivKeyEncrypted = checkPrivateKeyEncrypted(key);
         navigation.goBack();
         dispatch(
@@ -219,6 +224,7 @@ const CreateEncryptionPassword = () => {
           <PasswordInputContainer>
             <Controller
               control={control}
+              // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above (onSubmit mutates key)
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   ref={confirmPasswordRef}

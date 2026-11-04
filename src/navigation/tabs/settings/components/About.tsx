@@ -80,7 +80,7 @@ const About = () => {
   const [sessionLogsProdEnabled, setSessionLogsProdEnabled] = useState(() =>
     getSessionLogsProdEnabled(),
   );
-  const [versionTapCount, setVersionTapCount] = useState(0);
+  const [, setVersionTapCount] = useState(0);
 
   const showSessionLogs = __DEV__ || sessionLogsProdEnabled;
 

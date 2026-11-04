@@ -40,14 +40,19 @@ const Spinner = (props: SpinnerProps) => {
   const iconSize = scale * size;
 
   const angle = useSharedValue(-45);
-  angle.value = withRepeat(
-    withTiming(675, {duration: 1500, easing: Easing.bezier(0.5, 0, 0.25, 1.2)}),
-    -1,
-    false,
+  angle.set(
+    withRepeat(
+      withTiming(675, {
+        duration: 1500,
+        easing: Easing.bezier(0.5, 0, 0.25, 1.2),
+      }),
+      -1,
+      false,
+    ),
   );
 
   const spin = useAnimatedStyle(() => ({
-    transform: [{rotate: `${angle.value}deg`}],
+    transform: [{rotate: `${angle.get()}deg`}],
   }));
 
   return (

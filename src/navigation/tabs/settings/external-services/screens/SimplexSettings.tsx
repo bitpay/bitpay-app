@@ -131,7 +131,7 @@ const SimplexSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
-    [paymentRequests],
+    [paymentRequests, navigation, t],
   );
 
   const memoizedSellCryptoHistory = useCallback(
@@ -187,7 +187,7 @@ const SimplexSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
-    [sellOrders],
+    [sellOrders, navigation, t],
   );
 
   useEffect(() => {
@@ -214,6 +214,7 @@ const SimplexSettings: React.FC = () => {
         }`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
 
   useEffect(() => {
@@ -228,6 +229,7 @@ const SimplexSettings: React.FC = () => {
       );
       setSellOrders(simplexSellOrders);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
   }, [isFocused]);
 
   return (

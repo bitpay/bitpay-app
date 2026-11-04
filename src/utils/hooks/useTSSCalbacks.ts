@@ -77,7 +77,7 @@ export const useTSSCallbacks = ({
       setShowTSSProgressModal(false);
       setResetSwipeButton(true);
     },
-    [setShowTSSProgressModal, setResetSwipeButton],
+    [setTssStatus, setShowTSSProgressModal, setResetSwipeButton],
   );
 
   const onComplete = useCallback((_signature: string) => {

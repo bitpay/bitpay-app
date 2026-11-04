@@ -2299,6 +2299,12 @@
   "Show balances": "Mostrar saldos",
   "Hide balances": "Ocultar saldos",
   "Could not check this account for pending transactions. Check your connection and try again.": "No se pudo comprobar si esta cuenta tiene transacciones pendientes. Revise su conexión e inténtelo de nuevo.",
+  "Loading balance history": "Cargando historial de saldo",
+  "Updating history · {{completed}} of {{count}} wallets_one": "Actualizando historial · {{completed}} de {{count}} billetera",
+  "Updating history · {{completed}} of {{count}} wallets_many": "Actualizando historial · {{completed}} de {{count}} billeteras",
+  "Updating history · {{completed}} of {{count}} wallets_other": "Actualizando historial · {{completed}} de {{count}} billeteras",
+  "Couldn't load balance history.": "No se pudo cargar el historial de saldo.",
+  "Retry": "Reintentar",
   "Testnet mode unlocked": "Modo testnet desbloqueado",
   "Testnet wallets and networks are now shown. You can turn them off below.": "Ahora se muestran las billeteras y redes de testnet. Puede desactivarlas a continuación.",
   "Show Testnet Wallets": "Mostrar billeteras de testnet",
@@ -2308,7 +2314,9 @@
   "Add Testnet Wallets": "Agregar billeteras de testnet",
   "Wallet data could not be opened": "No se pudieron abrir los datos de la billetera",
   "Your local data was preserved. Retry or contact support. Do not uninstall the app or clear its data. Reference: {{id}}.": "Sus datos locales se conservaron. Vuelva a intentarlo o póngase en contacto con el soporte. No desinstale la aplicación ni borre sus datos. Referencia: {{id}}.",
-  "Retry": "Reintentar",
   "There are no wallets with enough funds on the {{network}} network.": "No hay billeteras con fondos suficientes en la red {{network}}.",
-  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Si elimina la aplicación BitPay o pierde su dispositivo, necesitará su frase de recuperación para obtener el acceso a sus fondos."
+  "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Si elimina la aplicación BitPay o pierde su dispositivo, necesitará su frase de recuperación para obtener el acceso a sus fondos.",
+  "Some assets not charted": "Algunos activos no están en el gráfico",
+  "Not all assets are charted": "No todos los activos están en el gráfico",
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "El gráfico y su variación aún no incluyen estos activos porque no se pudo reconstruir su historial. Tu balance del portafolio sí los incluye."
 }

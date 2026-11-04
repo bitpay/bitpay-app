@@ -159,9 +159,9 @@ export const buildUncompleteBadge = (
 };
 
 export const buildGasTokenBadge = (
-  IsVMChain: boolean | undefined,
+  isVMChain: boolean | undefined,
 ): ReactElement | undefined => {
-  if (!IsVMChain) {
+  if (!isVMChain) {
     return;
   }
   const badgeLabel = 'Gas Token';

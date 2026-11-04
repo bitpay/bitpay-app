@@ -19,20 +19,24 @@ const ChartSelectionDot = ({
   const innerRadius = useSharedValue(0);
 
   useAnimatedReaction(
-    () => isActive.value,
+    () => isActive.get(),
     active => {
-      outerRadius.value = withSpring(active ? 9 : 0, {
-        mass: 1,
-        stiffness: 1000,
-        damping: 50,
-        velocity: 0,
-      });
-      innerRadius.value = withSpring(active ? 4 : 0, {
-        mass: 1,
-        stiffness: 1000,
-        damping: 50,
-        velocity: 0,
-      });
+      outerRadius.set(
+        withSpring(active ? 9 : 0, {
+          mass: 1,
+          stiffness: 1000,
+          damping: 50,
+          velocity: 0,
+        }),
+      );
+      innerRadius.set(
+        withSpring(active ? 4 : 0, {
+          mass: 1,
+          stiffness: 1000,
+          damping: 50,
+          velocity: 0,
+        }),
+      );
     },
   );
 

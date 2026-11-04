@@ -142,6 +142,7 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
   useEffect(() => {
     return () => {
       dismissTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- ref holds a single Map that is never reassigned, so unmount must read its latest entries to clear pending timeouts
       dismissTimeoutsRef.current.clear();
     };
   }, []);

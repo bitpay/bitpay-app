@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef} from 'react';
+import {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
 import FastImage from 'react-native-fast-image';
 import type {Keys} from '../../../store/wallet/wallet.reducer';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
@@ -53,12 +53,16 @@ const usePreloadedCustomGlobalSelectList = ({
     selectedChainFilterOption,
     livenetOnly,
   });
-  preloadInputsRef.current = {
-    keys,
-    customToSelectCurrencies,
-    selectedChainFilterOption,
-    livenetOnly,
-  };
+  // Keep the latest inputs for `preload`, which is only invoked from
+  // effects/event handlers (never during render).
+  useLayoutEffect(() => {
+    preloadInputsRef.current = {
+      keys,
+      customToSelectCurrencies,
+      selectedChainFilterOption,
+      livenetOnly,
+    };
+  });
 
   const preload = useCallback(() => {
     const currentInputs = preloadInputsRef.current;

@@ -1,11 +1,14 @@
+import {useMemo} from 'react';
 import {shallowEqual} from 'react-redux';
 import {selectHasCompletedFullPortfolioPopulate} from '../../../store/portfolio/portfolio.selectors';
 import type {Wallet} from '../../../store/wallet/wallet.models';
 import {useAppSelector} from '../../../utils/hooks';
 import {
+  getPopulateProgressForWallets,
   hasCompletedPopulateForWallets,
   isPopulateLoadingForWallets,
   walletsHaveNonZeroLiveBalance,
+  type PortfolioPopulateProgress,
 } from '../../../utils/portfolio/assets';
 import usePortfolioChartableWallets from './usePortfolioChartableWallets';
 import usePortfolioWalletSnapshotPresence from './usePortfolioWalletSnapshotPresence';
@@ -18,6 +21,11 @@ export type PortfolioBalanceChartReadiness = {
   hasHistoricalChartData: boolean;
   isChartDataPending: boolean;
   isScopePopulateLoading: boolean;
+  /**
+   * Wallet counts for the populate running over this chart's scope, or
+   * undefined when none is running (or counts are unknown).
+   */
+  populateProgress?: PortfolioPopulateProgress;
   isSnapshotPresenceLoading: boolean;
   isBalanceChartDataReadyToQuery: boolean;
   shouldRenderZeroBalanceChart: boolean;
@@ -42,31 +50,53 @@ export default function usePortfolioBalanceChartReadiness(args: {
   const hasChartableWallets = chartableWallets.length > 0;
   const baseEnabled = enabled && hasChartableWallets;
 
-  const {hasCompletedScopePopulate, isScopePopulateLoading} = useAppSelector(
-    ({PORTFOLIO}) => {
-      if (!baseEnabled) {
-        return {
-          hasCompletedScopePopulate: false,
-          isScopePopulateLoading: false,
-        };
-      }
-
-      const populateStatus = PORTFOLIO.populateStatus;
+  const {
+    hasCompletedScopePopulate,
+    isScopePopulateLoading,
+    populateCompleted,
+    populateTotal,
+  } = useAppSelector(({PORTFOLIO}) => {
+    if (!baseEnabled) {
       return {
-        hasCompletedScopePopulate:
-          hasCompletedFullPortfolioPopulate ||
-          hasCompletedPopulateForWallets({
-            populateStatus,
-            wallets: chartableWallets,
-            requireAllWalletsInScope: true,
-          }),
-        isScopePopulateLoading: isPopulateLoadingForWallets({
+        hasCompletedScopePopulate: false,
+        isScopePopulateLoading: false,
+        populateCompleted: 0,
+        populateTotal: 0,
+      };
+    }
+
+    const populateStatus = PORTFOLIO.populateStatus;
+    const scopePopulateLoading = isPopulateLoadingForWallets({
+      populateStatus,
+      wallets: chartableWallets,
+    });
+    // Only track counts while this scope is populating; otherwise the counts
+    // stay at 0 so progress ticks elsewhere do not re-render this screen.
+    const progress = scopePopulateLoading
+      ? getPopulateProgressForWallets({
           populateStatus,
           wallets: chartableWallets,
+        })
+      : undefined;
+    return {
+      hasCompletedScopePopulate:
+        hasCompletedFullPortfolioPopulate ||
+        hasCompletedPopulateForWallets({
+          populateStatus,
+          wallets: chartableWallets,
+          requireAllWalletsInScope: true,
         }),
-      };
-    },
-    shallowEqual,
+      isScopePopulateLoading: scopePopulateLoading,
+      populateCompleted: progress?.completed ?? 0,
+      populateTotal: progress?.total ?? 0,
+    };
+  }, shallowEqual);
+  const populateProgress = useMemo<PortfolioPopulateProgress | undefined>(
+    () =>
+      populateTotal > 0
+        ? {completed: populateCompleted, total: populateTotal}
+        : undefined,
+    [populateCompleted, populateTotal],
   );
   const canCheckSnapshotPresence = baseEnabled && hasCompletedScopePopulate;
   const snapshotPresence = usePortfolioWalletSnapshotPresence({
@@ -118,6 +148,7 @@ export default function usePortfolioBalanceChartReadiness(args: {
     isChartDataPending,
     isScopePopulateLoading,
     isSnapshotPresenceLoading,
+    populateProgress,
     shouldRenderZeroBalanceChart,
     shouldPreserveStaleBalanceChart,
     shouldMountBalanceChart,

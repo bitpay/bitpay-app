@@ -113,7 +113,6 @@ import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
-import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 const styles = StyleSheet.create({
@@ -199,7 +198,6 @@ const SimplexSellCheckout: React.FC = () => {
   });
   const {
     control,
-    handleSubmit,
     setError,
     clearErrors,
     setValue,
@@ -214,7 +212,7 @@ const SimplexSellCheckout: React.FC = () => {
 
   const [toAddressValue, setToAddressValue] = useState<string | undefined>();
   const [validAddress, setValidAddress] = useState(false);
-  const [isToken, setIsToken] = useState(
+  const [isToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -223,7 +221,7 @@ const SimplexSellCheckout: React.FC = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [expiredAnalyticSent, setExpiredAnalyticSent] =
     useState<boolean>(false);
-  const [amountExpected, setAmountExpected] = useState<number>(amount);
+  const [amountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
@@ -277,15 +275,15 @@ const SimplexSellCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    intervalId?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr('expired');
-      if (countDown) {
-        clearInterval(countDown);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
       return;
     }
@@ -321,9 +319,9 @@ const SimplexSellCheckout: React.FC = () => {
       const coinAndNetwork = GetCoinAndNetwork(address);
       if (coinAndNetwork) {
         if (
-          coinAndNetwork.coin?.toLowerCase() !=
+          coinAndNetwork.coin?.toLowerCase() !==
             wallet.currencyAbbreviation?.toLowerCase() ||
-          coinAndNetwork.network != 'livenet'
+          coinAndNetwork.network !== 'livenet'
         ) {
           setError('toAddress', {
             type: 'manual',
@@ -384,13 +382,13 @@ const SimplexSellCheckout: React.FC = () => {
   };
 
   const createTx = async (
-    wallet: Wallet,
+    txWallet: Wallet,
     toAddress: string,
     depositSat: string,
     destTag?: string,
   ): Promise<TransactionProposal> => {
     try {
-      const message = `Sold ${wallet.currencyAbbreviation.toUpperCase()}`;
+      const message = `Sold ${txWallet.currencyAbbreviation.toUpperCase()}`;
       let outputs = [];
 
       outputs.push({
@@ -402,7 +400,7 @@ const SimplexSellCheckout: React.FC = () => {
       let txp: Partial<TransactionProposal> = {
         toAddress,
         amount: depositSat,
-        chain: wallet.chain,
+        chain: txWallet.chain,
         outputs,
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
@@ -413,8 +411,8 @@ const SimplexSellCheckout: React.FC = () => {
       };
 
       if (isToken) {
-        if (wallet.tokenAddress) {
-          txp.tokenAddress = wallet.tokenAddress;
+        if (txWallet.tokenAddress) {
+          txp.tokenAddress = txWallet.tokenAddress;
           if (IsEVMChain(txp.chain!)) {
             if (txp.outputs) {
               for (const output of txp.outputs) {
@@ -423,19 +421,19 @@ const SimplexSellCheckout: React.FC = () => {
                 }
                 if (!output.data) {
                   output.data = BWC.getCore()
-                    .Transactions.get({chain: getCWCChain(wallet.chain)})
+                    .Transactions.get({chain: getCWCChain(txWallet.chain)})
                     .encodeData({
                       recipients: [
                         {address: output.toAddress, amount: output.amount},
                       ],
-                      tokenAddress: wallet.tokenAddress,
+                      tokenAddress: txWallet.tokenAddress,
                     });
                 }
               }
             }
           } else if (IsSVMChain(txp.chain!)) {
             const receiveAddressSolanaTokens: SolanaTokenData[] =
-              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
+              await getSolanaATAs(txWallet?.receiveAddress!, txWallet?.network);
 
             let ataReceiveAddress: SolanaTokenData | undefined;
             if (receiveAddressSolanaTokens) {
@@ -453,7 +451,7 @@ const SimplexSellCheckout: React.FC = () => {
               const _ataReceiveAddress =
                 await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
-                  feePayer: wallet?.receiveAddress!,
+                  feePayer: txWallet?.receiveAddress!,
                 });
               txp.fromAta = _ataReceiveAddress;
               logger.debug(
@@ -463,7 +461,7 @@ const SimplexSellCheckout: React.FC = () => {
 
             if (txp.outputs) {
               const toAddressSolanaTokens: SolanaTokenData[] =
-                await getSolanaATAs(toAddress, wallet?.network);
+                await getSolanaATAs(toAddress, txWallet?.network);
 
               let ataToAddress: string | undefined;
               if (toAddressSolanaTokens) {
@@ -498,7 +496,7 @@ const SimplexSellCheckout: React.FC = () => {
         txp.fee = sendMaxInfo.fee;
         txp.feePerKb = undefined;
       } else {
-        if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
+        if (['btc', 'eth', 'matic'].includes(txWallet.chain)) {
           txp.feeLevel = 'priority';
         } // Avoid expired order due to slow TX confirmation
       }
@@ -507,8 +505,8 @@ const SimplexSellCheckout: React.FC = () => {
         txp.destinationTag = Number(destTag);
       }
 
-      const ctxp = await dispatch(createTxProposal(wallet, txp));
-      return Promise.resolve(ctxp);
+      const createdTxp = await dispatch(createTxProposal(txWallet, txp));
+      return Promise.resolve(createdTxp);
     } catch (err: any) {
       const errStr =
         err instanceof Error
@@ -673,14 +671,16 @@ const SimplexSellCheckout: React.FC = () => {
     let warningMsg = dispatch(
       GetExcludedUtxosMessage(coin, chain, tokenAddress, sendMaxInfo),
     );
-    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
+    const sendMaxFee = dispatch(
+      SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress),
+    );
 
     const msg =
       t(
         'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
         {
           chain: dispatch(GetName(chain, chain)) || chain.toUpperCase(),
-          fee,
+          fee: sendMaxFee,
           coin: coin.toUpperCase(),
         },
       ) + `\n${warningMsg}`;
@@ -778,6 +778,7 @@ const SimplexSellCheckout: React.FC = () => {
 
   useEffect(() => {
     if (isToken) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- known bug (RN-3026): this override is lost on later renders
       useSendMax = false;
     }
 
@@ -822,15 +823,19 @@ const SimplexSellCheckout: React.FC = () => {
       }
 
       createTx(wallet, toAddress, depositSat, destinationTag)
-        .then(async ctxp => {
-          setCtxp(ctxp);
-          setFee(ctxp.fee);
+        .then(async newCtxp => {
+          setCtxp(newCtxp);
+          setFee(newCtxp.fee);
           setIsLoading(false);
           hideOngoingProcess();
           await sleep(400);
 
           if (useSendMax) {
-            showSendMaxWarning(ctxp.coin, ctxp.chain, wallet.tokenAddress);
+            showSendMaxWarning(
+              newCtxp.coin,
+              newCtxp.chain,
+              wallet.tokenAddress,
+            );
           }
           return;
         })
@@ -854,7 +859,8 @@ const SimplexSellCheckout: React.FC = () => {
           return;
         });
     }
-  }, [validAddress, toAddressValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- creates the tx only when the entered address changes/validates; wallet, amount and helpers are read at that time
+  }, [validAddress, toAddressValue, dispatch, logger]);
 
   useEffect(() => {
     if (remainingTimeStr === 'expired' && !expiredAnalyticSent) {
@@ -873,7 +879,8 @@ const SimplexSellCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
-  }, [remainingTimeStr, expiredAnalyticSent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on expiry state changes only; quote/wallet values are read at that time for the analytics payload
+  }, [remainingTimeStr, expiredAnalyticSent, dispatch]);
 
   useEffect(() => {
     if (!resetSwipeButton) {

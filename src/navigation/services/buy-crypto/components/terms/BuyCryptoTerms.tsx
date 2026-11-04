@@ -111,10 +111,10 @@ const BuyCryptoTerms: React.FC<{
   const dispatch = useAppDispatch();
 
   const getLinks = (
-    exchangeKey: BuyCryptoExchangeKey,
-    pm: PaymentMethod | undefined,
+    linksExchangeKey: BuyCryptoExchangeKey,
+    _pm: PaymentMethod | undefined,
   ) => {
-    switch (exchangeKey) {
+    switch (linksExchangeKey) {
       case 'banxa':
         return {
           fees: 'https://support.banxa.com/en/support/solutions/articles/44002465167-how-does-banxa-set-the-price-of-cryptocurrency-',
@@ -127,7 +127,7 @@ const BuyCryptoTerms: React.FC<{
             ? 'https://www.moonpay.com/legal/europe_pricing_disclosure'
             : 'https://www.moonpay.com/legal/pricing_disclosure',
           terms:
-            country == 'US'
+            country === 'US'
               ? 'https://www.moonpay.com/legal/terms_of_use_usa'
               : 'https://www.moonpay.com/legal/terms_of_use',
         };
@@ -135,7 +135,7 @@ const BuyCryptoTerms: React.FC<{
         return {
           fees: 'https://support.rampnetwork.com/en/articles/10415-what-fees-does-ramp-charge-for-buying-and-selling-crypto',
           terms:
-            country == 'US'
+            country === 'US'
               ? 'https://rampnetwork.com/terms-of-service/#us-terms-of-service'
               : 'https://rampnetwork.com/terms-of-service/#global-terms-of-service',
         };

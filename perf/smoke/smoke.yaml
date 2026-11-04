@@ -1,0 +1,79 @@
+appId: com.bitpay.wallet
+---
+# Broad smoke pass over the main surfaces, for builds whose risk is a
+# reflection/keep-rule break (R8) rather than a logic change. Read-only: it
+# opens screens and backs out; it never confirms a send, buy, sell or swap.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 60000
+- runFlow: _assert-ok.yaml
+
+- tapOn: 'Receive'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'Send'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'Swap'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'Buy'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'Sell'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+
+# Wallet details (history, chart)
+- tapOn: 'My Key'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+
+# Scan (camera + ML Kit barcode)
+- tapOn:
+    point: '7%,8%'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+
+- tapOn:
+    id: 'tab-shop'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- tapOn:
+    id: 'tab-bills'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- tapOn:
+    id: 'tab-settings'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- tapOn: 'General'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'Security'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'Wallets & Keys'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn: 'About BitPay'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml
+- back
+- tapOn:
+    id: 'tab-home'
+- waitForAnimationToEnd
+- runFlow: _assert-ok.yaml

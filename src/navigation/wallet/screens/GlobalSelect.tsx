@@ -832,14 +832,16 @@ const buildSelectableWalletList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
 
-      coinEntry.chains.forEach(chain => {
-        const wallet = filteredWallets.find(w => w.chain === chain);
-        if (!wallet || coinEntry.chainsImg[chain]?.priority) {
+      coinEntry.chains.forEach(entryChain => {
+        const wallet = filteredWallets.find(w => w.chain === entryChain);
+        if (!wallet || coinEntry.chainsImg[entryChain]?.priority) {
           return;
         }
-        coinEntry.chainsImg[chain] = {
+        coinEntry.chainsImg[entryChain] = {
           badgeUri:
-            IsVMChain(chain) && !wallet.badgeImg ? wallet.img : wallet.badgeImg,
+            IsVMChain(entryChain) && !wallet.badgeImg
+              ? wallet.img
+              : wallet.badgeImg,
           priority,
         };
       });
@@ -986,6 +988,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   navigation,
   route,
 }) => {
+  // React Compiler opt-out: customCurrenciesSupportedList reads and writes
+  // customGlobalSelectListCacheRef inside useMemo to reuse the previous list
+  // (structural sharing across renders), plus latest-value refs written during
+  // render. The compiler rejects ref access during render and could not
+  // preserve this screen's manual memoization; opting out keeps the current
+  // (uncompiled) behaviour.
+  'use no memo';
   const {t} = useTranslation();
   let {context, recipient, amount, selectedAccountAddress, assetContext} =
     route.params || {};
@@ -1025,6 +1034,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     [
       customSupportedCurrencies,
       customTokenOptionsByAddress,
+      // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
       requiresCurrencyCatalog,
       tokenOptionsByAddress,
     ],
@@ -1104,6 +1114,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   useEffect(() => {
     if (useAsModal) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs focus state from navigation (external) on mount/when mode changes
       setIsFocused(true);
       return;
     }
@@ -1380,8 +1391,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         wallets,
         previous:
           preloadedCustomToSelectCurrenciesList ??
+          // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
           customGlobalSelectListCacheRef.current,
       });
+      // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
       customGlobalSelectListCacheRef.current = resolvedList;
       return resolvedList.data;
     } else {
@@ -1411,6 +1424,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
 
     initialAccountSelectionHandledRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot initial account selection once the list is available
     setSelectedEVMAccount(initialAccountSelection.account);
     setSelectedAssetsFromAccount(
       initialAccountSelection.assetsByChain as AssetsByChainData[],
@@ -1489,22 +1503,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     (selectObj: GlobalSelectObj) => openCryptoSelectorRef.current(selectObj),
     [],
   );
-
-  useLayoutEffect(() => {
-    openCryptoSelectorRef.current = async (selectObj: GlobalSelectObj) => {
-      const availableKeys = Object.values(keys);
-      if (availableKeys.length > 1) {
-        openKeySelector(selectObj);
-      } else {
-        const selectedKey = availableKeys[0];
-        if (IsVMChain(selectObj.chains[0])) {
-          openAccountSelector(selectObj, selectedKey);
-        } else {
-          openAccountUtxoSelector(selectObj, selectedKey);
-        }
-      }
-    };
-  });
 
   useEffect(() => {
     if (autoAdvanceReceiveRef.current) {
@@ -1667,11 +1665,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
-              onAmountSelected: async (amount, setButtonState, amountOpts) => {
+              onAmountSelected: async (
+                selectedAmount,
+                setButtonState,
+                amountOpts,
+              ) => {
                 dispatch(
                   createProposalAndNavigate({
                     wallet,
-                    amount,
+                    amount: selectedAmount,
                     sendTo,
                     setButtonState,
                     opts: {...opts, ...amountOpts},
@@ -1748,6 +1750,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     [context, navigation],
   );
   const preloadSendToRef = useRef(preloadSendTo);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   preloadSendToRef.current = preloadSendTo;
   const stablePreloadSendTo = useCallback(
     (wallet: Wallet | undefined) => preloadSendToRef.current(wallet),
@@ -1760,6 +1763,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }`
     : undefined;
   const firstSendWalletRef = useRef(firstSendWallet);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   firstSendWalletRef.current = firstSendWallet;
 
   useEffect(() => {
@@ -2203,6 +2207,25 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   };
 
+  // Declared after the selector helpers it references. There are no layout
+  // effects in between, and openCryptoSelector is only invoked from passive
+  // effects and handlers, so it still sees the latest implementation.
+  useLayoutEffect(() => {
+    openCryptoSelectorRef.current = async (selectObj: GlobalSelectObj) => {
+      const availableKeys = Object.values(keys);
+      if (availableKeys.length > 1) {
+        openKeySelector(selectObj);
+      } else {
+        const selectedKey = availableKeys[0];
+        if (IsVMChain(selectObj.chains[0])) {
+          openAccountSelector(selectObj, selectedKey);
+        } else {
+          openAccountUtxoSelector(selectObj, selectedKey);
+        }
+      }
+    };
+  });
+
   const openNetworkSelector = async (
     selectedAccount: AccountRowProps | undefined,
     selectedCurrency: GlobalSelectObj,
@@ -2254,11 +2277,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }
       // user is selecting address to receive funds if context === receive
       setCryptoSelectModalVisible(false);
-      const {keyId, wallets} = selectedAccount;
+      const {keyId, wallets: accountWallets} = selectedAccount;
       const walletFullObject = findWalletById(
         keys[keyId].wallets,
-        wallets[0].id,
-        wallets[0].copayerId,
+        accountWallets[0].id,
+        accountWallets[0].copayerId,
       ) as Wallet;
       onWalletSelect(walletFullObject, undefined);
       return;
@@ -2290,6 +2313,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       // No wallets available
       // TODO: show warning
       if (useAsModal) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- dismisses the modal when no wallets are available
         closeModal();
       }
     }
@@ -2314,6 +2338,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       );
 
     if (!selectedAccount) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciles the selected account when the list changes underneath it
       setSearchVal('');
       setSearchResults([]);
       setSelectedEVMAccount({} as Partial<AccountRowProps>);

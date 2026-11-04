@@ -341,14 +341,16 @@ const StatefulButtonContent: React.FC<
     }
 
     previousHiddenRef.current = hidden;
-    childOpacity.value = withDelay(
-      hidden ? 0 : DURATION,
-      withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+    childOpacity.set(
+      withDelay(
+        hidden ? 0 : DURATION,
+        withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+      ),
     );
   }, [childOpacity, hidden]);
 
   const childrenStyle = useAnimatedStyle(() => ({
-    opacity: childOpacity.value,
+    opacity: childOpacity.get(),
   }));
 
   return <Animated.View style={childrenStyle}>{children}</Animated.View>;

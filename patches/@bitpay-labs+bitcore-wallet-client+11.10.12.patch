@@ -1,0 +1,72 @@
+diff --git a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
+index edec33e..ea765e8 100644
+--- a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
++++ b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common/utils.js
+@@ -87,11 +87,41 @@ class Utils {
+     }
+     static signMessage(message, privKey) {
+         $.checkArgument(message);
+-        const priv = new PrivateKey(privKey);
++        const priv = Utils._requestPrivateKey(privKey);
+         const flattenedMessage = Array.isArray(message) ? message.join(',') : message;
+         const hash = this.hashMessage(flattenedMessage);
+         return crypto.ECDSA.sign(hash, priv, { endian: 'little' }).toString();
+     }
++    // Every BWS request is signed with the same request key. Building a new
++    // PrivateKey from the string each time re-derived its public key (one EC
++    // multiplication) and re-validated it (another, the slower kind) just to
++    // read the `compressed` flag, tripling the cost of each signature; on a
++    // mid-range Android phone under Hermes that was ~50 ms of JS per request.
++    // The string form of the key already lives in the wallet credentials, so
++    // keeping its parsed PrivateKey changes nothing about what is in memory.
++    // Signatures are unchanged (RFC 6979 deterministic k).
++    // Called when a key is deleted, so parsed request keys don't outlive
++    // the wallets they belong to.
++    static clearRequestPrivateKeyCache() {
++        if (Utils._requestPrivateKeys) {
++            Utils._requestPrivateKeys.clear();
++        }
++    }
++    static _requestPrivateKey(privKey) {
++        if (typeof privKey !== 'string') {
++            return new PrivateKey(privKey);
++        }
++        const cache = Utils._requestPrivateKeys || (Utils._requestPrivateKeys = new Map());
++        let priv = cache.get(privKey);
++        if (!priv) {
++            priv = new PrivateKey(privKey);
++            if (cache.size >= 32) {
++                cache.delete(cache.keys().next().value);
++            }
++            cache.set(privKey, priv);
++        }
++        return priv;
++    }
+     static verifyMessage(message, signature, pubKey) {
+         $.checkArgument(message);
+         $.checkArgument(pubKey);
+diff --git a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js
+index c8bef3f..c495251 100644
+--- a/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js
++++ b/node_modules/@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/tsskey.js
+@@ -132,17 +132,19 @@ class TssKeyGen extends events_1.EventEmitter {
+         _TssKeyGen_subscriptionId.set(this, void 0);
+         _TssKeyGen_subscriptionRunning.set(this, void 0);
+         $.checkArgument(params.chain, 'Missing required param: chain');
++        $.checkArgument(params.coin, 'Missing required param: coin');
+         $.checkArgument(params.network, 'Missing required param: network');
+         $.checkArgument(params.baseUrl, 'Missing required param: baseUrl');
+         $.checkArgument(params.key, 'Missing required param: key');
+         $.checkArgument(params.key instanceof key_1.Key, 'key must be an instance of Key');
+         this.chain = params.chain.toLowerCase();
++        this.coin = params.coin.toLowerCase();
+         this.network = params.network;
+         __classPrivateFieldSet(this, _TssKeyGen_request, new request_1.Request(params.baseUrl, {
+             r: params.request,
+         }), "f");
+         __classPrivateFieldSet(this, _TssKeyGen_key, params.key, "f");
+-        __classPrivateFieldSet(this, _TssKeyGen_credentials, __classPrivateFieldGet(this, _TssKeyGen_key, "f").createCredentials(params.password, { chain: this.chain, network: this.network, n: 1, account: 0 }), "f");
++        __classPrivateFieldSet(this, _TssKeyGen_credentials, __classPrivateFieldGet(this, _TssKeyGen_key, "f").createCredentials(params.password, { coin: this.coin, chain: this.chain, network: this.network, n: 1, account: 0 }), "f");
+         __classPrivateFieldGet(this, _TssKeyGen_request, "f").setCredentials(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f"));
+         __classPrivateFieldSet(this, _TssKeyGen_requestPrivateKey, crypto_wallet_core_1.BitcoreLib.PrivateKey.fromString(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f").requestPrivKey), "f");
+         const baseXPrivKey = __classPrivateFieldGet(this, _TssKeyGen_key, "f").get(params.password).xPrivKey;

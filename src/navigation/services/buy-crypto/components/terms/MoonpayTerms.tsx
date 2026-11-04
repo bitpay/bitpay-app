@@ -73,7 +73,7 @@ const MoonpayTerms: React.FC<{
           haptic('impactLight');
           dispatch(
             openUrlWithInAppBrowser(
-              country == 'US'
+              country === 'US'
                 ? 'https://www.moonpay.com/legal/terms_of_use_usa'
                 : 'https://www.moonpay.com/legal/terms_of_use',
             ),

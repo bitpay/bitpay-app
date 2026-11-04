@@ -3,7 +3,7 @@ import {StyleSheet, TouchableHighlight, View} from 'react-native';
 import {useTheme} from '../../contexts';
 import {Column} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
-import {Black, GhostWhite, SlateDark, White} from '../../styles/colors';
+import {GhostWhite} from '../../styles/colors';
 import AngleRight from '../../../assets/img/angle-right.svg';
 import ContactIcon from '../../navigation/tabs/contacts/components/ContactIcon';
 import {getCurrencyAbbreviation} from '../../utils/helper-methods';

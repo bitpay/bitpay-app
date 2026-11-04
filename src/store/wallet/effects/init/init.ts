@@ -34,6 +34,7 @@ const runWalletStoreInit = async (
         getAndDispatchUpdatedWalletBalances({
           context: 'init',
           skipRateUpdate: false,
+          forceRateUpdate: false,
         }),
       );
     } else {

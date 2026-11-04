@@ -115,6 +115,11 @@ import {
   logReducerDuration,
 } from './performanceDiagnostics';
 import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
+import {
+  isPerfEnabled,
+  recordAction,
+  registerStoreForPerf,
+} from '../perf/PerfMonitor';
 
 import {modernStorage as storage, requireVaultActive} from './vault-storage';
 import {prepareModernVault} from './vault-runtime';
@@ -209,7 +214,7 @@ const removePortfolioChartsPersistRoot = (
     delete parsed.PORTFOLIO_CHARTS;
 
     return {changed: true, value: JSON.stringify(parsed)};
-  } catch (_) {
+  } catch {
     return {changed: false, value: rawJson};
   }
 };
@@ -291,7 +296,7 @@ export const reduxStorage: Storage = {
         pendingPersistRoot = valueToStore;
         runFsBackup();
       }
-    } catch (_) {}
+    } catch {}
     if (PERF_DEBUG) {
       logPersistPhase(
         'setItem.total',
@@ -320,7 +325,7 @@ export const reduxStorage: Storage = {
             logManager.info(
               `MMKV persist:root removed PORTFOLIO_CHARTS - beforeBytes:${value.length} afterBytes:${sanitized.value.length}`,
             );
-          } catch (_) {}
+          } catch {}
         }
         return Promise.resolve(sanitized.value);
       }
@@ -516,6 +521,7 @@ const rootReducer = (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- dev debug toggle: enabled by uncommenting middlewares.push(logger) in configureStore
 const logger = createLogger({
   predicate: (_getState, action) =>
     ![
@@ -609,6 +615,13 @@ const initializeStore = async () => {
         store.dispatch(clearWalletPortfolioDataWithRuntime({walletIds}) as any);
       }
 
+      // BWC keeps parsed request keys for signing (patched for speed); drop
+      // them with the key. Lazy so the store module doesn't load BWC early.
+      try {
+        const {BwcProvider} = require('../lib/bwc');
+        BwcProvider.getInstance().getUtils().clearRequestPrivateKeyCache?.();
+      } catch {}
+
       return result;
     };
   };
@@ -622,7 +635,7 @@ const initializeStore = async () => {
             flushPersistenceSoon();
           }
         }
-      } catch (_) {}
+      } catch {}
       return next(action);
     };
 
@@ -635,6 +648,22 @@ const initializeStore = async () => {
 
   if (PERF_DEBUG) {
     middlewares.unshift(reduxPerformanceMiddleware);
+  }
+  // Perf builds only (IS_PERF): counts and times every action for the
+  // harness's load profile. Outermost, so it times the whole chain.
+  if (isPerfEnabled) {
+    middlewares.unshift(() => next => (action: AnyAction) => {
+      const startedAt = performance.now();
+      const result = next(action);
+      if (typeof action?.type === 'string') {
+        recordAction(
+          action.type,
+          performance.now() - startedAt,
+          (action as AnyAction).payload,
+        );
+      }
+      return result;
+    });
   }
   middlewares.push(lastActionMiddleware());
   middlewares.push(invalidateWalletDerivedCachesMiddleware);
@@ -781,7 +810,7 @@ const initializeStore = async () => {
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.start storageKeys:${keysCount}`,
             );
-          } catch (_) {}
+          } catch {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
           !firstRehydrateLogged
@@ -793,7 +822,7 @@ const initializeStore = async () => {
             const totalSize = (() => {
               try {
                 return JSON.stringify(payload).length;
-              } catch (_) {
+              } catch {
                 return -1;
               }
             })();
@@ -802,15 +831,15 @@ const initializeStore = async () => {
               Object.keys(payload).forEach(k => {
                 try {
                   sizeByReduxKey[k] = JSON.stringify(payload[k]).length;
-                } catch (_) {}
+                } catch {}
               });
-            } catch (_) {}
+            } catch {}
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.complete durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
                 sizeByReduxKey,
               )}`,
             );
-          } catch (_) {}
+          } catch {}
         }
       }
       return next(action);
@@ -824,6 +853,9 @@ const initializeStore = async () => {
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+  registerStoreForPerf(
+    store.getState as unknown as () => Record<string, unknown>,
+  );
   // Registered before the Provider subscribes, so list helpers see the new
   // testnet visibility by the time components re-render.
   store.subscribe(() =>

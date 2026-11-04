@@ -1,0 +1,7 @@
+appId: com.bitpay.wallet
+---
+# No `launchApp` — the harness handles the warm restart (see startup_cold.yaml).
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 60000

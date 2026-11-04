@@ -299,3 +299,60 @@ describe('balanceChartData view model hydration', () => {
     expect(hydrated?.pointByTimestamp.get(1002)?.timestamp).toBe(900);
   });
 });
+
+describe('balanceChartData request order', () => {
+  // Mixed-case SVM token addresses are where a code-unit order differs from
+  // the localeCompare order this builder used before; only the set of
+  // requests and their cache keys matter, and the order must be stable.
+  const wallets = [
+    makeStoredWallet({walletId: 'w-btc', coin: 'btc'}),
+    makeStoredWallet({walletId: 'w-eth', coin: 'eth'}),
+    makeStoredWallet({
+      walletId: 'w-usdc-eth',
+      coin: 'usdc',
+      chain: 'eth',
+      tokenAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    }),
+    makeStoredWallet({
+      walletId: 'w-usdc-sol',
+      coin: 'usdc',
+      chain: 'sol',
+      tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    }),
+    makeStoredWallet({
+      walletId: 'w-usdt-sol',
+      coin: 'usdt',
+      chain: 'sol',
+      tokenAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    }),
+    makeStoredWallet({walletId: 'w-sol', coin: 'sol'}),
+  ];
+  const build = (input: typeof wallets) =>
+    buildBalanceChartHistoricalRateRequests({
+      wallets: input,
+      quoteCurrency: 'EUR',
+      timeframes: ['1D'],
+    });
+  const asSet = (groups: ReturnType<typeof build>) =>
+    groups
+      .flatMap(group =>
+        group.requests.map(request =>
+          JSON.stringify([group.quoteCurrency, request]),
+        ),
+      )
+      .sort();
+
+  it('builds the same requests and cache keys whatever the wallet order', () => {
+    const forward = build(wallets);
+    const reversed = build([...wallets].reverse());
+    const rotated = build([...wallets.slice(3), ...wallets.slice(0, 3)]);
+
+    expect(reversed).toEqual(forward);
+    expect(rotated).toEqual(forward);
+    expect(
+      getBalanceChartHistoricalRateCacheKeysFromRequestGroups(reversed),
+    ).toEqual(getBalanceChartHistoricalRateCacheKeysFromRequestGroups(forward));
+    expect(asSet(forward)).toHaveLength(new Set(asSet(forward)).size);
+    expect(asSet(forward).length).toBeGreaterThan(wallets.length);
+  });
+});

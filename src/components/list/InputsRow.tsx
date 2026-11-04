@@ -1,4 +1,4 @@
-import React, {memo, useEffect, useState} from 'react';
+import React, {memo, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {ActiveOpacity, Column} from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
@@ -27,6 +27,8 @@ const styles = StyleSheet.create({
 const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
   const {amount, address, checked: initialCheckValue, fiatAmount} = item;
   const [checked, setChecked] = useState(!!initialCheckValue);
+  const [prevInitialCheckValue, setPrevInitialCheckValue] =
+    useState(initialCheckValue);
 
   const toggle = (): void => {
     const newCheckedState = !checked;
@@ -35,10 +37,12 @@ const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
     emit({...item, checked: newCheckedState}, index);
   };
 
-  // Effect to synchronize internal state with prop changes
-  useEffect(() => {
+  // Synchronize internal state with prop changes (adjust-state-during-render
+  // pattern instead of an effect, so there is no extra commit with stale state)
+  if (prevInitialCheckValue !== initialCheckValue) {
+    setPrevInitialCheckValue(initialCheckValue);
     setChecked(!!initialCheckValue);
-  }, [initialCheckValue]);
+  }
 
   return (
     <RowContainer

@@ -87,7 +87,7 @@ export const moonpaySellSupportedSolanaTokens = [
 ];
 
 export const getMoonpaySellSupportedCurrencies = (
-  country?: string,
+  _country?: string,
 ): string[] => {
   const moonpaySellSupportedCurrencies = [
     ...moonpaySellSupportedCoins,

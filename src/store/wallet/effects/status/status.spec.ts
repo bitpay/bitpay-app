@@ -162,7 +162,6 @@ jest.mock('../address/address', () => ({
 
 import {BwcProvider} from '../../../../lib/bwc';
 import {isCacheKeyStale} from '../../utils/wallet';
-import {convertToFiat} from '../../../../utils/helper-methods';
 
 /** Minimal WalletBalance used as cached balance in tests */
 const makeCachedBalance = (sat = 1_000_000) => ({
@@ -1511,8 +1510,10 @@ describe('updateKeyStatus — SOL token address normalisation', () => {
     });
 
     // Should resolve (may return undefined if credentials empty after filter)
-    const {updateKeyStatus} = require('./status');
-    const result = await store.dispatch(updateKeyStatus({key, force: true}));
+    const {updateKeyStatus: requiredUpdateKeyStatus} = require('./status');
+    const result = await store.dispatch(
+      requiredUpdateKeyStatus({key, force: true}),
+    );
     // Either undefined (no credentials) or a result object — no throw
     expect(result === undefined || typeof result === 'object').toBe(true);
   });

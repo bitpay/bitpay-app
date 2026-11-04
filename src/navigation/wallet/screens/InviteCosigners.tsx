@@ -446,13 +446,6 @@ const ModalTitle = ({
   );
 };
 
-const HeaderButton = ({
-  style,
-  ...rest
-}: React.ComponentProps<typeof RNTouchableOpacity>) => (
-  <RNTouchableOpacity style={[styles.headerButton, style]} {...rest} />
-);
-
 const PlaceholderView = ({
   style,
   ...rest
@@ -525,10 +518,6 @@ const StatusContainer = ({
   ...rest
 }: React.ComponentProps<typeof View>) => (
   <View style={[styles.statusContainer, style]} {...rest} />
-);
-
-const QRCodeWrapper = ({style, ...rest}: React.ComponentProps<typeof View>) => (
-  <View style={[styles.qrCodeWrapper, style]} {...rest} />
 );
 
 const ShareButton = ({
@@ -692,18 +681,20 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
 
   useEffect(() => {
     if (tssSession?.status === 'ceremony_in_progress') {
+      // eslint-disable-next-line react-hooks/immutability -- the effect must sit above the early return; it runs after render, once handleStartCeremony is initialized
       handleStartCeremony();
     }
     return () => {
       dispatch(cancelTSSCeremony(keyId));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount (resume an in-progress ceremony); cleanup cancels it on unmount
   }, []);
 
   if (!tssSession) {
     return null;
   }
 
-  const {m, n, walletName, copayers = []} = tssSession;
+  const {copayers = []} = tssSession;
   const allInvited = copayers.every(c => c.status === 'invited');
 
   const handleOpenModal = (copayer: TSSCopayerInfo) => {

@@ -1,0 +1,16 @@
+appId: com.bitpay.wallet
+---
+# NOTE: intentionally no `launchApp`.
+#
+# The harness performs the launch itself via the real LAUNCHER intent so it can
+# read ActivityTaskManager's `Displayed` timing, which is the authoritative
+# time-to-first-frame. Adding `launchApp` here would launch the app a second
+# time and make every startup number meaningless.
+#
+# This flow's only job is to hold the run open until the app is actually usable,
+# which gives us the coarse `visible_ms` cross-check.
+
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 120000

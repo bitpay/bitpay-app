@@ -313,7 +313,7 @@ const MoonpayConnectionSettings = () => {
             // }
             navigation.goBack();
           }}
-          onError={err => {
+          onError={() => {
             // Even if reset fails, clear credentials so the UI reflects unlinked state.
             clearMoonpayEmbeddedCredentials();
             setMoonpayEmbeddedAnonymousCredentials(undefined);

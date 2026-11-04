@@ -71,6 +71,7 @@ const RampDetails: React.FC = () => {
 
   useEffect(() => {
     updateStatusDescription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sets the initial status description once on mount
   }, []);
 
   useEffect(() => {

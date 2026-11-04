@@ -9,6 +9,7 @@ interface ScanProps {
   theme: Theme;
 }
 export enum ScanScreens {
+  // eslint-disable-next-line @typescript-eslint/no-shadow -- enum member name is public API (ScanScreens.Root); it does not reference the imported Root
   Root = 'ScanRoot',
 }
 

@@ -48,7 +48,11 @@ const BrandDetails = ({style, ...rest}: React.ComponentProps<typeof View>) => (
   <View style={[styles.brandDetails, style]} {...rest} />
 );
 
-export default ({cardConfig}: {cardConfig: CardConfig}) => {
+// Memoized: this screen isn't compiled by React Compiler (see babel.config's
+// REACT_COMPILER_DIRS), so without memo a bucket change in the catalog
+// re-renders every already-rendered row. cardConfig is a stable reference from
+// the card-config map, so a shallow prop compare keeps rendered rows static.
+const GiftCardItem = ({cardConfig}: {cardConfig: CardConfig}) => {
   const {displayName, icon} = cardConfig;
   return (
     <GiftCardItemContainer>
@@ -64,3 +68,5 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
     </GiftCardItemContainer>
   );
 };
+
+export default React.memo(GiftCardItem);

@@ -129,8 +129,14 @@ jest.mock('../ExchangeRate.utils', () => ({
   POLYGON_ABOUT_FALLBACK: '',
 }));
 
+// Reassigning the module-level capture variable directly inside the
+// component trips React Compiler's `globals` rule; route it through a helper.
+const captureSharedModel = (model: typeof latestSharedModel) => {
+  latestSharedModel = model;
+};
+
 const HookHarness = () => {
-  latestSharedModel = useExchangeRateSharedModel();
+  captureSharedModel(useExchangeRateSharedModel());
   return null;
 };
 

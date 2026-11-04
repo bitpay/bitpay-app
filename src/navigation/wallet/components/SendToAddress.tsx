@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -215,7 +216,9 @@ const SendToAddress = () => {
   };
 
   const validateDataRef = useRef(validateData);
-  validateDataRef.current = validateData;
+  useLayoutEffect(() => {
+    validateDataRef.current = validateData;
+  });
   const onSearchInputChange = useDebouncedSendToValidation(text => {
     setWalletSearchInput(text);
     validateDataRef.current(text);

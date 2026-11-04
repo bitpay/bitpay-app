@@ -593,11 +593,11 @@ export const getProtocolName = (
 export const getProtocolsName = (chain: string): string | undefined => {
   if (IsSVMChain(chain)) {
     return SUPPORTED_SVM_COINS.map(
-      chain => PROTOCOL_NAME[chain][Network.mainnet],
+      supportedChain => PROTOCOL_NAME[supportedChain][Network.mainnet],
     ).join(', ');
   } else {
     return SUPPORTED_EVM_COINS.map(
-      chain => PROTOCOL_NAME[chain][Network.mainnet],
+      supportedChain => PROTOCOL_NAME[supportedChain][Network.mainnet],
     ).join(', ');
   }
 };
@@ -939,9 +939,9 @@ export const processOtherMethodsRequest =
     try {
       const wallet = Object.values(keys as Keys).flatMap(key =>
         key.wallets.filter(
-          wallet =>
-            isSameAddress(wallet.receiveAddress, senderAddress) &&
-            wallet.chain === swapFromChain,
+          w =>
+            isSameAddress(w.receiveAddress, senderAddress) &&
+            w.chain === swapFromChain,
         ),
       )[0];
 
@@ -1247,7 +1247,7 @@ export const processSwapRequest =
     const {chainId} = params;
     const {method} = params.request;
 
-    const {to, data, from, value} = params.request.params[0];
+    const {data, from, value} = params.request.params[0];
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
 
     if (data === '0x') {
@@ -1341,13 +1341,16 @@ export const processSwapRequest =
     }
   };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- currently unreferenced; removing it would also drop the only EtherscanAPI import, left for a dedicated dead-code cleanup
 const fetchContractAbi = async (
   dispatch: any,
   chainId: string,
   address: string,
 ) => {
-  const getAbiFromAddress = async (address: string): Promise<any> => {
-    const abi = await dispatch(EtherscanAPI.getContractAbi(chainId, address));
+  const getAbiFromAddress = async (contractAddress: string): Promise<any> => {
+    const abi = await dispatch(
+      EtherscanAPI.getContractAbi(chainId, contractAddress),
+    );
     if (!abi || abi === 'Contract source code not verified') {
       throw new Error('No ABI found');
     }
@@ -1411,9 +1414,7 @@ const handleDefaultTransaction = async (
   logManager.debug(`processing ${transactionDataName} transaction`);
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
-      wallet =>
-        isSameAddress(wallet.receiveAddress, senderAddress) &&
-        wallet.chain === chain,
+      w => isSameAddress(w.receiveAddress, senderAddress) && w.chain === chain,
     ),
   )[0];
   const {currencyAbbreviation} = wallet; // this is the "gas" wallet
@@ -1440,17 +1441,7 @@ const handlePayTransaction = async (
 ) => {
   logManager.debug('processing pay transaction');
 
-  const [
-    valueBN,
-    gasPriceBN,
-    expirationBN,
-    payload,
-    hash,
-    v,
-    r,
-    s,
-    tokenContract,
-  ] = transactionData.args;
+  const [valueBN, , , , , , , , tokenContract] = transactionData.args;
 
   const swapAmount = valueBN.toString();
   const senderContractAddress = tokenContract;
@@ -1618,7 +1609,7 @@ export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
 };
 
 export const isAndroidStoragePermissionGranted = (
-  dispatch: AppDispatch,
+  _dispatch: AppDispatch,
 ): Promise<boolean> => {
   return new Promise(async (resolve, reject) => {
     try {

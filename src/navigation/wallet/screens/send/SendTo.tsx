@@ -583,7 +583,10 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
   };
 
   const validateAndNavigateToConfirmRef = useRef(validateAndNavigateToConfirm);
-  validateAndNavigateToConfirmRef.current = validateAndNavigateToConfirm;
+  // Latest-callback ref: only read from event handlers / debounced callbacks.
+  useLayoutEffect(() => {
+    validateAndNavigateToConfirmRef.current = validateAndNavigateToConfirm;
+  });
 
   const debouncedValidateSearchInput = useDebouncedSendToValidation(text => {
     setWalletSearchInput(text);

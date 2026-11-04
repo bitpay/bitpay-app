@@ -122,29 +122,31 @@ const ChartAxisLabel = ({
     }
 
     if (!hasMeasuredTranslateRef.current) {
-      translateX.value = newTranslateX;
+      translateX.set(newTranslateX);
       hasMeasuredTranslateRef.current = true;
       return;
     }
 
-    if (Math.abs(translateX.value - newTranslateX) < 0.5) {
-      translateX.value = newTranslateX;
+    if (Math.abs(translateX.get() - newTranslateX) < 0.5) {
+      translateX.set(newTranslateX);
       return;
     }
 
-    translateX.value = withSpring(newTranslateX, {
-      mass: 1,
-      stiffness: 500,
-      damping: 400,
-      velocity: 0,
-    });
+    translateX.set(
+      withSpring(newTranslateX, {
+        mass: 1,
+        stiffness: 500,
+        damping: 400,
+        velocity: 0,
+      }),
+    );
   }, [newTranslateX, resolvedWidth, translateX]);
 
   const translateY = type === 'min' ? 5 : -5;
 
   const opacity = useSharedValue(0);
   useEffect(() => {
-    opacity.value = withTiming(1, {duration: 800});
+    opacity.set(withTiming(1, {duration: 800}));
   }, [opacity]);
 
   const labelColor = textColor ?? (theme.dark ? Slate30 : SlateDark);
@@ -160,7 +162,7 @@ const ChartAxisLabel = ({
       : 1;
 
   const contentOpacityAnimatedStyle = useAnimatedStyle(() => {
-    const sharedOpacity = sharedContentOpacity?.value;
+    const sharedOpacity = sharedContentOpacity?.get();
     return {
       opacity:
         typeof sharedOpacity === 'number' && Number.isFinite(sharedOpacity)

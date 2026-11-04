@@ -58,7 +58,8 @@ const BottomAmountModal: React.FC<BottomAmountModalProps> = props => {
     onBackdropPress,
     onSendMaxPressed,
     isVisible,
-    modalTitle,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to keep modalTitle out of amountProps
+    modalTitle: _modalTitle,
     limitsOpts,
     initialAmount,
     onAmountChange,

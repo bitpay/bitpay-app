@@ -369,6 +369,32 @@ const TransactionLevel = ({
     return _speedUpMinFeePerKb;
   };
 
+  const setFeesRecommended = (_feeLevels: Fee[]): void => {
+    let {minValue, maxValue} = getRecommendedFees(_feeLevels);
+    setMaxFeeRecommended(maxValue);
+    setMinFeeRecommended(minValue);
+    setMaxFeeAllowed(maxValue * FEE_MULTIPLIER);
+  };
+
+  const getRecommendedFees = (
+    _feeLevels: Fee[],
+  ): {minValue: number; maxValue: number} => {
+    const value = _feeLevels.map(({feePerKb}: Fee) => feePerKb);
+    const maxValue = Math.max(...value);
+
+    let minValue;
+    if (isSpeedUpTx && speedUpMinFeePerKb) {
+      minValue = speedUpMinFeePerKb;
+    } else {
+      minValue = Math.min(...value);
+    }
+
+    return {
+      maxValue: parseInt((maxValue / feeUnitAmount).toFixed(), 10),
+      minValue: parseInt((minValue / feeUnitAmount).toFixed(), 10),
+    };
+  };
+
   const setFeeRate = (_feeLevels: Fee[]) => {
     let _speedUpMinFeePerKb: number | undefined;
     if (isSpeedUpTx) {
@@ -447,7 +473,7 @@ const TransactionLevel = ({
       if (customFeePerKB) {
         setCustomSatsPerByte((customFeePerKB / feeUnitAmount).toFixed());
       }
-    } catch (e) {}
+    } catch {}
   };
 
   const checkFees = (
@@ -501,7 +527,9 @@ const TransactionLevel = ({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- init() recomputes fee-level state from the wallet; refactoring to render-time derivation would change when fees load
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when wallet changes; init reads the current fee settings
   }, [wallet]);
 
   const onClose = () => {
@@ -529,32 +557,6 @@ const TransactionLevel = ({
     } else {
       onCloseModal(selectedLevel);
     }
-  };
-
-  const setFeesRecommended = (_feeLevels: Fee[]): void => {
-    let {minValue, maxValue} = getRecommendedFees(_feeLevels);
-    setMaxFeeRecommended(maxValue);
-    setMinFeeRecommended(minValue);
-    setMaxFeeAllowed(maxValue * FEE_MULTIPLIER);
-  };
-
-  const getRecommendedFees = (
-    _feeLevels: Fee[],
-  ): {minValue: number; maxValue: number} => {
-    const value = _feeLevels.map(({feePerKb}: Fee) => feePerKb);
-    const maxValue = Math.max(...value);
-
-    let minValue;
-    if (isSpeedUpTx && speedUpMinFeePerKb) {
-      minValue = speedUpMinFeePerKb;
-    } else {
-      minValue = Math.min(...value);
-    }
-
-    return {
-      maxValue: parseInt((maxValue / feeUnitAmount).toFixed(), 10),
-      minValue: parseInt((minValue / feeUnitAmount).toFixed(), 10),
-    };
   };
 
   const onSelectCustomFee = () => {

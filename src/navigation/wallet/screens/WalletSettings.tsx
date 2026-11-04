@@ -155,15 +155,17 @@ const WalletSettings = () => {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tracks wallet visibility from the store; state is also toggled locally
     setHadVisibleWallet(wallets.some(w => !w.hideWallet && IsVMChain(w.chain)));
   }, [wallets]);
 
   useEffect(() => {
     if (wallet.receiveAddress) {
-      const {hideAccount, accountToggleSelected} =
+      const {hideAccount: accountHidden, accountToggleSelected: accountToggle} =
         evmAccountsInfo?.[wallet.receiveAddress] || {};
-      setHideAccount(hideAccount ?? false);
-      setAccountToggleSelected(accountToggleSelected ?? false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- re-syncs locally toggled switch state from the store when it changes
+      setHideAccount(accountHidden ?? false);
+      setAccountToggleSelected(accountToggle ?? false);
     }
   }, [evmAccountsInfo, wallet.receiveAddress]);
 
@@ -210,10 +212,10 @@ const WalletSettings = () => {
   };
 
   const handleToggleAndUpdateAccount = (
-    keyId: string,
+    accountKeyId: string,
     accountAddress: string,
   ) => {
-    dispatch(toggleHideAccount({keyId, accountAddress}));
+    dispatch(toggleHideAccount({keyId: accountKeyId, accountAddress}));
     dispatch(
       startUpdateAllWalletStatusForKey({
         key,

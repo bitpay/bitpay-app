@@ -15,7 +15,7 @@ const MoonpayConnectSvg: React.FC<{
   isDark: boolean;
   width: number;
   height: number;
-}> = ({isDark, width, height}) => {
+}> = ({width, height}) => {
   return (
     <Svg
       width={width}

@@ -272,10 +272,10 @@ const ExportWallet = () => {
 
       const _sendWallet = walletExport(password);
       const {
-        credentials: {walletName: cWalletName, walletId},
+        credentials: {walletName: cWalletName, walletId: cWalletId},
         walletName,
       } = wallet;
-      let name = walletName || cWalletName || walletId;
+      let name = walletName || cWalletName || cWalletId;
 
       if (dontIncludePrivateKey) {
         name = name + ' ' + t('(No Private Key)');
@@ -337,10 +337,10 @@ const ExportWallet = () => {
       setSendButtonState('loading');
       const _sendWallet = walletExport(password);
       const {
-        credentials: {walletName: cWalletName, walletId},
+        credentials: {walletName: cWalletName, walletId: cWalletId},
         walletName,
       } = wallet;
-      let name = walletName || cWalletName || walletId;
+      let name = walletName || cWalletName || cWalletId;
 
       if (dontIncludePrivateKey) {
         name = name + ' ' + t('(No Private Key)');

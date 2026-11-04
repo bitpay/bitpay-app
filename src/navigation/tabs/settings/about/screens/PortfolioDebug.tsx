@@ -591,7 +591,12 @@ const PortfolioDebug = ({navigation}: PortfolioDebugScreenProps) => {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [
+    invalidDecimalsByWalletIdRef,
+    mismatchByWalletIdRef,
+    quarantinesByWalletIdRef,
+    walletsRef,
+  ]);
 
   useEffect(() => {
     load();

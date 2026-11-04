@@ -251,6 +251,7 @@ const timingSafeEqual = (a: string, b: string): boolean => {
 
   let result = 0;
   for (let i = 0; i < a.length; i++) {
+    // eslint-disable-next-line no-bitwise -- constant-time XOR/OR accumulation for timing-safe comparison
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
 
