@@ -26,7 +26,9 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      systemAttachmentLifetime = "keepAlways"
+      userAttachmentLifetime = "keepAlways">
       <Testables>
          <TestableReference
             skipped = "NO">
@@ -35,6 +37,17 @@
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
                BuildableName = "BitPayAppTests"
                BlueprintName = "BitPayAppTests"
+               ReferencedContainer = "container:BitPayApp.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CDF085062FACD8A500CA4C1B"
+               BuildableName = "BitPayAppUITests.xctest"
+               BlueprintName = "BitPayAppUITests"
                ReferencedContainer = "container:BitPayApp.xcodeproj">
             </BuildableReference>
          </TestableReference>
