@@ -19,7 +19,7 @@ import {
   networkChanged,
   showBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
-import {sleep} from '../../../../../utils/helper-methods';
+import {flushPersistor} from '../../../../../store/persistor';
 import RNRestart from 'react-native-restart';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {SettingsDetailsParamList} from '../../SettingsDetails';
@@ -60,7 +60,7 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
               primary: true,
               action: async () => {
                 dispatch(networkChanged(changeNetwork));
-                await sleep(200);
+                await flushPersistor().catch(() => {});
                 RNRestart.restart();
               },
             },
