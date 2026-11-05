@@ -67,6 +67,14 @@ export class BwcProvider {
     return new TssKey.TssKey(opts);
   }
 
+  public createTssWallet(opts: any) {
+    return (TssKey as any).createWallet(opts);
+  }
+
+  public joinTssWallet(opts: any) {
+    return (TssKey as any).joinWallet(opts);
+  }
+
   public createKeyGen(opts: TssKey.ITssKeyGenConstructorParams) {
     return new TssKey.TssKeyGen(opts);
   }
