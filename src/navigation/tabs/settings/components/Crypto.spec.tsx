@@ -77,14 +77,12 @@ const makeState = (
   wallets: any[] = [],
 ) => ({
   APP: {network: 'livenet'},
-  BITPAY_ID: {user: {}},
   WALLET: {
     keys: {key1: {wallets}},
     showTestnetWallets,
     useUnconfirmedFunds: false,
     customizeNonce: false,
     queuedTransactions: false,
-    tssEnabled: false,
   },
 });
 

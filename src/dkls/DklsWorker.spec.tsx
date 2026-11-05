@@ -201,6 +201,144 @@ describe('DklsWorkerHost', () => {
     }
   });
 
+  const startBootedCall = async () => {
+    const worker = load();
+    const mocks = nodeMockFactory();
+    const renderer = await worker.render(mocks.createNodeMock);
+    let call!: Promise<unknown>;
+    await worker.act(async () => {
+      call = worker.callWorker({type: 'ping'});
+    });
+    await worker.act(async () => {
+      webViews(renderer)[0].props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({id: -1, ok: true, result: 'BOOTED'}),
+        },
+      });
+    });
+    return {...worker, ...mocks, renderer, call};
+  };
+
+  it('fails the call and starts a fresh WebView when the worker stops replying', async () => {
+    jest.useFakeTimers();
+    try {
+      const {act, callWorker, renderer, instances, call} =
+        await startBootedCall();
+      const outcome = expect(call).rejects.toThrow('DKLS worker did not reply');
+
+      await act(async () => {
+        jest.advanceTimersByTime(60000);
+      });
+
+      await outcome;
+      expect(webViews(renderer)).toHaveLength(0);
+
+      let second!: Promise<unknown>;
+      await act(async () => {
+        second = callWorker({type: 'ping'});
+      });
+      expect(instances).toHaveLength(2);
+      const reply = (id: number, result: unknown) =>
+        webViews(renderer)[0].props.onMessage({
+          nativeEvent: {data: JSON.stringify({id, ok: true, result})},
+        });
+      await act(async () => {
+        reply(-1, 'BOOTED');
+      });
+      const sentId = (instance: {postMessage: jest.Mock}) =>
+        JSON.parse(instance.postMessage.mock.calls[0][0]).id;
+      let settled = false;
+      second.finally(() => (settled = true));
+
+      await act(async () => {
+        reply(sentId(instances[0]), 'stale');
+      });
+      expect(settled).toBe(false);
+
+      await act(async () => {
+        reply(sentId(instances[1]), 'pong');
+      });
+      await expect(second).resolves.toBe('pong');
+      act(() => renderer.unmount());
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('drops a call whose WebView dies in the same batch that boots it', async () => {
+    const {render, act, callWorker} = load();
+    const {createNodeMock, sentMessage} = nodeMockFactory();
+    const renderer = await render(createNodeMock);
+    let call!: Promise<unknown>;
+    await act(async () => {
+      call = callWorker({type: 'ping'});
+    });
+    const outcome = expect(call).rejects.toThrow('DKLS worker restarted');
+
+    await act(async () => {
+      const {props} = webViews(renderer)[0];
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({id: -1, ok: true, result: 'BOOTED'}),
+        },
+      });
+      props.onContentProcessDidTerminate({nativeEvent: {}});
+    });
+
+    expect(sentMessage('ping')).toBeUndefined();
+    await outcome;
+    act(() => renderer.unmount());
+  });
+
+  it.each(['onContentProcessDidTerminate', 'onRenderProcessGone'])(
+    'fails in-flight calls when the WebView process dies (%s)',
+    async handler => {
+      const {act, renderer, call} = await startBootedCall();
+      const outcome = expect(call).rejects.toThrow(
+        'DKLS worker process terminated',
+      );
+
+      await act(async () => {
+        webViews(renderer)[0].props[handler]({nativeEvent: {}});
+      });
+
+      await outcome;
+      expect(webViews(renderer)).toHaveLength(0);
+      act(() => renderer.unmount());
+    },
+  );
+
+  it('fails in-flight calls when the WebView unmounts', async () => {
+    const {act, renderer, call} = await startBootedCall();
+    const outcome = expect(call).rejects.toThrow('DKLS worker unmounted');
+
+    act(() => renderer.unmount());
+
+    await outcome;
+  });
+
+  it('rejects with an Error that keeps the worker message', async () => {
+    const {act, renderer, sentMessage, call} = await startBootedCall();
+    const outcome = expect(call).rejects.toEqual(
+      new Error('Abort the protocol and ban party 1'),
+    );
+
+    await act(async () => {
+      webViews(renderer)[0].props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            id: sentMessage('ping').id,
+            ok: false,
+            result: 'Abort the protocol and ban party 1',
+          }),
+        },
+      });
+    });
+
+    await outcome;
+    act(() => renderer.unmount());
+  });
+
   it('starts no boot timer when no host is rendered', () => {
     jest.useFakeTimers();
     try {
