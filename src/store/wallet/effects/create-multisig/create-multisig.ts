@@ -465,6 +465,15 @@ export const addCoSignerToTSS =
 
       logManager.debug(`[TSS] Created joinCode for party ${opts.partyId}`);
 
+      // createJoinCode() registers the party's public key in the keygen session's
+      // in-memory roster, which only reaches persistence through exportSession().
+      // Re-export here so the roster survives the restoreSession() that
+      // startTSSCeremony() does from storage — the ceremony's final createWallet()
+      // needs every party's pubkey to encrypt the BWS join secret, and without a
+      // fresh export it restores the empty roster captured at key creation and
+      // aborts with "Missing the public keys of some TSS parties".
+      const sessionExport = tssKeyGen.exportSession();
+
       const updatedCopayers = [...(key.tssSession.copayers || [])];
       const copayerIndex = updatedCopayers.findIndex(
         c => c.partyId === opts.partyId,
@@ -487,6 +496,7 @@ export const addCoSignerToTSS =
         ...key,
         tssSession: {
           ...key.tssSession,
+          sessionExport,
           copayers: updatedCopayers,
           status: newStatus,
         },

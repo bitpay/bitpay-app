@@ -653,6 +653,39 @@ describe('addCoSignerToTSS', () => {
     );
   });
 
+  it('re-exports the keygen session after createJoinCode so the roster is persisted', async () => {
+    const keyId = 'key-roster-persist';
+    const store = configureTestStore({
+      WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
+    });
+    // createJoinCode() registers the party in the keygen's in-memory roster;
+    // the fresh export is the only thing that carries it into storage, so the
+    // ceremony's restoreSession() sees every party's pubkey instead of the
+    // empty roster captured at key creation.
+    lastKeyGen.exportSession.mockReturnValue('export-with-roster');
+
+    await store.dispatch(
+      addCoSignerToTSS({
+        keyId,
+        joinerSessionId: encodeJoinerSessionId({pubKey: 'joiner-pub-key'}),
+        partyId: 1,
+      }),
+    );
+
+    expect(lastKeyGen.exportSession).toHaveBeenCalled();
+    // The export must happen after createJoinCode so it captures the new party.
+    expect(lastKeyGen.createJoinCode.mock.invocationCallOrder[0]).toBeLessThan(
+      lastKeyGen.exportSession.mock.invocationCallOrder[0],
+    );
+
+    const updateAction = store
+      .getActions()
+      .find((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY);
+    expect(updateAction.payload.key.tssSession.sessionExport).toBe(
+      'export-with-roster',
+    );
+  });
+
   it('does not restore a deleted key when restoreSession finishes', async () => {
     const keyId = 'key-deleted-during-invite';
     const store = configureTestStore({
