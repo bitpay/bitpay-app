@@ -18,6 +18,7 @@ export enum SumSubActionTypes {
   SET_KYC = 'SumSub/SET_KYC',
   SET_SDK_STATUS = 'SumSub/SET_SDK_STATUS',
   SET_BANNER_ACK = 'SumSub/SET_BANNER_ACK',
+  SET_GET_VERIFIED_DISMISSED = 'SumSub/SET_GET_VERIFIED_DISMISSED',
   RESET_KYC = 'SumSub/RESET_KYC',
 }
 
@@ -36,9 +37,19 @@ interface SetBannerAck {
   payload: {network: Network; ack: KycBannerAck};
 }
 
+interface SetGetVerifiedDismissed {
+  type: typeof SumSubActionTypes.SET_GET_VERIFIED_DISMISSED;
+  payload: {network: Network; eid: string};
+}
+
 interface ResetKyc {
   type: typeof SumSubActionTypes.RESET_KYC;
   payload: {network: Network};
 }
 
-export type SumSubActionType = SetKyc | SetSdkStatus | SetBannerAck | ResetKyc;
+export type SumSubActionType =
+  | SetKyc
+  | SetSdkStatus
+  | SetBannerAck
+  | SetGetVerifiedDismissed
+  | ResetKyc;
