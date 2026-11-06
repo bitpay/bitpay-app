@@ -22,6 +22,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {checkEncryptPassword} from '../../utils/wallet';
 import {broadcastTx, checkBiometricForSending, getTx} from '../send/send';
+import {assertTxpPayProUrlTrusted} from '../paypro/paypro';
 import {getErrorName} from '../../../../constants/BWCError';
 import {requestDklsWorkerMount} from '../../../../dkls/DklsWorker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -571,6 +572,10 @@ export const startTSSSigning =
         if (!isTSSKey(key)) {
           throw new Error('Key is not a TSS key');
         }
+
+        // RN-3074 / IS-1457: BWC contacts txp.payProUrl itself in pushSignatures and
+        // broadcastTxProposal; never start a signing ceremony for an untrusted one.
+        assertTxpPayProUrlTrusted(txp);
 
         const tssKey = restoreKeychain(key.methods);
         if (!tssKey) {
