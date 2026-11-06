@@ -14,6 +14,7 @@ import {
 } from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
+import {RestoreOrImportSheet} from '../components/RestoreOrImportSheet';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -50,6 +51,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const [multisigModalType, setMultisigModalType] =
     useState<MultisigModalType>(null);
+  const [importSheetVisible, setImportSheetVisible] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -106,7 +108,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
             context: 'CreationOptions',
           }),
         );
-        navigation.navigate('Import');
+        setImportSheetVisible(true);
       },
     },
     {
@@ -171,6 +173,10 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
         isVisible={multisigModalType !== null}
         modalType={multisigModalType}
         closeModal={() => setMultisigModalType(null)}
+      />
+      <RestoreOrImportSheet
+        isVisible={importSheetVisible}
+        onClose={() => setImportSheetVisible(false)}
       />
     </>
   );

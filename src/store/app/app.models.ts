@@ -37,4 +37,6 @@ export interface HomeCarouselConfig {
 
 export type HomeCarouselLayoutType = 'carousel' | 'listView';
 
+export type OnboardingKeyStatus = 'idle' | 'creating' | 'waiting' | 'failed';
+
 export type InAppNotificationContextType = 'notification';

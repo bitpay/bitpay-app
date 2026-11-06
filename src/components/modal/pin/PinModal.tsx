@@ -165,14 +165,14 @@ const Pin = gestureHandlerRootHOC(
     const checkPinRef = useRef(checkPin);
     checkPinRef.current = checkPin;
 
-    const gotoCreateKey = useCallback(async () => {
+    const gotoTermsOfUse = useCallback(async () => {
       dispatch(AppActions.dismissPinModal());
       await sleep(10);
-      navigationRef.navigate('CreateKey' as any);
+      navigationRef.navigate('TermsOfUse' as any);
     }, [dispatch]);
 
-    const gotoCreateKeyRef = useRef(gotoCreateKey);
-    gotoCreateKeyRef.current = gotoCreateKey;
+    const gotoTermsOfUseRef = useRef(gotoTermsOfUse);
+    gotoTermsOfUseRef.current = gotoTermsOfUse;
 
     const setCurrentPin = useCallback(
       async (newPin: {firstPinEntered: Array<string>; pin: Array<string>}) => {
@@ -190,7 +190,7 @@ const Pin = gestureHandlerRootHOC(
 
             if (context === 'onboarding') {
               dispatch(AppActions.setPinInteractionDone());
-              gotoCreateKeyRef.current();
+              gotoTermsOfUseRef.current();
             } else {
               dispatch(AppActions.dismissPinModal());
             }
@@ -361,7 +361,8 @@ const Pin = gestureHandlerRootHOC(
     const handleBackPress = useCallback(() => {
       dispatch(AppActions.dismissPinModal());
       reset();
-    }, [dispatch, reset]);
+      onClose?.(false);
+    }, [dispatch, onClose, reset]);
 
     const animatedStyle = useMemo(() => ({opacity: fadeAnim}), [fadeAnim]);
 

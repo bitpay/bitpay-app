@@ -28,6 +28,7 @@ import {
   publishAndSign,
   sendCrypto,
   startSendPayment,
+  verifyIdentity,
 } from './send';
 import * as Root from '../../../../Root';
 import {ethers} from 'ethers';
@@ -371,5 +372,34 @@ describe('sendCrypto', () => {
       context: 'send',
       assetContext,
     });
+  });
+});
+
+describe('verifyIdentity', () => {
+  it.each([
+    [true, 'resolves'],
+    [false, 'rejects'],
+  ])('with PIN lock, a %s check %s', async (checked, outcome) => {
+    const store = configureTestStore({
+      APP: {pinLockActive: true, biometricLockActive: false},
+    });
+
+    const verification = store.dispatch(verifyIdentity());
+    store.getState().APP.pinModalConfig?.onClose?.(checked);
+
+    if (outcome === 'resolves') {
+      await expect(verification).resolves.toBeUndefined();
+    } else {
+      await expect(verification).rejects.toThrow();
+    }
+  });
+
+  it('resolves without a prompt when no app lock is set', async () => {
+    const store = configureTestStore({
+      APP: {pinLockActive: false, biometricLockActive: false},
+    });
+
+    await expect(store.dispatch(verifyIdentity())).resolves.toBeUndefined();
+    expect(store.getState().APP.pinModalConfig).toBeUndefined();
   });
 });

@@ -294,7 +294,7 @@ const KeyWalletsRow = ({
               <KeySvg />
               <KeyName>{key.keyName || t('My Key')}</KeyName>
               {!key.backupComplete && (
-                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+                <NeedBackupText>{t('Backup Required')}</NeedBackupText>
               )}
             </KeyNameContainer>
           )}
