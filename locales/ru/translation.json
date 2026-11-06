@@ -2319,5 +2319,8 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Если вы удалите приложение BitPay или потеряете устройство, для получения доступа к вашим средствам вам потребуется ввести фразу восстановления.",
   "Some assets not charted": "Некоторые активы не отображены на графике",
   "Not all assets are charted": "Не все активы отображены на графике",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "График и его изменение пока не учитывают эти активы, так как их историю не удалось восстановить. Баланс портфеля по-прежнему их включает."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "График и его изменение пока не учитывают эти активы, так как их историю не удалось восстановить. Баланс портфеля по-прежнему их включает.",
+  "Connect BitPay ID": "Подключить BitPay ID",
+  "A link is asking to connect a BitPay ID and replace the account currently signed in on this device. Only continue if you started this action yourself.": "Ссылка запрашивает подключение BitPay ID и замену аккаунта, в который вы сейчас вошли на этом устройстве. Продолжайте, только если вы сами начали это действие.",
+  "A link is asking to connect a BitPay ID to this app. Only continue if you started this action yourself.": "Ссылка запрашивает подключение BitPay ID к этому приложению. Продолжайте, только если вы сами начали это действие."
 }
