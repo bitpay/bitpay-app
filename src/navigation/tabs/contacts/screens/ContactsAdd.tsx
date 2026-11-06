@@ -14,6 +14,7 @@ import {
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
+import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../../store';
 import {
   createContact,
@@ -82,7 +83,7 @@ const ContactsAdd = ({
     setValue,
     formState: {errors},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
-  const {contact, context, onEditComplete} = route.params || {};
+  const {contact, context} = route.params || {};
 
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
@@ -176,6 +177,7 @@ const ContactsAdd = ({
     }
 
     const contactToSave: ContactRowProps = {
+      ...(context === 'edit' ? contact : {}),
       ...formValues,
       address: addressValue,
       coin: coinValue,
@@ -186,7 +188,6 @@ const ContactsAdd = ({
     if (context === 'edit') {
       dispatch(updateContact(contactToSave));
       navigation.goBack();
-      onEditComplete?.(contactToSave);
       return;
     }
 
@@ -215,6 +216,12 @@ const ContactsAdd = ({
       }),
     );
 
+    if (!contacts.length) {
+      navigation.dispatch(
+        StackActions.replace('SettingsDetails', {initialRoute: 'Contacts'}),
+      );
+      return;
+    }
     navigation.goBack();
   });
 
