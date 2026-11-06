@@ -1,4 +1,6 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
+import {spanEnd, spanStart} from '../../../perf/PerfMonitor';
+import {offerSettleDelay} from '../utils/offer-settle';
 import uuid from 'react-native-uuid';
 import {useTheme} from '../../../contexts';
 import {
@@ -2905,6 +2907,10 @@ const ExternalServicesOfferSelector: React.FC<
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Flags seen by the previous run of each offer effect (offerSettleDelay).
+  const lastBuyFinishedKey = useRef('');
+  const lastSellFinishedKey = useRef('');
+
   const resetFinishedStates = () => {
     setFinishedBanxa(null);
     setFinishedMoonpay(null);
@@ -2976,6 +2982,7 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     setOfferSelectorText(t('Searching for our Best Offer'));
+    spanStart(context === 'sellCrypto' ? 'SellQuotes' : 'BuyQuotes');
     setOfferWarnMsg(undefined);
     setSelectedOffer(undefined);
     onSelectOffer?.(undefined);
@@ -3018,6 +3025,17 @@ const ExternalServicesOfferSelector: React.FC<
     if (context !== 'buyCrypto') {
       return;
     }
+    const settleDelay = offerSettleDelay(
+      [
+        finishedBanxa,
+        finishedMoonpay,
+        finishedRamp,
+        finishedSardine,
+        finishedSimplex,
+        finishedTransak,
+      ],
+      lastBuyFinishedKey,
+    );
     setOffers(offers);
 
     if (!selectedWallet || !amount || !amountLimits) {
@@ -3072,6 +3090,7 @@ const ExternalServicesOfferSelector: React.FC<
       );
       if (filteredOffers.length === 0) {
         if (allExchangesFinished) {
+          spanEnd('BuyQuotes');
           setOfferWarnMsg(
             t(
               'There are currently no offers that satisfy your request. Please try again later.',
@@ -3102,6 +3121,7 @@ const ExternalServicesOfferSelector: React.FC<
         ? moonpayOffer
         : _selectedOffer;
       setSelectedOffer(offerToSelect);
+      spanEnd('BuyQuotes');
       onSelectOffer?.(offerToSelect);
       setOfferWarnMsg(undefined);
       setOfferSelectorText(
@@ -3121,7 +3141,7 @@ const ExternalServicesOfferSelector: React.FC<
       );
 
       setSelectedOfferLoading(false);
-    }, 3500);
+    }, settleDelay);
 
     return () => clearTimeout(offersTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-evaluates buy offers only when the payment method or a partner's finished state changes; other values are read at that time
@@ -3139,6 +3159,10 @@ const ExternalServicesOfferSelector: React.FC<
     if (context !== 'sellCrypto') {
       return;
     }
+    const settleDelay = offerSettleDelay(
+      [finishedMoonpay, finishedRamp, finishedSimplex],
+      lastSellFinishedKey,
+    );
     setSellOffers(sellOffers);
 
     if (!selectedWallet || !amount || !sellLimits) {
@@ -3180,6 +3204,7 @@ const ExternalServicesOfferSelector: React.FC<
       );
       if (filteredOffers.length === 0) {
         if (allSellExchangesFinished) {
+          spanEnd('SellQuotes');
           setOfferWarnMsg(
             t(
               'There are currently no offers that satisfy your request. Please try again later.',
@@ -3201,6 +3226,7 @@ const ExternalServicesOfferSelector: React.FC<
       const amountReceiving = Number(_selectedOffer.amountReceiving);
       if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
         setSelectedOffer(_selectedOffer);
+        spanEnd('SellQuotes');
         onSelectOffer?.(_selectedOffer);
         setOfferWarnMsg(undefined);
         setOfferSelectorText(
@@ -3227,7 +3253,7 @@ const ExternalServicesOfferSelector: React.FC<
         onSelectOffer?.(undefined);
       }
       setSelectedOfferLoading(false);
-    }, 3500);
+    }, settleDelay);
 
     return () => clearTimeout(offersTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-evaluates sell offers only when the withdrawal method or a partner's finished state changes; other values are read at that time

@@ -1,4 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {findTokenByCoinAndChain} from '../../utils/token-lookup';
+import {spanEnd, spanStart} from '../../../../perf/PerfMonitor';
 import {
   ActivityIndicator,
   ScrollView,
@@ -383,12 +385,6 @@ const SwapCryptoRoot: React.FC = () => {
   const network = useAppSelector(({APP}) => APP.network);
   useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
-  const tokenOptions = Object.entries(tokenOptionsByAddress).map(
-    ([k, {symbol}]) => {
-      const chain = getChainFromTokenByAddressKey(k);
-      return getExternalServiceSymbol(symbol.toLowerCase(), chain);
-    },
-  );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const prefetchedOpts = getSwapCryptoPrefetchedData();
@@ -437,7 +433,18 @@ const SwapCryptoRoot: React.FC = () => {
   const [offersLoading, setOffersLoading] = useState<boolean>(false);
   let selectedWallet = route.params?.selectedWallet;
   const selectedAccountAddress = route.params?.selectedAccount;
-  const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
+  // ~21k token symbols: built once per token list, not on every render
+  // (each rebuild was ~60-90 ms of JS on every keypress and modal toggle).
+  const allSupportedTokens: string[] = useMemo(
+    () => [
+      ...Object.entries(tokenOptionsByAddress).map(([k, {symbol}]) => {
+        const chain = getChainFromTokenByAddressKey(k);
+        return getExternalServiceSymbol(symbol.toLowerCase(), chain);
+      }),
+      ...SUPPORTED_TOKENS,
+    ],
+    [tokenOptionsByAddress],
+  );
   const preSetPartner: SwapCryptoExchangeKey | undefined =
     route.params?.partner &&
     SwapCryptoSupportedExchanges.includes(
@@ -1260,8 +1267,10 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
-    const foundToken = Object.values(tokenDataByAddress).find(
-      token => token.coin === _currencyAbbreviation && token.chain === _chain,
+    const foundToken = findTokenByCoinAndChain(
+      tokenDataByAddress,
+      _currencyAbbreviation,
+      _chain,
     );
     if (
       SupportedCurrencyOptions.find(
@@ -1523,6 +1532,7 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const init = async () => {
+    spanStart('SwapCurrencies');
     const isCacheFresh =
       !!prefetchedOpts?.fetchedAt &&
       Date.now() - prefetchedOpts.fetchedAt < SWAP_CRYPTO_CACHE_TTL;
@@ -1733,6 +1743,7 @@ const SwapCryptoRoot: React.FC = () => {
 
         if (allSupportedCoinsOrdered?.length > 0) {
           setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
+          spanEnd('SwapCurrencies');
 
           // Write back to cache so subsequent opens skip network calls
           if (!isCacheFresh) {
