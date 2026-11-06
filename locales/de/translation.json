@@ -2308,5 +2308,7 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Wenn Sie die BitPay-App löschen oder Ihr Gerät verlieren, benötigen Sie Ihre Wiederherstellungsphrase, um wieder Zugriff auf Ihr Guthaben zu erhalten.",
   "Some assets not charted": "Einige Assets nicht im Diagramm",
   "Not all assets are charted": "Nicht alle Assets sind im Diagramm",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Das Diagramm und seine Veränderung enthalten diese Assets noch nicht, da ihr Verlauf nicht wiederhergestellt werden konnte. Ihr Portfolio-Saldo enthält sie weiterhin.",
+  "Unrecognized payment request": "Unbekannte Zahlungsanforderung",
+  "This payment request does not come from BitPay and was blocked for your protection.": "Diese Zahlungsanforderung stammt nicht von BitPay und wurde zu Ihrem Schutz blockiert."
 }
