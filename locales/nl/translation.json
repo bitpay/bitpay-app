@@ -2308,5 +2308,10 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Als u de BitPay-app verwijdert of uw apparaat verliest, heeft u uw herstelzin nodig om weer toegang tot uw geld te krijgen.",
   "Some assets not charted": "Sommige assets niet in de grafiek",
   "Not all assets are charted": "Niet alle assets staan in de grafiek",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "De grafiek en de verandering ervan bevatten deze assets nog niet, omdat hun geschiedenis niet kon worden hersteld. Je walletsaldo bevat ze nog steeds."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "De grafiek en de verandering ervan bevatten deze assets nog niet, omdat hun geschiedenis niet kon worden hersteld. Je walletsaldo bevat ze nog steeds.",
+  "Transfer function": "Overdrachtsfunctie",
+  "Token": "Token",
+  "Amount (base units)": "Bedrag (basiseenheden)",
+  "Unrecognized contract call": "Onbekende contractaanroep",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Dit verzoek roept een contractmethode aan die de app niet kan samenvatten. Het werkelijke effect staat in de gegevens hieronder – keur alleen goed als u deze site vertrouwt."
 }

@@ -2318,5 +2318,10 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Si vous supprimez l'application BitPay ou si vous perdez votre appareil, vous aurez besoin de votre phrase de récupération pour accéder à nouveau à vos fonds.",
   "Some assets not charted": "Certains actifs ne sont pas représentés",
   "Not all assets are charted": "Tous les actifs ne sont pas représentés",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Le graphique et sa variation n'incluent pas encore ces actifs, car leur historique n'a pas pu être reconstruit. Votre solde du portefeuille les inclut toujours."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "Le graphique et sa variation n'incluent pas encore ces actifs, car leur historique n'a pas pu être reconstruit. Votre solde du portefeuille les inclut toujours.",
+  "Transfer function": "Fonction de transfert",
+  "Token": "Jeton",
+  "Amount (base units)": "Montant (unités de base)",
+  "Unrecognized contract call": "Appel de contrat non reconnu",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Cette demande appelle une méthode de contrat que l'application ne peut pas résumer. L'effet réel se trouve dans les données ci-dessous : n'approuvez que si vous faites confiance à ce site."
 }

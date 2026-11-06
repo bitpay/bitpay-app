@@ -67,6 +67,7 @@ import {
   WCV2RequestType,
   WCV2SessionType,
   TokenApproval,
+  TokenTransfer,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
@@ -136,6 +137,7 @@ const WalletConnectConfirm = () => {
     selectedAccountAddress,
   } = route.params;
   const tokenApproval: TokenApproval | undefined = request.tokenApproval;
+  const tokenTransfer: TokenTransfer | undefined = request.tokenTransfer;
   const peerIcon = icons && icons[0];
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
@@ -686,6 +688,85 @@ const WalletConnectConfirm = () => {
               />
             ) : null}
           </>
+        ) : null}
+        {tokenTransfer ? (
+          <>
+            <SharedDetailRow
+              description={t('Transfer function')}
+              value={tokenTransfer.functionName}
+              secondary
+              hr
+            />
+            {tokenTransfer.symbol ? (
+              <SharedDetailRow
+                description={t('Token')}
+                value={tokenTransfer.symbol.toUpperCase()}
+                secondary
+                hr
+              />
+            ) : null}
+            {[
+              {
+                label: t('Token contract'),
+                value: request.params.request.params[0].to,
+                type: 'transferContract',
+              },
+              ...(tokenTransfer.from
+                ? [
+                    {
+                      label: t('From'),
+                      value: tokenTransfer.from,
+                      type: 'transferFrom',
+                    },
+                  ]
+                : []),
+              {
+                label: t('Recipient'),
+                value: tokenTransfer.recipient,
+                type: 'transferRecipient',
+              },
+            ].map(({label, value, type}) => (
+              <TouchableOpacity
+                key={type}
+                accessibilityRole="button"
+                accessibilityLabel={t('Copy {{label}}: {{address}}', {
+                  label,
+                  address: value,
+                })}
+                disabled={clipboardObj.copied}
+                onPress={() => copyToClipboard(value, type)}>
+                <SharedDetailRow
+                  description={
+                    clipboardObj.copied && clipboardObj.type === type
+                      ? t('{{label}} (copied)', {label})
+                      : t('{{label}} (tap to copy)', {label})
+                  }
+                  value={value}
+                  secondary
+                  hr
+                />
+              </TouchableOpacity>
+            ))}
+            <SharedDetailRow
+              description={t('Amount (base units)')}
+              value={tokenTransfer.amount}
+              secondary
+              hr
+            />
+          </>
+        ) : null}
+        {request.unknownContractCall &&
+        !tokenApproval &&
+        !tokenTransfer &&
+        !request.tokenApprovalDecodeError ? (
+          <Banner
+            height={100}
+            type={'warning'}
+            title={t('Unrecognized contract call')}
+            description={t(
+              "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.",
+            )}
+          />
         ) : null}
         {txDetails?.data ? (
           <>
