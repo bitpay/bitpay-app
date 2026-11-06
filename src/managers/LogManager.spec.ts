@@ -79,4 +79,27 @@ describe('LogManager', () => {
     });
     expect(logManager.getLogs()).toEqual([]);
   });
+  it('redacts key material before it reaches the session log or Sentry', () => {
+    const {logManager} = require('./LogManager');
+
+    logManager.error(
+      'failed with walletPrivKey: deadbeef01 and xprv9s21ZrQH143K3QTDL4LXw2F7HEK3',
+    );
+    logManager.warnWithSentryMessage(
+      'local walletPrivKey=cafebabe',
+      'sentry tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSbrd',
+    );
+
+    const stored = logManager
+      .getLogs()
+      .map((l: {message: string}) => l.message)
+      .join(' ');
+    expect(stored).not.toMatch(/deadbeef01|xprv9s21|cafebabe/);
+    expect(stored).toContain('walletPrivKey:[...]');
+
+    const crumbs = (Sentry.addBreadcrumb as jest.Mock).mock.calls
+      .map(([c]) => c.message)
+      .join(' ');
+    expect(crumbs).not.toMatch(/deadbeef01|xprv9s21|tprv8Zgx/);
+  });
 });

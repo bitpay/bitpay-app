@@ -30,7 +30,11 @@ import {
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_DESKTOP, IS_IOS} from '../../../../../constants';
 import {APP_NAME_UPPERCASE, APP_VERSION} from '../../../../../constants/config';
-import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
+import {
+  LogEntry,
+  LogLevel,
+  sanitizeLogMessage,
+} from '../../../../../store/log/log.models';
 import {
   Action,
   Caution,
@@ -496,7 +500,15 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
     try {
       const parsedLogs = JSON.parse(value);
       if (Array.isArray(parsedLogs)) {
-        setPersistedLogs(parsedLogs);
+        // Entries written by older builds went through a sanitizer whose patterns never
+        // matched, so redact again on read before they are shown or exported.
+        setPersistedLogs(
+          parsedLogs.map((log: LogEntry) =>
+            typeof log?.message === 'string'
+              ? {...log, message: sanitizeLogMessage(log.message)}
+              : log,
+          ),
+        );
       }
     } catch (err) {
       const errorMessage =
