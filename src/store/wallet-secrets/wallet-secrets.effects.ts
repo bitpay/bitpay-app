@@ -191,3 +191,28 @@ export const rehydrateWalletSecrets =
       );
     }
   };
+
+// RN-3086 / IS-1572: TSS keys completed before ceremony secrets were dropped on
+// completion still carry tssSession.password (the spending password that encrypts the
+// key) and a duplicate partyKey. Scrub them once at startup; idempotent, and a no-op
+// once nothing is left to remove.
+export const scrubCompletedTssSessionSecrets =
+  (): Effect<void> => (dispatch, getState) => {
+    const sessions = getState().WALLET_SECRETS?.tssSessionByKeyId || {};
+    const keyIds = Object.keys(sessions).filter(keyId => {
+      const session = sessions[keyId];
+      return (
+        session?.status === 'complete' &&
+        (session.password !== undefined || session.partyKey !== undefined)
+      );
+    });
+    if (keyIds.length) {
+      logManager.info(
+        `[TSS] Clearing ceremony secrets from ${keyIds.length} completed session(s)`,
+      );
+      dispatch({
+        type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+        payload: {keyIds},
+      });
+    }
+  };

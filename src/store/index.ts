@@ -18,6 +18,7 @@ import {Selector} from 'reselect';
 import {
   backupFileExists,
   backupPersistRoot,
+  discardRollingBackup,
   readBackupPersistRoot,
 } from './backup/fs-backup';
 import {
@@ -129,6 +130,8 @@ export {storage};
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
   WalletActionTypes.SUCCESS_IMPORT,
+  // Rewrite the backup once completed TSS sessions are scrubbed (RN-3086).
+  WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
   WalletActionTypes.SUCCESS_ADD_WALLET,
   WalletActionTypes.DELETE_KEY,
   WalletActionTypes.UPDATE_KEY_NAME,
@@ -157,6 +160,13 @@ let backupInFlight = false;
 // Latest persist:root not yet handed to a backup; writes arriving while one is
 // in flight coalesce here instead of queueing attempts past the failure limit
 let pendingPersistRoot: string | null = null;
+// RN-3086: CLEAR_TSS_SESSION_SECRETS scrubs secrets from state, but the next
+// backup rotates the pre-scrub file into .bak. persist:root writes are numbered
+// so .bak is only dropped after a backup of a write made after the scrub; a
+// coalesced or retried write of older state must not count.
+let persistRootWriteSeq = 0;
+let pendingPersistRootSeq = 0;
+let discardBakAfterSeq: number | null = null;
 
 let storeDispatch: ((action: AnyAction) => void) | null = null;
 // Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
@@ -226,9 +236,17 @@ const runFsBackup = async (): Promise<void> => {
   }
   backupInFlight = true;
   pendingPersistRoot = null;
+  const seq = pendingPersistRootSeq;
+  const scrubsPendingBak =
+    discardBakAfterSeq !== null && seq > discardBakAfterSeq;
   let label = backupTriggerAction;
   backupTriggerAction = null;
   try {
+    // The scrub's own trigger can be consumed by an older coalesced write, so a
+    // pending scrub keeps forcing backups until a post-scrub one lands
+    if (!label && scrubsPendingBak && backupFailures < 3) {
+      label = WalletActionTypes.CLEAR_TSS_SESSION_SECRETS;
+    }
     // A fresh trigger action always gets one attempt, as before retries existed
     if (!label && backupFailures < 3) {
       label =
@@ -243,6 +261,9 @@ const runFsBackup = async (): Promise<void> => {
       backupFailures = 0;
       backupRetryLabel = null;
       logManager.debug(`Backed up store to filesystem, triggered by ${label}.`);
+      if (scrubsPendingBak && (await discardRollingBackup())) {
+        discardBakAfterSeq = null;
+      }
     } catch {
       // Retry on the next persist:root write rather than waiting for another
       // trigger action, which may never come
@@ -294,6 +315,7 @@ export const reduxStorage: Storage = {
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
         pendingPersistRoot = valueToStore;
+        pendingPersistRootSeq = ++persistRootWriteSeq;
         runFsBackup();
       }
     } catch {}
@@ -632,6 +654,10 @@ const initializeStore = async () => {
         if (action && typeof action.type === 'string') {
           if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
             backupTriggerAction = action.type;
+            if (action.type === WalletActionTypes.CLEAR_TSS_SESSION_SECRETS) {
+              // Every write so far holds pre-scrub state
+              discardBakAfterSeq = persistRootWriteSeq;
+            }
             flushPersistenceSoon();
           }
         }
